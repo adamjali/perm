@@ -1,0 +1,2642 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PERM Tracker - Dashboard Mockup v2</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ============================================================================
+       CSS VARIABLES - DESIGN TOKENS
+       ============================================================================ */
+    :root {
+      /* Colors - Light Mode */
+      --background: #FAFAFA;
+      --foreground: #000000;
+      --muted: #F5F5F5;
+      --muted-foreground: #666666;
+      --border: #000000;
+      --card: #FFFFFF;
+      --primary: #2ECC40;
+      --primary-foreground: #000000;
+      --destructive: #DC2626;
+
+      /* Stage Colors */
+      --stage-pwd: #0066FF;
+      --stage-recruitment: #9333ea;
+      --stage-eta9089: #D97706;
+      --stage-i140: #059669;
+      --stage-complete: #059669;
+      --stage-closed: #6B7280;
+
+      /* Urgency Colors */
+      --urgency-overdue: #DC2626;
+      --urgency-thisweek: #EA580C;
+      --urgency-thismonth: #D97706;
+      --urgency-later: #059669;
+
+      /* Manila Folder */
+      --manila: #F5E6C8;
+      --manila-dark: #E8D4A8;
+      --manila-shadow: #D4C090;
+
+      /* Shadows */
+      --shadow-hard-sm: 2px 2px 0px var(--border);
+      --shadow-hard: 4px 4px 0px var(--border);
+      --shadow-hard-lg: 8px 8px 0px var(--border);
+
+      /* Typography */
+      --font-heading: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Transitions */
+      --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-spring: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Dark Mode */
+    .dark {
+      --background: #0A0A0A;
+      --foreground: #FAFAFA;
+      --muted: #1A1A1A;
+      --muted-foreground: #A0A0A0;
+      --border: #FAFAFA;
+      --card: #141414;
+      --manila: #3D3426;
+      --manila-dark: #2E2820;
+      --manila-shadow: #1F1B16;
+      --shadow-hard-sm: 2px 2px 0px rgba(255,255,255,0.2);
+      --shadow-hard: 4px 4px 0px rgba(255,255,255,0.2);
+      --shadow-hard-lg: 8px 8px 0px rgba(255,255,255,0.2);
+    }
+
+    /* ============================================================================
+       BASE STYLES
+       ============================================================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--background);
+      color: var(--foreground);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Dot Pattern Background */
+    .bg-dots {
+      background-image: radial-gradient(rgba(0,0,0,0.12) 1.5px, transparent 1.5px);
+      background-size: 24px 24px;
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .dark .bg-dots {
+      background-image: radial-gradient(rgba(255,255,255,0.06) 1.5px, transparent 1.5px);
+    }
+
+    /* Grain Overlay */
+    .grain-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+    }
+
+    /* ============================================================================
+       HEADER
+       ============================================================================ */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #000;
+      border-bottom: 4px solid var(--primary);
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: #fff;
+      padding: 0.5rem;
+      transition: all var(--transition-fast);
+    }
+
+    .logo:hover {
+      background: var(--primary);
+      color: #000;
+    }
+
+    .logo-icon { color: var(--primary); transition: color var(--transition-fast); }
+    .logo:hover .logo-icon { color: #000; }
+    .logo-perm { color: var(--primary); transition: color var(--transition-fast); }
+    .logo:hover .logo-perm { color: #000; }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .nav-link {
+      position: relative;
+      padding: 0.5rem 1rem;
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #fff;
+      text-decoration: none;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 1rem;
+      right: 1rem;
+      height: 3px;
+      background: var(--primary);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform var(--transition-normal);
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--primary);
+    }
+
+    .nav-link.active::after,
+    .nav-link:hover::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .notification-btn {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 2px solid rgba(255,255,255,0.3);
+      color: #fff;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .notification-btn:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #000;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 20px;
+      height: 20px;
+      background: var(--destructive);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #000;
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 2px solid rgba(255,255,255,0.3);
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .user-menu:hover {
+      border-color: rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.1);
+    }
+
+    .theme-toggle {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 2px solid rgba(255,255,255,0.3);
+      color: #fff;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .theme-toggle:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #000;
+    }
+
+    /* ============================================================================
+       MAIN CONTENT
+       ============================================================================ */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* ============================================================================
+       WELCOME HEADER
+       ============================================================================ */
+    .welcome-section {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .welcome-content h1 {
+      font-size: 2rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .welcome-content p {
+      color: var(--muted-foreground);
+      font-size: 1rem;
+    }
+
+    .welcome-date {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--muted-foreground);
+      padding: 0.5rem 1rem;
+      background: var(--muted);
+      border: 2px solid var(--border);
+    }
+
+    /* ============================================================================
+       DEADLINE HERO WIDGET
+       ============================================================================ */
+    .deadline-hero {
+      background: var(--card);
+      border: 3px solid var(--border);
+      box-shadow: var(--shadow-hard);
+      margin-bottom: 2rem;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .deadline-hero-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 3px solid var(--border);
+      background: var(--muted);
+    }
+
+    .deadline-hero-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+
+    .deadline-hero-title-icon {
+      color: var(--primary);
+    }
+
+    .deadline-hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .refresh-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      background: transparent;
+      border: 2px solid var(--border);
+      color: var(--foreground);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .refresh-btn:hover {
+      background: var(--foreground);
+      color: var(--background);
+    }
+
+    .deadline-hero-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* Urgency Columns */
+    .urgency-column {
+      padding: 1.5rem;
+      border-right: 2px solid var(--border);
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .urgency-column:last-child {
+      border-right: none;
+    }
+
+    .urgency-column.overdue {
+      background: linear-gradient(135deg, rgba(220,38,38,0.08) 0%, rgba(220,38,38,0.02) 100%);
+    }
+
+    .urgency-column.thisweek {
+      background: linear-gradient(135deg, rgba(234,88,12,0.08) 0%, rgba(234,88,12,0.02) 100%);
+    }
+
+    .urgency-column.thismonth {
+      background: linear-gradient(135deg, rgba(217,119,6,0.06) 0%, rgba(217,119,6,0.02) 100%);
+    }
+
+    .urgency-column.later {
+      background: linear-gradient(135deg, rgba(5,150,105,0.06) 0%, rgba(5,150,105,0.02) 100%);
+    }
+
+    .urgency-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px dashed var(--border);
+    }
+
+    .urgency-title {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .urgency-column.overdue .urgency-title { color: var(--urgency-overdue); }
+    .urgency-column.thisweek .urgency-title { color: var(--urgency-thisweek); }
+    .urgency-column.thismonth .urgency-title { color: var(--urgency-thismonth); }
+    .urgency-column.later .urgency-title { color: var(--urgency-later); }
+
+    .urgency-count {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.5rem;
+      border: 2px solid currentColor;
+    }
+
+    .urgency-column.overdue .urgency-count {
+      background: var(--urgency-overdue);
+      color: #fff;
+      border-color: var(--urgency-overdue);
+    }
+    .urgency-column.thisweek .urgency-count {
+      background: var(--urgency-thisweek);
+      color: #fff;
+      border-color: var(--urgency-thisweek);
+    }
+    .urgency-column.thismonth .urgency-count {
+      color: var(--urgency-thismonth);
+    }
+    .urgency-column.later .urgency-count {
+      color: var(--urgency-later);
+    }
+
+    .urgency-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      flex: 1;
+    }
+
+    .deadline-item {
+      padding: 0.875rem;
+      background: var(--background);
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .deadline-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+    }
+
+    .deadline-item[data-stage="pwd"]::before { background: var(--stage-pwd); }
+    .deadline-item[data-stage="recruitment"]::before { background: var(--stage-recruitment); }
+    .deadline-item[data-stage="eta9089"]::before { background: var(--stage-eta9089); }
+    .deadline-item[data-stage="i140"]::before { background: var(--stage-i140); }
+
+    .deadline-item:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-hard);
+    }
+
+    .deadline-item-employer {
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .deadline-item-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .deadline-item-date {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .deadline-item-days {
+      font-weight: 700;
+    }
+
+    .urgency-column.overdue .deadline-item-days { color: var(--urgency-overdue); }
+    .urgency-column.thisweek .deadline-item-days { color: var(--urgency-thisweek); }
+    .urgency-column.thismonth .deadline-item-days { color: var(--urgency-thismonth); }
+    .urgency-column.later .deadline-item-days { color: var(--urgency-later); }
+
+    /* Hazard stripe for overdue */
+    .hazard-stripe {
+      height: 6px;
+      background: repeating-linear-gradient(
+        -45deg,
+        var(--urgency-overdue),
+        var(--urgency-overdue) 8px,
+        #000 8px,
+        #000 16px
+      );
+    }
+
+    .urgency-column.overdue .hazard-stripe {
+      display: block;
+      margin: -1.5rem -1.5rem 1rem -1.5rem;
+    }
+
+    .urgency-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted-foreground);
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .urgency-empty-icon {
+      margin-bottom: 0.75rem;
+      opacity: 0.5;
+    }
+
+    .urgency-empty-text {
+      font-size: 0.875rem;
+    }
+
+    /* ============================================================================
+       SUMMARY TILES GRID
+       ============================================================================ */
+    .summary-section {
+      margin-bottom: 2rem;
+    }
+
+    .summary-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .summary-section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .summary-total {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.5rem 1rem;
+      background: var(--primary);
+      color: #000;
+      border: 2px solid var(--border);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow-hard-sm);
+    }
+
+    .summary-total:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-hard);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .summary-tile {
+      background: var(--card);
+      border: 3px solid var(--border);
+      padding: 1.5rem;
+      position: relative;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow-hard);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .summary-tile::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .summary-tile[data-stage="pwd"]::before { background: var(--stage-pwd); }
+    .summary-tile[data-stage="recruitment"]::before { background: var(--stage-recruitment); }
+    .summary-tile[data-stage="eta9089"]::before { background: var(--stage-eta9089); }
+    .summary-tile[data-stage="i140"]::before { background: var(--stage-i140); }
+    .summary-tile[data-stage="complete"]::before { background: var(--stage-complete); }
+    .summary-tile[data-stage="closed"]::before { background: var(--stage-closed); }
+
+    .summary-tile:hover {
+      transform: translate(-4px, -4px);
+      box-shadow: var(--shadow-hard-lg);
+    }
+
+    .summary-tile:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+
+    /* Hover underline effect */
+    .summary-tile::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .summary-tile[data-stage="pwd"]::after { background: var(--stage-pwd); }
+    .summary-tile[data-stage="recruitment"]::after { background: var(--stage-recruitment); }
+    .summary-tile[data-stage="eta9089"]::after { background: var(--stage-eta9089); }
+    .summary-tile[data-stage="i140"]::after { background: var(--stage-i140); }
+    .summary-tile[data-stage="complete"]::after { background: var(--stage-complete); }
+    .summary-tile[data-stage="closed"]::after { background: var(--stage-closed); }
+
+    .summary-tile:hover::after {
+      width: 100%;
+    }
+
+    .summary-tile-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .summary-tile-stage {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.25rem 0.5rem;
+      border: 2px solid currentColor;
+    }
+
+    .summary-tile[data-stage="pwd"] .summary-tile-stage { color: var(--stage-pwd); }
+    .summary-tile[data-stage="recruitment"] .summary-tile-stage { color: var(--stage-recruitment); }
+    .summary-tile[data-stage="eta9089"] .summary-tile-stage { color: var(--stage-eta9089); }
+    .summary-tile[data-stage="i140"] .summary-tile-stage { color: var(--stage-i140); }
+    .summary-tile[data-stage="complete"] .summary-tile-stage { color: var(--stage-complete); }
+    .summary-tile[data-stage="closed"] .summary-tile-stage { color: var(--stage-closed); }
+
+    .summary-tile-count {
+      font-family: var(--font-heading);
+      font-size: 3rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .summary-tile-label {
+      font-size: 0.875rem;
+      color: var(--muted-foreground);
+    }
+
+    /* Progress ring */
+    .progress-ring {
+      width: 48px;
+      height: 48px;
+      position: relative;
+    }
+
+    .progress-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-bg {
+      fill: none;
+      stroke: var(--muted);
+      stroke-width: 4;
+    }
+
+    .progress-ring-fill {
+      fill: none;
+      stroke-width: 4;
+      stroke-linecap: butt;
+      transition: stroke-dashoffset 1s ease-out;
+    }
+
+    .summary-tile[data-stage="pwd"] .progress-ring-fill { stroke: var(--stage-pwd); }
+    .summary-tile[data-stage="recruitment"] .progress-ring-fill { stroke: var(--stage-recruitment); }
+    .summary-tile[data-stage="eta9089"] .progress-ring-fill { stroke: var(--stage-eta9089); }
+    .summary-tile[data-stage="i140"] .progress-ring-fill { stroke: var(--stage-i140); }
+    .summary-tile[data-stage="complete"] .progress-ring-fill { stroke: var(--stage-complete); }
+
+    /* ============================================================================
+       TWO-COLUMN WIDGETS
+       ============================================================================ */
+    .widgets-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .widget {
+      background: var(--card);
+      border: 3px solid var(--border);
+      box-shadow: var(--shadow-hard);
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .widget-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 2px solid var(--border);
+      background: var(--muted);
+    }
+
+    .widget-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9375rem;
+      font-weight: 700;
+    }
+
+    .widget-title-icon {
+      color: var(--primary);
+    }
+
+    .widget-badge {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      padding: 0.25rem 0.5rem;
+      background: var(--primary);
+      color: #000;
+      margin-left: 0.5rem;
+    }
+
+    .widget-link {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: color var(--transition-fast);
+    }
+
+    .widget-link:hover {
+      color: var(--primary);
+    }
+
+    .widget-body {
+      padding: 1rem;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+
+    .widget-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    /* Upcoming Deadline Item */
+    .upcoming-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+
+    .upcoming-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+    }
+
+    .upcoming-item[data-stage="pwd"]::before { background: var(--stage-pwd); }
+    .upcoming-item[data-stage="recruitment"]::before { background: var(--stage-recruitment); }
+    .upcoming-item[data-stage="eta9089"]::before { background: var(--stage-eta9089); }
+    .upcoming-item[data-stage="i140"]::before { background: var(--stage-i140); }
+
+    .upcoming-item:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-hard);
+    }
+
+    .upcoming-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .upcoming-employer {
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .upcoming-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+    }
+
+    .upcoming-right {
+      text-align: right;
+    }
+
+    .upcoming-days {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      font-weight: 700;
+    }
+
+    .upcoming-days.urgent { color: var(--urgency-overdue); }
+    .upcoming-days.soon { color: var(--urgency-thisweek); }
+    .upcoming-days.normal { color: var(--urgency-later); }
+
+    .upcoming-date {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--muted-foreground);
+    }
+
+    /* Activity Item */
+    .activity-item {
+      display: flex;
+      gap: 0.875rem;
+      padding: 0.875rem;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .activity-item:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-hard);
+    }
+
+    .activity-icon {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--muted);
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .activity-icon.status { color: var(--stage-i140); }
+    .activity-icon.deadline { color: var(--urgency-thisweek); }
+    .activity-icon.note { color: var(--stage-pwd); }
+
+    .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .activity-employer {
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 0.125rem;
+    }
+
+    .activity-description {
+      font-size: 0.8125rem;
+      color: var(--muted-foreground);
+    }
+
+    .activity-time {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--muted-foreground);
+      margin-top: 0.375rem;
+    }
+
+    .widget-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+      text-align: center;
+      color: var(--muted-foreground);
+    }
+
+    .widget-empty-icon {
+      margin-bottom: 0.75rem;
+      opacity: 0.4;
+    }
+
+    /* ============================================================================
+       CASE CARDS SECTION
+       ============================================================================ */
+    .cases-section {
+      margin-bottom: 2rem;
+    }
+
+    .cases-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .cases-title {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .cases-filter-tabs {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .filter-tab {
+      padding: 0.5rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: transparent;
+      border: 2px solid var(--border);
+      color: var(--foreground);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .filter-tab:hover {
+      background: var(--muted);
+    }
+
+    .filter-tab.active {
+      background: var(--foreground);
+      color: var(--background);
+    }
+
+    .cases-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+
+    /* Case Card - Manila Folder Style */
+    .case-card {
+      background: var(--manila);
+      border: 3px solid var(--border);
+      position: relative;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow-hard);
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .dark .case-card {
+      background: var(--manila);
+    }
+
+    /* Folder Tab */
+    .case-card::before {
+      content: attr(data-stage-label);
+      position: absolute;
+      top: -24px;
+      left: 16px;
+      padding: 0.25rem 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #000;
+      border: 3px solid var(--border);
+      border-bottom: none;
+      clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 100%, 0 100%);
+    }
+
+    .case-card[data-stage="pwd"]::before { background: var(--stage-pwd); color: #fff; }
+    .case-card[data-stage="recruitment"]::before { background: var(--stage-recruitment); color: #fff; }
+    .case-card[data-stage="eta9089"]::before { background: var(--stage-eta9089); }
+    .case-card[data-stage="i140"]::before { background: var(--stage-i140); color: #fff; }
+
+    /* Left color bar */
+    .case-card::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+    }
+
+    .case-card[data-stage="pwd"]::after { background: var(--stage-pwd); }
+    .case-card[data-stage="recruitment"]::after { background: var(--stage-recruitment); }
+    .case-card[data-stage="eta9089"]::after { background: var(--stage-eta9089); }
+    .case-card[data-stage="i140"]::after { background: var(--stage-i140); }
+
+    .case-card:hover {
+      transform: translate(-4px, -4px);
+      box-shadow: var(--shadow-hard-lg);
+    }
+
+    .case-card-inner {
+      padding: 1.25rem;
+      padding-left: 1.5rem;
+    }
+
+    .case-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .case-card-employer {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      color: #000;
+    }
+
+    .dark .case-card-employer {
+      color: var(--foreground);
+    }
+
+    .case-card-beneficiary {
+      font-size: 0.8125rem;
+      color: var(--muted-foreground);
+      margin-bottom: 0.75rem;
+    }
+
+    .case-card-badges {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+
+    .case-badge {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      font-weight: 700;
+      padding: 0.2rem 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 2px solid;
+    }
+
+    .case-badge.pro {
+      background: var(--primary);
+      color: #000;
+      border-color: #000;
+    }
+
+    .case-badge.rfi {
+      background: var(--urgency-thisweek);
+      color: #fff;
+      border-color: #000;
+    }
+
+    .case-badge.synced {
+      background: transparent;
+      color: var(--stage-i140);
+      border-color: var(--stage-i140);
+    }
+
+    .case-card-deadline {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.5rem;
+      background: rgba(0,0,0,0.05);
+      border: 2px solid var(--border);
+    }
+
+    .deadline-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 0;
+    }
+
+    .deadline-dot.urgent { background: var(--urgency-overdue); }
+    .deadline-dot.soon { background: var(--urgency-thisweek); }
+    .deadline-dot.normal { background: var(--urgency-later); }
+
+    .case-card-favorite {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--background);
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+
+    .case-card:hover .case-card-favorite {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .case-card-favorite.active {
+      opacity: 1;
+      transform: translateY(0);
+      background: #FFC107;
+      color: #000;
+    }
+
+    .case-card-favorite:hover {
+      background: #FFC107;
+      color: #000;
+    }
+
+    /* Expanded state */
+    .case-card.expanded {
+      z-index: 10;
+    }
+
+    .case-card-expanded {
+      display: none;
+      padding: 1rem 1.25rem 1.25rem 1.5rem;
+      border-top: 2px dashed var(--border);
+      background: rgba(0,0,0,0.03);
+    }
+
+    .case-card.expanded .case-card-expanded {
+      display: block;
+    }
+
+    .case-card-dates {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .date-item {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+    }
+
+    .date-label {
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .date-value {
+      font-weight: 600;
+      margin-top: 0.125rem;
+    }
+
+    .case-card-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .card-btn {
+      flex: 1;
+      padding: 0.625rem;
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.375rem;
+    }
+
+    .card-btn-primary {
+      background: var(--primary);
+      color: #000;
+    }
+
+    .card-btn-primary:hover {
+      background: #000;
+      color: #fff;
+    }
+
+    .card-btn-secondary {
+      background: transparent;
+      color: var(--foreground);
+    }
+
+    .card-btn-secondary:hover {
+      background: var(--foreground);
+      color: var(--background);
+    }
+
+    /* ============================================================================
+       ADD CASE BUTTON
+       ============================================================================ */
+    .add-case-section {
+      display: flex;
+      justify-content: center;
+      padding: 2rem 0;
+      border-top: 3px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    .add-case-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.25rem 2.5rem;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--primary);
+      color: #000;
+      border: 4px solid var(--border);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow-hard);
+    }
+
+    .add-case-btn:hover {
+      transform: translate(-4px, -4px);
+      box-shadow: var(--shadow-hard-lg);
+    }
+
+    .add-case-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+
+    /* ============================================================================
+       TIMELINE PREVIEW
+       ============================================================================ */
+    .timeline-section {
+      margin-bottom: 2rem;
+    }
+
+    .timeline-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .timeline-title {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .timeline-widget {
+      background: var(--card);
+      border: 3px solid var(--border);
+      box-shadow: var(--shadow-hard);
+      padding: 1.5rem;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .timeline-months {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .timeline-month {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      color: var(--muted-foreground);
+      text-align: center;
+      flex: 1;
+    }
+
+    .timeline-month.current {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .timeline-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .timeline-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .timeline-row-label {
+      width: 100px;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .timeline-row[data-stage="pwd"] .timeline-row-label { color: var(--stage-pwd); }
+    .timeline-row[data-stage="recruitment"] .timeline-row-label { color: var(--stage-recruitment); }
+    .timeline-row[data-stage="eta9089"] .timeline-row-label { color: var(--stage-eta9089); }
+    .timeline-row[data-stage="i140"] .timeline-row-label { color: var(--stage-i140); }
+
+    .timeline-track {
+      flex: 1;
+      height: 24px;
+      background: var(--muted);
+      position: relative;
+      border: 2px solid var(--border);
+    }
+
+    .timeline-bar {
+      position: absolute;
+      height: 100%;
+      opacity: 0.6;
+    }
+
+    .timeline-row[data-stage="pwd"] .timeline-bar { background: var(--stage-pwd); }
+    .timeline-row[data-stage="recruitment"] .timeline-bar { background: var(--stage-recruitment); }
+    .timeline-row[data-stage="eta9089"] .timeline-bar { background: var(--stage-eta9089); }
+    .timeline-row[data-stage="i140"] .timeline-bar { background: var(--stage-i140); }
+
+    .timeline-milestone {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 2px solid var(--border);
+    }
+
+    .timeline-row[data-stage="pwd"] .timeline-milestone { background: var(--stage-pwd); }
+    .timeline-row[data-stage="recruitment"] .timeline-milestone { background: var(--stage-recruitment); }
+    .timeline-row[data-stage="eta9089"] .timeline-milestone { background: var(--stage-eta9089); }
+    .timeline-row[data-stage="i140"] .timeline-milestone { background: var(--stage-i140); }
+
+    .timeline-today {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--destructive);
+      z-index: 10;
+    }
+
+    .timeline-today-label {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--destructive);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* ============================================================================
+       RESPONSIVE
+       ============================================================================ */
+    @media (max-width: 1024px) {
+      .deadline-hero-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .urgency-column {
+        border-bottom: 2px solid var(--border);
+      }
+
+      .urgency-column:nth-child(2) {
+        border-right: none;
+      }
+
+      .urgency-column:nth-child(3),
+      .urgency-column:nth-child(4) {
+        border-bottom: none;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .widgets-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cases-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-inner {
+        padding: 1rem;
+      }
+
+      .nav {
+        display: none;
+      }
+
+      .main {
+        padding: 1rem;
+      }
+
+      .deadline-hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .urgency-column {
+        border-right: none;
+        border-bottom: 2px solid var(--border);
+        min-height: auto;
+      }
+
+      .urgency-column:last-child {
+        border-bottom: none;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .cases-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .welcome-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+    }
+
+    /* ============================================================================
+       PREFERS REDUCED MOTION
+       ============================================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background -->
+  <div class="bg-dots" aria-hidden="true"></div>
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="#" class="logo">
+        <i data-lucide="file-text" class="logo-icon" style="width: 28px; height: 28px;"></i>
+        <span><span class="logo-perm">PERM</span> Tracker</span>
+      </a>
+
+      <nav class="nav">
+        <a href="#" class="nav-link active">Dashboard</a>
+        <a href="#" class="nav-link">Cases</a>
+        <a href="#" class="nav-link">Calendar</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="notification-btn" aria-label="Notifications">
+          <i data-lucide="bell" style="width: 20px; height: 20px;"></i>
+          <span class="notification-badge">3</span>
+        </button>
+
+        <button class="user-menu">
+          <span>John Smith</span>
+          <i data-lucide="chevron-down" style="width: 16px; height: 16px;"></i>
+        </button>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <i data-lucide="moon" id="themeIcon" style="width: 20px; height: 20px;"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+    <!-- Welcome Section -->
+    <section class="welcome-section" id="welcome">
+      <div class="welcome-content">
+        <h1>Good morning, John 👋</h1>
+        <p>You have <strong>3 urgent deadlines</strong> requiring attention</p>
+      </div>
+      <div class="welcome-date">
+        <span id="currentDate">Wednesday, January 1, 2026</span>
+      </div>
+    </section>
+
+    <!-- Deadline Hero Widget -->
+    <section class="deadline-hero" id="deadlineHero">
+      <div class="deadline-hero-header">
+        <h2 class="deadline-hero-title">
+          <i data-lucide="alert-triangle" class="deadline-hero-title-icon" style="width: 24px; height: 24px;"></i>
+          Deadline Tracker
+        </h2>
+        <div class="deadline-hero-actions">
+          <button class="refresh-btn" id="refreshBtn">
+            <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="deadline-hero-grid">
+        <!-- Overdue Column -->
+        <div class="urgency-column overdue">
+          <div class="hazard-stripe"></div>
+          <div class="urgency-header">
+            <span class="urgency-title">Overdue</span>
+            <span class="urgency-count">2</span>
+          </div>
+          <div class="urgency-list">
+            <div class="deadline-item" data-stage="eta9089">
+              <div class="deadline-item-employer">Acme Tech Corp</div>
+              <div class="deadline-item-label">RFI Response Due</div>
+              <div class="deadline-item-date">
+                <span class="deadline-item-days">3 days ago</span>
+                <span>· Dec 29</span>
+              </div>
+            </div>
+            <div class="deadline-item" data-stage="pwd">
+              <div class="deadline-item-employer">GlobalSoft Inc</div>
+              <div class="deadline-item-label">PWD Expires</div>
+              <div class="deadline-item-date">
+                <span class="deadline-item-days">1 day ago</span>
+                <span>· Dec 31</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- This Week Column -->
+        <div class="urgency-column thisweek">
+          <div class="urgency-header">
+            <span class="urgency-title">This Week</span>
+            <span class="urgency-count">3</span>
+          </div>
+          <div class="urgency-list">
+            <div class="deadline-item" data-stage="recruitment">
+              <div class="deadline-item-employer">DataFlow Systems</div>
+              <div class="deadline-item-label">Job Order Ends</div>
+              <div class="deadline-item-date">
+                <span class="deadline-item-days">in 2 days</span>
+                <span>· Jan 3</span>
+              </div>
+            </div>
+            <div class="deadline-item" data-stage="i140">
+              <div class="deadline-item-employer">CloudNine Ltd</div>
+              <div class="deadline-item-label">I-140 Filing Due</div>
+              <div class="deadline-item-date">
+                <span class="deadline-item-days">in 4 days</span>
+                <span>· Jan 5</span>
+              </div>
+            </div>
+            <div class="deadline-item" data-stage="eta9089">
+              <div class="deadline-item-employer">TechVentures</div>
+              <div class="deadline-item-label">ETA Window Opens</div>
+              <div class="deadline-item-date">
+                <span class="deadline-item-days">in 5 days</span>
+                <span>· Jan 6</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- This Month Column -->
+        <div class="urgency-column thismonth">
+          <div class="urgency-header">
+            <span class="urgency-title">This Month</span>
+            <span class="urgency-count">4</span>
+          </div>
+          <div class="urgency-list">
+            <div class="deadline-item" data-stage="pwd">
+              <div class="deadline-item-employer">InnoSoft Labs</div>
+              <div class="deadline-item-label">PWD Expires</div>
+              <div class="deadline-item-date">
+                <span class="deadline-item-days">in 12 days</span>
+                <span>· Jan 13</span>
+              </div>
+            </div>
+            <div class="deadline-item" data-stage="recruitment">
+              <div class="deadline-item-employer">MegaCorp Tech</div>
+              <div class="deadline-item-label">Sunday Ad #2</div>
+              <div class="deadline-item-date">
+                <span class="deadline-item-days">in 18 days</span>
+                <span>· Jan 19</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Later Column -->
+        <div class="urgency-column later">
+          <div class="urgency-header">
+            <span class="urgency-title">Later</span>
+            <span class="urgency-count">6</span>
+          </div>
+          <div class="urgency-list">
+            <div class="deadline-item" data-stage="eta9089">
+              <div class="deadline-item-employer">FutureTech Inc</div>
+              <div class="deadline-item-label">ETA Filing Window</div>
+              <div class="deadline-item-date">
+                <span class="deadline-item-days">in 45 days</span>
+                <span>· Feb 15</span>
+              </div>
+            </div>
+            <div class="deadline-item" data-stage="i140">
+              <div class="deadline-item-employer">StartupXYZ</div>
+              <div class="deadline-item-label">I-140 Deadline</div>
+              <div class="deadline-item-date">
+                <span class="deadline-item-days">in 89 days</span>
+                <span>· Mar 31</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Summary Tiles -->
+    <section class="summary-section">
+      <div class="summary-section-header">
+        <h2 class="summary-section-title">
+          <i data-lucide="layout-grid" style="width: 18px; height: 18px;"></i>
+          Cases by Stage
+        </h2>
+        <button class="summary-total">View All 24 Cases →</button>
+      </div>
+
+      <div class="summary-grid">
+        <article class="summary-tile" data-stage="pwd">
+          <div class="summary-tile-header">
+            <span class="summary-tile-stage">PWD</span>
+            <div class="progress-ring">
+              <svg width="48" height="48" viewBox="0 0 48 48">
+                <circle class="progress-ring-bg" cx="24" cy="24" r="20"></circle>
+                <circle class="progress-ring-fill" cx="24" cy="24" r="20"
+                        stroke-dasharray="125.6" stroke-dashoffset="94.2"></circle>
+              </svg>
+            </div>
+          </div>
+          <div class="summary-tile-count">5</div>
+          <div class="summary-tile-label">Awaiting determination</div>
+        </article>
+
+        <article class="summary-tile" data-stage="recruitment">
+          <div class="summary-tile-header">
+            <span class="summary-tile-stage">Recruitment</span>
+            <div class="progress-ring">
+              <svg width="48" height="48" viewBox="0 0 48 48">
+                <circle class="progress-ring-bg" cx="24" cy="24" r="20"></circle>
+                <circle class="progress-ring-fill" cx="24" cy="24" r="20"
+                        stroke-dasharray="125.6" stroke-dashoffset="75.4"></circle>
+              </svg>
+            </div>
+          </div>
+          <div class="summary-tile-count">8</div>
+          <div class="summary-tile-label">Active recruitment</div>
+        </article>
+
+        <article class="summary-tile" data-stage="eta9089">
+          <div class="summary-tile-header">
+            <span class="summary-tile-stage">ETA 9089</span>
+            <div class="progress-ring">
+              <svg width="48" height="48" viewBox="0 0 48 48">
+                <circle class="progress-ring-bg" cx="24" cy="24" r="20"></circle>
+                <circle class="progress-ring-fill" cx="24" cy="24" r="20"
+                        stroke-dasharray="125.6" stroke-dashoffset="50.2"></circle>
+              </svg>
+            </div>
+          </div>
+          <div class="summary-tile-count">6</div>
+          <div class="summary-tile-label">Pending certification</div>
+        </article>
+
+        <article class="summary-tile" data-stage="i140">
+          <div class="summary-tile-header">
+            <span class="summary-tile-stage">I-140</span>
+            <div class="progress-ring">
+              <svg width="48" height="48" viewBox="0 0 48 48">
+                <circle class="progress-ring-bg" cx="24" cy="24" r="20"></circle>
+                <circle class="progress-ring-fill" cx="24" cy="24" r="20"
+                        stroke-dasharray="125.6" stroke-dashoffset="31.4"></circle>
+              </svg>
+            </div>
+          </div>
+          <div class="summary-tile-count">3</div>
+          <div class="summary-tile-label">Awaiting approval</div>
+        </article>
+
+        <article class="summary-tile" data-stage="complete">
+          <div class="summary-tile-header">
+            <span class="summary-tile-stage">Complete</span>
+          </div>
+          <div class="summary-tile-count">2</div>
+          <div class="summary-tile-label">Successfully approved</div>
+        </article>
+
+        <article class="summary-tile" data-stage="closed">
+          <div class="summary-tile-header">
+            <span class="summary-tile-stage">Closed</span>
+          </div>
+          <div class="summary-tile-count">0</div>
+          <div class="summary-tile-label">Withdrawn or denied</div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Two-Column Widgets -->
+    <div class="widgets-grid">
+      <!-- Upcoming Deadlines Widget -->
+      <section class="widget" id="upcomingWidget">
+        <div class="widget-header">
+          <h3 class="widget-title">
+            <i data-lucide="calendar-clock" class="widget-title-icon" style="width: 18px; height: 18px;"></i>
+            Next 30 Days
+            <span class="widget-badge">7</span>
+          </h3>
+          <a href="#" class="widget-link">
+            Calendar
+            <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+          </a>
+        </div>
+        <div class="widget-body">
+          <div class="widget-list">
+            <article class="upcoming-item" data-stage="recruitment">
+              <div class="upcoming-left">
+                <div class="upcoming-employer">DataFlow Systems</div>
+                <div class="upcoming-label">Job Order Ends</div>
+              </div>
+              <div class="upcoming-right">
+                <div class="upcoming-days urgent">2 days</div>
+                <div class="upcoming-date">Jan 3, 2026</div>
+              </div>
+            </article>
+
+            <article class="upcoming-item" data-stage="i140">
+              <div class="upcoming-left">
+                <div class="upcoming-employer">CloudNine Ltd</div>
+                <div class="upcoming-label">I-140 Filing Due</div>
+              </div>
+              <div class="upcoming-right">
+                <div class="upcoming-days soon">4 days</div>
+                <div class="upcoming-date">Jan 5, 2026</div>
+              </div>
+            </article>
+
+            <article class="upcoming-item" data-stage="eta9089">
+              <div class="upcoming-left">
+                <div class="upcoming-employer">TechVentures</div>
+                <div class="upcoming-label">ETA Window Opens</div>
+              </div>
+              <div class="upcoming-right">
+                <div class="upcoming-days soon">5 days</div>
+                <div class="upcoming-date">Jan 6, 2026</div>
+              </div>
+            </article>
+
+            <article class="upcoming-item" data-stage="pwd">
+              <div class="upcoming-left">
+                <div class="upcoming-employer">InnoSoft Labs</div>
+                <div class="upcoming-label">PWD Expires</div>
+              </div>
+              <div class="upcoming-right">
+                <div class="upcoming-days normal">12 days</div>
+                <div class="upcoming-date">Jan 13, 2026</div>
+              </div>
+            </article>
+
+            <article class="upcoming-item" data-stage="recruitment">
+              <div class="upcoming-left">
+                <div class="upcoming-employer">MegaCorp Tech</div>
+                <div class="upcoming-label">Sunday Ad #2</div>
+              </div>
+              <div class="upcoming-right">
+                <div class="upcoming-days normal">18 days</div>
+                <div class="upcoming-date">Jan 19, 2026</div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recent Activity Widget -->
+      <section class="widget" id="activityWidget">
+        <div class="widget-header">
+          <h3 class="widget-title">
+            <i data-lucide="history" class="widget-title-icon" style="width: 18px; height: 18px;"></i>
+            Recent Activity
+          </h3>
+          <a href="#" class="widget-link">
+            View all
+            <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+          </a>
+        </div>
+        <div class="widget-body">
+          <div class="widget-list">
+            <article class="activity-item">
+              <div class="activity-icon status">
+                <i data-lucide="git-branch" style="width: 16px; height: 16px;"></i>
+              </div>
+              <div class="activity-content">
+                <div class="activity-employer">CloudNine Ltd</div>
+                <div class="activity-description">Status changed to I-140 Stage</div>
+                <div class="activity-time">2 hours ago</div>
+              </div>
+            </article>
+
+            <article class="activity-item">
+              <div class="activity-icon deadline">
+                <i data-lucide="bell" style="width: 16px; height: 16px;"></i>
+              </div>
+              <div class="activity-content">
+                <div class="activity-employer">DataFlow Systems</div>
+                <div class="activity-description">Deadline reminder sent (Job Order)</div>
+                <div class="activity-time">5 hours ago</div>
+              </div>
+            </article>
+
+            <article class="activity-item">
+              <div class="activity-icon note">
+                <i data-lucide="file-edit" style="width: 16px; height: 16px;"></i>
+              </div>
+              <div class="activity-content">
+                <div class="activity-employer">Acme Tech Corp</div>
+                <div class="activity-description">RFI documents uploaded</div>
+                <div class="activity-time">Yesterday</div>
+              </div>
+            </article>
+
+            <article class="activity-item">
+              <div class="activity-icon status">
+                <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
+              </div>
+              <div class="activity-content">
+                <div class="activity-employer">FutureTech Inc</div>
+                <div class="activity-description">New case created</div>
+                <div class="activity-time">2 days ago</div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Timeline Preview -->
+    <section class="timeline-section">
+      <div class="timeline-header">
+        <h2 class="timeline-title">
+          <i data-lucide="gantt-chart" style="width: 18px; height: 18px;"></i>
+          Case Timeline Overview
+        </h2>
+      </div>
+
+      <div class="timeline-widget" id="timelineWidget">
+        <!-- Today Marker -->
+        <div class="timeline-today-label">Today</div>
+
+        <div class="timeline-months">
+          <span class="timeline-month">Oct</span>
+          <span class="timeline-month">Nov</span>
+          <span class="timeline-month">Dec</span>
+          <span class="timeline-month current">Jan</span>
+          <span class="timeline-month">Feb</span>
+          <span class="timeline-month">Mar</span>
+        </div>
+
+        <div class="timeline-rows">
+          <div class="timeline-row" data-stage="pwd">
+            <div class="timeline-row-label">PWD</div>
+            <div class="timeline-track">
+              <div class="timeline-today" style="left: 50%;"></div>
+              <div class="timeline-bar" style="left: 10%; width: 30%;"></div>
+              <div class="timeline-milestone" style="left: 10%;"></div>
+              <div class="timeline-milestone" style="left: 40%;"></div>
+            </div>
+          </div>
+
+          <div class="timeline-row" data-stage="recruitment">
+            <div class="timeline-row-label">Recruitment</div>
+            <div class="timeline-track">
+              <div class="timeline-today" style="left: 50%;"></div>
+              <div class="timeline-bar" style="left: 35%; width: 25%;"></div>
+              <div class="timeline-milestone" style="left: 38%;"></div>
+              <div class="timeline-milestone" style="left: 45%;"></div>
+              <div class="timeline-milestone" style="left: 55%;"></div>
+            </div>
+          </div>
+
+          <div class="timeline-row" data-stage="eta9089">
+            <div class="timeline-row-label">ETA 9089</div>
+            <div class="timeline-track">
+              <div class="timeline-today" style="left: 50%;"></div>
+              <div class="timeline-bar" style="left: 55%; width: 20%;"></div>
+              <div class="timeline-milestone" style="left: 58%;"></div>
+            </div>
+          </div>
+
+          <div class="timeline-row" data-stage="i140">
+            <div class="timeline-row-label">I-140</div>
+            <div class="timeline-track">
+              <div class="timeline-today" style="left: 50%;"></div>
+              <div class="timeline-milestone" style="left: 78%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Cases -->
+    <section class="cases-section">
+      <div class="cases-header">
+        <h2 class="cases-title">
+          <i data-lucide="folder" style="width: 18px; height: 18px;"></i>
+          Recent Cases
+        </h2>
+        <div class="cases-filter-tabs">
+          <button class="filter-tab active">All</button>
+          <button class="filter-tab">Favorites</button>
+          <button class="filter-tab">Urgent</button>
+        </div>
+      </div>
+
+      <div class="cases-grid">
+        <!-- Case Card 1 -->
+        <article class="case-card" data-stage="eta9089" data-stage-label="ETA 9089" id="card1">
+          <button class="case-card-favorite active" aria-label="Toggle favorite">
+            <i data-lucide="bookmark" style="width: 16px; height: 16px;"></i>
+          </button>
+          <div class="case-card-inner">
+            <div class="case-card-header">
+              <div>
+                <div class="case-card-employer">Acme Tech Corp</div>
+                <div class="case-card-beneficiary">Sr. Software Engineer</div>
+              </div>
+            </div>
+            <div class="case-card-badges">
+              <span class="case-badge pro">PRO</span>
+              <span class="case-badge rfi">RFI</span>
+              <span class="case-badge synced">Synced</span>
+            </div>
+            <div class="case-card-deadline">
+              <span class="deadline-dot urgent"></span>
+              <span>RFI Due: <strong>Dec 29</strong> (3 days overdue)</span>
+            </div>
+          </div>
+          <div class="case-card-expanded">
+            <div class="case-card-dates">
+              <div class="date-item">
+                <div class="date-label">PWD Filed</div>
+                <div class="date-value">Jun 15, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">PWD Determined</div>
+                <div class="date-value">Oct 20, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">ETA Filed</div>
+                <div class="date-value">Nov 25, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">RFI Received</div>
+                <div class="date-value">Dec 15, 2025</div>
+              </div>
+            </div>
+            <div class="case-card-actions">
+              <button class="card-btn card-btn-primary">
+                <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                View
+              </button>
+              <button class="card-btn card-btn-secondary">
+                <i data-lucide="edit" style="width: 14px; height: 14px;"></i>
+                Edit
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Case Card 2 -->
+        <article class="case-card" data-stage="recruitment" data-stage-label="Recruitment" id="card2">
+          <button class="case-card-favorite" aria-label="Toggle favorite">
+            <i data-lucide="bookmark" style="width: 16px; height: 16px;"></i>
+          </button>
+          <div class="case-card-inner">
+            <div class="case-card-header">
+              <div>
+                <div class="case-card-employer">DataFlow Systems</div>
+                <div class="case-card-beneficiary">Data Scientist</div>
+              </div>
+            </div>
+            <div class="case-card-badges">
+              <span class="case-badge synced">Synced</span>
+            </div>
+            <div class="case-card-deadline">
+              <span class="deadline-dot soon"></span>
+              <span>Job Order Ends: <strong>Jan 3</strong> (2 days)</span>
+            </div>
+          </div>
+          <div class="case-card-expanded">
+            <div class="case-card-dates">
+              <div class="date-item">
+                <div class="date-label">PWD Filed</div>
+                <div class="date-value">May 10, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">PWD Determined</div>
+                <div class="date-value">Sep 15, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">Job Order Start</div>
+                <div class="date-value">Dec 4, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">Sunday Ad #1</div>
+                <div class="date-value">Dec 8, 2025</div>
+              </div>
+            </div>
+            <div class="case-card-actions">
+              <button class="card-btn card-btn-primary">
+                <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                View
+              </button>
+              <button class="card-btn card-btn-secondary">
+                <i data-lucide="edit" style="width: 14px; height: 14px;"></i>
+                Edit
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Case Card 3 -->
+        <article class="case-card" data-stage="i140" data-stage-label="I-140" id="card3">
+          <button class="case-card-favorite" aria-label="Toggle favorite">
+            <i data-lucide="bookmark" style="width: 16px; height: 16px;"></i>
+          </button>
+          <div class="case-card-inner">
+            <div class="case-card-header">
+              <div>
+                <div class="case-card-employer">CloudNine Ltd</div>
+                <div class="case-card-beneficiary">DevOps Engineer</div>
+              </div>
+            </div>
+            <div class="case-card-badges">
+              <span class="case-badge pro">PRO</span>
+              <span class="case-badge synced">Synced</span>
+            </div>
+            <div class="case-card-deadline">
+              <span class="deadline-dot soon"></span>
+              <span>I-140 Due: <strong>Jan 5</strong> (4 days)</span>
+            </div>
+          </div>
+          <div class="case-card-expanded">
+            <div class="case-card-dates">
+              <div class="date-item">
+                <div class="date-label">PWD Determined</div>
+                <div class="date-value">Jul 20, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">ETA Filed</div>
+                <div class="date-value">Sep 10, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">ETA Certified</div>
+                <div class="date-value">Nov 28, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">I-140 Window</div>
+                <div class="date-value">→ May 27, 2026</div>
+              </div>
+            </div>
+            <div class="case-card-actions">
+              <button class="card-btn card-btn-primary">
+                <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                View
+              </button>
+              <button class="card-btn card-btn-secondary">
+                <i data-lucide="edit" style="width: 14px; height: 14px;"></i>
+                Edit
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Case Card 4 -->
+        <article class="case-card" data-stage="pwd" data-stage-label="PWD" id="card4">
+          <button class="case-card-favorite" aria-label="Toggle favorite">
+            <i data-lucide="bookmark" style="width: 16px; height: 16px;"></i>
+          </button>
+          <div class="case-card-inner">
+            <div class="case-card-header">
+              <div>
+                <div class="case-card-employer">InnoSoft Labs</div>
+                <div class="case-card-beneficiary">ML Engineer</div>
+              </div>
+            </div>
+            <div class="case-card-badges">
+              <span class="case-badge synced">Synced</span>
+            </div>
+            <div class="case-card-deadline">
+              <span class="deadline-dot normal"></span>
+              <span>PWD Expires: <strong>Jan 13</strong> (12 days)</span>
+            </div>
+          </div>
+          <div class="case-card-expanded">
+            <div class="case-card-dates">
+              <div class="date-item">
+                <div class="date-label">PWD Filed</div>
+                <div class="date-value">Mar 15, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">PWD Determined</div>
+                <div class="date-value">Jul 20, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">PWD Expires</div>
+                <div class="date-value">Jan 13, 2026</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">Status</div>
+                <div class="date-value">Ready for recruitment</div>
+              </div>
+            </div>
+            <div class="case-card-actions">
+              <button class="card-btn card-btn-primary">
+                <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                View
+              </button>
+              <button class="card-btn card-btn-secondary">
+                <i data-lucide="edit" style="width: 14px; height: 14px;"></i>
+                Edit
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Case Card 5 -->
+        <article class="case-card" data-stage="eta9089" data-stage-label="ETA 9089" id="card5">
+          <button class="case-card-favorite" aria-label="Toggle favorite">
+            <i data-lucide="bookmark" style="width: 16px; height: 16px;"></i>
+          </button>
+          <div class="case-card-inner">
+            <div class="case-card-header">
+              <div>
+                <div class="case-card-employer">TechVentures</div>
+                <div class="case-card-beneficiary">Backend Developer</div>
+              </div>
+            </div>
+            <div class="case-card-badges">
+              <span class="case-badge synced">Synced</span>
+            </div>
+            <div class="case-card-deadline">
+              <span class="deadline-dot soon"></span>
+              <span>ETA Window: <strong>Jan 6</strong> (5 days)</span>
+            </div>
+          </div>
+          <div class="case-card-expanded">
+            <div class="case-card-dates">
+              <div class="date-item">
+                <div class="date-label">PWD Determined</div>
+                <div class="date-value">Aug 10, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">Recruitment End</div>
+                <div class="date-value">Dec 7, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">ETA Window Opens</div>
+                <div class="date-value">Jan 6, 2026</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">ETA Window Closes</div>
+                <div class="date-value">Jun 5, 2026</div>
+              </div>
+            </div>
+            <div class="case-card-actions">
+              <button class="card-btn card-btn-primary">
+                <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                View
+              </button>
+              <button class="card-btn card-btn-secondary">
+                <i data-lucide="edit" style="width: 14px; height: 14px;"></i>
+                Edit
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Case Card 6 -->
+        <article class="case-card" data-stage="recruitment" data-stage-label="Recruitment" id="card6">
+          <button class="case-card-favorite active" aria-label="Toggle favorite">
+            <i data-lucide="bookmark" style="width: 16px; height: 16px;"></i>
+          </button>
+          <div class="case-card-inner">
+            <div class="case-card-header">
+              <div>
+                <div class="case-card-employer">MegaCorp Tech</div>
+                <div class="case-card-beneficiary">Product Manager</div>
+              </div>
+            </div>
+            <div class="case-card-badges">
+              <span class="case-badge pro">PRO</span>
+            </div>
+            <div class="case-card-deadline">
+              <span class="deadline-dot normal"></span>
+              <span>Sunday Ad #2: <strong>Jan 19</strong> (18 days)</span>
+            </div>
+          </div>
+          <div class="case-card-expanded">
+            <div class="case-card-dates">
+              <div class="date-item">
+                <div class="date-label">PWD Filed</div>
+                <div class="date-value">Apr 1, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">PWD Determined</div>
+                <div class="date-value">Aug 15, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">Sunday Ad #1</div>
+                <div class="date-value">Dec 15, 2025</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">Sunday Ad #2</div>
+                <div class="date-value">Jan 19, 2026</div>
+              </div>
+            </div>
+            <div class="case-card-actions">
+              <button class="card-btn card-btn-primary">
+                <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                View
+              </button>
+              <button class="card-btn card-btn-secondary">
+                <i data-lucide="edit" style="width: 14px; height: 14px;"></i>
+                Edit
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Add Case Button -->
+    <section class="add-case-section">
+      <button class="add-case-btn">
+        <i data-lucide="plus" style="width: 24px; height: 24px;"></i>
+        Add New Case
+      </button>
+    </section>
+  </main>
+
+  <!-- JavaScript -->
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // ============================================================================
+    // GSAP ANIMATIONS
+    // ============================================================================
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Welcome Section
+    gsap.to('.welcome-section', {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      delay: 0.2,
+      ease: 'power3.out'
+    });
+
+    // Deadline Hero Widget
+    gsap.to('.deadline-hero', {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      delay: 0.3,
+      ease: 'power3.out'
+    });
+
+    // Deadline items stagger
+    gsap.from('.deadline-item', {
+      opacity: 0,
+      x: -20,
+      duration: 0.4,
+      stagger: 0.05,
+      delay: 0.6,
+      ease: 'power2.out'
+    });
+
+    // Summary Tiles
+    gsap.utils.toArray('.summary-tile').forEach((tile, i) => {
+      gsap.to(tile, {
+        opacity: 1,
+        y: 0,
+        duration: 0.5,
+        delay: 0.4 + (i * 0.08),
+        ease: 'power3.out'
+      });
+    });
+
+    // Progress rings animation
+    gsap.from('.progress-ring-fill', {
+      strokeDashoffset: 125.6,
+      duration: 1.5,
+      delay: 0.8,
+      ease: 'power2.out',
+      stagger: 0.1
+    });
+
+    // Widgets
+    gsap.utils.toArray('.widget').forEach((widget, i) => {
+      gsap.to(widget, {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        scrollTrigger: {
+          trigger: widget,
+          start: 'top 85%',
+          toggleActions: 'play none none reverse'
+        },
+        delay: i * 0.1
+      });
+    });
+
+    // Timeline Widget
+    gsap.to('.timeline-widget', {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      scrollTrigger: {
+        trigger: '.timeline-widget',
+        start: 'top 85%',
+        toggleActions: 'play none none reverse'
+      }
+    });
+
+    // Timeline bars
+    gsap.from('.timeline-bar', {
+      scaleX: 0,
+      transformOrigin: 'left center',
+      duration: 0.8,
+      stagger: 0.1,
+      scrollTrigger: {
+        trigger: '.timeline-widget',
+        start: 'top 80%'
+      },
+      ease: 'power2.out'
+    });
+
+    // Timeline milestones
+    gsap.from('.timeline-milestone', {
+      scale: 0,
+      duration: 0.4,
+      stagger: 0.05,
+      delay: 0.3,
+      scrollTrigger: {
+        trigger: '.timeline-widget',
+        start: 'top 80%'
+      },
+      ease: 'back.out(1.7)'
+    });
+
+    // Case Cards
+    gsap.utils.toArray('.case-card').forEach((card, i) => {
+      gsap.to(card, {
+        opacity: 1,
+        y: 0,
+        duration: 0.5,
+        scrollTrigger: {
+          trigger: card,
+          start: 'top 90%',
+          toggleActions: 'play none none reverse'
+        },
+        delay: i * 0.08
+      });
+    });
+
+    // ============================================================================
+    // INTERACTIVE BEHAVIORS
+    // ============================================================================
+
+    // Case Card Click to Expand
+    document.querySelectorAll('.case-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        // Don't toggle if clicking buttons
+        if (e.target.closest('button') || e.target.closest('.card-btn')) return;
+
+        // Toggle expanded state
+        card.classList.toggle('expanded');
+
+        // Animate expansion
+        if (card.classList.contains('expanded')) {
+          gsap.from(card.querySelector('.case-card-expanded'), {
+            height: 0,
+            opacity: 0,
+            duration: 0.3,
+            ease: 'power2.out'
+          });
+        }
+      });
+    });
+
+    // Favorite toggle
+    document.querySelectorAll('.case-card-favorite').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        btn.classList.toggle('active');
+
+        // Animate
+        gsap.fromTo(btn,
+          { scale: 0.8 },
+          { scale: 1, duration: 0.3, ease: 'back.out(1.7)' }
+        );
+      });
+    });
+
+    // Refresh button spin
+    const refreshBtn = document.getElementById('refreshBtn');
+    refreshBtn.addEventListener('click', () => {
+      const icon = refreshBtn.querySelector('i');
+      gsap.to(icon, {
+        rotation: 360,
+        duration: 0.6,
+        ease: 'power2.inOut',
+        onComplete: () => {
+          gsap.set(icon, { rotation: 0 });
+        }
+      });
+    });
+
+    // Filter tabs
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // ============================================================================
+    // THEME TOGGLE
+    // ============================================================================
+
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const html = document.documentElement;
+
+    // Check for saved theme
+    const savedTheme = localStorage.getItem('theme');
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
+      html.classList.add('dark');
+      themeIcon.setAttribute('data-lucide', 'sun');
+      lucide.createIcons();
+    }
+
+    themeToggle.addEventListener('click', () => {
+      html.classList.toggle('dark');
+      const isDark = html.classList.contains('dark');
+
+      themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+      lucide.createIcons();
+
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+
+    // ============================================================================
+    // DATE DISPLAY
+    // ============================================================================
+
+    const dateEl = document.getElementById('currentDate');
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    dateEl.textContent = now.toLocaleDateString('en-US', options);
+
+    // ============================================================================
+    // HOVER TOOLTIPS FOR DEADLINE ITEMS
+    // ============================================================================
+
+    document.querySelectorAll('.deadline-item').forEach(item => {
+      item.addEventListener('mouseenter', () => {
+        gsap.to(item, {
+          scale: 1.02,
+          duration: 0.2,
+          ease: 'power2.out'
+        });
+      });
+
+      item.addEventListener('mouseleave', () => {
+        gsap.to(item, {
+          scale: 1,
+          duration: 0.2,
+          ease: 'power2.out'
+        });
+      });
+    });
+
+    // ============================================================================
+    // SUMMARY TILE COUNT ANIMATION
+    // ============================================================================
+
+    const animateValue = (element, start, end, duration) => {
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        element.textContent = Math.floor(progress * (end - start) + start);
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        }
+      };
+      window.requestAnimationFrame(step);
+    };
+
+    // Animate counts on load
+    setTimeout(() => {
+      document.querySelectorAll('.summary-tile-count').forEach(count => {
+        const value = parseInt(count.textContent);
+        animateValue(count, 0, value, 1000);
+      });
+    }, 600);
+  </script>
+</body>
+</html>

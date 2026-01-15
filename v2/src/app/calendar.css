@@ -1,0 +1,213 @@
+/**
+ * Calendar-specific CSS animations and micro-interactions
+ *
+ * This file contains additional animations for the calendar view
+ * that complement the inline styles in CalendarView.tsx
+ *
+ * Phase: 23.1 (Calendar UI)
+ * Created: 2025-12-28
+ */
+
+/* ============================================================================
+   CALENDAR LOADING ANIMATION
+   ============================================================================ */
+
+/* Skeleton shimmer for calendar grid cells */
+.calendar-skeleton-cell {
+  position: relative;
+  overflow: hidden;
+}
+
+.calendar-skeleton-cell::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.dark .calendar-skeleton-cell::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* ============================================================================
+   CALENDAR EVENT ANIMATIONS
+   ============================================================================ */
+
+/* Event entry animation for new events */
+@keyframes event-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.calendar-event-enter {
+  animation: event-enter 0.2s ease-out forwards;
+}
+
+/* Event pulse for urgent deadlines */
+@keyframes event-urgent-pulse {
+  0%, 100% {
+    box-shadow: 2px 2px 0 rgba(220, 38, 38, 0.3);
+  }
+  50% {
+    box-shadow: 4px 4px 0 rgba(220, 38, 38, 0.5);
+  }
+}
+
+.calendar-event-urgent {
+  animation: event-urgent-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================================================
+   NAVIGATION TRANSITIONS
+   ============================================================================ */
+
+/* Month/week transition */
+@keyframes view-slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes view-slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.calendar-view-enter-left {
+  animation: view-slide-left 0.2s ease-out forwards;
+}
+
+.calendar-view-enter-right {
+  animation: view-slide-right 0.2s ease-out forwards;
+}
+
+/* ============================================================================
+   TOOLTIP/POPOVER ANIMATIONS
+   ============================================================================ */
+
+/* Popover scale-in */
+@keyframes popover-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.calendar-popover-enter {
+  animation: popover-scale-in 0.15s ease-out forwards;
+}
+
+/* ============================================================================
+   DARK MODE ADJUSTMENTS
+   ============================================================================ */
+
+/* Adjust event shadows for dark mode */
+.dark .calendar-container .rbc-event {
+  box-shadow: 2px 2px 0 rgba(250, 250, 250, 0.15);
+}
+
+.dark .calendar-container .rbc-event:hover {
+  box-shadow: 4px 4px 0 rgba(250, 250, 250, 0.25);
+}
+
+.dark .calendar-container .rbc-event.rbc-selected {
+  box-shadow: 4px 4px 0 var(--primary) !important;
+}
+
+/* Today cell pulse for dark mode */
+.dark .calendar-container .rbc-day-bg.rbc-today {
+  background-color: rgba(46, 204, 64, 0.15);
+}
+
+/* ============================================================================
+   ACCESSIBILITY FOCUS STATES
+   ============================================================================ */
+
+/* Enhanced focus visible for keyboard navigation */
+.calendar-container .rbc-event:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+  z-index: 10;
+}
+
+.calendar-container button:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .calendar-container .rbc-event {
+    border-width: 3px;
+  }
+
+  .calendar-container .rbc-day-bg.rbc-today {
+    box-shadow: inset 0 0 0 3px var(--primary);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .calendar-container .rbc-event,
+  .calendar-container .rbc-day-bg {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .calendar-event-enter,
+  .calendar-event-urgent,
+  .calendar-view-enter-left,
+  .calendar-view-enter-right,
+  .calendar-popover-enter {
+    animation: none !important;
+  }
+
+  /* Preserve today indicator but without animation */
+  .calendar-container .rbc-day-bg.rbc-today {
+    box-shadow: inset 0 0 0 2px rgba(46, 204, 64, 0.4);
+  }
+}

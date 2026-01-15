@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PERM Tracker - Phase 17 Brainstorming</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg: #FAFAFA;
+            --surface: #FFFFFF;
+            --ink: #000000;
+            --accent: #228B22; /* Forest Green */
+            --accent-soft: rgba(34, 139, 34, 0.1);
+            --shadow: 4px 4px 0px #000000;
+            --shadow-hover: 8px 8px 0px #000000;
+            --shadow-active: 0px 0px 0px #000000;
+            --border: 2px solid #000000;
+            --font-heading: 'Space Grotesk', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --stage-pwd: #0066FF;
+            --stage-rec: #9333ea;
+            --stage-eta: #D97706;
+            --stage-i140: #059669;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--ink);
+            font-family: var(--font-body);
+            line-height: 1.5;
+            padding: 2rem;
+            background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 3rem;
+            border-bottom: var(--border);
+            padding-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        h1 {
+            font-family: var(--font-heading);
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            line-height: 0.9;
+        }
+
+        .phase-badge {
+            font-family: var(--font-mono);
+            background: var(--ink);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        /* Bento Grid */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-auto-rows: minmax(160px, auto);
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: var(--border);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-title {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-content {
+            font-size: 0.9375rem;
+            color: #444;
+            flex-grow: 1;
+        }
+
+        .recommendation-bar {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Specific Sizes */
+        .col-6 { grid-column: span 6; }
+        .col-4 { grid-column: span 4; }
+        .col-8 { grid-column: span 8; }
+        .row-2 { grid-row: span 2; }
+
+        /* Animation Visualizer */
+        .anim-box {
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            border: 2px solid #000;
+            margin: 1rem 0;
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-20px) rotate(90deg); box-shadow: 4px 10px 0px #000; }
+        }
+
+        /* Skeleton States */
+        .skeleton-line {
+            height: 12px;
+            background: #eee;
+            margin-bottom: 8px;
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+        .skeleton-line::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Labels & Tags */
+        .tag {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border: 1px solid #000;
+            margin-right: 4px;
+        }
+
+        .tag.forest { background: var(--accent); color: white; }
+
+        /* Form Logic Graphic */
+        .form-logic-viz {
+            background: #f0f0f0;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            border: 1px dashed #000;
+            margin-top: 0.5rem;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background: var(--accent);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .btn-action {
+            background: var(--accent);
+            color: white;
+            border: var(--border);
+            padding: 0.5rem 1rem;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            box-shadow: 2px 2px 0px #000;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            margin-top: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        @media (max-width: 900px) {
+            .col-6, .col-4, .col-8 { grid-column: span 12; }
+            h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div>
+                <span class="phase-badge">SYSTEM ARCHITECTURE // PHASE 17</span>
+                <h1>Design Strategy<br><span style="color: var(--accent)">Brainstorming</span></h1>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.8rem; text-align: right;">
+                V2.0.0_REF_DOC<br>
+                STATUS: PLANNING
+            </div>
+        </header>
+
+        <div class="bento-grid">
+            
+            <!-- Library Choice -->
+            <div class="card col-6">
+                <div class="card-title">
+                    <i data-lucide="layers"></i>
+                    Library: shadcn/ui vs. Scratch
+                </div>
+                <div class="card-content">
+                    Building from scratch offers total control, but <strong>shadcn/ui</strong> provides the "copy-paste ownership" model. It uses Radix UI primitives for accessibility (ARIA, focus management) while letting us inject our <strong>Soft Neobrutalist</strong> CSS directly into the component files.
+                </div>
+                <div class="recommendation-bar">
+                    <i data-lucide="check-circle-2"></i> REC: shadcn/ui (Ownership + Speed)
+                </div>
+            </div>
+
+            <!-- Animation Strategy -->
+            <div class="card col-6 row-2">
+                <div class="card-title">
+                    <i data-lucide="zap"></i>
+                    Motion: Framer vs. CSS
+                </div>
+                <div class="card-content">
+                    "Lots of good animations" requires <strong>Framer Motion</strong>. 
+                    <ul style="margin-top: 1rem; list-style: none;">
+                        <li style="margin-bottom: 0.5rem"><span class="tag">LAYOUT</span> <code>layoutId</code> for seamless shared element transitions.</li>
+                        <li style="margin-bottom: 0.5rem"><span class="tag">GESTURES</span> Built-in drag/hover/tap physics.</li>
+                        <li style="margin-bottom: 0.5rem"><span class="tag">LOTTIE</span> Use for complex "Success" celebrations.</li>
+                    </ul>
+                    <div class="anim-box"></div>
+                    Professional tools like <strong>Linear</strong> use Framer Motion for that "snappy" reactive feel.
+                </div>
+                <div class="recommendation-bar">
+                    <i data-lucide="check-circle-2"></i> REC: Framer Motion (Snappy/Reactive)
+                </div>
+            </div>
+
+            <!-- Form Validation -->
+            <div class="card col-8">
+                <div class="card-title">
+                    <i data-lucide="check-square"></i>
+                    Validation: UI vs. Logic
+                </div>
+                <div class="card-content">
+                    Logic (Zod) determines *if* a date is valid (e.g., ETA filed < 180 days after Recruitment). The UI is how we communicate it. 
+                    <div class="form-logic-viz">
+                        const CaseSchema = z.object({<br>
+                        &nbsp;&nbsp;pwd_filed: z.date(),<br>
+                        &nbsp;&nbsp;pwd_exp: z.date().refine(...)<br>
+                        }); <span class="cursor"></span>
+                    </div>
+                    <strong>Connection:</strong> Use React Hook Form's <code>errors</code> object to trigger "Hard Shadow" red alerts and micro-shake animations.
+                </div>
+                <div class="recommendation-bar">
+                    <i data-lucide="check-circle-2"></i> REC: Zod + React Hook Form + Integrated UI Hooks
+                </div>
+            </div>
+
+            <!-- Loading States -->
+            <div class="card col-4">
+                <div class="card-title">
+                    <i data-lucide="loader"></i>
+                    Skeleton Strategy
+                </div>
+                <div class="card-content">
+                    These are <strong>Design System</strong> concerns. We define <code>&lt;Skeleton /&gt;</code> primitives (Block, Circle, Text) that follow our monolithic 2px border rules. 
+                    <div style="margin-top: 1rem;">
+                        <div class="skeleton-line" style="width: 80%"></div>
+                        <div class="skeleton-line" style="width: 100%"></div>
+                        <div class="skeleton-line" style="width: 60%"></div>
+                    </div>
+                    Pages then compose these into "Loading States" that match the actual component layout perfectly.
+                </div>
+                <div class="recommendation-bar">
+                    <i data-lucide="check-circle-2"></i> REC: Design System Primitives
+                </div>
+            </div>
+
+            <!-- Visual Identity -->
+            <div class="card col-12">
+                <div class="card-title">
+                    <i data-lucide="palette"></i>
+                    Visual Identity: Heavy-Ink Monolithic Blockwork
+                </div>
+                <div class="card-content" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <span class="tag forest">MATERIALITY</span>
+                        <p style="font-size: 0.8rem; margin-top: 0.5rem;">Thick borders (2px+), pitch black ink, and high-contrast surfaces. The UI should feel "printed" and "heavy".</p>
+                    </div>
+                    <div>
+                        <span class="tag">TYPOGRAPHY</span>
+                        <p style="font-size: 0.8rem; margin-top: 0.5rem; font-family: var(--font-heading); font-weight: 700;">SPACE GROTESK HEADINGS</p>
+                        <p style="font-size: 0.8rem; font-family: var(--font-mono);">JetBrains Mono Data</p>
+                    </div>
+                    <div>
+                        <span class="tag">INTERACTION</span>
+                        <p style="font-size: 0.8rem; margin-top: 0.5rem;">Buttons that physically "depress" into the page by removing their shadow on click.</p>
+                        <button class="btn-action">
+                            Test Interaction <i data-lucide="arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <footer style="margin-top: 4rem; padding: 2rem 0; border-top: var(--border); font-family: var(--font-mono); font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                INSPIRATION: LINEAR.APP // INNGEST.COM // GREPTILE.COM
+            </div>
+            <div>
+                © 2025 PERM TRACKER // AI GENERATED SYSTEM ARCHITECTURE
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Optional: Simple logic to demonstrate "snappy" feeling
+        document.querySelector('.btn-action').addEventListener('click', () => {
+            console.log('Action triggered: Snappy feedback initiated.');
+        });
+    </script>
+</body>
+</html>

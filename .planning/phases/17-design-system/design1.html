@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tectonic UI Strategy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --tectonic-shadow: 8px 8px 0px 0px #000;
+            --slab-border: 3px solid #000;
+            --accent-purple: #8B5CF6;
+            --accent-green: #22C55E;
+            --accent-yellow: #FACC15;
+        }
+
+        body {
+            background-color: #e5e7eb;
+            font-family: 'Inter', sans-serif;
+            color: #000;
+            cursor: crosshair;
+        }
+
+        .slab {
+            background: white;
+            border: var(--slab-border);
+            box-shadow: var(--tectonic-shadow);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slab:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 12px 12px 0px 0px #000;
+        }
+
+        .slab:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px 0px #000;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto;
+            gap: 2rem;
+        }
+
+        .bg-mesh {
+            background-image: radial-gradient(#000 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        @keyframes pulse-slab {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .skeleton-animate {
+            animation: pulse-slab 1.5s infinite ease-in-out;
+            background: #e5e7eb;
+        }
+
+        .tectonic-shift {
+            clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
+        }
+    </style>
+</head>
+<body class="bg-mesh p-6 md:p-12">
+
+    <header class="mb-16">
+        <h1 class="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none italic mb-4">
+            Architecture <span class="text-white bg-black px-4 tectonic-shift">V1.0</span>
+        </h1>
+        <p class="mono uppercase tracking-widest font-bold bg-yellow-400 inline-block px-2">Project: Perm-Tracker-Test // Strategy Document</p>
+    </header>
+
+    <div class="grid-container">
+        
+        <!-- COMPONENT LIBRARY STRATEGY -->
+        <div class="slab col-span-12 md:col-span-7 p-8 border-l-[12px] border-l-purple-600">
+            <div class="flex justify-between items-start mb-6">
+                <h2 class="text-3xl font-black uppercase">Foundation: Shadcn/UI</h2>
+                <span class="mono bg-black text-white px-2 py-1">REC: DEFINITIVE YES</span>
+            </div>
+            <p class="text-lg leading-tight mb-6 font-bold">
+                Building from scratch is a trap. <span class="bg-purple-100 italic">shadcn/ui</span> is not a "library" you install—it's code you own. It uses Radix UI for accessibility (the hard part) and Tailwind for styling (the fun part).
+            </p>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="border-2 border-black p-4 bg-purple-50">
+                    <span class="mono block mb-2 font-bold underline">PROS</span>
+                    <ul class="mono space-y-1">
+                        <li>+ Full source control</li>
+                        <li>+ Linear/Vercel Aesthetic</li>
+                        <li>+ Modular Copy/Paste</li>
+                    </ul>
+                </div>
+                <div class="border-2 border-black p-4">
+                    <span class="mono block mb-2 font-bold underline">IMPLEMENTATION</span>
+                    <p class="mono leading-tight">Install the CLI, init with Tailwind, and only pull the slabs you need (Buttons, Dialogs, Tables).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANIMATION STRATEGY -->
+        <div class="slab col-span-12 md:col-span-5 p-8 bg-black text-white">
+            <h2 class="text-3xl font-black uppercase mb-4 text-green-400">Motion Engine</h2>
+            <p class="mono text-sm mb-6 opacity-80">"What does it mean?" It means orchestrating how pixels move so the app feels alive, not static.</p>
+            
+            <div class="space-y-4">
+                <div class="group border border-white/20 p-4 hover:bg-green-400 hover:text-black transition-colors cursor-pointer">
+                    <div class="flex justify-between items-center">
+                        <span class="font-black uppercase italic text-xl">Framer Motion</span>
+                        <span class="mono border border-current px-2 text-[10px]">REACTIVE</span>
+                    </div>
+                    <p class="text-xs mt-2 mono">Use for: Layout transitions, dragging elements, and complex entry sequences. It handles the "logic" of movement.</p>
+                </div>
+                
+                <div class="group border border-white/20 p-4 hover:bg-yellow-400 hover:text-black transition-colors cursor-pointer">
+                    <div class="flex justify-between items-center">
+                        <span class="font-black uppercase italic text-xl">CSS Transitions</span>
+                        <span class="mono border border-current px-2 text-[10px]">MICRO</span>
+                    </div>
+                    <p class="text-xs mt-2 mono">Use for: Hover states, button scales, and color shifts. Zero performance overhead.</p>
+                </div>
+
+                <div class="group border border-white/20 p-4 hover:bg-purple-400 hover:text-black transition-colors cursor-pointer">
+                    <div class="flex justify-between items-center">
+                        <span class="font-black uppercase italic text-xl">Lottie</span>
+                        <span class="mono border border-current px-2 text-[10px]">NARRATIVE</span>
+                    </div>
+                    <p class="text-xs mt-2 mono">Use for: Celebratory "Success" animations or complex empty-state illustrations.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM VALIDATION LOGIC -->
+        <div class="slab col-span-12 md:col-span-6 p-8">
+            <h2 class="text-3xl font-black uppercase mb-2">Form Logic ↔ UI</h2>
+            <div class="mono mb-6 bg-gray-100 p-2 border-l-4 border-black text-xs uppercase font-bold">
+                The Connection: React-Hook-Form + Zod
+            </div>
+            <div class="relative h-48 border-2 border-dashed border-black flex items-center justify-center bg-gray-50">
+                <div class="absolute inset-4 border-2 border-black p-4 bg-white shadow-[4px_4px_0_0_#000]">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <span class="mono text-[10px] font-bold italic">VALIDATION TRIGGERED</span>
+                    </div>
+                    <div class="h-2 w-full bg-black mb-2"></div>
+                    <div class="h-2 w-2/3 bg-black/20"></div>
+                </div>
+                <div class="z-10 bg-yellow-400 px-4 py-2 border-2 border-black font-black uppercase text-sm rotate-3 shadow-[4px_4px_0_0_#000]">
+                    The Bridge
+                </div>
+            </div>
+            <p class="text-sm mt-4 mono leading-tight italic">
+                Recommendation: Logic (Zod) validates the data; the UI (Shadcn Form) listens for errors. If "CaseNumber" is invalid, the Logic tells the UI to turn the Slab red and shake it.
+            </p>
+        </div>
+
+        <!-- LOADING & SKELETONS -->
+        <div class="slab col-span-12 md:col-span-6 p-8 border-r-[12px] border-r-green-500">
+            <h2 class="text-3xl font-black uppercase mb-4">Skeleton Systems</h2>
+            <p class="text-sm font-bold uppercase mb-6 tracking-tighter">Concern: Design System (Primitive) + Page Level (Layout)</p>
+            
+            <div class="space-y-4">
+                <div class="flex gap-4 items-center">
+                    <div class="w-16 h-16 bg-black flex-shrink-0 skeleton-animate"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="h-4 w-full bg-black skeleton-animate"></div>
+                        <div class="h-4 w-3/4 bg-black skeleton-animate"></div>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-center opacity-40">
+                    <div class="w-16 h-16 bg-black flex-shrink-0"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="h-4 w-full bg-black"></div>
+                        <div class="h-4 w-3/4 bg-black"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="mt-8 text-xs mono leading-relaxed">
+                <span class="font-black bg-black text-white px-1">SYSTEM:</span> Define the "SlabSkeleton" component in your design system.<br>
+                <span class="font-black bg-black text-white px-1">PAGE:</span> Arrange those skeletons on the page to mirror the final content layout. This prevents "Layout Shift."
+            </p>
+        </div>
+
+        <!-- NEOMETRIC BENTO FOOTER -->
+        <div class="slab col-span-12 md:col-span-4 p-6 bg-yellow-400 flex items-center justify-between">
+            <span class="font-black uppercase text-2xl italic tracking-tighter">Screenshots?</span>
+            <button class="mono bg-black text-white px-4 py-2 text-[10px] font-bold hover:bg-white hover:text-black transition-colors border-2 border-black">
+                SEND TO /ASSETS
+            </button>
+        </div>
+        
+        <div class="slab col-span-12 md:col-span-8 p-6 bg-white flex items-center">
+            <p class="mono text-xs uppercase font-bold">
+                Inspiration Matrix: 
+                <span class="underline decoration-2">Linear.app</span> (Precision) / 
+                <span class="underline decoration-2">Greptile</span> (Clarity) / 
+                <span class="underline decoration-2">Inngest</span> (Technical) / 
+                <span class="underline decoration-2 text-purple-600">VibeKanban</span> (Flow)
+            </p>
+        </div>
+
+    </div>
+
+    <footer class="mt-24 border-t-4 border-black pt-8 flex justify-between items-end">
+        <div>
+            <div class="text-4xl font-black italic">FLASH UI</div>
+            <div class="mono text-[10px] opacity-60 italic">TECTONIC SLABWORK ENGINE // SYSTEM_READY</div>
+        </div>
+        <div class="mono text-right text-[10px] font-bold">
+            BUILD STATUS: <span class="text-green-600">OPTIMIZED</span><br>
+            VERSION: 4.0.2-BETA
+        </div>
+    </footer>
+
+</body>
+</html>

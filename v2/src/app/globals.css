@@ -1,0 +1,934 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Core */
+  --background: #FAFAFA;
+  --foreground: #000000;
+  --card: #FAFAFA;
+  --card-foreground: #000000;
+  --popover: #FAFAFA;
+  --popover-foreground: #000000;
+
+  /* Brand - Lime Green (same in light and dark for consistency) */
+  --primary: #2ECC40;
+  --primary-foreground: #000000;
+
+  /* Secondary */
+  --secondary: #F5F5F5;
+  --secondary-foreground: #000000;
+
+  /* Muted */
+  --muted: #F5F5F5;
+  --muted-foreground: #666666;
+
+  /* Accent */
+  --accent: #2ECC40;
+  --accent-foreground: #000000;
+
+  /* Destructive */
+  --destructive: #FF4747;
+  --destructive-foreground: #FAFAFA;
+
+  /* Borders */
+  --border: #000000;
+  --input: #000000;
+  --ring: #2ECC40;
+
+  /* Radius - neobrutalist */
+  --radius: 0px;
+
+  /* Shadows - hard shadows using border color for theme consistency */
+  --shadow-hard-sm: 2px 2px 0px var(--border);
+  --shadow-hard: 4px 4px 0px var(--border);
+  --shadow-hard-lg: 8px 8px 0px var(--border);
+
+  /* Case Stage Colors */
+  --stage-pwd: #0066FF;
+  --stage-recruitment: #9333ea;
+  --stage-eta9089: #D97706;
+  --stage-eta9089-working: #EAB308;
+  --stage-i140: #059669;
+  --stage-closed: #6B7280;
+  --stage-success: #2ECC40;
+
+  /* Urgency Colors */
+  --urgency-completed: #059669;
+  --urgency-overdue: #991B1B;
+  --urgency-urgent: #DC2626;
+  --urgency-soon: #EA580C;
+  --urgency-normal: #2563EB;
+
+  /* Manila Folder Colors */
+  --manila: #F5E6C8;
+  --manila-dark: #E8D4A8;
+  --manila-shadow: #D4C090;
+
+  /* Transitions - matching mockup */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dark {
+  --background: #0A0A0A;
+  --foreground: #FAFAFA;
+  --card: #1A1A1A;
+  --card-foreground: #FAFAFA;
+  --popover: #1A1A1A;
+  --popover-foreground: #FAFAFA;
+  --primary: #2ECC40;
+  --primary-foreground: #000000;
+  --secondary: #1A1A1A;
+  --secondary-foreground: #FAFAFA;
+  --muted: #1A1A1A;
+  --muted-foreground: #A0A0A0;
+  --accent: #2ECC40;
+  --accent-foreground: #000000;
+  --destructive: #FF4747;
+  --destructive-foreground: #FAFAFA;
+  --border: #FAFAFA;
+  --input: #FAFAFA;
+  --ring: #2ECC40;
+
+  /* Manila Folder Colors - Dark Mode (darker tones) */
+  --manila: #C4A97A;
+  --manila-dark: #A8916A;
+  --manila-shadow: #8A7552;
+
+  /* Dark mode shadows - subtle for visibility */
+  --shadow-hard-sm: 2px 2px 0px rgba(255,255,255,0.3);
+  --shadow-hard: 4px 4px 0px rgba(255,255,255,0.3);
+  --shadow-hard-lg: 8px 8px 0px rgba(255,255,255,0.3);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-stage-pwd: var(--stage-pwd);
+  --color-stage-recruitment: var(--stage-recruitment);
+  --color-stage-eta9089: var(--stage-eta9089);
+  --color-stage-eta9089-working: var(--stage-eta9089-working);
+  --color-stage-i140: var(--stage-i140);
+  --color-stage-closed: var(--stage-closed);
+  --color-urgency-urgent: var(--urgency-urgent);
+  --color-urgency-soon: var(--urgency-soon);
+  --color-urgency-normal: var(--urgency-normal);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Utility classes for hard shadows */
+@layer utilities {
+  .shadow-hard-sm {
+    box-shadow: var(--shadow-hard-sm);
+  }
+  .shadow-hard {
+    box-shadow: var(--shadow-hard);
+  }
+  .shadow-hard-lg {
+    box-shadow: var(--shadow-hard-lg);
+  }
+
+  /* Grain overlay texture - matches mockup exactly */
+  .grain-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+
+  /* Dot pattern background - light mode */
+  .bg-dots {
+    background-image: radial-gradient(circle, rgba(0,0,0,0.5) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Dot pattern background - dark mode */
+  .dark .bg-dots {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Monospace font utility */
+  .mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Skeleton loading animation - matches design4 */
+  .skeleton-pulse {
+    background: linear-gradient(90deg, #eeeeee 25%, #dddddd 50%, #eeeeee 75%);
+    background-size: 200% 100%;
+    animation: skeleton-move 1.5s ease-in-out infinite;
+  }
+
+  .dark .skeleton-pulse {
+    background: linear-gradient(90deg, #3a3a3a 25%, #4a4a4a 50%, #3a3a3a 75%);
+    background-size: 200% 100%;
+    animation: skeleton-move 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-move {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Hazard background - yellow/black diagonal stripes */
+  .hazard-bg {
+    background: repeating-linear-gradient(
+      -45deg,
+      #fbbf24,
+      #fbbf24 10px,
+      #000 10px,
+      #000 20px
+    );
+  }
+
+  /* Bounce animations - snappy, reactive like design3 */
+  .bounce {
+    animation: bounce 2s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+  }
+  .bounce-fast {
+    animation: bounce 1.2s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+  }
+  .bounce-slow {
+    animation: bounce 3s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+  }
+  .bounce-subtle {
+    animation: bounce-subtle 2s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+  }
+  .bounce-spin {
+    animation: bounce-spin 2s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+      box-shadow: var(--shadow-hard);
+    }
+    50% {
+      transform: translateY(-20px) rotate(90deg);
+      box-shadow: 4px 10px 0px #000;
+    }
+  }
+
+  @keyframes bounce-subtle {
+    0%, 100% {
+      transform: translateY(0);
+      box-shadow: var(--shadow-hard);
+    }
+    50% {
+      transform: translateY(-12px);
+      box-shadow: 4px 8px 0px #000;
+    }
+  }
+
+  @keyframes bounce-spin {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+      box-shadow: var(--shadow-hard);
+    }
+    25% {
+      transform: translateY(-15px) rotate(45deg);
+      box-shadow: 4px 8px 0px #000;
+    }
+    50% {
+      transform: translateY(-20px) rotate(90deg);
+      box-shadow: 4px 10px 0px #000;
+    }
+    75% {
+      transform: translateY(-15px) rotate(135deg);
+      box-shadow: 4px 8px 0px #000;
+    }
+  }
+
+  /* Continuous spin animation */
+  @keyframes spin-continuous {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .spin-continuous {
+    animation: spin-continuous 1s linear infinite;
+  }
+
+  /* Snappy card hover - design3 style
+   * 0.15s max for hover responses (Linear.app style)
+   * Ease-out-quad curve for natural deceleration
+   */
+  .card-snappy {
+    transition: all 0.15s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+  .card-snappy:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-hard-lg);
+  }
+  .card-snappy:active {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+  }
+
+  /* Corner decoration - dramatic accent like design4 */
+  .corner-accent {
+    position: relative;
+    overflow: hidden;
+  }
+  .corner-accent::before {
+    content: '';
+    position: absolute;
+    top: -64px;
+    right: -64px;
+    width: 128px;
+    height: 128px;
+    background: var(--primary);
+    opacity: 0.1;
+    transform: rotate(45deg);
+    pointer-events: none;
+  }
+
+  /* Corner accent with hazard pattern */
+  .corner-accent-hazard {
+    position: relative;
+    overflow: hidden;
+  }
+  .corner-accent-hazard::before {
+    content: '';
+    position: absolute;
+    top: -64px;
+    right: -64px;
+    width: 128px;
+    height: 128px;
+    background: repeating-linear-gradient(
+      -45deg,
+      #fbbf24,
+      #fbbf24 10px,
+      #000 10px,
+      #000 20px
+    );
+    opacity: 0.1;
+    transform: rotate(45deg);
+    pointer-events: none;
+  }
+
+  /* Corner accent variations */
+  .corner-accent-sm::before {
+    top: -32px;
+    right: -32px;
+    width: 64px;
+    height: 64px;
+  }
+  .corner-accent-lg::before {
+    top: -96px;
+    right: -96px;
+    width: 192px;
+    height: 192px;
+  }
+
+  /* Bottom-left corner variant */
+  .corner-accent-bl::before {
+    top: auto;
+    right: auto;
+    bottom: -64px;
+    left: -64px;
+  }
+
+  /* Glass panel effect - frosted glass with backdrop blur */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .glass-panel {
+    background: rgba(42, 42, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Marquee animation for trust strip */
+  .marquee {
+    display: flex;
+    gap: 4rem;
+    animation: marquee 30s linear infinite;
+    white-space: nowrap;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Scroll progress bar */
+  .scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--stage-pwd), var(--stage-recruitment));
+    z-index: 1000;
+    transition: width 0.1s ease-out;
+  }
+
+  /* Pulse animation for eyebrow dot */
+  .pulse-dot {
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+  }
+
+  /* Scroll hint animation */
+  .scroll-hint-icon {
+    animation: scroll-hint 1.5s ease-in-out infinite;
+  }
+
+  @keyframes scroll-hint {
+    0%, 100% { transform: translateX(0); opacity: 0.5; }
+    50% { transform: translateX(8px); opacity: 1; }
+  }
+
+  /* Floating shapes for parallax with CSS scroll-driven animation */
+  .floating-shape {
+    position: absolute;
+    border: 3px solid;
+    opacity: 0.15;
+    z-index: -1;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  /* Parallax floating animation - different speeds for depth effect */
+  .parallax-slow {
+    animation: parallax-float-slow 8s ease-in-out infinite;
+  }
+
+  .parallax-medium {
+    animation: parallax-float-medium 6s ease-in-out infinite;
+  }
+
+  .parallax-fast {
+    animation: parallax-float-fast 4s ease-in-out infinite;
+  }
+
+  @keyframes parallax-float-slow {
+    0%, 100% { transform: translateY(0) rotate(12deg); }
+    50% { transform: translateY(-20px) rotate(15deg); }
+  }
+
+  @keyframes parallax-float-medium {
+    0%, 100% { transform: translateY(0) rotate(-8deg); }
+    50% { transform: translateY(-15px) rotate(-5deg); }
+  }
+
+  @keyframes parallax-float-fast {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(3deg); }
+  }
+
+  /* CSS scroll-driven parallax for modern browsers */
+  @supports (animation-timeline: scroll()) {
+    .scroll-parallax {
+      animation: scroll-move linear;
+      animation-timeline: scroll();
+    }
+
+    @keyframes scroll-move {
+      from { transform: translateY(0); }
+      to { transform: translateY(-100px); }
+    }
+  }
+
+  /* Hide scrollbar for horizontal scroll containers */
+  .scrollbar-hide,
+  .journey-scroll-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar,
+  .journey-scroll-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Count-up animation support */
+  .count-up {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Blink animation for streaming cursor */
+  .animate-blink {
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* Shimmer animation for tool call loading state */
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+  }
+
+  .dark .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    /* Prevent iOS elastic overscroll showing blank areas */
+    overscroll-behavior: none;
+    /* Fill available viewport height */
+    height: 100%;
+    height: -webkit-fill-available;
+    /* Scrollbar on html - keeps layout inside body unaffected */
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  body {
+    @apply bg-background text-foreground font-body;
+    /* Prevent overscroll bounce showing blank areas */
+    overscroll-behavior: none;
+    /* Ensure height fills viewport */
+    min-height: 100%;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    /* No overflow on body - html handles it */
+    overflow: visible;
+    /* Ensure no margin/padding on body */
+    margin: 0;
+    padding: 0;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+/* Theme transition - minimal transitions for snappy toggle
+ * CRITICAL: Avoid broad selectors that cause performance issues
+ * Individual components should NOT have background-color transitions
+ */
+html {
+  color-scheme: light dark;
+}
+
+/* File input button press animation */
+input[type="file"]::file-selector-button:active {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
+/* Scrollbar styling - overlay style on modern browsers */
+@supports (overflow-y: overlay) {
+  html {
+    overflow-y: overlay;
+  }
+}
+
+/* Custom scrollbar - slim overlay style */
+::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 0% / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 0% / 0.5);
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 100% / 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 100% / 0.5);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(0 0% 0% / 0.3) transparent;
+}
+
+.dark * {
+  scrollbar-color: hsl(0 0% 100% / 0.3) transparent;
+}
+
+/* Slide-in animation for deadline items */
+@keyframes slide-in-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-from-right 0.3s ease-out forwards;
+}
+
+/* Underline animation on hover - for nav links */
+.hover-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.hover-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--primary);
+  transition: width 0.3s ease-out;
+}
+
+.hover-underline:hover::after {
+  width: 100%;
+}
+
+/* Hazard strip for deadline widget - red/black variant */
+.hazard-strip-red {
+  background: repeating-linear-gradient(
+    90deg,
+    #dc2626,
+    #dc2626 10px,
+    #000 10px,
+    #000 20px
+  );
+  height: 6px;
+}
+
+/* Hazard left border for overdue items */
+.hazard-border-left {
+  position: relative;
+}
+
+.hazard-border-left::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    #dc2626,
+    #dc2626 4px,
+    #000 4px,
+    #000 8px
+  );
+}
+
+/* Global cursor pointer styles */
+button,
+[role="button"],
+[type="button"],
+[type="submit"],
+[type="reset"],
+a,
+label[for],
+select,
+summary,
+[onclick],
+[tabindex]:not([tabindex="-1"]),
+input[type="checkbox"],
+input[type="radio"],
+.clickable {
+  cursor: pointer;
+}
+
+/* Loading/disabled states */
+button:disabled,
+[aria-disabled="true"],
+button[disabled] {
+  cursor: not-allowed;
+}
+
+/* Shake animation for form errors */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Slide up animation for staggered form sections */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out both;
+}
+
+/* Success checkmark animation (CSS-based, neobrutalist) */
+@keyframes checkmark-draw {
+  0% {
+    stroke-dashoffset: 32;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes success-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-success-pop {
+  animation: success-pop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.animate-checkmark-draw {
+  stroke-dasharray: 32;
+  stroke-dashoffset: 32;
+  animation: checkmark-draw 0.3s ease-out 0.2s forwards;
+}
+
+/* Micro-interaction: hover lift for interactive cards/buttons
+ * 0.15s is the max for snappy hover responses
+ * Ease-out provides natural deceleration
+ */
+.hover-lift {
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hard);
+}
+
+.hover-lift:active {
+  transform: translateY(1px);
+  box-shadow: var(--shadow-hard-sm);
+}
+
+/* Press effect for buttons (neobrutalist)
+ * 0.1s for ultra-responsive button feedback
+ * Creates tactile "button push" sensation
+ */
+.press-effect {
+  transition: all 0.1s ease-out;
+}
+
+.press-effect:hover {
+  transform: translate(-1px, -1px);
+}
+
+.press-effect:active {
+  transform: translate(2px, 2px);
+  box-shadow: none !important;
+}
+
+/* Fix: Prevent Radix UI portals from hiding scrollbar */
+html[data-scroll-locked],
+body[data-scroll-locked] {
+  overflow-y: auto !important;
+  padding-right: 0 !important;
+}
+
+/* Ensure dropdown menus don't block header animations */
+[data-radix-popper-content-wrapper] {
+  pointer-events: auto;
+}
+
+/* Keep nav link animations active when dropdown is open */
+.hover-underline::after {
+  pointer-events: none;
+}
+
+/* ============================================================================
+ * REDUCED MOTION ACCESSIBILITY
+ * ============================================================================
+ *
+ * Respects the user's "prefers-reduced-motion: reduce" OS setting.
+ * This is CRITICAL for users with vestibular disorders, motion sensitivity,
+ * or those who simply prefer reduced motion.
+ *
+ * HOW IT WORKS:
+ * 1. All CSS animations/transitions are made nearly instant (0.01ms)
+ * 2. Decorative animations (bouncing, spinning) are completely disabled
+ * 3. Essential state changes (fade-in, slide-up) become instant
+ * 4. Smooth scroll is disabled in favor of instant jumps
+ *
+ * FRAMER MOTION INTEGRATION:
+ * - Framer Motion's useReducedMotion() hook handles JS animations
+ * - This CSS handles CSS-based animations that Framer Motion doesn't control
+ * - Together they provide complete reduced motion support
+ *
+ * WHAT'S NOT AFFECTED:
+ * - Static transforms (rotation, scale that don't animate)
+ * - Color changes (these are still allowed to transition)
+ * - Layout shifts (handled by the browser)
+ *
+ * TESTING:
+ * - macOS: System Preferences > Accessibility > Display > Reduce motion
+ * - Windows: Settings > Ease of Access > Display > Show animations
+ * - Chrome DevTools: Rendering tab > Emulate CSS media feature
+ *
+ * ============================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  /* Universal override for all animations and transitions */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Completely disable decorative animations */
+  .bounce,
+  .bounce-fast,
+  .bounce-slow,
+  .bounce-subtle,
+  .bounce-spin,
+  .spin-continuous,
+  .animate-blink {
+    animation: none !important;
+  }
+
+  /* Skeleton loading is functional (communicates loading state),
+     so we preserve a slowed-down version instead of disabling */
+  .skeleton-pulse {
+    animation-duration: 3s !important;
+  }
+
+  /* Ensure visibility for entrance animations (instant reveal) */
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-slide-in-right,
+  .animate-shake {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Disable hover lift/press effects that involve motion */
+  .hover-lift,
+  .press-effect,
+  .card-snappy {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  /* Ensure hover states still work but without motion */
+  .hover-lift:hover,
+  .press-effect:hover,
+  .card-snappy:hover {
+    transform: none !important;
+  }
+
+  /* Disable parallax transforms */
+  [data-parallax],
+  .parallax {
+    transform: none !important;
+  }
+}

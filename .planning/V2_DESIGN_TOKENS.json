@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "meta": {
+    "version": "2.0.0",
+    "lastUpdated": "2025-12-20",
+    "description": "Design token system for PERM Tracker V2",
+    "extractedFrom": [
+      "docs/design-system.md",
+      "frontend/src/css/main.css",
+      "frontend/tailwind.config.js"
+    ]
+  },
+  "colors": {
+    "light": {
+      "background": {
+        "primary": "#FAFAFA",
+        "secondary": "#F5F5F5"
+      },
+      "text": {
+        "primary": "#000000",
+        "secondary": "#666666"
+      },
+      "accent": {
+        "primary": "#228B22",
+        "primaryHover": "#1B6B1B",
+        "secondary": "#FF4747"
+      },
+      "border": {
+        "default": "#000000"
+      }
+    },
+    "dark": {
+      "background": {
+        "primary": "#1A1A1A",
+        "secondary": "#2A2A2A"
+      },
+      "text": {
+        "primary": "#FAFAFA",
+        "secondary": "#B0B0B0"
+      },
+      "accent": {
+        "primary": "#2ECC40",
+        "primaryHover": "#228B22",
+        "secondary": "#FF4747"
+      },
+      "border": {
+        "default": "#FAFAFA"
+      }
+    },
+    "stages": {
+      "pwd": "#0066FF",
+      "recruitment": "#9333ea",
+      "eta9089": "#D97706",
+      "eta9089Working": "#EAB308",
+      "i140": "#059669",
+      "closed": "#6B7280"
+    },
+    "tags": {
+      "professional": { "bg": "#1F2937", "text": "#F9FAFB" },
+      "rfiActive": "#DC2626",
+      "rfeActive": "#DC2626"
+    },
+    "urgency": {
+      "urgent": "#DC2626",
+      "soon": "#EA580C",
+      "normal": "#059669"
+    },
+    "semantic": {
+      "success": "#228B22",
+      "warning": "#D97706",
+      "error": "#FF4747",
+      "info": "#0066FF"
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "heading": "'Space Grotesk', system-ui, sans-serif",
+      "body": "'Inter', system-ui, sans-serif",
+      "mono": "'JetBrains Mono', 'Fira Code', monospace"
+    },
+    "fontWeight": {
+      "normal": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "fontSize": {
+      "xs": {
+        "size": "0.75rem",
+        "lineHeight": "1rem"
+      },
+      "sm": {
+        "size": "0.875rem",
+        "lineHeight": "1.25rem"
+      },
+      "base": {
+        "size": "1rem",
+        "lineHeight": "1.5rem"
+      },
+      "lg": {
+        "size": "1.125rem",
+        "lineHeight": "1.75rem"
+      },
+      "xl": {
+        "size": "1.25rem",
+        "lineHeight": "1.75rem"
+      },
+      "2xl": {
+        "size": "1.5rem",
+        "lineHeight": "2rem"
+      },
+      "3xl": {
+        "size": "1.875rem",
+        "lineHeight": "2.25rem"
+      },
+      "4xl": {
+        "size": "2.25rem",
+        "lineHeight": "2.5rem"
+      }
+    }
+  },
+  "spacing": {
+    "xs": "0.5rem",
+    "sm": "1rem",
+    "md": "2rem",
+    "lg": "3rem",
+    "xl": "4rem"
+  },
+  "borders": {
+    "width": {
+      "default": "2px"
+    },
+    "radius": {
+      "default": "6px"
+    }
+  },
+  "shadows": {
+    "hard": {
+      "sm": "2px 2px 0px #000",
+      "default": "4px 4px 0px #000",
+      "lg": "8px 8px 0px #000"
+    }
+  },
+  "transitions": {
+    "duration": {
+      "fast": "0.15s",
+      "base": "0.2s",
+      "slow": "0.3s"
+    },
+    "timing": {
+      "ease": "ease",
+      "bounce": "cubic-bezier(0.68, -0.55, 0.265, 1.55)"
+    }
+  },
+  "accessibility": {
+    "contrast": {
+      "ratio": "19.77:1",
+      "level": "AAA"
+    },
+    "focus": {
+      "outline": {
+        "width": "2px",
+        "style": "solid",
+        "color": "var(--accent)",
+        "offset": "2px"
+      }
+    }
+  },
+  "components": {
+    "chatbot": {
+      "width": "400px",
+      "height": "600px",
+      "toggle": {
+        "size": {
+          "desktop": "60px",
+          "mobile": "52px"
+        }
+      },
+      "zIndex": {
+        "base": 9000,
+        "toggle": 9999
+      }
+    }
+  },
+  "breakpoints": {
+    "sm": "640px",
+    "md": "768px",
+    "lg": "1024px",
+    "xl": "1280px",
+    "2xl": "1536px"
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "add": "Add",
+      "close": "Close",
+      "back": "Back",
+      "next": "Next",
+      "submit": "Submit",
+      "reset": "Reset",
+      "tryAgain": "Try Again",
+      "goToDashboard": "Go to Dashboard",
+      "viewAll": "View All",
+      "loading": "Loading..."
+    },
+    "labels": {
+      "yes": "Yes",
+      "no": "No",
+      "required": "Required",
+      "optional": "Optional",
+      "search": "Search",
+      "filter": "Filter",
+      "sort": "Sort",
+      "noResults": "No results found",
+      "all": "All",
+      "none": "None"
+    },
+    "status": {
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "dates": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "yesterday": "Yesterday",
+      "daysAgo": "{count, plural, one {# day ago} other {# days ago}}",
+      "daysFromNow": "{count, plural, one {in # day} other {in # days}}"
+    }
+  },
+  "validation": {
+    "required": "{field} is required",
+    "invalidDate": "Invalid date format",
+    "invalidEmail": "Invalid email address",
+    "dateMustBeAfter": "{field} must be after {after}",
+    "dateMustBeBefore": "{field} must be before {before}",
+    "dateMustBeSunday": "{field} must be on a Sunday",
+    "minimumDuration": "{field} must be at least {days} days",
+    "filingWindowClosed": "Filing window has closed",
+    "pwdExpired": "PWD has expired"
+  },
+  "cases": {
+    "title": "Cases",
+    "newCase": "New Case",
+    "editCase": "Edit Case",
+    "caseDetails": "Case Details",
+    "noCases": "No cases found",
+    "status": {
+      "Pending": "Pending",
+      "Certified": "Certified",
+      "Denied": "Denied",
+      "Withdrawn": "Withdrawn"
+    },
+    "progressStatus": {
+      "Not Started": "Not Started",
+      "PWD Requested": "PWD Requested",
+      "PWD Received": "PWD Received",
+      "Recruitment in Progress": "Recruitment in Progress",
+      "Recruitment Complete": "Recruitment Complete",
+      "ETA 9089 Filed": "ETA 9089 Filed",
+      "ETA 9089 Under Audit": "ETA 9089 Under Audit",
+      "ETA 9089 Certified": "ETA 9089 Certified",
+      "ETA 9089 Denied": "ETA 9089 Denied",
+      "I-140 Filed": "I-140 Filed",
+      "I-140 Approved": "I-140 Approved",
+      "I-140 Denied": "I-140 Denied",
+      "Case Withdrawn": "Case Withdrawn"
+    },
+    "fields": {
+      "employerName": "Employer Name",
+      "beneficiaryIdentifier": "Beneficiary",
+      "positionTitle": "Position Title",
+      "caseNumber": "Case Number",
+      "caseStatus": "Case Status",
+      "progressStatus": "Progress Status"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "summaryTiles": {
+      "totalCases": "Total Cases",
+      "activeCases": "Active Cases",
+      "upcomingDeadlines": "Upcoming Deadlines",
+      "needsAttention": "Needs Attention"
+    },
+    "sections": {
+      "recentActivity": "Recent Activity",
+      "upcomingDeadlines": "Upcoming Deadlines",
+      "casesByStatus": "Cases by Status"
+    }
+  },
+  "forms": {
+    "sections": {
+      "basicInfo": "Basic Information",
+      "pwd": "Prevailing Wage Determination",
+      "recruitment": "Recruitment",
+      "eta9089": "ETA 9089",
+      "i140": "I-140",
+      "notes": "Notes & Journal"
+    },
+    "hints": {
+      "pwdFilingDate": "Date PWD was filed with DOL",
+      "pwdDeterminationDate": "Date PWD was determined",
+      "sundayAd": "Must be on a Sunday",
+      "jobOrderDuration": "Must be at least 30 days",
+      "filingWindow": "Must file 30-180 days after recruitment ends"
+    }
+  },
+  "errors": {
+    "generic": "An unexpected error occurred",
+    "networkError": "Network error. Please check your connection and try again.",
+    "permissionDenied": "You don't have permission to perform this action",
+    "notFound": "The requested resource was not found",
+    "sessionExpired": "Your session has expired. Please log in again.",
+    "validationFailed": "Validation failed. Please check the form for errors.",
+    "saveFailed": "Failed to save. Please try again."
+  },
+  "calendar": {
+    "title": "Calendar",
+    "today": "Today",
+    "month": "Month",
+    "week": "Week",
+    "day": "Day",
+    "noEvents": "No events for this day"
+  },
+  "timeline": {
+    "title": "Timeline",
+    "noEvents": "No timeline events"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "preferences": "Preferences",
+    "notifications": "Notifications",
+    "theme": "Theme",
+    "language": "Language"
+  },
+  "auth": {
+    "login": "Log In",
+    "logout": "Log Out",
+    "signup": "Sign Up",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password"
+  }
+}

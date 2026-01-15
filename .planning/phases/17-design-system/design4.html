@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash UI - PERM Tracker Design System Brainstorm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #FAFAFA;
+            --text-primary: #000000;
+            --accent: #228B22; /* Forest Green */
+            --stage-pwd: #0066FF;
+            --stage-rec: #9333ea;
+            --stage-eta: #D97706;
+            --stage-i140: #059669;
+            --shadow-hard: 4px 4px 0px #000;
+            --shadow-hard-lg: 8px 8px 0px #000;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Soft Neobrutalism Base */
+        .brutalist-card {
+            background: white;
+            border: 2px solid black;
+            box-shadow: var(--shadow-hard);
+            transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+        }
+
+        .brutalist-card:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: var(--shadow-hard-lg);
+        }
+
+        .brutalist-btn {
+            background: var(--accent);
+            color: white;
+            border: 2px solid black;
+            box-shadow: 4px 4px 0px #000;
+            padding: 12px 24px;
+            font-weight: 700;
+            font-family: 'Space Grotesk';
+            transition: all 0.15s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .brutalist-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #000;
+        }
+
+        .brutalist-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: none;
+        }
+
+        /* Kinetic Relay Animations */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .float-animation {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .grain {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Bento Grid Specifics */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+
+        .bento-item {
+            grid-column: span 12;
+        }
+
+        @media (min-width: 768px) {
+            .bento-item-large { grid-column: span 8; }
+            .bento-item-small { grid-column: span 4; }
+            .bento-item-half { grid-column: span 6; }
+        }
+
+        /* Skeleton Simulation */
+        .skeleton-pulse {
+            background: linear-gradient(90deg, #eeeeee 25%, #dddddd 50%, #eeeeee 75%);
+            background-size: 200% 100%;
+            animation: skeleton-move 1.5s infinite;
+        }
+
+        @keyframes skeleton-move {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .stage-tag {
+            padding: 4px 10px;
+            font-size: 10px;
+            font-weight: 800;
+            border: 1.5px solid black;
+            text-transform: uppercase;
+            box-shadow: 2px 2px 0px #000;
+        }
+
+        .hazard-bg {
+            background: repeating-linear-gradient(
+                -45deg,
+                #fbbf24,
+                #fbbf24 10px,
+                #000 10px,
+                #000 20px
+            );
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 12px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb {
+            background: #000;
+            border: 3px solid #f1f1f1;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-12">
+    <div class="grain"></div>
+
+    <!-- Header Section -->
+    <header class="mb-16">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+                <span class="mono text-sm font-bold tracking-widest text-neutral-500 uppercase">Phase 17 Brainstorm</span>
+                <h1 class="text-6xl md:text-8xl font-black leading-tight mt-2">DESIGN<br><span class="text-green-700">STRATEGY</span></h1>
+            </div>
+            <div class="max-w-md text-right">
+                <p class="text-xl font-medium leading-relaxed">
+                    A high-fidelity layout exploring <span class="underline decoration-4 underline-offset-4 decoration-green-600">shadcn/ui integration</span>, kinetic motion, and the bridge between logic and aesthetics.
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Bento Grid -->
+    <main class="bento-grid">
+        
+        <!-- Strategy 1: Library vs Scratch -->
+        <section class="bento-item bento-item-large brutalist-card p-8 flex flex-col justify-between overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-green-100 hazard-bg opacity-10 -mr-16 -mt-16 rotate-45"></div>
+            <div>
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="w-4 h-4 bg-black rounded-full"></span>
+                    <h2 class="text-3xl font-bold uppercase italic">shadcn/ui vs. Scratch</h2>
+                </div>
+                <p class="text-lg mb-8 max-w-2xl leading-relaxed">
+                    You mentioned <strong>shadcn/ui</strong>—it is the correct choice. Unlike traditional libraries (MUI/Chakra), shadcn/ui is a <span class="italic font-bold">set of reusable components that you copy into your project.</span>
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 border-2 border-black bg-neutral-50">
+                        <h4 class="font-bold mb-1">Ownership</h4>
+                        <p class="text-sm">You own the code. You can strip the default "Apple-lite" styling and inject the <strong>Soft Neobrutalist</strong> soul directly into the base file.</p>
+                    </div>
+                    <div class="p-4 border-2 border-black bg-neutral-50">
+                        <h4 class="font-bold mb-1">Primitives</h4>
+                        <p class="text-sm">Radix UI (the core of shadcn) handles accessibility (ARIA roles, keyboard nav), letting us focus purely on the <span class="text-green-700 font-bold">tactile visuals</span>.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 flex gap-4">
+                <button class="brutalist-btn">Adopt shadcn</button>
+                <button class="mono border-b-2 border-black font-bold px-4 hover:bg-black hover:text-white transition-colors">See Implementation</button>
+            </div>
+        </section>
+
+        <!-- Strategy 2: Motion -->
+        <section class="bento-item bento-item-small brutalist-card p-8 bg-black text-white relative group overflow-hidden">
+            <h2 class="text-3xl font-bold uppercase mb-4 leading-none">Animation<br>Strategy</h2>
+            <p class="text-neutral-400 text-sm mb-6">"Rhythmic Kinetic Relay"</p>
+            
+            <ul class="space-y-4 mono text-xs">
+                <li class="flex items-center gap-2 group-hover:translate-x-2 transition-transform">
+                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                    FRAMER MOTION: Complex Hand-offs
+                </li>
+                <li class="flex items-center gap-2 group-hover:translate-x-2 transition-transform delay-75">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    CSS: Snappy Micro-States
+                </li>
+                <li class="flex items-center gap-2 group-hover:translate-x-2 transition-transform delay-150">
+                    <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    LOTTIE: "Success" Celebrations
+                </li>
+            </ul>
+
+            <div class="mt-12 p-4 border border-neutral-700 rounded-sm relative">
+                <div class="absolute inset-0 bg-green-500/10 group-hover:bg-green-500/20 transition-colors"></div>
+                <p class="relative z-10 text-[10px] leading-relaxed">
+                    <strong>MY REC:</strong> Use Framer Motion for <span class="text-green-400">Layout Animations</span>. When a user filters cases, the cards shouldn't just vanish—they should slide and reorganize with weight.
+                </p>
+            </div>
+        </section>
+
+        <!-- Strategy 3: Validation Bridge -->
+        <section class="bento-item bento-item-small brutalist-card p-8 flex flex-col justify-center gap-4 bg-neutral-50">
+            <div class="text-center">
+                <h3 class="text-2xl font-black mb-2 uppercase italic">Validation Bridge</h3>
+                <p class="text-xs font-medium text-neutral-500 mb-6">Logic → JSON → UI</p>
+            </div>
+
+            <!-- Validation UI Simulation -->
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold uppercase tracking-wider">ETA Filing Date</label>
+                    <input type="text" value="2024-05-15" class="w-full border-2 border-black p-2 text-sm focus:outline-none focus:ring-2 ring-green-500">
+                    <div class="flex items-center gap-1 text-red-600 font-bold text-[10px] uppercase pt-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        Rule Violation: Must be 30 days after recruitment
+                    </div>
+                </div>
+                <div class="p-3 bg-red-50 border-l-4 border-red-600 text-[10px] font-medium leading-tight text-red-800">
+                    <strong>Logic (The Brain):</strong> Phase 16 calculates dates.<br>
+                    <strong>UI (The Body):</strong> Re-renders with "Error State" variants.
+                </div>
+            </div>
+        </section>
+
+        <!-- Strategy 4: Skeletons -->
+        <section class="bento-item bento-item-large brutalist-card p-8 flex flex-col md:flex-row gap-8">
+            <div class="flex-1">
+                <h2 class="text-3xl font-bold uppercase italic mb-4">Skeletons & States</h2>
+                <p class="text-neutral-600 leading-relaxed mb-6">
+                    "Are skeletons a Design System or Page concern?"<br>
+                    <strong>Design System.</strong> Always. If we change the card's hard shadow depth, the skeleton must reflect that instantly.
+                </p>
+                <div class="flex gap-4">
+                    <div class="stage-tag bg-neutral-200 text-neutral-400 border-neutral-300 shadow-none">System Level</div>
+                    <div class="stage-tag bg-green-100 text-green-800">Atomic Skeletons</div>
+                </div>
+            </div>
+            <div class="flex-1 space-y-4 p-6 border-2 border-black bg-white shadow-[8px_8px_0px_#f0f0f0]">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="w-24 h-4 skeleton-pulse rounded-full"></div>
+                    <div class="w-12 h-6 skeleton-pulse rounded-sm"></div>
+                </div>
+                <div class="w-full h-12 skeleton-pulse rounded-sm"></div>
+                <div class="w-3/4 h-4 skeleton-pulse rounded-full"></div>
+                <div class="grid grid-cols-3 gap-2 mt-6">
+                    <div class="h-8 skeleton-pulse rounded-sm"></div>
+                    <div class="h-8 skeleton-pulse rounded-sm"></div>
+                    <div class="h-8 skeleton-pulse rounded-sm"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final Vision: Stage Progression -->
+        <section class="bento-item brutalist-card p-12 bg-neutral-900 text-white overflow-hidden">
+            <div class="relative z-10">
+                <h2 class="text-5xl font-black italic mb-8 uppercase tracking-tighter">The PERM Progression</h2>
+                <div class="flex flex-wrap gap-8 justify-between">
+                    <div class="group cursor-help">
+                        <div class="stage-tag bg-[#0066FF] mb-2">PWD Phase</div>
+                        <div class="text-2xl font-bold mono group-hover:text-[#0066FF] transition-colors">01. FILED</div>
+                        <div class="w-0 group-hover:w-full h-1 bg-[#0066FF] transition-all duration-500 mt-1"></div>
+                    </div>
+                    <div class="group cursor-help">
+                        <div class="stage-tag bg-[#9333ea] mb-2">Recruitment</div>
+                        <div class="text-2xl font-bold mono group-hover:text-[#9333ea] transition-colors">02. ACTIVE</div>
+                        <div class="w-0 group-hover:w-full h-1 bg-[#9333ea] transition-all duration-500 mt-1"></div>
+                    </div>
+                    <div class="group cursor-help">
+                        <div class="stage-tag bg-[#D97706] mb-2">ETA 9089</div>
+                        <div class="text-2xl font-bold mono group-hover:text-[#D97706] transition-colors">03. PREP</div>
+                        <div class="w-0 group-hover:w-full h-1 bg-[#D97706] transition-all duration-500 mt-1"></div>
+                    </div>
+                    <div class="group cursor-help">
+                        <div class="stage-tag bg-[#059669] mb-2">I-140 Phase</div>
+                        <div class="text-2xl font-bold mono group-hover:text-[#059669] transition-colors">04. FINAL</div>
+                        <div class="w-0 group-hover:w-full h-1 bg-[#059669] transition-all duration-500 mt-1"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Abstract background shape -->
+            <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-green-800 rounded-full blur-[100px] opacity-20 pointer-events-none"></div>
+        </section>
+    </main>
+
+    <footer class="mt-24 pt-8 border-t-2 border-black flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="mono text-xs font-bold uppercase">
+            Built for Maria Garcia • Phase 17 Design System
+        </div>
+        <div class="flex gap-4">
+            <a href="#" class="text-xs font-black uppercase underline underline-offset-4 hover:text-green-700">Inspiration: Linear.app</a>
+            <a href="#" class="text-xs font-black uppercase underline underline-offset-4 hover:text-green-700">Inspiration: Inngest</a>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <span class="mono text-[10px] font-bold">READY FOR INTEGRATION</span>
+        </div>
+    </footer>
+
+    <script>
+        // Simple Interaction logic
+        document.querySelectorAll('.brutalist-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                // Potential Framer Motion equivalent trigger
+                console.log('Kinetic trigger active');
+            });
+        });
+
+        // Simulating the validation bridge toggle
+        const input = document.querySelector('input');
+        input.addEventListener('input', (e) => {
+            if (e.target.value === "") {
+                e.target.style.borderColor = "black";
+            } else {
+                e.target.style.borderColor = "#228B22";
+            }
+        });
+    </script>
+</body>
+</html>

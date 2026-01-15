@@ -1,0 +1,36 @@
+{
+  "currentFeature": {
+    "name": "deadline-enforcement",
+    "planId": "linked-dreaming-stream",
+    "status": "completed",
+    "startedAt": "2025-12-30T20:00:00Z",
+    "completedAt": "2025-12-30T22:00:00Z",
+    "tasks": [
+      {"id": 1, "name": "Schema changes", "status": "completed", "files": ["v2/convex/schema.ts", "v2/convex/users.ts"]},
+      {"id": 2, "name": "Enforcement helpers", "status": "completed", "files": ["v2/convex/lib/deadlineEnforcementHelpers.ts"]},
+      {"id": 3, "name": "Convex functions", "status": "completed", "files": ["v2/convex/deadlineEnforcement.ts", "v2/convex/users.ts"]},
+      {"id": 4, "name": "Alert banner component", "status": "completed", "files": ["v2/src/components/dashboard/AutoClosureAlertBanner.tsx"]},
+      {"id": 5, "name": "Settings toggle component", "status": "completed", "files": ["v2/src/components/settings/DeadlineEnforcementToggle.tsx"]},
+      {"id": 6, "name": "Dashboard integration", "status": "completed", "files": ["v2/src/app/(authenticated)/dashboard/page.tsx", "v2/src/app/(authenticated)/settings/page.tsx"]},
+      {"id": 7, "name": "Tests", "status": "completed", "files": ["v2/convex/lib/__tests__/deadlineEnforcementHelpers.test.ts"]}
+    ]
+  },
+  "previousPlans": [
+    {
+      "planId": "happy-questing-moonbeam",
+      "startedAt": "2025-12-30T00:00:00Z",
+      "completedAt": "2025-12-30T19:30:00Z",
+      "issues": [
+        {"id": 1, "name": "File Naming Convention", "status": "completed", "effort": "S"},
+        {"id": 2, "name": "Test Utils Organization", "status": "completed", "effort": "S"},
+        {"id": 3, "name": "Error Boundaries", "status": "completed", "effort": "S"},
+        {"id": 4, "name": "Debouncing Infrastructure", "status": "completed", "effort": "M"},
+        {"id": 5, "name": "Schema Legacy Docs", "status": "completed", "effort": "S"},
+        {"id": 6, "name": "Full i18n (next-intl)", "status": "completed", "effort": "L"},
+        {"id": 7, "name": "Sentry Observability", "status": "completed", "effort": "M"},
+        {"id": 8, "name": "WCAG 2.1 AA Accessibility", "status": "completed", "effort": "L"},
+        {"id": 9, "name": "Component Refactoring", "status": "completed", "effort": "M"}
+      ]
+    }
+  ]
+}

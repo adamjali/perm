@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #FAFAFA;
+            --bg-secondary: #F5F5F5;
+            --text-primary: #000000;
+            --accent: #228B22;
+            --accent-soft: #e9f5e9;
+            --border: #000000;
+            --milled-grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3BaseFilter id='f'%3B%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .grain-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            opacity: 0.04;
+            z-index: 50;
+            background-image: var(--milled-grain);
+        }
+
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .bento-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto;
+            gap: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .milled-card {
+            background: white;
+            border: 2px solid var(--border);
+            box-shadow: 6px 6px 0px var(--border);
+            transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 1.75rem;
+        }
+
+        .milled-card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 10px 10px 0px var(--border);
+        }
+
+        .milled-card:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px var(--border);
+        }
+
+        .tag {
+            font-family: 'JetBrains Mono';
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 0.25rem 0.5rem;
+            border: 1.5px solid var(--border);
+            display: inline-block;
+            margin-bottom: 1rem;
+            background: #fff;
+        }
+
+        .accent-bg { background-color: var(--accent); color: white; }
+
+        /* Animation Keyframes */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .animate-float { animation: float 4s ease-in-out infinite; }
+
+        .skeleton-row {
+            height: 12px;
+            background: #eee;
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+        .skeleton-row::after {
+            content: "";
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+            animation: loading 1.5s infinite;
+        }
+        @keyframes loading {
+            100% { left: 100%; }
+        }
+
+        .industrial-line {
+            height: 1px;
+            background: var(--border);
+            width: 100%;
+            margin: 1.5rem 0;
+            opacity: 0.1;
+        }
+
+        .knob-track {
+            height: 4px;
+            background: #000;
+            width: 100%;
+            position: relative;
+            margin-top: 1rem;
+        }
+        .knob-handle {
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border: 2px solid #000;
+            position: absolute;
+            top: -6px;
+            cursor: pointer;
+        }
+
+        .hazard-stripes {
+            background: repeating-linear-gradient(
+                45deg,
+                #facc15,
+                #facc15 10px,
+                #000 10px,
+                #000 20px
+            );
+            height: 8px;
+            width: 100%;
+        }
+
+        .glass-panel {
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); }
+    </style>
+</head>
+<body>
+    <div class="grain-overlay"></div>
+
+    <!-- Header Section -->
+    <header class="px-8 pt-12 max-w-[1400px] mx-auto">
+        <div class="flex justify-between items-end border-b-2 border-black pb-6">
+            <div>
+                <span class="mono text-xs uppercase tracking-widest opacity-50">System Phase 17 // Design System Foundation</span>
+                <h1 class="text-6xl font-bold mt-2 tracking-tighter">PERM <span class="text-[var(--accent)]">TRACKER</span> CORE</h1>
+            </div>
+            <div class="text-right hidden md:block">
+                <p class="mono text-xs uppercase font-bold">Standard: Soft Neobrutalism v2.0</p>
+                <p class="mono text-xs opacity-50">Generated: 2025-12-22</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="bento-container">
+        
+        <!-- 1. shadcn/ui vs Scratch -->
+        <div class="milled-card col-span-12 md:col-span-7 row-span-2 group">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="tag accent-bg">Architecture Rec</span>
+                    <h2 class="text-3xl font-bold mb-4">Shadcn/UI: The "Hybrid" Assembly</h2>
+                </div>
+                <div class="w-12 h-12 border-2 border-black flex items-center justify-center text-xl font-bold group-hover:bg-black group-hover:text-white transition-colors">
+                    01
+                </div>
+            </div>
+            <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                I recommend <span class="font-bold underline">shadcn/ui</span>. It’s not a library you "install" and get stuck with; it's code you <span class="italic">own</span>. Since PERM Tracker requires a highly specific neobrutalist aesthetic, shadcn provides the "machined parts" (Radix primitives for accessibility) while allowing us to apply our "Forest Green & Hard Shadows" finish.
+            </p>
+            <div class="grid grid-cols-2 gap-4 mt-auto">
+                <div class="p-4 bg-[var(--bg-secondary)] border-2 border-black">
+                    <p class="mono text-xs font-bold mb-2">PROS</p>
+                    <ul class="text-xs space-y-1 opacity-70">
+                        <li>• Zero package bloat</li>
+                        <li>• Full Tailwind control</li>
+                        <li>• WCAG AAA Accessible</li>
+                    </ul>
+                </div>
+                <div class="p-4 border-2 border-black border-dashed">
+                    <p class="mono text-xs font-bold mb-2">VERDICT</p>
+                    <p class="text-sm font-bold">"Machined Primitives" > "Black Box Components"</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Animation Strategy -->
+        <div class="milled-card col-span-12 md:col-span-5 bg-black text-white">
+            <span class="tag bg-white text-black">Motion Profile</span>
+            <h2 class="text-2xl font-bold mb-4">Framer Motion + CSS</h2>
+            <p class="text-sm opacity-80 mb-6">
+                Linear-style snapping. CSS for micro-interactions (fast), Framer for layout shifts (smart).
+            </p>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between text-xs mono">
+                    <span>HOVER TENSION</span>
+                    <span>150ms</span>
+                </div>
+                <div class="knob-track"><div class="knob-handle" style="left: 20%"></div></div>
+                
+                <div class="flex items-center justify-between text-xs mono pt-2">
+                    <span>ENTRY DAMPING</span>
+                    <span>400ms</span>
+                </div>
+                <div class="knob-track"><div class="knob-handle" style="left: 65%"></div></div>
+            </div>
+
+            <div class="mt-8 flex gap-2">
+                <div class="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse"></div>
+                <div class="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" style="animation-delay: 0.2s"></div>
+                <div class="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" style="animation-delay: 0.4s"></div>
+            </div>
+        </div>
+
+        <!-- 3. Validation Logic vs UI -->
+        <div class="milled-card col-span-12 md:col-span-5 row-span-2">
+            <span class="tag">Interface Bridge</span>
+            <h2 class="text-2xl font-bold mb-2">Validation Synthesis</h2>
+            <p class="text-xs mono mb-6 opacity-60">Logic (Phase 16) → React Hook Form → UI</p>
+            
+            <div class="space-y-4">
+                <div class="border-2 border-black p-4">
+                    <label class="text-[10px] font-bold mono uppercase">PWD Filed Date</label>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-sm">2023-10-15</span>
+                        <div class="text-[var(--accent)]">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17L4 12"/></svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border-2 border-red-500 p-4 bg-red-50">
+                    <label class="text-[10px] font-bold mono uppercase text-red-500">ETA Filing Window</label>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-sm font-bold text-red-600">OVERDUE</span>
+                        <div class="text-red-600 animate-bounce">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="mt-6 text-sm italic border-l-4 border-[var(--accent)] pl-4">
+                "Logic is the rulebook; UI is the referee. We use Phase 16 schemas to trigger 'Error Shakes' and 'Success Glows' instantly."
+            </p>
+        </div>
+
+        <!-- 4. Skeleton / Loading States -->
+        <div class="milled-card col-span-12 md:col-span-7">
+            <div class="flex gap-8">
+                <div class="flex-1">
+                    <span class="tag">Design System Core</span>
+                    <h2 class="text-2xl font-bold mb-4">Atomic Skeletons</h2>
+                    <p class="text-sm opacity-70">
+                        Skeletons are <span class="font-bold">Design System</span> concerns. Every component must have its "ghost" twin to prevent layout shift.
+                    </p>
+                </div>
+                <div class="w-1/2 border-l-2 border-black pl-8 space-y-4">
+                    <div class="skeleton-row w-3/4"></div>
+                    <div class="skeleton-row w-full"></div>
+                    <div class="skeleton-row w-1/2"></div>
+                    <div class="flex gap-2 pt-2">
+                        <div class="w-8 h-8 border-2 border-black border-dashed"></div>
+                        <div class="w-8 h-8 border-2 border-black border-dashed"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Inspiration/Action -->
+        <div class="milled-card col-span-12 md:col-span-12 flex-row gap-12 items-center bg-[var(--bg-secondary)]">
+            <div class="flex-1">
+                <h3 class="text-xl font-bold uppercase tracking-tight">Phase 17 Execution Plan</h3>
+                <p class="text-sm opacity-60 mono mt-2">Target Aesthetic: Linear + Greptile + Neobrutalism</p>
+            </div>
+            <div class="flex gap-4">
+                <button class="px-6 py-3 bg-black text-white font-bold mono text-xs uppercase tracking-widest hover:translate-y-[-2px] transition-transform active:translate-y-[2px]">
+                    Fetch Inspiration Code
+                </button>
+                <button class="px-6 py-3 border-2 border-black font-bold mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-all">
+                    Generate Component Lab
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer Stats -->
+    <footer class="max-w-[1400px] mx-auto px-8 pb-12">
+        <div class="hazard-stripes mb-8"></div>
+        <div class="grid grid-cols-4 gap-8">
+            <div class="border-t-2 border-black pt-4">
+                <p class="mono text-[10px] uppercase font-bold">Contrast Ratio</p>
+                <p class="text-2xl font-bold">19.77:1</p>
+            </div>
+            <div class="border-t-2 border-black pt-4">
+                <p class="mono text-[10px] uppercase font-bold">Component Count</p>
+                <p class="text-2xl font-bold">42 Nodes</p>
+            </div>
+            <div class="border-t-2 border-black pt-4">
+                <p class="mono text-[10px] uppercase font-bold">Avg Latency</p>
+                <p class="text-2xl font-bold">~14ms</p>
+            </div>
+            <div class="border-t-2 border-black pt-4">
+                <p class="mono text-[10px] uppercase font-bold">Status</p>
+                <p class="text-2xl font-bold text-[var(--accent)] italic">READY</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Simple interactive handling for the "knobs"
+        document.querySelectorAll('.knob-track').forEach(track => {
+            track.addEventListener('click', (e) => {
+                const rect = track.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const percent = Math.min(Math.max(0, x / rect.width), 1) * 100;
+                track.querySelector('.knob-handle').style.left = `calc(${percent}% - 8px)`;
+            });
+        });
+
+        // Add "press" effect sound/vibration mimicry via CSS
+        document.querySelectorAll('.milled-card').forEach(card => {
+            card.addEventListener('mousedown', () => {
+                window.navigator.vibrate?.(10);
+            });
+        });
+    </script>
+</body>
+</html>

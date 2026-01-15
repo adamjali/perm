@@ -1,0 +1,2340 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PERM Tracker - Demo Page Mockup v2</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ============================================================================
+       CSS VARIABLES - DESIGN TOKENS
+       ============================================================================ */
+    :root {
+      /* Colors - Light Mode */
+      --background: #FAFAFA;
+      --foreground: #000000;
+      --muted: #F5F5F5;
+      --muted-foreground: #666666;
+      --border: #000000;
+      --primary: #2ECC40;
+      --primary-foreground: #000000;
+      --card: #FFFFFF;
+
+      /* Stage Colors */
+      --stage-pwd: #0066FF;
+      --stage-recruitment: #9333ea;
+      --stage-eta9089: #D97706;
+      --stage-i140: #059669;
+      --stage-success: #2ECC40;
+      --stage-closed: #6B7280;
+
+      /* Urgency Colors */
+      --urgency-urgent: #DC2626;
+      --urgency-soon: #EA580C;
+      --urgency-normal: #059669;
+
+      /* Manila Folder Colors */
+      --manila-light: #F5E6C8;
+      --manila-medium: #E8D4A8;
+      --manila-dark: #D4C090;
+
+      /* Shadows */
+      --shadow-hard-sm: 2px 2px 0px var(--border);
+      --shadow-hard: 4px 4px 0px var(--border);
+      --shadow-hard-lg: 8px 8px 0px var(--border);
+
+      /* Typography */
+      --font-heading: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Transitions */
+      --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-spring: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Dark Mode */
+    .dark {
+      --background: #0A0A0A;
+      --foreground: #FAFAFA;
+      --muted: #1A1A1A;
+      --muted-foreground: #A0A0A0;
+      --border: #FAFAFA;
+      --card: #141414;
+      --shadow-hard-sm: 2px 2px 0px rgba(255,255,255,0.2);
+      --shadow-hard: 4px 4px 0px rgba(255,255,255,0.2);
+      --shadow-hard-lg: 8px 8px 0px rgba(255,255,255,0.2);
+      --manila-light: #3D3528;
+      --manila-medium: #4A4234;
+      --manila-dark: #5C5142;
+    }
+
+    /* ============================================================================
+       BASE STYLES
+       ============================================================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--background);
+      color: var(--foreground);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Dot Pattern Background */
+    .bg-dots {
+      background-image: radial-gradient(rgba(0,0,0,0.15) 1.5px, transparent 1.5px);
+      background-size: 24px 24px;
+    }
+
+    .dark .bg-dots {
+      background-image: radial-gradient(rgba(255,255,255,0.08) 1.5px, transparent 1.5px);
+    }
+
+    /* Grain Overlay */
+    .grain-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+
+    /* ============================================================================
+       TYPOGRAPHY
+       ============================================================================ */
+    h1, h2, h3, h4, h5, h6 {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+    }
+
+    /* ============================================================================
+       HEADER
+       ============================================================================ */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: #000;
+      border-bottom: 4px solid var(--foreground);
+      transition: all var(--transition-normal);
+    }
+
+    .header.scrolled {
+      backdrop-filter: blur(12px);
+      background: rgba(0,0,0,0.95);
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: padding var(--transition-normal);
+    }
+
+    .header.scrolled .header-inner {
+      padding-block: 0.75rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: #fff;
+      padding: 0.5rem;
+      transition: all var(--transition-fast);
+    }
+
+    .logo:hover {
+      background: var(--primary);
+      color: #000;
+      box-shadow: var(--shadow-hard);
+    }
+
+    .logo:hover .logo-icon {
+      color: #000;
+    }
+
+    .logo-icon {
+      color: var(--primary);
+      transition: color var(--transition-fast);
+    }
+
+    .logo-perm {
+      color: var(--primary);
+      transition: color var(--transition-fast);
+    }
+
+    .logo:hover .logo-perm {
+      color: #000;
+    }
+
+    /* Nav Links */
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-link {
+      position: relative;
+      padding: 0.5rem 1rem;
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #fff;
+      text-decoration: none;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 1rem;
+      right: 1rem;
+      height: 3px;
+      background: var(--primary);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform var(--transition-normal);
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--primary);
+    }
+
+    .nav-link.active::after,
+    .nav-link:hover::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 2px solid rgba(255,255,255,0.3);
+      color: #fff;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .theme-toggle:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #000;
+      box-shadow: var(--shadow-hard-sm);
+      transform: translate(-2px, -2px);
+    }
+
+    .theme-toggle:active {
+      transform: translate(0, 0);
+      box-shadow: none;
+    }
+
+    /* ============================================================================
+       DEMO BANNER
+       ============================================================================ */
+    .demo-banner {
+      position: fixed;
+      top: 80px;
+      left: 0;
+      right: 0;
+      z-index: 90;
+      background: linear-gradient(90deg, var(--stage-pwd), var(--stage-recruitment), var(--stage-eta9089));
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      animation: bannerPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes bannerPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.9; }
+    }
+
+    .demo-banner-icon {
+      animation: bounceIcon 1s ease-in-out infinite;
+    }
+
+    @keyframes bounceIcon {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    .demo-banner-text {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .demo-banner-badge {
+      background: rgba(0,0,0,0.3);
+      padding: 0.25rem 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: #fff;
+    }
+
+    /* ============================================================================
+       MAIN CONTENT
+       ============================================================================ */
+    .main-content {
+      padding-top: 140px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* ============================================================================
+       PAGE HEADER
+       ============================================================================ */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 3px solid var(--border);
+    }
+
+    .page-header-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .page-title {
+      font-size: clamp(2rem, 4vw, 3rem);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .page-title-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--primary);
+      color: #000;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      box-shadow: var(--shadow-hard-sm);
+    }
+
+    .page-subtitle {
+      font-size: 1.125rem;
+      color: var(--muted-foreground);
+      max-width: 600px;
+    }
+
+    .page-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 1.5rem;
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-decoration: none;
+      border: 3px solid var(--border);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #000;
+      box-shadow: var(--shadow-hard);
+    }
+
+    .btn-primary:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-hard-lg);
+    }
+
+    .btn-primary:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--foreground);
+      box-shadow: var(--shadow-hard);
+    }
+
+    .btn-outline:hover {
+      background: var(--foreground);
+      color: var(--background);
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-hard-lg);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted-foreground);
+      border: 2px solid var(--muted-foreground);
+      box-shadow: none;
+    }
+
+    .btn-ghost:hover {
+      color: var(--foreground);
+      border-color: var(--foreground);
+    }
+
+    .btn-sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+    }
+
+    /* ============================================================================
+       STATS GRID
+       ============================================================================ */
+    .stats-section {
+      margin-bottom: 3rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 3px solid var(--border);
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-hard);
+      transition: all var(--transition-normal);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 6px;
+      height: 100%;
+      background: var(--stat-color, var(--primary));
+    }
+
+    .stat-card:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-hard-lg);
+    }
+
+    .stat-card-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--muted);
+      border: 2px solid var(--border);
+      margin-bottom: 1rem;
+      color: var(--stat-color, var(--primary));
+      transition: all var(--transition-normal);
+    }
+
+    .stat-card:hover .stat-card-icon {
+      background: var(--stat-color, var(--primary));
+      color: #fff;
+    }
+
+    .stat-card-value {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-card-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted-foreground);
+    }
+
+    .stat-card[data-stat="total"] { --stat-color: var(--primary); }
+    .stat-card[data-stat="active"] { --stat-color: var(--stage-pwd); }
+    .stat-card[data-stat="urgent"] { --stat-color: var(--urgency-urgent); }
+    .stat-card[data-stat="completed"] { --stat-color: var(--stage-success); }
+
+    /* Animated counter */
+    .stat-card-value[data-count] {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    /* ============================================================================
+       DASHBOARD GRID - CALENDAR & TIMELINE
+       ============================================================================ */
+    .dashboard-section {
+      margin-bottom: 3rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-title-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary);
+      color: #000;
+      border: 2px solid var(--border);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    /* Mini Calendar */
+    .calendar-card {
+      background: var(--card);
+      border: 3px solid var(--border);
+      box-shadow: var(--shadow-hard);
+      overflow: hidden;
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 3px solid var(--border);
+      background: var(--muted);
+    }
+
+    .calendar-title {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .calendar-nav-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--background);
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .calendar-nav-btn:hover {
+      background: var(--primary);
+      color: #000;
+    }
+
+    .calendar-body {
+      padding: 1.5rem;
+    }
+
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .calendar-weekday {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      text-align: center;
+      color: var(--muted-foreground);
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+
+    .calendar-day:hover {
+      background: var(--muted);
+      border-color: var(--border);
+    }
+
+    .calendar-day.today {
+      background: var(--primary);
+      color: #000;
+      font-weight: 700;
+      border-color: var(--border);
+      box-shadow: var(--shadow-hard-sm);
+    }
+
+    .calendar-day.has-deadline::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--urgency-urgent);
+    }
+
+    .calendar-day.has-deadline.soon::after {
+      background: var(--urgency-soon);
+    }
+
+    .calendar-day.has-deadline.normal::after {
+      background: var(--urgency-normal);
+    }
+
+    .calendar-day.other-month {
+      color: var(--muted-foreground);
+      opacity: 0.5;
+    }
+
+    /* Calendar Legend */
+    .calendar-legend {
+      display: flex;
+      gap: 1.5rem;
+      padding: 1rem 1.5rem;
+      border-top: 2px solid var(--border);
+      background: var(--muted);
+    }
+
+    .calendar-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+    }
+
+    .calendar-legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .calendar-legend-dot.urgent { background: var(--urgency-urgent); }
+    .calendar-legend-dot.soon { background: var(--urgency-soon); }
+    .calendar-legend-dot.normal { background: var(--urgency-normal); }
+
+    /* Mini Timeline */
+    .timeline-card {
+      background: var(--card);
+      border: 3px solid var(--border);
+      box-shadow: var(--shadow-hard);
+      overflow: hidden;
+    }
+
+    .timeline-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 3px solid var(--border);
+      background: var(--muted);
+    }
+
+    .timeline-title {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+
+    .timeline-body {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .timeline-case {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .timeline-case-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .timeline-case-name {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .timeline-case-stage {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      background: var(--stage-color, var(--muted));
+      color: #fff;
+    }
+
+    .timeline-case[data-stage="pwd"] .timeline-case-stage { background: var(--stage-pwd); }
+    .timeline-case[data-stage="recruitment"] .timeline-case-stage { background: var(--stage-recruitment); }
+    .timeline-case[data-stage="eta9089"] .timeline-case-stage { background: var(--stage-eta9089); }
+    .timeline-case[data-stage="i140"] .timeline-case-stage { background: var(--stage-i140); }
+
+    .timeline-progress {
+      position: relative;
+      height: 24px;
+      background: var(--muted);
+      border: 2px solid var(--border);
+      overflow: hidden;
+    }
+
+    .timeline-progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: linear-gradient(90deg,
+        var(--stage-pwd) 0%,
+        var(--stage-recruitment) 33%,
+        var(--stage-eta9089) 66%,
+        var(--stage-i140) 100%
+      );
+      transition: width 1s ease-out;
+    }
+
+    .timeline-progress-stages {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+    }
+
+    .timeline-progress-stage {
+      flex: 1;
+      border-right: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      color: var(--muted-foreground);
+      opacity: 0.7;
+    }
+
+    .timeline-progress-stage:last-child {
+      border-right: none;
+    }
+
+    .timeline-case-meta {
+      display: flex;
+      gap: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+    }
+
+    .timeline-case-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* ============================================================================
+       CASES GRID - MANILA FOLDER CARDS
+       ============================================================================ */
+    .cases-section {
+      margin-bottom: 3rem;
+    }
+
+    .cases-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 2rem;
+    }
+
+    /* Manila Folder Card */
+    .case-card {
+      position: relative;
+      background: var(--manila-light);
+      border: 3px solid var(--border);
+      box-shadow: var(--shadow-hard);
+      transition: all var(--transition-normal);
+      padding-top: 1.5rem;
+    }
+
+    .case-card::before {
+      content: '';
+      position: absolute;
+      top: -16px;
+      left: 20px;
+      width: 100px;
+      height: 20px;
+      background: var(--manila-medium);
+      border: 3px solid var(--border);
+      border-bottom: none;
+      clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%);
+    }
+
+    .case-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 6px;
+      height: 100%;
+      background: var(--stage-color, var(--primary));
+    }
+
+    .case-card:hover {
+      transform: translate(-4px, -4px);
+      box-shadow: var(--shadow-hard-lg);
+    }
+
+    .case-card[data-stage="pwd"] { --stage-color: var(--stage-pwd); }
+    .case-card[data-stage="recruitment"] { --stage-color: var(--stage-recruitment); }
+    .case-card[data-stage="eta9089"] { --stage-color: var(--stage-eta9089); }
+    .case-card[data-stage="i140"] { --stage-color: var(--stage-i140); }
+    .case-card[data-stage="closed"] { --stage-color: var(--stage-closed); }
+
+    .case-card-content {
+      padding: 1.5rem;
+    }
+
+    .case-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .case-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .case-card-name {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #000;
+    }
+
+    .dark .case-card-name {
+      color: var(--foreground);
+    }
+
+    .case-card-employer {
+      font-size: 0.875rem;
+      color: var(--muted-foreground);
+    }
+
+    .case-card-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .case-card-action {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--background);
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      color: var(--foreground);
+    }
+
+    .case-card-action:hover {
+      background: var(--primary);
+      color: #000;
+    }
+
+    .case-card-action.delete:hover {
+      background: var(--urgency-urgent);
+      color: #fff;
+    }
+
+    .case-card-badges {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .case-card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: var(--stage-color, var(--muted));
+      color: #fff;
+    }
+
+    .case-card-badge.urgent {
+      background: var(--urgency-urgent);
+      animation: urgentPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes urgentPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .case-card-dates {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      padding-top: 1rem;
+      border-top: 2px dashed var(--border);
+    }
+
+    .case-card-date {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .case-card-date-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted-foreground);
+    }
+
+    .case-card-date-value {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #000;
+    }
+
+    .dark .case-card-date-value {
+      color: var(--foreground);
+    }
+
+    /* Favorite indicator */
+    .case-card-favorite {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      color: var(--primary);
+      animation: favoriteWiggle 0.5s ease-in-out;
+    }
+
+    @keyframes favoriteWiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-15deg); }
+      75% { transform: rotate(15deg); }
+    }
+
+    /* Add Case Card */
+    .case-card-add {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      min-height: 280px;
+      background: var(--muted);
+      border: 3px dashed var(--border);
+      cursor: pointer;
+      transition: all var(--transition-normal);
+    }
+
+    .case-card-add::before,
+    .case-card-add::after {
+      display: none;
+    }
+
+    .case-card-add:hover {
+      background: var(--primary);
+      border-style: solid;
+      color: #000;
+    }
+
+    .case-card-add-icon {
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--background);
+      border: 3px solid var(--border);
+      transition: all var(--transition-normal);
+    }
+
+    .case-card-add:hover .case-card-add-icon {
+      background: #000;
+      color: var(--primary);
+      transform: rotate(90deg);
+    }
+
+    .case-card-add-text {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ============================================================================
+       FLOATING ACTION BUTTON
+       ============================================================================ */
+    .fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary);
+      color: #000;
+      border: 3px solid var(--border);
+      box-shadow: var(--shadow-hard-lg);
+      cursor: pointer;
+      transition: all var(--transition-spring);
+      z-index: 50;
+    }
+
+    .fab:hover {
+      transform: translate(-4px, -4px) scale(1.1);
+      box-shadow: 12px 12px 0px var(--border);
+    }
+
+    .fab:active {
+      transform: translate(2px, 2px) scale(0.95);
+      box-shadow: none;
+    }
+
+    .fab-icon {
+      transition: transform var(--transition-spring);
+    }
+
+    .fab:hover .fab-icon {
+      transform: rotate(90deg);
+    }
+
+    /* ============================================================================
+       CTA SECTION
+       ============================================================================ */
+    .cta-section {
+      margin-top: 4rem;
+      padding: 4rem 2rem;
+      background: var(--foreground);
+      color: var(--background);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-inner {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    .cta-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+
+    .cta-title {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      margin-bottom: 1rem;
+    }
+
+    .cta-subtitle {
+      font-size: 1.125rem;
+      opacity: 0.8;
+      margin-bottom: 2rem;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-cta {
+      background: var(--primary);
+      color: #000;
+      border-color: var(--primary);
+    }
+
+    .btn-cta:hover {
+      background: #fff;
+      color: #000;
+      border-color: #fff;
+    }
+
+    .btn-cta-outline {
+      background: transparent;
+      color: #fff;
+      border-color: #fff;
+    }
+
+    .btn-cta-outline:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    /* CTA decoration */
+    .cta-decoration {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      background: var(--primary);
+      opacity: 0.1;
+    }
+
+    .cta-decoration-1 {
+      top: -100px;
+      left: -100px;
+      transform: rotate(45deg);
+    }
+
+    .cta-decoration-2 {
+      bottom: -100px;
+      right: -100px;
+      transform: rotate(45deg);
+    }
+
+    /* ============================================================================
+       RESET BUTTON
+       ============================================================================ */
+    .reset-section {
+      padding: 2rem;
+      text-align: center;
+      border-top: 3px solid var(--border);
+    }
+
+    /* ============================================================================
+       TOOLTIP
+       ============================================================================ */
+    .tooltip-wrapper {
+      position: relative;
+    }
+
+    .tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      background: var(--foreground);
+      color: var(--background);
+      padding: 0.5rem 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-fast);
+      pointer-events: none;
+      border: 2px solid var(--primary);
+      box-shadow: var(--shadow-hard-sm);
+      z-index: 100;
+    }
+
+    .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--foreground);
+    }
+
+    .tooltip-wrapper:hover .tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(-12px);
+    }
+
+    /* ============================================================================
+       INTERACTIVE CALLOUT
+       ============================================================================ */
+    .interactive-callout {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      max-width: 300px;
+      background: var(--card);
+      border: 3px solid var(--border);
+      box-shadow: var(--shadow-hard-lg);
+      padding: 1.5rem;
+      z-index: 50;
+      animation: calloutBounce 0.5s ease-out;
+    }
+
+    @keyframes calloutBounce {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .interactive-callout-close {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--muted-foreground);
+      transition: color var(--transition-fast);
+    }
+
+    .interactive-callout-close:hover {
+      color: var(--foreground);
+    }
+
+    .interactive-callout-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary);
+      color: #000;
+      margin-bottom: 1rem;
+      animation: iconPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .interactive-callout-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .interactive-callout-text {
+      font-size: 0.875rem;
+      color: var(--muted-foreground);
+      line-height: 1.5;
+    }
+
+    .interactive-callout-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--primary);
+    }
+
+    /* ============================================================================
+       FOOTER
+       ============================================================================ */
+    .footer {
+      background: #000;
+      color: #fff;
+      padding: 2rem;
+      text-align: center;
+      border-top: 4px solid var(--primary);
+    }
+
+    .footer-text {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .footer-link {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .footer-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ============================================================================
+       RESPONSIVE
+       ============================================================================ */
+    @media (max-width: 1024px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .page-header {
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nav {
+        display: none;
+      }
+
+      .demo-banner {
+        top: 70px;
+        flex-wrap: wrap;
+        text-align: center;
+      }
+
+      .main-content {
+        padding-top: 160px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cases-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .interactive-callout {
+        left: 1rem;
+        right: 1rem;
+        max-width: none;
+      }
+
+      .fab {
+        bottom: 1rem;
+        right: 1rem;
+        width: 56px;
+        height: 56px;
+      }
+    }
+
+    /* ============================================================================
+       REDUCED MOTION
+       ============================================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-dots">
+  <!-- Grain Overlay -->
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="header" id="header">
+    <div class="header-inner">
+      <a href="mockup-home-v2.html" class="logo">
+        <i data-lucide="file-text" class="logo-icon" style="width: 28px; height: 28px;"></i>
+        <span><span class="logo-perm">PERM</span> Tracker</span>
+      </a>
+
+      <nav class="nav">
+        <a href="mockup-home-v2.html" class="nav-link">Home</a>
+        <a href="#" class="nav-link active">Demo</a>
+        <a href="#" class="nav-link">Login</a>
+        <a href="#" class="nav-link">Sign Up</a>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <i data-lucide="moon" id="themeIcon" style="width: 20px; height: 20px;"></i>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Demo Banner -->
+  <div class="demo-banner">
+    <i data-lucide="sparkles" class="demo-banner-icon" style="width: 18px; height: 18px; color: #fff;"></i>
+    <span class="demo-banner-text">You're exploring the demo</span>
+    <span class="demo-banner-badge">Browser Storage Only</span>
+  </div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-header-content">
+          <h1 class="page-title">
+            PERM Tracker Demo
+            <span class="page-title-badge">
+              <i data-lucide="play" style="width: 14px; height: 14px;"></i>
+              Live
+            </span>
+          </h1>
+          <p class="page-subtitle">
+            Explore the full functionality with sample cases. All changes are saved locally in your browser—create an account to sync across devices.
+          </p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-outline btn-sm" id="resetBtn">
+            <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+            Reset Demo
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <section class="stats-section">
+        <div class="stats-grid">
+          <article class="stat-card" data-stat="total">
+            <div class="stat-card-icon">
+              <i data-lucide="folder" style="width: 24px; height: 24px;"></i>
+            </div>
+            <div class="stat-card-value" data-count="5">0</div>
+            <div class="stat-card-label">Total Cases</div>
+          </article>
+
+          <article class="stat-card" data-stat="active">
+            <div class="stat-card-icon">
+              <i data-lucide="activity" style="width: 24px; height: 24px;"></i>
+            </div>
+            <div class="stat-card-value" data-count="3">0</div>
+            <div class="stat-card-label">Active Cases</div>
+          </article>
+
+          <article class="stat-card" data-stat="urgent">
+            <div class="stat-card-icon">
+              <i data-lucide="alert-triangle" style="width: 24px; height: 24px;"></i>
+            </div>
+            <div class="stat-card-value" data-count="2">0</div>
+            <div class="stat-card-label">Urgent Deadlines</div>
+          </article>
+
+          <article class="stat-card" data-stat="completed">
+            <div class="stat-card-icon">
+              <i data-lucide="check-circle" style="width: 24px; height: 24px;"></i>
+            </div>
+            <div class="stat-card-value" data-count="1">0</div>
+            <div class="stat-card-label">Completed</div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Dashboard Grid -->
+      <section class="dashboard-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="section-title-icon">
+              <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
+            </span>
+            Overview
+          </h2>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Mini Calendar -->
+          <div class="calendar-card">
+            <div class="calendar-header">
+              <h3 class="calendar-title">January 2026</h3>
+              <div class="calendar-nav">
+                <button class="calendar-nav-btn tooltip-wrapper">
+                  <i data-lucide="chevron-left" style="width: 16px; height: 16px;"></i>
+                  <span class="tooltip">Previous Month</span>
+                </button>
+                <button class="calendar-nav-btn tooltip-wrapper">
+                  <i data-lucide="chevron-right" style="width: 16px; height: 16px;"></i>
+                  <span class="tooltip">Next Month</span>
+                </button>
+              </div>
+            </div>
+            <div class="calendar-body">
+              <div class="calendar-weekdays">
+                <span class="calendar-weekday">Sun</span>
+                <span class="calendar-weekday">Mon</span>
+                <span class="calendar-weekday">Tue</span>
+                <span class="calendar-weekday">Wed</span>
+                <span class="calendar-weekday">Thu</span>
+                <span class="calendar-weekday">Fri</span>
+                <span class="calendar-weekday">Sat</span>
+              </div>
+              <div class="calendar-days">
+                <span class="calendar-day other-month">28</span>
+                <span class="calendar-day other-month">29</span>
+                <span class="calendar-day other-month">30</span>
+                <span class="calendar-day other-month">31</span>
+                <span class="calendar-day today">1</span>
+                <span class="calendar-day">2</span>
+                <span class="calendar-day">3</span>
+                <span class="calendar-day">4</span>
+                <span class="calendar-day has-deadline">5</span>
+                <span class="calendar-day">6</span>
+                <span class="calendar-day">7</span>
+                <span class="calendar-day has-deadline soon">8</span>
+                <span class="calendar-day">9</span>
+                <span class="calendar-day">10</span>
+                <span class="calendar-day">11</span>
+                <span class="calendar-day">12</span>
+                <span class="calendar-day has-deadline normal">13</span>
+                <span class="calendar-day">14</span>
+                <span class="calendar-day">15</span>
+                <span class="calendar-day has-deadline">16</span>
+                <span class="calendar-day">17</span>
+                <span class="calendar-day">18</span>
+                <span class="calendar-day">19</span>
+                <span class="calendar-day">20</span>
+                <span class="calendar-day">21</span>
+                <span class="calendar-day has-deadline soon">22</span>
+                <span class="calendar-day">23</span>
+                <span class="calendar-day">24</span>
+                <span class="calendar-day">25</span>
+                <span class="calendar-day">26</span>
+                <span class="calendar-day">27</span>
+                <span class="calendar-day">28</span>
+                <span class="calendar-day">29</span>
+                <span class="calendar-day">30</span>
+                <span class="calendar-day">31</span>
+              </div>
+            </div>
+            <div class="calendar-legend">
+              <div class="calendar-legend-item">
+                <span class="calendar-legend-dot urgent"></span>
+                <span>Urgent (≤7d)</span>
+              </div>
+              <div class="calendar-legend-item">
+                <span class="calendar-legend-dot soon"></span>
+                <span>Soon (8-30d)</span>
+              </div>
+              <div class="calendar-legend-item">
+                <span class="calendar-legend-dot normal"></span>
+                <span>Normal (30d+)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mini Timeline -->
+          <div class="timeline-card">
+            <div class="timeline-header">
+              <h3 class="timeline-title">Case Progress</h3>
+              <button class="btn btn-ghost btn-sm">
+                View All
+                <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+              </button>
+            </div>
+            <div class="timeline-body">
+              <!-- Case 1 -->
+              <div class="timeline-case" data-stage="recruitment">
+                <div class="timeline-case-header">
+                  <span class="timeline-case-name">Jane Smith</span>
+                  <span class="timeline-case-stage">Recruitment</span>
+                </div>
+                <div class="timeline-progress">
+                  <div class="timeline-progress-bar" style="width: 45%;"></div>
+                  <div class="timeline-progress-stages">
+                    <span class="timeline-progress-stage">PWD</span>
+                    <span class="timeline-progress-stage">REC</span>
+                    <span class="timeline-progress-stage">9089</span>
+                    <span class="timeline-progress-stage">I-140</span>
+                  </div>
+                </div>
+                <div class="timeline-case-meta">
+                  <div class="timeline-case-meta-item">
+                    <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
+                    <span>Next: Jan 15</span>
+                  </div>
+                  <div class="timeline-case-meta-item">
+                    <i data-lucide="clock" style="width: 12px; height: 12px;"></i>
+                    <span>14 days left</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Case 2 -->
+              <div class="timeline-case" data-stage="eta9089">
+                <div class="timeline-case-header">
+                  <span class="timeline-case-name">John Doe</span>
+                  <span class="timeline-case-stage">ETA 9089</span>
+                </div>
+                <div class="timeline-progress">
+                  <div class="timeline-progress-bar" style="width: 70%;"></div>
+                  <div class="timeline-progress-stages">
+                    <span class="timeline-progress-stage">PWD</span>
+                    <span class="timeline-progress-stage">REC</span>
+                    <span class="timeline-progress-stage">9089</span>
+                    <span class="timeline-progress-stage">I-140</span>
+                  </div>
+                </div>
+                <div class="timeline-case-meta">
+                  <div class="timeline-case-meta-item">
+                    <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
+                    <span>Filed: Dec 20</span>
+                  </div>
+                  <div class="timeline-case-meta-item">
+                    <i data-lucide="hourglass" style="width: 12px; height: 12px;"></i>
+                    <span>Processing</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Case 3 -->
+              <div class="timeline-case" data-stage="pwd">
+                <div class="timeline-case-header">
+                  <span class="timeline-case-name">Sarah Johnson</span>
+                  <span class="timeline-case-stage">PWD</span>
+                </div>
+                <div class="timeline-progress">
+                  <div class="timeline-progress-bar" style="width: 15%;"></div>
+                  <div class="timeline-progress-stages">
+                    <span class="timeline-progress-stage">PWD</span>
+                    <span class="timeline-progress-stage">REC</span>
+                    <span class="timeline-progress-stage">9089</span>
+                    <span class="timeline-progress-stage">I-140</span>
+                  </div>
+                </div>
+                <div class="timeline-case-meta">
+                  <div class="timeline-case-meta-item">
+                    <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
+                    <span>Filed: Nov 1</span>
+                  </div>
+                  <div class="timeline-case-meta-item">
+                    <i data-lucide="hourglass" style="width: 12px; height: 12px;"></i>
+                    <span>~3 months</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cases Grid -->
+      <section class="cases-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="section-title-icon">
+              <i data-lucide="folder-open" style="width: 18px; height: 18px;"></i>
+            </span>
+            Your Cases
+          </h2>
+          <button class="btn btn-primary" id="addCaseBtn">
+            <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+            Add Case
+          </button>
+        </div>
+
+        <div class="cases-grid">
+          <!-- Case Card 1 -->
+          <article class="case-card" data-stage="recruitment">
+            <i data-lucide="star" class="case-card-favorite" style="width: 20px; height: 20px; fill: currentColor;"></i>
+            <div class="case-card-content">
+              <div class="case-card-header">
+                <div class="case-card-info">
+                  <h3 class="case-card-name">Jane Smith</h3>
+                  <p class="case-card-employer">TechCorp Inc.</p>
+                </div>
+                <div class="case-card-actions">
+                  <button class="case-card-action tooltip-wrapper">
+                    <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
+                    <span class="tooltip">Edit Case</span>
+                  </button>
+                  <button class="case-card-action delete tooltip-wrapper">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                    <span class="tooltip">Delete Case</span>
+                  </button>
+                </div>
+              </div>
+              <div class="case-card-badges">
+                <span class="case-card-badge" style="background: var(--stage-recruitment);">Recruitment</span>
+                <span class="case-card-badge urgent">
+                  <i data-lucide="alert-triangle" style="width: 10px; height: 10px;"></i>
+                  5 Days
+                </span>
+              </div>
+              <div class="case-card-dates">
+                <div class="case-card-date">
+                  <span class="case-card-date-label">PWD Expires</span>
+                  <span class="case-card-date-value">Mar 15, 2026</span>
+                </div>
+                <div class="case-card-date">
+                  <span class="case-card-date-label">Job Order End</span>
+                  <span class="case-card-date-value">Jan 5, 2026</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Case Card 2 -->
+          <article class="case-card" data-stage="eta9089">
+            <div class="case-card-content">
+              <div class="case-card-header">
+                <div class="case-card-info">
+                  <h3 class="case-card-name">John Doe</h3>
+                  <p class="case-card-employer">StartupXYZ</p>
+                </div>
+                <div class="case-card-actions">
+                  <button class="case-card-action tooltip-wrapper">
+                    <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
+                    <span class="tooltip">Edit Case</span>
+                  </button>
+                  <button class="case-card-action delete tooltip-wrapper">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                    <span class="tooltip">Delete Case</span>
+                  </button>
+                </div>
+              </div>
+              <div class="case-card-badges">
+                <span class="case-card-badge" style="background: var(--stage-eta9089);">ETA 9089</span>
+              </div>
+              <div class="case-card-dates">
+                <div class="case-card-date">
+                  <span class="case-card-date-label">Filed</span>
+                  <span class="case-card-date-value">Dec 20, 2025</span>
+                </div>
+                <div class="case-card-date">
+                  <span class="case-card-date-label">Expires</span>
+                  <span class="case-card-date-value">Jun 30, 2026</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Case Card 3 -->
+          <article class="case-card" data-stage="pwd">
+            <div class="case-card-content">
+              <div class="case-card-header">
+                <div class="case-card-info">
+                  <h3 class="case-card-name">Sarah Johnson</h3>
+                  <p class="case-card-employer">MegaCorp LLC</p>
+                </div>
+                <div class="case-card-actions">
+                  <button class="case-card-action tooltip-wrapper">
+                    <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
+                    <span class="tooltip">Edit Case</span>
+                  </button>
+                  <button class="case-card-action delete tooltip-wrapper">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                    <span class="tooltip">Delete Case</span>
+                  </button>
+                </div>
+              </div>
+              <div class="case-card-badges">
+                <span class="case-card-badge" style="background: var(--stage-pwd);">PWD</span>
+                <span class="case-card-badge" style="background: var(--urgency-soon);">28 Days</span>
+              </div>
+              <div class="case-card-dates">
+                <div class="case-card-date">
+                  <span class="case-card-date-label">Filed</span>
+                  <span class="case-card-date-value">Nov 1, 2025</span>
+                </div>
+                <div class="case-card-date">
+                  <span class="case-card-date-label">Est. Completion</span>
+                  <span class="case-card-date-value">Mar 2026</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Case Card 4 -->
+          <article class="case-card" data-stage="i140">
+            <i data-lucide="star" class="case-card-favorite" style="width: 20px; height: 20px; fill: currentColor;"></i>
+            <div class="case-card-content">
+              <div class="case-card-header">
+                <div class="case-card-info">
+                  <h3 class="case-card-name">Michael Chen</h3>
+                  <p class="case-card-employer">GlobalTech</p>
+                </div>
+                <div class="case-card-actions">
+                  <button class="case-card-action tooltip-wrapper">
+                    <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
+                    <span class="tooltip">Edit Case</span>
+                  </button>
+                  <button class="case-card-action delete tooltip-wrapper">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                    <span class="tooltip">Delete Case</span>
+                  </button>
+                </div>
+              </div>
+              <div class="case-card-badges">
+                <span class="case-card-badge" style="background: var(--stage-i140);">I-140</span>
+              </div>
+              <div class="case-card-dates">
+                <div class="case-card-date">
+                  <span class="case-card-date-label">Filed</span>
+                  <span class="case-card-date-value">Dec 1, 2025</span>
+                </div>
+                <div class="case-card-date">
+                  <span class="case-card-date-label">Premium</span>
+                  <span class="case-card-date-value">Yes ⚡</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Case Card 5 - Completed -->
+          <article class="case-card" data-stage="closed" style="opacity: 0.7;">
+            <div class="case-card-content">
+              <div class="case-card-header">
+                <div class="case-card-info">
+                  <h3 class="case-card-name">Emily Davis</h3>
+                  <p class="case-card-employer">InnovateCo</p>
+                </div>
+                <div class="case-card-actions">
+                  <button class="case-card-action tooltip-wrapper">
+                    <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                    <span class="tooltip">View Case</span>
+                  </button>
+                </div>
+              </div>
+              <div class="case-card-badges">
+                <span class="case-card-badge" style="background: var(--stage-success);">
+                  <i data-lucide="check" style="width: 10px; height: 10px;"></i>
+                  Approved
+                </span>
+              </div>
+              <div class="case-card-dates">
+                <div class="case-card-date">
+                  <span class="case-card-date-label">I-140 Approved</span>
+                  <span class="case-card-date-value">Nov 15, 2025</span>
+                </div>
+                <div class="case-card-date">
+                  <span class="case-card-date-label">Priority Date</span>
+                  <span class="case-card-date-value">Aug 10, 2025</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Add New Case Card -->
+          <article class="case-card case-card-add" id="addCaseCard">
+            <div class="case-card-add-icon">
+              <i data-lucide="plus" style="width: 32px; height: 32px;"></i>
+            </div>
+            <span class="case-card-add-text">Add New Case</span>
+          </article>
+        </div>
+      </section>
+
+      <!-- Reset Section -->
+      <div class="reset-section">
+        <button class="btn btn-ghost">
+          <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
+          Reset Demo Data
+        </button>
+      </div>
+    </div>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+      <div class="cta-decoration cta-decoration-1"></div>
+      <div class="cta-decoration cta-decoration-2"></div>
+
+      <div class="cta-inner">
+        <div class="cta-eyebrow">
+          <i data-lucide="rocket" style="width: 14px; height: 14px;"></i>
+          Ready to get started?
+        </div>
+        <h2 class="cta-title">Like what you see?</h2>
+        <p class="cta-subtitle">
+          Create a free account to save your cases, sync across devices, and get deadline notifications.
+        </p>
+        <div class="cta-buttons">
+          <a href="#" class="btn btn-cta">
+            <i data-lucide="user-plus" style="width: 18px; height: 18px;"></i>
+            Create Free Account
+          </a>
+          <a href="mockup-home-v2.html" class="btn btn-cta-outline">
+            <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+            Back to Home
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating Action Button -->
+  <button class="fab tooltip-wrapper" id="fabBtn">
+    <i data-lucide="plus" class="fab-icon" style="width: 28px; height: 28px;"></i>
+    <span class="tooltip">Add New Case</span>
+  </button>
+
+  <!-- Interactive Callout -->
+  <div class="interactive-callout" id="callout">
+    <button class="interactive-callout-close" id="closeCallout">
+      <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+    </button>
+    <div class="interactive-callout-icon">
+      <i data-lucide="mouse-pointer-click" style="width: 20px; height: 20px;"></i>
+    </div>
+    <h4 class="interactive-callout-title">Try it out!</h4>
+    <p class="interactive-callout-text">
+      Click on any case card to see details, or hover over buttons for tooltips. Everything is interactive!
+    </p>
+    <div class="interactive-callout-hint">
+      <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+      <span>Click cards to interact</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p class="footer-text">
+      © 2026 PERM Tracker. <a href="mockup-home-v2.html" class="footer-link">Back to Home</a>
+    </p>
+  </footer>
+
+  <!-- JavaScript -->
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // ============================================================================
+    // GSAP ANIMATIONS
+    // ============================================================================
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Page Load Animation
+    const loadTimeline = gsap.timeline({ delay: 0.3 });
+
+    loadTimeline
+      .from('.page-header', {
+        opacity: 0,
+        y: 30,
+        duration: 0.6,
+        ease: 'power3.out'
+      })
+      .from('.stat-card', {
+        opacity: 0,
+        y: 40,
+        duration: 0.5,
+        stagger: 0.1,
+        ease: 'power3.out'
+      }, '-=0.3')
+      .from('.dashboard-grid > *', {
+        opacity: 0,
+        y: 30,
+        duration: 0.6,
+        stagger: 0.15,
+        ease: 'power3.out'
+      }, '-=0.3')
+      .from('.case-card', {
+        opacity: 0,
+        y: 40,
+        scale: 0.95,
+        duration: 0.5,
+        stagger: 0.08,
+        ease: 'back.out(1.2)'
+      }, '-=0.4')
+      .from('.interactive-callout', {
+        opacity: 0,
+        y: 20,
+        duration: 0.5,
+        ease: 'power3.out'
+      }, '-=0.2')
+      .from('.fab', {
+        opacity: 0,
+        scale: 0,
+        duration: 0.5,
+        ease: 'back.out(1.7)'
+      }, '-=0.3');
+
+    // Stats Count-Up Animation
+    const statValues = document.querySelectorAll('.stat-card-value[data-count]');
+
+    statValues.forEach(stat => {
+      const target = parseInt(stat.getAttribute('data-count'));
+
+      gsap.to(stat, {
+        opacity: 1,
+        y: 0,
+        duration: 0.5,
+        delay: 0.5,
+        onComplete: () => {
+          gsap.to(stat, {
+            innerText: target,
+            duration: 1.5,
+            ease: 'power2.out',
+            snap: { innerText: 1 },
+            onUpdate: function() {
+              stat.innerText = Math.round(this.targets()[0].innerText);
+            }
+          });
+        }
+      });
+    });
+
+    // Timeline Progress Bars Animation
+    const progressBars = document.querySelectorAll('.timeline-progress-bar');
+
+    progressBars.forEach(bar => {
+      const targetWidth = bar.style.width;
+      bar.style.width = '0%';
+
+      ScrollTrigger.create({
+        trigger: bar,
+        start: 'top 80%',
+        onEnter: () => {
+          gsap.to(bar, {
+            width: targetWidth,
+            duration: 1.5,
+            ease: 'power3.out'
+          });
+        },
+        once: true
+      });
+    });
+
+    // Case Card Hover Animation Enhancement
+    const caseCards = document.querySelectorAll('.case-card:not(.case-card-add)');
+
+    caseCards.forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        gsap.to(card, {
+          scale: 1.02,
+          duration: 0.3,
+          ease: 'power2.out'
+        });
+      });
+
+      card.addEventListener('mouseleave', () => {
+        gsap.to(card, {
+          scale: 1,
+          duration: 0.3,
+          ease: 'power2.out'
+        });
+      });
+
+      // Click animation
+      card.addEventListener('click', () => {
+        gsap.to(card, {
+          scale: 0.98,
+          duration: 0.1,
+          yoyo: true,
+          repeat: 1,
+          ease: 'power2.inOut'
+        });
+      });
+    });
+
+    // FAB Pulse Animation
+    gsap.to('.fab', {
+      scale: 1.05,
+      duration: 1.5,
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut'
+    });
+
+    // ============================================================================
+    // HEADER SCROLL STATE
+    // ============================================================================
+
+    const header = document.getElementById('header');
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+    });
+
+    // ============================================================================
+    // THEME TOGGLE
+    // ============================================================================
+
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const html = document.documentElement;
+
+    // Check for saved theme or system preference
+    const savedTheme = localStorage.getItem('theme');
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
+      html.classList.add('dark');
+      themeIcon.setAttribute('data-lucide', 'sun');
+      lucide.createIcons();
+    }
+
+    themeToggle.addEventListener('click', () => {
+      html.classList.toggle('dark');
+      const isDark = html.classList.contains('dark');
+
+      themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+      lucide.createIcons();
+
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+
+    // ============================================================================
+    // CLOSE CALLOUT
+    // ============================================================================
+
+    const callout = document.getElementById('callout');
+    const closeCallout = document.getElementById('closeCallout');
+
+    closeCallout.addEventListener('click', () => {
+      gsap.to(callout, {
+        opacity: 0,
+        y: 20,
+        duration: 0.3,
+        ease: 'power3.in',
+        onComplete: () => {
+          callout.style.display = 'none';
+        }
+      });
+    });
+
+    // Auto-hide callout after 10 seconds
+    setTimeout(() => {
+      if (callout.style.display !== 'none') {
+        gsap.to(callout, {
+          opacity: 0,
+          y: 20,
+          duration: 0.5,
+          ease: 'power3.in',
+          onComplete: () => {
+            callout.style.display = 'none';
+          }
+        });
+      }
+    }, 10000);
+
+    // ============================================================================
+    // CALENDAR DAY HOVER EFFECTS
+    // ============================================================================
+
+    const calendarDays = document.querySelectorAll('.calendar-day:not(.other-month)');
+
+    calendarDays.forEach(day => {
+      day.addEventListener('mouseenter', () => {
+        if (!day.classList.contains('today')) {
+          gsap.to(day, {
+            scale: 1.1,
+            duration: 0.2,
+            ease: 'power2.out'
+          });
+        }
+      });
+
+      day.addEventListener('mouseleave', () => {
+        gsap.to(day, {
+          scale: 1,
+          duration: 0.2,
+          ease: 'power2.out'
+        });
+      });
+    });
+
+    // ============================================================================
+    // ADD CASE BUTTON INTERACTIONS
+    // ============================================================================
+
+    const addCaseCard = document.getElementById('addCaseCard');
+    const addCaseBtn = document.getElementById('addCaseBtn');
+    const fabBtn = document.getElementById('fabBtn');
+
+    [addCaseCard, addCaseBtn, fabBtn].forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Animate the FAB
+        gsap.to('.fab', {
+          rotation: 180,
+          duration: 0.3,
+          ease: 'power2.inOut',
+          yoyo: true,
+          repeat: 1
+        });
+
+        // Show alert (in real app, this would open a modal)
+        alert('🎉 Add Case modal would open here!\n\nIn the real app, this opens a form to create a new PERM case.');
+      });
+    });
+
+    // ============================================================================
+    // RESET BUTTON
+    // ============================================================================
+
+    const resetBtn = document.getElementById('resetBtn');
+
+    resetBtn.addEventListener('click', () => {
+      // Shake animation
+      gsap.to('.case-card', {
+        x: 10,
+        duration: 0.1,
+        yoyo: true,
+        repeat: 5,
+        ease: 'power2.inOut'
+      });
+
+      alert('🔄 Demo data would be reset here!\n\nIn the real app, this restores the default sample cases.');
+    });
+
+    // ============================================================================
+    // EDIT/DELETE BUTTON INTERACTIONS
+    // ============================================================================
+
+    const editBtns = document.querySelectorAll('.case-card-action:not(.delete)');
+    const deleteBtns = document.querySelectorAll('.case-card-action.delete');
+
+    editBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        alert('✏️ Edit modal would open here!');
+      });
+    });
+
+    deleteBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        alert('🗑️ Delete confirmation dialog would appear here!');
+      });
+    });
+
+    // ============================================================================
+    // FAVORITE STAR ANIMATION
+    // ============================================================================
+
+    const favorites = document.querySelectorAll('.case-card-favorite');
+
+    favorites.forEach(star => {
+      star.addEventListener('click', (e) => {
+        e.stopPropagation();
+        gsap.to(star, {
+          scale: 1.5,
+          rotation: 360,
+          duration: 0.4,
+          ease: 'back.out(1.7)',
+          yoyo: true,
+          repeat: 1
+        });
+      });
+    });
+  </script>
+</body>
+</html>
