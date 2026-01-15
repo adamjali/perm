@@ -212,21 +212,9 @@ export function useCaseFormSubmit({
             throw new Error("Cannot update case without ID");
           }
 
-          // Convert number fields to BigInt for Convex
-          const convexData = {
-            ...formData,
-            recruitmentApplicantsCount: BigInt(
-              formData.recruitmentApplicantsCount || 0
-            ),
-            pwdWageAmount:
-              formData.pwdWageAmount !== undefined
-                ? BigInt(formData.pwdWageAmount)
-                : undefined,
-          };
-
           await updateMutation({
             id: caseId,
-            ...convexData,
+            ...formData,
           });
 
           toast.success("Case updated successfully");
