@@ -367,4 +367,134 @@ describe('ChatInput', () => {
       expect(textarea?.className).toContain('resize-none');
     });
   });
+
+  // ============================================================================
+  // MIC BUTTON TESTS (Speech Recognition)
+  // ============================================================================
+
+  describe('mic button', () => {
+    // Mock SpeechRecognition for tests
+    const mockSpeechRecognition = vi.fn(() => ({
+      continuous: false,
+      interimResults: false,
+      lang: '',
+      start: vi.fn(),
+      stop: vi.fn(),
+      abort: vi.fn(),
+      onresult: null,
+      onerror: null,
+      onend: null,
+    }));
+
+    beforeEach(() => {
+      // Reset mocks between tests
+      vi.clearAllMocks();
+    });
+
+    it('does not render mic button when speech recognition is not supported', () => {
+      // Ensure window.SpeechRecognition is undefined (default in jsdom)
+      delete (window as { SpeechRecognition?: unknown }).SpeechRecognition;
+      delete (window as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+
+      render(
+        <ChatInput
+          value=""
+          onChange={() => {}}
+          onSend={() => {}}
+        />
+      );
+
+      // Should only have send button, not mic button
+      expect(screen.queryByRole('button', { name: /voice/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /recording/i })).not.toBeInTheDocument();
+    });
+
+    it('renders mic button when speech recognition is supported', async () => {
+      // Mock SpeechRecognition
+      window.SpeechRecognition = mockSpeechRecognition as unknown as typeof SpeechRecognition;
+
+      render(
+        <ChatInput
+          value=""
+          onChange={() => {}}
+          onSend={() => {}}
+        />
+      );
+
+      // Wait for mount effect to run
+      await vi.waitFor(() => {
+        expect(screen.getByRole('button', { name: /start voice input/i })).toBeInTheDocument();
+      });
+    });
+
+    it('mic button is disabled when disabled prop is true', async () => {
+      window.SpeechRecognition = mockSpeechRecognition as unknown as typeof SpeechRecognition;
+
+      render(
+        <ChatInput
+          value=""
+          onChange={() => {}}
+          onSend={() => {}}
+          disabled
+        />
+      );
+
+      await vi.waitFor(() => {
+        expect(screen.getByRole('button', { name: /start voice input/i })).toBeDisabled();
+      });
+    });
+
+    it('starts speech recognition when mic button is clicked', async () => {
+      const mockStart = vi.fn();
+
+      // Create a proper constructor function
+      function MockSpeechRecognition(this: {
+        continuous: boolean;
+        interimResults: boolean;
+        lang: string;
+        start: () => void;
+        stop: () => void;
+        abort: () => void;
+        onresult: null;
+        onerror: null;
+        onend: null;
+      }) {
+        this.continuous = false;
+        this.interimResults = false;
+        this.lang = '';
+        this.start = mockStart;
+        this.stop = vi.fn();
+        this.abort = vi.fn();
+        this.onresult = null;
+        this.onerror = null;
+        this.onend = null;
+      }
+
+      window.SpeechRecognition = MockSpeechRecognition as unknown as typeof SpeechRecognition;
+
+      const user = userEvent.setup();
+
+      render(
+        <ChatInput
+          value=""
+          onChange={() => {}}
+          onSend={() => {}}
+        />
+      );
+
+      await vi.waitFor(() => {
+        expect(screen.getByRole('button', { name: /start voice input/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /start voice input/i }));
+
+      expect(mockStart).toHaveBeenCalled();
+    });
+
+    afterEach(() => {
+      // Clean up mocks
+      delete (window as { SpeechRecognition?: unknown }).SpeechRecognition;
+      delete (window as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+    });
+  });
 });
