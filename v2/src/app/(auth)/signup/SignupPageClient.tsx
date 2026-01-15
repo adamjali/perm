@@ -172,7 +172,7 @@ export function SignupPageClient() {
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-sm text-muted-foreground">
-            We&apos;ve sent an 8-digit verification code to{" "}
+            We&apos;ve sent a 12-character verification code to{" "}
             <span className="font-semibold text-foreground">{email}</span>
           </p>
 
@@ -188,11 +188,11 @@ export function SignupPageClient() {
                 id="code"
                 name="code"
                 type="text"
-                placeholder="12345678"
-                maxLength={8}
+                placeholder="XXXXXXXXXXXX"
+                maxLength={12}
                 required
                 disabled={isLoading}
-                className="mono text-lg tracking-wider text-center"
+                className="mono text-lg tracking-wider text-center uppercase"
               />
             </div>
 
