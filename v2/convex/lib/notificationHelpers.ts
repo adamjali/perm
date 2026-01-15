@@ -75,7 +75,7 @@ export interface NotificationContext {
 }
 
 /**
- * User notification preferences subset for email decision logic.
+ * User notification preferences subset for email/push decision logic.
  * Matches relevant fields from schema.userProfiles.
  */
 export interface UserNotificationPrefs {
@@ -89,6 +89,8 @@ export interface UserNotificationPrefs {
   emailRfeAlerts: boolean;
   /** Whether to send RFI alert emails (same pref as RFE) */
   // Note: Schema uses emailRfeAlerts for both RFI and RFE
+  /** Master switch for push notifications */
+  pushNotificationsEnabled: boolean;
   /** Whether quiet hours are enabled */
   quietHoursEnabled: boolean;
   /** Quiet hours start time (HH:MM format) */
@@ -170,6 +172,7 @@ export function buildUserNotificationPrefs(
     emailDeadlineReminders: userProfile?.emailDeadlineReminders ?? true,
     emailStatusUpdates: userProfile?.emailStatusUpdates ?? true,
     emailRfeAlerts: userProfile?.emailRfeAlerts ?? true,
+    pushNotificationsEnabled: userProfile?.pushNotificationsEnabled ?? false,
     quietHoursEnabled: userProfile?.quietHoursEnabled ?? false,
     quietHoursStart: userProfile?.quietHoursStart,
     quietHoursEnd: userProfile?.quietHoursEnd,

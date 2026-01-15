@@ -78,6 +78,7 @@ function getDefaultPrefs(): UserNotificationPrefs {
     emailDeadlineReminders: true,
     emailStatusUpdates: true,
     emailRfeAlerts: true,
+    pushNotificationsEnabled: false, // Default to disabled for new users
     quietHoursEnabled: false,
     timezone: "America/New_York",
   };
@@ -92,6 +93,7 @@ function buildUserPrefs(profile: Doc<"userProfiles">): UserNotificationPrefs {
     emailDeadlineReminders: profile.emailDeadlineReminders,
     emailStatusUpdates: profile.emailStatusUpdates,
     emailRfeAlerts: profile.emailRfeAlerts,
+    pushNotificationsEnabled: profile.pushNotificationsEnabled ?? false,
     quietHoursEnabled: profile.quietHoursEnabled,
     quietHoursStart: profile.quietHoursStart,
     quietHoursEnd: profile.quietHoursEnd,
@@ -486,6 +488,18 @@ export const checkDeadlineReminders = internalAction({
         }
 
         emailsScheduled++;
+      }
+
+      // Schedule push notification if user has push enabled
+      // Push follows same quiet hours logic as email
+      if (reminder.userPrefs.pushNotificationsEnabled && sendEmail) {
+        await ctx.scheduler.runAfter(0, internal.pushNotifications.sendPushNotification, {
+          userId: reminder.userId,
+          title,
+          body: message,
+          url: `/cases/${reminder.caseId}`,
+          tag: `deadline-${reminder.caseId}-${reminder.deadlineType}`,
+        });
       }
     }
 
