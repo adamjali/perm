@@ -195,7 +195,7 @@ export function CaseSelectionModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleCancel()}>
       <DialogContent
-        className="sm:max-w-xl max-h-[85vh] flex flex-col"
+        className="sm:max-w-xl max-h-[85vh] flex flex-col overflow-hidden"
         showCloseButton={true}
         data-testid="case-selection-modal"
       >
