@@ -413,7 +413,7 @@ export default function NotificationPreferencesSection({
     const previousDays = reminderDays;
     setReminderDays(newDays);
     try {
-      await updateProfile({ reminderDaysBefore: newDays.map(n => BigInt(n)) });
+      await updateProfile({ reminderDaysBefore: newDays });
       toast.success("Reminder days updated");
     } catch (error) {
       setReminderDays(previousDays);
@@ -430,7 +430,7 @@ export default function NotificationPreferencesSection({
     setUrgentDays(value);
     setIsUpdatingUrgentDays(true);
     try {
-      await updateProfile({ urgentDeadlineDays: BigInt(value) });
+      await updateProfile({ urgentDeadlineDays: value });
       toast.success("Urgent threshold updated");
     } catch (error) {
       setUrgentDays(previousValue);
