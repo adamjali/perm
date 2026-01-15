@@ -3,11 +3,11 @@
 ## Milestones
 
 - ✅ [v1.0 Codebase Cleanup](milestones/v1.0-ROADMAP.md) (Phases 1-10 + 6.1) - SHIPPED 2025-12-20
-- 🚧 **v2.0 Complete Migration** - Phases 11-32 (in progress)
+- ✅ **v2.0 Complete Migration** - Phases 11-32 - SHIPPED 2026-01-15
 
 ---
 
-## 🚧 v2.0 Complete Migration (In Progress)
+## ✅ v2.0 Complete Migration (SHIPPED 2026-01-15)
 
 **Milestone Goal:** Complete platform rebuild from FastAPI + Supabase + Alpine.js to Next.js + Convex + React.
 
@@ -401,18 +401,19 @@ See: `.planning/phases/25.1-calendar-two-way-sync/25.1-CONTEXT.md`
 - 31-02: SEO Infrastructure (robots.ts, sitemap.ts, OpenGraph image, page-level metadata) ✓
 - 31-03: Performance & Polish (Bundle analyzer, image optimization, Speed Insights, Lighthouse 90+) ✓
 
-#### Phase 32: Data Migration + Go-Live
+#### Phase 32: Data Migration + Go-Live ✓
 **Goal:** Supabase → Convex migration, 229 features verified, ship it
 **Depends on:** Phase 31
 **Research:** YES - COMPLETE (2026-01-12)
-**Status:** In progress
-**Plans:** 3/4 complete
+**Status:** Complete
+**Plans:** 4/4 complete
+**Completed:** 2026-01-15
 
 **Plan breakdown:**
 - 32-01: Migration Scripts & Infrastructure (export, transform, import tools) ✓
 - 32-02: v2 Calendar Sync Fixes (auto-cleanup on toggle, "Clear All" button) ✓
 - 32-03: Data Migration Execution & Verification (infrastructure verified) ✓
-- 32-04: Go-Live & Decommission (DNS cutover, v1 cleanup)
+- 32-04: Go-Live & Decommission (DNS cutover, v1 cleanup scripts) ✓
 
 ---
 
@@ -448,7 +449,7 @@ See: `.planning/phases/25.1-calendar-two-way-sync/25.1-CONTEXT.md`
 | ~~29. Advanced Automation~~ | v2.0 | - | DEFERRED | - |
 | ~~30. Calendar~~ | v2.0 | - | MOVED → 25.1 | - |
 | 31. PWA + SEO | v2.0 | 3/3 | Complete | 2026-01-11 |
-| 32. Data Migration | v2.0 | 3/4 | In progress | - |
+| 32. Data Migration + Go-Live | v2.0 | 4/4 | Complete | 2026-01-15 |
 
 ---
 
