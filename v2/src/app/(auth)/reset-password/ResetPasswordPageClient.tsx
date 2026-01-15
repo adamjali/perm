@@ -123,11 +123,11 @@ export function ResetPasswordPageClient() {
                 id="code"
                 name="code"
                 type="text"
-                placeholder="12345678"
-                maxLength={8}
+                placeholder="XXXXXXXXXXXX"
+                maxLength={12}
                 required
                 disabled={isLoading}
-                className="mono text-lg tracking-wider text-center"
+                className="mono text-lg tracking-wider text-center uppercase"
               />
             </div>
 
