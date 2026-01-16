@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ToolCallList, type ToolCall } from './ToolCallCard';
+import { ChatMarkdown } from './ChatMarkdown';
 import type { ToolConfirmationState } from '@/lib/ai/tool-confirmation-types';
 
 interface ChatMessageProps {
@@ -105,9 +106,9 @@ export function ChatMessage({
               : 'bg-card text-card-foreground border-border shadow-hard-sm'
           )}
         >
-          {/* Message content - always left-aligned text within bubble */}
-          <div className="whitespace-pre-wrap break-words text-sm">
-            {displayedContent}
+          {/* Message content with markdown rendering */}
+          <div className="text-sm">
+            <ChatMarkdown content={displayedContent} isUser={isUser} />
             {(isStreaming || isTyping) && (
               <span className="inline-block ml-1 w-2 h-4 bg-current animate-blink" />
             )}

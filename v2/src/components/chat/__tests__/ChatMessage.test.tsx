@@ -41,11 +41,11 @@ describe('ChatMessage', () => {
     });
 
     it('has user text styling', () => {
-      render(<ChatMessage role="user" content="User message" />);
+      const { container } = render(<ChatMessage role="user" content="User message" />);
 
-      const message = screen.getByText('User message');
-      // User messages have left-aligned text within right-aligned bubble
-      expect(message).toHaveClass('text-sm');
+      // text-sm is on the content wrapper div
+      const textWrapper = container.querySelector('.text-sm');
+      expect(textWrapper).toBeInTheDocument();
     });
   });
 
@@ -74,11 +74,11 @@ describe('ChatMessage', () => {
     });
 
     it('has assistant text styling', () => {
-      render(<ChatMessage role="assistant" content="Assistant message" />);
+      const { container } = render(<ChatMessage role="assistant" content="Assistant message" />);
 
-      const message = screen.getByText('Assistant message');
-      // Assistant messages have left-aligned text within left-aligned bubble
-      expect(message).toHaveClass('text-sm');
+      // text-sm is on the content wrapper div
+      const textWrapper = container.querySelector('.text-sm');
+      expect(textWrapper).toBeInTheDocument();
     });
   });
 
@@ -161,19 +161,22 @@ describe('ChatMessage', () => {
   // ============================================================================
 
   describe('content rendering', () => {
-    it('preserves whitespace and line breaks', () => {
-      render(<ChatMessage role="user" content="Line 1\nLine 2" />);
+    it('renders markdown paragraphs', () => {
+      render(<ChatMessage role="user" content={'Line 1\n\nLine 2'} />);
 
-      const message = screen.getByText(/Line 1/);
-      // Should have whitespace-pre-wrap class
-      expect(message).toHaveClass('whitespace-pre-wrap');
+      // Content should be rendered
+      const paragraph = screen.getByText(/Line 1/);
+      expect(paragraph).toBeInTheDocument();
     });
 
     it('handles long words with break-words', () => {
-      render(<ChatMessage role="user" content="Superlongwordwithoutspaces" />);
+      const { container } = render(
+        <ChatMessage role="user" content="Superlongwordwithoutspaces" />
+      );
 
-      const message = screen.getByText('Superlongwordwithoutspaces');
-      expect(message).toHaveClass('break-words');
+      // break-words is on the markdown wrapper
+      const markdownWrapper = container.querySelector('.break-words');
+      expect(markdownWrapper).toBeInTheDocument();
     });
 
     it('limits max width of message bubble', () => {
@@ -184,6 +187,33 @@ describe('ChatMessage', () => {
       // Message bubble should have max-w constraint
       const bubble = container.querySelector('[class*="max-w-"]');
       expect(bubble).toBeInTheDocument();
+    });
+
+    it('renders markdown bold text', () => {
+      render(<ChatMessage role="assistant" content="This is **bold** text" />);
+
+      const boldText = screen.getByText('bold');
+      expect(boldText.tagName).toBe('STRONG');
+    });
+
+    it('renders markdown code inline', () => {
+      render(<ChatMessage role="assistant" content="Use `console.log()` for debugging" />);
+
+      const codeText = screen.getByText('console.log()');
+      expect(codeText.tagName).toBe('CODE');
+    });
+
+    it('renders markdown lists', () => {
+      // Use template literal to ensure proper line breaks
+      const content = `- Item 1
+- Item 2`;
+      const { container } = render(<ChatMessage role="assistant" content={content} />);
+
+      // Should render as a list
+      const list = container.querySelector('ul');
+      expect(list).toBeInTheDocument();
+      const listItems = container.querySelectorAll('li');
+      expect(listItems).toHaveLength(2);
     });
   });
 
