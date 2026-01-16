@@ -1,218 +1,325 @@
 # Coding Conventions
 
-**Analysis Date:** 2026-01-03
+**Analysis Date:** 2026-01-16
 
 ## Naming Patterns
 
 **Files:**
-- PascalCase.tsx for React components (CaseForm.tsx, DeadlineHeroWidget.tsx)
-- camelCase.ts for utilities and helpers (dashboardHelpers.ts, auth.ts)
-- *.test.ts(x) for test files alongside source
-- index.ts for barrel exports
+- Components: PascalCase (e.g., `CaseCard.tsx`, `SummaryTile.tsx`)
+- Hooks: camelCase with `use` prefix (e.g., `useFormCalculations.ts`, `useDateFieldValidation.ts`)
+- Utilities: camelCase (e.g., `date.ts`, `validation.ts`)
+- Tests: Same name with `.test.ts`/`.test.tsx` suffix (e.g., `pwd.test.ts`, `SummaryTile.test.tsx`)
+- Test directories: `__tests__/` within component folders
 
 **Functions:**
-- camelCase for all functions (calculatePWDExpiration, validateRecruitment)
-- handle* for event handlers (handleClick, handleSubmit)
-- No special prefix for async functions
+- camelCase for all functions (e.g., `calculatePWDExpiration`, `validateCase`)
+- Prefix private/internal helpers with underscore in tests only
+- Factory functions: `create` prefix (e.g., `createISODate`, `createValidationResult`, `createTestCase`)
+- Type guards: `is` prefix (e.g., `isISODateString`, `isCaseStatus`)
 
 **Variables:**
-- camelCase for variables
-- SCREAMING_SNAKE_CASE for constants (DEADLINE_RELEVANT_FIELDS)
-- No underscore prefix for private (TypeScript visibility)
+- camelCase for variables and parameters
+- SCREAMING_SNAKE_CASE for constants (e.g., `STAGGER_DELAY`, `MOBILE_BREAKPOINT`)
+- Descriptive names over abbreviations
 
 **Types:**
-- PascalCase for interfaces, no I prefix (User, CaseData)
-- PascalCase for type aliases (ValidationResult, ISODateString)
-- PascalCase for enum names, UPPER_CASE values (Status.PENDING)
-- *Props suffix for component props (DateInputProps)
+- PascalCase for all types and interfaces
+- Suffix with purpose: `Props`, `Data`, `Result`, `Input` (e.g., `ButtonProps`, `CaseData`, `ValidationResult`)
+- Branded types use unique symbols (e.g., `ISODateString`, `ValidationResult`)
 
-**Database:**
-- camelCase for table names (cases, userProfiles)
-- camelCase for field names (pwdFilingDate, beneficiaryIdentifier)
-- by_* prefix for index names (by_userId, by_status)
+**Database (Convex Schema):**
+- Tables: camelCase (e.g., `cases`, `userProfiles`, `auditLogs`)
+- Fields: camelCase (e.g., `employerName`, `pwdFilingDate`, `rfiEntries`)
+- Indexes: snake_case with `by_` prefix (e.g., `by_user_id`, `by_deleted_at`)
 
 ## Code Style
 
 **Formatting:**
-- ESLint with Next.js config (no Prettier)
-- 2 space indentation
-- Single quotes for strings
-- Semicolons required
-- 100 character line length (approximate)
+- ESLint with `eslint-config-next` (core-web-vitals + TypeScript)
+- No dedicated Prettier config - uses ESLint rules
+- Indentation: 2 spaces
+- Single quotes for imports, double quotes allowed in JSX
 
 **Linting:**
-- ESLint 9 with flat config (eslint.config.mjs)
-- @typescript-eslint for TypeScript rules
-- eslint-plugin-storybook for Storybook files
-- Run: `npm run lint`
+- Tool: ESLint 9 with flat config (`eslint.config.mjs`)
+- Key rules:
+  - `@typescript-eslint/no-unused-vars`: warn (ignore `_` prefixed)
+  - `@typescript-eslint/no-explicit-any`: warn (off in tests)
+  - `react-hooks/set-state-in-effect`: off (valid patterns exist)
+- Test files have relaxed rules for mocking flexibility
 
-**Key ESLint Rules:**
-```javascript
-"@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-"@typescript-eslint/no-explicit-any": "warn",
-"react-hooks/set-state-in-effect": "off"
-```
+**TypeScript:**
+- Strict mode enabled (`"strict": true`)
+- `noUncheckedIndexedAccess`: true (safer array access)
+- `noImplicitOverride`: true (explicit override keyword)
+- No `any` types in production code (warn level)
+- Target: ES2017
 
 ## Import Organization
 
 **Order:**
-1. React and framework imports (react, next/*)
-2. Third-party packages (date-fns, zod, framer-motion)
-3. Internal absolute imports (@/lib, @/components)
-4. Convex imports (convex/*, @/convex)
-5. Relative imports (./utils, ../types)
-6. Type imports last (import type {})
-
-**Grouping:**
-- Blank line between groups
-- Alphabetical within each group
+1. External packages (React, Next.js, third-party)
+2. Internal aliases (`@/lib/...`, `@/components/...`)
+3. Relative imports (`./`, `../`)
+4. Type imports (use `import type` when importing only types)
 
 **Path Aliases:**
-- @/* maps to src/*
-- Prefer absolute (@/lib/utils) over relative (../../lib/utils)
+- `@/*` → `./src/*`
+- `@/test-utils` → `./test-utils`
+- `@/convex` → `./convex`
+
+**Example:**
+```typescript
+import { describe, it, expect, vi } from "vitest";
+import { screen } from "@testing-library/react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+import { PWDSection } from "../PWDSection";
+import type { CaseData } from "./types";
+```
 
 ## Error Handling
 
 **Patterns:**
-- Early returns for guard clauses
-- Throw errors, catch at boundaries (route handlers, top-level)
-- Validation returns result objects: `{ valid: boolean, errors: [], warnings: [] }`
+- Validators return `ValidationResult` with `errors[]` and `warnings[]`
+- Never throw for validation failures - return structured results
+- Use early returns for auth checks:
+  ```typescript
+  const userId = await getCurrentUserIdOrNull(ctx);
+  if (userId === null) {
+    return []; // Graceful empty response for unauthenticated
+  }
+  ```
+- Mutations throw for unauthorized access (security)
+- Queries return `null` for missing/unauthorized resources (no information leakage)
 
-**Error Types:**
-- Throw on: invalid input, authorization failures, invariant violations
-- Return result on: expected validation failures
-- Log with context before throwing: `console.error('[Push] Error:', error)`
+**Validation Result Pattern:**
+```typescript
+import { createValidationResult } from '@/lib/perm';
 
-**Async:**
-- Use try/catch, avoid .catch() chains
-- Include cause in errors: `new Error('Failed', { cause: originalError })`
+// Factory ensures valid === (errors.length === 0)
+const result = createValidationResult(
+  [{ ruleId: 'V-PWD-01', severity: 'error', field: 'pwd_filing_date', message: 'Required' }],
+  [{ ruleId: 'V-PWD-02', severity: 'warning', field: 'pwd_expiration_date', message: 'Expires soon' }]
+);
+```
 
 ## Logging
 
-**Framework:**
-- Console logging (console.log, console.error, console.warn)
-- Sentry for production error tracking
+**Framework:** Custom `loggers` module from `convex/lib/logging`
 
 **Patterns:**
-- Prefix with context: `console.log('[Push] Sending notification...')`
-- Log at service boundaries
-- Log state transitions, external API calls, errors
-- Avoid excessive logging in loops
+```typescript
+import { loggers } from "./lib/logging";
+const log = loggers.cases;
 
-**Note:** Should migrate to structured logging utility
+// Use appropriate log levels
+log.debug("Processing case", { caseId });
+log.info("Case created", { caseId, userId });
+log.warn("Missing expected field", { field });
+log.error("Operation failed", { error });
+```
 
 ## Comments
 
 **When to Comment:**
-- Explain WHY, not WHAT
-- Document business rules: `// PWD expires Jun 30 following year if after Jun 30`
-- Explain non-obvious algorithms or workarounds
-- Avoid obvious comments
+- Complex PERM regulation logic (cite CFR references)
+- Non-obvious business rules
+- Public API functions (JSDoc with examples)
+- Test file headers explaining coverage scope
 
-**JSDoc/TSDoc:**
-- Required for public API functions
-- Use @param, @returns, @throws, @example tags
-- Comprehensive docs for branded types
-
-**Section Headers:**
+**JSDoc Pattern:**
 ```typescript
-// ============================================================================
-// SECTION NAME
-// ============================================================================
+/**
+ * Validate PWD dates according to PERM regulations.
+ *
+ * Rules:
+ * - V-PWD-01: Filing date must be before determination date
+ * - V-PWD-02: Determination date must be before expiration date
+ *
+ * @example
+ * const result = validatePWD({
+ *   pwd_filing_date: '2024-01-15',
+ *   pwd_determination_date: '2024-02-20',
+ *   pwd_expiration_date: '2024-05-20'
+ * });
+ */
+export function validatePWD(input: PWDValidationInput): ValidationResult { ... }
 ```
 
-**TODO Comments:**
-- Format: `// TODO: description`
-- Link to issue if exists: `// TODO: Fix race condition (issue #123)`
+**Test File Headers:**
+```typescript
+/**
+ * SummaryTile Component Tests
+ *
+ * Tests essential behavior:
+ * - Renders label, count, subtext, and link
+ * - Links to filtered cases list
+ * - Handles edge cases (empty subtext, zero/large counts)
+ * - Accessibility requirements met
+ *
+ * NOTE: Styling tests removed - CSS class assertions don't test behavior.
+ * Visual styling verified via Storybook.
+ */
+```
 
 ## Function Design
 
 **Size:**
-- Keep under 50 lines
+- Keep functions focused on single responsibility
 - Extract helpers for complex logic
-- One level of abstraction per function
+- Validators typically under 50 lines
 
 **Parameters:**
-- Max 3 parameters
-- Use options object for 4+ parameters: `function create(options: CreateOptions)`
-- Destructure in parameter list: `function process({ id, name }: ProcessParams)`
+- Use object parameters for 3+ args: `function create({ name, email, settings })`
+- Optional parameters in options object: `{ timeout?: number }`
+- Type all parameters explicitly
 
 **Return Values:**
-- Explicit return statements
-- Return early for guard clauses
-- Use result pattern for validation: `{ valid, errors, warnings }`
+- Explicit return types on all exported functions
+- Use branded types for domain-specific values (e.g., `ISODateString`)
+- Factory functions for complex types to ensure invariants
 
 ## Module Design
 
 **Exports:**
-- Named exports preferred
-- Default exports for page components
-- Barrel exports from index.ts
-
-**Organization:**
-```typescript
-// 1. Imports
-// 2. Type definitions
-// 3. Constants
-// 4. Helper functions
-// 5. Main exports
-// 6. Default export (if any)
-```
+- Named exports preferred over default exports
+- Barrel files (`index.ts`) for module public API
+- Internal helpers not exported
 
 **Barrel Files:**
-- index.ts re-exports public API
-- Keep internal helpers private
-- Avoid circular dependencies
-
-## React Patterns
-
-**Components:**
 ```typescript
-"use client"; // Client component directive
+// convex/lib/perm/index.ts
+export { calculatePWDExpiration } from './calculators/pwd';
+export { validatePWD } from './validators/pwd';
+export { applyCascade } from './cascade';
+export type { CaseData, ValidationResult } from './types';
+```
 
-interface ComponentProps {
-  // Props with JSDoc
-}
+## Date Handling
 
-export default function Component({ prop }: ComponentProps) {
-  // Hooks first
-  const [state, setState] = useState();
+**Critical Pattern: All dates are ISO strings (YYYY-MM-DD).**
 
-  // Handlers
-  const handleClick = () => {};
+```typescript
+// CORRECT
+const date = '2024-06-15';
+const expiration = calculatePWDExpiration(date); // Returns string
 
-  // Render
-  return <div>...</div>;
+// WRONG
+const date = new Date('2024-06-15'); // Never store Date objects
+```
+
+**Parsing/Formatting:**
+```typescript
+import { parseISO, format } from 'date-fns';
+
+const parsed = parseISO('2024-06-15');
+const result = addDays(parsed, 30);
+const output = format(result, 'yyyy-MM-dd'); // Back to string
+```
+
+**Branded Type for Safety:**
+```typescript
+import { createISODate, isISODateString } from '@/lib/perm';
+
+const date = createISODate(userInput); // Returns ISODateString | null
+if (date) {
+  // Use safely
 }
 ```
 
-**Convex Functions:**
+## Component Patterns
+
+**UI Components (shadcn/ui style):**
+- Use `cva` (class-variance-authority) for variants
+- Use `cn()` for class merging
+- Forward refs when wrapping native elements
+- Support `asChild` pattern with Radix Slot
+
 ```typescript
-export const getCase = query({
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  "base-classes",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary",
+        destructive: "bg-destructive",
+      },
+      size: {
+        default: "h-9",
+        sm: "h-8",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ComponentProps<"button">,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+```
+
+**Form Sections:**
+- Accept `values` and `onChange` props
+- Use `onDateChange` for date cascade triggers
+- Controlled inputs only
+
+## Convex Patterns
+
+**Query/Mutation Structure:**
+```typescript
+export const get = query({
   args: { id: v.id('cases') },
   handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
-    // ... implementation
-  }
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return null;
+
+    const doc = await ctx.db.get(args.id);
+    if (!doc || doc.userId !== userId) return null;
+
+    return doc;
+  },
 });
 ```
 
-## Type Safety
+**Internal Functions:**
+- Use `internalQuery`, `internalMutation`, `internalAction`
+- Call via `ctx.runMutation(internal.module.function)`
 
-**Branded Types:**
+**Soft Delete:**
+- All tables support `deletedAt: v.optional(v.number())`
+- Filter with `.filter(c => c.deletedAt === undefined)`
+
+## Animation Patterns
+
+**Use motion/react (framer-motion):**
 ```typescript
-declare const ISODateBrand: unique symbol;
-export type ISODateString = string & { readonly [ISODateBrand]: true };
+import { motion } from "motion/react";
+import { fadeInUp, staggerContainer } from "@/lib/animations";
 
-export function createISODate(dateStr: string): ISODateString | null { ... }
+<motion.div variants={staggerContainer} initial="hidden" animate="visible">
+  <motion.div variants={fadeInUp}>Content</motion.div>
+</motion.div>
 ```
 
-**Strict Mode:**
-- TypeScript strict: true
-- noUncheckedIndexedAccess: true
-- noImplicitOverride: true
+**Respect Reduced Motion:**
+```typescript
+import { useReducedMotion, getReducedMotionVariants } from "@/lib/animations";
+
+const prefersReducedMotion = useReducedMotion();
+const variants = getReducedMotionVariants(fadeInUp, prefersReducedMotion);
+```
 
 ---
 
-*Convention analysis: 2026-01-03*
-*Update when patterns change*
+*Convention analysis: 2026-01-16*

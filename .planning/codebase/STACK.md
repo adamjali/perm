@@ -1,110 +1,173 @@
 # Technology Stack
 
-**Analysis Date:** 2026-01-03
+**Analysis Date:** 2026-01-16
 
 ## Languages
 
 **Primary:**
-- TypeScript 5 (strict mode) - All application code
+- TypeScript 5.x - All source code (frontend and backend)
 
 **Secondary:**
-- JavaScript - Configuration files (eslint.config.mjs, postcss.config.mjs)
+- HTML/CSS - Email templates and static markup
 
 ## Runtime
 
 **Environment:**
-- Node.js (Next.js server runtime)
-- Convex Edge Runtime (serverless functions)
-- Browser (React 19)
+- Node.js 20+ (inferred from ES2017 target, ESM support)
+- Convex Edge Runtime - Backend function execution
 
 **Package Manager:**
-- pnpm (workspace support via pnpm-workspace.yaml)
-- Lockfile: pnpm-lock.yaml present
+- pnpm 10.27.0 (pinned via packageManager field)
+- Lockfile: `v2/pnpm-lock.yaml` (present)
 
 ## Frameworks
 
 **Core:**
-- Next.js 16.1.0 - Full-stack React framework with App Router
+- Next.js 16.1.0 - React framework with App Router
 - React 19.2.3 - UI library
-- Convex 1.31.2 - Backend-as-a-service (real-time database + functions)
+- Convex 1.31.4 - Backend-as-a-service (database, functions, auth)
 
 **Testing:**
-- Vitest 4.0.16 - Unit/component tests
-- @testing-library/react - Component testing utilities
-- Playwright 1.57.0 - E2E browser testing
-- convex-test - Convex function testing
+- Vitest 4.0.16 - Unit and component testing
+- Playwright 1.57.0 - End-to-end testing
+- Testing Library (React) 16.3.1 - Component testing utilities
+- convex-test 0.0.41 - Convex function testing
+- vitest-axe 0.1.0 - Accessibility testing
 
 **Build/Dev:**
-- Vite 7.3.0 - Dev server (via Vitest/Storybook)
-- TypeScript 5 - Compilation and type checking
-- PostCSS 4 - CSS processing pipeline
-- Turbopack - Next.js dev server (optional)
+- Turbopack - Next.js bundler (development)
+- Webpack - Next.js bundler (production builds)
+- Vite 7.3.0 - Test runner bundler
+- Storybook 10.1.10 - Component development and documentation
 
 ## Key Dependencies
 
 **Critical:**
-- @convex-dev/auth 0.0.90 - Authentication system
-- react-hook-form 7.69.0 - Form state management
-- zod 4.2.1 - Schema validation
-- date-fns 4.1.0 - Date manipulation
-- resend 6.6.0 - Email delivery service
-
-**Infrastructure:**
-- @sentry/nextjs 10.32.1 - Error tracking and monitoring
-- web-push 3.6.7 - Browser push notifications
-- google-auth-library 10.5.0 - Google OAuth client
-- @oslojs/crypto 1.0.1 - Token encryption (AES-256-GCM)
+- `@convex-dev/auth` 0.0.90 - Authentication via Convex
+- `@convex-dev/rag` 0.6.1 - RAG knowledge base for chatbot
+- `ai` 5.x - Vercel AI SDK for chat/streaming
+- `resend` 6.6.0 - Email delivery
+- `web-push` 3.6.7 - Web push notifications
 
 **UI:**
-- Tailwind CSS 4 - Utility-first CSS (CSS-first config)
-- shadcn/ui (Radix primitives) - Component library
-- Framer Motion 12.23.26 - Animations
-- lucide-react - Icons
-- sonner - Toast notifications
-- next-themes - Dark/light mode
+- Tailwind CSS 4.x - Utility-first styling
+- Radix UI - Headless accessible components
+- Framer Motion / Motion 12.23.26 - Animations
+- Lucide React 0.562.0 - Icon library
+- class-variance-authority 0.7.1 - Component variants
+- sonner 2.0.7 - Toast notifications
+- react-big-calendar 1.19.4 - Calendar component
 
-**Drag & Drop:**
-- @dnd-kit/core 6.3.1 - Drag and drop framework
-- @dnd-kit/sortable - Sortable lists
+**Data/Forms:**
+- Zod 4.2.1 - Schema validation
+- React Hook Form 7.69.0 - Form state management
+- date-fns 4.1.0 - Date utilities
 
-**Internationalization:**
-- next-intl 4.6.1 - Multilingual support
+**AI Providers:**
+- `@ai-sdk/google` 2.0.52 - Google Gemini
+- `@ai-sdk/openai` 2.0.89 - OpenAI-compatible APIs
+- `@openrouter/ai-sdk-provider` 1.5.4 - OpenRouter multi-provider
+- `ai-fallback` 1.0.8 - Multi-provider fallback handling
 
-**Component Development:**
-- Storybook 10.1.10 - Component development environment
+**Infrastructure:**
+- `@sentry/nextjs` 10.32.1 - Error tracking
+- `@serwist/next` 9.5.0 - PWA service worker
+- `@vercel/speed-insights` 1.3.1 - Performance monitoring
+- `google-auth-library` 10.5.0 - Google OAuth/Calendar
+- `next-intl` 4.6.1 - Internationalization (prepared)
+- `next-themes` 0.4.6 - Dark mode support
 
 ## Configuration
 
 **Environment:**
-- .env.local for local development
-- Convex dashboard for production secrets
-- Key configs: CONVEX_DEPLOYMENT, NEXT_PUBLIC_CONVEX_URL, JWT_PRIVATE_KEY, AUTH_GOOGLE_*, RESEND_API_KEY, VAPID_*
+- `.env.local` - Local development secrets
+- `.env.example` - Template for required variables
+- Convex Dashboard - Production environment variables
+
+**Key configs required:**
+```bash
+# Convex (auto-set by npx convex dev)
+CONVEX_DEPLOYMENT=
+NEXT_PUBLIC_CONVEX_URL=
+
+# Authentication
+AUTH_GOOGLE_ID=
+AUTH_GOOGLE_SECRET=
+
+# AI Providers (chat functionality)
+GOOGLE_GENERATIVE_AI_API_KEY=
+OPENROUTER_API_KEY=
+GROQ_API_KEY=
+CEREBRAS_API_KEY=
+MISTRAL_API_KEY=
+
+# Google Calendar
+GOOGLE_CALENDAR_CLIENT_ID=
+GOOGLE_CALENDAR_CLIENT_SECRET=
+CALENDAR_TOKEN_ENCRYPTION_KEY=
+
+# Web Search
+TAVILY_API_KEY=
+BRAVE_API_KEY=
+
+# Email
+RESEND_API_KEY=
+
+# Push Notifications
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+
+# Error Tracking
+NEXT_PUBLIC_SENTRY_DSN=
+SENTRY_AUTH_TOKEN=
+```
 
 **Build:**
-- tsconfig.json - TypeScript strict mode, path aliases (@/*)
-- next.config.ts - Next.js config with Sentry integration
-- vitest.config.ts - Test configuration with jsdom + edge-runtime
-- eslint.config.mjs - ESLint flat config format
-- postcss.config.mjs - PostCSS pipeline for Tailwind
-
-**Path Aliases:**
-- @/* → ./src/*
-- @/convex → ./convex/ (Vitest)
-- @/test-utils → ./test-utils/ (Vitest)
+- `v2/next.config.ts` - Next.js configuration (Sentry, Serwist, next-intl)
+- `v2/tsconfig.json` - TypeScript strict mode configuration
+- `v2/vitest.config.ts` - Three-project test configuration
+- `v2/playwright.config.ts` - E2E test configuration
+- `v2/postcss.config.mjs` - Tailwind PostCSS integration
+- `v2/eslint.config.mjs` - ESLint 9 flat config
 
 ## Platform Requirements
 
 **Development:**
-- macOS/Linux/Windows (Node.js required)
-- pnpm for package management
-- Convex CLI for backend development
+- Node.js 20+
+- pnpm 10.x
+- Two terminals required: `npx convex dev` + `pnpm dev`
+- Convex CLI installed
 
 **Production:**
-- Frontend: Vercel (Next.js hosting)
-- Backend: Convex Cloud (serverless)
-- Database: PostgreSQL via Convex
+- Vercel - Frontend hosting (auto-deploy from main)
+- Convex Cloud - Backend hosting (auto-sync from main)
+- Resend - Email infrastructure
+- Sentry - Error monitoring
+- Google Cloud Console - OAuth credentials
+
+## Test Infrastructure
+
+**Test Projects (Vitest):**
+| Project | Environment | Includes |
+|---------|-------------|----------|
+| `unit` | happy-dom | `src/lib/**`, `src/hooks/**`, `convex/lib/perm/**` |
+| `components` | happy-dom | `src/components/**`, `src/app/**`, `src/emails/**` |
+| `convex` | edge-runtime | `convex/*.test.ts`, `convex/__tests__/**` |
+
+**Coverage Thresholds:**
+- Branches: 70%
+- Functions: 75%
+- Lines: 75%
+- Statements: 75%
+
+**Test Commands:**
+```bash
+pnpm test         # Watch mode (development)
+pnpm test:fast    # Unit tests only (~30s)
+pnpm test:run     # Full suite (~9 min, 3600+ tests)
+pnpm test:e2e     # Playwright E2E
+```
 
 ---
 
-*Stack analysis: 2026-01-03*
-*Update after major dependency changes*
+*Stack analysis: 2026-01-16*
