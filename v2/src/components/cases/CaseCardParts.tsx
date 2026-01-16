@@ -287,17 +287,24 @@ export function ExpandedContent({
   dates,
   notes,
 }: ExpandedContentProps) {
+  // Mobile-first: always expanded on mobile (no hover), collapsible on desktop
+  const isExpanded = shouldExpand && !isClosed;
+
   return (
     <div
       data-testid="expanded-content"
       className={cn(
         "overflow-hidden relative z-10 -mx-6 px-6 transition-all duration-150 ease-out",
-        shouldExpand && !isClosed
-          ? "max-h-[500px] opacity-100 mt-3 pt-3 pb-6"
-          : "max-h-0 opacity-0 mt-0 pt-0 pb-0"
+        // Mobile: always show expanded content (no hover on touch devices)
+        // Desktop (md+): respect hover/pin state
+        isClosed
+          ? "max-h-0 opacity-0 mt-0 pt-0 pb-0"
+          : "max-h-[500px] opacity-100 mt-3 pt-3 pb-6 md:max-h-0 md:opacity-0 md:mt-0 md:pt-0 md:pb-0",
+        // Desktop expanded state override
+        isExpanded && "md:max-h-[500px] md:opacity-100 md:mt-3 md:pt-3 md:pb-6"
       )}
       style={{
-        backgroundColor: shouldExpand && !isClosed ? "rgba(255,255,255,0.6)" : "transparent",
+        backgroundColor: !isClosed ? "rgba(255,255,255,0.6)" : "transparent",
       }}
     >
       <div className="mb-3 border-t border-dashed border-black/30" />

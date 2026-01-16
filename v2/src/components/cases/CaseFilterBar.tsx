@@ -329,26 +329,26 @@ export function CaseFilterBar({
             <Button
               variant="outline"
               size="default"
-              className="w-44 justify-between cursor-pointer"
+              className="w-full md:w-44 justify-between cursor-pointer"
               aria-label={`Case Status: ${getCurrentCaseStatusLabel()}`}
             >
               <span className="truncate">Case Status: {getCurrentCaseStatusLabel()}</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem onClick={() => handleCaseStatusChange("all")} className="cursor-pointer text-base py-2">
+          <DropdownMenuContent align="end" className="w-[calc(100vw-2.5rem)] md:w-44">
+            <DropdownMenuItem onClick={() => handleCaseStatusChange("all")} className="cursor-pointer">
               All
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCaseStatusChange("pwd")} className="cursor-pointer text-base py-2">
+            <DropdownMenuItem onClick={() => handleCaseStatusChange("pwd")} className="cursor-pointer">
               PWD
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCaseStatusChange("recruitment")} className="cursor-pointer text-base py-2">
+            <DropdownMenuItem onClick={() => handleCaseStatusChange("recruitment")} className="cursor-pointer">
               Recruitment
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCaseStatusChange("eta9089")} className="cursor-pointer text-base py-2">
+            <DropdownMenuItem onClick={() => handleCaseStatusChange("eta9089")} className="cursor-pointer">
               ETA 9089
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCaseStatusChange("i140")} className="cursor-pointer text-base py-2">
+            <DropdownMenuItem onClick={() => handleCaseStatusChange("i140")} className="cursor-pointer">
               I-140
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -360,32 +360,32 @@ export function CaseFilterBar({
             <Button
               variant="outline"
               size="default"
-              className="w-52 justify-between cursor-pointer"
+              className="w-full md:w-52 justify-between cursor-pointer"
               aria-label={`Progress Status: ${getCurrentProgressStatusLabel()}`}
             >
               <span className="truncate">Progress: {getCurrentProgressStatusLabel()}</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("all")} className="cursor-pointer text-base py-2">
+          <DropdownMenuContent align="end" className="w-[calc(100vw-2.5rem)] md:w-48">
+            <DropdownMenuItem onClick={() => handleProgressStatusChange("all")} className="cursor-pointer">
               All
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("working")} className="cursor-pointer text-base py-2">
+            <DropdownMenuItem onClick={() => handleProgressStatusChange("working")} className="cursor-pointer">
               Working on it
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("waiting_intake")} className="cursor-pointer text-base py-2">
+            <DropdownMenuItem onClick={() => handleProgressStatusChange("waiting_intake")} className="cursor-pointer">
               Waiting for intake
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("filed")} className="cursor-pointer text-base py-2">
+            <DropdownMenuItem onClick={() => handleProgressStatusChange("filed")} className="cursor-pointer">
               Filed
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("approved")} className="cursor-pointer text-base py-2">
+            <DropdownMenuItem onClick={() => handleProgressStatusChange("approved")} className="cursor-pointer">
               Approved
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("under_review")} className="cursor-pointer text-base py-2">
+            <DropdownMenuItem onClick={() => handleProgressStatusChange("under_review")} className="cursor-pointer">
               Under review
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("rfi_rfe")} className="cursor-pointer text-base py-2">
+            <DropdownMenuItem onClick={() => handleProgressStatusChange("rfi_rfe")} className="cursor-pointer">
               RFI/RFE
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -405,44 +405,44 @@ export function CaseFilterBar({
         </Button>
 
         {/* Sort Dropdown + Order Toggle */}
-        <div className="flex items-center gap-1">
+        <div className="flex w-full md:w-auto items-center gap-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
                 size="default"
-                className="w-44 justify-between cursor-pointer"
+                className="flex-1 md:w-44 justify-between cursor-pointer"
                 aria-label={`Sort by: ${getCurrentSortLabel()}`}
               >
                 <span className="truncate">Sort: {getCurrentSortLabel()}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem onClick={() => handleSortChange("custom")} className="cursor-pointer text-base py-2">
+            <DropdownMenuContent align="end" className="w-[calc(100vw-2.5rem)] md:w-44">
+              <DropdownMenuItem onClick={() => handleSortChange("custom")} className="cursor-pointer">
                 Custom order
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("deadline")} className="cursor-pointer text-base py-2">
+              <DropdownMenuItem onClick={() => handleSortChange("deadline")} className="cursor-pointer">
                 Next deadline
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("updated")} className="cursor-pointer text-base py-2">
+              <DropdownMenuItem onClick={() => handleSortChange("updated")} className="cursor-pointer">
                 Recently updated
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("favorites")} className="cursor-pointer text-base py-2">
+              <DropdownMenuItem onClick={() => handleSortChange("favorites")} className="cursor-pointer">
                 Favorites first
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("employer")} className="cursor-pointer text-base py-2">
+              <DropdownMenuItem onClick={() => handleSortChange("employer")} className="cursor-pointer">
                 Employer name
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("status")} className="cursor-pointer text-base py-2">
+              <DropdownMenuItem onClick={() => handleSortChange("status")} className="cursor-pointer">
                 Case status
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("pwdFiled")} className="cursor-pointer text-base py-2">
+              <DropdownMenuItem onClick={() => handleSortChange("pwdFiled")} className="cursor-pointer">
                 PWD filed
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("etaFiled")} className="cursor-pointer text-base py-2">
+              <DropdownMenuItem onClick={() => handleSortChange("etaFiled")} className="cursor-pointer">
                 ETA 9089 filed
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("i140Filed")} className="cursor-pointer text-base py-2">
+              <DropdownMenuItem onClick={() => handleSortChange("i140Filed")} className="cursor-pointer">
                 I-140 filed
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -470,18 +470,18 @@ export function CaseFilterBar({
             <Button
               variant="outline"
               size="default"
-              className="w-36 justify-between cursor-pointer font-mono"
+              className="w-full md:w-36 justify-between cursor-pointer font-mono"
               aria-label={`Per Page: ${pageSize}`}
             >
               <span className="truncate">Per Page: {pageSize}</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-36">
+          <DropdownMenuContent align="end" className="w-[calc(100vw-2.5rem)] md:w-36">
             {PAGE_SIZE_OPTIONS.map((size) => (
               <DropdownMenuItem
                 key={size}
                 onClick={() => onPageSizeChange(size)}
-                className="font-mono cursor-pointer text-base py-2"
+                className="font-mono cursor-pointer"
                 aria-label={`${size} per page`}
               >
                 {size}

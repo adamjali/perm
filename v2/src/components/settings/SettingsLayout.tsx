@@ -135,8 +135,9 @@ function NavButton({
       className={cn(
         "flex items-center gap-3 text-sm font-heading font-bold border-2 transition-all duration-150",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+        // Mobile-first: 44px minimum touch target (py-3 on mobile for tabs, sidebar always has py-3)
         variant === "sidebar" && "w-full px-4 py-3 text-left",
-        variant === "tab" && "px-4 py-2 whitespace-nowrap",
+        variant === "tab" && "px-4 py-3 whitespace-nowrap",
         isActive
           ? cn(
               "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black",

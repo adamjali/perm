@@ -593,22 +593,23 @@ function SettingsToggle({ id, label, description, checked, onChange }: { id: str
 function StickyFooter({ mode, caseId, isDirty, isSubmitting, isDeleting, isCancelNavigating, errorCount, onCancel, onDeleteClick }: { mode: "add" | "edit"; caseId?: Id<"cases">; isDirty: boolean; isSubmitting: boolean; isDeleting: boolean; isCancelNavigating: boolean; errorCount: number; onCancel: () => void; onDeleteClick: () => void }) {
   return (
     <div className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t-4 border-border p-4 shadow-hard-lg z-10 animate-slide-up" style={{ animationDelay: "350ms" }}>
-      <div className="flex items-center justify-between gap-4 max-w-5xl mx-auto">
-        <div className="flex items-center gap-4">
+      {/* Mobile: stacked layout, Desktop: horizontal */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4 max-w-5xl mx-auto">
+        <div className="flex items-center gap-3 md:gap-4 order-2 md:order-1">
           {mode === "edit" && caseId && (
-            <Button type="button" variant="destructive" size="lg" onClick={onDeleteClick} disabled={isSubmitting || isDeleting || isCancelNavigating} className="gap-2">
+            <Button type="button" variant="destructive" size="lg" onClick={onDeleteClick} disabled={isSubmitting || isDeleting || isCancelNavigating} className="gap-2 flex-1 md:flex-none">
               <Trash2 className="size-4" />Delete
             </Button>
           )}
           {isDirty && !isSubmitting && !isCancelNavigating && (
             <div className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400 animate-fade-in">
-              <AlertTriangle className="size-4" /><span>Unsaved changes</span>
+              <AlertTriangle className="size-4" /><span className="hidden sm:inline">Unsaved changes</span>
             </div>
           )}
         </div>
-        <div className="flex items-center gap-4">
-          <Button type="button" variant="outline" size="lg" onClick={onCancel} disabled={isSubmitting || isDeleting || isCancelNavigating} loading={isCancelNavigating} loadingText="Cancelling...">Cancel</Button>
-          <Button type="submit" size="lg" loading={isSubmitting} loadingText="Saving..." disabled={isSubmitting || isDeleting || isCancelNavigating || errorCount > 0}>Save Case</Button>
+        <div className="flex items-center gap-3 md:gap-4 order-1 md:order-2">
+          <Button type="button" variant="outline" size="lg" onClick={onCancel} disabled={isSubmitting || isDeleting || isCancelNavigating} loading={isCancelNavigating} loadingText="Cancelling..." className="flex-1 md:flex-none">Cancel</Button>
+          <Button type="submit" size="lg" loading={isSubmitting} loadingText="Saving..." disabled={isSubmitting || isDeleting || isCancelNavigating || errorCount > 0} className="flex-1 md:flex-none">Save Case</Button>
         </div>
       </div>
     </div>

@@ -69,8 +69,8 @@ export default function NotificationTabs({
             aria-controls={`notification-panel-${tab.id}`}
             onClick={() => onTabChange(tab.id)}
             className={cn(
-              // Base styles
-              "flex items-center gap-2 px-4 py-2",
+              // Base styles - Mobile-first: 44px touch target (py-3), smaller on desktop
+              "flex items-center gap-2 px-4 py-3 md:py-2",
               "text-sm font-heading font-bold uppercase tracking-wide",
               "border-2 transition-all duration-150",
               // Active state

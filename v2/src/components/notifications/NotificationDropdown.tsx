@@ -360,7 +360,7 @@ export default function NotificationDropdown() {
   const hasUnread = notifications?.some((n) => !n.isRead) ?? false;
 
   return (
-    <div className="w-[360px]">
+    <div className="w-[calc(100vw-2rem)] sm:w-[360px]">
       {/* Header */}
       <header
         className={cn(
