@@ -6,15 +6,23 @@
  *
  */
 
+import type { Metadata } from "next";
 import Link from "next/link";
 
 // Force static generation for instant loading
 export const dynamic = "force-static";
 
-export const metadata = {
-  title: "Terms of Service | PERM Tracker",
+export const metadata: Metadata = {
+  title: "Terms of Service",
   description:
     "Terms of Service for PERM Tracker. Read our terms for using our free PERM labor certification case management software.",
+  alternates: {
+    canonical: "/terms",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function TermsPage() {

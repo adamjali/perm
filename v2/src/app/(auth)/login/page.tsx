@@ -3,7 +3,11 @@ import { LoginPageClient } from "./LoginPageClient";
 
 export const metadata: Metadata = {
   title: "Sign In",
-  description: "Sign in to your PERM Tracker account to manage your immigration cases.",
+  description:
+    "Sign in to your PERM Tracker account to manage your immigration cases.",
+  alternates: {
+    canonical: "/login",
+  },
 };
 
 export default function LoginPage() {

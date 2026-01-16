@@ -898,6 +898,7 @@ describe("Notifications", () => {
         emailDeadlineReminders: true,
         emailStatusUpdates: true,
         emailRfeAlerts: true,
+        pushNotificationsEnabled: true,
         quietHoursEnabled: false,
         timezone: "America/Los_Angeles",
       };

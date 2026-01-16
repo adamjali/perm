@@ -3,7 +3,11 @@ import { SignupPageClient } from "./SignupPageClient";
 
 export const metadata: Metadata = {
   title: "Create Account",
-  description: "Create a free PERM Tracker account to start managing your immigration cases.",
+  description:
+    "Create a free PERM Tracker account to start managing your immigration cases. No credit card required.",
+  alternates: {
+    canonical: "/signup",
+  },
 };
 
 export default function SignupPage() {

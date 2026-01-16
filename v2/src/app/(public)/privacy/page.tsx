@@ -6,15 +6,23 @@
  *
  */
 
+import type { Metadata } from "next";
 import Link from "next/link";
 
 // Force static generation for instant loading
 export const dynamic = "force-static";
 
-export const metadata = {
-  title: "Privacy Policy | PERM Tracker",
+export const metadata: Metadata = {
+  title: "Privacy Policy",
   description:
     "Privacy Policy for PERM Tracker. Learn how we protect your immigration case data with bank-level encryption and row-level security.",
+  alternates: {
+    canonical: "/privacy",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function PrivacyPage() {

@@ -6,16 +6,27 @@
  *
  */
 
+import type { Metadata } from "next";
 import { Mail, MessageSquare, Github } from "lucide-react";
 import Link from "next/link";
 
 // Force static generation for instant loading
 export const dynamic = "force-static";
 
-export const metadata = {
-  title: "Contact | PERM Tracker",
+export const metadata: Metadata = {
+  title: "Contact",
   description:
-    "Contact PERM Tracker support for help with your immigration case management.",
+    "Contact PERM Tracker support for help with your immigration case management. Email, feature requests, and bug reports.",
+  alternates: {
+    canonical: "/contact",
+  },
+  openGraph: {
+    title: "Contact PERM Tracker",
+    description:
+      "Get in touch with PERM Tracker support for help with your immigration case management.",
+    url: "/contact",
+    type: "website",
+  },
 };
 
 export default function ContactPage() {

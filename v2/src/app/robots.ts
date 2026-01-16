@@ -9,13 +9,13 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: '/',
         disallow: [
-          '/api/',        // API routes
-          '/dashboard/',  // Authenticated
-          '/cases/',      // Authenticated
-          '/calendar/',   // Authenticated
-          '/timeline/',   // Authenticated
-          '/notifications/', // Authenticated
-          '/settings/',   // Authenticated
+          '/api/',           // API routes - internal only
+          '/dashboard/',     // Authenticated dashboard
+          '/cases/',         // Authenticated case management (all /cases/* routes)
+          '/calendar/',      // Authenticated calendar view
+          '/timeline/',      // Authenticated timeline view
+          '/notifications/', // Authenticated notifications
+          '/settings/',      // Authenticated user settings
         ],
       },
     ],

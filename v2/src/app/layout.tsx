@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale } from "next-intl/server";
@@ -6,6 +6,11 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { ConvexClientProvider } from "./providers";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
+import {
+  getSoftwareApplicationSchema,
+  getOrganizationSchema,
+  getWebSiteSchema,
+} from "@/lib/structuredData";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -24,6 +29,14 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   weight: ["400", "700"],
 });
+
+// Viewport configuration for proper mobile scaling
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#22c55e", // green-500 matching logo
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -55,6 +68,15 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
+  // Icons configuration - Next.js will automatically serve icon.tsx as favicon
+  icons: {
+    icon: [
+      { url: "/icon", type: "image/png", sizes: "32x32" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -77,6 +99,8 @@ export const metadata: Metadata = {
     title: "PERM Tracker - Free Case Tracking",
     description: "Free PERM case tracking for immigration attorneys.",
     images: ["/opengraph-image"],
+    creator: "@permtracker",
+    site: "@permtracker",
   },
   robots: {
     index: true,
@@ -89,6 +113,10 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
+  // Uncomment and add your verification code after setting up Google Search Console
+  // verification: {
+  //   google: "YOUR_GOOGLE_VERIFICATION_CODE",
+  // },
 };
 
 export default async function RootLayout({
@@ -100,9 +128,29 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
 
+  // Generate structured data for SEO (static data, not user input - safe for JSON-LD)
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+  const structuredData = [
+    getSoftwareApplicationSchema(baseUrl),
+    getOrganizationSchema(baseUrl),
+    getWebSiteSchema(baseUrl),
+  ];
+
   return (
     <ConvexAuthNextjsServerProvider>
       <html lang={locale} suppressHydrationWarning>
+        <head>
+          {/* JSON-LD structured data for rich search results
+              Note: Using dangerouslySetInnerHTML is safe here because structuredData
+              is generated from hardcoded strings in structuredData.ts, not user input */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(structuredData),
+            }}
+          />
+        </head>
         <body
           className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} font-body antialiased`}
         >

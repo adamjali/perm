@@ -33,6 +33,16 @@ export const metadata: Metadata = {
   title: "PERM Tracker - Free Case Tracking for Immigration Attorneys",
   description:
     "Free PERM case tracking software. Manage labor certification deadlines, track case status, and streamline your immigration practice.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "PERM Tracker - Free Case Tracking for Immigration Attorneys",
+    description:
+      "Free PERM case tracking software for immigration attorneys. Track deadlines, manage cases, never miss a filing date.",
+    url: "/",
+    type: "website",
+  },
 };
 
 export default function HomePage() {

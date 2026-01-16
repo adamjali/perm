@@ -23,7 +23,17 @@ import { DemoPageClient } from "./DemoPageClient";
 export const metadata: Metadata = {
   title: "Try Demo",
   description:
-    "Try PERM Tracker for free. Explore all features with sample data before signing up.",
+    "Try PERM Tracker for free. Explore all features with sample data before signing up. No account required.",
+  alternates: {
+    canonical: "/demo",
+  },
+  openGraph: {
+    title: "Try PERM Tracker Demo",
+    description:
+      "Try PERM Tracker for free. Explore deadline tracking, case validation, and all features with sample data.",
+    url: "/demo",
+    type: "website",
+  },
 };
 
 export default function DemoPage() {
