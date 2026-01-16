@@ -143,6 +143,10 @@ export function ChatInput({
    * - Appends at cursor (or end if no focus)
    * - Only replaces text if user has selected/highlighted text
    * - Adds space before if needed for natural flow
+   *
+   * NOTE: We read currentValue from the DOM (textareaRef) instead of the `value` prop
+   * to avoid stale closure issues when Web Speech API fires multiple onresult events
+   * in rapid succession (e.g., when user pauses and continues speaking).
    */
   const insertTranscriptAtCursor = useCallback((transcript: string) => {
     // Get fresh cursor position from textarea (most accurate)
@@ -155,7 +159,8 @@ export function ChatInput({
       end = textareaRef.current.selectionEnd;
     }
 
-    const currentValue = value || '';
+    // Read current value from DOM to avoid stale closure issues
+    const currentValue = textareaRef.current?.value ?? '';
 
     // If cursor is at 0 and end is 0, and we have content, append to end
     // This handles the case where focus was lost
@@ -201,7 +206,7 @@ export function ChatInput({
       // Update cursor position ref for next insertion
       cursorPositionRef.current = { start: newCursorPos, end: newCursorPos };
     });
-  }, [value, onChange]);
+  }, [onChange]);
 
   /**
    * Start speech recognition.
