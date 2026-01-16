@@ -377,7 +377,7 @@ export default function NotificationDropdown() {
             variant="ghost"
             size="xs"
             onClick={handleMarkAllAsRead}
-            className="text-xs text-primary hover:text-primary/80"
+            className="text-xs text-primary hover:text-primary hover:bg-primary/10"
           >
             Mark All Read
           </Button>
