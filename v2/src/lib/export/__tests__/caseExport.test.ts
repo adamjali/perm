@@ -539,7 +539,7 @@ describe("exportFullCasesJSON", () => {
 
     const ids = parsed.cases.map((c: any) => c._id);
     expect(ids).toContain("case_full_1");
-    expect(ids).toContain("case_bigint_test");
+    expect(ids).toContain("case_large_values_test");
     expect(ids).toContain("case_minimal");
   });
 

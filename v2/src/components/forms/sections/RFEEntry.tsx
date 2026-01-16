@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
@@ -132,9 +132,12 @@ function RFEEntryComponent({
     name: `rfeEntries.${index}.responseSubmittedDate`,
   });
 
-  // Get errors for this entry
+  // State for inline validation errors (e.g., responseSubmittedDate > responseDueDate)
+  const [inlineErrors, setInlineErrors] = useState<Record<string, string>>({});
+
+  // Get errors for this entry (merging RHF errors with inline validation errors)
   const entryErrors = errors.rfeEntries?.[index];
-  const fieldErrors: Record<string, string> = {};
+  const fieldErrors: Record<string, string> = { ...inlineErrors };
   const fieldWarnings: Record<string, string> = {};
   if (entryErrors) {
     for (const [key, value] of Object.entries(entryErrors)) {
@@ -172,8 +175,32 @@ function RFEEntryComponent({
         value || undefined,
         { shouldDirty: true }
       );
+
+      // Clear responseSubmittedDate validation when due date changes
+      if (field === "responseDueDate") {
+        setInlineErrors((prev) => {
+          const { responseSubmittedDate: _, ...rest } = prev;
+          return rest;
+        });
+      }
+
+      // Validate responseSubmittedDate against responseDueDate
+      if (field === "responseSubmittedDate" && value) {
+        const currentDueDate = responseDueDate;
+        if (currentDueDate && value > currentDueDate) {
+          setInlineErrors((prev) => ({
+            ...prev,
+            responseSubmittedDate: `Response submitted date cannot be after due date (${currentDueDate})`,
+          }));
+        } else {
+          setInlineErrors((prev) => {
+            const { responseSubmittedDate: _, ...rest } = prev;
+            return rest;
+          });
+        }
+      }
     },
-    [setValue, index]
+    [setValue, index, responseDueDate]
   );
 
   // Stable handler for remove button

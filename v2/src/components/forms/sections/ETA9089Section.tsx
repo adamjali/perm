@@ -437,7 +437,6 @@ export function ETA9089Section(props: ETA9089SectionProps) {
 
           <RFIEntryList
             minReceivedDate={values.eta9089FilingDate}
-            maxReceivedDate={values.pwdExpirationDate}
             receivedDisabled={
               !values.eta9089FilingDate
                 ? { disabled: true, reason: "Enter ETA 9089 filing date first" }

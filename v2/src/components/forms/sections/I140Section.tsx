@@ -473,7 +473,6 @@ export function I140Section(props: I140SectionProps) {
 
           <RFEEntryList
             minReceivedDate={values.i140FilingDate}
-            maxReceivedDate={values.eta9089ExpirationDate}
             receivedDisabled={
               !values.i140FilingDate
                 ? { disabled: true, reason: "Enter I-140 filing date first" }
