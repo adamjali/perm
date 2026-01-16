@@ -1,20 +1,34 @@
 # Project Milestones: PERM Tracker
 
-## v2.0 Complete Migration (In Progress)
+## v2.0.0 Complete Migration (Shipped: 2026-01-15)
 
-**Goal:** Complete platform rebuild from FastAPI + Supabase + Alpine.js to Next.js + Convex + React.
+**Delivered:** Complete platform rebuild from FastAPI + Supabase + Alpine.js to Next.js + Convex + React. 229 features migrated, production-grade AI chatbot with 32 tools, two-way Google Calendar sync, real-time everywhere.
 
-**Phases:** 11-32 (22 phases)
+**Phases completed:** 11-32 (22 phases, 95 plans total)
 
-**Key focus areas:**
-- Deadlines & Validations as the CORE
-- Real-time updates everywhere
-- Production-grade AI chatbot
-- 229 features preserved
+**Key accomplishments:**
 
-**Started:** 2025-12-20
+- Complete platform migration: Next.js 16 + Convex + React + TypeScript
+- 229 features preserved with no feature loss
+- Production-grade AI chatbot with 32 tools and 3-tier permission system (autonomous/confirm/destructive)
+- Two-way Google Calendar sync with OAuth, encrypted tokens, and event management
+- Central validation module with 3,600+ tests covering all PERM deadline rules
+- Real-time updates everywhere via Convex subscriptions
+- PWA with service worker, SEO infrastructure, Lighthouse 90+ scores
+- Neobrutalist design system with Motion animations
 
-See `.planning/V2_MIGRATION_BRIEF.md` for full context.
+**Stats:**
+
+- 178,198 lines of TypeScript (v2/)
+- 22 phases, 95 plans completed
+- 3,600+ tests
+- 27 days from start to ship (2025-12-20 → 2026-01-15)
+
+**Production URL:** https://permtracker.app
+
+**Git range:** Phase 11 → Phase 32
+
+**What's next:** Post-MVP enhancements (bulkUpdateField, duplicateCase, getAuditHistory tools), decommission v1 infrastructure.
 
 ---
 
@@ -43,6 +57,6 @@ See `.planning/V2_MIGRATION_BRIEF.md` for full context.
 
 **Git range:** `feat(01-01)` → `feat(10-03)`
 
-**What's next:** Merge to main, then execute Phase 9 (calendar two-way sync) in production environment.
+**What's next:** v2.0 Complete Migration
 
 ---
