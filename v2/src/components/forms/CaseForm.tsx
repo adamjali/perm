@@ -130,7 +130,6 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
 
   const {
     validateField,
-    validateOnChange,
     fieldStates,
     fieldErrors: dateFieldErrors,
     allFieldDisabledStates,
@@ -325,9 +324,9 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
       for (const cleared of clearedFields) {
         toast.info(cleared.reason, { duration: 4000 });
       }
-      validateOnChange(field, value);
+      // Validation happens on blur (handleFieldBlur) to prevent error flash while typing
     },
-    [handleChange, triggerCalculation, validateOnChange]
+    [handleChange, triggerCalculation]
   );
 
   const handleFieldBlur = useCallback(
