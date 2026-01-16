@@ -224,8 +224,6 @@ export function CasesPageClient() {
   // Convex queries and mutations
   const customOrderData = useQuery(api.userCaseOrder.getCaseOrder);
   const saveCaseOrderMutation = useMutation(api.userCaseOrder.saveCaseOrder);
-  // deleteCaseOrderMutation available for reset functionality
-  const _deleteCaseOrderMutation = useMutation(api.userCaseOrder.deleteCaseOrder);
   const importCasesMutation = useMutation(api.cases.importCases);
   const bulkRemoveMutation = useMutation(api.cases.bulkRemove);
   const bulkUpdateStatusMutation = useMutation(api.cases.bulkUpdateStatus);
@@ -1061,15 +1059,15 @@ export function CasesPageClient() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
+      {/* Page Header - responsive: stacks on mobile, horizontal on desktop */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-heading text-3xl font-bold">Cases</h1>
           <p className="text-muted-foreground mt-1">
             {totalCount} {totalCount === 1 ? "case" : "cases"}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             variant={selectionMode ? "default" : "outline"}
             size="default"

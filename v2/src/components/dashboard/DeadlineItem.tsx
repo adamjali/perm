@@ -24,6 +24,31 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Z_INDEX } from "@/lib/constants/zIndex";
+
+/**
+ * Hook to detect if the device has hover capability.
+ * Returns true for desktop/mouse devices, false for touch-only devices.
+ * Uses the `(hover: hover)` media query which is the most reliable way
+ * to detect pointer devices vs touch devices.
+ */
+function useHasHover(): boolean {
+  const [hasHover, setHasHover] = useState(false);
+
+  useEffect(() => {
+    // Check if device supports hover (has fine pointer like mouse)
+    const mediaQuery = window.matchMedia("(hover: hover)");
+    setHasHover(mediaQuery.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      setHasHover(event.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  return hasHover;
+}
 import type { DeadlineItem as DeadlineItemType } from "../../../convex/lib/dashboardTypes";
 
 interface DeadlineItemProps {
@@ -44,6 +69,7 @@ interface HoverCardPosition {
 
 export default function DeadlineItem({ deadline, index, isLoading = false, onNavigate }: DeadlineItemProps) {
   const router = useRouter();
+  const hasHover = useHasHover();
   const [showHoverCard, setShowHoverCard] = useState(false);
   const [hoverPosition, setHoverPosition] = useState<HoverCardPosition | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -83,14 +109,25 @@ export default function DeadlineItem({ deadline, index, isLoading = false, onNav
     const cardWidth = 224; // w-56 = 14rem = 224px
     const gap = 8; // ml-2 = 0.5rem = 8px
 
-    // Determine horizontal position
+    // Determine horizontal position - prefer right side unless not enough space
     const spaceOnRight = viewportWidth - rect.right;
     const placement: "right" | "left" = spaceOnRight < cardWidth + gap ? "left" : "right";
 
-    // Calculate absolute position
-    const left = placement === "right"
-      ? rect.right + gap
-      : rect.left - cardWidth - gap;
+    // Calculate absolute position with boundary checking
+    let left: number;
+    if (placement === "right") {
+      left = rect.right + gap;
+      // Ensure card doesn't overflow right edge
+      if (left + cardWidth > viewportWidth - gap) {
+        left = viewportWidth - cardWidth - gap;
+      }
+    } else {
+      left = rect.left - cardWidth - gap;
+      // Ensure card doesn't overflow left edge (prevent negative values)
+      if (left < gap) {
+        left = gap;
+      }
+    }
 
     setHoverPosition({
       top: rect.top,
@@ -99,11 +136,12 @@ export default function DeadlineItem({ deadline, index, isLoading = false, onNav
     });
   }, []);
 
-  // Recalculate position when hover starts
+  // Recalculate position when hover starts (only on devices with hover capability)
   const handleMouseEnter = useCallback(() => {
+    if (!hasHover) return; // Skip hover card on touch devices
     calculatePosition();
     setShowHoverCard(true);
-  }, [calculatePosition]);
+  }, [hasHover, calculatePosition]);
 
   const handleMouseLeave = useCallback(() => {
     setShowHoverCard(false);
