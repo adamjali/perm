@@ -153,6 +153,7 @@ export interface DeadlineItem {
   readonly caseNumber?: string;
   readonly employerName: string;
   readonly beneficiaryName: string;
+  readonly positionTitle: string;
   readonly type: DeadlineType;
   readonly label: string;
   readonly dueDate: string; // ISO date string (YYYY-MM-DD)
@@ -266,6 +267,7 @@ export interface RecentActivityItem {
   caseNumber?: string;
   employerName: string;
   beneficiaryIdentifier: string;
+  positionTitle: string;
   action: string;
   timestamp: number;
   caseStatus: CaseStatus;

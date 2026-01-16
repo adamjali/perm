@@ -80,6 +80,7 @@ export const getDeadlines = query({
             caseNumber: caseDoc.caseNumber,
             employerName: caseDoc.employerName,
             beneficiaryName: caseDoc.beneficiaryIdentifier,
+            positionTitle: caseDoc.positionTitle,
             type: mapDeadlineType(extracted.type, extracted.daysUntil),
             label: extracted.label,
             dueDate: extracted.date,
@@ -353,7 +354,8 @@ export const getRecentActivity = query({
       id: c._id,
       caseNumber: c.caseNumber,
       employerName: c.employerName,
-      beneficiaryIdentifier: c.beneficiaryIdentifier, // Use beneficiaryIdentifier not beneficiaryName
+      beneficiaryIdentifier: c.beneficiaryIdentifier,
+      positionTitle: c.positionTitle,
       action: "Updated", // Generic action for now
       timestamp: c.updatedAt ?? c._creationTime,
       caseStatus: c.caseStatus,
@@ -404,6 +406,7 @@ export const getUpcomingDeadlines = query({
             caseNumber: caseDoc.caseNumber,
             employerName: caseDoc.employerName,
             beneficiaryName: caseDoc.beneficiaryIdentifier,
+            positionTitle: caseDoc.positionTitle,
             type: mapDeadlineType(extracted.type, extracted.daysUntil),
             label: extracted.label,
             dueDate: extracted.date,

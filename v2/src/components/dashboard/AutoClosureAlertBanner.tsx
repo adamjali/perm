@@ -158,10 +158,10 @@ export default function AutoClosureAlertBanner() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold text-amber-900 dark:text-amber-100 truncate">
-                  {alert.beneficiaryIdentifier}
+                  {alert.employerName}
                 </span>
                 <span className="text-amber-700 dark:text-amber-300 text-sm">
-                  at {alert.employerName}
+                  - {alert.positionTitle}
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-1 text-sm text-amber-600 dark:text-amber-400">
@@ -188,7 +188,7 @@ export default function AutoClosureAlertBanner() {
                 onClick={() => handleDismissOne(alert.notificationId)}
                 className="p-1.5 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors"
                 title="Dismiss alert"
-                aria-label={`Dismiss alert for ${alert.beneficiaryIdentifier}`}
+                aria-label={`Dismiss alert for ${alert.employerName} - ${alert.positionTitle}`}
               >
                 <X className="w-4 h-4" />
               </button>

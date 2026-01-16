@@ -72,6 +72,7 @@ export const CaseCard = memo(function CaseCard({
     _id,
     employerName,
     beneficiaryIdentifier,
+    positionTitle,
     caseStatus,
     progressStatus,
     nextDeadline,
@@ -125,7 +126,7 @@ export const CaseCard = memo(function CaseCard({
 
   const handleDelete = (e: React.MouseEvent): void => {
     e.stopPropagation();
-    const caseName = `${employerName} - ${beneficiaryIdentifier}`;
+    const caseName = `${employerName} - ${positionTitle || beneficiaryIdentifier}`;
     if (onDeleteRequest) {
       onDeleteRequest(_id, caseName);
     } else {
@@ -135,7 +136,7 @@ export const CaseCard = memo(function CaseCard({
 
   const handleArchive = (e: React.MouseEvent): void => {
     e.stopPropagation();
-    const caseName = `${employerName} - ${beneficiaryIdentifier}`;
+    const caseName = `${employerName} - ${positionTitle || beneficiaryIdentifier}`;
     if (onArchiveRequest) {
       onArchiveRequest(_id, caseName);
     } else {
@@ -223,7 +224,7 @@ export const CaseCard = memo(function CaseCard({
             <h3 className="font-heading font-bold text-lg leading-tight truncate text-black dark:text-black">
               {employerName}
             </h3>
-            <p className="text-sm text-[#666666] truncate">{beneficiaryIdentifier}</p>
+            <p className="text-sm text-[#666666] truncate">{positionTitle || beneficiaryIdentifier}</p>
           </div>
           <CaseBadges
             duplicateOf={duplicateOf}

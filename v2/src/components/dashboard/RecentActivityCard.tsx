@@ -52,7 +52,7 @@ export default function RecentActivityCard({ activity }: RecentActivityCardProps
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="truncate">{activity.beneficiaryIdentifier}</span>
+          <span className="truncate">{activity.positionTitle}</span>
           <span className="shrink-0">•</span>
           <span className="truncate">{activity.action}</span>
         </div>

@@ -202,10 +202,10 @@ export default function DeadlineItem({ deadline, index, isLoading = false, onNav
         </div>
         <div>
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Beneficiary
+            Position
           </div>
           <div className="text-sm font-medium text-foreground">
-            {deadline.beneficiaryName}
+            {deadline.positionTitle || deadline.beneficiaryName || "N/A"}
           </div>
         </div>
         <div>

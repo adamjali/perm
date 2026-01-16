@@ -55,6 +55,7 @@ const notificationType = v.union(
 interface CaseInfo {
   employerName?: string;
   beneficiaryIdentifier?: string;
+  positionTitle?: string;
   caseStatus?: string;
 }
 
@@ -74,6 +75,7 @@ async function enrichNotificationWithCase<T extends Doc<"notifications">>(
       caseInfo = {
         employerName: caseDoc.employerName,
         beneficiaryIdentifier: caseDoc.beneficiaryIdentifier,
+        positionTitle: caseDoc.positionTitle,
         caseStatus: caseDoc.caseStatus,
       };
     }

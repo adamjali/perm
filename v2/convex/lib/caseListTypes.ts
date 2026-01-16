@@ -203,6 +203,7 @@ export interface CaseCardData {
   readonly _id: Id<"cases">;
   readonly employerName: string;
   readonly beneficiaryIdentifier: string;
+  readonly positionTitle: string;
   readonly caseStatus: CaseStatus;
   readonly progressStatus: ProgressStatus;
   readonly nextDeadline?: string; // ISO date string (YYYY-MM-DD)
@@ -232,6 +233,7 @@ export function createCaseCardData(params: {
   _id: Id<"cases">;
   employerName: string;
   beneficiaryIdentifier: string;
+  positionTitle: string;
   caseStatus: CaseStatus;
   progressStatus: ProgressStatus;
   nextDeadline?: string;
@@ -272,6 +274,7 @@ export function createCaseCardData(params: {
     _id: params._id,
     employerName: params.employerName,
     beneficiaryIdentifier: params.beneficiaryIdentifier,
+    positionTitle: params.positionTitle,
     caseStatus: params.caseStatus,
     progressStatus: params.progressStatus,
     nextDeadline: params.nextDeadline,

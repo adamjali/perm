@@ -59,6 +59,7 @@ export interface AutoClosureAlert {
   closureReason: string;
   employerName: string;
   beneficiaryIdentifier: string;
+  positionTitle: string;
   createdAt: number;
   isRead: boolean;
 }
@@ -364,6 +365,7 @@ export const getAutoClosureAlerts = query({
     for (const notification of autoClosureNotifications) {
       let employerName = "Unknown";
       let beneficiaryIdentifier = "Unknown";
+      let positionTitle = "Unknown";
       let closureReason = notification.deadlineType || "unknown";
 
       // Get case data if available
@@ -372,6 +374,7 @@ export const getAutoClosureAlerts = query({
         if (caseDoc) {
           employerName = caseDoc.employerName;
           beneficiaryIdentifier = caseDoc.beneficiaryIdentifier;
+          positionTitle = caseDoc.positionTitle;
           closureReason = caseDoc.closureReason || closureReason;
         }
       }
@@ -384,6 +387,7 @@ export const getAutoClosureAlerts = query({
         closureReason,
         employerName,
         beneficiaryIdentifier,
+        positionTitle,
         createdAt: notification.createdAt,
         isRead: notification.isRead,
       });

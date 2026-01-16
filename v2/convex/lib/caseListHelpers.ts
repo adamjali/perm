@@ -141,6 +141,7 @@ interface NoteEntry {
  */
 interface CaseDataForProjection extends CaseDataForDeadlines {
   _id: Id<"cases">;
+  positionTitle: string;
   notes?: NoteEntry[];
   isFavorite?: boolean;
   isPinned?: boolean;
@@ -182,6 +183,7 @@ export function projectCaseForCard(caseData: CaseDataForProjection, todayISO: st
     _id: caseData._id,
     employerName: caseData.employerName,
     beneficiaryIdentifier: caseData.beneficiaryIdentifier,
+    positionTitle: caseData.positionTitle,
     caseStatus: caseData.caseStatus,
     progressStatus: caseData.progressStatus,
     nextDeadline: nextDeadline?.date,
@@ -522,6 +524,10 @@ export function filterBySearch(
         trimmedQuery,
         caseData.beneficiaryIdentifier.toLowerCase()
       );
+      const positionScore = fuzzyMatchScore(
+        trimmedQuery,
+        caseData.positionTitle.toLowerCase()
+      );
 
       // Also search in notes if available
       let notesScore = 0;
@@ -530,7 +536,7 @@ export function filterBySearch(
       }
 
       // Best score across all fields
-      const score = Math.max(employerScore, beneficiaryScore, notesScore);
+      const score = Math.max(employerScore, beneficiaryScore, positionScore, notesScore);
 
       return {
         caseData,

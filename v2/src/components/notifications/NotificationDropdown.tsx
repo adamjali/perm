@@ -70,6 +70,7 @@ interface Notification {
   caseInfo?: {
     employerName?: string;
     beneficiaryIdentifier?: string;
+    positionTitle?: string;
     caseStatus?: string;
   } | null;
 }
@@ -203,8 +204,8 @@ function NotificationItem({
         {notification.caseInfo?.employerName && (
           <p className="text-xs text-muted-foreground/70 truncate">
             {notification.caseInfo.employerName}
-            {notification.caseInfo.beneficiaryIdentifier &&
-              ` - ${notification.caseInfo.beneficiaryIdentifier}`}
+            {(notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier) &&
+              ` - ${notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier}`}
           </p>
         )}
       </div>

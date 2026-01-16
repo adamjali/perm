@@ -66,6 +66,7 @@ type DeadlineItemInput = {
   caseNumber?: string;
   employerName: string;
   beneficiaryName: string;
+  positionTitle: string;
   type: DeadlineItem["type"];
   label: string;
   dueDate: string;

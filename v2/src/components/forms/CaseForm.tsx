@@ -513,7 +513,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
         <UnsavedChangesDialog open={shouldShowDialog} onStay={cancelNavigation} onLeave={confirmNavigation} />
 
         {mode === "edit" && caseId && (
-          <DeleteDialog open={deleteDialogOpen} isDeleting={isDeleting} caseName={`${formData.employerName} - ${formData.beneficiaryIdentifier}`} onCancel={() => setDeleteDialogOpen(false)} onConfirm={handleDeleteConfirm} />
+          <DeleteDialog open={deleteDialogOpen} isDeleting={isDeleting} caseName={`${formData.employerName} - ${formData.positionTitle}`} onCancel={() => setDeleteDialogOpen(false)} onConfirm={handleDeleteConfirm} />
         )}
       </form>
       </FormSectionProvider>
