@@ -16,8 +16,8 @@
 
 ---
 
-> **Stack:** Next.js 16 + Convex + React + TypeScript (strict mode)
-> **Status:** Active development | **Last Updated:** 2025-12-31
+> **Stack:** Next.js 16.1 + Convex 1.31 + React 19 + TypeScript (strict mode)
+> **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-01-16
 
 ## Quick Start
 

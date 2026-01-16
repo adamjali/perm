@@ -392,4 +392,4 @@ The PERM Engine is a comprehensive TypeScript library for PERM deadline calculat
 
 ---
 
-*Last updated: 2026-01-08*
+*Last updated: 2026-01-16*

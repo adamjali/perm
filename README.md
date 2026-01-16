@@ -5,6 +5,7 @@
 ![Status](https://img.shields.io/badge/Status-Production-success?style=for-the-badge)
 ![Stack](https://img.shields.io/badge/Stack-Next.js%20%2B%20Convex-blue?style=for-the-badge)
 ![Tests](https://img.shields.io/badge/Tests-3600%2B%20Passing-brightgreen?style=for-the-badge)
+![Coverage](https://img.shields.io/badge/Coverage-75%25%2B-blue?style=for-the-badge)
 
 ---
 
@@ -18,26 +19,36 @@
 
 ## Features
 
-### Core Functionality
-- **Full CRUD Case Management** - Create, read, update, delete PERM cases
-- **Smart Date Validation** - Automatic validation per 20 CFR 656.40(c) regulations
-- **Auto-Calculations** - PWD expiration, ETA 9089 windows, I-140 deadlines
-- **Cascade Logic** - Dependent dates auto-calculate when source fields change
-- **RFI/RFE Tracking** - Request for Information/Evidence entries with due dates
-- **Notifications** - Real-time in-app notifications with email delivery
+### Case Management
+- Full CRUD with real-time sync, duplicate detection, bulk operations
+- Smart date validation per 20 CFR 656.40(c) regulations
+- Auto-calculations (PWD expiration, ETA 9089 windows, I-140 deadlines)
+- Cascade logic - dependent dates auto-calculate
+- RFI/RFE tracking with due dates
 
-### User Experience
-- **Beautiful Dashboard** - Case statistics, upcoming deadlines, recent activity
-- **Privacy Mode** - One-click anonymization for screen sharing
-- **Responsive Design** - Works on desktop, tablet, and mobile
-- **Dark/Light Mode** - User preference persisted
-- **PWA Support** - Installable progressive web app
+### Dashboard & UX
+- Real-time case counts, upcoming deadlines, recent activity
+- Timeline visualization with milestone tracking
+- Calendar view with deadline color coding
+- Privacy mode for screen sharing
+- Dark/light mode, responsive design, PWA support
 
-### Security & Authentication
-- **Convex Auth** - Secure authentication with Convex
-- **Google OAuth** - One-click sign-in with Google
-- **Row-Level Security** - Database-level access control via Convex
-- **Activity Tracking** - Inactivity timeout for security
+### Notifications
+- In-app notification bell with unread badge
+- Email notifications via Resend
+- Push notifications via Web Push
+- Daily deadline reminders (cron), weekly digest
+
+### AI Chat Assistant
+- Natural language case queries and updates
+- Multi-provider fallback (Gemini, OpenRouter, Groq, Cerebras)
+- Web search integration for PERM regulations
+- Tool confirmation for destructive actions
+
+### Google Calendar Sync
+- One-click OAuth connection
+- Automatic deadline event creation
+- Bulk sync for all cases
 
 ---
 

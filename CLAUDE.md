@@ -16,7 +16,7 @@
 
 ---
 
-**Status:** Production | **Last Updated:** January 2026
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** January 2026
 
 ## Production URLs
 
@@ -25,11 +25,14 @@
 
 ## Tech Stack
 
-- **Frontend:** Next.js 16 + React + TypeScript (Vercel)
-- **Backend:** Convex (serverless functions)
-- **Database:** Convex (built-in)
+- **Frontend:** Next.js 16.1 + React 19 + TypeScript (Vercel)
+- **Backend:** Convex 1.31 (serverless functions)
+- **Database:** Convex (built-in, real-time)
 - **Authentication:** Convex Auth + Google OAuth
 - **Email:** Resend
+- **Push Notifications:** Web Push (VAPID)
+- **AI Chat:** Vercel AI SDK + Multi-provider (Gemini, OpenRouter, Groq)
+- **Testing:** Vitest (3600+ tests) + Playwright (E2E)
 
 ---
 
@@ -55,15 +58,19 @@ pnpm dev
 | Topic | File |
 |-------|------|
 | **Developer Guide (PRIMARY)** | [v2/CLAUDE.md](v2/CLAUDE.md) |
+| **API Reference** | [v2/docs/API.md](v2/docs/API.md) |
 | PERM Workflow (canonical) | [perm_flow.md](perm_flow.md) |
-| Planning & Architecture | [.planning/](.planning/) |
+| Testing Guide | [v2/TEST_README.md](v2/TEST_README.md) |
+| Codebase Architecture | [.planning/codebase/](.planning/codebase/) |
+| Planning & Roadmap | [.planning/](.planning/) |
 
 **See [v2/CLAUDE.md](v2/CLAUDE.md) for complete developer documentation** including:
 - Convex function patterns
-- PERM business logic API
-- Testing commands
-- Notification system
-- Email templates
+- PERM business logic API (calculators, validators, cascade)
+- Testing commands and patterns
+- Notification system (in-app, email, push)
+- AI chat integration
+- Calendar sync with Google Calendar
 
 ---
 
