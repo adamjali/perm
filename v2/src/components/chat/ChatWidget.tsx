@@ -20,6 +20,7 @@ interface ChatWidgetProps {
   input?: string;
   onInputChange?: (value: string) => void;
   onSend?: () => void;
+  onStop?: () => void;
   status?: 'ready' | 'submitted' | 'streaming' | 'error';
   streamingContent?: string;
   onOpenHistory?: () => void;
@@ -44,6 +45,7 @@ export function ChatWidget({
   input = '',
   onInputChange = () => {},
   onSend = () => {},
+  onStop,
   status = 'ready',
   streamingContent,
   onOpenHistory,
@@ -95,6 +97,7 @@ export function ChatWidget({
             input={input}
             onInputChange={onInputChange}
             onSend={onSend}
+            onStop={onStop}
             onClose={() => setIsOpen(false)}
             status={status}
             streamingContent={streamingContent}

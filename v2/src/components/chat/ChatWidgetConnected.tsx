@@ -78,6 +78,7 @@ export function ChatWidgetConnected() {
     startNewConversation,
     selectConversation,
     sendMessage,
+    stop,
   } = useChatWithPersistence({
     conversationId: recentConversation?._id,
     actionMode: actionMode,
@@ -175,6 +176,7 @@ export function ChatWidgetConnected() {
         input={input}
         onInputChange={setInput}
         onSend={handleSend}
+        onStop={stop}
         status={status}
         streamingContent={streamingContent}
         onOpenHistory={() => setIsHistoryOpen(true)}

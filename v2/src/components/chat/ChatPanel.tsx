@@ -42,6 +42,8 @@ interface ChatPanelProps {
   onInputChange: (value: string) => void;
   /** Callback when user sends a message */
   onSend: () => void;
+  /** Callback to stop/cancel AI response generation */
+  onStop?: () => void;
   /** Callback when user closes the chat panel */
   onClose: () => void;
   /** Current chat status */
@@ -71,6 +73,7 @@ export function ChatPanel({
   input,
   onInputChange,
   onSend,
+  onStop,
   onClose,
   status,
   streamingContent,
@@ -303,7 +306,9 @@ export function ChatPanel({
         value={input}
         onChange={onInputChange}
         onSend={onSend}
-        disabled={isProcessing}
+        onStop={onStop}
+        disabled={false}
+        isProcessing={isProcessing}
         placeholder={isProcessing ? 'Thinking...' : 'Type a message...'}
       />
     </motion.div>
