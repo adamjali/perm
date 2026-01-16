@@ -1,6 +1,22 @@
 import { parseISO, format, isValid, getDay, subDays } from 'date-fns';
 
 /**
+ * Type guard to check if a string is a valid ISO date (YYYY-MM-DD).
+ * Does not throw - use for checking/filtering.
+ *
+ * @param dateStr - String to validate
+ * @returns True if the string is a valid ISO date format
+ *
+ * @example
+ * isValidISODate('2024-01-15') // true
+ * isValidISODate('invalid') // false
+ * isValidISODate(null) // false
+ */
+export function isValidISODate(dateStr: string | null | undefined): dateStr is string {
+  return Boolean(dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr));
+}
+
+/**
  * Add days to a date in UTC (avoids DST issues).
  *
  * @param date - Date object to add days to

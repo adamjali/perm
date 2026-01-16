@@ -107,7 +107,7 @@ describe('CaseForm', () => {
   });
 
   describe('rendering', () => {
-    it('renders all form sections', { timeout: 60000 }, () => {
+    it('renders all form sections', { timeout: 15000 }, () => {
       const { container } = renderWithProviders(
         <CaseForm
           mode="add"
@@ -399,7 +399,7 @@ describe('CaseForm', () => {
       vi.useRealTimers();
     });
 
-    it('allows adding RFI entry', { timeout: 120000 }, async () => {
+    it('allows adding RFI entry', { timeout: 15000 }, async () => {
       // Use fireEvent (synchronous) instead of userEvent with fake timers
       renderWithProviders(
         <CaseForm
@@ -428,7 +428,7 @@ describe('CaseForm', () => {
       });
     });
 
-    it('allows removing RFI entry', { timeout: 120000 }, async () => {
+    it('allows removing RFI entry', { timeout: 15000 }, async () => {
       // Use fireEvent (synchronous) instead of userEvent with fake timers
       renderWithProviders(
         <CaseForm
@@ -466,7 +466,7 @@ describe('CaseForm', () => {
       });
     });
 
-    it('allows adding RFE entry', { timeout: 120000 }, async () => {
+    it('allows adding RFE entry', { timeout: 15000 }, async () => {
       // Use fireEvent (synchronous) instead of userEvent with fake timers
       renderWithProviders(
         <CaseForm
@@ -494,7 +494,7 @@ describe('CaseForm', () => {
       });
     });
 
-    it('allows removing RFE entry', { timeout: 120000 }, async () => {
+    it('allows removing RFE entry', { timeout: 15000 }, async () => {
       // Use fireEvent (synchronous) instead of userEvent with fake timers
       renderWithProviders(
         <CaseForm

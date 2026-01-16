@@ -460,12 +460,13 @@ describe("CaseCard - Hover Expansion", () => {
 
     const { container } = renderWithProviders(<CaseCard case={mockCase} />);
 
-    // Expanded content IS in the DOM but hidden via CSS (max-h-0 opacity-0)
+    // Expanded content IS in the DOM but hidden via CSS on desktop (md:max-h-0 md:opacity-0)
+    // Note: Mobile-first design shows content on mobile, hides on desktop
     const expandedContent = container.querySelector('[data-testid="expanded-content"]');
     expect(expandedContent).toBeInTheDocument();
-    // Should have hidden classes when not hovered
-    expect(expandedContent).toHaveClass("max-h-0");
-    expect(expandedContent).toHaveClass("opacity-0");
+    // Should have responsive hidden classes (visible on mobile, hidden on md: breakpoint)
+    expect(expandedContent).toHaveClass("md:max-h-0");
+    expect(expandedContent).toHaveClass("md:opacity-0");
   });
 
   it("shows PWD dates in expanded content structure", () => {

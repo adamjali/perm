@@ -10,6 +10,7 @@ export {
   validateISODate,
   formatUTC,
   lastSundayOnOrBefore,
+  isValidISODate,
 } from './dateUtils';
 
 // Business day utilities

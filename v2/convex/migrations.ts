@@ -416,7 +416,7 @@ export const importUserWithProfile = mutation({
   },
   handler: async (ctx, args) => {
     // 1. Check if user already exists by email
-    let existingUser = await ctx.db
+    const existingUser = await ctx.db
       .query("users")
       .withIndex("email", (q) => q.eq("email", args.email))
       .first();
@@ -891,7 +891,7 @@ export const importUsersWithProfiles = mutation({
     for (const userData of args.users) {
       try {
         // 1. Check/Create user
-        let existingUser = await ctx.db
+        const existingUser = await ctx.db
           .query("users")
           .withIndex("email", (q) => q.eq("email", userData.email))
           .first();

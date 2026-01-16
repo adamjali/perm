@@ -891,23 +891,21 @@ function createTools(
         }
 
         try {
-          // toggleCalendarSync toggles the state - we call it expecting to enable sync
-          const result = await fetchMutation(
-            api.cases.toggleCalendarSync,
+          // Use explicit enableCalendarSync mutation (idempotent)
+          await fetchMutation(
+            api.cases.enableCalendarSync,
             { id: params.caseId as Id<'cases'> },
             { token }
           );
 
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] syncToCalendar result (${duration}ms):`, result);
+          console.log(`[Chat API] syncToCalendar result (${duration}ms): enabled`);
 
           return {
             success: true,
             caseId: params.caseId,
-            calendarSyncEnabled: result,
-            message: result
-              ? 'Calendar sync enabled. Case deadlines will appear in your Google Calendar.'
-              : 'Calendar sync was already enabled. Toggled to disabled.',
+            calendarSyncEnabled: true,
+            message: 'Calendar sync enabled. Case deadlines will appear in your Google Calendar.',
           };
         } catch (error) {
           console.error(`[Chat API] syncToCalendar error:`, error);
@@ -948,23 +946,21 @@ function createTools(
         }
 
         try {
-          // toggleCalendarSync toggles the state - we call it expecting to disable sync
-          const result = await fetchMutation(
-            api.cases.toggleCalendarSync,
+          // Use explicit disableCalendarSync mutation (idempotent)
+          await fetchMutation(
+            api.cases.disableCalendarSync,
             { id: params.caseId as Id<'cases'> },
             { token }
           );
 
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] unsyncFromCalendar result (${duration}ms):`, result);
+          console.log(`[Chat API] unsyncFromCalendar result (${duration}ms): disabled`);
 
           return {
             success: true,
             caseId: params.caseId,
-            calendarSyncEnabled: result,
-            message: result
-              ? 'Calendar sync was already disabled. Toggled to enabled.'
-              : 'Calendar sync disabled. Case deadlines removed from your Google Calendar.',
+            calendarSyncEnabled: false,
+            message: 'Calendar sync disabled. Case deadlines removed from your Google Calendar.',
           };
         } catch (error) {
           console.error(`[Chat API] unsyncFromCalendar error:`, error);

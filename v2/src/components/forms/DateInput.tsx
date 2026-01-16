@@ -32,6 +32,28 @@ function getNextSunday(dateStr: string | undefined): string | undefined {
   return date.toISOString().split("T")[0];
 }
 
+/**
+ * Get a recent Sunday date (within 7 days of today).
+ * Returns last Sunday if today is Sun-Wed, next Sunday if Thu-Sat.
+ * Used as fallback for Sunday-only date picker when no minDate is provided.
+ */
+function getRecentSunday(): string {
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+
+  if (dayOfWeek <= 3) {
+    // Sunday through Wednesday - use last Sunday
+    const lastSunday = new Date(today);
+    lastSunday.setDate(today.getDate() - dayOfWeek);
+    return lastSunday.toISOString().split("T")[0]!;
+  } else {
+    // Thursday through Saturday - use next Sunday
+    const nextSunday = new Date(today);
+    nextSunday.setDate(today.getDate() + (7 - dayOfWeek));
+    return nextSunday.toISOString().split("T")[0]!;
+  }
+}
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -133,7 +155,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
     // For Sunday-only mode, adjust min date to next Sunday and use step="7"
     const effectiveMinDate = useMemo(() => {
       if (sundayOnly) {
-        return minDate ? getNextSunday(minDate) : "2024-01-07";
+        return minDate ? getNextSunday(minDate) : getRecentSunday();
       }
       return minDate;
     }, [sundayOnly, minDate]);

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { I140Section } from "../I140Section";
 import { CaseFormProvider } from "../../CaseFormContext";
@@ -14,6 +14,13 @@ const mockOnDateChange = vi.fn();
 beforeEach(() => {
   mockOnChange.mockReset();
   mockOnDateChange.mockReset();
+  // Fix test determinism: Use frozen time for date-dependent tests
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2024-06-15T12:00:00Z"));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 /**
@@ -86,15 +93,12 @@ describe("I140Section - Filing Deadline", () => {
   });
 
   it("should show 'OPEN' status when within 180 days", () => {
-    const today = new Date();
-    const certDate = new Date(today);
-    certDate.setDate(certDate.getDate() - 10); // 10 days ago
-    const expDate = new Date(certDate);
-    expDate.setDate(expDate.getDate() + 180); // +180 days = 170 days remaining
-
+    // System time frozen to 2024-06-15
+    // Cert date: 2024-06-05 (10 days ago)
+    // Exp date: 2024-12-02 (+180 days from cert = 170 days remaining)
     const values = createMockValues({
-      eta9089CertificationDate: certDate.toISOString().split("T")[0],
-      eta9089ExpirationDate: expDate.toISOString().split("T")[0],
+      eta9089CertificationDate: "2024-06-05",
+      eta9089ExpirationDate: "2024-12-02",
     });
 
     renderI140Section(values);
@@ -106,15 +110,12 @@ describe("I140Section - Filing Deadline", () => {
   });
 
   it("should show 'Closing Soon' status when <=14 days remaining", () => {
-    const today = new Date();
-    const expDate = new Date(today);
-    expDate.setDate(expDate.getDate() + 10); // 10 days remaining (triggers closing_soon)
-    const certDate = new Date(expDate);
-    certDate.setDate(certDate.getDate() - 180);
-
+    // System time frozen to 2024-06-15
+    // Exp date: 2024-06-25 (10 days remaining triggers closing_soon)
+    // Cert date: 2023-12-28 (+180 days = exp date)
     const values = createMockValues({
-      eta9089CertificationDate: certDate.toISOString().split("T")[0],
-      eta9089ExpirationDate: expDate.toISOString().split("T")[0],
+      eta9089CertificationDate: "2023-12-28",
+      eta9089ExpirationDate: "2024-06-25",
     });
 
     renderI140Section(values);
@@ -124,15 +125,12 @@ describe("I140Section - Filing Deadline", () => {
   });
 
   it("should show 'Closing Soon' status when <7 days remaining", () => {
-    const today = new Date();
-    const expDate = new Date(today);
-    expDate.setDate(expDate.getDate() + 5); // 5 days remaining
-    const certDate = new Date(expDate);
-    certDate.setDate(certDate.getDate() - 180);
-
+    // System time frozen to 2024-06-15
+    // Exp date: 2024-06-20 (5 days remaining)
+    // Cert date: 2023-12-23 (+180 days = exp date)
     const values = createMockValues({
-      eta9089CertificationDate: certDate.toISOString().split("T")[0],
-      eta9089ExpirationDate: expDate.toISOString().split("T")[0],
+      eta9089CertificationDate: "2023-12-23",
+      eta9089ExpirationDate: "2024-06-20",
     });
 
     renderI140Section(values);
@@ -142,15 +140,12 @@ describe("I140Section - Filing Deadline", () => {
   });
 
   it("should show 'CLOSED' status when >180 days past certification", () => {
-    const today = new Date();
-    const expDate = new Date(today);
-    expDate.setDate(expDate.getDate() - 10); // Expired 10 days ago
-    const certDate = new Date(expDate);
-    certDate.setDate(certDate.getDate() - 180);
-
+    // System time frozen to 2024-06-15
+    // Exp date: 2024-06-05 (expired 10 days ago)
+    // Cert date: 2023-12-08 (+180 days = exp date)
     const values = createMockValues({
-      eta9089CertificationDate: certDate.toISOString().split("T")[0],
-      eta9089ExpirationDate: expDate.toISOString().split("T")[0],
+      eta9089CertificationDate: "2023-12-08",
+      eta9089ExpirationDate: "2024-06-05",
     });
 
     renderI140Section(values);
@@ -162,15 +157,12 @@ describe("I140Section - Filing Deadline", () => {
   });
 
   it("should show countdown when deadline is near", () => {
-    const today = new Date();
-    const expDate = new Date(today);
-    expDate.setDate(expDate.getDate() + 5); // ~5 days remaining
-    const certDate = new Date(expDate);
-    certDate.setDate(certDate.getDate() - 180);
-
+    // System time frozen to 2024-06-15
+    // Exp date: 2024-06-20 (~5 days remaining)
+    // Cert date: 2023-12-23 (+180 days = exp date)
     const values = createMockValues({
-      eta9089CertificationDate: certDate.toISOString().split("T")[0],
-      eta9089ExpirationDate: expDate.toISOString().split("T")[0],
+      eta9089CertificationDate: "2023-12-23",
+      eta9089ExpirationDate: "2024-06-20",
     });
 
     renderI140Section(values);

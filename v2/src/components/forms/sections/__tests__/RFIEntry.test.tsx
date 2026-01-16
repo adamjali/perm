@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { FormProvider, useForm } from "react-hook-form";
@@ -85,6 +85,13 @@ function renderRFIEntry({
 describe("RFIEntry", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Fix test determinism: Use frozen time for date-dependent tests
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-06-15T12:00:00Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe("Rendering", () => {
@@ -232,13 +239,10 @@ describe("RFIEntry", () => {
 
   describe("Urgency Indicators", () => {
     it("shows urgent styling when due date is within 7 days", () => {
-      const today = new Date();
-      const dueDate = new Date(today);
-      dueDate.setDate(today.getDate() + 5); // 5 days from now
-
+      // System time is frozen to 2024-06-15
       const entry = createEntry({
-        receivedDate: "2024-01-15",
-        responseDueDate: dueDate.toISOString().split("T")[0],
+        receivedDate: "2024-05-16",
+        responseDueDate: "2024-06-20", // 5 days from frozen "today"
         responseSubmittedDate: undefined,
       });
       renderRFIEntry({ entry });
@@ -249,13 +253,10 @@ describe("RFIEntry", () => {
     });
 
     it("shows normal styling when due date is far away", () => {
-      const today = new Date();
-      const dueDate = new Date(today);
-      dueDate.setDate(today.getDate() + 20); // 20 days from now
-
+      // System time is frozen to 2024-06-15
       const entry = createEntry({
-        receivedDate: "2024-01-15",
-        responseDueDate: dueDate.toISOString().split("T")[0],
+        receivedDate: "2024-05-16",
+        responseDueDate: "2024-07-05", // 20 days from frozen "today"
         responseSubmittedDate: undefined,
       });
       renderRFIEntry({ entry });

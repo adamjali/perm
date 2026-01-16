@@ -88,6 +88,10 @@ export {
 } from './constants';
 
 export {
+  // Core date utilities
+  isValidISODate,
+  addDaysUTC,
+  formatUTC,
   // Business days
   addBusinessDays,
   countBusinessDays,

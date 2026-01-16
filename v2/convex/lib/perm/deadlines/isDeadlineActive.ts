@@ -4,8 +4,8 @@
  * Determines whether a deadline is active (should be shown/notified) based on
  * case data and PERM workflow rules.
  *
- * Per perm_flow.md line 41:
- * "A deadline becomes inactive/met once the filed has a value"
+ * Per perm_flow.md (deadline supersession section):
+ * "A deadline becomes inactive/met once the field has a value"
  *
  * @module
  */
@@ -159,7 +159,7 @@ function checkI140DeadlineActive(
 /**
  * RFI deadline is superseded when response is submitted.
  *
- * Per perm_flow.md line 56: "only one active one at a time"
+ * Per perm_flow.md (RFI section): "only one active one at a time"
  * We check if there's ANY active RFI entry.
  */
 function checkRfiActive(caseData: CaseDataForDeadlines): DeadlineActiveStatus {
@@ -179,7 +179,7 @@ function checkRfiActive(caseData: CaseDataForDeadlines): DeadlineActiveStatus {
 /**
  * RFE deadline is superseded when response is submitted.
  *
- * Per perm_flow.md line 62: "only one active one at a time"
+ * Per perm_flow.md (RFE section): "only one active one at a time"
  * We check if there's ANY active RFE entry.
  */
 function checkRfeActive(caseData: CaseDataForDeadlines): DeadlineActiveStatus {

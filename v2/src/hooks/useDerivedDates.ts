@@ -9,8 +9,11 @@
 
 import { useMemo } from "react";
 
-const FILING_WINDOW_WAIT_DAYS = 30;
-const FILING_WINDOW_CLOSE_DAYS = 180;
+import {
+  FILING_WINDOW_WAIT_DAYS,
+  FILING_WINDOW_CLOSE_DAYS,
+  isValidISODate,
+} from "@/lib/perm";
 
 export interface DerivedDatesInput {
   filingWindowOpens?: string | null;
@@ -36,10 +39,6 @@ export interface DerivedDatesOutput {
   recruitmentStartDate: string | undefined;
   recruitmentEndDate: string | undefined;
   recruitmentWindowCloses: string | undefined;
-}
-
-function isValidISODate(dateStr: string | null | undefined): dateStr is string {
-  return Boolean(dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr));
 }
 
 function addDays(dateStr: string, days: number): string {

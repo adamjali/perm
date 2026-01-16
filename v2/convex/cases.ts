@@ -1673,6 +1673,100 @@ export const toggleCalendarSync = mutation({
 });
 
 /**
+ * Enable calendar sync for a case (explicit ON).
+ * Idempotent - safe to call multiple times. Returns true.
+ *
+ * When enabling: schedules sync to create calendar events
+ */
+export const enableCalendarSync = mutation({
+  args: {
+    id: v.id("cases"),
+  },
+  handler: async (ctx, args): Promise<boolean> => {
+    const caseDoc = await ctx.db.get(args.id);
+
+    // Verify ownership
+    await verifyOwnership(ctx, caseDoc, "case");
+
+    // Check not deleted
+    if (caseDoc!.deletedAt !== undefined) {
+      throw new Error("Cannot update deleted case");
+    }
+
+    // Only proceed if not already enabled (idempotent)
+    if (!caseDoc!.calendarSyncEnabled) {
+      await ctx.db.patch(args.id, {
+        calendarSyncEnabled: true,
+        updatedAt: Date.now(),
+      });
+
+      // Schedule calendar sync (best-effort, non-blocking)
+      try {
+        const syncResult = await scheduleCalendarSync(ctx, caseDoc!.userId, args.id);
+        if (syncResult.scheduled) {
+          log.info('Scheduled sync after enabling', { resourceId: args.id });
+        }
+      } catch (calendarError) {
+        log.error('Failed to schedule calendar sync after enable', {
+          resourceId: args.id,
+          error: calendarError instanceof Error ? calendarError.message : String(calendarError),
+        });
+      }
+    }
+
+    return true; // Always returns true (enabled)
+  },
+});
+
+/**
+ * Disable calendar sync for a case (explicit OFF).
+ * Idempotent - safe to call multiple times. Returns false.
+ *
+ * When disabling: schedules deletion of existing calendar events
+ */
+export const disableCalendarSync = mutation({
+  args: {
+    id: v.id("cases"),
+  },
+  handler: async (ctx, args): Promise<boolean> => {
+    const caseDoc = await ctx.db.get(args.id);
+
+    // Verify ownership
+    await verifyOwnership(ctx, caseDoc, "case");
+
+    // Check not deleted
+    if (caseDoc!.deletedAt !== undefined) {
+      throw new Error("Cannot update deleted case");
+    }
+
+    // Only proceed if currently enabled (idempotent)
+    if (caseDoc!.calendarSyncEnabled) {
+      await ctx.db.patch(args.id, {
+        calendarSyncEnabled: false,
+        updatedAt: Date.now(),
+      });
+
+      // Schedule calendar event deletion (best-effort, non-blocking)
+      try {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.googleCalendarActions.deleteCaseCalendarEvents,
+          { userId: caseDoc!.userId, caseId: args.id }
+        );
+        log.info('Scheduled event deletion after disabling', { resourceId: args.id });
+      } catch (calendarError) {
+        log.error('Failed to schedule calendar unsync after disable', {
+          resourceId: args.id,
+          error: calendarError instanceof Error ? calendarError.message : String(calendarError),
+        });
+      }
+    }
+
+    return false; // Always returns false (disabled)
+  },
+});
+
+/**
  * Check for duplicates before importing or creating/editing a case.
  * Returns list of cases that would be duplicates.
  *
