@@ -385,7 +385,8 @@ export const recordUsage = mutation({
 
 /**
  * Internal: Create template from chatbot.
- * Bypasses some validation for trusted callers.
+ * Accepts userId directly instead of extracting from auth context.
+ * Performs same validation as public create mutation.
  */
 export const internalCreate = internalMutation({
   args: {

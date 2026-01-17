@@ -55,7 +55,7 @@ export interface TemplateSelectorProps {
  * - Search/filter templates by position title
  * - Shows usage count for each template
  * - Access to template management modal
- * - Groups templates alphabetically
+ * - Sorts templates alphabetically
  *
  * @example
  * ```tsx

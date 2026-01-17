@@ -81,7 +81,12 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
   // Load a template and record usage
   const loadTemplate = useCallback(
     async (template: JobDescriptionTemplate) => {
-      await recordUsageMutation({ id: template._id });
+      try {
+        await recordUsageMutation({ id: template._id });
+      } catch (error) {
+        console.error("[useJobDescriptionTemplates] Failed to record usage:", error);
+        // Still set template ID - usage tracking is non-critical
+      }
       setLoadedTemplateId(template._id);
     },
     [recordUsageMutation]
@@ -90,9 +95,14 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
   // Save as new template
   const saveAsNewTemplate = useCallback(
     async (name: string, description: string) => {
-      const id = await createMutation({ name, description });
-      setLoadedTemplateId(id);
-      return id;
+      try {
+        const id = await createMutation({ name, description });
+        setLoadedTemplateId(id);
+        return id;
+      } catch (error) {
+        console.error("[useJobDescriptionTemplates] Failed to create template:", error);
+        throw error; // Re-throw for caller to handle
+      }
     },
     [createMutation]
   );
@@ -100,7 +110,12 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
   // Update existing template
   const updateTemplate = useCallback(
     async (id: Id<"jobDescriptionTemplates">, name: string, description: string) => {
-      await updateMutation({ id, name, description });
+      try {
+        await updateMutation({ id, name, description });
+      } catch (error) {
+        console.error("[useJobDescriptionTemplates] Failed to update template:", error);
+        throw error; // Re-throw for caller to handle
+      }
     },
     [updateMutation]
   );
@@ -108,10 +123,15 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
   // Soft delete template
   const deleteTemplate = useCallback(
     async (id: Id<"jobDescriptionTemplates">) => {
-      await removeMutation({ id });
-      // Clear loaded template if it was the deleted one
-      if (loadedTemplateId === id) {
-        setLoadedTemplateId(undefined);
+      try {
+        await removeMutation({ id });
+        // Clear loaded template if it was the deleted one
+        if (loadedTemplateId === id) {
+          setLoadedTemplateId(undefined);
+        }
+      } catch (error) {
+        console.error("[useJobDescriptionTemplates] Failed to delete template:", error);
+        throw error; // Re-throw for caller to handle
       }
     },
     [removeMutation, loadedTemplateId]
@@ -120,12 +140,17 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
   // Hard delete template (permanent, clears case references)
   const hardDeleteTemplate = useCallback(
     async (id: Id<"jobDescriptionTemplates">) => {
-      const result = await hardDeleteMutation({ id });
-      // Clear loaded template if it was the deleted one
-      if (loadedTemplateId === id) {
-        setLoadedTemplateId(undefined);
+      try {
+        const result = await hardDeleteMutation({ id });
+        // Clear loaded template if it was the deleted one
+        if (loadedTemplateId === id) {
+          setLoadedTemplateId(undefined);
+        }
+        return result;
+      } catch (error) {
+        console.error("[useJobDescriptionTemplates] Failed to hard delete template:", error);
+        throw error; // Re-throw for caller to handle
       }
-      return result;
     },
     [hardDeleteMutation, loadedTemplateId]
   );

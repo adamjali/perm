@@ -38,6 +38,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/lib/toast";
 import type { JobDescriptionTemplate } from "./JobDescriptionField";
+import { formatTemplateDate, copyToClipboard, isTemplateNameTaken } from "./shared";
 
 // ============================================================================
 // TYPES
@@ -163,13 +164,8 @@ export function TemplateManagementModal({
     if (!selectedTemplate || !onUpdate) return;
     if (!editName.trim() || !editDescription.trim()) return;
 
-    // Check for duplicate names
-    const isDuplicate = templates.some(
-      (t) =>
-        t._id !== selectedTemplate._id &&
-        t.name.toLowerCase() === editName.toLowerCase()
-    );
-    if (isDuplicate) {
+    // Check for duplicate names using shared utility
+    if (isTemplateNameTaken(templates, editName.trim(), selectedTemplate._id)) {
       toast.error("A template with this name already exists");
       return;
     }
@@ -184,8 +180,9 @@ export function TemplateManagementModal({
       });
       setEditMode(false);
       toast.success("Template updated");
-    } catch {
-      toast.error("Failed to update template");
+    } catch (error) {
+      console.error("[TemplateManagementModal] Update failed:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to update template");
     } finally {
       setIsProcessing(false);
     }
@@ -212,8 +209,9 @@ export function TemplateManagementModal({
       } else {
         toast.success("Template permanently deleted");
       }
-    } catch {
-      toast.error("Failed to delete template");
+    } catch (error) {
+      console.error("[TemplateManagementModal] Delete failed:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete template");
     } finally {
       setIsProcessing(false);
     }
@@ -222,27 +220,16 @@ export function TemplateManagementModal({
   const handleCopy = async () => {
     if (!selectedTemplate) return;
 
-    try {
-      await navigator.clipboard.writeText(selectedTemplate.description);
+    const success = await copyToClipboard(selectedTemplate.description);
+    if (success) {
       setIsCopied(true);
-      toast.success("Copied to clipboard");
       setTimeout(() => setIsCopied(false), 2000);
-    } catch {
-      toast.error("Failed to copy");
     }
   };
 
   const handleUseTemplate = () => {
     if (!selectedTemplate || !onSelect) return;
     onSelect(selectedTemplate);
-  };
-
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
   };
 
   return (
@@ -328,7 +315,7 @@ export function TemplateManagementModal({
                           {template.description}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Used {template.usageCount}× • Updated {formatDate(template.updatedAt)}
+                          Used {template.usageCount}× • Updated {formatTemplateDate(template.updatedAt)}
                         </p>
                       </button>
                     ))}
@@ -531,8 +518,8 @@ export function TemplateManagementModal({
                         <div className="space-y-4">
                           {/* Metadata row - compact */}
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground border-b border-border pb-3">
-                            <span>Created {formatDate(selectedTemplate.createdAt)}</span>
-                            <span>Updated {formatDate(selectedTemplate.updatedAt)}</span>
+                            <span>Created {formatTemplateDate(selectedTemplate.createdAt)}</span>
+                            <span>Updated {formatTemplateDate(selectedTemplate.updatedAt)}</span>
                             <span>Used {selectedTemplate.usageCount} times</span>
                             <span>{selectedTemplate.description.length.toLocaleString()} chars</span>
                           </div>

@@ -72,6 +72,9 @@ export function TemplateUpdateConfirmDialog({
     try {
       await onConfirmOverwrite();
       onOpenChange(false);
+    } catch (error) {
+      console.error("[TemplateUpdateConfirmDialog] Overwrite failed:", error);
+      // Don't close dialog on error - let user retry or cancel
     } finally {
       setIsProcessing(false);
     }
@@ -85,6 +88,9 @@ export function TemplateUpdateConfirmDialog({
       onOpenChange(false);
       setShowNewNameInput(false);
       setNewName("");
+    } catch (error) {
+      console.error("[TemplateUpdateConfirmDialog] Save as new failed:", error);
+      // Don't close dialog on error - let user retry or cancel
     } finally {
       setIsProcessing(false);
     }
@@ -109,7 +115,7 @@ export function TemplateUpdateConfirmDialog({
             </AlertDialogTitle>
           </div>
           <AlertDialogDescription className="pt-2">
-            A template named <span className="font-semibold text-foreground">"{templateName}"</span> already exists.
+            A template named <span className="font-semibold text-foreground">&ldquo;{templateName}&rdquo;</span> already exists.
             Would you like to update it or save as a new template?
           </AlertDialogDescription>
         </AlertDialogHeader>

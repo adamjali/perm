@@ -25,8 +25,20 @@ export type { JobDescriptionDetailViewProps } from "./JobDescriptionDetailView";
 export { TemplateSelector } from "./TemplateSelector";
 export type { TemplateSelectorProps } from "./TemplateSelector";
 
-export { TemplateSaveDialog } from "./TemplateSaveDialog";
-export type { TemplateSaveDialogProps } from "./TemplateSaveDialog";
-
 export { TemplateManagementModal } from "./TemplateManagementModal";
 export type { TemplateManagementModalProps } from "./TemplateManagementModal";
+
+export { TemplateUpdateConfirmDialog } from "./TemplateUpdateConfirmDialog";
+export type { TemplateUpdateConfirmDialogProps } from "./TemplateUpdateConfirmDialog";
+
+// Shared utilities and components
+export {
+  JOB_DESCRIPTION_MAX_LENGTH,
+  copyToClipboard,
+  formatTemplateDate,
+  findTemplateByName,
+  isTemplateNameTaken,
+  TemplateStatusBadge,
+  TemplateTypeBadge,
+} from "./shared";
+export type { JobDescriptionTemplateData } from "./shared";

@@ -10,6 +10,43 @@ import { createTestContext, createAuthenticatedContext } from './convex';
 import { api } from '../convex/_generated/api';
 import type { Id } from '../convex/_generated/dataModel';
 
+// ============================================================================
+// TEST DATA FACTORY
+// ============================================================================
+
+interface TemplateData {
+  name?: string;
+  description?: string;
+  usageCount?: number;
+  deletedAt?: number;
+}
+
+/**
+ * Create a test template with sensible defaults.
+ * Reduces boilerplate in test setup.
+ *
+ * @param auth - The authenticated context (created by createAuthenticatedContext)
+ * @param overrides - Optional overrides for template fields
+ * @returns The created template ID
+ */
+async function createTestTemplate(
+  auth: Awaited<ReturnType<typeof createAuthenticatedContext>>,
+  overrides: TemplateData = {}
+): Promise<Id<"jobDescriptionTemplates">> {
+  return auth.run(async (ctx) => {
+    const now = Date.now();
+    return await ctx.db.insert('jobDescriptionTemplates', {
+      userId: auth.userId,
+      name: overrides.name ?? 'Test Template',
+      description: overrides.description ?? 'Test description content',
+      usageCount: overrides.usageCount ?? 0,
+      createdAt: now,
+      updatedAt: now,
+      ...(overrides.deletedAt !== undefined && { deletedAt: overrides.deletedAt }),
+    });
+  });
+}
+
 describe('jobDescriptionTemplates', () => {
   describe('list', () => {
     it('returns empty array when user has no templates', async () => {
@@ -619,6 +656,186 @@ describe('jobDescriptionTemplates', () => {
           id: templateId,
         })
       ).rejects.toThrow(/deleted/i);
+    });
+  });
+
+  describe('hardDelete', () => {
+    it('permanently deletes template from database', async () => {
+      const t = createTestContext();
+      const auth = await createAuthenticatedContext(t);
+
+      const templateId = await createTestTemplate(auth, {
+        name: 'Template to Hard Delete',
+      });
+
+      // Verify template exists
+      const beforeDelete = await auth.run(async (ctx) => ctx.db.get(templateId));
+      expect(beforeDelete).toBeDefined();
+
+      // Hard delete
+      const result = await auth.mutation(api.jobDescriptionTemplates.hardDelete, {
+        id: templateId,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.clearedReferences).toBe(0);
+
+      // Template should be completely gone from database
+      const afterDelete = await auth.run(async (ctx) => ctx.db.get(templateId));
+      expect(afterDelete).toBeNull();
+    });
+
+    it('clears jobDescriptionTemplateId from cases using the template', async () => {
+      const t = createTestContext();
+      const auth = await createAuthenticatedContext(t);
+
+      // Create a template
+      const templateId = await createTestTemplate(auth, {
+        name: 'Template for Cases',
+      });
+
+      // Create cases that reference this template
+      const caseIds = await auth.run(async (ctx) => {
+        const now = Date.now();
+        const caseDefaults = {
+          userId: auth.userId,
+          employerName: 'Test Employer',
+          positionTitle: 'Software Engineer',
+          caseStatus: 'pwd' as const,
+          progressStatus: 'working' as const,
+          jobDescriptionTemplateId: templateId,
+          additionalRecruitmentMethods: [],
+          recruitmentApplicantsCount: 0,
+          isProfessionalOccupation: false,
+          priorityLevel: 'normal' as const,
+          isFavorite: false,
+          tags: [],
+          calendarSyncEnabled: false,
+          documents: [],
+          createdAt: now,
+          updatedAt: now,
+        };
+        const case1 = await ctx.db.insert('cases', caseDefaults);
+        const case2 = await ctx.db.insert('cases', caseDefaults);
+        return [case1, case2];
+      });
+
+      // Hard delete the template
+      const result = await auth.mutation(api.jobDescriptionTemplates.hardDelete, {
+        id: templateId,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.clearedReferences).toBe(2);
+
+      // Verify template references are cleared from cases
+      for (const caseId of caseIds) {
+        const caseDoc = await auth.run(async (ctx) => ctx.db.get(caseId));
+        expect(caseDoc).toBeDefined();
+        expect(caseDoc?.jobDescriptionTemplateId).toBeUndefined();
+      }
+    });
+
+    it('returns correct clearedReferences count', async () => {
+      const t = createTestContext();
+      const auth = await createAuthenticatedContext(t);
+
+      const templateId = await createTestTemplate(auth);
+
+      // Create 3 cases with this template
+      await auth.run(async (ctx) => {
+        const now = Date.now();
+        for (let i = 0; i < 3; i++) {
+          await ctx.db.insert('cases', {
+            userId: auth.userId,
+            employerName: 'Test Employer',
+            positionTitle: 'Engineer',
+            caseStatus: 'pwd' as const,
+            progressStatus: 'working' as const,
+            jobDescriptionTemplateId: templateId,
+            additionalRecruitmentMethods: [],
+            recruitmentApplicantsCount: 0,
+            isProfessionalOccupation: false,
+            priorityLevel: 'normal' as const,
+            isFavorite: false,
+            tags: [],
+            calendarSyncEnabled: false,
+            documents: [],
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      });
+
+      const result = await auth.mutation(api.jobDescriptionTemplates.hardDelete, {
+        id: templateId,
+      });
+
+      expect(result.clearedReferences).toBe(3);
+    });
+
+    it('throws error when template not found', async () => {
+      const t = createTestContext();
+      const auth = await createAuthenticatedContext(t);
+
+      // Create and then delete a template to get a valid but non-existent ID
+      const templateId = await createTestTemplate(auth);
+      await auth.run(async (ctx) => ctx.db.delete(templateId));
+
+      await expect(
+        auth.mutation(api.jobDescriptionTemplates.hardDelete, {
+          id: templateId,
+        })
+      ).rejects.toThrow(/not found/i);
+    });
+
+    it('throws error when user does not own template', async () => {
+      const t = createTestContext();
+      const auth1 = await createAuthenticatedContext(t, 'User 1');
+      const auth2 = await createAuthenticatedContext(t, 'User 2');
+
+      // User 1 creates a template
+      const templateId = await createTestTemplate(auth1, {
+        name: 'User 1 Template',
+      });
+
+      // User 2 tries to hard delete it
+      await expect(
+        auth2.mutation(api.jobDescriptionTemplates.hardDelete, {
+          id: templateId,
+        })
+      ).rejects.toThrow();
+    });
+
+    it('works on soft-deleted templates', async () => {
+      const t = createTestContext();
+      const auth = await createAuthenticatedContext(t);
+
+      // Create a template using the factory
+      const templateId = await createTestTemplate(auth, {
+        name: 'Soft Deleted Template',
+      });
+
+      // Soft delete it first
+      await auth.mutation(api.jobDescriptionTemplates.remove, {
+        id: templateId,
+      });
+
+      // Should still be in database
+      const afterSoftDelete = await auth.run(async (ctx) => ctx.db.get(templateId));
+      expect(afterSoftDelete).toBeDefined();
+      expect(afterSoftDelete?.deletedAt).toBeDefined();
+
+      // Hard delete should still work
+      const result = await auth.mutation(api.jobDescriptionTemplates.hardDelete, {
+        id: templateId,
+      });
+
+      expect(result.success).toBe(true);
+
+      // Now it should be gone
+      const afterHardDelete = await auth.run(async (ctx) => ctx.db.get(templateId));
+      expect(afterHardDelete).toBeNull();
     });
   });
 });
