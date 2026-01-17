@@ -303,7 +303,7 @@ export function EditCasePageClient() {
       const formData = formDataOrId;
       // Check if employer or beneficiary changed (these are what define duplicates)
       const employerChanged = caseData && formData.employerName.toLowerCase().trim() !== caseData.employerName.toLowerCase().trim();
-      const beneficiaryChanged = caseData && formData.beneficiaryIdentifier.toLowerCase().trim() !== caseData.beneficiaryIdentifier.toLowerCase().trim();
+      const beneficiaryChanged = caseData && formData.beneficiaryIdentifier?.toLowerCase().trim() !== caseData.beneficiaryIdentifier?.toLowerCase().trim();
 
       // Only check for duplicates if employer or beneficiary changed
       if (employerChanged || beneficiaryChanged) {

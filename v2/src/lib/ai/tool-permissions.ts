@@ -75,6 +75,12 @@ export const TOOL_PERMISSIONS: Partial<Record<ChatToolName, PermissionLevel>> = 
   updateSettings: 'confirm', // Modifies user preferences
   getSettings: 'autonomous', // Read-only
 
+  // Job description template tools
+  listJobDescriptionTemplates: 'autonomous', // Read-only
+  createJobDescriptionTemplate: 'confirm', // Creates template
+  updateJobDescriptionTemplate: 'confirm', // Modifies template
+  deleteJobDescriptionTemplate: 'confirm', // Soft deletes template
+
   // ==========================================================================
   // DESTRUCTIVE - Always ask, even in AUTO mode
   // These tools cause irreversible changes

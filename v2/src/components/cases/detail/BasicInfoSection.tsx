@@ -21,7 +21,7 @@ export interface BasicInfoSectionProps {
   data: {
     caseNumber?: string;
     employerName: string;
-    beneficiaryIdentifier: string;
+    beneficiaryIdentifier?: string;
     positionTitle: string;
     caseStatus: CaseStatus;
     progressStatus: string;

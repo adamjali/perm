@@ -202,7 +202,7 @@ export const QueryCasesInputSchema = z.object({
     .string()
     .optional()
     .describe(
-      'Text search across employer name, position title, beneficiary identifier, and notes. Case-insensitive partial match'
+      'Text search across employer name, position title, foreign worker ID, and notes. Case-insensitive partial match'
     ),
 
   isProfessionalOccupation: z
@@ -216,7 +216,7 @@ export const QueryCasesInputSchema = z.object({
     .array(z.string())
     .optional()
     .describe(
-      'Specific fields to return. If omitted, returns common fields. Common fields: employerName, beneficiaryIdentifier, positionTitle, caseStatus, progressStatus, pwdExpirationDate, eta9089FilingDate'
+      'Specific fields to return. If omitted, returns common fields. Common fields: employerName, foreignWorkerId, positionTitle, caseStatus, progressStatus, pwdExpirationDate, eta9089FilingDate'
     ),
 
   returnAllFields: z
@@ -243,7 +243,7 @@ export const QueryCasesInputSchema = z.object({
     .boolean()
     .optional()
     .describe(
-      'For bulk operations: returns minimal data (_id, employerName, beneficiaryIdentifier, calendarSyncEnabled). Use this when you need case IDs for bulkCalendarSync, bulkUpdateStatus, etc.'
+      'For bulk operations: returns minimal data (_id, employerName, foreignWorkerId, calendarSyncEnabled). Use this when you need case IDs for bulkCalendarSync, bulkUpdateStatus, etc.'
     ),
 });
 
@@ -309,7 +309,7 @@ export const queryCasesTool = tool({
 - hasRfi/hasRfe: Filter for cases with active RFI/RFE (true/false)
 - hasOverdueDeadline: Filter for overdue deadlines (true/false)
 - deadlineWithinDays: Filter for deadlines within N days (number)
-- searchText: Text search in employer name, position, beneficiary, notes
+- searchText: Text search in employer name, position, foreign worker ID, notes
 - isProfessionalOccupation: Filter by professional occupation status (true/false)
 - fields: Specific fields to return (array of field names)
 - countOnly: Return only count, not case data (default: false)
@@ -864,10 +864,10 @@ export const CreateCaseInputSchema = z.object({
     .string()
     .min(1)
     .describe('Name of the sponsoring employer (required)'),
-  beneficiaryIdentifier: z
+  foreignWorkerId: z
     .string()
-    .min(1)
-    .describe('Identifier for the beneficiary - name or initials (required)'),
+    .optional()
+    .describe('Foreign worker identifier - name or initials (optional)'),
   positionTitle: z
     .string()
     .min(1)
@@ -971,11 +971,10 @@ export const UpdateCaseInputSchema = z.object({
   // CORE IDENTITY FIELDS
   // ==========================================================================
   employerName: z.string().min(1).optional().describe('Update employer name'),
-  beneficiaryIdentifier: z
+  foreignWorkerId: z
     .string()
-    .min(1)
     .optional()
-    .describe('Update beneficiary identifier'),
+    .describe('Update foreign worker ID'),
   positionTitle: z.string().min(1).optional().describe('Update position title'),
   jobTitle: z.string().optional().describe('Update job title'),
 
@@ -1409,7 +1408,7 @@ export const createCaseTool = tool({
 
 ## WHEN TO USE:
 - User explicitly asks to create a new case: "Create a case for TechCorp"
-- User wants to add a new beneficiary: "Add a new case for John at ACME"
+- User wants to add a new case: "Add a new case for John at ACME"
 - User provides case details and wants to save: "Start a new PWD case"
 - User confirms after you've gathered required info
 
@@ -1421,17 +1420,19 @@ export const createCaseTool = tool({
 
 ## REQUIRED FIELDS:
 - employerName: Sponsoring employer name
-- beneficiaryIdentifier: Beneficiary name or initials
 - positionTitle: Job title
+
+## OPTIONAL FIELDS:
+- foreignWorkerId: Foreign worker name or initials (optional)
 
 ## OPTIONAL FIELDS:
 All dates should be YYYY-MM-DD format. See input schema for full list.
 
 ## EXAMPLES:
 - "Create case for TechCorp, John Doe, Software Engineer":
-  { employerName: "TechCorp", beneficiaryIdentifier: "John Doe", positionTitle: "Software Engineer" }
+  { employerName: "TechCorp", foreignWorkerId: "John Doe", positionTitle: "Software Engineer" }
 - "Add a PWD case for ACME":
-  { employerName: "ACME", beneficiaryIdentifier: "[ask user]", positionTitle: "[ask user]", caseStatus: "pwd" }
+  { employerName: "ACME", positionTitle: "[ask user]", caseStatus: "pwd" }
 
 ## NOTES:
 - Always confirm details with user before creating
@@ -1454,7 +1455,7 @@ export const updateCaseTool = tool({
 ## COMPREHENSIVE FIELD SUPPORT
 
 This tool supports updating ALL case fields including:
-- Core identity (employer, beneficiary, position)
+- Core identity (employer, foreign worker, position)
 - Status fields (caseStatus, progressStatus, priority)
 - All dates (PWD, recruitment, ETA 9089, I-140)
 - Flags (favorite, pinned, professional, calendar sync)
@@ -1892,6 +1893,224 @@ Use EITHER "all" OR "caseIds", not both:
 });
 
 // =============================================================================
+// Job Description Template Tool Schemas
+// =============================================================================
+
+/**
+ * Schema for listJobDescriptionTemplates tool input
+ */
+export const ListJobDescriptionTemplatesInputSchema = z.object({
+  searchQuery: z
+    .string()
+    .optional()
+    .describe('Optional search query to filter templates by name (position title)'),
+});
+
+export type ListJobDescriptionTemplatesInput = z.infer<typeof ListJobDescriptionTemplatesInputSchema>;
+
+/**
+ * Schema for createJobDescriptionTemplate tool input
+ */
+export const CreateJobDescriptionTemplateInputSchema = z.object({
+  name: z
+    .string()
+    .min(1)
+    .describe('Template name (usually the position title, e.g., "Software Engineer")'),
+  description: z
+    .string()
+    .min(1)
+    .max(10000)
+    .describe('Job description text (max 10,000 characters)'),
+});
+
+export type CreateJobDescriptionTemplateInput = z.infer<typeof CreateJobDescriptionTemplateInputSchema>;
+
+/**
+ * Schema for updateJobDescriptionTemplate tool input
+ */
+export const UpdateJobDescriptionTemplateInputSchema = z.object({
+  templateId: z.string().describe('The Convex ID of the template to update'),
+  name: z
+    .string()
+    .min(1)
+    .optional()
+    .describe('New template name (position title)'),
+  description: z
+    .string()
+    .min(1)
+    .max(10000)
+    .optional()
+    .describe('New job description text'),
+});
+
+export type UpdateJobDescriptionTemplateInput = z.infer<typeof UpdateJobDescriptionTemplateInputSchema>;
+
+/**
+ * Schema for deleteJobDescriptionTemplate tool input
+ */
+export const DeleteJobDescriptionTemplateInputSchema = z.object({
+  templateId: z.string().describe('The Convex ID of the template to delete'),
+});
+
+export type DeleteJobDescriptionTemplateInput = z.infer<typeof DeleteJobDescriptionTemplateInputSchema>;
+
+// =============================================================================
+// Job Description Template Tool Definitions
+// =============================================================================
+
+/**
+ * List Job Description Templates Tool
+ *
+ * Lists all job description templates for the user.
+ */
+export const listJobDescriptionTemplatesTool = tool({
+  description: `List the user's job description templates.
+
+## WHEN TO USE:
+- User asks about their job description templates: "Show my templates", "What job descriptions do I have saved?"
+- User wants to find a specific template: "Do I have a Software Engineer template?"
+- Before suggesting to use or modify a template
+- User wants to see available templates to populate a case
+
+## WHEN NOT TO USE:
+- User wants to create a new template (use createJobDescriptionTemplate)
+- User is asking about case data (use queryCases)
+- User wants to update a template (use updateJobDescriptionTemplate)
+
+## PARAMETERS:
+- searchQuery (optional): Filter templates by name (position title). Case-insensitive partial match.
+
+## OUTPUT FORMAT:
+{
+  templates: [{ _id, name, description, usageCount, createdAt, updatedAt }],
+  count: number
+}
+
+## EXAMPLES:
+- "Show my templates": { }
+- "Do I have engineer templates?": { searchQuery: "engineer" }
+- "Find Software Engineer template": { searchQuery: "Software Engineer" }`,
+
+  inputSchema: ListJobDescriptionTemplatesInputSchema,
+});
+
+/**
+ * Create Job Description Template Tool
+ *
+ * Creates a new job description template.
+ */
+export const createJobDescriptionTemplateTool = tool({
+  description: `Create a new job description template.
+
+## WHEN TO USE:
+- User asks to save a job description as a template: "Save this as a template"
+- User wants to create a new template: "Create a Software Engineer template"
+- User provides job description content to save for reuse
+
+## WHEN NOT TO USE:
+- User wants to update an existing template (use updateJobDescriptionTemplate)
+- User wants to see existing templates (use listJobDescriptionTemplates)
+- User wants to apply a template to a case (use updateCase with jobDescription fields)
+
+## PARAMETERS:
+- name (required): Template name - usually the position title (e.g., "Software Engineer", "Data Analyst")
+- description (required): The job description text (max 10,000 characters)
+
+## BEHAVIOR:
+- Creates a new template with the given name and description
+- Template names must be unique per user (case-insensitive)
+- If a template with the same name exists, will fail with an error
+
+## EXAMPLES:
+- "Create a Software Engineer template":
+  { name: "Software Engineer", description: "[job description text]" }
+- "Save this job description for Data Analyst":
+  { name: "Data Analyst", description: "[job description text]" }
+
+## NOTES:
+- Always confirm the name and description with the user before creating
+- Template names should be descriptive (usually position titles)
+- Max 10,000 characters for description`,
+
+  inputSchema: CreateJobDescriptionTemplateInputSchema,
+});
+
+/**
+ * Update Job Description Template Tool
+ *
+ * Updates an existing job description template.
+ */
+export const updateJobDescriptionTemplateTool = tool({
+  description: `Update an existing job description template.
+
+## WHEN TO USE:
+- User asks to modify a template: "Update my Software Engineer template"
+- User wants to change a template's name or description
+- User wants to improve or correct an existing template
+
+## WHEN NOT TO USE:
+- User wants to create a new template (use createJobDescriptionTemplate)
+- User wants to delete a template (use deleteJobDescriptionTemplate)
+- User wants to see templates (use listJobDescriptionTemplates)
+
+## PARAMETERS:
+- templateId (required): The Convex ID of the template to update
+- name (optional): New template name
+- description (optional): New job description text
+
+## BEHAVIOR:
+- Updates only the fields provided
+- At least one of name or description must be provided
+- If name is changed, must not conflict with existing template names
+
+## EXAMPLES:
+- "Update the description": { templateId: "abc123", description: "[new text]" }
+- "Rename template": { templateId: "abc123", name: "Senior Software Engineer" }
+- "Update both": { templateId: "abc123", name: "Senior Software Engineer", description: "[new text]" }
+
+## NOTES:
+- Use listJobDescriptionTemplates first if you need to find the template ID
+- Only include fields that need to change`,
+
+  inputSchema: UpdateJobDescriptionTemplateInputSchema,
+});
+
+/**
+ * Delete Job Description Template Tool
+ *
+ * Deletes a job description template (soft delete).
+ */
+export const deleteJobDescriptionTemplateTool = tool({
+  description: `Delete a job description template.
+
+## WHEN TO USE:
+- User explicitly asks to delete a template: "Delete my old template"
+- User wants to remove a template they no longer need
+
+## WHEN NOT TO USE:
+- User wants to update a template (use updateJobDescriptionTemplate)
+- User is unsure which template to delete (use listJobDescriptionTemplates first)
+
+## PARAMETERS:
+- templateId (required): The Convex ID of the template to delete
+
+## BEHAVIOR:
+- Performs a soft delete (template is marked as deleted but not removed)
+- Cannot be undone from the chat interface
+- Template will no longer appear in lists
+
+## EXAMPLES:
+- "Delete the old template": { templateId: "abc123" }
+
+## NOTES:
+- Always confirm with user before deleting
+- Use listJobDescriptionTemplates first to find the template ID
+- This is a destructive action`,
+
+  inputSchema: DeleteJobDescriptionTemplateInputSchema,
+});
+
+// =============================================================================
 // Exports
 // =============================================================================
 
@@ -1938,6 +2157,12 @@ export const chatTools = {
   // Settings tools
   updateSettings: updateSettingsTool,
   getSettings: getSettingsTool,
+
+  // Job description template tools
+  listJobDescriptionTemplates: listJobDescriptionTemplatesTool,
+  createJobDescriptionTemplate: createJobDescriptionTemplateTool,
+  updateJobDescriptionTemplate: updateJobDescriptionTemplateTool,
+  deleteJobDescriptionTemplate: deleteJobDescriptionTemplateTool,
 };
 
 /**

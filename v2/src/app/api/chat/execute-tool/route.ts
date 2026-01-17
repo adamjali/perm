@@ -21,7 +21,7 @@ import type { Id } from '@/../convex/_generated/dataModel';
 
 interface CaseDetails {
   employerName: string;
-  beneficiaryIdentifier: string;
+  foreignWorkerId: string;
   positionTitle: string;
 }
 
@@ -33,7 +33,7 @@ async function getCaseDetails(caseId: Id<'cases'>, token: string): Promise<CaseD
   );
   return {
     employerName: caseData?.employerName ?? 'Unknown',
-    beneficiaryIdentifier: caseData?.beneficiaryIdentifier ?? 'Unknown',
+    foreignWorkerId: caseData?.beneficiaryIdentifier ?? '',
     positionTitle: caseData?.positionTitle ?? 'Unknown',
   };
 }
@@ -70,11 +70,13 @@ type ToolExecutor = (
 const toolExecutors: Record<string, ToolExecutor> = {
   // Case CRUD operations
   createCase: async (args, token) => {
+    // Map foreignWorkerId to beneficiaryIdentifier (database field name)
+    const foreignWorkerId = (args.foreignWorkerId as string | undefined) ?? '';
     const result = await fetchMutation(
       api.cases.create,
       {
         employerName: args.employerName as string,
-        beneficiaryIdentifier: args.beneficiaryIdentifier as string,
+        beneficiaryIdentifier: foreignWorkerId,
         positionTitle: args.positionTitle as string,
         caseStatus: args.caseStatus as CaseStatus | undefined,
         progressStatus: args.progressStatus as ProgressStatus | undefined,
@@ -116,18 +118,26 @@ const toolExecutors: Record<string, ToolExecutor> = {
       success: true,
       caseId: result,
       employerName: args.employerName as string,
-      beneficiaryIdentifier: args.beneficiaryIdentifier as string,
+      foreignWorkerId,
       positionTitle: args.positionTitle as string,
       action: 'case_created',
-      message: `Created new case "${args.employerName} - ${args.beneficiaryIdentifier} (${args.positionTitle})".`,
+      message: foreignWorkerId
+        ? `Created new case "${args.employerName} - ${foreignWorkerId} (${args.positionTitle})".`
+        : `Created new case "${args.employerName} (${args.positionTitle})".`,
     };
   },
 
   updateCase: async (args, token) => {
-    const { caseId, ...updateFields } = args;
+    const { caseId, foreignWorkerId, ...otherFields } = args;
 
     // Fetch case details first for accurate confirmation message
     const caseDetails = await getCaseDetails(caseId as Id<'cases'>, token);
+
+    // Map foreignWorkerId to beneficiaryIdentifier (database field name)
+    const updateFields = {
+      ...otherFields,
+      ...(foreignWorkerId !== undefined ? { beneficiaryIdentifier: foreignWorkerId as string } : {}),
+    };
 
     const result = await fetchMutation(
       api.cases.update,
@@ -138,15 +148,25 @@ const toolExecutors: Record<string, ToolExecutor> = {
       { token }
     );
 
-    const updatedFieldNames = Object.keys(updateFields).join(', ');
-    const fieldCount = Object.keys(updateFields).length;
+    // For display purposes, show foreignWorkerId instead of beneficiaryIdentifier
+    const displayFields = { ...updateFields };
+    if ('beneficiaryIdentifier' in displayFields) {
+      delete displayFields.beneficiaryIdentifier;
+      (displayFields as Record<string, unknown>).foreignWorkerId = foreignWorkerId;
+    }
+
+    const updatedFieldNames = Object.keys(displayFields).join(', ');
+    const fieldCount = Object.keys(displayFields).length;
+    const caseLabel = caseDetails.foreignWorkerId
+      ? `${caseDetails.employerName} - ${caseDetails.foreignWorkerId}`
+      : caseDetails.employerName;
     return {
       success: true,
       caseId: result,
       ...caseDetails,
-      updates: updateFields,
+      updates: displayFields,
       action: 'case_updated',
-      message: `Updated ${fieldCount} field${fieldCount !== 1 ? 's' : ''} (${updatedFieldNames}) for case "${caseDetails.employerName} - ${caseDetails.beneficiaryIdentifier}".`,
+      message: `Updated ${fieldCount} field${fieldCount !== 1 ? 's' : ''} (${updatedFieldNames}) for case "${caseLabel}".`,
     };
   },
 
@@ -161,12 +181,15 @@ const toolExecutors: Record<string, ToolExecutor> = {
       { token }
     );
 
+    const caseLabel = caseDetails.foreignWorkerId
+      ? `${caseDetails.employerName} - ${caseDetails.foreignWorkerId}`
+      : caseDetails.employerName;
     return {
       success: true,
       caseId: args.caseId,
       ...caseDetails,
       action: 'archived',
-      message: `Archived case "${caseDetails.employerName} - ${caseDetails.beneficiaryIdentifier} (${caseDetails.positionTitle})".`,
+      message: `Archived case "${caseLabel} (${caseDetails.positionTitle})".`,
     };
   },
 
@@ -180,12 +203,15 @@ const toolExecutors: Record<string, ToolExecutor> = {
       { token }
     );
 
+    const caseLabel = caseDetails.foreignWorkerId
+      ? `${caseDetails.employerName} - ${caseDetails.foreignWorkerId}`
+      : caseDetails.employerName;
     return {
       success: true,
       caseId: args.caseId,
       ...caseDetails,
       action: 'reopened',
-      message: `Reopened case "${caseDetails.employerName} - ${caseDetails.beneficiaryIdentifier} (${caseDetails.positionTitle})".`,
+      message: `Reopened case "${caseLabel} (${caseDetails.positionTitle})".`,
     };
   },
 
@@ -200,12 +226,15 @@ const toolExecutors: Record<string, ToolExecutor> = {
       { token }
     );
 
+    const caseLabel = caseDetails.foreignWorkerId
+      ? `${caseDetails.employerName} - ${caseDetails.foreignWorkerId}`
+      : caseDetails.employerName;
     return {
       success: true,
       caseId: args.caseId,
       ...caseDetails,
       action: 'permanently_deleted',
-      message: `PERMANENTLY DELETED case "${caseDetails.employerName} - ${caseDetails.beneficiaryIdentifier} (${caseDetails.positionTitle})". This action cannot be undone.`,
+      message: `PERMANENTLY DELETED case "${caseLabel} (${caseDetails.positionTitle})". This action cannot be undone.`,
     };
   },
 
@@ -220,13 +249,16 @@ const toolExecutors: Record<string, ToolExecutor> = {
       { token }
     );
 
+    const caseLabel = caseDetails.foreignWorkerId
+      ? `${caseDetails.employerName} - ${caseDetails.foreignWorkerId}`
+      : caseDetails.employerName;
     return {
       success: true,
       caseId: args.caseId,
       ...caseDetails,
       enabled: true,
       action: 'calendar_sync_enabled',
-      message: `Enabled calendar sync for case "${caseDetails.employerName} - ${caseDetails.beneficiaryIdentifier}". Deadlines will now appear in your calendar.`,
+      message: `Enabled calendar sync for case "${caseLabel}". Deadlines will now appear in your calendar.`,
     };
   },
 
@@ -240,13 +272,16 @@ const toolExecutors: Record<string, ToolExecutor> = {
       { token }
     );
 
+    const caseLabel = caseDetails.foreignWorkerId
+      ? `${caseDetails.employerName} - ${caseDetails.foreignWorkerId}`
+      : caseDetails.employerName;
     return {
       success: true,
       caseId: args.caseId,
       ...caseDetails,
       enabled: false,
       action: 'calendar_sync_disabled',
-      message: `Disabled calendar sync for case "${caseDetails.employerName} - ${caseDetails.beneficiaryIdentifier}". Deadlines removed from calendar.`,
+      message: `Disabled calendar sync for case "${caseLabel}". Deadlines removed from calendar.`,
     };
   },
 

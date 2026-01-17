@@ -228,6 +228,10 @@ export const caseFormSchema = z
     tags: z.array(z.string()),
     calendarSyncEnabled: z.boolean(),
     showOnTimeline: z.boolean(),
+
+    // Job Description (for PERM postings)
+    jobDescriptionPositionTitle: z.string().optional(),
+    jobDescription: z.string().max(10000, 'Job description must be 10,000 characters or less').optional(),
   })
   .superRefine((data, ctx) => {
     validateSundayAdSequence(data, ctx);

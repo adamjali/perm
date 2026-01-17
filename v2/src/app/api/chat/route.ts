@@ -57,6 +57,10 @@ import {
   BulkArchiveCasesInputSchema,
   BulkDeleteCasesInputSchema,
   BulkCalendarSyncInputSchema,
+  ListJobDescriptionTemplatesInputSchema,
+  CreateJobDescriptionTemplateInputSchema,
+  UpdateJobDescriptionTemplateInputSchema,
+  DeleteJobDescriptionTemplateInputSchema,
   type QueryCasesInput,
   type SearchKnowledgeInput,
   type SearchWebInput,
@@ -81,6 +85,10 @@ import {
   type BulkArchiveCasesInput,
   type BulkDeleteCasesInput,
   type BulkCalendarSyncInput,
+  type ListJobDescriptionTemplatesInput,
+  type CreateJobDescriptionTemplateInput,
+  type UpdateJobDescriptionTemplateInput,
+  type DeleteJobDescriptionTemplateInput,
   createCaseTool,
   updateCaseTool,
   archiveCaseTool,
@@ -257,6 +265,23 @@ DESTRUCTIVE: Always requires confirmation.
 IMPORTANT: Use { all: true } to affect all cases - no need to query IDs first.
 Use filterByStatus to only affect cases with a specific status.
 Parameters: all (boolean), enabled (boolean), filterByStatus (optional).`;
+
+// Job description template tool descriptions
+const LIST_JOB_DESC_TEMPLATES_DESCRIPTION = `List the user's job description templates.
+Use for: showing templates, finding template by name, suggesting templates.
+Parameters: searchQuery (optional, filter by name).`;
+
+const CREATE_JOB_DESC_TEMPLATE_DESCRIPTION = `Create a new job description template.
+Use for: saving a job description for reuse, creating template from position title.
+Parameters: name (position title), description (job description text).`;
+
+const UPDATE_JOB_DESC_TEMPLATE_DESCRIPTION = `Update an existing job description template.
+Use for: modifying template name or description.
+Parameters: templateId, name (optional), description (optional).`;
+
+const DELETE_JOB_DESC_TEMPLATE_DESCRIPTION = `Delete a job description template (soft delete).
+DESTRUCTIVE: Requires confirmation.
+Parameters: templateId.`;
 
 /**
  * Create tools object with execute functions that call Convex
@@ -548,7 +573,7 @@ function createTools(
             toolName: 'createCase',
             toolCallId,
             arguments: params,
-            description: `Create a new PERM case for ${params.employerName} - ${params.beneficiaryIdentifier} (${params.positionTitle})`,
+            description: `Create a new PERM case for ${params.employerName} - ${params.foreignWorkerId || 'TBD'} (${params.positionTitle})`,
             _ai_instruction: 'A confirmation card is now visible. Briefly explain what action this card will perform. Do NOT retry this tool - the user will click Approve or Cancel on the card.',
           };
         }
@@ -558,7 +583,7 @@ function createTools(
             api.cases.create,
             {
               employerName: params.employerName,
-              beneficiaryIdentifier: params.beneficiaryIdentifier,
+              beneficiaryIdentifier: params.foreignWorkerId,
               positionTitle: params.positionTitle,
               caseStatus: params.caseStatus,
               progressStatus: params.progressStatus,
@@ -602,9 +627,9 @@ function createTools(
             success: true,
             caseId: result,
             employerName: params.employerName,
-            beneficiaryIdentifier: params.beneficiaryIdentifier,
+            foreignWorkerId: params.foreignWorkerId,
             positionTitle: params.positionTitle,
-            message: `Created case for ${params.beneficiaryIdentifier} at ${params.employerName}`,
+            message: `Created case for ${params.foreignWorkerId || params.positionTitle} at ${params.employerName}`,
           };
         } catch (error) {
           console.error(`[Chat API] createCase error:`, error);
@@ -1627,6 +1652,222 @@ AUTONOMOUS: No confirmation needed.`,
             suggestion: error instanceof Error ? error.message : 'Please try again',
           };
         }
+      },
+    },
+
+    // =========================================================================
+    // JOB DESCRIPTION TEMPLATE TOOLS
+    // These tools manage job description templates for the user
+    // =========================================================================
+
+    listJobDescriptionTemplates: {
+      description: LIST_JOB_DESC_TEMPLATES_DESCRIPTION,
+      inputSchema: ListJobDescriptionTemplatesInputSchema,
+      execute: async (params: ListJobDescriptionTemplatesInput) => {
+        const startTime = Date.now();
+        console.log(`[Chat API] listJobDescriptionTemplates called with:`, truncateForLog(params));
+
+        try {
+          let templates;
+
+          if (params.searchQuery) {
+            // Use search query
+            templates = await fetchQuery(
+              api.jobDescriptionTemplates.searchByName,
+              { query: params.searchQuery },
+              { token }
+            );
+          } else {
+            // List all templates
+            templates = await fetchQuery(
+              api.jobDescriptionTemplates.list,
+              {},
+              { token }
+            );
+          }
+
+          const duration = Date.now() - startTime;
+          console.log(`[Chat API] listJobDescriptionTemplates result (${duration}ms): ${templates.length} templates`);
+
+          return {
+            success: true,
+            templates: sanitizeBigInts(templates),
+            count: templates.length,
+          };
+        } catch (error) {
+          console.error(`[Chat API] listJobDescriptionTemplates error:`, error);
+          return {
+            error: 'Failed to list job description templates',
+            suggestion: error instanceof Error ? error.message : 'Please try again',
+          };
+        }
+      },
+    },
+
+    createJobDescriptionTemplate: {
+      description: CREATE_JOB_DESC_TEMPLATE_DESCRIPTION,
+      inputSchema: CreateJobDescriptionTemplateInputSchema,
+      execute: async (params: CreateJobDescriptionTemplateInput, { toolCallId }: ToolExecutionOptions) => {
+        const startTime = Date.now();
+        console.log(`[Chat API] createJobDescriptionTemplate called with:`, truncateForLog(params));
+
+        // Check if tool is allowed in current mode
+        if (!isToolAllowed('createJobDescriptionTemplate', actionMode)) {
+          return {
+            error: 'Template creation is disabled',
+            suggestion: 'Actions are currently turned off. Enable actions in settings to create templates.',
+          };
+        }
+
+        // Check permission - return confirmation request if needed
+        if (requiresConfirmation('createJobDescriptionTemplate', actionMode)) {
+          return {
+            requiresPermission: true,
+            permissionType: getToolPermission('createJobDescriptionTemplate'),
+            toolName: 'createJobDescriptionTemplate',
+            toolCallId,
+            arguments: params,
+            description: `Create job description template "${params.name}"`,
+            _ai_instruction: 'A confirmation card is now visible. Briefly explain what action this card will perform. Do NOT retry this tool - the user will click Approve or Cancel on the card.',
+          };
+        }
+
+        try {
+          const templateId = await fetchMutation(
+            api.jobDescriptionTemplates.create,
+            {
+              name: params.name,
+              description: params.description,
+            },
+            { token }
+          );
+
+          const duration = Date.now() - startTime;
+          console.log(`[Chat API] createJobDescriptionTemplate result (${duration}ms):`, templateId);
+
+          return {
+            success: true,
+            templateId,
+            name: params.name,
+            message: `Created job description template "${params.name}"`,
+          };
+        } catch (error) {
+          console.error(`[Chat API] createJobDescriptionTemplate error:`, error);
+          return {
+            error: 'Failed to create job description template',
+            suggestion: error instanceof Error ? error.message : 'Please try again',
+          };
+        }
+      },
+    },
+
+    updateJobDescriptionTemplate: {
+      description: UPDATE_JOB_DESC_TEMPLATE_DESCRIPTION,
+      inputSchema: UpdateJobDescriptionTemplateInputSchema,
+      execute: async (params: UpdateJobDescriptionTemplateInput, { toolCallId }: ToolExecutionOptions) => {
+        const startTime = Date.now();
+        console.log(`[Chat API] updateJobDescriptionTemplate called with:`, truncateForLog(params));
+
+        // Check if tool is allowed in current mode
+        if (!isToolAllowed('updateJobDescriptionTemplate', actionMode)) {
+          return {
+            error: 'Template updates are disabled',
+            suggestion: 'Actions are currently turned off. Enable actions in settings to update templates.',
+          };
+        }
+
+        // Need at least one field to update
+        if (!params.name && !params.description) {
+          return {
+            error: 'Nothing to update',
+            suggestion: 'Provide at least one of: name, description',
+          };
+        }
+
+        // Check permission - return confirmation request if needed
+        if (requiresConfirmation('updateJobDescriptionTemplate', actionMode)) {
+          const updateFields = [];
+          if (params.name) updateFields.push('name');
+          if (params.description) updateFields.push('description');
+          return {
+            requiresPermission: true,
+            permissionType: getToolPermission('updateJobDescriptionTemplate'),
+            toolName: 'updateJobDescriptionTemplate',
+            toolCallId,
+            arguments: params,
+            description: `Update job description template: changing ${updateFields.join(', ')}`,
+            _ai_instruction: 'A confirmation card is now visible. Briefly explain what action this card will perform. Do NOT retry this tool - the user will click Approve or Cancel on the card.',
+          };
+        }
+
+        try {
+          // First get the existing template to merge fields
+          const existing = await fetchQuery(
+            api.jobDescriptionTemplates.get,
+            { id: params.templateId as Id<'jobDescriptionTemplates'> },
+            { token }
+          );
+
+          if (!existing) {
+            return {
+              error: 'Template not found',
+              suggestion: 'Use listJobDescriptionTemplates to find the correct template ID.',
+            };
+          }
+
+          const templateId = await fetchMutation(
+            api.jobDescriptionTemplates.update,
+            {
+              id: params.templateId as Id<'jobDescriptionTemplates'>,
+              name: params.name || existing.name,
+              description: params.description || existing.description,
+            },
+            { token }
+          );
+
+          const duration = Date.now() - startTime;
+          console.log(`[Chat API] updateJobDescriptionTemplate result (${duration}ms):`, templateId);
+
+          return {
+            success: true,
+            templateId,
+            message: `Updated job description template`,
+          };
+        } catch (error) {
+          console.error(`[Chat API] updateJobDescriptionTemplate error:`, error);
+          return {
+            error: 'Failed to update job description template',
+            suggestion: error instanceof Error ? error.message : 'Please try again',
+          };
+        }
+      },
+    },
+
+    deleteJobDescriptionTemplate: {
+      description: DELETE_JOB_DESC_TEMPLATE_DESCRIPTION,
+      inputSchema: DeleteJobDescriptionTemplateInputSchema,
+      execute: async (params: DeleteJobDescriptionTemplateInput, { toolCallId }: ToolExecutionOptions) => {
+        console.log(`[Chat API] deleteJobDescriptionTemplate called with:`, truncateForLog(params));
+
+        // Check if tool is allowed in current mode
+        if (!isToolAllowed('deleteJobDescriptionTemplate', actionMode)) {
+          return {
+            error: 'Template deletion is disabled',
+            suggestion: 'Actions are currently turned off. Enable actions in settings to delete templates.',
+          };
+        }
+
+        // DESTRUCTIVE action - requires confirmation
+        return {
+          requiresPermission: true,
+          permissionType: 'confirm' as const,
+          toolName: 'deleteJobDescriptionTemplate',
+          toolCallId,
+          arguments: params,
+          description: `Delete job description template`,
+          warning: 'This will remove the template. It will no longer be available for use.',
+          _ai_instruction: 'A confirmation card is now visible. Briefly explain what action this card will perform. Do NOT retry this tool - the user will click Approve or Cancel on the card.',
+        };
       },
     },
   };

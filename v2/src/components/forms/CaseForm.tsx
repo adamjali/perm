@@ -44,6 +44,7 @@ import {
   Building2,
   StickyNote,
   Trash2,
+  ScrollText,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -81,6 +82,8 @@ import {
 } from "@/lib/forms/case-form-schema";
 import { getAllDateConstraints } from "@/lib/forms/date-constraints";
 import { initializeFormData, mapFieldToInputName } from "./case-form.helpers";
+import { JobDescriptionField } from "@/components/job-description";
+import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 
 // Re-export helpers for consumers
 export { DEFAULT_FORM_DATA, initializeFormData, errorsToFieldMap } from "./case-form.helpers";
@@ -235,6 +238,21 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
   const { sectionStates, toggleSection, enableOverride, openSection } = useSectionState(formData);
 
   // ============================================================================
+  // JOB DESCRIPTION TEMPLATES
+  // ============================================================================
+
+  const {
+    templates: jobDescTemplates,
+    isLoading: isTemplatesLoading,
+    loadedTemplateId: jobDescLoadedTemplateId,
+    setLoadedTemplateId: setJobDescLoadedTemplateId,
+    loadTemplate: loadJobDescTemplate,
+    saveAsNewTemplate: saveJobDescAsNewTemplate,
+    updateTemplate: updateJobDescTemplate,
+    deleteTemplate: deleteJobDescTemplate,
+  } = useJobDescriptionTemplates();
+
+  // ============================================================================
   // AUTO STATUS
   // ============================================================================
 
@@ -339,6 +357,47 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
   const handleNotesChange = useCallback(
     (notes: NoteEntry[]) => setValue("notes", notes, { shouldDirty: true }),
     [setValue]
+  );
+
+  // ============================================================================
+  // JOB DESCRIPTION HANDLERS
+  // ============================================================================
+
+  const handleJobDescPositionTitleChange = useCallback(
+    (value: string) => {
+      setValue("jobDescriptionPositionTitle", value, { shouldDirty: true });
+    },
+    [setValue]
+  );
+
+  const handleJobDescriptionChange = useCallback(
+    (value: string) => {
+      setValue("jobDescription", value, { shouldDirty: true });
+    },
+    [setValue]
+  );
+
+  const handleLoadJobDescTemplate = useCallback(
+    async (template: { _id: string; name: string; description: string }) => {
+      await loadJobDescTemplate(template as Parameters<typeof loadJobDescTemplate>[0]);
+      setValue("jobDescriptionPositionTitle", template.name, { shouldDirty: true });
+      setValue("jobDescription", template.description, { shouldDirty: true });
+    },
+    [loadJobDescTemplate, setValue]
+  );
+
+  const handleSaveJobDescAsNew = useCallback(
+    async (name: string, description: string) => {
+      await saveJobDescAsNewTemplate(name, description);
+    },
+    [saveJobDescAsNewTemplate]
+  );
+
+  const handleUpdateJobDescTemplate = useCallback(
+    async (id: string, name: string, description: string) => {
+      await updateJobDescTemplate(id as Parameters<typeof updateJobDescTemplate>[0], name, description);
+    },
+    [updateJobDescTemplate]
   );
 
   // ============================================================================
@@ -491,6 +550,30 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
           <CollapsibleSection name="i140" title="I-140 (Immigrant Petition)" state={sectionStates.i140} onToggle={() => toggleSection("i140")} onOverride={() => enableOverride("i140")} icon={<Building2 className="size-5" />} description="I-140 petition filing, receipt, and approval">
             <I140Section />
           </CollapsibleSection>
+        </div>
+
+        {/* Job Description Section */}
+        <div className="animate-slide-up" style={{ animationDelay: "275ms" }}>
+          <JobDescriptionField
+            inheritedPositionTitle={formData.positionTitle || ""}
+            positionTitle={formData.jobDescriptionPositionTitle || ""}
+            description={formData.jobDescription || ""}
+            onPositionTitleChange={handleJobDescPositionTitleChange}
+            onDescriptionChange={handleJobDescriptionChange}
+            templates={jobDescTemplates.map((t) => ({
+              _id: t._id,
+              name: t.name,
+              description: t.description,
+              createdAt: t.createdAt,
+              updatedAt: t.updatedAt,
+              usageCount: t.usageCount,
+            }))}
+            loadedTemplateId={jobDescLoadedTemplateId}
+            onLoadTemplate={handleLoadJobDescTemplate}
+            onSaveAsNewTemplate={handleSaveJobDescAsNew}
+            onUpdateTemplate={handleUpdateJobDescTemplate}
+            isLoading={isTemplatesLoading}
+          />
         </div>
 
         {/* Notes Section */}

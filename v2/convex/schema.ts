@@ -398,6 +398,27 @@ export default defineSchema({
     ),
     tags: v.array(v.string()),
 
+    // Job Description (for PERM postings)
+    /**
+     * Position title for the job description.
+     * Inherited from positionTitle by default, but can be edited independently.
+     * Used for template matching and display.
+     * @optional Backwards compatibility - existing documents won't have this.
+     */
+    jobDescriptionPositionTitle: v.optional(v.string()),
+    /**
+     * Job description text for PERM postings.
+     * Can be loaded from templates or entered manually.
+     * @optional Backwards compatibility - existing documents won't have this.
+     */
+    jobDescription: v.optional(v.string()),
+    /**
+     * Reference to the template this job description was loaded from.
+     * Null if entered manually or if template was deleted.
+     * @optional Only set when loaded from a template.
+     */
+    jobDescriptionTemplateId: v.optional(v.id("jobDescriptionTemplates")),
+
     // Calendar integration - maps deadline type to Google Calendar event ID
     calendarEventIds: v.optional(
       v.object({
@@ -768,4 +789,39 @@ export default defineSchema({
   })
     .index("by_conversation_tool_hash", ["conversationId", "toolName", "queryHash"])
     .index("by_expires", ["expiresAt"]),
+
+  /**
+   * Job Description Templates
+   *
+   * Reusable job description templates for PERM cases.
+   * Templates are user-scoped and identified by position title (name).
+   * No duplicate names allowed per user.
+   *
+   * Usage: When filling out PERM applications, attorneys often need
+   * the same job description text for multiple postings. Templates
+   * allow saving and reusing descriptions efficiently.
+   */
+  jobDescriptionTemplates: defineTable({
+    // Owner
+    userId: v.id("users"),
+
+    // Template identity - position title serves as the template name
+    // Must be unique per user (enforced in mutations)
+    name: v.string(),
+
+    // The actual job description text
+    description: v.string(),
+
+    // Usage tracking
+    usageCount: v.number(), // Incremented when template is loaded
+    lastUsedAt: v.optional(v.number()), // Timestamp of last use
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    deletedAt: v.optional(v.number()), // Soft delete
+  })
+    .index("by_user_id", ["userId"])
+    .index("by_user_and_name", ["userId", "name"])
+    .index("by_deleted_at", ["deletedAt"]),
 });

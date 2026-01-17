@@ -227,7 +227,7 @@ function getToolPriorityKeys(tool: string): string[] {
     case 'searchWeb':
       return ['query'];
     case 'createCase':
-      return ['employerName', 'positionTitle', 'beneficiaryIdentifier'];
+      return ['employerName', 'positionTitle', 'foreignWorkerId'];
     case 'updateCase':
       return ['caseId', 'updates'];
     case 'archiveCase':

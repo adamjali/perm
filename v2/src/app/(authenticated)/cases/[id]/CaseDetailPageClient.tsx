@@ -48,6 +48,7 @@ import { RecruitmentResultsSection } from "@/components/cases/detail/Recruitment
 import { ETA9089Section } from "@/components/cases/detail/ETA9089Section";
 import { I140Section } from "@/components/cases/detail/I140Section";
 import { RFIRFESection } from "@/components/cases/detail/RFIRFESection";
+import { JobDescriptionDetailView } from "@/components/job-description";
 import { InlineCaseTimeline } from "@/components/cases/detail/InlineCaseTimeline";
 import { WindowsDisplay } from "@/components/cases/detail/WindowsDisplay";
 import { NextUpSection } from "@/components/cases/detail/NextUpSection";
@@ -886,6 +887,15 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           rfeEntries={caseData.rfeEntries}
           defaultOpen={!isMobile}
         />
+
+        {/* Job Description Section - only shown if job description exists */}
+        {(caseData.jobDescription || caseData.jobDescriptionPositionTitle) && (
+          <JobDescriptionDetailView
+            positionTitle={caseData.jobDescriptionPositionTitle}
+            description={caseData.jobDescription}
+            defaultOpen={!isMobile}
+          />
+        )}
       </motion.div>
 
       {/* Inline Timeline - At bottom for reference */}

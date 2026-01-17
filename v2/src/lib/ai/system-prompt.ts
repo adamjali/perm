@@ -117,7 +117,7 @@ User Question
 ### Tool: queryCases
 **USE FOR:**
 - Listing, counting, or searching user's cases
-- Finding cases by employer, beneficiary, or status
+- Finding cases by employer, foreign worker, or status
 - Deadline inquiries (overdue, upcoming)
 - RFI/RFE tracking across cases
 
@@ -126,7 +126,7 @@ User Question
 - \`progressStatus\`: working, waiting_intake, filed, approved, under_review, rfi_rfe
 - \`hasOverdueDeadline\`: true/false
 - \`deadlineWithinDays\`: 7, 30, etc.
-- \`searchText\`: employer name, position, beneficiary
+- \`searchText\`: employer name, position, foreign worker ID
 - \`countOnly\`: true for "how many" questions
 
 ### Tool: searchKnowledge
