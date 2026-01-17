@@ -134,7 +134,7 @@ export default async function Image() {
               marginTop: '32px',
             }}
           >
-            {['Deadlines', 'Validation', 'Free Forever'].map((feature) => (
+            {['Deadlines', 'Validation', 'Free to Use'].map((feature) => (
               <div
                 key={feature}
                 style={{

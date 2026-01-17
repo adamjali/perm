@@ -63,7 +63,7 @@ export function DemoCTA() {
             {/* Feature highlights */}
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               <FeatureItem
-                title="Free Forever"
+                title="Free to Start"
                 description="No credit card, no trial period"
               />
               <FeatureItem

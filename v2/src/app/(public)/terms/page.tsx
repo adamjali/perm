@@ -15,7 +15,7 @@ export const dynamic = "force-static";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "Terms of Service for PERM Tracker. Read our terms for using our free PERM labor certification case management software.",
+    "Terms of Service for PERM Tracker. Read our terms for using our PERM labor certification case management software.",
   alternates: {
     canonical: "/terms",
   },
@@ -31,7 +31,7 @@ export default function TermsPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>
         <p className="text-foreground/60 mb-8">
-          Effective Date: January 3, 2026 | Last Updated: January 3, 2026
+          Effective Date: January 3, 2026 | Last Updated: January 17, 2026
         </p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
@@ -55,9 +55,11 @@ export default function TermsPage() {
               2. Description of Service
             </h2>
             <p className="text-foreground/80 leading-relaxed">
-              PERM Tracker is a free web application designed to help immigration
+              PERM Tracker is a web application designed to help immigration
               attorneys and law firms track Permanent Labor Certification (PERM)
               cases through the Department of Labor (DOL) and USCIS processes.
+              The Service is currently offered free of charge, though we reserve
+              the right to introduce fees or subscription plans in the future.
             </p>
             <p className="text-foreground/80 leading-relaxed mt-4">
               The Service includes:
@@ -251,9 +253,10 @@ export default function TermsPage() {
               <li>Errors in date calculations or notifications</li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
-              Because this is a free service, our total liability for any claims
-              arising from your use of the Service is limited to the amount you
-              paid to use the Service (which is zero).
+              Our total liability for any claims arising from your use of the
+              Service is limited to the greater of (a) the amount you paid to
+              use the Service in the twelve (12) months preceding the claim, or
+              (b) one hundred dollars ($100).
             </p>
           </section>
 
@@ -276,19 +279,22 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              10. Service Modifications
+              10. Service Modifications & Pricing
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We reserve the right to:
             </p>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>Modify or discontinue the Service (or any part) at any time</li>
-              <li>Change features, functionality, or pricing (if applicable)</li>
+              <li>Introduce fees, subscription plans, or change pricing at any time</li>
+              <li>Offer premium features or tiers alongside or instead of free access</li>
               <li>Impose limits on certain features or restrict access</li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
-              We will make reasonable efforts to notify users of significant
-              changes, but are not obligated to do so.
+              If we introduce fees for features you currently use for free, we
+              will provide at least 7 days advance notice. Your continued use
+              of paid features after the effective date constitutes acceptance
+              of the applicable fees.
             </p>
           </section>
 

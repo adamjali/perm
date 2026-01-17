@@ -23,7 +23,7 @@ interface Stat {
 
 const stats: Stat[] = [
   { value: 180, label: "Day Filing Window" },
-  { value: 100, suffix: "%", label: "Free Forever" },
+  { value: 100, suffix: "%", label: "Free to Start" },
   { value: 24, label: "Hour Support" },
   { value: 5, label: "PERM Stages Tracked" },
 ];

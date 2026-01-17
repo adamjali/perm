@@ -52,7 +52,7 @@ const faqItems: FAQItem[] = [
   {
     question: "Is PERM Tracker really free?",
     answer:
-      "Yes, completely free. No hidden fees, no premium tiers, no trial periods. Immigration attorneys deserve quality tools without the typical SaaS pricing. We may add optional premium features later, but core functionality will always be free.",
+      "Yes, PERM Tracker is free to use. No credit card required to get started. Immigration attorneys deserve quality tools without the typical SaaS pricing. We may introduce optional premium features in the future.",
   },
 ];
 

@@ -95,7 +95,7 @@ export function HeroSection() {
             {/* Trust signal */}
             <ScrollReveal direction="up" delay={0.2}>
               <p className="mono text-sm text-muted-foreground">
-                No credit card required <span className="opacity-50">·</span> Free forever <span className="opacity-50">·</span> Built for attorneys
+                No credit card required <span className="opacity-50">·</span> Free to use <span className="opacity-50">·</span> Built for attorneys
               </p>
             </ScrollReveal>
           </div>
