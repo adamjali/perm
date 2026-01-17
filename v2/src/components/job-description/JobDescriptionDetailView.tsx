@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { FileText, Copy, Check, ChevronDown, Trash2, Pencil, Settings2 } from "lucide-react";
+import { useState, useCallback, useMemo } from "react";
+import { FileText, Copy, Check, ChevronDown, Trash2, Pencil, Settings2, Save, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,11 +17,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { TemplateSelector } from "./TemplateSelector";
 import { TemplateManagementModal } from "./TemplateManagementModal";
+import { TemplateUpdateConfirmDialog } from "./TemplateUpdateConfirmDialog";
 import type { JobDescriptionTemplate } from "./JobDescriptionField";
 
 // ============================================================================
 // TYPES
 // ============================================================================
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const DEFAULT_MAX_LENGTH = 10000;
 
 export interface JobDescriptionDetailViewProps {
   /** Position title for the job description */
@@ -40,6 +47,10 @@ export interface JobDescriptionDetailViewProps {
   onDeleteTemplate?: (id: string) => Promise<{ success: boolean; clearedReferences: number }>;
   /** Callback to update a template */
   onUpdateTemplate?: (id: string, name: string, description: string) => Promise<void>;
+  /** Callback when saving as new template (returns template ID) */
+  onSaveAsNewTemplate?: (name: string, description: string) => Promise<unknown>;
+  /** Maximum character count for description */
+  maxLength?: number;
   /** Whether section starts expanded */
   defaultOpen?: boolean;
   /** Additional className */
@@ -77,6 +88,8 @@ export function JobDescriptionDetailView({
   onLoadTemplate,
   onDeleteTemplate,
   onUpdateTemplate,
+  onSaveAsNewTemplate,
+  maxLength = DEFAULT_MAX_LENGTH,
   defaultOpen = true,
   className,
 }: JobDescriptionDetailViewProps) {
@@ -85,14 +98,40 @@ export function JobDescriptionDetailView({
   const [isClearing, setIsClearing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [editPositionTitle, setEditPositionTitle] = useState(positionTitle || "");
   const [editDescription, setEditDescription] = useState(description || "");
   const [managementOpen, setManagementOpen] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>();
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+
+  // Track original content for "modified" indicator
+  const [originalContent, setOriginalContent] = useState<{
+    positionTitle: string;
+    description: string;
+  } | null>(null);
 
   const hasContent = description?.trim();
   const characterCount = description?.length ?? 0;
   const canEdit = !!onUpdate;
+  const editCharacterCount = editDescription.length;
+  const isOverLimit = editCharacterCount > maxLength;
+
+  // Check if position title matches an existing template (case-insensitive)
+  const matchingTemplate = useMemo(() =>
+    templates.find((t) => t.name.toLowerCase() === editPositionTitle.trim().toLowerCase()),
+    [templates, editPositionTitle]
+  );
+  const isExistingTemplateName = !!matchingTemplate;
+  const canSaveTemplate = editPositionTitle.trim() && editDescription.trim() && !isOverLimit && !!onSaveAsNewTemplate;
+
+  // Check if content has been modified since loading a template
+  const isModifiedFromTemplate = selectedTemplateId && originalContent && (
+    editPositionTitle !== originalContent.positionTitle ||
+    editDescription !== originalContent.description
+  );
+
+  const loadedTemplate = templates.find((t) => t._id === selectedTemplateId);
 
   const handleClear = useCallback(async () => {
     if (!onClear) return;
@@ -145,23 +184,93 @@ export function JobDescriptionDetailView({
     setEditPositionTitle(template.name);
     setEditDescription(template.description);
     setSelectedTemplateId(template._id);
+    setOriginalContent({
+      positionTitle: template.name,
+      description: template.description,
+    });
     if (onLoadTemplate) {
       onLoadTemplate(template);
     }
+    toast.success(`Loaded template: ${template.name}`);
   }, [onLoadTemplate]);
 
+  // Handle save template button click
+  const handleSaveTemplateClick = useCallback(async () => {
+    if (!canSaveTemplate || isSavingTemplate) return;
+
+    if (isExistingTemplateName) {
+      // Show confirmation dialog for updating existing template
+      setShowUpdateConfirm(true);
+    } else {
+      // Create new template directly
+      setIsSavingTemplate(true);
+      try {
+        await onSaveAsNewTemplate!(editPositionTitle.trim(), editDescription);
+        toast.success(`Template "${editPositionTitle.trim()}" created`);
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to save template"
+        );
+      } finally {
+        setIsSavingTemplate(false);
+      }
+    }
+  }, [canSaveTemplate, isSavingTemplate, isExistingTemplateName, editPositionTitle, editDescription, onSaveAsNewTemplate]);
+
+  // Handle confirming overwrite of existing template
+  const handleConfirmOverwrite = useCallback(async () => {
+    if (!matchingTemplate || !onUpdateTemplate) return;
+    setIsSavingTemplate(true);
+    try {
+      await onUpdateTemplate(matchingTemplate._id, editPositionTitle.trim(), editDescription);
+      setOriginalContent({ positionTitle: editPositionTitle.trim(), description: editDescription });
+      toast.success(`Template "${editPositionTitle.trim()}" updated`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update template"
+      );
+      throw error; // Re-throw so dialog stays open
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  }, [matchingTemplate, editPositionTitle, editDescription, onUpdateTemplate]);
+
+  // Handle saving as new with a different name
+  const handleSaveAsNewWithName = useCallback(
+    async (newName: string) => {
+      if (!onSaveAsNewTemplate) return;
+      setIsSavingTemplate(true);
+      try {
+        await onSaveAsNewTemplate(newName, editDescription);
+        // Update position title to match new template name
+        setEditPositionTitle(newName);
+        toast.success(`Template "${newName}" created`);
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to save template"
+        );
+        throw error; // Re-throw so dialog stays open
+      } finally {
+        setIsSavingTemplate(false);
+      }
+    },
+    [editDescription, onSaveAsNewTemplate]
+  );
+
   const handleCopy = useCallback(async () => {
-    if (!description) return;
+    // In edit mode, copy the edit description; otherwise copy the displayed description
+    const textToCopy = isEditing ? editDescription : description;
+    if (!textToCopy) return;
 
     try {
-      await navigator.clipboard.writeText(description);
+      await navigator.clipboard.writeText(textToCopy);
       setIsCopied(true);
       toast.success("Copied to clipboard");
       setTimeout(() => setIsCopied(false), 2000);
     } catch {
       toast.error("Failed to copy");
     }
-  }, [description]);
+  }, [isEditing, editDescription, description]);
 
   // Don't render section if no description AND no templates to manage
   if (!hasContent && !positionTitle && templates.length === 0) {
@@ -227,35 +336,71 @@ export function JobDescriptionDetailView({
               {isEditing ? (
                 /* Edit Mode */
                 <>
-                  {/* Template selector */}
-                  {templates.length > 0 && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <TemplateSelector
-                        templates={templates}
-                        selectedTemplateId={selectedTemplateId}
-                        onSelect={handleLoadTemplate}
-                        onDelete={onDeleteTemplate}
-                        onUpdate={onUpdateTemplate}
-                      />
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setManagementOpen(true)}
-                              className="border-2 gap-1.5 min-h-[44px]"
-                            >
-                              <Settings2 className="h-5 w-5 sm:h-4 sm:w-4" />
-                              <span className="hidden sm:inline">Manage</span>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Manage templates</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  )}
+                  {/* Template selector row */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <TemplateSelector
+                      templates={templates}
+                      selectedTemplateId={selectedTemplateId}
+                      onSelect={handleLoadTemplate}
+                      onDelete={onDeleteTemplate}
+                      onUpdate={onUpdateTemplate}
+                    />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setManagementOpen(true)}
+                            className="border-2 gap-1.5 min-h-[44px]"
+                          >
+                            <Settings2 className="h-5 w-5 sm:h-4 sm:w-4" />
+                            <span className="hidden sm:inline">Manage</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Manage templates</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    {/* Template indicator badge */}
+                    {loadedTemplate && (
+                      <span
+                        className={cn(
+                          "text-xs px-2 py-0.5 rounded-full border",
+                          isModifiedFromTemplate
+                            ? "bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-400"
+                            : "bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
+                        )}
+                      >
+                        {isModifiedFromTemplate ? "Modified" : "From Template"}
+                      </span>
+                    )}
+
+                    {/* Copy button */}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCopy}
+                            disabled={!editDescription}
+                            className="gap-1.5 border-2 min-h-[44px] min-w-[44px]"
+                          >
+                            {isCopied ? (
+                              <Check className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
+                            ) : (
+                              <Copy className="h-5 w-5 sm:h-4 sm:w-4" />
+                            )}
+                            <span className="hidden sm:inline">Copy</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Copy description to clipboard</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
 
                   {/* Position title input */}
                   <div className="space-y-2">
@@ -269,7 +414,7 @@ export function JobDescriptionDetailView({
                     />
                   </div>
 
-                  {/* Description textarea - fewer rows on mobile */}
+                  {/* Description textarea */}
                   <div className="space-y-2">
                     <Label htmlFor="edit-description">Description</Label>
                     <Textarea
@@ -277,15 +422,83 @@ export function JobDescriptionDetailView({
                       value={editDescription}
                       onChange={(e) => setEditDescription(e.target.value)}
                       placeholder="Enter job description..."
-                      className="border-2 resize-y min-h-[120px] sm:min-h-[180px]"
+                      className={cn(
+                        "border-2 resize-y min-h-[120px] sm:min-h-[180px]",
+                        isOverLimit && "border-destructive focus-visible:ring-destructive"
+                      )}
                       style={{ minHeight: "min(180px, 35vh)" }}
                     />
-                    <p className="text-xs text-muted-foreground text-right">
-                      {editDescription.length.toLocaleString()} characters
-                    </p>
+                    <div className="flex items-center justify-between">
+                      {isOverLimit && (
+                        <p className="text-xs text-destructive">
+                          Exceeds {maxLength.toLocaleString()} character limit
+                        </p>
+                      )}
+                      <p className={cn(
+                        "text-xs text-muted-foreground ml-auto",
+                        isOverLimit && "text-destructive"
+                      )}>
+                        {editCharacterCount.toLocaleString()}/{maxLength.toLocaleString()}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Edit action buttons - stack on very small screens */}
+                  {/* Save template row - dynamic based on whether name exists */}
+                  {onSaveAsNewTemplate && (
+                    <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-border">
+                      {/* Single dynamic save button */}
+                      <div
+                        className={cn(
+                          "rounded-md border-2 transition-colors",
+                          isExistingTemplateName
+                            ? "border-blue-500 dark:border-blue-400"
+                            : "border-emerald-500 dark:border-emerald-400"
+                        )}
+                      >
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleSaveTemplateClick}
+                          disabled={!canSaveTemplate || isSavingTemplate}
+                          className={cn(
+                            "gap-1.5 rounded-[4px] min-h-[44px]",
+                            isExistingTemplateName
+                              ? "text-blue-700 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
+                              : "text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-900/30"
+                          )}
+                        >
+                          {isExistingTemplateName ? (
+                            <>
+                              <Save className="h-5 w-5 sm:h-4 sm:w-4" />
+                              <span className="text-sm">{isSavingTemplate ? "Updating..." : "Update Template"}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="h-5 w-5 sm:h-4 sm:w-4" />
+                              <span className="text-sm">{isSavingTemplate ? "Saving..." : "Save Template"}</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      {/* Status indicator */}
+                      {editPositionTitle.trim() && (
+                        <span
+                          className={cn(
+                            "text-xs px-2 py-1 rounded border hidden xs:inline-block",
+                            isExistingTemplateName
+                              ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
+                              : "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400"
+                          )}
+                        >
+                          {isExistingTemplateName ? "Existing" : "New"}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Edit action buttons */}
                   <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2">
                     <Button
                       type="button"
@@ -301,10 +514,10 @@ export function JobDescriptionDetailView({
                       type="button"
                       size="sm"
                       onClick={handleSaveEdit}
-                      disabled={isSaving || !editDescription.trim()}
+                      disabled={isSaving || !editDescription.trim() || isOverLimit}
                       className="min-h-[44px]"
                     >
-                      {isSaving ? "Saving..." : "Save Changes"}
+                      {isSaving ? "Saving..." : "Save to Case"}
                     </Button>
                   </div>
                 </>
@@ -328,29 +541,27 @@ export function JobDescriptionDetailView({
                         Description
                       </dt>
                       <div className="flex items-center gap-1 flex-wrap">
-                        {/* Manage Templates button - always visible when templates exist or can be managed */}
-                        {templates.length > 0 && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setManagementOpen(true);
-                                  }}
-                                  className="h-9 sm:h-8 gap-1.5 text-xs min-w-[44px] px-2 sm:px-3"
-                                >
-                                  <Settings2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
-                                  <span>Templates</span>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Manage job description templates</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
+                        {/* Manage Templates button - always visible */}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setManagementOpen(true);
+                                }}
+                                className="h-9 sm:h-8 gap-1.5 text-xs min-w-[44px] px-2 sm:px-3"
+                              >
+                                <Settings2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                                <span>Templates</span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Manage job description templates</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         {canEdit && (
                           <TooltipProvider>
                             <Tooltip>
@@ -452,6 +663,16 @@ export function JobDescriptionDetailView({
         }}
         onDelete={onDeleteTemplate}
         onUpdate={onUpdateTemplate}
+      />
+
+      {/* Template Update Confirmation Dialog */}
+      <TemplateUpdateConfirmDialog
+        open={showUpdateConfirm}
+        onOpenChange={setShowUpdateConfirm}
+        templateName={editPositionTitle.trim()}
+        onConfirmOverwrite={handleConfirmOverwrite}
+        onSaveAsNew={handleSaveAsNewWithName}
+        existingTemplateNames={templates.map((t) => t.name)}
       />
     </div>
   );

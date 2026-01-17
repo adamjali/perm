@@ -281,6 +281,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
     loadTemplate: loadJobDescTemplate,
     hardDeleteTemplate: hardDeleteJobDescTemplate,
     updateTemplate: updateJobDescTemplate,
+    saveAsNewTemplate: saveJobDescAsNewTemplate,
   } = useJobDescriptionTemplates();
 
   // Toggle loading states
@@ -935,6 +936,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               }}
               onDeleteTemplate={(id) => hardDeleteJobDescTemplate(id as Id<"jobDescriptionTemplates">)}
               onUpdateTemplate={(id, name, desc) => updateJobDescTemplate(id as Id<"jobDescriptionTemplates">, name, desc)}
+              onSaveAsNewTemplate={saveJobDescAsNewTemplate}
               defaultOpen={!isMobile}
             />
           </div>

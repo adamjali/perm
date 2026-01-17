@@ -248,7 +248,7 @@ export function TemplateManagementModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="border-2 shadow-hard max-w-5xl w-[95vw] h-[85vh] sm:h-[80vh] max-h-[900px] flex flex-col p-0">
+        <DialogContent className="border-2 shadow-hard !max-w-[98vw] sm:!max-w-[96vw] md:!max-w-[94vw] lg:!max-w-[1400px] xl:!max-w-[1600px] w-[98vw] sm:w-[96vw] md:w-[94vw] h-[92vh] sm:h-[88vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b-2 border-border shrink-0">
             {/* Mobile: Show back button when in detail view */}
             {isMobile && mobileView === "detail" && selectedTemplate && (
@@ -274,11 +274,11 @@ export function TemplateManagementModal({
             )}
           </DialogHeader>
 
-          <div className="flex flex-col sm:flex-row flex-1 min-h-0">
+          <div className="flex flex-col sm:flex-row flex-1 min-h-0 overflow-hidden">
             {/* Left panel - Template list (hidden on mobile when viewing detail) */}
             <div
               className={cn(
-                "sm:w-[320px] lg:w-[380px] shrink-0 border-b-2 sm:border-b-0 sm:border-r-2 border-border flex flex-col",
+                "sm:w-[380px] md:w-[420px] lg:w-[480px] shrink-0 border-b-2 sm:border-b-0 sm:border-r-2 border-border flex flex-col overflow-hidden",
                 isMobile && mobileView === "detail" && "hidden"
               )}
             >
@@ -340,7 +340,7 @@ export function TemplateManagementModal({
             {/* Right panel - Template detail/edit (hidden on mobile when showing list) */}
             <div
               className={cn(
-                "flex-1 flex flex-col",
+                "flex-1 flex flex-col min-w-0 overflow-hidden",
                 isMobile && mobileView === "list" && "hidden"
               )}
             >
@@ -538,12 +538,12 @@ export function TemplateManagementModal({
                           </div>
 
                           {/* Description - takes remaining space */}
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <p className="text-sm text-muted-foreground mb-2">
                               Description
                             </p>
-                            <div className="rounded-lg border-2 border-border bg-muted/30 p-3 sm:p-4 max-h-[50vh] overflow-y-auto">
-                              <p className="text-sm whitespace-pre-wrap">
+                            <div className="rounded-lg border-2 border-border bg-muted/30 p-3 sm:p-4 overflow-auto">
+                              <p className="text-sm whitespace-pre-wrap break-words">
                                 {selectedTemplate.description}
                               </p>
                             </div>
