@@ -122,8 +122,8 @@ export default function SummaryTile({
         {/* Corner decoration */}
         <CornerDecoration variant={cornerVariant} color={color} status={status} />
 
-        {/* Content - add right padding when tag variant to avoid overlap */}
-        <div className={`relative z-10 ${cornerVariant === "bar" ? "pt-4" : ""} ${cornerVariant === "tag" ? "pr-20" : ""}`}>
+        {/* Content - add top padding when tag variant on mobile to avoid overlap, right padding on larger screens */}
+        <div className={`relative z-10 ${cornerVariant === "bar" ? "pt-4" : ""} ${cornerVariant === "tag" ? "pt-8 sm:pt-0 sm:pr-20" : ""}`}>
           {/* Status label with hover color effect */}
           <div className="mb-3">
             <h3 className="font-heading font-bold text-sm sm:text-base text-foreground transition-colors group-hover:text-[var(--tile-color)] leading-tight">

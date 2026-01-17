@@ -49,8 +49,10 @@ export function DemoBanner() {
     /* Fixed banner - positioned below the fixed header, moves with header on scroll */
     <div
       className={cn(
-        "fixed inset-x-0 z-40 flex h-10 items-center justify-center gap-2 text-sm font-bold text-white shadow-hard-sm transition-[top] duration-200",
-        isScrolled ? "top-[52px]" : "top-[72px]"
+        "fixed inset-x-0 z-40 flex min-h-10 items-center justify-center gap-x-2 gap-y-0 px-4 py-1.5 text-sm font-bold text-white shadow-hard-sm transition-[top] duration-200 flex-wrap",
+        // Header height: py-5 (40px) + content (~32px) + border-b-4 (4px) = ~76px on mobile
+        // When scrolled, header shrinks slightly
+        isScrolled ? "top-[56px]" : "top-[76px]"
       )}
       style={{
         background: "linear-gradient(90deg, var(--primary) 0%, var(--stage-pwd) 100%)",
@@ -58,8 +60,8 @@ export function DemoBanner() {
       role="banner"
       aria-label="Demo mode indicator"
     >
-      <span>Demo Mode - Changes saved to this browser only</span>
-      <span className="mx-1">|</span>
+      <span className="text-center">Demo Mode - Changes saved to this browser only</span>
+      <span className="hidden sm:inline mx-1">|</span>
       <Link
         href="/signup"
         className="font-extrabold underline transition-opacity hover:opacity-80"
