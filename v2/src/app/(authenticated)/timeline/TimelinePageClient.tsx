@@ -302,8 +302,8 @@ export function TimelinePageClient() {
         </div>
       </div>
 
-      {/* Main timeline grid */}
-      <div className="flex-1 overflow-auto min-h-[400px] border-2 border-border rounded-lg bg-card">
+      {/* Main timeline grid - overflow-x-auto for horizontal scroll, overflow-y-visible for tooltips to escape */}
+      <div className="flex-1 overflow-x-auto overflow-y-visible min-h-[400px] border-2 border-border rounded-lg bg-card">
         <TimelineGrid
           cases={displayedCases}
           timeRange={effectiveTimeRange}

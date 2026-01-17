@@ -106,6 +106,7 @@ export function TimelineRangeBar({
       />
 
       {/* Hover tooltip - NOT affected by bar opacity */}
+      {/* z-[45] ensures tooltip appears above milestone dots (z-40) but below milestone tooltips (z-50) */}
       <div
         className={cn(
           "absolute bottom-full left-1/2 -translate-x-1/2 mb-3",
@@ -113,7 +114,7 @@ export function TimelineRangeBar({
           "whitespace-nowrap shadow-xl",
           "opacity-0 group-hover:opacity-100",
           "transition-opacity duration-150",
-          "pointer-events-none",
+          "pointer-events-none z-[45]",
           "border-2 border-foreground rounded-lg"
         )}
       >

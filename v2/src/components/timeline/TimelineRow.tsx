@@ -236,8 +236,8 @@ export function TimelineRow({
         </div>
       </div>
 
-      {/* Timeline Content Area */}
-      <div className="flex-1 relative">
+      {/* Timeline Content Area - z-30 ensures tooltips appear above sticky sidebar (z-20) */}
+      <div className="flex-1 relative z-30">
         {/* Month grid lines */}
         <div className="absolute inset-0 flex">
           {months.map((month) => (
