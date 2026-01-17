@@ -114,13 +114,12 @@ export function TimelineMilestoneMarker({
     <div
       className={cn(
         "absolute top-1/2 cursor-pointer",
-        `z-${Z_INDEX.base}`,
-        isHovered && `z-${Z_INDEX.tooltipHovered}`,
         className
       )}
       style={{
         left: `${clampedPosition}%`,
         transform: "translate(-50%, -50%)",
+        zIndex: isHovered ? Z_INDEX.milestoneHovered : Z_INDEX.milestone,
       }}
       onClick={handleClick}
       onKeyDown={handleKeyDown}

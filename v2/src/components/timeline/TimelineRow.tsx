@@ -23,7 +23,7 @@ import { parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { extractMilestones, extractRangeBars } from "@/lib/timeline/milestones";
 import { calculatePosition, calculateRangePosition } from "@/lib/timeline/positioning";
-import { SIDEBAR_WIDTH_CLASSES, Z_INDEX } from "@/lib/timeline/constants";
+import { SIDEBAR_WIDTH_CLASSES } from "@/lib/timeline/constants";
 import type { Milestone, RangeBar, CaseWithDates } from "@/lib/timeline/types";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { TimelineMilestoneMarker } from "./TimelineMilestoneMarker";
@@ -196,7 +196,6 @@ export function TimelineRow({
         "border-b border-foreground/20",
         "group transition-colors duration-150",
         "hover:bg-primary/5",
-        `hover:z-${Z_INDEX.hovered}`,
         // Alternating row background
         isEven ? "bg-muted/20" : "bg-transparent",
         // Cursor pointer when row click is enabled

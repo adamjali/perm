@@ -73,6 +73,7 @@ export function TimelineRangeBar({
   endPosition,
   className,
 }: TimelineRangeBarProps) {
+  const [isHovered, setIsHovered] = React.useState(false);
   const clampedStart = clampPosition(startPosition);
   const clampedEnd = clampPosition(endPosition);
   const width = Math.max(0, clampedEnd - clampedStart);
@@ -83,13 +84,15 @@ export function TimelineRangeBar({
     <div
       className={cn(
         "absolute top-1/2 -translate-y-1/2 h-2 group cursor-default",
-        `z-${Z_INDEX.base} hover:z-${Z_INDEX.tooltipHovered}`,
         className
       )}
       style={{
         left: `${clampedStart}%`,
         width: `${width}%`,
+        zIndex: isHovered ? Z_INDEX.rangeBarHovered : Z_INDEX.rangeBar,
       }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       role="img"
       aria-label={`${rangeBar.label}: ${formatISODate(rangeBar.startDate)} to ${formatISODate(rangeBar.endDate)}`}
     >

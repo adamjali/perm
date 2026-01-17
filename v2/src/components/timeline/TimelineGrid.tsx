@@ -159,14 +159,14 @@ export function TimelineGrid({
     <div
       className={cn(
         "border-2 border-foreground",
-        "bg-card shadow-hard",
-        "overflow-hidden"
+        "bg-card shadow-hard"
+        // Note: No overflow-hidden here - allows tooltips to escape vertically
       )}
       role="grid"
       aria-label={`Timeline showing ${cases.length} cases over ${timeRange} months`}
     >
-      {/* Scrollable container */}
-      <div className="overflow-x-auto">
+      {/* Scrollable container - overflow-x-auto handles horizontal scroll */}
+      <div className="overflow-x-auto overflow-y-visible">
         {/* Minimum width to prevent squishing on small screens */}
         <div className="min-w-[600px]">
           {/* Header Row */}

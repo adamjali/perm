@@ -26,11 +26,17 @@ export const SIDEBAR_WIDTHS = {
 
 /**
  * Z-index layers for timeline elements.
+ * Note: Using numeric values for inline styles (Tailwind z-100 etc don't exist)
  */
 export const Z_INDEX = {
-  base: 10,
-  hovered: 50,
-  tooltipHovered: 100,
+  /** Base layer for range bars */
+  rangeBar: 10,
+  /** Range bar when hovered */
+  rangeBarHovered: 30,
+  /** Base layer for milestone markers (above range bars) */
+  milestone: 20,
+  /** Milestone when hovered (above everything) */
+  milestoneHovered: 40,
 } as const;
 
 /**
