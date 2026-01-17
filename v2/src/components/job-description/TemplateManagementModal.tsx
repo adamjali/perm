@@ -199,6 +199,10 @@ export function TemplateManagementModal({
       const result = await onDelete(deleteConfirmId);
       if (selectedTemplate?._id === deleteConfirmId) {
         setSelectedTemplate(null);
+        // On mobile, go back to list view when selected template is deleted
+        if (isMobile) {
+          setMobileView("list");
+        }
       }
       setDeleteConfirmId(null);
       if (result.clearedReferences > 0) {
@@ -244,7 +248,7 @@ export function TemplateManagementModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="border-2 shadow-hard max-w-4xl w-[95vw] sm:w-auto h-[90vh] sm:h-[80vh] flex flex-col p-0">
+        <DialogContent className="border-2 shadow-hard max-w-5xl w-[95vw] h-[85vh] sm:h-[80vh] max-h-[900px] flex flex-col p-0">
           <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b-2 border-border shrink-0">
             {/* Mobile: Show back button when in detail view */}
             {isMobile && mobileView === "detail" && selectedTemplate && (
@@ -274,7 +278,7 @@ export function TemplateManagementModal({
             {/* Left panel - Template list (hidden on mobile when viewing detail) */}
             <div
               className={cn(
-                "sm:w-80 md:w-96 shrink-0 border-b-2 sm:border-b-0 sm:border-r-2 border-border flex flex-col",
+                "sm:w-[320px] lg:w-[380px] shrink-0 border-b-2 sm:border-b-0 sm:border-r-2 border-border flex flex-col",
                 isMobile && mobileView === "detail" && "hidden"
               )}
             >
@@ -525,33 +529,23 @@ export function TemplateManagementModal({
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          <div>
+                          {/* Metadata row - compact */}
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground border-b border-border pb-3">
+                            <span>Created {formatDate(selectedTemplate.createdAt)}</span>
+                            <span>Updated {formatDate(selectedTemplate.updatedAt)}</span>
+                            <span>Used {selectedTemplate.usageCount} times</span>
+                            <span>{selectedTemplate.description.length.toLocaleString()} chars</span>
+                          </div>
+
+                          {/* Description - takes remaining space */}
+                          <div className="flex-1">
                             <p className="text-sm text-muted-foreground mb-2">
                               Description
                             </p>
-                            <div className="rounded-lg border-2 border-border bg-muted/30 p-3 sm:p-4">
+                            <div className="rounded-lg border-2 border-border bg-muted/30 p-3 sm:p-4 max-h-[50vh] overflow-y-auto">
                               <p className="text-sm whitespace-pre-wrap">
                                 {selectedTemplate.description}
                               </p>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
-                            <div>
-                              <p className="text-muted-foreground text-xs sm:text-sm">Created</p>
-                              <p className="text-sm">{formatDate(selectedTemplate.createdAt)}</p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground text-xs sm:text-sm">Last Updated</p>
-                              <p className="text-sm">{formatDate(selectedTemplate.updatedAt)}</p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground text-xs sm:text-sm">Usage Count</p>
-                              <p className="text-sm">{selectedTemplate.usageCount} times</p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground text-xs sm:text-sm">Characters</p>
-                              <p className="text-sm">{selectedTemplate.description.length.toLocaleString()}</p>
                             </div>
                           </div>
                         </div>

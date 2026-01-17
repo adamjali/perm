@@ -149,14 +149,16 @@ describe("ImportModal", () => {
         <ImportModal open={true} onOpenChange={mockOnOpenChange} onImport={mockOnImport} />
       );
 
+      // Note: Only employerName is truly required for validation
+      // Missing beneficiaryIdentifier just gets a placeholder, not an error
       const mixedJSON = JSON.stringify([
         {
           employerName: "Valid Corp",
           beneficiaryIdentifier: "Valid Person",
         },
         {
-          employerName: "Invalid Corp",
-          // Missing beneficiaryIdentifier
+          // Missing employerName - this causes a validation error
+          beneficiaryIdentifier: "Person Without Employer",
         },
       ]);
 
@@ -166,9 +168,10 @@ describe("ImportModal", () => {
       await user.upload(input, file);
 
       await waitFor(() => {
-        // Find the error row
+        // Find the error row - look for actual Tailwind classes used
         const errorRows = screen.getAllByRole("row").filter((row) => {
-          return row.className.includes("bg-red") || row.className.includes("border-red");
+          // Component uses bg-red-50 and border-red-500 for error rows
+          return row.className.includes("bg-red-50") || row.className.includes("border-red-500");
         });
 
         expect(errorRows.length).toBeGreaterThan(0);
@@ -181,6 +184,8 @@ describe("ImportModal", () => {
         <ImportModal open={true} onOpenChange={mockOnOpenChange} onImport={mockOnImport} />
       );
 
+      // Note: Missing beneficiaryIdentifier is NOT an error (uses placeholder)
+      // Only missing employerName causes a validation error
       const mixedJSON = JSON.stringify([
         {
           employerName: "Valid 1",
@@ -191,8 +196,8 @@ describe("ImportModal", () => {
           beneficiaryIdentifier: "Person 2",
         },
         {
-          employerName: "Invalid",
-          // Missing beneficiaryIdentifier
+          // Missing employerName - this causes a validation error
+          beneficiaryIdentifier: "Person Without Employer",
         },
       ]);
 

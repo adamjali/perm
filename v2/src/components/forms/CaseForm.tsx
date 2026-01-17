@@ -250,6 +250,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
     saveAsNewTemplate: saveJobDescAsNewTemplate,
     updateTemplate: updateJobDescTemplate,
     deleteTemplate: deleteJobDescTemplate,
+    hardDeleteTemplate: hardDeleteJobDescTemplate,
   } = useJobDescriptionTemplates();
 
   // Sync loadedTemplateId from initialData when editing
@@ -580,6 +581,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
             onLoadTemplate={handleLoadJobDescTemplate}
             onSaveAsNewTemplate={handleSaveJobDescAsNew}
             onUpdateTemplate={handleUpdateJobDescTemplate}
+            onDeleteTemplate={(id) => hardDeleteJobDescTemplate(id as Id<"jobDescriptionTemplates">)}
             isLoading={isTemplatesLoading}
           />
         </div>

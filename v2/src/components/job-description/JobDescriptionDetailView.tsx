@@ -163,8 +163,8 @@ export function JobDescriptionDetailView({
     }
   }, [description]);
 
-  // Don't render section if no description at all
-  if (!hasContent && !positionTitle) {
+  // Don't render section if no description AND no templates to manage
+  if (!hasContent && !positionTitle && templates.length === 0) {
     return null;
   }
 
@@ -328,6 +328,29 @@ export function JobDescriptionDetailView({
                         Description
                       </dt>
                       <div className="flex items-center gap-1 flex-wrap">
+                        {/* Manage Templates button - always visible when templates exist or can be managed */}
+                        {templates.length > 0 && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setManagementOpen(true);
+                                  }}
+                                  className="h-9 sm:h-8 gap-1.5 text-xs min-w-[44px] px-2 sm:px-3"
+                                >
+                                  <Settings2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                                  <span>Templates</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Manage job description templates</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                         {canEdit && (
                           <TooltipProvider>
                             <Tooltip>

@@ -94,38 +94,70 @@ describe("DeadlineItem", () => {
   });
 
   describe("quick-peek hover card", () => {
-    it("shows hover card on mouse enter", () => {
+    beforeEach(() => {
+      // Mock matchMedia to enable hover capability detection
+      // This needs to be set before component mounts
+      Object.defineProperty(window, "matchMedia", {
+        writable: true,
+        value: vi.fn().mockImplementation((query: string) => ({
+          matches: query === "(hover: hover)",
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        })),
+      });
+    });
+
+    it("shows hover card on mouse enter", async () => {
       const { container } = renderWithProviders(
         <DeadlineItem deadline={defaultDeadline} index={0} />
       );
 
       const wrapper = container.firstChild as Element;
-      fireEvent.mouseEnter(wrapper);
 
-      expect(screen.getByText("Case #")).toBeInTheDocument();
+      // Wait for useEffect to run and detect hover capability, then trigger hover
+      await vi.waitFor(() => {
+        fireEvent.mouseEnter(wrapper);
+        // Hover card appears via portal after hover capability is detected
+        expect(screen.queryByText("Case #")).toBeInTheDocument();
+      });
+
       expect(screen.getByText("Position")).toBeInTheDocument();
       expect(screen.getByText("Due")).toBeInTheDocument();
     });
 
-    it("hides hover card on mouse leave", () => {
+    it("hides hover card on mouse leave", async () => {
       const { container } = renderWithProviders(
         <DeadlineItem deadline={defaultDeadline} index={0} />
       );
 
       const wrapper = container.firstChild as Element;
-      fireEvent.mouseEnter(wrapper);
-      fireEvent.mouseLeave(wrapper);
 
+      // Wait for hover detection then test show/hide
+      await vi.waitFor(() => {
+        fireEvent.mouseEnter(wrapper);
+        expect(screen.queryByText("Case #")).toBeInTheDocument();
+      });
+
+      fireEvent.mouseLeave(wrapper);
       expect(screen.queryByText("Case #")).not.toBeInTheDocument();
     });
 
-    it("hover card shows case details", () => {
+    it("hover card shows case details", async () => {
       const { container } = renderWithProviders(
         <DeadlineItem deadline={defaultDeadline} index={0} />
       );
 
       const wrapper = container.firstChild as Element;
-      fireEvent.mouseEnter(wrapper);
+
+      await vi.waitFor(() => {
+        fireEvent.mouseEnter(wrapper);
+        expect(screen.queryByText("Case #")).toBeInTheDocument();
+      });
 
       expect(
         screen.getAllByText(defaultDeadline.beneficiaryName).length

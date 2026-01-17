@@ -63,14 +63,14 @@ describe("RecentActivityCard", () => {
       expect(screen.getByText("Tech Corp Inc")).toBeInTheDocument();
     });
 
-    it("renders beneficiary identifier", () => {
+    it("renders position title", () => {
       const activity = createMockActivityItem({
-        beneficiaryIdentifier: "TEST-001",
+        positionTitle: "Senior Developer",
       });
 
       renderWithProviders(<RecentActivityCard activity={activity} />);
 
-      expect(screen.getByText("TEST-001")).toBeInTheDocument();
+      expect(screen.getByText("Senior Developer")).toBeInTheDocument();
     });
 
     it("renders action label", () => {
@@ -367,16 +367,16 @@ describe("RecentActivityCard", () => {
     it("has accessible link text", () => {
       const activity = createMockActivityItem({
         employerName: "Tech Corp Inc",
-        beneficiaryIdentifier: "TEST-001",
+        positionTitle: "Software Engineer",
       });
 
       renderWithProviders(<RecentActivityCard activity={activity} />);
 
-      // Link should be accessible (contains employer and beneficiary)
+      // Link should be accessible (contains employer and position)
       const link = screen.getByRole("link");
       expect(link).toBeInTheDocument();
       expect(link.textContent).toContain("Tech Corp Inc");
-      expect(link.textContent).toContain("TEST-001");
+      expect(link.textContent).toContain("Software Engineer");
     });
 
     it("has aria-label or accessible name", () => {
@@ -414,7 +414,7 @@ describe("RecentActivityCard", () => {
     it("renders all required elements in correct order", () => {
       const activity = createMockActivityItem({
         employerName: "Tech Corp Inc",
-        beneficiaryIdentifier: "TEST-001",
+        positionTitle: "Software Engineer",
         action: ACTIVITY_ACTIONS.pwdFiled,
         caseNumber: "CASE-2024-001",
         timestamp: hoursAgo(2),
@@ -424,7 +424,7 @@ describe("RecentActivityCard", () => {
 
       // All key elements should be present
       expect(screen.getByText("Tech Corp Inc")).toBeInTheDocument();
-      expect(screen.getByText("TEST-001")).toBeInTheDocument();
+      expect(screen.getByText("Software Engineer")).toBeInTheDocument();
       expect(screen.getByText("PWD filed")).toBeInTheDocument();
       expect(screen.getByText("CASE-2024-001")).toBeInTheDocument();
       expect(screen.getByText(/2h ago/)).toBeInTheDocument();

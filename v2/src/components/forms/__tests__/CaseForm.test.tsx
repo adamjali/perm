@@ -177,8 +177,8 @@ describe('CaseForm', () => {
       const employerInput = screen.getByLabelText(/employer name/i) as HTMLInputElement;
       expect(employerInput.value).toBe('');
 
-      const beneficiaryInput = screen.getByLabelText(/beneficiary identifier/i) as HTMLInputElement;
-      expect(employerInput.value).toBe('');
+      const beneficiaryInput = screen.getByLabelText(/foreign worker id/i) as HTMLInputElement;
+      expect(beneficiaryInput.value).toBe('');
     });
   });
 
@@ -197,7 +197,7 @@ describe('CaseForm', () => {
       const employerInput = screen.getByLabelText(/employer name/i) as HTMLInputElement;
       expect(employerInput.value).toBe('Test Corp');
 
-      const beneficiaryInput = screen.getByLabelText(/beneficiary identifier/i) as HTMLInputElement;
+      const beneficiaryInput = screen.getByLabelText(/foreign worker id/i) as HTMLInputElement;
       expect(beneficiaryInput.value).toBe('JD');
 
       const positionInput = screen.getByLabelText(/position title/i) as HTMLInputElement;
@@ -223,7 +223,7 @@ describe('CaseForm', () => {
       await waitFor(() => {
         // Use getAllByText since errors appear in both summary and field
         expect(screen.getAllByText(/employer name is required/i).length).toBeGreaterThanOrEqual(1);
-        expect(screen.getAllByText(/beneficiary identifier is required/i).length).toBeGreaterThanOrEqual(1);
+        // Note: Foreign Worker ID (beneficiaryIdentifier) is optional now
         expect(screen.getAllByText(/position title is required/i).length).toBeGreaterThanOrEqual(1);
       });
     });

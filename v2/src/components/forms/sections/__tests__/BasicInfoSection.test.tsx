@@ -89,13 +89,14 @@ describe('BasicInfoSection', () => {
       expect(employerLabel?.textContent).toContain('*');
     });
 
-    it('shows required indicator on foreignWorkerId', () => {
-      const { container } = renderWithProviders(
+    it('shows foreignWorkerId as optional (no required indicator)', () => {
+      renderWithProviders(
         <BasicInfoSection values={mockValues} onChange={mockOnChange} />
       );
 
       const foreignWorkerLabel = screen.getByText('Foreign Worker ID').closest('label');
-      expect(foreignWorkerLabel?.textContent).toContain('*');
+      // Foreign Worker ID is now optional, so should NOT have the required indicator
+      expect(foreignWorkerLabel?.textContent).not.toContain('*');
     });
 
     it('shows required indicator on positionTitle', () => {

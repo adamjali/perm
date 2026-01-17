@@ -64,6 +64,8 @@ export interface JobDescriptionFieldProps {
   onSaveAsNewTemplate: (name: string, description: string) => Promise<void>;
   /** Callback when updating existing template */
   onUpdateTemplate: (id: string, name: string, description: string) => Promise<void>;
+  /** Callback when permanently deleting a template */
+  onDeleteTemplate?: (id: string) => Promise<{ success: boolean; clearedReferences: number }>;
   /** Whether the field is in a loading state */
   isLoading?: boolean;
   /** Maximum character count for description */
@@ -123,6 +125,7 @@ export function JobDescriptionField({
   onLoadTemplate,
   onSaveAsNewTemplate,
   onUpdateTemplate,
+  onDeleteTemplate,
   isLoading = false,
   maxLength = DEFAULT_MAX_LENGTH,
   defaultExpanded = false,
@@ -364,6 +367,8 @@ export function JobDescriptionField({
                   templates={templates}
                   selectedTemplateId={loadedTemplateId}
                   onSelect={handleLoadTemplate}
+                  onDelete={onDeleteTemplate}
+                  onUpdate={onUpdateTemplate}
                   disabled={isLoading}
                 />
 
