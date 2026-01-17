@@ -33,8 +33,8 @@ export interface TemplateSelectorProps {
   selectedTemplateId?: string;
   /** Callback when template is selected */
   onSelect: (template: JobDescriptionTemplate) => void;
-  /** Callback when template is deleted */
-  onDelete?: (id: string) => Promise<void>;
+  /** Callback when template is permanently deleted */
+  onDelete?: (id: string) => Promise<{ success: boolean; clearedReferences: number }>;
   /** Callback when template is updated */
   onUpdate?: (id: string, name: string, description: string) => Promise<void>;
   /** Whether the selector is disabled */
@@ -103,21 +103,21 @@ export function TemplateSelector({
             aria-label="Select template"
             disabled={disabled}
             className={cn(
-              "justify-between gap-2 border-2 min-w-[180px]",
+              "justify-between gap-2 border-2 min-w-[140px] sm:min-w-[180px] min-h-[44px]",
               !selectedTemplate && "text-muted-foreground",
               className
             )}
           >
             <div className="flex items-center gap-2 truncate">
-              <FileText className="h-4 w-4 shrink-0" />
-              <span className="truncate">
+              <FileText className="h-5 w-5 sm:h-4 sm:w-4 shrink-0" />
+              <span className="truncate text-sm">
                 {selectedTemplate ? selectedTemplate.name : "Load Template..."}
               </span>
             </div>
-            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="h-5 w-5 sm:h-4 sm:w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0 border-2" align="start">
+        <PopoverContent className="w-[calc(100vw-2rem)] max-w-[300px] p-0 border-2" align="start">
           <Command>
             <CommandInput placeholder="Search templates..." />
             <CommandList>
@@ -137,18 +137,18 @@ export function TemplateSelector({
                       key={template._id}
                       value={template.name}
                       onSelect={() => handleSelect(template)}
-                      className="flex items-center justify-between gap-2"
+                      className="flex items-center justify-between gap-2 min-h-[44px] py-2"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <Check
                           className={cn(
-                            "h-4 w-4 shrink-0",
+                            "h-5 w-5 sm:h-4 sm:w-4 shrink-0",
                             selectedTemplateId === template._id
                               ? "opacity-100"
                               : "opacity-0"
                           )}
                         />
-                        <span className="truncate">{template.name}</span>
+                        <span className="truncate text-sm">{template.name}</span>
                       </div>
                       <span className="text-xs text-muted-foreground shrink-0">
                         {template.usageCount > 0 && `Used ${template.usageCount}×`}
@@ -164,9 +164,9 @@ export function TemplateSelector({
                     setOpen(false);
                     setManagementOpen(true);
                   }}
-                  className="gap-2"
+                  className="gap-2 min-h-[44px] py-2"
                 >
-                  <Settings2 className="h-4 w-4" />
+                  <Settings2 className="h-5 w-5 sm:h-4 sm:w-4" />
                   <span>Manage Templates...</span>
                 </CommandItem>
               </CommandGroup>

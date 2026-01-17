@@ -876,37 +876,58 @@ export const update = mutation({
       log.error('Failed to log case update', { resourceId: args.id, error: auditError instanceof Error ? auditError.message : String(auditError) });
     }
 
-    // Create notification if caseStatus changed (v1 parity)
-    if (args.caseStatus && oldDoc!.caseStatus !== args.caseStatus) {
-      try {
-        const userProfile = await ctx.db
-          .query("userProfiles")
-          .withIndex("by_user_id", (q) => q.eq("userId", oldDoc!.userId))
-          .first();
+    // =========================================================================
+    // NOTIFICATIONS: Create notifications for actual changes
+    // =========================================================================
+    // Determine the ACTUAL applied status (auto-calculated vs explicit)
+    const actualNewCaseStatus = isOverridden
+      ? (args.caseStatus ?? caseDoc!.caseStatus)
+      : autoStatus.caseStatus;
+    const actualNewProgressStatus = isOverridden
+      ? (args.progressStatus ?? caseDoc!.progressStatus)
+      : autoStatus.progressStatus;
 
-        // Default to creating notification if profile doesn't exist or emailStatusUpdates is true
+    // Build case label: "Employer - Position" format (fallback to just employer)
+    const caseLabel = oldDoc!.positionTitle
+      ? `${oldDoc!.employerName} - ${oldDoc!.positionTitle}`
+      : oldDoc!.employerName;
+
+    // Detect what actually changed
+    const caseStatusChanged = actualNewCaseStatus !== oldDoc!.caseStatus;
+    const progressStatusChanged = actualNewProgressStatus !== oldDoc!.progressStatus;
+    const jobDescriptionChanged =
+      args.jobDescription !== undefined &&
+      args.jobDescription !== (oldDoc!.jobDescription ?? "");
+
+    try {
+      const userProfile = await ctx.db
+        .query("userProfiles")
+        .withIndex("by_user_id", (q) => q.eq("userId", oldDoc!.userId))
+        .first();
+
+      // 1. Case status change notification
+      if (caseStatusChanged) {
         if (!userProfile || userProfile.emailStatusUpdates) {
           const notificationId = await ctx.runMutation(internal.notifications.createNotification, {
             userId: oldDoc!.userId,
             caseId: args.id,
             type: "status_change",
             title: "Case Status Updated",
-            message: `Case for ${oldDoc!.beneficiaryIdentifier || "beneficiary"} status changed from ${oldDoc!.caseStatus} to ${args.caseStatus}.`,
+            message: `Case for ${caseLabel} status changed from ${formatCaseStatus(oldDoc!.caseStatus)} to ${formatCaseStatus(actualNewCaseStatus)}.`,
             priority: "normal",
           });
 
           // Schedule email if preferences allow
           if (shouldSendEmail("status_change", "normal", buildUserNotificationPrefs(userProfile))) {
-            // Get user email from users table
             const user = await ctx.db.get(oldDoc!.userId);
             if (user?.email) {
               await ctx.scheduler.runAfter(0, internal.notificationActions.sendStatusChangeEmail, {
                 notificationId,
                 to: user.email,
-                beneficiaryName: oldDoc!.beneficiaryIdentifier || "Beneficiary",
+                beneficiaryName: oldDoc!.positionTitle || oldDoc!.beneficiaryIdentifier || "Beneficiary",
                 companyName: oldDoc!.employerName,
                 previousStatus: formatCaseStatus(oldDoc!.caseStatus),
-                newStatus: formatCaseStatus(args.caseStatus),
+                newStatus: formatCaseStatus(actualNewCaseStatus),
                 changeType: "stage",
                 changedAt: new Date().toLocaleDateString("en-US", {
                   year: "numeric",
@@ -921,10 +942,38 @@ export const update = mutation({
             }
           }
         }
-      } catch (notificationError) {
-        // Log notification failure but don't fail the operation - case was updated successfully
-        log.error('Failed to create status change notification', { resourceId: args.id, error: notificationError instanceof Error ? notificationError.message : String(notificationError) });
       }
+
+      // 2. Progress status change notification (only if caseStatus didn't also change)
+      if (progressStatusChanged && !caseStatusChanged) {
+        if (!userProfile || userProfile.emailStatusUpdates) {
+          await ctx.runMutation(internal.notifications.createNotification, {
+            userId: oldDoc!.userId,
+            caseId: args.id,
+            type: "status_change",
+            title: "Case Progress Updated",
+            message: `Case for ${caseLabel} progress changed from ${oldDoc!.progressStatus} to ${actualNewProgressStatus}.`,
+            priority: "low",
+          });
+          // Note: Not sending email for progress-only changes to reduce noise
+        }
+      }
+
+      // 3. Job description change notification
+      if (jobDescriptionChanged) {
+        await ctx.runMutation(internal.notifications.createNotification, {
+          userId: oldDoc!.userId,
+          caseId: args.id,
+          type: "system",
+          title: "Job Description Updated",
+          message: `Job description for ${caseLabel} has been updated.`,
+          priority: "low",
+        });
+        // Note: Not sending email for job description changes to reduce noise
+      }
+    } catch (notificationError) {
+      // Log notification failure but don't fail the operation - case was updated successfully
+      log.error('Failed to create notification', { resourceId: args.id, error: notificationError instanceof Error ? notificationError.message : String(notificationError) });
     }
 
     // Schedule Google Calendar sync if deadline-relevant fields changed (best-effort, non-blocking)
@@ -1768,6 +1817,44 @@ export const disableCalendarSync = mutation({
     }
 
     return false; // Always returns false (disabled)
+  },
+});
+
+/**
+ * Clear job description from a case.
+ * Removes the job description, position title, and template reference.
+ */
+export const clearJobDescription = mutation({
+  args: { id: v.id("cases") },
+  handler: async (ctx, args) => {
+    const caseDoc = await ctx.db.get(args.id);
+    if (!caseDoc) {
+      throw new Error("Case not found");
+    }
+    await verifyOwnership(ctx, caseDoc, "case");
+
+    if (caseDoc.deletedAt !== undefined) {
+      throw new Error("Cannot update deleted case");
+    }
+
+    // Capture old state for audit logging
+    const oldDoc = { ...caseDoc };
+
+    // Clear all job description fields
+    await ctx.db.patch(args.id, {
+      jobDescription: undefined,
+      jobDescriptionPositionTitle: undefined,
+      jobDescriptionTemplateId: undefined,
+      updatedAt: Date.now(),
+    });
+
+    // Audit log the change
+    const newDoc = await ctx.db.get(args.id);
+    if (newDoc) {
+      await logUpdate(ctx, "cases", args.id, oldDoc, newDoc);
+    }
+
+    return { success: true };
   },
 });
 

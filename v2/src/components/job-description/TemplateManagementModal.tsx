@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search,
   Trash2,
@@ -10,6 +10,7 @@ import {
   Check,
   X,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -51,8 +52,8 @@ export interface TemplateManagementModalProps {
   templates: JobDescriptionTemplate[];
   /** Callback when template is selected for use */
   onSelect?: (template: JobDescriptionTemplate) => void;
-  /** Callback when template is deleted */
-  onDelete?: (id: string) => Promise<void>;
+  /** Callback when template is permanently deleted */
+  onDelete?: (id: string) => Promise<{ success: boolean; clearedReferences: number }>;
   /** Callback when template is updated */
   onUpdate?: (id: string, name: string, description: string) => Promise<void>;
 }
@@ -102,6 +103,18 @@ export function TemplateManagementModal({
   const [isCopied, setIsCopied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Mobile view state - on mobile, show either list or detail, not both
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // Filter templates by search query
   const filteredTemplates = useMemo(() => {
     if (!searchQuery.trim()) return templates;
@@ -123,6 +136,14 @@ export function TemplateManagementModal({
   const handleSelectTemplate = (template: JobDescriptionTemplate) => {
     setSelectedTemplate(template);
     setEditMode(false);
+    // On mobile, switch to detail view when selecting
+    if (isMobile) {
+      setMobileView("detail");
+    }
+  };
+
+  const handleBackToList = () => {
+    setMobileView("list");
   };
 
   const handleStartEdit = () => {
@@ -175,12 +196,18 @@ export function TemplateManagementModal({
 
     setIsProcessing(true);
     try {
-      await onDelete(deleteConfirmId);
+      const result = await onDelete(deleteConfirmId);
       if (selectedTemplate?._id === deleteConfirmId) {
         setSelectedTemplate(null);
       }
       setDeleteConfirmId(null);
-      toast.success("Template deleted");
+      if (result.clearedReferences > 0) {
+        toast.success(
+          `Template deleted. Removed reference from ${result.clearedReferences} case${result.clearedReferences === 1 ? "" : "s"}.`
+        );
+      } else {
+        toast.success("Template permanently deleted");
+      }
     } catch {
       toast.error("Failed to delete template");
     } finally {
@@ -217,19 +244,40 @@ export function TemplateManagementModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="border-2 shadow-hard max-w-4xl h-[80vh] flex flex-col p-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b-2 border-border shrink-0">
-            <DialogTitle className="font-heading text-xl">
-              Manage Job Description Templates
+        <DialogContent className="border-2 shadow-hard max-w-4xl w-[95vw] sm:w-auto h-[90vh] sm:h-[80vh] flex flex-col p-0">
+          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b-2 border-border shrink-0">
+            {/* Mobile: Show back button when in detail view */}
+            {isMobile && mobileView === "detail" && selectedTemplate && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBackToList}
+                className="w-fit -ml-2 mb-2 gap-1.5 min-h-[44px]"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back to Templates
+              </Button>
+            )}
+            <DialogTitle className="font-heading text-lg sm:text-xl">
+              {isMobile && mobileView === "detail" && selectedTemplate
+                ? selectedTemplate.name
+                : "Manage Job Description Templates"}
             </DialogTitle>
-            <DialogDescription>
-              View, edit, and manage your saved job description templates.
-            </DialogDescription>
+            {(!isMobile || mobileView === "list") && (
+              <DialogDescription>
+                View, edit, and manage your saved job description templates.
+              </DialogDescription>
+            )}
           </DialogHeader>
 
-          <div className="flex flex-1 min-h-0">
-            {/* Left panel - Template list */}
-            <div className="w-1/3 border-r-2 border-border flex flex-col">
+          <div className="flex flex-col sm:flex-row flex-1 min-h-0">
+            {/* Left panel - Template list (hidden on mobile when viewing detail) */}
+            <div
+              className={cn(
+                "sm:w-80 md:w-96 shrink-0 border-b-2 sm:border-b-0 sm:border-r-2 border-border flex flex-col",
+                isMobile && mobileView === "detail" && "hidden"
+              )}
+            >
               {/* Search */}
               <div className="p-3 border-b border-border">
                 <div className="relative">
@@ -238,7 +286,7 @@ export function TemplateManagementModal({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search..."
-                    className="pl-8 border-2 text-sm"
+                    className="pl-8 border-2 text-sm min-h-[44px]"
                   />
                 </div>
               </div>
@@ -246,8 +294,8 @@ export function TemplateManagementModal({
               {/* Template list */}
               <ScrollArea className="flex-1">
                 {sortedTemplates.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center p-8 text-center">
-                    <FileText className="h-12 w-12 text-muted-foreground mb-3" />
+                  <div className="flex flex-col items-center justify-center p-6 sm:p-8 text-center">
+                    <FileText className="h-10 sm:h-12 w-10 sm:w-12 text-muted-foreground mb-3" />
                     <p className="text-sm text-muted-foreground">
                       {searchQuery
                         ? "No templates match your search"
@@ -261,15 +309,16 @@ export function TemplateManagementModal({
                         key={template._id}
                         onClick={() => handleSelectTemplate(template)}
                         className={cn(
-                          "w-full text-left p-3 rounded-lg transition-colors",
-                          "hover:bg-muted/50",
+                          "w-full text-left p-3 sm:p-3 rounded-lg transition-colors",
+                          "hover:bg-muted/50 active:bg-muted/70",
+                          "min-h-[64px]", // Touch-friendly minimum height
                           selectedTemplate?._id === template._id &&
                             "bg-muted border-2 border-border"
                         )}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium truncate">{template.name}</span>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <span className="font-medium truncate flex-1 min-w-0">{template.name}</span>
+                          <ChevronRight className="h-5 w-5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                         </div>
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {template.description}
@@ -284,34 +333,42 @@ export function TemplateManagementModal({
               </ScrollArea>
             </div>
 
-            {/* Right panel - Template detail/edit */}
-            <div className="flex-1 flex flex-col">
+            {/* Right panel - Template detail/edit (hidden on mobile when showing list) */}
+            <div
+              className={cn(
+                "flex-1 flex flex-col",
+                isMobile && mobileView === "list" && "hidden"
+              )}
+            >
               <AnimatePresence mode="wait">
                 {selectedTemplate ? (
                   <motion.div
                     key={selectedTemplate._id}
-                    initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: isMobile ? 0 : 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
+                    exit={{ opacity: 0, x: isMobile ? 0 : -20 }}
                     transition={{ duration: 0.15 }}
                     className="flex-1 flex flex-col"
                   >
-                    {/* Detail header */}
-                    <div className="p-4 border-b border-border flex items-center justify-between">
+                    {/* Detail header - hidden on mobile since title is in DialogHeader */}
+                    <div className={cn(
+                      "p-3 sm:p-4 border-b border-border flex items-center justify-between gap-2",
+                      isMobile && "hidden sm:flex"
+                    )}>
                       {editMode ? (
                         <Input
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          className="font-heading text-lg font-semibold border-2 max-w-sm"
+                          className="font-heading text-base sm:text-lg font-semibold border-2 flex-1 min-w-0 max-w-sm min-h-[44px]"
                           placeholder="Template name"
                         />
                       ) : (
-                        <h3 className="font-heading text-lg font-semibold">
+                        <h3 className="font-heading text-base sm:text-lg font-semibold truncate">
                           {selectedTemplate.name}
                         </h3>
                       )}
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                         {editMode ? (
                           <>
                             <Button
@@ -319,8 +376,9 @@ export function TemplateManagementModal({
                               size="sm"
                               onClick={handleCancelEdit}
                               disabled={isProcessing}
+                              className="min-h-[44px] min-w-[44px]"
                             >
-                              <X className="h-4 w-4" />
+                              <X className="h-5 w-5 sm:h-4 sm:w-4" />
                             </Button>
                             <Button
                               size="sm"
@@ -330,8 +388,9 @@ export function TemplateManagementModal({
                                 !editName.trim() ||
                                 !editDescription.trim()
                               }
+                              className="min-h-[44px] min-w-[44px]"
                             >
-                              <Check className="h-4 w-4" />
+                              <Check className="h-5 w-5 sm:h-4 sm:w-4" />
                             </Button>
                           </>
                         ) : (
@@ -340,12 +399,12 @@ export function TemplateManagementModal({
                               variant="ghost"
                               size="sm"
                               onClick={handleCopy}
-                              className="gap-1.5"
+                              className="gap-1.5 min-h-[44px] min-w-[44px]"
                             >
                               {isCopied ? (
-                                <Check className="h-4 w-4 text-green-600" />
+                                <Check className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
                               ) : (
-                                <Copy className="h-4 w-4" />
+                                <Copy className="h-5 w-5 sm:h-4 sm:w-4" />
                               )}
                             </Button>
                             {onUpdate && (
@@ -353,8 +412,9 @@ export function TemplateManagementModal({
                                 variant="ghost"
                                 size="sm"
                                 onClick={handleStartEdit}
+                                className="min-h-[44px] min-w-[44px]"
                               >
-                                <Pencil className="h-4 w-4" />
+                                <Pencil className="h-5 w-5 sm:h-4 sm:w-4" />
                               </Button>
                             )}
                             {onDelete && (
@@ -362,9 +422,9 @@ export function TemplateManagementModal({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setDeleteConfirmId(selectedTemplate._id)}
-                                className="text-destructive hover:text-destructive"
+                                className="text-destructive hover:text-destructive min-h-[44px] min-w-[44px]"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-5 w-5 sm:h-4 sm:w-4" />
                               </Button>
                             )}
                           </>
@@ -372,8 +432,84 @@ export function TemplateManagementModal({
                       </div>
                     </div>
 
+                    {/* Mobile action bar when viewing detail */}
+                    {isMobile && !editMode && (
+                      <div className="p-3 border-b border-border flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleCopy}
+                          className="gap-1.5 min-h-[44px]"
+                        >
+                          {isCopied ? (
+                            <Check className="h-5 w-5 text-green-600" />
+                          ) : (
+                            <Copy className="h-5 w-5" />
+                          )}
+                          <span className="text-sm">Copy</span>
+                        </Button>
+                        {onUpdate && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleStartEdit}
+                            className="gap-1.5 min-h-[44px]"
+                          >
+                            <Pencil className="h-5 w-5" />
+                            <span className="text-sm">Edit</span>
+                          </Button>
+                        )}
+                        {onDelete && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleteConfirmId(selectedTemplate._id)}
+                            className="text-destructive hover:text-destructive gap-1.5 min-h-[44px]"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                            <span className="text-sm">Delete</span>
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Mobile edit header when editing */}
+                    {isMobile && editMode && (
+                      <div className="p-3 border-b border-border space-y-3">
+                        <Input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="font-heading text-base font-semibold border-2 min-h-[44px]"
+                          placeholder="Template name"
+                        />
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelEdit}
+                            disabled={isProcessing}
+                            className="min-h-[44px] border-2"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={handleSaveEdit}
+                            disabled={
+                              isProcessing ||
+                              !editName.trim() ||
+                              !editDescription.trim()
+                            }
+                            className="min-h-[44px]"
+                          >
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Detail content */}
-                    <ScrollArea className="flex-1 p-4">
+                    <ScrollArea className="flex-1 p-3 sm:p-4">
                       {editMode ? (
                         <div className="space-y-4">
                           <div className="space-y-2">
@@ -381,8 +517,8 @@ export function TemplateManagementModal({
                             <Textarea
                               value={editDescription}
                               onChange={(e) => setEditDescription(e.target.value)}
-                              rows={12}
-                              className="border-2 resize-y"
+                              rows={isMobile ? 8 : 12}
+                              className="border-2 resize-y min-h-[120px]"
                               placeholder="Job description..."
                             />
                           </div>
@@ -393,29 +529,29 @@ export function TemplateManagementModal({
                             <p className="text-sm text-muted-foreground mb-2">
                               Description
                             </p>
-                            <div className="rounded-lg border-2 border-border bg-muted/30 p-4">
+                            <div className="rounded-lg border-2 border-border bg-muted/30 p-3 sm:p-4">
                               <p className="text-sm whitespace-pre-wrap">
                                 {selectedTemplate.description}
                               </p>
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
                             <div>
-                              <p className="text-muted-foreground">Created</p>
-                              <p>{formatDate(selectedTemplate.createdAt)}</p>
+                              <p className="text-muted-foreground text-xs sm:text-sm">Created</p>
+                              <p className="text-sm">{formatDate(selectedTemplate.createdAt)}</p>
                             </div>
                             <div>
-                              <p className="text-muted-foreground">Last Updated</p>
-                              <p>{formatDate(selectedTemplate.updatedAt)}</p>
+                              <p className="text-muted-foreground text-xs sm:text-sm">Last Updated</p>
+                              <p className="text-sm">{formatDate(selectedTemplate.updatedAt)}</p>
                             </div>
                             <div>
-                              <p className="text-muted-foreground">Usage Count</p>
-                              <p>{selectedTemplate.usageCount} times</p>
+                              <p className="text-muted-foreground text-xs sm:text-sm">Usage Count</p>
+                              <p className="text-sm">{selectedTemplate.usageCount} times</p>
                             </div>
                             <div>
-                              <p className="text-muted-foreground">Characters</p>
-                              <p>{selectedTemplate.description.length.toLocaleString()}</p>
+                              <p className="text-muted-foreground text-xs sm:text-sm">Characters</p>
+                              <p className="text-sm">{selectedTemplate.description.length.toLocaleString()}</p>
                             </div>
                           </div>
                         </div>
@@ -424,9 +560,9 @@ export function TemplateManagementModal({
 
                     {/* Action footer */}
                     {!editMode && onSelect && (
-                      <div className="p-4 border-t border-border">
-                        <Button onClick={handleUseTemplate} className="w-full gap-2">
-                          <FileText className="h-4 w-4" />
+                      <div className="p-3 sm:p-4 border-t border-border">
+                        <Button onClick={handleUseTemplate} className="w-full gap-2 min-h-[48px]">
+                          <FileText className="h-5 w-5 sm:h-4 sm:w-4" />
                           Use This Template
                         </Button>
                       </div>
@@ -436,10 +572,13 @@ export function TemplateManagementModal({
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex-1 flex flex-col items-center justify-center text-center p-8"
+                    className={cn(
+                      "flex-1 flex flex-col items-center justify-center text-center p-6 sm:p-8",
+                      isMobile && "hidden" // On mobile, we show list by default
+                    )}
                   >
-                    <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-                    <p className="text-lg font-medium text-muted-foreground">
+                    <FileText className="h-12 sm:h-16 w-12 sm:w-16 text-muted-foreground mb-4" />
+                    <p className="text-base sm:text-lg font-medium text-muted-foreground">
                       Select a template
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -456,22 +595,28 @@ export function TemplateManagementModal({
       {/* Delete confirmation dialog */}
       <AlertDialog
         open={!!deleteConfirmId}
-        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        onOpenChange={(open: boolean) => !open && setDeleteConfirmId(null)}
       >
         <AlertDialogContent className="border-2">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Template?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the template.
+            <AlertDialogTitle>Permanently Delete Template?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                This action cannot be undone. The template will be permanently removed from the database.
+              </span>
+              <span className="block text-amber-600 dark:text-amber-400">
+                Any cases using this template will retain their job description content, but the template link will be removed.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="border-2">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
+              disabled={isProcessing}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {isProcessing ? "Deleting..." : "Delete Permanently"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

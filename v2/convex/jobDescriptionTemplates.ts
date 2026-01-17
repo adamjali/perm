@@ -307,6 +307,51 @@ export const remove = mutation({
 });
 
 /**
+ * Permanently delete a job description template (hard delete).
+ * Also clears the template reference from any cases that use it.
+ * The job description content is preserved on cases - only the link is removed.
+ *
+ * @throws {Error} If template not found or not owned
+ */
+export const hardDelete = mutation({
+  args: { id: v.id("jobDescriptionTemplates") },
+  handler: async (ctx, args) => {
+    const template = await ctx.db.get(args.id);
+    if (!template) {
+      throw new Error("Template not found");
+    }
+    await verifyOwnership(ctx, template, "template");
+
+    // Find all cases referencing this template
+    const referencingCases = await ctx.db
+      .query("cases")
+      .withIndex("by_user_id", (q) => q.eq("userId", template.userId))
+      .collect();
+
+    // Filter to only cases with this template ID
+    const casesWithTemplate = referencingCases.filter(
+      (c) => c.jobDescriptionTemplateId === args.id
+    );
+
+    // Clear template references (preserves job description data)
+    for (const caseDoc of casesWithTemplate) {
+      await ctx.db.patch(caseDoc._id, {
+        jobDescriptionTemplateId: undefined,
+        updatedAt: Date.now(),
+      });
+    }
+
+    // Audit log before deletion
+    await logDelete(ctx, "jobDescriptionTemplates", args.id, template);
+
+    // Hard delete the template
+    await ctx.db.delete(args.id);
+
+    return { success: true, clearedReferences: casesWithTemplate.length };
+  },
+});
+
+/**
  * Increment usage count when a template is loaded.
  * Called when user selects a template to populate the job description field.
  */

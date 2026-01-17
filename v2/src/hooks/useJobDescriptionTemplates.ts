@@ -51,8 +51,10 @@ export interface UseJobDescriptionTemplatesReturn {
   saveAsNewTemplate: (name: string, description: string) => Promise<Id<"jobDescriptionTemplates">>;
   /** Update an existing template */
   updateTemplate: (id: Id<"jobDescriptionTemplates">, name: string, description: string) => Promise<void>;
-  /** Delete a template */
+  /** Soft delete a template (can be recovered) */
   deleteTemplate: (id: Id<"jobDescriptionTemplates">) => Promise<void>;
+  /** Permanently delete a template and clear references from cases */
+  hardDeleteTemplate: (id: Id<"jobDescriptionTemplates">) => Promise<{ success: boolean; clearedReferences: number }>;
   /** Find template by exact name match */
   findTemplateByName: (name: string) => JobDescriptionTemplate | undefined;
 }
@@ -73,6 +75,7 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
   const createMutation = useMutation(api.jobDescriptionTemplates.create);
   const updateMutation = useMutation(api.jobDescriptionTemplates.update);
   const removeMutation = useMutation(api.jobDescriptionTemplates.remove);
+  const hardDeleteMutation = useMutation(api.jobDescriptionTemplates.hardDelete);
   const recordUsageMutation = useMutation(api.jobDescriptionTemplates.recordUsage);
 
   // Load a template and record usage
@@ -102,7 +105,7 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
     [updateMutation]
   );
 
-  // Delete template
+  // Soft delete template
   const deleteTemplate = useCallback(
     async (id: Id<"jobDescriptionTemplates">) => {
       await removeMutation({ id });
@@ -112,6 +115,19 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
       }
     },
     [removeMutation, loadedTemplateId]
+  );
+
+  // Hard delete template (permanent, clears case references)
+  const hardDeleteTemplate = useCallback(
+    async (id: Id<"jobDescriptionTemplates">) => {
+      const result = await hardDeleteMutation({ id });
+      // Clear loaded template if it was the deleted one
+      if (loadedTemplateId === id) {
+        setLoadedTemplateId(undefined);
+      }
+      return result;
+    },
+    [hardDeleteMutation, loadedTemplateId]
   );
 
   // Find template by exact name match (case-insensitive)
@@ -132,6 +148,7 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
     saveAsNewTemplate,
     updateTemplate,
     deleteTemplate,
+    hardDeleteTemplate,
     findTemplateByName,
   };
 }

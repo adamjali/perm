@@ -5,6 +5,7 @@
  * Integrates with lib/perm validators for PERM-specific rules.
  */
 import { z } from 'zod';
+import type { Id } from '@/../convex/_generated/dataModel';
 import {
   validateCase,
   type ValidationIssue as PermValidationIssue,
@@ -232,6 +233,7 @@ export const caseFormSchema = z
     // Job Description (for PERM postings)
     jobDescriptionPositionTitle: z.string().optional(),
     jobDescription: z.string().max(10000, 'Job description must be 10,000 characters or less').optional(),
+    jobDescriptionTemplateId: z.custom<Id<"jobDescriptionTemplates">>().optional(), // Template ID reference
   })
   .superRefine((data, ctx) => {
     validateSundayAdSequence(data, ctx);

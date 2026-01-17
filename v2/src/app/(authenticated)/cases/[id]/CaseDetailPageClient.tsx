@@ -56,6 +56,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useDerivedDates } from "@/hooks/useDerivedDates";
+import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
 import type { ProgressStatus } from "@/lib/perm";
 
@@ -272,6 +273,15 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   const toggleCalendarSyncMutation = useMutation(api.cases.toggleCalendarSync);
   const addToTimelineMutation = useMutation(api.timeline.addCaseToTimeline);
   const removeFromTimelineMutation = useMutation(api.timeline.removeCaseFromTimeline);
+  const clearJobDescriptionMutation = useMutation(api.cases.clearJobDescription);
+
+  // Job description templates
+  const {
+    templates: jobDescTemplates,
+    loadTemplate: loadJobDescTemplate,
+    hardDeleteTemplate: hardDeleteJobDescTemplate,
+    updateTemplate: updateJobDescTemplate,
+  } = useJobDescriptionTemplates();
 
   // Toggle loading states
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
@@ -888,13 +898,46 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           defaultOpen={!isMobile}
         />
 
-        {/* Job Description Section - only shown if job description exists */}
+        {/* Job Description Section - Full Width, only shown if job description exists */}
         {(caseData.jobDescription || caseData.jobDescriptionPositionTitle) && (
-          <JobDescriptionDetailView
-            positionTitle={caseData.jobDescriptionPositionTitle}
-            description={caseData.jobDescription}
-            defaultOpen={!isMobile}
-          />
+          <div className="lg:col-span-2">
+            <JobDescriptionDetailView
+              positionTitle={caseData.jobDescriptionPositionTitle}
+              description={caseData.jobDescription}
+              onClear={async () => {
+                await clearJobDescriptionMutation({ id: caseId });
+              }}
+              onUpdate={async (positionTitle, description, templateId) => {
+                await updateMutation({
+                  id: caseId,
+                  jobDescriptionPositionTitle: positionTitle,
+                  jobDescription: description,
+                  jobDescriptionTemplateId: templateId as Id<"jobDescriptionTemplates"> | undefined,
+                });
+              }}
+              templates={jobDescTemplates.map((t) => ({
+                _id: t._id,
+                name: t.name,
+                description: t.description,
+                createdAt: t.createdAt,
+                updatedAt: t.updatedAt,
+                usageCount: t.usageCount,
+              }))}
+              onLoadTemplate={async (template) => {
+                await loadJobDescTemplate({
+                  _id: template._id as Id<"jobDescriptionTemplates">,
+                  name: template.name,
+                  description: template.description,
+                  createdAt: template.createdAt,
+                  updatedAt: template.updatedAt,
+                  usageCount: template.usageCount,
+                });
+              }}
+              onDeleteTemplate={(id) => hardDeleteJobDescTemplate(id as Id<"jobDescriptionTemplates">)}
+              onUpdateTemplate={(id, name, desc) => updateJobDescTemplate(id as Id<"jobDescriptionTemplates">, name, desc)}
+              defaultOpen={!isMobile}
+            />
+          </div>
         )}
       </motion.div>
 

@@ -252,6 +252,13 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
     deleteTemplate: deleteJobDescTemplate,
   } = useJobDescriptionTemplates();
 
+  // Sync loadedTemplateId from initialData when editing
+  useEffect(() => {
+    if (mode === "edit" && initialData?.jobDescriptionTemplateId) {
+      setJobDescLoadedTemplateId(initialData.jobDescriptionTemplateId);
+    }
+  }, [mode, initialData?.jobDescriptionTemplateId, setJobDescLoadedTemplateId]);
+
   // ============================================================================
   // AUTO STATUS
   // ============================================================================
@@ -569,6 +576,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
               usageCount: t.usageCount,
             }))}
             loadedTemplateId={jobDescLoadedTemplateId}
+            setLoadedTemplateId={(id) => setJobDescLoadedTemplateId(id as Id<"jobDescriptionTemplates"> | undefined)}
             onLoadTemplate={handleLoadJobDescTemplate}
             onSaveAsNewTemplate={handleSaveJobDescAsNew}
             onUpdateTemplate={handleUpdateJobDescTemplate}

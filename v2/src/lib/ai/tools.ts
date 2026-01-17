@@ -1061,6 +1061,12 @@ export const UpdateCaseInputSchema = z.object({
   i140ServiceCenter: z.string().optional().describe('Update I-140 service center'),
 
   // ==========================================================================
+  // JOB DESCRIPTION
+  // ==========================================================================
+  jobDescription: z.string().max(10000).optional().describe('Update job description text (max 10,000 characters)'),
+  jobDescriptionPositionTitle: z.string().optional().describe('Update job description position title'),
+
+  // ==========================================================================
   // POSITION / EMPLOYER DETAILS
   // ==========================================================================
   employerFein: z.string().optional().describe('Update employer FEIN'),
