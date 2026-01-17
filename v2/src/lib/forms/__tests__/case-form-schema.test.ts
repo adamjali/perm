@@ -179,12 +179,15 @@ describe('caseFormSchema', () => {
       expect(result.success).toBe(false);
     });
 
-    it('fails when beneficiaryIdentifier is missing', () => {
+    it('succeeds when beneficiaryIdentifier is missing (optional field)', () => {
       const data = createValidCaseFormData();
-      // @ts-expect-error - testing missing required field
+      // @ts-expect-error - testing optional field
       delete data.beneficiaryIdentifier;
       const result = caseFormSchema.safeParse(data);
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.beneficiaryIdentifier).toBe(''); // Defaults to empty string
+      }
     });
 
     it('fails when positionTitle is missing', () => {

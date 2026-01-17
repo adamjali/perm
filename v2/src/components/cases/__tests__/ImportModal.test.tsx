@@ -99,7 +99,7 @@ describe("ImportModal", () => {
       // Missing beneficiaryIdentifier produces a warning banner, not an error
       // Cases get a placeholder and need manual updates after import
       await waitFor(() => {
-        expect(screen.getByText(/Need.*Beneficiary Info/i)).toBeInTheDocument();
+        expect(screen.getByText(/Need.*Foreign Worker Info/i)).toBeInTheDocument();
       });
     });
   });
@@ -133,7 +133,7 @@ describe("ImportModal", () => {
       await waitFor(() => {
         // Check table headers
         expect(screen.getByText("Employer")).toBeInTheDocument();
-        expect(screen.getByText("Beneficiary")).toBeInTheDocument();
+        expect(screen.getByText("Foreign Worker")).toBeInTheDocument();
 
         // Check data rows
         expect(screen.getByText("Tech Corp")).toBeInTheDocument();
@@ -263,7 +263,7 @@ describe("ImportModal", () => {
 
       // But a warning banner should be shown
       await waitFor(() => {
-        expect(screen.getByText(/Need.*Beneficiary Info/i)).toBeInTheDocument();
+        expect(screen.getByText(/Need.*Foreign Worker Info/i)).toBeInTheDocument();
       });
     });
 

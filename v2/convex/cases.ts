@@ -154,7 +154,7 @@ export const create = mutation({
   args: {
     // Required fields
     employerName: v.string(),
-    beneficiaryIdentifier: v.string(),
+    beneficiaryIdentifier: v.optional(v.string()),
     positionTitle: v.string(),
 
     // Optional fields with explicit defaults
@@ -399,7 +399,7 @@ export const create = mutation({
     const caseId = await ctx.db.insert("cases", {
       userId: userId as Id<"users">,
       employerName: args.employerName,
-      beneficiaryIdentifier: args.beneficiaryIdentifier,
+      beneficiaryIdentifier: args.beneficiaryIdentifier ?? "",
       positionTitle: args.positionTitle,
 
       // Apply auto-calculated or overridden status
@@ -1778,7 +1778,7 @@ export const checkDuplicates = query({
     cases: v.array(
       v.object({
         employerName: v.string(),
-        beneficiaryIdentifier: v.string(),
+        beneficiaryIdentifier: v.optional(v.string()),
       })
     ),
     // Optional: exclude this case ID from duplicate check (used when editing)
@@ -1814,7 +1814,7 @@ export const checkDuplicates = query({
       if (args.excludeCaseId && c._id === args.excludeCaseId) {
         continue;
       }
-      const key = `${c.employerName.toLowerCase().trim()}|${c.beneficiaryIdentifier.toLowerCase().trim()}`;
+      const key = `${c.employerName.toLowerCase().trim()}|${(c.beneficiaryIdentifier ?? "").toLowerCase().trim()}`;
       existingKeyMap.set(key, {
         id: c._id,
         positionTitle: c.positionTitle,
@@ -1834,13 +1834,14 @@ export const checkDuplicates = query({
 
     for (let i = 0; i < args.cases.length; i++) {
       const caseData = args.cases[i]!;
-      const key = `${caseData.employerName.toLowerCase().trim()}|${caseData.beneficiaryIdentifier.toLowerCase().trim()}`;
+      const beneficiaryId = caseData.beneficiaryIdentifier ?? "";
+      const key = `${caseData.employerName.toLowerCase().trim()}|${beneficiaryId.toLowerCase().trim()}`;
       const existing = existingKeyMap.get(key);
       if (existing) {
         duplicates.push({
           index: i,
           employerName: caseData.employerName,
-          beneficiaryIdentifier: caseData.beneficiaryIdentifier,
+          beneficiaryIdentifier: beneficiaryId,
           existingCaseId: existing.id,
           existingPositionTitle: existing.positionTitle,
           existingCaseStatus: existing.caseStatus,
@@ -2008,7 +2009,7 @@ export const importCases = mutation({
     // Create a Map of existing employer+beneficiary combinations with their case IDs
     const existingKeyMap = new Map<string, Id<"cases">>();
     for (const c of existingCases) {
-      const key = `${c.employerName.toLowerCase().trim()}|${c.beneficiaryIdentifier.toLowerCase().trim()}`;
+      const key = `${c.employerName.toLowerCase().trim()}|${(c.beneficiaryIdentifier ?? "").toLowerCase().trim()}`;
       existingKeyMap.set(key, c._id);
     }
 
@@ -2497,7 +2498,7 @@ export const listFilteredIds = query({
     if (args.searchQuery !== undefined && args.searchQuery.length > 0) {
       const searchLower = args.searchQuery.toLowerCase();
       filteredCases = filteredCases.filter((c) => {
-        const beneficiaryIdentifier = c.beneficiaryIdentifier.toLowerCase();
+        const beneficiaryIdentifier = (c.beneficiaryIdentifier ?? "").toLowerCase();
         const employerName = c.employerName.toLowerCase();
         const jobTitle = c.jobTitle?.toLowerCase() ?? "";
         return (

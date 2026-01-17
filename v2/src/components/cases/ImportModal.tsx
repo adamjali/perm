@@ -534,17 +534,17 @@ export function ImportModal({
                     </div>
                   )}
 
-                  {/* Beneficiary Warning Banner */}
+                  {/* Foreign Worker Warning Banner */}
                   {parseResult.casesNeedingBeneficiary > 0 && (
                     <div className="flex items-start gap-3 p-4 border-2 border-orange-500 bg-orange-50 dark:bg-orange-950/20">
                       <UserX className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium text-orange-900 dark:text-orange-100">
                           {parseResult.casesNeedingBeneficiary} Case
-                          {parseResult.casesNeedingBeneficiary !== 1 ? "s" : ""} Need Beneficiary Info
+                          {parseResult.casesNeedingBeneficiary !== 1 ? "s" : ""} Need Foreign Worker Info
                         </p>
                         <p className="text-sm text-orange-800 dark:text-orange-200 mt-1">
-                          These cases were imported from a legacy format without beneficiary identifiers. They
+                          These cases were imported from a legacy format without foreign worker IDs. They
                           have been marked with{" "}
                           <code className="bg-orange-200 dark:bg-orange-800/50 px-1 rounded font-mono text-xs">
                             {BENEFICIARY_PLACEHOLDER}
@@ -698,7 +698,7 @@ export function ImportModal({
                         <thead className="sticky top-0 z-10">
                           <tr className="border-b-2 border-border bg-muted">
                             <th className="px-3 py-3 text-left text-sm font-semibold w-[25%]">Employer</th>
-                            <th className="px-3 py-3 text-left text-sm font-semibold w-[25%]">Beneficiary</th>
+                            <th className="px-3 py-3 text-left text-sm font-semibold w-[25%]">Foreign Worker</th>
                             <th className="px-3 py-3 text-left text-sm font-semibold w-[35%]">Status</th>
                             <th className="px-3 py-3 text-left text-sm font-semibold w-[15%]">Date</th>
                           </tr>
@@ -862,10 +862,10 @@ export function ImportModal({
                           />
                         </div>
 
-                        {/* Beneficiary Identifier */}
+                        {/* Foreign Worker ID */}
                         <div className="space-y-2">
                           <Label htmlFor="edit-beneficiary" className="text-xs font-medium">
-                            Beneficiary Identifier
+                            Foreign Worker ID
                           </Label>
                           <Input
                             id="edit-beneficiary"
@@ -1027,7 +1027,7 @@ export function ImportModal({
                   <thead>
                     <tr className="border-b-2 border-border bg-muted">
                       <th className="px-3 py-3 text-left text-sm font-semibold w-[30%]">Employer</th>
-                      <th className="px-3 py-3 text-left text-sm font-semibold w-[30%]">Beneficiary</th>
+                      <th className="px-3 py-3 text-left text-sm font-semibold w-[30%]">Foreign Worker</th>
                       <th className="px-3 py-3 text-left text-sm font-semibold w-[40%]">Action</th>
                     </tr>
                   </thead>

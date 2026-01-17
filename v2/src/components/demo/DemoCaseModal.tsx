@@ -330,7 +330,7 @@ export function DemoCaseModal({
     const newErrors: FormErrors = {};
 
     if (!formData.beneficiaryName?.trim()) {
-      newErrors.beneficiaryName = "Beneficiary name is required";
+      newErrors.beneficiaryName = "Foreign worker name is required";
     }
     if (!formData.employerName?.trim()) {
       newErrors.employerName = "Employer name is required";
@@ -419,7 +419,7 @@ export function DemoCaseModal({
             </h3>
 
             <FormField
-              label="Beneficiary Name"
+              label="Foreign Worker Name"
               name="beneficiaryName"
               required
               error={errors.beneficiaryName}
@@ -428,7 +428,7 @@ export function DemoCaseModal({
                 id="beneficiaryName"
                 value={formData.beneficiaryName ?? ""}
                 onChange={handleInputChange("beneficiaryName")}
-                placeholder="Enter beneficiary name"
+                placeholder="Enter foreign worker name"
               />
             </FormField>
 

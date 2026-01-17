@@ -133,7 +133,7 @@ export const getCalendarEvents = query({
     return filteredCases.map((caseDoc) => ({
       id: caseDoc._id,
       employerName: caseDoc.employerName,
-      beneficiaryIdentifier: caseDoc.beneficiaryIdentifier,
+      beneficiaryIdentifier: caseDoc.beneficiaryIdentifier ?? "",
       positionTitle: caseDoc.positionTitle,
       caseStatus: caseDoc.caseStatus,
       progressStatus: caseDoc.progressStatus,

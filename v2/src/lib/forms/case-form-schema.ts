@@ -144,7 +144,7 @@ export const caseFormSchema = z
   .object({
     // Required fields
     employerName: z.string().min(1, 'Employer name is required'),
-    beneficiaryIdentifier: z.string().min(1, 'Beneficiary identifier is required'),
+    beneficiaryIdentifier: z.string().optional().default(''),
     positionTitle: z.string().min(1, 'Position title is required'),
     caseStatus: z.enum(['pwd', 'recruitment', 'eta9089', 'i140', 'closed']),
     progressStatus: z.enum([

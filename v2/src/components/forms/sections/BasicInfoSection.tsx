@@ -191,11 +191,10 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
             />
           </FormField>
 
-          {/* Beneficiary Identifier | Case Number (side by side) */}
+          {/* Foreign Worker ID | Case Number (side by side) */}
           <FormField
-            label="Beneficiary Identifier"
+            label="Foreign Worker ID"
             name="beneficiaryIdentifier"
-            required
             error={errors?.beneficiaryIdentifier}
           >
             <Input
@@ -205,7 +204,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
               value={values.beneficiaryIdentifier}
               onChange={handleInputChange}
               aria-invalid={!!errors?.beneficiaryIdentifier}
-              placeholder="Initials or unique ID"
+              placeholder="Initials or unique ID (optional)"
             />
           </FormField>
 

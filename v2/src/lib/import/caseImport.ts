@@ -700,7 +700,7 @@ interface NormalizeResult {
 function normalizeAndValidateCase(
   caseData: unknown,
   rowIndex: number,
-  format: DetectedFormat
+  _format: DetectedFormat // Preserved for potential future format-specific handling
 ): NormalizeResult {
   const errors: ImportError[] = [];
   const warnings: ImportWarning[] = [];
@@ -754,26 +754,18 @@ function normalizeAndValidateCase(
     normalized.employerName = employerName;
   }
 
-  // Handle missing beneficiaryIdentifier
+  // Handle missing beneficiaryIdentifier (optional field - use placeholder for imports)
   if (!beneficiaryIdentifier || typeof beneficiaryIdentifier !== "string" || !beneficiaryIdentifier.trim()) {
-    // Use placeholder for legacy imports
-    if (format !== "v2") {
-      beneficiaryIdentifier = BENEFICIARY_PLACEHOLDER;
-      needsBeneficiary = true;
-      warnings.push({
-        row: rowIndex,
-        field: "beneficiaryIdentifier",
-        message: `Missing beneficiary name - placeholder "${BENEFICIARY_PLACEHOLDER}" used. Please update after import.`,
-        employerName: typeof employerName === "string" ? employerName : undefined,
-        originalValue: typeof positionTitle === "string" ? positionTitle : undefined,
-      });
-    } else {
-      errors.push({
-        row: rowIndex,
-        field: "beneficiaryIdentifier",
-        message: "beneficiaryIdentifier is required and must be a non-empty string",
-      });
-    }
+    // Use placeholder for all imports (beneficiaryIdentifier is optional in schema)
+    beneficiaryIdentifier = BENEFICIARY_PLACEHOLDER;
+    needsBeneficiary = true;
+    warnings.push({
+      row: rowIndex,
+      field: "beneficiaryIdentifier",
+      message: `Missing beneficiary name - placeholder "${BENEFICIARY_PLACEHOLDER}" used. Please update after import.`,
+      employerName: typeof employerName === "string" ? employerName : undefined,
+      originalValue: typeof positionTitle === "string" ? positionTitle : undefined,
+    });
   } else {
     beneficiaryIdentifier = (beneficiaryIdentifier as string).trim();
   }

@@ -45,7 +45,7 @@ describe('BasicInfoSection', () => {
 
       // Should have labels for all required fields
       expect(screen.getByText('Employer Name')).toBeInTheDocument();
-      expect(screen.getByText('Beneficiary Identifier')).toBeInTheDocument();
+      expect(screen.getByText('Foreign Worker ID')).toBeInTheDocument();
       expect(screen.getByText('Position Title')).toBeInTheDocument();
     });
 
@@ -89,13 +89,13 @@ describe('BasicInfoSection', () => {
       expect(employerLabel?.textContent).toContain('*');
     });
 
-    it('shows required indicator on beneficiaryIdentifier', () => {
+    it('shows required indicator on foreignWorkerId', () => {
       const { container } = renderWithProviders(
         <BasicInfoSection values={mockValues} onChange={mockOnChange} />
       );
 
-      const beneficiaryLabel = screen.getByText('Beneficiary Identifier').closest('label');
-      expect(beneficiaryLabel?.textContent).toContain('*');
+      const foreignWorkerLabel = screen.getByText('Foreign Worker ID').closest('label');
+      expect(foreignWorkerLabel?.textContent).toContain('*');
     });
 
     it('shows required indicator on positionTitle', () => {

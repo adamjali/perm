@@ -115,7 +115,7 @@ export function DeadlineReminder({
           <Text style={labelStyle}>Employer</Text>
           <Text style={valueStyle}>{employerName}</Text>
 
-          <Text style={labelStyle}>Beneficiary</Text>
+          <Text style={labelStyle}>Foreign Worker</Text>
           <Text style={valueStyle}>{beneficiaryName}</Text>
 
           <Text style={labelStyle}>Deadline Type</Text>

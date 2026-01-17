@@ -133,9 +133,9 @@ export function BasicInfoSection({
             className="md:col-span-2"
           />
 
-          {/* Beneficiary */}
+          {/* Foreign Worker */}
           <DetailField
-            label="Beneficiary Identifier"
+            label="Foreign Worker ID"
             value={data.beneficiaryIdentifier}
           />
 

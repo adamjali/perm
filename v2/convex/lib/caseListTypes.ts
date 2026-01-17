@@ -232,7 +232,7 @@ export interface CaseCardData {
 export function createCaseCardData(params: {
   _id: Id<"cases">;
   employerName: string;
-  beneficiaryIdentifier: string;
+  beneficiaryIdentifier?: string; // Optional - falls back to empty string
   positionTitle: string;
   caseStatus: CaseStatus;
   progressStatus: ProgressStatus;
@@ -273,7 +273,7 @@ export function createCaseCardData(params: {
   return {
     _id: params._id,
     employerName: params.employerName,
-    beneficiaryIdentifier: params.beneficiaryIdentifier,
+    beneficiaryIdentifier: params.beneficiaryIdentifier ?? "",
     positionTitle: params.positionTitle,
     caseStatus: params.caseStatus,
     progressStatus: params.progressStatus,

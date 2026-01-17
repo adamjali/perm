@@ -103,7 +103,7 @@ describe("DeadlineItem", () => {
       fireEvent.mouseEnter(wrapper);
 
       expect(screen.getByText("Case #")).toBeInTheDocument();
-      expect(screen.getByText("Beneficiary")).toBeInTheDocument();
+      expect(screen.getByText("Position")).toBeInTheDocument();
       expect(screen.getByText("Due")).toBeInTheDocument();
     });
 

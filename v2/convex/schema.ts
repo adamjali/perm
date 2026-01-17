@@ -224,7 +224,7 @@ export default defineSchema({
     employerFein: v.optional(v.string()),
 
     // Beneficiary info
-    beneficiaryIdentifier: v.string(), // Privacy-safe identifier
+    beneficiaryIdentifier: v.optional(v.string()), // Privacy-safe identifier (optional)
 
     // Position info
     positionTitle: v.string(),

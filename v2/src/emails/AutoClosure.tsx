@@ -58,7 +58,7 @@ export function AutoClosure({
       />
 
       <Section style={detailsSectionStyle}>
-        <Text style={labelStyle}>Beneficiary</Text>
+        <Text style={labelStyle}>Foreign Worker</Text>
         <Text style={valueStyle}>{beneficiaryName}</Text>
 
         <Text style={labelStyle}>Company</Text>

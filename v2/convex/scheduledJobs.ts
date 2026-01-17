@@ -251,7 +251,7 @@ export const getCasesNeedingReminders = internalQuery({
               deadlineDate,
               daysUntilDeadline: daysUntil,
               employerName: caseDoc.employerName,
-              beneficiaryIdentifier: caseDoc.beneficiaryIdentifier,
+              beneficiaryIdentifier: caseDoc.beneficiaryIdentifier ?? "",
               userEmail,
               userPrefs,
             });
@@ -703,7 +703,7 @@ export const getDeadlinesForDigest = internalQuery({
           deadlines.push({
             caseId: caseDoc._id,
             employerName: caseDoc.employerName,
-            beneficiaryIdentifier: caseDoc.beneficiaryIdentifier,
+            beneficiaryIdentifier: caseDoc.beneficiaryIdentifier ?? "",
             deadlineType: type,
             deadlineDate: date,
             daysUntil,
@@ -775,7 +775,7 @@ export const getRecentlyUpdatedCases = internalQuery({
     return cases.map((c) => ({
       caseId: c._id,
       employerName: c.employerName,
-      beneficiaryIdentifier: c.beneficiaryIdentifier,
+      beneficiaryIdentifier: c.beneficiaryIdentifier ?? "",
       caseStatus: c.caseStatus,
       progressStatus: c.progressStatus,
       updatedAt: c.updatedAt,
@@ -860,7 +860,7 @@ export const getUpcomingDeadlinesForUser = internalQuery({
           deadlines.push({
             caseId: caseDoc._id,
             employerName: caseDoc.employerName,
-            beneficiaryIdentifier: caseDoc.beneficiaryIdentifier,
+            beneficiaryIdentifier: caseDoc.beneficiaryIdentifier ?? "",
             deadlineType: type,
             deadlineDate: date,
             daysUntil,

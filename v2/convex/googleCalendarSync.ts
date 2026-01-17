@@ -41,7 +41,7 @@ export const getCaseForCalendarSync = internalQuery({
       caseNumber: caseDoc.caseNumber,
       internalCaseNumber: caseDoc.internalCaseNumber,
       employerName: caseDoc.employerName,
-      beneficiaryIdentifier: caseDoc.beneficiaryIdentifier,
+      beneficiaryIdentifier: caseDoc.beneficiaryIdentifier ?? "",
       caseStatus: caseDoc.caseStatus,
       progressStatus: caseDoc.progressStatus,
       deletedAt: caseDoc.deletedAt,

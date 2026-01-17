@@ -312,7 +312,7 @@ export function CalendarEventPopover({
               </motion.div>
             )}
 
-            {/* Beneficiary */}
+            {/* Foreign Worker */}
             {caseData && (
               <motion.div
                 custom={3}
@@ -322,7 +322,7 @@ export function CalendarEventPopover({
                 className="flex items-start gap-2"
               >
                 <span className="text-sm text-muted-foreground w-20 shrink-0">
-                  Beneficiary:
+                  Foreign Worker:
                 </span>
                 <span className="text-sm font-semibold text-foreground">
                   {caseData.beneficiaryIdentifier}

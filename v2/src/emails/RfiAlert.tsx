@@ -76,7 +76,7 @@ export function RfiAlert({
       )}
 
       <Section style={styles.details}>
-        <Text style={styles.label}>Beneficiary</Text>
+        <Text style={styles.label}>Foreign Worker</Text>
         <Text style={styles.value}>{beneficiaryName}</Text>
 
         <Text style={styles.label}>Company</Text>

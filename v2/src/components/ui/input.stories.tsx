@@ -95,7 +95,7 @@ export const CaseForm: Story = {
     <div className="grid w-full max-w-md gap-4 p-6 border-2 border-border">
       <h3 className="text-lg font-semibold">New Case</h3>
       <div className="grid gap-1.5">
-        <Label htmlFor="beneficiary">Beneficiary Name</Label>
+        <Label htmlFor="beneficiary">Foreign Worker Name</Label>
         <Input type="text" id="beneficiary" placeholder="John Doe" />
       </div>
       <div className="grid gap-1.5">

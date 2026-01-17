@@ -60,7 +60,7 @@ export interface CaseDataForDeadlines {
   _id?: string;
   caseNumber?: string;
   employerName: string;
-  beneficiaryIdentifier: string;
+  beneficiaryIdentifier?: string; // Optional - falls back to positionTitle for display
 
   // Status fields
   caseStatus: CaseStatus;

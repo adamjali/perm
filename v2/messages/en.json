@@ -82,7 +82,7 @@
     },
     "fields": {
       "employerName": "Employer Name",
-      "beneficiaryIdentifier": "Beneficiary",
+      "beneficiaryIdentifier": "Foreign Worker ID",
       "positionTitle": "Position Title",
       "caseNumber": "Case Number",
       "caseStatus": "Case Status",

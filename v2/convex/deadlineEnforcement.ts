@@ -180,7 +180,7 @@ export const checkAndEnforceDeadlines = mutation({
         const message = generateClosureMessage(
           violation,
           caseDoc.employerName,
-          caseDoc.beneficiaryIdentifier
+          caseDoc.beneficiaryIdentifier ?? ""
         );
 
         const notificationId = await ctx.db.insert("notifications", {
@@ -239,7 +239,7 @@ export const checkAndEnforceDeadlines = mutation({
         closedCases.push({
           caseId: caseDoc._id,
           employerName: caseDoc.employerName,
-          beneficiaryIdentifier: caseDoc.beneficiaryIdentifier,
+          beneficiaryIdentifier: caseDoc.beneficiaryIdentifier ?? "",
           violationType: violation.type,
           reason: violation.reason,
         });
@@ -373,7 +373,7 @@ export const getAutoClosureAlerts = query({
         const caseDoc = await ctx.db.get(notification.caseId);
         if (caseDoc) {
           employerName = caseDoc.employerName;
-          beneficiaryIdentifier = caseDoc.beneficiaryIdentifier;
+          beneficiaryIdentifier = caseDoc.beneficiaryIdentifier ?? "";
           positionTitle = caseDoc.positionTitle;
           closureReason = caseDoc.closureReason || closureReason;
         }

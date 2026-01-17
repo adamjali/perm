@@ -97,7 +97,7 @@ describe('CaseForm', () => {
         errors.push({ field: 'employerName', message: 'Employer name is required' });
       }
       if (!data?.beneficiaryIdentifier) {
-        errors.push({ field: 'beneficiaryIdentifier', message: 'Beneficiary identifier is required' });
+        errors.push({ field: 'beneficiaryIdentifier', message: 'Foreign worker ID is required' });
       }
       if (!data?.positionTitle) {
         errors.push({ field: 'positionTitle', message: 'Position title is required' });
