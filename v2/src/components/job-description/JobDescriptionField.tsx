@@ -24,7 +24,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TemplateSelector } from "./TemplateSelector";
-import { TemplateSaveDialog } from "./TemplateSaveDialog";
+import { TemplateUpdateConfirmDialog } from "./TemplateUpdateConfirmDialog";
 import { toast } from "@/lib/toast";
 
 // ============================================================================
@@ -130,8 +130,8 @@ export function JobDescriptionField({
 
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [isCopied, setIsCopied] = useState(false);
-  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
-  const [saveMode, setSaveMode] = useState<"new" | "update">("new");
+  const [isSaving, setIsSaving] = useState(false);
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
 
   // Track if content has been modified since loading a template
   const [originalContent, setOriginalContent] = useState<{
@@ -149,6 +149,13 @@ export function JobDescriptionField({
   const hasContent = positionTitle.trim() || description.trim();
   const characterCount = description.length;
   const isOverLimit = characterCount > maxLength;
+
+  // Check if position title matches an existing template (case-insensitive)
+  const matchingTemplate = templates.find(
+    (t) => t.name.toLowerCase() === positionTitle.trim().toLowerCase()
+  );
+  const isExistingTemplateName = !!matchingTemplate;
+  const canSaveTemplate = positionTitle.trim() && description.trim() && !isOverLimit;
 
   // ============================================================================
   // EFFECTS
@@ -190,35 +197,66 @@ export function JobDescriptionField({
     [onLoadTemplate]
   );
 
-  const handleSaveAsNew = useCallback(() => {
-    setSaveMode("new");
-    setIsSaveDialogOpen(true);
-  }, []);
+  // Handle save button click - either create new or show update confirmation
+  const handleSaveClick = useCallback(async () => {
+    if (!canSaveTemplate || isSaving) return;
 
-  const handleUpdateTemplate = useCallback(() => {
-    setSaveMode("update");
-    setIsSaveDialogOpen(true);
-  }, []);
-
-  const handleSaveConfirm = useCallback(
-    async (name: string, desc: string) => {
+    if (isExistingTemplateName) {
+      // Show confirmation dialog for updating existing template
+      setShowUpdateConfirm(true);
+    } else {
+      // Create new template directly
+      setIsSaving(true);
       try {
-        if (saveMode === "new") {
-          await onSaveAsNewTemplate(name, desc);
-          toast.success(`Template "${name}" created`);
-        } else if (loadedTemplateId) {
-          await onUpdateTemplate(loadedTemplateId, name, desc);
-          setOriginalContent({ positionTitle: name, description: desc });
-          toast.success(`Template "${name}" updated`);
-        }
-        setIsSaveDialogOpen(false);
+        await onSaveAsNewTemplate(positionTitle.trim(), description);
+        toast.success(`Template "${positionTitle.trim()}" created`);
       } catch (error) {
         toast.error(
           error instanceof Error ? error.message : "Failed to save template"
         );
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  }, [canSaveTemplate, isSaving, isExistingTemplateName, positionTitle, description, onSaveAsNewTemplate]);
+
+  // Handle confirming overwrite of existing template
+  const handleConfirmOverwrite = useCallback(async () => {
+    if (!matchingTemplate) return;
+    setIsSaving(true);
+    try {
+      await onUpdateTemplate(matchingTemplate._id, positionTitle.trim(), description);
+      setOriginalContent({ positionTitle: positionTitle.trim(), description });
+      toast.success(`Template "${positionTitle.trim()}" updated`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update template"
+      );
+      throw error; // Re-throw so dialog stays open
+    } finally {
+      setIsSaving(false);
+    }
+  }, [matchingTemplate, positionTitle, description, onUpdateTemplate]);
+
+  // Handle saving as new with a different name
+  const handleSaveAsNewWithName = useCallback(
+    async (newName: string) => {
+      setIsSaving(true);
+      try {
+        await onSaveAsNewTemplate(newName, description);
+        // Update position title to match new template name
+        onPositionTitleChange(newName);
+        toast.success(`Template "${newName}" created`);
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to save template"
+        );
+        throw error; // Re-throw so dialog stays open
+      } finally {
+        setIsSaving(false);
       }
     },
-    [saveMode, loadedTemplateId, onSaveAsNewTemplate, onUpdateTemplate]
+    [description, onSaveAsNewTemplate, onPositionTitleChange]
   );
 
   // ============================================================================
@@ -400,32 +438,56 @@ export function JobDescriptionField({
                 )}
               </div>
 
-              {/* Save options row */}
+              {/* Save template row - dynamic based on whether name exists */}
               <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-border">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSaveAsNew}
-                  disabled={!positionTitle.trim() || !description.trim() || isLoading}
-                  className="gap-1.5 border-2"
+                {/* Single dynamic save button */}
+                <div
+                  className={cn(
+                    "rounded-md border-2 transition-colors",
+                    isExistingTemplateName
+                      ? "border-blue-500 dark:border-blue-400"
+                      : "border-emerald-500 dark:border-emerald-400"
+                  )}
                 >
-                  <Sparkles className="h-4 w-4" />
-                  Save as New Template
-                </Button>
-
-                {loadedTemplateId && isModified && (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    onClick={handleUpdateTemplate}
-                    disabled={!positionTitle.trim() || !description.trim() || isLoading}
-                    className="gap-1.5 border-2"
+                    onClick={handleSaveClick}
+                    disabled={!canSaveTemplate || isLoading || isSaving}
+                    className={cn(
+                      "gap-1.5 rounded-[4px]",
+                      isExistingTemplateName
+                        ? "text-blue-700 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
+                        : "text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-900/30"
+                    )}
                   >
-                    <Save className="h-4 w-4" />
-                    Update Template
+                    {isExistingTemplateName ? (
+                      <>
+                        <Save className="h-4 w-4" />
+                        {isSaving ? "Updating..." : "Update Template"}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        {isSaving ? "Saving..." : "Save Template"}
+                      </>
+                    )}
                   </Button>
+                </div>
+
+                {/* Status indicator */}
+                {positionTitle.trim() && (
+                  <span
+                    className={cn(
+                      "text-xs px-2 py-1 rounded border",
+                      isExistingTemplateName
+                        ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
+                        : "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400"
+                    )}
+                  >
+                    {isExistingTemplateName ? "Existing template" : "New template"}
+                  </span>
                 )}
 
                 <span className="text-xs text-muted-foreground ml-auto">
@@ -437,16 +499,14 @@ export function JobDescriptionField({
         )}
       </AnimatePresence>
 
-      {/* Save dialog */}
-      <TemplateSaveDialog
-        open={isSaveDialogOpen}
-        onOpenChange={setIsSaveDialogOpen}
-        mode={saveMode}
-        currentName={positionTitle}
-        currentDescription={description}
+      {/* Update confirmation dialog */}
+      <TemplateUpdateConfirmDialog
+        open={showUpdateConfirm}
+        onOpenChange={setShowUpdateConfirm}
+        templateName={positionTitle.trim()}
+        onConfirmOverwrite={handleConfirmOverwrite}
+        onSaveAsNew={handleSaveAsNewWithName}
         existingTemplateNames={templates.map((t) => t.name)}
-        loadedTemplateName={loadedTemplate?.name}
-        onSave={handleSaveConfirm}
       />
     </div>
   );

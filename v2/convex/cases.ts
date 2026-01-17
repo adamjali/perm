@@ -729,6 +729,11 @@ export const update = mutation({
     // Duplicate tracking
     duplicateOf: v.optional(v.id("cases")),
     markedAsDuplicateAt: v.optional(v.number()),
+
+    // Job description fields
+    jobDescription: v.optional(v.string()),
+    jobDescriptionPositionTitle: v.optional(v.string()),
+    jobDescriptionTemplateId: v.optional(v.id("jobDescriptionTemplates")),
   },
   handler: async (ctx, args) => {
     const caseDoc = await ctx.db.get(args.id);
