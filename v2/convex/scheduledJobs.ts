@@ -389,6 +389,9 @@ export const checkDeadlineReminders = internalAction({
     let processed = 0;
     let emailsScheduled = 0;
 
+    // Stagger emails by 600ms each to stay under Resend's 2 req/sec rate limit
+    let emailIndex = 0;
+
     for (const reminder of reminders) {
       // Determine notification type based on deadline type
       let notificationType: NotificationType = "deadline_reminder";
@@ -446,11 +449,13 @@ export const checkDeadlineReminders = internalAction({
 
       if (sendEmail) {
         // Schedule appropriate email based on notification type
+        // Stagger by 600ms to stay under Resend's 2 req/sec rate limit
         const formattedDate = formatDateForEmail(reminder.deadlineDate);
         const formattedDeadlineType = formatDeadlineType(reminder.deadlineType);
+        const delayMs = emailIndex * 600;
 
         if (notificationType === "rfi_alert") {
-          await ctx.scheduler.runAfter(0, internal.notificationActions.sendRfiAlertEmail, {
+          await ctx.scheduler.runAfter(delayMs, internal.notificationActions.sendRfiAlertEmail, {
             notificationId,
             to: reminder.userEmail,
             beneficiaryName: reminder.beneficiaryIdentifier,
@@ -462,7 +467,7 @@ export const checkDeadlineReminders = internalAction({
             caseId: reminder.caseId,
           });
         } else if (notificationType === "rfe_alert") {
-          await ctx.scheduler.runAfter(0, internal.notificationActions.sendRfeAlertEmail, {
+          await ctx.scheduler.runAfter(delayMs, internal.notificationActions.sendRfeAlertEmail, {
             notificationId,
             to: reminder.userEmail,
             beneficiaryName: reminder.beneficiaryIdentifier,
@@ -475,7 +480,7 @@ export const checkDeadlineReminders = internalAction({
           });
         } else {
           // Standard deadline reminder email
-          await ctx.scheduler.runAfter(0, internal.notificationActions.sendDeadlineReminderEmail, {
+          await ctx.scheduler.runAfter(delayMs, internal.notificationActions.sendDeadlineReminderEmail, {
             notificationId,
             to: reminder.userEmail,
             employerName: reminder.employerName,
@@ -487,6 +492,7 @@ export const checkDeadlineReminders = internalAction({
           });
         }
 
+        emailIndex++;
         emailsScheduled++;
       }
 
@@ -595,6 +601,9 @@ export const sendWeeklyDigest = internalAction({
     let sent = 0;
     let skipped = 0;
 
+    // Stagger emails by 600ms each to stay under Resend's 2 req/sec rate limit
+    let emailIndex = 0;
+
     for (const { userId, email, userName } of users) {
       let step = "initializing";
       try {
@@ -637,13 +646,15 @@ export const sendWeeklyDigest = internalAction({
           rawCaseUpdates,
         });
 
-        // Schedule the email (always send, even if empty)
+        // Schedule the email with staggered delay (600ms apart to stay under 2 req/sec)
         step = "scheduling email";
-        await ctx.scheduler.runAfter(0, internal.notificationActions.sendWeeklyDigestEmail, {
+        const delayMs = emailIndex * 600;
+        await ctx.scheduler.runAfter(delayMs, internal.notificationActions.sendWeeklyDigestEmail, {
           to: email,
           digestContent,
         });
 
+        emailIndex++;
         sent++;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);

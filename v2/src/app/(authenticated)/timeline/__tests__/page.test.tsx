@@ -480,7 +480,8 @@ describe("TimelinePage - Layout", () => {
   it("has scrollable timeline area", () => {
     const { container } = renderWithProviders(<TimelinePage />);
 
-    const scrollArea = container.querySelector(".overflow-auto");
+    // Component uses overflow-x-auto for horizontal scroll
+    const scrollArea = container.querySelector(".overflow-x-auto");
     expect(scrollArea).toBeInTheDocument();
   });
 

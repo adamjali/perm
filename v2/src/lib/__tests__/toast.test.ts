@@ -8,7 +8,7 @@
  * - Promise toasts still return the promise even when suppressed
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from "vitest";
 import { toast as sonnerToast } from "sonner";
 import { toast, updateToastAuthState, getToastAuthState } from "../toast";
 
@@ -28,9 +28,16 @@ vi.mock("sonner", () => ({
 }));
 
 describe("Auth-Aware Toast", () => {
+  // Reset module state at suite start to ensure clean isolation
+  beforeAll(() => {
+    updateToastAuthState(false);
+  });
+
   beforeEach(() => {
+    // Reset state FIRST (before clearing mocks) to handle any cross-test pollution
+    updateToastAuthState(false);
     vi.clearAllMocks();
-    // Reset to default state (not signing out)
+    // Reset state again AFTER clearing mocks to ensure clean state
     updateToastAuthState(false);
   });
 
