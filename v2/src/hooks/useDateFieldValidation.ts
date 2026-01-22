@@ -37,8 +37,8 @@ const FIELD_DEPENDENCIES: Record<string, string[]> = {
   eta9089AuditDate: ['eta9089FilingDate'],
   eta9089CertificationDate: ['eta9089FilingDate'],
   i140ReceiptDate: ['i140FilingDate'],
-  i140ApprovalDate: ['i140FilingDate', 'i140ReceiptDate'],
-  i140DenialDate: ['i140FilingDate', 'i140ReceiptDate'],
+  i140ApprovalDate: ['i140FilingDate'],
+  i140DenialDate: ['i140FilingDate'],
 };
 
 const FIELD_NAME_MAP: Record<string, string> = {

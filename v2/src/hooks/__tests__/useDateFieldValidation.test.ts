@@ -577,23 +577,23 @@ describe('useDateFieldValidation', () => {
       expect(disabledState.disabled).toBe(false);
     });
 
-    it('disables i140ApprovalDate when i140FilingDate or i140ReceiptDate is not set', () => {
+    it('disables i140ApprovalDate when i140FilingDate is not set', () => {
       const formData = createFormData({
-        i140FilingDate: '2025-01-15',
-        i140ReceiptDate: undefined,
+        i140FilingDate: undefined,
+        i140ReceiptDate: '2025-01-20',
       });
       const { result } = renderHook(() => useDateFieldValidation(formData));
 
       const disabledState = result.current.isFieldDisabled('i140ApprovalDate');
 
       expect(disabledState.disabled).toBe(true);
-      expect(disabledState.reason).toContain('I-140 receipt date');
+      expect(disabledState.reason).toContain('I-140 filing date');
     });
 
-    it('enables i140ApprovalDate when both i140FilingDate and i140ReceiptDate are set', () => {
+    it('enables i140ApprovalDate when i140FilingDate is set (receipt date optional)', () => {
       const formData = createFormData({
         i140FilingDate: '2025-01-15',
-        i140ReceiptDate: '2025-01-20',
+        i140ReceiptDate: undefined, // Receipt date is now optional
       });
       const { result } = renderHook(() => useDateFieldValidation(formData));
 
@@ -1092,22 +1092,23 @@ describe('useDateFieldValidation', () => {
       expect(disabledState.disabled).toBe(false);
     });
 
-    it('disables i140DenialDate when dependencies are not set', () => {
+    it('disables i140DenialDate when i140FilingDate is not set', () => {
       const formData = createFormData({
-        i140FilingDate: '2025-01-15',
-        i140ReceiptDate: undefined,
+        i140FilingDate: undefined,
+        i140ReceiptDate: '2025-01-20',
       });
       const { result } = renderHook(() => useDateFieldValidation(formData));
 
       const disabledState = result.current.isFieldDisabled('i140DenialDate');
 
       expect(disabledState.disabled).toBe(true);
+      expect(disabledState.reason).toContain('I-140 filing date');
     });
 
-    it('enables i140DenialDate when all dependencies are set', () => {
+    it('enables i140DenialDate when i140FilingDate is set (receipt date optional)', () => {
       const formData = createFormData({
         i140FilingDate: '2025-01-15',
-        i140ReceiptDate: '2025-01-20',
+        i140ReceiptDate: undefined, // Receipt date is now optional
       });
       const { result } = renderHook(() => useDateFieldValidation(formData));
 
