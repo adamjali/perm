@@ -111,6 +111,7 @@
     "convex-test": "^0.0.41",
     "eslint": "^9",
     "eslint-config-next": "16.1.0",
+    "eslint-plugin-security": "^3.0.1",
     "eslint-plugin-storybook": "^10.1.10",
     "happy-dom": "^20.1.0",
     "jsdom": "^27.3.0",

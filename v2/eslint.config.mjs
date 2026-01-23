@@ -1,5 +1,6 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
 import storybook from "eslint-plugin-storybook";
+import security from "eslint-plugin-security";
 
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
@@ -9,6 +10,7 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   ...storybook.configs["flat/recommended"],
+  security.configs.recommended,
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
