@@ -248,7 +248,6 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
     loadTemplate: loadJobDescTemplate,
     saveAsNewTemplate: saveJobDescAsNewTemplate,
     updateTemplate: updateJobDescTemplate,
-    deleteTemplate: _deleteJobDescTemplate,
     hardDeleteTemplate: hardDeleteJobDescTemplate,
   } = useJobDescriptionTemplates();
 
