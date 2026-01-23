@@ -17,7 +17,7 @@
  * ```
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
@@ -68,7 +68,10 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
 
   // Query templates
   const templatesData = useQuery(api.jobDescriptionTemplates.list);
-  const templates = (templatesData ?? []) as JobDescriptionTemplate[];
+  const templates = useMemo(
+    () => (templatesData ?? []) as JobDescriptionTemplate[],
+    [templatesData]
+  );
   const isLoading = templatesData === undefined;
 
   // Mutations

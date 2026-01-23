@@ -1,8 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { useState, useMemo } from "react";
-import { Check, ChevronsUpDown, FileText, Settings2, Search } from "lucide-react";
+import { Check, ChevronsUpDown, FileText, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {

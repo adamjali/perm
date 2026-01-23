@@ -44,7 +44,6 @@ import {
   Building2,
   StickyNote,
   Trash2,
-  ScrollText,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -249,7 +248,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
     loadTemplate: loadJobDescTemplate,
     saveAsNewTemplate: saveJobDescAsNewTemplate,
     updateTemplate: updateJobDescTemplate,
-    deleteTemplate: deleteJobDescTemplate,
+    deleteTemplate: _deleteJobDescTemplate,
     hardDeleteTemplate: hardDeleteJobDescTemplate,
   } = useJobDescriptionTemplates();
 
