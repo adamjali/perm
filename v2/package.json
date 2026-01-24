@@ -66,6 +66,7 @@
     "framer-motion": "^12.23.26",
     "google-auth-library": "^10.5.0",
     "lottie-react": "^2.4.1",
+    "lucia": "^3.2.2",
     "lucide-react": "^0.562.0",
     "motion": "^12.23.26",
     "next": "16.1.0",

@@ -10,6 +10,7 @@
 
 import type * as ResendOTP from "../ResendOTP.js";
 import type * as ResendPasswordReset from "../ResendPasswordReset.js";
+import type * as admin from "../admin.js";
 import type * as apiUsage from "../apiUsage.js";
 import type * as auditLogs from "../auditLogs.js";
 import type * as auth from "../auth.js";
@@ -109,6 +110,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   ResendOTP: typeof ResendOTP;
   ResendPasswordReset: typeof ResendPasswordReset;
+  admin: typeof admin;
   apiUsage: typeof apiUsage;
   auditLogs: typeof auditLogs;
   auth: typeof auth;

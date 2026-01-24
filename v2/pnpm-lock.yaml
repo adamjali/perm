@@ -128,6 +128,9 @@ importers:
       lottie-react:
         specifier: ^2.4.1
         version: 2.4.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      lucia:
+        specifier: ^3.2.2
+        version: 3.2.2
       lucide-react:
         specifier: ^0.562.0
         version: 0.562.0(react@19.2.3)
