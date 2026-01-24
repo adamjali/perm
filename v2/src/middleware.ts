@@ -15,6 +15,13 @@ const isPublicRoute = createRouteMatcher([
   "/contact",
   "/privacy",
   "/terms",
+  // Static assets that need to be public
+  "/icon",
+  "/favicon.ico",
+  "/apple-touch-icon.png",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/manifest.webmanifest",
   // Google Calendar OAuth callback - must be public because Google redirect loses session cookies
   "/api/google/callback",
 ]);
