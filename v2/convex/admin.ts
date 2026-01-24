@@ -8,11 +8,116 @@
  * SECURITY: These are internal mutations - not exposed to the client.
  */
 
-import { internalMutation, internalAction } from "./_generated/server";
+import { internalMutation, internalAction, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { Scrypt } from "lucia";
+
+/**
+ * Test password verification for debugging.
+ */
+export const testPasswordVerification = internalAction({
+  args: { email: v.string(), password: v.string() },
+  handler: async (ctx, args): Promise<{
+    success: boolean;
+    email: string;
+    secretLength?: number;
+    secretPrefix?: string;
+    error?: string;
+  }> => {
+    // Get the auth account
+    const result = await ctx.runQuery(internal.admin.getAuthAccountSecret, {
+      email: args.email,
+    }) as { found: boolean; secret?: string; provider?: string };
+
+    if (!result.secret) {
+      return { success: false, error: "No secret found", email: args.email };
+    }
+
+    // Try to verify the password
+    const scrypt = new Scrypt();
+    const isValid = await scrypt.verify(result.secret, args.password);
+
+    return {
+      success: isValid,
+      email: args.email,
+      secretLength: result.secret.length,
+      secretPrefix: result.secret.substring(0, 20),
+    };
+  },
+});
+
+/**
+ * Helper query to get auth account secret.
+ */
+export const getAuthAccountSecret = internalQuery({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const authAccount = await ctx.db
+      .query("authAccounts")
+      .filter((q) => q.eq(q.field("providerAccountId"), args.email))
+      .first();
+
+    return {
+      found: !!authAccount,
+      secret: authAccount?.secret,
+      provider: authAccount?.provider,
+    };
+  },
+});
+
+/**
+ * Debug query to check auth accounts for a given email.
+ */
+export const debugAuthAccount = internalQuery({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .first();
+
+    if (!user) {
+      return { error: "User not found", email: args.email };
+    }
+
+    const authAccounts = await ctx.db
+      .query("authAccounts")
+      .filter((q) => q.eq(q.field("userId"), user._id))
+      .collect();
+
+    const authAccountByEmail = await ctx.db
+      .query("authAccounts")
+      .filter((q) => q.eq(q.field("providerAccountId"), args.email))
+      .collect();
+
+    return {
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        emailVerificationTime: user.emailVerificationTime,
+      },
+      authAccountsByUserId: authAccounts.map((a) => ({
+        _id: a._id,
+        provider: a.provider,
+        providerAccountId: a.providerAccountId,
+        hasSecret: !!a.secret,
+        secretLength: a.secret?.length,
+        emailVerified: a.emailVerified,
+      })),
+      authAccountsByEmail: authAccountByEmail.map((a) => ({
+        _id: a._id,
+        provider: a.provider,
+        providerAccountId: a.providerAccountId,
+        hasSecret: !!a.secret,
+        secretLength: a.secret?.length,
+        emailVerified: a.emailVerified,
+      })),
+    };
+  },
+});
 
 /**
  * Copy all data from one user to another.
