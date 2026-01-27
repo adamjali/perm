@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { RFEEntry } from "./RFEEntry";
 import { useRfeFieldArray } from "@/components/forms/CaseFormContext";
 import type { RFEEntry as RFEEntryType } from "@/lib/forms/case-form-schema";
+import type { ISODateString } from "@/lib/perm";
 
 // ============================================================================
 // TYPES
@@ -142,8 +143,8 @@ export function RFEEntryList({
    */
   const handleAdd = useCallback(() => {
     addEntry({
-      receivedDate: "",
-      responseDueDate: "",
+      receivedDate: "" as ISODateString,
+      responseDueDate: "" as ISODateString,
       responseSubmittedDate: undefined,
     });
   }, [addEntry]);
