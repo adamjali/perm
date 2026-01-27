@@ -19,9 +19,20 @@
 
 ## Screenshots
 
-![PERM Tracker Dashboard](hero_image.png)
+### Homepage
+![Homepage](docs/images/screenshot-homepage.png)
 
-*Dashboard showing case management, deadline tracking, and timeline visualization*
+### Dashboard
+![Dashboard](docs/images/screenshot-dashboard.png)
+*Deadline Hub showing overdue, upcoming, and future deadlines at a glance*
+
+### Cases
+![Cases](docs/images/screenshot-cases.png)
+*Case management with filtering, search, status badges, and calendar sync*
+
+### Calendar & AI Assistant
+![Calendar](docs/images/screenshot-calendar.png)
+*Calendar view with deadline color-coding and AI chat assistant for natural language case management*
 
 ---
 
