@@ -462,7 +462,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as ExecuteToolRequest;
     const { toolCallId, toolName, arguments: args } = body;
 
-    console.log(`[Execute Tool] ${toolName} (${toolCallId}):`, JSON.stringify(args).slice(0, 200));
+    console.log('[Execute Tool]', { toolName: String(toolName).slice(0, 50), toolCallId: String(toolCallId).slice(0, 50), args: JSON.stringify(args).slice(0, 200) });
 
     // 3. Find executor
     const executor = toolExecutors[toolName];

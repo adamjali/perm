@@ -160,9 +160,15 @@ export default function ProfileSection({
   };
 
   // Determine if signed in with Google (check for Google profile photo URL pattern)
-  const isGoogleSignIn = Boolean(
-    profile.profilePhotoUrl?.includes("googleusercontent.com")
-  );
+  const isGoogleSignIn = (() => {
+    if (!profile.profilePhotoUrl) return false;
+    try {
+      const url = new URL(profile.profilePhotoUrl);
+      return url.hostname.endsWith('.googleusercontent.com') || url.hostname === 'googleusercontent.com';
+    } catch {
+      return false;
+    }
+  })();
 
   return (
     <div

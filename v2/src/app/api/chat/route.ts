@@ -169,7 +169,7 @@ function sanitizeBigInts<T>(data: T): T {
  * Generate unique session ID for request tracing
  */
 function generateSessionId(): string {
-  return `chat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  return `chat_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
 }
 
 // =============================================================================
