@@ -225,7 +225,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
     onChange('isProfessionalOccupation', checked);
     // Initialize with one empty method when checkbox is checked
     if (checked && (!values.additionalRecruitmentMethods || values.additionalRecruitmentMethods.length === 0)) {
-      onChange('additionalRecruitmentMethods', [{ method: '', date: '', description: '' }]);
+      onChange('additionalRecruitmentMethods', [{ method: '', date: '', description: '' }] as AdditionalRecruitmentMethod[]);
     }
   };
 
@@ -237,20 +237,20 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
 
   const addMethod = () => {
     if (methods.length < 3) {
-      const newMethods = [...methods, { method: '', date: '', description: '' }];
+      const newMethods: AdditionalRecruitmentMethod[] = [...methods, { method: '', date: '', description: '' }];
       onChange('additionalRecruitmentMethods', newMethods);
     }
   };
 
   const removeMethod = (index: number) => {
     if (methods.length > 1) {
-      const newMethods = methods.filter((_, i) => i !== index);
+      const newMethods: AdditionalRecruitmentMethod[] = methods.filter((_, i) => i !== index);
       onChange('additionalRecruitmentMethods', newMethods);
     }
   };
 
   const updateMethod = (index: number, field: keyof AdditionalRecruitmentMethod, value: string) => {
-    const newMethods = methods.map((m, i) =>
+    const newMethods: AdditionalRecruitmentMethod[] = methods.map((m, i) =>
       i === index ? { ...m, [field]: value } : m
     );
     onChange('additionalRecruitmentMethods', newMethods);
