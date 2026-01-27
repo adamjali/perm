@@ -106,10 +106,18 @@ type LooseDateFields<T> = {
       : T[K];
 };
 
+/**
+ * Loose input type for initialData that accepts Convex case documents.
+ * Convex returns plain strings for dates and includes extra fields (_id, _creationTime, etc.).
+ * The initializeFormData function extracts only the relevant form fields.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type CaseFormInitialData = Partial<LooseDateFields<CaseFormData>> & Record<string, any>;
+
 export interface CaseFormProps {
   mode: "add" | "edit";
   caseId?: Id<"cases">;
-  initialData?: Partial<LooseDateFields<CaseFormData>>;
+  initialData?: CaseFormInitialData;
   onSuccess: (formDataOrCaseId: CaseFormData | Id<"cases">) => void | Promise<void>;
   onCancel: () => void;
 }
