@@ -91,10 +91,25 @@ export { DEFAULT_FORM_DATA, initializeFormData, errorsToFieldMap } from "./case-
 // TYPES
 // ============================================================================
 
+/**
+ * Loose type for initial data that accepts plain strings for date fields.
+ * Convex returns plain strings, not branded ISODateString types.
+ * The form initialization handles the conversion.
+ */
+type LooseDateFields<T> = {
+  [K in keyof T]: T[K] extends string & { readonly [key: symbol]: true }
+    ? string | T[K]
+    : T[K] extends (infer U)[]
+      ? U extends { date: string & { readonly [key: symbol]: true } }
+        ? Array<Omit<U, 'date'> & { date: string }>
+        : T[K]
+      : T[K];
+};
+
 export interface CaseFormProps {
   mode: "add" | "edit";
   caseId?: Id<"cases">;
-  initialData?: Partial<CaseFormData>;
+  initialData?: Partial<LooseDateFields<CaseFormData>>;
   onSuccess: (formDataOrCaseId: CaseFormData | Id<"cases">) => void | Promise<void>;
   onCancel: () => void;
 }

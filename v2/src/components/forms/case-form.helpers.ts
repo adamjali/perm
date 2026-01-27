@@ -38,10 +38,14 @@ export const DEFAULT_FORM_DATA: Partial<CaseFormData> = {
  * Merge initialData with defaults for form state
  * In add mode: Apply defaults first, then overlay any provided initialData
  * In edit mode: Use initialData directly (it should be complete)
+ *
+ * Note: initialData is typed loosely to accept plain strings from Convex
+ * (which doesn't use branded ISODateString types).
  */
 export function initializeFormData(
   mode: "add" | "edit",
-  initialData?: Partial<CaseFormData>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialData?: Record<string, any>
 ): CaseFormData {
   // In add mode, merge defaults with any provided initialData (for pre-population)
   // In edit mode, use initialData directly (it should have all values from DB)
