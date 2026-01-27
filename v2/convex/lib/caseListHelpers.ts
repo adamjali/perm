@@ -293,9 +293,27 @@ export function sortCases(
         comparison = a.dates.updated - b.dates.updated;
         break;
 
-      case "employer":
-        comparison = a.employerName.toLowerCase().localeCompare(b.employerName.toLowerCase());
+      case "employer": {
+        // Custom sort: alphabetic first (A-Z), then non-alphabetic (#)
+        // This matches the client-side group display order
+        const aName = a.employerName.toLowerCase();
+        const bName = b.employerName.toLowerCase();
+        const aFirstChar = aName.charAt(0);
+        const bFirstChar = bName.charAt(0);
+        const aIsAlpha = /[a-z]/.test(aFirstChar);
+        const bIsAlpha = /[a-z]/.test(bFirstChar);
+
+        // Non-alphabetic names go last
+        if (aIsAlpha && !bIsAlpha) {
+          comparison = -1; // a (alphabetic) comes before b (non-alphabetic)
+        } else if (!aIsAlpha && bIsAlpha) {
+          comparison = 1; // b (alphabetic) comes before a (non-alphabetic)
+        } else {
+          // Both same category - use standard alphabetic comparison
+          comparison = aName.localeCompare(bName);
+        }
         break;
+      }
 
       case "status":
         comparison = compareCaseStatus(a.caseStatus, b.caseStatus);
