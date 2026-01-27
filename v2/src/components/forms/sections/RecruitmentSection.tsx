@@ -226,8 +226,9 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
 
   // ========== PROFESSIONAL OCCUPATION HANDLERS ==========
   // Type-safe handler for additionalRecruitmentMethods array changes
+  // Cast is required to bridge UI type (plain string dates) to schema type (branded ISODateString)
   const updateRecruitmentMethods = (methods: AdditionalRecruitmentMethod[]) => {
-    onChange('additionalRecruitmentMethods', methods);
+    onChange('additionalRecruitmentMethods', methods as CaseFormData['additionalRecruitmentMethods']);
   };
 
   const handleCheckboxChange = (checked: boolean) => {
@@ -281,7 +282,6 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
   // Get disabled states for fields with dependencies
   const sundaySecondDisabled = fieldDisabledStates?.sundayAdSecondDate;
   const jobOrderEndDisabled = fieldDisabledStates?.jobOrderEndDate;
-  const _noticeEndDisabled = fieldDisabledStates?.noticeOfFilingEndDate;
 
   // ========== QUICK SELECT FOR SECOND SUNDAY AD ==========
   const firstSundayIsValid = isValidSunday(values.sundayAdFirstDate);
