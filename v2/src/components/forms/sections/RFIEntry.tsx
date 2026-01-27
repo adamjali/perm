@@ -12,6 +12,7 @@ import { CheckCircle2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getRfiRfeUrgency, type UrgencyLevelWithCompletion } from "@/lib/status/urgency";
 import { calculateRFIDueDate } from "@/lib/perm";
+import type { ISODateString } from "@/lib/perm";
 import type { CaseFormData, RFIEntry as RFIEntryType } from "@/lib/forms/case-form-schema";
 
 // ============================================================================
@@ -176,7 +177,7 @@ function RFIEntryComponent({
         const dueDate = value ? calculateRFIDueDate(value) : "";
         setValue(
           `rfiEntries.${index}.responseDueDate` as const,
-          dueDate,
+          dueDate as ISODateString,
           { shouldDirty: true }
         );
         // Clear any inline errors for responseSubmittedDate since due date changed
