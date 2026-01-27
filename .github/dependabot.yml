@@ -26,6 +26,13 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # Keep @ai-sdk/google on v2 (v3 has breaking changes)
+      - dependency-name: "@ai-sdk/google"
+        update-types: ["version-update:semver-major"]
+      # Keep @types/node on v20 (matches Vercel Node 20 LTS)
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
