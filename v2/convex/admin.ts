@@ -8,7 +8,7 @@
  * SECURITY: These are internal mutations - not exposed to the client.
  */
 
-import { internalMutation, internalAction, internalQuery } from "./_generated/server";
+import { internalMutation, internalAction, internalQuery, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
@@ -669,6 +669,25 @@ export const debugListFiltered = internalQuery({
     // Check for any cases with deletedAt set
     const deletedCases = allCases.filter((c) => c.deletedAt !== undefined);
 
+    // Check for duplicates
+    const duplicateCases = filteredCases.filter((c) => c.duplicateOf !== undefined);
+
+    // Check for the mystery userId
+    const mysteryUserId = "md717vgz2vwh83c3drbgd8daz57z9nnt";
+    const mysteryCases = await ctx.db
+      .query("cases")
+      .withIndex("by_user_id", (q) => q.eq("userId", mysteryUserId as Id<"users">))
+      .collect();
+
+    // Check if mystery user exists in users table
+    let mysteryUserExists = false;
+    try {
+      const mysteryUser = await ctx.db.get(mysteryUserId as Id<"users">);
+      mysteryUserExists = mysteryUser !== null;
+    } catch (e) {
+      mysteryUserExists = false;
+    }
+
     return {
       email: args.email,
       userId: user._id,
@@ -676,6 +695,12 @@ export const debugListFiltered = internalQuery({
       afterSoftDeleteFilter: afterDeleteFilter,
       softDeletedCount: deletedCases.length,
       deletedCaseIds: deletedCases.map(c => c._id),
+      duplicateCount: duplicateCases.length,
+      duplicateCaseIds: duplicateCases.map(c => c._id),
+      // Mystery user debug
+      mysteryUserId,
+      mysteryCasesCount: mysteryCases.length,
+      mysteryUserExists,
     };
   },
 });
@@ -700,6 +725,17 @@ export const debugCaseCounts = internalQuery({
       .query("cases")
       .withIndex("by_user_id", (q) => q.eq("userId", user._id))
       .collect();
+
+    // Also get ALL cases to find unique userIds
+    const allCasesInDb = await ctx.db.query("cases").collect();
+    const uniqueUserIds: Record<string, number> = {};
+    for (const c of allCasesInDb) {
+      const uid = c.userId as string;
+      uniqueUserIds[uid] = (uniqueUserIds[uid] || 0) + 1;
+    }
+    const sortedUserIds = Object.entries(uniqueUserIds)
+      .sort((a, b) => b[1] - a[1])
+      .map(([uid, count]) => ({ userId: uid, caseCount: count }));
 
     // Group by status
     const byStatus: Record<string, number> = {};
@@ -742,6 +778,137 @@ export const debugCaseCounts = internalQuery({
       activeByOldDefinition: cases.filter(c => !c.deletedAt && c.caseStatus !== "closed").length, // Old definition (only excludes closed)
       byStatus,
       byStatusProgress,
+      // All unique userIds in cases table with counts
+      allUniqueUserIds: sortedUserIds,
+      totalCasesInDb: allCasesInDb.length,
+    };
+  },
+});
+
+/**
+ * Debug query to list all users with their case counts.
+ * Run via: npx convex run admin:listUsersWithCaseCounts '{}'
+ */
+export const listUsersWithCaseCounts = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+
+    const results = [];
+    for (const user of users) {
+      const cases = await ctx.db
+        .query("cases")
+        .withIndex("by_user_id", (q) => q.eq("userId", user._id))
+        .collect();
+
+      const activeCases = cases.filter(c =>
+        !c.deletedAt &&
+        c.caseStatus !== "closed" &&
+        !(c.caseStatus === "i140" && c.progressStatus === "approved")
+      );
+
+      results.push({
+        userId: user._id,
+        email: user.email,
+        name: user.name,
+        totalCases: cases.length,
+        activeCases: activeCases.length,
+        deletedCases: cases.filter(c => c.deletedAt).length,
+      });
+    }
+
+    // Sort by totalCases descending
+    results.sort((a, b) => b.totalCases - a.totalCases);
+
+    return results;
+  },
+});
+
+/**
+ * Debug query to get all unique userIds in cases table with counts.
+ * Run via: npx convex run admin:debugAllCaseUserIds '{}'
+ */
+export const debugAllCaseUserIds = query({
+  args: {},
+  handler: async (ctx) => {
+    const allCases = await ctx.db.query("cases").collect();
+
+    const userIdCounts: Record<string, { total: number; active: number }> = {};
+
+    for (const c of allCases) {
+      const uid = c.userId as string;
+      if (!userIdCounts[uid]) {
+        userIdCounts[uid] = { total: 0, active: 0 };
+      }
+      userIdCounts[uid].total++;
+      if (!c.deletedAt && c.caseStatus !== "closed") {
+        userIdCounts[uid].active++;
+      }
+    }
+
+    // Sort by total descending
+    const sorted = Object.entries(userIdCounts)
+      .map(([userId, counts]) => ({ userId, ...counts }))
+      .sort((a, b) => b.total - a.total);
+
+    return {
+      totalCasesInTable: allCases.length,
+      uniqueUserIds: sorted.length,
+      userIdCounts: sorted,
+    };
+  },
+});
+
+/**
+ * Debug query to test case counts for a specific userId string.
+ * Run via: npx convex run admin:debugCasesByUserIdPublic '{"userId": "md717vgz2vwh83c3drbgd8daz57z9nnt"}'
+ */
+export const debugCasesByUserIdPublic = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    // Try querying with the userId as-is
+    const casesWithIndex = await ctx.db
+      .query("cases")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId as Id<"users">))
+      .take(1000);
+
+    // Also try without index (full table scan) for comparison
+    const allCases = await ctx.db.query("cases").collect();
+    const casesWithFilter = allCases.filter(c => c.userId === args.userId);
+
+    return {
+      inputUserId: args.userId,
+      casesWithIndex: casesWithIndex.length,
+      casesWithFilter: casesWithFilter.length,
+      totalCasesInTable: allCases.length,
+      uniqueUserIdsInCases: Array.from(new Set(allCases.map(c => c.userId))),
+    };
+  },
+});
+
+/**
+ * Debug query to test case counts for a specific userId string.
+ * Run via: npx convex run admin:debugCasesByUserId '{"userId": "md717vgz2vwh83c3drbgd8daz57z9nnt"}'
+ */
+export const debugCasesByUserId = internalQuery({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    // Try querying with the userId as-is
+    const casesWithIndex = await ctx.db
+      .query("cases")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId as Id<"users">))
+      .take(1000);
+
+    // Also try without index (full table scan) for comparison
+    const allCases = await ctx.db.query("cases").take(1000);
+    const casesWithFilter = allCases.filter(c => c.userId === args.userId);
+
+    return {
+      inputUserId: args.userId,
+      casesWithIndex: casesWithIndex.length,
+      casesWithFilter: casesWithFilter.length,
+      totalCasesInTable: allCases.length,
+      sampleUserIds: Array.from(new Set(allCases.slice(0, 20).map(c => c.userId))),
     };
   },
 });

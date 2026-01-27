@@ -67,6 +67,13 @@ export const list = query({
       return [];
     }
 
+    // Security: Verify userId exists in users table (protects against invalid/foreign auth tokens)
+    const userExists = await ctx.db.get(userId as Id<"users">);
+    if (!userExists) {
+      console.warn("[list] Invalid userId from auth token:", userId);
+      return [];
+    }
+
     // Query cases for user using the by_user_id index with reasonable limit
     const cases = await ctx.db
       .query("cases")
@@ -2469,6 +2476,20 @@ export const listFiltered = query({
       };
     }
 
+    // 1.5 Security: Verify userId exists in users table (protects against invalid/foreign auth tokens)
+    const userExists = await ctx.db.get(userId as Id<"users">);
+    if (!userExists) {
+      console.warn("[listFiltered] Invalid userId from auth token:", userId);
+      return {
+        cases: [],
+        pagination: createCaseListPagination({
+          page: 1,
+          pageSize: args.pageSize ?? 12,
+          totalCount: 0,
+        }),
+      };
+    }
+
     // 2. Query cases with ownership filter and reasonable limit
     const allCases = await ctx.db
       .query("cases")
@@ -2477,6 +2498,22 @@ export const listFiltered = query({
 
     // 3. Filter out soft-deleted cases
     let filteredCases = allCases.filter((c) => c.deletedAt === undefined);
+
+    // DEBUG: Log initial counts
+    console.log("[listFiltered DEBUG]", {
+      userId,
+      totalFromDB: allCases.length,
+      afterSoftDeleteFilter: filteredCases.length,
+      args: {
+        activeOnly: args.activeOnly,
+        status: args.status,
+        progressStatus: args.progressStatus,
+        favoritesOnly: args.favoritesOnly,
+        duplicatesOnly: args.duplicatesOnly,
+        page: args.page,
+        pageSize: args.pageSize,
+      },
+    });
 
     // 4. Apply status filter
     if (args.status !== undefined) {
@@ -2532,6 +2569,13 @@ export const listFiltered = query({
     const pageSize = args.pageSize ?? 12;
     const totalCount = sortedCases.length;
 
+    // DEBUG: Log final count
+    console.log("[listFiltered RESULT]", {
+      totalCount,
+      page,
+      pageSize,
+    });
+
     // If pageSize is 0, return all cases (no pagination)
     const paginatedCases = pageSize === 0
       ? sortedCases
@@ -2568,6 +2612,13 @@ export const listFilteredIds = query({
 
     // Return empty result if not authenticated
     if (userId === null) {
+      return [];
+    }
+
+    // 1.5 Security: Verify userId exists in users table (protects against invalid/foreign auth tokens)
+    const userExists = await ctx.db.get(userId as Id<"users">);
+    if (!userExists) {
+      console.warn("[listFilteredIds] Invalid userId from auth token:", userId);
       return [];
     }
 
