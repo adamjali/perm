@@ -637,3 +637,111 @@ export const createTestUserAndCopyData = internalAction({
     };
   },
 });
+
+/**
+ * Debug query to mimic listFiltered exactly.
+ * Run via: npx convex run admin:debugListFiltered '{"email": "admin@yahoo.com"}'
+ */
+export const debugListFiltered = internalQuery({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .first();
+
+    if (!user) {
+      return { error: "User not found", email: args.email };
+    }
+
+    // Exact same query as listFiltered
+    const allCases = await ctx.db
+      .query("cases")
+      .withIndex("by_user_id", (q) => q.eq("userId", user._id))
+      .take(1000);
+
+    const beforeDeleteFilter = allCases.length;
+
+    // Filter out soft-deleted cases
+    const filteredCases = allCases.filter((c) => c.deletedAt === undefined);
+    const afterDeleteFilter = filteredCases.length;
+
+    // Check for any cases with deletedAt set
+    const deletedCases = allCases.filter((c) => c.deletedAt !== undefined);
+
+    return {
+      email: args.email,
+      userId: user._id,
+      rawQueryCount: beforeDeleteFilter,
+      afterSoftDeleteFilter: afterDeleteFilter,
+      softDeletedCount: deletedCases.length,
+      deletedCaseIds: deletedCases.map(c => c._id),
+    };
+  },
+});
+
+/**
+ * Debug query to get case counts by status for a user.
+ * Run via: npx convex run admin:debugCaseCounts '{"email": "admin@yahoo.com"}'
+ */
+export const debugCaseCounts = internalQuery({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .first();
+
+    if (!user) {
+      return { error: "User not found", email: args.email };
+    }
+
+    const cases = await ctx.db
+      .query("cases")
+      .withIndex("by_user_id", (q) => q.eq("userId", user._id))
+      .collect();
+
+    // Group by status
+    const byStatus: Record<string, number> = {};
+    const byStatusProgress: Record<string, number> = {};
+    let deleted = 0;
+    let active = 0; // not closed, not completed
+    let completed = 0; // i140 + approved
+    let closed = 0;
+
+    for (const c of cases) {
+      if (c.deletedAt) {
+        deleted++;
+        continue;
+      }
+
+      const status = c.caseStatus || "unknown";
+      const progress = c.progressStatus || "unknown";
+      const combo = `${status}/${progress}`;
+
+      byStatus[status] = (byStatus[status] || 0) + 1;
+      byStatusProgress[combo] = (byStatusProgress[combo] || 0) + 1;
+
+      if (c.caseStatus === "closed") {
+        closed++;
+      } else if (c.caseStatus === "i140" && c.progressStatus === "approved") {
+        completed++;
+      } else {
+        active++;
+      }
+    }
+
+    return {
+      userId: user._id,
+      email: user.email,
+      totalCases: cases.length,
+      deleted,
+      active, // Excludes closed AND completed
+      completed,
+      closed,
+      activeByOldDefinition: cases.filter(c => !c.deletedAt && c.caseStatus !== "closed").length, // Old definition (only excludes closed)
+      byStatus,
+      byStatusProgress,
+    };
+  },
+});

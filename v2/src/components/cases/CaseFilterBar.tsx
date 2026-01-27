@@ -92,6 +92,8 @@ const PAGE_SIZE_OPTIONS = [6, 12, 24, 50] as const;
 const deriveTabFromFilters = (f: CaseListFilters): ShowByTab => {
   if (f.status === "closed") return "closed";
   if (f.status === "i140" && f.progressStatus === "approved") return "completed";
+  // If activeOnly is explicitly false with no status filters, show "all"
+  if (f.activeOnly === false && !f.status && !f.progressStatus) return "all";
   return "active";
 };
 
@@ -139,11 +141,16 @@ export function CaseFilterBar({
     } else if (filters.status === "closed") {
       setActiveTab("closed");
     } else if (!filters.status && !filters.progressStatus) {
-      // No status filters = Active tab (default view)
-      setActiveTab("active");
+      // Check activeOnly to determine if "active" or "all"
+      if (filters.activeOnly === false) {
+        setActiveTab("all");
+      } else {
+        // activeOnly true or undefined = Active tab (default view)
+        setActiveTab("active");
+      }
     }
     // If specific status is set but not complete/closed, don't change tab (user is filtering within active)
-  }, [filters.status, filters.progressStatus]);
+  }, [filters.status, filters.progressStatus, filters.activeOnly]);
 
   // ============================================================================
   // DEBOUNCED SEARCH
@@ -177,12 +184,12 @@ export function CaseFilterBar({
     switch (tab) {
       case "active":
         // Active = show all non-closed, non-completed cases
-        // Since we can't filter "not closed AND not completed" with single status,
-        // we clear filters and let the page apply special "active" logic
+        // Uses activeOnly filter to exclude closed and completed (i140 + approved)
         onFiltersChange({
           ...filters,
           status: undefined,
           progressStatus: undefined,
+          activeOnly: true,
         });
         break;
       case "completed":
@@ -191,6 +198,7 @@ export function CaseFilterBar({
           ...filters,
           status: "i140",
           progressStatus: "approved",
+          activeOnly: false,
         });
         break;
       case "closed":
@@ -199,14 +207,16 @@ export function CaseFilterBar({
           ...filters,
           status: "closed",
           progressStatus: undefined,
+          activeOnly: false,
         });
         break;
       case "all":
-        // All = clear status filters
+        // All = clear status filters, show everything
         onFiltersChange({
           ...filters,
           status: undefined,
           progressStatus: undefined,
+          activeOnly: false,
         });
         break;
     }

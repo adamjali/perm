@@ -2447,6 +2447,7 @@ export const listFiltered = query({
     searchQuery: v.optional(v.string()),
     favoritesOnly: v.optional(v.boolean()),
     duplicatesOnly: v.optional(v.boolean()),
+    activeOnly: v.optional(v.boolean()),
     sortBy: v.optional(v.string()),
     sortOrder: v.optional(v.string()),
     page: v.optional(v.number()),
@@ -2495,6 +2496,18 @@ export const listFiltered = query({
     // 6.5 Apply duplicates filter (show only cases marked as duplicates)
     if (args.duplicatesOnly === true) {
       filteredCases = filteredCases.filter((c) => c.duplicateOf !== undefined);
+    }
+
+    // 6.6 Apply activeOnly filter (exclude closed AND completed cases)
+    // Completed = i140 status + approved progress status
+    if (args.activeOnly === true) {
+      filteredCases = filteredCases.filter((c) => {
+        // Exclude closed cases
+        if (c.caseStatus === "closed") return false;
+        // Exclude completed cases (i140 + approved)
+        if (c.caseStatus === "i140" && c.progressStatus === "approved") return false;
+        return true;
+      });
     }
 
     // 7. Project each case to CaseCardData using helper function
@@ -2547,6 +2560,7 @@ export const listFilteredIds = query({
     searchQuery: v.optional(v.string()),
     favoritesOnly: v.optional(v.boolean()),
     duplicatesOnly: v.optional(v.boolean()),
+    activeOnly: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<Id<"cases">[]> => {
     // 1. Get authenticated user (null-safe for sign-out transitions)
@@ -2584,6 +2598,15 @@ export const listFilteredIds = query({
     // 7. Apply duplicates filter
     if (args.duplicatesOnly === true) {
       filteredCases = filteredCases.filter((c) => c.duplicateOf !== undefined);
+    }
+
+    // 7.5 Apply activeOnly filter (exclude closed AND completed cases)
+    if (args.activeOnly === true) {
+      filteredCases = filteredCases.filter((c) => {
+        if (c.caseStatus === "closed") return false;
+        if (c.caseStatus === "i140" && c.progressStatus === "approved") return false;
+        return true;
+      });
     }
 
     // 8. Apply search filter if provided (simple substring match for IDs query)
