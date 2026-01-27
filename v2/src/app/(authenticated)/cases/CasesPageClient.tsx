@@ -32,12 +32,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { motion, AnimatePresence } from "motion/react";
 import { SortableCaseCard } from "@/components/cases/SortableCaseCard";
 import { CaseFilterBar } from "@/components/cases/CaseFilterBar";
 import { CasePagination } from "@/components/cases/CasePagination";
 import { CaseListEmptyState } from "@/components/cases/CaseListEmptyState";
 import { SelectionBar } from "@/components/cases/SelectionBar";
 import { ImportModal } from "@/components/cases/ImportModal";
+import { ViewToggle, type ViewMode } from "@/components/cases/ViewToggle";
+import { CaseListView } from "@/components/cases/CaseListView";
 import { sortCases } from "../../../../convex/lib/caseListHelpers";
 import {
   exportFullCasesJSON,
@@ -58,6 +61,7 @@ import type { CaseStatus, ProgressStatus } from "../../../../convex/lib/dashboar
 
 const DEFAULT_PAGE_SIZE = 12;
 const PAGE_SIZE_STORAGE_KEY = "perm-tracker-page-size";
+const VIEW_MODE_STORAGE_KEY = "perm-tracker-view-mode";
 const DEFAULT_SORT: CaseListSort = {
   sortBy: "deadline",
   sortOrder: "asc",
@@ -91,6 +95,34 @@ function setStoredPageSize(size: number): void {
     localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(size));
   } catch (error) {
     // Handle quota exceeded or other storage errors
+    if (error instanceof DOMException && error.name === "QuotaExceededError") {
+      console.warn("[CasesPage] localStorage quota exceeded");
+    } else if (process.env.NODE_ENV === "development") {
+      console.warn("[CasesPage] localStorage write failed:", error);
+    }
+  }
+}
+
+function getStoredViewMode(): ViewMode {
+  if (typeof window === "undefined") return "card";
+  try {
+    const stored = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    if (stored === "list" || stored === "card") {
+      return stored;
+    }
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[CasesPage] localStorage read failed:", error);
+    }
+  }
+  return "card";
+}
+
+function setStoredViewMode(mode: ViewMode): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+  } catch (error) {
     if (error instanceof DOMException && error.name === "QuotaExceededError") {
       console.warn("[CasesPage] localStorage quota exceeded");
     } else if (process.env.NODE_ENV === "development") {
@@ -160,6 +192,16 @@ export function CasesPageClient() {
     parseURLPage(searchParams)
   );
   const [pageSize, setPageSize] = useState(() => getStoredPageSize());
+  const [viewMode, setViewMode] = useState<ViewMode>(() => getStoredViewMode());
+
+  // ============================================================================
+  // VIEW MODE HANDLER
+  // ============================================================================
+
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
+    setViewMode(mode);
+    setStoredViewMode(mode);
+  }, []);
 
   // ============================================================================
   // SELECTION MODE STATE
@@ -1070,11 +1112,14 @@ export function CasesPageClient() {
     <div className="space-y-6">
       {/* Page Header - responsive: stacks on mobile, horizontal on desktop */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="font-heading text-3xl font-bold">Cases</h1>
-          <p className="text-muted-foreground mt-1">
-            {totalCount} {totalCount === 1 ? "case" : "cases"}
-          </p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="font-heading text-3xl font-bold">Cases</h1>
+            <p className="text-muted-foreground mt-1">
+              {totalCount} {totalCount === 1 ? "case" : "cases"}
+            </p>
+          </div>
+          <ViewToggle view={viewMode} onChange={handleViewModeChange} />
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Button
@@ -1117,37 +1162,57 @@ export function CasesPageClient() {
         onPageSizeChange={handlePageSizeChange}
       />
 
-      {/* Case Cards Grid */}
+      {/* Case Cards/List View */}
       <div
         className="transition-opacity duration-200"
         style={{ opacity: isRefetching || isPending ? 0.6 : 1 }}
       >
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={paginatedCases.map((c) => c._id)}
-            strategy={verticalListSortingStrategy}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={viewMode}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedCases.map((caseData, index) => (
-                <SortableCaseCard
-                  key={caseData._id}
-                  case={caseData}
-                  index={index}
-                  selectionMode={selectionMode}
-                  isSelected={selectedCaseIds.has(caseData._id)}
-                  onSelect={handleSelectCase}
-                  onDeleteRequest={handleSingleCaseDeleteRequest}
-                  onArchiveRequest={handleSingleCaseArchiveRequest}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+            {viewMode === "card" ? (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={paginatedCases.map((c) => c._id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {paginatedCases.map((caseData, index) => (
+                      <SortableCaseCard
+                        key={caseData._id}
+                        case={caseData}
+                        index={index}
+                        selectionMode={selectionMode}
+                        isSelected={selectedCaseIds.has(caseData._id)}
+                        onSelect={handleSelectCase}
+                        onDeleteRequest={handleSingleCaseDeleteRequest}
+                        onArchiveRequest={handleSingleCaseArchiveRequest}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            ) : (
+              <CaseListView
+                cases={paginatedCases}
+                sortBy={sort.sortBy}
+                selectionMode={selectionMode}
+                selectedCaseIds={selectedCaseIds}
+                onSelect={handleSelectCase}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Pagination */}
