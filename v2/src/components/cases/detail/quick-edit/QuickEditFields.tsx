@@ -26,6 +26,7 @@ import { DateInput } from "@/components/forms/DateInput";
 import { getAllDateConstraints } from "@/lib/forms/date-constraints";
 import { useFormCalculations } from "@/hooks/useFormCalculations";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
+import type { ISODateString } from "@/lib/perm";
 import type { NextUpCaseData } from "../next-up-section.utils";
 import {
   type ActionConfig,
@@ -111,19 +112,19 @@ function convertToCaseFormData(caseData: NextUpCaseData): CaseFormData {
     i140FilingDate: caseData.i140FilingDate ?? undefined,
     i140ApprovalDate: caseData.i140ApprovalDate ?? undefined,
     i140DenialDate: caseData.i140DenialDate ?? undefined,
-    // RFI/RFE entries
+    // RFI/RFE entries - cast dates from plain strings to ISODateString branded type
     rfiEntries: caseData.rfiEntries?.map(e => ({
       id: crypto.randomUUID(),
-      receivedDate: e.receivedDate,
-      responseDueDate: e.responseDueDate,
-      responseSubmittedDate: e.responseSubmittedDate,
+      receivedDate: e.receivedDate as ISODateString,
+      responseDueDate: e.responseDueDate as ISODateString,
+      responseSubmittedDate: e.responseSubmittedDate as ISODateString | undefined,
       createdAt: Date.now(),
     })) ?? [],
     rfeEntries: caseData.rfeEntries?.map(e => ({
       id: crypto.randomUUID(),
-      receivedDate: e.receivedDate,
-      responseDueDate: e.responseDueDate,
-      responseSubmittedDate: e.responseSubmittedDate,
+      receivedDate: e.receivedDate as ISODateString,
+      responseDueDate: e.responseDueDate as ISODateString,
+      responseSubmittedDate: e.responseSubmittedDate as ISODateString | undefined,
       createdAt: Date.now(),
     })) ?? [],
     // Professional occupation
