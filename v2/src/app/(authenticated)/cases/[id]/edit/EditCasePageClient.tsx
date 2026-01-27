@@ -8,7 +8,7 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { api } from "../../../../../../convex/_generated/api";
 import type { Id, Doc } from "../../../../../../convex/_generated/dataModel";
-import { CaseForm } from "@/components/forms/CaseForm";
+import { CaseForm, type CaseFormInitialData } from "@/components/forms/CaseForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -390,11 +390,13 @@ export function EditCasePageClient() {
   }
 
   // Convert Convex case data to form data (handle BigInt conversion)
+  // Cast to CaseFormInitialData since Convex documents include extra fields
+  // that aren't in CaseFormData (e.g., _id, _creationTime, documents)
   const formData = {
     ...caseData,
     recruitmentApplicantsCount: Number(caseData.recruitmentApplicantsCount || 0),
     pwdWageAmount: caseData.pwdWageAmount !== undefined ? Number(caseData.pwdWageAmount) : undefined,
-  };
+  } as CaseFormInitialData;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 space-y-6">
