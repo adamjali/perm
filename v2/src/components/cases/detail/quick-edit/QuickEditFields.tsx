@@ -129,7 +129,10 @@ function convertToCaseFormData(caseData: NextUpCaseData): CaseFormData {
     })) ?? [],
     // Professional occupation
     isProfessionalOccupation: caseData.isProfessionalOccupation ?? false,
-    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods ?? [],
+    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods?.map(m => ({
+      ...m,
+      date: m.date as ISODateString,
+    })) ?? [],
     // Default values for other required fields
     priorityLevel: "normal",
     isFavorite: false,
