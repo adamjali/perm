@@ -16,6 +16,7 @@ import { useRecruitmentSection } from "@/components/forms/useCaseFormSection";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
 import type { AdditionalRecruitmentMethod } from "@/lib/shared/types";
+import type { CaseFormData } from "@/lib/forms/case-form-schema";
 
 // Import extracted constants and components
 import { US_STATES, RECRUITMENT_METHODS } from "./recruitment-section.constants";
@@ -187,26 +188,29 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
     onDateChange,
     onBlur,
   } = useRecruitmentSection(props as Parameters<typeof useRecruitmentSection>[0]);
+  // Generic input handler for text and number fields
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = event.target;
 
     // Convert number inputs to numeric values
     if (type === 'number') {
       const numericValue = value === '' ? undefined : Number(value);
-      onChange(name, numericValue);
+      (onChange as (field: string, value: string | number | undefined) => void)(name, numericValue);
     } else {
-      onChange(name, value || undefined);
+      (onChange as (field: string, value: string | undefined) => void)(name, value || undefined);
     }
   };
 
+  // Generic select handler
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = event.target;
-    onChange(name, value || undefined);
+    (onChange as (field: string, value: string | undefined) => void)(name, value || undefined);
   };
 
-  const handleDateChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Date change handler - returns a curried function for specific field
+  const handleDateChange = (field: keyof CaseFormData) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-    onChange(field, value || undefined);
+    (onChange as (field: string, value: string | undefined) => void)(field, value || undefined);
 
     // Trigger onDateChange callback if provided (for calculation logic)
     if (onDateChange) {
@@ -221,11 +225,16 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
   };
 
   // ========== PROFESSIONAL OCCUPATION HANDLERS ==========
+  // Type-safe handler for additionalRecruitmentMethods array changes
+  const updateRecruitmentMethods = (methods: AdditionalRecruitmentMethod[]) => {
+    onChange('additionalRecruitmentMethods', methods);
+  };
+
   const handleCheckboxChange = (checked: boolean) => {
     onChange('isProfessionalOccupation', checked);
     // Initialize with one empty method when checkbox is checked
     if (checked && (!values.additionalRecruitmentMethods || values.additionalRecruitmentMethods.length === 0)) {
-      onChange('additionalRecruitmentMethods', [{ method: '', date: '', description: '' }] as unknown as typeof values.additionalRecruitmentMethods);
+      updateRecruitmentMethods([{ method: '', date: '', description: '' }]);
     }
   };
 
@@ -237,23 +246,20 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
 
   const addMethod = () => {
     if (methods.length < 3) {
-      const newMethods: AdditionalRecruitmentMethod[] = [...methods, { method: '', date: '', description: '' }];
-      onChange('additionalRecruitmentMethods', newMethods as unknown as typeof values.additionalRecruitmentMethods);
+      updateRecruitmentMethods([...methods, { method: '', date: '', description: '' }]);
     }
   };
 
   const removeMethod = (index: number) => {
     if (methods.length > 1) {
-      const newMethods: AdditionalRecruitmentMethod[] = methods.filter((_, i) => i !== index);
-      onChange('additionalRecruitmentMethods', newMethods as unknown as typeof values.additionalRecruitmentMethods);
+      updateRecruitmentMethods(methods.filter((_, i) => i !== index));
     }
   };
 
   const updateMethod = (index: number, field: keyof AdditionalRecruitmentMethod, value: string) => {
-    const newMethods: AdditionalRecruitmentMethod[] = methods.map((m, i) =>
+    updateRecruitmentMethods(methods.map((m, i) =>
       i === index ? { ...m, [field]: value } : m
-    );
-    onChange('additionalRecruitmentMethods', newMethods as unknown as typeof values.additionalRecruitmentMethods);
+    ));
   };
 
   // Get constraints for professional recruitment dates

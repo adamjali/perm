@@ -27,6 +27,23 @@ export interface FieldDisabledState {
   reason?: string;
 }
 
+/**
+ * Type-safe field change handler.
+ *
+ * Uses generic constraint to ensure the value type matches the field type.
+ * This is the industry-standard pattern used by react-hook-form's setValue.
+ *
+ * @example
+ * // TypeScript correctly infers value type from field name:
+ * onChange('employerName', 'Acme Corp');  // ✅ string
+ * onChange('isProfessionalOccupation', true);  // ✅ boolean
+ * onChange('additionalRecruitmentMethods', [...]);  // ✅ AdditionalRecruitmentMethod[]
+ */
+export type FormFieldChangeHandler = <K extends keyof CaseFormData>(
+  field: K,
+  value: CaseFormData[K]
+) => void;
+
 export interface FormSectionContextValue {
   /**
    * Form mode: add (new case) or edit (existing case)
@@ -69,9 +86,10 @@ export interface FormSectionContextValue {
   fieldDisabledStates: Record<string, FieldDisabledState>;
 
   /**
-   * Generic change handler
+   * Type-safe field change handler.
+   * Field name determines the expected value type automatically.
    */
-  onChange: (field: string, value: CaseFormData[keyof CaseFormData]) => void;
+  onChange: FormFieldChangeHandler;
 
   /**
    * Date change handler (triggers calculations)
@@ -133,7 +151,7 @@ export interface FormSectionProviderProps {
   dateConstraints: Record<string, DateConstraint>;
   validationStates: Record<string, ValidationState>;
   fieldDisabledStates: Record<string, FieldDisabledState>;
-  onChange: (field: string, value: CaseFormData[keyof CaseFormData]) => void;
+  onChange: FormFieldChangeHandler;
   onDateChange: (field: string, value: string) => void;
   onBlur: (field: string, value: string | undefined) => void;
   isAutoStatusEnabled: boolean;
@@ -308,7 +326,8 @@ export function useBasicInfoSection(props?: {
   };
 
   const errors = props?.errors ?? context?.errors ?? {};
-  const onChange = props?.onChange ?? context?.onChange ?? (() => {});
+  // Cast FormFieldChangeHandler to simpler signature for backward compatibility
+  const onChange = (props?.onChange ?? context?.onChange ?? (() => {})) as (field: string, value: string) => void;
   // Don't provide noop fallback - let component handle undefined for fallback logic
   const onCaseStatusChange = props?.onCaseStatusChange ?? context?.onCaseStatusChange;
   const onProgressStatusChange = props?.onProgressStatusChange ?? context?.onProgressStatusChange;
@@ -392,11 +411,14 @@ export function useRecruitmentSection(props?: {
   dateConstraints?: Record<string, DateConstraint>;
   validationStates?: Record<string, ValidationState>;
   fieldDisabledStates?: Record<string, FieldDisabledState>;
-  onChange?: (field: string, value: CaseFormData[keyof CaseFormData]) => void;
+  onChange?: FormFieldChangeHandler;
   onDateChange?: (field: string, value: string) => void;
   onBlur?: (field: string, value: string | undefined) => void;
 }) {
   const context = useFormSectionContextOptional();
+
+  // Default no-op handler that satisfies the generic type
+  const noopOnChange: FormFieldChangeHandler = () => {};
 
   return {
     values: props?.values ?? context?.formData ?? {},
@@ -405,7 +427,7 @@ export function useRecruitmentSection(props?: {
     dateConstraints: props?.dateConstraints ?? context?.dateConstraints ?? {},
     validationStates: props?.validationStates ?? context?.validationStates ?? {},
     fieldDisabledStates: props?.fieldDisabledStates ?? context?.fieldDisabledStates ?? {},
-    onChange: props?.onChange ?? context?.onChange ?? (() => {}),
+    onChange: props?.onChange ?? context?.onChange ?? noopOnChange,
     onDateChange: props?.onDateChange ?? context?.onDateChange ?? (() => {}),
     onBlur: props?.onBlur ?? context?.onBlur ?? (() => {}),
   };

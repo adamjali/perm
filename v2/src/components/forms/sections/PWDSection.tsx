@@ -131,26 +131,29 @@ export function PWDSection(props: PWDSectionProps) {
     onBlur,
   } = usePWDSection(props);
 
+  // Generic input handler for text and number fields
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = event.target;
 
     // Convert number inputs to numeric values
     if (type === 'number') {
       const numericValue = value === '' ? undefined : Number(value);
-      onChange(name, numericValue);
+      (onChange as (field: string, value: string | number | undefined) => void)(name, numericValue);
     } else {
-      onChange(name, value || undefined);
+      (onChange as (field: string, value: string | undefined) => void)(name, value || undefined);
     }
   };
 
+  // Generic select handler
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = event.target;
-    onChange(name, value || undefined);
+    (onChange as (field: string, value: string | undefined) => void)(name, value || undefined);
   };
 
+  // Date change handler - returns a curried function for specific field
   const handleDateChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-    onChange(field, value || undefined);
+    (onChange as (field: string, value: string | undefined) => void)(field, value || undefined);
 
     // Trigger onDateChange callback if provided (for calculation logic)
     if (onDateChange) {
