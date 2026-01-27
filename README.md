@@ -17,6 +17,14 @@
 
 ---
 
+## Screenshots
+
+![PERM Tracker Dashboard](hero_image.png)
+
+*Dashboard showing case management, deadline tracking, and timeline visualization*
+
+---
+
 ## Features
 
 ### Case Management
