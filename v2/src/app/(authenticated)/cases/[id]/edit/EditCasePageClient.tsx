@@ -390,13 +390,13 @@ export function EditCasePageClient() {
   }
 
   // Convert Convex case data to form data (handle BigInt conversion)
-  // Cast to CaseFormInitialData since Convex documents include extra fields
-  // that aren't in CaseFormData (e.g., _id, _creationTime, documents)
+  // Cast via unknown since Convex documents include extra fields (_id, _creationTime, documents)
+  // that aren't in CaseFormData. The initializeFormData helper extracts only relevant fields.
   const formData = {
     ...caseData,
     recruitmentApplicantsCount: Number(caseData.recruitmentApplicantsCount || 0),
     pwdWageAmount: caseData.pwdWageAmount !== undefined ? Number(caseData.pwdWageAmount) : undefined,
-  } as CaseFormInitialData;
+  } as unknown as CaseFormInitialData;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 space-y-6">
