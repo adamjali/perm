@@ -23,10 +23,7 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  // Fix workspace root detection with parent lockfiles
-  turbopack: {
-    root: process.cwd(),
-  },
+  // Empty config - plugins add their settings
 };
 
 // Apply next-intl plugin first, then Serwist
