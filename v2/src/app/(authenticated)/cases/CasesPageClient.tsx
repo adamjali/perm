@@ -109,6 +109,9 @@ function parseURLFilters(searchParams: URLSearchParams): CaseListFilters {
   const searchQuery = searchParams.get("search");
   const favoritesOnly = searchParams.get("favorites") === "true";
   const duplicatesOnly = searchParams.get("duplicates") === "true";
+  // activeOnly defaults to true (Active tab is default), false only when explicitly set
+  const activeOnlyParam = searchParams.get("activeOnly");
+  const activeOnly = activeOnlyParam === "false" ? false : true;
 
   return {
     status: status || undefined,
@@ -116,6 +119,7 @@ function parseURLFilters(searchParams: URLSearchParams): CaseListFilters {
     searchQuery: searchQuery || undefined,
     favoritesOnly: favoritesOnly || undefined,
     duplicatesOnly: duplicatesOnly || undefined,
+    activeOnly,
   };
 }
 
@@ -261,7 +265,8 @@ export function CasesPageClient() {
         prev.progressStatus === urlFilters.progressStatus &&
         prev.searchQuery === urlFilters.searchQuery &&
         prev.favoritesOnly === urlFilters.favoritesOnly &&
-        prev.duplicatesOnly === urlFilters.duplicatesOnly
+        prev.duplicatesOnly === urlFilters.duplicatesOnly &&
+        prev.activeOnly === urlFilters.activeOnly
       ) {
         return prev; // No change, return same reference
       }
@@ -291,6 +296,8 @@ export function CasesPageClient() {
       if (newFilters.searchQuery) params.set("search", newFilters.searchQuery);
       if (newFilters.favoritesOnly) params.set("favorites", "true");
       if (newFilters.duplicatesOnly) params.set("duplicates", "true");
+      // Only add activeOnly to URL when false (All tab) - true is the default
+      if (newFilters.activeOnly === false) params.set("activeOnly", "false");
       if (newSort.sortBy !== DEFAULT_SORT.sortBy) params.set("sort", newSort.sortBy);
       if (newSort.sortOrder !== DEFAULT_SORT.sortOrder) params.set("order", newSort.sortOrder);
       if (newPage > 1) params.set("page", newPage.toString());
@@ -357,6 +364,7 @@ export function CasesPageClient() {
     searchQuery: filters.searchQuery,
     favoritesOnly: filters.favoritesOnly,
     duplicatesOnly: filters.duplicatesOnly,
+    activeOnly: filters.activeOnly,
     sortBy: sort.sortBy,
     sortOrder: sort.sortOrder,
     page: currentPage,
@@ -557,6 +565,7 @@ export function CasesPageClient() {
         searchQuery: filters.searchQuery,
         favoritesOnly: filters.favoritesOnly,
         duplicatesOnly: filters.duplicatesOnly,
+        activeOnly: filters.activeOnly,
       });
       setSelectedCaseIds(new Set(allIds));
     } catch (error) {
