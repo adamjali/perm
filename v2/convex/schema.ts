@@ -54,7 +54,6 @@ export default defineSchema({
     name: v.optional(v.string()),
     image: v.optional(v.string()),
     email: v.optional(v.string()),
-    emailVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
     phone: v.optional(v.string()),
     deletedAt: v.optional(v.number()),
