@@ -4,10 +4,11 @@
  * Client component that handles pending terms acceptance after OAuth redirect.
  *
  * This component:
- * 1. Checks localStorage for pending terms acceptance (saved before Google OAuth from signup)
- * 2. If found and valid (not expired), calls acceptTermsOfService mutation
- * 3. If no pending terms AND no termsAcceptedAt, shows TermsAcceptanceModal
- * 4. Clears localStorage after successful recording
+ * 1. If authenticated but no profile exists, creates one (safety net for callback failures)
+ * 2. Checks localStorage for pending terms acceptance (saved before Google OAuth from signup)
+ * 3. If found and valid (not expired), calls acceptTermsOfService mutation
+ * 4. If no pending terms AND no termsAcceptedAt, shows TermsAcceptanceModal
+ * 5. Clears localStorage after successful recording
  *
  * Must be rendered inside a ConvexProvider with authenticated user.
  *
@@ -29,9 +30,16 @@
  * 5. Shows TermsAcceptanceModal
  * 6. User accepts → mutation called → modal closes
  *
+ * Flow C (Account re-creation after deletion):
+ * 1. User deletes account (all data wiped)
+ * 2. User signs in with Google again
+ * 3. New user created but afterUserCreatedOrUpdated callback may fail
+ * 4. This component detects null profile + authenticated → creates profile
+ * 5. New profile has no termsAcceptedAt → shows TermsAcceptanceModal
+ *
  * Phase: 32 (Data Migration / Go-Live polish)
  * Created: 2026-01-13
- * Updated: 2026-01-15 - Added modal for new Google users from login page
+ * Updated: 2026-02-02 - Handle null profile when authenticated (safety net for callback failures)
  */
 
 "use client";
@@ -39,7 +47,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useMutation, useQuery } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import {
   getPendingTermsAcceptance,
@@ -50,9 +58,12 @@ import { TermsAcceptanceModal } from "./TermsAcceptanceModal";
 export function PendingTermsHandler() {
   const router = useRouter();
   const { signOut } = useAuthActions();
+  const { isAuthenticated } = useConvexAuth();
   const acceptTerms = useMutation(api.users.acceptTermsOfService);
+  const ensureProfile = useMutation(api.users.ensureUserProfile);
   const profile = useQuery(api.users.currentUserProfile);
   const hasProcessed = useRef(false);
+  const hasCreatedProfile = useRef(false);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -66,8 +77,25 @@ export function PendingTermsHandler() {
       return; // Still loading
     }
 
-    // If profile is null, user might not be authenticated yet
+    // If profile is null, check if user is authenticated
+    // Profile can be null in two cases:
+    // 1. User is not authenticated (getCurrentUserIdOrNull returns null)
+    // 2. User IS authenticated but profile record doesn't exist (e.g. callback failure after deletion + re-signup)
     if (profile === null) {
+      if (!isAuthenticated || hasCreatedProfile.current) {
+        return;
+      }
+      // Safety net: create the missing profile. The reactive query will
+      // re-fire once the profile exists, and the terms check will proceed.
+      hasCreatedProfile.current = true;
+      ensureProfile({})
+        .then(() => {
+          console.log("[PendingTermsHandler] Safety net: created missing user profile");
+        })
+        .catch((error) => {
+          console.error("[PendingTermsHandler] Failed to create user profile:", error);
+          hasCreatedProfile.current = false;
+        });
       return;
     }
 
@@ -105,7 +133,7 @@ export function PendingTermsHandler() {
     // Show the terms acceptance modal
     hasProcessed.current = true;
     setShowModal(true);
-  }, [profile, acceptTerms]);
+  }, [profile, acceptTerms, isAuthenticated, ensureProfile]);
 
   // Handle modal acceptance
   const handleAccepted = () => {

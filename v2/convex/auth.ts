@@ -108,9 +108,17 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
     async afterUserCreatedOrUpdated(ctx, { userId }) {
       // Call internal mutation to ensure user profile exists
       // This is idempotent - it does nothing if profile already exists
-      await ctx.runMutation(internal.users.ensureUserProfileInternal, {
-        userId: userId as Id<"users">,
-      });
+      try {
+        await ctx.runMutation(internal.users.ensureUserProfileInternal, {
+          userId: userId as Id<"users">,
+        });
+      } catch (error) {
+        // Log but don't block auth - PendingTermsHandler has a safety net
+        console.error(
+          `[auth] Failed to ensure user profile for ${userId}:`,
+          error instanceof Error ? error.message : error
+        );
+      }
     },
   },
 });
