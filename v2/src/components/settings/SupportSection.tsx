@@ -44,8 +44,10 @@ import {
   ExternalLink,
   Trash2,
   AlertTriangle,
+  Zap,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
+import DeleteNowDialog from "./DeleteNowDialog";
 
 // ============================================================================
 // CONSTANTS
@@ -82,6 +84,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteNowOpen, setDeleteNowOpen] = useState(false);
 
   // Auth for sign out
   const { signOut } = useAuthActions();
@@ -114,7 +117,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
     try {
       await requestDeletion({});
       toast.success(
-        `Account deletion scheduled. You have ${GRACE_PERIOD_DAYS} days to cancel.`
+        `Account deletion scheduled. You have ${GRACE_PERIOD_DAYS} days to cancel. Sign in and go to Settings to cancel.`
       );
       setConfirmDeleteOpen(false);
       setDeleteConfirmation("");
@@ -286,14 +289,23 @@ export default function SupportSection({ profile }: SupportSectionProps) {
                   </p>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCancelDeletion}
-                className="flex-shrink-0"
-              >
-                Cancel Deletion
-              </Button>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setDeleteNowOpen(true)}
+                >
+                  <Zap className="w-3 h-3 mr-1" />
+                  Delete Now
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelDeletion}
+                >
+                  Cancel Deletion
+                </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -391,6 +403,9 @@ export default function SupportSection({ profile }: SupportSectionProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Now Dialog */}
+      <DeleteNowDialog open={deleteNowOpen} onOpenChange={setDeleteNowOpen} />
     </div>
   );
 }

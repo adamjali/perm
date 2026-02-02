@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 /**
  * @fileoverview Tests for SupportSection component
  * @see v2/src/components/settings/SupportSection.tsx
@@ -56,6 +55,7 @@ vi.mock("@convex-dev/auth/react", () => ({
 // Mock Convex hooks
 const mockRequestDeletion = vi.fn();
 const mockCancelDeletion = vi.fn();
+const mockImmediateDelete = vi.fn();
 vi.mock("convex/react", () => ({
   useMutation: (ref: unknown) => {
     // Return appropriate mock based on which mutation is being used
@@ -65,6 +65,7 @@ vi.mock("convex/react", () => ({
     }
     return mockRequestDeletion;
   },
+  useAction: () => mockImmediateDelete,
 }));
 
 // Mock auth-aware toast wrapper (not sonner directly)
@@ -103,6 +104,7 @@ describe("SupportSection", () => {
     // Set up mock defaults
     mockRequestDeletion.mockResolvedValue(undefined);
     mockCancelDeletion.mockResolvedValue(undefined);
+    mockImmediateDelete.mockResolvedValue({ success: true });
   });
 
   // ============================================================================
@@ -409,6 +411,29 @@ describe("SupportSection", () => {
       expect(screen.getByText(/Notification preferences and history/)).toBeInTheDocument();
       expect(screen.getByText(/Calendar sync settings/)).toBeInTheDocument();
       expect(screen.getByText(/Your user profile/)).toBeInTheDocument();
+    });
+
+    it("shows Delete Now button when deletion is scheduled", () => {
+      renderWithProviders(<SupportSection profile={scheduledDeletionProfile} />);
+
+      const deleteNowButton = screen.getByRole("button", { name: /Delete Now/i });
+      expect(deleteNowButton).toBeInTheDocument();
+    });
+
+    it("does not show Delete Now button when no deletion scheduled", () => {
+      renderWithProviders(<SupportSection profile={defaultProfile} />);
+
+      expect(screen.queryByRole("button", { name: /Delete Now/i })).not.toBeInTheDocument();
+    });
+
+    it("opens DeleteNowDialog when Delete Now is clicked", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<SupportSection profile={scheduledDeletionProfile} />);
+
+      const deleteNowButton = screen.getByRole("button", { name: /Delete Now/i });
+      await user.click(deleteNowButton);
+
+      expect(screen.getByText("Delete Account Now")).toBeInTheDocument();
     });
   });
 
