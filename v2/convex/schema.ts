@@ -56,6 +56,7 @@ export default defineSchema({
     email: v.optional(v.string()),
     isAnonymous: v.optional(v.boolean()),
     phone: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()), // Set by @convex-dev/auth on email verification
     deletedAt: v.optional(v.number()),
   })
     .index("email", ["email"])
