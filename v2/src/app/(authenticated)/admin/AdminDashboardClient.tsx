@@ -10,8 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminDashboardClient() {
-  const { isAdmin, isLoading: authLoading } = useAdminAuth();
-  const dashboardData = useQuery(api.admin.getAdminDashboardData);
+  const { isAdmin, isLoading: authLoading, isSigningOut } = useAdminAuth();
+  const dashboardData = useQuery(
+    api.admin.getAdminDashboardData,
+    isSigningOut ? "skip" : undefined
+  );
 
   // Loading state
   if (authLoading || dashboardData === undefined) {
