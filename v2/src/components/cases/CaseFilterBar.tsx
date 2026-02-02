@@ -323,7 +323,6 @@ export function CaseFilterBar({
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         {/* Search Input */}
         <div data-testid="search-input-container" className="relative flex-1 group">
-          <Search className="absolute left-3 top-1/2 z-20 size-5 -translate-y-1/2 text-foreground/60 dark:text-foreground/50 pointer-events-none transition-transform duration-150 group-hover:-translate-y-[calc(50%+1px)]" />
           <Input
             type="text"
             placeholder="Search cases..."
@@ -331,6 +330,7 @@ export function CaseFilterBar({
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-11 h-11 text-base"
           />
+          <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-foreground/60 dark:text-foreground/50 pointer-events-none transition-transform duration-150 group-hover:-translate-y-[calc(50%+1px)]" />
         </div>
 
         {/* Case Status Dropdown */}

@@ -272,13 +272,13 @@ export function TemplateManagementModal({
               {/* Search */}
               <div className="p-3 border-b border-border">
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/60 pointer-events-none z-10" />
                   <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search..."
                     className="pl-8 border-2 text-sm min-h-[44px]"
                   />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/60 pointer-events-none" />
                 </div>
               </div>
 
