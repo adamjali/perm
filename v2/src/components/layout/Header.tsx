@@ -68,7 +68,7 @@ function UserMenu({ userName }: UserMenuProps) {
     setIsOpen(false);
     try {
       await signOut();
-      router.push("/login");
+      window.location.href = "/login";
     } catch (error) {
       console.error("Sign out error:", error);
       cancelSignOut();
@@ -140,7 +140,6 @@ function UserMenu({ userName }: UserMenuProps) {
 
 export default function Header(): React.ReactElement {
   const pathname = usePathname();
-  const router = useRouter();
   const user = useQuery(api.users.currentUser);
   const { signOut } = useAuthActions();
   const { isSigningOut, beginSignOut, cancelSignOut } = useAuthContext();
@@ -158,7 +157,7 @@ export default function Header(): React.ReactElement {
     beginSignOut();
     try {
       await signOut();
-      router.push("/login");
+      window.location.href = "/login";
     } catch (error) {
       console.error("Sign out error:", error);
       cancelSignOut();
