@@ -471,7 +471,7 @@ export function UsersTable({ users }: UsersTableProps) {
             </CardTitle>
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1 sm:min-w-[300px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground/60 pointer-events-none z-10" />
                 <Input
                   placeholder="Search email, name, type, status, ID..."
                   value={searchQuery}
