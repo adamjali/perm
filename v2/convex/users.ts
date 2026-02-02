@@ -1,4 +1,4 @@
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation, action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
@@ -806,5 +806,107 @@ export const cancelAccountDeletion = mutation({
     });
 
     return { success: true };
+  },
+});
+
+/**
+ * Internal helper to prepare an account for immediate deletion.
+ *
+ * Cancels the scheduled job, sets deletedAt to the past so the
+ * permanentlyDeleteAccount guard passes, and returns user info for email.
+ */
+export const prepareImmediateDeletion = internalMutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, { userId }) => {
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (!profile) {
+      throw new Error("User profile not found");
+    }
+
+    if (!profile.deletedAt) {
+      throw new Error("No deletion scheduled for this account");
+    }
+
+    if (profile.deletedAt < Date.now()) {
+      throw new Error("Grace period has expired. Account is being deleted automatically.");
+    }
+
+    // Cancel the existing scheduled deletion job
+    if (profile.scheduledDeletionJobId) {
+      await ctx.scheduler.cancel(profile.scheduledDeletionJobId);
+    }
+
+    // Get user info for email before deletion
+    const user = await ctx.db.get(userId);
+    const email = user?.email;
+    const userName = profile.fullName || user?.name || user?.email || "User";
+
+    // Set deletedAt to past so permanentlyDeleteAccount guard passes
+    await ctx.db.patch(userId, {
+      deletedAt: Date.now() - 1000,
+    });
+    await ctx.db.patch(profile._id, {
+      deletedAt: Date.now() - 1000,
+      scheduledDeletionJobId: undefined,
+      updatedAt: Date.now(),
+    });
+
+    return { email, userName };
+  },
+});
+
+/**
+ * Immediately delete a user's account.
+ *
+ * This bypasses the 30-day grace period for users who have already
+ * scheduled deletion. Sends a confirmation email, then permanently
+ * deletes all user data.
+ *
+ * Precondition: User must have an active scheduled deletion (deletedAt set and in future).
+ *
+ * @returns Object with success status
+ */
+export const immediateAccountDeletion = action({
+  args: {},
+  handler: async (ctx): Promise<{ success: boolean; message: string }> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject.split("|")[0] as Id<"users">;
+
+    // Prepare: cancel scheduled job, set deletedAt to past, get user info
+    const { email, userName } = await ctx.runMutation(
+      internal.users.prepareImmediateDeletion,
+      { userId }
+    );
+
+    // Send confirmation email before deletion
+    if (email) {
+      try {
+        await ctx.runAction(
+          internal.notificationActions.sendImmediateDeletionEmail,
+          { to: email, userName }
+        );
+      } catch (emailError) {
+        // Log but don't block deletion on email failure
+        log.error("Failed to send immediate deletion email", {
+          error: emailError instanceof Error ? emailError.message : "Unknown error",
+        });
+      }
+    }
+
+    // Permanently delete all user data
+    await ctx.runMutation(internal.scheduledJobs.permanentlyDeleteAccount, {
+      userId,
+    });
+
+    return { success: true, message: "Account permanently deleted" };
   },
 });

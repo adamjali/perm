@@ -435,6 +435,61 @@ export const sendAccountDeletionEmail = internalAction({
   },
 });
 
+/**
+ * Send immediate account deletion confirmation email.
+ *
+ * Sent when a user chooses to delete their account immediately
+ * (bypassing the 30-day grace period). Uses the same template
+ * as scheduled deletion but with immediate=true for different copy.
+ *
+ * @param to - Recipient email address
+ * @param userName - User's display name or email
+ */
+export const sendImmediateDeletionEmail = internalAction({
+  args: {
+    to: v.string(),
+    userName: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const appUrl = getAppUrl();
+    const supportUrl = "mailto:support@permtracker.app";
+
+    const { AccountDeletionConfirm } = await import(
+      "../src/emails/AccountDeletionConfirm"
+    );
+
+    const html = await render(
+      AccountDeletionConfirm({
+        userName: args.userName,
+        deletionDate: new Date().toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        cancelUrl: appUrl, // Not used when immediate=true, but required by type
+        supportUrl,
+        immediate: true,
+      })
+    );
+
+    const resend = getResend();
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [args.to],
+      subject: "Account Deleted - PERM Tracker",
+      html,
+    });
+
+    if (error) {
+      log.error('Failed to send immediate deletion confirmation email', { error: error.message, to: args.to });
+      throw new Error(`Email failed: ${error.message}`);
+    }
+
+    log.info('Immediate deletion confirmation email sent', { to: args.to });
+  },
+});
+
 // ============================================================================
 // WEEKLY DIGEST EMAIL
 // ============================================================================

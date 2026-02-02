@@ -26,6 +26,8 @@ export interface AccountDeletionConfirmProps {
   cancelUrl: string;
   /** URL to contact support */
   supportUrl?: string;
+  /** If true, renders "Account Deleted" variant (no cancel CTA, immediate messaging) */
+  immediate?: boolean;
 }
 
 /**
@@ -37,20 +39,29 @@ export function AccountDeletionConfirm({
   deletionDate,
   cancelUrl,
   supportUrl = "mailto:support@permtracker.app",
+  immediate = false,
 }: AccountDeletionConfirmProps) {
-  const previewText = `Your PERM Tracker account is scheduled for deletion on ${deletionDate}`;
+  const previewText = immediate
+    ? "Your PERM Tracker account has been permanently deleted"
+    : `Your PERM Tracker account is scheduled for deletion on ${deletionDate}`;
 
   return (
     <EmailLayout previewText={previewText}>
       {/* Warning Banner */}
-      <Section style={styles.banner}>
-        <Text style={styles.bannerText}>Account Deletion Scheduled</Text>
+      <Section style={immediate ? styles.bannerImmediate : styles.banner}>
+        <Text style={styles.bannerText}>
+          {immediate ? "Account Deleted" : "Account Deletion Scheduled"}
+        </Text>
       </Section>
 
       {/* Main Header */}
       <EmailHeader
-        title="Account Deletion Request"
-        subtitle="We received your request to delete your account"
+        title={immediate ? "Account Deleted" : "Account Deletion Request"}
+        subtitle={
+          immediate
+            ? "Your account has been permanently deleted"
+            : "We received your request to delete your account"
+        }
         urgency="high"
       />
 
@@ -59,43 +70,76 @@ export function AccountDeletionConfirm({
         <Section style={styles.detailsCard}>
           <Text style={styles.greeting}>Hi {userName},</Text>
 
-          <Text style={styles.paragraph}>
-            We&apos;ve received your request to delete your PERM Tracker
-            account. Your account and all associated data will be permanently
-            deleted on:
-          </Text>
+          {immediate ? (
+            <>
+              <Text style={styles.paragraph}>
+                Your PERM Tracker account and all associated data have been
+                permanently deleted as requested on:
+              </Text>
 
-          {/* Deletion Date Callout */}
-          <Section style={styles.dateCallout}>
-            <Text style={styles.dateText}>{deletionDate}</Text>
-          </Section>
+              <Section style={styles.dateCalloutImmediate}>
+                <Text style={styles.dateText}>{deletionDate}</Text>
+              </Section>
 
-          <Text style={styles.paragraph}>
-            <strong>What happens next:</strong>
-          </Text>
+              <Text style={styles.paragraph}>
+                The following data has been permanently removed:
+              </Text>
 
-          <Text style={styles.listItem}>
-            You have <strong>30 days</strong> to cancel this request
-          </Text>
-          <Text style={styles.listItem}>
-            Your account remains active during this period
-          </Text>
-          <Text style={styles.listItem}>
-            All case data, settings, and history will be permanently deleted
-          </Text>
-          <Text style={styles.listItem}>
-            This action cannot be undone after the deletion date
-          </Text>
+              <Text style={styles.listItem}>
+                All PERM cases and related data
+              </Text>
+              <Text style={styles.listItem}>
+                Notification preferences and history
+              </Text>
+              <Text style={styles.listItem}>
+                Calendar sync settings
+              </Text>
+              <Text style={styles.listItem}>
+                Your user profile
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.paragraph}>
+                We&apos;ve received your request to delete your PERM Tracker
+                account. Your account and all associated data will be permanently
+                deleted on:
+              </Text>
+
+              <Section style={styles.dateCallout}>
+                <Text style={styles.dateText}>{deletionDate}</Text>
+              </Section>
+
+              <Text style={styles.paragraph}>
+                <strong>What happens next:</strong>
+              </Text>
+
+              <Text style={styles.listItem}>
+                You have <strong>30 days</strong> to cancel this request
+              </Text>
+              <Text style={styles.listItem}>
+                Your account remains active during this period
+              </Text>
+              <Text style={styles.listItem}>
+                All case data, settings, and history will be permanently deleted
+              </Text>
+              <Text style={styles.listItem}>
+                This action cannot be undone after the deletion date
+              </Text>
+            </>
+          )}
         </Section>
       </Section>
 
-      {/* Cancel CTA */}
-      <Section style={styles.cta}>
-        <Text style={styles.ctaText}>Changed your mind?</Text>
-        <EmailButton href={cancelUrl} variant="default">
-          Cancel Account Deletion
-        </EmailButton>
-      </Section>
+      {/* Cancel CTA - only for scheduled deletion */}
+      {!immediate && (
+        <Section style={styles.cta}>
+          <Text style={styles.ctaText}>Changed your mind?</Text>
+          <EmailButton href={cancelUrl} variant="default">
+            Cancel Account Deletion
+          </EmailButton>
+        </Section>
+      )}
 
       {/* Support Section */}
       <Section style={styles.support}>
@@ -117,6 +161,13 @@ export function AccountDeletionConfirm({
 const styles = {
   banner: {
     backgroundColor: "#F97316", // Orange - high priority
+    padding: "12px 16px",
+    textAlign: "center" as const,
+    marginBottom: "24px",
+    border: "3px solid #000000",
+  },
+  bannerImmediate: {
+    backgroundColor: "#DC2626", // Red - immediate/destructive
     padding: "12px 16px",
     textAlign: "center" as const,
     marginBottom: "24px",
@@ -152,6 +203,14 @@ const styles = {
   },
   dateCallout: {
     backgroundColor: "#F97316",
+    padding: "16px",
+    textAlign: "center" as const,
+    border: "3px solid #000000",
+    marginTop: "8px",
+    marginBottom: "16px",
+  },
+  dateCalloutImmediate: {
+    backgroundColor: "#DC2626",
     padding: "16px",
     textAlign: "center" as const,
     border: "3px solid #000000",

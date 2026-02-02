@@ -15,7 +15,7 @@ import {
   setupSchedulerTests,
   finishScheduledFunctions,
 } from "../test-utils/convex";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 // ============================================================================
 // USER PROFILE TESTS
@@ -422,6 +422,143 @@ describe("Account Deletion", () => {
       await expect(
         t.mutation(api.users.cancelAccountDeletion, {})
       ).rejects.toThrow();
+    });
+  });
+
+  describe("prepareImmediateDeletion (internal)", () => {
+    it("sets deletedAt to past when deletion is scheduled", async () => {
+      const t = createTestContext();
+      const authT = await createAuthenticatedContext(t, "Test User");
+
+      await authT.mutation(api.users.ensureUserProfile, {});
+      await finishScheduledFunctions(t);
+      await authT.mutation(api.users.requestAccountDeletion, {});
+      await finishScheduledFunctions(t);
+
+      // Get the user ID
+      const user = await authT.query(api.users.currentUser, {});
+      expect(user).not.toBeNull();
+
+      // Call prepareImmediateDeletion
+      const result = await authT.run(async (ctx) => {
+        return await ctx.runMutation(internal.users.prepareImmediateDeletion, {
+          userId: user!._id,
+        });
+      });
+      await finishScheduledFunctions(t);
+
+      expect(result.email).toBeDefined();
+      expect(result.userName).toBeDefined();
+
+      // Verify deletedAt is now in the past
+      const updatedUser = await authT.run(async (ctx) => {
+        return await ctx.db.get(user!._id);
+      });
+      expect(updatedUser?.deletedAt).toBeLessThan(Date.now());
+    });
+
+    it("throws error if no deletion is scheduled", async () => {
+      const t = createTestContext();
+      const authT = await createAuthenticatedContext(t, "Test User");
+
+      await authT.mutation(api.users.ensureUserProfile, {});
+      await finishScheduledFunctions(t);
+
+      const user = await authT.query(api.users.currentUser, {});
+
+      await expect(
+        authT.run(async (ctx) => {
+          return await ctx.runMutation(internal.users.prepareImmediateDeletion, {
+            userId: user!._id,
+          });
+        })
+      ).rejects.toThrow("No deletion scheduled");
+    });
+
+    it("throws error if profile does not exist", async () => {
+      const t = createTestContext();
+      const authT = await createAuthenticatedContext(t, "Test User");
+
+      // Don't create profile
+      const user = await authT.query(api.users.currentUser, {});
+
+      await expect(
+        authT.run(async (ctx) => {
+          return await ctx.runMutation(internal.users.prepareImmediateDeletion, {
+            userId: user!._id,
+          });
+        })
+      ).rejects.toThrow("User profile not found");
+    });
+
+    it("throws error if grace period has expired", async () => {
+      const t = createTestContext();
+      const authT = await createAuthenticatedContext(t, "Test User");
+
+      await authT.mutation(api.users.ensureUserProfile, {});
+      await finishScheduledFunctions(t);
+
+      const profile = await authT.query(api.users.currentUserProfile, {});
+
+      // Manually set deletedAt to past
+      await authT.run(async (ctx) => {
+        await ctx.db.patch(profile!._id, {
+          deletedAt: Date.now() - 1000,
+        });
+      });
+
+      const user = await authT.query(api.users.currentUser, {});
+
+      await expect(
+        authT.run(async (ctx) => {
+          return await ctx.runMutation(internal.users.prepareImmediateDeletion, {
+            userId: user!._id,
+          });
+        })
+      ).rejects.toThrow("Grace period has expired");
+    });
+
+    it("returns user email and name", async () => {
+      const t = createTestContext();
+      const authT = await createAuthenticatedContext(t, "Test User");
+
+      await authT.mutation(api.users.ensureUserProfile, {});
+      await finishScheduledFunctions(t);
+      await authT.mutation(api.users.requestAccountDeletion, {});
+      await finishScheduledFunctions(t);
+
+      const user = await authT.query(api.users.currentUser, {});
+
+      const result = await authT.run(async (ctx) => {
+        return await ctx.runMutation(internal.users.prepareImmediateDeletion, {
+          userId: user!._id,
+        });
+      });
+
+      expect(result.userName).toBeTruthy();
+    });
+
+    it("clears scheduledDeletionJobId on profile", async () => {
+      const t = createTestContext();
+      const authT = await createAuthenticatedContext(t, "Test User");
+
+      await authT.mutation(api.users.ensureUserProfile, {});
+      await finishScheduledFunctions(t);
+      await authT.mutation(api.users.requestAccountDeletion, {});
+      await finishScheduledFunctions(t);
+
+      const user = await authT.query(api.users.currentUser, {});
+
+      await authT.run(async (ctx) => {
+        return await ctx.runMutation(internal.users.prepareImmediateDeletion, {
+          userId: user!._id,
+        });
+      });
+      await finishScheduledFunctions(t);
+
+      // Profile should have scheduledDeletionJobId cleared
+      const profile = await authT.query(api.users.currentUserProfile, {});
+      expect(profile?.scheduledDeletionJobId).toBeUndefined();
     });
   });
 });
