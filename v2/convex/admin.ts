@@ -8,11 +8,13 @@
  * SECURITY: These are internal mutations - not exposed to the client.
  */
 
-import { internalMutation, internalAction, internalQuery, query } from "./_generated/server";
+import { internalMutation, internalAction, internalQuery, query, mutation, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import type { Id, Doc } from "./_generated/dataModel";
 import { Scrypt } from "lucia";
+import { isAdmin, getAdminDashboardDataHelper } from "./lib/admin";
+import { Resend } from "resend";
 
 /**
  * Test password verification for debugging.
@@ -922,159 +924,284 @@ export const debugCasesByUserId = internalQuery({
 export const getUserSummary = internalQuery({
   args: {},
   handler: async (ctx) => {
-    // Bulk-load all 5 tables
-    const [users, authAccounts, authSessions, userProfiles, cases] = await Promise.all([
-      ctx.db.query("users").collect(),
-      ctx.db.query("authAccounts").collect(),
-      ctx.db.query("authSessions").collect(),
-      ctx.db.query("userProfiles").collect(),
-      ctx.db.query("cases").collect(),
-    ]);
+    // Use shared helper from lib/admin.ts
+    return await getAdminDashboardDataHelper(ctx);
+  },
+});
 
-    // Build lookup maps: userId -> docs[]
-    const accountsByUserId = new Map<Id<"users">, Doc<"authAccounts">[]>();
+// ============================================================================
+// PUBLIC ADMIN QUERIES/MUTATIONS/ACTIONS
+// ============================================================================
+
+/**
+ * Get admin dashboard data (public query for admin UI)
+ *
+ * Returns comprehensive user summary with stats:
+ * - Total users, active, deleted, pending deletion
+ * - Per-user: email, name, cases, sessions, auth providers
+ * - Sorted by last activity
+ *
+ * @throws {Error} If not admin
+ */
+export const getAdminDashboardData = query({
+  args: {},
+  handler: async (ctx) => {
+    await isAdmin(ctx);
+    return await getAdminDashboardDataHelper(ctx);
+  },
+});
+
+/**
+ * Update user profile fields (admin only)
+ *
+ * Can update:
+ * - fullName (also syncs to users table name field)
+ * - userType (individual | firm_admin | firm_member)
+ *
+ * @throws {Error} If not admin or user/profile not found
+ */
+export const updateUserAdmin = mutation({
+  args: {
+    userId: v.id("users"),
+    fullName: v.optional(v.string()),
+    userType: v.optional(v.union(
+      v.literal("individual"),
+      v.literal("firm_admin"),
+      v.literal("firm_member")
+    )),
+  },
+  handler: async (ctx, args) => {
+    await isAdmin(ctx);
+
+    // Get user profile
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (!profile) {
+      throw new Error("User profile not found");
+    }
+
+    // Build patch object
+    const profilePatch: Record<string, unknown> = {
+      updatedAt: Date.now(),
+    };
+
+    if (args.fullName !== undefined) {
+      profilePatch.fullName = args.fullName;
+    }
+
+    if (args.userType !== undefined) {
+      profilePatch.userType = args.userType;
+    }
+
+    // Update profile
+    await ctx.db.patch(profile._id, profilePatch);
+
+    // If fullName was updated, also update users table
+    if (args.fullName !== undefined) {
+      await ctx.db.patch(args.userId, {
+        name: args.fullName,
+      });
+    }
+
+    return { success: true };
+  },
+});
+
+/**
+ * Delete user account (admin only)
+ *
+ * Permanently deletes user and all associated data:
+ * - All cases
+ * - All notifications
+ * - All conversations, messages, and tool cache
+ * - All audit logs
+ * - User case order
+ * - Timeline preferences
+ * - Job description templates
+ * - User profile
+ * - Auth accounts and sessions
+ * - User record
+ *
+ * NO grace period - immediate deletion (admin bypass)
+ *
+ * @throws {Error} If not admin or user not found
+ */
+export const deleteUserAdmin = mutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    await isAdmin(ctx);
+
+    const userId = args.userId;
+
+    // Verify user exists
+    const user = await ctx.db.get(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Delete all user's cases
+    const cases = await ctx.db
+      .query("cases")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const caseDoc of cases) {
+      await ctx.db.delete(caseDoc._id);
+    }
+
+    // Delete all user's notifications
+    const notifications = await ctx.db
+      .query("notifications")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const notif of notifications) {
+      await ctx.db.delete(notif._id);
+    }
+
+    // Delete conversations, messages, and tool cache
+    const conversations = await ctx.db
+      .query("conversations")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const conv of conversations) {
+      const messages = await ctx.db
+        .query("conversationMessages")
+        .withIndex("by_conversation_id", (q) => q.eq("conversationId", conv._id))
+        .collect();
+      for (const msg of messages) {
+        await ctx.db.delete(msg._id);
+      }
+
+      const cacheEntries = await ctx.db
+        .query("toolCache")
+        .withIndex("by_conversation_tool_hash", (q) => q.eq("conversationId", conv._id))
+        .collect();
+      for (const entry of cacheEntries) {
+        await ctx.db.delete(entry._id);
+      }
+
+      await ctx.db.delete(conv._id);
+    }
+
+    // Delete audit logs
+    const auditLogs = await ctx.db
+      .query("auditLogs")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const logEntry of auditLogs) {
+      await ctx.db.delete(logEntry._id);
+    }
+
+    // Delete custom case order
+    const caseOrders = await ctx.db
+      .query("userCaseOrder")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const order of caseOrders) {
+      await ctx.db.delete(order._id);
+    }
+
+    // Delete timeline preferences
+    const timelinePrefs = await ctx.db
+      .query("timelinePreferences")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const pref of timelinePrefs) {
+      await ctx.db.delete(pref._id);
+    }
+
+    // Delete job description templates
+    const templates = await ctx.db
+      .query("jobDescriptionTemplates")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const template of templates) {
+      await ctx.db.delete(template._id);
+    }
+
+    // Delete user profile
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .first();
+
+    if (profile) {
+      await ctx.db.delete(profile._id);
+    }
+
+    // Delete auth accounts
+    const authAccounts = await ctx.db
+      .query("authAccounts")
+      .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
+      .collect();
+
     for (const account of authAccounts) {
-      const existing = accountsByUserId.get(account.userId) ?? [];
-      existing.push(account);
-      accountsByUserId.set(account.userId, existing);
+      await ctx.db.delete(account._id);
     }
 
-    const sessionsByUserId = new Map<Id<"users">, Doc<"authSessions">[]>();
+    // Delete auth sessions
+    const authSessions = await ctx.db
+      .query("authSessions")
+      .withIndex("userId", (q) => q.eq("userId", userId))
+      .collect();
+
     for (const session of authSessions) {
-      const existing = sessionsByUserId.get(session.userId) ?? [];
-      existing.push(session);
-      sessionsByUserId.set(session.userId, existing);
+      await ctx.db.delete(session._id);
     }
 
-    const profileByUserId = new Map<Id<"users">, Doc<"userProfiles">>();
-    for (const profile of userProfiles) {
-      profileByUserId.set(profile.userId, profile);
+    // Finally delete the user record
+    await ctx.db.delete(userId);
+
+    return { success: true, message: `User ${user.email} permanently deleted` };
+  },
+});
+
+/**
+ * Send email as admin (admin only)
+ *
+ * Sends a plain text email from the admin notification address.
+ *
+ * @throws {Error} If not admin or email fails
+ */
+export const sendAdminEmail = action({
+  args: {
+    toEmail: v.string(),
+    subject: v.string(),
+    body: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Verify admin via getUserIdentity
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.email || identity.email !== "admin@yahoo.com") {
+      throw new Error("Unauthorized: Admin access required");
     }
 
-    const casesByUserId = new Map<Id<"users">, Doc<"cases">[]>();
-    for (const c of cases) {
-      const existing = casesByUserId.get(c.userId) ?? [];
-      existing.push(c);
-      casesByUserId.set(c.userId, existing);
-    }
+    // Initialize Resend
+    const resend = new Resend(process.env.AUTH_RESEND_KEY);
 
-    // Aggregate stats
-    let totalUsers = 0;
-    let activeUsers = 0;
-    let deletedUsers = 0;
-    let pendingDeletion = 0;
-    let usersWithCases = 0;
-
-    // Assemble per-user summary
-    const userSummaries = users.map((user) => {
-      const accounts = accountsByUserId.get(user._id) ?? [];
-      const sessions = sessionsByUserId.get(user._id) ?? [];
-      const profile = profileByUserId.get(user._id);
-      const userCases = casesByUserId.get(user._id) ?? [];
-
-      // Auth providers
-      const authProviders = accounts.map((a) => a.provider);
-
-      // Email verification: Google = always verified; password = check emailVerified field
-      const hasGoogle = accounts.some((a) => a.provider === "google");
-      const hasPasswordVerified = accounts.some(
-        (a) => a.provider === "password" && a.emailVerified !== undefined
-      );
-      const emailVerified = hasGoogle || hasPasswordVerified;
-
-      // Verification method
-      let verificationMethod: string;
-      if (accounts.length === 0) {
-        verificationMethod = "no_auth_account";
-      } else if (hasGoogle) {
-        verificationMethod = "google";
-      } else if (hasPasswordVerified) {
-        verificationMethod = "password_otp";
-      } else {
-        verificationMethod = "unverified";
-      }
-
-      // Session stats
-      const lastLoginTime = sessions.length > 0
-        ? Math.max(...sessions.map((s) => s._creationTime))
-        : null;
-      const totalLogins = sessions.length;
-
-      // Case stats
-      const totalCasesCount = userCases.length;
-      const activeCases = userCases.filter(
-        (c) =>
-          c.deletedAt === undefined &&
-          c.caseStatus !== "closed" &&
-          !(c.caseStatus === "i140" && c.progressStatus === "approved")
-      ).length;
-      const deletedCases = userCases.filter((c) => c.deletedAt !== undefined).length;
-      const lastCaseUpdate = userCases.length > 0
-        ? Math.max(...userCases.map((c) => c.updatedAt))
-        : null;
-
-      // Account status
-      let accountStatus: "active" | "pending_deletion" | "deleted";
-      if (user.deletedAt !== undefined) {
-        accountStatus = "deleted";
-      } else if (profile?.deletedAt !== undefined) {
-        accountStatus = "pending_deletion";
-      } else {
-        accountStatus = "active";
-      }
-
-      // Last activity: max of (lastLogin, lastCaseUpdate, profile updatedAt)
-      const activityCandidates: number[] = [];
-      if (lastLoginTime !== null) activityCandidates.push(lastLoginTime);
-      if (lastCaseUpdate !== null) activityCandidates.push(lastCaseUpdate);
-      if (profile?.updatedAt) activityCandidates.push(profile.updatedAt);
-      const lastActivity = activityCandidates.length > 0
-        ? Math.max(...activityCandidates)
-        : user._creationTime;
-
-      // Aggregate counters
-      totalUsers++;
-      if (accountStatus === "active") activeUsers++;
-      if (accountStatus === "deleted") deletedUsers++;
-      if (accountStatus === "pending_deletion") pendingDeletion++;
-      if (totalCasesCount > 0) usersWithCases++;
-
-      return {
-        userId: user._id,
-        email: user.email ?? "(no email)",
-        name: profile?.fullName ?? user.name ?? "(no name)",
-        emailVerified,
-        verificationMethod,
-        authProviders,
-        accountCreated: user._creationTime,
-        lastLoginTime,
-        totalLogins,
-        totalCases: totalCasesCount,
-        activeCases,
-        deletedCases,
-        lastCaseUpdate,
-        userType: profile ? profile.userType : "(no profile)",
-        firmName: profile?.firmName ?? null,
-        accountStatus,
-        deletedAt: user.deletedAt ?? null,
-        termsAccepted: profile?.termsAcceptedAt ?? null,
-        termsVersion: profile?.termsVersion ?? null,
-        lastActivity,
-      };
+    // Send email
+    const { error } = await resend.emails.send({
+      from: "PERM Tracker Admin <notifications@permtracker.app>",
+      to: [args.toEmail],
+      subject: args.subject,
+      text: args.body,
     });
 
-    // Sort by lastActivity descending
-    userSummaries.sort((a, b) => b.lastActivity - a.lastActivity);
+    if (error) {
+      throw new Error(`Email failed: ${error.message}`);
+    }
 
-    return {
-      generatedAt: Date.now(),
-      totalUsers,
-      activeUsers,
-      deletedUsers,
-      pendingDeletion,
-      usersWithCases,
-      totalCasesInSystem: cases.length,
-      users: userSummaries,
-    };
+    return { success: true };
   },
 });
