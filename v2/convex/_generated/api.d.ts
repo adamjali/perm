@@ -29,6 +29,7 @@ import type * as googleCalendarSync from "../googleCalendarSync.js";
 import type * as http from "../http.js";
 import type * as jobDescriptionTemplates from "../jobDescriptionTemplates.js";
 import type * as knowledge from "../knowledge.js";
+import type * as lib_admin from "../lib/admin.js";
 import type * as lib_audit from "../lib/audit.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_calendarEventExtractor from "../lib/calendarEventExtractor.js";
@@ -126,6 +127,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   jobDescriptionTemplates: typeof jobDescriptionTemplates;
   knowledge: typeof knowledge;
+  "lib/admin": typeof lib_admin;
   "lib/audit": typeof lib_audit;
   "lib/auth": typeof lib_auth;
   "lib/calendarEventExtractor": typeof lib_calendarEventExtractor;
