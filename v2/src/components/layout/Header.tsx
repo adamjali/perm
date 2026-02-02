@@ -9,8 +9,9 @@ import { toast } from "@/lib/toast";
 import { ChevronDown, Settings, LogOut, FileText, Loader2, Menu, X } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
-import { AUTHENTICATED_NAV_LINKS } from "@/lib/constants/navigation";
+import { AUTHENTICATED_NAV_LINKS, ADMIN_NAV_LINK } from "@/lib/constants/navigation";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
+import { ADMIN_EMAIL } from "@/lib/admin/adminAuth";
 import ThemeToggle from "./ThemeToggle";
 import { NavLink } from "@/components/ui/nav-link";
 import { NotificationBell, NotificationDropdown } from "@/components/notifications";
@@ -168,6 +169,14 @@ export default function Header(): React.ReactElement {
   // Enable toast notifications for new notifications
   useNotificationToasts();
 
+  // Check if user is admin
+  const isAdmin = user?.email === ADMIN_EMAIL;
+
+  // Build nav links with conditional admin link
+  const navLinks = isAdmin
+    ? [...AUTHENTICATED_NAV_LINKS, ADMIN_NAV_LINK]
+    : AUTHENTICATED_NAV_LINKS;
+
   return (
     <header className="sticky top-0 z-50 border-b-4 border-black bg-black dark:border-white dark:bg-black">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-8">
@@ -190,7 +199,7 @@ export default function Header(): React.ReactElement {
         <nav className="flex items-center gap-4 sm:gap-8">
           {/* Desktop Navigation - hidden on mobile */}
           <div className="hidden md:flex items-center gap-1">
-            {AUTHENTICATED_NAV_LINKS.map((link) => {
+            {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <NavLink
@@ -241,7 +250,7 @@ export default function Header(): React.ReactElement {
         <div className="absolute left-0 right-0 top-full border-b-4 border-white/20 bg-black px-4 py-4 md:hidden z-50">
           <nav className="flex flex-col gap-1">
             {/* Navigation Links */}
-            {AUTHENTICATED_NAV_LINKS.map((link) => {
+            {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <NavLink

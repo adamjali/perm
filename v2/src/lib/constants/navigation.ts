@@ -22,6 +22,14 @@ export const AUTHENTICATED_NAV_LINKS: NavLink[] = [
 ];
 
 /**
+ * Admin navigation link (conditionally shown based on user email)
+ */
+export const ADMIN_NAV_LINK: NavLink = {
+  href: "/admin",
+  label: "Admin",
+};
+
+/**
  * Navigation links for public/auth pages (non-home)
  * Used in AuthHeader component on pages like /demo, /login, /signup
  */
