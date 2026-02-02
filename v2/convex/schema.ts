@@ -20,7 +20,6 @@
  * - `conversationMessages` - Message history with tool calls
  *
  * ### Infrastructure
- * - `refreshTokens` - JWT refresh token rotation
  * - `auditLogs` - Append-only change tracking
  * - `userCaseOrder` - Custom drag-drop case ordering
  * - `timelinePreferences` - Timeline display settings
@@ -636,29 +635,6 @@ export default defineSchema({
   })
     .index("by_conversation_id", ["conversationId"])
     .index("by_created_at", ["createdAt"]),
-
-  // Token management for refresh token rotation
-  refreshTokens: defineTable({
-    userId: v.id("users"),
-    token: v.string(), // Hashed token
-    expiresAt: v.number(), // Unix timestamp
-    revokedAt: v.optional(v.number()),
-    revokedReason: v.optional(
-      v.union(
-        v.literal("rotation"),
-        v.literal("logout"),
-        v.literal("security"),
-        v.literal("expired")
-      )
-    ),
-    ipAddress: v.optional(v.string()),
-    userAgent: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user_id", ["userId"])
-    .index("by_token", ["token"])
-    .index("by_expires_at", ["expiresAt"]),
 
   // Audit logging for detailed change tracking (append-only)
   auditLogs: defineTable({

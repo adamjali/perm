@@ -1,21 +1,5 @@
 # CLAUDE.md - PERM Tracker
 
-**LSP Priority** (all agents have access):
-- `findReferences` > grep for "find usages"
-- `goToDefinition` > grep for "where defined"
-- `documentSymbol` > grep for "list symbols"
-- `incomingCalls`/`outgoingCalls` for call chains
-- FALLBACK to Glob/Grep if LSP errors or for pattern/text search
-
-**Quality Standards:**
-- DRY/KISS: Minimal, consolidated. No duplicates. Work within existing.
-- Clean code: Maintainable, abstract-able, scalable, readable.
-- Token-efficient: Save context, be concise.
-- **MUST use frontend-design skill (its a plug-in)** for UI work.
-- Subagents get full context + these standards.
-
----
-
 **Status:** Production | **Version:** 2.0.0 | **Last Updated:** January 2026
 
 ## Production URLs
@@ -64,13 +48,7 @@ pnpm dev
 | Codebase Architecture | [.planning/codebase/](.planning/codebase/) |
 | Planning & Roadmap | [.planning/](.planning/) |
 
-**See [v2/CLAUDE.md](v2/CLAUDE.md) for complete developer documentation** including:
-- Convex function patterns
-- PERM business logic API (calculators, validators, cascade)
-- Testing commands and patterns
-- Notification system (in-app, email, push)
-- AI chat integration
-- Calendar sync with Google Calendar
+**See [v2/CLAUDE.md](v2/CLAUDE.md) for complete developer documentation.**
 
 ---
 
@@ -81,8 +59,6 @@ All PERM business logic is centralized in:
 - **Frontend:** `v2/src/lib/perm/` (re-exports)
 
 **NEVER recreate deadline/validation logic elsewhere.**
-
-### Key APIs
 
 ```typescript
 import {
@@ -113,10 +89,6 @@ pnpm test:run      # Full suite (~9 min)
 Push to main triggers auto-deploy:
 - **Vercel:** Frontend rebuild
 - **Convex:** Backend sync
-
-```bash
-git add . && git commit -m "feat: feature" && git push origin main
-```
 
 ---
 

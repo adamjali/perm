@@ -11,10 +11,14 @@ import { NavLink } from "@/components/ui/nav-link";
 import { toast } from "@/lib/toast";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 
+type LoginStep = "login" | "verification";
+
 export function LoginPageClient() {
   const { signIn } = useAuthActions();
   const router = useRouter();
   const { completeSignOut } = useAuthContext();
+  const [step, setStep] = useState<LoginStep>("login");
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -29,22 +33,93 @@ export function LoginPageClient() {
 
     try {
       const formData = new FormData(e.currentTarget);
-      await signIn("password", formData);
-      router.push("/dashboard");
+      const result = await signIn("password", formData);
+
+      if (result.signingIn) {
+        router.push("/dashboard");
+      } else {
+        // Email not verified — provider re-sent a verification code
+        setEmail(formData.get("email") as string);
+        setStep("verification");
+        toast.info("Your email isn't verified yet. We've sent a new verification code.");
+      }
     } catch (error) {
-      // Log full error for debugging (visible in browser console)
       console.error("[Login Error]", error);
 
       const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("InvalidAccountId") || message.includes("invalid")) {
+      const lower = message.toLowerCase();
+      if (
+        lower.includes("invalidaccountid") ||
+        lower.includes("invalidsecret") ||
+        lower.includes("invalid credentials") ||
+        lower.includes("invalid")
+      ) {
         toast.error("Invalid email or password. Please try again.");
-      } else if (message.includes("not verified")) {
-        toast.error("Please verify your email before signing in.");
-      } else if (message.includes("rate limit") || message.includes("too many")) {
+      } else if (
+        lower.includes("toomanyfailedattempts") ||
+        lower.includes("rate limit") ||
+        lower.includes("too many")
+      ) {
         toast.error("Too many attempts. Please wait a moment and try again.");
+      } else if (
+        lower.includes("network") ||
+        lower.includes("offline") ||
+        lower.includes("failed to fetch") ||
+        lower.includes("load failed")
+      ) {
+        toast.error("Network error. Please check your connection and try again.");
       } else {
         console.warn("[Login] Unhandled error type:", message);
-        toast.error("Sign in failed. Please try again or contact support.");
+        toast.error("Invalid email or password. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerificationSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      await signIn("password", formData);
+
+      toast.success("Email verified! Signing you in.");
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("[Login Verification Error]", error);
+
+      const message = error instanceof Error ? error.message : String(error);
+      const lower = message.toLowerCase();
+      if (lower.includes("expired")) {
+        toast.error(
+          "Verification code expired. Go back and sign in again to get a new code."
+        );
+      } else if (
+        lower.includes("invalid") ||
+        lower.includes("incorrect") ||
+        lower.includes("could not verify")
+      ) {
+        toast.error("Invalid verification code. Please check and try again.");
+      } else if (
+        lower.includes("toomanyfailedattempts") ||
+        lower.includes("rate limit") ||
+        lower.includes("too many")
+      ) {
+        toast.error("Too many attempts. Please wait a moment and try again.");
+      } else if (
+        lower.includes("network") ||
+        lower.includes("offline") ||
+        lower.includes("failed to fetch") ||
+        lower.includes("load failed")
+      ) {
+        toast.error("Network error. Please check your connection and try again.");
+      } else {
+        console.warn("[Login Verification] Unhandled error type:", message);
+        toast.error("Verification failed. Please try again or contact support.");
       }
     } finally {
       setIsLoading(false);
@@ -56,21 +131,87 @@ export function LoginPageClient() {
     try {
       await signIn("google", { redirectTo: "/dashboard" });
     } catch (error) {
-      // Log full error for debugging (visible in browser console)
       console.error("[Google Sign In Error]", error);
 
       const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("popup") || message.includes("closed")) {
+      const lower = message.toLowerCase();
+      if (lower.includes("popup") || lower.includes("closed")) {
         toast.error("Sign in was cancelled. Please try again.");
-      } else if (message.includes("network") || message.includes("offline")) {
-        toast.error("Network error. Please check your connection.");
+      } else if (
+        lower.includes("network") ||
+        lower.includes("offline") ||
+        lower.includes("failed to fetch") ||
+        lower.includes("load failed")
+      ) {
+        toast.error("Network error. Please check your connection and try again.");
       } else {
         console.warn("[Google Sign In] Unhandled error type:", message);
-        toast.error("Failed to sign in with Google. Please try again.");
+        toast.error("Failed to sign in with Google. Please try again or contact support.");
       }
       setIsGoogleLoading(false);
     }
   };
+
+  if (step === "verification") {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-3xl font-heading uppercase tracking-tight">
+            Verify Email
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <p className="text-sm text-muted-foreground">
+            Your email hasn&apos;t been verified yet. We&apos;ve sent a 12-character
+            verification code to{" "}
+            <span className="font-semibold text-foreground">{email}</span>
+          </p>
+
+          <form onSubmit={handleVerificationSubmit} className="space-y-5">
+            <input type="hidden" name="email" value={email} />
+            <input type="hidden" name="flow" value="email-verification" />
+
+            <div className="space-y-2">
+              <Label htmlFor="code" className="text-xs uppercase mono font-bold tracking-widest">
+                Verification Code
+              </Label>
+              <Input
+                id="code"
+                name="code"
+                type="text"
+                placeholder="XXXXXXXXXXXX"
+                maxLength={12}
+                required
+                disabled={isLoading}
+                className="mono text-lg tracking-wider text-center uppercase"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              loading={isLoading}
+              loadingText="VERIFYING..."
+            >
+              VERIFY EMAIL
+            </Button>
+          </form>
+
+          <div className="pt-4 text-center border-t-2 border-black">
+            <button
+              onClick={() => setStep("login")}
+              className="text-sm font-bold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
+            >
+              &larr; Back to sign in
+            </button>
+            <p className="text-xs text-muted-foreground mt-2">
+              Didn&apos;t get the code? Go back and sign in again to resend it.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

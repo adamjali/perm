@@ -116,7 +116,11 @@ function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
 
 export function ViewToggle({ view, onChange, className }: ViewToggleProps) {
   const [hoveredView, setHoveredView] = useState<ViewMode | null>(null);
-  const buttonRefs = useRef<Map<ViewMode, HTMLButtonElement>>(new Map());
+  const cardButtonRef = useRef<HTMLButtonElement>(null);
+  const listButtonRef = useRef<HTMLButtonElement>(null);
+
+  const getButtonRef = (v: ViewMode) =>
+    v === "card" ? cardButtonRef : listButtonRef;
 
   const handleClick = useCallback(
     (newView: ViewMode) => {
@@ -126,15 +130,6 @@ export function ViewToggle({ view, onChange, className }: ViewToggleProps) {
     },
     [view, onChange]
   );
-
-  const handleButtonRef = useCallback((el: HTMLButtonElement | null) => {
-    if (el) {
-      const viewAttr = el.dataset.view as ViewMode | undefined;
-      if (viewAttr) {
-        buttonRefs.current.set(viewAttr, el);
-      }
-    }
-  }, []);
 
   return (
     <div
@@ -162,8 +157,7 @@ export function ViewToggle({ view, onChange, className }: ViewToggleProps) {
             onMouseLeave={() => setHoveredView(null)}
           >
             <button
-              ref={handleButtonRef}
-              data-view={v}
+              ref={getButtonRef(v)}
               type="button"
               role="radio"
               aria-checked={isActive}
@@ -200,7 +194,7 @@ export function ViewToggle({ view, onChange, className }: ViewToggleProps) {
 
             {/* Portal-based Tooltip */}
             <TooltipPortal
-              targetRef={{ current: buttonRefs.current.get(v) ?? null }}
+              targetRef={getButtonRef(v)}
               visible={isHovered}
             >
               {config.tooltip}

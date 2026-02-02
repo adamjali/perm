@@ -22,7 +22,7 @@ import {
   buildRecruitmentSubtext,
   buildEta9089Subtext,
   buildI140Subtext,
-} from "./dashboard";
+} from "./dashboardHelpers";
 
 // ============================================================================
 // calculateUrgency(daysUntil)

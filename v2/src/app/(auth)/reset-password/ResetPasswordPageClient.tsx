@@ -30,17 +30,41 @@ export function ResetPasswordPageClient() {
 
       await signIn("password", formData);
       setStep("reset");
-      toast.success("Reset code sent to your email");
+      toast.success("If an account exists with this email, we've sent a reset code.");
     } catch (error) {
-      // Log full error for debugging (visible in browser console)
       console.error("[Reset Password Request Error]", error);
 
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes("InvalidAccountId")) {
-        toast.error("No account found with this email. Please sign up first.");
+      const message = error instanceof Error ? error.message : String(error);
+      const lower = message.toLowerCase();
+
+      // Security: don't reveal whether email exists — show same success message
+      // and proceed to code step for non-existent emails too
+      if (
+        lower.includes("invalidaccountid") ||
+        lower.includes("invalid") ||
+        lower.includes("account")
+      ) {
+        setStep("reset");
+        toast.success("If an account exists with this email, we've sent a reset code.");
+      } else if (
+        lower.includes("toomanyfailedattempts") ||
+        lower.includes("rate limit") ||
+        lower.includes("too many")
+      ) {
+        toast.error("Too many attempts. Please wait a moment and try again.");
+      } else if (
+        lower.includes("network") ||
+        lower.includes("offline") ||
+        lower.includes("failed to fetch") ||
+        lower.includes("load failed")
+      ) {
+        toast.error("Network error. Please check your connection and try again.");
       } else {
-        console.warn("[Reset Password Request] Unhandled error type:", errorMessage);
-        toast.error("Failed to send reset code. Please try again.");
+        // In production, Convex strips error messages — treat unknown errors
+        // the same as success to avoid leaking email existence
+        console.warn("[Reset Password Request] Unhandled error type:", message);
+        setStep("reset");
+        toast.success("If an account exists with this email, we've sent a reset code.");
       }
     } finally {
       setIsLoading(false);
@@ -77,19 +101,36 @@ export function ResetPasswordPageClient() {
       toast.success("Password reset successful! Please sign in.");
       router.push("/login");
     } catch (error) {
-      // Log full error for debugging (visible in browser console)
       console.error("[Reset Password Error]", error);
 
       const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("expired")) {
+      const lower = message.toLowerCase();
+      if (lower.includes("expired")) {
         toast.error("Reset code expired. Please request a new one.");
-      } else if (message.includes("invalid") || message.includes("incorrect")) {
+      } else if (lower.includes("invalid password")) {
+        toast.error("Password does not meet requirements. Must be at least 8 characters.");
+      } else if (
+        lower.includes("invalid") ||
+        lower.includes("incorrect") ||
+        lower.includes("could not verify")
+      ) {
         toast.error("Invalid reset code. Please check and try again.");
-      } else if (message.includes("rate limit") || message.includes("too many")) {
+      } else if (
+        lower.includes("toomanyfailedattempts") ||
+        lower.includes("rate limit") ||
+        lower.includes("too many")
+      ) {
         toast.error("Too many attempts. Please wait a moment and try again.");
+      } else if (
+        lower.includes("network") ||
+        lower.includes("offline") ||
+        lower.includes("failed to fetch") ||
+        lower.includes("load failed")
+      ) {
+        toast.error("Network error. Please check your connection and try again.");
       } else {
         console.warn("[Reset Password] Unhandled error type:", message);
-        toast.error("Failed to reset password. Please try again.");
+        toast.error("Failed to reset password. Please try again or contact support.");
       }
     } finally {
       setIsLoading(false);

@@ -65,23 +65,49 @@ export function SignupPageClient() {
       // Remove confirmPassword from formData before sending
       formData.delete("confirmPassword");
 
-      await signIn("password", formData);
-      setStep("verification");
-      toast.success("Verification code sent to your email");
+      const result = await signIn("password", formData);
+
+      if (result.signingIn) {
+        // Account already verified (e.g., re-signup with existing verified account)
+        try {
+          await acceptTerms({ termsVersion: TERMS_VERSION });
+        } catch {
+          // Terms may already be recorded — non-blocking
+        }
+        toast.success("Welcome to PERM Tracker!");
+        router.push("/dashboard");
+      } else {
+        // OTP sent — move to verification step
+        setStep("verification");
+        toast.success("Verification code sent to your email");
+      }
     } catch (error) {
-      // Log full error for debugging (visible in browser console)
       console.error("[Signup Error]", error);
 
       const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("already exists") || message.includes("duplicate")) {
-        toast.error("An account with this email already exists. Try signing in.");
-      } else if (message.includes("invalid email") || message.includes("email format")) {
+      const lower = message.toLowerCase();
+      if (lower.includes("already exists") || lower.includes("duplicate")) {
+        toast.error("Could not create account. If you already have an account, try signing in instead.");
+      } else if (lower.includes("invalid email") || lower.includes("email format")) {
         toast.error("Please enter a valid email address.");
-      } else if (message.includes("rate limit") || message.includes("too many")) {
+      } else if (lower.includes("invalid password")) {
+        toast.error("Password does not meet requirements. Must be at least 8 characters.");
+      } else if (
+        lower.includes("toomanyfailedattempts") ||
+        lower.includes("rate limit") ||
+        lower.includes("too many")
+      ) {
         toast.error("Too many attempts. Please wait a moment and try again.");
+      } else if (
+        lower.includes("network") ||
+        lower.includes("offline") ||
+        lower.includes("failed to fetch") ||
+        lower.includes("load failed")
+      ) {
+        toast.error("Network error. Please check your connection and try again.");
       } else {
         console.warn("[Signup] Unhandled error type:", message);
-        toast.error("Failed to create account. Please try again.");
+        toast.error("Failed to create account. Please try again or contact support.");
       }
     } finally {
       setIsLoading(false);
@@ -109,19 +135,34 @@ export function SignupPageClient() {
       toast.success("Account verified! Welcome to PERM Tracker.");
       router.push("/dashboard");
     } catch (error) {
-      // Log full error for debugging (visible in browser console)
       console.error("[Verification Error]", error);
 
       const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("expired")) {
-        toast.error("Verification code expired. Please request a new one.");
-      } else if (message.includes("invalid") || message.includes("incorrect")) {
+      const lower = message.toLowerCase();
+      if (lower.includes("expired")) {
+        toast.error("Verification code expired. Go back and resubmit to get a new code.");
+      } else if (
+        lower.includes("invalid") ||
+        lower.includes("incorrect") ||
+        lower.includes("could not verify")
+      ) {
         toast.error("Invalid verification code. Please check and try again.");
-      } else if (message.includes("rate limit") || message.includes("too many")) {
+      } else if (
+        lower.includes("toomanyfailedattempts") ||
+        lower.includes("rate limit") ||
+        lower.includes("too many")
+      ) {
         toast.error("Too many attempts. Please wait a moment and try again.");
+      } else if (
+        lower.includes("network") ||
+        lower.includes("offline") ||
+        lower.includes("failed to fetch") ||
+        lower.includes("load failed")
+      ) {
+        toast.error("Network error. Please check your connection and try again.");
       } else {
         console.warn("[Verification] Unhandled error type:", message);
-        toast.error("Verification failed. Please try again.");
+        toast.error("Verification failed. Please try again or contact support.");
       }
     } finally {
       setIsLoading(false);
@@ -146,17 +187,22 @@ export function SignupPageClient() {
       // Note: For Google OAuth, terms acceptance is recorded after redirect
       // The PendingTermsHandler component checks localStorage and calls acceptTermsOfService
     } catch (error) {
-      // Log full error for debugging (visible in browser console)
       console.error("[Google Sign Up Error]", error);
 
       const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("popup") || message.includes("closed")) {
+      const lower = message.toLowerCase();
+      if (lower.includes("popup") || lower.includes("closed")) {
         toast.error("Sign up was cancelled. Please try again.");
-      } else if (message.includes("network") || message.includes("offline")) {
-        toast.error("Network error. Please check your connection.");
+      } else if (
+        lower.includes("network") ||
+        lower.includes("offline") ||
+        lower.includes("failed to fetch") ||
+        lower.includes("load failed")
+      ) {
+        toast.error("Network error. Please check your connection and try again.");
       } else {
         console.warn("[Google Sign Up] Unhandled error type:", message);
-        toast.error("Failed to sign up with Google. Please try again.");
+        toast.error("Failed to sign up with Google. Please try again or contact support.");
       }
       setIsGoogleLoading(false);
     }
