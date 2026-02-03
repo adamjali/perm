@@ -511,7 +511,7 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
                       </button>
                     </th>
                   ))}
-                  <th className="p-3 text-right text-xs font-bold uppercase tracking-wide sticky right-0 bg-muted min-w-[90px] border-l-2 border-border">
+                  <th className="p-3 text-right text-xs font-bold uppercase tracking-wide sticky right-0 z-20 bg-muted min-w-[90px] border-l-2 border-border">
                     Actions
                   </th>
                 </tr>
@@ -536,7 +536,7 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
                         )}
                       </td>
                     ))}
-                    <td className="p-3 sticky right-0 bg-card border-l-2 border-border">
+                    <td className="p-3 sticky right-0 z-20 bg-card border-l-2 border-border">
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           size="icon-sm"
