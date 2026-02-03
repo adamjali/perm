@@ -283,7 +283,14 @@ export function useFormCalculations(
       }
 
       if (Object.keys(updates).length > 0) {
-        setFormData({ ...effectiveFormData, ...updates });
+        // Convert undefined → "" so cleared values persist through save.
+        // Convex strips undefined from mutation args, causing ?? fallback to old DB value.
+        // Empty strings pass through as real values: "" ?? oldValue === ""
+        const persistableUpdates: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(updates)) {
+          persistableUpdates[key] = value === undefined ? "" : value;
+        }
+        setFormData({ ...effectiveFormData, ...persistableUpdates } as CaseFormData);
         setAutoCalculatedFields(newAutoFields);
       }
 

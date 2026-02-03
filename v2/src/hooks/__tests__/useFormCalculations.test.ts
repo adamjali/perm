@@ -343,7 +343,7 @@ describe('useFormCalculations', () => {
   // ============================================================================
 
   describe('Cascade Behavior', () => {
-    it('clears pwdExpirationDate when pwdDeterminationDate is cleared', () => {
+    it('clears pwdExpirationDate when pwdDeterminationDate is cleared (persists as empty string)', () => {
       const formData = createFormData({
         pwdDeterminationDate: undefined,
         pwdExpirationDate: '2024-08-13', // Had a value before
@@ -357,9 +357,35 @@ describe('useFormCalculations', () => {
         result.current.triggerCalculation('pwdDeterminationDate');
       });
 
+      // Cleared values must be "" (not undefined) so they persist through Convex save.
+      // Convex strips undefined from mutation args → ?? fallback restores old DB value.
       expect(setFormData).toHaveBeenCalledWith(
         expect.objectContaining({
-          pwdExpirationDate: undefined,
+          pwdExpirationDate: '',
+        })
+      );
+    });
+
+    it('recursively clears entire chain: pwdFilingDate → pwdDeterminationDate → pwdExpirationDate', () => {
+      const formData = createFormData({
+        pwdFilingDate: undefined, // cleared
+        pwdDeterminationDate: '2024-05-15',
+        pwdExpirationDate: '2024-08-13',
+      });
+
+      const { result } = renderHook(() =>
+        useFormCalculations(formData, setFormData)
+      );
+
+      act(() => {
+        result.current.triggerCalculation('pwdFilingDate');
+      });
+
+      // Both dependent fields in the chain should be cleared as ""
+      expect(setFormData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pwdDeterminationDate: '',
+          pwdExpirationDate: '',
         })
       );
     });
