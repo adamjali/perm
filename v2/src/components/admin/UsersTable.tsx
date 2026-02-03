@@ -360,10 +360,24 @@ function InlineEdit({
   );
 }
 
+const SORT_STORAGE_KEY = "admin-users-sort";
+
+function loadSavedSort(): { field: SortField; direction: SortDirection } {
+  try {
+    const raw = localStorage.getItem(SORT_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.field && parsed.direction) return parsed;
+    }
+  } catch { /* ignore */ }
+  return { field: "lastActivity", direction: "desc" };
+}
+
 export function UsersTable({ users }: UsersTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<SortField>("lastActivity");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const saved = loadSavedSort();
+  const [sortField, setSortField] = useState<SortField>(saved.field);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(saved.direction);
   const [currentPage, setCurrentPage] = useState(0);
 
   // Modal states
@@ -452,13 +466,19 @@ export function UsersTable({ users }: UsersTableProps) {
   const showPagination = sortedUsers.length > PAGE_SIZE;
 
   const handleSort = (field: SortField) => {
+    let newDirection: SortDirection;
     if (sortField === field) {
-      setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+      newDirection = sortDirection === "asc" ? "desc" : "asc";
+      setSortDirection(newDirection);
     } else {
+      newDirection = "desc";
       setSortField(field);
-      setSortDirection("desc");
+      setSortDirection(newDirection);
     }
     setCurrentPage(0);
+    try {
+      localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify({ field, direction: newDirection }));
+    } catch { /* private browsing */ }
   };
 
   return (
