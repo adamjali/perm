@@ -140,6 +140,13 @@ export function JobDescriptionField({
   const [isSaving, setIsSaving] = useState(false);
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
 
+  // Track whether JD position title auto-follows the inherited position title.
+  // Starts true when empty or matching inherited. Stops when user manually edits.
+  // Re-enabled by clicking the reset button or clearing.
+  const [isTrackingInherited, setIsTrackingInherited] = useState(
+    !positionTitle || positionTitle === inheritedPositionTitle
+  );
+
   // Track if content has been modified since loading a template
   const [originalContent, setOriginalContent] = useState<{
     positionTitle: string;
@@ -168,12 +175,12 @@ export function JobDescriptionField({
   // EFFECTS
   // ============================================================================
 
-  // Auto-inherit position title when it changes and no custom title is set
+  // Auto-sync JD position title from inherited when tracking is active
   useEffect(() => {
-    if (!positionTitle && inheritedPositionTitle) {
+    if (isTrackingInherited) {
       onPositionTitleChange(inheritedPositionTitle);
     }
-  }, [inheritedPositionTitle, positionTitle, onPositionTitleChange]);
+  }, [inheritedPositionTitle, isTrackingInherited, onPositionTitleChange]);
 
   // ============================================================================
   // HANDLERS
@@ -196,6 +203,7 @@ export function JobDescriptionField({
     onPositionTitleChange("");
     onDescriptionChange("");
     setOriginalContent(null);
+    setIsTrackingInherited(true);
     if (setLoadedTemplateId) {
       setLoadedTemplateId(undefined);
     }
@@ -204,6 +212,7 @@ export function JobDescriptionField({
 
   const handleLoadTemplate = useCallback(
     (template: JobDescriptionTemplate) => {
+      setIsTrackingInherited(false);
       onLoadTemplate(template);
       setOriginalContent({
         positionTitle: template.name,
@@ -426,7 +435,10 @@ export function JobDescriptionField({
                   <Input
                     id="job-desc-position"
                     value={positionTitle}
-                    onChange={(e) => onPositionTitleChange(e.target.value)}
+                    onChange={(e) => {
+                      setIsTrackingInherited(false);
+                      onPositionTitleChange(e.target.value);
+                    }}
                     placeholder="e.g., Software Engineer"
                     disabled={isLoading}
                     className="border-2 min-h-[44px]"
@@ -437,7 +449,10 @@ export function JobDescriptionField({
                         <TooltipTrigger asChild>
                           <button
                             type="button"
-                            onClick={() => onPositionTitleChange(inheritedPositionTitle)}
+                            onClick={() => {
+                              setIsTrackingInherited(true);
+                              onPositionTitleChange(inheritedPositionTitle);
+                            }}
                             className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
                           >
                             <RefreshCw className="h-5 w-5 sm:h-4 sm:w-4" />
@@ -449,7 +464,9 @@ export function JobDescriptionField({
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Inherited from Position Title above. Edit if needed for the job description.
+                  {isTrackingInherited
+                    ? "Auto-syncing from Position Title above. Edit to set a custom title."
+                    : "Custom title. Click the reset icon to re-sync with Position Title."}
                 </p>
               </div>
 

@@ -272,12 +272,21 @@ export function PWDSection(props: PWDSectionProps) {
             id="pwdWageAmount"
             name="pwdWageAmount"
             type="number"
-            value={values.pwdWageAmount || ''}
+            value={values.pwdWageAmount ?? ''}
             onChange={handleInputChange}
+            onBlur={(e) => {
+              // Round to nearest cent on blur (industry standard)
+              const raw = e.target.value;
+              if (raw === '') return;
+              const rounded = Math.round(Number(raw) * 100) / 100;
+              if (!isNaN(rounded) && rounded >= 0) {
+                (onChange as (field: string, value: number | undefined) => void)('pwdWageAmount', rounded);
+              }
+            }}
             aria-invalid={!!errors?.pwdWageAmount}
-            placeholder="e.g., 85000"
+            placeholder="e.g., 85000.00"
             min="0"
-            step="1000"
+            step="0.01"
           />
         </FormField>
 
