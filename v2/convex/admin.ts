@@ -14,6 +14,7 @@ import { v } from "convex/values";
 import type { Id, Doc } from "./_generated/dataModel";
 import { Scrypt } from "lucia";
 import { isAdmin, getAdminDashboardDataHelper } from "./lib/admin";
+import { getCurrentUserId } from "./lib/auth";
 import { Resend } from "resend";
 
 /**
@@ -947,7 +948,53 @@ export const getAdminDashboardData = query({
   args: {},
   handler: async (ctx) => {
     await isAdmin(ctx);
-    return await getAdminDashboardDataHelper(ctx);
+    const data = await getAdminDashboardDataHelper(ctx);
+
+    // Include admin's sort preference
+    const adminUserId = await getCurrentUserId(ctx);
+    const adminProfile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", adminUserId as Id<"users">))
+      .first();
+
+    return {
+      ...data,
+      adminSortPreference: {
+        sortBy: adminProfile?.adminSortBy ?? "lastActivity",
+        sortOrder: adminProfile?.adminSortOrder ?? "desc",
+      },
+    };
+  },
+});
+
+/**
+ * Save admin sort preference to DB (admin only)
+ */
+export const saveAdminSortPreference = mutation({
+  args: {
+    sortBy: v.string(),
+    sortOrder: v.union(v.literal("asc"), v.literal("desc")),
+  },
+  handler: async (ctx, args) => {
+    await isAdmin(ctx);
+
+    const userId = await getCurrentUserId(ctx);
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .first();
+
+    if (!profile) {
+      throw new Error("User profile not found");
+    }
+
+    await ctx.db.patch(profile._id, {
+      adminSortBy: args.sortBy,
+      adminSortOrder: args.sortOrder,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
   },
 });
 

@@ -43,6 +43,7 @@ interface UserSummary {
 
 interface UsersTableProps {
   users: UserSummary[];
+  initialSort?: { sortBy: string; sortOrder: "asc" | "desc" };
 }
 
 type SortField = keyof UserSummary;
@@ -360,24 +361,10 @@ function InlineEdit({
   );
 }
 
-const SORT_STORAGE_KEY = "admin-users-sort";
-
-function loadSavedSort(): { field: SortField; direction: SortDirection } {
-  try {
-    const raw = localStorage.getItem(SORT_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed.field && parsed.direction) return parsed;
-    }
-  } catch { /* ignore */ }
-  return { field: "lastActivity", direction: "desc" };
-}
-
-export function UsersTable({ users }: UsersTableProps) {
+export function UsersTable({ users, initialSort }: UsersTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const saved = loadSavedSort();
-  const [sortField, setSortField] = useState<SortField>(saved.field);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(saved.direction);
+  const [sortField, setSortField] = useState<SortField>((initialSort?.sortBy as SortField) || "lastActivity");
+  const [sortDirection, setSortDirection] = useState<SortDirection>(initialSort?.sortOrder || "desc");
   const [currentPage, setCurrentPage] = useState(0);
 
   // Modal states
@@ -385,6 +372,7 @@ export function UsersTable({ users }: UsersTableProps) {
   const [emailModalUser, setEmailModalUser] = useState<UserSummary | null>(null);
 
   const updateUser = useMutation(api.admin.updateUserAdmin);
+  const saveSortPreference = useMutation(api.admin.saveAdminSortPreference);
 
   // Reset page when search changes
   useEffect(() => {
@@ -476,9 +464,8 @@ export function UsersTable({ users }: UsersTableProps) {
       setSortDirection(newDirection);
     }
     setCurrentPage(0);
-    try {
-      localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify({ field, direction: newDirection }));
-    } catch { /* private browsing */ }
+    // Persist to DB (fire-and-forget)
+    saveSortPreference({ sortBy: field, sortOrder: newDirection }).catch(() => {});
   };
 
   return (
@@ -524,7 +511,7 @@ export function UsersTable({ users }: UsersTableProps) {
                       </button>
                     </th>
                   ))}
-                  <th className="p-3 text-right text-xs font-bold uppercase tracking-wide sticky right-0 bg-muted/50 min-w-[90px] border-l-2 border-border">
+                  <th className="p-3 text-right text-xs font-bold uppercase tracking-wide sticky right-0 bg-muted min-w-[90px] border-l-2 border-border">
                     Actions
                   </th>
                 </tr>

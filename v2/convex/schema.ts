@@ -168,6 +168,10 @@ export default defineSchema({
     calendarShowCompleted: v.optional(v.boolean()), // Show I-140 approved cases
     calendarShowClosed: v.optional(v.boolean()), // Show closed/archived cases
 
+    // Admin UI preferences
+    adminSortBy: v.optional(v.string()),
+    adminSortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
+
     // Deadline Enforcement
     autoDeadlineEnforcementEnabled: v.boolean(),
 

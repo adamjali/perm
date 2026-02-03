@@ -84,7 +84,7 @@ export default function AdminDashboardClient() {
       <AdminStatsGrid data={dashboardData} />
 
       {/* Users Table */}
-      <UsersTable users={dashboardData.users} />
+      <UsersTable users={dashboardData.users} initialSort={dashboardData.adminSortPreference} />
     </div>
   );
 }
