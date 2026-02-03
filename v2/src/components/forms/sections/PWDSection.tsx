@@ -216,7 +216,6 @@ export function PWDSection(props: PWDSectionProps) {
             onChange={handleDateChange('pwdDeterminationDate')}
             onBlur={handleDateBlur('pwdDeterminationDate')}
             minDate={determinationConstraint?.min}
-            maxDate={determinationConstraint?.max}
             error={!!errors?.pwdDeterminationDate}
             validationState={validationStates?.pwdDeterminationDate}
             disabled={determinationDisabled?.disabled}

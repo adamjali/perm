@@ -75,7 +75,7 @@ function validateDateField(
   if (!value) return {};
 
   if (!isISODateString(value)) {
-    return { error: "Invalid date. Please select a valid date." };
+    return { error: "Invalid date format. Use YYYY-MM-DD." };
   }
 
   const date = new Date(value + "T00:00:00");

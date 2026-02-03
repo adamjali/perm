@@ -32,7 +32,7 @@ export function isSunday(dateStr: string): boolean {
 // Zod Schema Factories
 // ============================================================================
 
-const ISO_DATE_MESSAGE = 'Invalid date. Please select a valid date.';
+const ISO_DATE_MESSAGE = 'Invalid date format (expected YYYY-MM-DD)';
 
 /** Create an optional date schema with custom validation */
 function createOptionalDateSchema(

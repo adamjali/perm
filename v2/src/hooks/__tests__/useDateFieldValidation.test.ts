@@ -151,7 +151,7 @@ describe('useDateFieldValidation', () => {
         validation = result.current.validateField('pwdFilingDate', '01/15/2025');
       });
 
-      expect(validation?.error).toBe('Invalid date. Please select a valid date.');
+      expect(validation?.error).toBe('Invalid date format. Use YYYY-MM-DD.');
     });
 
     it('returns error for invalid date format (partial date)', () => {
@@ -163,7 +163,7 @@ describe('useDateFieldValidation', () => {
         validation = result.current.validateField('pwdFilingDate', '2025-01');
       });
 
-      expect(validation?.error).toBe('Invalid date. Please select a valid date.');
+      expect(validation?.error).toBe('Invalid date format. Use YYYY-MM-DD.');
     });
 
     it('returns error for invalid date (impossible date)', () => {
@@ -175,7 +175,7 @@ describe('useDateFieldValidation', () => {
         validation = result.current.validateField('pwdFilingDate', '2025-02-30');
       });
 
-      expect(validation?.error).toBe('Invalid date. Please select a valid date.');
+      expect(validation?.error).toBe('Invalid date format. Use YYYY-MM-DD.');
     });
 
     it('returns valid for correct date format', () => {
@@ -1012,7 +1012,7 @@ describe('useDateFieldValidation', () => {
         validation = result.current.validateField('pwdFilingDate', '2025-02-29');
       });
 
-      expect(validation?.error).toBe('Invalid date. Please select a valid date.');
+      expect(validation?.error).toBe('Invalid date format. Use YYYY-MM-DD.');
     });
 
     it('handles empty string as undefined-like value', () => {

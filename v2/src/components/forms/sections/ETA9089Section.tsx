@@ -355,7 +355,6 @@ export function ETA9089Section(props: ETA9089SectionProps) {
               onChange={handleDateChange("eta9089AuditDate")}
               onBlur={handleDateBlur("eta9089AuditDate")}
               minDate={auditConstraint?.min}
-              maxDate={auditConstraint?.max}
               error={!!errors?.eta9089AuditDate}
               validationState={validationStates?.eta9089AuditDate}
               disabled={auditDisabled?.disabled}
@@ -377,7 +376,6 @@ export function ETA9089Section(props: ETA9089SectionProps) {
               onChange={handleDateChange("eta9089CertificationDate")}
               onBlur={handleDateBlur("eta9089CertificationDate")}
               minDate={certificationConstraint?.min}
-              maxDate={certificationConstraint?.max}
               error={!!errors?.eta9089CertificationDate}
               validationState={validationStates?.eta9089CertificationDate}
               disabled={certificationDisabled?.disabled}

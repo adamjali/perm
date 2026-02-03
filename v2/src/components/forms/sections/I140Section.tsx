@@ -291,7 +291,6 @@ export function I140Section(props: I140SectionProps) {
               onChange={handleDateChange("i140ReceiptDate")}
               onBlur={handleDateBlur("i140ReceiptDate")}
               minDate={receiptConstraint?.min}
-              maxDate={receiptConstraint?.max}
               error={!!errors?.i140ReceiptDate}
               validationState={validationStates?.i140ReceiptDate}
               disabled={receiptDisabled?.disabled}
@@ -361,7 +360,6 @@ export function I140Section(props: I140SectionProps) {
               onChange={handleDateChange("i140ApprovalDate")}
               onBlur={handleDateBlur("i140ApprovalDate")}
               minDate={approvalConstraint?.min}
-              maxDate={approvalConstraint?.max}
               error={!!errors?.i140ApprovalDate}
               validationState={validationStates?.i140ApprovalDate}
               disabled={approvalDisabled?.disabled}
@@ -383,7 +381,6 @@ export function I140Section(props: I140SectionProps) {
               onChange={handleDateChange("i140DenialDate")}
               onBlur={handleDateBlur("i140DenialDate")}
               minDate={denialConstraint?.min}
-              maxDate={denialConstraint?.max}
               error={!!errors?.i140DenialDate}
               validationState={validationStates?.i140DenialDate}
               disabled={denialDisabled?.disabled}
