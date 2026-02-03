@@ -14,10 +14,17 @@ import type { CaseStatus, ProgressStatus } from "@/lib/perm";
 
 /** Field dependencies for auto-calculation cascade. Only fields with dependencies are listed. */
 const FIELD_DEPENDENCIES: Partial<Record<keyof CaseFormData, (keyof CaseFormData)[]>> = {
+  // Clear-only: clearing parent clears user-entered child (prevents soft-lock on disabled fields)
+  pwdFilingDate: ["pwdDeterminationDate"],
+  sundayAdFirstDate: ["sundayAdSecondDate"],
+  eta9089FilingDate: ["eta9089AuditDate", "eta9089CertificationDate"],
+  i140FilingDate: ["i140ReceiptDate", "i140ApprovalDate", "i140DenialDate"],
+  // Auto-calculated: changing parent recalculates child
   pwdDeterminationDate: ["pwdExpirationDate"],
   noticeOfFilingStartDate: ["noticeOfFilingEndDate"],
   jobOrderStartDate: ["jobOrderEndDate"],
   eta9089CertificationDate: ["eta9089ExpirationDate"],
+  // Mutual exclusivity
   i140ApprovalDate: ["i140DenialDate"],
   i140DenialDate: ["i140ApprovalDate"],
 };
@@ -132,11 +139,12 @@ function calculateDependentValue(
       return formData.i140DenialDate ? undefined : formData.i140ApprovalDate;
     }
 
-    // Unhandled dependency - log for debugging
-    console.warn(
-      `[useFormCalculations] Unhandled dependency: ${String(sourceField)} -> ${String(dependentField)}`
-    );
-    return undefined;
+    // Default clear-only behavior: clear dependent when source is cleared, keep value otherwise
+    const sourceValue = formData[sourceField];
+    if (!sourceValue) {
+      return undefined;
+    }
+    return formData[dependentField] as string | undefined;
   } catch (error) {
     console.error(
       `[useFormCalculations] Failed to calculate ${String(dependentField)} from ${String(sourceField)}:`,
@@ -217,6 +225,9 @@ export function useFormCalculations(
       const newAutoFields = new Set(autoCalculatedFields);
       const clearedFields: ClearedFieldInfo[] = [];
 
+      // Process dependents and collect fields that were cleared for recursive cascade
+      const fieldsToRecurse: (keyof CaseFormData)[] = [];
+
       for (const dependentField of dependentFields) {
         if (manualOverrides.has(dependentField)) continue;
 
@@ -228,8 +239,10 @@ export function useFormCalculations(
           newAutoFields.add(dependentField);
         } else {
           newAutoFields.delete(dependentField);
-          // Track cleared I-140 approval/denial due to mutual exclusivity
           if (oldValue) {
+            // Track for recursive cascade (e.g., filing→determination→expiration)
+            fieldsToRecurse.push(dependentField);
+            // Track cleared I-140 approval/denial for toast notification
             const clearReasons: Record<string, string> = {
               "i140ApprovalDate:i140DenialDate":
                 "I-140 Denial date cleared because approval date was entered",
@@ -240,6 +253,31 @@ export function useFormCalculations(
             if (clearReasons[key]) {
               clearedFields.push({ field: dependentField, reason: clearReasons[key] });
             }
+          }
+        }
+      }
+
+      // Recursive cascade: process dependents of cleared fields
+      // e.g., clearing pwdFilingDate clears pwdDeterminationDate, which then clears pwdExpirationDate
+      const cascadedFormData = { ...effectiveFormData, ...updates };
+      for (const clearedField of fieldsToRecurse) {
+        const childDeps = FIELD_DEPENDENCIES[clearedField] ?? [];
+        for (const childDep of childDeps) {
+          if (manualOverrides.has(childDep)) continue;
+          if (childDep in updates) continue; // Already processed
+
+          const oldChildValue = formData[childDep];
+          const newChildValue = calculateDependentValue(clearedField, childDep, cascadedFormData);
+          (updates as Record<string, unknown>)[childDep] = newChildValue;
+
+          if (newChildValue !== undefined) {
+            newAutoFields.add(childDep);
+          } else {
+            newAutoFields.delete(childDep);
+          }
+
+          if (newChildValue !== oldChildValue) {
+            (cascadedFormData as Record<string, unknown>)[childDep] = newChildValue;
           }
         }
       }

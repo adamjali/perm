@@ -223,9 +223,12 @@ export function useDateFieldValidation(formValues: Partial<CaseFormData>) {
       const value = formValues[field as keyof CaseFormData] as string | undefined;
       if (value) {
         validateField(field, value);
+      } else {
+        // Clear stale validation for fields that no longer have values (e.g., cascade-cleared)
+        clearFieldValidation(field);
       }
     }
-  }, [formValues, validateField]);
+  }, [formValues, validateField, clearFieldValidation]);
 
   // Memoized getters
   const getConstraint = useCallback(
