@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/lib/toast";
 import { Loader2 } from "lucide-react";
 import {
@@ -49,7 +50,7 @@ export function UserEditModal({ user, onClose }: UserEditModalProps) {
 
     try {
       await updateUser({
-        userId: user.userId as any,
+        userId: user.userId as Id<"users">,
         fullName: fullName.trim(),
         userType: userType as "individual" | "firm_admin" | "firm_member",
       });

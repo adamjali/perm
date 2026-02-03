@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { toast } from "@/lib/toast";
@@ -33,32 +34,18 @@ interface UserMenuProps {
 
 function UserMenu({ userName }: UserMenuProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const { signOut } = useAuthActions();
   const { isSigningOut, beginSignOut, cancelSignOut } = useAuthContext();
+  const { isNavigating: isNavigatingToSettings, navigateTo } = useNavigationLoading();
 
-  const [isNavigatingToSettings, setIsNavigatingToSettings] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   const isOnSettingsPage = pathname === "/settings";
 
-  // Reset navigation state when pathname changes
-  useEffect(() => {
-    setIsNavigatingToSettings(false);
-  }, [pathname]);
-
-  // Safety timeout: reset spinner after 3 seconds if navigation is slow
-  useEffect(() => {
-    if (!isNavigatingToSettings) return;
-    const timeout = setTimeout(() => setIsNavigatingToSettings(false), 3000);
-    return () => clearTimeout(timeout);
-  }, [isNavigatingToSettings]);
-
   function handleSettingsClick(): void {
     if (isOnSettingsPage) return;
-    setIsNavigatingToSettings(true);
     setIsOpen(false);
-    router.push("/settings");
+    navigateTo("/settings");
   }
 
   async function handleSignOut(): Promise<void> {

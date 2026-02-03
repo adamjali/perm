@@ -128,7 +128,8 @@ export interface CaseFormProps {
 
 export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: CaseFormProps) {
   const router = useRouter();
-  const initialDataRef = useRef(JSON.stringify(initializeFormData(mode, initialData)));
+  const initialDataRef = useRef<string | null>(null);
+  const [trackDirty, setTrackDirty] = useState(false);
 
   // ============================================================================
   // REACT HOOK FORM SETUP
@@ -242,9 +243,21 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
 
   const { isDirty, setDirty, shouldShowDialog, requestNavigation, confirmNavigation, cancelNavigation, markNavigating } = useUnsavedChanges({ isSubmitting: rhfIsSubmitting });
 
+  // Start dirty tracking after form state stabilizes (field registration, auto-calc, etc.)
   useEffect(() => {
-    setDirty(JSON.stringify(formData) !== initialDataRef.current);
-  }, [formData, setDirty]);
+    const timer = setTimeout(() => setTrackDirty(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!trackDirty) return;
+    const currentJson = JSON.stringify(formData);
+    if (initialDataRef.current === null) {
+      initialDataRef.current = currentJson;
+      return;
+    }
+    setDirty(currentJson !== initialDataRef.current);
+  }, [formData, setDirty, trackDirty]);
 
   // Track cancel navigation loading state
   const [isCancelNavigating, setIsCancelNavigating] = useState(false);

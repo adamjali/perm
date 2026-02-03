@@ -9,8 +9,8 @@
 
 "use client";
 
-import { useCallback, useTransition, useState, memo } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useState, memo } from "react";
+import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,8 +52,7 @@ export const CaseListRow = memo(function CaseListRow({
     nextDeadlineLabel,
   } = caseData;
 
-  const router = useRouter();
-  const [isNavigating, startNavigation] = useTransition();
+  const { isNavigating, navigateTo } = useNavigationLoading();
   const [isHovered, setIsHovered] = useState(false);
 
   const stageColor = getStageColorVar(caseStatus);
@@ -69,9 +68,9 @@ export const CaseListRow = memo(function CaseListRow({
         onSelect(_id);
         return;
       }
-      startNavigation(() => router.push(`/cases/${_id}`));
+      navigateTo(`/cases/${_id}`);
     },
-    [_id, router, selectionMode, onSelect]
+    [_id, navigateTo, selectionMode, onSelect]
   );
 
   const handleCheckboxChange = useCallback(() => {
@@ -87,11 +86,11 @@ export const CaseListRow = memo(function CaseListRow({
         if (selectionMode && onSelect) {
           onSelect(_id);
         } else {
-          startNavigation(() => router.push(`/cases/${_id}`));
+          navigateTo(`/cases/${_id}`);
         }
       }
     },
-    [_id, router, selectionMode, onSelect]
+    [_id, navigateTo, selectionMode, onSelect]
   );
 
   // Deadline urgency styling
@@ -103,27 +102,33 @@ export const CaseListRow = memo(function CaseListRow({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.12, delay: index * 0.05 }}
       className={cn(
-        // Base row styling
-        "relative flex items-center gap-3 px-4 py-3",
-        "border-b border-border bg-background",
-        "cursor-pointer select-none",
-        // Hover effect
-        "transition-all duration-150",
-        isHovered && "-translate-y-0.5 shadow-hard-sm",
-        // Selected state
-        isSelected && "bg-muted/50",
-        // Navigating state
-        isNavigating && "opacity-70 pointer-events-none"
+        "relative",
+        isHovered && "z-20"
       )}
-      onClick={handleRowClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="button"
-      aria-selected={isSelected}
-      aria-label={`${employerName} - ${positionTitle}`}
     >
+      <div
+        className={cn(
+          // Base row styling
+          "relative flex items-center gap-3 px-4 py-3",
+          "border-b border-t border-border border-t-transparent bg-background",
+          "cursor-pointer select-none",
+          // Hover effect
+          "transition-all duration-150",
+          isHovered && "-translate-y-0.5 shadow-hard-sm border-t-border",
+          // Selected state
+          isSelected && "bg-muted/50",
+          // Navigating state
+          isNavigating && "opacity-70 pointer-events-none"
+        )}
+        onClick={handleRowClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
+        role="button"
+        aria-pressed={isSelected}
+        aria-label={`${employerName} - ${positionTitle}`}
+      >
       {/* Selection checkbox */}
       {selectionMode && (
         <Checkbox
@@ -193,6 +198,7 @@ export const CaseListRow = memo(function CaseListRow({
         <div className="shrink-0">
           <ProgressStatusBadge status={progressStatus} className="text-[10px]" />
         </div>
+      </div>
       </div>
     </motion.div>
   );

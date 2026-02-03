@@ -12,8 +12,7 @@
 
 import { type ReactNode } from "react";
 import { useQuery } from "convex/react";
-import { useState, useEffect, useCallback } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 
 import { api } from "../../../convex/_generated/api";
@@ -161,7 +160,6 @@ function DeadlineHeroEmptyState({
 
 export default function DeadlineHeroWidget(): ReactNode {
   const { isSigningOut } = useAuthContext();
-  const pathname = usePathname();
 
   const data = useQuery(
     api.dashboard.getDeadlines,
@@ -170,18 +168,6 @@ export default function DeadlineHeroWidget(): ReactNode {
 
   const [lastRefresh, setLastRefresh] = useState<number>(() => Date.now());
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Track which case is currently being navigated to (for loading state coordination)
-  const [loadingCaseId, setLoadingCaseId] = useState<string | null>(null);
-
-  // Reset loading state when navigation completes (pathname changes)
-  useEffect(() => {
-    setLoadingCaseId(null);
-  }, [pathname]);
-
-  const handleCaseClick = useCallback((caseId: string) => {
-    setLoadingCaseId(caseId);
-  }, []);
 
   // Auto-refresh every 5 minutes
   useEffect(() => {
@@ -231,10 +217,10 @@ export default function DeadlineHeroWidget(): ReactNode {
           onRefresh={handleRefresh}
         />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-          <UrgencyGroup title="Overdue" urgency="overdue" items={data.overdue} loadingCaseId={loadingCaseId} onCaseClick={handleCaseClick} />
-          <UrgencyGroup title="This Week" urgency="thisWeek" items={data.thisWeek} loadingCaseId={loadingCaseId} onCaseClick={handleCaseClick} />
-          <UrgencyGroup title="This Month" urgency="thisMonth" items={data.thisMonth} loadingCaseId={loadingCaseId} onCaseClick={handleCaseClick} />
-          <UrgencyGroup title="Later" urgency="later" items={data.later} isLast loadingCaseId={loadingCaseId} onCaseClick={handleCaseClick} />
+          <UrgencyGroup title="Overdue" urgency="overdue" items={data.overdue} />
+          <UrgencyGroup title="This Week" urgency="thisWeek" items={data.thisWeek} />
+          <UrgencyGroup title="This Month" urgency="thisMonth" items={data.thisMonth} />
+          <UrgencyGroup title="Later" urgency="later" items={data.later} isLast />
         </div>
       </div>
     </div>

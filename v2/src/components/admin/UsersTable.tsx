@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { Search, Mail, Trash2, ArrowUpDown, Check, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/lib/toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -383,11 +384,11 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
   const handleInlineSave = useCallback(
     async (userId: string, field: EditableField, value: string) => {
       try {
-        const args: Record<string, unknown> = { userId };
-        if (field === "name") args.fullName = value;
-        if (field === "userType") args.userType = value;
-
-        await updateUser(args as any);
+        await updateUser({
+          userId: userId as Id<"users">,
+          ...(field === "name" ? { fullName: value } : {}),
+          ...(field === "userType" ? { userType: value as "individual" | "firm_admin" | "firm_member" } : {}),
+        });
         toast.success(`Updated ${field}`);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Failed to update");

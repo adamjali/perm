@@ -13,8 +13,8 @@
  * - Hover: lift + shadow-hard-lg + expand content
  */
 
-import { useTransition, memo, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { memo, useMemo } from "react";
+import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useQuery } from "convex/react";
 import { toast } from "@/lib/toast";
 import { MoreHorizontal, Trash2, Archive, RotateCcw, Eye, Loader2 } from "lucide-react";
@@ -89,9 +89,7 @@ export const CaseCard = memo(function CaseCard({
   } = caseData;
 
   const isClosed = caseStatus === "closed";
-  const router = useRouter();
-  const [isNavigating, startNavigation] = useTransition();
-  const [navigatingTo, setNavigatingTo] = useState<"view" | "edit" | null>(null);
+  const { isNavigating: isNavActive, targetPath, navigateTo } = useNavigationLoading();
 
   const ui = useCardUI();
   const mutations = useCardMutations({
@@ -104,18 +102,21 @@ export const CaseCard = memo(function CaseCard({
   const userProfile = useQuery(api.users.currentUserProfile);
   const isGoogleConnected = userProfile?.googleCalendarConnected ?? false;
 
+  const viewPath = `/cases/${_id}`;
+  const editPath = `/cases/${_id}/edit`;
+  const isNavigating = isNavActive;
+  const navigatingTo = targetPath === editPath ? "edit" as const : targetPath === viewPath ? "view" as const : null;
+
   const handleViewClick = (e: React.MouseEvent): void => {
     e.stopPropagation();
     e.preventDefault();
-    setNavigatingTo("view");
-    startNavigation(() => router.push(`/cases/${_id}`));
+    navigateTo(viewPath);
   };
 
   const handleEditClick = (e: React.MouseEvent): void => {
     e.stopPropagation();
     e.preventDefault();
-    setNavigatingTo("edit");
-    startNavigation(() => router.push(`/cases/${_id}/edit`));
+    navigateTo(editPath);
   };
 
   const handleCardClick = async (): Promise<void> => {

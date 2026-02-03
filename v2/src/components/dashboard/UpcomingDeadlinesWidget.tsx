@@ -9,10 +9,9 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { useState } from "react";
 import { useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
 import { Calendar } from "lucide-react";
+import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
 import { api } from "../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
@@ -53,8 +52,7 @@ function UpcomingDeadlinesLoadingSkeleton(): ReactNode {
 // ============================================================================
 
 export default function UpcomingDeadlinesWidget(): ReactNode {
-  const router = useRouter();
-  const [isNavigating, setIsNavigating] = useState(false);
+  const { isNavigating, navigateTo } = useNavigationLoading();
   const deadlines = useQuery(api.dashboard.getUpcomingDeadlines, { days: 30 });
 
   if (deadlines === undefined) {
@@ -65,8 +63,7 @@ export default function UpcomingDeadlinesWidget(): ReactNode {
   const hasDeadlines = count > 0;
 
   function handleNavigate(): void {
-    setIsNavigating(true);
-    router.push("/calendar");
+    navigateTo("/calendar");
   }
 
   return (

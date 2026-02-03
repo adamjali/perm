@@ -21,10 +21,10 @@
  * ```
  */
 
-import { useTransition, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
 // ============================================================================
 // TYPES
@@ -61,8 +61,7 @@ export function NavigableCard({
   disabled,
   ...restProps
 }: NavigableCardProps) {
-  const router = useRouter();
-  const [isNavigating, startNavigation] = useTransition();
+  const { isNavigating, navigateTo } = useNavigationLoading();
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -72,10 +71,7 @@ export function NavigableCard({
     // Run optional click handler
     onClick?.();
 
-    // Start navigation with transition
-    startNavigation(() => {
-      router.push(href);
-    });
+    navigateTo(href);
   };
 
   // Determine loading indicator element

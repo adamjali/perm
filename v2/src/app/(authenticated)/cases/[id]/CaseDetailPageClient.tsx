@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { use, useState, useTransition } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { motion } from "motion/react";
@@ -244,12 +244,10 @@ interface CaseDetailProps {
 
 function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const { isNavigating, navigateTo } = useNavigationLoading();
+  const { isNavigating, isAnyNavigating, targetPath, navigateTo } = useNavigationLoading();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isEditNavigating, setIsEditNavigating] = useState(false);
 
   // Detect mobile for default section state
   // On mobile (<768px), only first section is open by default
@@ -389,11 +387,11 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   }, [caseData]);
 
   // Handlers
+  const editPath = `/cases/${caseId}/edit`;
+  const isEditNavigating = isNavigating && targetPath === editPath;
+
   const handleEdit = () => {
-    setIsEditNavigating(true);
-    startTransition(() => {
-      router.push(`/cases/${caseId}/edit`);
-    });
+    navigateTo(editPath);
   };
 
   const handleDelete = async () => {
@@ -534,7 +532,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               "min-h-[44px] min-w-[44px]",
               isNavigating && "opacity-70 pointer-events-none"
             )}
-            disabled={isPending || isNavigating}
+            disabled={isAnyNavigating}
           >
             {isNavigating ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -641,7 +639,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 "hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard transition-all",
                 "min-h-[44px] min-w-[44px]"
               )}
-              disabled={isUpdating || isPending}
+              disabled={isUpdating || isAnyNavigating}
             >
               <MoreVertical className="h-5 w-5" />
               <span className="sr-only">Actions</span>
@@ -653,10 +651,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 e.preventDefault(); // Keep dropdown open during navigation
                 handleEdit();
               }}
-              disabled={isPending}
+              disabled={isAnyNavigating}
               className="min-h-[44px]"
             >
-              {isPending && isEditNavigating ? (
+              {isEditNavigating ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Pencil className="h-4 w-4" />

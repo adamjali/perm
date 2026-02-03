@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/lib/toast";
 import { Loader2, AlertTriangle } from "lucide-react";
 import {
@@ -47,7 +48,7 @@ export function UserDeleteConfirmModal({ user, onClose }: UserDeleteConfirmModal
 
     try {
       await deleteUser({
-        userId: user.userId as any,
+        userId: user.userId as Id<"users">,
       });
 
       toast.success(`User ${user.email} deleted successfully`);

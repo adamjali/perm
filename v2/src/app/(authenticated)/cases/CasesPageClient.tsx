@@ -41,6 +41,7 @@ import { SelectionBar } from "@/components/cases/SelectionBar";
 import { ImportModal } from "@/components/cases/ImportModal";
 import { ViewToggle, type ViewMode } from "@/components/cases/ViewToggle";
 import { CaseListView } from "@/components/cases/CaseListView";
+import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { sortCases } from "../../../../convex/lib/caseListHelpers";
 import {
   exportFullCasesJSON,
@@ -253,7 +254,7 @@ export function CasesPageClient() {
   // LOADING STATES
   // ============================================================================
 
-  const [isAddingCase, setIsAddingCase] = useState(false);
+  const { isNavigating: isAddingCase, navigateTo: navigateToAddCase } = useNavigationLoading();
 
   // Track initial load to prevent skeleton flash on filter changes
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
@@ -846,9 +847,8 @@ export function CasesPageClient() {
   }, []);
 
   const handleAddCase = useCallback(() => {
-    setIsAddingCase(true);
-    router.push("/cases/new");
-  }, [router]);
+    navigateToAddCase("/cases/new");
+  }, [navigateToAddCase]);
 
   // Check for duplicates before import
   const handleCheckDuplicates = useCallback(

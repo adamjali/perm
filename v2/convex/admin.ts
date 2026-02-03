@@ -11,7 +11,7 @@
 import { internalMutation, internalAction, internalQuery, query, mutation, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
-import type { Id, Doc } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 import { Scrypt } from "lucia";
 import { isAdmin, getAdminDashboardDataHelper } from "./lib/admin";
 import { getCurrentUserId } from "./lib/auth";
@@ -223,24 +223,23 @@ export const copyUserData = internalMutation({
       if (targetProfile) {
         // Update target profile with source settings
         // Keep target's userId and timestamps
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const {
           _id,
           _creationTime,
-          userId,
-          createdAt,
-          deletedAt,
-          scheduledDeletionJobId,
+          userId: _userId,
+          createdAt: _createdAt,
+          deletedAt: _deletedAt,
+          scheduledDeletionJobId: _scheduledDeletionJobId,
           // Don't copy Google OAuth tokens - they're user-specific
-          googleEmail,
-          googleRefreshToken,
-          googleAccessToken,
-          googleTokenExpiry,
-          googleScopes,
-          googleCalendarConnected,
-          gmailConnected,
+          googleEmail: _googleEmail,
+          googleRefreshToken: _googleRefreshToken,
+          googleAccessToken: _googleAccessToken,
+          googleTokenExpiry: _googleTokenExpiry,
+          googleScopes: _googleScopes,
+          googleCalendarConnected: _googleCalendarConnected,
+          gmailConnected: _gmailConnected,
           // Don't copy push subscription - device specific
-          pushSubscription,
+          pushSubscription: _pushSubscription,
           // Map case IDs in arrays
           calendarHiddenCases,
           dismissedDeadlines,
@@ -685,7 +684,7 @@ export const debugListFiltered = internalQuery({
     try {
       const mysteryUser = await ctx.db.get(mysteryUserId as Id<"users">);
       mysteryUserExists = mysteryUser !== null;
-    } catch (e) {
+    } catch {
       mysteryUserExists = false;
     }
 

@@ -17,25 +17,21 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
 export default function AddCaseButton() {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const { isNavigating, navigateTo } = useNavigationLoading();
 
   const handleClick = () => {
-    startTransition(() => {
-      router.push("/cases/new");
-    });
+    navigateTo("/cases/new");
   };
 
   return (
     <button
       onClick={handleClick}
-      disabled={isPending}
+      disabled={isNavigating}
       className={cn(
         // Base styling
         "inline-flex items-center justify-center gap-2 px-6 py-3",
@@ -50,21 +46,21 @@ export default function AddCaseButton() {
         // Cursor pointer for clickable state
         "cursor-pointer",
         // Hover: lift up-left (disabled when pending)
-        !isPending && "hover:-translate-x-1 hover:-translate-y-1",
+        !isNavigating && "hover:-translate-x-1 hover:-translate-y-1",
         // Active: press down-right, remove shadow (disabled when pending)
-        !isPending && "active:translate-x-1 active:translate-y-1 active:shadow-none",
+        !isNavigating && "active:translate-x-1 active:translate-y-1 active:shadow-none",
         // Loading state
-        isPending && "opacity-80 cursor-wait",
+        isNavigating && "opacity-80 cursor-wait",
         // Smooth transitions
         "transition-all duration-200"
       )}
     >
-      {isPending ? (
+      {isNavigating ? (
         <Loader2 className="size-5 animate-spin" />
       ) : (
         <Plus className="size-5" />
       )}
-      {isPending ? "Loading..." : "Add New Case"}
+      {isNavigating ? "Loading..." : "Add New Case"}
     </button>
   );
 }

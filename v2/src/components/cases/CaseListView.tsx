@@ -219,7 +219,7 @@ export function CaseListView({
   let globalIndex = 0;
 
   return (
-    <div className="border-2 border-border bg-background shadow-hard">
+    <div className="border-2 border-border bg-background shadow-hard overflow-visible">
       {groups.map((group) => (
         <div key={group.key}>
           {/* Group header - only show if there's a label */}
@@ -227,7 +227,7 @@ export function CaseListView({
             <div
               className={cn(
                 "sticky top-0 z-10",
-                "bg-background/95 backdrop-blur-sm",
+                "bg-background",
                 "border-b-2 border-border",
                 "py-2 px-4"
               )}

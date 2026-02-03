@@ -38,7 +38,7 @@ export default function ThemeToggle() {
       <button
         type="button"
         aria-label="Toggle theme"
-        className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-none border-2 border-transparent bg-transparent transition-all duration-150"
+        className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-transparent transition-all duration-150"
       >
         <div className="size-5" />
       </button>
@@ -52,7 +52,7 @@ export default function ThemeToggle() {
       type="button"
       onClick={toggleTheme}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
-      className="group relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-none border-2 border-white/30 bg-transparent text-white transition-all duration-150 hover:bg-primary hover:border-primary hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-sm active:translate-x-0 active:translate-y-0 active:shadow-none"
+      className="group relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-none border-2 border-transparent bg-transparent text-white transition-all duration-150 hover:bg-primary hover:border-primary hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-sm active:translate-x-0 active:translate-y-0 active:shadow-none"
     >
       {isDark ? (
         <Sun className="size-5 transition-transform duration-300 ease-out group-hover:rotate-[20deg] group-hover:scale-110 group-active:rotate-0 group-active:scale-95" />

@@ -20,10 +20,10 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Z_INDEX } from "@/lib/constants/zIndex";
+import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
 /**
  * Hook to detect if the device has hover capability.
@@ -54,10 +54,6 @@ import type { DeadlineItem as DeadlineItemType } from "../../../convex/lib/dashb
 interface DeadlineItemProps {
   deadline: DeadlineItemType;
   index: number;
-  /** Whether this item is currently loading (controlled by parent) */
-  isLoading?: boolean;
-  /** Callback when navigation starts (for parent to track loading state) */
-  onNavigate?: (caseId: string) => void;
 }
 
 // Hover card position calculated from element position
@@ -67,8 +63,8 @@ interface HoverCardPosition {
   placement: "right" | "left";
 }
 
-export default function DeadlineItem({ deadline, index, isLoading = false, onNavigate }: DeadlineItemProps) {
-  const router = useRouter();
+export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
+  const { isNavigating: isLoading, navigateTo } = useNavigationLoading();
   const hasHover = useHasHover();
   const [showHoverCard, setShowHoverCard] = useState(false);
   const [hoverPosition, setHoverPosition] = useState<HoverCardPosition | null>(null);
@@ -77,13 +73,12 @@ export default function DeadlineItem({ deadline, index, isLoading = false, onNav
 
   const isOverdue = deadline.urgency === "overdue";
 
-  // Handle click - notify parent and navigate
+  // Handle click - navigate via shared loading context
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     if (isLoading) return; // Prevent double-clicks
-    onNavigate?.(deadline.caseId);
-    router.push(`/cases/${deadline.caseId}`);
-  }, [isLoading, onNavigate, deadline.caseId, router]);
+    navigateTo(`/cases/${deadline.caseId}`);
+  }, [isLoading, navigateTo, deadline.caseId]);
 
   // Calculate animation delay (staggered 50ms per index for smoother cascade)
   const animationDelay = `${index * 50}ms`;

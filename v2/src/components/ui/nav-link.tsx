@@ -27,6 +27,14 @@ const NavLinkContext = createContext<{
   setActiveNavigation: (path: string | null) => void;
 } | null>(null);
 
+/**
+ * Hook for any component to access the shared navigation loading context.
+ * Returns null if not inside NavLinkProvider.
+ */
+export function useNavigationContext() {
+  return useContext(NavLinkContext);
+}
+
 // Provider component to wrap app and coordinate NavLink loading states
 export function NavLinkProvider({ children }: { children: React.ReactNode }) {
   const [activeNavigation, setActiveNavigation] = useState<string | null>(null);

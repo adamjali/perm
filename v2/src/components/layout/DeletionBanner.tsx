@@ -20,10 +20,13 @@ export default function DeletionBanner() {
   // Start hidden to avoid flash of banner before sessionStorage is checked
   const [dismissed, setDismissed] = useState(true);
 
+  // useState initializer runs once — avoids impure Date.now() during render
+  const [mountTime] = useState(() => Date.now());
+
   const isDeletionScheduled =
     profile?.deletedAt !== undefined &&
     profile?.deletedAt !== null &&
-    profile.deletedAt > Date.now();
+    profile.deletedAt > mountTime;
 
   const storageKey = isDeletionScheduled
     ? `dismissedDeletionBanner_${profile.deletedAt}`

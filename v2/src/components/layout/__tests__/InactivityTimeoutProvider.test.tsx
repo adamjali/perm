@@ -25,10 +25,10 @@ import { ThemeProvider } from "next-themes";
 // MOCKS (must be before imports that use them)
 // ============================================================================
 
-// Mock useRouter
-const mockPush = vi.fn();
+// Mock useRouter (component uses window.location.href for redirect, not router.push)
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => "/dashboard",
 }));
 
 // Mock useAuthActions
@@ -104,12 +104,21 @@ function renderWithTheme(ui: React.ReactElement) {
 // ============================================================================
 
 describe("InactivityTimeoutProvider", () => {
+  // Component uses window.location.href = "/login" for hard redirect
+  const originalLocation = window.location;
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockSignOut.mockResolvedValue(undefined);
     mockIsWarningVisible = false;
     mockOnTimeoutCallback = null;
     mockIsSigningOut = false;
+    // Mock window.location to capture href assignment (jsdom doesn't support navigation)
+    Object.defineProperty(window, "location", {
+      value: { ...originalLocation, href: originalLocation.href },
+      writable: true,
+      configurable: true,
+    });
   });
 
   // --------------------------------------------------------------------------
@@ -173,7 +182,7 @@ describe("InactivityTimeoutProvider", () => {
         expect(mockSignOut).toHaveBeenCalledTimes(1);
       });
 
-      expect(mockPush).toHaveBeenCalledWith("/login");
+      expect(window.location.href).toBe("/login");
     });
 
     it("calls signOut when Log Out Now is clicked", async () => {
@@ -195,7 +204,7 @@ describe("InactivityTimeoutProvider", () => {
         expect(mockSignOut).toHaveBeenCalledTimes(1);
       });
 
-      expect(mockPush).toHaveBeenCalledWith("/login");
+      expect(window.location.href).toBe("/login");
     });
 
     it("shows toast on sign-out error", async () => {

@@ -200,15 +200,15 @@ export function CollapsibleSection({
         {isOpen && canInteract && (
           <motion.div
             id={`section-${name}-content`}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            initial={{ height: 0, opacity: 0, overflow: "hidden" }}
+            animate={{ height: "auto", opacity: 1, overflow: "visible" }}
+            exit={{ height: 0, opacity: 0, overflow: "hidden" }}
             transition={{
               type: "spring",
               visualDuration: 0.15,
               bounce: 0.1,
+              overflow: { delay: 0.15 },
             }}
-            className="overflow-hidden"
           >
             <div className="px-4 pb-4">
               {children}

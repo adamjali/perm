@@ -35,6 +35,7 @@ vi.mock('next/navigation', () => ({
     push: vi.fn(),
     back: vi.fn(),
   }),
+  usePathname: () => '/cases/new',
 }));
 
 // Mock validateCaseForm - can be overridden per test

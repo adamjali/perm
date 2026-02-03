@@ -15,10 +15,6 @@ interface UrgencyGroupProps {
   maxItems?: number;
   /** Whether this is the last column (no right border) */
   isLast?: boolean;
-  /** Currently loading case ID (for coordinated loading state) */
-  loadingCaseId?: string | null;
-  /** Callback when a case is clicked */
-  onCaseClick?: (caseId: string) => void;
 }
 
 // V1-style urgency gradient backgrounds and colors
@@ -51,8 +47,6 @@ export default function UrgencyGroup({
   urgency,
   maxItems = 5,
   isLast = false,
-  loadingCaseId,
-  onCaseClick,
 }: UrgencyGroupProps) {
   const [showAllItems, setShowAllItems] = useState(false);
 
@@ -112,8 +106,6 @@ export default function UrgencyGroup({
               key={`${item.caseId}-${item.type}`}
               deadline={item}
               index={index}
-              isLoading={loadingCaseId === item.caseId}
-              onNavigate={onCaseClick}
             />
           ))}
 
