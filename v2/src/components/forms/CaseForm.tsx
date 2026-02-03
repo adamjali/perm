@@ -155,6 +155,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
 
   const {
     validateField,
+    clearFieldValidation,
     fieldStates,
     fieldErrors: dateFieldErrors,
     allFieldDisabledStates,
@@ -366,14 +367,20 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
 
   const handleDateChange = useCallback(
     (field: string, value: string) => {
-      handleChange(field, value);
-      const clearedFields = triggerCalculation(field as keyof CaseFormData, value);
+      // Convert empty string to undefined (cleared date field)
+      const normalizedValue = value || undefined;
+      handleChange(field, normalizedValue);
+      const clearedFields = triggerCalculation(field as keyof CaseFormData, normalizedValue);
       for (const cleared of clearedFields) {
+        // Clear validation state and errors for cascade-cleared fields
+        clearFieldValidation(cleared.field);
+        clearFieldError(cleared.field);
+        rhfClearErrors(cleared.field as keyof CaseFormData);
         toast.info(cleared.reason, { duration: 4000 });
       }
       // Validation happens on blur (handleFieldBlur) to prevent error flash while typing
     },
-    [handleChange, triggerCalculation]
+    [handleChange, triggerCalculation, clearFieldValidation, clearFieldError, rhfClearErrors]
   );
 
   const handleFieldBlur = useCallback(

@@ -14,12 +14,47 @@ import type { CaseStatus, ProgressStatus } from "@/lib/perm";
 
 /** Field dependencies for auto-calculation cascade. Only fields with dependencies are listed. */
 const FIELD_DEPENDENCIES: Partial<Record<keyof CaseFormData, (keyof CaseFormData)[]>> = {
+  // Clear-only cascades: clearing parent clears all dependents
+  pwdFilingDate: ["pwdDeterminationDate", "pwdExpirationDate"],
+  sundayAdFirstDate: ["sundayAdSecondDate"],
+  additionalRecruitmentStartDate: ["additionalRecruitmentEndDate"],
+  eta9089FilingDate: ["eta9089AuditDate", "eta9089CertificationDate", "eta9089ExpirationDate"],
+  i140FilingDate: ["i140ReceiptDate", "i140ApprovalDate", "i140DenialDate"],
+  // Auto-calculation cascades: changing parent recalculates dependent
   pwdDeterminationDate: ["pwdExpirationDate"],
   noticeOfFilingStartDate: ["noticeOfFilingEndDate"],
   jobOrderStartDate: ["jobOrderEndDate"],
   eta9089CertificationDate: ["eta9089ExpirationDate"],
   i140ApprovalDate: ["i140DenialDate"],
   i140DenialDate: ["i140ApprovalDate"],
+};
+
+/**
+ * Fields that only cascade-clear when their parent is removed.
+ * When parent has a value, dependent values are preserved unchanged.
+ */
+const CLEAR_ONLY_SOURCES = new Set<keyof CaseFormData>([
+  "pwdFilingDate",
+  "sundayAdFirstDate",
+  "additionalRecruitmentStartDate",
+  "eta9089FilingDate",
+  "i140FilingDate",
+]);
+
+/** Display names for cleared field toast notifications */
+const FIELD_DISPLAY_NAMES: Partial<Record<keyof CaseFormData, string>> = {
+  pwdDeterminationDate: "PWD determination date",
+  pwdExpirationDate: "PWD expiration date",
+  sundayAdSecondDate: "Second Sunday ad date",
+  additionalRecruitmentEndDate: "Additional recruitment end date",
+  noticeOfFilingEndDate: "Notice of filing end date",
+  jobOrderEndDate: "Job order end date",
+  eta9089AuditDate: "ETA 9089 audit date",
+  eta9089CertificationDate: "ETA 9089 certification date",
+  eta9089ExpirationDate: "ETA 9089 expiration date",
+  i140ReceiptDate: "I-140 receipt date",
+  i140ApprovalDate: "I-140 approval date",
+  i140DenialDate: "I-140 denial date",
 };
 
 export interface AutoStatusResult {
@@ -85,6 +120,13 @@ function calculateDependentValue(
   formData: CaseFormData
 ): string | undefined {
   try {
+    // Clear-only cascades: when parent is cleared, clear dependents; otherwise preserve
+    if (CLEAR_ONLY_SOURCES.has(sourceField)) {
+      return formData[sourceField]
+        ? (formData[dependentField] as string | undefined)
+        : undefined;
+    }
+
     // PWD expiration calculation
     if (sourceField === "pwdDeterminationDate" && dependentField === "pwdExpirationDate") {
       if (!formData.pwdDeterminationDate) {
@@ -228,18 +270,10 @@ export function useFormCalculations(
           newAutoFields.add(dependentField);
         } else {
           newAutoFields.delete(dependentField);
-          // Track cleared I-140 approval/denial due to mutual exclusivity
+          // Track all cleared fields for toast notifications and validation cleanup
           if (oldValue) {
-            const clearReasons: Record<string, string> = {
-              "i140ApprovalDate:i140DenialDate":
-                "I-140 Denial date cleared because approval date was entered",
-              "i140DenialDate:i140ApprovalDate":
-                "I-140 Approval date cleared because denial date was entered",
-            };
-            const key = `${fieldName}:${dependentField}`;
-            if (clearReasons[key]) {
-              clearedFields.push({ field: dependentField, reason: clearReasons[key] });
-            }
+            const displayName = FIELD_DISPLAY_NAMES[dependentField] || String(dependentField);
+            clearedFields.push({ field: dependentField, reason: `${displayName} was cleared` });
           }
         }
       }
