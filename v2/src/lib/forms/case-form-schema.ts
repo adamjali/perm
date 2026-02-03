@@ -42,7 +42,7 @@ function createOptionalDateSchema(
   return z
     .string()
     .optional()
-    .refine((val) => val === undefined || validate(val), { message });
+    .refine((val) => !val || validate(val), { message });
 }
 
 const isoDateSchema = z.string().refine(isISODateString, { message: ISO_DATE_MESSAGE });
@@ -457,26 +457,26 @@ function formDataToValidationData(data: CaseFormData) {
   const activeRfe = getActiveEntry(data.rfeEntries);
 
   return {
-    pwd_filing_date: data.pwdFilingDate ?? null,
-    pwd_determination_date: data.pwdDeterminationDate ?? null,
-    pwd_expiration_date: data.pwdExpirationDate ?? null,
-    sunday_ad_first_date: data.sundayAdFirstDate ?? null,
-    sunday_ad_second_date: data.sundayAdSecondDate ?? null,
-    job_order_start_date: data.jobOrderStartDate ?? null,
-    job_order_end_date: data.jobOrderEndDate ?? null,
-    notice_of_filing_start_date: data.noticeOfFilingStartDate ?? null,
-    notice_of_filing_end_date: data.noticeOfFilingEndDate ?? null,
-    eta9089_filing_date: data.eta9089FilingDate ?? null,
-    eta9089_certification_date: data.eta9089CertificationDate ?? null,
-    eta9089_expiration_date: data.eta9089ExpirationDate ?? null,
-    i140_filing_date: data.i140FilingDate ?? null,
-    i140_approval_date: data.i140ApprovalDate ?? null,
-    rfi_received_date: activeRfi?.receivedDate ?? null,
-    rfi_due_date: activeRfi?.responseDueDate ?? null,
-    rfi_submitted_date: activeRfi?.responseSubmittedDate ?? null,
-    rfe_received_date: activeRfe?.receivedDate ?? null,
-    rfe_due_date: activeRfe?.responseDueDate ?? null,
-    rfe_submitted_date: activeRfe?.responseSubmittedDate ?? null,
+    pwd_filing_date: data.pwdFilingDate || null,
+    pwd_determination_date: data.pwdDeterminationDate || null,
+    pwd_expiration_date: data.pwdExpirationDate || null,
+    sunday_ad_first_date: data.sundayAdFirstDate || null,
+    sunday_ad_second_date: data.sundayAdSecondDate || null,
+    job_order_start_date: data.jobOrderStartDate || null,
+    job_order_end_date: data.jobOrderEndDate || null,
+    notice_of_filing_start_date: data.noticeOfFilingStartDate || null,
+    notice_of_filing_end_date: data.noticeOfFilingEndDate || null,
+    eta9089_filing_date: data.eta9089FilingDate || null,
+    eta9089_certification_date: data.eta9089CertificationDate || null,
+    eta9089_expiration_date: data.eta9089ExpirationDate || null,
+    i140_filing_date: data.i140FilingDate || null,
+    i140_approval_date: data.i140ApprovalDate || null,
+    rfi_received_date: activeRfi?.receivedDate || null,
+    rfi_due_date: activeRfi?.responseDueDate || null,
+    rfi_submitted_date: activeRfi?.responseSubmittedDate || null,
+    rfe_received_date: activeRfe?.receivedDate || null,
+    rfe_due_date: activeRfe?.responseDueDate || null,
+    rfe_submitted_date: activeRfe?.responseSubmittedDate || null,
     is_professional_occupation: data.isProfessionalOccupation,
   };
 }

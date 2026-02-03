@@ -366,7 +366,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
 
   const handleDateChange = useCallback(
     (field: string, value: string) => {
-      handleChange(field, value);
+      handleChange(field, value || undefined);
       const clearedFields = triggerCalculation(field as keyof CaseFormData, value);
       for (const cleared of clearedFields) {
         toast.info(cleared.reason, { duration: 4000 });
