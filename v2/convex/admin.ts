@@ -16,6 +16,8 @@ import { Scrypt } from "lucia";
 import { isAdmin, getAdminDashboardDataHelper, ADMIN_EMAIL } from "./lib/admin";
 import { getCurrentUserId } from "./lib/auth";
 import { Resend } from "resend";
+import { render } from "@react-email/render";
+import { AdminEmail } from "../src/emails/AdminEmail";
 
 /**
  * Test password verification for debugging.
@@ -1235,6 +1237,7 @@ export const getUserEmail = internalQuery({
 export const sendAdminEmail = action({
   args: {
     toEmail: v.string(),
+    toName: v.string(),
     subject: v.string(),
     body: v.string(),
   },
@@ -1250,14 +1253,24 @@ export const sendAdminEmail = action({
       throw new Error("Unauthorized: Admin access required");
     }
 
+    // Render branded HTML email
+    const html = await render(
+      AdminEmail({
+        recipientName: args.toName,
+        subject: args.subject,
+        body: args.body,
+      })
+    );
+
     // Initialize Resend
     const resend = new Resend(process.env.AUTH_RESEND_KEY);
 
-    // Send email
+    // Send email with both HTML and plain text fallback
     const { error } = await resend.emails.send({
       from: "PERM Tracker Admin <notifications@permtracker.app>",
       to: [args.toEmail],
       subject: args.subject,
+      html,
       text: args.body,
     });
 

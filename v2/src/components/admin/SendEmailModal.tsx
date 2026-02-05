@@ -53,6 +53,7 @@ export function SendEmailModal({ user, onClose }: SendEmailModalProps) {
     try {
       await sendEmail({
         toEmail: user.email,
+        toName: user.name ?? user.email.split("@")[0],
         subject: subject.trim(),
         body: body.trim(),
       });
