@@ -13,7 +13,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { Scrypt } from "lucia";
-import { isAdmin, getAdminDashboardDataHelper } from "./lib/admin";
+import { isAdmin, getAdminDashboardDataHelper, ADMIN_EMAIL } from "./lib/admin";
 import { getCurrentUserId } from "./lib/auth";
 import { Resend } from "resend";
 
@@ -1214,6 +1214,18 @@ export const deleteUserAdmin = mutation({
 });
 
 /**
+ * Get user email by ID (internal helper for action admin checks)
+ */
+export const getUserEmail = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) return null;
+    return { email: user.email };
+  },
+});
+
+/**
  * Send email as admin (admin only)
  *
  * Sends a plain text email from the admin notification address.
@@ -1227,9 +1239,14 @@ export const sendAdminEmail = action({
     body: v.string(),
   },
   handler: async (ctx, args) => {
-    // Verify admin via getUserIdentity
+    // Verify admin: get userId from identity token, then check via DB
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity?.email || identity.email !== "admin@yahoo.com") {
+    if (!identity) {
+      throw new Error("Unauthorized: Not authenticated");
+    }
+    const userId = identity.subject.split("|")[0] as Id<"users">;
+    const user = await ctx.runQuery(internal.admin.getUserEmail, { userId });
+    if (!user || user.email !== ADMIN_EMAIL) {
       throw new Error("Unauthorized: Admin access required");
     }
 
