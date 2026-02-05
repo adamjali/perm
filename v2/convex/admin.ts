@@ -1237,7 +1237,7 @@ export const getUserEmail = internalQuery({
 export const sendAdminEmail = action({
   args: {
     toEmail: v.string(),
-    toName: v.string(),
+    toName: v.optional(v.string()),
     subject: v.string(),
     body: v.string(),
   },
@@ -1256,7 +1256,7 @@ export const sendAdminEmail = action({
     // Render branded HTML email
     const html = await render(
       AdminEmail({
-        recipientName: args.toName,
+        recipientName: args.toName ?? args.toEmail.split("@")[0],
         subject: args.subject,
         body: args.body,
       })
