@@ -178,7 +178,7 @@ export function FormField({
       {/* Input wrapper with animation */}
       <div
         className={cn(
-          "transition-all duration-200",
+          "transition-all duration-200 overflow-hidden",
           error && "animate-shake"
         )}
       >

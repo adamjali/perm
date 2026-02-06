@@ -226,7 +226,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
 
     return (
       <div
-        className={cn("relative w-full min-w-0 group", className)}
+        className={cn("relative w-full min-w-0 overflow-hidden group", className)}
         data-auto-calculated={autoCalculated ? "true" : undefined}
       >
         <input
