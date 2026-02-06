@@ -7,6 +7,7 @@
  * - Bold border (neobrutalist)
  * - Inline styles for email client compatibility
  * - Urgency variants (urgent=red, warning=orange)
+ * - Dark mode via CSS class
  *
  * Phase: 24 (Notifications + Email)
  */
@@ -39,7 +40,7 @@ export function EmailButton({
   };
 
   return (
-    <Button href={href} style={buttonStyle}>
+    <Button href={href} className="em-button" style={buttonStyle}>
       {children}
     </Button>
   );

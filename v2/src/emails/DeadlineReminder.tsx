@@ -8,17 +8,13 @@
  * - Clear deadline date and days remaining
  * - CTA to view case
  * - Settings link in footer
+ * - Dark mode support via CSS classes
  *
  * Urgency thresholds (from v1):
  * - overdue (<=0): #991B1B (dark red)
  * - urgent (1-7): #DC2626 (red)
  * - high (8-14): #F97316 (orange)
  * - normal (15+): #2563EB (blue)
- *
- * Subject line patterns:
- * - Overdue: "OVERDUE: {deadlineType} for {employer}"
- * - Urgent: "Urgent: {deadlineType} in {daysUntil} days"
- * - Normal: "Reminder: {deadlineType} in {daysUntil} days"
  *
  * Phase: 24 (Notifications + Email)
  */
@@ -111,18 +107,18 @@ export function DeadlineReminder({
 
       {/* Case Details */}
       <Section style={detailsSectionStyle}>
-        <Section style={styles.detailsCard}>
-          <Text style={labelStyle}>Employer</Text>
-          <Text style={valueStyle}>{employerName}</Text>
+        <Section className="em-card-bold" style={styles.detailsCard}>
+          <Text className="em-text-secondary" style={labelStyle}>Employer</Text>
+          <Text className="em-text" style={valueStyle}>{employerName}</Text>
 
-          <Text style={labelStyle}>Foreign Worker</Text>
-          <Text style={valueStyle}>{beneficiaryName}</Text>
+          <Text className="em-text-secondary" style={labelStyle}>Foreign Worker</Text>
+          <Text className="em-text" style={valueStyle}>{beneficiaryName}</Text>
 
-          <Text style={labelStyle}>Deadline Type</Text>
-          <Text style={valueStyle}>{deadlineType}</Text>
+          <Text className="em-text-secondary" style={labelStyle}>Deadline Type</Text>
+          <Text className="em-text" style={valueStyle}>{deadlineType}</Text>
 
-          <Text style={labelStyle}>Deadline Date</Text>
-          <Text style={styles.dateValue}>{deadlineDate}</Text>
+          <Text className="em-text-secondary" style={labelStyle}>Deadline Date</Text>
+          <Text className="em-text" style={styles.dateValue}>{deadlineDate}</Text>
         </Section>
 
         {/* Days Remaining Callout */}

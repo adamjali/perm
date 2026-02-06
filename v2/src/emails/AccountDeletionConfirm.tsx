@@ -67,12 +67,12 @@ export function AccountDeletionConfirm({
 
       {/* Details Card */}
       <Section style={styles.details}>
-        <Section style={styles.detailsCard}>
-          <Text style={styles.greeting}>Hi {userName},</Text>
+        <Section className="em-card-bold" style={styles.detailsCard}>
+          <Text className="em-text" style={styles.greeting}>Hi {userName},</Text>
 
           {immediate ? (
             <>
-              <Text style={styles.paragraph}>
+              <Text className="em-text-body" style={styles.paragraph}>
                 Your PERM Tracker account and all associated data have been
                 permanently deleted as requested on:
               </Text>
@@ -81,26 +81,26 @@ export function AccountDeletionConfirm({
                 <Text style={styles.dateText}>{deletionDate}</Text>
               </Section>
 
-              <Text style={styles.paragraph}>
+              <Text className="em-text-body" style={styles.paragraph}>
                 The following data has been permanently removed:
               </Text>
 
-              <Text style={styles.listItem}>
+              <Text className="em-text-body" style={styles.listItem}>
                 All PERM cases and related data
               </Text>
-              <Text style={styles.listItem}>
+              <Text className="em-text-body" style={styles.listItem}>
                 Notification preferences and history
               </Text>
-              <Text style={styles.listItem}>
+              <Text className="em-text-body" style={styles.listItem}>
                 Calendar sync settings
               </Text>
-              <Text style={styles.listItem}>
+              <Text className="em-text-body" style={styles.listItem}>
                 Your user profile
               </Text>
             </>
           ) : (
             <>
-              <Text style={styles.paragraph}>
+              <Text className="em-text-body" style={styles.paragraph}>
                 We&apos;ve received your request to delete your PERM Tracker
                 account. Your account and all associated data will be permanently
                 deleted on:
@@ -110,20 +110,20 @@ export function AccountDeletionConfirm({
                 <Text style={styles.dateText}>{deletionDate}</Text>
               </Section>
 
-              <Text style={styles.paragraph}>
+              <Text className="em-text-body" style={styles.paragraph}>
                 <strong>What happens next:</strong>
               </Text>
 
-              <Text style={styles.listItem}>
+              <Text className="em-text-body" style={styles.listItem}>
                 You have <strong>30 days</strong> to cancel this request
               </Text>
-              <Text style={styles.listItem}>
+              <Text className="em-text-body" style={styles.listItem}>
                 Your account remains active during this period
               </Text>
-              <Text style={styles.listItem}>
+              <Text className="em-text-body" style={styles.listItem}>
                 All case data, settings, and history will be permanently deleted
               </Text>
-              <Text style={styles.listItem}>
+              <Text className="em-text-body" style={styles.listItem}>
                 This action cannot be undone after the deletion date
               </Text>
             </>
@@ -134,7 +134,7 @@ export function AccountDeletionConfirm({
       {/* Cancel CTA - only for scheduled deletion */}
       {!immediate && (
         <Section style={styles.cta}>
-          <Text style={styles.ctaText}>Changed your mind?</Text>
+          <Text className="em-text-secondary" style={styles.ctaText}>Changed your mind?</Text>
           <EmailButton href={cancelUrl} variant="default">
             Cancel Account Deletion
           </EmailButton>
@@ -142,10 +142,10 @@ export function AccountDeletionConfirm({
       )}
 
       {/* Support Section */}
-      <Section style={styles.support}>
-        <Text style={styles.supportText}>
+      <Section className="em-support-box" style={styles.support}>
+        <Text className="em-support-text" style={styles.supportText}>
           If you didn&apos;t request this deletion, please{" "}
-          <Link href={supportUrl} style={styles.supportLink}>
+          <Link href={supportUrl} className="em-support-link" style={styles.supportLink}>
             contact support immediately
           </Link>
           .

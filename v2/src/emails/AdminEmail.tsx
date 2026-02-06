@@ -48,7 +48,7 @@ export function AdminEmail({
 
       {/* Greeting */}
       <Section style={styles.greetingSection}>
-        <Text style={styles.greeting}>
+        <Text className="em-text" style={styles.greeting}>
           Hi {recipientName},
         </Text>
       </Section>
@@ -56,7 +56,7 @@ export function AdminEmail({
       {/* Body */}
       <Section style={styles.bodySection}>
         {paragraphs.map((paragraph, i) => (
-          <Text key={i} style={styles.bodyText}>
+          <Text key={i} className="em-text-body" style={styles.bodyText}>
             {paragraph.split("\n").map((line, j, arr) => (
               <React.Fragment key={j}>
                 {line}
@@ -67,14 +67,14 @@ export function AdminEmail({
         ))}
       </Section>
 
-      <Hr style={styles.divider} />
+      <Hr className="em-divider" style={styles.divider} />
 
       {/* Sign-off */}
       <Section style={styles.signOffSection}>
-        <Text style={styles.signOff}>
+        <Text className="em-text-secondary" style={styles.signOff}>
           Best regards,
         </Text>
-        <Text style={styles.signOffName}>
+        <Text className="em-text" style={styles.signOffName}>
           The PERM Tracker Team
         </Text>
       </Section>

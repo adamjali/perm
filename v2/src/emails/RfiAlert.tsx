@@ -67,8 +67,8 @@ export function RfiAlert({
       />
 
       {alertType === "new" && (
-        <Section style={styles.alertBox}>
-          <Text style={styles.alertText}>
+        <Section className="em-alert-yellow" style={styles.alertBox}>
+          <Text className="em-alert-yellow-text" style={styles.alertText}>
             A Request for Information has been received from the DOL. The
             response is due within 30 days of receipt.
           </Text>
@@ -76,17 +76,17 @@ export function RfiAlert({
       )}
 
       <Section style={styles.details}>
-        <Text style={styles.label}>Foreign Worker</Text>
-        <Text style={styles.value}>{beneficiaryName}</Text>
+        <Text className="em-text-secondary" style={styles.label}>Foreign Worker</Text>
+        <Text className="em-text" style={styles.value}>{beneficiaryName}</Text>
 
-        <Text style={styles.label}>Company</Text>
-        <Text style={styles.value}>{companyName}</Text>
+        <Text className="em-text-secondary" style={styles.label}>Company</Text>
+        <Text className="em-text" style={styles.value}>{companyName}</Text>
 
-        <Text style={styles.label}>RFI Received</Text>
-        <Text style={styles.value}>{receivedDate}</Text>
+        <Text className="em-text-secondary" style={styles.label}>RFI Received</Text>
+        <Text className="em-text" style={styles.value}>{receivedDate}</Text>
 
-        <Text style={styles.label}>Response Due</Text>
-        <Text style={styles.valueHighlight}>{dueDate}</Text>
+        <Text className="em-text-secondary" style={styles.label}>Response Due</Text>
+        <Text className="em-text" style={styles.valueHighlight}>{dueDate}</Text>
 
         <Text style={isOverdue ? styles.overdue : styles.daysRemaining}>
           {daysRemaining > 0
@@ -103,8 +103,8 @@ export function RfiAlert({
         </EmailButton>
       </Section>
 
-      <Section style={styles.warning}>
-        <Text style={styles.warningText}>
+      <Section className="em-alert-red" style={styles.warning}>
+        <Text className="em-alert-red-text" style={styles.warningText}>
           ⚠️ Failure to respond to an RFI within 30 days may result in denial of
           the PERM application.
         </Text>

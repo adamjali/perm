@@ -58,26 +58,26 @@ export function AutoClosure({
       />
 
       <Section style={detailsSectionStyle}>
-        <Text style={labelStyle}>Foreign Worker</Text>
-        <Text style={valueStyle}>{beneficiaryName}</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Foreign Worker</Text>
+        <Text className="em-text" style={valueStyle}>{beneficiaryName}</Text>
 
-        <Text style={labelStyle}>Company</Text>
-        <Text style={valueStyle}>{companyName}</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Company</Text>
+        <Text className="em-text" style={valueStyle}>{companyName}</Text>
       </Section>
 
       {/* Closure reason box */}
-      <Section style={styles.closureBox}>
-        <Text style={styles.closureTitle}>Closure Reason</Text>
+      <Section className="em-closure-box" style={styles.closureBox}>
+        <Text className="em-closure-title" style={styles.closureTitle}>Closure Reason</Text>
         <Text style={styles.closureType}>{violationType}</Text>
-        <Text style={styles.closureReason}>{reason}</Text>
+        <Text className="em-closure-reason" style={styles.closureReason}>{reason}</Text>
       </Section>
 
       <Section style={styles.timestamp}>
-        <Text style={styles.timestampText}>Closed on {closedAt}</Text>
+        <Text className="em-text-secondary" style={styles.timestampText}>Closed on {closedAt}</Text>
       </Section>
 
-      <Section style={styles.infoBox}>
-        <Text style={styles.infoText}>
+      <Section className="em-info-box" style={styles.infoBox}>
+        <Text className="em-info-text" style={styles.infoText}>
           This case was automatically closed because a critical deadline was
           missed. If this was in error, you can reopen the case from the case
           details page.

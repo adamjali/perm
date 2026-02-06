@@ -74,10 +74,10 @@ export function WeeklyDigest({
     <EmailLayout previewText={previewText} settingsUrl={settingsUrl}>
       {/* Greeting */}
       <Section style={styles.greeting}>
-        <Text style={styles.greetingText}>
+        <Text className="em-text" style={styles.greetingText}>
           Good morning, {userName}!
         </Text>
-        <Text style={styles.weekRange}>
+        <Text className="em-text-secondary" style={styles.weekRange}>
           Week of {weekRange}
         </Text>
       </Section>
@@ -87,21 +87,21 @@ export function WeeklyDigest({
         <table width="100%" cellPadding="0" cellSpacing="0" style={styles.statsTable}>
           <tbody>
             <tr>
-              <td style={styles.statCell}>
-                <Text style={styles.statNumber}>{stats.totalActiveCases}</Text>
-                <Text style={styles.statLabel}>Active Cases</Text>
+              <td className="em-stat-cell" style={styles.statCell}>
+                <Text className="em-stat-number" style={styles.statNumber}>{stats.totalActiveCases}</Text>
+                <Text className="em-text-secondary" style={styles.statLabel}>Active Cases</Text>
               </td>
-              <td style={getStatCellStyle(stats.overdueCount > 0 ? "#991B1B" : undefined)}>
-                <Text style={styles.statNumber}>{stats.overdueCount}</Text>
-                <Text style={styles.statLabel}>Overdue</Text>
+              <td className="em-stat-cell" style={getStatCellStyle(stats.overdueCount > 0 ? "#991B1B" : undefined)}>
+                <Text className="em-stat-number" style={styles.statNumber}>{stats.overdueCount}</Text>
+                <Text className="em-text-secondary" style={styles.statLabel}>Overdue</Text>
               </td>
-              <td style={getStatCellStyle(stats.urgentCount > 0 ? "#DC2626" : undefined)}>
-                <Text style={styles.statNumber}>{stats.urgentCount}</Text>
-                <Text style={styles.statLabel}>This Week</Text>
+              <td className="em-stat-cell" style={getStatCellStyle(stats.urgentCount > 0 ? "#DC2626" : undefined)}>
+                <Text className="em-stat-number" style={styles.statNumber}>{stats.urgentCount}</Text>
+                <Text className="em-text-secondary" style={styles.statLabel}>This Week</Text>
               </td>
-              <td style={styles.statCell}>
-                <Text style={styles.statNumber}>{stats.unreadNotificationCount}</Text>
-                <Text style={styles.statLabel}>Unread</Text>
+              <td className="em-stat-cell" style={styles.statCell}>
+                <Text className="em-stat-number" style={styles.statNumber}>{stats.unreadNotificationCount}</Text>
+                <Text className="em-text-secondary" style={styles.statLabel}>Unread</Text>
               </td>
             </tr>
           </tbody>
@@ -110,12 +110,12 @@ export function WeeklyDigest({
 
       {/* Empty State */}
       {isEmpty && (
-        <Section style={styles.emptyState}>
+        <Section className="em-alert-green" style={styles.emptyState}>
           <Text style={styles.emptyIcon}>&#127881;</Text>
-          <Text style={styles.emptyTitle}>All Clear!</Text>
-          <Text style={styles.emptyMessage}>{emptyMessage}</Text>
+          <Text className="em-alert-green-title" style={styles.emptyTitle}>All Clear!</Text>
+          <Text className="em-alert-green-text" style={styles.emptyMessage}>{emptyMessage}</Text>
           <Section style={styles.ctaSection}>
-            <Link href={`${baseUrl}/cases`} style={styles.ctaButton}>
+            <Link href={`${baseUrl}/cases`} className="em-cta-button" style={styles.ctaButton}>
               View Your Cases
             </Link>
           </Section>
@@ -179,9 +179,9 @@ export function WeeklyDigest({
       {/* Recent Activity */}
       {recentCaseUpdates.length > 0 && (
         <>
-          <Hr style={styles.divider} />
+          <Hr className="em-divider" style={styles.divider} />
           <Section style={styles.activitySection}>
-            <Text style={styles.activityHeader}>Recent Activity</Text>
+            <Text className="em-text" style={styles.activityHeader}>Recent Activity</Text>
             {recentCaseUpdates.slice(0, 5).map((update) => (
               <ActivityRow
                 key={`activity-${update.caseId}-${update.updatedAt}`}
@@ -190,7 +190,7 @@ export function WeeklyDigest({
               />
             ))}
             {recentCaseUpdates.length > 5 && (
-              <Text style={styles.moreActivity}>
+              <Text className="em-text-muted" style={styles.moreActivity}>
                 +{recentCaseUpdates.length - 5} more updates
               </Text>
             )}
@@ -201,7 +201,7 @@ export function WeeklyDigest({
       {/* CTA */}
       {!isEmpty && (
         <Section style={styles.ctaSection}>
-          <Link href={`${baseUrl}/cases`} style={styles.ctaButton}>
+          <Link href={`${baseUrl}/cases`} className="em-cta-button" style={styles.ctaButton}>
             View All Cases
           </Link>
         </Section>
@@ -237,20 +237,20 @@ function DeadlineRow({
   };
 
   return (
-    <Section style={styles.deadlineRow}>
+    <Section className="em-deadline-row" style={styles.deadlineRow}>
       <table width="100%" cellPadding="0" cellSpacing="0">
         <tbody>
           <tr>
             <td style={styles.deadlineContent}>
-              <Text style={styles.deadlineCaseName}>
+              <Text className="em-text" style={styles.deadlineCaseName}>
                 {deadline.beneficiaryIdentifier} at {deadline.employerName}
               </Text>
-              <Text style={styles.deadlineType}>
+              <Text className="em-text-secondary" style={styles.deadlineType}>
                 {deadline.deadlineType}
               </Text>
             </td>
             <td style={styles.deadlineDateCell}>
-              <Text style={styles.deadlineDate}>
+              <Text className="em-text" style={styles.deadlineDate}>
                 {formatDate(deadline.deadlineDate)}
               </Text>
               <Text style={getDeadlineDaysStyle(deadline.urgency)}>
@@ -260,6 +260,7 @@ function DeadlineRow({
             <td style={styles.deadlineAction}>
               <Link
                 href={`${baseUrl}/cases/${deadline.caseId}`}
+                className="em-link-blue"
                 style={styles.viewLink}
               >
                 View
@@ -294,20 +295,20 @@ function ActivityRow({
   };
 
   return (
-    <Section style={styles.activityRow}>
+    <Section className="em-activity-row" style={styles.activityRow}>
       <table width="100%" cellPadding="0" cellSpacing="0">
         <tbody>
           <tr>
             <td style={styles.activityContent}>
-              <Text style={styles.activityCase}>
+              <Text className="em-text" style={styles.activityCase}>
                 {update.beneficiaryIdentifier} at {update.employerName}
               </Text>
-              <Text style={styles.activityChange}>
+              <Text className="em-text-secondary" style={styles.activityChange}>
                 {update.changeDescription}
               </Text>
             </td>
             <td style={styles.activityTime}>
-              <Text style={styles.activityTimeText}>
+              <Text className="em-text-muted" style={styles.activityTimeText}>
                 {formatTime(update.updatedAt)}
               </Text>
             </td>

@@ -6,9 +6,9 @@
  * - Visual status change indicator (from -> to)
  * - Case details
  * - CTA to view case
+ * - Dark mode support via CSS classes
  *
  * Phase: 24 (Notifications + Email)
- * Status: PLACEHOLDER - Implementation in Task 2
  */
 
 import { Text, Section } from "@react-email/components";
@@ -63,28 +63,28 @@ export function StatusChange({
       />
 
       <Section style={detailsSectionStyle}>
-        <Text style={labelStyle}>Foreign Worker</Text>
-        <Text style={valueStyle}>{beneficiaryName}</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Foreign Worker</Text>
+        <Text className="em-text" style={valueStyle}>{beneficiaryName}</Text>
 
-        <Text style={labelStyle}>Company</Text>
-        <Text style={valueStyle}>{companyName}</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Company</Text>
+        <Text className="em-text" style={valueStyle}>{companyName}</Text>
       </Section>
 
       {/* Status change indicator */}
-      <Section style={styles.statusChange}>
+      <Section className="em-status-box" style={styles.statusChange}>
         <div style={styles.statusBox}>
-          <Text style={styles.statusLabel}>Previous</Text>
-          <Text style={styles.statusValue}>{previousStatus}</Text>
+          <Text className="em-text-secondary" style={styles.statusLabel}>Previous</Text>
+          <Text className="em-status-prev" style={styles.statusValue}>{previousStatus}</Text>
         </div>
         <Text style={styles.arrow}>→</Text>
         <div style={styles.statusBox}>
-          <Text style={styles.statusLabel}>Current</Text>
-          <Text style={styles.statusValueNew}>{newStatus}</Text>
+          <Text className="em-text-secondary" style={styles.statusLabel}>Current</Text>
+          <Text className="em-status-new" style={styles.statusValueNew}>{newStatus}</Text>
         </div>
       </Section>
 
       <Section style={styles.timestamp}>
-        <Text style={styles.timestampText}>Changed on {changedAt}</Text>
+        <Text className="em-text-secondary" style={styles.timestampText}>Changed on {changedAt}</Text>
       </Section>
 
       <Section style={ctaSectionStyle}>

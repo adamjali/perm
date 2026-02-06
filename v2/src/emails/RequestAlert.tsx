@@ -91,8 +91,8 @@ export function RequestAlert({
       />
 
       {alertType === "new" && (
-        <Section style={styles.alertBox}>
-          <Text style={styles.alertText}>
+        <Section className="em-alert-yellow" style={styles.alertBox}>
+          <Text className="em-alert-yellow-text" style={styles.alertText}>
             A {requestFullName} has been received from {agency} regarding{" "}
             {context}. {isRfi ? "The response is due within 30 days of receipt." : "Timely response is critical."}
           </Text>
@@ -100,24 +100,24 @@ export function RequestAlert({
       )}
 
       <Section style={detailsSectionStyle}>
-        <Text style={labelStyle}>Foreign Worker</Text>
-        <Text style={valueStyle}>{beneficiaryName}</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Foreign Worker</Text>
+        <Text className="em-text" style={valueStyle}>{beneficiaryName}</Text>
 
-        <Text style={labelStyle}>Company</Text>
-        <Text style={valueStyle}>{companyName}</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Company</Text>
+        <Text className="em-text" style={valueStyle}>{companyName}</Text>
 
         {!isRfi && i140FilingDate && (
           <>
-            <Text style={labelStyle}>I-140 Filing Date</Text>
-            <Text style={valueStyle}>{i140FilingDate}</Text>
+            <Text className="em-text-secondary" style={labelStyle}>I-140 Filing Date</Text>
+            <Text className="em-text" style={valueStyle}>{i140FilingDate}</Text>
           </>
         )}
 
-        <Text style={labelStyle}>{requestLabel} Received</Text>
-        <Text style={valueStyle}>{receivedDate}</Text>
+        <Text className="em-text-secondary" style={labelStyle}>{requestLabel} Received</Text>
+        <Text className="em-text" style={valueStyle}>{receivedDate}</Text>
 
-        <Text style={labelStyle}>Response Due</Text>
-        <Text style={valueHighlightStyle}>{dueDate}</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Response Due</Text>
+        <Text className="em-text" style={valueHighlightStyle}>{dueDate}</Text>
 
         <Text style={daysRemaining <= 0 ? styles.overdue : styles.daysRemaining}>
           {formatDaysRemaining(daysRemaining)}
@@ -130,8 +130,8 @@ export function RequestAlert({
         </EmailButton>
       </Section>
 
-      <Section style={styles.warning}>
-        <Text style={styles.warningText}>
+      <Section className="em-alert-red" style={styles.warning}>
+        <Text className="em-alert-red-text" style={styles.warningText}>
           ⚠️ {isRfi
             ? "Failure to respond to an RFI within 30 days may result in denial of the PERM application."
             : "Failure to respond to an RFE within the specified timeframe may result in denial of the I-140 petition and loss of the PERM labor certification priority date."}

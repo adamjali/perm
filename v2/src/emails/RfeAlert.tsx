@@ -70,8 +70,8 @@ export function RfeAlert({
       />
 
       {alertType === "new" && (
-        <Section style={styles.alertBox}>
-          <Text style={styles.alertText}>
+        <Section className="em-alert-yellow" style={styles.alertBox}>
+          <Text className="em-alert-yellow-text" style={styles.alertText}>
             A Request for Evidence has been received from USCIS regarding the
             I-140 petition. Timely response is critical.
           </Text>
@@ -79,24 +79,24 @@ export function RfeAlert({
       )}
 
       <Section style={styles.details}>
-        <Text style={styles.label}>Foreign Worker</Text>
-        <Text style={styles.value}>{beneficiaryName}</Text>
+        <Text className="em-text-secondary" style={styles.label}>Foreign Worker</Text>
+        <Text className="em-text" style={styles.value}>{beneficiaryName}</Text>
 
-        <Text style={styles.label}>Company</Text>
-        <Text style={styles.value}>{companyName}</Text>
+        <Text className="em-text-secondary" style={styles.label}>Company</Text>
+        <Text className="em-text" style={styles.value}>{companyName}</Text>
 
         {i140FilingDate && (
           <>
-            <Text style={styles.label}>I-140 Filing Date</Text>
-            <Text style={styles.value}>{i140FilingDate}</Text>
+            <Text className="em-text-secondary" style={styles.label}>I-140 Filing Date</Text>
+            <Text className="em-text" style={styles.value}>{i140FilingDate}</Text>
           </>
         )}
 
-        <Text style={styles.label}>RFE Received</Text>
-        <Text style={styles.value}>{receivedDate}</Text>
+        <Text className="em-text-secondary" style={styles.label}>RFE Received</Text>
+        <Text className="em-text" style={styles.value}>{receivedDate}</Text>
 
-        <Text style={styles.label}>Response Due</Text>
-        <Text style={styles.valueHighlight}>{dueDate}</Text>
+        <Text className="em-text-secondary" style={styles.label}>Response Due</Text>
+        <Text className="em-text" style={styles.valueHighlight}>{dueDate}</Text>
 
         <Text style={isOverdue ? styles.overdue : styles.daysRemaining}>
           {daysRemaining > 0
@@ -113,8 +113,8 @@ export function RfeAlert({
         </EmailButton>
       </Section>
 
-      <Section style={styles.warning}>
-        <Text style={styles.warningText}>
+      <Section className="em-alert-red" style={styles.warning}>
+        <Text className="em-alert-red-text" style={styles.warningText}>
           ⚠️ Failure to respond to an RFE within the specified timeframe may
           result in denial of the I-140 petition and loss of the PERM labor
           certification priority date.

@@ -6,6 +6,7 @@
  * - Bold styling matching neobrutalist design
  * - Urgency color bars
  * - Icon support (emoji-based for email compatibility)
+ * - Dark mode via CSS classes
  *
  * Phase: 24 (Notifications + Email)
  */
@@ -48,8 +49,8 @@ export function EmailHeader({
       <Section style={styles.titleRow}>
         {icon && <Text style={styles.icon}>{icon}</Text>}
         <div>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+          <Text className="em-text" style={styles.title}>{title}</Text>
+          {subtitle && <Text className="em-text-secondary" style={styles.subtitle}>{subtitle}</Text>}
         </div>
       </Section>
     </Section>
