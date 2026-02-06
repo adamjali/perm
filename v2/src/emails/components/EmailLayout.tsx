@@ -55,7 +55,7 @@ const DARK_MODE_STYLES = [
   "  .em-text-secondary { color: #a1a1aa !important; }",
   "  .em-text-muted { color: #71717a !important; }",
   // Links
-  "  .em-link { color: #fafafa !important; }",
+  "  .em-link { color: #d4d4d8 !important; }",
   "  .em-link-blue { color: #60a5fa !important; }",
   // Dividers
   "  .em-divider { border-color: #52525b !important; }",
@@ -225,7 +225,7 @@ const styles = {
     margin: "0 0 12px 0",
   },
   footerLink: {
-    color: "#18181b",
+    color: "#71717a",
     textDecoration: "underline",
   },
   copyright: {
