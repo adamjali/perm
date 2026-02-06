@@ -9,7 +9,7 @@
  * - 2 minute warning before auto-logout
  * - Multi-tab sync via BroadcastChannel
  * - Debounced activity tracking
- * - Events: mouse, keyboard, scroll, touch
+ * - Events: mouse, keyboard, scroll, touch, visibilitychange, focus
  * - Safe localStorage operations (handles private browsing)
  *
  * Phase: 20 (Dashboard + UI Polish)
@@ -38,6 +38,8 @@ const TIMEOUT_CONFIG = {
   STORAGE_KEY: "perm-tracker-last-activity",
   /** Activity events to track */
   ACTIVITY_EVENTS: ["mousedown", "keydown", "scroll", "touchstart", "click"] as const,
+  /** Minimum hidden duration (ms) before we recalculate timers on return */
+  MIN_HIDDEN_DURATION: 5000,
 } as const;
 
 // ============================================================================
@@ -282,6 +284,59 @@ export function useInactivityTimeout({
       window.addEventListener(event, handleActivity, { passive: true });
     });
 
+    // Track when the page was hidden so we can recalculate timers on return.
+    // Without this, timers fire while the tab is backgrounded, causing the
+    // warning modal to appear behind other apps — the user sees a "frozen"
+    // page with an invisible overlay when they swipe back.
+    let hiddenAt: number | null = null;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Page is being hidden — record the timestamp and pause timers
+        hiddenAt = Date.now();
+        clearAllTimers();
+      } else {
+        // Page is visible again — recalculate based on actual elapsed time
+        if (hiddenAt && Date.now() - hiddenAt > TIMEOUT_CONFIG.MIN_HIDDEN_DURATION) {
+          const elapsed = Date.now() - getLastActivity();
+
+          if (elapsed >= TIMEOUT_CONFIG.INACTIVITY_TIMEOUT) {
+            // Already past timeout — trigger logout immediately
+            onTimeoutRef.current();
+          } else if (elapsed >= TIMEOUT_CONFIG.WARNING_TIME) {
+            // In warning window — show warning with correct remaining time
+            const remaining = Math.ceil(
+              (TIMEOUT_CONFIG.INACTIVITY_TIMEOUT - elapsed) / 1000
+            );
+            setIsWarningVisible(true);
+            setRemainingSeconds(remaining);
+            startCountdown();
+
+            // Set a fresh logout timer for the remaining time
+            logoutTimerRef.current = setTimeout(() => {
+              setIsWarningVisible(false);
+              onTimeoutRef.current();
+            }, TIMEOUT_CONFIG.INACTIVITY_TIMEOUT - elapsed);
+          } else {
+            // Still within active window — restart timers from where we left off
+            startTimers();
+          }
+        }
+        hiddenAt = null;
+      }
+    };
+
+    const handleWindowFocus = () => {
+      // Treat window focus as user activity (swiping back to app, clicking tab)
+      // but only if warning isn't already showing
+      if (!isWarningVisibleRef.current) {
+        handleActivity();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleWindowFocus);
+
     return () => {
       clearAllTimers();
       if (debounceTimerRef.current) {
@@ -298,8 +353,10 @@ export function useInactivityTimeout({
       TIMEOUT_CONFIG.ACTIVITY_EVENTS.forEach((event) => {
         window.removeEventListener(event, handleActivity);
       });
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [enabled, handleActivity, handleChannelMessage, startTimers, updateLastActivity, clearAllTimers]);
+  }, [enabled, handleActivity, handleChannelMessage, startTimers, updateLastActivity, clearAllTimers, startCountdown]);
 
   return {
     isWarningVisible,
