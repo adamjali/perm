@@ -47,6 +47,8 @@ import type * as lib_deadlineEnforcementHelpers from "../lib/deadlineEnforcement
 import type * as lib_deadlineTypeMapping from "../lib/deadlineTypeMapping.js";
 import type * as lib_derivedCalculations from "../lib/derivedCalculations.js";
 import type * as lib_digestHelpers from "../lib/digestHelpers.js";
+import type * as lib_email from "../lib/email.js";
+import type * as lib_formatDate from "../lib/formatDate.js";
 import type * as lib_googleHelpers from "../lib/googleHelpers.js";
 import type * as lib_logging from "../lib/logging.js";
 import type * as lib_notificationHelpers from "../lib/notificationHelpers.js";
@@ -87,6 +89,7 @@ import type * as lib_rag_index from "../lib/rag/index.js";
 import type * as lib_rag_ingest from "../lib/rag/ingest.js";
 import type * as lib_rag_permKnowledge from "../lib/rag/permKnowledge.js";
 import type * as lib_rateLimit from "../lib/rateLimit.js";
+import type * as lib_userDefaults from "../lib/userDefaults.js";
 import type * as lib_userProfileHelpers from "../lib/userProfileHelpers.js";
 import type * as notificationActions from "../notificationActions.js";
 import type * as notifications from "../notifications.js";
@@ -145,6 +148,8 @@ declare const fullApi: ApiFromModules<{
   "lib/deadlineTypeMapping": typeof lib_deadlineTypeMapping;
   "lib/derivedCalculations": typeof lib_derivedCalculations;
   "lib/digestHelpers": typeof lib_digestHelpers;
+  "lib/email": typeof lib_email;
+  "lib/formatDate": typeof lib_formatDate;
   "lib/googleHelpers": typeof lib_googleHelpers;
   "lib/logging": typeof lib_logging;
   "lib/notificationHelpers": typeof lib_notificationHelpers;
@@ -185,6 +190,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rag/ingest": typeof lib_rag_ingest;
   "lib/rag/permKnowledge": typeof lib_rag_permKnowledge;
   "lib/rateLimit": typeof lib_rateLimit;
+  "lib/userDefaults": typeof lib_userDefaults;
   "lib/userProfileHelpers": typeof lib_userProfileHelpers;
   notificationActions: typeof notificationActions;
   notifications: typeof notifications;

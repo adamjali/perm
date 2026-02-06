@@ -12,6 +12,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
+import { loggers } from "./lib/logging";
 
 /**
  * Maps calendar sync preference names to the schema field names for calendarEventIds.
@@ -274,6 +275,26 @@ export const updateCalendarPreferences = mutation({
         calendarShowCompleted: args.showCompleted ?? false,
         calendarShowClosed: args.showClosed ?? false,
       });
+
+      // Admin notification: new user signup (calendar preferences path)
+      try {
+        const adminPrefs = await ctx.runQuery(internal.admin.getAdminNotificationPrefs, {});
+        if (adminPrefs.adminNotifyNewUser) {
+          const user = await ctx.db.get(userId);
+          const signupTime = new Date().toLocaleDateString("en-US", {
+            year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
+          });
+          await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
+            subject: "New User Signup",
+            body: `A new user has signed up for PERM Tracker.\n\nEmail: ${user?.email ?? "unknown"}\nName: ${user?.name ?? "Not provided"}\nTime: ${signupTime}`,
+          });
+        }
+      } catch (adminNotifError) {
+        loggers.auth.error("Failed to send admin signup notification", {
+          error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
+        });
+      }
+
       return profileId;
     }
 
