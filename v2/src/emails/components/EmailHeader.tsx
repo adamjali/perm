@@ -43,7 +43,7 @@ export function EmailHeader({
   return (
     <Section style={styles.container}>
       {/* Urgency color bar */}
-      <div style={urgencyBarStyle} />
+      <div className="em-banner" style={urgencyBarStyle} />
 
       {/* Title row */}
       <Section style={styles.titleRow}>

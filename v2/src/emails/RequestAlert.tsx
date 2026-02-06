@@ -119,7 +119,7 @@ export function RequestAlert({
         <Text className="em-text-secondary" style={labelStyle}>Response Due</Text>
         <Text className="em-text" style={valueHighlightStyle}>{dueDate}</Text>
 
-        <Text style={daysRemaining <= 0 ? styles.overdue : styles.daysRemaining}>
+        <Text className={daysRemaining <= 0 ? "em-days-overdue" : "em-days-warning"} style={daysRemaining <= 0 ? styles.overdue : styles.daysRemaining}>
           {formatDaysRemaining(daysRemaining)}
         </Text>
       </Section>

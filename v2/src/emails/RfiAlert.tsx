@@ -88,7 +88,7 @@ export function RfiAlert({
         <Text className="em-text-secondary" style={styles.label}>Response Due</Text>
         <Text className="em-text" style={styles.valueHighlight}>{dueDate}</Text>
 
-        <Text style={isOverdue ? styles.overdue : styles.daysRemaining}>
+        <Text className={isOverdue ? "em-days-overdue" : "em-days-warning"} style={isOverdue ? styles.overdue : styles.daysRemaining}>
           {daysRemaining > 0
             ? `${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} remaining`
             : daysRemaining === 0

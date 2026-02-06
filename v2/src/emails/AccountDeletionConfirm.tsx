@@ -48,8 +48,8 @@ export function AccountDeletionConfirm({
   return (
     <EmailLayout previewText={previewText}>
       {/* Warning Banner */}
-      <Section style={immediate ? styles.bannerImmediate : styles.banner}>
-        <Text style={styles.bannerText}>
+      <Section className="em-banner" style={immediate ? styles.bannerImmediate : styles.banner}>
+        <Text className="em-text-white" style={styles.bannerText}>
           {immediate ? "Account Deleted" : "Account Deletion Scheduled"}
         </Text>
       </Section>
@@ -77,8 +77,8 @@ export function AccountDeletionConfirm({
                 permanently deleted as requested on:
               </Text>
 
-              <Section style={styles.dateCalloutImmediate}>
-                <Text style={styles.dateText}>{deletionDate}</Text>
+              <Section className="em-banner em-date-callout" style={styles.dateCalloutImmediate}>
+                <Text className="em-text-white" style={styles.dateText}>{deletionDate}</Text>
               </Section>
 
               <Text className="em-text-body" style={styles.paragraph}>
@@ -106,8 +106,8 @@ export function AccountDeletionConfirm({
                 deleted on:
               </Text>
 
-              <Section style={styles.dateCallout}>
-                <Text style={styles.dateText}>{deletionDate}</Text>
+              <Section className="em-banner em-date-callout" style={styles.dateCallout}>
+                <Text className="em-text-white" style={styles.dateText}>{deletionDate}</Text>
               </Section>
 
               <Text className="em-text-body" style={styles.paragraph}>

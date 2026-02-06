@@ -68,7 +68,7 @@ export function AutoClosure({
       {/* Closure reason box */}
       <Section className="em-closure-box" style={styles.closureBox}>
         <Text className="em-closure-title" style={styles.closureTitle}>Closure Reason</Text>
-        <Text style={styles.closureType}>{violationType}</Text>
+        <Text className="em-closure-type" style={styles.closureType}>{violationType}</Text>
         <Text className="em-closure-reason" style={styles.closureReason}>{reason}</Text>
       </Section>
 

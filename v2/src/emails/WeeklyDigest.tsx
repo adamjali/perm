@@ -125,8 +125,8 @@ export function WeeklyDigest({
       {/* Overdue Deadlines */}
       {overdueDeadlines.length > 0 && (
         <Section style={styles.deadlineSection}>
-          <Section style={getDeadlineHeaderStyle("#991B1B")}>
-            <Text style={styles.deadlineHeaderText}>
+          <Section className="em-banner" style={getDeadlineHeaderStyle("#991B1B")}>
+            <Text className="em-text-white" style={styles.deadlineHeaderText}>
               &#128680; OVERDUE ({overdueDeadlines.length})
             </Text>
           </Section>
@@ -143,8 +143,8 @@ export function WeeklyDigest({
       {/* Next 7 Days */}
       {next7DaysDeadlines.length > 0 && (
         <Section style={styles.deadlineSection}>
-          <Section style={getDeadlineHeaderStyle("#DC2626")}>
-            <Text style={styles.deadlineHeaderText}>
+          <Section className="em-banner" style={getDeadlineHeaderStyle("#DC2626")}>
+            <Text className="em-text-white" style={styles.deadlineHeaderText}>
               &#9888;&#65039; THIS WEEK ({next7DaysDeadlines.length})
             </Text>
           </Section>
@@ -161,8 +161,8 @@ export function WeeklyDigest({
       {/* Days 8-14 */}
       {next14DaysDeadlines.length > 0 && (
         <Section style={styles.deadlineSection}>
-          <Section style={getDeadlineHeaderStyle("#F97316")}>
-            <Text style={styles.deadlineHeaderText}>
+          <Section className="em-banner" style={getDeadlineHeaderStyle("#F97316")}>
+            <Text className="em-text-white" style={styles.deadlineHeaderText}>
               &#128197; NEXT WEEK ({next14DaysDeadlines.length})
             </Text>
           </Section>
@@ -253,7 +253,7 @@ function DeadlineRow({
               <Text className="em-text" style={styles.deadlineDate}>
                 {formatDate(deadline.deadlineDate)}
               </Text>
-              <Text style={getDeadlineDaysStyle(deadline.urgency)}>
+              <Text className={deadline.urgency === 'overdue' || deadline.urgency === 'urgent' ? 'em-days-overdue' : 'em-days-warning'} style={getDeadlineDaysStyle(deadline.urgency)}>
                 {formatDays(deadline.daysUntil)}
               </Text>
             </td>

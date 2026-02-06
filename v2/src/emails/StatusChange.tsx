@@ -76,7 +76,7 @@ export function StatusChange({
           <Text className="em-text-secondary" style={styles.statusLabel}>Previous</Text>
           <Text className="em-status-prev" style={styles.statusValue}>{previousStatus}</Text>
         </div>
-        <Text style={styles.arrow}>→</Text>
+        <Text className="em-arrow" style={styles.arrow}>→</Text>
         <div style={styles.statusBox}>
           <Text className="em-text-secondary" style={styles.statusLabel}>Current</Text>
           <Text className="em-status-new" style={styles.statusValueNew}>{newStatus}</Text>

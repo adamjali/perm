@@ -97,6 +97,18 @@ const DARK_MODE_STYLES = [
   "  .em-closure-box { background-color: #450a0a !important; border-color: #dc2626 !important; }",
   "  .em-closure-title { color: #fca5a5 !important; }",
   "  .em-closure-reason { color: #fecaca !important; }",
+  "  .em-closure-type { color: #fca5a5 !important; }",
+  // Colored banners & urgency sections (keep color bg, fix borders)
+  "  .em-banner { border-color: #52525b !important; }",
+  // White text on colored backgrounds (prevent inversion)
+  "  .em-text-white { color: #fffffe !important; }",
+  // Status change arrow
+  "  .em-arrow { color: #4ade80 !important; }",
+  // Days remaining indicators
+  "  .em-days-warning { color: #fb923c !important; }",
+  "  .em-days-overdue { color: #fca5a5 !important; }",
+  // Date callout sections
+  "  .em-date-callout { border-color: #52525b !important; }",
   "}",
 ].join("\n");
 

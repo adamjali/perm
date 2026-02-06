@@ -92,8 +92,8 @@ export function DeadlineReminder({
   return (
     <EmailLayout previewText={previewText} settingsUrl={settingsUrl}>
       {/* Urgency Banner */}
-      <Section style={getBannerStyle(urgencyColor)}>
-        <Text style={styles.bannerText}>
+      <Section className="em-banner" style={getBannerStyle(urgencyColor)}>
+        <Text className="em-text-white" style={styles.bannerText}>
           {icon} {urgencyText}
         </Text>
       </Section>
@@ -122,8 +122,8 @@ export function DeadlineReminder({
         </Section>
 
         {/* Days Remaining Callout */}
-        <Section style={getDaysCalloutStyle(urgencyColor)}>
-          <Text style={styles.daysText}>{formatDaysRemaining(daysUntil)}</Text>
+        <Section className="em-banner em-date-callout" style={getDaysCalloutStyle(urgencyColor)}>
+          <Text className="em-text-white" style={styles.daysText}>{formatDaysRemaining(daysUntil)}</Text>
         </Section>
       </Section>
 
