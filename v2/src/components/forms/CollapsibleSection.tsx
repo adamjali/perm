@@ -210,7 +210,7 @@ export function CollapsibleSection({
               overflow: { delay: 0.15 },
             }}
           >
-            <div className="px-4 pb-4 overflow-hidden">
+            <div className="px-4 pb-4">
               {children}
             </div>
           </motion.div>

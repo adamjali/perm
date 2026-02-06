@@ -109,7 +109,7 @@ export function FormField({
 
   return (
     <div
-      className={cn("flex flex-col space-y-1.5", className)}
+      className={cn("flex flex-col space-y-1.5 min-w-0", className)}
       data-error={error ? "true" : undefined}
       data-warning={warning && !error ? "true" : undefined}
       data-valid={validationState === 'valid' ? "true" : undefined}
