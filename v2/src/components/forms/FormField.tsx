@@ -116,8 +116,8 @@ export function FormField({
       data-auto-calculated={autoCalculated ? "true" : undefined}
     >
       {/* Label row with status indicator */}
-      <div className="flex items-center gap-2">
-        <Label htmlFor={name} data-slot="label" className="font-semibold">
+      <div className="flex items-center gap-2 min-w-0 flex-wrap">
+        <Label htmlFor={name} data-slot="label" className="font-semibold break-words min-w-0">
           {label}
           {required && (
             <span className="text-destructive ml-1 font-bold" aria-hidden="true">
@@ -129,19 +129,19 @@ export function FormField({
         {/* Status icons - only show one at a time */}
         {showErrorIcon && (
           <AlertCircle
-            className="size-4 text-destructive animate-fade-in"
+            className="size-4 shrink-0 text-destructive animate-fade-in"
             aria-label="Field has error"
           />
         )}
         {showWarningIcon && (
           <AlertTriangle
-            className="size-4 text-orange-500 animate-fade-in"
+            className="size-4 shrink-0 text-orange-500 animate-fade-in"
             aria-label="Field has warning"
           />
         )}
         {showValidIcon && (
           <CheckCircle2
-            className="size-4 text-emerald-500 animate-fade-in"
+            className="size-4 shrink-0 text-emerald-500 animate-fade-in"
             aria-label="Field is valid"
           />
         )}

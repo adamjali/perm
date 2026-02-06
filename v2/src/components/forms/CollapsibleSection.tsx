@@ -106,11 +106,11 @@ export function CollapsibleSection({
         aria-expanded={isOpen}
         aria-controls={`section-${name}-content`}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           {/* Icon */}
           {icon && (
             <span className={cn(
-              "text-muted-foreground",
+              "shrink-0 text-muted-foreground",
               canInteract && "text-foreground"
             )}>
               {icon}
@@ -118,15 +118,15 @@ export function CollapsibleSection({
           )}
 
           {/* Title and description */}
-          <div>
+          <div className="min-w-0">
             <h3 className={cn(
-              "font-heading font-semibold text-lg",
+              "font-heading font-semibold text-lg break-words",
               !canInteract && "text-muted-foreground"
             )}>
               {title}
             </h3>
             {description && (
-              <p className="text-sm text-muted-foreground mt-0.5">
+              <p className="text-sm text-muted-foreground mt-0.5 break-words">
                 {description}
               </p>
             )}
@@ -134,7 +134,7 @@ export function CollapsibleSection({
         </div>
 
         {/* Right side: Status indicators and chevron */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Status info */}
           {statusInfo && canInteract && (
             <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
@@ -210,7 +210,7 @@ export function CollapsibleSection({
               overflow: { delay: 0.15 },
             }}
           >
-            <div className="px-4 pb-4">
+            <div className="px-4 pb-4 overflow-hidden">
               {children}
             </div>
           </motion.div>

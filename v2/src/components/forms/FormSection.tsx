@@ -90,12 +90,12 @@ export function FormSection({
         )}
         aria-expanded={isOpen}
       >
-        <div className="flex items-center gap-3">
-          {icon && <span className="text-muted-foreground">{icon}</span>}
-          <h3 className="font-heading font-semibold text-lg">{title}</h3>
-          {statusIcon}
+        <div className="flex items-center gap-3 min-w-0">
+          {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
+          <h3 className="font-heading font-semibold text-lg break-words min-w-0">{title}</h3>
+          {statusIcon && <span className="shrink-0">{statusIcon}</span>}
         </div>
-        <span className="text-muted-foreground transition-transform duration-200">
+        <span className="shrink-0 text-muted-foreground transition-transform duration-200">
           {isOpen ? (
             <ChevronDown className="h-5 w-5" />
           ) : (
