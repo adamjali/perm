@@ -7,9 +7,10 @@ import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 function DropdownMenu({
+  modal = false,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" modal={modal} {...props} />
 }
 
 function DropdownMenuPortal({
@@ -41,19 +42,6 @@ function DropdownMenuContent({
       <DropdownMenuPrimitive.Content
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
-        // Radix portals render at the end of <body>. When the portal receives
-        // focus, the browser scrolls to its DOM position (bottom of body),
-        // yanking the viewport away from sticky headers. Saving and restoring
-        // scroll position on mount prevents this.
-        ref={(node) => {
-          if (!node) return
-          const saved = window.scrollY
-          requestAnimationFrame(() => {
-            if (Math.abs(window.scrollY - saved) > 1) {
-              window.scrollTo({ top: saved })
-            }
-          })
-        }}
         className={cn(
           // Base styles
           "bg-popover text-popover-foreground z-50 min-w-[8rem] rounded-md border p-1 shadow-md",
