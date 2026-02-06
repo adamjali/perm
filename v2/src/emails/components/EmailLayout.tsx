@@ -174,9 +174,9 @@ const styles = {
     padding: "20px",
   },
   header: {
-    backgroundColor: "#000000",
+    backgroundColor: "#000001",
     padding: "24px 32px",
-    borderBottom: "4px solid #000000",
+    borderBottom: "4px solid #000001",
   },
   logo: {
     margin: "0",
@@ -188,12 +188,12 @@ const styles = {
     color: "#22c55e",
   },
   logoTracker: {
-    color: "#ffffff",
+    color: "#fffffe",
   },
   content: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fffffe",
     padding: "32px",
-    border: "4px solid #000000",
+    border: "4px solid #000001",
     borderTop: "none",
   },
   footer: {

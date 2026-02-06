@@ -122,7 +122,7 @@ const styles = {
     fontWeight: "600" as const,
     margin: "0",
     padding: "8px 16px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fffffe",
     border: "2px solid #e4e4e7",
   },
   statusValueNew: {

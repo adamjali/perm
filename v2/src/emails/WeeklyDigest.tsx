@@ -337,7 +337,7 @@ function getDeadlineHeaderStyle(color: string): React.CSSProperties {
   return {
     backgroundColor: color,
     padding: "10px 16px",
-    border: "3px solid #000000",
+    border: "3px solid #000001",
     borderBottom: "none",
   };
 }
@@ -386,7 +386,7 @@ const styles = {
   statsTable: {
     width: "100%",
     borderCollapse: "collapse" as const,
-    border: "3px solid #000000",
+    border: "3px solid #000001",
   },
   statCell: {
     padding: "16px 12px",
@@ -438,7 +438,7 @@ const styles = {
     marginBottom: "24px",
   },
   deadlineHeaderText: {
-    color: "#ffffff",
+    color: "#fffffe",
     fontSize: "12px",
     fontWeight: "700" as const,
     textTransform: "uppercase" as const,
@@ -446,10 +446,10 @@ const styles = {
     margin: "0",
   },
   deadlineRow: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fffffe",
     padding: "12px 16px",
-    borderLeft: "3px solid #000000",
-    borderRight: "3px solid #000000",
+    borderLeft: "3px solid #000001",
+    borderRight: "3px solid #000001",
     borderBottom: "2px solid #e4e4e7",
   },
   deadlineContent: {
@@ -549,13 +549,13 @@ const styles = {
   ctaButton: {
     display: "inline-block",
     backgroundColor: "#18181b",
-    color: "#ffffff",
+    color: "#fffffe",
     padding: "14px 28px",
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    border: "3px solid #000000",
-    boxShadow: "4px 4px 0 #000000",
+    border: "3px solid #000001",
+    boxShadow: "4px 4px 0 #000001",
   },
 } as const;
 

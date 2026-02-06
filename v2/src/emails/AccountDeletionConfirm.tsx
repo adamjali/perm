@@ -164,17 +164,17 @@ const styles = {
     padding: "12px 16px",
     textAlign: "center" as const,
     marginBottom: "24px",
-    border: "3px solid #000000",
+    border: "3px solid #000001",
   },
   bannerImmediate: {
     backgroundColor: "#DC2626", // Red - immediate/destructive
     padding: "12px 16px",
     textAlign: "center" as const,
     marginBottom: "24px",
-    border: "3px solid #000000",
+    border: "3px solid #000001",
   },
   bannerText: {
-    color: "#ffffff",
+    color: "#fffffe",
     fontSize: "16px",
     fontWeight: "700" as const,
     textTransform: "uppercase" as const,
@@ -187,7 +187,7 @@ const styles = {
   detailsCard: {
     backgroundColor: "#f4f4f5",
     padding: "20px",
-    border: "3px solid #000000",
+    border: "3px solid #000001",
   },
   greeting: {
     color: "#18181b",
@@ -205,7 +205,7 @@ const styles = {
     backgroundColor: "#F97316",
     padding: "16px",
     textAlign: "center" as const,
-    border: "3px solid #000000",
+    border: "3px solid #000001",
     marginTop: "8px",
     marginBottom: "16px",
   },
@@ -213,12 +213,12 @@ const styles = {
     backgroundColor: "#DC2626",
     padding: "16px",
     textAlign: "center" as const,
-    border: "3px solid #000000",
+    border: "3px solid #000001",
     marginTop: "8px",
     marginBottom: "16px",
   },
   dateText: {
-    color: "#ffffff",
+    color: "#fffffe",
     fontSize: "20px",
     fontWeight: "700" as const,
     margin: "0",

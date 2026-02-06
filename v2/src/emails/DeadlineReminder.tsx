@@ -146,7 +146,7 @@ function getBannerStyle(color: string): React.CSSProperties {
     padding: "12px 16px",
     textAlign: "center" as const,
     marginBottom: "24px",
-    border: "3px solid #000000",
+    border: "3px solid #000001",
   };
 }
 
@@ -158,7 +158,7 @@ function getDaysCalloutStyle(color: string): React.CSSProperties {
     backgroundColor: color,
     padding: "16px",
     textAlign: "center" as const,
-    border: "3px solid #000000",
+    border: "3px solid #000001",
     marginTop: "16px",
   };
 }
@@ -168,7 +168,7 @@ function getDaysCalloutStyle(color: string): React.CSSProperties {
  */
 const styles = {
   bannerText: {
-    color: "#ffffff",
+    color: "#fffffe",
     fontSize: "16px",
     fontWeight: "700" as const,
     textTransform: "uppercase" as const,
@@ -178,7 +178,7 @@ const styles = {
   detailsCard: {
     backgroundColor: "#f4f4f5",
     padding: "20px",
-    border: "3px solid #000000",
+    border: "3px solid #000001",
   },
   dateValue: {
     color: "#18181b",
@@ -187,7 +187,7 @@ const styles = {
     margin: "0",
   },
   daysText: {
-    color: "#ffffff",
+    color: "#fffffe",
     fontSize: "18px",
     fontWeight: "700" as const,
     textTransform: "uppercase" as const,

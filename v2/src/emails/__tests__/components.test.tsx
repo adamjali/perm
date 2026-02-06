@@ -187,8 +187,8 @@ describe("EmailButton", () => {
           children: "Click",
         })
       );
-      // Default button has black background (#000000)
-      expect(html).toContain("#000000");
+      // Default button has near-black background (#000001 — off-by-one for Gmail dark mode)
+      expect(html).toContain("#000001");
     });
   });
 
