@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { NavLink } from "@/components/ui/nav-link";
 import { toast } from "@/lib/toast";
 
 // Current Terms of Service version (matches effective date in /terms page)
@@ -100,23 +99,23 @@ export function TermsAcceptanceModal({
               className="text-sm leading-relaxed cursor-pointer text-muted-foreground"
             >
               I agree to the{" "}
-              <NavLink
+              <a
                 href="/terms"
                 target="_blank"
+                rel="noopener noreferrer"
                 className="text-foreground font-semibold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
-                spinnerSize={10}
               >
                 Terms of Service
-              </NavLink>{" "}
+              </a>{" "}
               and{" "}
-              <NavLink
+              <a
                 href="/privacy"
                 target="_blank"
+                rel="noopener noreferrer"
                 className="text-foreground font-semibold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
-                spinnerSize={10}
               >
                 Privacy Policy
-              </NavLink>
+              </a>
             </label>
           </div>
 

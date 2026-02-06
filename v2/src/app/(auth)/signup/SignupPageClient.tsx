@@ -346,23 +346,23 @@ export function SignupPageClient() {
               className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
             >
               I agree to the{" "}
-              <NavLink
+              <a
                 href="/terms"
-                className="text-foreground font-semibold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
-                spinnerSize={10}
                 target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground font-semibold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
               >
                 Terms of Service
-              </NavLink>{" "}
+              </a>{" "}
               and{" "}
-              <NavLink
+              <a
                 href="/privacy"
-                className="text-foreground font-semibold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
-                spinnerSize={10}
                 target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground font-semibold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
               >
                 Privacy Policy
-              </NavLink>
+              </a>
             </label>
           </div>
 
