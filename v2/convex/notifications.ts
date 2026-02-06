@@ -28,7 +28,7 @@
 
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-import type { Id, Doc } from "./_generated/dataModel";
+import type { Doc } from "./_generated/dataModel";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import type { QueryCtx } from "./_generated/server";
 
@@ -143,7 +143,7 @@ export const getUnreadCount = query({
     const unreadNotifications = await ctx.db
       .query("notifications")
       .withIndex("by_user_and_unread", (q) =>
-        q.eq("userId", userId as Id<"users">).eq("isRead", false)
+        q.eq("userId", userId).eq("isRead", false)
       )
       .take(1000); // Limit to prevent runaway queries
 
@@ -175,7 +175,7 @@ export const getRecentNotifications = query({
     // Query notifications ordered by creation time (descending)
     const notifications = await ctx.db
       .query("notifications")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .order("desc")
       .take(limit);
 
@@ -228,7 +228,7 @@ export const getNotifications = query({
       notificationsQuery = ctx.db
         .query("notifications")
         .withIndex("by_user_and_unread", (q) =>
-          q.eq("userId", userId as Id<"users">).eq("isRead", filters.isRead!)
+          q.eq("userId", userId).eq("isRead", filters.isRead!)
         );
     } else if (filters?.caseId !== undefined) {
       // Use by_case_id index when filtering by case
@@ -239,7 +239,7 @@ export const getNotifications = query({
       // Default: use by_user_id index
       notificationsQuery = ctx.db
         .query("notifications")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">));
+        .withIndex("by_user_id", (q) => q.eq("userId", userId));
     }
 
     // Fetch notifications with limit + 1 to detect if there are more
@@ -345,7 +345,7 @@ export const getNotificationStats = query({
     // Fetch all notifications for user (limited)
     const notifications = await ctx.db
       .query("notifications")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .take(1000);
 
     // Calculate stats
@@ -423,7 +423,7 @@ export const markAllAsRead = mutation({
     const unreadNotifications = await ctx.db
       .query("notifications")
       .withIndex("by_user_and_unread", (q) =>
-        q.eq("userId", userId as Id<"users">).eq("isRead", false)
+        q.eq("userId", userId).eq("isRead", false)
       )
       .take(BATCH_SIZE + 1); // Take one extra to check if there are more
 
@@ -537,7 +537,7 @@ export const deleteAllRead = mutation({
     const readNotifications = await ctx.db
       .query("notifications")
       .withIndex("by_user_and_unread", (q) =>
-        q.eq("userId", userId as Id<"users">).eq("isRead", true)
+        q.eq("userId", userId).eq("isRead", true)
       )
       .take(BATCH_SIZE + 1); // Take one extra to check if there are more
 

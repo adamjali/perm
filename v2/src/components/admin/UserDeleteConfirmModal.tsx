@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 
 interface UserDeleteConfirmModalProps {
   user: {
-    userId: string;
+    userId: Id<"users">;
     email: string;
     name: string;
     totalCases: number;
@@ -48,7 +48,7 @@ export function UserDeleteConfirmModal({ user, onClose }: UserDeleteConfirmModal
 
     try {
       await deleteUser({
-        userId: user.userId as Id<"users">,
+        userId: user.userId,
       });
 
       toast.success(`User ${user.email} deleted successfully`);

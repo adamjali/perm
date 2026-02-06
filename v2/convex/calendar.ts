@@ -111,7 +111,7 @@ export const getCalendarEvents = query({
     // Query cases for user with reasonable limit
     const cases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .take(1000);
 
     // Filter out deleted cases
@@ -188,7 +188,7 @@ export const getCalendarPreferences = query({
     // Query user profile for calendar preferences
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .first();
 
@@ -229,14 +229,14 @@ export const updateCalendarPreferences = mutation({
     // Query user profile
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .first();
 
     // Create profile if it doesn't exist
     if (!profile) {
       const profileId = await ctx.db.insert("userProfiles", {
-        userId: userId as Id<"users">,
+        userId: userId,
         userType: "individual",
         emailNotificationsEnabled: true,
         smsNotificationsEnabled: false,
@@ -330,7 +330,7 @@ export const disconnectGoogleCalendarWithCleanup = mutation({
     // Get the user profile
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .first();
 
@@ -353,7 +353,7 @@ export const disconnectGoogleCalendarWithCleanup = mutation({
     await ctx.scheduler.runAfter(
       0,
       internal.googleCalendarActions.clearAllCalendarEvents,
-      { userId: userId as Id<"users"> }
+      { userId: userId }
     );
 
     // Clear all Google OAuth fields immediately
@@ -423,7 +423,7 @@ export const updateCalendarSyncPreference = mutation({
     // Get user profile
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .first();
 
@@ -447,7 +447,7 @@ export const updateCalendarSyncPreference = mutation({
           0,
           internal.googleCalendarActions.bulkDeleteEventsByType,
           {
-            userId: userId as Id<"users">,
+            userId: userId,
             eventSchemaFields: schemaFields,
           }
         );

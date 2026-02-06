@@ -169,8 +169,21 @@ export default defineSchema({
     calendarShowClosed: v.optional(v.boolean()), // Show closed/archived cases
 
     // Admin UI preferences
-    adminSortBy: v.optional(v.string()),
+    adminSortBy: v.optional(v.union(
+      v.literal("lastActivity"), v.literal("email"), v.literal("name"),
+      v.literal("accountStatus"), v.literal("totalCases"), v.literal("activeCases"),
+      v.literal("totalLogins"), v.literal("accountCreated"), v.literal("lastLoginTime"),
+      v.literal("userType"), v.literal("emailVerified"), v.literal("verificationMethod"),
+      v.literal("deletedCases"), v.literal("firmName"), v.literal("termsVersion"),
+      v.literal("termsAccepted"), v.literal("lastCaseUpdate"), v.literal("deletedAt"),
+      v.literal("userId"), v.literal("authProviders")
+    )),
     adminSortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
+
+    // Admin notification preferences
+    adminNotifyNewUser: v.optional(v.boolean()),
+    adminNotifyFirstCase: v.optional(v.boolean()),
+    adminNotifyAnyCase: v.optional(v.boolean()),
 
     // Deadline Enforcement
     autoDeadlineEnforcementEnabled: v.boolean(),

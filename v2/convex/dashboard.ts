@@ -10,7 +10,6 @@
 
 import { query } from "./_generated/server";
 import { v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
 import { getCurrentUserIdOrNull } from "./lib/auth";
 import {
   extractDeadlines,
@@ -58,7 +57,7 @@ export const getDeadlines = query({
     // Most users have <100 cases, limit prevents unbounded growth
     const cases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .take(1000);
 
@@ -140,7 +139,7 @@ export const getSummary = query({
     // Fetch non-deleted cases for user with reasonable limit
     const cases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .take(1000);
 
@@ -340,7 +339,7 @@ export const getRecentActivity = query({
     // Take more than 5 to account for deleted cases that will be filtered out
     const cases = await ctx.db
       .query("cases")
-      .withIndex("by_user_and_updated_at", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_and_updated_at", (q) => q.eq("userId", userId))
       .order("desc")
       .take(20); // Take extra to account for deletions
 
@@ -384,7 +383,7 @@ export const getUpcomingDeadlines = query({
     // Fetch non-deleted cases for user with reasonable limit
     const cases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .take(1000);
 

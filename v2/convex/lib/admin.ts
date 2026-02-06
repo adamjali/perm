@@ -20,15 +20,36 @@ export const ADMIN_EMAIL = "admin@yahoo.com";
  *
  * @throws {Error} If not authenticated or not admin
  */
-export async function isAdmin(ctx: QueryCtx): Promise<void> {
+export async function requireAdmin(ctx: QueryCtx): Promise<void> {
   const userId = await getCurrentUserId(ctx);
 
-  // Get the user record
-  const user = await ctx.db.get(userId as Id<"users">);
+  const user = await ctx.db.get(userId);
 
   if (!user || user.email !== ADMIN_EMAIL) {
     throw new Error("Unauthorized: Admin access required");
   }
+}
+
+/**
+ * Get the current admin user's profile.
+ *
+ * Combines requireAdmin check + profile lookup into a single helper.
+ * Use in admin mutations that need to read/write the admin's own profile.
+ *
+ * @throws {Error} If not admin or profile not found
+ */
+export async function getAdminProfile(ctx: QueryCtx): Promise<Doc<"userProfiles">> {
+  await requireAdmin(ctx);
+  const userId = await getCurrentUserId(ctx);
+  const profile = await ctx.db
+    .query("userProfiles")
+    .withIndex("by_user_id", (q) => q.eq("userId", userId))
+    .first();
+
+  if (!profile) {
+    throw new Error("User profile not found");
+  }
+  return profile;
 }
 
 /**
@@ -38,7 +59,39 @@ export async function isAdmin(ctx: QueryCtx): Promise<void> {
  * Bulk-loads all 5 tables, builds lookup maps, assembles per-user summary in one pass.
  * Sorted by lastActivity descending (most recently active first).
  */
-export async function getAdminDashboardDataHelper(ctx: QueryCtx) {
+export interface AdminDashboardData {
+  generatedAt: number;
+  totalUsers: number;
+  activeUsers: number;
+  deletedUsers: number;
+  pendingDeletion: number;
+  usersWithCases: number;
+  totalCasesInSystem: number;
+  users: Array<{
+    userId: Id<"users">;
+    email: string;
+    name: string;
+    emailVerified: boolean;
+    verificationMethod: string;
+    authProviders: string[];
+    accountCreated: number;
+    lastLoginTime: number | null;
+    totalLogins: number;
+    totalCases: number;
+    activeCases: number;
+    deletedCases: number;
+    lastCaseUpdate: number | null;
+    userType: string;
+    firmName: string | null;
+    accountStatus: "active" | "pending_deletion" | "deleted";
+    deletedAt: number | null;
+    termsAccepted: number | null;
+    termsVersion: string | null;
+    lastActivity: number;
+  }>;
+}
+
+export async function getAdminDashboardDataHelper(ctx: QueryCtx): Promise<AdminDashboardData> {
   // Bulk-load all 5 tables
   const [users, authAccounts, authSessions, userProfiles, cases] = await Promise.all([
     ctx.db.query("users").collect(),
@@ -95,7 +148,7 @@ export async function getAdminDashboardDataHelper(ctx: QueryCtx) {
     // Email verification: Google = always verified; password = check emailVerified field
     const hasGoogle = accounts.some((a) => a.provider === "google");
     const hasPasswordVerified = accounts.some(
-      (a) => a.provider === "password" && a.emailVerified !== undefined
+      (a) => a.provider === "password" && !!a.emailVerified
     );
     const emailVerified = hasGoogle || hasPasswordVerified;
 

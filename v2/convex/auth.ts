@@ -3,7 +3,7 @@ import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth } from "@convex-dev/auth/server";
 import { ResendOTP } from "./ResendOTP";
 import { ResendPasswordReset } from "./ResendPasswordReset";
-import { DataModel, Id } from "./_generated/dataModel";
+import { DataModel } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
@@ -110,7 +110,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       // This is idempotent - it does nothing if profile already exists
       try {
         await ctx.runMutation(internal.users.ensureUserProfileInternal, {
-          userId: userId as Id<"users">,
+          userId: userId,
         });
       } catch (error) {
         // Log but don't block auth - PendingTermsHandler has a safety net

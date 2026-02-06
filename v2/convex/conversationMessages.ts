@@ -15,7 +15,6 @@
 
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
 import { getCurrentUserId } from "./lib/auth";
 
 /**
@@ -352,7 +351,7 @@ export const getMostRecent = query({
 
     const conversations = await ctx.db
       .query("conversations")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .collect();
 
     if (conversations.length === 0) {

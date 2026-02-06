@@ -133,7 +133,7 @@ export const checkAndEnforceDeadlines = mutation({
     // Get user profile to check if enforcement is enabled
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     // If no profile or enforcement disabled, return early
@@ -149,7 +149,7 @@ export const checkAndEnforceDeadlines = mutation({
     // Get all active (non-deleted, non-closed) cases for user
     const cases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .collect();
 
     // Filter to active cases only
@@ -184,7 +184,7 @@ export const checkAndEnforceDeadlines = mutation({
         );
 
         const notificationId = await ctx.db.insert("notifications", {
-          userId: userId as Id<"users">,
+          userId: userId,
           caseId: caseDoc._id,
           type: "auto_closure",
           title,
@@ -202,12 +202,12 @@ export const checkAndEnforceDeadlines = mutation({
         try {
           const userProfile = await ctx.db
             .query("userProfiles")
-            .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+            .withIndex("by_user_id", (q) => q.eq("userId", userId))
             .first();
 
           if (shouldSendEmail("auto_closure", "urgent", buildUserNotificationPrefs(userProfile))) {
             // Get user email from users table
-            const user = await ctx.db.get(userId as Id<"users">);
+            const user = await ctx.db.get(userId);
             if (user?.email) {
               await ctx.scheduler.runAfter(0, internal.notificationActions.sendAutoClosureEmail, {
                 notificationId,
@@ -304,7 +304,7 @@ export const dismissAllAutoClosureAlerts = mutation({
     const notifications = await ctx.db
       .query("notifications")
       .withIndex("by_user_and_unread", (q) =>
-        q.eq("userId", userId as Id<"users">).eq("isRead", false)
+        q.eq("userId", userId).eq("isRead", false)
       )
       .collect();
 
@@ -350,7 +350,7 @@ export const getAutoClosureAlerts = query({
     const notifications = await ctx.db
       .query("notifications")
       .withIndex("by_user_and_unread", (q) =>
-        q.eq("userId", userId as Id<"users">).eq("isRead", false)
+        q.eq("userId", userId).eq("isRead", false)
       )
       .collect();
 
@@ -415,7 +415,7 @@ export const isEnforcementEnabled = query({
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     return profile?.autoDeadlineEnforcementEnabled ?? false;

@@ -5,6 +5,7 @@ import { api } from "../../../../convex/_generated/api";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
 import { Shield, AlertCircle } from "lucide-react";
 import { AdminStatsGrid } from "@/components/admin/AdminStatsGrid";
+import { AdminNotificationSettings } from "@/components/admin/AdminNotificationSettings";
 import { UsersTable } from "@/components/admin/UsersTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -82,6 +83,9 @@ export default function AdminDashboardClient() {
 
       {/* Stats Grid */}
       <AdminStatsGrid data={dashboardData} />
+
+      {/* Admin Notification Settings */}
+      <AdminNotificationSettings preferences={dashboardData.adminNotificationPreferences} />
 
       {/* Users Table */}
       <UsersTable users={dashboardData.users} initialSort={dashboardData.adminSortPreference} />

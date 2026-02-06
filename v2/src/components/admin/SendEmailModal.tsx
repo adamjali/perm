@@ -123,7 +123,7 @@ export function SendEmailModal({ user, onClose }: SendEmailModalProps) {
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              This will be sent as a plain text email from notifications@permtracker.app
+              This will be sent as a branded HTML email from notifications@permtracker.app
             </p>
           </div>
 

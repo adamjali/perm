@@ -16,7 +16,6 @@
 
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
 import { getCurrentUserId, getCurrentUserIdOrNull, verifyOwnership } from "./lib/auth";
 import { logCreate, logUpdate, logDelete } from "./lib/audit";
 
@@ -37,7 +36,7 @@ export const list = query({
 
     const templates = await ctx.db
       .query("jobDescriptionTemplates")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .collect();
 
@@ -82,7 +81,7 @@ export const searchByName = query({
 
     const templates = await ctx.db
       .query("jobDescriptionTemplates")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .collect();
 
@@ -118,7 +117,7 @@ export const findByExactName = query({
     const templates = await ctx.db
       .query("jobDescriptionTemplates")
       .withIndex("by_user_and_name", (q) =>
-        q.eq("userId", userId as Id<"users">)
+        q.eq("userId", userId)
       )
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .collect();
@@ -162,7 +161,7 @@ export const create = mutation({
     const nameLower = name.toLowerCase();
     const existingTemplates = await ctx.db
       .query("jobDescriptionTemplates")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .collect();
 
@@ -178,7 +177,7 @@ export const create = mutation({
     // Create template
     const now = Date.now();
     const templateId = await ctx.db.insert("jobDescriptionTemplates", {
-      userId: userId as Id<"users">,
+      userId: userId,
       name,
       description,
       usageCount: 0,

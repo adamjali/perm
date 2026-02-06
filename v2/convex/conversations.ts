@@ -9,7 +9,6 @@
 
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
 import { getCurrentUserId } from "./lib/auth";
 
 /**
@@ -59,7 +58,7 @@ export const create = mutation({
     };
 
     const conversationId = await ctx.db.insert("conversations", {
-      userId: userId as Id<"users">,
+      userId: userId,
       title: args.title ?? "New Conversation",
       isArchived: false,
       metadata,
@@ -129,7 +128,7 @@ export const list = query({
 
     const conversations = await ctx.db
       .query("conversations")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .collect();
 
     // Sort by updatedAt descending (most recent first)
@@ -244,7 +243,7 @@ export const deleteAll = mutation({
     // Get all conversations for user
     const conversations = await ctx.db
       .query("conversations")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .collect();
 
     // Delete each conversation and its messages

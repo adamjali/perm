@@ -23,26 +23,11 @@ import { OAuth2Client } from "google-auth-library";
 import {
   calculateTokenExpiry,
 } from "./lib/googleHelpers";
-import { Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
+import { extractUserIdFromAction } from "./lib/auth";
 import { loggers } from "./lib/logging";
 
 const log = loggers.calendar;
-
-/**
- * Extract the primary user ID from an identity subject.
- *
- * When a user has multiple auth methods (e.g., password + Google),
- * the identity.subject may contain multiple IDs joined by `|`.
- * The first ID is the primary user ID.
- *
- * @param subject - The identity.subject string
- * @returns The primary user ID
- */
-function extractUserId(subject: string): Id<"users"> {
-  // Handle multi-account subjects (e.g., "userId1|userId2")
-  const primaryId = subject.split("|")[0];
-  return primaryId as Id<"users">;
-}
 
 /**
  * Create an OAuth2 client with the refresh token set
@@ -1185,7 +1170,7 @@ export const clearAllEvents = action({
       };
     }
 
-    const userId = extractUserId(identity.subject);
+    const userId = extractUserIdFromAction(identity.subject);
 
     // Check if Google Calendar is connected
     const tokens = await ctx.runQuery(internal.googleAuth.getGoogleTokens, {
@@ -1227,7 +1212,7 @@ export const syncAllCases = action({
       };
     }
 
-    const userId = extractUserId(identity.subject);
+    const userId = extractUserIdFromAction(identity.subject);
 
     // 2. Check if Google Calendar is connected
     const eligibility = await ctx.runQuery(

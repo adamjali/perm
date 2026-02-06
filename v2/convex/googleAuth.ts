@@ -17,8 +17,7 @@ import {
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
-import { Id } from "./_generated/dataModel";
-import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
+import { getCurrentUserId, getCurrentUserIdOrNull, extractUserIdFromAction } from "./lib/auth";
 import { encryptToken, decryptToken } from "./lib/crypto";
 import { isTokenExpired } from "./lib/googleHelpers";
 import { loggers } from "./lib/logging";
@@ -52,7 +51,7 @@ export const storeGoogleTokens = mutation({
     // Get the user profile
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (!profile) {
@@ -92,7 +91,7 @@ export const clearGoogleTokens = mutation({
     // Get the user profile
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (!profile) {
@@ -130,7 +129,7 @@ export const getGoogleConnectionStatus = query({
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (!profile) {
@@ -164,7 +163,7 @@ export const updateGoogleAccessToken = mutation({
     // Get the user profile
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (!profile) {
@@ -260,7 +259,7 @@ export const isGoogleCalendarConnected = query({
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     return profile?.googleCalendarConnected ?? false;
@@ -481,7 +480,7 @@ export const disconnectWithRevocation = action({
     }
 
     // First element is the primary user ID (when multiple auth methods exist)
-    const userId = identity.subject.split("|")[0] as Id<"users">;
+    const userId = extractUserIdFromAction(identity.subject);
     let revoked = false;
 
     try {

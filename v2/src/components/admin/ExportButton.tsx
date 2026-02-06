@@ -4,30 +4,10 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportUsersToCSV, downloadCSV } from "@/lib/admin/csvExport";
 import { toast } from "@/lib/toast";
+import type { UserSummary } from "@/lib/admin/types";
 
 interface ExportButtonProps {
-  users: Array<{
-    userId: string;
-    email: string;
-    name: string;
-    emailVerified: boolean;
-    verificationMethod: string;
-    authProviders: string[];
-    accountCreated: number;
-    lastLoginTime: number | null;
-    totalLogins: number;
-    totalCases: number;
-    activeCases: number;
-    deletedCases: number;
-    lastCaseUpdate: number | null;
-    userType: string;
-    firmName: string | null;
-    accountStatus: string;
-    deletedAt: number | null;
-    termsAccepted: number | null;
-    termsVersion: string | null;
-    lastActivity: number;
-  }>;
+  users: UserSummary[];
 }
 
 export function ExportButton({ users }: ExportButtonProps) {

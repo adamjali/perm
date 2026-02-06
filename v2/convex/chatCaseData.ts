@@ -11,7 +11,7 @@
 
 import { query } from "./_generated/server";
 import { v } from "convex/values";
-import type { Id, Doc } from "./_generated/dataModel";
+import type { Doc } from "./_generated/dataModel";
 import { getCurrentUserIdOrNull } from "./lib/auth";
 import { extractActiveDeadlines } from "./lib/perm/deadlines";
 
@@ -231,7 +231,7 @@ export const queryCases = query({
     // Query all cases for user using index
     const allCases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .take(1000);
 
     // Get today's date for deadline comparisons
@@ -483,7 +483,7 @@ export const getCaseSummary = query({
     // Query all cases for user
     const allCases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .take(1000);
 
     // Filter out deleted cases

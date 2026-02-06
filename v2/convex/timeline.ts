@@ -43,7 +43,7 @@ export const getPreferences = query({
     // Query for existing preferences
     const preferences = await ctx.db
       .query("timelinePreferences")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .first();
 
     if (!preferences) {
@@ -77,7 +77,7 @@ export const updatePreferences = mutation({
     // Query for existing preferences
     const existingPreferences = await ctx.db
       .query("timelinePreferences")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .first();
 
     if (existingPreferences) {
@@ -101,7 +101,7 @@ export const updatePreferences = mutation({
     } else {
       // Create new preferences
       const preferencesId = await ctx.db.insert("timelinePreferences", {
-        userId: userId as Id<"users">,
+        userId: userId,
         selectedCaseIds: args.selectedCaseIds === null ? undefined : args.selectedCaseIds,
         timeRange: args.timeRange ?? DEFAULT_TIME_RANGE,
         createdAt: now,
@@ -133,13 +133,13 @@ export const addCaseToTimeline = mutation({
     // Get existing preferences
     const existingPreferences = await ctx.db
       .query("timelinePreferences")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .first();
 
     if (!existingPreferences) {
       // No preferences exist - create with just this case selected
       const preferencesId = await ctx.db.insert("timelinePreferences", {
-        userId: userId as Id<"users">,
+        userId: userId,
         selectedCaseIds: [args.caseId],
         timeRange: DEFAULT_TIME_RANGE,
         createdAt: now,
@@ -155,7 +155,7 @@ export const addCaseToTimeline = mutation({
       // null/undefined means "all cases" - we need to get all active cases and add this one
       const allCases = await ctx.db
         .query("cases")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+        .withIndex("by_user_id", (q) => q.eq("userId", userId))
         .take(1000);
 
       const activeCaseIds = allCases
@@ -198,7 +198,7 @@ export const removeCaseFromTimeline = mutation({
     // Get existing preferences
     const existingPreferences = await ctx.db
       .query("timelinePreferences")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .first();
 
     if (!existingPreferences) {
@@ -206,7 +206,7 @@ export const removeCaseFromTimeline = mutation({
       // Create preferences with all active cases except this one
       const allCases = await ctx.db
         .query("cases")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+        .withIndex("by_user_id", (q) => q.eq("userId", userId))
         .take(1000);
 
       const activeCaseIds = allCases
@@ -219,7 +219,7 @@ export const removeCaseFromTimeline = mutation({
         .map((c) => c._id);
 
       const preferencesId = await ctx.db.insert("timelinePreferences", {
-        userId: userId as Id<"users">,
+        userId: userId,
         selectedCaseIds: activeCaseIds,
         timeRange: DEFAULT_TIME_RANGE,
         createdAt: now,
@@ -234,7 +234,7 @@ export const removeCaseFromTimeline = mutation({
       // null/undefined means "all cases" - get all active cases except this one
       const allCases = await ctx.db
         .query("cases")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+        .withIndex("by_user_id", (q) => q.eq("userId", userId))
         .take(1000);
 
       currentSelection = allCases
@@ -328,7 +328,7 @@ export const getCasesForTimeline = query({
     // Get user's preferences
     const preferences = await ctx.db
       .query("timelinePreferences")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .first();
 
     // Use provided timeRange or preference or default
@@ -338,7 +338,7 @@ export const getCasesForTimeline = query({
     // Fetch non-deleted cases for user with reasonable limit
     const allCases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .take(1000);
 
     // Filter out deleted cases and cases hidden from timeline

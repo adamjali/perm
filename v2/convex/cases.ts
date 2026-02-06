@@ -68,7 +68,7 @@ export const list = query({
     }
 
     // Security: Verify userId exists in users table (protects against invalid/foreign auth tokens)
-    const userExists = await ctx.db.get(userId as Id<"users">);
+    const userExists = await ctx.db.get(userId);
     if (!userExists) {
       console.warn("[list] Invalid userId from auth token:", userId);
       return [];
@@ -77,7 +77,7 @@ export const list = query({
     // Query cases for user using the by_user_id index with reasonable limit
     const cases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .take(1000);
 
     // Filter out deleted cases
@@ -407,7 +407,7 @@ export const create = mutation({
       : autoStatus.progressStatus;
 
     const caseId = await ctx.db.insert("cases", {
-      userId: userId as Id<"users">,
+      userId: userId,
       employerName: args.employerName,
       beneficiaryIdentifier: args.beneficiaryIdentifier ?? "",
       positionTitle: args.positionTitle,
@@ -502,13 +502,13 @@ export const create = mutation({
     try {
       const userProfile = await ctx.db
         .query("userProfiles")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+        .withIndex("by_user_id", (q) => q.eq("userId", userId))
         .first();
 
       // Default to creating notification if profile doesn't exist or emailStatusUpdates is true
       if (!userProfile || userProfile.emailStatusUpdates) {
         const notificationId = await ctx.runMutation(internal.notifications.createNotification, {
-          userId: userId as Id<"users">,
+          userId: userId,
           caseId: caseId,
           type: "status_change",
           title: "New Case Created",
@@ -519,7 +519,7 @@ export const create = mutation({
         // Schedule email if preferences allow
         if (shouldSendEmail("status_change", "normal", buildUserNotificationPrefs(userProfile))) {
           // Get user email from users table
-          const user = await ctx.db.get(userId as Id<"users">);
+          const user = await ctx.db.get(userId);
           if (user?.email) {
             await ctx.scheduler.runAfter(0, internal.notificationActions.sendStatusChangeEmail, {
               notificationId,
@@ -551,7 +551,7 @@ export const create = mutation({
     // Only sync if case-level calendarSyncEnabled is not explicitly false
     if (args.calendarSyncEnabled !== false) {
       try {
-        const syncResult = await scheduleCalendarSync(ctx, userId as Id<"users">, caseId);
+        const syncResult = await scheduleCalendarSync(ctx, userId, caseId);
         if (syncResult.scheduled) {
           log.info('Scheduled sync for new case', { resourceId: caseId });
         }
@@ -559,6 +559,49 @@ export const create = mutation({
         // Log calendar sync failure but don't fail the operation - case was created successfully
         log.error('Failed to schedule sync for new case', { resourceId: caseId, error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
       }
+    }
+
+    // Admin notification: case created (first case or any case)
+    try {
+      const adminPrefs = await ctx.runQuery(internal.admin.getAdminNotificationPrefs, {});
+      if (adminPrefs.adminNotifyFirstCase || adminPrefs.adminNotifyAnyCase) {
+        const user = await ctx.db.get(userId);
+        const userEmail = user?.email ?? "unknown";
+        const createdTime = new Date().toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        let shouldSendFirstCase = false;
+        if (adminPrefs.adminNotifyFirstCase) {
+          // Count user's cases - if only 1 exists, it's their first
+          const userCases = await ctx.db
+            .query("cases")
+            .withIndex("by_user_id", (q) => q.eq("userId", userId))
+            .take(2);
+          shouldSendFirstCase = userCases.length === 1;
+        }
+
+        if (shouldSendFirstCase) {
+          await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
+            subject: "First Case Created",
+            body: `A user has created their first case on PERM Tracker.\n\nUser: ${userEmail}\nEmployer: ${args.employerName}\nPosition: ${args.positionTitle}\nBeneficiary: ${args.beneficiaryIdentifier || "Not specified"}\nTime: ${createdTime}`,
+          });
+        } else if (adminPrefs.adminNotifyAnyCase) {
+          await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
+            subject: "New Case Created",
+            body: `A new case has been created on PERM Tracker.\n\nUser: ${userEmail}\nEmployer: ${args.employerName}\nPosition: ${args.positionTitle}\nBeneficiary: ${args.beneficiaryIdentifier || "Not specified"}\nTime: ${createdTime}`,
+          });
+        }
+      }
+    } catch (adminNotifError) {
+      log.error("Failed to send admin case notification", {
+        resourceId: caseId,
+        error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
+      });
     }
 
     return caseId;
@@ -1239,7 +1282,7 @@ export const bulkRemove = mutation({
           await ctx.scheduler.runAfter(
             0,
             internal.googleCalendarActions.deleteCaseCalendarEvents,
-            { userId: userId as Id<"users">, caseId: id }
+            { userId: userId, caseId: id }
           );
         } catch (calendarError) {
           log.error('Failed to schedule event deletion in bulk', { resourceId: id, error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
@@ -1264,7 +1307,7 @@ export const bulkRemove = mutation({
       try {
         const userCaseOrder = await ctx.db
           .query("userCaseOrder")
-          .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+          .withIndex("by_user_id", (q) => q.eq("userId", userId))
           .first();
 
         if (userCaseOrder) {
@@ -1284,7 +1327,7 @@ export const bulkRemove = mutation({
       try {
         const timelinePrefs = await ctx.db
           .query("timelinePreferences")
-          .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+          .withIndex("by_user_id", (q) => q.eq("userId", userId))
           .first();
 
         if (timelinePrefs?.selectedCaseIds) {
@@ -1304,7 +1347,7 @@ export const bulkRemove = mutation({
       try {
         const userProfile = await ctx.db
           .query("userProfiles")
-          .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+          .withIndex("by_user_id", (q) => q.eq("userId", userId))
           .first();
 
         if (userProfile) {
@@ -1324,7 +1367,7 @@ export const bulkRemove = mutation({
       try {
         const conversations = await ctx.db
           .query("conversations")
-          .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+          .withIndex("by_user_id", (q) => q.eq("userId", userId))
           .collect();
 
         for (const conv of conversations) {
@@ -1346,7 +1389,7 @@ export const bulkRemove = mutation({
       try {
         const conversations = await ctx.db
           .query("conversations")
-          .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+          .withIndex("by_user_id", (q) => q.eq("userId", userId))
           .collect();
 
         for (const conv of conversations) {
@@ -1520,7 +1563,7 @@ export const bulkUpdateStatus = mutation({
     // Status changes affect calendar display (e.g., case stage progression)
     if (successfulCaseIds.length > 0) {
       try {
-        const syncResult = await scheduleCalendarSyncBulk(ctx, userId as Id<"users">, successfulCaseIds);
+        const syncResult = await scheduleCalendarSyncBulk(ctx, userId, successfulCaseIds);
         if (syncResult.scheduledCount > 0) {
           log.info('Scheduled bulk sync for status-updated cases', { count: syncResult.scheduledCount });
         }
@@ -1600,7 +1643,7 @@ export const bulkUpdateCalendarSync = mutation({
       try {
         if (args.calendarSyncEnabled) {
           // Enabling - sync to calendar
-          const syncResult = await scheduleCalendarSyncBulk(ctx, userId as Id<"users">, successfulCaseIds);
+          const syncResult = await scheduleCalendarSyncBulk(ctx, userId, successfulCaseIds);
           if (syncResult.scheduledCount > 0) {
             log.info('Scheduled bulk sync for cases', { count: syncResult.scheduledCount });
           }
@@ -1610,7 +1653,7 @@ export const bulkUpdateCalendarSync = mutation({
             await ctx.scheduler.runAfter(
               0,
               internal.googleCalendarActions.deleteCaseCalendarEvents,
-              { userId: userId as Id<"users">, caseId }
+              { userId: userId, caseId }
             );
           }
           log.info('Scheduled bulk delete for cases', { count: successfulCaseIds.length });
@@ -1904,7 +1947,7 @@ export const checkDuplicates = query({
     // Fetch all existing cases for this user
     const existingCases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .collect();
 
@@ -2104,7 +2147,7 @@ export const importCases = mutation({
     // Fetch all existing cases for this user to check for duplicates
     const existingCases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .collect();
 
@@ -2175,7 +2218,7 @@ export const importCases = mutation({
             await ctx.scheduler.runAfter(
               0,
               internal.googleCalendarActions.deleteCaseCalendarEvents,
-              { userId: userId as Id<"users">, caseId: existingCaseId }
+              { userId: userId, caseId: existingCaseId }
             );
           } catch (calendarError) {
             log.error('Failed to schedule event deletion during import replace', { resourceId: existingCaseId, error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
@@ -2185,7 +2228,7 @@ export const importCases = mutation({
           try {
             const userCaseOrder = await ctx.db
               .query("userCaseOrder")
-              .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+              .withIndex("by_user_id", (q) => q.eq("userId", userId))
               .first();
             if (userCaseOrder && userCaseOrder.caseIds.includes(existingCaseId)) {
               await ctx.db.patch(userCaseOrder._id, {
@@ -2201,7 +2244,7 @@ export const importCases = mutation({
           try {
             const timelinePrefs = await ctx.db
               .query("timelinePreferences")
-              .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+              .withIndex("by_user_id", (q) => q.eq("userId", userId))
               .first();
             if (timelinePrefs?.selectedCaseIds?.includes(existingCaseId)) {
               await ctx.db.patch(timelinePrefs._id, {
@@ -2217,7 +2260,7 @@ export const importCases = mutation({
           try {
             const userProfile = await ctx.db
               .query("userProfiles")
-              .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+              .withIndex("by_user_id", (q) => q.eq("userId", userId))
               .first();
             if (userProfile?.dismissedDeadlines.some((d) => d.caseId === existingCaseId)) {
               await ctx.db.patch(userProfile._id, {
@@ -2233,7 +2276,7 @@ export const importCases = mutation({
           try {
             const conversations = await ctx.db
               .query("conversations")
-              .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+              .withIndex("by_user_id", (q) => q.eq("userId", userId))
               .collect();
             for (const conv of conversations) {
               if (conv.metadata?.relatedCaseId === existingCaseId) {
@@ -2324,7 +2367,7 @@ export const importCases = mutation({
       }
 
       const caseId = await ctx.db.insert("cases", {
-        userId: userId as Id<"users">,
+        userId: userId,
         employerName: caseData.employerName,
         beneficiaryIdentifier: caseData.beneficiaryIdentifier,
         positionTitle: caseData.positionTitle ?? "",
@@ -2480,7 +2523,7 @@ export const listFiltered = query({
     }
 
     // 1.5 Security: Verify userId exists in users table (protects against invalid/foreign auth tokens)
-    const userExists = await ctx.db.get(userId as Id<"users">);
+    const userExists = await ctx.db.get(userId);
     if (!userExists) {
       console.warn("[listFiltered] Invalid userId from auth token:", userId);
       return {
@@ -2496,7 +2539,7 @@ export const listFiltered = query({
     // 2. Query cases with ownership filter and reasonable limit
     const allCases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .take(1000);
 
     // 3. Filter out soft-deleted cases
@@ -2619,7 +2662,7 @@ export const listFilteredIds = query({
     }
 
     // 1.5 Security: Verify userId exists in users table (protects against invalid/foreign auth tokens)
-    const userExists = await ctx.db.get(userId as Id<"users">);
+    const userExists = await ctx.db.get(userId);
     if (!userExists) {
       console.warn("[listFilteredIds] Invalid userId from auth token:", userId);
       return [];
@@ -2628,7 +2671,7 @@ export const listFilteredIds = query({
     // 2. Query cases with ownership filter
     const allCases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .take(1000);
 
     // 3. Filter out soft-deleted cases
@@ -2846,7 +2889,7 @@ export const getSyncEligibleCaseCount = query({
 
     const cases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .take(1000);
 
     // Count non-deleted cases with sync enabled (not explicitly false)
@@ -2872,7 +2915,7 @@ export const getCasesWithEventsCount = query({
 
     const cases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .take(1000);
 
     // Count non-deleted cases with calendar events

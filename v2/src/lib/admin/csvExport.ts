@@ -4,31 +4,7 @@
  * Functions for exporting user data to CSV format with proper escaping.
  */
 
-/**
- * User data shape from admin dashboard
- */
-interface UserSummary {
-  userId: string;
-  email: string;
-  name: string;
-  emailVerified: boolean;
-  verificationMethod: string;
-  authProviders: string[];
-  accountCreated: number;
-  lastLoginTime: number | null;
-  totalLogins: number;
-  totalCases: number;
-  activeCases: number;
-  deletedCases: number;
-  lastCaseUpdate: number | null;
-  userType: string;
-  firmName: string | null;
-  accountStatus: string;
-  deletedAt: number | null;
-  termsAccepted: number | null;
-  termsVersion: string | null;
-  lastActivity: number;
-}
+import type { UserSummary } from "./types";
 
 /**
  * Escape a CSV field value.

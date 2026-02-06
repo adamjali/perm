@@ -11,6 +11,7 @@
  * - sendRfiAlertEmail: Send RFI alert email
  * - sendRfeAlertEmail: Send RFE alert email
  * - sendAutoClosureEmail: Send auto-closure notification email
+ * - sendAdminNotificationEmail: Send admin notification (non-throwing)
  *
  * PUBLIC ACTIONS (exposed to client):
  * - sendTestEmail: Send a test email to verify configuration
@@ -23,11 +24,11 @@
 
 import { action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
-import { Resend } from "resend";
 import { render } from "@react-email/render";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { loggers } from "./lib/logging";
+import { getResend, FROM_EMAIL } from "./lib/email";
 
 const log = loggers.email;
 import { DeadlineReminder } from "../src/emails/DeadlineReminder";
@@ -37,9 +38,6 @@ import { RfeAlert } from "../src/emails/RfeAlert";
 import { AutoClosure } from "../src/emails/AutoClosure";
 import { WeeklyDigest } from "../src/emails/WeeklyDigest";
 import type { DigestContent } from "./lib/digestHelpers";
-
-// From email address for notifications
-const FROM_EMAIL = "PERM Tracker <notifications@permtracker.app>";
 
 // App URL for generating links (falls back to production URL)
 function getAppUrl(): string {
@@ -58,12 +56,6 @@ function buildEmailUrls(caseId?: string): { appUrl: string; caseUrl?: string; se
   };
 }
 
-/**
- * Create a Resend client for sending emails.
- */
-function getResend(): Resend {
-  return new Resend(process.env.AUTH_RESEND_KEY);
-}
 
 /**
  * Send an email via Resend and optionally mark notification as sent.
@@ -387,108 +379,67 @@ export const sendAutoClosureEmail = internalAction({
 /**
  * Send an account deletion confirmation email.
  *
+ * Handles both scheduled and immediate deletions via the `immediate` flag.
+ * - Scheduled: shows deletionDate and cancel link
+ * - Immediate: shows today's date and no cancel link
+ *
  * @param to - Recipient email address
  * @param userName - User's display name or email
- * @param deletionDate - Human-readable deletion date (e.g., "February 15, 2025")
+ * @param deletionDate - Human-readable deletion date (scheduled only)
+ * @param immediate - Whether deletion is immediate (bypasses grace period)
  */
 export const sendAccountDeletionEmail = internalAction({
   args: {
     to: v.string(),
     userName: v.string(),
-    deletionDate: v.string(),
+    deletionDate: v.optional(v.string()),
+    immediate: v.optional(v.boolean()),
   },
   handler: async (_ctx, args) => {
     const appUrl = getAppUrl();
-    const cancelUrl = `${appUrl}/settings`;
-    const supportUrl = "mailto:support@permtracker.app";
-
-    // Import template dynamically to avoid circular dependency issues
-    const { AccountDeletionConfirm } = await import(
-      "../src/emails/AccountDeletionConfirm"
-    );
-
-    // Render React Email template to HTML
-    const html = await render(
-      AccountDeletionConfirm({
-        userName: args.userName,
-        deletionDate: args.deletionDate,
-        cancelUrl,
-        supportUrl,
-      })
-    );
-
-    // Send email via Resend
-    const resend = getResend();
-    const { error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: [args.to],
-      subject: "Account Deletion Scheduled - PERM Tracker",
-      html,
-    });
-
-    if (error) {
-      log.error('Failed to send account deletion confirmation email', { error: error.message, to: args.to });
-      throw new Error(`Email failed: ${error.message}`);
-    }
-
-    log.info('Account deletion confirmation email sent', { to: args.to });
-  },
-});
-
-/**
- * Send immediate account deletion confirmation email.
- *
- * Sent when a user chooses to delete their account immediately
- * (bypassing the 30-day grace period). Uses the same template
- * as scheduled deletion but with immediate=true for different copy.
- *
- * @param to - Recipient email address
- * @param userName - User's display name or email
- */
-export const sendImmediateDeletionEmail = internalAction({
-  args: {
-    to: v.string(),
-    userName: v.string(),
-  },
-  handler: async (_ctx, args) => {
-    const appUrl = getAppUrl();
+    const isImmediate = args.immediate ?? false;
     const supportUrl = "mailto:support@permtracker.app";
 
     const { AccountDeletionConfirm } = await import(
       "../src/emails/AccountDeletionConfirm"
     );
 
+    const { formatDateForNotification } = await import("./lib/formatDate");
+    const deletionDate = isImmediate
+      ? formatDateForNotification(Date.now(), true)
+      : args.deletionDate!;
+
     const html = await render(
       AccountDeletionConfirm({
         userName: args.userName,
-        deletionDate: new Date().toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }),
-        cancelUrl: appUrl, // Not used when immediate=true, but required by type
+        deletionDate,
+        cancelUrl: `${appUrl}/settings`,
         supportUrl,
-        immediate: true,
+        ...(isImmediate ? { immediate: true } : {}),
       })
     );
+
+    const subject = isImmediate
+      ? "Account Deleted - PERM Tracker"
+      : "Account Deletion Scheduled - PERM Tracker";
 
     const resend = getResend();
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [args.to],
-      subject: "Account Deleted - PERM Tracker",
+      subject,
       html,
     });
 
     if (error) {
-      log.error('Failed to send immediate deletion confirmation email', { error: error.message, to: args.to });
+      log.error('Failed to send account deletion email', { error: error.message, to: args.to, immediate: isImmediate });
       throw new Error(`Email failed: ${error.message}`);
     }
 
-    log.info('Immediate deletion confirmation email sent', { to: args.to });
+    log.info('Account deletion email sent', { to: args.to, immediate: isImmediate });
   },
 });
+
 
 // ============================================================================
 // WEEKLY DIGEST EMAIL
@@ -703,5 +654,55 @@ export const sendTestEmail = action({
     }
 
     return { success: true };
+  },
+});
+
+// ============================================================================
+// ADMIN NOTIFICATION EMAIL
+// ============================================================================
+
+/**
+ * Send an admin notification email (e.g., new user signup, case created).
+ *
+ * Uses the branded AdminEmail template and sends to the admin email address.
+ *
+ * INTENTIONALLY non-throwing: admin notifications must never block user
+ * operations (signup, case creation). Errors are logged but swallowed so
+ * the calling action can continue normally.
+ */
+export const sendAdminNotificationEmail = internalAction({
+  args: {
+    subject: v.string(),
+    body: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const { ADMIN_EMAIL } = await import("./lib/admin");
+    const { AdminEmail } = await import("../src/emails/AdminEmail");
+
+    const html = await render(
+      AdminEmail({
+        recipientName: "Admin",
+        subject: args.subject,
+        body: args.body,
+      })
+    );
+
+    const resend = getResend();
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [ADMIN_EMAIL],
+      subject: args.subject,
+      html,
+    });
+
+    if (error) {
+      log.error("Failed to send admin notification email", {
+        error: error.message,
+        subject: args.subject,
+      });
+      return;
+    }
+
+    log.info("Admin notification email sent", { subject: args.subject });
   },
 });

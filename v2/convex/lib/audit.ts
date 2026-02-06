@@ -190,7 +190,7 @@ export async function logAudit(
     const changes = calculateChanges(params.oldDoc ?? null, params.newDoc ?? null);
 
     await ctx.db.insert("auditLogs", {
-      userId: userId as Id<"users">,
+      userId: userId,
       tableName: params.tableName,
       documentId: params.documentId.toString(),
       action: params.action,

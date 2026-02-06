@@ -1,11 +1,13 @@
 /**
- * Admin Mutations
+ * Admin Functions
  *
- * These mutations are for administrative tasks like creating test users
- * and copying data between accounts. They should only be run from the
- * Convex dashboard or via CLI.
+ * Contains both internal admin utilities (test user creation, data copying)
+ * and public admin endpoints (dashboard data, user management, notification
+ * settings, email sending).
  *
- * SECURITY: These are internal mutations - not exposed to the client.
+ * SECURITY: Public functions enforce admin access via requireAdmin() guard.
+ * Internal functions use internalQuery/internalMutation/internalAction
+ * and are only callable server-side.
  */
 
 import { internalMutation, internalAction, internalQuery, query, mutation, action } from "./_generated/server";
@@ -13,9 +15,9 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { Scrypt } from "lucia";
-import { isAdmin, getAdminDashboardDataHelper, ADMIN_EMAIL } from "./lib/admin";
-import { getCurrentUserId } from "./lib/auth";
-import { Resend } from "resend";
+import { requireAdmin, getAdminProfile, getAdminDashboardDataHelper, ADMIN_EMAIL } from "./lib/admin";
+import { getCurrentUserId, extractUserIdFromAction } from "./lib/auth";
+import { buildDefaultProfile } from "./lib/userDefaults";
 import { render } from "@react-email/render";
 import { AdminEmail } from "../src/emails/AdminEmail";
 
@@ -133,6 +135,11 @@ export const debugAuthAccount = internalQuery({
  * - Notifications
  * - User case order preferences
  * - Timeline preferences
+ *
+ * Does NOT copy (by design):
+ * - Google OAuth tokens (must re-authenticate)
+ * - Push subscriptions (device-specific)
+ * - Tool cache (ephemeral)
  *
  * Usage from Convex Dashboard:
  * 1. Go to Functions > admin > copyUserData
@@ -515,44 +522,10 @@ export const createTestUserInternal = internalMutation({
     });
 
     // Create userProfile with default settings
-    const now = Date.now();
-    await ctx.db.insert("userProfiles", {
+    await ctx.db.insert("userProfiles", buildDefaultProfile(
       userId,
-      fullName: args.name,
-      userType: "individual",
-      emailNotificationsEnabled: true,
-      smsNotificationsEnabled: false,
-      pushNotificationsEnabled: false,
-      urgentDeadlineDays: 7,
-      reminderDaysBefore: [1, 3, 7, 14, 30],
-      emailDeadlineReminders: true,
-      emailStatusUpdates: true,
-      emailRfeAlerts: true,
-      emailWeeklyDigest: true,
-      preferredNotificationEmail: "signup",
-      quietHoursEnabled: false,
-      timezone: "America/New_York",
-      calendarSyncEnabled: false,
-      calendarSyncPwd: true,
-      calendarSyncEta9089: true,
-      calendarSyncI140: true,
-      calendarSyncRfe: true,
-      calendarSyncRfi: true,
-      calendarSyncRecruitment: true,
-      calendarSyncFilingWindow: true,
-      googleCalendarConnected: false,
-      gmailConnected: false,
-      casesSortBy: "updatedAt",
-      casesSortOrder: "desc",
-      casesPerPage: 10,
-      dismissedDeadlines: [],
-      darkModeEnabled: false,
-      autoDeadlineEnforcementEnabled: true,
-      termsAcceptedAt: now,
-      termsVersion: "2025-01-01",
-      createdAt: now,
-      updatedAt: now,
-    });
+      { fullName: args.name, termsAcceptedAt: Date.now(), termsVersion: "2025-01-01" }
+    ));
 
     console.log(`Created test user: ${args.email} with ID: ${userId}`);
 
@@ -640,280 +613,6 @@ export const createTestUserAndCopyData = internalAction({
   },
 });
 
-/**
- * Debug query to mimic listFiltered exactly.
- * Run via: npx convex run admin:debugListFiltered '{"email": "admin@yahoo.com"}'
- */
-export const debugListFiltered = internalQuery({
-  args: { email: v.string() },
-  handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("email"), args.email))
-      .first();
-
-    if (!user) {
-      return { error: "User not found", email: args.email };
-    }
-
-    // Exact same query as listFiltered
-    const allCases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", user._id))
-      .take(1000);
-
-    const beforeDeleteFilter = allCases.length;
-
-    // Filter out soft-deleted cases
-    const filteredCases = allCases.filter((c) => c.deletedAt === undefined);
-    const afterDeleteFilter = filteredCases.length;
-
-    // Check for any cases with deletedAt set
-    const deletedCases = allCases.filter((c) => c.deletedAt !== undefined);
-
-    // Check for duplicates
-    const duplicateCases = filteredCases.filter((c) => c.duplicateOf !== undefined);
-
-    // Check for the mystery userId
-    const mysteryUserId = "md717vgz2vwh83c3drbgd8daz57z9nnt";
-    const mysteryCases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", mysteryUserId as Id<"users">))
-      .collect();
-
-    // Check if mystery user exists in users table
-    let mysteryUserExists = false;
-    try {
-      const mysteryUser = await ctx.db.get(mysteryUserId as Id<"users">);
-      mysteryUserExists = mysteryUser !== null;
-    } catch {
-      mysteryUserExists = false;
-    }
-
-    return {
-      email: args.email,
-      userId: user._id,
-      rawQueryCount: beforeDeleteFilter,
-      afterSoftDeleteFilter: afterDeleteFilter,
-      softDeletedCount: deletedCases.length,
-      deletedCaseIds: deletedCases.map(c => c._id),
-      duplicateCount: duplicateCases.length,
-      duplicateCaseIds: duplicateCases.map(c => c._id),
-      // Mystery user debug
-      mysteryUserId,
-      mysteryCasesCount: mysteryCases.length,
-      mysteryUserExists,
-    };
-  },
-});
-
-/**
- * Debug query to get case counts by status for a user.
- * Run via: npx convex run admin:debugCaseCounts '{"email": "admin@yahoo.com"}'
- */
-export const debugCaseCounts = internalQuery({
-  args: { email: v.string() },
-  handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("email"), args.email))
-      .first();
-
-    if (!user) {
-      return { error: "User not found", email: args.email };
-    }
-
-    const cases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", user._id))
-      .collect();
-
-    // Also get ALL cases to find unique userIds
-    const allCasesInDb = await ctx.db.query("cases").collect();
-    const uniqueUserIds: Record<string, number> = {};
-    for (const c of allCasesInDb) {
-      const uid = c.userId as string;
-      uniqueUserIds[uid] = (uniqueUserIds[uid] || 0) + 1;
-    }
-    const sortedUserIds = Object.entries(uniqueUserIds)
-      .sort((a, b) => b[1] - a[1])
-      .map(([uid, count]) => ({ userId: uid, caseCount: count }));
-
-    // Group by status
-    const byStatus: Record<string, number> = {};
-    const byStatusProgress: Record<string, number> = {};
-    let deleted = 0;
-    let active = 0; // not closed, not completed
-    let completed = 0; // i140 + approved
-    let closed = 0;
-
-    for (const c of cases) {
-      if (c.deletedAt) {
-        deleted++;
-        continue;
-      }
-
-      const status = c.caseStatus || "unknown";
-      const progress = c.progressStatus || "unknown";
-      const combo = `${status}/${progress}`;
-
-      byStatus[status] = (byStatus[status] || 0) + 1;
-      byStatusProgress[combo] = (byStatusProgress[combo] || 0) + 1;
-
-      if (c.caseStatus === "closed") {
-        closed++;
-      } else if (c.caseStatus === "i140" && c.progressStatus === "approved") {
-        completed++;
-      } else {
-        active++;
-      }
-    }
-
-    return {
-      userId: user._id,
-      email: user.email,
-      totalCases: cases.length,
-      deleted,
-      active, // Excludes closed AND completed
-      completed,
-      closed,
-      activeByOldDefinition: cases.filter(c => !c.deletedAt && c.caseStatus !== "closed").length, // Old definition (only excludes closed)
-      byStatus,
-      byStatusProgress,
-      // All unique userIds in cases table with counts
-      allUniqueUserIds: sortedUserIds,
-      totalCasesInDb: allCasesInDb.length,
-    };
-  },
-});
-
-/**
- * Debug query to list all users with their case counts.
- * Run via: npx convex run admin:listUsersWithCaseCounts '{}'
- */
-export const listUsersWithCaseCounts = internalQuery({
-  args: {},
-  handler: async (ctx) => {
-    const users = await ctx.db.query("users").collect();
-
-    const results = [];
-    for (const user of users) {
-      const cases = await ctx.db
-        .query("cases")
-        .withIndex("by_user_id", (q) => q.eq("userId", user._id))
-        .collect();
-
-      const activeCases = cases.filter(c =>
-        !c.deletedAt &&
-        c.caseStatus !== "closed" &&
-        !(c.caseStatus === "i140" && c.progressStatus === "approved")
-      );
-
-      results.push({
-        userId: user._id,
-        email: user.email,
-        name: user.name,
-        totalCases: cases.length,
-        activeCases: activeCases.length,
-        deletedCases: cases.filter(c => c.deletedAt).length,
-      });
-    }
-
-    // Sort by totalCases descending
-    results.sort((a, b) => b.totalCases - a.totalCases);
-
-    return results;
-  },
-});
-
-/**
- * Debug query to get all unique userIds in cases table with counts.
- * Run via: npx convex run admin:debugAllCaseUserIds '{}'
- */
-export const debugAllCaseUserIds = query({
-  args: {},
-  handler: async (ctx) => {
-    const allCases = await ctx.db.query("cases").collect();
-
-    const userIdCounts: Record<string, { total: number; active: number }> = {};
-
-    for (const c of allCases) {
-      const uid = c.userId as string;
-      if (!userIdCounts[uid]) {
-        userIdCounts[uid] = { total: 0, active: 0 };
-      }
-      userIdCounts[uid].total++;
-      if (!c.deletedAt && c.caseStatus !== "closed") {
-        userIdCounts[uid].active++;
-      }
-    }
-
-    // Sort by total descending
-    const sorted = Object.entries(userIdCounts)
-      .map(([userId, counts]) => ({ userId, ...counts }))
-      .sort((a, b) => b.total - a.total);
-
-    return {
-      totalCasesInTable: allCases.length,
-      uniqueUserIds: sorted.length,
-      userIdCounts: sorted,
-    };
-  },
-});
-
-/**
- * Debug query to test case counts for a specific userId string.
- * Run via: npx convex run admin:debugCasesByUserIdPublic '{"userId": "md717vgz2vwh83c3drbgd8daz57z9nnt"}'
- */
-export const debugCasesByUserIdPublic = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    // Try querying with the userId as-is
-    const casesWithIndex = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", args.userId as Id<"users">))
-      .take(1000);
-
-    // Also try without index (full table scan) for comparison
-    const allCases = await ctx.db.query("cases").collect();
-    const casesWithFilter = allCases.filter(c => c.userId === args.userId);
-
-    return {
-      inputUserId: args.userId,
-      casesWithIndex: casesWithIndex.length,
-      casesWithFilter: casesWithFilter.length,
-      totalCasesInTable: allCases.length,
-      uniqueUserIdsInCases: Array.from(new Set(allCases.map(c => c.userId))),
-    };
-  },
-});
-
-/**
- * Debug query to test case counts for a specific userId string.
- * Run via: npx convex run admin:debugCasesByUserId '{"userId": "md717vgz2vwh83c3drbgd8daz57z9nnt"}'
- */
-export const debugCasesByUserId = internalQuery({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    // Try querying with the userId as-is
-    const casesWithIndex = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", args.userId as Id<"users">))
-      .take(1000);
-
-    // Also try without index (full table scan) for comparison
-    const allCases = await ctx.db.query("cases").take(1000);
-    const casesWithFilter = allCases.filter(c => c.userId === args.userId);
-
-    return {
-      inputUserId: args.userId,
-      casesWithIndex: casesWithIndex.length,
-      casesWithFilter: casesWithFilter.length,
-      totalCasesInTable: allCases.length,
-      sampleUserIds: Array.from(new Set(allCases.slice(0, 20).map(c => c.userId))),
-    };
-  },
-});
 
 /**
  * Comprehensive admin summary joining users + authAccounts + authSessions + userProfiles + cases.
@@ -928,6 +627,48 @@ export const getUserSummary = internalQuery({
   handler: async (ctx) => {
     // Use shared helper from lib/admin.ts
     return await getAdminDashboardDataHelper(ctx);
+  },
+});
+
+// ============================================================================
+// ADMIN NOTIFICATION PREFERENCES
+// ============================================================================
+
+/**
+ * Get admin notification preferences (internal query).
+ *
+ * Looks up the admin user by ADMIN_EMAIL and returns notification prefs.
+ * Must be internalQuery because it's called from non-admin user context
+ * (e.g., during signup or case creation by any user).
+ */
+export const getAdminNotificationPrefs = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const adminUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), ADMIN_EMAIL))
+      .first();
+
+    if (!adminUser) {
+      console.warn(`[admin] getAdminNotificationPrefs: admin user not found for email ${ADMIN_EMAIL}`);
+      return { adminNotifyNewUser: false, adminNotifyFirstCase: false, adminNotifyAnyCase: false };
+    }
+
+    const adminProfile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", adminUser._id))
+      .first();
+
+    if (!adminProfile) {
+      console.warn(`[admin] getAdminNotificationPrefs: admin profile not found for user ${adminUser._id}`);
+      return { adminNotifyNewUser: false, adminNotifyFirstCase: false, adminNotifyAnyCase: false };
+    }
+
+    return {
+      adminNotifyNewUser: adminProfile.adminNotifyNewUser ?? false,
+      adminNotifyFirstCase: adminProfile.adminNotifyFirstCase ?? false,
+      adminNotifyAnyCase: adminProfile.adminNotifyAnyCase ?? false,
+    };
   },
 });
 
@@ -948,23 +689,44 @@ export const getUserSummary = internalQuery({
 export const getAdminDashboardData = query({
   args: {},
   handler: async (ctx) => {
-    await isAdmin(ctx);
+    const adminProfile = await getAdminProfile(ctx);
     const data = await getAdminDashboardDataHelper(ctx);
-
-    // Include admin's sort preference
-    const adminUserId = await getCurrentUserId(ctx);
-    const adminProfile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", adminUserId as Id<"users">))
-      .first();
 
     return {
       ...data,
       adminSortPreference: {
-        sortBy: adminProfile?.adminSortBy ?? "lastActivity",
-        sortOrder: adminProfile?.adminSortOrder ?? "desc",
+        sortBy: adminProfile.adminSortBy ?? "lastActivity",
+        sortOrder: adminProfile.adminSortOrder ?? "desc",
+      },
+      adminNotificationPreferences: {
+        adminNotifyNewUser: adminProfile.adminNotifyNewUser ?? false,
+        adminNotifyFirstCase: adminProfile.adminNotifyFirstCase ?? false,
+        adminNotifyAnyCase: adminProfile.adminNotifyAnyCase ?? false,
       },
     };
+  },
+});
+
+/**
+ * Save admin notification preferences to DB (admin only)
+ */
+export const saveAdminNotificationPreferences = mutation({
+  args: {
+    adminNotifyNewUser: v.boolean(),
+    adminNotifyFirstCase: v.boolean(),
+    adminNotifyAnyCase: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const profile = await getAdminProfile(ctx);
+
+    await ctx.db.patch(profile._id, {
+      adminNotifyNewUser: args.adminNotifyNewUser,
+      adminNotifyFirstCase: args.adminNotifyFirstCase,
+      adminNotifyAnyCase: args.adminNotifyAnyCase,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
   },
 });
 
@@ -973,21 +735,19 @@ export const getAdminDashboardData = query({
  */
 export const saveAdminSortPreference = mutation({
   args: {
-    sortBy: v.string(),
+    sortBy: v.union(
+      v.literal("lastActivity"), v.literal("email"), v.literal("name"),
+      v.literal("accountStatus"), v.literal("totalCases"), v.literal("activeCases"),
+      v.literal("totalLogins"), v.literal("accountCreated"), v.literal("lastLoginTime"),
+      v.literal("userType"), v.literal("emailVerified"), v.literal("verificationMethod"),
+      v.literal("deletedCases"), v.literal("firmName"), v.literal("termsVersion"),
+      v.literal("termsAccepted"), v.literal("lastCaseUpdate"), v.literal("deletedAt"),
+      v.literal("userId"), v.literal("authProviders")
+    ),
     sortOrder: v.union(v.literal("asc"), v.literal("desc")),
   },
   handler: async (ctx, args) => {
-    await isAdmin(ctx);
-
-    const userId = await getCurrentUserId(ctx);
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
-      .first();
-
-    if (!profile) {
-      throw new Error("User profile not found");
-    }
+    const profile = await getAdminProfile(ctx);
 
     await ctx.db.patch(profile._id, {
       adminSortBy: args.sortBy,
@@ -1019,9 +779,8 @@ export const updateUserAdmin = mutation({
     )),
   },
   handler: async (ctx, args) => {
-    await isAdmin(ctx);
+    await requireAdmin(ctx);
 
-    // Get user profile
     const profile = await ctx.db
       .query("userProfiles")
       .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
@@ -1032,7 +791,11 @@ export const updateUserAdmin = mutation({
     }
 
     // Build patch object
-    const profilePatch: Record<string, unknown> = {
+    const profilePatch: Partial<{
+      fullName: string;
+      userType: "individual" | "firm_admin" | "firm_member";
+      updatedAt: number;
+    }> = {
       updatedAt: Date.now(),
     };
 
@@ -1044,10 +807,9 @@ export const updateUserAdmin = mutation({
       profilePatch.userType = args.userType;
     }
 
-    // Update profile
     await ctx.db.patch(profile._id, profilePatch);
 
-    // If fullName was updated, also update users table
+    // Sync name to users table
     if (args.fullName !== undefined) {
       await ctx.db.patch(args.userId, {
         name: args.fullName,
@@ -1082,7 +844,13 @@ export const deleteUserAdmin = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    await isAdmin(ctx);
+    await requireAdmin(ctx);
+
+    // Prevent admin from deleting their own account
+    const currentUserId = await getCurrentUserId(ctx);
+    if (args.userId === currentUserId) {
+      throw new Error("Cannot delete your own admin account");
+    }
 
     const userId = args.userId;
 
@@ -1211,6 +979,18 @@ export const deleteUserAdmin = mutation({
     // Finally delete the user record
     await ctx.db.delete(userId);
 
+    console.info(`[admin] deleteUserAdmin: permanently deleted user ${user.email}`, {
+      cases: cases.length,
+      notifications: notifications.length,
+      conversations: conversations.length,
+      auditLogs: auditLogs.length,
+      caseOrders: caseOrders.length,
+      timelinePrefs: timelinePrefs.length,
+      templates: templates.length,
+      authAccounts: authAccounts.length,
+      authSessions: authSessions.length,
+    });
+
     return { success: true, message: `User ${user.email} permanently deleted` };
   },
 });
@@ -1230,7 +1010,8 @@ export const getUserEmail = internalQuery({
 /**
  * Send email as admin (admin only)
  *
- * Sends a plain text email from the admin notification address.
+ * Renders a branded HTML email using the AdminEmail template
+ * with a plain text fallback, and sends via Resend.
  *
  * @throws {Error} If not admin or email fails
  */
@@ -1247,7 +1028,7 @@ export const sendAdminEmail = action({
     if (!identity) {
       throw new Error("Unauthorized: Not authenticated");
     }
-    const userId = identity.subject.split("|")[0] as Id<"users">;
+    const userId = extractUserIdFromAction(identity.subject);
     const user = await ctx.runQuery(internal.admin.getUserEmail, { userId });
     if (!user || user.email !== ADMIN_EMAIL) {
       throw new Error("Unauthorized: Admin access required");
@@ -1256,18 +1037,19 @@ export const sendAdminEmail = action({
     // Render branded HTML email
     const html = await render(
       AdminEmail({
-        recipientName: args.toName ?? args.toEmail.split("@")[0],
+        recipientName: args.toName ?? args.toEmail.split("@")[0] ?? args.toEmail,
         subject: args.subject,
         body: args.body,
       })
     );
 
     // Initialize Resend
-    const resend = new Resend(process.env.AUTH_RESEND_KEY);
+    const { getResend, FROM_EMAIL } = await import("./lib/email");
+    const resend = getResend();
 
     // Send email with both HTML and plain text fallback
     const { error } = await resend.emails.send({
-      from: "PERM Tracker Admin <notifications@permtracker.app>",
+      from: FROM_EMAIL,
       to: [args.toEmail],
       subject: args.subject,
       html,

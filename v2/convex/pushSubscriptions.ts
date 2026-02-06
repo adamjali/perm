@@ -16,7 +16,6 @@
 import { internalQuery, internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import type { Id } from "./_generated/dataModel";
 
 // ============================================================================
 // PUBLIC QUERIES
@@ -38,7 +37,7 @@ export const getCurrentUserPushProfile = query({
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .unique();
 
@@ -47,7 +46,7 @@ export const getCurrentUserPushProfile = query({
     }
 
     return {
-      userId: userId as Id<"users">,
+      userId: userId,
       pushSubscription: profile.pushSubscription,
       pushNotificationsEnabled: profile.pushNotificationsEnabled,
     };

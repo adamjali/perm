@@ -1,10 +1,10 @@
 import { query, mutation, action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
-import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
+import { getCurrentUserId, getCurrentUserIdOrNull, extractUserIdFromAction } from "./lib/auth";
 import { encryptToken, decryptToken } from "./lib/crypto";
 import { loggers } from "./lib/logging";
+import { buildDefaultProfile } from "./lib/userDefaults";
 
 const log = loggers.auth;
 
@@ -19,8 +19,7 @@ export const currentUser = query({
     if (userId === null) {
       return null;
     }
-    // Cast to Id<"users"> for proper type inference
-    const user = await ctx.db.get(userId as Id<"users">);
+    const user = await ctx.db.get(userId);
     return user;
   },
 });
@@ -40,7 +39,7 @@ export const currentUserProfile = query({
     // Query userProfiles by userId index
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     return profile;
@@ -63,7 +62,7 @@ export const ensureUserProfile = mutation({
     // Check if profile already exists
     const existingProfile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (existingProfile) {
@@ -72,56 +71,13 @@ export const ensureUserProfile = mutation({
     }
 
     // Get the user record to copy name and image from auth
-    const user = await ctx.db.get(userId as Id<"users">);
+    const user = await ctx.db.get(userId);
 
     // Create new profile with default values
-    // Copy name and image from auth (Google OAuth or signup)
-    const profileId = await ctx.db.insert("userProfiles", {
-      userId: userId as Id<"users">,
-      // Copy name and image from auth
-      fullName: user?.name,
-      profilePhotoUrl: user?.image,
-      // User type
-      userType: "individual",
-      // Notification settings
-      emailNotificationsEnabled: true,
-      smsNotificationsEnabled: false,
-      pushNotificationsEnabled: false,
-      urgentDeadlineDays: 7,
-      reminderDaysBefore: [1, 3, 7, 14, 30],
-      // Email preferences
-      emailDeadlineReminders: true,
-      emailStatusUpdates: true,
-      emailRfeAlerts: true,
-      emailWeeklyDigest: true, // Weekly digest enabled by default
-      preferredNotificationEmail: "signup",
-      // Quiet hours
-      quietHoursEnabled: false,
-      timezone: "America/New_York",
-      // Calendar sync
-      calendarSyncEnabled: true,
-      calendarSyncPwd: true,
-      calendarSyncEta9089: true,
-      calendarSyncI140: true,
-      calendarSyncRfe: true,
-      calendarSyncRfi: true,
-      calendarSyncRecruitment: true,
-      calendarSyncFilingWindow: true,
-      // Google OAuth
-      googleCalendarConnected: false,
-      gmailConnected: false,
-      // UI preferences
-      casesSortBy: "updatedAt",
-      casesSortOrder: "desc",
-      casesPerPage: 20,
-      dismissedDeadlines: [],
-      darkModeEnabled: false,
-      // Deadline Enforcement
-      autoDeadlineEnforcementEnabled: false,
-      // Timestamps
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
+    const profileId = await ctx.db.insert("userProfiles", buildDefaultProfile(
+      userId,
+      { fullName: user?.name, profilePhotoUrl: user?.image }
+    ));
 
     return profileId;
   },
@@ -150,52 +106,32 @@ export const ensureUserProfileInternal = internalMutation({
     const user = await ctx.db.get(args.userId);
 
     // Create new profile with default values
-    const profileId = await ctx.db.insert("userProfiles", {
-      userId: args.userId,
-      // Copy name and image from auth (Google OAuth or signup)
-      fullName: user?.name,
-      profilePhotoUrl: user?.image,
-      // User type
-      userType: "individual",
-      // Notification settings
-      emailNotificationsEnabled: true,
-      smsNotificationsEnabled: false,
-      pushNotificationsEnabled: false,
-      urgentDeadlineDays: 7,
-      reminderDaysBefore: [1, 3, 7, 14, 30],
-      // Email preferences
-      emailDeadlineReminders: true,
-      emailStatusUpdates: true,
-      emailRfeAlerts: true,
-      emailWeeklyDigest: true, // Weekly digest enabled by default
-      preferredNotificationEmail: "signup",
-      // Quiet hours
-      quietHoursEnabled: false,
-      timezone: "America/New_York",
-      // Calendar sync
-      calendarSyncEnabled: true,
-      calendarSyncPwd: true,
-      calendarSyncEta9089: true,
-      calendarSyncI140: true,
-      calendarSyncRfe: true,
-      calendarSyncRfi: true,
-      calendarSyncRecruitment: true,
-      calendarSyncFilingWindow: true,
-      // Google OAuth
-      googleCalendarConnected: false,
-      gmailConnected: false,
-      // UI preferences
-      casesSortBy: "updatedAt",
-      casesSortOrder: "desc",
-      casesPerPage: 20,
-      dismissedDeadlines: [],
-      darkModeEnabled: false,
-      // Deadline Enforcement
-      autoDeadlineEnforcementEnabled: false,
-      // Timestamps
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
+    const profileId = await ctx.db.insert("userProfiles", buildDefaultProfile(
+      args.userId,
+      { fullName: user?.name, profilePhotoUrl: user?.image }
+    ));
+
+    // Admin notification: new user signup
+    try {
+      const adminPrefs = await ctx.runQuery(internal.admin.getAdminNotificationPrefs, {});
+      if (adminPrefs.adminNotifyNewUser) {
+        const signupTime = new Date().toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
+          subject: "New User Signup",
+          body: `A new user has signed up for PERM Tracker.\n\nEmail: ${user?.email ?? "unknown"}\nName: ${user?.name ?? "Not provided"}\nTime: ${signupTime}`,
+        });
+      }
+    } catch (adminNotifError) {
+      log.error("Failed to send admin signup notification", {
+        error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
+      });
+    }
 
     return profileId;
   },
@@ -285,49 +221,16 @@ export const updateUserProfile = mutation({
     // Get current profile or create one if it doesn't exist (upsert pattern)
     let profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (!profile) {
       // Auto-create profile with defaults (same as ensureUserProfile)
-      // Copy name and image from auth (Google OAuth or signup)
-      const user = await ctx.db.get(userId as Id<"users">);
-      const profileId = await ctx.db.insert("userProfiles", {
-        userId: userId as Id<"users">,
-        fullName: user?.name,
-        profilePhotoUrl: user?.image,
-        userType: "individual",
-        emailNotificationsEnabled: true,
-        smsNotificationsEnabled: false,
-        pushNotificationsEnabled: false,
-        urgentDeadlineDays: 7,
-        reminderDaysBefore: [1, 3, 7, 14, 30],
-        emailDeadlineReminders: true,
-        emailStatusUpdates: true,
-        emailRfeAlerts: true,
-        emailWeeklyDigest: true, // Weekly digest enabled by default
-        preferredNotificationEmail: "signup",
-        quietHoursEnabled: false,
-        timezone: "America/New_York",
-        calendarSyncEnabled: true,
-        calendarSyncPwd: true,
-        calendarSyncEta9089: true,
-        calendarSyncI140: true,
-        calendarSyncRfe: true,
-        calendarSyncRfi: true,
-        calendarSyncRecruitment: true,
-        calendarSyncFilingWindow: true,
-        googleCalendarConnected: false,
-        gmailConnected: false,
-        casesSortBy: "updatedAt",
-        casesSortOrder: "desc",
-        casesPerPage: 20,
-        dismissedDeadlines: [],
-        darkModeEnabled: false,
-        autoDeadlineEnforcementEnabled: false,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+      const user = await ctx.db.get(userId);
+      const profileId = await ctx.db.insert("userProfiles", buildDefaultProfile(
+        userId,
+        { fullName: user?.name, profilePhotoUrl: user?.image }
+      ));
       profile = await ctx.db.get(profileId);
       if (!profile) {
         throw new Error("Failed to create user profile");
@@ -381,7 +284,7 @@ export const getDecryptedGoogleTokens = query({
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (!profile) {
@@ -449,52 +352,16 @@ export const acceptTermsOfService = mutation({
     // Get or create user profile
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (!profile) {
       // Create profile first if it doesn't exist
-      const user = await ctx.db.get(userId as Id<"users">);
-      const profileId = await ctx.db.insert("userProfiles", {
-        userId: userId as Id<"users">,
-        fullName: user?.name,
-        profilePhotoUrl: user?.image,
-        userType: "individual",
-        emailNotificationsEnabled: true,
-        smsNotificationsEnabled: false,
-        pushNotificationsEnabled: false,
-        urgentDeadlineDays: 7,
-        reminderDaysBefore: [1, 3, 7, 14, 30],
-        emailDeadlineReminders: true,
-        emailStatusUpdates: true,
-        emailRfeAlerts: true,
-        emailWeeklyDigest: true, // Weekly digest enabled by default
-        preferredNotificationEmail: "signup",
-        quietHoursEnabled: false,
-        timezone: "America/New_York",
-        calendarSyncEnabled: true,
-        calendarSyncPwd: true,
-        calendarSyncEta9089: true,
-        calendarSyncI140: true,
-        calendarSyncRfe: true,
-        calendarSyncRfi: true,
-        calendarSyncRecruitment: true,
-        calendarSyncFilingWindow: true,
-        googleCalendarConnected: false,
-        gmailConnected: false,
-        casesSortBy: "updatedAt",
-        casesSortOrder: "desc",
-        casesPerPage: 20,
-        dismissedDeadlines: [],
-        darkModeEnabled: false,
-        autoDeadlineEnforcementEnabled: false,
-        // Legal acceptance
-        termsAcceptedAt: Date.now(),
-        termsVersion,
-        // Timestamps
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+      const user = await ctx.db.get(userId);
+      const profileId = await ctx.db.insert("userProfiles", buildDefaultProfile(
+        userId,
+        { fullName: user?.name, profilePhotoUrl: user?.image, termsAcceptedAt: Date.now(), termsVersion }
+      ));
       return { success: true, profileId };
     }
 
@@ -532,7 +399,7 @@ export const savePushSubscription = mutation({
     // Get current profile
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (!profile) {
@@ -579,7 +446,7 @@ export const removePushSubscription = mutation({
     // Get current profile
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (!profile) {
@@ -627,7 +494,7 @@ export const getActionMode = query({
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     return profile?.actionMode ?? "confirm"; // Default to "confirm" (safest)
@@ -654,7 +521,7 @@ export const updateActionMode = mutation({
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (!profile) {
@@ -691,7 +558,7 @@ export const requestAccountDeletion = mutation({
     // Get the user profile
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (!profile) {
@@ -706,7 +573,7 @@ export const requestAccountDeletion = mutation({
     const scheduledJobId = await ctx.scheduler.runAt(
       deletionDate,
       internal.scheduledJobs.permanentlyDeleteAccount,
-      { userId: userId as Id<"users"> }
+      { userId: userId }
     );
 
     // Set deletedAt and save the scheduled job ID on the user profile
@@ -717,23 +584,16 @@ export const requestAccountDeletion = mutation({
     });
 
     // Also set deletedAt on the users table
-    await ctx.db.patch(userId as Id<"users">, {
+    await ctx.db.patch(userId, {
       deletedAt: deletionDate,
     });
 
     // Get user email to send confirmation
-    const user = await ctx.db.get(userId as Id<"users">);
+    const user = await ctx.db.get(userId);
     if (user?.email) {
       // Format deletion date for human readability
-      const deletionDateFormatted = new Date(deletionDate).toLocaleDateString(
-        "en-US",
-        {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }
-      );
+      const { formatDateForNotification } = await import("./lib/formatDate");
+      const deletionDateFormatted = formatDateForNotification(deletionDate, true);
 
       // Schedule deletion confirmation email (runs immediately via runAfter(0))
       await ctx.scheduler.runAfter(
@@ -771,7 +631,7 @@ export const cancelAccountDeletion = mutation({
     // Get the user profile
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
     if (!profile) {
@@ -801,7 +661,7 @@ export const cancelAccountDeletion = mutation({
     });
 
     // Also clear deletedAt on the users table
-    await ctx.db.patch(userId as Id<"users">, {
+    await ctx.db.patch(userId, {
       deletedAt: undefined,
     });
 
@@ -879,7 +739,7 @@ export const immediateAccountDeletion = action({
     if (!identity) {
       throw new Error("Not authenticated");
     }
-    const userId = identity.subject.split("|")[0] as Id<"users">;
+    const userId = extractUserIdFromAction(identity.subject);
 
     // Prepare: cancel scheduled job, set deletedAt to past, get user info
     const { email, userName } = await ctx.runMutation(
@@ -891,8 +751,8 @@ export const immediateAccountDeletion = action({
     if (email) {
       try {
         await ctx.runAction(
-          internal.notificationActions.sendImmediateDeletionEmail,
-          { to: email, userName }
+          internal.notificationActions.sendAccountDeletionEmail,
+          { to: email, userName, immediate: true }
         );
       } catch (emailError) {
         // Log but don't block deletion on email failure

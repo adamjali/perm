@@ -1,6 +1,5 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
 import { getCurrentUserIdOrNull } from "./lib/auth";
 
 /**
@@ -25,7 +24,7 @@ export const listMine = query({
     // Query by user ID index
     const logs = await ctx.db
       .query("auditLogs")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .order("desc")
       .take(limit);
 
@@ -90,7 +89,7 @@ export const byDateRange = query({
       .query("auditLogs")
       .withIndex("by_user_and_timestamp", (q) =>
         q
-          .eq("userId", userId as Id<"users">)
+          .eq("userId", userId)
           .gte("timestamp", args.startDate)
           .lte("timestamp", args.endDate)
       )

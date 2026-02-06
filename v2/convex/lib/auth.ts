@@ -20,7 +20,7 @@ type AuthContext = QueryCtx | MutationCtx;
  * Get the current authenticated user's ID
  * @throws {Error} If user is not authenticated
  */
-export async function getCurrentUserId(ctx: AuthContext): Promise<string> {
+export async function getCurrentUserId(ctx: AuthContext): Promise<Id<"users">> {
   const userId = await getAuthUserId(ctx);
   if (userId === null) {
     throw new Error("not authenticated");
@@ -31,7 +31,7 @@ export async function getCurrentUserId(ctx: AuthContext): Promise<string> {
 /**
  * Get the current authenticated user's ID, or null if not authenticated
  */
-export async function getCurrentUserIdOrNull(ctx: AuthContext): Promise<string | null> {
+export async function getCurrentUserIdOrNull(ctx: AuthContext): Promise<Id<"users"> | null> {
   return await getAuthUserId(ctx);
 }
 
@@ -44,7 +44,7 @@ export async function getCurrentUserProfile(ctx: AuthContext): Promise<Doc<"user
 
   const profile = await ctx.db
     .query("userProfiles")
-    .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
+    .withIndex("by_user_id", (q) => q.eq("userId", userId))
     .filter((q) => q.eq(q.field("deletedAt"), undefined))
     .first();
 
@@ -159,4 +159,18 @@ export async function verifyFirmAccess<T extends { userId: string }>(
   }
 
   throw new Error(`Access denied: you do not have access to this ${resourceName}`);
+}
+
+/**
+ * Extract the primary user ID from an action's identity subject.
+ *
+ * In actions, `ctx.auth.getUserIdentity()` returns an identity whose
+ * `subject` may contain multiple IDs joined by `|` (when a user has
+ * multiple auth methods). The first ID is the primary user ID.
+ *
+ * @param subject - The identity.subject string
+ * @returns The primary user ID as Id<"users">
+ */
+export function extractUserIdFromAction(subject: string): Id<"users"> {
+  return subject.split("|")[0] as Id<"users">;
 }

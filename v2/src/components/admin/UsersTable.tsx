@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Search, Mail, Trash2, ArrowUpDown, Check, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Search, Mail, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -18,29 +18,9 @@ import {
 import { UserDeleteConfirmModal } from "./UserDeleteConfirmModal";
 import { SendEmailModal } from "./SendEmailModal";
 import { ExportButton } from "./ExportButton";
-
-interface UserSummary {
-  userId: string;
-  email: string;
-  name: string;
-  emailVerified: boolean;
-  verificationMethod: string;
-  authProviders: string[];
-  accountCreated: number;
-  lastLoginTime: number | null;
-  totalLogins: number;
-  totalCases: number;
-  activeCases: number;
-  deletedCases: number;
-  lastCaseUpdate: number | null;
-  userType: string;
-  firmName: string | null;
-  accountStatus: string;
-  deletedAt: number | null;
-  termsAccepted: number | null;
-  termsVersion: string | null;
-  lastActivity: number;
-}
+import { InlineEdit } from "./InlineEdit";
+import type { EditableField } from "./InlineEdit";
+import type { UserSummary } from "@/lib/admin/types";
 
 interface UsersTableProps {
   users: UserSummary[];
@@ -49,7 +29,6 @@ interface UsersTableProps {
 
 type SortField = keyof UserSummary;
 type SortDirection = "asc" | "desc";
-type EditableField = "name" | "userType";
 
 const PAGE_SIZE = 25;
 
@@ -255,113 +234,6 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function InlineEdit({
-  value,
-  field,
-  userId,
-  onSave,
-}: {
-  value: string;
-  field: EditableField;
-  userId: string;
-  onSave: (userId: string, field: EditableField, value: string) => Promise<void>;
-}) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(value);
-  const [isSaving, setIsSaving] = useState(false);
-
-  // Sync external value changes (real-time updates from Convex)
-  useEffect(() => {
-    if (!isEditing) {
-      setEditValue(value);
-    }
-  }, [value, isEditing]);
-
-  const handleSave = async () => {
-    if (editValue === value) {
-      setIsEditing(false);
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await onSave(userId, field, editValue);
-      setIsEditing(false);
-    } catch {
-      setEditValue(value);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setEditValue(value);
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") handleSave();
-    if (e.key === "Escape") handleCancel();
-  };
-
-  if (!isEditing) {
-    return (
-      <button
-        onClick={() => setIsEditing(true)}
-        className="w-full text-left px-1 py-0.5 -mx-1 hover:bg-primary/10 hover:outline hover:outline-2 hover:outline-primary/30 transition-all cursor-text rounded-sm truncate block max-w-[180px]"
-        title="Click to edit"
-      >
-        {field === "userType" ? value.replace(/_/g, " ") : value || "(empty)"}
-      </button>
-    );
-  }
-
-  if (field === "userType") {
-    return (
-      <div className="flex items-center gap-1">
-        <select
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          autoFocus
-          disabled={isSaving}
-          className="h-8 border-2 border-primary bg-background px-2 text-sm outline-none"
-        >
-          <option value="individual">individual</option>
-          <option value="firm_admin">firm admin</option>
-          <option value="firm_member">firm member</option>
-          <option value="(no profile)">(no profile)</option>
-        </select>
-        <button onClick={handleSave} disabled={isSaving} className="text-green-600 hover:text-green-800 p-0.5">
-          <Check className="size-3.5" />
-        </button>
-        <button onClick={handleCancel} disabled={isSaving} className="text-red-500 hover:text-red-700 p-0.5">
-          <X className="size-3.5" />
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-1">
-      <input
-        type="text"
-        value={editValue}
-        onChange={(e) => setEditValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        autoFocus
-        disabled={isSaving}
-        className="h-8 w-full border-2 border-primary bg-background px-2 text-sm outline-none"
-      />
-      <button onClick={handleSave} disabled={isSaving} className="text-green-600 hover:text-green-800 p-0.5 flex-shrink-0">
-        <Check className="size-3.5" />
-      </button>
-      <button onClick={handleCancel} disabled={isSaving} className="text-red-500 hover:text-red-700 p-0.5 flex-shrink-0">
-        <X className="size-3.5" />
-      </button>
-    </div>
-  );
-}
-
 export function UsersTable({ users, initialSort }: UsersTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>((initialSort?.sortBy as SortField) || "lastActivity");
@@ -382,10 +254,10 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
 
   // Inline save handler
   const handleInlineSave = useCallback(
-    async (userId: string, field: EditableField, value: string) => {
+    async (userId: Id<"users">, field: EditableField, value: string) => {
       try {
         await updateUser({
-          userId: userId as Id<"users">,
+          userId: userId,
           ...(field === "name" ? { fullName: value } : {}),
           ...(field === "userType" ? { userType: value as "individual" | "firm_admin" | "firm_member" } : {}),
         });
@@ -466,7 +338,9 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
     }
     setCurrentPage(0);
     // Persist to DB (fire-and-forget)
-    saveSortPreference({ sortBy: field, sortOrder: newDirection }).catch(() => {});
+    saveSortPreference({ sortBy: field, sortOrder: newDirection }).catch((error) => {
+      console.error("Failed to save sort preference:", error);
+    });
   };
 
   return (
