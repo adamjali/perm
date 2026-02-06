@@ -16,6 +16,7 @@
 
 import { Github, Twitter, Linkedin, Heart } from "lucide-react";
 import { NavLink } from "@/components/ui/nav-link";
+import { LawGavelSVG } from "@/components/illustrations";
 
 interface FooterProps {
   variant?: "compact" | "extended";
@@ -165,10 +166,15 @@ export default function Footer({ variant = "compact" }: FooterProps) {
             </div>
           </div>
 
-          {/* Bottom bar */}
+          {/* Bottom bar with illustration */}
           <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
-            <div className="mono text-xs text-white/40">
-              &copy; {currentYear} PERM Tracker. All rights reserved.
+            <div className="flex items-center gap-3">
+              <div className="opacity-30" aria-hidden="true">
+                <LawGavelSVG size={28} className="text-white" />
+              </div>
+              <div className="mono text-xs text-white/40">
+                &copy; {currentYear} PERM Tracker. All rights reserved.
+              </div>
             </div>
             <div className="flex items-center gap-1 text-xs text-white/40">
               Made with <Heart className="h-3 w-3 text-primary" /> for immigration attorneys

@@ -4,17 +4,14 @@
  * JourneySection Component
  *
  * Horizontal scrolling section showing the PERM process stages.
- * Features stage cards with color-coded indicators and scroll progress.
+ * Each card has a background photograph, custom SVG illustration,
+ * stage-colored accents, and scroll progress timeline.
  *
  */
 
 import * as React from "react";
+import Image from "next/image";
 import {
-  FileSearch,
-  Users,
-  FileText,
-  Stamp,
-  Trophy,
   Clock,
   AlertCircle,
   Newspaper,
@@ -29,6 +26,13 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import {
+  DocumentStackSVG,
+  TeamCollabSVG,
+  CalendarDeadlineSVG,
+  ShieldCheckSVG,
+  SuccessCelebrationSVG,
+} from "@/components/illustrations";
 
 // ============================================================================
 // STAGE DATA
@@ -41,21 +45,23 @@ interface StageMeta {
 
 interface JourneyStage {
   number: string;
-  icon: typeof FileSearch;
+  illustration: React.ReactNode;
   title: string;
   description: string;
   stage: "pwd" | "recruitment" | "eta9089" | "i140" | "success";
+  bgImage: string;
   meta: StageMeta[];
 }
 
 const stages: JourneyStage[] = [
   {
     number: "1",
-    icon: FileSearch,
+    illustration: <DocumentStackSVG size={70} className="text-foreground" />,
     title: "PWD Request",
     description:
       "Submit prevailing wage determination request to DOL. Processing typically takes 4-6 months.",
     stage: "pwd",
+    bgImage: "/images/journey/pwd-documents.jpg",
     meta: [
       { icon: Clock, text: "4-6 months processing" },
       { icon: AlertCircle, text: "Valid for 1 year" },
@@ -63,11 +69,12 @@ const stages: JourneyStage[] = [
   },
   {
     number: "2",
-    icon: Users,
+    illustration: <TeamCollabSVG size={70} className="text-foreground" />,
     title: "Recruitment",
     description:
       "Conduct required recruitment activities including Sunday ads, job orders, and additional methods.",
     stage: "recruitment",
+    bgImage: "/images/journey/recruitment-office.jpg",
     meta: [
       { icon: Newspaper, text: "2 Sunday newspaper ads" },
       { icon: Briefcase, text: "30+ day job order" },
@@ -75,11 +82,12 @@ const stages: JourneyStage[] = [
   },
   {
     number: "3",
-    icon: FileText,
+    illustration: <CalendarDeadlineSVG size={70} className="text-foreground" />,
     title: "ETA 9089 Filing",
     description:
       "File the PERM application 30-180 days after recruitment ends and before PWD expires.",
     stage: "eta9089",
+    bgImage: "/images/journey/filing-forms.jpg",
     meta: [
       { icon: Calendar, text: "30-180 day window" },
       { icon: Hourglass, text: "6-12 months processing" },
@@ -87,11 +95,12 @@ const stages: JourneyStage[] = [
   },
   {
     number: "4",
-    icon: Stamp,
+    illustration: <ShieldCheckSVG size={70} className="text-foreground" />,
     title: "I-140 Filing",
     description:
       "File I-140 within 180 days of PERM certification. Premium processing available.",
     stage: "i140",
+    bgImage: "/images/journey/approval-stamp.jpg",
     meta: [
       { icon: Timer, text: "180 day deadline" },
       { icon: Zap, text: "Premium: 15 days" },
@@ -99,11 +108,12 @@ const stages: JourneyStage[] = [
   },
   {
     number: "\u2713",
-    icon: Trophy,
+    illustration: <SuccessCelebrationSVG size={70} className="text-foreground" />,
     title: "Approved!",
     description:
       "I-140 approved! Your client's priority date is locked in. Green card journey continues.",
     stage: "success",
+    bgImage: "/images/journey/celebration.jpg",
     meta: [
       { icon: CheckCircle, text: "Priority date secured" },
       { icon: Award, text: "Case complete" },
@@ -135,7 +145,6 @@ export function JourneySection() {
     if (!container) return;
 
     const handleScroll = () => {
-      // Throttle with requestAnimationFrame
       if (rafRef.current !== null) return;
 
       rafRef.current = requestAnimationFrame(() => {
@@ -179,7 +188,7 @@ export function JourneySection() {
       <div className="relative w-full">
         {/* Progress Timeline - positioned BEHIND cards */}
         <div
-          className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-muted"
+          className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-muted"
           style={{ zIndex: 0 }}
           aria-hidden="true"
         >
@@ -209,60 +218,83 @@ export function JourneySection() {
             scrollbarWidth: "none",
           }}
         >
-
           {stages.map((stage) => (
             <article
               key={stage.title}
-              className="relative flex-shrink-0 w-80 border-3 border-border bg-background p-8 shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
+              className="group relative flex-shrink-0 w-80 border-3 border-border bg-background overflow-hidden shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
               style={{
                 scrollSnapAlign: "center",
                 borderLeftWidth: "6px",
                 borderLeftColor: stageColors[stage.stage],
               }}
             >
-              {/* Stage number badge */}
+              {/* Background image - subtle tint */}
+              <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
+                <Image
+                  src={stage.bgImage}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="320px"
+                  aria-hidden="true"
+                />
+              </div>
+
+              {/* Stage color gradient at top */}
               <div
-                className="absolute -top-4 right-6 flex h-12 w-12 items-center justify-center border-3 border-border font-heading text-xl font-bold shadow-hard-sm"
+                className="absolute inset-x-0 top-0 h-20 opacity-[0.06]"
                 style={{
-                  backgroundColor: stageColors[stage.stage],
-                  color: "#000",
+                  background: `linear-gradient(to bottom, ${stageColors[stage.stage]}, transparent)`,
                 }}
-              >
-                {stage.number}
-              </div>
+                aria-hidden="true"
+              />
 
-              {/* Icon */}
-              <div
-                className="mb-6 inline-flex h-12 w-12 items-center justify-center border-2 border-border bg-muted"
-                style={{ color: stageColors[stage.stage] }}
-              >
-                <stage.icon className="h-6 w-6" />
-              </div>
+              {/* Content */}
+              <div className="relative p-8">
+                {/* Stage number badge */}
+                <div
+                  className="absolute -top-0 right-6 flex h-12 w-12 items-center justify-center border-3 border-border font-heading text-xl font-bold shadow-hard-sm"
+                  style={{
+                    backgroundColor: stageColors[stage.stage],
+                    color: "#000",
+                    top: "-1px",
+                  }}
+                >
+                  {stage.number}
+                </div>
 
-              {/* Title */}
-              <h3 className="mb-2 font-heading text-xl font-bold">
-                {stage.title}
-              </h3>
-
-              {/* Description */}
-              <p className="mb-6 text-[15px] leading-relaxed text-muted-foreground">
-                {stage.description}
-              </p>
-
-              {/* Meta items */}
-              <div className="flex flex-col gap-2">
-                {stage.meta.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 font-mono text-xs text-muted-foreground"
-                  >
-                    <item.icon
-                      className="h-3.5 w-3.5"
-                      style={{ color: stageColors[stage.stage] }}
-                    />
-                    <span>{item.text}</span>
+                {/* Illustration */}
+                <div className="mb-5 flex h-[70px] items-center">
+                  <div className="transition-transform duration-500 group-hover:scale-110">
+                    {stage.illustration}
                   </div>
-                ))}
+                </div>
+
+                {/* Title */}
+                <h3 className="mb-2 font-heading text-xl font-bold">
+                  {stage.title}
+                </h3>
+
+                {/* Description */}
+                <p className="mb-6 text-[15px] leading-relaxed text-muted-foreground">
+                  {stage.description}
+                </p>
+
+                {/* Meta items */}
+                <div className="flex flex-col gap-2">
+                  {stage.meta.map((item, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 font-mono text-xs text-muted-foreground"
+                    >
+                      <item.icon
+                        className="h-3.5 w-3.5"
+                        style={{ color: stageColors[stage.stage] }}
+                      />
+                      <span>{item.text}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </article>
           ))}

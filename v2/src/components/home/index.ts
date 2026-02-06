@@ -13,5 +13,6 @@ export { StatsSection } from "./StatsSection";
 export { FeatureShowcase } from "./FeatureShowcase";
 export { FAQSection } from "./FAQSection";
 export { CTASection } from "./CTASection";
+export { TestimonialsSection } from "./TestimonialsSection";
 export { ContactSection } from "./ContactSection";
 export { ScrollProgress, FloatingShapes } from "./DecorativeElements";

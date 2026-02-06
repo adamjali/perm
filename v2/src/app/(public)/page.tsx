@@ -25,6 +25,7 @@ import {
   FeaturesGrid,
   HowItWorks,
   StatsSection,
+  TestimonialsSection,
   FAQSection,
   CTASection,
 } from "@/components/home";
@@ -54,6 +55,7 @@ export default function HomePage() {
       <FeaturesGrid />
       <HowItWorks />
       <StatsSection />
+      <TestimonialsSection />
       <FAQSection />
       <CTASection />
     </>
