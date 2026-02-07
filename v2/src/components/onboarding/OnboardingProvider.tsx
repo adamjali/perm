@@ -37,7 +37,6 @@ export function useOnboardingOptional(): OnboardingContextValue | null {
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const onboardingState = useQuery(api.onboarding.getOnboardingState);
-  const hasCases = useQuery(api.cases.hasAnyCases);
 
   const updateStep = useMutation(api.onboarding.updateOnboardingStep);
   const completeItem = useMutation(api.onboarding.completeChecklistItem);
@@ -66,18 +65,22 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     return (onboardingState.onboardingStep as OnboardingStep) ?? null;
   }, [onboardingState]);
 
-  const isLoading = onboardingState === undefined || hasCases === undefined;
+  const isLoading = onboardingState === undefined;
 
-  // Skip logic: existing users with cases or completed onboarding don't see anything
+  // Skip logic: only skip while loading, no profile, or waiting for terms acceptance.
+  // Once terms are accepted, onboarding shows for ALL users who haven't completed it.
   const shouldSkipOnboarding = useMemo(() => {
     if (isLoading) return true;
     if (onboardingState === null) return true;
+    // Already completed → don't skip (show checklist)
     if (onboardingState.onboardingCompletedAt !== null) return false;
+    // In progress → don't skip (show wizard/tour)
     if (onboardingState.onboardingStep !== null) return false;
-    if (hasCases === true) return true;
+    // Defer to PendingTermsHandler until terms are accepted
     if (onboardingState.termsAcceptedAt === null) return true;
+    // New user, terms accepted, not started → show onboarding
     return false;
-  }, [isLoading, onboardingState, hasCases]);
+  }, [isLoading, onboardingState]);
 
   // Show wizard when: not skipping AND step is null or a wizard step
   const showWizard = useMemo(() => {

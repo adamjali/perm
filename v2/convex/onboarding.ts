@@ -196,6 +196,50 @@ export const resetOnboardingByEmail = internalMutation({
 });
 
 /**
+ * Backfill migration: set termsAcceptedAt + reset onboarding for ALL users
+ * who haven't completed it. Run once via CLI:
+ *   npx convex run onboarding:backfillOnboardingForAllUsers '{}' --prod
+ */
+export const backfillOnboardingForAllUsers = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const profiles = await ctx.db.query("userProfiles").collect();
+    let termsBackfilled = 0;
+    let onboardingReset = 0;
+
+    for (const profile of profiles) {
+      const updates: Record<string, unknown> = {};
+
+      // Backfill termsAcceptedAt if missing
+      if (!profile.termsAcceptedAt) {
+        updates.termsAcceptedAt = Date.now();
+        updates.termsVersion = "2026-01-03";
+        termsBackfilled++;
+      }
+
+      // Reset onboarding if not completed
+      if (!profile.onboardingCompletedAt) {
+        updates.onboardingStep = "welcome";
+        updates.onboardingChecklist = undefined;
+        updates.onboardingChecklistDismissed = undefined;
+        onboardingReset++;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        updates.updatedAt = Date.now();
+        await ctx.db.patch(profile._id, updates);
+      }
+    }
+
+    return {
+      totalProfiles: profiles.length,
+      termsBackfilled,
+      onboardingReset,
+    };
+  },
+});
+
+/**
  * Dismiss the entire onboarding checklist.
  */
 export const dismissChecklist = mutation({
