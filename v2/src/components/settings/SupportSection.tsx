@@ -82,6 +82,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
   const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || "2.0.0";
   const currentYear = new Date().getFullYear();
   const { restartTour } = useOnboarding();
+  const [isRestarting, setIsRestarting] = useState(false);
 
   // Delete account state
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -256,18 +257,28 @@ export default function SupportSection({ profile }: SupportSectionProps) {
           {/* Replay Tour */}
           <button
             onClick={async () => {
-              await restartTour();
-              router.push("/dashboard");
+              setIsRestarting(true);
+              try {
+                await restartTour();
+                router.push("/dashboard");
+              } finally {
+                setIsRestarting(false);
+              }
             }}
-            className="flex flex-col items-center gap-3 p-4 border-2 border-black dark:border-white/20 bg-card hover:bg-accent transition-colors group"
+            disabled={isRestarting}
+            className="flex flex-col items-center gap-3 p-4 border-2 border-black dark:border-white/20 bg-card hover:bg-accent transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ boxShadow: "2px 2px 0px #000" }}
           >
             <div className="p-3 bg-lime-500/10 border-2 border-lime-500/20 group-hover:bg-lime-500/20 transition-colors">
-              <PlayCircle className="h-6 w-6 text-lime-600 dark:text-lime-400" />
+              {isRestarting ? (
+                <div className="h-6 w-6 border-2 border-lime-600 dark:border-lime-400 border-t-transparent animate-spin rounded-full" />
+              ) : (
+                <PlayCircle className="h-6 w-6 text-lime-600 dark:text-lime-400" />
+              )}
             </div>
             <div className="text-center">
               <span className="font-heading font-bold text-sm block">
-                Replay Tour
+                {isRestarting ? "Starting..." : "Replay Tour"}
               </span>
               <span className="text-xs text-muted-foreground">
                 Product walkthrough
