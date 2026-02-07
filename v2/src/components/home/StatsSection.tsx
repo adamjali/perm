@@ -13,10 +13,6 @@ import * as React from "react";
 import Image from "next/image";
 import { useInView } from "motion/react";
 
-// ============================================================================
-// STAT DATA
-// ============================================================================
-
 interface Stat {
   value: number;
   suffix?: string;
@@ -78,10 +74,6 @@ const stats: Stat[] = [
   },
 ];
 
-// ============================================================================
-// COUNT-UP HOOK
-// ============================================================================
-
 function useCountUp(target: number, isInView: boolean, duration: number = 2000) {
   const [count, setCount] = React.useState(0);
   const hasAnimated = React.useRef(false);
@@ -114,10 +106,6 @@ function useCountUp(target: number, isInView: boolean, duration: number = 2000) 
   return count;
 }
 
-// ============================================================================
-// STAT ITEM COMPONENT
-// ============================================================================
-
 interface StatItemProps {
   stat: Stat;
   isInView: boolean;
@@ -146,10 +134,6 @@ function StatItem({ stat, isInView }: StatItemProps) {
     </div>
   );
 }
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 export function StatsSection() {
   const ref = React.useRef<HTMLDivElement>(null);

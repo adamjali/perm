@@ -13,6 +13,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import type { ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
+import { stagger, fadeUp } from "@/lib/content/animations";
 import { useParallax } from "@/lib/hooks/useGSAP";
 
 /** Hero background images per content type */
@@ -31,22 +32,6 @@ interface ContentHeroProps {
   /** Total post count to show */
   postCount?: number;
 }
-
-const stagger = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] as const },
-  },
-};
 
 export default function ContentHero({
   type,

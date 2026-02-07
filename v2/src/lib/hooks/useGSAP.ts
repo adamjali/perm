@@ -27,18 +27,26 @@ async function loadGSAP(): Promise<{
 
   if (!loadPromise) {
     loadPromise = (async () => {
-      const [gsapModule, stModule] = await Promise.all([
-        import("gsap"),
-        import("gsap/ScrollTrigger"),
-      ]);
-      gsapInstance = gsapModule.default;
-      scrollTriggerPlugin = stModule.ScrollTrigger;
-      gsapInstance.registerPlugin(scrollTriggerPlugin);
+      try {
+        const [gsapModule, stModule] = await Promise.all([
+          import("gsap"),
+          import("gsap/ScrollTrigger"),
+        ]);
+        gsapInstance = gsapModule.default;
+        scrollTriggerPlugin = stModule.ScrollTrigger;
+        gsapInstance.registerPlugin(scrollTriggerPlugin);
+      } catch (error) {
+        loadPromise = null; // Allow retry on next call
+        throw error;
+      }
     })();
   }
 
   await loadPromise;
-  return { gsap: gsapInstance!, ScrollTrigger: scrollTriggerPlugin! };
+  if (!gsapInstance || !scrollTriggerPlugin) {
+    throw new Error("GSAP failed to initialize");
+  }
+  return { gsap: gsapInstance, ScrollTrigger: scrollTriggerPlugin };
 }
 
 /**
@@ -60,6 +68,8 @@ export function useGSAP() {
 
     loadGSAP().then(({ gsap, ScrollTrigger }) => {
       setTools({ gsap, ScrollTrigger });
+    }).catch((error) => {
+      console.error("[useGSAP] Failed to load GSAP:", error);
     });
   }, []);
 
@@ -110,6 +120,11 @@ export function useScrollStagger(
 
     return () => {
       ctx.revert();
+      // Ensure elements are visible after cleanup (prevents invisible content)
+      Array.from(children).forEach((child) => {
+        (child as HTMLElement).style.opacity = "";
+        (child as HTMLElement).style.transform = "";
+      });
     };
   }, [gsapTools, containerRef, selector, options?.y, options?.stagger, options?.duration, options?.start]);
 }

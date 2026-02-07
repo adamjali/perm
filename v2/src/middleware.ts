@@ -23,6 +23,7 @@ const isPublicRoute = createRouteMatcher([
   "/guides",
   "/guides/(.*)",
   "/changelog",
+  "/changelog/(.*)",
   "/resources",
   "/resources/(.*)",
   // Static assets and SEO routes that need to be public

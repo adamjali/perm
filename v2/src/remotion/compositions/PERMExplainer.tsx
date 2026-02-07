@@ -13,15 +13,15 @@ import { AnimatedText } from "../components/AnimatedText";
 import { StageCard } from "../components/StageCard";
 
 /**
- * PERMExplainer - Animated explainer of the 5 PERM process stages.
+ * PERMExplainer - Animated explainer of the 4 PERM stages + approval.
  *
- * Scenes:
- * 1. Intro title (0-3s)
- * 2. PWD Request stage (3-6s)
- * 3. Recruitment stage (6-9s)
- * 4. ETA 9089 Filing stage (9-12s)
- * 5. I-140 Filing stage (12-15s)
- * 6. Approval + CTA (15-20s)
+ * Scenes (with 12-15 frame transition overlaps between each):
+ * 1. Intro title (frames 0-90)
+ * 2. PWD Request stage (frames ~90-180)
+ * 3. Recruitment stage (frames ~180-270)
+ * 4. ETA 9089 Filing stage (frames ~270-360)
+ * 5. I-140 Filing stage (frames ~360-450)
+ * 6. Approval + CTA (frames ~450-600)
  *
  * 600 frames @ 30fps = 20 seconds
  */
@@ -30,9 +30,17 @@ type PERMExplainerProps = {
   brandColor: string;
 };
 
-const STAGES = [
+interface PERMStage {
+  badge: string;
+  title: string;
+  description: string;
+  color: string;
+  meta: Array<{ text: string }>;
+}
+
+const STAGES: PERMStage[] = [
   {
-    number: "1",
+    badge: "1",
     title: "PWD Request",
     description:
       "Submit prevailing wage determination to the DOL. Processing takes 4-6 months. Valid for 1 year.",
@@ -40,7 +48,7 @@ const STAGES = [
     meta: [{ text: "4-6 months" }, { text: "Valid 1 year" }],
   },
   {
-    number: "2",
+    badge: "2",
     title: "Recruitment",
     description:
       "Conduct required recruitment: Sunday newspaper ads, job orders, and additional methods for professional roles.",
@@ -48,7 +56,7 @@ const STAGES = [
     meta: [{ text: "2 Sunday ads" }, { text: "30+ day job order" }],
   },
   {
-    number: "3",
+    badge: "3",
     title: "ETA 9089 Filing",
     description:
       "File the PERM application 30-180 days after recruitment ends. Must file before PWD expires.",
@@ -56,7 +64,7 @@ const STAGES = [
     meta: [{ text: "30-180 day window" }, { text: "6-12 months review" }],
   },
   {
-    number: "4",
+    badge: "4",
     title: "I-140 Filing",
     description:
       "File I-140 petition within 180 days of PERM certification. Premium processing available.",
@@ -64,7 +72,7 @@ const STAGES = [
     meta: [{ text: "180 day deadline" }, { text: "Premium: 15 days" }],
   },
   {
-    number: "✓",
+    badge: "✓",
     title: "Approved!",
     description:
       "Case approved. Priority date secured. The green card journey continues from here.",
@@ -119,7 +127,7 @@ const IntroScene: React.FC = () => {
 
       <div style={{ marginTop: 20 }}>
         <AnimatedText
-          text="5 stages from start to green card"
+          text="4 stages to green card approval"
           fontSize={30}
           fontFamily="'Inter', system-ui, sans-serif"
           fontWeight={400}
@@ -228,7 +236,7 @@ const StageScene: React.FC<{
           userSelect: "none",
         }}
       >
-        {stage.number}
+        {stage.badge}
       </div>
 
       {/* Timeline on left */}
@@ -311,7 +319,7 @@ const StageScene: React.FC<{
             }}
           >
             <AnimatedText
-              text={`STAGE ${stage.number}`}
+              text={`STAGE ${stage.badge}`}
               fontSize={14}
               fontWeight={700}
               color="#000000"
@@ -321,7 +329,7 @@ const StageScene: React.FC<{
         </Sequence>
 
         <StageCard
-          number={stage.number}
+          badge={stage.badge}
           title={stage.title}
           description={stage.description}
           stageColor={stage.color}
@@ -364,7 +372,7 @@ const StageScene: React.FC<{
               color: `${stage.color}40`,
             }}
           >
-            {stage.number}
+            {stage.badge}
           </span>
         </div>
       </div>

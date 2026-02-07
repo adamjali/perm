@@ -20,10 +20,6 @@ import {
   ShieldCheckSVG,
 } from "@/components/illustrations";
 
-// ============================================================================
-// FEATURE DATA
-// ============================================================================
-
 interface Feature {
   title: string;
   description: string;
@@ -99,10 +95,6 @@ const features: Feature[] = [
     accentColor: "var(--stage-closed)",
   },
 ];
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 export function FeaturesGrid() {
   return (

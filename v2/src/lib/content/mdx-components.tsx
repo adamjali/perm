@@ -117,6 +117,14 @@ function ComparisonTable({
   headers: string[];
   rows: string[][];
 }) {
+  if (process.env.NODE_ENV === "development") {
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i]!.length !== headers.length) {
+        console.warn(`[ComparisonTable] Row ${i} has ${rows[i]!.length} cells but headers has ${headers.length}`);
+      }
+    }
+  }
+
   return (
     <div className="my-6 overflow-x-auto">
       <table className="w-full border-2 border-border text-sm">

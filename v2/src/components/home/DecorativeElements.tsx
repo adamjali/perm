@@ -13,10 +13,6 @@
 
 import * as React from "react";
 
-// ============================================================================
-// SCROLL PROGRESS
-// ============================================================================
-
 export function ScrollProgress() {
   const [progress, setProgress] = React.useState(0);
   const rafRef = React.useRef<number | null>(null);
@@ -52,10 +48,6 @@ export function ScrollProgress() {
     />
   );
 }
-
-// ============================================================================
-// FLOATING ICONS - Scroll-based parallax with real SVG mini-illustrations
-// ============================================================================
 
 interface FloatingIconsProps {
   className?: string;
@@ -226,10 +218,6 @@ export function FloatingIcons({ className = "" }: FloatingIconsProps) {
 
 // Keep old name as alias for backwards compatibility
 export const FloatingShapes = FloatingIcons;
-
-// ============================================================================
-// FLOATING PARTICLES - Tiny animated dots
-// ============================================================================
 
 export function FloatingParticles({ className = "" }: { className?: string }) {
   return (

@@ -5,6 +5,7 @@ import { X, Check, ChevronRight, Sparkles } from "lucide-react";
 import { useOnboarding } from "./OnboardingProvider";
 import { CHECKLIST_ITEMS } from "@/lib/onboarding/constants";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export function OnboardingChecklist() {
   const router = useRouter();
@@ -52,7 +53,14 @@ export function OnboardingChecklist() {
         </div>
         <button
           type="button"
-          onClick={() => dismissChecklist()}
+          onClick={async () => {
+            try {
+              await dismissChecklist();
+            } catch (error) {
+              console.error("Failed to dismiss checklist:", error);
+              toast.error("Couldn't dismiss checklist. Please try again.");
+            }
+          }}
           className="flex-shrink-0 p-2 -mr-1 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Dismiss checklist"
         >

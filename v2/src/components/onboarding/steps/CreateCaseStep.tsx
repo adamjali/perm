@@ -60,7 +60,8 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
       onNext();
     } catch (error) {
       console.error("Failed to create case:", error);
-      setErrors({ form: "Failed to create case. Please try again." });
+      const message = error instanceof Error ? error.message : "Failed to create case. Please try again.";
+      setErrors({ form: message });
     } finally {
       setIsCreating(false);
     }

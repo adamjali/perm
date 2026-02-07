@@ -8,10 +8,6 @@
  *
  */
 
-// ============================================================================
-// TRUST BADGE DATA
-// ============================================================================
-
 interface TrustBadge {
   icon: React.ReactNode;
   text: string;
@@ -97,10 +93,6 @@ const trustBadges: TrustBadge[] = [
     text: "Auto Deadlines",
   },
 ];
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 export function TrustStrip() {
   // Duplicate badges for seamless infinite scroll

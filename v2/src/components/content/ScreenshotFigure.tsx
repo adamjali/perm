@@ -10,6 +10,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { fadeUp } from "@/lib/content/animations";
 
 interface ScreenshotFigureProps {
   /** Image source path (relative to public/) */
@@ -22,16 +23,9 @@ interface ScreenshotFigureProps {
   step?: number;
   /** Optional max width constraint */
   maxWidth?: number;
+  /** Aspect ratio (width/height). Defaults to 16/9. */
+  aspectRatio?: number;
 }
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] as const },
-  },
-};
 
 export default function ScreenshotFigure({
   src,
@@ -39,6 +33,7 @@ export default function ScreenshotFigure({
   caption,
   step,
   maxWidth = 800,
+  aspectRatio = 16 / 9,
 }: ScreenshotFigureProps) {
   return (
     <motion.figure
@@ -61,7 +56,7 @@ export default function ScreenshotFigure({
           src={src}
           alt={alt}
           width={maxWidth}
-          height={Math.round(maxWidth * 0.5625)}
+          height={Math.round(maxWidth / aspectRatio)}
           className="w-full h-auto"
           sizes="(max-width: 768px) 100vw, 800px"
         />

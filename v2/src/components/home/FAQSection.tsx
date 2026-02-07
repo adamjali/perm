@@ -14,10 +14,6 @@ import { ChevronDown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
-// ============================================================================
-// FAQ DATA
-// ============================================================================
-
 interface FAQItem {
   question: string;
   answer: string;
@@ -55,10 +51,6 @@ const faqItems: FAQItem[] = [
       "We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don't need to manually update formulas or check for rule changes.",
   },
 ];
-
-// ============================================================================
-// FAQ ITEM COMPONENT
-// ============================================================================
 
 interface FAQAccordionItemProps {
   item: FAQItem;
@@ -133,10 +125,6 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
     </div>
   );
 }
-
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
 
 export function FAQSection() {
   // Only one item can be open at a time

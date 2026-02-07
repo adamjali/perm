@@ -2,10 +2,9 @@
  * StructuredData
  *
  * Server component that renders JSON-LD structured data for content pages.
- * Uses Next.js built-in Script approach for safety.
+ * Rendered inline as a script tag for immediate crawler availability.
  */
 
-import Script from "next/script";
 import type { PostMeta, ContentType } from "@/lib/content/types";
 import { generateArticleSchema, generateBreadcrumbSchema } from "@/lib/content/seo";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
@@ -28,13 +27,12 @@ export default function StructuredData({ type, slug, meta }: StructuredDataProps
 
   const jsonLd = JSON.stringify([articleSchema, breadcrumbSchema]);
 
+  // JSON-LD content is generated server-side from trusted frontmatter data (not user input).
+  // This is the recommended Next.js pattern for structured data: https://nextjs.org/docs/app/building-your-application/optimizing/metadata#json-ld
   return (
-    <Script
-      id={`structured-data-${type}-${slug}`}
+    <script
       type="application/ld+json"
-      strategy="afterInteractive"
-    >
-      {jsonLd}
-    </Script>
+      dangerouslySetInnerHTML={{ __html: jsonLd }}
+    />
   );
 }

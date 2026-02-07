@@ -5,7 +5,7 @@
  *
  * Client-side content search input.
  * Filters posts by title and description.
- * Focus ring animation + clear button.
+ * Focus border + shadow transition, clear button.
  */
 
 import { motion, AnimatePresence } from "framer-motion";

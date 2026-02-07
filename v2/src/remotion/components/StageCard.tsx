@@ -8,7 +8,7 @@ import { AnimatedText } from "./AnimatedText";
  */
 
 type StageCardProps = {
-  number: string;
+  badge: string;
   title: string;
   description: string;
   stageColor: string;
@@ -17,7 +17,7 @@ type StageCardProps = {
 };
 
 export const StageCard: React.FC<StageCardProps> = ({
-  number,
+  badge,
   title,
   description,
   stageColor,
@@ -79,7 +79,7 @@ export const StageCard: React.FC<StageCardProps> = ({
             color: "#000000",
           }}
         >
-          {number}
+          {badge}
         </span>
       </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Dialog,
@@ -51,21 +51,6 @@ export function OnboardingWizard() {
 
   const currentIndex = WIZARD_STEPS.indexOf(currentStep);
 
-  const goToStep = useCallback(
-    async (nextStep: OnboardingWizardStep) => {
-      await advanceWizardStep(nextStep);
-    },
-    [advanceWizardStep]
-  );
-
-  const handleTakeTour = useCallback(() => {
-    startTour();
-  }, [startTour]);
-
-  const handleSkipTour = useCallback(() => {
-    skipTour();
-  }, [skipTour]);
-
   if (!showWizard) return null;
 
   return (
@@ -105,21 +90,21 @@ export function OnboardingWizard() {
               exit="exit"
             >
               {currentStep === "welcome" && (
-                <WelcomeStep onNext={() => goToStep("role")} />
+                <WelcomeStep onNext={() => advanceWizardStep("role")} />
               )}
               {currentStep === "role" && (
-                <RoleStep onNext={() => goToStep("create_case")} />
+                <RoleStep onNext={() => advanceWizardStep("create_case")} />
               )}
               {currentStep === "create_case" && (
-                <CreateCaseStep onNext={() => goToStep("value_preview")} />
+                <CreateCaseStep onNext={() => advanceWizardStep("value_preview")} />
               )}
               {currentStep === "value_preview" && (
-                <ValuePreviewStep onNext={() => goToStep("completion")} />
+                <ValuePreviewStep onNext={() => advanceWizardStep("completion")} />
               )}
               {currentStep === "completion" && (
                 <CompletionStep
-                  onTakeTour={handleTakeTour}
-                  onSkip={handleSkipTour}
+                  onTakeTour={startTour}
+                  onSkip={skipTour}
                 />
               )}
             </motion.div>

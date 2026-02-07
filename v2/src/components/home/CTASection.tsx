@@ -16,10 +16,6 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { RocketLaunchSVG } from "@/components/illustrations";
 
-// ============================================================================
-// COMPONENT
-// ============================================================================
-
 export function CTASection() {
   const { isNavigating, navigateTo, targetPath } = useNavigationLoading();
 

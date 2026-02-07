@@ -47,7 +47,6 @@ function SummaryTilesGridContent({
     );
   }
 
-  // Calculate total from all status counts
   const total =
     data.pwd.count +
     data.recruitment.count +

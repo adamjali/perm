@@ -12,7 +12,8 @@ import {
 import { useQuery, useMutation } from "convex/react";
 import { usePathname } from "next/navigation";
 import { api } from "../../../convex/_generated/api";
-import type { OnboardingContextValue, OnboardingStep, TourPhase } from "@/lib/onboarding/types";
+import { toast } from "sonner";
+import type { ChecklistItemId, OnboardingContextValue, OnboardingStep, TourPhase } from "@/lib/onboarding/types";
 import { TOUR_PHASE_ORDER } from "@/lib/onboarding/constants";
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
@@ -37,8 +38,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const onboardingState = useQuery(api.onboarding.getOnboardingState);
   const hasCases = useQuery(api.cases.hasAnyCases);
-  // Removed hasAnyCaseDates — too eager for existing users with cases.
-  // "add_dates" is auto-completed when user visits a case detail page instead.
 
   const updateStep = useMutation(api.onboarding.updateOnboardingStep);
   const completeItem = useMutation(api.onboarding.completeChecklistItem);
@@ -94,15 +93,19 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   // Checklist state
   const completedChecklistItems = onboardingState?.onboardingChecklist ?? [];
   const isChecklistDismissed =
-    shouldSkipOnboarding && onboardingState?.onboardingCompletedAt === null
-      ? true
-      : completedChecklistItems.includes("dismissed");
+    (shouldSkipOnboarding && onboardingState?.onboardingCompletedAt === null) ||
+    (onboardingState?.onboardingChecklistDismissed ?? false);
 
   // --- Actions ---
 
   const advanceWizardStep = useCallback(
-    async (newStep: string) => {
-      await updateStep({ step: newStep });
+    async (newStep: NonNullable<OnboardingStep>) => {
+      try {
+        await updateStep({ step: newStep });
+      } catch (error) {
+        console.error("Failed to advance wizard step:", error);
+        toast.error("Something went wrong. Please try again.");
+      }
     },
     [updateStep]
   );
@@ -111,14 +114,18 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     setWizardDismissed(true); // Close wizard immediately (don't wait for DB)
     setTourActive(true);
     setTourPhase("dashboard");
-    updateStep({ step: "tour_pending" });
+    updateStep({ step: "tour_pending" }).catch((error) => {
+      console.error("Failed to start tour:", error);
+    });
   }, [updateStep]);
 
   const skipTour = useCallback(() => {
     setWizardDismissed(true); // Close wizard immediately (don't wait for DB)
     setTourActive(false);
     setTourPhase(null);
-    updateStep({ step: "tour_completed" });
+    updateStep({ step: "tour_completed" }).catch((error) => {
+      console.error("Failed to skip tour:", error);
+    });
   }, [updateStep]);
 
   const advanceTourPhase = useCallback(() => {
@@ -129,14 +136,16 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       // Tour complete
       setTourActive(false);
       setTourPhase(null);
-      updateStep({ step: "tour_completed" });
+      updateStep({ step: "tour_completed" }).catch((error) => {
+        console.error("Failed to complete tour:", error);
+      });
     } else {
       setTourPhase(TOUR_PHASE_ORDER[nextIndex] ?? null);
     }
   }, [tourPhase, updateStep]);
 
   const completeChecklistItem = useCallback(
-    async (itemId: string) => {
+    async (itemId: ChecklistItemId) => {
       await completeItem({ itemId });
     },
     [completeItem]
@@ -151,22 +160,28 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     if (isChecklistDismissed || isLoading || shouldSkipOnboarding) return;
     if (onboardingState?.onboardingCompletedAt === null) return;
 
-    const path = pathname;
-    if (completedPaths.current.has(path)) return;
-    completedPaths.current.add(path);
+    if (completedPaths.current.has(pathname)) return;
+    completedPaths.current.add(pathname);
 
-    if (path === "/calendar" && !completedChecklistItems.includes("explore_calendar")) {
-      completeItem({ itemId: "explore_calendar" });
+    // Map paths to checklist items they auto-complete
+    const pathToItems: Record<string, string[]> = {
+      "/calendar": ["explore_calendar"],
+      "/settings": ["setup_notifications", "explore_settings"],
+    };
+
+    const itemsForPath = pathToItems[pathname] ?? [];
+
+    // Case detail pages auto-complete "add_dates"
+    if (/^\/cases\/[^/]+$/.test(pathname)) {
+      itemsForPath.push("add_dates");
     }
-    if (path === "/settings" && !completedChecklistItems.includes("setup_notifications")) {
-      completeItem({ itemId: "setup_notifications" });
-    }
-    if (path === "/settings" && !completedChecklistItems.includes("explore_settings")) {
-      completeItem({ itemId: "explore_settings" });
-    }
-    // Auto-complete "add_dates" when user visits a case detail page
-    if (path.match(/^\/cases\/[^/]+$/) && !completedChecklistItems.includes("add_dates")) {
-      completeItem({ itemId: "add_dates" });
+
+    for (const itemId of itemsForPath) {
+      if (!completedChecklistItems.includes(itemId)) {
+        completeItem({ itemId: itemId as "explore_calendar" | "setup_notifications" | "explore_settings" | "add_dates" }).catch((error) => {
+          console.error(`Failed to auto-complete checklist item ${itemId}:`, error);
+        });
+      }
     }
   }, [
     pathname,

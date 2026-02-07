@@ -74,7 +74,8 @@ export function OnboardingTour({
       if (availableSteps.length === 0) {
         if (attempts >= maxAttempts) {
           clearInterval(pollTimer);
-          onPhaseComplete(); // Give up, skip phase
+          console.warn(`[OnboardingTour] Phase "${tourPhase}" skipped: no DOM elements found after ${maxAttempts} attempts`);
+          onPhaseComplete();
         }
         return;
       }

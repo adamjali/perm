@@ -211,8 +211,10 @@ export default defineSchema({
     onboardingStep: v.optional(v.string()),
     /** Timestamp when onboarding wizard was completed. */
     onboardingCompletedAt: v.optional(v.number()),
-    /** Completed checklist item IDs. ["dismissed"] = user dismissed the checklist. */
+    /** Completed checklist item IDs. */
     onboardingChecklist: v.optional(v.array(v.string())),
+    /** Whether the user dismissed the getting-started checklist. */
+    onboardingChecklistDismissed: v.optional(v.boolean()),
 
     // Timestamps
     createdAt: v.number(),

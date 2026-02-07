@@ -21,10 +21,6 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { FloatingIcons, FloatingParticles } from "./DecorativeElements";
 
-// ============================================================================
-// COMPONENT
-// ============================================================================
-
 export function HeroSection() {
   const { isNavigating, navigateTo, targetPath } = useNavigationLoading();
 

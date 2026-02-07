@@ -2,12 +2,24 @@
  * Onboarding Convex Functions
  *
  * Manages the onboarding wizard, product tour, and getting-started checklist state.
- * State is stored on the userProfiles table (3 fields: onboardingStep, onboardingCompletedAt, onboardingChecklist).
+ * State is stored on the userProfiles table.
  */
 
+import type { MutationCtx } from "./_generated/server";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
+
+/** Lookup the authenticated user's profile. Throws if not found. */
+async function requireProfile(ctx: MutationCtx) {
+  const userId = await getCurrentUserId(ctx);
+  const profile = await ctx.db
+    .query("userProfiles")
+    .withIndex("by_user_id", (q) => q.eq("userId", userId))
+    .unique();
+  if (!profile) throw new Error("User profile not found");
+  return profile;
+}
 
 /**
  * Get current user's onboarding state.
@@ -30,6 +42,7 @@ export const getOnboardingState = query({
       onboardingStep: (profile.onboardingStep as string | undefined) ?? null,
       onboardingCompletedAt: profile.onboardingCompletedAt ?? null,
       onboardingChecklist: profile.onboardingChecklist ?? [],
+      onboardingChecklistDismissed: profile.onboardingChecklistDismissed ?? false,
       termsAcceptedAt: profile.termsAcceptedAt ?? null,
       fullName: profile.fullName ?? null,
     };
@@ -39,19 +52,43 @@ export const getOnboardingState = query({
 /**
  * Update onboarding step (wizard/tour progress).
  */
+/** Valid onboarding step values */
+const onboardingStepValidator = v.union(
+  v.literal("welcome"),
+  v.literal("role"),
+  v.literal("create_case"),
+  v.literal("value_preview"),
+  v.literal("completion"),
+  v.literal("tour_pending"),
+  v.literal("tour_completed"),
+  v.literal("done")
+);
+
+/** Valid checklist item IDs */
+const checklistItemValidator = v.union(
+  v.literal("create_case"),
+  v.literal("add_dates"),
+  v.literal("explore_calendar"),
+  v.literal("setup_notifications"),
+  v.literal("try_assistant"),
+  v.literal("explore_settings")
+);
+
+/** Valid role values */
+const roleValidator = v.union(
+  v.literal("Immigration Attorney"),
+  v.literal("Paralegal"),
+  v.literal("HR Professional"),
+  v.literal("Employer/Petitioner"),
+  v.literal("Other")
+);
+
 export const updateOnboardingStep = mutation({
   args: {
-    step: v.string(),
+    step: onboardingStepValidator,
   },
   handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
-
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-
-    if (!profile) throw new Error("User profile not found");
+    const profile = await requireProfile(ctx);
 
     const update: Record<string, unknown> = {
       onboardingStep: args.step,
@@ -76,17 +113,10 @@ export const updateOnboardingStep = mutation({
  */
 export const saveOnboardingRole = mutation({
   args: {
-    role: v.string(),
+    role: roleValidator,
   },
   handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
-
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-
-    if (!profile) throw new Error("User profile not found");
+    const profile = await requireProfile(ctx);
 
     await ctx.db.patch(profile._id, {
       jobTitle: args.role,
@@ -100,23 +130,15 @@ export const saveOnboardingRole = mutation({
  */
 export const completeChecklistItem = mutation({
   args: {
-    itemId: v.string(),
+    itemId: checklistItemValidator,
   },
   handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
+    const profile = await requireProfile(ctx);
 
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-
-    if (!profile) throw new Error("User profile not found");
+    if (profile.onboardingChecklistDismissed) return;
 
     const currentItems = profile.onboardingChecklist ?? [];
-    // Don't add duplicates, and don't modify if dismissed
-    if (currentItems.includes(args.itemId) || currentItems.includes("dismissed")) {
-      return;
-    }
+    if (currentItems.includes(args.itemId)) return;
 
     await ctx.db.patch(profile._id, {
       onboardingChecklist: [...currentItems, args.itemId],
@@ -131,19 +153,13 @@ export const completeChecklistItem = mutation({
 export const resetOnboarding = mutation({
   args: {},
   handler: async (ctx) => {
-    const userId = await getCurrentUserId(ctx);
-
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-
-    if (!profile) throw new Error("User profile not found");
+    const profile = await requireProfile(ctx);
 
     await ctx.db.patch(profile._id, {
       onboardingStep: "welcome",
       onboardingCompletedAt: undefined,
       onboardingChecklist: undefined,
+      onboardingChecklistDismissed: undefined,
       updatedAt: Date.now(),
     });
   },
@@ -172,6 +188,7 @@ export const resetOnboardingByEmail = internalMutation({
       onboardingStep: "welcome",
       onboardingCompletedAt: undefined,
       onboardingChecklist: undefined,
+      onboardingChecklistDismissed: undefined,
       updatedAt: Date.now(),
     });
     return { success: true, userId: profile.userId };
@@ -184,17 +201,10 @@ export const resetOnboardingByEmail = internalMutation({
 export const dismissChecklist = mutation({
   args: {},
   handler: async (ctx) => {
-    const userId = await getCurrentUserId(ctx);
-
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-
-    if (!profile) throw new Error("User profile not found");
+    const profile = await requireProfile(ctx);
 
     await ctx.db.patch(profile._id, {
-      onboardingChecklist: ["dismissed"],
+      onboardingChecklistDismissed: true,
       onboardingStep: "done",
       updatedAt: Date.now(),
     });

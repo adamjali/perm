@@ -22,9 +22,18 @@ export type UserRole =
   | "Employer/Petitioner"
   | "Other";
 
+/** Valid checklist item IDs */
+export type ChecklistItemId =
+  | "create_case"
+  | "add_dates"
+  | "explore_calendar"
+  | "setup_notifications"
+  | "try_assistant"
+  | "explore_settings";
+
 /** Checklist item definition */
 export interface ChecklistItem {
-  id: string;
+  id: ChecklistItemId;
   label: string;
   description: string;
   href?: string;
@@ -64,7 +73,7 @@ export interface OnboardingContextValue {
   /** Current tour phase for multi-page tour */
   tourPhase: TourPhase;
   /** Completed checklist items */
-  completedChecklistItems: string[];
+  completedChecklistItems: (ChecklistItemId | string)[];
   /** Whether the checklist is dismissed */
   isChecklistDismissed: boolean;
   /** Whether onboarding is loading */
@@ -74,10 +83,10 @@ export interface OnboardingContextValue {
   /** Case info created during wizard (for display in completion step) */
   onboardingCaseInfo: { employerName: string; positionTitle: string } | null;
   /** Actions */
-  advanceWizardStep: (step: string) => Promise<void>;
+  advanceWizardStep: (step: NonNullable<OnboardingStep>) => Promise<void>;
   setOnboardingCaseId: (id: string) => void;
   setOnboardingCaseInfo: (info: { employerName: string; positionTitle: string }) => void;
-  completeChecklistItem: (itemId: string) => Promise<void>;
+  completeChecklistItem: (itemId: ChecklistItemId) => Promise<void>;
   dismissChecklist: () => Promise<void>;
   startTour: () => void;
   skipTour: () => void;

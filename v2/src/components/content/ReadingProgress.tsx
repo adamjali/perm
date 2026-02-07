@@ -4,8 +4,7 @@
  * ReadingProgress
  *
  * Article reading progress bar.
- * Shows how far the user has scrolled through the article content.
- * Uses RAF-throttled scroll listener for performance.
+ * Uses Framer Motion useScroll + useSpring for smooth scroll tracking.
  */
 
 import { motion, useScroll, useSpring } from "framer-motion";

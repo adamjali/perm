@@ -29,25 +29,47 @@ export function getPostBySlug(type: ContentType, slug: string): Post | null {
   const filePath = path.join(CONTENT_DIR, type, `${slug}.mdx`);
   if (!fs.existsSync(filePath)) return null;
 
-  const raw = fs.readFileSync(filePath, "utf-8");
-  const { data, content } = matter(raw);
+  let raw: string;
+  try {
+    raw = fs.readFileSync(filePath, "utf-8");
+  } catch (error) {
+    console.error(`[content] Failed to read ${type}/${slug}.mdx:`, error);
+    return null;
+  }
+
+  let data: Record<string, unknown>;
+  let content: string;
+  try {
+    const parsed = matter(raw);
+    data = parsed.data;
+    content = parsed.content;
+  } catch (error) {
+    console.error(`[content] Failed to parse frontmatter in ${type}/${slug}.mdx:`, error);
+    return null;
+  }
+
   const stats = readingTime(content);
 
+  // Warn about missing required frontmatter fields
+  if (!data.title) console.warn(`[content] Missing title in ${type}/${slug}.mdx`);
+  if (!data.date) console.warn(`[content] Missing date in ${type}/${slug}.mdx — using today's date`);
+  if (data.tags && !Array.isArray(data.tags)) console.warn(`[content] tags should be an array in ${type}/${slug}.mdx`);
+
   const meta: PostMeta = {
-    title: data.title ?? "Untitled",
-    description: data.description ?? "",
-    date: data.date ?? new Date().toISOString().split("T")[0],
-    updated: data.updated,
-    author: data.author ?? "PERM Tracker Team",
-    image: data.image,
-    imageAlt: data.imageAlt,
-    tags: data.tags ?? [],
-    category: data.category,
+    title: (data.title as string) ?? "Untitled",
+    description: (data.description as string) ?? "",
+    date: (data.date as string) ?? new Date().toISOString().split("T")[0],
+    updated: data.updated as string | undefined,
+    author: (data.author as string) ?? "PERM Tracker Team",
+    image: data.image as string | undefined,
+    imageAlt: data.imageAlt as string | undefined,
+    tags: (Array.isArray(data.tags) ? data.tags : []) as string[],
+    category: data.category as string | undefined,
     readingTime: stats.text,
     published: data.published !== false,
-    featured: data.featured ?? false,
-    seoTitle: data.seoTitle,
-    seoDescription: data.seoDescription,
+    featured: (data.featured as boolean | undefined) ?? false,
+    seoTitle: data.seoTitle as string | undefined,
+    seoDescription: data.seoDescription as string | undefined,
   };
 
   return { slug, type, meta, content };

@@ -12,6 +12,7 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import { NavLink } from "@/components/ui/nav-link";
 import { useParallax } from "@/lib/hooks/useGSAP";
+import { stagger, fadeUp } from "@/lib/content/animations";
 
 interface ContentCTAProps {
   title?: string;
@@ -19,22 +20,6 @@ interface ContentCTAProps {
   buttonText?: string;
   href?: string;
 }
-
-const stagger = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] as const },
-  },
-};
 
 export default function ContentCTA({
   title = "Start Tracking Your PERM Cases",

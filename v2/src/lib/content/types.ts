@@ -12,11 +12,14 @@ export type ContentType =
   | "changelog"
   | "resources";
 
+/** ISO date string in YYYY-MM-DD format */
+export type ContentDateString = string & { readonly __brand?: "ContentDate" };
+
 export interface PostMeta {
   title: string;
   description: string;
-  date: string; // ISO date string YYYY-MM-DD
-  updated?: string; // Last updated date
+  date: ContentDateString;
+  updated?: ContentDateString;
   author: string;
   image?: string; // Featured image path (relative to /public)
   imageAlt?: string;

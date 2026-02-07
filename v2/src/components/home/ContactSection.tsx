@@ -25,16 +25,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
 const SUPPORT_EMAIL = "support@permtracker.app";
 const MIN_MESSAGE_LENGTH = 10;
-
-// ============================================================================
-// TYPES
-// ============================================================================
 
 interface FormData {
   name: string;
@@ -47,10 +39,6 @@ interface FormErrors {
   email?: string;
   message?: string;
 }
-
-// ============================================================================
-// VALIDATION
-// ============================================================================
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -78,10 +66,6 @@ function validateForm(data: FormData): FormErrors {
 
   return errors;
 }
-
-// ============================================================================
-// CONTACT LINK CARD COMPONENT
-// ============================================================================
 
 interface ContactLinkCardProps {
   href: string;
@@ -115,10 +99,6 @@ function ContactLinkCard({
     </a>
   );
 }
-
-// ============================================================================
-// FORM FIELD WRAPPER COMPONENT (simplified for contact form)
-// ============================================================================
 
 interface FormFieldWrapperProps {
   label: string;
@@ -169,10 +149,6 @@ function FormFieldWrapper({
   );
 }
 
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
-
 export function ContactSection() {
   // Form state
   const [formData, setFormData] = React.useState<FormData>({
@@ -202,7 +178,7 @@ export function ContactSection() {
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validate form
@@ -233,7 +209,9 @@ export function ContactSection() {
   // Handle keyboard submission (Enter in last field)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      handleSubmit(e);
+      e.preventDefault();
+      const form = e.currentTarget.form;
+      if (form) form.requestSubmit();
     }
   };
 

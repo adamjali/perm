@@ -5,7 +5,7 @@
  *
  * Timeline-style display for changelog/update entries.
  * Each entry is expanded inline (no separate detail pages).
- * GSAP-powered stagger reveal on scroll.
+ * GSAP scroll-triggered stagger for entries. FM for vertical line entrance.
  */
 
 import * as React from "react";

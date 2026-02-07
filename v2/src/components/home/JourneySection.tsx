@@ -34,10 +34,6 @@ import {
   SuccessCelebrationSVG,
 } from "@/components/illustrations";
 
-// ============================================================================
-// STAGE DATA
-// ============================================================================
-
 interface StageMeta {
   icon: typeof Clock;
   text: string;
@@ -129,10 +125,6 @@ const stageColors: Record<JourneyStage["stage"], string> = {
   i140: "var(--stage-i140)",
   success: "var(--stage-success)",
 };
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 export function JourneySection() {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);

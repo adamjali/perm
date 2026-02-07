@@ -14,6 +14,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Scale,
@@ -40,8 +41,7 @@ export function RoleStep({ onNext }: RoleStepProps) {
       onNext();
     } catch (error) {
       console.error("Failed to save role:", error);
-      // Continue anyway so user isn't stuck
-      onNext();
+      toast.error("Failed to save role. Please try again.");
     } finally {
       setIsSaving(false);
     }

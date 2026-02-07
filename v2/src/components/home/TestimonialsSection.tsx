@@ -11,10 +11,6 @@ import Script from "next/script";
 import { Star, MessageSquarePlus, ExternalLink } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
-// ============================================================================
-// TRUST BADGE DATA
-// ============================================================================
-
 interface TrustBadge {
   icon: React.ReactNode;
   label: string;
@@ -72,10 +68,6 @@ const trustBadges: TrustBadge[] = [
     label: "Real-Time Updates",
   },
 ];
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 export function TestimonialsSection() {
   return (

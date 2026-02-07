@@ -48,35 +48,23 @@ export const hasAnyCases = query({
     const userId = await getCurrentUserIdOrNull(ctx);
     if (userId === null) return false;
 
-    const firstCase = await ctx.db
+    // Iterate until we find a non-deleted case (don't assume first is active)
+    let cursor = await ctx.db
       .query("cases")
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .first();
 
-    return firstCase !== null && firstCase.deletedAt === undefined;
-  },
-});
+    if (cursor === null) return false;
+    if (cursor.deletedAt === undefined) return true;
 
-/**
- * Check if any of the user's cases have date fields populated.
- * Used by onboarding checklist to auto-complete the "add_dates" item.
- */
-export const hasAnyCaseDates = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getCurrentUserIdOrNull(ctx);
-    if (userId === null) return false;
-
+    // First case was soft-deleted — check remaining cases
     const cases = await ctx.db
       .query("cases")
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
+      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .first();
 
-    return cases.some(
-      (c) =>
-        c.deletedAt === undefined &&
-        (c.pwdFilingDate || c.pwdDeterminationDate || c.eta9089FilingDate || c.eta9089CertificationDate)
-    );
+    return cases !== null;
   },
 });
 

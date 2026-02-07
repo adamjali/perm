@@ -19,10 +19,6 @@ import {
 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
-// ============================================================================
-// FEATURE DATA
-// ============================================================================
-
 interface ShowcaseFeature {
   icon: typeof CalendarCheck;
   title: string;
@@ -67,10 +63,6 @@ const showcaseFeatures: ShowcaseFeature[] = [
       "Visual progress from PWD through I-140. See exactly where each case stands, what's completed, and what's coming next—all at a glance.",
   },
 ];
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 export function FeatureShowcase() {
   return (

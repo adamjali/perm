@@ -18,10 +18,6 @@ import {
   NotificationBellSVG,
 } from "@/components/illustrations";
 
-// ============================================================================
-// STEP DATA
-// ============================================================================
-
 interface Step {
   number: number;
   illustration: React.ReactNode;
@@ -57,10 +53,6 @@ const steps: Step[] = [
     accentColor: "var(--stage-pwd)",
   },
 ];
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 export function HowItWorks() {
   return (

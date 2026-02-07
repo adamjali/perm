@@ -26,9 +26,13 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
       : `https://permtracker.app${url}`;
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(fullUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      console.warn("[ShareButtons] Clipboard write failed — likely insecure context or unsupported browser");
+    }
   };
 
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(fullUrl)}`;

@@ -179,8 +179,11 @@ export function ChatWidgetConnected() {
     if (onboarding.completedChecklistItems.includes('try_assistant')) return;
     const hasUserMessage = messages.some((m) => m.role === 'user');
     if (hasUserMessage) {
-      hasMarkedAssistant.current = true;
-      onboarding.completeChecklistItem('try_assistant');
+      onboarding.completeChecklistItem('try_assistant').then(() => {
+        hasMarkedAssistant.current = true;
+      }).catch((error) => {
+        console.error("Failed to mark try_assistant checklist item:", error);
+      });
     }
   }, [messages, onboarding]);
 
