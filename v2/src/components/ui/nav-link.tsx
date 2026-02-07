@@ -99,12 +99,12 @@ export function NavLink({
     if (e.defaultPrevented || isCurrentPage) return;
 
     // Set this link as actively navigating (clears other NavLinks)
-    if (showLoading) {
-      if (context) {
-        context.setActiveNavigation(targetPath || "/");
-      } else {
-        setLocalIsNavigating(true);
-      }
+    // Always coordinate via context so other components can detect navigation,
+    // even when this NavLink doesn't show its own spinner (showLoading=false)
+    if (context) {
+      context.setActiveNavigation(targetPath || "/");
+    } else if (showLoading) {
+      setLocalIsNavigating(true);
     }
     // Let the Link handle navigation naturally - this triggers loading.tsx immediately
   };
@@ -125,7 +125,8 @@ export function NavLink({
       href={href}
       className={cn(
         className,
-        isNavigating && "pointer-events-none opacity-70"
+        isNavigating && "pointer-events-none",
+        isNavigating && showLoading && "opacity-70"
       )}
       onClick={handleClick}
       aria-disabled={isNavigating}

@@ -1,7 +1,7 @@
 # CLAUDE.md - PERM Tracker v2
 
 > **Stack:** Next.js 16.1 + Convex 1.31 + React 19 + TypeScript (strict mode)
-> **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-01-16
+> **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-02-06
 
 ## Quick Start
 
@@ -136,13 +136,86 @@ v2/
 │   ├── deadlineEnforcement.ts  # Deadline reminders
 │   ├── crons.ts            # Cron definitions
 │   └── schema.ts           # Database schema
+├── content/                 # MDX content hub articles
+│   ├── blog/               # Blog posts
+│   ├── tutorials/          # Step-by-step tutorials
+│   ├── guides/             # Reference guides
+│   ├── changelog/          # Product changelog entries
+│   └── resources/          # PERM resources
 ├── src/
 │   ├── app/                # Next.js App Router pages
-│   ├── components/         # React components
-│   ├── emails/            # React Email templates
-│   └── lib/perm/          # Frontend re-exports
-├── docs/API.md            # Convex API reference
-└── test-utils/            # Test utilities and fixtures
+│   ├── components/
+│   │   ├── ui/             # Core UI (shadcn/ui)
+│   │   ├── content/        # Content hub components (16 components)
+│   │   ├── status/         # PERM status badges
+│   │   ├── dashboard/      # Dashboard components
+│   │   └── layout/         # Layout (Header, Footer)
+│   ├── lib/
+│   │   ├── perm/           # Frontend PERM re-exports
+│   │   └── content/        # MDX processing + mdx-components
+│   ├── emails/             # React Email templates
+│   └── remotion/           # Remotion video compositions
+├── public/images/
+│   ├── screenshots/        # App screenshots + GIFs for articles
+│   ├── journey/            # PERM journey photos
+│   └── features/           # Feature illustrations
+├── docs/API.md             # Convex API reference
+└── test-utils/             # Test utilities and fixtures
+```
+
+---
+
+## Content Hub
+
+### MDX Articles
+
+Content lives in `content/{type}/*.mdx` with frontmatter (title, date, tags, etc.). Processed by `next-mdx-remote` + `gray-matter` + `reading-time`.
+
+### MDX Components (available in all articles)
+
+Registered in `src/lib/content/mdx-components.tsx`:
+
+| Component | Props | Usage |
+|-----------|-------|-------|
+| `Callout` | `type` (info/warning/tip/important), `title` | Highlighted info boxes |
+| `ProductCTA` | `title`, `description`, `href`, `buttonText` | Signup call-to-action |
+| `StepByStep` / `Step` | `number`, `title` | Numbered step containers |
+| `ComparisonTable` | `headers`, `rows` | Comparison tables |
+| `ScreenshotFigure` | `src`, `alt`, `caption?`, `step?`, `maxWidth?` | App screenshot with neobrutalist border, optional step badge |
+| `VideoPlayer` | `videoId` | Remotion video player (lazy-loaded, SSR-disabled) |
+
+### Screenshot Assets
+
+App screenshots in `public/images/screenshots/`:
+
+| File | Content |
+|------|---------|
+| `dashboard.png` | Deadline Hub with urgency columns |
+| `cases.png` | Case management grid with cards |
+| `calendar.png` | Calendar view with deadline markers |
+| `homepage.png` | Landing page hero |
+| `create-case.gif` | Animated walkthrough: create a new case |
+
+### Adding Screenshots to Articles
+
+```mdx
+<ScreenshotFigure
+  src="/images/screenshots/dashboard.png"
+  alt="Dashboard showing deadline urgency columns"
+  caption="The Deadline Hub organizes deadlines by urgency."
+  step={1}
+/>
+```
+
+For GIFs (not compatible with Next.js Image), use raw HTML:
+
+```mdx
+<figure className="not-prose my-8">
+  <div className="border-2 border-border shadow-hard overflow-hidden">
+    <img src="/images/screenshots/create-case.gif" alt="..." className="w-full h-auto" loading="lazy" />
+  </div>
+  <figcaption className="mt-2 font-mono text-xs text-muted-foreground">Caption text</figcaption>
+</figure>
 ```
 
 ---

@@ -1,53 +1,75 @@
 "use client";
 
 /**
- * TestimonialsSection Component
+ * SocialProofSection (formerly TestimonialsSection)
  *
- * Quote cards from immigration attorneys with photo avatars,
- * neobrutalist styling, and staggered scroll animations.
- *
+ * Trust badges, Senja reviews widget, and links to leave a review / G2.
+ * Neobrutalist styling consistent with other homepage sections.
  */
 
-import Image from "next/image";
-import { Quote } from "lucide-react";
+import Script from "next/script";
+import { Star, MessageSquarePlus, ExternalLink } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 // ============================================================================
-// TESTIMONIAL DATA
+// TRUST BADGE DATA
 // ============================================================================
 
-interface Testimonial {
-  name: string;
-  title: string;
-  quote: string;
-  avatar: string;
-  accentColor: string;
+interface TrustBadge {
+  icon: React.ReactNode;
+  label: string;
 }
 
-const testimonials: Testimonial[] = [
+const trustBadges: TrustBadge[] = [
   {
-    name: "Sarah Chen",
-    title: "Immigration Attorney, NYC",
-    quote:
-      "PERM Tracker transformed how I manage my caseload. The automatic deadline calculations alone have saved me countless hours of manual tracking.",
-    avatar: "/images/hero/attorney-at-desk.jpg",
-    accentColor: "var(--primary)",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M10 2 L17 6 L17 11 Q17 17 10 18 Q3 17 3 11 L3 6 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M7 10 L9 12 L13 8" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="square" />
+      </svg>
+    ),
+    label: "Encrypted Data",
   },
   {
-    name: "Michael Rodriguez",
-    title: "Partner, Rodriguez & Associates",
-    quote:
-      "The calendar sync feature is a game-changer. My whole team stays aligned on deadlines without any extra effort. I can't imagine going back.",
-    avatar: "/images/features/team-meeting.jpg",
-    accentColor: "var(--stage-recruitment)",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <rect x="3" y="4" width="14" height="12" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M3 4 L10 10 L17 4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="15" cy="5" r="3" fill="var(--primary)" stroke="currentColor" strokeWidth="1" />
+      </svg>
+    ),
+    label: "DOL Compliant",
   },
   {
-    name: "Priya Patel",
-    title: "Solo Practitioner, Bay Area",
-    quote:
-      "As a solo attorney handling dozens of PERM cases, this tool gives me the confidence that nothing falls through the cracks. The notifications are perfectly timed.",
-    avatar: "/images/hero/legal-office-wide.jpg",
-    accentColor: "var(--stage-eta9089)",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="13" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="10" cy="13" r="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
+    ),
+    label: "Built for Attorneys",
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="5" cy="10" r="2.5" fill="var(--stage-pwd)" stroke="currentColor" strokeWidth="1" />
+        <circle cx="10" cy="10" r="2.5" fill="var(--stage-recruitment)" stroke="currentColor" strokeWidth="1" />
+        <circle cx="15" cy="10" r="2.5" fill="var(--stage-eta9089)" stroke="currentColor" strokeWidth="1" />
+      </svg>
+    ),
+    label: "5 PERM Stages",
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <line x1="10" y1="5" x2="10" y2="10" stroke="currentColor" strokeWidth="2" />
+        <line x1="10" y1="10" x2="14" y2="12" stroke="var(--primary)" strokeWidth="1.5" />
+      </svg>
+    ),
+    label: "Real-Time Updates",
   },
 ];
 
@@ -57,101 +79,77 @@ const testimonials: Testimonial[] = [
 
 export function TestimonialsSection() {
   return (
-    <section className="relative py-20 sm:py-28 overflow-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <svg className="absolute top-12 left-[5%] opacity-8" width="60" height="60" viewBox="0 0 60 60" fill="none">
-          <path d="M10 45 L10 25 Q10 10 25 10 L28 10 L28 16 L25 16 Q16 16 16 25 L16 30 L28 30 L28 45 Z" fill="var(--primary)" />
-          <path d="M35 45 L35 25 Q35 10 50 10 L53 10 L53 16 L50 16 Q41 16 41 25 L41 30 L53 30 L53 45 Z" fill="var(--primary)" />
-        </svg>
-        <div className="absolute bottom-8 right-[8%] h-20 w-20 border-3 border-primary/10 rotate-12" />
-        <div className="absolute top-[40%] right-[3%] h-16 w-16 border-2 border-border/20 -rotate-6" />
-      </div>
-
+    <section className="relative py-16 sm:py-20 overflow-hidden">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8">
         {/* Section header */}
-        <ScrollReveal direction="up" className="mb-12 text-center sm:mb-16">
+        <ScrollReveal direction="up" className="mb-10 text-center">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-            <Quote className="h-3.5 w-3.5" />
-            What Attorneys Say
+            <Star className="h-3.5 w-3.5" />
+            Trusted by Practitioners
           </div>
           <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-            Trusted by Practitioners
+            What Our Users Say
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-            Immigration attorneys rely on PERM Tracker to manage their most critical deadlines.
+          <p className="mx-auto mt-4 max-w-lg text-lg text-muted-foreground">
+            Immigration attorneys trust PERM Tracker to manage their cases and never miss a deadline.
           </p>
         </ScrollReveal>
 
-        {/* Testimonial cards grid */}
-        <div className="grid gap-8 md:grid-cols-3">
-          {testimonials.map((testimonial, index) => (
-            <ScrollReveal
-              key={testimonial.name}
-              direction="up"
-              delay={index * 0.1}
-            >
-              <div className="group relative border-3 border-border bg-background overflow-hidden shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-                {/* Top accent bar */}
-                <div
-                  className="h-1.5 w-full"
-                  style={{ backgroundColor: testimonial.accentColor }}
-                  aria-hidden="true"
-                />
-
-                {/* Background image - very subtle */}
-                <div className="absolute inset-0 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-500">
-                  <Image
-                    src={testimonial.avatar}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    aria-hidden="true"
-                  />
-                </div>
-
-                {/* Content */}
-                <div className="relative p-8">
-                  {/* Quote icon */}
-                  <div
-                    className="mb-4 inline-flex h-10 w-10 items-center justify-center border-2 border-border"
-                    style={{ backgroundColor: testimonial.accentColor }}
-                  >
-                    <Quote className="h-5 w-5 text-black" />
-                  </div>
-
-                  {/* Quote text */}
-                  <blockquote className="mb-6 text-[15px] leading-relaxed text-muted-foreground italic">
-                    &ldquo;{testimonial.quote}&rdquo;
-                  </blockquote>
-
-                  {/* Author */}
-                  <div className="flex items-center gap-3">
-                    {/* Avatar circle with image */}
-                    <div className="relative h-10 w-10 border-2 border-border overflow-hidden flex-shrink-0">
-                      <Image
-                        src={testimonial.avatar}
-                        alt={testimonial.name}
-                        fill
-                        className="object-cover"
-                        sizes="40px"
-                      />
-                    </div>
-                    <div>
-                      <div className="font-heading text-sm font-bold">
-                        {testimonial.name}
-                      </div>
-                      <div className="font-mono text-xs text-muted-foreground">
-                        {testimonial.title}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        {/* Trust badges row */}
+        <ScrollReveal direction="up" delay={0.05}>
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 mb-12">
+            {trustBadges.map((badge) => (
+              <div
+                key={badge.label}
+                className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground"
+              >
+                <span className="flex-shrink-0">{badge.icon}</span>
+                <span>{badge.label}</span>
               </div>
-            </ScrollReveal>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollReveal>
+
+        {/* Senja Reviews Widget */}
+        <ScrollReveal direction="up" delay={0.1}>
+          <div>
+            <Script
+              src="https://widget.senja.io/widget/3563db96-3a71-4d2a-b7e8-70550d4dd814/platform.js"
+              strategy="lazyOnload"
+            />
+            <div
+              className="senja-embed"
+              data-id="3563db96-3a71-4d2a-b7e8-70550d4dd814"
+              data-mode="shadow"
+              data-lazyload="false"
+              style={{ display: "block", width: "100%" }}
+            />
+          </div>
+        </ScrollReveal>
+
+        {/* Review links */}
+        <ScrollReveal direction="up" delay={0.2}>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <a
+              href="https://senja.io/p/perm-tracker/r/FXAjpr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 border-3 border-border bg-primary px-5 py-2.5 font-heading text-sm font-bold uppercase tracking-wide text-black shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+            >
+              <MessageSquarePlus className="h-4 w-4" />
+              Leave a Review
+            </a>
+            <a
+              href="https://www.g2.com/products/perm-tracker/reviews"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 border-3 border-border bg-background px-5 py-2.5 font-heading text-sm font-bold uppercase tracking-wide text-foreground shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Review us on G2
+            </a>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );

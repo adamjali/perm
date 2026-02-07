@@ -39,6 +39,48 @@ const DEADLINE_RELEVANT_FIELDS = [
 ] as const;
 
 /**
+ * Check if the current user has any (non-deleted) cases.
+ * Lightweight query used by onboarding skip-logic.
+ */
+export const hasAnyCases = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return false;
+
+    const firstCase = await ctx.db
+      .query("cases")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .first();
+
+    return firstCase !== null && firstCase.deletedAt === undefined;
+  },
+});
+
+/**
+ * Check if any of the user's cases have date fields populated.
+ * Used by onboarding checklist to auto-complete the "add_dates" item.
+ */
+export const hasAnyCaseDates = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return false;
+
+    const cases = await ctx.db
+      .query("cases")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .collect();
+
+    return cases.some(
+      (c) =>
+        c.deletedAt === undefined &&
+        (c.pwdFilingDate || c.pwdDeterminationDate || c.eta9089FilingDate || c.eta9089CertificationDate)
+    );
+  },
+});
+
+/**
  * List cases for the current user
  * Supports filtering by status and favorites
  *

@@ -1109,7 +1109,7 @@ export function CasesPageClient() {
   // ============================================================================
 
   return (
-    <div className="space-y-6">
+    <div data-tour="cases-list" className="space-y-6">
       {/* Page Header - responsive: stacks on mobile, horizontal on desktop */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">

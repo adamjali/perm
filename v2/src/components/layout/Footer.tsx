@@ -101,36 +101,47 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               </nav>
             </div>
 
-            {/* Resources column */}
+            {/* Learn column */}
             <div>
               <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
-                Resources
+                Learn
               </h4>
-              <nav className="flex flex-col gap-3" aria-label="Resource links">
-                <a
-                  href="https://flag.dol.gov/programs/perm"
-                  target="_blank"
-                  rel="noopener noreferrer"
+              <nav className="flex flex-col gap-3" aria-label="Content links">
+                <NavLink
+                  href="/blog"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
+                  spinnerClassName="text-primary"
                 >
-                  DOL PERM Info
-                </a>
-                <a
-                  href="https://www.ecfr.gov/current/title-20/chapter-V/part-656"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  Blog
+                </NavLink>
+                <NavLink
+                  href="/tutorials"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
+                  spinnerClassName="text-primary"
                 >
-                  20 CFR 656
-                </a>
-                <a
-                  href="https://github.com/adamjali/perm"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  Tutorials
+                </NavLink>
+                <NavLink
+                  href="/guides"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
+                  spinnerClassName="text-primary"
                 >
-                  GitHub
-                </a>
+                  Guides
+                </NavLink>
+                <NavLink
+                  href="/changelog"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
+                  spinnerClassName="text-primary"
+                >
+                  Changelog
+                </NavLink>
+                <NavLink
+                  href="/resources"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
+                  spinnerClassName="text-primary"
+                >
+                  Resources
+                </NavLink>
               </nav>
             </div>
 

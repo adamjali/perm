@@ -39,6 +39,18 @@ export const AUTH_NAV_LINKS: NavLink[] = [
 ];
 
 /**
+ * Content hub navigation links
+ * Used in footer and content section headers
+ */
+export const CONTENT_NAV_LINKS: NavLink[] = [
+  { href: "/blog", label: "Blog" },
+  { href: "/tutorials", label: "Tutorials" },
+  { href: "/guides", label: "Guides" },
+  { href: "/changelog", label: "Changelog" },
+  { href: "/resources", label: "Resources" },
+];
+
+/**
  * Section navigation for home page
  * Uses scroll-spy to highlight current section
  * Links to #section IDs within the home page

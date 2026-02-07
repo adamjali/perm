@@ -11,12 +11,13 @@
 export { DocumentStackSVG } from "./DocumentStackSVG";
 export { GlobePassportSVG } from "./GlobePassportSVG";
 export { CalendarDeadlineSVG } from "./CalendarDeadlineSVG";
+export { CalendarSyncSVG } from "./CalendarSyncSVG";
 export { ShieldCheckSVG } from "./ShieldCheckSVG";
 export { NotificationBellSVG } from "./NotificationBellSVG";
 export { TimelineSVG } from "./TimelineSVG";
 export { LawGavelSVG } from "./LawGavelSVG";
 export { FolderOpenSVG } from "./FolderOpenSVG";
 export { RocketLaunchSVG } from "./RocketLaunchSVG";
-export { TeamCollabSVG } from "./TeamCollabSVG";
 export { ClockUrgentSVG } from "./ClockUrgentSVG";
 export { SuccessCelebrationSVG } from "./SuccessCelebrationSVG";
+export { NewspaperAdSVG } from "./NewspaperAdSVG";

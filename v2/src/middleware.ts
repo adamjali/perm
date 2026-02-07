@@ -15,6 +15,16 @@ const isPublicRoute = createRouteMatcher([
   "/contact",
   "/privacy",
   "/terms",
+  // Content hub pages (SEO)
+  "/blog",
+  "/blog/(.*)",
+  "/tutorials",
+  "/tutorials/(.*)",
+  "/guides",
+  "/guides/(.*)",
+  "/changelog",
+  "/resources",
+  "/resources/(.*)",
   // Static assets and SEO routes that need to be public
   "/icon",
   "/favicon.ico",

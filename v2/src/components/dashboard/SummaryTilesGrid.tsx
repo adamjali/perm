@@ -57,7 +57,7 @@ function SummaryTilesGridContent({
     data.closed.count;
 
   return (
-    <div>
+    <div data-tour="summary-tiles">
       {/* Section header with total badge */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-heading text-2xl font-bold">Case Summary</h2>

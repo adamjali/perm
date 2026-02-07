@@ -322,6 +322,7 @@ export function CalendarPageClient() {
 
   return (
     <motion.div
+      data-tour="calendar-view"
       className="flex flex-col h-full"
       variants={pageVariants}
       initial="hidden"

@@ -67,7 +67,7 @@ export default function UpcomingDeadlinesWidget(): ReactNode {
   }
 
   return (
-    <div className={WIDGET_CONTAINER_CLASSES}>
+    <div data-tour="upcoming-deadlines" className={WIDGET_CONTAINER_CLASSES}>
       <WidgetHeader
         icon={Calendar}
         title="Next 30 Days"

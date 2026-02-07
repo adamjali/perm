@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** January 2026
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** February 2026
 
 ## Production URLs
 
@@ -43,6 +43,8 @@ pnpm dev
 |-------|------|
 | **Developer Guide (PRIMARY)** | [v2/CLAUDE.md](v2/CLAUDE.md) |
 | **API Reference** | [v2/docs/API.md](v2/docs/API.md) |
+| Design System | [v2/docs/DESIGN_SYSTEM.md](v2/docs/DESIGN_SYSTEM.md) |
+| Animation Catalog | [v2/docs/ANIMATION_STORYBOARD.md](v2/docs/ANIMATION_STORYBOARD.md) |
 | PERM Workflow (canonical) | [perm_flow.md](perm_flow.md) |
 | Testing Guide | [v2/TEST_README.md](v2/TEST_README.md) |
 | Codebase Architecture | [.planning/codebase/](.planning/codebase/) |

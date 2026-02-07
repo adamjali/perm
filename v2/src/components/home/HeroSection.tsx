@@ -5,7 +5,7 @@
  *
  * Visually rich hero section with:
  * - Background photograph with dark overlay
- * - GlobePassportSVG illustration
+ * - SVG illustrations
  * - Floating SVG icons with parallax
  * - Shimmer gradient on "Effortlessly" accent
  * - Dashboard screenshot with neobrutalist frame
@@ -67,25 +67,25 @@ export function HeroSection() {
             <ScrollReveal direction="up">
               <div className="inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
                 <span className="pulse-dot h-2 w-2 bg-primary" />
-                Case Management Reimagined
+                Free for Immigration Attorneys
               </div>
             </ScrollReveal>
 
             {/* Headline with shimmer accent */}
             <ScrollReveal direction="up" delay={0.05}>
               <h1 className="font-heading text-4xl font-black leading-[1.1] tracking-[-0.02em] sm:text-5xl lg:text-6xl xl:text-7xl">
-                Track Your PERM Cases{" "}
+                Never Miss a PERM{" "}
                 <span className="hero-shimmer-text inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-                  Effortlessly
-                </span>
+                  Deadline
+                </span>{" "}
+                Again
               </h1>
             </ScrollReveal>
 
             {/* Subheadline */}
             <ScrollReveal direction="up" delay={0.1}>
               <p className="max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-                Free, modern case management for immigration attorneys.
-                Never miss a deadline, stay organized, and manage your PERM cases with confidence.
+                One missed filing window can kill a case. PERM Tracker auto-calculates every DOL deadline, sends reminders, and keeps your entire caseload organized — so you can focus on your clients, not spreadsheets.
               </p>
             </ScrollReveal>
 
@@ -103,7 +103,7 @@ export function HeroSection() {
                   ) : (
                     <Rocket className="mr-2 h-5 w-5" />
                   )}
-                  Get Started Free
+                  Start Tracking Cases Free
                 </Button>
                 <Button
                   variant="outline"
@@ -127,15 +127,15 @@ export function HeroSection() {
               <div className="flex flex-wrap gap-3 pt-2">
                 <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
                   <Shield className="h-3.5 w-3.5 text-primary" />
-                  DOL Compliant
+                  20 CFR 656 Compliant
                 </div>
                 <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
                   <Zap className="h-3.5 w-3.5 text-primary" />
-                  Real-time Updates
+                  No Credit Card Required
                 </div>
                 <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
                   <Clock className="h-3.5 w-3.5 text-primary" />
-                  Auto Deadlines
+                  Set Up in 2 Minutes
                 </div>
               </div>
             </ScrollReveal>

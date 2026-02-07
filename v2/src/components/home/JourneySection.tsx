@@ -28,7 +28,7 @@ import {
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import {
   DocumentStackSVG,
-  TeamCollabSVG,
+  NewspaperAdSVG,
   CalendarDeadlineSVG,
   ShieldCheckSVG,
   SuccessCelebrationSVG,
@@ -69,7 +69,7 @@ const stages: JourneyStage[] = [
   },
   {
     number: "2",
-    illustration: <TeamCollabSVG size={70} className="text-foreground" />,
+    illustration: <NewspaperAdSVG size={70} className="text-foreground" />,
     title: "Recruitment",
     description:
       "Conduct required recruitment activities including Sunday ads, job orders, and additional methods.",
@@ -175,11 +175,10 @@ export function JourneySection() {
             The PERM Process
           </div>
           <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-            Your Immigration Journey
+            Every PERM Stage, Tracked
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-            Follow the complete PERM labor certification process from start to
-            finish. We track every deadline so you don&apos;t have to.
+            From PWD request to I-140 approval — we calculate every deadline, validate every step, and alert you before anything expires.
           </p>
         </ScrollReveal>
       </div>

@@ -3,7 +3,7 @@
 **Framework:** Next.js 16 + React 19 + Tailwind CSS
 **Style:** Neobrutalism
 **Version:** 2.0
-**Last Updated:** 2026-01-03
+**Last Updated:** 2026-02-06
 
 **Source Files:**
 - Design tokens: `v2/src/app/globals.css`
@@ -205,6 +205,42 @@ Located in `v2/src/components/dashboard/`:
    - Fetches data from Convex `dashboard.getSummary`
    - Loading state with skeleton placeholders
    - Supports `cornerVariant` prop to apply decoration to all tiles
+
+### Content Hub Components
+
+Located in `v2/src/components/content/` (16 components, barrel-exported from `index.ts`):
+
+**Article Layout:**
+1. **ArticleLayout** - Full article page with hero, table of contents, and related posts
+2. **ContentHero** - Article hero section with title, metadata, and featured image
+3. **TableOfContents** - Sticky sidebar TOC with scroll-aware active heading highlighting
+4. **ReadingProgress** - FM `useScroll` + `useSpring` progress bar at top of article
+
+**Content Display:**
+5. **ContentCard** - Card for article previews in listings
+6. **ContentGrid** - Responsive grid for content cards
+7. **ContentListing** - Full listing page with filters and search
+8. **ContentCTA** - Call-to-action block for articles
+9. **ChangelogTimeline** - Single-page timeline for changelog entries
+
+**Media:**
+10. **ScreenshotFigure** - App screenshot with neobrutalist styling
+    - Props: `src`, `alt` (required), `caption?`, `step?` (numbered badge), `maxWidth?`
+    - Features: `border-2 border-border shadow-hard`, FM `whileInView` fade-up, green step badge, `font-mono text-xs` caption
+    - Uses `not-prose` to escape MDX prose styling
+11. **VideoPlayer** - Remotion video player (dynamic import, `ssr: false`)
+12. **VideoPlayerInner** - Client-side Remotion `<Player>` wrapper
+
+**Utilities:**
+13. **ShareButtons** - Social sharing (Twitter, LinkedIn, copy link)
+14. **RelatedPosts** - Related articles by tag similarity
+15. **CategoryFilter** - Content type filter tabs
+16. **ContentSearch** - Fuzzy search across articles
+17. **StructuredData** - JSON-LD structured data via `next/script`
+
+**MDX Components** (defined in `src/lib/content/mdx-components.tsx`):
+- `Callout` (info/warning/tip/important), `ProductCTA`, `StepByStep`/`Step`, `ComparisonTable`
+- Plus `ScreenshotFigure` and `VideoPlayer` registered for use in MDX articles
 
 ### Layout Components
 
@@ -454,5 +490,5 @@ focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
 ---
 
 **Maintained by:** Claude Code
-**Last Review:** 2026-01-03
-**Phase:** 25.1 (Calendar Sync & Accessibility)
+**Last Review:** 2026-02-06
+**Phase:** Content Hub Visual Aids

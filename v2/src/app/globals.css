@@ -872,6 +872,204 @@ body[data-scroll-locked] {
 }
 
 /* ============================================================================
+ * PROSE — NEOBRUTALIST ARTICLE TYPOGRAPHY
+ * ============================================================================
+ * Applied via .prose-neobrutalist on MDX article content.
+ * Matches the neobrutalist design system: hard edges, bold headings,
+ * Space Grotesk + Inter, lime green accents.
+ * ============================================================================ */
+.prose-neobrutalist {
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  color: var(--foreground);
+}
+
+.prose-neobrutalist > * + * {
+  margin-top: 1.5em;
+}
+
+/* Headings */
+.prose-neobrutalist h1,
+.prose-neobrutalist h2,
+.prose-neobrutalist h3,
+.prose-neobrutalist h4 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+  scroll-margin-top: 6rem;
+}
+
+.prose-neobrutalist h1 { font-size: 2.25rem; margin-top: 0; margin-bottom: 1rem; }
+.prose-neobrutalist h2 { font-size: 1.75rem; margin-top: 2.5em; margin-bottom: 0.75em; padding-bottom: 0.5em; border-bottom: 2px solid var(--border); }
+.prose-neobrutalist h3 { font-size: 1.375rem; margin-top: 2em; margin-bottom: 0.5em; }
+.prose-neobrutalist h4 { font-size: 1.125rem; margin-top: 1.5em; margin-bottom: 0.5em; }
+
+/* Paragraphs */
+.prose-neobrutalist p {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+/* Links */
+.prose-neobrutalist a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+
+.prose-neobrutalist a:hover {
+  color: var(--foreground);
+  text-decoration-color: var(--primary);
+}
+
+/* Strong / Bold */
+.prose-neobrutalist strong {
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+/* Lists */
+.prose-neobrutalist ul,
+.prose-neobrutalist ol {
+  padding-left: 1.5em;
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+.prose-neobrutalist ul {
+  list-style-type: square;
+}
+
+.prose-neobrutalist ol {
+  list-style-type: decimal;
+}
+
+.prose-neobrutalist li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose-neobrutalist li > ul,
+.prose-neobrutalist li > ol {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+/* Blockquote */
+.prose-neobrutalist blockquote {
+  border-left: 4px solid var(--primary);
+  padding: 1em 1.5em;
+  margin: 1.5em 0;
+  background: var(--muted);
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+.prose-neobrutalist blockquote p {
+  margin: 0;
+}
+
+/* Code — inline */
+.prose-neobrutalist :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  padding: 0.15em 0.4em;
+  font-weight: 500;
+}
+
+/* Code — block (pre) */
+.prose-neobrutalist pre {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  background: hsl(0 0% 8%);
+  color: hsl(0 0% 92%);
+  border: 2px solid var(--border);
+  padding: 1.25em;
+  overflow-x: auto;
+  margin: 1.5em 0;
+}
+
+.prose-neobrutalist pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* Tables */
+.prose-neobrutalist table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.9375rem;
+}
+
+.prose-neobrutalist thead th {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-align: left;
+  padding: 0.75em 1em;
+  border: 2px solid var(--border);
+  background: var(--muted);
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.prose-neobrutalist tbody td {
+  padding: 0.75em 1em;
+  border: 2px solid var(--border);
+}
+
+.prose-neobrutalist tbody tr:nth-child(even) {
+  background: var(--muted);
+}
+
+/* Images */
+.prose-neobrutalist img {
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-hard);
+  margin: 1.5em 0;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Horizontal rule */
+.prose-neobrutalist hr {
+  border: none;
+  border-top: 2px solid var(--border);
+  margin: 2em 0;
+}
+
+/* Autolink heading anchor */
+.prose-neobrutalist .anchor {
+  text-decoration: none;
+  opacity: 0;
+  margin-left: 0.25em;
+  transition: opacity 0.15s;
+}
+
+.prose-neobrutalist h2:hover .anchor,
+.prose-neobrutalist h3:hover .anchor,
+.prose-neobrutalist h4:hover .anchor {
+  opacity: 0.5;
+}
+
+/* Not-prose escape — prevents prose link styles from overriding embedded components */
+.prose-neobrutalist .not-prose a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: inherit;
+}
+
+/* ============================================================================
  * REDUCED MOTION ACCESSIBILITY
  * ============================================================================
  *
@@ -959,4 +1157,231 @@ body[data-scroll-locked] {
   .parallax {
     transform: none !important;
   }
+}
+
+/* ============================================================================
+ * Driver.js - Neobrutalist Theme
+ * Bold borders, hard shadows, uppercase headings, press-effect buttons
+ * ============================================================================ */
+
+/* Popover card */
+.driver-popover.neo-popover {
+  background: var(--card);
+  color: var(--foreground);
+  border: 3px solid var(--foreground);
+  border-radius: 0 !important;
+  box-shadow: 6px 6px 0px var(--foreground);
+  padding: 0;
+  max-width: 380px;
+  overflow: hidden;
+}
+
+/* Green accent bar at top */
+.driver-popover.neo-popover::before {
+  content: "";
+  display: block;
+  height: 4px;
+  background: var(--primary);
+}
+
+/* Content area */
+.driver-popover.neo-popover .driver-popover-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+  padding: 1rem 1.25rem 0;
+}
+
+.driver-popover.neo-popover .driver-popover-description {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  padding: 0.5rem 1.25rem 0;
+}
+
+/* Progress text — styled as a badge */
+.driver-popover.neo-popover .driver-popover-progress-text {
+  font-family: var(--font-heading);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.75rem 1.25rem 0;
+}
+
+/* Footer buttons area */
+.driver-popover.neo-popover .driver-popover-footer {
+  padding: 1rem 1.25rem;
+  border-top: 2px solid var(--border);
+  margin-top: 1rem;
+}
+
+/* All buttons — neobrutalist base */
+.driver-popover.neo-popover .driver-popover-navigation-btns button {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border: 2px solid var(--foreground);
+  border-radius: 0 !important;
+  box-shadow: 3px 3px 0px var(--foreground);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.5rem 1.25rem;
+  cursor: pointer;
+  transition: transform 100ms, box-shadow 100ms;
+}
+
+.driver-popover.neo-popover .driver-popover-navigation-btns button:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px var(--foreground);
+}
+
+.driver-popover.neo-popover .driver-popover-navigation-btns button:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0px 0px 0px var(--foreground);
+}
+
+/* Previous / back button — outline variant */
+.driver-popover.neo-popover .driver-popover-prev-btn {
+  background: var(--background);
+  color: var(--foreground);
+  border-color: var(--border);
+  box-shadow: 3px 3px 0px var(--border);
+}
+
+.driver-popover.neo-popover .driver-popover-prev-btn:hover {
+  box-shadow: 4px 4px 0px var(--border);
+}
+
+.driver-popover.neo-popover .driver-popover-prev-btn:active {
+  box-shadow: 0px 0px 0px var(--border);
+}
+
+/* Close X button */
+.driver-popover.neo-popover .driver-popover-close-btn {
+  color: var(--muted-foreground);
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0.5rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  position: absolute;
+  top: 8px;
+  right: 6px;
+}
+
+.driver-popover.neo-popover .driver-popover-close-btn:hover {
+  color: var(--foreground);
+  transform: none;
+  box-shadow: none;
+  background: var(--muted);
+}
+
+.driver-popover.neo-popover .driver-popover-close-btn:active {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Arrow — match card background behind the border */
+.driver-popover.neo-popover .driver-popover-arrow-side-bottom .driver-popover-arrow {
+  border-bottom-color: var(--primary);
+}
+.driver-popover.neo-popover .driver-popover-arrow-side-top .driver-popover-arrow {
+  border-top-color: var(--card);
+}
+.driver-popover.neo-popover .driver-popover-arrow-side-left .driver-popover-arrow {
+  border-left-color: var(--card);
+}
+.driver-popover.neo-popover .driver-popover-arrow-side-right .driver-popover-arrow {
+  border-right-color: var(--card);
+}
+
+/* Stage highlight — sharp corners, bold outline */
+.driver-active-element {
+  border-radius: 0 !important;
+}
+
+/* Mobile: constrain popover width and reduce padding */
+@media (max-width: 480px) {
+  .driver-popover.neo-popover {
+    max-width: calc(100vw - 2rem);
+    box-shadow: 4px 4px 0px var(--foreground);
+  }
+
+  .driver-popover.neo-popover .driver-popover-title {
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem 0;
+  }
+
+  .driver-popover.neo-popover .driver-popover-description {
+    font-size: 0.8125rem;
+    padding: 0.375rem 1rem 0;
+  }
+
+  .driver-popover.neo-popover .driver-popover-progress-text {
+    font-size: 0.625rem;
+    padding: 0.5rem 1rem 0;
+  }
+
+  .driver-popover.neo-popover .driver-popover-footer {
+    padding: 0.75rem 1rem;
+  }
+
+  .driver-popover.neo-popover .driver-popover-navigation-btns button {
+    padding: 0.5rem 1rem;
+    font-size: 0.6875rem;
+  }
+}
+
+/* Dark mode adjustments */
+.dark .driver-popover.neo-popover {
+  border-color: var(--primary);
+  box-shadow: 6px 6px 0px color-mix(in srgb, var(--primary) 60%, black);
+}
+
+/* Next / Done button — high contrast in dark mode */
+.dark .driver-popover.neo-popover .driver-popover-navigation-btns button {
+  background: var(--primary);
+  color: #000;
+  border-color: #000;
+  box-shadow: 3px 3px 0px #000;
+}
+
+.dark .driver-popover.neo-popover .driver-popover-navigation-btns button:hover {
+  background: color-mix(in srgb, var(--primary) 85%, white);
+  box-shadow: 4px 4px 0px #000;
+}
+
+.dark .driver-popover.neo-popover .driver-popover-navigation-btns button:active {
+  box-shadow: 0px 0px 0px #000;
+}
+
+/* Back button — visible outline in dark mode */
+.dark .driver-popover.neo-popover .driver-popover-prev-btn {
+  background: transparent;
+  color: var(--foreground);
+  border-color: var(--border);
+  box-shadow: 3px 3px 0px color-mix(in srgb, var(--border) 50%, transparent);
+}
+
+.dark .driver-popover.neo-popover .driver-popover-prev-btn:hover {
+  background: var(--muted);
+  box-shadow: 4px 4px 0px color-mix(in srgb, var(--border) 50%, transparent);
+}
+
+.dark .driver-popover.neo-popover .driver-popover-prev-btn:active {
+  box-shadow: 0px 0px 0px transparent;
+}
+
+.dark .driver-popover.neo-popover .driver-popover-arrow-side-bottom .driver-popover-arrow {
+  border-bottom-color: var(--primary);
 }

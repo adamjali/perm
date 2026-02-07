@@ -1,23 +1,15 @@
 /**
  * MiniTimeline Component
  *
- * Vertical list of cases with progress bars showing stage completion.
- * Compact styling for grid cell display.
- *
- * Features:
- * - Progress bar (width based on stage completion %)
- * - Status badge for current stage
- * - Stage color for progress bar
- * - Max 5 items shown (sorted by nearest deadline)
- * - Dark mode support
- *
+ * Neobrutalist case progress panel showing stage completion bars.
+ * Matches the real product's visual language with bold borders,
+ * stage-colored progress bars, and compact typography.
  */
 
 "use client";
 
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { BarChart3 } from "lucide-react";
 import type { DemoCase } from "@/lib/demo";
 import type { CaseStatus, ProgressStatus } from "@/lib/perm";
 
@@ -25,44 +17,31 @@ interface MiniTimelineProps {
   cases: DemoCase[];
 }
 
-/**
- * Progress percentage mapping based on case status and progress
- * Represents overall completion through the PERM process
- */
 const STATUS_PROGRESS: Record<string, number> = {
-  // PWD Stage (0-20%)
   "pwd:working": 5,
   "pwd:waiting_intake": 8,
   "pwd:filed": 12,
   "pwd:under_review": 15,
   "pwd:rfi_rfe": 14,
   "pwd:approved": 20,
-
-  // Recruitment Stage (20-40%)
   "recruitment:working": 25,
   "recruitment:waiting_intake": 28,
   "recruitment:filed": 32,
   "recruitment:under_review": 35,
   "recruitment:rfi_rfe": 34,
   "recruitment:approved": 40,
-
-  // ETA 9089 Stage (40-70%)
   "eta9089:working": 45,
   "eta9089:waiting_intake": 48,
   "eta9089:filed": 55,
   "eta9089:under_review": 60,
   "eta9089:rfi_rfe": 58,
   "eta9089:approved": 70,
-
-  // I-140 Stage (70-100%)
   "i140:working": 75,
   "i140:waiting_intake": 78,
   "i140:filed": 85,
   "i140:under_review": 90,
   "i140:rfi_rfe": 88,
   "i140:approved": 100,
-
-  // Closed (could be at any stage)
   "closed:working": 0,
   "closed:waiting_intake": 0,
   "closed:filed": 0,
@@ -71,9 +50,6 @@ const STATUS_PROGRESS: Record<string, number> = {
   "closed:approved": 0,
 };
 
-/**
- * Stage color CSS classes for progress bars
- */
 const STAGE_COLORS: Record<CaseStatus, string> = {
   pwd: "bg-stage-pwd",
   recruitment: "bg-stage-recruitment",
@@ -82,20 +58,14 @@ const STAGE_COLORS: Record<CaseStatus, string> = {
   closed: "bg-stage-closed",
 };
 
-/**
- * Human-readable stage labels
- */
 const STAGE_LABELS: Record<CaseStatus, string> = {
   pwd: "PWD",
   recruitment: "Recruitment",
   eta9089: "ETA 9089",
   i140: "I-140",
-  closed: "Closed",
+  closed: "Complete",
 };
 
-/**
- * Human-readable progress status labels
- */
 const PROGRESS_LABELS: Record<ProgressStatus, string> = {
   working: "Working",
   waiting_intake: "Waiting",
@@ -105,62 +75,36 @@ const PROGRESS_LABELS: Record<ProgressStatus, string> = {
   rfi_rfe: "RFI/RFE",
 };
 
-/**
- * Get progress percentage for a case
- */
 function getProgressPercentage(status: CaseStatus, progressStatus: ProgressStatus): number {
   const key = `${status}:${progressStatus}`;
   return STATUS_PROGRESS[key] ?? 0;
 }
 
-/**
- * Get the nearest upcoming deadline from a case
- */
 function getNearestDeadline(caseData: DemoCase): Date | null {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const deadlines: Date[] = [];
 
-  if (caseData.pwdExpirationDate) {
-    deadlines.push(new Date(caseData.pwdExpirationDate));
-  }
-  if (caseData.jobOrderEndDate) {
-    deadlines.push(new Date(caseData.jobOrderEndDate));
-  }
-  if (caseData.noticeOfFilingEndDate) {
-    deadlines.push(new Date(caseData.noticeOfFilingEndDate));
-  }
-  if (caseData.rfiDueDate && !caseData.rfiSubmittedDate) {
-    deadlines.push(new Date(caseData.rfiDueDate));
-  }
-  if (caseData.rfeDueDate && !caseData.rfeSubmittedDate) {
-    deadlines.push(new Date(caseData.rfeDueDate));
-  }
-  if (caseData.eta9089ExpirationDate) {
-    deadlines.push(new Date(caseData.eta9089ExpirationDate));
-  }
+  if (caseData.pwdExpirationDate) deadlines.push(new Date(caseData.pwdExpirationDate));
+  if (caseData.jobOrderEndDate) deadlines.push(new Date(caseData.jobOrderEndDate));
+  if (caseData.noticeOfFilingEndDate) deadlines.push(new Date(caseData.noticeOfFilingEndDate));
+  if (caseData.rfiDueDate && !caseData.rfiSubmittedDate) deadlines.push(new Date(caseData.rfiDueDate));
+  if (caseData.rfeDueDate && !caseData.rfeSubmittedDate) deadlines.push(new Date(caseData.rfeDueDate));
+  if (caseData.eta9089ExpirationDate) deadlines.push(new Date(caseData.eta9089ExpirationDate));
 
-  // Filter to upcoming deadlines only
   const upcoming = deadlines.filter((d) => d >= today);
-
   if (upcoming.length === 0) return null;
-
-  // Return nearest
-  return upcoming.reduce((nearest, current) =>
-    current < nearest ? current : nearest
-  );
+  return upcoming.reduce((nearest, current) => (current < nearest ? current : nearest));
 }
 
 export function MiniTimeline({ cases }: MiniTimelineProps) {
-  // Sort cases by nearest deadline and take top 5
   const sortedCases = useMemo(() => {
     const withDeadlines = cases.map((c) => ({
       ...c,
       nearestDeadline: getNearestDeadline(c),
     }));
 
-    // Sort by nearest deadline (null deadlines go to end)
     withDeadlines.sort((a, b) => {
       if (!a.nearestDeadline && !b.nearestDeadline) return 0;
       if (!a.nearestDeadline) return 1;
@@ -173,75 +117,82 @@ export function MiniTimeline({ cases }: MiniTimelineProps) {
 
   if (sortedCases.length === 0) {
     return (
-      <Card className="h-full">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Case Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            No cases to display
-          </p>
-        </CardContent>
-      </Card>
+      <div className="border-3 border-border bg-background shadow-hard overflow-hidden">
+        <div className="flex items-center gap-2 border-b-2 border-border bg-muted px-4 py-3">
+          <BarChart3 className="h-4 w-4 text-primary" />
+          <h3 className="font-heading text-sm font-bold">Case Progress</h3>
+        </div>
+        <div className="p-8 text-center">
+          <p className="text-sm text-muted-foreground">No cases to display</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Case Progress</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 pb-4">
+    <div className="border-3 border-border bg-background shadow-hard overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-2 border-b-2 border-border bg-muted px-4 py-3">
+        <BarChart3 className="h-4 w-4 text-primary" />
+        <h3 className="font-heading text-sm font-bold">Case Progress</h3>
+      </div>
+
+      {/* Cases */}
+      <div className="divide-y-2 divide-border">
         {sortedCases.map((caseData) => {
           const progress = getProgressPercentage(caseData.status, caseData.progressStatus);
           const stageColor = STAGE_COLORS[caseData.status];
           const stageLabel = STAGE_LABELS[caseData.status];
           const progressLabel = PROGRESS_LABELS[caseData.progressStatus];
+          const isClosed = caseData.status === "closed";
 
           return (
             <div
               key={caseData.id}
-              className="border-l-4 pl-3"
-              style={{
-                borderColor: `var(--stage-${caseData.status})`,
-              }}
+              className="px-4 py-3"
+              style={{ borderLeft: `4px solid var(--stage-${caseData.status})` }}
             >
-              {/* Case Name */}
-              <div className="mb-1 flex items-start justify-between gap-2">
-                <p className="line-clamp-1 text-xs font-medium">
-                  {caseData.beneficiaryName} @ {caseData.employerName}
+              {/* Case header */}
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="truncate text-xs font-bold">
+                  {caseData.beneficiaryName}
                 </p>
-                <Badge
-                  variant="outline"
-                  className="shrink-0 px-1.5 py-0 text-[10px]"
+                <span
+                  className={`shrink-0 px-1.5 py-0 text-[9px] font-black uppercase tracking-wider text-black ${stageColor}`}
                 >
                   {stageLabel}
-                </Badge>
+                </span>
               </div>
 
               {/* Progress Bar */}
-              <div className="mb-1 h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div className="mb-1.5 h-2.5 w-full border border-border bg-muted overflow-hidden">
                 <div
-                  className={`h-full transition-all duration-300 ${stageColor}`}
-                  style={{ width: `${progress}%` }}
+                  className={`h-full transition-all duration-500 ${stageColor}`}
+                  style={{ width: `${isClosed && caseData.progressStatus === "approved" ? 100 : progress}%` }}
                 />
               </div>
 
-              {/* Progress Info */}
-              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                <span>{progressLabel}</span>
-                <span>{progress}%</span>
+              {/* Progress info */}
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {progressLabel}
+                </span>
+                <span className="font-mono text-[10px] font-bold">
+                  {isClosed && caseData.progressStatus === "approved" ? 100 : progress}%
+                </span>
               </div>
             </div>
           );
         })}
+      </div>
 
-        {cases.length > 5 && (
-          <p className="pt-1 text-center text-[10px] text-muted-foreground">
+      {cases.length > 5 && (
+        <div className="border-t-2 border-dashed border-border px-4 py-2 text-center">
+          <span className="font-mono text-[10px] text-muted-foreground">
             +{cases.length - 5} more cases
-          </p>
-        )}
-      </CardContent>
-    </Card>
+          </span>
+        </div>
+      )}
+    </div>
   );
 }

@@ -70,6 +70,7 @@ export function ChatWidget({
             exit={{ opacity: 0, scale: 0 }}
             transition={springConfig}
             className="fixed bottom-20 right-4 z-[60]"
+            data-tour="chat-bubble"
           >
             <Button
               onClick={() => setIsOpen(true)}

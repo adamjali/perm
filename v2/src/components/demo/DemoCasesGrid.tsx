@@ -1,22 +1,14 @@
 /**
  * DemoCasesGrid Component
  *
- * Responsive grid layout for demo case cards.
- * Includes add button and empty state handling.
- *
- * Features:
- * - Responsive grid: 1 col mobile, 2 col tablet, 3 col desktop
- * - Add Case button at top
- * - Empty state when no cases
- * - AnimatePresence for enter/exit animations
- *
+ * Responsive grid for demo case cards with neobrutalist add button
+ * and empty state. AnimatePresence for enter/exit animations.
  */
 
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
 import { Plus, FolderOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { DemoCaseCard } from "./DemoCaseCard";
 import type { DemoCase } from "@/lib/demo";
 
@@ -32,31 +24,39 @@ export function DemoCasesGrid({ cases, onEdit, onDelete, onAdd }: DemoCasesGridP
     <div>
       {/* Header with Add Button */}
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           {cases.length} {cases.length === 1 ? "case" : "cases"}
         </p>
-        <Button onClick={onAdd} size="sm" className="gap-1.5">
-          <Plus className="size-4" />
+        <button
+          type="button"
+          onClick={onAdd}
+          className="inline-flex items-center gap-1.5 border-3 border-border bg-primary px-4 py-2 font-heading text-xs font-bold uppercase tracking-wider text-black shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0 active:translate-y-0 active:shadow-none"
+        >
+          <Plus className="h-3.5 w-3.5" />
           Add Case
-        </Button>
+        </button>
       </div>
 
       {/* Grid or Empty State */}
       {cases.length === 0 ? (
-        <div className="flex h-64 flex-col items-center justify-center gap-4 border-2 border-dashed border-muted-foreground/30 bg-muted/30">
-          <FolderOpen className="size-12 text-muted-foreground/50" />
+        <div className="flex h-64 flex-col items-center justify-center gap-4 border-3 border-dashed border-border bg-muted/30">
+          <FolderOpen className="h-12 w-12 text-muted-foreground/40" />
           <div className="text-center">
-            <p className="font-heading font-semibold text-muted-foreground">
+            <p className="font-heading font-bold text-muted-foreground">
               No cases yet
             </p>
-            <p className="text-sm text-muted-foreground/70">
+            <p className="mt-1 text-sm text-muted-foreground/70">
               Click &quot;Add Case&quot; to create your first demo case
             </p>
           </div>
-          <Button onClick={onAdd} variant="outline" size="sm" className="gap-1.5">
-            <Plus className="size-4" />
+          <button
+            type="button"
+            onClick={onAdd}
+            className="inline-flex items-center gap-1.5 border-2 border-border bg-background px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors hover:bg-muted"
+          >
+            <Plus className="h-3.5 w-3.5" />
             Add Case
-          </Button>
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

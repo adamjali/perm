@@ -187,11 +187,13 @@ export default function Header(): React.ReactElement {
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
+              const tourId = link.href === "/cases" ? "nav-cases" : link.href === "/calendar" ? "nav-calendar" : undefined;
               return (
                 <NavLink
                   key={link.href}
                   href={link.href}
                   spinnerClassName="text-primary"
+                  data-tour={tourId}
                   className={cn(
                     "hover-underline px-3 lg:px-4 py-2 text-sm font-semibold font-heading uppercase tracking-wide transition-colors",
                     isActive

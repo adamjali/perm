@@ -1,7 +1,7 @@
 # PERM Tracker v2
 
 **Production:** https://permtracker.app
-**Version:** 2.0.0 | **Last Updated:** 2026-01-16
+**Version:** 2.0.0 | **Last Updated:** 2026-02-06
 
 ---
 
@@ -59,11 +59,17 @@ v2/
 │   ├── lib/perm/       # PERM business logic (canonical)
 │   ├── cases.ts        # Case CRUD
 │   └── schema.ts       # Database schema
+├── content/             # MDX content hub (blog, tutorials, guides, changelog)
 ├── src/
 │   ├── app/            # Next.js pages
-│   ├── components/     # React components
+│   ├── components/
+│   │   ├── ui/         # Core UI (shadcn/ui)
+│   │   ├── content/    # Content hub components (16)
+│   │   └── status/     # PERM status badges
 │   ├── emails/         # React Email templates
-│   └── lib/perm/       # Frontend PERM re-exports
+│   ├── lib/perm/       # Frontend PERM re-exports
+│   └── remotion/       # Video compositions
+├── public/images/       # Screenshots, GIFs, photos
 ├── docs/               # Feature documentation
 └── test-utils/         # Test utilities
 ```
@@ -74,10 +80,11 @@ v2/
 
 | Document | Purpose |
 |----------|---------|
-| **[CLAUDE.md](CLAUDE.md)** | Developer guide with API reference |
+| **[CLAUDE.md](CLAUDE.md)** | Developer guide, content hub, file structure |
 | [TEST_README.md](TEST_README.md) | Testing commands and patterns |
 | [docs/API.md](docs/API.md) | Convex API reference |
-| [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | Design tokens and components |
+| [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | Design tokens, components (UI, content, status) |
+| [docs/ANIMATION_STORYBOARD.md](docs/ANIMATION_STORYBOARD.md) | Animation catalog and patterns |
 
 **Parent docs:** See root [README.md](../README.md) for project overview.
 
@@ -91,6 +98,7 @@ v2/
 - **Calendar** — Month/week/day views, deadline color coding
 - **Notifications** — In-app, email (Resend), push (Web Push), cron reminders
 - **AI Chat** — Natural language queries, case updates, regulation lookup
+- **Content Hub** — Blog, tutorials, guides, changelog (MDX-powered, 12 articles)
 
 ---
 

@@ -11,6 +11,7 @@ import RecentActivityWidget from "@/components/dashboard/RecentActivityWidget";
 import UpcomingDeadlinesWidget from "@/components/dashboard/UpcomingDeadlinesWidget";
 import AddCaseButton from "@/components/dashboard/AddCaseButton";
 import AutoClosureAlertBanner from "@/components/dashboard/AutoClosureAlertBanner";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 
 export function DashboardPageClient() {
   const router = useRouter();
@@ -100,6 +101,9 @@ export function DashboardPageClient() {
       {/* Summary Tiles Grid */}
       <SummaryTilesGrid cornerVariant="tag" />
 
+      {/* Onboarding Checklist - shown for new users after wizard */}
+      <OnboardingChecklist />
+
       {/* Two-column layout: Upcoming Deadlines | Recent Activity */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <UpcomingDeadlinesWidget />
@@ -107,9 +111,10 @@ export function DashboardPageClient() {
       </div>
 
       {/* Add Case Button - Full width call to action */}
-      <div className="flex justify-center">
+      <div data-tour="add-case-button" className="flex justify-center">
         <AddCaseButton />
       </div>
+
     </div>
   );
 }

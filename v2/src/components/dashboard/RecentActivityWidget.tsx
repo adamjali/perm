@@ -81,6 +81,7 @@ export default function RecentActivityWidget(): ReactNode {
 
   return (
     <section
+      data-tour="recent-activity"
       className={cn(WIDGET_CONTAINER_CLASSES, "p-7")}
       aria-label="Recent Activity"
     >

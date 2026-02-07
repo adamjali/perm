@@ -107,11 +107,10 @@ export function CTASection() {
 
         <ScrollReveal direction="up" delay={0.05}>
           <h2 className="font-heading text-3xl font-black text-black sm:text-4xl lg:text-5xl">
-            Ready to Track Smarter?
+            Stop Tracking Deadlines Manually
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-lg text-black/70">
-            Join immigration attorneys who never miss a deadline. Get started
-            free today.
+            Set up in 2 minutes. Free forever. No credit card required.
           </p>
         </ScrollReveal>
 
@@ -129,7 +128,7 @@ export function CTASection() {
               ) : (
                 <Rocket className="mr-2 h-5 w-5" />
               )}
-              Get Started Free
+              Start Tracking Cases Free
             </Button>
             <Button
               variant="outline"

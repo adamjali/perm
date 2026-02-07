@@ -35,24 +35,24 @@ const steps: Step[] = [
   {
     number: 1,
     illustration: <RocketLaunchSVG size={80} className="text-foreground" />,
-    title: "Create Account",
-    description: "Sign up for free in seconds. No credit card required.",
+    title: "Sign Up Free",
+    description: "Create your account with Google in one click. No credit card, no setup fee, no trial limits.",
     bgImage: "/images/hero/legal-office-wide.jpg",
     accentColor: "var(--primary)",
   },
   {
     number: 2,
     illustration: <CalendarDeadlineSVG size={80} className="text-foreground" />,
-    title: "Add Cases",
-    description: "Enter your case details. We'll calculate all deadlines automatically.",
+    title: "Add Your Cases",
+    description: "Enter case details and key dates. Every downstream deadline — PWD expiration, filing windows, I-140 cutoffs — calculates automatically.",
     bgImage: "/images/features/calendar-planning.jpg",
     accentColor: "var(--stage-eta9089)",
   },
   {
     number: 3,
     illustration: <NotificationBellSVG size={80} className="text-foreground" />,
-    title: "Stay On Track",
-    description: "Receive notifications and never miss a deadline again.",
+    title: "Never Miss a Deadline",
+    description: "Get email and push alerts before deadlines hit. Sync to Google Calendar. Your whole team stays on the same page.",
     bgImage: "/images/features/notification-phone.jpg",
     accentColor: "var(--stage-pwd)",
   },
@@ -66,7 +66,7 @@ export function HowItWorks() {
   return (
     <section id="how" className="relative bg-muted">
       {/* Content container */}
-      <div className="mx-auto max-w-[1200px] px-4 py-20 sm:px-8 sm:py-28">
+      <div className="mx-auto max-w-[1400px] px-4 py-20 sm:px-8 sm:py-28">
         {/* Section header */}
         <ScrollReveal direction="up" className="mb-16 text-center">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
@@ -141,13 +141,66 @@ export function HowItWorks() {
                 </h3>
 
                 {/* Description */}
-                <p className="text-[15px] text-muted-foreground leading-relaxed max-w-[250px] mx-auto">
+                <p className="text-[15px] text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
                   {step.description}
                 </p>
               </div>
             </ScrollReveal>
           ))}
         </div>
+
+        {/* Product screenshots — see it in action */}
+        <ScrollReveal direction="up" delay={0.3} className="mt-16">
+          <div className="text-center mb-8">
+            <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              See it in action
+            </p>
+          </div>
+          <div className="grid gap-8 md:grid-cols-3">
+            {[
+              {
+                src: "/images/screenshots/screenshot-dashboard.png",
+                alt: "PERM Tracker dashboard showing deadline hub with overdue, this week, and upcoming deadlines",
+                label: "Deadline Hub",
+              },
+              {
+                src: "/images/screenshots/screenshot-cases.png",
+                alt: "Cases view with filterable case cards showing status, deadlines, and progress",
+                label: "Case Cards",
+              },
+              {
+                src: "/images/screenshots/screenshot-calendar.png",
+                alt: "Calendar view with color-coded PERM deadlines and AI assistant chat",
+                label: "Calendar + AI Chat",
+              },
+            ].map((screenshot) => (
+              <div key={screenshot.label} className="group">
+                <div className="border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
+                  {/* Mini browser chrome */}
+                  <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
+                    <div className="h-2 w-2 bg-[#FF5F57]" />
+                    <div className="h-2 w-2 bg-[#FFBD2E]" />
+                    <div className="h-2 w-2 bg-[#28CA41]" />
+                    <span className="ml-2 font-mono text-[9px] text-background/50">
+                      {screenshot.label}
+                    </span>
+                  </div>
+                  <Image
+                    src={screenshot.src}
+                    alt={screenshot.alt}
+                    width={800}
+                    height={500}
+                    className="w-full transition-transform duration-500 group-hover:scale-[1.02]"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 450px"
+                  />
+                </div>
+                <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                  {screenshot.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );

@@ -11,8 +11,9 @@
  * 4. FeaturesGrid - 6 feature cards with corner accents (#features)
  * 5. HowItWorks - 3-step process with connectors (#how)
  * 6. StatsSection - Count-up statistics
- * 7. FAQSection - Common questions (#faq)
- * 8. CTASection - Full-width CTA
+ * 7. TestimonialsSection - Value props + trust badges + G2 CTA
+ * 8. FAQSection - Common questions (#faq)
+ * 9. CTASection - Full-width CTA
  * (Footer is rendered by PublicLayout)
  *
  */

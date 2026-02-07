@@ -93,6 +93,7 @@ import type * as lib_userDefaults from "../lib/userDefaults.js";
 import type * as lib_userProfileHelpers from "../lib/userProfileHelpers.js";
 import type * as notificationActions from "../notificationActions.js";
 import type * as notifications from "../notifications.js";
+import type * as onboarding from "../onboarding.js";
 import type * as pushNotifications from "../pushNotifications.js";
 import type * as pushSubscriptions from "../pushSubscriptions.js";
 import type * as scheduledJobs from "../scheduledJobs.js";
@@ -194,6 +195,7 @@ declare const fullApi: ApiFromModules<{
   "lib/userProfileHelpers": typeof lib_userProfileHelpers;
   notificationActions: typeof notificationActions;
   notifications: typeof notifications;
+  onboarding: typeof onboarding;
   pushNotifications: typeof pushNotifications;
   pushSubscriptions: typeof pushSubscriptions;
   scheduledJobs: typeof scheduledJobs;

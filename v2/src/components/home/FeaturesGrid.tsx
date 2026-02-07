@@ -15,7 +15,7 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import {
   CalendarDeadlineSVG,
   NotificationBellSVG,
-  GlobePassportSVG,
+  CalendarSyncSVG,
   TimelineSVG,
   ShieldCheckSVG,
 } from "@/components/illustrations";
@@ -34,33 +34,33 @@ interface Feature {
 
 const features: Feature[] = [
   {
-    title: "Smart Deadlines",
+    title: "Auto Deadline Calculation",
     description:
-      "Automatic deadline calculation based on DOL regulations. Never miss a critical filing window.",
+      "Enter one date and every downstream deadline updates instantly — PWD expiration, filing windows, I-140 cutoffs. No more manual math or spreadsheet formulas.",
     illustration: <CalendarDeadlineSVG size={100} className="text-foreground" />,
     bgImage: "/images/features/calendar-planning.jpg",
     accentColor: "var(--stage-pwd)",
   },
   {
-    title: "Smart Notifications",
+    title: "Deadline Alerts",
     description:
-      "Get notified about upcoming deadlines, document expirations, and case status changes.",
+      "Get email and push notifications before deadlines hit. Your team stays informed even when you're in court or on vacation.",
     illustration: <NotificationBellSVG size={100} className="text-foreground" />,
     bgImage: "/images/features/notification-phone.jpg",
     accentColor: "var(--primary)",
   },
   {
-    title: "Calendar Sync",
+    title: "Google Calendar Sync",
     description:
-      "Sync deadlines directly to Google Calendar. Access your schedule anywhere, anytime.",
-    illustration: <GlobePassportSVG size={100} className="text-foreground" />,
+      "Every PERM deadline appears on your Google Calendar automatically. Access your filing schedule from any device.",
+    illustration: <CalendarSyncSVG size={100} className="text-foreground" />,
     bgImage: "/images/features/team-meeting.jpg",
     accentColor: "var(--stage-recruitment)",
   },
   {
-    title: "Case Timeline",
+    title: "Visual Case Timeline",
     description:
-      "Visual timeline showing every milestone in your case with color-coded progress tracking.",
+      "See exactly where each case stands with a color-coded timeline. Instantly spot which cases need attention and which are on track.",
     illustration: (
       <div className="flex items-center justify-center w-[100px] h-[100px]">
         <TimelineSVG size={180} className="text-foreground" />
@@ -70,32 +70,29 @@ const features: Feature[] = [
     accentColor: "var(--stage-eta9089)",
   },
   {
-    title: "Compliance Check",
+    title: "DOL Compliance Checks",
     description:
-      "Built-in validation ensures all recruitment activities meet DOL requirements.",
+      "Built-in validation catches missing recruitment steps, expired PWDs, and filing window violations before they become audit problems.",
     illustration: <ShieldCheckSVG size={100} className="text-foreground" />,
     bgImage: "/images/journey/pwd-documents.jpg",
     accentColor: "var(--stage-i140)",
   },
   {
-    title: "Dark Mode",
+    title: "AI Case Assistant",
     description:
-      "Easy on the eyes for those late-night filing sessions. Toggle anytime.",
+      "Ask questions in plain English — \"What cases have deadlines this week?\" or \"Start a new case for John Smith.\" It handles the rest.",
     illustration: (
       <svg width="100" height="100" viewBox="0 0 200 200" fill="none" className="text-foreground" aria-hidden="true">
-        {/* Moon */}
-        <circle cx="100" cy="90" r="55" fill="currentColor" opacity="0.1" stroke="currentColor" strokeWidth="3" />
-        <circle cx="125" cy="70" r="45" fill="var(--background)" />
-        {/* Stars */}
-        <g opacity="0.5">
-          <path d="M50 50 L52 46 L54 50 L58 52 L54 54 L52 58 L50 54 L46 52 Z" fill="var(--primary)" />
-          <path d="M140 40 L141.5 37 L143 40 L146 41.5 L143 43 L141.5 46 L140 43 L137 41.5 Z" fill="var(--primary)" />
-          <path d="M60 130 L61 128 L62 130 L64 131 L62 132 L61 134 L60 132 L58 131 Z" fill="currentColor" />
-          <path d="M155 120 L156.5 117 L158 120 L161 121.5 L158 123 L156.5 126 L155 123 L152 121.5 Z" fill="currentColor" />
-        </g>
-        {/* ZZZ */}
-        <text x="70" y="120" fill="var(--primary)" fontSize="20" fontWeight="900" fontFamily="var(--font-heading)" opacity="0.4">Z</text>
-        <text x="55" y="140" fill="var(--primary)" fontSize="16" fontWeight="900" fontFamily="var(--font-heading)" opacity="0.3">z</text>
+        {/* Chat bubble */}
+        <rect x="30" y="40" width="140" height="90" rx="8" fill="currentColor" opacity="0.08" stroke="currentColor" strokeWidth="3" />
+        <polygon points="60,130 80,130 70,150" fill="currentColor" opacity="0.08" stroke="currentColor" strokeWidth="3" />
+        {/* Sparkle */}
+        <path d="M140 55 L143 48 L146 55 L153 58 L146 61 L143 68 L140 61 L133 58 Z" fill="var(--primary)" />
+        <path d="M60 65 L61.5 61 L63 65 L67 66.5 L63 68 L61.5 72 L60 68 L56 66.5 Z" fill="var(--primary)" opacity="0.5" />
+        {/* Text lines */}
+        <line x1="55" y1="80" x2="125" y2="80" stroke="currentColor" strokeWidth="3" opacity="0.3" strokeLinecap="round" />
+        <line x1="55" y1="95" x2="105" y2="95" stroke="currentColor" strokeWidth="3" opacity="0.2" strokeLinecap="round" />
+        <line x1="55" y1="110" x2="115" y2="110" stroke="currentColor" strokeWidth="3" opacity="0.15" strokeLinecap="round" />
       </svg>
     ),
     bgImage: "/images/backgrounds/dark-geometric.jpg",
@@ -116,13 +113,13 @@ export function FeaturesGrid() {
         <ScrollReveal direction="up" className="mb-12 text-center sm:mb-16">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5" />
-            Powerful Features
+            What You Get
           </div>
           <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-            Everything You Need
+            Built for PERM Practitioners
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-            Built specifically for immigration attorneys handling PERM labor certification cases.
+            Stop juggling spreadsheets and calendar reminders. Every tool you need to manage PERM cases, in one place.
           </p>
         </ScrollReveal>
 

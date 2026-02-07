@@ -21,17 +21,30 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { AUTH_NAV_LINKS, HOME_SECTION_LINKS } from "@/lib/constants/navigation";
+import { AUTH_NAV_LINKS, HOME_SECTION_LINKS, CONTENT_NAV_LINKS } from "@/lib/constants/navigation";
 import ThemeToggle from "./ThemeToggle";
 import { NavLink } from "@/components/ui/nav-link";
-import { FileText, Menu, X } from "lucide-react";
+import { FileText, Menu, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function AuthHeader() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isLearnOpen, setIsLearnOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState<string>("hero");
+  const learnRef = React.useRef<HTMLDivElement>(null);
+
+  // Close Learn dropdown when clicking outside
+  React.useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (learnRef.current && !learnRef.current.contains(e.target as Node)) {
+        setIsLearnOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const showSignIn = pathname !== "/login";
   const showSignUp = pathname !== "/signup";
@@ -140,41 +153,119 @@ export default function AuthHeader() {
           {/* Nav Links */}
           <div className="flex items-center gap-1">
             {isHomePage ? (
-              HOME_SECTION_LINKS.map((link) => {
-                const sectionId = link.href.replace("#", "");
-                const isActive = activeSection === sectionId;
-                return (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    onClick={(e) => scrollToSection(e, link.href)}
-                    className={cn(
-                      "relative px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
-                      isActive ? "text-primary" : "text-white hover:text-primary"
-                    )}
-                  >
-                    {link.label}
-                    <span
+              <>
+                {HOME_SECTION_LINKS.map((link) => {
+                  const sectionId = link.href.replace("#", "");
+                  const isActive = activeSection === sectionId;
+                  return (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      onClick={(e) => scrollToSection(e, link.href)}
                       className={cn(
-                        "absolute bottom-0 left-3 right-3 h-[2px] bg-primary transition-transform duration-200 origin-left",
-                        isActive ? "scale-x-100" : "scale-x-0 hover:scale-x-100"
+                        "relative px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
+                        isActive ? "text-primary" : "text-white hover:text-primary"
                       )}
-                    />
-                  </a>
-                );
-              })
-            ) : (
-              AUTH_NAV_LINKS.filter((link) => link.href !== pathname).map((link) => (
+                    >
+                      {link.label}
+                      <span
+                        className={cn(
+                          "absolute bottom-0 left-3 right-3 h-[2px] bg-primary transition-transform duration-200 origin-left",
+                          isActive ? "scale-x-100" : "scale-x-0 hover:scale-x-100"
+                        )}
+                      />
+                    </a>
+                  );
+                })}
+
+                {/* Demo link */}
                 <NavLink
-                  key={link.href}
-                  href={link.href}
-                  className="px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
+                  href="/demo"
+                  className="relative px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
                   spinnerClassName="text-white"
                   spinnerSize={14}
                 >
-                  {link.label}
+                  Demo
                 </NavLink>
-              ))
+
+                {/* Learn dropdown */}
+                <div ref={learnRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsLearnOpen(!isLearnOpen)}
+                    className="flex items-center gap-1 px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
+                    aria-expanded={isLearnOpen}
+                  >
+                    Learn
+                    <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
+                  </button>
+                  {isLearnOpen && (
+                    <div className="absolute left-0 top-full mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(46,204,64,0.3)]">
+                      {CONTENT_NAV_LINKS.map((link) => (
+                        <NavLink
+                          key={link.href}
+                          href={link.href}
+                          className="block px-4 py-2 font-heading text-sm font-semibold text-white transition-colors hover:bg-white/5 hover:text-primary"
+                          spinnerClassName="text-white"
+                          spinnerSize={14}
+                          onClick={() => setIsLearnOpen(false)}
+                        >
+                          {link.label}
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                {AUTH_NAV_LINKS.filter((link) => link.href !== pathname).map((link) => (
+                  <NavLink
+                    key={link.href}
+                    href={link.href}
+                    className="px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
+                    spinnerClassName="text-white"
+                    spinnerSize={14}
+                  >
+                    {link.label}
+                  </NavLink>
+                ))}
+
+                {/* Learn dropdown */}
+                <div ref={learnRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsLearnOpen(!isLearnOpen)}
+                    className={cn(
+                      "flex items-center gap-1 px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
+                      CONTENT_NAV_LINKS.some(l => l.href === pathname) ? "text-primary" : "text-white hover:text-primary"
+                    )}
+                    aria-expanded={isLearnOpen}
+                  >
+                    Learn
+                    <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
+                  </button>
+                  {isLearnOpen && (
+                    <div className="absolute left-0 top-full mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(46,204,64,0.3)]">
+                      {CONTENT_NAV_LINKS.map((link) => (
+                        <NavLink
+                          key={link.href}
+                          href={link.href}
+                          className={cn(
+                            "block px-4 py-2 font-heading text-sm font-semibold transition-colors",
+                            pathname === link.href ? "bg-primary/10 text-primary" : "text-white hover:bg-white/5 hover:text-primary"
+                          )}
+                          spinnerClassName="text-white"
+                          spinnerSize={14}
+                          onClick={() => setIsLearnOpen(false)}
+                        >
+                          {link.label}
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
 
@@ -226,36 +317,92 @@ export default function AuthHeader() {
         <div className="absolute left-0 right-0 top-full border-b-3 border-white/20 bg-black px-4 py-4 sm:hidden">
           <nav className="flex flex-col gap-3">
             {isHomePage ? (
-              HOME_SECTION_LINKS.map((link) => {
-                const sectionId = link.href.replace("#", "");
-                const isActive = activeSection === sectionId;
-                return (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    onClick={(e) => scrollToSection(e, link.href)}
-                    className={cn(
-                      "block py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
-                      isActive ? "text-primary" : "text-white hover:text-primary"
-                    )}
-                  >
-                    {link.label}
-                  </a>
-                );
-              })
-            ) : (
-              AUTH_NAV_LINKS.filter((link) => link.href !== pathname).map((link) => (
+              <>
+                {HOME_SECTION_LINKS.map((link) => {
+                  const sectionId = link.href.replace("#", "");
+                  const isActive = activeSection === sectionId;
+                  return (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      onClick={(e) => scrollToSection(e, link.href)}
+                      className={cn(
+                        "block py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
+                        isActive ? "text-primary" : "text-white hover:text-primary"
+                      )}
+                    >
+                      {link.label}
+                    </a>
+                  );
+                })}
+
+                {/* Demo link */}
                 <NavLink
-                  key={link.href}
-                  href={link.href}
+                  href="/demo"
                   className="block py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
                   spinnerClassName="text-white"
                   spinnerSize={14}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  {link.label}
+                  Demo
                 </NavLink>
-              ))
+
+                {/* Learn section */}
+                <div className="border-t border-white/10 pt-2 mt-1">
+                  <p className="py-1 font-heading text-[10px] font-bold uppercase tracking-widest text-white/40">
+                    Learn
+                  </p>
+                  {CONTENT_NAV_LINKS.map((link) => (
+                    <NavLink
+                      key={link.href}
+                      href={link.href}
+                      className="block py-2 pl-2 font-heading text-sm font-semibold text-white transition-colors hover:text-primary"
+                      spinnerClassName="text-white"
+                      spinnerSize={14}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </NavLink>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                {AUTH_NAV_LINKS.filter((link) => link.href !== pathname).map((link) => (
+                  <NavLink
+                    key={link.href}
+                    href={link.href}
+                    className="block py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
+                    spinnerClassName="text-white"
+                    spinnerSize={14}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {link.label}
+                  </NavLink>
+                ))}
+
+                {/* Learn section */}
+                <div className="border-t border-white/10 pt-2 mt-1">
+                  <p className="py-1 font-heading text-[10px] font-bold uppercase tracking-widest text-white/40">
+                    Learn
+                  </p>
+                  {CONTENT_NAV_LINKS.map((link) => (
+                    <NavLink
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "block py-2 pl-2 font-heading text-sm font-semibold transition-colors",
+                        pathname === link.href ? "text-primary" : "text-white hover:text-primary"
+                      )}
+                      spinnerClassName="text-white"
+                      spinnerSize={14}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </NavLink>
+                  ))}
+                </div>
+              </>
             )}
             <div className="flex flex-col gap-3 border-t border-white/20 pt-3">
               {showSignIn && (

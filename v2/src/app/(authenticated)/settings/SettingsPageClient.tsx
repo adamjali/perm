@@ -231,7 +231,7 @@ export function SettingsPageClient() {
 
   return (
     <SettingsUnsavedChangesProvider>
-      <div className="space-y-8">
+      <div data-tour="settings-page" className="space-y-8">
         {/* Page Header */}
         <div>
           <h1 className="font-heading text-3xl font-bold">Settings</h1>

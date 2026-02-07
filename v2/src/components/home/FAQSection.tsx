@@ -25,34 +25,34 @@ interface FAQItem {
 
 const faqItems: FAQItem[] = [
   {
-    question: "What is PERM and why do I need to track it?",
+    question: "What exactly does PERM Tracker do?",
     answer:
-      "PERM (Program Electronic Review Management) is the DOL's labor certification process for permanent employment-based immigration. Tracking is critical because there are strict deadlines—miss one and the entire application could be denied or require starting over. PERM Tracker automates deadline calculations and sends reminders so you never miss a filing window.",
+      "PERM Tracker automates the deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline — PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync so your whole team stays aligned.",
   },
   {
-    question: "How does deadline tracking work?",
+    question: "How is this different from using a spreadsheet?",
     answer:
-      "Based on DOL regulations (20 CFR 656.40), PERM Tracker automatically calculates all critical deadlines. This includes PWD expiration dates, the 30-180 day ETA 9089 filing window after recruitment ends, the 180-day I-140 filing deadline after PERM certification, and RFI response deadlines. You'll get notifications before each deadline approaches.",
-  },
-  {
-    question: "Is my data secure?",
-    answer:
-      "Yes. We use industry-standard encryption, secure authentication, and row-level database security to protect your client data. We also offer Privacy Mode to hide sensitive information during screen sharing or presentations.",
-  },
-  {
-    question: "Can I import existing cases?",
-    answer:
-      "Yes! PERM Tracker supports CSV import for bulk case uploads. You can also export your data anytime. The import wizard maps your fields automatically and validates data before import.",
-  },
-  {
-    question: "How does the AI assistant work?",
-    answer:
-      'The AI assistant understands the entire PERM process. Ask questions in plain English like "What cases have deadlines this week?" or "Start a new case for John Smith at Acme Corp." It can search, filter, create, update, and explain—essentially anything you can do manually.',
+      "Spreadsheets require manual deadline math, don't send reminders, and break when regulations change. PERM Tracker auto-calculates 15+ deadlines per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.",
   },
   {
     question: "Is PERM Tracker really free?",
     answer:
-      "Yes, PERM Tracker is free to use. No credit card required to get started. Immigration attorneys deserve quality tools without the typical SaaS pricing. We may introduce optional premium features in the future.",
+      "Yes, completely free. No credit card, no trial period, no case limits. Immigration attorneys deserve quality tools without typical SaaS pricing. We may introduce optional premium features in the future, but the core tracking and deadline management will always be free.",
+  },
+  {
+    question: "Is my client data secure?",
+    answer:
+      "Yes. We use industry-standard encryption, secure Google OAuth authentication, and row-level database security. Your data is isolated — no other firm can see your cases. We also offer Privacy Mode to hide sensitive information during screen sharing or presentations.",
+  },
+  {
+    question: "Can I import my existing cases?",
+    answer:
+      "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime — your data is always yours.",
+  },
+  {
+    question: "What happens if DOL changes regulations?",
+    answer:
+      "We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don't need to manually update formulas or check for rule changes.",
   },
 ];
 

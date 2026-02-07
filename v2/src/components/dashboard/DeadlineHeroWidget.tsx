@@ -206,7 +206,7 @@ export default function DeadlineHeroWidget(): ReactNode {
   const hasOverdue = data.overdue.length > 0;
 
   return (
-    <div className="overflow-hidden rounded-none border-3 border-black dark:border-white/20 shadow-hard">
+    <div data-tour="deadline-hero" className="overflow-hidden rounded-none border-3 border-black dark:border-white/20 shadow-hard">
       <div className="hazard-strip-red" aria-hidden="true" />
       <div className="bg-card">
         <DeadlineHeroHeader

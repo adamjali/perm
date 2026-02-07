@@ -201,6 +201,19 @@ export default defineSchema({
      */
     termsVersion: v.optional(v.string()),
 
+    // Onboarding
+    /**
+     * Current onboarding step for the wizard/tour flow.
+     * undefined = not started, "done" = fully complete.
+     * Wizard steps: "welcome" | "role" | "create_case" | "value_preview" | "completion"
+     * Post-wizard: "tour_pending" | "tour_completed" | "done"
+     */
+    onboardingStep: v.optional(v.string()),
+    /** Timestamp when onboarding wizard was completed. */
+    onboardingCompletedAt: v.optional(v.number()),
+    /** Completed checklist item IDs. ["dismissed"] = user dismissed the checklist. */
+    onboardingChecklist: v.optional(v.array(v.string())),
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),

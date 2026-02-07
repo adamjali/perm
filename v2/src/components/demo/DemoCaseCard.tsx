@@ -1,26 +1,15 @@
 /**
  * DemoCaseCard Component
  *
- * Simplified case card for the demo page.
- * Displays case information with neobrutalist styling.
- *
- * Features:
- * - Stage color header (full width)
- * - Beneficiary and employer names
- * - Progress status badge
- * - Next deadline with urgency indicator
- * - PRO/RFI/RFE badges when applicable
- * - Edit and Delete action buttons
- *
+ * Neobrutalist case card matching the real product's visual identity.
+ * Stage-colored left border, bold typography, urgency indicators,
+ * and hard shadow hover effects.
  */
 
 "use client";
 
 import { useMemo } from "react";
-import { Pencil, Trash2 } from "lucide-react";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Pencil, Trash2, Star } from "lucide-react";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
 import { getUrgencyFromDeadline, getUrgencyDotClass } from "@/lib/status";
 import type { DemoCase } from "@/lib/demo";
@@ -32,10 +21,15 @@ interface DemoCaseCardProps {
   onDelete: () => void;
 }
 
-/**
- * Stage color CSS variables
- */
 const STAGE_COLORS: Record<CaseStatus, string> = {
+  pwd: "var(--stage-pwd)",
+  recruitment: "var(--stage-recruitment)",
+  eta9089: "var(--stage-eta9089)",
+  i140: "var(--stage-i140)",
+  closed: "var(--stage-closed)",
+};
+
+const STAGE_BG_CLASSES: Record<CaseStatus, string> = {
   pwd: "bg-stage-pwd",
   recruitment: "bg-stage-recruitment",
   eta9089: "bg-stage-eta9089",
@@ -43,9 +37,6 @@ const STAGE_COLORS: Record<CaseStatus, string> = {
   closed: "bg-stage-closed",
 };
 
-/**
- * Stage labels for display
- */
 const STAGE_LABELS: Record<CaseStatus, string> = {
   pwd: "PWD",
   recruitment: "Recruitment",
@@ -54,48 +45,31 @@ const STAGE_LABELS: Record<CaseStatus, string> = {
   closed: "Closed",
 };
 
-// Note: getUrgencyFromDeadline and getUrgencyDotClass are imported from @/lib/status
-
-/**
- * Get the next relevant deadline from a case
- */
 function getNextDeadline(caseData: DemoCase): { date: string; label: string } | null {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const deadlines: { date: string; label: string }[] = [];
 
-  // RFI due date (highest priority)
   if (caseData.rfiDueDate && !caseData.rfiSubmittedDate) {
     deadlines.push({ date: caseData.rfiDueDate, label: "RFI Due" });
   }
-
-  // RFE due date
   if (caseData.rfeDueDate && !caseData.rfeSubmittedDate) {
     deadlines.push({ date: caseData.rfeDueDate, label: "RFE Due" });
   }
-
-  // PWD expiration
   if (caseData.pwdExpirationDate) {
     deadlines.push({ date: caseData.pwdExpirationDate, label: "PWD Expires" });
   }
-
-  // Job order end
   if (caseData.jobOrderEndDate) {
     deadlines.push({ date: caseData.jobOrderEndDate, label: "Job Order Ends" });
   }
-
-  // Notice of filing end
   if (caseData.noticeOfFilingEndDate) {
     deadlines.push({ date: caseData.noticeOfFilingEndDate, label: "NOF Ends" });
   }
-
-  // ETA 9089 expiration
   if (caseData.eta9089ExpirationDate) {
     deadlines.push({ date: caseData.eta9089ExpirationDate, label: "ETA Expires" });
   }
 
-  // Filter to future deadlines and sort by date
   const upcoming = deadlines
     .filter((d) => new Date(d.date) >= today)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -103,9 +77,6 @@ function getNextDeadline(caseData: DemoCase): { date: string; label: string } | 
   return upcoming[0] || null;
 }
 
-/**
- * Format deadline for display
- */
 function formatDeadline(dateStr: string): string {
   const date = new Date(dateStr);
   return date.toLocaleDateString("en-US", {
@@ -115,135 +86,159 @@ function formatDeadline(dateStr: string): string {
   });
 }
 
+function getDaysUntil(dateStr: string): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 export function DemoCaseCard({ case: caseData, onEdit, onDelete }: DemoCaseCardProps) {
   const isClosed = caseData.status === "closed";
   const stageColor = STAGE_COLORS[caseData.status];
+  const stageBgClass = STAGE_BG_CLASSES[caseData.status];
   const stageLabel = STAGE_LABELS[caseData.status];
 
-  // Calculate next deadline
   const nextDeadline = useMemo(() => getNextDeadline(caseData), [caseData]);
   const urgency = useMemo(
     () => (nextDeadline ? getUrgencyFromDeadline(nextDeadline.date) : null),
     [nextDeadline]
   );
+  const daysUntil = useMemo(
+    () => (nextDeadline ? getDaysUntil(nextDeadline.date) : null),
+    [nextDeadline]
+  );
 
-  // Check for active RFI/RFE
   const hasActiveRfi = Boolean(caseData.rfiDueDate && !caseData.rfiSubmittedDate);
   const hasActiveRfe = Boolean(caseData.rfeDueDate && !caseData.rfeSubmittedDate);
 
   return (
-    <Card className="relative overflow-hidden transition-all duration-150 hover:-translate-y-1">
-      {/* Stage Color Header */}
-      <div className={`h-2 w-full ${stageColor}`} />
-
-      <CardContent className="pt-4">
-        {/* Header with stage badge */}
-        <div className="mb-3 flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            {/* Beneficiary Name */}
-            <h3 className="truncate font-heading text-base font-bold leading-tight">
-              {caseData.beneficiaryName}
-            </h3>
-            {/* Employer Name */}
-            <p className="truncate text-sm text-muted-foreground">
-              {caseData.employerName}
-            </p>
-          </div>
-
-          {/* Stage Badge */}
-          <Badge
-            variant="outline"
-            className="shrink-0 px-2 py-0.5 text-[10px] font-bold"
+    <div
+      className="group relative border-3 border-border bg-background overflow-hidden shadow-hard transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
+      style={{ borderLeftWidth: "6px", borderLeftColor: stageColor }}
+    >
+      {/* Stage header bar */}
+      <div className="flex items-center justify-between border-b-2 border-border px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          {/* Stage badge */}
+          <span
+            className={`inline-flex items-center px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-black ${stageBgClass}`}
           >
             {stageLabel}
-          </Badge>
-        </div>
+          </span>
 
-        {/* Badges Row */}
-        <div className="mb-3 flex flex-wrap items-center gap-1.5">
-          {/* Professional Occupation */}
+          {/* Professional badge */}
           {caseData.isProfessionalOccupation && (
-            <Badge
-              variant="outline"
-              className="bg-gray-200 px-1.5 py-0 text-[10px] font-bold text-black"
-            >
+            <span className="inline-flex items-center border-2 border-border bg-muted px-1.5 py-0 text-[10px] font-bold">
               PRO
-            </Badge>
+            </span>
           )}
 
-          {/* RFI Active */}
+          {/* RFI/RFE badges */}
           {hasActiveRfi && (
-            <Badge
-              variant="outline"
-              className="bg-urgency-urgent px-1.5 py-0 text-[10px] font-bold text-white"
-            >
+            <span className="inline-flex items-center bg-urgency-urgent px-1.5 py-0 text-[10px] font-bold text-white">
               RFI
-            </Badge>
+            </span>
           )}
-
-          {/* RFE Active */}
           {hasActiveRfe && (
-            <Badge
-              variant="outline"
-              className="bg-urgency-urgent px-1.5 py-0 text-[10px] font-bold text-white"
-            >
+            <span className="inline-flex items-center bg-urgency-urgent px-1.5 py-0 text-[10px] font-bold text-white">
               RFE
-            </Badge>
+            </span>
           )}
         </div>
+
+        {/* Favorite star */}
+        {caseData.isFavorite && (
+          <Star className="h-3.5 w-3.5 fill-primary text-primary" />
+        )}
+      </div>
+
+      {/* Card body */}
+      <div className="p-4">
+        {/* Names */}
+        <h3 className="truncate font-heading text-base font-bold leading-tight">
+          {caseData.beneficiaryName}
+        </h3>
+        <p className="truncate text-sm text-muted-foreground">
+          {caseData.employerName}
+        </p>
 
         {/* Progress Status */}
         {!isClosed && (
-          <div className="mb-3">
+          <div className="mt-3">
             <ProgressStatusBadge status={caseData.progressStatus} />
           </div>
         )}
 
         {/* Next Deadline */}
-        {!isClosed && nextDeadline ? (
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-2.5 w-2.5 shrink-0 ${
-                urgency ? getUrgencyDotClass(urgency) : ""
-              }`}
-            />
-            <span className="font-mono text-xs">
-              {nextDeadline.label}: {formatDeadline(nextDeadline.date)}
-            </span>
-          </div>
-        ) : !isClosed ? (
-          <span className="text-xs text-muted-foreground">No upcoming deadlines</span>
-        ) : (
-          <span className="text-xs italic text-muted-foreground">Case closed</span>
-        )}
-      </CardContent>
+        <div className="mt-3 border-t-2 border-dashed border-border pt-3">
+          {!isClosed && nextDeadline ? (
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div
+                  className={`h-3 w-3 shrink-0 border border-border ${
+                    urgency ? getUrgencyDotClass(urgency) : ""
+                  }`}
+                />
+                <span className="truncate font-mono text-xs font-medium">
+                  {nextDeadline.label}
+                </span>
+              </div>
+              <div className="shrink-0 text-right">
+                <div className="font-mono text-xs font-bold">
+                  {formatDeadline(nextDeadline.date)}
+                </div>
+                {daysUntil !== null && (
+                  <div className="text-[10px] text-muted-foreground">
+                    {daysUntil === 0
+                      ? "Today"
+                      : daysUntil === 1
+                        ? "Tomorrow"
+                        : `${daysUntil} days`}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : !isClosed ? (
+            <span className="text-xs text-muted-foreground">No upcoming deadlines</span>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 shrink-0 bg-stage-closed border border-border" />
+              <span className="font-mono text-xs text-muted-foreground">
+                Case complete
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
 
-      {/* Action Buttons */}
-      <CardFooter className="gap-2 border-t border-border pt-4">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1 gap-1.5"
+      {/* Action buttons */}
+      <div className="flex border-t-2 border-border">
+        <button
+          type="button"
+          className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors hover:bg-muted"
           onClick={(e) => {
             e.stopPropagation();
             onEdit();
           }}
         >
-          <Pencil className="size-3.5" />
+          <Pencil className="h-3 w-3" />
           Edit
-        </Button>
-        <Button
-          variant="outline"
-          size="icon-sm"
+        </button>
+        <div className="w-px bg-border" />
+        <button
+          type="button"
+          className="flex items-center justify-center px-4 py-2.5 text-xs text-muted-foreground transition-colors hover:bg-urgency-urgent/10 hover:text-urgency-urgent"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
           }}
           aria-label="Delete case"
         >
-          <Trash2 className="size-3.5" />
-        </Button>
-      </CardFooter>
-    </Card>
+          <Trash2 className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
   );
 }

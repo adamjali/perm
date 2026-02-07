@@ -1,9 +1,11 @@
 import type { MetadataRoute } from 'next'
+import { getAllPosts } from '@/lib/content'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://permtracker.app'
 
-  return [
+  // Static pages
+  const staticPages: MetadataRoute.Sitemap = [
     // Primary pages (high priority)
     {
       url: baseUrl,
@@ -14,6 +16,32 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/demo`,
       changeFrequency: 'monthly',
       priority: 0.8,
+    },
+    // Content hub listing pages
+    {
+      url: `${baseUrl}/blog`,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/tutorials`,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/guides`,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/changelog`,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/resources`,
+      changeFrequency: 'monthly',
+      priority: 0.7,
     },
     // Auth pages (medium priority)
     {
@@ -43,4 +71,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.3,
     },
   ]
+
+  // Dynamic content pages (blog, tutorials, guides, resources)
+  const contentPages: MetadataRoute.Sitemap = getAllPosts()
+    .filter((post) => post.type !== 'changelog') // Changelog is a single page, no individual routes
+    .map((post) => ({
+      url: `${baseUrl}/${post.type}/${post.slug}`,
+      lastModified: post.meta.updated ?? post.meta.date,
+      changeFrequency: 'monthly' as const,
+      priority: post.meta.featured ? 0.8 : 0.6,
+    }))
+
+  return [...staticPages, ...contentPages]
 }

@@ -26,22 +26,36 @@ interface Stat {
 
 const stats: Stat[] = [
   {
-    value: 180,
-    label: "Day Filing Window",
+    value: 15,
+    suffix: "+",
+    label: "Deadlines Auto-Tracked",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
         <rect x="3" y="6" width="22" height="18" fill="none" stroke="currentColor" strokeWidth="2" />
         <rect x="3" y="6" width="22" height="5" fill="var(--primary)" stroke="currentColor" strokeWidth="2" />
         <rect x="8" y="3" width="3" height="6" fill="currentColor" />
         <rect x="17" y="3" width="3" height="6" fill="currentColor" />
-        <circle cx="14" cy="17" r="2.5" fill="var(--primary)" />
+        <path d="M9 16 L12 19 L19 13" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="square" />
+      </svg>
+    ),
+  },
+  {
+    value: 5,
+    label: "PERM Stages Covered",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+        <line x1="4" y1="14" x2="24" y2="14" stroke="currentColor" strokeWidth="2" />
+        <circle cx="6" cy="14" r="3" fill="var(--stage-pwd)" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="11" cy="14" r="3" fill="var(--stage-recruitment)" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="16" cy="14" r="3" fill="var(--stage-eta9089)" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="21" cy="14" r="3" fill="var(--stage-i140)" stroke="currentColor" strokeWidth="1.5" />
       </svg>
     ),
   },
   {
     value: 100,
     suffix: "%",
-    label: "Free to Start",
+    label: "Free to Use",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
         <path d="M14 3 L24 8 L24 15 Q24 23 14 25 Q4 23 4 15 L4 8 Z" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -50,27 +64,15 @@ const stats: Stat[] = [
     ),
   },
   {
-    value: 24,
-    label: "Hour Support",
+    value: 2,
+    suffix: " min",
+    label: "Setup Time",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
         <circle cx="14" cy="14" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
         <line x1="14" y1="8" x2="14" y2="14" stroke="currentColor" strokeWidth="2.5" />
         <line x1="14" y1="14" x2="19" y2="16" stroke="var(--primary)" strokeWidth="2" />
         <circle cx="14" cy="14" r="1.5" fill="var(--primary)" />
-      </svg>
-    ),
-  },
-  {
-    value: 5,
-    label: "PERM Stages Tracked",
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-        <line x1="4" y1="14" x2="24" y2="14" stroke="currentColor" strokeWidth="2" />
-        <circle cx="6" cy="14" r="3" fill="var(--stage-pwd)" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="11" cy="14" r="3" fill="var(--stage-recruitment)" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="16" cy="14" r="3" fill="var(--stage-eta9089)" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="21" cy="14" r="3" fill="var(--stage-i140)" stroke="currentColor" strokeWidth="1.5" />
       </svg>
     ),
   },

@@ -23,6 +23,9 @@ import InactivityTimeoutProvider from "@/components/layout/InactivityTimeoutProv
 import { ChatWidgetConnected } from "@/components/chat/ChatWidgetConnected";
 import { ServiceWorkerRegistration } from "@/components/pwa";
 import { PendingTermsHandler } from "@/components/auth/PendingTermsHandler";
+import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { OnboardingTourWrapper } from "@/components/onboarding/OnboardingTourWrapper";
 
 export default function AuthenticatedLayout({
   children,
@@ -36,6 +39,11 @@ export default function AuthenticatedLayout({
 
       {/* Handle pending terms acceptance from Google OAuth redirect */}
       <PendingTermsHandler />
+
+      {/* Onboarding: wizard + tour + checklist state management */}
+      <OnboardingProvider>
+        {/* Blocking onboarding wizard modal (shown for new users) */}
+        <OnboardingWizard />
 
       <div className="relative flex min-h-screen flex-col bg-background">
         {/* Skip link for keyboard users */}
@@ -76,6 +84,10 @@ export default function AuthenticatedLayout({
         {/* Chat Widget */}
         <ChatWidgetConnected />
       </div>
+
+        {/* Multi-page product tour (renders null, manages Driver.js) */}
+        <OnboardingTourWrapper />
+      </OnboardingProvider>
     </InactivityTimeoutProvider>
   );
 }

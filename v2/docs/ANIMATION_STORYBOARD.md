@@ -1,7 +1,7 @@
 # Animation Storyboard
 
 > Complete animation catalog for PERM Tracker v2
-> Last updated: 2026-01-01
+> Last updated: 2026-02-06
 
 ---
 
@@ -88,6 +88,27 @@ Unified timing tokens ensure animations feel cohesive throughout the application
 .link:hover {
   background-size: 100% 1px;
 }
+```
+
+---
+
+### Content Hub Animations
+
+| Element | Trigger | Animation | Duration |
+|---------|---------|-----------|----------|
+| ScreenshotFigure | 10% viewport | fadeInUp | 0.5s ease [0.4,0,0.2,1] |
+
+**Implementation:**
+```tsx
+// ScreenshotFigure fade-up (src/components/content/ScreenshotFigure.tsx)
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1, y: 0,
+    transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] as const },
+  },
+};
+// Used with: whileInView="show", viewport={{ once: true, margin: "-40px" }}
 ```
 
 ---

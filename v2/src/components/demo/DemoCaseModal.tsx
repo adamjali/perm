@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { AlertCircle, Zap, CheckCircle2 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import {
   Dialog,
@@ -17,7 +18,14 @@ import { Label } from "@/components/ui/label";
 import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
 import { SelectInput, type SelectOption } from "@/components/forms/SelectInput";
-import { applyCascade, type CaseData, type CaseStatus, type ProgressStatus } from "@/lib/perm";
+import {
+  applyCascade,
+  validateCase,
+  type CaseData,
+  type CaseStatus,
+  type ProgressStatus,
+  type ValidationResult,
+} from "@/lib/perm";
 import type { DemoCase } from "@/lib/demo/types";
 
 // ============================================================================
@@ -59,24 +67,42 @@ const PROGRESS_STATUS_OPTIONS: SelectOption[] = [
   { value: "rfi_rfe", label: "RFI/RFE" },
 ];
 
-// Status order for section visibility
 const STATUS_ORDER: CaseStatus[] = ["pwd", "recruitment", "eta9089", "i140", "closed"];
+
+// Map snake_case validation fields to camelCase form fields
+const FIELD_MAP: Record<string, string> = {
+  pwd_filing_date: "pwdFilingDate",
+  pwd_determination_date: "pwdDeterminationDate",
+  pwd_expiration_date: "pwdExpirationDate",
+  sunday_ad_first_date: "sundayAdFirstDate",
+  sunday_ad_second_date: "sundayAdSecondDate",
+  job_order_start_date: "jobOrderStartDate",
+  job_order_end_date: "jobOrderEndDate",
+  notice_of_filing_start_date: "noticeOfFilingStartDate",
+  notice_of_filing_end_date: "noticeOfFilingEndDate",
+  recruitment_start_date: "recruitmentStartDate",
+  recruitment_end_date: "recruitmentEndDate",
+  eta9089_filing_date: "eta9089FilingDate",
+  eta9089_certification_date: "eta9089CertificationDate",
+  eta9089_expiration_date: "eta9089ExpirationDate",
+  i140_filing_date: "i140FilingDate",
+  i140_approval_date: "i140ApprovalDate",
+  rfi_received_date: "rfiReceivedDate",
+  rfi_due_date: "rfiDueDate",
+  rfi_submitted_date: "rfiSubmittedDate",
+  rfe_received_date: "rfeReceivedDate",
+  rfe_due_date: "rfeDueDate",
+  rfe_submitted_date: "rfeSubmittedDate",
+};
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
-/**
- * Convert camelCase field to snake_case for cascade compatibility.
- * DemoCase uses camelCase, cascade uses snake_case.
- */
 function toCascadeField(field: string): string {
   return field.replace(/[A-Z]/g, (m) => "_" + m.toLowerCase());
 }
 
-/**
- * Convert DemoCase (camelCase) to CaseData (snake_case) for cascade operations.
- */
 function toCaseData(demoCase: Partial<DemoCase>): CaseData {
   return {
     pwd_filing_date: demoCase.pwdFilingDate ?? null,
@@ -107,66 +133,38 @@ function toCaseData(demoCase: Partial<DemoCase>): CaseData {
   };
 }
 
-/**
- * Apply cascade for a specific date field.
- * Returns the cascaded CaseData with auto-calculated dependent fields.
- */
 function applyCascadeForField(
   caseData: CaseData,
   field: string,
   value: string | null
 ): CaseData {
-  // Map camelCase fields to their cascade equivalents
   switch (field) {
     case "pwdDeterminationDate":
-      return applyCascade(caseData, {
-        field: "pwd_determination_date",
-        value: value,
-      });
+      return applyCascade(caseData, { field: "pwd_determination_date", value });
     case "noticeOfFilingStartDate":
-      return applyCascade(caseData, {
-        field: "notice_of_filing_start_date",
-        value: value,
-      });
+      return applyCascade(caseData, { field: "notice_of_filing_start_date", value });
     case "jobOrderStartDate":
-      return applyCascade(caseData, {
-        field: "job_order_start_date",
-        value: value,
-      });
+      return applyCascade(caseData, { field: "job_order_start_date", value });
     case "eta9089CertificationDate":
-      return applyCascade(caseData, {
-        field: "eta9089_certification_date",
-        value: value,
-      });
+      return applyCascade(caseData, { field: "eta9089_certification_date", value });
     case "rfiReceivedDate":
-      return applyCascade(caseData, {
-        field: "rfi_received_date",
-        value: value,
-      });
-    default:
-      // No cascade for this field, just apply the value
+      return applyCascade(caseData, { field: "rfi_received_date", value });
+    default: {
       const snakeField = toCascadeField(field);
       return { ...caseData, [snakeField]: value };
+    }
   }
 }
 
-/**
- * Apply cascade result back to DemoCase format.
- */
 function applyCascadeToDemoCase(
   formData: Partial<DemoCase>,
   field: string,
   value: string | null
 ): Partial<DemoCase> {
   const caseData = toCaseData(formData);
-
-  // Apply cascade with proper typing
   const cascadeResult = applyCascadeForField(caseData, field, value);
-
-  // Build updated form data
   const updated = { ...formData, [field]: value ?? undefined };
 
-  // Map cascaded fields back to camelCase
   const cascadeFieldMap: Record<string, keyof DemoCase> = {
     pwd_expiration_date: "pwdExpirationDate",
     notice_of_filing_end_date: "noticeOfFilingEndDate",
@@ -175,19 +173,34 @@ function applyCascadeToDemoCase(
     rfi_due_date: "rfiDueDate",
   };
 
+  const cascadedFields: string[] = [];
+
   for (const [snakeKey, camelKey] of Object.entries(cascadeFieldMap)) {
     const cascadeValue = cascadeResult[snakeKey as keyof CaseData];
     if (cascadeValue !== caseData[snakeKey as keyof CaseData]) {
       (updated as Record<string, unknown>)[camelKey] = cascadeValue ?? undefined;
+      if (cascadeValue) {
+        cascadedFields.push(camelKey);
+      }
     }
+  }
+
+  // Toast feedback when fields auto-calculate
+  if (cascadedFields.length > 0) {
+    const labels: Record<string, string> = {
+      pwdExpirationDate: "PWD Expiration",
+      noticeOfFilingEndDate: "NOF End Date",
+      jobOrderEndDate: "Job Order End",
+      eta9089ExpirationDate: "ETA 9089 Expiration",
+      rfiDueDate: "RFI Due Date",
+    };
+    const names = cascadedFields.map((f) => labels[f] || f).join(", ");
+    toast.success(`Auto-calculated: ${names}`);
   }
 
   return updated;
 }
 
-/**
- * Create default form data for a new case.
- */
 function createDefaultFormData(): Partial<DemoCase> {
   return {
     beneficiaryName: "",
@@ -199,27 +212,96 @@ function createDefaultFormData(): Partial<DemoCase> {
   };
 }
 
-/**
- * Get status index for comparison.
- */
 function getStatusIndex(status: CaseStatus): number {
   return STATUS_ORDER.indexOf(status);
+}
+
+// ============================================================================
+// Section Header
+// ============================================================================
+
+interface SectionHeaderProps {
+  title: string;
+  stageColor: string;
+  icon?: React.ReactNode;
+}
+
+function SectionHeader({ title, stageColor, icon }: SectionHeaderProps) {
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        className="h-5 w-1.5"
+        style={{ backgroundColor: stageColor }}
+        aria-hidden="true"
+      />
+      {icon}
+      <h3 className="font-heading text-sm font-bold uppercase tracking-wider">
+        {title}
+      </h3>
+    </div>
+  );
+}
+
+// ============================================================================
+// Validation Summary
+// ============================================================================
+
+interface ValidationSummaryProps {
+  validation: ValidationResult;
+}
+
+function ValidationSummary({ validation }: ValidationSummaryProps) {
+  if (validation.valid && validation.warnings.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      {/* Errors */}
+      {validation.errors.length > 0 && (
+        <div className="border-2 border-destructive/30 bg-destructive/5 p-3">
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+            <span className="text-xs font-bold uppercase tracking-wider text-destructive">
+              {validation.errors.length} Validation {validation.errors.length === 1 ? "Error" : "Errors"}
+            </span>
+          </div>
+          <ul className="space-y-1">
+            {validation.errors.map((err) => (
+              <li key={err.ruleId} className="text-xs text-destructive/90">
+                <span className="font-mono text-[10px] text-destructive/60">[{err.ruleId}]</span>{" "}
+                {err.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Warnings */}
+      {validation.warnings.length > 0 && (
+        <div className="border-2 border-orange-500/30 bg-orange-50 p-3 dark:bg-orange-900/10">
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <AlertCircle className="h-3.5 w-3.5 text-orange-500" />
+            <span className="text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+              {validation.warnings.length} {validation.warnings.length === 1 ? "Warning" : "Warnings"}
+            </span>
+          </div>
+          <ul className="space-y-1">
+            {validation.warnings.map((warn) => (
+              <li key={warn.ruleId} className="text-xs text-orange-600/90 dark:text-orange-400/90">
+                <span className="font-mono text-[10px] text-orange-500/60">[{warn.ruleId}]</span>{" "}
+                {warn.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ============================================================================
 // Component
 // ============================================================================
 
-/**
- * DemoCaseModal - Add/Edit modal for PERM demo cases.
- *
- * Features:
- * - Form fields for core PERM case data
- * - Auto-calculation via cascade logic (PWD expiration, etc.)
- * - Section visibility based on case status
- * - Client-side validation
- * - Neobrutalist styling
- */
 export function DemoCaseModal({
   isOpen,
   onClose,
@@ -228,13 +310,11 @@ export function DemoCaseModal({
 }: DemoCaseModalProps) {
   const isEditMode = Boolean(caseToEdit);
 
-  // Form state
   const [formData, setFormData] = useState<Partial<DemoCase>>(
     caseToEdit ?? createDefaultFormData()
   );
   const [errors, setErrors] = useState<FormErrors>({});
 
-  // Reset form when modal opens/closes or caseToEdit changes
   useEffect(() => {
     if (isOpen) {
       setFormData(caseToEdit ?? createDefaultFormData());
@@ -242,7 +322,7 @@ export function DemoCaseModal({
     }
   }, [isOpen, caseToEdit]);
 
-  // Derived state for section visibility
+  // Section visibility
   const currentStatusIndex = useMemo(
     () => getStatusIndex(formData.status ?? "pwd"),
     [formData.status]
@@ -252,7 +332,59 @@ export function DemoCaseModal({
   const showEta9089 = currentStatusIndex >= getStatusIndex("eta9089");
   const showI140 = currentStatusIndex >= getStatusIndex("i140");
 
-  // Handle text input changes
+  // Live PERM validation
+  const permValidation = useMemo<ValidationResult>(() => {
+    const caseData = toCaseData(formData);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { case_status, progress_status, ...validationData } = caseData;
+    return validateCase(validationData);
+  }, [formData]);
+
+  // Map validation issues by field for inline display
+  const fieldErrors = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const issue of permValidation.errors) {
+      const camelField = FIELD_MAP[issue.field];
+      if (camelField && !map[camelField]) {
+        map[camelField] = issue.message;
+      }
+    }
+    return map;
+  }, [permValidation]);
+
+  const fieldWarnings = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const issue of permValidation.warnings) {
+      const camelField = FIELD_MAP[issue.field];
+      if (camelField && !map[camelField]) {
+        map[camelField] = issue.message;
+      }
+    }
+    return map;
+  }, [permValidation]);
+
+  // Track which fields are auto-calculated
+  const autoCalcFields = useMemo(() => {
+    const fields = new Set<string>();
+    if (formData.pwdDeterminationDate && formData.pwdExpirationDate) {
+      fields.add("pwdExpirationDate");
+    }
+    if (formData.noticeOfFilingStartDate && formData.noticeOfFilingEndDate) {
+      fields.add("noticeOfFilingEndDate");
+    }
+    if (formData.jobOrderStartDate && formData.jobOrderEndDate) {
+      fields.add("jobOrderEndDate");
+    }
+    if (formData.eta9089CertificationDate && formData.eta9089ExpirationDate) {
+      fields.add("eta9089ExpirationDate");
+    }
+    if (formData.rfiReceivedDate && formData.rfiDueDate) {
+      fields.add("rfiDueDate");
+    }
+    return fields;
+  }, [formData]);
+
+  // Handlers
   const handleInputChange = useCallback(
     (field: keyof DemoCase) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setFormData((prev) => ({ ...prev, [field]: e.target.value }));
@@ -263,7 +395,6 @@ export function DemoCaseModal({
     [errors]
   );
 
-  // Handle select changes
   const handleSelectChange = useCallback(
     (field: keyof DemoCase) => (e: React.ChangeEvent<HTMLSelectElement>) => {
       setFormData((prev) => ({ ...prev, [field]: e.target.value as CaseStatus | ProgressStatus }));
@@ -274,12 +405,9 @@ export function DemoCaseModal({
     [errors]
   );
 
-  // Handle date input changes with cascade
   const handleDateChange = useCallback(
     (field: keyof DemoCase) => (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value || null;
-
-      // Check if this field triggers cascade
       const cascadeFields = [
         "pwdDeterminationDate",
         "noticeOfFilingStartDate",
@@ -297,7 +425,6 @@ export function DemoCaseModal({
     []
   );
 
-  // Handle date clear
   const handleDateClear = useCallback(
     (field: keyof DemoCase) => () => {
       const cascadeFields = [
@@ -317,7 +444,6 @@ export function DemoCaseModal({
     []
   );
 
-  // Handle checkbox change
   const handleCheckboxChange = useCallback(
     (field: keyof DemoCase) => (checked: boolean) => {
       setFormData((prev) => ({ ...prev, [field]: checked }));
@@ -325,7 +451,6 @@ export function DemoCaseModal({
     []
   );
 
-  // Validate form
   const validate = useCallback((): boolean => {
     const newErrors: FormErrors = {};
 
@@ -346,7 +471,6 @@ export function DemoCaseModal({
     return Object.keys(newErrors).length === 0;
   }, [formData]);
 
-  // Handle save
   const handleSave = useCallback(() => {
     if (!validate()) return;
 
@@ -361,11 +485,9 @@ export function DemoCaseModal({
       isFavorite: formData.isFavorite ?? false,
       createdAt: caseToEdit?.createdAt ?? now,
       updatedAt: now,
-      // PWD dates
       pwdFilingDate: formData.pwdFilingDate,
       pwdDeterminationDate: formData.pwdDeterminationDate,
       pwdExpirationDate: formData.pwdExpirationDate,
-      // Recruitment dates
       sundayAdFirstDate: formData.sundayAdFirstDate,
       sundayAdSecondDate: formData.sundayAdSecondDate,
       jobOrderStartDate: formData.jobOrderStartDate,
@@ -375,48 +497,64 @@ export function DemoCaseModal({
       recruitmentStartDate: formData.recruitmentStartDate,
       recruitmentEndDate: formData.recruitmentEndDate,
       additionalRecruitmentMethods: formData.additionalRecruitmentMethods,
-      // ETA 9089 dates
       eta9089FilingDate: formData.eta9089FilingDate,
       eta9089CertificationDate: formData.eta9089CertificationDate,
       eta9089ExpirationDate: formData.eta9089ExpirationDate,
-      // I-140 dates
       i140FilingDate: formData.i140FilingDate,
       i140ApprovalDate: formData.i140ApprovalDate,
-      // RFI/RFE dates
       rfiReceivedDate: formData.rfiReceivedDate,
       rfiDueDate: formData.rfiDueDate,
       rfiSubmittedDate: formData.rfiSubmittedDate,
       rfeReceivedDate: formData.rfeReceivedDate,
       rfeDueDate: formData.rfeDueDate,
       rfeSubmittedDate: formData.rfeSubmittedDate,
-      // Notes
       notes: formData.notes,
     };
 
     try {
       onSave(caseData);
+      if (permValidation.warnings.length > 0) {
+        toast.warning(`Saved with ${permValidation.warnings.length} warning(s)`);
+      }
       onClose();
     } catch (error) {
       console.error("Failed to save demo case:", error);
       toast.error("Failed to save case. Please try again.");
     }
-  }, [formData, caseToEdit, validate, onSave, onClose]);
+  }, [formData, caseToEdit, validate, onSave, onClose, permValidation]);
+
+  // Helper to check if a field has a value
+  const hasValue = (field: keyof DemoCase) => Boolean(formData[field]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="font-heading">
             {isEditMode ? "Edit Case" : "Add New Case"}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Live Validation Summary */}
+          <ValidationSummary validation={permValidation} />
+
+          {/* Validation status indicator */}
+          {permValidation.valid && permValidation.warnings.length === 0 && hasValue("pwdFilingDate") && (
+            <div className="flex items-center gap-2 border-2 border-emerald-500/30 bg-emerald-50 p-2.5 dark:bg-emerald-900/10">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                All validations passing
+              </span>
+            </div>
+          )}
+
           {/* Basic Info Section */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Basic Information
-            </h3>
+            <SectionHeader
+              title="Basic Information"
+              stageColor="var(--primary)"
+            />
 
             <FormField
               label="Foreign Worker Name"
@@ -492,44 +630,59 @@ export function DemoCaseModal({
 
           {/* PWD Section */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              PWD (Prevailing Wage Determination)
-            </h3>
+            <SectionHeader
+              title="PWD (Prevailing Wage Determination)"
+              stageColor="var(--stage-pwd)"
+            />
 
-            <FormField label="PWD Filing Date" name="pwdFilingDate">
+            <FormField
+              label="PWD Filing Date"
+              name="pwdFilingDate"
+              error={fieldErrors.pwdFilingDate}
+              warning={fieldWarnings.pwdFilingDate}
+            >
               <DateInput
                 id="pwdFilingDate"
                 value={formData.pwdFilingDate ?? ""}
                 onChange={handleDateChange("pwdFilingDate")}
                 onClear={handleDateClear("pwdFilingDate")}
+                error={Boolean(fieldErrors.pwdFilingDate)}
               />
             </FormField>
 
             <FormField
               label="PWD Determination Date"
               name="pwdDeterminationDate"
-              hint="Sets PWD expiration date automatically"
+              hint={hasValue("pwdFilingDate") ? "Auto-calculates PWD Expiration (1 year)" : "Enter PWD Filing Date first"}
+              error={fieldErrors.pwdDeterminationDate}
+              warning={fieldWarnings.pwdDeterminationDate}
             >
               <DateInput
                 id="pwdDeterminationDate"
                 value={formData.pwdDeterminationDate ?? ""}
                 onChange={handleDateChange("pwdDeterminationDate")}
                 onClear={handleDateClear("pwdDeterminationDate")}
+                disabled={!hasValue("pwdFilingDate")}
+                error={Boolean(fieldErrors.pwdDeterminationDate)}
               />
             </FormField>
 
             <FormField
               label="PWD Expiration Date"
               name="pwdExpirationDate"
-              autoCalculated={Boolean(formData.pwdDeterminationDate && formData.pwdExpirationDate)}
+              autoCalculated={autoCalcFields.has("pwdExpirationDate")}
+              error={fieldErrors.pwdExpirationDate}
+              warning={fieldWarnings.pwdExpirationDate}
+              hint={autoCalcFields.has("pwdExpirationDate") ? "1 year from determination date" : undefined}
             >
               <DateInput
                 id="pwdExpirationDate"
                 value={formData.pwdExpirationDate ?? ""}
                 onChange={handleDateChange("pwdExpirationDate")}
                 onClear={handleDateClear("pwdExpirationDate")}
-                autoCalculated={Boolean(formData.pwdDeterminationDate && formData.pwdExpirationDate)}
-                disabled={Boolean(formData.pwdDeterminationDate)}
+                autoCalculated={autoCalcFields.has("pwdExpirationDate")}
+                disabled={autoCalcFields.has("pwdExpirationDate")}
+                error={Boolean(fieldErrors.pwdExpirationDate)}
               />
             </FormField>
           </section>
@@ -537,63 +690,128 @@ export function DemoCaseModal({
           {/* Recruitment Section */}
           {showRecruitment && (
             <section className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                Recruitment
-              </h3>
+              <SectionHeader
+                title="Recruitment"
+                stageColor="var(--stage-recruitment)"
+              />
 
               <FormField
                 label="Notice of Filing Start"
                 name="noticeOfFilingStartDate"
-                hint="End date calculated automatically (+10 business days)"
+                hint="Auto-calculates end date (+10 business days)"
+                error={fieldErrors.noticeOfFilingStartDate}
+                warning={fieldWarnings.noticeOfFilingStartDate}
               >
                 <DateInput
                   id="noticeOfFilingStartDate"
                   value={formData.noticeOfFilingStartDate ?? ""}
                   onChange={handleDateChange("noticeOfFilingStartDate")}
                   onClear={handleDateClear("noticeOfFilingStartDate")}
+                  error={Boolean(fieldErrors.noticeOfFilingStartDate)}
                 />
               </FormField>
 
               <FormField
                 label="Notice of Filing End"
                 name="noticeOfFilingEndDate"
-                autoCalculated={Boolean(formData.noticeOfFilingStartDate && formData.noticeOfFilingEndDate)}
+                autoCalculated={autoCalcFields.has("noticeOfFilingEndDate")}
+                hint={autoCalcFields.has("noticeOfFilingEndDate") ? "+10 business days from start" : undefined}
+                error={fieldErrors.noticeOfFilingEndDate}
+                warning={fieldWarnings.noticeOfFilingEndDate}
               >
                 <DateInput
                   id="noticeOfFilingEndDate"
                   value={formData.noticeOfFilingEndDate ?? ""}
                   onChange={handleDateChange("noticeOfFilingEndDate")}
                   onClear={handleDateClear("noticeOfFilingEndDate")}
-                  autoCalculated={Boolean(formData.noticeOfFilingStartDate && formData.noticeOfFilingEndDate)}
-                  disabled={Boolean(formData.noticeOfFilingStartDate)}
+                  autoCalculated={autoCalcFields.has("noticeOfFilingEndDate")}
+                  disabled={autoCalcFields.has("noticeOfFilingEndDate")}
+                  error={Boolean(fieldErrors.noticeOfFilingEndDate)}
                 />
               </FormField>
 
               <FormField
                 label="Job Order Start"
                 name="jobOrderStartDate"
-                hint="End date calculated automatically (+30 days)"
+                hint="Auto-calculates end date (+30 days)"
+                error={fieldErrors.jobOrderStartDate}
+                warning={fieldWarnings.jobOrderStartDate}
               >
                 <DateInput
                   id="jobOrderStartDate"
                   value={formData.jobOrderStartDate ?? ""}
                   onChange={handleDateChange("jobOrderStartDate")}
                   onClear={handleDateClear("jobOrderStartDate")}
+                  error={Boolean(fieldErrors.jobOrderStartDate)}
                 />
               </FormField>
 
               <FormField
                 label="Job Order End"
                 name="jobOrderEndDate"
-                autoCalculated={Boolean(formData.jobOrderStartDate && formData.jobOrderEndDate)}
+                autoCalculated={autoCalcFields.has("jobOrderEndDate")}
+                hint={autoCalcFields.has("jobOrderEndDate") ? "+30 days from start" : undefined}
+                error={fieldErrors.jobOrderEndDate}
+                warning={fieldWarnings.jobOrderEndDate}
               >
                 <DateInput
                   id="jobOrderEndDate"
                   value={formData.jobOrderEndDate ?? ""}
                   onChange={handleDateChange("jobOrderEndDate")}
                   onClear={handleDateClear("jobOrderEndDate")}
-                  autoCalculated={Boolean(formData.jobOrderStartDate && formData.jobOrderEndDate)}
-                  disabled={Boolean(formData.jobOrderStartDate)}
+                  autoCalculated={autoCalcFields.has("jobOrderEndDate")}
+                  disabled={autoCalcFields.has("jobOrderEndDate")}
+                  error={Boolean(fieldErrors.jobOrderEndDate)}
+                />
+              </FormField>
+
+              <FormField
+                label="Sunday Ad #1"
+                name="sundayAdFirstDate"
+                error={fieldErrors.sundayAdFirstDate}
+                warning={fieldWarnings.sundayAdFirstDate}
+              >
+                <DateInput
+                  id="sundayAdFirstDate"
+                  value={formData.sundayAdFirstDate ?? ""}
+                  onChange={handleDateChange("sundayAdFirstDate")}
+                  onClear={handleDateClear("sundayAdFirstDate")}
+                  sundayOnly
+                  error={Boolean(fieldErrors.sundayAdFirstDate)}
+                />
+              </FormField>
+
+              <FormField
+                label="Sunday Ad #2"
+                name="sundayAdSecondDate"
+                hint={!hasValue("sundayAdFirstDate") ? "Enter Sunday Ad #1 first" : undefined}
+                error={fieldErrors.sundayAdSecondDate}
+                warning={fieldWarnings.sundayAdSecondDate}
+              >
+                <DateInput
+                  id="sundayAdSecondDate"
+                  value={formData.sundayAdSecondDate ?? ""}
+                  onChange={handleDateChange("sundayAdSecondDate")}
+                  onClear={handleDateClear("sundayAdSecondDate")}
+                  sundayOnly
+                  disabled={!hasValue("sundayAdFirstDate")}
+                  minDate={formData.sundayAdFirstDate}
+                  error={Boolean(fieldErrors.sundayAdSecondDate)}
+                />
+              </FormField>
+
+              <FormField
+                label="Recruitment End Date"
+                name="recruitmentEndDate"
+                error={fieldErrors.recruitmentEndDate}
+                warning={fieldWarnings.recruitmentEndDate}
+              >
+                <DateInput
+                  id="recruitmentEndDate"
+                  value={formData.recruitmentEndDate ?? ""}
+                  onChange={handleDateChange("recruitmentEndDate")}
+                  onClear={handleDateClear("recruitmentEndDate")}
+                  error={Boolean(fieldErrors.recruitmentEndDate)}
                 />
               </FormField>
             </section>
@@ -602,44 +820,58 @@ export function DemoCaseModal({
           {/* ETA 9089 Section */}
           {showEta9089 && (
             <section className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                ETA 9089
-              </h3>
+              <SectionHeader
+                title="ETA 9089"
+                stageColor="var(--stage-eta9089)"
+              />
 
-              <FormField label="ETA 9089 Filing Date" name="eta9089FilingDate">
+              <FormField
+                label="ETA 9089 Filing Date"
+                name="eta9089FilingDate"
+                error={fieldErrors.eta9089FilingDate}
+                warning={fieldWarnings.eta9089FilingDate}
+              >
                 <DateInput
                   id="eta9089FilingDate"
                   value={formData.eta9089FilingDate ?? ""}
                   onChange={handleDateChange("eta9089FilingDate")}
                   onClear={handleDateClear("eta9089FilingDate")}
+                  error={Boolean(fieldErrors.eta9089FilingDate)}
                 />
               </FormField>
 
               <FormField
                 label="ETA 9089 Certification Date"
                 name="eta9089CertificationDate"
-                hint="Expiration date calculated automatically (+180 days)"
+                hint="Auto-calculates expiration (+180 days)"
+                error={fieldErrors.eta9089CertificationDate}
+                warning={fieldWarnings.eta9089CertificationDate}
               >
                 <DateInput
                   id="eta9089CertificationDate"
                   value={formData.eta9089CertificationDate ?? ""}
                   onChange={handleDateChange("eta9089CertificationDate")}
                   onClear={handleDateClear("eta9089CertificationDate")}
+                  error={Boolean(fieldErrors.eta9089CertificationDate)}
                 />
               </FormField>
 
               <FormField
                 label="ETA 9089 Expiration Date"
                 name="eta9089ExpirationDate"
-                autoCalculated={Boolean(formData.eta9089CertificationDate && formData.eta9089ExpirationDate)}
+                autoCalculated={autoCalcFields.has("eta9089ExpirationDate")}
+                hint={autoCalcFields.has("eta9089ExpirationDate") ? "+180 days from certification" : undefined}
+                error={fieldErrors.eta9089ExpirationDate}
+                warning={fieldWarnings.eta9089ExpirationDate}
               >
                 <DateInput
                   id="eta9089ExpirationDate"
                   value={formData.eta9089ExpirationDate ?? ""}
                   onChange={handleDateChange("eta9089ExpirationDate")}
                   onClear={handleDateClear("eta9089ExpirationDate")}
-                  autoCalculated={Boolean(formData.eta9089CertificationDate && formData.eta9089ExpirationDate)}
-                  disabled={Boolean(formData.eta9089CertificationDate)}
+                  autoCalculated={autoCalcFields.has("eta9089ExpirationDate")}
+                  disabled={autoCalcFields.has("eta9089ExpirationDate")}
+                  error={Boolean(fieldErrors.eta9089ExpirationDate)}
                 />
               </FormField>
             </section>
@@ -648,29 +880,117 @@ export function DemoCaseModal({
           {/* I-140 Section */}
           {showI140 && (
             <section className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                I-140
-              </h3>
+              <SectionHeader
+                title="I-140"
+                stageColor="var(--stage-i140)"
+              />
 
-              <FormField label="I-140 Filing Date" name="i140FilingDate">
+              <FormField
+                label="I-140 Filing Date"
+                name="i140FilingDate"
+                error={fieldErrors.i140FilingDate}
+                warning={fieldWarnings.i140FilingDate}
+              >
                 <DateInput
                   id="i140FilingDate"
                   value={formData.i140FilingDate ?? ""}
                   onChange={handleDateChange("i140FilingDate")}
                   onClear={handleDateClear("i140FilingDate")}
+                  error={Boolean(fieldErrors.i140FilingDate)}
                 />
               </FormField>
 
-              <FormField label="I-140 Approval Date" name="i140ApprovalDate">
+              <FormField
+                label="I-140 Approval Date"
+                name="i140ApprovalDate"
+                error={fieldErrors.i140ApprovalDate}
+                warning={fieldWarnings.i140ApprovalDate}
+              >
                 <DateInput
                   id="i140ApprovalDate"
                   value={formData.i140ApprovalDate ?? ""}
                   onChange={handleDateChange("i140ApprovalDate")}
                   onClear={handleDateClear("i140ApprovalDate")}
+                  error={Boolean(fieldErrors.i140ApprovalDate)}
                 />
               </FormField>
             </section>
           )}
+
+          {/* RFI Section */}
+          <section className="space-y-4">
+            <SectionHeader
+              title="RFI (Request for Information)"
+              stageColor="var(--urgency-urgent, #ef4444)"
+            />
+
+            <FormField
+              label="RFI Received Date"
+              name="rfiReceivedDate"
+              hint="Auto-calculates due date (+30 days)"
+              error={fieldErrors.rfiReceivedDate}
+              warning={fieldWarnings.rfiReceivedDate}
+            >
+              <DateInput
+                id="rfiReceivedDate"
+                value={formData.rfiReceivedDate ?? ""}
+                onChange={handleDateChange("rfiReceivedDate")}
+                onClear={handleDateClear("rfiReceivedDate")}
+                error={Boolean(fieldErrors.rfiReceivedDate)}
+              />
+            </FormField>
+
+            <FormField
+              label="RFI Due Date"
+              name="rfiDueDate"
+              autoCalculated={autoCalcFields.has("rfiDueDate")}
+              hint={autoCalcFields.has("rfiDueDate") ? "+30 days from received date" : !hasValue("rfiReceivedDate") ? "Enter RFI Received Date first" : undefined}
+              error={fieldErrors.rfiDueDate}
+              warning={fieldWarnings.rfiDueDate}
+            >
+              <DateInput
+                id="rfiDueDate"
+                value={formData.rfiDueDate ?? ""}
+                onChange={handleDateChange("rfiDueDate")}
+                onClear={handleDateClear("rfiDueDate")}
+                autoCalculated={autoCalcFields.has("rfiDueDate")}
+                disabled={autoCalcFields.has("rfiDueDate") || !hasValue("rfiReceivedDate")}
+                error={Boolean(fieldErrors.rfiDueDate)}
+              />
+            </FormField>
+
+            <FormField
+              label="RFI Submitted Date"
+              name="rfiSubmittedDate"
+              hint={!hasValue("rfiReceivedDate") ? "Enter RFI Received Date first" : undefined}
+              error={fieldErrors.rfiSubmittedDate}
+              warning={fieldWarnings.rfiSubmittedDate}
+            >
+              <DateInput
+                id="rfiSubmittedDate"
+                value={formData.rfiSubmittedDate ?? ""}
+                onChange={handleDateChange("rfiSubmittedDate")}
+                onClear={handleDateClear("rfiSubmittedDate")}
+                disabled={!hasValue("rfiReceivedDate")}
+                error={Boolean(fieldErrors.rfiSubmittedDate)}
+              />
+            </FormField>
+          </section>
+
+          {/* Auto-Calculation Callout */}
+          <div className="flex items-start gap-2 border-2 border-primary/30 bg-primary/5 p-3">
+            <Zap className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+            <div>
+              <p className="text-xs font-bold text-foreground">
+                Auto-Cascade in Action
+              </p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Try entering a PWD Determination Date — the Expiration Date
+                fills in automatically. This cascade works for NOF, Job Order,
+                ETA 9089, and RFI dates too.
+              </p>
+            </div>
+          </div>
         </div>
 
         <DialogFooter>
