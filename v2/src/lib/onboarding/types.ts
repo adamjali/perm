@@ -91,4 +91,5 @@ export interface OnboardingContextValue {
   startTour: () => void;
   skipTour: () => void;
   advanceTourPhase: () => void;
+  restartTour: () => Promise<void>;
 }

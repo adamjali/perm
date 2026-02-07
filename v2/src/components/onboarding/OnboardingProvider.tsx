@@ -41,6 +41,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const updateStep = useMutation(api.onboarding.updateOnboardingStep);
   const completeItem = useMutation(api.onboarding.completeChecklistItem);
   const dismissMutation = useMutation(api.onboarding.dismissChecklist);
+  const restartTourMutation = useMutation(api.onboarding.restartTour);
 
   // Tour state
   const [tourActive, setTourActive] = useState(false);
@@ -129,6 +130,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     updateStep({ step: "tour_completed" }).catch((error) => {
       console.error("Failed to skip tour:", error);
     });
+    toast("Tour skipped. You can replay it anytime from Settings \u2192 Support.", { icon: "\uD83D\uDCA1" });
   }, [updateStep]);
 
   const advanceTourPhase = useCallback(() => {
@@ -142,6 +144,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       updateStep({ step: "tour_completed" }).catch((error) => {
         console.error("Failed to complete tour:", error);
       });
+      toast.success("Tour complete! You can replay it anytime from Settings \u2192 Support.");
     } else {
       setTourPhase(TOUR_PHASE_ORDER[nextIndex] ?? null);
     }
@@ -157,6 +160,17 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const dismissChecklist = useCallback(async () => {
     await dismissMutation({});
   }, [dismissMutation]);
+
+  const restartTour = useCallback(async () => {
+    try {
+      await restartTourMutation({});
+      setTourActive(true);
+      setTourPhase("dashboard");
+    } catch (error) {
+      console.error("Failed to restart tour:", error);
+      toast.error("Failed to restart tour");
+    }
+  }, [restartTourMutation]);
 
   // --- Auto-complete checklist items based on page visits ---
   useEffect(() => {
@@ -225,6 +239,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       startTour,
       skipTour,
       advanceTourPhase,
+      restartTour,
     }),
     [
       step,
@@ -242,6 +257,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       startTour,
       skipTour,
       advanceTourPhase,
+      restartTour,
     ]
   );
 

@@ -24,6 +24,14 @@ export function OnboardingTour({
   const pathname = usePathname();
   const driverRef = useRef<ReturnType<typeof driver> | null>(null);
   const hasStartedPhase = useRef<string | null>(null);
+  const tourCompletedRef = useRef(false);
+
+  // Reset completed flag when tour goes from inactive to active (restart scenario)
+  useEffect(() => {
+    if (active) {
+      tourCompletedRef.current = false;
+    }
+  }, [active]);
 
   const cleanup = useCallback(() => {
     if (driverRef.current) {
@@ -35,6 +43,7 @@ export function OnboardingTour({
   // Start Driver.js for the current phase when we're on the right page
   useEffect(() => {
     if (!active || tourPhase === null) return;
+    if (tourCompletedRef.current) return;
 
     const phaseConfig = TOUR_PHASES.find((p) => p.phase === tourPhase);
     if (!phaseConfig) return;
@@ -89,6 +98,10 @@ export function OnboardingTour({
 
       const isMobile = window.innerWidth < 640;
 
+      // Track whether user completed the phase normally (clicked Done/Continue)
+      // vs closed via X button or overlay click
+      let completedNormally = false;
+
       const driverObj = driver({
         showProgress: true,
         animate: true,
@@ -101,14 +114,21 @@ export function OnboardingTour({
         nextBtnText: "Next \u2192",
         prevBtnText: "\u2190 Back",
         doneBtnText: isLastPhase ? "Finish Tour \u2713" : "Continue \u2192",
+        onNextClick: () => {
+          // If this is the last step and user clicked Done/Continue, mark as completed
+          if (!driverObj.hasNextStep()) {
+            completedNormally = true;
+          }
+          driverObj.moveNext();
+        },
         onDestroyStarted: () => {
           driverObj.destroy();
           driverRef.current = null;
-          // If user completed all steps in this phase, advance
-          if (!driverObj.hasNextStep() || driverObj.isLastStep()) {
+          if (completedNormally) {
             onPhaseComplete();
           } else {
-            // User closed early (X button or overlay click)
+            // User clicked X or overlay — skip entire tour
+            tourCompletedRef.current = true;
             onTourSkip();
           }
         },
@@ -121,8 +141,7 @@ export function OnboardingTour({
 
     return () => {
       clearInterval(pollTimer);
-      // Reset ref so React strict mode re-run can start the poll again
-      hasStartedPhase.current = null;
+      // Don't reset hasStartedPhase — prevents double-run on strict mode re-renders
     };
   }, [active, tourPhase, pathname, router, cleanup, onPhaseComplete, onTourSkip]);
 

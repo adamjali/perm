@@ -45,8 +45,10 @@ import {
   Trash2,
   AlertTriangle,
   Zap,
+  PlayCircle,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import DeleteNowDialog from "./DeleteNowDialog";
 
 // ============================================================================
@@ -79,6 +81,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
   // Version from env or fallback
   const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || "2.0.0";
   const currentYear = new Date().getFullYear();
+  const { restartTour } = useOnboarding();
 
   // Delete account state
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -185,7 +188,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
         </p>
 
         {/* Support Links Grid */}
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Contact Support */}
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
@@ -249,6 +252,28 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               </span>
             </div>
           </a>
+
+          {/* Replay Tour */}
+          <button
+            onClick={async () => {
+              await restartTour();
+              router.push("/dashboard");
+            }}
+            className="flex flex-col items-center gap-3 p-4 border-2 border-black dark:border-white/20 bg-card hover:bg-accent transition-colors group"
+            style={{ boxShadow: "2px 2px 0px #000" }}
+          >
+            <div className="p-3 bg-lime-500/10 border-2 border-lime-500/20 group-hover:bg-lime-500/20 transition-colors">
+              <PlayCircle className="h-6 w-6 text-lime-600 dark:text-lime-400" />
+            </div>
+            <div className="text-center">
+              <span className="font-heading font-bold text-sm block">
+                Replay Tour
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Product walkthrough
+              </span>
+            </div>
+          </button>
         </div>
       </div>
 

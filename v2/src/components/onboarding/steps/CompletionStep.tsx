@@ -56,9 +56,13 @@ export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
           size="lg"
           className="w-full text-muted-foreground text-sm"
         >
-          Skip, I&apos;ll explore on my own
+          Skip for now
         </Button>
       </div>
+
+      <p className="text-muted-foreground/60 text-xs mt-4">
+        You can always replay the tour from Settings &rarr; Support.
+      </p>
     </div>
   );
 }

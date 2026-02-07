@@ -148,6 +148,21 @@ export const completeChecklistItem = mutation({
 });
 
 /**
+ * Restart just the product tour (not the full wizard).
+ * Keeps onboardingCompletedAt so wizard doesn't re-show.
+ */
+export const restartTour = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const profile = await requireProfile(ctx);
+    await ctx.db.patch(profile._id, {
+      onboardingStep: "tour_pending",
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
  * Reset onboarding state to trigger the wizard again (authenticated).
  */
 export const resetOnboarding = mutation({
