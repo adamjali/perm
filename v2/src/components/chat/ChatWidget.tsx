@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -58,6 +58,13 @@ export function ChatWidget({
   onDenyConfirmation,
 }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Listen for external open requests (e.g. from onboarding checklist)
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener('open-chat-widget', handleOpen);
+    return () => window.removeEventListener('open-chat-widget', handleOpen);
+  }, []);
 
   return (
     <>

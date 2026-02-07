@@ -19,7 +19,11 @@ export function OnboardingChecklist() {
   const totalCount = CHECKLIST_ITEMS.length;
   const progressPercent = Math.round((completedCount / totalCount) * 100);
 
-  const handleItemClick = (href?: string) => {
+  const handleItemClick = (itemId: string, href?: string) => {
+    if (itemId === "try_assistant") {
+      window.dispatchEvent(new CustomEvent("open-chat-widget"));
+      return;
+    }
     if (href) {
       router.push(href);
     }
@@ -78,13 +82,13 @@ export function OnboardingChecklist() {
       <div className="px-4 pb-4 space-y-1">
         {CHECKLIST_ITEMS.map((item) => {
           const isComplete = completedChecklistItems.includes(item.id);
-          const isClickable = !isComplete && !!item.href;
+          const isClickable = !isComplete && (!!item.href || item.id === "try_assistant");
 
           return (
             <button
               key={item.id}
               type="button"
-              onClick={() => handleItemClick(item.href)}
+              onClick={() => handleItemClick(item.id, item.href)}
               disabled={!isClickable}
               className={cn(
                 "w-full flex items-center gap-3 p-2.5 min-h-[44px] text-left transition-all duration-150",

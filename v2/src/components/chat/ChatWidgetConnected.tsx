@@ -14,7 +14,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { ChatWidget } from './ChatWidget';
@@ -24,6 +24,7 @@ import { useChatWithPersistence } from '@/hooks/useChatWithPersistence';
 import { useToolOrchestrator } from '@/hooks/useToolOrchestrator';
 import { useAuthContext } from '@/lib/contexts/AuthContext';
 import { usePageContext } from '@/lib/ai/page-context';
+import { useOnboardingOptional } from '@/components/onboarding/OnboardingProvider';
 
 export function ChatWidgetConnected() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -168,6 +169,20 @@ export function ChatWidgetConnected() {
       setIsInitialized(true);
     }
   }, [recentConversation, isInitialized, conversationId, selectConversation]);
+
+  // Auto-complete "try_assistant" checklist item when user sends first message
+  const onboarding = useOnboardingOptional();
+  const hasMarkedAssistant = useRef(false);
+  useEffect(() => {
+    if (hasMarkedAssistant.current) return;
+    if (!onboarding || onboarding.isChecklistDismissed) return;
+    if (onboarding.completedChecklistItems.includes('try_assistant')) return;
+    const hasUserMessage = messages.some((m) => m.role === 'user');
+    if (hasUserMessage) {
+      hasMarkedAssistant.current = true;
+      onboarding.completeChecklistItem('try_assistant');
+    }
+  }, [messages, onboarding]);
 
   return (
     <>
