@@ -60,6 +60,10 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   // Track which paths have been visited for checklist auto-completion
   const completedPaths = useRef(new Set<string>());
 
+  // Guard: prevent auto-activation useEffect from re-triggering after skip/complete
+  // (DB step may still be "tour_pending" until the mutation lands)
+  const tourEndedRef = useRef(false);
+
   // Determine current step
   const step: OnboardingStep = useMemo(() => {
     if (onboardingState === undefined || onboardingState === null) return null;
@@ -115,6 +119,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   );
 
   const startTour = useCallback(() => {
+    tourEndedRef.current = false; // Allow auto-activation
     setWizardDismissed(true); // Close wizard immediately (don't wait for DB)
     setTourActive(true);
     setTourPhase("dashboard");
@@ -124,6 +129,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   }, [updateStep]);
 
   const skipTour = useCallback(() => {
+    tourEndedRef.current = true; // Block auto-reactivation until mutation lands
     setWizardDismissed(true); // Close wizard immediately (don't wait for DB)
     setTourActive(false);
     setTourPhase(null);
@@ -139,6 +145,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     const nextIndex = currentIndex + 1;
     if (nextIndex >= TOUR_PHASE_ORDER.length) {
       // Tour complete
+      tourEndedRef.current = true; // Block auto-reactivation until mutation lands
       setTourActive(false);
       setTourPhase(null);
       updateStep({ step: "tour_completed" }).catch((error) => {
@@ -163,6 +170,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const restartTour = useCallback(async () => {
     try {
+      tourEndedRef.current = false; // Allow auto-activation
       await restartTourMutation({});
       setTourActive(true);
       setTourPhase("dashboard");
@@ -210,13 +218,20 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     completeItem,
   ]);
 
-  // Activate tour if step is tour_pending
+  // Activate tour if step is tour_pending (e.g. page reload mid-tour)
+  // Guard: tourEndedRef prevents re-activation during the gap between
+  // skipTour()/advanceTourPhase() and the DB mutation landing
   useEffect(() => {
+    if (tourEndedRef.current) return;
     if (step === "tour_pending" && !tourActive) {
       setTourActive(true);
       if (tourPhase === null) {
         setTourPhase("dashboard");
       }
+    }
+    // Clear the guard once DB confirms step is no longer tour_pending
+    if (step !== "tour_pending") {
+      tourEndedRef.current = false;
     }
   }, [step, tourActive, tourPhase]);
 
