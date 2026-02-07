@@ -1,7 +1,7 @@
 import { getPostBySlug } from "@/lib/content";
 import { generateArticleOG, OG_SIZE } from "@/lib/content/og-image";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const alt = "PERM Tracker Resource";
 export const size = OG_SIZE;
 export const contentType = "image/png";
