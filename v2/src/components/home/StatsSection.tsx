@@ -5,13 +5,15 @@
  *
  * Statistics section with count-up animation on scroll.
  * Features background photograph, decorative SVG elements,
- * and animated stat counters.
+ * animated stat counters with scramble effect, and SVG ring
+ * animations on icons.
  *
  */
 
 import * as React from "react";
 import Image from "next/image";
 import { useInView } from "motion/react";
+import { useReducedMotion } from "@/lib/animations";
 
 interface Stat {
   value: number;
@@ -74,51 +76,131 @@ const stats: Stat[] = [
   },
 ];
 
-function useCountUp(target: number, isInView: boolean, duration: number = 2000) {
-  const [count, setCount] = React.useState(0);
+/**
+ * Count-up hook with digit scramble phase.
+ *
+ * Phase 1 (0–600ms): Rapidly cycle random digits matching the target's digit count.
+ * Phase 2 (600–2000ms): Converge toward target with easeOutQuad.
+ *
+ * When reducedMotion is true, returns the target value immediately.
+ */
+function useCountUp(
+  target: number,
+  isInView: boolean,
+  reducedMotion: boolean,
+  duration: number = 2000,
+  scrambleDuration: number = 600,
+) {
+  const [display, setDisplay] = React.useState(0);
   const hasAnimated = React.useRef(false);
 
   React.useEffect(() => {
+    if (reducedMotion) {
+      setDisplay(target);
+      return;
+    }
+
     if (!isInView || hasAnimated.current) return;
     hasAnimated.current = true;
 
-    const startTime = Date.now();
-    const startValue = 0;
+    const digitCount = String(target).length;
+    const scrambleMin = Math.pow(10, digitCount - 1); // e.g. 10 for 2-digit
+    const scrambleMax = Math.pow(10, digitCount) - 1; // e.g. 99 for 2-digit
+    // For single digit targets, scrambleMin would be 1
+    const effectiveMin = digitCount === 1 ? 0 : scrambleMin;
 
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+    const startTime = performance.now();
+    let lastScrambleTick = 0;
+    const SCRAMBLE_INTERVAL = 50; // ms between random digit swaps
 
-      // Ease out quad
-      const easeOut = 1 - (1 - progress) * (1 - progress);
-      const currentValue = Math.round(startValue + (target - startValue) * easeOut);
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
 
-      setCount(currentValue);
-
-      if (progress < 1) {
+      if (elapsed < scrambleDuration) {
+        // Phase 1: Scramble — cycle random digits every 50ms
+        if (elapsed - lastScrambleTick >= SCRAMBLE_INTERVAL) {
+          lastScrambleTick = elapsed;
+          const randomValue =
+            effectiveMin + Math.floor(Math.random() * (scrambleMax - effectiveMin + 1));
+          setDisplay(randomValue);
+        }
         requestAnimationFrame(animate);
+      } else {
+        // Phase 2: Ease out from scramble toward target
+        const convergeElapsed = elapsed - scrambleDuration;
+        const convergeDuration = duration - scrambleDuration;
+        const progress = Math.min(convergeElapsed / convergeDuration, 1);
+
+        // easeOutQuad
+        const easeOut = 1 - (1 - progress) * (1 - progress);
+        const currentValue = Math.round(target * easeOut);
+
+        setDisplay(currentValue);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
       }
     };
 
     requestAnimationFrame(animate);
-  }, [isInView, target, duration]);
+  }, [isInView, target, duration, scrambleDuration, reducedMotion]);
 
-  return count;
+  return display;
 }
 
 interface StatItemProps {
   stat: Stat;
   isInView: boolean;
+  reducedMotion: boolean;
 }
 
-function StatItem({ stat, isInView }: StatItemProps) {
-  const count = useCountUp(stat.value, isInView);
+/**
+ * SVG ring radius and dimensions for the icon ring animation.
+ * Circle is sized to wrap the 40x40 (h-10 w-10) icon container.
+ */
+const RING_SIZE = 48;
+const RING_RADIUS = 20;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+function StatItem({ stat, isInView, reducedMotion }: StatItemProps) {
+  const count = useCountUp(stat.value, isInView, reducedMotion);
 
   return (
     <div className="group relative border-3 border-transparent p-6 text-center transition-all duration-300 hover:border-primary/30">
-      {/* Icon */}
-      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center opacity-60 transition-opacity group-hover:opacity-100">
-        {stat.icon}
+      {/* Icon with SVG ring */}
+      <div className="relative mx-auto mb-3 flex h-12 w-12 items-center justify-center">
+        {/* Animated ring */}
+        <svg
+          width={RING_SIZE}
+          height={RING_SIZE}
+          viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
+          className="absolute inset-0"
+          aria-hidden="true"
+        >
+          <circle
+            cx={RING_SIZE / 2}
+            cy={RING_SIZE / 2}
+            r={RING_RADIUS}
+            fill="none"
+            stroke="var(--primary)"
+            strokeWidth="2"
+            strokeDasharray={RING_CIRCUMFERENCE}
+            strokeDashoffset={
+              reducedMotion || isInView ? 0 : RING_CIRCUMFERENCE
+            }
+            className="origin-center -rotate-90"
+            style={{
+              transition: reducedMotion
+                ? "none"
+                : "stroke-dashoffset 1.5s ease-out",
+            }}
+          />
+        </svg>
+        {/* Icon centered inside ring */}
+        <div className="relative flex h-10 w-10 items-center justify-center opacity-60 transition-opacity group-hover:opacity-100">
+          {stat.icon}
+        </div>
       </div>
 
       {/* Number */}
@@ -138,6 +220,7 @@ function StatItem({ stat, isInView }: StatItemProps) {
 export function StatsSection() {
   const ref = React.useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const reducedMotion = useReducedMotion();
 
   return (
     <section ref={ref} className="relative bg-foreground py-16 text-background sm:py-20 overflow-hidden">
@@ -173,7 +256,7 @@ export function StatsSection() {
       {/* Stats grid */}
       <div className="relative z-10 mx-auto grid max-w-[1400px] grid-cols-2 gap-8 px-4 sm:px-8 lg:grid-cols-4">
         {stats.map((stat) => (
-          <StatItem key={stat.label} stat={stat} isInView={isInView} />
+          <StatItem key={stat.label} stat={stat} isInView={isInView} reducedMotion={reducedMotion} />
         ))}
       </div>
     </section>

@@ -9,6 +9,7 @@ export { TrustStrip } from "./TrustStrip";
 export { FeaturesGrid } from "./FeaturesGrid";
 export { JourneySection } from "./JourneySection";
 export { HowItWorks } from "./HowItWorks";
+export { VideoShowcase } from "./VideoShowcase";
 export { StatsSection } from "./StatsSection";
 export { FeatureShowcase } from "./FeatureShowcase";
 export { FAQSection } from "./FAQSection";

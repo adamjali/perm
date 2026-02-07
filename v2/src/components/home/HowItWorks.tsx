@@ -4,19 +4,23 @@
  * HowItWorks Component
  *
  * Three-step process showing how PERM Tracker works.
- * Each step has a custom SVG illustration, animated connector,
- * and bold step numbers with hover effects.
+ * Each step has a custom SVG illustration, animated connector
+ * with SVG draw-in effect, and bold step numbers with hover effects.
  *
  */
 
+import * as React from "react";
 import Image from "next/image";
 import { Route } from "lucide-react";
+import { useInView } from "motion/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { useReducedMotion } from "@/lib/animations";
 import {
   RocketLaunchSVG,
   CalendarDeadlineSVG,
   NotificationBellSVG,
 } from "@/components/illustrations";
+import VideoPlayer from "@/components/content/VideoPlayer";
 
 interface Step {
   number: number;
@@ -54,11 +58,121 @@ const steps: Step[] = [
   },
 ];
 
+/**
+ * Animated SVG connector between steps.
+ * Draws a line from left to right with a traveling dot and arrow reveal.
+ */
+function AnimatedConnector({
+  isInView,
+  reducedMotion,
+  delay,
+}: {
+  isInView: boolean;
+  reducedMotion: boolean;
+  delay: number;
+}) {
+  const [lineDrawn, setLineDrawn] = React.useState(false);
+
+  // Track when line draw completes to trigger dot + arrow
+  React.useEffect(() => {
+    if (reducedMotion || !isInView) return;
+    const timer = setTimeout(
+      () => setLineDrawn(true),
+      delay * 1000 + 800 // delay + draw duration
+    );
+    return () => clearTimeout(timer);
+  }, [isInView, reducedMotion, delay]);
+
+  // Line length matches the SVG viewBox width
+  const LINE_LENGTH = 200;
+
+  return (
+    <div
+      className="absolute hidden md:block"
+      style={{
+        top: "52px",
+        left: "calc(50% + 48px)",
+        width: "calc(100% - 96px)",
+        height: "12px",
+        zIndex: 1,
+      }}
+      aria-hidden="true"
+    >
+      <svg
+        viewBox={`0 0 ${LINE_LENGTH} 12`}
+        preserveAspectRatio="none"
+        className="h-full w-full"
+        style={{ overflow: "visible" }}
+      >
+        {/* Main line with draw-in effect */}
+        <line
+          x1="0"
+          y1="6"
+          x2={LINE_LENGTH}
+          y2="6"
+          stroke="var(--border)"
+          strokeWidth="3"
+          strokeDasharray={LINE_LENGTH}
+          strokeDashoffset={
+            reducedMotion ? 0 : isInView ? 0 : LINE_LENGTH
+          }
+          style={{
+            transition: reducedMotion
+              ? "none"
+              : `stroke-dashoffset 0.8s ease-out ${delay}s`,
+          }}
+        />
+
+        {/* Traveling dot */}
+        {!reducedMotion && (
+          <circle
+            cx="0"
+            cy="6"
+            r="3"
+            fill="var(--primary)"
+            opacity={isInView && lineDrawn ? 1 : 0}
+            style={{
+              transition: "opacity 0.15s",
+            }}
+          >
+            {lineDrawn && (
+              <animate
+                attributeName="cx"
+                from="0"
+                to={String(LINE_LENGTH)}
+                dur="1s"
+                fill="freeze"
+                begin="0s"
+              />
+            )}
+          </circle>
+        )}
+
+        {/* Arrow at end */}
+        <polygon
+          points={`${LINE_LENGTH},6 ${LINE_LENGTH - 8},1 ${LINE_LENGTH - 8},11`}
+          fill="var(--border)"
+          opacity={reducedMotion ? 1 : lineDrawn ? 1 : 0}
+          style={{
+            transition: reducedMotion
+              ? "none"
+              : "opacity 0.3s ease-out",
+          }}
+        />
+      </svg>
+    </div>
+  );
+}
+
 export function HowItWorks() {
+  const sectionRef = React.useRef<HTMLDivElement>(null);
+  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const reducedMotion = useReducedMotion();
+
   return (
     <section id="how" className="relative bg-muted">
       {/* Content container */}
-      <div className="mx-auto max-w-[1400px] px-4 py-20 sm:px-8 sm:py-28">
+      <div ref={sectionRef} className="mx-auto max-w-[1400px] px-4 py-20 sm:px-8 sm:py-28">
         {/* Section header */}
         <ScrollReveal direction="up" className="mb-16 text-center">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
@@ -77,26 +191,13 @@ export function HowItWorks() {
         <ScrollReveal direction="up" stagger className="relative grid gap-0 md:grid-cols-3">
           {steps.map((step, index) => (
               <div key={step.number} className="group relative text-center px-6 py-8">
-                {/* Connector line - positioned at vertical center of step number */}
+                {/* Animated SVG connector line */}
                 {index < steps.length - 1 && (
-                  <div
-                    className="absolute hidden md:block"
-                    style={{
-                      top: "52px",
-                      left: "calc(50% + 48px)",
-                      width: "calc(100% - 96px)",
-                      height: "3px",
-                      backgroundColor: "var(--border)",
-                      zIndex: 1,
-                    }}
-                    aria-hidden="true"
-                  >
-                    {/* Arrow at end of connector */}
-                    <div
-                      className="absolute right-0 top-1/2 -translate-y-1/2 border-y-[5px] border-y-transparent border-l-[8px]"
-                      style={{ borderLeftColor: "var(--border)" }}
-                    />
-                  </div>
+                  <AnimatedConnector
+                    isInView={isInView}
+                    reducedMotion={reducedMotion}
+                    delay={index === 0 ? 0.3 : 0.6}
+                  />
                 )}
 
                 {/* Step number - big and bold with spring hover */}
@@ -185,6 +286,54 @@ export function HowItWorks() {
                 </p>
               </div>
             ))}
+          </div>
+
+          {/* Product demo video */}
+          <div className="mt-12 mx-auto max-w-3xl">
+            <div className="text-center mb-6">
+              <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                Watch the full demo
+              </p>
+            </div>
+            <div className="border-3 border-border shadow-hard overflow-hidden">
+              <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
+                <div className="h-2 w-2 bg-[#FF5F57]" />
+                <div className="h-2 w-2 bg-[#FFBD2E]" />
+                <div className="h-2 w-2 bg-[#28CA41]" />
+                <span className="ml-2 font-mono text-[9px] text-background/50">
+                  Product Demo
+                </span>
+              </div>
+              <VideoPlayer videoId="ProductDemo" className="border-0 shadow-none" autoPlay loop />
+            </div>
+          </div>
+
+          {/* Create case GIF — shows auto-calculated deadlines */}
+          <div className="mt-12 mx-auto max-w-3xl">
+            <div className="text-center mb-6">
+              <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                Auto-calculated deadlines in action
+              </p>
+            </div>
+            <div className="group border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
+              <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
+                <div className="h-2 w-2 bg-[#FF5F57]" />
+                <div className="h-2 w-2 bg-[#FFBD2E]" />
+                <div className="h-2 w-2 bg-[#28CA41]" />
+                <span className="ml-2 font-mono text-[9px] text-background/50">
+                  Create Case
+                </span>
+              </div>
+              {/* GIF can't use Next.js Image — use raw img with lazy loading */}
+              <figure className="not-prose">
+                <img
+                  src="/images/screenshots/create-case.gif"
+                  alt="Creating a new PERM case with automatic deadline calculation"
+                  loading="lazy"
+                  className="w-full"
+                />
+              </figure>
+            </div>
           </div>
         </ScrollReveal>
       </div>

@@ -11,22 +11,44 @@
  * - Dashboard screenshot with neobrutalist frame
  * - Trust badges with icons
  * - Animated particles
+ * - Scroll-linked dashboard reveal (scale + opacity + y)
  *
  */
 
+import { useRef } from "react";
 import Image from "next/image";
 import { Loader2, Rocket, Play, Shield, Zap, Clock } from "lucide-react";
+import { motion, useScroll, useTransform } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
+import { useReducedMotion } from "@/lib/animations";
 import { FloatingIcons, FloatingParticles } from "./DecorativeElements";
 
 export function HeroSection() {
   const { isNavigating, navigateTo, targetPath } = useNavigationLoading();
+  const heroRef = useRef<HTMLElement>(null);
+  const reducedMotion = useReducedMotion();
+
+  // Scroll-linked transforms for the dashboard reveal
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+
+  // Dashboard container transforms (scale, opacity, y)
+  const dashboardScale = useTransform(scrollYProgress, [0, 0.5], [0.92, 1]);
+  const dashboardOpacity = useTransform(scrollYProgress, [0, 0.4], [0.7, 1]);
+  const dashboardY = useTransform(scrollYProgress, [0, 0.5], [40, 0]);
+
+  // Browser chrome staggers slightly ahead (0.05 earlier)
+  const chromeScale = useTransform(scrollYProgress, [0, 0.45], [0.92, 1]);
+  const chromeOpacity = useTransform(scrollYProgress, [0, 0.35], [0.7, 1]);
+  const chromeY = useTransform(scrollYProgress, [0, 0.45], [40, 0]);
 
   return (
-    <section id="hero" className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
+    <section ref={heroRef} id="hero" className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
       {/* Background photo with dark overlay */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -85,7 +107,7 @@ export function HeroSection() {
               <MagneticButton>
                 <Button
                   size="lg"
-                  className="cta-glow h-14 border-3 border-border px-8 font-heading text-base font-bold uppercase tracking-[0.05em] shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                  className="h-14 border-3 border-border px-8 font-heading text-base font-bold uppercase tracking-[0.05em] shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
                   onClick={() => navigateTo("/signup")}
                   disabled={isNavigating}
                 >
@@ -144,10 +166,32 @@ export function HeroSection() {
               aria-hidden="true"
             />
 
-            {/* Dashboard screenshot with neobrutalist frame */}
-            <div className="relative">
-              {/* Browser chrome bar */}
-              <div className="flex items-center gap-2 border-4 border-b-0 border-black bg-foreground px-4 py-2.5 dark:border-white/20">
+            {/* Dashboard screenshot with neobrutalist frame + scroll-linked reveal */}
+            <motion.div
+              className="relative"
+              style={
+                reducedMotion
+                  ? undefined
+                  : {
+                      scale: dashboardScale,
+                      opacity: dashboardOpacity,
+                      y: dashboardY,
+                    }
+              }
+            >
+              {/* Browser chrome bar (staggers slightly ahead) */}
+              <motion.div
+                className="flex items-center gap-2 border-4 border-b-0 border-black bg-foreground px-4 py-2.5 dark:border-white/20"
+                style={
+                  reducedMotion
+                    ? undefined
+                    : {
+                        scale: chromeScale,
+                        opacity: chromeOpacity,
+                        y: chromeY,
+                      }
+                }
+              >
                 <div className="flex gap-1.5">
                   <div className="h-3 w-3 bg-[#FF5F57]" />
                   <div className="h-3 w-3 bg-[#FFBD2E]" />
@@ -156,7 +200,7 @@ export function HeroSection() {
                 <div className="ml-3 flex-1 bg-background/10 px-3 py-1 font-mono text-[10px] text-background/60">
                   permtracker.app/dashboard
                 </div>
-              </div>
+              </motion.div>
 
               {/* Screenshot */}
               <div className="border-4 border-black shadow-hard-lg dark:border-white/20">
@@ -181,7 +225,7 @@ export function HeroSection() {
                   <div className="font-mono text-[10px] text-muted-foreground">No credit card</div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </ScrollReveal>
         </div>
       </div>

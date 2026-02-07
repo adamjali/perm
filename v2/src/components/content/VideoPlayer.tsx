@@ -14,6 +14,8 @@ type VideoId = "ProductDemo" | "PERMExplainer";
 interface VideoPlayerProps {
   videoId: VideoId;
   className?: string;
+  autoPlay?: boolean;
+  loop?: boolean;
 }
 
 const VIDEO_CONFIG: Record<
@@ -45,6 +47,8 @@ const DynamicPlayer = dynamic(() => import("./VideoPlayerInner"), {
 export default function VideoPlayer({
   videoId,
   className = "",
+  autoPlay = false,
+  loop = false,
 }: VideoPlayerProps) {
   const config = VIDEO_CONFIG[videoId];
 
@@ -52,7 +56,7 @@ export default function VideoPlayer({
     <div
       className={`relative overflow-hidden border-2 border-border bg-card shadow-hard ${className}`}
     >
-      <DynamicPlayer videoId={videoId} config={config} />
+      <DynamicPlayer videoId={videoId} config={config} autoPlay={autoPlay} loop={loop} />
     </div>
   );
 }

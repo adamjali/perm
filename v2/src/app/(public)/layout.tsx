@@ -15,6 +15,7 @@
 import AuthHeader from "@/components/layout/AuthHeader";
 import Footer from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/home";
+import { PageTransition } from "@/components/ui/page-transition";
 
 export default function PublicLayout({
   children,
@@ -49,7 +50,7 @@ export default function PublicLayout({
         className="relative flex-1 pt-20"
         tabIndex={-1}
       >
-        {children}
+        <PageTransition>{children}</PageTransition>
       </main>
 
       {/* Extended Footer for public pages */}

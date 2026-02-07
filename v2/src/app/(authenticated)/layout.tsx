@@ -26,6 +26,7 @@ import { PendingTermsHandler } from "@/components/auth/PendingTermsHandler";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { OnboardingTourWrapper } from "@/components/onboarding/OnboardingTourWrapper";
+import { PageTransition } from "@/components/ui/page-transition";
 
 export default function AuthenticatedLayout({
   children,
@@ -72,7 +73,7 @@ export default function AuthenticatedLayout({
           className="relative mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8"
           tabIndex={-1}
         >
-          {children}
+          <PageTransition>{children}</PageTransition>
         </main>
 
         {/* Footer */}

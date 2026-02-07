@@ -21,6 +21,8 @@ interface VideoPlayerInnerProps {
     width: number;
     height: number;
   };
+  autoPlay?: boolean;
+  loop?: boolean;
 }
 
 const COMPONENTS: Record<VideoId, React.FC<{ brandColor: string }>> = {
@@ -31,6 +33,8 @@ const COMPONENTS: Record<VideoId, React.FC<{ brandColor: string }>> = {
 export default function VideoPlayerInner({
   videoId,
   config,
+  autoPlay = false,
+  loop = false,
 }: VideoPlayerInnerProps) {
   const Component = COMPONENTS[videoId];
 
@@ -45,7 +49,8 @@ export default function VideoPlayerInner({
         compositionHeight={config.height}
         style={{ width: "100%", height: "100%" }}
         controls
-        autoPlay={false}
+        autoPlay={autoPlay}
+        loop={loop}
       />
     </div>
   );

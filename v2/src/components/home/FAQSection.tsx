@@ -93,10 +93,10 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
           {item.question}
         </span>
 
-        {/* Chevron icon - simple rotation on open */}
+        {/* Chevron icon - spring bounce rotation on open */}
         <div
           className={cn(
-            "shrink-0 transition-transform duration-300",
+            "shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
             isOpen && "rotate-180"
           )}
         >

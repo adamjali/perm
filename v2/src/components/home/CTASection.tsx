@@ -115,7 +115,7 @@ export function CTASection() {
             <MagneticButton>
               <Button
                 size="lg"
-                className="cta-glow h-14 border-3 border-black bg-black px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-white transition-all duration-150 hover:bg-white hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-black dark:text-white dark:hover:bg-white dark:hover:text-black"
+                className="h-14 border-3 border-black bg-black px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-white transition-all duration-150 hover:bg-white hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-black dark:text-white dark:hover:bg-white dark:hover:text-black"
                 style={{ boxShadow: "4px 4px 0px #000" }}
                 onClick={() => navigateTo("/signup")}
                 disabled={isNavigating}
