@@ -149,19 +149,18 @@ export function FAQSection() {
           </h2>
         </ScrollReveal>
 
-        {/* FAQ accordion list */}
-        <div className="flex flex-col gap-4">
+        {/* FAQ accordion list - single stagger container */}
+        <ScrollReveal direction="up" stagger className="flex flex-col gap-4">
           {faqItems.map((item, index) => (
-            <ScrollReveal key={index} direction="up" delay={index * 0.05}>
-              <FAQAccordionItem
-                item={item}
-                index={index}
-                isOpen={openIndex === index}
-                onToggle={() => handleToggle(index)}
-              />
-            </ScrollReveal>
+            <FAQAccordionItem
+              key={index}
+              item={item}
+              index={index}
+              isOpen={openIndex === index}
+              onToggle={() => handleToggle(index)}
+            />
           ))}
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );

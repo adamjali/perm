@@ -315,17 +315,17 @@ export function DemoPageClient() {
             <div className="grid gap-6 md:grid-cols-3">
               {[
                 {
-                  src: "/images/screenshots/screenshot-dashboard.png",
+                  src: "/images/screenshots/dashboard.png",
                   alt: "Dashboard with deadline hub showing overdue and upcoming deadlines",
                   label: "Deadline Hub",
                 },
                 {
-                  src: "/images/screenshots/screenshot-cases.png",
+                  src: "/images/screenshots/cases.png",
                   alt: "Case cards with filters, status badges, and progress indicators",
                   label: "Case Management",
                 },
                 {
-                  src: "/images/screenshots/screenshot-calendar.png",
+                  src: "/images/screenshots/calendar.png",
                   alt: "Calendar with color-coded deadlines and AI chat assistant",
                   label: "Calendar + AI Chat",
                 },

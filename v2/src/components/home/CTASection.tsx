@@ -12,6 +12,7 @@
 import Image from "next/image";
 import { Rocket, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { RocketLaunchSVG } from "@/components/illustrations";
@@ -94,53 +95,56 @@ export function CTASection() {
 
       {/* Content */}
       <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-8">
-        {/* Rocket illustration */}
-        <ScrollReveal direction="up">
+        {/* Single stagger container (1 Intersection Observer) */}
+        <ScrollReveal direction="up" stagger>
+          {/* Rocket illustration */}
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center">
             <RocketLaunchSVG size={80} className="text-black" />
           </div>
-        </ScrollReveal>
 
-        <ScrollReveal direction="up" delay={0.05}>
-          <h2 className="font-heading text-3xl font-black text-black sm:text-4xl lg:text-5xl">
-            Stop Tracking Deadlines Manually
-          </h2>
-          <p className="mx-auto mt-4 max-w-lg text-lg text-black/70">
-            Set up in 2 minutes. Free forever. No credit card required.
-          </p>
-        </ScrollReveal>
+          <div>
+            <h2 className="font-heading text-3xl font-black text-black sm:text-4xl lg:text-5xl">
+              Stop Tracking Deadlines Manually
+            </h2>
+            <p className="mx-auto mt-4 max-w-lg text-lg text-black/70">
+              Set up in 2 minutes. Free forever. No credit card required.
+            </p>
+          </div>
 
-        <ScrollReveal direction="up" delay={0.1}>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Button
-              size="lg"
-              className="h-14 border-3 border-black bg-black px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-white transition-all duration-150 hover:bg-white hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-black dark:text-white dark:hover:bg-white dark:hover:text-black"
-              style={{ boxShadow: "4px 4px 0px #000" }}
-              onClick={() => navigateTo("/signup")}
-              disabled={isNavigating}
-            >
-              {isNavigating && targetPath === "/signup" ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : (
-                <Rocket className="mr-2 h-5 w-5" />
-              )}
-              Start Tracking Cases Free
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="h-14 border-3 border-black bg-transparent px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-black transition-all duration-150 hover:bg-black hover:text-white hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-transparent dark:text-black dark:hover:bg-black dark:hover:text-white"
-              style={{ boxShadow: "4px 4px 0px #000" }}
-              onClick={() => navigateTo("/demo")}
-              disabled={isNavigating}
-            >
-              {isNavigating && targetPath === "/demo" ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : (
-                <Play className="mr-2 h-5 w-5" />
-              )}
-              View Demo
-            </Button>
+            <MagneticButton>
+              <Button
+                size="lg"
+                className="cta-glow h-14 border-3 border-black bg-black px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-white transition-all duration-150 hover:bg-white hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-black dark:text-white dark:hover:bg-white dark:hover:text-black"
+                style={{ boxShadow: "4px 4px 0px #000" }}
+                onClick={() => navigateTo("/signup")}
+                disabled={isNavigating}
+              >
+                {isNavigating && targetPath === "/signup" ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <Rocket className="mr-2 h-5 w-5" />
+                )}
+                Start Tracking Cases Free
+              </Button>
+            </MagneticButton>
+            <MagneticButton>
+              <Button
+                variant="outline"
+                size="lg"
+                className="h-14 border-3 border-black bg-transparent px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-black transition-all duration-150 hover:bg-black hover:text-white hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-transparent dark:text-black dark:hover:bg-black dark:hover:text-white"
+                style={{ boxShadow: "4px 4px 0px #000" }}
+                onClick={() => navigateTo("/demo")}
+                disabled={isNavigating}
+              >
+                {isNavigating && targetPath === "/demo" ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <Play className="mr-2 h-5 w-5" />
+                )}
+                View Demo
+              </Button>
+            </MagneticButton>
           </div>
         </ScrollReveal>
       </div>

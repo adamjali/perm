@@ -73,15 +73,10 @@ export function HowItWorks() {
           </p>
         </ScrollReveal>
 
-        {/* Step cards with connectors */}
-        <div className="relative grid gap-0 md:grid-cols-3">
+        {/* Step cards with connectors - single stagger container */}
+        <ScrollReveal direction="up" stagger className="relative grid gap-0 md:grid-cols-3">
           {steps.map((step, index) => (
-            <ScrollReveal
-              key={step.number}
-              direction="up"
-              delay={index * 0.15}
-            >
-              <div className="group relative text-center px-6 py-8">
+              <div key={step.number} className="group relative text-center px-6 py-8">
                 {/* Connector line - positioned at vertical center of step number */}
                 {index < steps.length - 1 && (
                   <div
@@ -137,9 +132,8 @@ export function HowItWorks() {
                   {step.description}
                 </p>
               </div>
-            </ScrollReveal>
           ))}
-        </div>
+        </ScrollReveal>
 
         {/* Product screenshots — see it in action */}
         <ScrollReveal direction="up" delay={0.3} className="mt-16">
@@ -151,17 +145,17 @@ export function HowItWorks() {
           <div className="grid gap-8 md:grid-cols-3">
             {[
               {
-                src: "/images/screenshots/screenshot-dashboard.png",
+                src: "/images/screenshots/dashboard.png",
                 alt: "PERM Tracker dashboard showing deadline hub with overdue, this week, and upcoming deadlines",
                 label: "Deadline Hub",
               },
               {
-                src: "/images/screenshots/screenshot-cases.png",
+                src: "/images/screenshots/cases.png",
                 alt: "Cases view with filterable case cards showing status, deadlines, and progress",
                 label: "Case Cards",
               },
               {
-                src: "/images/screenshots/screenshot-calendar.png",
+                src: "/images/screenshots/calendar.png",
                 alt: "Calendar view with color-coded PERM deadlines and AI assistant chat",
                 label: "Calendar + AI Chat",
               },

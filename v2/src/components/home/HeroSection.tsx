@@ -17,6 +17,7 @@
 import Image from "next/image";
 import { Loader2, Rocket, Play, Shield, Zap, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { FloatingIcons, FloatingParticles } from "./DecorativeElements";
@@ -57,40 +58,34 @@ export function HeroSection() {
       {/* Content container */}
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] max-w-[1400px] items-center px-4 py-12 sm:px-8 sm:py-16 lg:py-20">
         <div className="grid w-full items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* Left column - Text content */}
-          <div className="flex flex-col gap-6">
+          {/* Left column - Text content (single stagger container) */}
+          <ScrollReveal direction="up" stagger className="flex flex-col gap-6">
             {/* Eyebrow with animated dot */}
-            <ScrollReveal direction="up">
-              <div className="inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
-                <span className="pulse-dot h-2 w-2 bg-primary" />
-                Free for Immigration Attorneys
-              </div>
-            </ScrollReveal>
+            <div className="inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
+              <span className="pulse-dot h-2 w-2 bg-primary" />
+              Free for Immigration Attorneys
+            </div>
 
             {/* Headline with shimmer accent */}
-            <ScrollReveal direction="up" delay={0.05}>
-              <h1 className="font-heading text-4xl font-black leading-[1.1] tracking-[-0.02em] sm:text-5xl lg:text-6xl xl:text-7xl">
-                Never Miss a PERM{" "}
-                <span className="hero-shimmer-text inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-                  Deadline
-                </span>{" "}
-                Again
-              </h1>
-            </ScrollReveal>
+            <h1 className="font-heading text-4xl font-black leading-[1.1] tracking-[-0.02em] sm:text-5xl lg:text-6xl xl:text-7xl">
+              Never Miss a PERM{" "}
+              <span className="hero-shimmer-text inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
+                Deadline
+              </span>{" "}
+              Again
+            </h1>
 
             {/* Subheadline */}
-            <ScrollReveal direction="up" delay={0.1}>
-              <p className="max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-                One missed filing window can kill a case. PERM Tracker auto-calculates every DOL deadline, sends reminders, and keeps your entire caseload organized — so you can focus on your clients, not spreadsheets.
-              </p>
-            </ScrollReveal>
+            <p className="max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+              One missed filing window can kill a case. PERM Tracker auto-calculates every DOL deadline, sends reminders, and keeps your entire caseload organized — so you can focus on your clients, not spreadsheets.
+            </p>
 
             {/* CTAs */}
-            <ScrollReveal direction="up" delay={0.15}>
-              <div className="flex flex-wrap gap-4 pt-4">
+            <div className="flex flex-wrap gap-4 pt-4">
+              <MagneticButton>
                 <Button
                   size="lg"
-                  className="h-14 border-3 border-border px-8 font-heading text-base font-bold uppercase tracking-[0.05em] shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                  className="cta-glow h-14 border-3 border-border px-8 font-heading text-base font-bold uppercase tracking-[0.05em] shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
                   onClick={() => navigateTo("/signup")}
                   disabled={isNavigating}
                 >
@@ -101,6 +96,8 @@ export function HeroSection() {
                   )}
                   Start Tracking Cases Free
                 </Button>
+              </MagneticButton>
+              <MagneticButton>
                 <Button
                   variant="outline"
                   size="lg"
@@ -115,27 +112,25 @@ export function HeroSection() {
                   )}
                   View Demo
                 </Button>
-              </div>
-            </ScrollReveal>
+              </MagneticButton>
+            </div>
 
             {/* Trust badges - visual chips */}
-            <ScrollReveal direction="up" delay={0.2}>
-              <div className="flex flex-wrap gap-3 pt-2">
-                <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
-                  <Shield className="h-3.5 w-3.5 text-primary" />
-                  20 CFR 656 Compliant
-                </div>
-                <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
-                  <Zap className="h-3.5 w-3.5 text-primary" />
-                  No Credit Card Required
-                </div>
-                <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5 text-primary" />
-                  Set Up in 2 Minutes
-                </div>
+            <div className="flex flex-wrap gap-3 pt-2">
+              <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
+                <Shield className="h-3.5 w-3.5 text-primary" />
+                20 CFR 656 Compliant
               </div>
-            </ScrollReveal>
-          </div>
+              <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
+                <Zap className="h-3.5 w-3.5 text-primary" />
+                No Credit Card Required
+              </div>
+              <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
+                <Clock className="h-3.5 w-3.5 text-primary" />
+                Set Up in 2 Minutes
+              </div>
+            </div>
+          </ScrollReveal>
 
           {/* Right column - Visual showcase */}
           <ScrollReveal direction="right" delay={0.15} className="relative lg:order-last">

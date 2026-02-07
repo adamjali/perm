@@ -79,34 +79,27 @@ export function FeatureShowcase() {
           </p>
         </ScrollReveal>
 
-        {/* Feature grid - 3 columns on desktop, 2 on tablet, 1 on mobile */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {showcaseFeatures.map((feature, index) => (
-            <ScrollReveal
-              key={feature.title}
-              direction="up"
-              delay={index * 0.08}
-              className="h-full"
-            >
-              <div className="group flex h-full flex-col gap-4 border-2 border-black bg-card p-6 shadow-hard transition-all hover:-translate-y-1 hover:shadow-hard-lg dark:border-white/20">
-                {/* Icon container */}
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-black bg-primary shadow-hard-sm dark:border-black">
-                  <feature.icon className="h-6 w-6 text-black" strokeWidth={2} />
-                </div>
-
-                {/* Text content */}
-                <div className="flex-1">
-                  <h3 className="font-heading text-lg font-bold">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </div>
+        {/* Feature grid - single stagger container */}
+        <ScrollReveal direction="up" stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {showcaseFeatures.map((feature) => (
+            <div key={feature.title} className="group flex h-full flex-col gap-4 border-2 border-black bg-card p-6 shadow-hard transition-all hover:-translate-y-1 hover:shadow-hard-lg dark:border-white/20">
+              {/* Icon container */}
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-black bg-primary shadow-hard-sm dark:border-black">
+                <feature.icon className="h-6 w-6 text-black" strokeWidth={2} />
               </div>
-            </ScrollReveal>
+
+              {/* Text content */}
+              <div className="flex-1">
+                <h3 className="font-heading text-lg font-bold">
+                  {feature.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {feature.description}
+                </p>
+              </div>
+            </div>
           ))}
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );

@@ -73,22 +73,23 @@ export function TestimonialsSection() {
   return (
     <section className="relative py-16 sm:py-20 overflow-hidden">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8">
-        {/* Section header */}
-        <ScrollReveal direction="up" className="mb-10 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-            <Star className="h-3.5 w-3.5" />
-            Trusted by Practitioners
+        {/* All content in single stagger container (1 Intersection Observer) */}
+        <ScrollReveal direction="up" stagger>
+          {/* Section header */}
+          <div className="mb-10 text-center">
+            <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              <Star className="h-3.5 w-3.5" />
+              Trusted by Practitioners
+            </div>
+            <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+              What Our Users Say
+            </h2>
+            <p className="mx-auto mt-4 max-w-lg text-lg text-muted-foreground">
+              Immigration attorneys trust PERM Tracker to manage their cases and never miss a deadline.
+            </p>
           </div>
-          <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-            What Our Users Say
-          </h2>
-          <p className="mx-auto mt-4 max-w-lg text-lg text-muted-foreground">
-            Immigration attorneys trust PERM Tracker to manage their cases and never miss a deadline.
-          </p>
-        </ScrollReveal>
 
-        {/* Trust badges row */}
-        <ScrollReveal direction="up" delay={0.05}>
+          {/* Trust badges row */}
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 mb-12">
             {trustBadges.map((badge) => (
               <div
@@ -100,10 +101,8 @@ export function TestimonialsSection() {
               </div>
             ))}
           </div>
-        </ScrollReveal>
 
-        {/* Senja Reviews Widget */}
-        <ScrollReveal direction="up" delay={0.1}>
+          {/* Senja Reviews Widget */}
           <div>
             <Script
               src="https://widget.senja.io/widget/3563db96-3a71-4d2a-b7e8-70550d4dd814/platform.js"
@@ -117,10 +116,8 @@ export function TestimonialsSection() {
               style={{ display: "block", width: "100%" }}
             />
           </div>
-        </ScrollReveal>
 
-        {/* Review links */}
-        <ScrollReveal direction="up" delay={0.2}>
+          {/* Review links */}
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <a
               href="https://senja.io/p/perm-tracker/r/FXAjpr"

@@ -12,6 +12,7 @@
 import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { useTilt } from "@/lib/hooks/useTilt";
 import {
   CalendarDeadlineSVG,
   NotificationBellSVG,
@@ -96,6 +97,68 @@ const features: Feature[] = [
   },
 ];
 
+/**
+ * Individual feature card with 3D tilt effect.
+ * Extracted as a component so each card gets its own useTilt hook instance.
+ */
+function FeatureCard({ feature }: { feature: Feature }) {
+  const { ref, style } = useTilt<HTMLDivElement>();
+
+  return (
+    <div
+      ref={ref}
+      style={style}
+      className="feature-card group relative border-3 border-border bg-background overflow-hidden shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
+    >
+      {/* Background image - subtle, tinted */}
+      <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
+        <Image
+          src={feature.bgImage}
+          alt=""
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 33vw"
+          aria-hidden="true"
+        />
+      </div>
+
+      {/* Top accent bar - appears on hover */}
+      <div
+        className="absolute left-0 right-0 top-0 h-1.5 origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
+        style={{ backgroundColor: feature.accentColor }}
+        aria-hidden="true"
+      />
+
+      {/* Corner accent - grows on hover */}
+      <div
+        className="absolute -bottom-10 -right-10 h-24 w-24 rotate-45 opacity-5 transition-all duration-300 group-hover:opacity-10 group-hover:scale-125"
+        style={{ backgroundColor: feature.accentColor }}
+        aria-hidden="true"
+      />
+
+      {/* Content */}
+      <div className="relative p-8 sm:p-10">
+        {/* Illustration */}
+        <div className="mb-6 flex h-[100px] items-center">
+          <div className="transition-transform duration-500 group-hover:scale-105">
+            {feature.illustration}
+          </div>
+        </div>
+
+        {/* Title */}
+        <h3 className="relative font-heading text-xl font-bold mb-3">
+          {feature.title}
+        </h3>
+
+        {/* Description */}
+        <p className="relative text-[15px] text-muted-foreground leading-relaxed">
+          {feature.description}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function FeaturesGrid() {
   return (
     <section id="features" className="relative">
@@ -115,64 +178,12 @@ export function FeaturesGrid() {
           </p>
         </ScrollReveal>
 
-        {/* Feature cards grid - 6 cards */}
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature, index) => (
-            <ScrollReveal
-              key={feature.title}
-              direction="up"
-              delay={index * 0.08}
-            >
-              <div className="feature-card group relative border-3 border-border bg-background overflow-hidden shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-                {/* Background image - subtle, tinted */}
-                <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
-                  <Image
-                    src={feature.bgImage}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    aria-hidden="true"
-                  />
-                </div>
-
-                {/* Top accent bar - appears on hover */}
-                <div
-                  className="absolute left-0 right-0 top-0 h-1.5 origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
-                  style={{ backgroundColor: feature.accentColor }}
-                  aria-hidden="true"
-                />
-
-                {/* Corner accent - grows on hover */}
-                <div
-                  className="absolute -bottom-10 -right-10 h-24 w-24 rotate-45 opacity-5 transition-all duration-300 group-hover:opacity-10 group-hover:scale-125"
-                  style={{ backgroundColor: feature.accentColor }}
-                  aria-hidden="true"
-                />
-
-                {/* Content */}
-                <div className="relative p-8 sm:p-10">
-                  {/* Illustration */}
-                  <div className="mb-6 flex h-[100px] items-center">
-                    <div className="transition-transform duration-500 group-hover:scale-105">
-                      {feature.illustration}
-                    </div>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="relative font-heading text-xl font-bold mb-3">
-                    {feature.title}
-                  </h3>
-
-                  {/* Description */}
-                  <p className="relative text-[15px] text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </div>
-            </ScrollReveal>
+        {/* Feature cards grid - single stagger container */}
+        <ScrollReveal direction="up" stagger className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature) => (
+            <FeatureCard key={feature.title} feature={feature} />
           ))}
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );
