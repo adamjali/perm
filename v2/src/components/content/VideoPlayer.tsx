@@ -9,7 +9,7 @@
 
 import dynamic from "next/dynamic";
 
-type VideoId = "ProductDemo" | "PERMExplainer";
+type VideoId = "ProductDemo" | "PERMExplainer" | "PERMInfographic";
 
 interface VideoPlayerProps {
   videoId: VideoId;
@@ -24,6 +24,7 @@ const VIDEO_CONFIG: Record<
 > = {
   ProductDemo: { durationInFrames: 450, fps: 30, width: 1920, height: 1080 },
   PERMExplainer: { durationInFrames: 600, fps: 30, width: 1920, height: 1080 },
+  PERMInfographic: { durationInFrames: 300, fps: 30, width: 1920, height: 1080 },
 };
 
 /**
@@ -47,8 +48,8 @@ const DynamicPlayer = dynamic(() => import("./VideoPlayerInner"), {
 export default function VideoPlayer({
   videoId,
   className = "",
-  autoPlay = false,
-  loop = false,
+  autoPlay = true,
+  loop = true,
 }: VideoPlayerProps) {
   const config = VIDEO_CONFIG[videoId];
 

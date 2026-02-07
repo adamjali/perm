@@ -1,6 +1,7 @@
 import { Composition, Folder } from "remotion";
 import { ProductDemo } from "./compositions/ProductDemo";
 import { PERMExplainer } from "./compositions/PERMExplainer";
+import { PERMInfographic } from "./compositions/PERMInfographic";
 
 /**
  * Remotion Root
@@ -26,6 +27,17 @@ export const RemotionRoot = () => {
         id="PERMExplainer"
         component={PERMExplainer}
         durationInFrames={600}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          brandColor: "#2ECC40",
+        }}
+      />
+      <Composition
+        id="PERMInfographic"
+        component={PERMInfographic}
+        durationInFrames={300}
         fps={30}
         width={1920}
         height={1080}

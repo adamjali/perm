@@ -26,6 +26,8 @@ import {
   type ProgressStatus,
   type ValidationResult,
 } from "@/lib/perm";
+import { useDateFieldValidation } from "@/hooks/useDateFieldValidation";
+import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { DemoCase } from "@/lib/demo/types";
 
 // ============================================================================
@@ -212,6 +214,29 @@ function createDefaultFormData(): Partial<DemoCase> {
   };
 }
 
+/**
+ * Bridge DemoCase fields to CaseFormData for real app validation hooks.
+ * Date field names are identical; we just need to shape the object correctly.
+ */
+function toCaseFormDataPartial(data: Partial<DemoCase>): Partial<CaseFormData> {
+  return {
+    pwdFilingDate: data.pwdFilingDate,
+    pwdDeterminationDate: data.pwdDeterminationDate,
+    pwdExpirationDate: data.pwdExpirationDate,
+    sundayAdFirstDate: data.sundayAdFirstDate,
+    sundayAdSecondDate: data.sundayAdSecondDate,
+    jobOrderStartDate: data.jobOrderStartDate,
+    jobOrderEndDate: data.jobOrderEndDate,
+    noticeOfFilingStartDate: data.noticeOfFilingStartDate,
+    noticeOfFilingEndDate: data.noticeOfFilingEndDate,
+    eta9089FilingDate: data.eta9089FilingDate,
+    eta9089CertificationDate: data.eta9089CertificationDate,
+    isProfessionalOccupation: data.isProfessionalOccupation ?? false,
+    i140FilingDate: data.i140FilingDate,
+    i140ApprovalDate: data.i140ApprovalDate,
+  } as Partial<CaseFormData>;
+}
+
 function getStatusIndex(status: CaseStatus): number {
   return STATUS_ORDER.indexOf(status);
 }
@@ -340,8 +365,8 @@ export function DemoCaseModal({
     return validateCase(validationData);
   }, [formData]);
 
-  // Map validation issues by field for inline display
-  const fieldErrors = useMemo(() => {
+  // Map PERM validation issues by field for inline display
+  const permFieldErrors = useMemo(() => {
     const map: Record<string, string> = {};
     for (const issue of permValidation.errors) {
       const camelField = FIELD_MAP[issue.field];
@@ -352,7 +377,7 @@ export function DemoCaseModal({
     return map;
   }, [permValidation]);
 
-  const fieldWarnings = useMemo(() => {
+  const permFieldWarnings = useMemo(() => {
     const map: Record<string, string> = {};
     for (const issue of permValidation.warnings) {
       const camelField = FIELD_MAP[issue.field];
@@ -362,6 +387,53 @@ export function DemoCaseModal({
     }
     return map;
   }, [permValidation]);
+
+  // Real app inline date validation (constraints, min/max, Sunday checks, cross-field)
+  const formDataAsCaseForm = useMemo(() => toCaseFormDataPartial(formData), [formData]);
+  const {
+    constraints: dateConstraints,
+    validateField: validateDateFieldInline,
+    validateOnChange: validateDateOnChange,
+    fieldStates: dateFieldStates,
+    fieldErrors: dateInlineErrors,
+    allFieldDisabledStates,
+    revalidateAllFields,
+  } = useDateFieldValidation(formDataAsCaseForm);
+
+  // Combined error/warning getters (inline validation takes priority over PERM validation)
+  const getFieldError = useCallback(
+    (field: string): string | undefined => dateInlineErrors[field] || permFieldErrors[field],
+    [dateInlineErrors, permFieldErrors]
+  );
+
+  const getFieldWarning = useCallback(
+    (field: string): string | undefined => permFieldWarnings[field],
+    [permFieldWarnings]
+  );
+
+  // Get dynamic hint from constraints, with fallback to static hint
+  const getFieldHint = useCallback(
+    (field: string, staticHint?: string): string | undefined => {
+      const depState = allFieldDisabledStates[field];
+      if (depState?.disabled && depState.reason) return depState.reason;
+      return dateConstraints[field]?.hint || staticHint;
+    },
+    [dateConstraints, allFieldDisabledStates]
+  );
+
+  // Check if date field has inline errors (blocks save)
+  const hasDateInlineErrors = useMemo(() => {
+    return Object.values(dateInlineErrors).some((e) => Boolean(e));
+  }, [dateInlineErrors]);
+
+  // Revalidate when modal opens with edit data
+  useEffect(() => {
+    if (isOpen && caseToEdit) {
+      // Defer to next tick so hook has fresh formData
+      const timer = setTimeout(() => revalidateAllFields(), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, caseToEdit, revalidateAllFields]);
 
   // Track which fields are auto-calculated
   const autoCalcFields = useMemo(() => {
@@ -421,8 +493,11 @@ export function DemoCaseModal({
       } else {
         setFormData((prev) => ({ ...prev, [field]: value ?? undefined }));
       }
+
+      // Inline validation for complete dates
+      validateDateOnChange(field, value ?? undefined);
     },
-    []
+    [validateDateOnChange]
   );
 
   const handleDateClear = useCallback(
@@ -440,8 +515,20 @@ export function DemoCaseModal({
       } else {
         setFormData((prev) => ({ ...prev, [field]: undefined }));
       }
+
+      // Clear validation state for cleared field
+      validateDateOnChange(field, undefined);
     },
-    []
+    [validateDateOnChange]
+  );
+
+  // Blur handler: trigger inline validation
+  const handleFieldBlur = useCallback(
+    (field: string) => () => {
+      const value = formData[field as keyof DemoCase] as string | undefined;
+      validateDateFieldInline(field, value);
+    },
+    [formData, validateDateFieldInline]
   );
 
   const handleCheckboxChange = useCallback(
@@ -473,6 +560,12 @@ export function DemoCaseModal({
 
   const handleSave = useCallback(() => {
     if (!validate()) return;
+
+    // Block save if any inline date validation errors exist
+    if (hasDateInlineErrors) {
+      toast.error("Please fix date validation errors before saving.");
+      return;
+    }
 
     const now = new Date().toISOString();
     const caseData: DemoCase = {
@@ -521,7 +614,7 @@ export function DemoCaseModal({
       console.error("Failed to save demo case:", error);
       toast.error("Failed to save case. Please try again.");
     }
-  }, [formData, caseToEdit, validate, onSave, onClose, permValidation]);
+  }, [formData, caseToEdit, validate, onSave, onClose, permValidation, hasDateInlineErrors]);
 
   // Helper to check if a field has a value
   const hasValue = (field: keyof DemoCase) => Boolean(formData[field]);
@@ -557,6 +650,20 @@ export function DemoCaseModal({
             />
 
             <FormField
+              label="Employer / Company Name"
+              name="employerName"
+              required
+              error={errors.employerName}
+            >
+              <Input
+                id="employerName"
+                value={formData.employerName ?? ""}
+                onChange={handleInputChange("employerName")}
+                placeholder="Enter employer name"
+              />
+            </FormField>
+
+            <FormField
               label="Foreign Worker Name"
               name="beneficiaryName"
               required
@@ -567,20 +674,6 @@ export function DemoCaseModal({
                 value={formData.beneficiaryName ?? ""}
                 onChange={handleInputChange("beneficiaryName")}
                 placeholder="Enter foreign worker name"
-              />
-            </FormField>
-
-            <FormField
-              label="Employer Name"
-              name="employerName"
-              required
-              error={errors.employerName}
-            >
-              <Input
-                id="employerName"
-                value={formData.employerName ?? ""}
-                onChange={handleInputChange("employerName")}
-                placeholder="Enter employer name"
               />
             </FormField>
 
@@ -616,15 +709,28 @@ export function DemoCaseModal({
               </FormField>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="isProfessionalOccupation"
-                checked={formData.isProfessionalOccupation ?? false}
-                onCheckedChange={handleCheckboxChange("isProfessionalOccupation")}
-              />
-              <Label htmlFor="isProfessionalOccupation" className="cursor-pointer">
-                Professional Occupation (requires additional recruitment)
-              </Label>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="isProfessionalOccupation"
+                  checked={formData.isProfessionalOccupation ?? false}
+                  onCheckedChange={handleCheckboxChange("isProfessionalOccupation")}
+                />
+                <Label htmlFor="isProfessionalOccupation" className="cursor-pointer">
+                  Professional Occupation (requires additional recruitment)
+                </Label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="isFavorite"
+                  checked={formData.isFavorite ?? false}
+                  onCheckedChange={handleCheckboxChange("isFavorite")}
+                />
+                <Label htmlFor="isFavorite" className="cursor-pointer">
+                  Mark as Favorite
+                </Label>
+              </div>
             </div>
           </section>
 
@@ -638,32 +744,40 @@ export function DemoCaseModal({
             <FormField
               label="PWD Filing Date"
               name="pwdFilingDate"
-              error={fieldErrors.pwdFilingDate}
-              warning={fieldWarnings.pwdFilingDate}
+              hint={getFieldHint("pwdFilingDate")}
+              error={getFieldError("pwdFilingDate")}
+              warning={getFieldWarning("pwdFilingDate")}
             >
               <DateInput
                 id="pwdFilingDate"
                 value={formData.pwdFilingDate ?? ""}
                 onChange={handleDateChange("pwdFilingDate")}
                 onClear={handleDateClear("pwdFilingDate")}
-                error={Boolean(fieldErrors.pwdFilingDate)}
+                onBlur={handleFieldBlur("pwdFilingDate")}
+                validationState={dateFieldStates.pwdFilingDate}
+                maxDate={dateConstraints.pwdFilingDate?.max}
+                error={Boolean(getFieldError("pwdFilingDate"))}
               />
             </FormField>
 
             <FormField
               label="PWD Determination Date"
               name="pwdDeterminationDate"
-              hint={hasValue("pwdFilingDate") ? "Auto-calculates PWD Expiration (1 year)" : "Enter PWD Filing Date first"}
-              error={fieldErrors.pwdDeterminationDate}
-              warning={fieldWarnings.pwdDeterminationDate}
+              hint={getFieldHint("pwdDeterminationDate", "Auto-calculates PWD Expiration (1 year)")}
+              error={getFieldError("pwdDeterminationDate")}
+              warning={getFieldWarning("pwdDeterminationDate")}
             >
               <DateInput
                 id="pwdDeterminationDate"
                 value={formData.pwdDeterminationDate ?? ""}
                 onChange={handleDateChange("pwdDeterminationDate")}
                 onClear={handleDateClear("pwdDeterminationDate")}
-                disabled={!hasValue("pwdFilingDate")}
-                error={Boolean(fieldErrors.pwdDeterminationDate)}
+                onBlur={handleFieldBlur("pwdDeterminationDate")}
+                validationState={dateFieldStates.pwdDeterminationDate}
+                minDate={dateConstraints.pwdDeterminationDate?.min}
+                maxDate={dateConstraints.pwdDeterminationDate?.max}
+                disabled={allFieldDisabledStates.pwdDeterminationDate?.disabled || !hasValue("pwdFilingDate")}
+                error={Boolean(getFieldError("pwdDeterminationDate"))}
               />
             </FormField>
 
@@ -671,8 +785,8 @@ export function DemoCaseModal({
               label="PWD Expiration Date"
               name="pwdExpirationDate"
               autoCalculated={autoCalcFields.has("pwdExpirationDate")}
-              error={fieldErrors.pwdExpirationDate}
-              warning={fieldWarnings.pwdExpirationDate}
+              error={getFieldError("pwdExpirationDate")}
+              warning={getFieldWarning("pwdExpirationDate")}
               hint={autoCalcFields.has("pwdExpirationDate") ? "1 year from determination date" : undefined}
             >
               <DateInput
@@ -682,7 +796,7 @@ export function DemoCaseModal({
                 onClear={handleDateClear("pwdExpirationDate")}
                 autoCalculated={autoCalcFields.has("pwdExpirationDate")}
                 disabled={autoCalcFields.has("pwdExpirationDate")}
-                error={Boolean(fieldErrors.pwdExpirationDate)}
+                error={Boolean(getFieldError("pwdExpirationDate"))}
               />
             </FormField>
           </section>
@@ -696,18 +810,38 @@ export function DemoCaseModal({
               />
 
               <FormField
+                label="Recruitment Start Date"
+                name="recruitmentStartDate"
+                error={getFieldError("recruitmentStartDate")}
+                warning={getFieldWarning("recruitmentStartDate")}
+              >
+                <DateInput
+                  id="recruitmentStartDate"
+                  value={formData.recruitmentStartDate ?? ""}
+                  onChange={handleDateChange("recruitmentStartDate")}
+                  onClear={handleDateClear("recruitmentStartDate")}
+                  onBlur={handleFieldBlur("recruitmentStartDate")}
+                  error={Boolean(getFieldError("recruitmentStartDate"))}
+                />
+              </FormField>
+
+              <FormField
                 label="Notice of Filing Start"
                 name="noticeOfFilingStartDate"
-                hint="Auto-calculates end date (+10 business days)"
-                error={fieldErrors.noticeOfFilingStartDate}
-                warning={fieldWarnings.noticeOfFilingStartDate}
+                hint={getFieldHint("noticeOfFilingStartDate", "Auto-calculates end date (+10 business days)")}
+                error={getFieldError("noticeOfFilingStartDate")}
+                warning={getFieldWarning("noticeOfFilingStartDate")}
               >
                 <DateInput
                   id="noticeOfFilingStartDate"
                   value={formData.noticeOfFilingStartDate ?? ""}
                   onChange={handleDateChange("noticeOfFilingStartDate")}
                   onClear={handleDateClear("noticeOfFilingStartDate")}
-                  error={Boolean(fieldErrors.noticeOfFilingStartDate)}
+                  onBlur={handleFieldBlur("noticeOfFilingStartDate")}
+                  validationState={dateFieldStates.noticeOfFilingStartDate}
+                  minDate={dateConstraints.noticeOfFilingStartDate?.min}
+                  maxDate={dateConstraints.noticeOfFilingStartDate?.max}
+                  error={Boolean(getFieldError("noticeOfFilingStartDate"))}
                 />
               </FormField>
 
@@ -716,8 +850,8 @@ export function DemoCaseModal({
                 name="noticeOfFilingEndDate"
                 autoCalculated={autoCalcFields.has("noticeOfFilingEndDate")}
                 hint={autoCalcFields.has("noticeOfFilingEndDate") ? "+10 business days from start" : undefined}
-                error={fieldErrors.noticeOfFilingEndDate}
-                warning={fieldWarnings.noticeOfFilingEndDate}
+                error={getFieldError("noticeOfFilingEndDate")}
+                warning={getFieldWarning("noticeOfFilingEndDate")}
               >
                 <DateInput
                   id="noticeOfFilingEndDate"
@@ -725,24 +859,28 @@ export function DemoCaseModal({
                   onChange={handleDateChange("noticeOfFilingEndDate")}
                   onClear={handleDateClear("noticeOfFilingEndDate")}
                   autoCalculated={autoCalcFields.has("noticeOfFilingEndDate")}
-                  disabled={autoCalcFields.has("noticeOfFilingEndDate")}
-                  error={Boolean(fieldErrors.noticeOfFilingEndDate)}
+                  disabled={autoCalcFields.has("noticeOfFilingEndDate") || (allFieldDisabledStates.noticeOfFilingEndDate?.disabled ?? false)}
+                  error={Boolean(getFieldError("noticeOfFilingEndDate"))}
                 />
               </FormField>
 
               <FormField
                 label="Job Order Start"
                 name="jobOrderStartDate"
-                hint="Auto-calculates end date (+30 days)"
-                error={fieldErrors.jobOrderStartDate}
-                warning={fieldWarnings.jobOrderStartDate}
+                hint={getFieldHint("jobOrderStartDate", "Auto-calculates end date (+30 days)")}
+                error={getFieldError("jobOrderStartDate")}
+                warning={getFieldWarning("jobOrderStartDate")}
               >
                 <DateInput
                   id="jobOrderStartDate"
                   value={formData.jobOrderStartDate ?? ""}
                   onChange={handleDateChange("jobOrderStartDate")}
                   onClear={handleDateClear("jobOrderStartDate")}
-                  error={Boolean(fieldErrors.jobOrderStartDate)}
+                  onBlur={handleFieldBlur("jobOrderStartDate")}
+                  validationState={dateFieldStates.jobOrderStartDate}
+                  minDate={dateConstraints.jobOrderStartDate?.min}
+                  maxDate={dateConstraints.jobOrderStartDate?.max}
+                  error={Boolean(getFieldError("jobOrderStartDate"))}
                 />
               </FormField>
 
@@ -750,68 +888,80 @@ export function DemoCaseModal({
                 label="Job Order End"
                 name="jobOrderEndDate"
                 autoCalculated={autoCalcFields.has("jobOrderEndDate")}
-                hint={autoCalcFields.has("jobOrderEndDate") ? "+30 days from start" : undefined}
-                error={fieldErrors.jobOrderEndDate}
-                warning={fieldWarnings.jobOrderEndDate}
+                hint={autoCalcFields.has("jobOrderEndDate") ? "+30 days from start" : getFieldHint("jobOrderEndDate")}
+                error={getFieldError("jobOrderEndDate")}
+                warning={getFieldWarning("jobOrderEndDate")}
               >
                 <DateInput
                   id="jobOrderEndDate"
                   value={formData.jobOrderEndDate ?? ""}
                   onChange={handleDateChange("jobOrderEndDate")}
                   onClear={handleDateClear("jobOrderEndDate")}
+                  onBlur={handleFieldBlur("jobOrderEndDate")}
+                  validationState={dateFieldStates.jobOrderEndDate}
+                  minDate={dateConstraints.jobOrderEndDate?.min}
                   autoCalculated={autoCalcFields.has("jobOrderEndDate")}
-                  disabled={autoCalcFields.has("jobOrderEndDate")}
-                  error={Boolean(fieldErrors.jobOrderEndDate)}
+                  disabled={autoCalcFields.has("jobOrderEndDate") || (allFieldDisabledStates.jobOrderEndDate?.disabled ?? false)}
+                  error={Boolean(getFieldError("jobOrderEndDate"))}
                 />
               </FormField>
 
               <FormField
                 label="Sunday Ad #1"
                 name="sundayAdFirstDate"
-                error={fieldErrors.sundayAdFirstDate}
-                warning={fieldWarnings.sundayAdFirstDate}
+                hint={getFieldHint("sundayAdFirstDate", "Must be a Sunday")}
+                error={getFieldError("sundayAdFirstDate")}
+                warning={getFieldWarning("sundayAdFirstDate")}
               >
                 <DateInput
                   id="sundayAdFirstDate"
                   value={formData.sundayAdFirstDate ?? ""}
                   onChange={handleDateChange("sundayAdFirstDate")}
                   onClear={handleDateClear("sundayAdFirstDate")}
+                  onBlur={handleFieldBlur("sundayAdFirstDate")}
+                  validationState={dateFieldStates.sundayAdFirstDate}
+                  minDate={dateConstraints.sundayAdFirstDate?.min}
+                  maxDate={dateConstraints.sundayAdFirstDate?.max}
                   sundayOnly
-                  error={Boolean(fieldErrors.sundayAdFirstDate)}
+                  error={Boolean(getFieldError("sundayAdFirstDate"))}
                 />
               </FormField>
 
               <FormField
                 label="Sunday Ad #2"
                 name="sundayAdSecondDate"
-                hint={!hasValue("sundayAdFirstDate") ? "Enter Sunday Ad #1 first" : undefined}
-                error={fieldErrors.sundayAdSecondDate}
-                warning={fieldWarnings.sundayAdSecondDate}
+                hint={getFieldHint("sundayAdSecondDate", !hasValue("sundayAdFirstDate") ? "Enter Sunday Ad #1 first" : "Must be a Sunday, 1+ week after first ad")}
+                error={getFieldError("sundayAdSecondDate")}
+                warning={getFieldWarning("sundayAdSecondDate")}
               >
                 <DateInput
                   id="sundayAdSecondDate"
                   value={formData.sundayAdSecondDate ?? ""}
                   onChange={handleDateChange("sundayAdSecondDate")}
                   onClear={handleDateClear("sundayAdSecondDate")}
+                  onBlur={handleFieldBlur("sundayAdSecondDate")}
+                  validationState={dateFieldStates.sundayAdSecondDate}
+                  minDate={dateConstraints.sundayAdSecondDate?.min}
+                  maxDate={dateConstraints.sundayAdSecondDate?.max}
                   sundayOnly
-                  disabled={!hasValue("sundayAdFirstDate")}
-                  minDate={formData.sundayAdFirstDate}
-                  error={Boolean(fieldErrors.sundayAdSecondDate)}
+                  disabled={allFieldDisabledStates.sundayAdSecondDate?.disabled || !hasValue("sundayAdFirstDate")}
+                  error={Boolean(getFieldError("sundayAdSecondDate"))}
                 />
               </FormField>
 
               <FormField
                 label="Recruitment End Date"
                 name="recruitmentEndDate"
-                error={fieldErrors.recruitmentEndDate}
-                warning={fieldWarnings.recruitmentEndDate}
+                error={getFieldError("recruitmentEndDate")}
+                warning={getFieldWarning("recruitmentEndDate")}
               >
                 <DateInput
                   id="recruitmentEndDate"
                   value={formData.recruitmentEndDate ?? ""}
                   onChange={handleDateChange("recruitmentEndDate")}
                   onClear={handleDateClear("recruitmentEndDate")}
-                  error={Boolean(fieldErrors.recruitmentEndDate)}
+                  onBlur={handleFieldBlur("recruitmentEndDate")}
+                  error={Boolean(getFieldError("recruitmentEndDate"))}
                 />
               </FormField>
             </section>
@@ -828,31 +978,41 @@ export function DemoCaseModal({
               <FormField
                 label="ETA 9089 Filing Date"
                 name="eta9089FilingDate"
-                error={fieldErrors.eta9089FilingDate}
-                warning={fieldWarnings.eta9089FilingDate}
+                hint={getFieldHint("eta9089FilingDate")}
+                error={getFieldError("eta9089FilingDate")}
+                warning={getFieldWarning("eta9089FilingDate")}
               >
                 <DateInput
                   id="eta9089FilingDate"
                   value={formData.eta9089FilingDate ?? ""}
                   onChange={handleDateChange("eta9089FilingDate")}
                   onClear={handleDateClear("eta9089FilingDate")}
-                  error={Boolean(fieldErrors.eta9089FilingDate)}
+                  onBlur={handleFieldBlur("eta9089FilingDate")}
+                  validationState={dateFieldStates.eta9089FilingDate}
+                  minDate={dateConstraints.eta9089FilingDate?.min}
+                  maxDate={dateConstraints.eta9089FilingDate?.max}
+                  error={Boolean(getFieldError("eta9089FilingDate"))}
                 />
               </FormField>
 
               <FormField
                 label="ETA 9089 Certification Date"
                 name="eta9089CertificationDate"
-                hint="Auto-calculates expiration (+180 days)"
-                error={fieldErrors.eta9089CertificationDate}
-                warning={fieldWarnings.eta9089CertificationDate}
+                hint={getFieldHint("eta9089CertificationDate", "Auto-calculates expiration (+180 days)")}
+                error={getFieldError("eta9089CertificationDate")}
+                warning={getFieldWarning("eta9089CertificationDate")}
               >
                 <DateInput
                   id="eta9089CertificationDate"
                   value={formData.eta9089CertificationDate ?? ""}
                   onChange={handleDateChange("eta9089CertificationDate")}
                   onClear={handleDateClear("eta9089CertificationDate")}
-                  error={Boolean(fieldErrors.eta9089CertificationDate)}
+                  onBlur={handleFieldBlur("eta9089CertificationDate")}
+                  validationState={dateFieldStates.eta9089CertificationDate}
+                  minDate={dateConstraints.eta9089CertificationDate?.min}
+                  maxDate={dateConstraints.eta9089CertificationDate?.max}
+                  disabled={allFieldDisabledStates.eta9089CertificationDate?.disabled ?? false}
+                  error={Boolean(getFieldError("eta9089CertificationDate"))}
                 />
               </FormField>
 
@@ -861,8 +1021,8 @@ export function DemoCaseModal({
                 name="eta9089ExpirationDate"
                 autoCalculated={autoCalcFields.has("eta9089ExpirationDate")}
                 hint={autoCalcFields.has("eta9089ExpirationDate") ? "+180 days from certification" : undefined}
-                error={fieldErrors.eta9089ExpirationDate}
-                warning={fieldWarnings.eta9089ExpirationDate}
+                error={getFieldError("eta9089ExpirationDate")}
+                warning={getFieldWarning("eta9089ExpirationDate")}
               >
                 <DateInput
                   id="eta9089ExpirationDate"
@@ -871,7 +1031,7 @@ export function DemoCaseModal({
                   onClear={handleDateClear("eta9089ExpirationDate")}
                   autoCalculated={autoCalcFields.has("eta9089ExpirationDate")}
                   disabled={autoCalcFields.has("eta9089ExpirationDate")}
-                  error={Boolean(fieldErrors.eta9089ExpirationDate)}
+                  error={Boolean(getFieldError("eta9089ExpirationDate"))}
                 />
               </FormField>
             </section>
@@ -888,30 +1048,41 @@ export function DemoCaseModal({
               <FormField
                 label="I-140 Filing Date"
                 name="i140FilingDate"
-                error={fieldErrors.i140FilingDate}
-                warning={fieldWarnings.i140FilingDate}
+                hint={getFieldHint("i140FilingDate")}
+                error={getFieldError("i140FilingDate")}
+                warning={getFieldWarning("i140FilingDate")}
               >
                 <DateInput
                   id="i140FilingDate"
                   value={formData.i140FilingDate ?? ""}
                   onChange={handleDateChange("i140FilingDate")}
                   onClear={handleDateClear("i140FilingDate")}
-                  error={Boolean(fieldErrors.i140FilingDate)}
+                  onBlur={handleFieldBlur("i140FilingDate")}
+                  validationState={dateFieldStates.i140FilingDate}
+                  minDate={dateConstraints.i140FilingDate?.min}
+                  maxDate={dateConstraints.i140FilingDate?.max}
+                  error={Boolean(getFieldError("i140FilingDate"))}
                 />
               </FormField>
 
               <FormField
                 label="I-140 Approval Date"
                 name="i140ApprovalDate"
-                error={fieldErrors.i140ApprovalDate}
-                warning={fieldWarnings.i140ApprovalDate}
+                hint={getFieldHint("i140ApprovalDate")}
+                error={getFieldError("i140ApprovalDate")}
+                warning={getFieldWarning("i140ApprovalDate")}
               >
                 <DateInput
                   id="i140ApprovalDate"
                   value={formData.i140ApprovalDate ?? ""}
                   onChange={handleDateChange("i140ApprovalDate")}
                   onClear={handleDateClear("i140ApprovalDate")}
-                  error={Boolean(fieldErrors.i140ApprovalDate)}
+                  onBlur={handleFieldBlur("i140ApprovalDate")}
+                  validationState={dateFieldStates.i140ApprovalDate}
+                  minDate={dateConstraints.i140ApprovalDate?.min}
+                  maxDate={dateConstraints.i140ApprovalDate?.max}
+                  disabled={allFieldDisabledStates.i140ApprovalDate?.disabled ?? false}
+                  error={Boolean(getFieldError("i140ApprovalDate"))}
                 />
               </FormField>
             </section>
@@ -928,15 +1099,16 @@ export function DemoCaseModal({
               label="RFI Received Date"
               name="rfiReceivedDate"
               hint="Auto-calculates due date (+30 days)"
-              error={fieldErrors.rfiReceivedDate}
-              warning={fieldWarnings.rfiReceivedDate}
+              error={getFieldError("rfiReceivedDate")}
+              warning={getFieldWarning("rfiReceivedDate")}
             >
               <DateInput
                 id="rfiReceivedDate"
                 value={formData.rfiReceivedDate ?? ""}
                 onChange={handleDateChange("rfiReceivedDate")}
                 onClear={handleDateClear("rfiReceivedDate")}
-                error={Boolean(fieldErrors.rfiReceivedDate)}
+                onBlur={handleFieldBlur("rfiReceivedDate")}
+                error={Boolean(getFieldError("rfiReceivedDate"))}
               />
             </FormField>
 
@@ -945,8 +1117,8 @@ export function DemoCaseModal({
               name="rfiDueDate"
               autoCalculated={autoCalcFields.has("rfiDueDate")}
               hint={autoCalcFields.has("rfiDueDate") ? "+30 days from received date" : !hasValue("rfiReceivedDate") ? "Enter RFI Received Date first" : undefined}
-              error={fieldErrors.rfiDueDate}
-              warning={fieldWarnings.rfiDueDate}
+              error={getFieldError("rfiDueDate")}
+              warning={getFieldWarning("rfiDueDate")}
             >
               <DateInput
                 id="rfiDueDate"
@@ -955,7 +1127,7 @@ export function DemoCaseModal({
                 onClear={handleDateClear("rfiDueDate")}
                 autoCalculated={autoCalcFields.has("rfiDueDate")}
                 disabled={autoCalcFields.has("rfiDueDate") || !hasValue("rfiReceivedDate")}
-                error={Boolean(fieldErrors.rfiDueDate)}
+                error={Boolean(getFieldError("rfiDueDate"))}
               />
             </FormField>
 
@@ -963,16 +1135,99 @@ export function DemoCaseModal({
               label="RFI Submitted Date"
               name="rfiSubmittedDate"
               hint={!hasValue("rfiReceivedDate") ? "Enter RFI Received Date first" : undefined}
-              error={fieldErrors.rfiSubmittedDate}
-              warning={fieldWarnings.rfiSubmittedDate}
+              error={getFieldError("rfiSubmittedDate")}
+              warning={getFieldWarning("rfiSubmittedDate")}
             >
               <DateInput
                 id="rfiSubmittedDate"
                 value={formData.rfiSubmittedDate ?? ""}
                 onChange={handleDateChange("rfiSubmittedDate")}
                 onClear={handleDateClear("rfiSubmittedDate")}
+                onBlur={handleFieldBlur("rfiSubmittedDate")}
                 disabled={!hasValue("rfiReceivedDate")}
-                error={Boolean(fieldErrors.rfiSubmittedDate)}
+                error={Boolean(getFieldError("rfiSubmittedDate"))}
+              />
+            </FormField>
+          </section>
+
+          {/* RFE Section */}
+          <section className="space-y-4">
+            <SectionHeader
+              title="RFE (Request for Evidence)"
+              stageColor="var(--urgency-urgent, #ef4444)"
+            />
+
+            <FormField
+              label="RFE Received Date"
+              name="rfeReceivedDate"
+              error={getFieldError("rfeReceivedDate")}
+              warning={getFieldWarning("rfeReceivedDate")}
+            >
+              <DateInput
+                id="rfeReceivedDate"
+                value={formData.rfeReceivedDate ?? ""}
+                onChange={handleDateChange("rfeReceivedDate")}
+                onClear={handleDateClear("rfeReceivedDate")}
+                onBlur={handleFieldBlur("rfeReceivedDate")}
+                error={Boolean(getFieldError("rfeReceivedDate"))}
+              />
+            </FormField>
+
+            <FormField
+              label="RFE Due Date"
+              name="rfeDueDate"
+              hint={!hasValue("rfeReceivedDate") ? "Enter RFE Received Date first" : undefined}
+              error={getFieldError("rfeDueDate")}
+              warning={getFieldWarning("rfeDueDate")}
+            >
+              <DateInput
+                id="rfeDueDate"
+                value={formData.rfeDueDate ?? ""}
+                onChange={handleDateChange("rfeDueDate")}
+                onClear={handleDateClear("rfeDueDate")}
+                onBlur={handleFieldBlur("rfeDueDate")}
+                disabled={!hasValue("rfeReceivedDate")}
+                error={Boolean(getFieldError("rfeDueDate"))}
+              />
+            </FormField>
+
+            <FormField
+              label="RFE Submitted Date"
+              name="rfeSubmittedDate"
+              hint={!hasValue("rfeReceivedDate") ? "Enter RFE Received Date first" : undefined}
+              error={getFieldError("rfeSubmittedDate")}
+              warning={getFieldWarning("rfeSubmittedDate")}
+            >
+              <DateInput
+                id="rfeSubmittedDate"
+                value={formData.rfeSubmittedDate ?? ""}
+                onChange={handleDateChange("rfeSubmittedDate")}
+                onClear={handleDateClear("rfeSubmittedDate")}
+                onBlur={handleFieldBlur("rfeSubmittedDate")}
+                disabled={!hasValue("rfeReceivedDate")}
+                error={Boolean(getFieldError("rfeSubmittedDate"))}
+              />
+            </FormField>
+          </section>
+
+          {/* Notes Section */}
+          <section className="space-y-4">
+            <SectionHeader
+              title="Notes"
+              stageColor="var(--muted-foreground)"
+            />
+
+            <FormField
+              label="Case Notes"
+              name="notes"
+            >
+              <textarea
+                id="notes"
+                value={formData.notes ?? ""}
+                onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                placeholder="Add any notes about this case..."
+                rows={3}
+                className="flex w-full border-2 border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y"
               />
             </FormField>
           </section>
@@ -997,7 +1252,7 @@ export function DemoCaseModal({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>
+          <Button onClick={handleSave} disabled={hasDateInlineErrors}>
             {isEditMode ? "Save Changes" : "Add Case"}
           </Button>
         </DialogFooter>

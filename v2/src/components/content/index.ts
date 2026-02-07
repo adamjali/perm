@@ -18,3 +18,4 @@ export { default as ChangelogTimeline } from "./ChangelogTimeline";
 export { default as StructuredData } from "./StructuredData";
 export { default as VideoPlayer } from "./VideoPlayer";
 export { default as ScreenshotFigure } from "./ScreenshotFigure";
+export { default as PrintableChecklist } from "./PrintableChecklist";

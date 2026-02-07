@@ -201,7 +201,7 @@ export function DemoPageClient() {
       if (foundCase) {
         setCaseToDelete({
           id: foundCase.id,
-          name: `${foundCase.beneficiaryName} (${foundCase.employerName})`,
+          name: `${foundCase.employerName} — ${foundCase.beneficiaryName}`,
         });
         setIsDeleteOpen(true);
       }
@@ -447,7 +447,7 @@ export function DemoPageClient() {
               <SectionLabel
                 number="3"
                 title="Your Cases"
-                description="Each card shows the beneficiary, employer, PERM stage, next deadline with urgency color, and progress status. Click Edit to change dates and see auto-cascade in action."
+                description="Each card shows the employer, beneficiary, PERM stage, next deadline with urgency color, and progress status. Click Edit to change dates and see auto-cascade in action."
                 icon={<LayoutGrid className="h-4 w-4" />}
                 accentColor="var(--stage-recruitment)"
               />

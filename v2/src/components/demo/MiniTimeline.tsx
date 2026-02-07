@@ -152,11 +152,16 @@ export function MiniTimeline({ cases }: MiniTimelineProps) {
               className="px-4 py-3"
               style={{ borderLeft: `4px solid var(--stage-${caseData.status})` }}
             >
-              {/* Case header */}
+              {/* Case header — company first */}
               <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="truncate text-xs font-bold">
-                  {caseData.beneficiaryName}
-                </p>
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-bold">
+                    {caseData.employerName}
+                  </p>
+                  <p className="truncate text-[10px] text-muted-foreground">
+                    {caseData.beneficiaryName}
+                  </p>
+                </div>
                 <span
                   className={`shrink-0 px-1.5 py-0 text-[9px] font-black uppercase tracking-wider text-black ${stageColor}`}
                 >

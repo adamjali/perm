@@ -156,12 +156,12 @@ export function DemoCaseCard({ case: caseData, onEdit, onDelete }: DemoCaseCardP
 
       {/* Card body */}
       <div className="p-4">
-        {/* Names */}
+        {/* Names — company first */}
         <h3 className="truncate font-heading text-base font-bold leading-tight">
-          {caseData.beneficiaryName}
+          {caseData.employerName}
         </h3>
         <p className="truncate text-sm text-muted-foreground">
-          {caseData.employerName}
+          {caseData.beneficiaryName}
         </p>
 
         {/* Progress Status */}

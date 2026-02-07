@@ -10,8 +10,9 @@
 import { Player } from "@remotion/player";
 import { ProductDemo } from "@/remotion/compositions/ProductDemo";
 import { PERMExplainer } from "@/remotion/compositions/PERMExplainer";
+import { PERMInfographic } from "@/remotion/compositions/PERMInfographic";
 
-type VideoId = "ProductDemo" | "PERMExplainer";
+type VideoId = "ProductDemo" | "PERMExplainer" | "PERMInfographic";
 
 interface VideoPlayerInnerProps {
   videoId: VideoId;
@@ -28,13 +29,14 @@ interface VideoPlayerInnerProps {
 const COMPONENTS: Record<VideoId, React.FC<{ brandColor: string }>> = {
   ProductDemo,
   PERMExplainer,
+  PERMInfographic,
 };
 
 export default function VideoPlayerInner({
   videoId,
   config,
-  autoPlay = false,
-  loop = false,
+  autoPlay = true,
+  loop = true,
 }: VideoPlayerInnerProps) {
   const Component = COMPONENTS[videoId];
 

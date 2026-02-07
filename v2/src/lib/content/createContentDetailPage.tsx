@@ -52,7 +52,11 @@ export function createContentDetailPage(type: ContentType) {
         modifiedTime: post.meta.updated ?? post.meta.date,
         authors: [post.meta.author],
         tags: post.meta.tags,
-        images: post.meta.image ? [{ url: post.meta.image }] : undefined,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: post.meta.title,
+        description: post.meta.description,
       },
     };
   }

@@ -61,7 +61,7 @@ function calculateETA9089ExpirationString(certificationDateStr: string): string 
 const DEMO_CREATED_AT = "2024-01-01T00:00:00.000Z";
 
 // ============================================================================
-// Case 1: PWD Stage - "Acme Corp / John Smith"
+// Case 1: PWD Stage — Acme Corp (John Smith)
 // ============================================================================
 
 function createCase1(): DemoCase {
@@ -88,7 +88,7 @@ function createCase1(): DemoCase {
 }
 
 // ============================================================================
-// Case 2: Recruitment Stage - "Tech Solutions / Maria Garcia"
+// Case 2: Recruitment Stage — Tech Solutions (Maria Garcia)
 // ============================================================================
 
 function createCase2(): DemoCase {
@@ -153,7 +153,7 @@ function createCase2(): DemoCase {
 }
 
 // ============================================================================
-// Case 3: ETA 9089 Stage - "Global Inc / Wei Chen"
+// Case 3: ETA 9089 Stage — Global Inc (Wei Chen)
 // ============================================================================
 
 function createCase3(): DemoCase {
@@ -202,7 +202,7 @@ function createCase3(): DemoCase {
 }
 
 // ============================================================================
-// Case 4: I-140 Stage - "Startup Labs / Raj Patel"
+// Case 4: I-140 Stage — Startup Labs (Raj Patel)
 // ============================================================================
 
 function createCase4(): DemoCase {
@@ -279,7 +279,7 @@ function createCase4(): DemoCase {
 }
 
 // ============================================================================
-// Case 5: Complete - "Enterprise Co / Anna Kowalski"
+// Case 5: Complete — Enterprise Co (Anna Kowalski)
 // ============================================================================
 
 function createCase5(): DemoCase {
@@ -344,12 +344,12 @@ function createCase5(): DemoCase {
 /**
  * Default demo cases representing all stages of the PERM process.
  *
- * Cases:
- * 1. "Acme Corp / John Smith" - PWD stage, working
- * 2. "Tech Solutions / Maria Garcia" - Recruitment stage, working (professional)
- * 3. "Global Inc / Wei Chen" - ETA 9089 stage, filed
- * 4. "Startup Labs / Raj Patel" - I-140 stage, filed (professional)
- * 5. "Enterprise Co / Anna Kowalski" - Complete (approved)
+ * Cases (Company — Beneficiary):
+ * 1. Acme Corp (John Smith) — PWD stage, working
+ * 2. Tech Solutions (Maria Garcia) — Recruitment stage, working (professional)
+ * 3. Global Inc (Wei Chen) — ETA 9089 stage, filed
+ * 4. Startup Labs (Raj Patel) — I-140 stage, filed (professional)
+ * 5. Enterprise Co (Anna Kowalski) — Complete (approved)
  */
 export const DEFAULT_DEMO_CASES: DemoCase[] = [
   createCase1(),

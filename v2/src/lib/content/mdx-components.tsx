@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { NavLink } from "@/components/ui/nav-link";
 import VideoPlayer from "@/components/content/VideoPlayer";
 import ScreenshotFigure from "@/components/content/ScreenshotFigure";
+import PrintableChecklist from "@/components/content/PrintableChecklist";
 
 /* ------------------------------------------------------------------ */
 /* Custom MDX blocks                                                   */
@@ -20,12 +21,37 @@ import ScreenshotFigure from "@/components/content/ScreenshotFigure";
 function Callout({
   type = "info",
   title,
+  stat,
   children,
 }: {
-  type?: "info" | "warning" | "tip" | "important";
+  type?: "info" | "warning" | "tip" | "important" | "stat";
   title?: string;
+  stat?: string;
   children: React.ReactNode;
 }) {
+  // Stat variant: neobrutalist card with large stat badge
+  if (type === "stat") {
+    return (
+      <div className="not-prose my-6 flex flex-col gap-4 border-2 border-border p-4 shadow-hard-sm sm:flex-row sm:items-center sm:gap-5 sm:p-5">
+        {stat && (
+          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center border-2 border-border bg-primary font-heading text-xl font-bold text-black sm:h-20 sm:w-20 sm:text-2xl">
+            {stat}
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          {title && (
+            <p className="mb-1 font-heading text-sm font-bold uppercase tracking-wide text-foreground">
+              {title}
+            </p>
+          )}
+          <div className="text-sm leading-relaxed text-muted-foreground">
+            {children}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const styles = {
     info: "border-l-4 border-primary bg-primary/5",
     warning: "border-l-4 border-yellow-500 bg-yellow-500/5",
@@ -172,6 +198,7 @@ export const mdxComponents: MDXComponents = {
   ComparisonTable,
   VideoPlayer,
   ScreenshotFigure,
+  PrintableChecklist,
 
   // Headings
   h1: ({ children, id, ...props }) => (

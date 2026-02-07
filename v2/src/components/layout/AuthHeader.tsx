@@ -200,7 +200,7 @@ export default function AuthHeader() {
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
                   </button>
                   {isLearnOpen && (
-                    <div className="absolute left-0 top-full mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(46,204,64,0.3)]">
+                    <div className="absolute left-0 top-full z-50 mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(46,204,64,0.3)]">
                       {CONTENT_NAV_LINKS.map((link) => (
                         <NavLink
                           key={link.href}
@@ -246,7 +246,7 @@ export default function AuthHeader() {
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
                   </button>
                   {isLearnOpen && (
-                    <div className="absolute left-0 top-full mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(46,204,64,0.3)]">
+                    <div className="absolute left-0 top-full z-50 mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(46,204,64,0.3)]">
                       {CONTENT_NAV_LINKS.map((link) => (
                         <NavLink
                           key={link.href}
