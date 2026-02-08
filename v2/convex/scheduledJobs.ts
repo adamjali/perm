@@ -45,6 +45,11 @@ import {
   type CaseDataForDeadlines,
 } from "./lib/perm/deadlines";
 import {
+  getTodayForDeadline,
+  DEFAULT_USER_TIMEZONE,
+} from "./lib/perm/deadlines/timezones";
+import type { DeadlineType } from "./lib/perm/deadlines";
+import {
   buildDigestContent,
   type RawDeadlineData,
   type RawCaseUpdateData,
@@ -138,6 +143,25 @@ function formatDateForEmail(dateStr: string): string {
   });
 }
 
+/**
+ * Calculate days until a deadline using timezone-aware "today" resolution.
+ *
+ * @param deadlineDate - ISO date string (YYYY-MM-DD)
+ * @param deadlineType - The deadline type (determines timezone rule)
+ * @param userTimezone - User's IANA timezone
+ * @returns Number of days until the deadline (negative = overdue)
+ */
+function daysUntilDeadline(
+  deadlineDate: string,
+  deadlineType: DeadlineType,
+  userTimezone: string
+): number {
+  const todayStr = getTodayForDeadline(deadlineType, userTimezone);
+  const todayMs = new Date(todayStr + "T00:00:00Z").getTime();
+  const deadlineMs = new Date(deadlineDate + "T00:00:00Z").getTime();
+  return Math.ceil((deadlineMs - todayMs) / (1000 * 60 * 60 * 24));
+}
+
 // ============================================================================
 // QUERIES
 // ============================================================================
@@ -159,8 +183,6 @@ export const getCasesNeedingReminders = internalQuery({
   args: {},
   handler: async (ctx): Promise<DeadlineReminder[]> => {
     const reminders: DeadlineReminder[] = [];
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
 
     // Get all user profiles with their settings
     const userProfiles = await ctx.db
@@ -222,17 +244,18 @@ export const getCasesNeedingReminders = internalQuery({
 
       const userPrefs = profile ? buildUserPrefs(profile) : getDefaultPrefs();
       const reminderDays = profile?.reminderDaysBefore ?? [1, 3, 7, 14, 30];
+      const userTz = profile?.timezone || DEFAULT_USER_TIMEZONE;
 
-      // Helper to check and add deadline reminders
+      // Helper to check and add deadline reminders.
+      // Uses timezone-aware "today" based on the deadline type's timezone rule.
       const checkDeadline = (
         deadlineDate: string | undefined,
-        deadlineType: DeadlineNotificationType
+        deadlineType: DeadlineNotificationType,
+        tzDeadlineType: DeadlineType
       ) => {
         if (!deadlineDate) return;
 
-        const deadline = new Date(deadlineDate + "T00:00:00Z");
-        const diffTime = deadline.getTime() - today.getTime();
-        const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const daysUntil = daysUntilDeadline(deadlineDate, tzDeadlineType, userTz);
 
         // Check if this matches any reminder interval
         for (const daysBefore of reminderDays) {
@@ -280,26 +303,26 @@ export const getCasesNeedingReminders = internalQuery({
 
       // Check PWD expiration (superseded when ETA 9089 filed)
       if (shouldRemindForDeadline("pwd_expiration", caseDataForDeadlines)) {
-        checkDeadline(caseDoc.pwdExpirationDate, "pwd_expiration");
+        checkDeadline(caseDoc.pwdExpirationDate, "pwd_expiration", "pwd_expiration");
       }
 
       // Check filing window closes (superseded when ETA 9089 filed)
       // Note: Uses "filing_window_opens" as the notification type for backward compatibility
       if (shouldRemindForDeadline("filing_window_closes", caseDataForDeadlines)) {
-        checkDeadline(caseDoc.filingWindowCloses, "filing_window_opens");
+        checkDeadline(caseDoc.filingWindowCloses, "filing_window_opens", "filing_window_closes");
       }
 
       // Check I-140 filing deadline (superseded when I-140 filed)
       // Uses eta9089ExpirationDate as the deadline (180 days from certification)
       if (shouldRemindForDeadline("i140_filing_deadline", caseDataForDeadlines)) {
-        checkDeadline(caseDoc.eta9089ExpirationDate, "i140_filing_deadline");
+        checkDeadline(caseDoc.eta9089ExpirationDate, "i140_filing_deadline", "i140_filing_deadline");
       }
 
       // Check RFI due dates (superseded when response submitted)
       if (shouldRemindForDeadline("rfi_due", caseDataForDeadlines)) {
         const activeRfi = getActiveRfiEntry(caseDoc.rfiEntries ?? []);
         if (activeRfi?.responseDueDate) {
-          checkDeadline(activeRfi.responseDueDate, "rfi_due");
+          checkDeadline(activeRfi.responseDueDate, "rfi_due", "rfi_due");
         }
       }
 
@@ -307,7 +330,7 @@ export const getCasesNeedingReminders = internalQuery({
       if (shouldRemindForDeadline("rfe_due", caseDataForDeadlines)) {
         const activeRfe = getActiveRfeEntry(caseDoc.rfeEntries ?? []);
         if (activeRfe?.responseDueDate) {
-          checkDeadline(activeRfe.responseDueDate, "rfe_due");
+          checkDeadline(activeRfe.responseDueDate, "rfe_due", "rfe_due");
         }
       }
     }
@@ -681,12 +704,21 @@ export const getDeadlinesForDigest = internalQuery({
     userId: v.id("users"),
   },
   handler: async (ctx, { userId }): Promise<RawDeadlineData[]> => {
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    // Look up user timezone for timezone-aware "today" resolution
+    const userProfile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .first();
+    const userTz = userProfile?.timezone || DEFAULT_USER_TIMEZONE;
+
+    // Use the most conservative "today" (UTC) for date range filtering.
+    // Per-deadline timezone resolution happens in daysUntil calculation.
+    const todayUtc = new Date();
+    todayUtc.setUTCHours(0, 0, 0, 0);
 
     // Include deadlines from 30 days ago (to capture overdue) to 14 days ahead
-    const pastDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const futureDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const pastDate = new Date(todayUtc.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const futureDate = new Date(todayUtc.getTime() + 14 * 24 * 60 * 60 * 1000);
     const pastDateStr = pastDate.toISOString().split("T")[0]!;
     const futureDateStr = futureDate.toISOString().split("T")[0]!;
 
@@ -704,13 +736,10 @@ export const getDeadlinesForDigest = internalQuery({
     const deadlines: RawDeadlineData[] = [];
 
     for (const caseDoc of cases) {
-      const addDeadline = (date: string | undefined, type: string) => {
+      const addDeadline = (date: string | undefined, type: string, tzType: DeadlineType) => {
         if (!date) return;
         if (date >= pastDateStr && date <= futureDateStr) {
-          const deadline = new Date(date + "T00:00:00Z");
-          const daysUntil = Math.ceil(
-            (deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-          );
+          const daysUntil = daysUntilDeadline(date, tzType, userTz);
           deadlines.push({
             caseId: caseDoc._id,
             employerName: caseDoc.employerName,
@@ -724,24 +753,24 @@ export const getDeadlinesForDigest = internalQuery({
 
       // Only add PWD expiration if not yet filed ETA 9089
       if (!caseDoc.eta9089FilingDate) {
-        addDeadline(caseDoc.pwdExpirationDate, "PWD Expiration");
+        addDeadline(caseDoc.pwdExpirationDate, "PWD Expiration", "pwd_expiration");
       }
 
       // Only add filing window if not yet filed ETA 9089
       if (!caseDoc.eta9089FilingDate) {
-        addDeadline(caseDoc.filingWindowCloses, "Filing Window Closes");
+        addDeadline(caseDoc.filingWindowCloses, "Filing Window Closes", "filing_window_closes");
       }
 
       // Only add I-140 deadline if not yet filed I-140
       if (!caseDoc.i140FilingDate && caseDoc.eta9089ExpirationDate) {
-        addDeadline(caseDoc.eta9089ExpirationDate, "I-140 Filing Deadline");
+        addDeadline(caseDoc.eta9089ExpirationDate, "I-140 Filing Deadline", "i140_filing_deadline");
       }
 
       // Check RFI/RFE entries (only active ones)
       if (caseDoc.rfiEntries) {
         for (const rfi of caseDoc.rfiEntries) {
           if (!rfi.responseSubmittedDate && rfi.responseDueDate) {
-            addDeadline(rfi.responseDueDate, "RFI Response Due");
+            addDeadline(rfi.responseDueDate, "RFI Response Due", "rfi_due");
           }
         }
       }
@@ -749,7 +778,7 @@ export const getDeadlinesForDigest = internalQuery({
       if (caseDoc.rfeEntries) {
         for (const rfe of caseDoc.rfeEntries) {
           if (!rfe.responseSubmittedDate && rfe.responseDueDate) {
-            addDeadline(rfe.responseDueDate, "RFE Response Due");
+            addDeadline(rfe.responseDueDate, "RFE Response Due", "rfe_due");
           }
         }
       }
@@ -833,12 +862,20 @@ export const getUpcomingDeadlinesForUser = internalQuery({
     deadlineDate: string;
     daysUntil: number;
   }>> => {
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    // Look up user timezone for timezone-aware resolution
+    const userProfile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .first();
+    const userTz = userProfile?.timezone || DEFAULT_USER_TIMEZONE;
 
-    const futureDate = new Date(today.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+    // Use UTC for date range filtering (conservative bounds)
+    const todayUtc = new Date();
+    todayUtc.setUTCHours(0, 0, 0, 0);
+
+    const futureDate = new Date(todayUtc.getTime() + daysAhead * 24 * 60 * 60 * 1000);
     const futureDateStr = futureDate.toISOString().split("T")[0]!;
-    const todayStr = today.toISOString().split("T")[0]!;
+    const todayStr = todayUtc.toISOString().split("T")[0]!;
 
     const cases = await ctx.db
       .query("cases")
@@ -861,13 +898,10 @@ export const getUpcomingDeadlinesForUser = internalQuery({
     }> = [];
 
     for (const caseDoc of cases) {
-      const checkDeadline = (date: string | undefined, type: string) => {
+      const checkDeadline = (date: string | undefined, type: string, tzType: DeadlineType) => {
         if (!date) return;
         if (date >= todayStr && date <= futureDateStr) {
-          const deadline = new Date(date + "T00:00:00Z");
-          const daysUntil = Math.ceil(
-            (deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-          );
+          const daysUntil = daysUntilDeadline(date, tzType, userTz);
           deadlines.push({
             caseId: caseDoc._id,
             employerName: caseDoc.employerName,
@@ -879,14 +913,14 @@ export const getUpcomingDeadlinesForUser = internalQuery({
         }
       };
 
-      checkDeadline(caseDoc.pwdExpirationDate, "PWD Expiration");
-      checkDeadline(caseDoc.filingWindowCloses, "Filing Window Closes");
+      checkDeadline(caseDoc.pwdExpirationDate, "PWD Expiration", "pwd_expiration");
+      checkDeadline(caseDoc.filingWindowCloses, "Filing Window Closes", "filing_window_closes");
 
       // Check RFI/RFE entries
       if (caseDoc.rfiEntries) {
         for (const rfi of caseDoc.rfiEntries) {
           if (!rfi.responseSubmittedDate) {
-            checkDeadline(rfi.responseDueDate, "RFI Response Due");
+            checkDeadline(rfi.responseDueDate, "RFI Response Due", "rfi_due");
           }
         }
       }
@@ -894,7 +928,7 @@ export const getUpcomingDeadlinesForUser = internalQuery({
       if (caseDoc.rfeEntries) {
         for (const rfe of caseDoc.rfeEntries) {
           if (!rfe.responseSubmittedDate) {
-            checkDeadline(rfe.responseDueDate, "RFE Response Due");
+            checkDeadline(rfe.responseDueDate, "RFE Response Due", "rfe_due");
           }
         }
       }

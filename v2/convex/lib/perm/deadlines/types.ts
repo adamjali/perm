@@ -8,6 +8,7 @@
  */
 
 import type { Id } from "../../../_generated/dataModel";
+import type { TimezoneRule } from "./timezones";
 
 // ============================================================================
 // DEADLINE TYPE ENUM
@@ -132,6 +133,14 @@ export interface ExtractedDeadline {
   /** Days until deadline (negative = overdue) */
   daysUntil: number;
 
+  /**
+   * Timezone rule governing this deadline.
+   *
+   * - "local": Expires at 11:59 PM in the user's timezone
+   * - "dol": Expires at 11:59 PM Eastern Time (DOL FLAG system)
+   */
+  timezoneRule: TimezoneRule;
+
   /** Optional: ID of the RFI/RFE entry this deadline is for */
   entryId?: string;
 }
@@ -142,13 +151,16 @@ export interface ExtractedDeadline {
  * Enforces the invariant that `label` is always derived from `type` via
  * DEADLINE_LABELS, ensuring consistency across the codebase.
  *
- * @param params - Deadline parameters (type, date, daysUntil, optional entryId)
+ * Callers should pass `DEADLINE_TIMEZONE_RULES[type]` for `timezoneRule`.
+ *
+ * @param params - Deadline parameters (type, date, daysUntil, timezoneRule, optional entryId)
  * @returns ExtractedDeadline with label derived from type
  */
 export function createExtractedDeadline(params: {
   type: DeadlineType;
   date: string;
   daysUntil: number;
+  timezoneRule: TimezoneRule;
   entryId?: string;
 }): ExtractedDeadline {
   return {
@@ -156,6 +168,7 @@ export function createExtractedDeadline(params: {
     label: DEADLINE_LABELS[params.type],
     date: params.date,
     daysUntil: params.daysUntil,
+    timezoneRule: params.timezoneRule,
     entryId: params.entryId,
   };
 }

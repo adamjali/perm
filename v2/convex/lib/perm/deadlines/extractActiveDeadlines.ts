@@ -22,6 +22,11 @@ import {
 } from "./isDeadlineActive";
 import { loggers } from "../../logging";
 import { daysBetween, getTodayISO } from "../../dateValidation";
+import {
+  DEADLINE_TIMEZONE_RULES,
+  getTodayForDeadline,
+  DEFAULT_USER_TIMEZONE,
+} from "./timezones";
 
 const log = loggers.deadline;
 
@@ -37,48 +42,56 @@ export { daysBetween, getTodayISO };
  *
  * This function:
  * 1. Checks each deadline type for supersession (using isDeadlineActive)
- * 2. Extracts the date and calculates days until
- * 3. Returns only active, valid deadlines
+ * 2. Extracts the date and calculates days until (timezone-aware per deadline type)
+ * 3. Returns only active, valid deadlines with their timezone rule
  *
  * @param caseData - Case data with deadline-relevant fields
- * @param todayISO - Today's date as ISO string (for testing, defaults to actual today)
+ * @param todayISO - Today's date as ISO string (for testing — overrides timezone resolution)
+ * @param userTimezone - User's IANA timezone for "local" deadlines (defaults to America/New_York)
  * @returns Array of active deadlines, sorted by daysUntil (most urgent first)
  *
  * @example
  * const deadlines = extractActiveDeadlines({
  *   pwdExpirationDate: "2025-06-30",
  *   eta9089FilingDate: undefined,
- * });
- * // Returns: [{ type: "pwd_expiration", date: "2025-06-30", daysUntil: 180, ... }]
+ * }, undefined, "America/Los_Angeles");
+ * // Returns: [{ type: "pwd_expiration", date: "2025-06-30", daysUntil: 180, timezoneRule: "local", ... }]
  */
 export function extractActiveDeadlines(
   caseData: CaseDataForDeadlines,
-  todayISO: string = getTodayISO()
+  todayISO?: string,
+  userTimezone: string = DEFAULT_USER_TIMEZONE
 ): ExtractedDeadline[] {
   const deadlines: ExtractedDeadline[] = [];
 
+  // Helper: resolve "today" for a given deadline type.
+  // If todayISO is provided (testing), use it for all types.
+  // Otherwise, resolve per-type using timezone rules.
+  const resolveToday = (type: DeadlineType): string =>
+    todayISO ?? getTodayForDeadline(type, userTimezone);
+
   // PWD expiration
-  const pwdDeadline = extractPwdExpiration(caseData, todayISO);
+  const pwdDeadline = extractPwdExpiration(caseData, resolveToday("pwd_expiration"));
   if (pwdDeadline) deadlines.push(pwdDeadline);
 
   // Filing window opens
-  const filingOpensDeadline = extractFilingWindowOpens(caseData, todayISO);
+  const filingOpensDeadline = extractFilingWindowOpens(caseData, resolveToday("filing_window_opens"));
   if (filingOpensDeadline) deadlines.push(filingOpensDeadline);
 
   // Filing window closes
-  const filingClosesDeadline = extractFilingWindowCloses(caseData, todayISO);
+  const filingClosesDeadline = extractFilingWindowCloses(caseData, resolveToday("filing_window_closes"));
   if (filingClosesDeadline) deadlines.push(filingClosesDeadline);
 
   // I-140 filing deadline
-  const i140Deadline = extractI140Deadline(caseData, todayISO);
+  const i140Deadline = extractI140Deadline(caseData, resolveToday("i140_filing_deadline"));
   if (i140Deadline) deadlines.push(i140Deadline);
 
   // RFI due
-  const rfiDeadline = extractRfiDeadline(caseData, todayISO);
+  const rfiDeadline = extractRfiDeadline(caseData, resolveToday("rfi_due"));
   if (rfiDeadline) deadlines.push(rfiDeadline);
 
   // RFE due
-  const rfeDeadline = extractRfeDeadline(caseData, todayISO);
+  const rfeDeadline = extractRfeDeadline(caseData, resolveToday("rfe_due"));
   if (rfeDeadline) deadlines.push(rfeDeadline);
 
   // Sort by daysUntil (most urgent first)
@@ -108,6 +121,7 @@ function extractPwdExpiration(
       label: DEADLINE_LABELS.pwd_expiration,
       date,
       daysUntil: daysBetween(todayISO, date),
+      timezoneRule: DEADLINE_TIMEZONE_RULES.pwd_expiration,
     };
   } catch (error) {
     log.error('Failed to extract PWD expiration', {
@@ -137,6 +151,7 @@ function extractFilingWindowOpens(
       label: DEADLINE_LABELS.filing_window_opens,
       date,
       daysUntil: daysBetween(todayISO, date),
+      timezoneRule: DEADLINE_TIMEZONE_RULES.filing_window_opens,
     };
   } catch (error) {
     log.error('Failed to extract filing window opens', {
@@ -166,6 +181,7 @@ function extractFilingWindowCloses(
       label: DEADLINE_LABELS.filing_window_closes,
       date,
       daysUntil: daysBetween(todayISO, date),
+      timezoneRule: DEADLINE_TIMEZONE_RULES.filing_window_closes,
     };
   } catch (error) {
     log.error('Failed to extract filing window closes', {
@@ -197,6 +213,7 @@ function extractI140Deadline(
       label: DEADLINE_LABELS.i140_filing_deadline,
       date,
       daysUntil: daysBetween(todayISO, date),
+      timezoneRule: DEADLINE_TIMEZONE_RULES.i140_filing_deadline,
     };
   } catch (error) {
     log.error('Failed to extract I-140 deadline', {
@@ -226,6 +243,7 @@ function extractRfiDeadline(
       label: DEADLINE_LABELS.rfi_due,
       date: activeRfi.responseDueDate,
       daysUntil: daysBetween(todayISO, activeRfi.responseDueDate),
+      timezoneRule: DEADLINE_TIMEZONE_RULES.rfi_due,
       entryId: activeRfi.id,
     };
   } catch (error) {
@@ -256,6 +274,7 @@ function extractRfeDeadline(
       label: DEADLINE_LABELS.rfe_due,
       date: activeRfe.responseDueDate,
       daysUntil: daysBetween(todayISO, activeRfe.responseDueDate),
+      timezoneRule: DEADLINE_TIMEZONE_RULES.rfe_due,
       entryId: activeRfe.id,
     };
   } catch (error) {

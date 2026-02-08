@@ -17,7 +17,7 @@
  * @see /perm_flow.md - Source of truth for business rules
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   checkDeadlineViolations,
   canRestartProcess,
@@ -377,6 +377,66 @@ describe("checkDeadlineViolations - Edge Cases", () => {
     });
 
     const violation = checkDeadlineViolations(caseData);
+    expect(violation).toBeNull();
+  });
+});
+
+// ============================================================================
+// Timezone-Aware Enforcement Tests
+// ============================================================================
+
+describe("checkDeadlineViolations - Timezone Awareness", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("filing_window_missed uses DOL timezone regardless of user timezone", () => {
+    // Mock: 11 PM Pacific on June 30 = 2 AM ET July 1
+    // filingWindowCloses = "2025-06-30"
+    // In PT: still June 30, so filing window is NOT expired
+    // In ET: already July 1, so filing window IS expired
+    const mockDate = new Date("2025-07-01T06:00:00Z"); // 11 PM PT / 2 AM ET
+    vi.useFakeTimers();
+    vi.setSystemTime(mockDate);
+
+    const caseData = createMinimalCase({
+      caseStatus: "recruitment",
+      pwdExpirationDate: "2025-12-30", // Valid
+      filingWindowCloses: "2025-06-30", // Expires today in ET but not in PT
+      recruitmentStartDate: "2025-01-01",
+      recruitmentWindowCloses: "2025-12-01", // Far future — recruitment check won't trigger
+      eta9089FilingDate: undefined,
+    });
+
+    // Call WITHOUT todayISO to exercise timezone resolution
+    const violation = checkDeadlineViolations(caseData, undefined, "America/Los_Angeles");
+
+    // filing_window_missed uses DOL (ET) timezone → should detect violation
+    // because in ET, June 30 has passed (it's July 1)
+    expect(violation).not.toBeNull();
+    expect(violation!.type).toBe("filing_window_missed");
+  });
+
+  it("pwd_expired uses user's local timezone", () => {
+    // Mock: 11 PM Pacific on June 30 = 2 AM ET July 1
+    // pwdExpirationDate = "2025-06-30"
+    // In PT: still June 30, so PWD is NOT expired (daysUntil = 0)
+    // In ET: already July 1, so PWD would be expired
+    const mockDate = new Date("2025-07-01T06:00:00Z"); // 11 PM PT / 2 AM ET
+    vi.useFakeTimers();
+    vi.setSystemTime(mockDate);
+
+    const caseData = createMinimalCase({
+      caseStatus: "pwd",
+      pwdExpirationDate: "2025-06-30",
+      eta9089FilingDate: undefined,
+    });
+
+    // Call WITHOUT todayISO, user in Pacific Time
+    const violation = checkDeadlineViolations(caseData, undefined, "America/Los_Angeles");
+
+    // pwd_expired uses local (PT) timezone → should NOT detect violation
+    // because in PT, it's still June 30 (daysUntil = 0, not < 0)
     expect(violation).toBeNull();
   });
 });

@@ -2,7 +2,7 @@
  * Tests for deadline extraction.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   extractActiveDeadlines,
   getActiveDeadlineTypes,
@@ -299,6 +299,157 @@ describe("extractActiveDeadlines", () => {
       expect(result.map((d) => d.type)).toContain("filing_window_closes");
       expect(result.map((d) => d.type)).toContain("rfi_due");
     });
+  });
+});
+
+describe("timezoneRule on extracted deadlines", () => {
+  const TODAY = "2024-12-15";
+
+  it("sets timezoneRule to 'local' for pwd_expiration", () => {
+    const caseData: CaseDataForDeadlines = {
+      pwdExpirationDate: "2025-06-30",
+    };
+    const result = extractActiveDeadlines(caseData, TODAY);
+    const pwd = result.find((d) => d.type === "pwd_expiration");
+    expect(pwd?.timezoneRule).toBe("local");
+  });
+
+  it("sets timezoneRule to 'local' for filing_window_opens", () => {
+    const caseData: CaseDataForDeadlines = {
+      filingWindowOpens: "2025-03-01",
+    };
+    const result = extractActiveDeadlines(caseData, TODAY);
+    const fwo = result.find((d) => d.type === "filing_window_opens");
+    expect(fwo?.timezoneRule).toBe("local");
+  });
+
+  it("sets timezoneRule to 'dol' for filing_window_closes", () => {
+    const caseData: CaseDataForDeadlines = {
+      filingWindowCloses: "2025-06-15",
+    };
+    const result = extractActiveDeadlines(caseData, TODAY);
+    const fwc = result.find((d) => d.type === "filing_window_closes");
+    expect(fwc?.timezoneRule).toBe("dol");
+  });
+
+  it("does not extract recruitment_window_closes (handled separately)", () => {
+    const caseData: CaseDataForDeadlines = {
+      recruitmentWindowCloses: "2025-04-01",
+    };
+    const result = extractActiveDeadlines(caseData, TODAY);
+    expect(result.find((d) => d.type === "recruitment_window_closes")).toBeUndefined();
+  });
+
+  it("sets timezoneRule to 'local' for i140_filing_deadline", () => {
+    const caseData: CaseDataForDeadlines = {
+      eta9089CertificationDate: "2024-06-01",
+      eta9089ExpirationDate: "2024-11-28",
+    };
+    const result = extractActiveDeadlines(caseData, TODAY);
+    const i140 = result.find((d) => d.type === "i140_filing_deadline");
+    expect(i140?.timezoneRule).toBe("local");
+  });
+
+  it("sets timezoneRule to 'dol' for rfi_due", () => {
+    const caseData: CaseDataForDeadlines = {
+      rfiEntries: [
+        {
+          id: "rfi-1",
+          createdAt: Date.now(),
+          receivedDate: "2024-12-01",
+          responseDueDate: "2024-12-31",
+        },
+      ],
+    };
+    const result = extractActiveDeadlines(caseData, TODAY);
+    const rfi = result.find((d) => d.type === "rfi_due");
+    expect(rfi?.timezoneRule).toBe("dol");
+  });
+
+  it("sets timezoneRule to 'local' for rfe_due", () => {
+    const caseData: CaseDataForDeadlines = {
+      rfeEntries: [
+        {
+          id: "rfe-1",
+          createdAt: Date.now(),
+          receivedDate: "2024-12-01",
+          responseDueDate: "2025-01-15",
+        },
+      ],
+    };
+    const result = extractActiveDeadlines(caseData, TODAY);
+    const rfe = result.find((d) => d.type === "rfe_due");
+    expect(rfe?.timezoneRule).toBe("local");
+  });
+
+  it("all DOL deadlines are only filing_window_closes and rfi_due", () => {
+    const caseData: CaseDataForDeadlines = {
+      pwdExpirationDate: "2025-06-30",
+      filingWindowOpens: "2025-03-01",
+      filingWindowCloses: "2025-06-15",
+      recruitmentWindowCloses: "2025-04-01",
+      eta9089CertificationDate: "2024-06-01",
+      eta9089ExpirationDate: "2024-11-28",
+      rfiEntries: [
+        {
+          id: "rfi-1",
+          createdAt: Date.now(),
+          receivedDate: "2024-12-01",
+          responseDueDate: "2024-12-31",
+        },
+      ],
+      rfeEntries: [
+        {
+          id: "rfe-1",
+          createdAt: Date.now(),
+          receivedDate: "2024-12-01",
+          responseDueDate: "2025-01-15",
+        },
+      ],
+    };
+    const result = extractActiveDeadlines(caseData, TODAY);
+
+    const dolDeadlines = result.filter((d) => d.timezoneRule === "dol");
+    const localDeadlines = result.filter((d) => d.timezoneRule === "local");
+
+    expect(dolDeadlines.map((d) => d.type).sort()).toEqual(
+      ["filing_window_closes", "rfi_due"].sort()
+    );
+    expect(localDeadlines.length).toBe(result.length - dolDeadlines.length);
+    for (const d of localDeadlines) {
+      expect(d.timezoneRule).toBe("local");
+    }
+  });
+});
+
+describe("timezone-aware daysUntil", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("DOL deadline daysUntil differs from local deadline near midnight", () => {
+    // Mock: 11 PM Pacific on June 30 = 2 AM ET July 1
+    const mockDate = new Date("2025-07-01T06:00:00Z");
+    vi.useFakeTimers();
+    vi.setSystemTime(mockDate);
+
+    const caseData: CaseDataForDeadlines = {
+      pwdExpirationDate: "2025-07-01", // local deadline: due July 1
+      filingWindowCloses: "2025-07-01", // DOL deadline: due July 1
+    };
+
+    // Call WITHOUT todayISO, user in Pacific Time
+    const result = extractActiveDeadlines(caseData, undefined, "America/Los_Angeles");
+
+    const pwd = result.find((d) => d.type === "pwd_expiration");
+    const fwc = result.find((d) => d.type === "filing_window_closes");
+
+    // In PT (11 PM June 30): PWD due July 1 → daysUntil = 1
+    // In ET (2 AM July 1): filing window due July 1 → daysUntil = 0
+    expect(pwd).toBeDefined();
+    expect(fwc).toBeDefined();
+    expect(pwd!.daysUntil).toBe(1); // PT: still June 30
+    expect(fwc!.daysUntil).toBe(0); // ET: already July 1
   });
 });
 

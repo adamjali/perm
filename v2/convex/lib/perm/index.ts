@@ -212,6 +212,7 @@ export {
   type ExtractedDeadline,
   type DeadlineActiveStatus,
   type SupersessionReason,
+  type TimezoneRule,
   DEADLINE_LABELS,
   SUPERSESSION_REASONS,
   // Supersession logic
@@ -225,4 +226,6 @@ export {
   shouldRemindForDeadline,
   daysBetween,
   getTodayISO,
+  // Timezone rules
+  getTimezoneDisplayLabel,
 } from './deadlines';

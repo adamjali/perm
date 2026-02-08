@@ -25,6 +25,7 @@ import {
 import { shouldSendEmail, formatDeadlineType, buildUserNotificationPrefs, type DeadlineNotificationType } from "./lib/notificationHelpers";
 import { type ViolationType } from "./lib/deadlineEnforcementHelpers";
 import { loggers } from "./lib/logging";
+import { DEFAULT_USER_TIMEZONE } from "./lib/perm/deadlines/timezones";
 
 const log = loggers.deadline;
 
@@ -160,10 +161,13 @@ export const checkAndEnforceDeadlines = mutation({
     const closedCases: EnforcementResult["closedCases"] = [];
     const now = Date.now();
 
+    // Resolve user timezone from profile
+    const userTimezone = profile.timezone || DEFAULT_USER_TIMEZONE;
+
     // Check each case for violations
     for (const caseDoc of activeCases) {
       const caseData = mapCaseToEnforcementData(caseDoc);
-      const violation = checkDeadlineViolations(caseData);
+      const violation = checkDeadlineViolations(caseData, undefined, userTimezone);
 
       // Only process violations that require closure
       if (violation && violation.suggestedAction === "close") {

@@ -21,6 +21,12 @@ import {
   getTodayISO,
   MS_PER_DAY,
 } from "./dateValidation";
+import {
+  ENFORCEMENT_TIMEZONE_RULES,
+  getTodayInTimezone,
+  getEffectiveTimezone,
+  DEFAULT_USER_TIMEZONE,
+} from "./perm/deadlines/timezones";
 
 // Re-export for backwards compatibility
 export { getTodayISO };
@@ -192,18 +198,22 @@ function checkPwdExpiration(
  */
 function checkRecruitmentWindow(
   caseData: CaseDataForEnforcement,
-  todayISO: string
+  todayISO: string,
+  dolTodayISO?: string
 ): DeadlineViolation | null {
   // Only check if ETA 9089 is NOT filed and we have recruitment data
   if (caseData.eta9089FilingDate) return null;
   if (!caseData.recruitmentStartDate) return null; // No recruitment started yet
 
-  // Use stored recruitmentWindowCloses if available
+  // Use stored recruitmentWindowCloses if available, fall back to filingWindowCloses.
+  // When falling back to filingWindowCloses (a DOL-governed date), use DOL "today"
   const windowCloses = caseData.recruitmentWindowCloses || caseData.filingWindowCloses;
+  const useDolDate = !caseData.recruitmentWindowCloses && !!caseData.filingWindowCloses;
+  const effectiveToday = useDolDate && dolTodayISO ? dolTodayISO : todayISO;
 
   if (!isValidISODate(windowCloses)) return null;
 
-  const daysUntil = daysBetween(todayISO, windowCloses);
+  const daysUntil = daysBetween(effectiveToday, windowCloses);
 
   if (daysUntil === null) return null;
 
@@ -274,7 +284,8 @@ function checkFilingWindow(
  */
 function checkEta9089Expiration(
   caseData: CaseDataForEnforcement,
-  todayISO: string
+  todayISO: string,
+  dolTodayISO?: string
 ): DeadlineViolation | null {
   // Only check if ETA 9089 is certified AND I-140 is NOT filed
   if (!caseData.eta9089CertificationDate) return null;
@@ -306,9 +317,10 @@ function checkEta9089Expiration(
     let suggestedAction: SuggestedAction = "close";
 
     if (canRestart) {
-      // Check if filing window is still open
+      // Check if filing window is still open (filingWindowCloses is DOL-governed)
       if (isValidISODate(caseData.filingWindowCloses)) {
-        const filingDaysUntil = daysBetween(todayISO, caseData.filingWindowCloses);
+        const filingToday = dolTodayISO ?? todayISO;
+        const filingDaysUntil = daysBetween(filingToday, caseData.filingWindowCloses);
         if (filingDaysUntil !== null && filingDaysUntil >= 0) {
           suggestedAction = "restart_eta9089";
         } else {
@@ -341,8 +353,13 @@ function checkEta9089Expiration(
  *
  * Returns the first violation found (most critical).
  *
+ * Each violation type uses timezone-aware "today" resolution:
+ * - PWD expired, recruitment missed, ETA 9089 expired → user's local timezone
+ * - Filing window missed → DOL Eastern Time
+ *
  * @param caseData - Case data for enforcement check
- * @param todayISO - Reference date (ISO string), defaults to today
+ * @param todayISO - Reference date (ISO string) for testing — overrides timezone resolution
+ * @param userTimezone - User's IANA timezone for "local" violations (defaults to America/New_York)
  * @returns First DeadlineViolation found or null if no violations
  *
  * @example
@@ -355,25 +372,37 @@ function checkEta9089Expiration(
  */
 export function checkDeadlineViolations(
   caseData: CaseDataForEnforcement,
-  todayISO?: string
+  todayISO?: string,
+  userTimezone: string = DEFAULT_USER_TIMEZONE
 ): DeadlineViolation | null {
-  const today = todayISO || getTodayISO();
+  // Helper: resolve "today" for a given violation type.
+  // If todayISO is provided (testing), use it for all types.
+  // Otherwise, resolve per-type using timezone rules.
+  const resolveToday = (violationType: ViolationType): string => {
+    if (todayISO) return todayISO;
+    const rule = ENFORCEMENT_TIMEZONE_RULES[violationType];
+    const tz = getEffectiveTimezone(rule, userTimezone);
+    return getTodayInTimezone(tz);
+  };
 
   // Skip already closed or deleted cases
   if (caseData.caseStatus === "closed") return null;
   if (caseData.deletedAt !== undefined) return null;
 
+  // Resolve DOL "today" once for functions that cross-check filing window dates
+  const dolToday = resolveToday("filing_window_missed");
+
   // Check in priority order - return first violation found
-  const pwdViolation = checkPwdExpiration(caseData, today);
+  const pwdViolation = checkPwdExpiration(caseData, resolveToday("pwd_expired"));
   if (pwdViolation) return pwdViolation;
 
-  const recruitmentViolation = checkRecruitmentWindow(caseData, today);
+  const recruitmentViolation = checkRecruitmentWindow(caseData, resolveToday("recruitment_window_missed"), dolToday);
   if (recruitmentViolation) return recruitmentViolation;
 
-  const filingViolation = checkFilingWindow(caseData, today);
+  const filingViolation = checkFilingWindow(caseData, dolToday);
   if (filingViolation) return filingViolation;
 
-  const eta9089Violation = checkEta9089Expiration(caseData, today);
+  const eta9089Violation = checkEta9089Expiration(caseData, resolveToday("eta9089_expired"), dolToday);
   if (eta9089Violation) return eta9089Violation;
 
   return null;

@@ -68,6 +68,7 @@ import type * as lib_perm_dates_index from "../lib/perm/dates/index.js";
 import type * as lib_perm_deadlines_extractActiveDeadlines from "../lib/perm/deadlines/extractActiveDeadlines.js";
 import type * as lib_perm_deadlines_index from "../lib/perm/deadlines/index.js";
 import type * as lib_perm_deadlines_isDeadlineActive from "../lib/perm/deadlines/isDeadlineActive.js";
+import type * as lib_perm_deadlines_timezones from "../lib/perm/deadlines/timezones.js";
 import type * as lib_perm_deadlines_types from "../lib/perm/deadlines/types.js";
 import type * as lib_perm_index from "../lib/perm/index.js";
 import type * as lib_perm_recruitment_isRecruitmentComplete from "../lib/perm/recruitment/isRecruitmentComplete.js";
@@ -170,6 +171,7 @@ declare const fullApi: ApiFromModules<{
   "lib/perm/deadlines/extractActiveDeadlines": typeof lib_perm_deadlines_extractActiveDeadlines;
   "lib/perm/deadlines/index": typeof lib_perm_deadlines_index;
   "lib/perm/deadlines/isDeadlineActive": typeof lib_perm_deadlines_isDeadlineActive;
+  "lib/perm/deadlines/timezones": typeof lib_perm_deadlines_timezones;
   "lib/perm/deadlines/types": typeof lib_perm_deadlines_types;
   "lib/perm/index": typeof lib_perm_index;
   "lib/perm/recruitment/isRecruitmentComplete": typeof lib_perm_recruitment_isRecruitmentComplete;
