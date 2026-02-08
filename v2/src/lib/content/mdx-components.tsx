@@ -13,6 +13,7 @@ import { NavLink } from "@/components/ui/nav-link";
 import VideoPlayer from "@/components/content/VideoPlayer";
 import ScreenshotFigure from "@/components/content/ScreenshotFigure";
 import PrintableChecklist from "@/components/content/PrintableChecklist";
+import { Lightbox } from "@/components/ui/lightbox";
 
 /* ------------------------------------------------------------------ */
 /* Custom MDX blocks                                                   */
@@ -325,14 +326,16 @@ export const mdxComponents: MDXComponents = {
   // Images
   img: ({ src, alt, ...props }) => (
     <figure className="my-6">
-      <Image
-        src={src ?? ""}
-        alt={alt ?? ""}
-        width={800}
-        height={450}
-        className="w-full border-2 border-border shadow-hard"
-        {...props}
-      />
+      <Lightbox src={src ?? ""} alt={alt ?? ""} caption={alt ?? undefined}>
+        <Image
+          src={src ?? ""}
+          alt={alt ?? ""}
+          width={800}
+          height={450}
+          className="w-full border-2 border-border shadow-hard"
+          {...props}
+        />
+      </Lightbox>
       {alt && (
         <figcaption className="mt-2 text-center text-xs text-muted-foreground">
           {alt}

@@ -15,7 +15,7 @@
 
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getCurrentUserId } from "./lib/auth";
+import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 
 /**
  * Truncate a string to a maximum length, adding ellipsis if truncated.
@@ -347,7 +347,8 @@ export const count = query({
 export const getMostRecent = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getCurrentUserId(ctx);
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (!userId) return null;
 
     const conversations = await ctx.db
       .query("conversations")

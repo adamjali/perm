@@ -21,6 +21,7 @@ import {
   NotificationBellSVG,
 } from "@/components/illustrations";
 import VideoPlayer from "@/components/content/VideoPlayer";
+import { Lightbox } from "@/components/ui/lightbox";
 
 interface Step {
   number: number;
@@ -272,26 +273,28 @@ export function HowItWorks() {
 
             {/* App Walkthrough */}
             <div>
-              <div className="group border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-                <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
-                  <div className="h-2 w-2 bg-[#FF5F57]" />
-                  <div className="h-2 w-2 bg-[#FFBD2E]" />
-                  <div className="h-2 w-2 bg-[#28CA41]" />
-                  <span className="ml-2 font-mono text-[9px] text-background/50">
-                    PERM Tracker
-                  </span>
+              <Lightbox videoSrc="/images/screenshots/create-case.mp4" alt="PERM Tracker app walkthrough">
+                <div className="group border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
+                  <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
+                    <div className="h-2 w-2 bg-[#FF5F57]" />
+                    <div className="h-2 w-2 bg-[#FFBD2E]" />
+                    <div className="h-2 w-2 bg-[#28CA41]" />
+                    <span className="ml-2 font-mono text-[9px] text-background/50">
+                      PERM Tracker
+                    </span>
+                  </div>
+                  <figure className="not-prose">
+                    <video
+                      src="/images/screenshots/create-case.mp4"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full"
+                    />
+                  </figure>
                 </div>
-                <figure className="not-prose">
-                  <video
-                    src="/images/screenshots/create-case.mp4"
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full"
-                  />
-                </figure>
-              </div>
+              </Lightbox>
               <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 See the full app in action
               </p>
@@ -318,25 +321,27 @@ export function HowItWorks() {
               },
             ].map((screenshot) => (
               <div key={screenshot.label} className="group">
-                <div className="border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-                  {/* Mini browser chrome */}
-                  <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
-                    <div className="h-2 w-2 bg-[#FF5F57]" />
-                    <div className="h-2 w-2 bg-[#FFBD2E]" />
-                    <div className="h-2 w-2 bg-[#28CA41]" />
-                    <span className="ml-2 font-mono text-[9px] text-background/50">
-                      {screenshot.label}
-                    </span>
+                <Lightbox src={screenshot.src} alt={screenshot.alt} caption={screenshot.label}>
+                  <div className="border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
+                    {/* Mini browser chrome */}
+                    <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
+                      <div className="h-2 w-2 bg-[#FF5F57]" />
+                      <div className="h-2 w-2 bg-[#FFBD2E]" />
+                      <div className="h-2 w-2 bg-[#28CA41]" />
+                      <span className="ml-2 font-mono text-[9px] text-background/50">
+                        {screenshot.label}
+                      </span>
+                    </div>
+                    <Image
+                      src={screenshot.src}
+                      alt={screenshot.alt}
+                      width={800}
+                      height={500}
+                      className="w-full transition-transform duration-500 group-hover:scale-[1.02]"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 450px"
+                    />
                   </div>
-                  <Image
-                    src={screenshot.src}
-                    alt={screenshot.alt}
-                    width={800}
-                    height={500}
-                    className="w-full transition-transform duration-500 group-hover:scale-[1.02]"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 450px"
-                  />
-                </div>
+                </Lightbox>
                 <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
                   {screenshot.label}
                 </p>

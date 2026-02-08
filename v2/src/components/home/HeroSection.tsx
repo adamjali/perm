@@ -25,6 +25,7 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useReducedMotion } from "@/lib/animations";
 import { FloatingIcons, FloatingParticles } from "./DecorativeElements";
+import { Lightbox } from "@/components/ui/lightbox";
 
 export function HeroSection() {
   const { isNavigating, navigateTo, targetPath } = useNavigationLoading();
@@ -203,17 +204,19 @@ export function HeroSection() {
               </motion.div>
 
               {/* Screenshot */}
-              <div className="border-4 border-black shadow-hard-lg dark:border-white/20">
-                <Image
-                  src="/images/hero-showcase.png"
-                  alt="PERM Tracker dashboard showing case timeline, deadline tracking, and status updates"
-                  width={800}
-                  height={600}
-                  priority
-                  className="w-full"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                />
-              </div>
+              <Lightbox src="/images/hero-showcase.png" alt="PERM Tracker dashboard showing case timeline, deadline tracking, and status updates">
+                <div className="border-4 border-black shadow-hard-lg dark:border-white/20">
+                  <Image
+                    src="/images/hero-showcase.png"
+                    alt="PERM Tracker dashboard showing case timeline, deadline tracking, and status updates"
+                    width={800}
+                    height={600}
+                    priority
+                    className="w-full"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                  />
+                </div>
+              </Lightbox>
 
               {/* Floating badge - bottom left overlapping the screenshot */}
               <div className="absolute -bottom-4 -left-4 z-10 flex items-center gap-2 border-3 border-border bg-background px-4 py-2.5 shadow-hard">

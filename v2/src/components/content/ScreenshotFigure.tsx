@@ -11,6 +11,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { fadeUp } from "@/lib/content/animations";
+import { Lightbox } from "@/components/ui/lightbox";
 
 interface ScreenshotFigureProps {
   /** Image source path (relative to public/) */
@@ -44,23 +45,25 @@ export default function ScreenshotFigure({
       viewport={{ once: true, margin: "-40px" }}
       style={{ maxWidth }}
     >
-      <div className="relative border-2 border-border shadow-hard overflow-hidden">
-        {/* Step badge */}
-        {step !== undefined && (
-          <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b-2 border-r-2 border-border bg-primary font-mono text-sm font-bold text-black">
-            {step}
-          </div>
-        )}
+      <Lightbox src={src} alt={alt} caption={caption}>
+        <div className="relative border-2 border-border shadow-hard overflow-hidden">
+          {/* Step badge */}
+          {step !== undefined && (
+            <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b-2 border-r-2 border-border bg-primary font-mono text-sm font-bold text-black">
+              {step}
+            </div>
+          )}
 
-        <Image
-          src={src}
-          alt={alt}
-          width={maxWidth}
-          height={Math.round(maxWidth / aspectRatio)}
-          className="w-full h-auto"
-          sizes="(max-width: 768px) 100vw, 800px"
-        />
-      </div>
+          <Image
+            src={src}
+            alt={alt}
+            width={maxWidth}
+            height={Math.round(maxWidth / aspectRatio)}
+            className="w-full h-auto"
+            sizes="(max-width: 768px) 100vw, 800px"
+          />
+        </div>
+      </Lightbox>
 
       {caption && (
         <figcaption className="mt-2 font-mono text-xs text-muted-foreground">
