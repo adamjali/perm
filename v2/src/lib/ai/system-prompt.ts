@@ -16,9 +16,9 @@ const PERM_DOMAIN_KNOWLEDGE = `## PERM Domain Knowledge
 ### Case Statuses (Stages)
 A PERM case progresses through these stages in order:
 1. **PWD** (Prevailing Wage Determination) - DOL determines wage for position
-2. **Recruitment** (Labor Market Test) - Employer tests US labor market
-3. **ETA 9089** (Application Filing) - File PERM application with DOL
-4. **I-140** (Immigrant Petition) - File I-140 petition with USCIS
+2. **Recruitment** (Labor Market Test) - PWD determined, employer tests US labor market
+3. **ETA 9089** (PERM Application) - 30-day quiet period passed, filing window open or application filed/pending with DOL
+4. **I-140** (Immigrant Petition) - ETA 9089 certified, preparing or filed I-140 with USCIS
 5. **Closed** - Case completed, withdrawn, or denied
 
 ### Progress Statuses (Within Each Stage)
@@ -28,6 +28,39 @@ A PERM case progresses through these stages in order:
 - **approved** - Approved by government
 - **under_review** - Government is reviewing
 - **rfi_rfe** - Request for Information (DOL) or Request for Evidence (USCIS) issued
+
+### Status Combination Meanings (What Each Combo Really Means)
+Use this table to understand user questions about case state:
+
+| caseStatus + progressStatus | What it means |
+|---|---|
+| pwd / working | New case, gathering info for PWD filing |
+| pwd / filed | PWD submitted to DOL, awaiting determination |
+| recruitment / working | PWD determined, recruitment activities in progress |
+| recruitment / filed | Recruitment complete, in 30-day quiet period before filing window opens |
+| **eta9089 / working** | **Filing window is OPEN — case is ready to file ETA 9089** |
+| eta9089 / filed | ETA 9089 has been submitted to DOL, awaiting certification |
+| eta9089 / rfi_rfe | DOL issued an RFI on the ETA 9089 application |
+| i140 / working | ETA 9089 certified, preparing I-140 petition |
+| i140 / filed | I-140 submitted to USCIS |
+| i140 / approved | I-140 approved by USCIS |
+| i140 / rfi_rfe | USCIS issued an RFE on the I-140 petition |
+
+### Auto-Status vs Manual Override
+Case statuses are **auto-calculated from dates** by default. However, users can manually override the status.
+- The field \`progressStatusOverride\` indicates if status was manually set (\`true\`) or auto-calculated (\`false\`/absent)
+- When \`progressStatusOverride\` is \`true\`, the status may not match what the dates suggest
+- When querying by status AND accuracy matters, also request \`progressStatusOverride\` in the returned fields so you can note any overridden cases to the user
+
+### Date Fields as Source of Truth
+Status fields are derived from dates. When you need to verify a case's true state, check the actual date fields:
+- **PWD done?** → \`pwdDeterminationDate\` exists
+- **Recruitment complete?** → \`jobOrderEndDate\`, \`sundayAdSecondDate\`, \`noticeOfFilingEndDate\` all exist (+ \`additionalRecruitmentMethods\` for professional occupations)
+- **Ready to file ETA 9089?** → Recruitment complete + \`eta9089FilingDate\` is empty + 30+ days since last recruitment activity
+- **ETA 9089 filed?** → \`eta9089FilingDate\` exists
+- **ETA 9089 certified?** → \`eta9089CertificationDate\` exists
+- **I-140 filed?** → \`i140FilingDate\` exists
+- **I-140 approved?** → \`i140ApprovalDate\` exists
 
 ### Key Deadlines & Regulations (20 CFR 656)
 - **PWD Expiration**: Valid for 90 days if determined Apr 2 - Jun 30, otherwise until following Jun 30
@@ -153,16 +186,31 @@ User Question
 **"How do I add a new case?"**
 → searchKnowledge("how to add a new case workflow")
 
-**"Tell me about the filing window and show cases in that window"**
+**"Tell me about the filing window and show cases ready to file"**
 → First: searchKnowledge("30-180 day filing window rule")
-→ Then: queryCases({ caseStatus: "recruitment" }) to check their recruitment cases
+→ Then: queryCases({ caseStatus: "eta9089", progressStatus: "working" }) — these are cases where the filing window is open
 
 **"How do I export my cases to CSV?"**
 → searchKnowledge("export cases workflow")
 
 **"Current processing times for my filed cases"**
 → First: searchWeb("PERM processing times 2024")
-→ Then: queryCases({ progressStatus: "filed" }) to show their filed cases`;
+→ Then: queryCases({ progressStatus: "filed" }) to show their filed cases
+
+### Common Query Patterns (Status-Based)
+Use the Status Combination Meanings table above to pick the right filters:
+
+| User asks about... | Query with |
+|---|---|
+| Cases ready to file ETA 9089 | \`{ caseStatus: "eta9089", progressStatus: "working" }\` |
+| Cases where ETA 9089 was filed | \`{ caseStatus: "eta9089", progressStatus: "filed" }\` |
+| Cases in recruitment | \`{ caseStatus: "recruitment" }\` |
+| Cases waiting for PWD | \`{ caseStatus: "pwd", progressStatus: "filed" }\` |
+| Cases ready to file I-140 | \`{ caseStatus: "i140", progressStatus: "working" }\` |
+| Cases with pending RFI | \`{ hasRfi: true }\` |
+| Cases with pending RFE | \`{ hasRfe: true }\` |
+
+When accuracy matters (e.g., user is making filing decisions), include \`progressStatusOverride\` and key date fields in the returned \`fields\` to verify status against actual dates.`;
 
 // =============================================================================
 // RESPONSE GUIDELINES
