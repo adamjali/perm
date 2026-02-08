@@ -132,6 +132,12 @@ function convertToCaseFormData(caseData: NextUpCaseData): CaseFormData {
     additionalRecruitmentMethods: caseData.additionalRecruitmentMethods?.map(m => ({
       ...m,
       date: m.date as ISODateString,
+      startDate: m.startDate as ISODateString | undefined,
+      endDate: m.endDate as ISODateString | undefined,
+      subEntries: m.subEntries?.map(e => ({
+        date: e.date as ISODateString,
+        description: e.description,
+      })),
     })) ?? [],
     // Default values for other required fields
     priorityLevel: "normal",

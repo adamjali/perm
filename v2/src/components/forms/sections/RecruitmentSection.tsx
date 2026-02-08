@@ -19,8 +19,11 @@ import type { AdditionalRecruitmentMethod } from "@/lib/shared/types";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
 
 // Import extracted constants and components
-import { US_STATES, RECRUITMENT_METHODS } from "./recruitment-section.constants";
+import { US_STATES, RECRUITMENT_METHODS, getMethodCategory } from "./recruitment-section.constants";
 import { RecruitmentDeadlineIndicator } from "./recruitment-section.components";
+import { SubEntriesManager } from "./SubEntriesManager";
+import { getMethodDateConstraints } from "@/lib/forms/date-constraints";
+import type { SubEntry } from "@/lib/shared/types";
 import { parseISO, addDays, differenceInDays, format } from "date-fns";
 
 // ============================================================================
@@ -257,16 +260,40 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
     }
   };
 
-  const updateMethod = (index: number, field: keyof AdditionalRecruitmentMethod, value: string) => {
+  const updateMethod = (index: number, field: string, value: string | SubEntry[] | undefined) => {
     updateRecruitmentMethods(methods.map((m, i) =>
       i === index ? { ...m, [field]: value } : m
     ));
   };
 
-  // Get constraints for professional recruitment dates
-  const additionalStartConstraint = dateConstraints?.additionalRecruitmentStartDate;
-  const additionalEndConstraint = dateConstraints?.additionalRecruitmentEndDate;
-  const additionalEndDisabled = fieldDisabledStates?.additionalRecruitmentEndDate;
+  // Feature 006: Handle method type change - clear incompatible date fields
+  const handleMethodTypeChange = (index: number, newMethod: string) => {
+    const oldCategory = getMethodCategory(methods[index]?.method || '');
+    const newCategory = getMethodCategory(newMethod);
+
+    const updated: AdditionalRecruitmentMethod = { ...methods[index]!, method: newMethod };
+
+    // Clear inapplicable fields when category changes
+    if (oldCategory !== newCategory) {
+      if (newCategory === 'date-range') {
+        updated.date = '';
+        updated.subEntries = undefined;
+      } else if (newCategory === 'sub-entries') {
+        updated.date = '';
+        updated.startDate = undefined;
+        updated.endDate = undefined;
+        updated.subEntries = [{ date: '', description: '' }];
+      } else {
+        updated.startDate = undefined;
+        updated.endDate = undefined;
+        updated.subEntries = undefined;
+      }
+    }
+
+    updateRecruitmentMethods(methods.map((m, i) => i === index ? updated : m));
+  };
+
+  // Feature 006: Legacy constraint variables removed - per-method constraints now calculated inline
 
   // Check which fields are auto-calculated
   const isNoticeEndAutoCalculated = autoCalculatedFields?.has('noticeOfFilingEndDate');
@@ -659,70 +686,159 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                           )}
                         </div>
 
-                        <div className="grid gap-3 md:grid-cols-3">
-                          {/* Method Select */}
-                          <FormField
-                            label="Method"
-                            name={`method-${index}`}
-                            error={errors?.[`additionalRecruitmentMethods.${index}.method`]}
+                        {/* Method Select - Always shown */}
+                        <FormField
+                          label="Method"
+                          name={`method-${index}`}
+                          error={errors?.[`additionalRecruitmentMethods.${index}.method`]}
+                        >
+                          <select
+                            id={`method-${index}`}
+                            value={method.method}
+                            onChange={(e) => handleMethodTypeChange(index, e.target.value)}
+                            className={cn(
+                              "flex h-10 w-full rounded-md border-2 border-border bg-background px-3 py-2 text-sm",
+                              "ring-offset-background placeholder:text-muted-foreground",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                              "disabled:cursor-not-allowed disabled:opacity-50",
+                              "shadow-hard-sm transition-all"
+                            )}
                           >
-                            <select
-                              id={`method-${index}`}
-                              value={method.method}
-                              onChange={(e) => updateMethod(index, 'method', e.target.value)}
-                              className={cn(
-                                "flex h-10 w-full rounded-md border-2 border-border bg-background px-3 py-2 text-sm",
-                                "ring-offset-background placeholder:text-muted-foreground",
-                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                                "disabled:cursor-not-allowed disabled:opacity-50",
-                                "shadow-hard-sm transition-all"
-                              )}
-                            >
-                              <option value="">Select method</option>
-                              {RECRUITMENT_METHODS.map((opt) => (
-                                <option
-                                  key={opt.value}
-                                  value={opt.value}
-                                  disabled={selectedMethods.includes(opt.value) && method.method !== opt.value}
+                            <option value="">Select method</option>
+                            {RECRUITMENT_METHODS.map((opt) => (
+                              <option
+                                key={opt.value}
+                                value={opt.value}
+                                disabled={selectedMethods.includes(opt.value) && method.method !== opt.value}
+                              >
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        </FormField>
+
+                        {/* Conditional Date Inputs Based on Method Category */}
+                        {(() => {
+                          const methodCategory = getMethodCategory(method.method);
+                          const methodConstraints = getMethodDateConstraints(
+                            values,
+                            methodCategory,
+                            method.startDate
+                          );
+
+                          if (methodCategory === 'date-range') {
+                            // Date-range methods (job_website_ad, employer_website, private_employment_firm)
+                            return (
+                              <div className="grid gap-3 md:grid-cols-3">
+                                <FormField
+                                  label="Start Date"
+                                  name={`method-start-${index}`}
+                                  error={errors?.[`additionalRecruitmentMethods.${index}.startDate`]}
+                                  hint={methodConstraints.startDate?.hint}
                                 >
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                          </FormField>
+                                  <DateInput
+                                    id={`method-start-${index}`}
+                                    name={`method-start-${index}`}
+                                    value={method.startDate || ''}
+                                    onChange={(e) => updateMethod(index, 'startDate', e.target.value)}
+                                    minDate={methodConstraints.startDate?.min}
+                                    maxDate={methodConstraints.startDate?.max}
+                                    error={!!errors?.[`additionalRecruitmentMethods.${index}.startDate`]}
+                                  />
+                                </FormField>
+                                <FormField
+                                  label="End Date"
+                                  name={`method-end-${index}`}
+                                  error={errors?.[`additionalRecruitmentMethods.${index}.endDate`]}
+                                  hint={methodConstraints.endDate?.hint}
+                                >
+                                  <DateInput
+                                    id={`method-end-${index}`}
+                                    name={`method-end-${index}`}
+                                    value={method.endDate || ''}
+                                    onChange={(e) => updateMethod(index, 'endDate', e.target.value)}
+                                    minDate={methodConstraints.endDate?.min}
+                                    maxDate={methodConstraints.endDate?.max}
+                                    error={!!errors?.[`additionalRecruitmentMethods.${index}.endDate`]}
+                                    disabled={!method.startDate}
+                                  />
+                                </FormField>
+                                <FormField
+                                  label="Description"
+                                  name={`method-desc-${index}`}
+                                  hint="Optional details"
+                                >
+                                  <Input
+                                    id={`method-desc-${index}`}
+                                    value={method.description || ''}
+                                    onChange={(e) => updateMethod(index, 'description', e.target.value)}
+                                    placeholder="e.g., posting details"
+                                  />
+                                </FormField>
+                              </div>
+                            );
+                          }
 
-                          {/* Date */}
-                          <FormField
-                            label="Date"
-                            name={`method-date-${index}`}
-                            error={errors?.[`additionalRecruitmentMethods.${index}.date`]}
-                            hint={additionalStartConstraint?.hint || "Date of recruitment activity"}
-                          >
-                            <DateInput
-                              id={`method-date-${index}`}
-                              name={`method-date-${index}`}
-                              value={method.date || ''}
-                              onChange={(e) => updateMethod(index, 'date', e.target.value)}
-                              minDate={additionalStartConstraint?.min}
-                              maxDate={additionalStartConstraint?.max}
-                              error={!!errors?.[`additionalRecruitmentMethods.${index}.date`]}
-                            />
-                          </FormField>
+                          if (methodCategory === 'sub-entries') {
+                            // Sub-entry methods (radio_ad, tv_ad)
+                            return (
+                              <div className="space-y-3">
+                                <SubEntriesManager
+                                  entries={method.subEntries || [{ date: '', description: '' }]}
+                                  onChange={(entries) => updateMethod(index, 'subEntries', entries)}
+                                  dateConstraint={methodConstraints.entryDate}
+                                  methodLabel={RECRUITMENT_METHODS.find(m => m.value === method.method)?.label || 'Entry'}
+                                />
+                                <FormField
+                                  label="Overall Description"
+                                  name={`method-desc-${index}`}
+                                  hint="Optional overall description (e.g., targeted metro area)"
+                                >
+                                  <Input
+                                    id={`method-desc-${index}`}
+                                    value={method.description || ''}
+                                    onChange={(e) => updateMethod(index, 'description', e.target.value)}
+                                    placeholder="e.g., Metro NYC area"
+                                  />
+                                </FormField>
+                              </div>
+                            );
+                          }
 
-                          {/* Description */}
-                          <FormField
-                            label="Description"
-                            name={`method-desc-${index}`}
-                            hint="Optional details"
-                          >
-                            <Input
-                              id={`method-desc-${index}`}
-                              value={method.description || ''}
-                              onChange={(e) => updateMethod(index, 'description', e.target.value)}
-                              placeholder="e.g., publication name"
-                            />
-                          </FormField>
-                        </div>
+                          // Single-date methods (default)
+                          return (
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <FormField
+                                label="Date"
+                                name={`method-date-${index}`}
+                                error={errors?.[`additionalRecruitmentMethods.${index}.date`]}
+                                hint={methodConstraints.date?.hint || "Date of recruitment activity"}
+                              >
+                                <DateInput
+                                  id={`method-date-${index}`}
+                                  name={`method-date-${index}`}
+                                  value={method.date || ''}
+                                  onChange={(e) => updateMethod(index, 'date', e.target.value)}
+                                  minDate={methodConstraints.date?.min}
+                                  maxDate={methodConstraints.date?.max}
+                                  error={!!errors?.[`additionalRecruitmentMethods.${index}.date`]}
+                                />
+                              </FormField>
+                              <FormField
+                                label="Description"
+                                name={`method-desc-${index}`}
+                                hint="Optional details"
+                              >
+                                <Input
+                                  id={`method-desc-${index}`}
+                                  value={method.description || ''}
+                                  onChange={(e) => updateMethod(index, 'description', e.target.value)}
+                                  placeholder="e.g., publication name"
+                                />
+                              </FormField>
+                            </div>
+                          );
+                        })()}
                       </div>
                     ))}
 
@@ -741,54 +857,9 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                     )}
                   </div>
 
-                  {/* Additional Recruitment Period (Optional) */}
-                  <div className="pt-2">
-                    <h5 className="text-sm font-medium text-muted-foreground mb-3">
-                      Additional Recruitment Period (Optional)
-                    </h5>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <FormField
-                        label="Start Date"
-                        name="additionalRecruitmentStartDate"
-                        error={errors?.additionalRecruitmentStartDate}
-                        hint={additionalStartConstraint?.hint || "First additional recruitment activity"}
-                        validationState={validationStates?.additionalRecruitmentStartDate}
-                      >
-                        <DateInput
-                          id="additionalRecruitmentStartDate"
-                          name="additionalRecruitmentStartDate"
-                          value={values.additionalRecruitmentStartDate || ''}
-                          onChange={handleDateChange('additionalRecruitmentStartDate')}
-                          onBlur={handleDateBlur('additionalRecruitmentStartDate')}
-                          minDate={additionalStartConstraint?.min}
-                          maxDate={additionalStartConstraint?.max}
-                          error={!!errors?.additionalRecruitmentStartDate}
-                          validationState={validationStates?.additionalRecruitmentStartDate}
-                        />
-                      </FormField>
-
-                      <FormField
-                        label="End Date"
-                        name="additionalRecruitmentEndDate"
-                        error={errors?.additionalRecruitmentEndDate}
-                        hint={additionalEndDisabled?.disabled ? additionalEndDisabled.reason : (additionalEndConstraint?.hint || "Last additional recruitment activity")}
-                        validationState={validationStates?.additionalRecruitmentEndDate}
-                      >
-                        <DateInput
-                          id="additionalRecruitmentEndDate"
-                          name="additionalRecruitmentEndDate"
-                          value={values.additionalRecruitmentEndDate || ''}
-                          onChange={handleDateChange('additionalRecruitmentEndDate')}
-                          onBlur={handleDateBlur('additionalRecruitmentEndDate')}
-                          minDate={additionalEndConstraint?.min}
-                          maxDate={additionalEndConstraint?.max}
-                          error={!!errors?.additionalRecruitmentEndDate}
-                          validationState={validationStates?.additionalRecruitmentEndDate}
-                          disabled={additionalEndDisabled?.disabled}
-                        />
-                      </FormField>
-                    </div>
-                  </div>
+                  {/* Feature 006: Legacy "Additional Recruitment Period" section removed.
+                      Dates now entered at the method level (startDate/endDate or subEntries).
+                      Legacy fields kept in schema for backward compatibility but UI removed. */}
                 </div>
               </motion.div>
             )}
