@@ -270,30 +270,6 @@ export function HowItWorks() {
               </p>
             </div>
 
-            {/* Create Case GIF */}
-            <div>
-              <div className="group border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-                <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
-                  <div className="h-2 w-2 bg-[#FF5F57]" />
-                  <div className="h-2 w-2 bg-[#FFBD2E]" />
-                  <div className="h-2 w-2 bg-[#28CA41]" />
-                  <span className="ml-2 font-mono text-[9px] text-background/50">
-                    Create Case
-                  </span>
-                </div>
-                <figure className="not-prose">
-                  <img
-                    src="/images/screenshots/create-case.gif"
-                    alt="Creating a new PERM case with automatic deadline calculation"
-                    loading="lazy"
-                    className="w-full"
-                  />
-                </figure>
-              </div>
-              <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
-                Auto-calculated deadlines in action
-              </p>
-            </div>
           </div>
 
           {/* Product screenshots */}

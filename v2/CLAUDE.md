@@ -194,7 +194,6 @@ App screenshots in `public/images/screenshots/`:
 | `cases.png` | Case management grid with cards |
 | `calendar.png` | Calendar view with deadline markers |
 | `homepage.png` | Landing page hero |
-| `create-case.gif` | Animated walkthrough: create a new case |
 
 ### Adding Screenshots to Articles
 
@@ -205,17 +204,6 @@ App screenshots in `public/images/screenshots/`:
   caption="The Deadline Hub organizes deadlines by urgency."
   step={1}
 />
-```
-
-For GIFs (not compatible with Next.js Image), use raw HTML:
-
-```mdx
-<figure className="not-prose my-8">
-  <div className="border-2 border-border shadow-hard overflow-hidden">
-    <img src="/images/screenshots/create-case.gif" alt="..." className="w-full h-auto" loading="lazy" />
-  </div>
-  <figcaption className="mt-2 font-mono text-xs text-muted-foreground">Caption text</figcaption>
-</figure>
 ```
 
 ---
