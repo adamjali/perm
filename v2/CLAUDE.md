@@ -196,6 +196,7 @@ App screenshots in `public/images/screenshots/`:
 | `homepage.png` | Landing page hero |
 | `create-case.mp4` | App walkthrough video (autoplay, loop) |
 | `cases-walkthrough.mp4` | Cases page walkthrough video (autoplay, loop) |
+| `settings-walkthrough.mp4` | Settings page walkthrough video (autoplay, loop) |
 
 ### Adding Screenshots to Articles
 
