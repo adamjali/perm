@@ -3,12 +3,11 @@
 /**
  * SocialProofSection (formerly TestimonialsSection)
  *
- * Trust badges, Senja reviews widget, and links to leave a review / G2.
+ * Trust badges and social proof.
  * Neobrutalist styling consistent with other homepage sections.
  */
 
-import Script from "next/script";
-import { Star, MessageSquarePlus, ExternalLink } from "lucide-react";
+import { Star } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 interface TrustBadge {
@@ -90,7 +89,7 @@ export function TestimonialsSection() {
           </div>
 
           {/* Trust badges row */}
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 mb-12">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
             {trustBadges.map((badge) => (
               <div
                 key={badge.label}
@@ -100,43 +99,6 @@ export function TestimonialsSection() {
                 <span>{badge.label}</span>
               </div>
             ))}
-          </div>
-
-          {/* Senja Reviews Widget */}
-          <div>
-            <Script
-              src="https://widget.senja.io/widget/3563db96-3a71-4d2a-b7e8-70550d4dd814/platform.js"
-              strategy="lazyOnload"
-            />
-            <div
-              className="senja-embed"
-              data-id="3563db96-3a71-4d2a-b7e8-70550d4dd814"
-              data-mode="shadow"
-              data-lazyload="false"
-              style={{ display: "block", width: "100%" }}
-            />
-          </div>
-
-          {/* Review links */}
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <a
-              href="https://senja.io/p/perm-tracker/r/FXAjpr"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 border-3 border-border bg-primary px-5 py-2.5 font-heading text-sm font-bold uppercase tracking-wide text-black shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
-            >
-              <MessageSquarePlus className="h-4 w-4" />
-              Leave a Review
-            </a>
-            <a
-              href="https://www.g2.com/products/perm-tracker/reviews"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 border-3 border-border bg-background px-5 py-2.5 font-heading text-sm font-bold uppercase tracking-wide text-foreground shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Review us on G2
-            </a>
           </div>
         </ScrollReveal>
       </div>
