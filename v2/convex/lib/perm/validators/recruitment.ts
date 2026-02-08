@@ -332,8 +332,133 @@ export interface ProfessionalMethodsInput {
  * @returns Validation result with errors and warnings
  */
 export function validateProfessionalMethods(
-  _input: ProfessionalMethodsInput
+  input: ProfessionalMethodsInput
 ): ValidationResult {
-  // STUB: Will be implemented in Task 2 (green phase)
-  return createValidationResult([], []);
+  const errors: ValidationIssue[] = [];
+  const warnings: ValidationIssue[] = [];
+
+  const { pwdDeterminationDate, pwdExpirationDate, firstRecruitmentDate, methods } = input;
+
+  // Categorize methods by date input type
+  const DATE_RANGE_METHODS = ['job_website_ad', 'employer_website', 'private_employment_firm'];
+  const SUB_ENTRY_METHODS = ['radio_ad', 'tv_ad'];
+
+  // Calculate recruitment window max date (same formula as Zod validator)
+  let maxRecruitmentDate: Date | null = null;
+  if (firstRecruitmentDate) {
+    const firstDate = parseISO(firstRecruitmentDate);
+    if (isValid(firstDate)) {
+      const max150 = new Date(firstDate);
+      max150.setDate(max150.getDate() + 150);
+
+      if (pwdExpirationDate) {
+        const pwdMax = parseISO(pwdExpirationDate);
+        if (isValid(pwdMax)) {
+          const pwdMaxMinus30 = new Date(pwdMax);
+          pwdMaxMinus30.setDate(pwdMaxMinus30.getDate() - 30);
+          maxRecruitmentDate = max150 <= pwdMaxMinus30 ? max150 : pwdMaxMinus30;
+        } else {
+          maxRecruitmentDate = max150;
+        }
+      } else {
+        maxRecruitmentDate = max150;
+      }
+    }
+  } else if (pwdExpirationDate) {
+    const pwdMax = parseISO(pwdExpirationDate);
+    if (isValid(pwdMax)) {
+      maxRecruitmentDate = new Date(pwdMax);
+      maxRecruitmentDate.setDate(maxRecruitmentDate.getDate() - 30);
+    }
+  }
+
+  const pwdDetDate = pwdDeterminationDate ? parseISO(pwdDeterminationDate) : null;
+
+  // Validate each method
+  methods.forEach((method, index) => {
+    // Only validate date-range and sub-entry methods
+    const isDateRange = DATE_RANGE_METHODS.includes(method.method);
+    const isSubEntry = SUB_ENTRY_METHODS.includes(method.method);
+
+    if (!isDateRange && !isSubEntry) {
+      return; // Single-date methods are validated by existing validators
+    }
+
+    // DATE-RANGE METHOD VALIDATION
+    if (isDateRange) {
+      const { startDate, endDate } = method;
+
+      // V-PROF-01: startDate must be after PWDDD
+      if (startDate && pwdDetDate && isValid(pwdDetDate)) {
+        const start = parseISO(startDate);
+        if (isValid(start) && !isAfter(start, pwdDetDate)) {
+          errors.push({
+            ruleId: 'V-PROF-01',
+            severity: 'error',
+            field: `additionalRecruitmentMethods.${index}.startDate`,
+            message: `Method start date must be after PWD determination date (${pwdDeterminationDate})`,
+          });
+        }
+      }
+
+      // V-PROF-02 & V-PROF-04: startDate must be <= endDate
+      if (startDate && endDate) {
+        const start = parseISO(startDate);
+        const end = parseISO(endDate);
+        if (isValid(start) && isValid(end) && isAfter(start, end)) {
+          errors.push({
+            ruleId: 'V-PROF-02',
+            severity: 'error',
+            field: `additionalRecruitmentMethods.${index}.endDate`,
+            message: 'Method end date must be on or after start date',
+          });
+        }
+      }
+
+      // V-PROF-03: endDate must be within recruitment window
+      if (endDate && maxRecruitmentDate) {
+        const end = parseISO(endDate);
+        if (isValid(end) && isAfter(end, maxRecruitmentDate)) {
+          const maxDateStr = maxRecruitmentDate.toISOString().split('T')[0];
+          errors.push({
+            ruleId: 'V-PROF-03',
+            severity: 'error',
+            field: `additionalRecruitmentMethods.${index}.endDate`,
+            message: `Method end date must be on or before ${maxDateStr} (recruitment window closes)`,
+          });
+        }
+      }
+    }
+
+    // SUB-ENTRY METHOD VALIDATION
+    if (isSubEntry && method.subEntries) {
+      method.subEntries.forEach((entry, subIndex) => {
+        const entryDate = parseISO(entry.date);
+        if (!isValid(entryDate)) return;
+
+        // V-PROF-05: sub-entry date must be after PWDDD
+        if (pwdDetDate && isValid(pwdDetDate) && !isAfter(entryDate, pwdDetDate)) {
+          errors.push({
+            ruleId: 'V-PROF-05',
+            severity: 'error',
+            field: `additionalRecruitmentMethods.${index}.subEntries.${subIndex}.date`,
+            message: `Entry date must be after PWD determination date (${pwdDeterminationDate})`,
+          });
+        }
+
+        // V-PROF-05: sub-entry date must be within recruitment window
+        if (maxRecruitmentDate && isAfter(entryDate, maxRecruitmentDate)) {
+          const maxDateStr = maxRecruitmentDate.toISOString().split('T')[0];
+          errors.push({
+            ruleId: 'V-PROF-05',
+            severity: 'error',
+            field: `additionalRecruitmentMethods.${index}.subEntries.${subIndex}.date`,
+            message: `Entry date must be on or before ${maxDateStr} (recruitment window closes)`,
+          });
+        }
+      });
+    }
+  });
+
+  return createValidationResult(errors, warnings);
 }

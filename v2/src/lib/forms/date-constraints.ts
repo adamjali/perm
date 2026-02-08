@@ -327,6 +327,65 @@ function buildAfterHint(
 }
 
 /**
+ * Get date constraints for a specific method's date fields based on its category.
+ * Uses the same formula as legacy getProfessionalDateConstraints.
+ *
+ * Feature 006: Per-method date constraints for date-range, sub-entries, and single-date methods.
+ *
+ * @param values - Current form values
+ * @param methodType - Method category ('date-range' | 'sub-entries' | 'single-date')
+ * @param methodStartDate - For date-range methods, the start date (to constrain end date)
+ * @returns Date constraints object with min, max, hint for applicable fields
+ */
+export function getMethodDateConstraints(
+  values: Partial<CaseFormData>,
+  methodType: 'date-range' | 'sub-entries' | 'single-date',
+  methodStartDate?: string
+) {
+  const firstRecruitmentDate = getFirstRecruitmentStartDate(values);
+  const { pwdExpirationDate: pwdExpiration, pwdDeterminationDate: pwdDet } = values;
+
+  const deadline = getRecruitmentFieldDeadline('additionalRecruitmentStartDate', firstRecruitmentDate, pwdExpiration);
+  const minAfterPwd = pwdDet ? addDaysToDateStr(pwdDet, 1) : undefined;
+
+  if (methodType === 'date-range') {
+    return {
+      startDate: {
+        min: minAfterPwd,
+        max: deadline.maxDate,
+        hint: buildAfterHint(pwdDet, deadline, "Enter PWD determination date first"),
+      },
+      endDate: {
+        min: methodStartDate ? addDaysToDateStr(methodStartDate, 1) : minAfterPwd,
+        max: deadline.maxDate,
+        hint: methodStartDate
+          ? buildAfterHint(methodStartDate, deadline, "Enter start date first")
+          : "Enter start date first",
+      },
+    };
+  }
+
+  if (methodType === 'sub-entries') {
+    return {
+      entryDate: {
+        min: minAfterPwd,
+        max: deadline.maxDate,
+        hint: buildAfterHint(pwdDet, deadline, "Enter PWD determination date first"),
+      },
+    };
+  }
+
+  // single-date: return same constraints as existing method date
+  return {
+    date: {
+      min: minAfterPwd,
+      max: deadline.maxDate,
+      hint: buildAfterHint(pwdDet, deadline, "Enter PWD determination date first"),
+    },
+  };
+}
+
+/**
  * Calculate the LAST recruitment end date from all recruitment activities
  * Used for the 30-day waiting period before ETA 9089 filing per perm_flow.md
  *

@@ -63,7 +63,12 @@ export interface DerivedCalculationInput {
 
   // Professional occupation dates (only included if isProfessionalOccupation is true)
   additionalRecruitmentEndDate?: string | null;
-  additionalRecruitmentMethods?: Array<{ date?: string }>;
+  additionalRecruitmentMethods?: Array<{
+    date?: string;
+    startDate?: string;
+    endDate?: string;
+    subEntries?: Array<{ date: string }>;
+  }>;
 
   // PWD expiration date (optional constraint for filing window)
   pwdExpirationDate?: string | null;
@@ -169,11 +174,26 @@ export function calculateRecruitmentEndDate(
       dates.push(input.additionalRecruitmentEndDate);
     }
 
-    // Include individual method dates
+    // Include individual method dates (Feature 006: support startDate, endDate, subEntries)
     if (input.additionalRecruitmentMethods) {
       for (const method of input.additionalRecruitmentMethods) {
+        // Existing: single date
         if (isValidISODate(method.date)) {
           dates.push(method.date);
+        }
+        // NEW: date-range methods - use endDate (or startDate if no endDate)
+        if (isValidISODate(method.endDate)) {
+          dates.push(method.endDate);
+        } else if (isValidISODate(method.startDate)) {
+          dates.push(method.startDate);
+        }
+        // NEW: sub-entry methods - use max sub-entry date
+        if (method.subEntries) {
+          for (const entry of method.subEntries) {
+            if (isValidISODate(entry.date)) {
+              dates.push(entry.date);
+            }
+          }
         }
       }
     }

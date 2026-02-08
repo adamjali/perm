@@ -13,12 +13,15 @@
  */
 
 /**
- * Additional recruitment method structure
+ * Additional recruitment method structure (Feature 006: extended with per-method dates)
  */
 interface AdditionalMethod {
   method: string;
   date: string;
   description?: string;
+  startDate?: string;
+  endDate?: string;
+  subEntries?: Array<{ date: string; description?: string }>;
 }
 
 /**
@@ -149,8 +152,11 @@ export function isProfessionalRecruitmentComplete(input: RecruitmentCheckInput):
   }
 
   // Check array-based additional methods (3+ required)
+  // Feature 006: methods can have dates in date, startDate, or subEntries
   const methods = input.additionalRecruitmentMethods ?? [];
-  const methodsWithDates = methods.filter((m) => m.method && m.date);
+  const methodsWithDates = methods.filter((m) =>
+    m.method && (m.date || m.startDate || (m.subEntries && m.subEntries.length > 0))
+  );
   const hasProfessionalMethods = methodsWithDates.length >= 3;
 
   // Legacy support: also accept additionalRecruitmentEndDate
