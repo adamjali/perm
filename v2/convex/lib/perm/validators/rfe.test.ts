@@ -91,13 +91,25 @@ describe('RFE Validator', () => {
     });
   });
 
-  describe('V-RFE-03: RFE submitted date must be after received date', () => {
+  describe('V-RFE-03: RFE submitted date must be on or after received date', () => {
     it('should pass when submitted is after received', () => {
       const result: ValidationResult = validateRFE({
         i140_filing_date: null,
         rfe_received_date: '2026-01-15',
         rfe_due_date: null,
         rfe_submitted_date: '2026-02-10',
+      });
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should pass when submitted is same day as received', () => {
+      const result: ValidationResult = validateRFE({
+        i140_filing_date: null,
+        rfe_received_date: '2026-01-15',
+        rfe_due_date: null,
+        rfe_submitted_date: '2026-01-15',
       });
 
       expect(result.valid).toBe(true);
@@ -118,7 +130,7 @@ describe('RFE Validator', () => {
       expect(result.errors[0].severity).toBe('error');
       expect(result.errors[0].field).toBe('rfe_submitted_date');
       expect(result.errors[0].message).toContain(
-        'RFE submitted date must be after received date'
+        'RFE submitted date must be on or after received date'
       );
     });
 

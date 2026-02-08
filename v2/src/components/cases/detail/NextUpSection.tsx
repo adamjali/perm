@@ -47,20 +47,11 @@ import {
 import type { Id } from "@/../convex/_generated/dataModel";
 
 export interface NextUpSectionProps {
-  /**
-   * Case data containing status and date information
-   */
   caseData: NextUpCaseData;
-
-  /**
-   * Case ID for quick-edit mutations (optional for backwards compatibility)
-   */
   caseId?: Id<"cases">;
-
-  /**
-   * Additional CSS classes
-   */
   className?: string;
+  /** Hide the stage progress indicator (when rendered elsewhere) */
+  showStageProgress?: boolean;
 }
 
 // Re-export types for consumers
@@ -70,7 +61,7 @@ export type { NextUpCaseData, NextAction, Deadline } from "./next-up-section.uti
 // MAIN COMPONENT
 // ============================================================================
 
-export function NextUpSection({ caseData, caseId, className }: NextUpSectionProps) {
+export function NextUpSection({ caseData, caseId, className, showStageProgress = true }: NextUpSectionProps) {
   const currentStage = getStageIndex(caseData.caseStatus);
   const nextAction = calculateNextAction(caseData);
   const nextDeadline = calculateNextDeadline(caseData);
@@ -86,14 +77,14 @@ export function NextUpSection({ caseData, caseId, className }: NextUpSectionProp
       initial="hidden"
       animate="visible"
       className={cn(
-        "rounded-lg border-2 border-border bg-card p-4 sm:p-6 shadow-hard",
+        "border-2 border-border bg-card p-4 sm:p-6 shadow-hard",
         className
       )}
       aria-labelledby="next-up-heading"
     >
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center gap-2 mb-5">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/20 text-primary">
+        <div className="flex items-center justify-center w-8 h-8 bg-primary/20 text-primary">
           <Zap className="h-5 w-5" />
         </div>
         <h2
@@ -104,10 +95,12 @@ export function NextUpSection({ caseData, caseId, className }: NextUpSectionProp
         </h2>
       </motion.div>
 
-      {/* Stage Progress */}
-      <div className="mb-6">
-        <StageProgressIndicator currentStage={currentStage} />
-      </div>
+      {/* Stage Progress (can be hidden when rendered elsewhere) */}
+      {showStageProgress && (
+        <div className="mb-6">
+          <StageProgressIndicator currentStage={currentStage} />
+        </div>
+      )}
 
       {/* Content Grid */}
       <div className="grid gap-4 sm:grid-cols-2">
@@ -137,7 +130,7 @@ export function NextUpSection({ caseData, caseId, className }: NextUpSectionProp
         {!nextDeadline && nextAction && (
           <motion.div
             variants={itemVariants}
-            className="sm:col-span-1 p-4 rounded-lg border-2 border-dashed border-border bg-muted/30 flex items-center justify-center"
+            className="sm:col-span-1 p-4 border-2 border-dashed border-border bg-muted/30 flex items-center justify-center"
           >
             <span className="text-sm text-muted-foreground">
               No upcoming deadlines

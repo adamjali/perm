@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { Calendar, Clock, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CaseWithDates } from "@/lib/timeline";
 import { isRecruitmentComplete } from "@/lib/perm";
@@ -353,175 +352,233 @@ function calculateFilingWindow(caseData: CaseWithDates): FilingWindowResult {
 }
 
 // ============================================================================
-// STATUS STYLING
+// STATUS STYLING — accent color, text color, status label
 // ============================================================================
 
-const RECRUITMENT_STATUS_STYLES: Record<
-  RecruitmentWindowStatus,
-  { bg: string; text: string; icon: React.ComponentType<{ className?: string }> }
-> = {
+interface StatusStyle {
+  /** CSS color string for accent bar + progress fill */
+  accent: string;
+  /** Tailwind classes for status chip bg + text */
+  chipBg: string;
+  chipText: string;
+  label: string;
+}
+
+const RECRUITMENT_STYLES: Record<RecruitmentWindowStatus, StatusStyle> = {
   COMPLETED: {
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-700 dark:text-blue-400",
-    icon: CheckCircle2,
+    accent: "var(--stage-recruitment)",
+    chipBg: "bg-purple-100 dark:bg-purple-900/40",
+    chipText: "text-purple-700 dark:text-purple-300",
+    label: "Complete",
   },
   ACTIVE: {
-    bg: "bg-green-100 dark:bg-green-900/30",
-    text: "text-green-700 dark:text-green-400",
-    icon: CheckCircle2,
+    accent: "var(--stage-recruitment)",
+    chipBg: "bg-emerald-100 dark:bg-emerald-900/40",
+    chipText: "text-emerald-700 dark:text-emerald-300",
+    label: "Active",
   },
   EXPIRED: {
-    bg: "bg-red-100 dark:bg-red-900/30",
-    text: "text-red-700 dark:text-red-400",
-    icon: XCircle,
+    accent: "var(--destructive)",
+    chipBg: "bg-red-100 dark:bg-red-900/40",
+    chipText: "text-red-700 dark:text-red-300",
+    label: "Expired",
   },
   NOT_STARTED: {
-    bg: "bg-gray-100 dark:bg-gray-800/50",
-    text: "text-gray-600 dark:text-gray-400",
-    icon: Clock,
+    accent: "var(--border)",
+    chipBg: "bg-muted",
+    chipText: "text-muted-foreground",
+    label: "Not Started",
   },
 };
 
-const FILING_STATUS_STYLES: Record<
-  FilingWindowStatus,
-  { bg: string; text: string; icon: React.ComponentType<{ className?: string }> }
-> = {
+const FILING_STYLES: Record<FilingWindowStatus, StatusStyle> = {
   OPEN: {
-    bg: "bg-green-100 dark:bg-green-900/30",
-    text: "text-green-700 dark:text-green-400",
-    icon: CheckCircle2,
+    accent: "var(--stage-eta9089)",
+    chipBg: "bg-emerald-100 dark:bg-emerald-900/40",
+    chipText: "text-emerald-700 dark:text-emerald-300",
+    label: "Open",
   },
   OPENING_SOON: {
-    bg: "bg-yellow-100 dark:bg-yellow-900/30",
-    text: "text-yellow-700 dark:text-yellow-400",
-    icon: Clock,
+    accent: "var(--stage-eta9089)",
+    chipBg: "bg-amber-100 dark:bg-amber-900/40",
+    chipText: "text-amber-700 dark:text-amber-300",
+    label: "Opening Soon",
   },
   CLOSING_SOON: {
-    bg: "bg-orange-100 dark:bg-orange-900/30",
-    text: "text-orange-700 dark:text-orange-400",
-    icon: AlertTriangle,
+    accent: "var(--stage-eta9089)",
+    chipBg: "bg-orange-100 dark:bg-orange-900/40",
+    chipText: "text-orange-700 dark:text-orange-300",
+    label: "Closing Soon",
   },
   CLOSED: {
-    bg: "bg-red-100 dark:bg-red-900/30",
-    text: "text-red-700 dark:text-red-400",
-    icon: XCircle,
+    accent: "var(--destructive)",
+    chipBg: "bg-red-100 dark:bg-red-900/40",
+    chipText: "text-red-700 dark:text-red-300",
+    label: "Closed",
   },
   FILED: {
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-700 dark:text-blue-400",
-    icon: CheckCircle2,
+    accent: "var(--stage-eta9089)",
+    chipBg: "bg-blue-100 dark:bg-blue-900/40",
+    chipText: "text-blue-700 dark:text-blue-300",
+    label: "Filed",
   },
   NOT_AVAILABLE: {
-    bg: "bg-gray-100 dark:bg-gray-800/50",
-    text: "text-gray-600 dark:text-gray-400",
-    icon: Clock,
+    accent: "var(--border)",
+    chipBg: "bg-muted",
+    chipText: "text-muted-foreground",
+    label: "Not Available",
   },
-};
-
-// Status display labels
-const RECRUITMENT_STATUS_LABELS: Record<RecruitmentWindowStatus, string> = {
-  COMPLETED: "Complete",
-  ACTIVE: "Active",
-  EXPIRED: "Expired",
-  NOT_STARTED: "Not Started",
-};
-
-const FILING_STATUS_LABELS: Record<FilingWindowStatus, string> = {
-  OPEN: "Open",
-  OPENING_SOON: "Opening Soon",
-  CLOSING_SOON: "Closing Soon",
-  CLOSED: "Closed",
-  FILED: "Filed",
-  NOT_AVAILABLE: "Not Available",
 };
 
 // ============================================================================
-// WINDOW CARD COMPONENT
+// SHORT DATE FORMATTER
+// ============================================================================
+
+const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function formatShortDate(isoDate: string): string {
+  const month = SHORT_MONTHS[parseInt(isoDate.substring(5, 7), 10) - 1] ?? "???";
+  const day = parseInt(isoDate.substring(8, 10), 10);
+  return `${month} ${day}`;
+}
+
+/**
+ * Calculate progress percentage through a date window (0-100)
+ */
+function getWindowProgress(startDate: string, endDate: string): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = parseDate(startDate);
+  const end = parseDate(endDate);
+  const total = end.getTime() - start.getTime();
+  if (total <= 0) return 100;
+  const elapsed = today.getTime() - start.getTime();
+  return Math.max(0, Math.min(100, (elapsed / total) * 100));
+}
+
+// ============================================================================
+// WINDOW CARD COMPONENT — Redesigned
 // ============================================================================
 
 interface WindowCardProps {
   title: string;
-  icon: React.ReactNode;
-  status: {
-    label: string;
-    bg: string;
-    text: string;
-    icon: React.ComponentType<{ className?: string }>;
-  };
+  style: StatusStyle;
+  /** Hero number to display prominently (e.g. days remaining) */
+  heroNumber: number | null;
+  /** Unit for hero number */
+  heroUnit: string;
+  /** Subtitle beneath hero (e.g. "days remaining") */
+  heroLabel: string;
+  /** Start date ISO */
   startDate: string | null;
+  /** End date ISO */
   endDate: string | null;
-  startLabel: string;
-  endLabel: string;
-  helperText: string | null;
+  /** Whether to show progress bar */
+  showProgress: boolean;
+  /** Whether the window is terminal (complete/expired/filed/closed) */
+  isTerminal: boolean;
 }
 
 function WindowCard({
   title,
-  icon,
-  status,
+  style,
+  heroNumber,
+  heroUnit,
+  heroLabel,
   startDate,
   endDate,
-  startLabel,
-  endLabel,
-  helperText,
+  showProgress,
+  isTerminal,
 }: WindowCardProps) {
-  const StatusIcon = status.icon;
+  const progress = startDate && endDate ? getWindowProgress(startDate, endDate) : 0;
 
   return (
     <div
       className={cn(
-        "rounded-lg border-2 border-border bg-card p-4",
+        "border-2 border-border bg-card overflow-hidden",
         "shadow-hard-sm transition-all duration-150",
         "hover:shadow-hard hover:-translate-y-0.5"
       )}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">{icon}</span>
-          <h3 className="font-heading font-semibold text-sm sm:text-base">{title}</h3>
-        </div>
+      {/* Accent strip at top */}
+      <div className="h-[3px]" style={{ backgroundColor: style.accent }} />
 
-        {/* Status Badge */}
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold",
-            status.bg,
-            status.text
-          )}
-        >
-          <StatusIcon className="h-3 w-3" />
-          {status.label}
-        </span>
-      </div>
-
-      {/* Date Range */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{startLabel}:</span>
-          <span className="font-medium">
-            {startDate ? formatDate(startDate) : "-"}
+      <div className="p-4">
+        {/* Row 1: Title + Status chip */}
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+            {title}
+          </span>
+          <span
+            className={cn(
+              "text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 border-2 border-border",
+              style.chipBg,
+              style.chipText
+            )}
+          >
+            {style.label}
           </span>
         </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{endLabel}:</span>
-          <span className="font-medium">
-            {endDate ? formatDate(endDate) : "-"}
-          </span>
-        </div>
-      </div>
 
-      {/* Helper Text */}
-      {helperText && (
-        <p
-          className={cn(
-            "mt-3 pt-3 border-t border-border/50 text-xs",
-            status.text
+        {/* Row 2: Hero metric */}
+        <div className="mb-3">
+          {heroNumber !== null ? (
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className="text-3xl font-heading font-bold tabular-nums leading-none"
+                style={{ color: style.accent }}
+              >
+                {heroNumber}
+              </span>
+              <span className="text-sm font-medium text-muted-foreground">
+                {heroUnit}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className="text-lg font-heading font-bold leading-none"
+                style={{ color: style.accent }}
+              >
+                {heroLabel}
+              </span>
+            </div>
           )}
-        >
-          {helperText}
-        </p>
-      )}
+          {heroNumber !== null && (
+            <span className="text-[11px] text-muted-foreground mt-0.5 block">
+              {heroLabel}
+            </span>
+          )}
+        </div>
+
+        {/* Row 3: Progress bar with date labels */}
+        {showProgress && startDate && endDate ? (
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono text-muted-foreground shrink-0">
+              {formatShortDate(startDate)}
+            </span>
+            <div className="flex-1 h-1.5 bg-border/50 relative overflow-hidden">
+              <div
+                className="absolute left-0 top-0 bottom-0 transition-[width] duration-1000"
+                style={{
+                  width: `${isTerminal ? 100 : progress}%`,
+                  backgroundColor: style.accent,
+                  opacity: isTerminal ? 0.5 : 1,
+                }}
+              />
+            </div>
+            <span className="text-[11px] font-mono text-muted-foreground shrink-0">
+              {formatShortDate(endDate)}
+            </span>
+          </div>
+        ) : startDate || endDate ? (
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-mono">
+            {startDate && <span>{formatDate(startDate)}</span>}
+            {startDate && endDate && <span className="text-border">→</span>}
+            {endDate && <span>{formatDate(endDate)}</span>}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -558,66 +615,83 @@ export function WindowsDisplay({ caseData, className }: WindowsDisplayProps) {
     [caseData]
   );
 
-  // Generate helper text for recruitment window
-  const recruitmentHelperText = React.useMemo(() => {
-    switch (recruitmentWindow.status) {
-      case "COMPLETED":
-        return "All recruitment steps finished";
-      case "ACTIVE":
-        return recruitmentWindow.daysRemaining !== null
-          ? `${recruitmentWindow.daysRemaining} days remaining`
-          : null;
-      case "EXPIRED":
-        return recruitmentWindow.daysElapsed !== null
-          ? `Expired ${recruitmentWindow.daysElapsed} days ago`
-          : null;
-      case "NOT_STARTED":
-        return "No recruitment activities recorded";
-    }
-  }, [recruitmentWindow]);
+  // Recruitment card props
+  const rStyle = RECRUITMENT_STYLES[recruitmentWindow.status];
+  const rTerminal = recruitmentWindow.status === "COMPLETED" || recruitmentWindow.status === "EXPIRED";
 
-  // Generate helper text for filing window
-  const filingHelperText = React.useMemo(() => {
-    switch (filingWindow.status) {
-      case "OPEN":
-        return filingWindow.daysRemaining !== null
-          ? `${filingWindow.daysRemaining} days remaining to file`
-          : null;
-      case "OPENING_SOON":
-        return filingWindow.daysUntilOpen !== null
-          ? `Opens in ${filingWindow.daysUntilOpen} days`
-          : null;
-      case "CLOSING_SOON":
-        return filingWindow.daysRemaining !== null
-          ? `Only ${filingWindow.daysRemaining} days left to file!`
-          : null;
-      case "CLOSED":
-        return filingWindow.daysElapsed !== null
-          ? `Closed ${filingWindow.daysElapsed} days ago`
-          : null;
-      case "FILED":
-        return "ETA 9089 has been filed";
-      case "NOT_AVAILABLE":
-        if (filingWindow.daysUntilOpen !== null) {
-          return `Opens in ${filingWindow.daysUntilOpen} days`;
-        }
-        return "Complete recruitment to calculate window";
-    }
-  }, [filingWindow]);
+  let rHeroNumber: number | null = null;
+  let rHeroUnit = "";
+  let rHeroLabel = "";
 
-  // Get styling for recruitment status
-  const recruitmentStyle = RECRUITMENT_STATUS_STYLES[recruitmentWindow.status];
-  const recruitmentStatusData = {
-    label: RECRUITMENT_STATUS_LABELS[recruitmentWindow.status],
-    ...recruitmentStyle,
-  };
+  switch (recruitmentWindow.status) {
+    case "ACTIVE":
+      rHeroNumber = recruitmentWindow.daysRemaining;
+      rHeroUnit = rHeroNumber === 1 ? "day" : "days";
+      rHeroLabel = "remaining in window";
+      break;
+    case "EXPIRED":
+      rHeroNumber = recruitmentWindow.daysElapsed;
+      rHeroUnit = rHeroNumber === 1 ? "day" : "days";
+      rHeroLabel = "past expiration";
+      break;
+    case "COMPLETED":
+      rHeroNumber = null;
+      rHeroUnit = "";
+      rHeroLabel = "All steps finished";
+      break;
+    case "NOT_STARTED":
+      rHeroNumber = null;
+      rHeroUnit = "";
+      rHeroLabel = "No activities yet";
+      break;
+  }
 
-  // Get styling for filing status
-  const filingStyle = FILING_STATUS_STYLES[filingWindow.status];
-  const filingStatusData = {
-    label: FILING_STATUS_LABELS[filingWindow.status],
-    ...filingStyle,
-  };
+  // Filing card props
+  const fStyle = FILING_STYLES[filingWindow.status];
+  const fTerminal = filingWindow.status === "FILED" || filingWindow.status === "CLOSED";
+
+  let fHeroNumber: number | null = null;
+  let fHeroUnit = "";
+  let fHeroLabel = "";
+
+  switch (filingWindow.status) {
+    case "OPEN":
+      fHeroNumber = filingWindow.daysRemaining;
+      fHeroUnit = fHeroNumber === 1 ? "day" : "days";
+      fHeroLabel = "remaining to file";
+      break;
+    case "OPENING_SOON":
+      fHeroNumber = filingWindow.daysUntilOpen;
+      fHeroUnit = fHeroNumber === 1 ? "day" : "days";
+      fHeroLabel = "until window opens";
+      break;
+    case "CLOSING_SOON":
+      fHeroNumber = filingWindow.daysRemaining;
+      fHeroUnit = fHeroNumber === 1 ? "day" : "days";
+      fHeroLabel = "left to file";
+      break;
+    case "CLOSED":
+      fHeroNumber = filingWindow.daysElapsed;
+      fHeroUnit = fHeroNumber === 1 ? "day" : "days";
+      fHeroLabel = "since window closed";
+      break;
+    case "FILED":
+      fHeroNumber = null;
+      fHeroUnit = "";
+      fHeroLabel = "ETA 9089 filed";
+      break;
+    case "NOT_AVAILABLE":
+      if (filingWindow.daysUntilOpen !== null) {
+        fHeroNumber = filingWindow.daysUntilOpen;
+        fHeroUnit = fHeroNumber === 1 ? "day" : "days";
+        fHeroLabel = "until window opens";
+      } else {
+        fHeroNumber = null;
+        fHeroUnit = "";
+        fHeroLabel = "Awaiting recruitment";
+      }
+      break;
+  }
 
   return (
     <div
@@ -626,28 +700,28 @@ export function WindowsDisplay({ caseData, className }: WindowsDisplayProps) {
         className
       )}
     >
-      {/* Recruitment Window Card */}
       <WindowCard
         title="Recruitment Window"
-        icon={<Calendar className="h-5 w-5" />}
-        status={recruitmentStatusData}
+        style={rStyle}
+        heroNumber={rHeroNumber}
+        heroUnit={rHeroUnit}
+        heroLabel={rHeroLabel}
         startDate={recruitmentWindow.startDate}
         endDate={recruitmentWindow.endDate}
-        startLabel="Start"
-        endLabel="Expires"
-        helperText={recruitmentHelperText}
+        showProgress={!!recruitmentWindow.startDate && !!recruitmentWindow.endDate}
+        isTerminal={rTerminal}
       />
 
-      {/* Filing Window Card */}
       <WindowCard
-        title="ETA 9089 Filing Window"
-        icon={<Clock className="h-5 w-5" />}
-        status={filingStatusData}
+        title="ETA 9089 Filing"
+        style={fStyle}
+        heroNumber={fHeroNumber}
+        heroUnit={fHeroUnit}
+        heroLabel={fHeroLabel}
         startDate={filingWindow.opensDate}
         endDate={filingWindow.closesDate}
-        startLabel="Opens"
-        endLabel="Closes"
-        helperText={filingHelperText}
+        showProgress={!!filingWindow.opensDate && !!filingWindow.closesDate}
+        isTerminal={fTerminal}
       />
     </div>
   );

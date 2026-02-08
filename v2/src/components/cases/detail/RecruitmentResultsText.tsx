@@ -273,7 +273,7 @@ export function RecruitmentResultsText({
         <motion.div
           layout
           className={cn(
-            "rounded-lg border-2 bg-muted/30 p-4 transition-colors",
+            "border-2 bg-muted/30 p-4 transition-colors",
             isCustom && !isEditing && "border-l-4 border-l-blue-500",
             isEditing && "border-primary"
           )}

@@ -121,7 +121,7 @@ export function RecruitmentStatus({ data, className }: RecruitmentStatusProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className={cn(
-        "rounded-lg border-2 p-4",
+        "border-2 p-4",
         config.bgClass,
         config.borderClass,
         className

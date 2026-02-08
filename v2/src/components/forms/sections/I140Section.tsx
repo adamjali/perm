@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RFEEntryList } from "@/components/forms/sections/RFEEntryList";
-import { differenceInDays } from "date-fns";
+import { differenceInDays, addDays, format as formatDate } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useI140Section } from "@/components/forms/useCaseFormSection";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
@@ -475,7 +475,7 @@ export function I140Section(props: I140SectionProps) {
           </h4>
 
           <RFEEntryList
-            minReceivedDate={values.i140FilingDate}
+            minReceivedDate={values.i140FilingDate ? formatDate(addDays(new Date(values.i140FilingDate + "T00:00:00"), 1), "yyyy-MM-dd") : undefined}
             receivedDisabled={
               !values.i140FilingDate
                 ? { disabled: true, reason: "Enter I-140 filing date first" }

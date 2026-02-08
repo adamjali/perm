@@ -218,7 +218,7 @@ export const caseFormSchema = z
     i140ReceiptNumber: z.string().optional(),
     i140ApprovalDate: optionalIsoDateSchema,
     i140DenialDate: optionalIsoDateSchema,
-    i140Category: z.enum(['EB-1', 'EB-2', 'EB-3']).optional(),
+    i140Category: z.enum(['EB-1', 'EB-2', 'EB-2-NIW', 'EB-3']).optional(),
     i140ServiceCenter: z.string().optional(),
     i140PremiumProcessing: z.boolean().optional(),
 

@@ -41,7 +41,6 @@ import {
 } from "@/components/ui/dialog";
 import { CaseStageBadge } from "@/components/status/case-stage-badge";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
-import { BasicInfoSection } from "@/components/cases/detail/BasicInfoSection";
 import { PWDSection } from "@/components/cases/detail/PWDSection";
 import { RecruitmentSection } from "@/components/cases/detail/RecruitmentSection";
 import { RecruitmentResultsSection } from "@/components/cases/detail/RecruitmentResultsSection";
@@ -52,6 +51,8 @@ import { JobDescriptionDetailView } from "@/components/job-description";
 import { InlineCaseTimeline } from "@/components/cases/detail/InlineCaseTimeline";
 import { WindowsDisplay } from "@/components/cases/detail/WindowsDisplay";
 import { NextUpSection } from "@/components/cases/detail/NextUpSection";
+import { StageProgressIndicator } from "@/components/cases/detail/next-up-section.components";
+import { getStageIndex } from "@/components/cases/detail/next-up-section.utils";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
@@ -108,6 +109,18 @@ const headerVariants = {
       damping: 28,
     },
   },
+};
+
+// ============================================================================
+// STAGE COLORS
+// ============================================================================
+
+const STAGE_ACCENT_COLORS: Record<string, string> = {
+  pwd: "var(--stage-pwd)",
+  recruitment: "var(--stage-recruitment)",
+  eta9089: "var(--stage-eta9089)",
+  i140: "var(--stage-i140)",
+  closed: "var(--stage-closed)",
 };
 
 // ============================================================================
@@ -498,6 +511,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
   const isClosed = caseData.caseStatus === "closed";
   const caseName = `${caseData.employerName} - ${caseData.positionTitle}`;
+  const stageColor = STAGE_ACCENT_COLORS[caseData.caseStatus] ?? "var(--stage-closed)";
+  const currentStage = getStageIndex(caseData.caseStatus);
 
   return (
     <motion.div
@@ -515,236 +530,251 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         caseName={caseName}
       />
 
-      {/* Header Row */}
+      {/* ================================================================ */}
+      {/* CASE HERO HEADER — stage accent, title, badges, stage progress  */}
+      {/* ================================================================ */}
       <motion.div
         variants={headerVariants}
-        className="flex items-start justify-between gap-3 sm:gap-4"
+        className="border-2 border-border bg-card shadow-hard overflow-hidden"
       >
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-          {/* Back Button - 44px minimum touch target with loading state */}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigateTo("/cases")}
-            className={cn(
-              "shrink-0 border-2 border-border",
-              "hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard transition-all",
-              "min-h-[44px] min-w-[44px]",
-              isNavigating && "opacity-70 pointer-events-none"
-            )}
-            disabled={isAnyNavigating}
-          >
-            {isNavigating ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <ArrowLeft className="h-5 w-5" />
-            )}
-            <span className="sr-only">Back to cases</span>
-          </Button>
+        {/* Stage accent strip */}
+        <div className="h-1" style={{ backgroundColor: stageColor }} />
 
-          {/* Title - truncate on mobile */}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h1 className="font-heading text-xl sm:text-2xl font-bold leading-tight truncate">
-                {caseData.employerName}
-              </h1>
-              {caseData.isSample && (
-                <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[0.625rem] font-bold tracking-wider uppercase border-2 border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
-                  SAMPLE
-                </span>
-              )}
-            </div>
-            <p className="text-muted-foreground text-sm sm:text-base truncate">
-              {caseData.positionTitle}
-            </p>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2">
-          {/* Favorite Toggle Button - 44px minimum touch target */}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleToggleFavorite}
-            disabled={isTogglingFavorite}
-            className={cn(
-              "shrink-0 border-2 transition-all cursor-pointer",
-              "min-h-[44px] min-w-[44px]",
-              caseData.isFavorite
-                ? "border-yellow-500 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30"
-                : "border-border hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard"
-            )}
-            aria-label={caseData.isFavorite ? "Remove from favorites" : "Add to favorites"}
-            aria-pressed={caseData.isFavorite}
-          >
-            {isTogglingFavorite ? (
-              <Loader2 className="h-5 w-5 animate-spin text-yellow-600" />
-            ) : (
-              <Star
+        <div className="p-4 sm:p-6 space-y-4">
+          {/* Row 1: Back + Title + Actions */}
+          <div className="flex items-start justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => navigateTo("/cases")}
                 className={cn(
-                  "h-5 w-5",
-                  caseData.isFavorite
-                    ? "fill-yellow-500 text-yellow-500"
-                    : "text-muted-foreground"
+                  "shrink-0 border-2 border-border",
+                  "hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard transition-all",
+                  "min-h-[44px] min-w-[44px]",
+                  isNavigating && "opacity-70 pointer-events-none"
                 )}
-              />
-            )}
-            <span className="sr-only">
-              {caseData.isFavorite ? "Remove from favorites" : "Add to favorites"}
-            </span>
-          </Button>
+                disabled={isAnyNavigating}
+              >
+                {isNavigating ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <ArrowLeft className="h-5 w-5" />
+                )}
+                <span className="sr-only">Back to cases</span>
+              </Button>
 
-          {/* Calendar Sync Toggle Button - 44px minimum touch target */}
-          {/* Shows warning state when sync enabled but Google not connected */}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleToggleCalendarSync}
-            disabled={isTogglingCalendarSync}
-            className={cn(
-              "shrink-0 border-2 transition-all cursor-pointer",
-              "min-h-[44px] min-w-[44px]",
-              caseData.calendarSyncEnabled && isGoogleConnected
-                ? "border-[#228B22] bg-[#228B22]/10 hover:bg-[#228B22]/20 dark:bg-[#228B22]/20 dark:hover:bg-[#228B22]/30"
-                : caseData.calendarSyncEnabled && !isGoogleConnected
-                  ? "border-amber-500 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
-                  : "border-border hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard"
-            )}
-            title={
-              caseData.calendarSyncEnabled && isGoogleConnected
-                ? "Calendar sync enabled"
-                : caseData.calendarSyncEnabled && !isGoogleConnected
-                  ? "Calendar not connected - click to go to settings"
-                  : "Calendar sync disabled"
-            }
-            aria-label={caseData.calendarSyncEnabled ? "Disable calendar sync" : "Enable calendar sync"}
-            aria-pressed={caseData.calendarSyncEnabled}
-          >
-            {isTogglingCalendarSync ? (
-              <Loader2 className="h-5 w-5 animate-spin text-[#228B22]" />
-            ) : caseData.calendarSyncEnabled && isGoogleConnected ? (
-              <CalendarCheck className="h-5 w-5 fill-[#228B22] text-[#228B22]" />
-            ) : caseData.calendarSyncEnabled && !isGoogleConnected ? (
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
-            ) : (
-              <CalendarX className="h-5 w-5 text-muted-foreground" />
-            )}
-            <span className="sr-only">
-              {caseData.calendarSyncEnabled ? "Disable calendar sync" : "Enable calendar sync"}
-            </span>
-          </Button>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h1 className="font-heading text-xl sm:text-2xl font-bold leading-tight truncate">
+                    {caseData.employerName}
+                  </h1>
+                  {caseData.isSample && (
+                    <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[0.625rem] font-bold tracking-wider uppercase border-2 border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
+                      SAMPLE
+                    </span>
+                  )}
+                </div>
+                <p className="text-muted-foreground text-sm sm:text-base truncate">
+                  {caseData.positionTitle}
+                </p>
+              </div>
+            </div>
 
-          {/* Quick Actions Dropdown - 44px minimum touch target */}
-          <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className={cn(
-                "shrink-0 border-2 border-border",
-                "hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard transition-all",
-                "min-h-[44px] min-w-[44px]"
-              )}
-              disabled={isUpdating || isAnyNavigating}
-            >
-              <MoreVertical className="h-5 w-5" />
-              <span className="sr-only">Actions</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 will-change-transform" onCloseAutoFocus={(e) => e.preventDefault()}>
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault(); // Keep dropdown open during navigation
-                handleEdit();
-              }}
-              disabled={isAnyNavigating}
-              className="min-h-[44px]"
-            >
-              {isEditNavigating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Pencil className="h-4 w-4" />
-              )}
-              Edit Case
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleToggleTimeline} disabled={isUpdating} className="min-h-[44px]">
-              {isOnTimeline ? (
-                <>
-                  <CalendarMinus className="h-4 w-4" />
-                  Remove from Timeline
-                </>
-              ) : (
-                <>
-                  <CalendarPlus className="h-4 w-4" />
-                  Add to Timeline
-                </>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {isClosed ? (
-              <DropdownMenuItem onClick={handleReopen} disabled={isUpdating} className="min-h-[44px]">
-                <RotateCcw className="h-4 w-4" />
-                Reopen Case
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onClick={handleArchive} disabled={isUpdating} className="min-h-[44px]">
-                <Archive className="h-4 w-4" />
-                Archive Case
-              </DropdownMenuItem>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleToggleFavorite}
+                disabled={isTogglingFavorite}
+                className={cn(
+                  "shrink-0 border-2 transition-all cursor-pointer",
+                  "min-h-[44px] min-w-[44px]",
+                  caseData.isFavorite
+                    ? "border-yellow-500 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30"
+                    : "border-border hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard"
+                )}
+                aria-label={caseData.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                aria-pressed={caseData.isFavorite}
+              >
+                {isTogglingFavorite ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-yellow-600" />
+                ) : (
+                  <Star
+                    className={cn(
+                      "h-5 w-5",
+                      caseData.isFavorite
+                        ? "fill-yellow-500 text-yellow-500"
+                        : "text-muted-foreground"
+                    )}
+                  />
+                )}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleToggleCalendarSync}
+                disabled={isTogglingCalendarSync}
+                className={cn(
+                  "shrink-0 border-2 transition-all cursor-pointer",
+                  "min-h-[44px] min-w-[44px]",
+                  caseData.calendarSyncEnabled && isGoogleConnected
+                    ? "border-[#228B22] bg-[#228B22]/10 hover:bg-[#228B22]/20 dark:bg-[#228B22]/20 dark:hover:bg-[#228B22]/30"
+                    : caseData.calendarSyncEnabled && !isGoogleConnected
+                      ? "border-amber-500 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
+                      : "border-border hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard"
+                )}
+                title={
+                  caseData.calendarSyncEnabled && isGoogleConnected
+                    ? "Calendar sync enabled"
+                    : caseData.calendarSyncEnabled && !isGoogleConnected
+                      ? "Calendar not connected - click to go to settings"
+                      : "Calendar sync disabled"
+                }
+                aria-label={caseData.calendarSyncEnabled ? "Disable calendar sync" : "Enable calendar sync"}
+                aria-pressed={caseData.calendarSyncEnabled}
+              >
+                {isTogglingCalendarSync ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-[#228B22]" />
+                ) : caseData.calendarSyncEnabled && isGoogleConnected ? (
+                  <CalendarCheck className="h-5 w-5 fill-[#228B22] text-[#228B22]" />
+                ) : caseData.calendarSyncEnabled && !isGoogleConnected ? (
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                ) : (
+                  <CalendarX className="h-5 w-5 text-muted-foreground" />
+                )}
+              </Button>
+
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={cn(
+                      "shrink-0 border-2 border-border",
+                      "hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard transition-all",
+                      "min-h-[44px] min-w-[44px]"
+                    )}
+                    disabled={isUpdating || isAnyNavigating}
+                  >
+                    <MoreVertical className="h-5 w-5" />
+                    <span className="sr-only">Actions</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 will-change-transform" onCloseAutoFocus={(e) => e.preventDefault()}>
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      handleEdit();
+                    }}
+                    disabled={isAnyNavigating}
+                    className="min-h-[44px]"
+                  >
+                    {isEditNavigating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pencil className="h-4 w-4" />
+                    )}
+                    Edit Case
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleToggleTimeline} disabled={isUpdating} className="min-h-[44px]">
+                    {isOnTimeline ? (
+                      <>
+                        <CalendarMinus className="h-4 w-4" />
+                        Remove from Timeline
+                      </>
+                    ) : (
+                      <>
+                        <CalendarPlus className="h-4 w-4" />
+                        Add to Timeline
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {isClosed ? (
+                    <DropdownMenuItem onClick={handleReopen} disabled={isUpdating} className="min-h-[44px]">
+                      <RotateCcw className="h-4 w-4" />
+                      Reopen Case
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={handleArchive} disabled={isUpdating} className="min-h-[44px]">
+                      <Archive className="h-4 w-4" />
+                      Archive Case
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => setDeleteDialogOpen(true)}
+                    className="min-h-[44px]"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete Case
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* Row 2: Case identifiers + Status badges + Deadline */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            {caseData.caseNumber && (
+              <span className="font-mono text-xs sm:text-sm text-muted-foreground border border-border px-2 py-0.5">
+                {caseData.caseNumber}
+              </span>
             )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => setDeleteDialogOpen(true)}
-              className="min-h-[44px]"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete Case
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            {caseData.beneficiaryIdentifier && (
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                Worker: <span className="font-medium text-foreground">{caseData.beneficiaryIdentifier}</span>
+              </span>
+            )}
+            <CaseStageBadge stage={caseData.caseStatus} bordered />
+            <ProgressStatusBadge status={caseData.progressStatus as ProgressStatus} />
+            {caseData.isProfessionalOccupation && (
+              <span className="inline-flex items-center border border-border bg-muted px-2.5 py-0.5 text-xs font-medium">
+                Professional
+              </span>
+            )}
+            {nextDeadline && (
+              <span
+                className={cn(
+                  "text-xs sm:text-sm ml-auto",
+                  nextDeadline.daysUntil <= 7
+                    ? "text-red-600 font-semibold"
+                    : nextDeadline.daysUntil <= 30
+                      ? "text-orange-600 font-medium"
+                      : "text-muted-foreground"
+                )}
+              >
+                {nextDeadline.label}:{" "}
+                {nextDeadline.daysUntil < 0
+                  ? `${Math.abs(nextDeadline.daysUntil)}d overdue`
+                  : nextDeadline.daysUntil === 0
+                    ? "Today"
+                    : `${nextDeadline.daysUntil}d`}
+              </span>
+            )}
+          </div>
+
+          {/* Row 3: Stage Progress Indicator */}
+          {!isClosed && (
+            <div className="pt-3 border-t border-border/50">
+              <StageProgressIndicator currentStage={currentStage} />
+            </div>
+          )}
         </div>
       </motion.div>
 
-      {/* Status Bar */}
-      <motion.div
-        variants={itemVariants}
-        className="flex flex-wrap items-center gap-3"
-      >
-        <CaseStageBadge stage={caseData.caseStatus} bordered />
-        <ProgressStatusBadge status={caseData.progressStatus as ProgressStatus} />
-        {caseData.isProfessionalOccupation && (
-          <span className="inline-flex items-center rounded-md border border-border bg-muted px-2.5 py-0.5 text-xs font-medium">
-            Professional
-          </span>
-        )}
-        {nextDeadline && (
-          <span
-            className={cn(
-              "text-sm",
-              nextDeadline.daysUntil <= 7
-                ? "text-red-600 font-semibold"
-                : nextDeadline.daysUntil <= 30
-                  ? "text-orange-600 font-medium"
-                  : "text-muted-foreground"
-            )}
-          >
-            {nextDeadline.label}:{" "}
-            {nextDeadline.daysUntil < 0
-              ? `${Math.abs(nextDeadline.daysUntil)} days overdue`
-              : nextDeadline.daysUntil === 0
-                ? "Today"
-                : `${nextDeadline.daysUntil} days`}
-          </span>
-        )}
-      </motion.div>
-
-      {/* Next Up Section - Shows next action and upcoming deadline (TOP PRIORITY) */}
+      {/* ================================================================ */}
+      {/* NEXT UP — action + deadline (stage progress hidden here now)    */}
+      {/* ================================================================ */}
       <motion.div variants={itemVariants}>
         <NextUpSection
           caseId={caseId}
+          showStageProgress={false}
           caseData={{
             caseStatus: caseData.caseStatus,
             progressStatus: caseData.progressStatus as ProgressStatus,
@@ -776,28 +806,51 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         <WindowsDisplay caseData={caseData} />
       </motion.div>
 
-      {/* Sections Grid - single column on mobile, 2 columns on lg+ */}
+      {/* ================================================================ */}
+      {/* CASE TIMELINE — moved up for at-a-glance visibility              */}
+      {/* ================================================================ */}
+      <motion.div
+        variants={itemVariants}
+        className="border-2 border-border bg-card p-3 sm:p-4 shadow-hard-sm hover:shadow-hard hover:-translate-y-0.5 transition-all duration-150 overflow-visible"
+      >
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="font-heading font-semibold text-base sm:text-lg">Case Timeline</h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToggleTimeline}
+            disabled={isUpdating}
+            className="gap-2 min-h-[36px] sm:min-h-[40px]"
+          >
+            {isOnTimeline ? (
+              <>
+                <CalendarMinus className="h-4 w-4" />
+                <span className="hidden sm:inline">Remove from Timeline</span>
+              </>
+            ) : (
+              <>
+                <CalendarPlus className="h-4 w-4" />
+                <span className="hidden sm:inline">Add to Timeline</span>
+              </>
+            )}
+          </Button>
+        </div>
+        <div className="relative overflow-visible">
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none z-10 sm:hidden" aria-hidden="true" />
+          <div className="overflow-x-auto overflow-y-visible -mx-3 px-3 sm:mx-0 sm:px-0 scroll-smooth touch-pan-x">
+            <InlineCaseTimeline caseData={caseData} className="min-w-[500px] sm:min-w-0" />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ================================================================ */}
+      {/* DETAIL SECTIONS — with stage accent on active section            */}
+      {/* ================================================================ */}
       <motion.div
         variants={itemVariants}
         className="grid gap-4 sm:gap-6 lg:grid-cols-2"
       >
-        {/* Basic Info Section - always full width, always open */}
-        <div className="lg:col-span-2">
-          <BasicInfoSection
-            data={{
-              caseNumber: caseData.caseNumber,
-              employerName: caseData.employerName,
-              beneficiaryIdentifier: caseData.beneficiaryIdentifier,
-              positionTitle: caseData.positionTitle,
-              caseStatus: caseData.caseStatus,
-              progressStatus: caseData.progressStatus,
-              isProfessionalOccupation: caseData.isProfessionalOccupation,
-            }}
-            defaultOpen={true}
-          />
-        </div>
-
-        {/* PWD Section - closed on mobile by default */}
+        {/* PWD Section */}
         <PWDSection
           data={{
             pwdFilingDate: caseData.pwdFilingDate,
@@ -811,9 +864,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
             pwdWageLevel: caseData.pwdWageLevel,
           }}
           defaultOpen={!isMobile}
+          accentColor={caseData.caseStatus === "pwd" ? stageColor : undefined}
         />
 
-        {/* ETA 9089 Section - closed on mobile by default */}
+        {/* ETA 9089 Section */}
         <ETA9089Section
           data={{
             eta9089FilingDate: caseData.eta9089FilingDate,
@@ -825,9 +879,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           filingWindowOpensDate={derivedDates.filingWindowOpens}
           filingWindowClosesDate={derivedDates.filingWindowCloses}
           defaultOpen={!isMobile}
+          accentColor={caseData.caseStatus === "eta9089" ? stageColor : undefined}
         />
 
-        {/* Recruitment Section - Full Width, closed on mobile by default */}
+        {/* Recruitment Section - Full Width */}
         <div className="lg:col-span-2">
           <RecruitmentSection
             data={{
@@ -847,10 +902,11 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               recruitmentNotes: caseData.recruitmentNotes,
             }}
             defaultOpen={!isMobile}
+            accentColor={caseData.caseStatus === "recruitment" ? stageColor : undefined}
           />
         </div>
 
-        {/* Recruitment Results Section - Full Width, closed on mobile by default */}
+        {/* Recruitment Results Section - Full Width */}
         <div className="lg:col-span-2">
           <RecruitmentResultsSection
             data={{
@@ -877,10 +933,11 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
             }}
             defaultOpen={!isMobile}
             readOnly={true}
+            accentColor={caseData.caseStatus === "recruitment" ? stageColor : undefined}
           />
         </div>
 
-        {/* I-140 Section - closed on mobile by default */}
+        {/* I-140 Section */}
         <I140Section
           data={{
             i140FilingDate: caseData.i140FilingDate,
@@ -895,16 +952,17 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           eta9089CertificationDate={caseData.eta9089CertificationDate}
           eta9089ExpirationDate={caseData.eta9089ExpirationDate}
           defaultOpen={!isMobile}
+          accentColor={caseData.caseStatus === "i140" ? stageColor : undefined}
         />
 
-        {/* RFI/RFE Section - closed on mobile by default */}
+        {/* RFI/RFE Section */}
         <RFIRFESection
           rfiEntries={caseData.rfiEntries}
           rfeEntries={caseData.rfeEntries}
           defaultOpen={!isMobile}
         />
 
-        {/* Job Description Section - Full Width, only shown if job description exists */}
+        {/* Job Description Section - Full Width */}
         {(caseData.jobDescription || caseData.jobDescriptionPositionTitle) && (
           <div className="lg:col-span-2">
             <JobDescriptionDetailView
@@ -948,49 +1006,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         )}
       </motion.div>
 
-      {/* Inline Timeline - At bottom for reference */}
-      {/* overflow-visible allows tooltips to escape container boundaries */}
-      <motion.div
-        variants={itemVariants}
-        className="rounded-lg border-2 border-border bg-card p-3 sm:p-4 shadow-hard-sm hover:shadow-hard hover:-translate-y-0.5 transition-all duration-150 overflow-visible"
-      >
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <h2 className="font-heading font-semibold text-base sm:text-lg">Case Timeline</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggleTimeline}
-            disabled={isUpdating}
-            className="gap-2 min-h-[36px] sm:min-h-[40px]"
-          >
-            {isOnTimeline ? (
-              <>
-                <CalendarMinus className="h-4 w-4" />
-                <span className="hidden sm:inline">Remove from Timeline</span>
-              </>
-            ) : (
-              <>
-                <CalendarPlus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add to Timeline</span>
-              </>
-            )}
-          </Button>
-        </div>
-        {/* Horizontal scroll container with swipe indicator on mobile */}
-        {/* overflow-visible allows tooltips to escape container boundaries */}
-        <div className="relative overflow-visible">
-          {/* Swipe indicator - fade gradient on right edge on mobile */}
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none z-10 sm:hidden" aria-hidden="true" />
-          <div className="overflow-x-auto overflow-y-visible -mx-3 px-3 sm:mx-0 sm:px-0 scroll-smooth touch-pan-x">
-            <InlineCaseTimeline caseData={caseData} className="min-w-[500px] sm:min-w-0" />
-          </div>
-        </div>
-      </motion.div>
-
       {/* Footer Metadata */}
       <motion.div
         variants={itemVariants}
-        className="text-sm text-muted-foreground border-t border-border pt-4 flex flex-wrap gap-4"
+        className="text-xs text-muted-foreground border-t border-border pt-4 flex flex-wrap gap-4 font-mono"
       >
         <span>
           Created:{" "}
@@ -1001,7 +1020,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           })}
         </span>
         <span>
-          Last Updated:{" "}
+          Updated:{" "}
           {new Date(caseData.updatedAt).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",

@@ -1,4 +1,4 @@
-import { parseISO, isAfter, differenceInDays } from 'date-fns';
+import { parseISO, isAfter, isBefore, differenceInDays } from 'date-fns';
 import type { ValidationResult, ValidationIssue } from '../types';
 import { createValidationResult } from '../types';
 import { calculateRFIDueDate } from '../calculators/rfi';
@@ -56,16 +56,16 @@ export function validateRFI(input: RFIValidationInput): ValidationResult {
     }
   }
 
-  // V-RFI-03: Submitted after received
+  // V-RFI-03: Submitted on or after received (same-day submission is valid)
   if (rfi_received_date && rfi_submitted_date) {
     const received = parseISO(rfi_received_date);
     const submitted = parseISO(rfi_submitted_date);
 
-    if (!isAfter(submitted, received)) {
+    if (isBefore(submitted, received)) {
       errors.push(error(
         'V-RFI-03',
         'rfi_submitted_date',
-        'RFI submitted date must be after received date'
+        'RFI submitted date must be on or after received date'
       ));
     }
   }

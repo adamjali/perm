@@ -42,10 +42,8 @@ export interface RecruitmentResultsSectionProps {
    */
   defaultOpen?: boolean;
 
-  /**
-   * Optional className for container
-   */
   className?: string;
+  accentColor?: string;
 }
 
 // ============================================================================
@@ -91,8 +89,8 @@ export function RecruitmentResultsSection({
   readOnly = false,
   defaultOpen = true,
   className,
+  accentColor,
 }: RecruitmentResultsSectionProps) {
-  // Check if we have any recruitment data to display
   const hasData = !!(
     data.noticeOfFilingStartDate ||
     data.jobOrderStartDate ||
@@ -106,6 +104,7 @@ export function RecruitmentResultsSection({
       icon={<ClipboardList className="h-5 w-5" />}
       defaultOpen={defaultOpen}
       className={className}
+      accentColor={accentColor}
     >
       {hasData ? (
         <div className="space-y-6">

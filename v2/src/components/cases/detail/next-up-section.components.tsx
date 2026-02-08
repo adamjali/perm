@@ -84,30 +84,25 @@ export const stageVariants = {
   }),
 };
 
-// Static highlight variants (no pulsing animation)
-export const highlightVariants = {
-  highlight: {
-    scale: 1,
-    opacity: 1,
-  },
-};
-
-export const glowVariants = {
-  glow: {
-    boxShadow: "0 0 0 4px rgba(46, 204, 64, 0.2)",
-  },
-};
-
 // ============================================================================
 // SUBCOMPONENTS
 // ============================================================================
+
+/** Stage accent colors matching CSS variables */
+const STAGE_ACCENT: Record<string, string> = {
+  pwd: "var(--stage-pwd)",
+  recruitment: "var(--stage-recruitment)",
+  eta9089: "var(--stage-eta9089)",
+  i140: "var(--stage-i140)",
+};
 
 interface StageProgressIndicatorProps {
   currentStage: number;
 }
 
 /**
- * Stage progress indicator showing current position in PERM process
+ * Stage progress indicator — neobrutalist squares with stage-colored accents.
+ * No rounded corners, no glow. Squares + hard borders + accent colors.
  */
 export function StageProgressIndicator({ currentStage }: StageProgressIndicatorProps) {
   return (
@@ -123,7 +118,7 @@ export function StageProgressIndicator({ currentStage }: StageProgressIndicatorP
       {STAGES.map((stage, index) => {
         const isCompleted = index < currentStage;
         const isCurrent = index === currentStage;
-        const isPending = index > currentStage;
+        const accent = STAGE_ACCENT[stage.id] ?? "var(--border)";
         const Icon = stage.icon;
 
         return (
@@ -133,56 +128,59 @@ export function StageProgressIndicator({ currentStage }: StageProgressIndicatorP
               variants={stageVariants}
               className="flex flex-col items-center gap-1"
             >
-              <motion.div
+              <div
                 className={cn(
-                  "relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 transition-colors",
-                  isCompleted && "bg-primary border-primary text-primary-foreground",
-                  isCurrent &&
-                    "bg-primary/20 border-primary text-primary",
-                  isPending && "bg-muted border-border text-muted-foreground"
+                  "relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 border-2 transition-colors",
+                  isCompleted && "text-white",
+                  isCurrent && "border-current",
+                  !isCompleted && !isCurrent && "bg-muted border-border text-muted-foreground"
                 )}
-                animate={isCurrent ? "glow" : undefined}
-                variants={glowVariants}
+                style={
+                  isCompleted
+                    ? { backgroundColor: accent, borderColor: accent }
+                    : isCurrent
+                      ? { borderColor: accent, color: accent }
+                      : undefined
+                }
               >
-                {isCurrent && (
-                  <motion.div
-                    className="absolute inset-0 rounded-full bg-primary/20"
-                    animate="highlight"
-                    variants={highlightVariants}
-                  />
-                )}
                 <Icon className="h-4 w-4 sm:h-5 sm:w-5 relative z-10" />
                 {isCompleted && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-background flex items-center justify-center"
+                    transition={{ type: "spring", stiffness: 600, damping: 25 }}
+                    className="absolute -top-1.5 -right-1.5 w-4 h-4 border-2 border-background flex items-center justify-center"
+                    style={{ backgroundColor: accent }}
                   >
                     <CheckCircle2 className="h-3 w-3 text-white" />
                   </motion.div>
                 )}
-              </motion.div>
+              </div>
               <span
                 className={cn(
-                  "text-xs font-medium text-center",
-                  isCurrent && "text-primary font-semibold",
-                  isPending && "text-muted-foreground"
+                  "text-[10px] sm:text-xs font-medium text-center uppercase tracking-wider",
+                  !isCompleted && !isCurrent && "text-muted-foreground"
                 )}
+                style={
+                  isCompleted || isCurrent
+                    ? { color: accent }
+                    : undefined
+                }
               >
                 {stage.label}
               </span>
             </motion.div>
 
-            {/* Connector line */}
+            {/* Connector line — colored if prior stage completed */}
             {index < STAGES.length - 1 && (
               <motion.div
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
                 transition={{ delay: 0.1 + index * 0.03, duration: 0.15 }}
-                className={cn(
-                  "flex-1 h-0.5 min-w-[16px] sm:min-w-[24px] origin-left",
-                  isCompleted ? "bg-primary" : "bg-border"
-                )}
+                className="flex-1 h-0.5 min-w-[16px] sm:min-w-[24px] origin-left"
+                style={{
+                  backgroundColor: isCompleted ? accent : "var(--border)",
+                }}
               />
             )}
           </React.Fragment>
@@ -284,7 +282,7 @@ export function NextActionCard({
       layout
       transition={{ layout: { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] } }}
       className={cn(
-        "rounded-lg border-2 border-border bg-card overflow-hidden",
+        "border-2 border-border bg-card overflow-hidden",
         "shadow-hard-sm transition-shadow duration-100",
         canExpand && "cursor-pointer",
         isExpanded && "shadow-hard border-primary/50"
@@ -301,7 +299,7 @@ export function NextActionCard({
         <div className="flex items-start gap-3">
           <div
             className={cn(
-              "flex items-center justify-center w-10 h-10 rounded-lg border-2",
+              "flex items-center justify-center w-10 h-10 border-2",
               urgencyColors.bg,
               urgencyColors.text,
               urgencyColors.border
@@ -398,7 +396,7 @@ export function DeadlineCountdown({ deadline }: DeadlineCountdownProps) {
     <motion.div
       variants={itemVariants}
       className={cn(
-        "p-4 rounded-lg border-2",
+        "p-4 border-2",
         urgencyColors.border,
         urgencyColors.bg
       )}

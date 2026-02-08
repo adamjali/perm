@@ -163,7 +163,7 @@ export interface ExportedCase {
   i140ReceiptNumber?: string;
   i140ApprovalDate?: string;
   i140DenialDate?: string;
-  i140Category?: "EB-1" | "EB-2" | "EB-3";
+  i140Category?: "EB-1" | "EB-2" | "EB-2-NIW" | "EB-3";
   i140PremiumProcessing?: boolean;
   i140ServiceCenter?: string;
 
@@ -282,7 +282,7 @@ export interface FullCaseData {
   i140ReceiptNumber?: string;
   i140ApprovalDate?: string;
   i140DenialDate?: string;
-  i140Category?: "EB-1" | "EB-2" | "EB-3";
+  i140Category?: "EB-1" | "EB-2" | "EB-2-NIW" | "EB-3";
   i140PremiumProcessing?: boolean;
   i140ServiceCenter?: string;
   priorityLevel: string;

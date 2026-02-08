@@ -425,10 +425,11 @@ function buildCertificationHint(auditDate: string | undefined, filingDate: strin
 
 /**
  * Get minimum received date for RFI entries (within ETA 9089)
+ * Returns the day AFTER filing date (received must be strictly after filing).
  * Individual entry constraints are handled in RFIEntry component
  */
 export function getRFIMinReceivedDate(values: Partial<CaseFormData>): string | undefined {
-  return values.eta9089FilingDate || undefined;
+  return values.eta9089FilingDate ? addDaysToDateStr(values.eta9089FilingDate, 1) : undefined;
 }
 
 /**
@@ -483,10 +484,11 @@ function buildAfterDateHint(date: string | undefined, label: string): string {
 
 /**
  * Get minimum received date for RFE entries (within I-140)
+ * Returns the day AFTER filing date (received must be strictly after filing).
  * Individual entry constraints are handled in RFEEntry component
  */
 export function getRFEMinReceivedDate(values: Partial<CaseFormData>): string | undefined {
-  return values.i140FilingDate || undefined;
+  return values.i140FilingDate ? addDaysToDateStr(values.i140FilingDate, 1) : undefined;
 }
 
 /**

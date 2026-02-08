@@ -73,7 +73,7 @@ function ChecklistItemRow({ item, index }: ChecklistItemRowProps) {
         ease: "easeOut",
       }}
       className={cn(
-        "flex items-start gap-3 p-3 rounded-lg border-2 transition-all duration-150",
+        "flex items-start gap-3 p-3 border-2 transition-all duration-150",
         item.complete
           ? "border-blue-500/50 bg-blue-50/50 dark:bg-blue-900/10"
           : "border-border bg-muted/20",

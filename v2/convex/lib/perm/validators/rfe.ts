@@ -1,4 +1,4 @@
-import { parseISO, isAfter, differenceInDays } from 'date-fns';
+import { parseISO, isAfter, isBefore, differenceInDays } from 'date-fns';
 import type { ValidationResult, ValidationIssue } from '../types';
 import { createValidationResult } from '../types';
 import { getTodayISO, error, warning } from '../utils/validation';
@@ -58,16 +58,16 @@ export function validateRFE(input: RFEValidationInput): ValidationResult {
     }
   }
 
-  // V-RFE-03: Submitted after received
+  // V-RFE-03: Submitted on or after received (same-day submission is valid)
   if (rfe_received_date && rfe_submitted_date) {
     const received = parseISO(rfe_received_date);
     const submitted = parseISO(rfe_submitted_date);
 
-    if (!isAfter(submitted, received)) {
+    if (isBefore(submitted, received)) {
       errors.push(error(
         'V-RFE-03',
         'rfe_submitted_date',
-        'RFE submitted date must be after received date'
+        'RFE submitted date must be on or after received date'
       ));
     }
   }

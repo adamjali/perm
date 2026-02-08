@@ -92,13 +92,25 @@ describe('RFI Validator', () => {
     });
   });
 
-  describe('V-RFI-03: RFI submitted date must be after received date', () => {
+  describe('V-RFI-03: RFI submitted date must be on or after received date', () => {
     it('should pass when submitted is after received', () => {
       const result: ValidationResult = validateRFI({
         eta9089_filing_date: null,
         rfi_received_date: '2026-01-15',
         rfi_due_date: null,
         rfi_submitted_date: '2026-02-10',
+      });
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should pass when submitted is same day as received', () => {
+      const result: ValidationResult = validateRFI({
+        eta9089_filing_date: null,
+        rfi_received_date: '2026-01-15',
+        rfi_due_date: null,
+        rfi_submitted_date: '2026-01-15',
       });
 
       expect(result.valid).toBe(true);
@@ -119,7 +131,7 @@ describe('RFI Validator', () => {
       expect(result.errors[0].severity).toBe('error');
       expect(result.errors[0].field).toBe('rfi_submitted_date');
       expect(result.errors[0].message).toContain(
-        'RFI submitted date must be after received date'
+        'RFI submitted date must be on or after received date'
       );
     });
 

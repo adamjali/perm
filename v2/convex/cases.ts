@@ -304,7 +304,7 @@ export const create = mutation({
     i140ReceiptNumber: v.optional(v.string()),
     i140ApprovalDate: v.optional(v.string()),
     i140DenialDate: v.optional(v.string()),
-    i140Category: v.optional(v.union(v.literal("EB-1"), v.literal("EB-2"), v.literal("EB-3"))),
+    i140Category: v.optional(v.union(v.literal("EB-1"), v.literal("EB-2"), v.literal("EB-2-NIW"), v.literal("EB-3"))),
     i140PremiumProcessing: v.optional(v.boolean()),
     i140ServiceCenter: v.optional(v.string()),
 
@@ -762,7 +762,7 @@ export const update = mutation({
     i140ReceiptNumber: v.optional(v.string()),
     i140ApprovalDate: v.optional(v.string()),
     i140DenialDate: v.optional(v.string()),
-    i140Category: v.optional(v.union(v.literal("EB-1"), v.literal("EB-2"), v.literal("EB-3"))),
+    i140Category: v.optional(v.union(v.literal("EB-1"), v.literal("EB-2"), v.literal("EB-2-NIW"), v.literal("EB-3"))),
     i140PremiumProcessing: v.optional(v.boolean()),
     i140ServiceCenter: v.optional(v.string()),
     caseNumber: v.optional(v.string()),

@@ -1,13 +1,13 @@
 "use client";
 
-import * as React from "react";
 import { useMemo, useCallback, useRef } from "react";
+import { useWatch } from "react-hook-form";
 import { Plus, AlertCircle } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { RFIEntry } from "./RFIEntry";
 import { useRfiFieldArray } from "@/components/forms/CaseFormContext";
-import type { RFIEntry as RFIEntryType } from "@/lib/forms/case-form-schema";
+import type { CaseFormData, RFIEntry as RFIEntryType } from "@/lib/forms/case-form-schema";
 import type { ISODateString } from "@/lib/perm";
 
 // ============================================================================
@@ -116,8 +116,16 @@ export function RFIEntryList({
   // Use the useFieldArray hook from CaseFormContext
   const { entries, addEntry, removeEntry } = useRfiFieldArray();
 
-  // Check if there's already an active entry
-  const hasActiveEntry = useMemo(() => entries.some(isActiveEntry), [entries]);
+  // Watch live form values for RFI entries to detect completion status changes.
+  // useFieldArray's `fields` only contains default/initial values and doesn't update
+  // when setValue is called on individual fields (like responseSubmittedDate).
+  const watchedEntries = useWatch<CaseFormData, "rfiEntries">({ name: "rfiEntries" });
+
+  // Check if there's already an active entry using LIVE watched values
+  const hasActiveEntry = useMemo(
+    () => (watchedEntries ?? []).some((e) => !e?.responseSubmittedDate),
+    [watchedEntries]
+  );
 
   // Generate a sort key that only changes when sorting-relevant data changes
   // This prevents re-sorting on every keystroke

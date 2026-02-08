@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { FileText } from "lucide-react";
-import { CaseDetailSection, DetailField } from "./CaseDetailSection";
+import { CaseDetailSection, MilestoneTrack, ValueHighlight } from "./CaseDetailSection";
 import { formatISODate } from "@/lib/utils/date";
 
 // ============================================================================
@@ -10,22 +10,17 @@ import { formatISODate } from "@/lib/utils/date";
 // ============================================================================
 
 export interface PWDSectionProps {
-  /**
-   * PWD data to display
-   */
   data: {
     pwdFilingDate?: string;
     pwdDeterminationDate?: string;
     pwdExpirationDate?: string;
     pwdCaseNumber?: string;
-    pwdWageAmount?: number; // Stored as cents
+    pwdWageAmount?: number;
     pwdWageLevel?: string;
   };
-
-  /**
-   * Whether section is initially expanded
-   */
   defaultOpen?: boolean;
+  /** CSS color for accent strip (e.g. "var(--stage-pwd)") */
+  accentColor?: string;
 }
 
 // ============================================================================
@@ -90,8 +85,8 @@ function formatDate(isoDate: string | undefined): string {
 export function PWDSection({
   data,
   defaultOpen = true,
+  accentColor,
 }: PWDSectionProps) {
-  // Check if section has any data
   const hasData = !!(
     data.pwdFilingDate ||
     data.pwdDeterminationDate ||
@@ -101,46 +96,56 @@ export function PWDSection({
     data.pwdWageLevel
   );
 
+  // Preview summary for collapsed state
+  const preview = React.useMemo(() => {
+    if (data.pwdExpirationDate) return `Exp ${formatDate(data.pwdExpirationDate)}`;
+    if (data.pwdDeterminationDate) return `Det ${formatDate(data.pwdDeterminationDate)}`;
+    if (data.pwdFilingDate) return `Filed ${formatDate(data.pwdFilingDate)}`;
+    return undefined;
+  }, [data.pwdExpirationDate, data.pwdDeterminationDate, data.pwdFilingDate]);
+
   return (
     <CaseDetailSection
       title="PWD (Prevailing Wage Determination)"
       icon={<FileText className="h-5 w-5" />}
       defaultOpen={defaultOpen}
+      preview={preview}
+      accentColor={accentColor}
     >
       {hasData ? (
-        <dl className="grid gap-4 md:grid-cols-3">
-          {/* Date Fields */}
-          <DetailField
-            label="Filing Date"
-            value={formatDate(data.pwdFilingDate)}
-          />
-          <DetailField
-            label="Determination Date"
-            value={formatDate(data.pwdDeterminationDate)}
-          />
-          <DetailField
-            label="Expiration Date"
-            value={formatDate(data.pwdExpirationDate)}
-          />
+        <div className="space-y-4">
+          {/* Milestone Timeline: Filing → Determination → Expiration */}
+          {(data.pwdFilingDate || data.pwdDeterminationDate || data.pwdExpirationDate) && (
+            <MilestoneTrack
+              color="var(--stage-pwd)"
+              steps={[
+                { label: "Filed", value: data.pwdFilingDate ? formatISODate(data.pwdFilingDate) : undefined },
+                { label: "Determined", value: data.pwdDeterminationDate ? formatISODate(data.pwdDeterminationDate) : undefined },
+                { label: "Expires", value: data.pwdExpirationDate ? formatISODate(data.pwdExpirationDate) : undefined },
+              ]}
+            />
+          )}
 
-          {/* Case Number */}
-          <DetailField
-            label="Case Number"
-            value={data.pwdCaseNumber}
-            mono
-          />
+          {/* Wage Amount + Wage Level — 2-col grid */}
+          {(data.pwdWageAmount !== undefined || data.pwdWageLevel) && (
+            <div className="grid grid-cols-2 gap-2">
+              {data.pwdWageAmount !== undefined && (
+                <ValueHighlight label="Prevailing Wage" value={formatWageAmount(data.pwdWageAmount)} mono />
+              )}
+              {data.pwdWageLevel && (
+                <ValueHighlight label="Wage Level" value={data.pwdWageLevel} />
+              )}
+            </div>
+          )}
 
-          {/* Wage Info */}
-          <DetailField
-            label="Wage Amount"
-            value={formatWageAmount(data.pwdWageAmount)}
-            mono
-          />
-          <DetailField
-            label="Wage Level"
-            value={data.pwdWageLevel}
-          />
-        </dl>
+          {/* Case Number — separate row */}
+          {data.pwdCaseNumber && (
+            <div className="space-y-1">
+              <dt className="text-sm font-medium text-muted-foreground">PWD Case Number</dt>
+              <dd className="text-sm font-mono">{data.pwdCaseNumber}</dd>
+            </div>
+          )}
+        </div>
       ) : (
         <p className="text-sm text-muted-foreground italic">
           No PWD information entered yet.

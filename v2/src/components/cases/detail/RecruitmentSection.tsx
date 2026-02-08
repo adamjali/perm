@@ -1,35 +1,26 @@
 "use client";
 
 import * as React from "react";
-import { Megaphone } from "lucide-react";
-import { CaseDetailSection, DetailField } from "./CaseDetailSection";
+import { Megaphone, Check } from "lucide-react";
+import { CaseDetailSection } from "./CaseDetailSection";
 import { formatISODate } from "@/lib/utils/date";
 import { differenceInDays } from "date-fns";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export interface RecruitmentSectionProps {
-  /**
-   * Recruitment data to display
-   */
   data: {
-    // Job Order
     jobOrderStartDate?: string;
     jobOrderEndDate?: string;
     jobOrderState?: string;
-
-    // Sunday Ads
     sundayAdFirstDate?: string;
     sundayAdSecondDate?: string;
     sundayAdNewspaper?: string;
-
-    // Notice of Filing
     noticeOfFilingStartDate?: string;
     noticeOfFilingEndDate?: string;
-
-    // Additional Recruitment
     additionalRecruitmentMethods?: Array<{
       method: string;
       date: string;
@@ -38,24 +29,13 @@ export interface RecruitmentSectionProps {
     recruitmentApplicantsCount?: number;
     recruitmentNotes?: string;
   };
-
-  /**
-   * Whether section is initially expanded
-   */
   defaultOpen?: boolean;
+  accentColor?: string;
 }
 
 // ============================================================================
 // HELPERS
 // ============================================================================
-
-/**
- * Format date for display, returning "-" if empty
- */
-function formatDate(isoDate: string | undefined): string {
-  if (!isoDate) return "-";
-  return formatISODate(isoDate);
-}
 
 /**
  * Calculate duration in days between two dates
@@ -104,8 +84,8 @@ function calculateDuration(startDate: string | undefined, endDate: string | unde
 export function RecruitmentSection({
   data,
   defaultOpen = true,
+  accentColor,
 }: RecruitmentSectionProps) {
-  // Check if section has any data
   const hasData = !!(
     data.jobOrderStartDate ||
     data.sundayAdFirstDate ||
@@ -115,125 +95,165 @@ export function RecruitmentSection({
     data.recruitmentNotes
   );
 
+  // Preview summary for collapsed state
+  const preview = React.useMemo(() => {
+    const steps: string[] = [];
+    if (data.jobOrderStartDate) steps.push("Job Order");
+    if (data.sundayAdFirstDate) steps.push("Ads");
+    if (data.noticeOfFilingStartDate) steps.push("NOF");
+    if (data.additionalRecruitmentMethods?.length) steps.push(`+${data.additionalRecruitmentMethods.length}`);
+    return steps.length > 0 ? steps.join(" · ") : undefined;
+  }, [data.jobOrderStartDate, data.sundayAdFirstDate, data.noticeOfFilingStartDate, data.additionalRecruitmentMethods]);
+
   return (
     <CaseDetailSection
       title="Recruitment"
       icon={<Megaphone className="h-5 w-5" />}
       defaultOpen={defaultOpen}
+      preview={preview}
+      accentColor={accentColor}
     >
       {hasData ? (
-        <div className="space-y-6">
-          {/* Job Order */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-muted-foreground">Job Order</h4>
-            <dl className="grid gap-4 md:grid-cols-3">
-              <DetailField
-                label="Start Date"
-                value={formatDate(data.jobOrderStartDate)}
-              />
-              <DetailField
-                label="End Date"
-                value={formatDate(data.jobOrderEndDate)}
-              />
-              <DetailField
-                label="Duration"
-                value={calculateDuration(data.jobOrderStartDate, data.jobOrderEndDate)}
-              />
-              {data.jobOrderState && (
-                <DetailField
-                  label="State"
-                  value={data.jobOrderState}
-                />
-              )}
-            </dl>
+        <div className="space-y-4">
+          {/* Required Steps Checklist */}
+          <div className="divide-y divide-border/50">
+            {/* SWA Job Order */}
+            <div className="flex items-start gap-3 py-2.5 first:pt-0">
+              <div className={cn(
+                "w-5 h-5 border-2 flex items-center justify-center shrink-0 mt-0.5",
+                data.jobOrderStartDate
+                  ? "bg-[var(--stage-recruitment)] border-[var(--stage-recruitment)]"
+                  : "border-muted-foreground/30"
+              )}>
+                {data.jobOrderStartDate && <Check className="w-3 h-3 text-white" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className={cn("text-sm font-medium", !data.jobOrderStartDate && "text-muted-foreground")}>
+                  SWA Job Order
+                </span>
+                {data.jobOrderStartDate && (
+                  <span className="text-xs text-muted-foreground block mt-0.5">
+                    {formatISODate(data.jobOrderStartDate)}
+                    {data.jobOrderEndDate && <> <span className="opacity-40">→</span> {formatISODate(data.jobOrderEndDate)}</>}
+                    {data.jobOrderStartDate && data.jobOrderEndDate && <> · {calculateDuration(data.jobOrderStartDate, data.jobOrderEndDate)}</>}
+                    {data.jobOrderState && <> · {data.jobOrderState}</>}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Sunday Ad #1 */}
+            <div className="flex items-start gap-3 py-2.5">
+              <div className={cn(
+                "w-5 h-5 border-2 flex items-center justify-center shrink-0 mt-0.5",
+                data.sundayAdFirstDate
+                  ? "bg-[var(--stage-recruitment)] border-[var(--stage-recruitment)]"
+                  : "border-muted-foreground/30"
+              )}>
+                {data.sundayAdFirstDate && <Check className="w-3 h-3 text-white" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className={cn("text-sm font-medium", !data.sundayAdFirstDate && "text-muted-foreground")}>
+                  Sunday Ad #1
+                </span>
+                {data.sundayAdFirstDate && (
+                  <span className="text-xs text-muted-foreground block mt-0.5">
+                    {formatISODate(data.sundayAdFirstDate)}
+                    {data.sundayAdNewspaper && <> · {data.sundayAdNewspaper}</>}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Sunday Ad #2 */}
+            <div className="flex items-start gap-3 py-2.5">
+              <div className={cn(
+                "w-5 h-5 border-2 flex items-center justify-center shrink-0 mt-0.5",
+                data.sundayAdSecondDate
+                  ? "bg-[var(--stage-recruitment)] border-[var(--stage-recruitment)]"
+                  : "border-muted-foreground/30"
+              )}>
+                {data.sundayAdSecondDate && <Check className="w-3 h-3 text-white" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className={cn("text-sm font-medium", !data.sundayAdSecondDate && "text-muted-foreground")}>
+                  Sunday Ad #2
+                </span>
+                {data.sundayAdSecondDate && (
+                  <span className="text-xs text-muted-foreground block mt-0.5">
+                    {formatISODate(data.sundayAdSecondDate)}
+                    {data.sundayAdNewspaper && <> · {data.sundayAdNewspaper}</>}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Notice of Filing */}
+            <div className="flex items-start gap-3 py-2.5">
+              <div className={cn(
+                "w-5 h-5 border-2 flex items-center justify-center shrink-0 mt-0.5",
+                data.noticeOfFilingStartDate
+                  ? "bg-[var(--stage-recruitment)] border-[var(--stage-recruitment)]"
+                  : "border-muted-foreground/30"
+              )}>
+                {data.noticeOfFilingStartDate && <Check className="w-3 h-3 text-white" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className={cn("text-sm font-medium", !data.noticeOfFilingStartDate && "text-muted-foreground")}>
+                  Notice of Filing
+                </span>
+                {data.noticeOfFilingStartDate && (
+                  <span className="text-xs text-muted-foreground block mt-0.5">
+                    {formatISODate(data.noticeOfFilingStartDate)}
+                    {data.noticeOfFilingEndDate && <> <span className="opacity-40">→</span> {formatISODate(data.noticeOfFilingEndDate)}</>}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-
-          {/* Sunday Ads */}
-          {(data.sundayAdFirstDate || data.sundayAdSecondDate || data.sundayAdNewspaper) && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-muted-foreground">Sunday Ads</h4>
-              <dl className="grid gap-4 md:grid-cols-3">
-                <DetailField
-                  label="First Sunday Ad"
-                  value={formatDate(data.sundayAdFirstDate)}
-                />
-                <DetailField
-                  label="Second Sunday Ad"
-                  value={formatDate(data.sundayAdSecondDate)}
-                />
-                <DetailField
-                  label="Newspaper"
-                  value={data.sundayAdNewspaper}
-                />
-              </dl>
-            </div>
-          )}
-
-          {/* Notice of Filing */}
-          {(data.noticeOfFilingStartDate || data.noticeOfFilingEndDate) && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-muted-foreground">Notice of Filing</h4>
-              <dl className="grid gap-4 md:grid-cols-2">
-                <DetailField
-                  label="Posting Date"
-                  value={formatDate(data.noticeOfFilingStartDate)}
-                />
-                <DetailField
-                  label="Removal Date"
-                  value={formatDate(data.noticeOfFilingEndDate)}
-                />
-              </dl>
-            </div>
-          )}
 
           {/* Additional Recruitment Methods */}
           {data.additionalRecruitmentMethods && data.additionalRecruitmentMethods.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-muted-foreground">
-                Additional Recruitment Methods
-              </h4>
-              <ul className="space-y-2">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                Additional Methods ({data.additionalRecruitmentMethods.length})
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {data.additionalRecruitmentMethods.map((method, index) => (
-                  <li
+                  <div
                     key={`${method.method}-${index}`}
-                    className="rounded-lg border-2 border-border bg-muted/30 p-3"
+                    className="border-2 border-border bg-muted/30 px-3 py-2"
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium capitalize">
-                          {method.method.replace(/_/g, " ")}
-                        </p>
-                        {method.description && (
-                          <p className="text-sm text-muted-foreground">
-                            {method.description}
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        {formatDate(method.date)}
-                      </span>
+                    <div className="text-sm font-medium capitalize leading-tight">
+                      {method.method.replace(/_/g, " ")}
                     </div>
-                  </li>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {formatISODate(method.date)}
+                      {method.description && <> · {method.description}</>}
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
 
-          {/* Applicants & Notes */}
-          <dl className="grid gap-4 md:grid-cols-2">
-            <DetailField
-              label="Number of Applicants"
-              value={data.recruitmentApplicantsCount}
-              mono
-            />
-          </dl>
-
-          {data.recruitmentNotes && (
-            <div className="space-y-1">
-              <dt className="text-sm font-medium text-muted-foreground">Notes</dt>
-              <dd className="text-sm whitespace-pre-wrap rounded-lg border-2 border-border bg-muted/30 p-3">
-                {data.recruitmentNotes}
-              </dd>
+          {/* Footer: Applicants + Notes */}
+          {(data.recruitmentApplicantsCount !== undefined || data.recruitmentNotes) && (
+            <div className="pt-3 border-t border-border/50 space-y-3">
+              {data.recruitmentApplicantsCount !== undefined && (
+                <div className="text-sm">
+                  <span className="font-mono font-medium">{data.recruitmentApplicantsCount}</span>
+                  <span className="text-muted-foreground ml-1.5">applicants</span>
+                </div>
+              )}
+              {data.recruitmentNotes && (
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium block">Notes</span>
+                  <div className="text-sm whitespace-pre-wrap border-2 border-border bg-muted/30 p-3">
+                    {data.recruitmentNotes}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

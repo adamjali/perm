@@ -438,7 +438,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
           </h4>
 
           <RFIEntryList
-            minReceivedDate={values.eta9089FilingDate}
+            minReceivedDate={values.eta9089FilingDate ? format(addDays(new Date(values.eta9089FilingDate + "T00:00:00"), 1), "yyyy-MM-dd") : undefined}
             receivedDisabled={
               !values.eta9089FilingDate
                 ? { disabled: true, reason: "Enter ETA 9089 filing date first" }
