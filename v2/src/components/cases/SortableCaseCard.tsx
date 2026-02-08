@@ -11,7 +11,7 @@
  * - Supports selection mode (passes through selection props)
  */
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CaseCard } from "./CaseCard";
@@ -51,17 +51,23 @@ export function SortableCaseCard({
     isDragging,
   } = useSortable({ id: caseData._id });
 
-  // Track whether a drag occurred so we can swallow the subsequent click event.
-  // After pointer-up following a drag, the browser fires a synthetic "click".
-  // That click would propagate into CaseCard and toggle pin — we prevent that here.
+  // Track whether a real dnd-kit drag occurred so we can swallow the
+  // synthetic click event the browser fires after pointer-up.
   const didDragRef = useRef(false);
+
+  // Sync the ref with dnd-kit's isDragging — this is the authoritative
+  // signal that a drag actually activated (past the activation threshold).
+  useEffect(() => {
+    if (isDragging) {
+      didDragRef.current = true;
+    }
+  }, [isDragging]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: transition ?? undefined,
-    // When this item is being rendered in the DragOverlay, the original
-    // stays in-place as a translucent placeholder so the user can see
-    // where the item came from.
+    transition,
+    // The original stays in-place as a translucent placeholder while the
+    // DragOverlay renders the dragged copy.
     opacity: isDragging ? 0.3 : 1,
     zIndex: isDragging ? 0 : 1,
   };
@@ -76,15 +82,7 @@ export function SortableCaseCard({
       onPointerDown={() => {
         didDragRef.current = false;
       }}
-      onPointerMove={() => {
-        // Any pointer movement while holding indicates drag intent.
-        // The actual dnd-kit activation distance (8px) gates the real drag,
-        // but we set this early so the click suppression is ready.
-        didDragRef.current = true;
-      }}
       onClickCapture={(e) => {
-        // After a drag-and-release the browser fires a click event.
-        // Swallow it so CaseCard's onClick (pin toggle) doesn't fire.
         if (didDragRef.current) {
           e.stopPropagation();
           e.preventDefault();

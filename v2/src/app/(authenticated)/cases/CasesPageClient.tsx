@@ -555,7 +555,12 @@ export function CasesPageClient() {
       const oldIndex = currentIds.findIndex((id) => id === activeId);
       const newIndex = currentIds.findIndex((id) => id === overId);
 
-      if (oldIndex === -1 || newIndex === -1) return;
+      if (oldIndex === -1 || newIndex === -1) {
+        console.warn(
+          `[CasesPage] Drag target not found: activeId=${activeId} (${oldIndex}), overId=${overId} (${newIndex})`
+        );
+        return;
+      }
 
       // Reorder locally - this will immediately update the display
       const newOrder = arrayMove(currentIds, oldIndex, newIndex);
@@ -575,8 +580,9 @@ export function CasesPageClient() {
           baseSortOrder: sort.sortOrder,
         });
 
-        // DON'T switch to custom sort - keep current view, just show reordered
-        // The localOrder will override the display order
+        // Clear local order so the server's reactive query takes over,
+        // preventing stale local state from masking future server updates.
+        setLocalOrder([]);
         toast.success("Order saved");
       } catch (error) {
         console.error("Failed to save custom order:", error);
@@ -592,6 +598,8 @@ export function CasesPageClient() {
     ]
   );
 
+  // Reset overlay on drag cancel (Escape key or context lost).
+  // localOrder is only mutated in handleDragEnd, so no revert needed here.
   const handleDragCancel = useCallback(() => {
     setActiveDragId(null);
   }, []);
@@ -1001,6 +1009,12 @@ export function CasesPageClient() {
   // Server already paginated - processedCases IS the current page
   const paginatedCases = processedCases;
 
+  // The case currently being dragged — used to render the DragOverlay content.
+  const activeDragCase = useMemo(
+    () => (activeDragId ? paginatedCases.find((c) => c._id === activeDragId) ?? null : null),
+    [activeDragId, paginatedCases]
+  );
+
   // ============================================================================
   // LOADING STATE
   // ============================================================================
@@ -1230,17 +1244,11 @@ export function CasesPageClient() {
                   }}
                   zIndex={50}
                 >
-                  {(() => {
-                    const dragCase = activeDragId
-                      ? paginatedCases.find((c) => c._id === activeDragId)
-                      : null;
-                    if (!dragCase) return null;
-                    return (
-                      <div className="rotate-[2deg] scale-105 pointer-events-none">
-                        <CaseCard case={dragCase} />
-                      </div>
-                    );
-                  })()}
+                  {activeDragCase && (
+                    <div className="rotate-[2deg] scale-105 pointer-events-none">
+                      <CaseCard case={activeDragCase} />
+                    </div>
+                  )}
                 </DragOverlay>
               </DndContext>
             ) : (
