@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { NavLink } from "@/components/ui/nav-link";
 import VideoPlayer from "@/components/content/VideoPlayer";
 import ScreenshotFigure from "@/components/content/ScreenshotFigure";
+import VideoFigure from "@/components/content/VideoFigure";
 import PrintableChecklist from "@/components/content/PrintableChecklist";
 import { Lightbox } from "@/components/ui/lightbox";
 
@@ -199,6 +200,7 @@ export const mdxComponents: MDXComponents = {
   ComparisonTable,
   VideoPlayer,
   ScreenshotFigure,
+  VideoFigure,
   PrintableChecklist,
 
   // Headings

@@ -146,7 +146,7 @@ v2/
 │   ├── app/                # Next.js App Router pages
 │   ├── components/
 │   │   ├── ui/             # Core UI (shadcn/ui)
-│   │   ├── content/        # Content hub components (16 components)
+│   │   ├── content/        # Content hub components (17 components)
 │   │   ├── status/         # PERM status badges
 │   │   ├── dashboard/      # Dashboard components
 │   │   └── layout/         # Layout (Header, Footer)
@@ -182,6 +182,7 @@ Registered in `src/lib/content/mdx-components.tsx`:
 | `StepByStep` / `Step` | `number`, `title` | Numbered step containers |
 | `ComparisonTable` | `headers`, `rows` | Comparison tables |
 | `ScreenshotFigure` | `src`, `alt`, `caption?`, `step?`, `maxWidth?` | App screenshot with neobrutalist border, optional step badge |
+| `VideoFigure` | `src`, `alt`, `caption?`, `step?`, `maxWidth?`, `poster?` | Video with neobrutalist border, Lightbox expand, IntersectionObserver autoplay |
 | `VideoPlayer` | `videoId` | Remotion video player (lazy-loaded, SSR-disabled) |
 
 ### Screenshot Assets
@@ -208,6 +209,19 @@ App screenshots in `public/images/screenshots/`:
   step={1}
 />
 ```
+
+### Adding Videos to Articles
+
+```mdx
+<VideoFigure
+  src="/images/screenshots/cases-walkthrough.mp4"
+  alt="Cases page walkthrough"
+  caption="The Cases page with filtering, search, and case details."
+  step={2}
+/>
+```
+
+Videos use IntersectionObserver — they autoplay when visible, pause when scrolled away, and are click-to-expand via Lightbox.
 
 ---
 
