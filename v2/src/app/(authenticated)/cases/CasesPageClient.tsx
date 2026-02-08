@@ -6,19 +6,23 @@ import { useCallback, useMemo, useState, useEffect, useTransition } from "react"
 import { Plus, CheckSquare, Upload, AlertTriangle } from "lucide-react";
 import {
   DndContext,
+  DragOverlay,
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
+  type DragStartEvent,
+  type DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
+  rectSortingStrategy,
 } from "@dnd-kit/sortable";
+import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { toast } from "@/lib/toast";
 import { api } from "../../../../convex/_generated/api";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
@@ -34,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "motion/react";
 import { SortableCaseCard } from "@/components/cases/SortableCaseCard";
+import { CaseCard } from "@/components/cases/CaseCard";
 import { CaseFilterBar } from "@/components/cases/CaseFilterBar";
 import { CasePagination } from "@/components/cases/CasePagination";
 import { CaseListEmptyState } from "@/components/cases/CaseListEmptyState";
@@ -266,7 +271,8 @@ export function CasesPageClient() {
 
   // Custom order state (local reordering before save)
   const [localOrder, setLocalOrder] = useState<string[]>([]);
-  const [_isDragging, setIsDragging] = useState(false);
+  // Active drag item ID — drives DragOverlay rendering
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
   // Convex queries and mutations
   const customOrderData = useQuery(api.userCaseOrder.getCaseOrder);
@@ -280,11 +286,18 @@ export function CasesPageClient() {
   const isCalendarConnected = useQuery(api.googleAuth.isGoogleCalendarConnected) ?? false;
   const convex = useConvex();
 
-  // Drag sensors
+  // Drag sensors — PointerSensor for mouse, TouchSensor for mobile (with
+  // hold delay to discriminate scroll from drag), KeyboardSensor for a11y.
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8, // 8px movement required to start drag (prevents accidental drags)
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200, // 200ms hold before drag starts — lets scroll pass through
+        tolerance: 5, // 5px movement tolerance during delay
       },
     }),
     useSensor(KeyboardSensor, {
@@ -463,10 +476,12 @@ export function CasesPageClient() {
         }
         if (aIndex !== Number.MAX_SAFE_INTEGER) return -1;
         if (bIndex !== Number.MAX_SAFE_INTEGER) return 1;
-        // Fallback for new cases not in custom order
+        // Fallback for new cases not in custom order — sort them using the
+        // base sort method that was active when custom order was saved.
         const baseSortBy = customOrderData.baseSortMethod || "deadline";
         const baseSortOrder = customOrderData.baseSortOrder || "asc";
-        return sortCases([a, b], baseSortBy, baseSortOrder)[0] === a ? -1 : 1;
+        const sorted = sortCases([a, b], baseSortBy, baseSortOrder);
+        return sorted[0]?._id === a._id ? -1 : 1;
       });
       return cases;
     }
@@ -520,13 +535,13 @@ export function CasesPageClient() {
   // DRAG HANDLERS
   // ============================================================================
 
-  const handleDragStart = useCallback(() => {
-    setIsDragging(true);
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveDragId(String(event.active.id));
   }, []);
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
-      setIsDragging(false);
+      setActiveDragId(null);
       const { active, over } = event;
 
       if (!over || active.id === over.id) {
@@ -535,10 +550,12 @@ export function CasesPageClient() {
 
       // Get current case IDs from processed cases
       const currentIds = processedCases.map((c) => c._id);
-      const activeId = active.id as string;
-      const overId = over.id as string;
+      const activeId = String(active.id);
+      const overId = String(over.id);
       const oldIndex = currentIds.findIndex((id) => id === activeId);
       const newIndex = currentIds.findIndex((id) => id === overId);
+
+      if (oldIndex === -1 || newIndex === -1) return;
 
       // Reorder locally - this will immediately update the display
       const newOrder = arrayMove(currentIds, oldIndex, newIndex);
@@ -574,6 +591,10 @@ export function CasesPageClient() {
       sort,
     ]
   );
+
+  const handleDragCancel = useCallback(() => {
+    setActiveDragId(null);
+  }, []);
 
   // ============================================================================
   // SELECTION HANDLERS
@@ -1181,17 +1202,17 @@ export function CasesPageClient() {
                 collisionDetection={closestCenter}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
+                onDragCancel={handleDragCancel}
               >
                 <SortableContext
                   items={paginatedCases.map((c) => c._id)}
-                  strategy={verticalListSortingStrategy}
+                  strategy={rectSortingStrategy}
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {paginatedCases.map((caseData, index) => (
+                    {paginatedCases.map((caseData) => (
                       <SortableCaseCard
                         key={caseData._id}
                         case={caseData}
-                        index={index}
                         selectionMode={selectionMode}
                         isSelected={selectedCaseIds.has(caseData._id)}
                         onSelect={handleSelectCase}
@@ -1201,6 +1222,26 @@ export function CasesPageClient() {
                     ))}
                   </div>
                 </SortableContext>
+                <DragOverlay
+                  modifiers={[restrictToWindowEdges]}
+                  dropAnimation={{
+                    duration: 200,
+                    easing: "ease-out",
+                  }}
+                  zIndex={50}
+                >
+                  {(() => {
+                    const dragCase = activeDragId
+                      ? paginatedCases.find((c) => c._id === activeDragId)
+                      : null;
+                    if (!dragCase) return null;
+                    return (
+                      <div className="rotate-[2deg] scale-105 pointer-events-none">
+                        <CaseCard case={dragCase} />
+                      </div>
+                    );
+                  })()}
+                </DragOverlay>
               </DndContext>
             ) : (
               <CaseListView

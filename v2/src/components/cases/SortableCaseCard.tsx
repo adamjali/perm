@@ -3,13 +3,15 @@
  * Wrapper around CaseCard that makes it draggable using dnd-kit.
  *
  * Features:
- * - Drag handle (entire card is draggable)
- * - Smooth animations during drag
- * - Visual feedback (lift + shadow)
+ * - Drag via entire card surface
+ * - Click-after-drag prevention (swallows click events that follow a drag)
+ * - Smooth transform animations during reorder
+ * - Visual placeholder (opacity reduced) while dragged item is in DragOverlay
  * - Neobrutalist styling preserved
  * - Supports selection mode (passes through selection props)
  */
 
+import { useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CaseCard } from "./CaseCard";
@@ -17,7 +19,6 @@ import type { CaseCardData } from "../../../convex/lib/caseListTypes";
 
 interface SortableCaseCardProps {
   case: CaseCardData;
-  index: number;
   selectionMode?: boolean;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
@@ -35,7 +36,6 @@ interface SortableCaseCardProps {
 
 export function SortableCaseCard({
   case: caseData,
-  index: _index,
   selectionMode = false,
   isSelected = false,
   onSelect,
@@ -47,16 +47,23 @@ export function SortableCaseCard({
     listeners,
     setNodeRef,
     transform,
-    transition: _transition,
+    transition,
     isDragging,
   } = useSortable({ id: caseData._id });
 
+  // Track whether a drag occurred so we can swallow the subsequent click event.
+  // After pointer-up following a drag, the browser fires a synthetic "click".
+  // That click would propagate into CaseCard and toggle pin — we prevent that here.
+  const didDragRef = useRef(false);
+
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: isDragging ? "none" : "transform 150ms ease-out",
-    opacity: isDragging ? 0.9 : 1,
-    zIndex: isDragging ? 1000 : 1,
-    scale: isDragging ? 1.02 : 1,
+    transition: transition ?? undefined,
+    // When this item is being rendered in the DragOverlay, the original
+    // stays in-place as a translucent placeholder so the user can see
+    // where the item came from.
+    opacity: isDragging ? 0.3 : 1,
+    zIndex: isDragging ? 0 : 1,
   };
 
   return (
@@ -65,7 +72,25 @@ export function SortableCaseCard({
       style={style}
       {...attributes}
       {...listeners}
-      className="cursor-grab active:cursor-grabbing"
+      className={`touch-manipulation ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+      onPointerDown={() => {
+        didDragRef.current = false;
+      }}
+      onPointerMove={() => {
+        // Any pointer movement while holding indicates drag intent.
+        // The actual dnd-kit activation distance (8px) gates the real drag,
+        // but we set this early so the click suppression is ready.
+        didDragRef.current = true;
+      }}
+      onClickCapture={(e) => {
+        // After a drag-and-release the browser fires a click event.
+        // Swallow it so CaseCard's onClick (pin toggle) doesn't fire.
+        if (didDragRef.current) {
+          e.stopPropagation();
+          e.preventDefault();
+          didDragRef.current = false;
+        }
+      }}
     >
       <CaseCard
         case={caseData}
