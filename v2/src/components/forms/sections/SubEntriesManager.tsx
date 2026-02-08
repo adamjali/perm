@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
 import { Input } from "@/components/ui/input";
@@ -81,6 +80,7 @@ export function SubEntriesManager({
               variant="ghost"
               size="sm"
               onClick={() => removeEntry(index)}
+              aria-label={`Remove entry ${index + 1}`}
               className="h-8 w-8 p-0 mt-6 text-destructive hover:text-destructive/80"
             >
               <Trash2 className="h-4 w-4" />

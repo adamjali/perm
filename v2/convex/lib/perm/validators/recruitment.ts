@@ -401,7 +401,7 @@ export function validateProfessionalMethods(
         }
       }
 
-      // V-PROF-02 & V-PROF-04: startDate must be <= endDate
+      // V-PROF-02: startDate must not be after endDate (covers V-PROF-04 from endDate perspective)
       if (startDate && endDate) {
         const start = parseISO(startDate);
         const end = parseISO(endDate);

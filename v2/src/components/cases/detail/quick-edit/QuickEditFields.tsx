@@ -14,7 +14,6 @@
  * - Closes card and updates via real-time sync after save
  */
 
-import * as React from "react";
 import { useState, useCallback, useMemo } from "react";
 import { useMutation } from "convex/react";
 import { motion } from "motion/react";
