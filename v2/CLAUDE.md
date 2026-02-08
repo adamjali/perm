@@ -190,10 +190,11 @@ App screenshots in `public/images/screenshots/`:
 
 | File | Content |
 |------|---------|
-| `dashboard.png` | Deadline Hub with urgency columns |
+| `dashboard.png` | Case Summary tiles with stage counts |
 | `cases.png` | Case management grid with cards |
 | `calendar.png` | Calendar view with deadline markers |
 | `homepage.png` | Landing page hero |
+| `create-case.png` | Case Summary tiles with stage counts |
 
 ### Adding Screenshots to Articles
 
