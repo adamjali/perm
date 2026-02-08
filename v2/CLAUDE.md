@@ -195,6 +195,7 @@ App screenshots in `public/images/screenshots/`:
 | `calendar.png` | Calendar view with deadline markers |
 | `homepage.png` | Landing page hero |
 | `create-case.mp4` | App walkthrough video (autoplay, loop) |
+| `cases-walkthrough.mp4` | Cases page walkthrough video (autoplay, loop) |
 
 ### Adding Screenshots to Articles
 

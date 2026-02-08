@@ -323,7 +323,6 @@ export function HowItWorks() {
               <div key={screenshot.label} className="group">
                 <Lightbox src={screenshot.src} alt={screenshot.alt} caption={screenshot.label}>
                   <div className="border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-                    {/* Mini browser chrome */}
                     <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
                       <div className="h-2 w-2 bg-[#FF5F57]" />
                       <div className="h-2 w-2 bg-[#FFBD2E]" />
