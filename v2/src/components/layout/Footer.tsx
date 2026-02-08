@@ -42,7 +42,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               {/* Social links */}
               <div className="flex gap-4">
                 <a
-                  href="https://github.com/adamjali/perm"
+                  href="https://github.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-white/60 transition-colors hover:text-primary"

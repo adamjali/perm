@@ -71,7 +71,7 @@ export default function ContactPage() {
                 Have an idea to improve PERM Tracker? We&apos;d love to hear it.
               </p>
               <a
-                href="https://github.com/adamjali/perm/issues"
+                href="https://github.com/issues"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover-underline text-primary font-medium"
@@ -94,7 +94,7 @@ export default function ContactPage() {
                 Found something that&apos;s not working right? Report it here.
               </p>
               <a
-                href="https://github.com/adamjali/perm/issues/new"
+                href="https://github.com/issues/new"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover-underline text-primary font-medium"

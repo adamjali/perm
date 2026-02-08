@@ -333,7 +333,7 @@ export function ContactSection() {
 
               {/* Report a Bug card */}
               <ContactLinkCard
-                href="https://github.com/adamjali/perm/issues"
+                href="https://github.com"
                 icon={<Bug className="h-6 w-6 text-primary" />}
                 title="Report a Bug"
                 subtitle="Found an issue? Let us know on GitHub"
@@ -342,7 +342,7 @@ export function ContactSection() {
 
               {/* Request a Feature card */}
               <ContactLinkCard
-                href="https://github.com/adamjali/perm/issues/new?labels=enhancement"
+                href="https://github.com/new?labels=enhancement"
                 icon={<Lightbulb className="h-6 w-6 text-primary" />}
                 title="Request a Feature"
                 subtitle="Have an idea? We'd love to hear it"

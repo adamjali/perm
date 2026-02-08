@@ -57,9 +57,9 @@ import DeleteNowDialog from "./DeleteNowDialog";
 
 const SUPPORT_EMAIL = "support@permtracker.app";
 const GITHUB_BUG_REPORT_URL =
-  "https://github.com/adamjali/perm/issues/new?labels=bug";
+  "https://github.com";
 const GITHUB_FEATURE_REQUEST_URL =
-  "https://github.com/adamjali/perm/issues/new?labels=enhancement";
+  "https://github.com";
 const DELETE_CONFIRMATION_TEXT = "DELETE";
 const GRACE_PERIOD_DAYS = 30;
 

@@ -9,11 +9,11 @@ https://permtracker.app/terms#attorney-privilege
 https://permtracker.app/contact
 https://permtracker.app/#features
 https://permtracker.app/#faq
-https://github.com/adamjali/perm
-https://github.com/adamjali/perm/issues
-https://github.com/adamjali/perm/issues/new
-https://github.com/adamjali/perm/issues/new?labels=bug
-https://github.com/adamjali/perm/issues/new?labels=enhancement
+https://github.com
+https://github.com/issues
+https://github.com/issues/new
+https://github.com/issues/new?labels=bug
+https://github.com/issues/new?labels=enhancement
 https://flag.dol.gov/programs/perm
 https://www.ecfr.gov/current/title-20/chapter-V/part-656
 https://developers.google.com/terms/api-services-user-data-policy

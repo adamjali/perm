@@ -60,7 +60,7 @@ export function getOrganizationSchema(baseUrl: string) {
       email: 'support@permtracker.app',
       contactType: 'customer support',
     },
-    sameAs: ['https://github.com/adamjali/perm'],
+    sameAs: ['https://github.com'],
   };
 }
 

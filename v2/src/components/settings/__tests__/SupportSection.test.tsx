@@ -6,8 +6,8 @@ import { renderWithProviders } from "../../../../test-utils/render-utils";
 import SupportSection from "../SupportSection";
 
 const SUPPORT_EMAIL = "support@permtracker.app";
-const GITHUB_BUG_REPORT_URL = "https://github.com/adamjali/perm/issues/new?labels=bug";
-const GITHUB_FEATURE_REQUEST_URL = "https://github.com/adamjali/perm/issues/new?labels=enhancement";
+const GITHUB_BUG_REPORT_URL = "https://github.com/issues/new?labels=bug";
+const GITHUB_FEATURE_REQUEST_URL = "https://github.com/issues/new?labels=enhancement";
 
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
