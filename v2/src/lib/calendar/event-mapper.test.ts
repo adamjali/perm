@@ -90,7 +90,7 @@ describe("caseToCalendarEvents", () => {
       const events = caseToCalendarEvents(caseData);
 
       expect(events).toHaveLength(1);
-      expect(events[0].title).toBe("PWD Exp: Smith J.");
+      expect(events[0].title).toBe("PWD Exp: Acme Corp");
       expect(events[0].start.toISOString().split("T")[0]).toBe("2024-07-15");
       expect(events[0].end.toISOString().split("T")[0]).toBe("2024-07-15");
       expect(events[0].allDay).toBe(true);
@@ -107,7 +107,7 @@ describe("caseToCalendarEvents", () => {
       const events = caseToCalendarEvents(caseData);
 
       expect(events).toHaveLength(1);
-      expect(events[0].title).toBe("PWD Filed: Smith J.");
+      expect(events[0].title).toBe("PWD Filed: Acme Corp");
       expect(events[0].start.toISOString().split("T")[0]).toBe("2024-06-01");
       expect(events[0].end.toISOString().split("T")[0]).toBe("2024-06-01");
       expect(events[0].allDay).toBe(true);
@@ -305,43 +305,42 @@ describe("caseToCalendarEvents", () => {
   });
 
   describe("title formatting", () => {
-    it("formats title with last name and first initial", () => {
+    it("formats title with employer name", () => {
       const caseData = createTestCase({
-        beneficiaryIdentifier: "Smith, John",
+        employerName: "Acme Corp",
         pwdFilingDate: "2024-06-01",
       });
 
       const events = caseToCalendarEvents(caseData);
 
-      expect(events[0].title).toBe("PWD Filed: Smith J.");
+      expect(events[0].title).toBe("PWD Filed: Acme Corp");
     });
 
-    it("handles single name (no comma)", () => {
+    it("trims whitespace from employer name", () => {
       const caseData = createTestCase({
-        beneficiaryIdentifier: "Smith",
+        employerName: "  Acme Corp  ",
         pwdFilingDate: "2024-06-01",
       });
 
       const events = caseToCalendarEvents(caseData);
 
-      expect(events[0].title).toBe("PWD Filed: Smith");
+      expect(events[0].title).toBe("PWD Filed: Acme Corp");
     });
 
-    it("handles first name last name format", () => {
+    it("handles empty employer name", () => {
       const caseData = createTestCase({
-        beneficiaryIdentifier: "John Smith",
+        employerName: "",
         pwdFilingDate: "2024-06-01",
       });
 
       const events = caseToCalendarEvents(caseData);
 
-      // Should still produce a readable title
-      expect(events[0].title).toContain("Smith");
+      expect(events[0].title).toBe("PWD Filed");
     });
 
-    it("handles empty beneficiary name", () => {
+    it("handles undefined employer name", () => {
       const caseData = createTestCase({
-        beneficiaryIdentifier: "",
+        employerName: undefined,
         pwdFilingDate: "2024-06-01",
       });
 

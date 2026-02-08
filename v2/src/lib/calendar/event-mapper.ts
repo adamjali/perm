@@ -26,60 +26,21 @@ export { calculateUrgency };
 // ============================================================================
 
 /**
- * Format beneficiary name for calendar event title.
- *
- * Converts "Smith, John" -> "Smith J."
- * Handles various name formats gracefully.
- *
- * @param beneficiaryIdentifier - Full beneficiary name
- * @returns Abbreviated name for calendar title
- */
-function formatBeneficiaryName(beneficiaryIdentifier: string): string {
-  if (!beneficiaryIdentifier || beneficiaryIdentifier.trim() === "") {
-    return "";
-  }
-
-  const name = beneficiaryIdentifier.trim();
-
-  // Handle "Last, First" format
-  if (name.includes(",")) {
-    const splitParts = name.split(",").map((s) => s.trim());
-    const lastName = splitParts[0] ?? "";
-    const firstName = splitParts[1];
-    if (firstName && firstName.length > 0) {
-      return `${lastName} ${firstName.charAt(0)}.`;
-    }
-    return lastName;
-  }
-
-  // Handle "First Last" format - extract last name
-  const parts = name.split(" ").filter((s) => s.length > 0);
-  if (parts.length > 1) {
-    const lastName = parts[parts.length - 1] ?? "";
-    const firstName = parts[0] ?? "";
-    return `${lastName} ${firstName.charAt(0)}.`;
-  }
-
-  // Single name
-  return name;
-}
-
-/**
- * Format calendar event title.
+ * Format calendar event title using employer name.
  *
  * @param deadlineType - Type of deadline
- * @param beneficiaryName - Formatted beneficiary name
- * @returns Formatted title like "PWD Exp: Smith J."
+ * @param employerName - Employer name for the case
+ * @returns Formatted title like "PWD Exp: Acme Corp"
  */
 function formatEventTitle(
   deadlineType: DeadlineType,
-  beneficiaryName: string
+  employerName: string
 ): string {
   const label = DEADLINE_TYPE_LABELS[deadlineType];
-  if (!beneficiaryName) {
+  if (!employerName) {
     return label;
   }
-  return `${label}: ${beneficiaryName}`;
+  return `${label}: ${employerName}`;
 }
 
 // ============================================================================
@@ -133,7 +94,7 @@ export function caseToCalendarEvents(
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const beneficiaryName = formatBeneficiaryName(caseData.beneficiaryIdentifier);
+  const employerLabel = caseData.employerName?.trim() || "";
   const caseId = caseData._id;
 
   // Convert CalendarCaseData to CaseWithDates for extractMilestones
@@ -168,7 +129,7 @@ export function caseToCalendarEvents(
     const event = milestoneToCalendarEvent(
       milestone,
       caseId as string,
-      beneficiaryName,
+      employerLabel,
       today,
       // Pass case data for hover tooltips
       caseData.employerName,
@@ -188,7 +149,7 @@ export function caseToCalendarEvents(
  *
  * @param milestone - Milestone from extractMilestones()
  * @param caseId - Case ID
- * @param beneficiaryName - Formatted beneficiary name
+ * @param employerLabel - Employer name for event title
  * @param today - Current date for urgency calculation
  * @param employerName - Employer name for tooltip
  * @param positionTitle - Position title for tooltip
@@ -198,7 +159,7 @@ export function caseToCalendarEvents(
 function milestoneToCalendarEvent(
   milestone: Milestone,
   caseId: string,
-  beneficiaryName: string,
+  employerLabel: string,
   today: Date,
   employerName?: string,
   positionTitle?: string,
@@ -261,11 +222,11 @@ function milestoneToCalendarEvent(
     deadlineType === "additionalMethod"
   ) {
     // Use the specific label (e.g., "RFI Due #1" or "Campus Recruitment")
-    title = beneficiaryName
-      ? `${milestone.label}: ${beneficiaryName}`
+    title = employerLabel
+      ? `${milestone.label}: ${employerLabel}`
       : milestone.label;
   } else {
-    title = formatEventTitle(deadlineType, beneficiaryName);
+    title = formatEventTitle(deadlineType, employerLabel);
   }
 
   // Use factory function to ensure urgency/daysUntil consistency

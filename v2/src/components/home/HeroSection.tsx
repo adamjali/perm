@@ -37,15 +37,15 @@ export function HeroSection() {
     offset: ["start start", "end start"],
   });
 
-  // Dashboard container transforms (scale, opacity, y)
-  const dashboardScale = useTransform(scrollYProgress, [0, 0.5], [0.92, 1]);
-  const dashboardOpacity = useTransform(scrollYProgress, [0, 0.4], [0.7, 1]);
-  const dashboardY = useTransform(scrollYProgress, [0, 0.5], [40, 0]);
+  // Dashboard container transforms — starts full, fades as user scrolls away
+  const dashboardScale = useTransform(scrollYProgress, [0, 0.8], [1, 0.92]);
+  const dashboardOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0.7]);
+  const dashboardY = useTransform(scrollYProgress, [0, 0.8], [0, 40]);
 
-  // Browser chrome staggers slightly ahead (0.05 earlier)
-  const chromeScale = useTransform(scrollYProgress, [0, 0.45], [0.92, 1]);
-  const chromeOpacity = useTransform(scrollYProgress, [0, 0.35], [0.7, 1]);
-  const chromeY = useTransform(scrollYProgress, [0, 0.45], [40, 0]);
+  // Browser chrome staggers slightly ahead
+  const chromeScale = useTransform(scrollYProgress, [0, 0.75], [1, 0.92]);
+  const chromeOpacity = useTransform(scrollYProgress, [0, 0.55], [1, 0.7]);
+  const chromeY = useTransform(scrollYProgress, [0, 0.75], [0, 40]);
 
   return (
     <section ref={heroRef} id="hero" className="relative min-h-[calc(100vh-4rem)] overflow-hidden">

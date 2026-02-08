@@ -9,12 +9,11 @@
  * 2. TrustStrip - Animated marquee with trust badges
  * 3. JourneySection - Horizontal scroll PERM stages (#journey)
  * 4. FeaturesGrid - 6 feature cards with corner accents (#features)
- * 5. HowItWorks - 3-step process with connectors (#how)
- * 6. VideoShowcase - PERMExplainer Remotion video embed
- * 7. StatsSection - Count-up statistics
- * 8. TestimonialsSection - Value props + trust badges + G2 CTA
- * 9. FAQSection - Common questions (#faq)
- * 10. CTASection - Full-width CTA
+ * 5. HowItWorks - 3-step process with connectors + video showcase (#how)
+ * 6. StatsSection - Count-up statistics
+ * 7. TestimonialsSection - Value props + trust badges + G2 CTA
+ * 8. FAQSection - Common questions (#faq)
+ * 9. CTASection - Full-width CTA
  * (Footer is rendered by PublicLayout)
  *
  */
@@ -26,7 +25,6 @@ import {
   JourneySection,
   FeaturesGrid,
   HowItWorks,
-  VideoShowcase,
   StatsSection,
   TestimonialsSection,
   FAQSection,
@@ -57,7 +55,6 @@ export default function HomePage() {
       <JourneySection />
       <FeaturesGrid />
       <HowItWorks />
-      <VideoShowcase />
       <StatsSection />
       <TestimonialsSection />
       <FAQSection />

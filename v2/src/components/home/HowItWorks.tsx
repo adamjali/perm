@@ -11,7 +11,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Route } from "lucide-react";
+import { Route, Play } from "lucide-react";
 import { useInView } from "motion/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useReducedMotion } from "@/lib/animations";
@@ -238,12 +238,66 @@ export function HowItWorks() {
 
         {/* Product screenshots — see it in action */}
         <ScrollReveal direction="up" delay={0.3} className="mt-16">
-          <div className="text-center mb-8">
-            <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-              See it in action
+          <div className="text-center mb-10">
+            <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              <Play className="h-3.5 w-3.5" />
+              Watch: The PERM Process
+            </div>
+            <h3 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
+              See How It Works in 20 Seconds
+            </h3>
+            <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
+              From case creation to deadline tracking — watch the entire PERM workflow.
             </p>
           </div>
-          <div className="grid gap-8 md:grid-cols-3">
+          {/* Product demo + Create case — side by side */}
+          <div className="grid gap-8 md:grid-cols-2">
+            {/* Product Demo video */}
+            <div>
+              <div className="border-3 border-border shadow-hard overflow-hidden">
+                <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
+                  <div className="h-2 w-2 bg-[#FF5F57]" />
+                  <div className="h-2 w-2 bg-[#FFBD2E]" />
+                  <div className="h-2 w-2 bg-[#28CA41]" />
+                  <span className="ml-2 font-mono text-[9px] text-background/50">
+                    Product Demo
+                  </span>
+                </div>
+                <VideoPlayer videoId="ProductDemo" className="border-0 shadow-none" autoPlay loop />
+              </div>
+              <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                Watch the full demo
+              </p>
+            </div>
+
+            {/* Create Case GIF */}
+            <div>
+              <div className="group border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
+                <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
+                  <div className="h-2 w-2 bg-[#FF5F57]" />
+                  <div className="h-2 w-2 bg-[#FFBD2E]" />
+                  <div className="h-2 w-2 bg-[#28CA41]" />
+                  <span className="ml-2 font-mono text-[9px] text-background/50">
+                    Create Case
+                  </span>
+                </div>
+                <figure className="not-prose">
+                  <img
+                    src="/images/screenshots/create-case.gif"
+                    alt="Creating a new PERM case with automatic deadline calculation"
+                    loading="lazy"
+                    className="w-full"
+                  />
+                </figure>
+              </div>
+              <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                Auto-calculated deadlines in action
+              </p>
+            </div>
+          </div>
+
+          {/* Product screenshots */}
+          <div className="mt-12 grid gap-8 md:grid-cols-3">
             {[
               {
                 src: "/images/screenshots/dashboard.png",
@@ -288,53 +342,6 @@ export function HowItWorks() {
             ))}
           </div>
 
-          {/* Product demo video */}
-          <div className="mt-12 mx-auto max-w-3xl">
-            <div className="text-center mb-6">
-              <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-                Watch the full demo
-              </p>
-            </div>
-            <div className="border-3 border-border shadow-hard overflow-hidden">
-              <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
-                <div className="h-2 w-2 bg-[#FF5F57]" />
-                <div className="h-2 w-2 bg-[#FFBD2E]" />
-                <div className="h-2 w-2 bg-[#28CA41]" />
-                <span className="ml-2 font-mono text-[9px] text-background/50">
-                  Product Demo
-                </span>
-              </div>
-              <VideoPlayer videoId="ProductDemo" className="border-0 shadow-none" autoPlay loop />
-            </div>
-          </div>
-
-          {/* Create case GIF — shows auto-calculated deadlines */}
-          <div className="mt-12 mx-auto max-w-3xl">
-            <div className="text-center mb-6">
-              <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-                Auto-calculated deadlines in action
-              </p>
-            </div>
-            <div className="group border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-              <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
-                <div className="h-2 w-2 bg-[#FF5F57]" />
-                <div className="h-2 w-2 bg-[#FFBD2E]" />
-                <div className="h-2 w-2 bg-[#28CA41]" />
-                <span className="ml-2 font-mono text-[9px] text-background/50">
-                  Create Case
-                </span>
-              </div>
-              {/* GIF can't use Next.js Image — use raw img with lazy loading */}
-              <figure className="not-prose">
-                <img
-                  src="/images/screenshots/create-case.gif"
-                  alt="Creating a new PERM case with automatic deadline calculation"
-                  loading="lazy"
-                  className="w-full"
-                />
-              </figure>
-            </div>
-          </div>
         </ScrollReveal>
       </div>
     </section>

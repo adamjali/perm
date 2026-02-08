@@ -5,6 +5,7 @@ import { getCurrentUserId, getCurrentUserIdOrNull, extractUserIdFromAction } fro
 import { encryptToken, decryptToken } from "./lib/crypto";
 import { loggers } from "./lib/logging";
 import { buildDefaultProfile } from "./lib/userDefaults";
+import { formatDateForNotification } from "./lib/formatDate";
 
 const log = loggers.auth;
 
@@ -653,7 +654,6 @@ export const requestAccountDeletion = mutation({
     const user = await ctx.db.get(userId);
     if (user?.email) {
       // Format deletion date for human readability
-      const { formatDateForNotification } = await import("./lib/formatDate");
       const deletionDateFormatted = formatDateForNotification(deletionDate, true);
 
       // Schedule deletion confirmation email (runs immediately via runAfter(0))
