@@ -10,25 +10,37 @@
  */
 
 import * as React from "react";
+import Link from "next/link";
 import { ChevronDown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
+const faqLink = "font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary";
+
 interface FAQItem {
   question: string;
-  answer: string;
+  answer: React.ReactNode;
 }
 
 const faqItems: FAQItem[] = [
   {
     question: "What exactly does PERM Tracker do?",
-    answer:
-      "PERM Tracker automates the deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline — PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync so your whole team stays aligned.",
+    answer: (
+      <>
+        PERM Tracker automates the deadline management for{" "}
+        <Link href="/blog/what-is-perm-labor-certification" className={faqLink}>PERM labor certification</Link>{" "}
+        cases. Enter your case dates, and it auto-calculates every critical deadline — PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync so your whole team stays aligned.{" "}
+        <Link href="/tutorials/tracking-perm-deadlines" className={faqLink}>See how deadline tracking works →</Link>
+      </>
+    ),
   },
   {
     question: "How is this different from using a spreadsheet?",
-    answer:
-      "Spreadsheets require manual deadline math, don't send reminders, and break when regulations change. PERM Tracker auto-calculates 15+ deadlines per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.",
+    answer: (
+      <>
+        <Link href="/resources/manual-vs-automated-tracking" className={faqLink}>Spreadsheets require manual deadline math</Link>, don&apos;t send reminders, and break when regulations change. PERM Tracker auto-calculates 15+ deadlines per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.
+      </>
+    ),
   },
   {
     question: "Is PERM Tracker really free?",
@@ -42,13 +54,21 @@ const faqItems: FAQItem[] = [
   },
   {
     question: "Can I import my existing cases?",
-    answer:
-      "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime — your data is always yours.",
+    answer: (
+      <>
+        Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime — your data is always yours.{" "}
+        <Link href="/tutorials/getting-started" className={faqLink}>Getting started tutorial →</Link>
+      </>
+    ),
   },
   {
     question: "What happens if DOL changes regulations?",
-    answer:
-      "We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don't need to manually update formulas or check for rule changes.",
+    answer: (
+      <>
+        We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don&apos;t need to manually update formulas or check for rule changes.{" "}
+        <Link href="/blog/perm-processing-times-2026" className={faqLink}>Current processing times →</Link>
+      </>
+    ),
   },
 ];
 

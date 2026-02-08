@@ -10,6 +10,7 @@
  */
 
 import Image from "next/image";
+import Link from "next/link";
 import { Rocket, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MagneticButton } from "@/components/ui/magnetic-button";
@@ -111,7 +112,8 @@ export function CTASection() {
             </p>
           </div>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <div className="mt-8 flex flex-col items-center gap-6">
+           <div className="flex flex-wrap justify-center gap-4">
             <MagneticButton>
               <Button
                 size="lg"
@@ -145,6 +147,23 @@ export function CTASection() {
                 View Demo
               </Button>
             </MagneticButton>
+           </div>
+
+            {/* Content links */}
+            <p className="text-sm text-black/50">
+              Or explore:{" "}
+              <Link href="/guides/ultimate-perm-guide-2026" className="text-black/60 underline decoration-black/20 underline-offset-2 transition-colors hover:text-black/90 hover:decoration-black/50">
+                Ultimate PERM Guide
+              </Link>
+              {" · "}
+              <Link href="/tutorials/getting-started" className="text-black/60 underline decoration-black/20 underline-offset-2 transition-colors hover:text-black/90 hover:decoration-black/50">
+                Getting Started
+              </Link>
+              {" · "}
+              <Link href="/blog" className="text-black/60 underline decoration-black/20 underline-offset-2 transition-colors hover:text-black/90 hover:decoration-black/50">
+                Blog
+              </Link>
+            </p>
           </div>
         </ScrollReveal>
       </div>

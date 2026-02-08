@@ -10,6 +10,7 @@
  */
 
 import Image from "next/image";
+import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useTilt } from "@/lib/hooks/useTilt";
@@ -27,6 +28,8 @@ interface Feature {
   illustration: React.ReactNode;
   bgImage: string;
   accentColor: string;
+  learnMoreHref?: string;
+  learnMoreText?: string;
 }
 
 const features: Feature[] = [
@@ -37,6 +40,8 @@ const features: Feature[] = [
     illustration: <CalendarDeadlineSVG size={100} className="text-foreground" />,
     bgImage: "/images/features/calendar-planning.jpg",
     accentColor: "var(--stage-pwd)",
+    learnMoreHref: "/tutorials/tracking-perm-deadlines",
+    learnMoreText: "See how deadlines work →",
   },
   {
     title: "Deadline Alerts",
@@ -73,6 +78,8 @@ const features: Feature[] = [
     illustration: <ShieldCheckSVG size={100} className="text-foreground" />,
     bgImage: "/images/journey/pwd-documents.jpg",
     accentColor: "var(--stage-i140)",
+    learnMoreHref: "/blog/common-perm-audit-triggers",
+    learnMoreText: "Common audit triggers →",
   },
   {
     title: "AI Case Assistant",
@@ -154,6 +161,16 @@ function FeatureCard({ feature }: { feature: Feature }) {
         <p className="relative text-[15px] text-muted-foreground leading-relaxed">
           {feature.description}
         </p>
+
+        {/* Learn more link */}
+        {feature.learnMoreHref && (
+          <Link
+            href={feature.learnMoreHref}
+            className="relative mt-3 inline-block text-xs font-semibold text-primary transition-colors duration-200 hover:text-primary/80"
+          >
+            {feature.learnMoreText}
+          </Link>
+        )}
       </div>
     </div>
   );

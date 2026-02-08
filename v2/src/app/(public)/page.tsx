@@ -28,6 +28,7 @@ import {
   StatsSection,
   TestimonialsSection,
   FAQSection,
+  ContentShowcase,
   CTASection,
 } from "@/components/home";
 
@@ -58,6 +59,7 @@ export default function HomePage() {
       <StatsSection />
       <TestimonialsSection />
       <FAQSection />
+      <ContentShowcase />
       <CTASection />
     </>
   );
