@@ -24,6 +24,8 @@ import {
   errorsToFieldMap,
   parseServerValidationError,
 } from "@/components/forms/case-form.helpers";
+import { prepareUpdatePayload } from "@/lib/forms/prepareUpdatePayload";
+import { ConvexError } from "convex/values";
 import { captureError } from "@/lib/sentry";
 
 export interface UseFormSubmissionProps {
@@ -126,7 +128,7 @@ export function useFormSubmission({
 
           await updateMutation({
             id: caseId,
-            ...currentFormData,
+            ...prepareUpdatePayload(currentFormData as Record<string, unknown>),
           });
 
           toast.success("Case updated successfully");
@@ -154,8 +156,13 @@ export function useFormSubmission({
           extra: { mode, hasFormData: !!currentFormData },
         });
 
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error";
+        let errorMessage: string;
+        if (error instanceof ConvexError) {
+          const data = error.data;
+          errorMessage = typeof data === "string" ? data : "Unknown error";
+        } else {
+          errorMessage = error instanceof Error ? error.message : "Unknown error";
+        }
 
         const serverErrors = parseServerValidationError(errorMessage);
 

@@ -1,5 +1,5 @@
 import { query, mutation, internalQuery } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull, verifyOwnership } from "./lib/auth";
@@ -397,7 +397,7 @@ export const create = mutation({
       const errorMessages = validationResult.errors
         .map((e) => `[${e.ruleId}] ${e.field}: ${e.message}`)
         .join('; ');
-      throw new Error(`Validation failed: ${errorMessages}`);
+      throw new ConvexError(`Validation failed: ${errorMessages}`);
     }
 
     // Auto-calculate status from dates unless explicitly overridden
@@ -705,28 +705,31 @@ export const update = mutation({
     ),
     calendarSyncEnabled: v.optional(v.boolean()),
     showOnTimeline: v.optional(v.boolean()),
-    pwdFilingDate: v.optional(v.string()),
-    pwdDeterminationDate: v.optional(v.string()),
-    pwdExpirationDate: v.optional(v.string()),
-    pwdCaseNumber: v.optional(v.string()),
+    // Clearable string fields: accept null as "clear this field" signal.
+    // When frontend clears a field, it sends null instead of undefined
+    // so the backend can distinguish "not sent" from "explicitly cleared".
+    pwdFilingDate: v.optional(v.union(v.string(), v.null())),
+    pwdDeterminationDate: v.optional(v.union(v.string(), v.null())),
+    pwdExpirationDate: v.optional(v.union(v.string(), v.null())),
+    pwdCaseNumber: v.optional(v.union(v.string(), v.null())),
     pwdWageAmount: v.optional(v.number()),
-    pwdWageLevel: v.optional(v.string()),
-    jobOrderStartDate: v.optional(v.string()),
-    jobOrderEndDate: v.optional(v.string()),
-    sundayAdFirstDate: v.optional(v.string()),
-    sundayAdSecondDate: v.optional(v.string()),
-    sundayAdNewspaper: v.optional(v.string()),
-    additionalRecruitmentStartDate: v.optional(v.string()),
-    additionalRecruitmentEndDate: v.optional(v.string()),
-    recruitmentNotes: v.optional(v.string()),
-    recruitmentSummaryCustom: v.optional(v.string()),
-    noticeOfFilingStartDate: v.optional(v.string()),
-    noticeOfFilingEndDate: v.optional(v.string()),
-    eta9089FilingDate: v.optional(v.string()),
-    eta9089AuditDate: v.optional(v.string()),
-    eta9089CertificationDate: v.optional(v.string()),
-    eta9089ExpirationDate: v.optional(v.string()),
-    eta9089CaseNumber: v.optional(v.string()),
+    pwdWageLevel: v.optional(v.union(v.string(), v.null())),
+    jobOrderStartDate: v.optional(v.union(v.string(), v.null())),
+    jobOrderEndDate: v.optional(v.union(v.string(), v.null())),
+    sundayAdFirstDate: v.optional(v.union(v.string(), v.null())),
+    sundayAdSecondDate: v.optional(v.union(v.string(), v.null())),
+    sundayAdNewspaper: v.optional(v.union(v.string(), v.null())),
+    additionalRecruitmentStartDate: v.optional(v.union(v.string(), v.null())),
+    additionalRecruitmentEndDate: v.optional(v.union(v.string(), v.null())),
+    recruitmentNotes: v.optional(v.union(v.string(), v.null())),
+    recruitmentSummaryCustom: v.optional(v.union(v.string(), v.null())),
+    noticeOfFilingStartDate: v.optional(v.union(v.string(), v.null())),
+    noticeOfFilingEndDate: v.optional(v.union(v.string(), v.null())),
+    eta9089FilingDate: v.optional(v.union(v.string(), v.null())),
+    eta9089AuditDate: v.optional(v.union(v.string(), v.null())),
+    eta9089CertificationDate: v.optional(v.union(v.string(), v.null())),
+    eta9089ExpirationDate: v.optional(v.union(v.string(), v.null())),
+    eta9089CaseNumber: v.optional(v.union(v.string(), v.null())),
     // RFI entries array (replaces single-field RFI)
     rfiEntries: v.optional(
       v.array(
@@ -757,21 +760,21 @@ export const update = mutation({
         })
       )
     ),
-    i140FilingDate: v.optional(v.string()),
-    i140ReceiptDate: v.optional(v.string()),
-    i140ReceiptNumber: v.optional(v.string()),
-    i140ApprovalDate: v.optional(v.string()),
-    i140DenialDate: v.optional(v.string()),
-    i140Category: v.optional(v.union(v.literal("EB-1"), v.literal("EB-2"), v.literal("EB-2-NIW"), v.literal("EB-3"))),
+    i140FilingDate: v.optional(v.union(v.string(), v.null())),
+    i140ReceiptDate: v.optional(v.union(v.string(), v.null())),
+    i140ReceiptNumber: v.optional(v.union(v.string(), v.null())),
+    i140ApprovalDate: v.optional(v.union(v.string(), v.null())),
+    i140DenialDate: v.optional(v.union(v.string(), v.null())),
+    i140Category: v.optional(v.union(v.literal("EB-1"), v.literal("EB-2"), v.literal("EB-2-NIW"), v.literal("EB-3"), v.null())),
     i140PremiumProcessing: v.optional(v.boolean()),
-    i140ServiceCenter: v.optional(v.string()),
-    caseNumber: v.optional(v.string()),
-    internalCaseNumber: v.optional(v.string()),
-    employerFein: v.optional(v.string()),
-    jobTitle: v.optional(v.string()),
-    socCode: v.optional(v.string()),
-    socTitle: v.optional(v.string()),
-    jobOrderState: v.optional(v.string()),
+    i140ServiceCenter: v.optional(v.union(v.string(), v.null())),
+    caseNumber: v.optional(v.union(v.string(), v.null())),
+    internalCaseNumber: v.optional(v.union(v.string(), v.null())),
+    employerFein: v.optional(v.union(v.string(), v.null())),
+    jobTitle: v.optional(v.union(v.string(), v.null())),
+    socCode: v.optional(v.union(v.string(), v.null())),
+    socTitle: v.optional(v.union(v.string(), v.null())),
+    jobOrderState: v.optional(v.union(v.string(), v.null())),
     progressStatusOverride: v.optional(v.boolean()),
     notes: v.optional(
       v.array(
@@ -819,8 +822,8 @@ export const update = mutation({
     markedAsDuplicateAt: v.optional(v.number()),
 
     // Job description fields
-    jobDescription: v.optional(v.string()),
-    jobDescriptionPositionTitle: v.optional(v.string()),
+    jobDescription: v.optional(v.union(v.string(), v.null())),
+    jobDescriptionPositionTitle: v.optional(v.union(v.string(), v.null())),
     jobDescriptionTemplateId: v.optional(v.id("jobDescriptionTemplates")),
   },
   handler: async (ctx, args) => {
@@ -831,27 +834,45 @@ export const update = mutation({
 
     // Check not deleted
     if (caseDoc!.deletedAt !== undefined) {
-      throw new Error("Cannot update deleted case");
+      throw new ConvexError("Cannot update deleted case");
     }
 
     // Capture old state for audit logging
     const oldDoc = caseDoc;
 
     // Extract ID field, then build the updates object
-    const { id: _id, ...updates } = args;
+    const { id: _id, ...rawUpdates } = args;
+
+    // Clean null values to undefined for db.patch (null = "clear this field")
+    const updates: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(rawUpdates)) {
+      updates[key] = val === null ? undefined : val;
+    }
+
+    // Resolve a field value for update merge:
+    // - string value → use the new value
+    // - null → clear the field (returns undefined)
+    // - undefined (absent from args) → keep existing DB value
+    const resolve = (
+      argVal: string | null | undefined,
+      dbVal: string | undefined,
+    ): string | undefined => {
+      if (argVal !== undefined) return argVal === null ? undefined : argVal;
+      return dbVal;
+    };
 
     // Merge existing case data with updates to calculate derived dates
-    // Use updated values if provided, otherwise fall back to existing values
+    // Uses resolve() so null signals "clear this field" instead of falling back to old value
     const mergedData = {
-      sundayAdFirstDate: args.sundayAdFirstDate ?? caseDoc!.sundayAdFirstDate,
-      sundayAdSecondDate: args.sundayAdSecondDate ?? caseDoc!.sundayAdSecondDate,
-      jobOrderStartDate: args.jobOrderStartDate ?? caseDoc!.jobOrderStartDate,
-      jobOrderEndDate: args.jobOrderEndDate ?? caseDoc!.jobOrderEndDate,
-      noticeOfFilingStartDate: args.noticeOfFilingStartDate ?? caseDoc!.noticeOfFilingStartDate,
-      noticeOfFilingEndDate: args.noticeOfFilingEndDate ?? caseDoc!.noticeOfFilingEndDate,
-      additionalRecruitmentEndDate: args.additionalRecruitmentEndDate ?? caseDoc!.additionalRecruitmentEndDate,
+      sundayAdFirstDate: resolve(args.sundayAdFirstDate, caseDoc!.sundayAdFirstDate),
+      sundayAdSecondDate: resolve(args.sundayAdSecondDate, caseDoc!.sundayAdSecondDate),
+      jobOrderStartDate: resolve(args.jobOrderStartDate, caseDoc!.jobOrderStartDate),
+      jobOrderEndDate: resolve(args.jobOrderEndDate, caseDoc!.jobOrderEndDate),
+      noticeOfFilingStartDate: resolve(args.noticeOfFilingStartDate, caseDoc!.noticeOfFilingStartDate),
+      noticeOfFilingEndDate: resolve(args.noticeOfFilingEndDate, caseDoc!.noticeOfFilingEndDate),
+      additionalRecruitmentEndDate: resolve(args.additionalRecruitmentEndDate, caseDoc!.additionalRecruitmentEndDate),
       additionalRecruitmentMethods: args.additionalRecruitmentMethods ?? caseDoc!.additionalRecruitmentMethods,
-      pwdExpirationDate: args.pwdExpirationDate ?? caseDoc!.pwdExpirationDate,
+      pwdExpirationDate: resolve(args.pwdExpirationDate, caseDoc!.pwdExpirationDate),
       isProfessionalOccupation: args.isProfessionalOccupation ?? caseDoc!.isProfessionalOccupation,
     };
 
@@ -861,9 +882,9 @@ export const update = mutation({
     // Validate merged case data before updating
     const fullCaseData = {
       // PWD dates
-      pwdFilingDate: args.pwdFilingDate ?? caseDoc!.pwdFilingDate,
-      pwdDeterminationDate: args.pwdDeterminationDate ?? caseDoc!.pwdDeterminationDate,
-      pwdExpirationDate: args.pwdExpirationDate ?? caseDoc!.pwdExpirationDate,
+      pwdFilingDate: resolve(args.pwdFilingDate, caseDoc!.pwdFilingDate),
+      pwdDeterminationDate: resolve(args.pwdDeterminationDate, caseDoc!.pwdDeterminationDate),
+      pwdExpirationDate: resolve(args.pwdExpirationDate, caseDoc!.pwdExpirationDate),
       // Recruitment dates
       sundayAdFirstDate: mergedData.sundayAdFirstDate,
       sundayAdSecondDate: mergedData.sundayAdSecondDate,
@@ -877,12 +898,12 @@ export const update = mutation({
       recruitmentStartDate: derivedDates.recruitmentStartDate,
       recruitmentEndDate: derivedDates.recruitmentEndDate,
       // ETA 9089 dates
-      eta9089FilingDate: args.eta9089FilingDate ?? caseDoc!.eta9089FilingDate,
-      eta9089CertificationDate: args.eta9089CertificationDate ?? caseDoc!.eta9089CertificationDate,
-      eta9089ExpirationDate: args.eta9089ExpirationDate ?? caseDoc!.eta9089ExpirationDate,
+      eta9089FilingDate: resolve(args.eta9089FilingDate, caseDoc!.eta9089FilingDate),
+      eta9089CertificationDate: resolve(args.eta9089CertificationDate, caseDoc!.eta9089CertificationDate),
+      eta9089ExpirationDate: resolve(args.eta9089ExpirationDate, caseDoc!.eta9089ExpirationDate),
       // I-140 dates
-      i140FilingDate: args.i140FilingDate ?? caseDoc!.i140FilingDate,
-      i140ApprovalDate: args.i140ApprovalDate ?? caseDoc!.i140ApprovalDate,
+      i140FilingDate: resolve(args.i140FilingDate, caseDoc!.i140FilingDate),
+      i140ApprovalDate: resolve(args.i140ApprovalDate, caseDoc!.i140ApprovalDate),
       // RFI/RFE entries
       rfiEntries: args.rfiEntries ?? caseDoc!.rfiEntries,
       rfeEntries: args.rfeEntries ?? caseDoc!.rfeEntries,
@@ -896,7 +917,7 @@ export const update = mutation({
       const errorMessages = validationResult.errors
         .map((e) => `[${e.ruleId}] ${e.field}: ${e.message}`)
         .join('; ');
-      throw new Error(`Validation failed: ${errorMessages}`);
+      throw new ConvexError(`Validation failed: ${errorMessages}`);
     }
 
     // Auto-calculate status from merged dates unless explicitly overridden
@@ -908,7 +929,7 @@ export const update = mutation({
       rfeEntries: fullCaseData.rfeEntries,
       // I-140 dates (merged)
       i140ApprovalDate: fullCaseData.i140ApprovalDate,
-      i140DenialDate: args.i140DenialDate ?? caseDoc!.i140DenialDate,
+      i140DenialDate: resolve(args.i140DenialDate, caseDoc!.i140DenialDate),
       i140FilingDate: fullCaseData.i140FilingDate,
       // ETA 9089 dates (merged)
       eta9089CertificationDate: fullCaseData.eta9089CertificationDate,
@@ -1777,7 +1798,7 @@ export const toggleCalendarSync = mutation({
 
     // Check not deleted
     if (caseDoc!.deletedAt !== undefined) {
-      throw new Error("Cannot update deleted case");
+      throw new ConvexError("Cannot update deleted case");
     }
 
     // Toggle calendar sync state
@@ -1832,7 +1853,7 @@ export const enableCalendarSync = mutation({
 
     // Check not deleted
     if (caseDoc!.deletedAt !== undefined) {
-      throw new Error("Cannot update deleted case");
+      throw new ConvexError("Cannot update deleted case");
     }
 
     // Only proceed if not already enabled (idempotent)
@@ -1878,7 +1899,7 @@ export const disableCalendarSync = mutation({
 
     // Check not deleted
     if (caseDoc!.deletedAt !== undefined) {
-      throw new Error("Cannot update deleted case");
+      throw new ConvexError("Cannot update deleted case");
     }
 
     // Only proceed if currently enabled (idempotent)
@@ -1917,12 +1938,12 @@ export const clearJobDescription = mutation({
   handler: async (ctx, args) => {
     const caseDoc = await ctx.db.get(args.id);
     if (!caseDoc) {
-      throw new Error("Case not found");
+      throw new ConvexError("Case not found");
     }
     await verifyOwnership(ctx, caseDoc, "case");
 
     if (caseDoc.deletedAt !== undefined) {
-      throw new Error("Cannot update deleted case");
+      throw new ConvexError("Cannot update deleted case");
     }
 
     // Capture old state for audit logging
@@ -2782,12 +2803,12 @@ export const reopenCase = mutation({
 
     // Only allow reopening closed cases
     if (caseDoc!.caseStatus !== "closed") {
-      throw new Error("Case is not closed");
+      throw new ConvexError("Case is not closed");
     }
 
     // Check not deleted
     if (caseDoc!.deletedAt !== undefined) {
-      throw new Error("Cannot reopen deleted case");
+      throw new ConvexError("Cannot reopen deleted case");
     }
 
     // Capture old state for audit logging

@@ -122,46 +122,46 @@ export function mapToValidatorFormat(fields: CamelCaseFields): CaseData {
   const activeRfe = getActiveEntry(fields.rfeEntries);
 
   return {
-    // PWD dates
-    pwd_filing_date: fields.pwdFilingDate ?? null,
-    pwd_determination_date: fields.pwdDeterminationDate ?? null,
-    pwd_expiration_date: fields.pwdExpirationDate ?? null,
+    // PWD dates (|| null so empty strings are treated as "no value")
+    pwd_filing_date: fields.pwdFilingDate || null,
+    pwd_determination_date: fields.pwdDeterminationDate || null,
+    pwd_expiration_date: fields.pwdExpirationDate || null,
 
     // Recruitment dates
-    sunday_ad_first_date: fields.sundayAdFirstDate ?? null,
-    sunday_ad_second_date: fields.sundayAdSecondDate ?? null,
-    job_order_start_date: fields.jobOrderStartDate ?? null,
-    job_order_end_date: fields.jobOrderEndDate ?? null,
-    notice_of_filing_start_date: fields.noticeOfFilingStartDate ?? null,
-    notice_of_filing_end_date: fields.noticeOfFilingEndDate ?? null,
+    sunday_ad_first_date: fields.sundayAdFirstDate || null,
+    sunday_ad_second_date: fields.sundayAdSecondDate || null,
+    job_order_start_date: fields.jobOrderStartDate || null,
+    job_order_end_date: fields.jobOrderEndDate || null,
+    notice_of_filing_start_date: fields.noticeOfFilingStartDate || null,
+    notice_of_filing_end_date: fields.noticeOfFilingEndDate || null,
 
     // Derived recruitment dates
-    recruitment_start_date: fields.recruitmentStartDate ?? null,
-    recruitment_end_date: fields.recruitmentEndDate ?? null,
+    recruitment_start_date: fields.recruitmentStartDate || null,
+    recruitment_end_date: fields.recruitmentEndDate || null,
 
     // Professional occupation flag
     is_professional_occupation: fields.isProfessionalOccupation ?? false,
 
     // ETA 9089 dates
-    eta9089_filing_date: fields.eta9089FilingDate ?? null,
-    eta9089_certification_date: fields.eta9089CertificationDate ?? null,
-    eta9089_expiration_date: fields.eta9089ExpirationDate ?? null,
+    eta9089_filing_date: fields.eta9089FilingDate || null,
+    eta9089_certification_date: fields.eta9089CertificationDate || null,
+    eta9089_expiration_date: fields.eta9089ExpirationDate || null,
 
     // I-140 dates
-    i140_filing_date: fields.i140FilingDate ?? null,
-    i140_approval_date: fields.i140ApprovalDate ?? null,
+    i140_filing_date: fields.i140FilingDate || null,
+    i140_approval_date: fields.i140ApprovalDate || null,
 
     // RFI dates (from first active entry)
-    rfi_received_date: activeRfi?.receivedDate ?? null,
-    rfi_due_date: activeRfi?.responseDueDate ?? null,
-    rfi_submitted_date: activeRfi?.responseSubmittedDate ?? null,
+    rfi_received_date: activeRfi?.receivedDate || null,
+    rfi_due_date: activeRfi?.responseDueDate || null,
+    rfi_submitted_date: activeRfi?.responseSubmittedDate || null,
 
     // RFE dates (from first active entry)
-    rfe_received_date: activeRfe?.receivedDate ?? null,
-    rfe_due_date: activeRfe?.responseDueDate ?? null,
-    rfe_submitted_date: activeRfe?.responseSubmittedDate ?? null,
+    rfe_received_date: activeRfe?.receivedDate || null,
+    rfe_due_date: activeRfe?.responseDueDate || null,
+    rfe_submitted_date: activeRfe?.responseSubmittedDate || null,
 
-    // Status fields (with defaults)
+    // Status fields (with defaults — keep ?? for non-string fields)
     case_status: (fields.caseStatus ?? 'pwd') as CaseStatus,
     progress_status: (fields.progressStatus ?? 'working') as ProgressStatus,
   };

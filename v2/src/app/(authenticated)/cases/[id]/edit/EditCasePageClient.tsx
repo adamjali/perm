@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
+import { prepareUpdatePayload } from "@/lib/forms/prepareUpdatePayload";
+import { ConvexError } from "convex/values";
 
 // ============================================================================
 // COMPONENTS
@@ -251,11 +253,9 @@ export function EditCasePageClient() {
     async (formData: CaseFormData, markAsDuplicate?: boolean) => {
       setIsUpdating(true);
       try {
-        const convexData = formData;
-
         await updateMutation({
           id: caseId as Id<"cases">,
-          ...convexData,
+          ...prepareUpdatePayload(formData as Record<string, unknown>),
           // If updating despite duplicate warning, mark as duplicate of the existing case
           ...(markAsDuplicate && duplicateCaseId
             ? {
@@ -269,7 +269,12 @@ export function EditCasePageClient() {
         await router.push(`/cases/${caseId}`);
       } catch (error) {
         console.error("Failed to update case:", error);
-        toast.error("Failed to update case. Please try again.");
+        let errorMsg = "Failed to update case. Please try again.";
+        if (error instanceof ConvexError) {
+          const data = error.data;
+          errorMsg = typeof data === "string" ? data : errorMsg;
+        }
+        toast.error(errorMsg);
       } finally {
         setIsUpdating(false);
       }
