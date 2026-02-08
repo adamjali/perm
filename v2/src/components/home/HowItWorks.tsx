@@ -270,7 +270,7 @@ export function HowItWorks() {
               </p>
             </div>
 
-            {/* Case Summary */}
+            {/* App Walkthrough */}
             <div>
               <div className="group border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
                 <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
@@ -278,20 +278,22 @@ export function HowItWorks() {
                   <div className="h-2 w-2 bg-[#FFBD2E]" />
                   <div className="h-2 w-2 bg-[#28CA41]" />
                   <span className="ml-2 font-mono text-[9px] text-background/50">
-                    Case Summary
+                    PERM Tracker
                   </span>
                 </div>
                 <figure className="not-prose">
-                  <img
-                    src="/images/screenshots/create-case.png"
-                    alt="Case Summary dashboard showing stage counts for PWD, Recruitment, ETA 9089, I-140, Complete, and Closed"
-                    loading="lazy"
+                  <video
+                    src="/images/screenshots/create-case.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
                     className="w-full"
                   />
                 </figure>
               </div>
               <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
-                Case summary at a glance
+                See the full app in action
               </p>
             </div>
           </div>

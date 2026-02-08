@@ -194,7 +194,7 @@ App screenshots in `public/images/screenshots/`:
 | `cases.png` | Case management grid with cards |
 | `calendar.png` | Calendar view with deadline markers |
 | `homepage.png` | Landing page hero |
-| `create-case.png` | Case Summary tiles with stage counts |
+| `create-case.mp4` | App walkthrough video (autoplay, loop) |
 
 ### Adding Screenshots to Articles
 
