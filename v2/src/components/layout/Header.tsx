@@ -38,13 +38,10 @@ function UserMenu({ userName }: UserMenuProps) {
   const { isSigningOut, beginSignOut, cancelSignOut } = useAuthContext();
   const { isNavigating: isNavigatingToSettings, navigateTo } = useNavigationLoading();
 
-  const [isOpen, setIsOpen] = useState(false);
-
   const isOnSettingsPage = pathname === "/settings";
 
   function handleSettingsClick(): void {
     if (isOnSettingsPage) return;
-    setIsOpen(false);
     navigateTo("/settings");
   }
 
@@ -52,7 +49,6 @@ function UserMenu({ userName }: UserMenuProps) {
     if (isSigningOut) return;
 
     beginSignOut();
-    setIsOpen(false);
     try {
       await signOut();
       window.location.href = "/login";
@@ -70,15 +66,12 @@ function UserMenu({ userName }: UserMenuProps) {
   }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu>
       <DropdownMenuTrigger
-        className="flex cursor-pointer items-center gap-2 rounded-none border-2 border-transparent bg-transparent px-3 py-2 text-sm font-medium text-white transition-all hover:border-white/50 hover:bg-white/10 focus:outline-none"
+        className="group flex cursor-pointer items-center gap-2 rounded-none border-2 border-transparent bg-transparent px-3 py-2 text-sm font-medium text-white transition-all hover:border-white/50 hover:bg-white/10 focus:outline-none"
       >
         <span className="max-w-[120px] truncate">{userName}</span>
-        <ChevronDown className={cn(
-          "size-4 transition-transform duration-150",
-          isOpen && "rotate-180"
-        )} />
+        <ChevronDown className="size-4 transition-transform duration-150 group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
@@ -86,7 +79,7 @@ function UserMenu({ userName }: UserMenuProps) {
         className="min-w-[180px] border-4 border-black bg-white shadow-hard rounded-none p-0"
       >
         <DropdownMenuItem
-          onClick={handleSettingsClick}
+          onSelect={handleSettingsClick}
           disabled={isNavigatingToSettings || isOnSettingsPage}
           className={cn(
             "flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-none cursor-pointer",
@@ -105,7 +98,7 @@ function UserMenu({ userName }: UserMenuProps) {
         </DropdownMenuItem>
 
         <DropdownMenuItem
-          onClick={handleSignOut}
+          onSelect={handleSignOut}
           disabled={isSigningOut}
           className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black rounded-none cursor-pointer hover:bg-gray-100"
         >
