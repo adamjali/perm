@@ -22,7 +22,7 @@ import { Check, Loader2, AlertCircle, ExternalLink, Info, Clock } from "lucide-r
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
-import { DateInput } from "@/components/forms/DateInput";
+import { DateInput, isValidDateString } from "@/components/forms/DateInput";
 import { getAllDateConstraints } from "@/lib/forms/date-constraints";
 import { useFormCalculations } from "@/hooks/useFormCalculations";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
@@ -238,21 +238,26 @@ export function QuickEditFields({
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Field-level validation errors (for inline display)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
   // Calculate date constraints based on current form data
   const constraints = useMemo(() => {
     return getAllDateConstraints(formData);
   }, [formData]);
 
-  // Check if all required fields are filled (for enabling submit button)
+  // Check if all required fields are filled AND no validation errors
+  const hasFieldErrors = Object.keys(fieldErrors).length > 0;
   const canSubmit = useMemo(() => {
     if (!config?.fields) return false;
+    if (hasFieldErrors) return false;
     return config.fields
       .filter(f => !f.autoCalculated) // Only check user-editable fields
       .every(f => {
         const value = formData[f.name as keyof CaseFormData];
         return typeof value === "string" && value.length > 0;
       });
-  }, [config, formData]);
+  }, [config, formData, hasFieldErrors]);
 
   // Check if any values have changed from original
   const hasChanges = useMemo(() => {
@@ -266,22 +271,51 @@ export function QuickEditFields({
   }, [config, formData, caseData]);
 
   /**
-   * Handle field value change - same pattern as CaseForm
-   * Updates form data and triggers dependent field calculations
+   * Validate a single date value. Returns error message or null.
+   */
+  const validateDateValue = useCallback((fieldName: string, value: string): string | null => {
+    if (!value) return null; // empty is OK (field not filled yet)
+    if (!isValidDateString(value)) return "Enter a valid date (1900–2100).";
+    const constraint = constraints[fieldName];
+    if (constraint?.min && value < constraint.min) return `Must be on or after ${constraint.min}.`;
+    if (constraint?.max && value > constraint.max) return `Must be on or before ${constraint.max}.`;
+    return null;
+  }, [constraints]);
+
+  /**
+   * Handle field value change.
+   * Updates form data immediately (for responsive UI) but only triggers
+   * calculations for valid, reasonable dates — avoids crashes on partial
+   * year typing like "0002".
    */
   const handleFieldChange = useCallback((fieldName: string, value: string) => {
-    // Update form data
+    // Always update form data (DateInput already filters via isValidDateString)
     setFormData(prev => ({ ...prev, [fieldName]: value }));
 
-    // Trigger dependent field calculations (same as CaseForm)
-    triggerCalculation(fieldName as keyof CaseFormData, value);
+    // Validate and set/clear field error
+    const error = validateDateValue(fieldName, value);
+    setFieldErrors(prev => {
+      if (error) return { ...prev, [fieldName]: error };
+      const { [fieldName]: _, ...rest } = prev;
+      return rest;
+    });
 
-    // Reset any error state when user makes changes
+    // Only trigger calculations for valid dates — prevents crashes from partial input
+    if (!error && value) {
+      try {
+        triggerCalculation(fieldName as keyof CaseFormData, value);
+      } catch (e) {
+        console.error("[QuickEdit] Calculation error:", e);
+        setFieldErrors(prev => ({ ...prev, [fieldName]: "Calculation error — use the full form." }));
+      }
+    }
+
+    // Reset submit error when user makes changes
     if (submitStatus === "error") {
       setSubmitStatus("idle");
       setSubmitError(null);
     }
-  }, [triggerCalculation, submitStatus]);
+  }, [triggerCalculation, submitStatus, validateDateValue]);
 
   /**
    * Handle submit - save all fields to database including auto-calculated status
@@ -289,6 +323,18 @@ export function QuickEditFields({
    */
   const handleSubmit = useCallback(async () => {
     if (!config?.fields || !canSubmit) return;
+
+    // Re-validate all fields as safety net before saving
+    const errors: Record<string, string> = {};
+    for (const field of config.fields) {
+      const value = formData[field.name as keyof CaseFormData];
+      const error = validateDateValue(field.name, typeof value === "string" ? value : "");
+      if (error) errors[field.name] = error;
+    }
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
 
     setSubmitStatus("saving");
     setSubmitError(null);
@@ -327,7 +373,7 @@ export function QuickEditFields({
       setSubmitStatus("error");
       setSubmitError(error instanceof Error ? error.message : "Save failed");
     }
-  }, [config, formData, canSubmit, updateCase, caseId, onComplete, suggestedCaseStatus, suggestedProgressStatus]);
+  }, [config, formData, canSubmit, updateCase, caseId, onComplete, suggestedCaseStatus, suggestedProgressStatus, validateDateValue]);
 
   // Handle different action types
   if (!config) {
@@ -380,6 +426,8 @@ export function QuickEditFields({
           const constraint = constraints[field.name];
           const isAutoCalculated = autoCalculatedFields.has(field.name as keyof CaseFormData);
 
+          const fieldError = fieldErrors[field.name];
+
           return (
             <div key={field.name} className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">
@@ -390,15 +438,18 @@ export function QuickEditFields({
                 onChange={(e) => handleFieldChange(field.name, e.target.value)}
                 disabled={field.autoCalculated || submitStatus === "saving"}
                 autoCalculated={field.autoCalculated || isAutoCalculated}
+                error={!!fieldError}
                 minDate={constraint?.min}
                 maxDate={constraint?.max}
                 sundayOnly={field.sundayOnly}
                 placeholder={field.placeholder}
                 className="w-full"
               />
-              {constraint?.hint && (
+              {fieldError ? (
+                <p className="text-xs text-destructive">{fieldError}</p>
+              ) : constraint?.hint ? (
                 <p className="text-xs text-muted-foreground">{constraint.hint}</p>
-              )}
+              ) : null}
             </div>
           );
         })}
@@ -417,7 +468,7 @@ export function QuickEditFields({
         onClick={handleSubmit}
         disabled={!canSubmit || !hasChanges || submitStatus === "saving"}
         className={cn(
-          "w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg",
+          "w-full flex items-center justify-center gap-2 px-4 py-2",
           "font-medium text-sm transition-colors",
           "border-2",
           canSubmit && hasChanges && submitStatus !== "saving"

@@ -10,13 +10,20 @@ import { cn } from "@/lib/utils";
 // ============================================================================
 
 /**
- * Check if a string is a valid ISO date (YYYY-MM-DD)
+ * Check if a string is a valid, reasonable ISO date (YYYY-MM-DD).
+ * Rejects dates outside the 1900–2100 range to prevent issues with
+ * partial year typing in native date inputs (e.g. "0002-01-15").
  */
 function isValidDateString(str: string): boolean {
   if (!str || str.length !== 10) return false;
   const date = new Date(str + "T00:00:00");
-  return !isNaN(date.getTime());
+  if (isNaN(date.getTime())) return false;
+  const year = date.getFullYear();
+  return year >= 1900 && year <= 2100;
 }
+
+/** Exported for use by QuickEditFields validation */
+export { isValidDateString };
 
 /**
  * Get the next Sunday on or after a given date string (YYYY-MM-DD)
