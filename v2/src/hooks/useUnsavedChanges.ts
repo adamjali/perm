@@ -132,6 +132,9 @@ export function useUnsavedChanges(
     if (!isDirty || isSubmitting) return;
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Re-check refs at fire time — markNavigating() or isSubmitting may have changed
+      // since the effect was set up (refs update without re-running effects)
+      if (navigationInitiatedRef.current || isSubmittingRef.current) return;
       e.preventDefault();
       // Modern browsers ignore custom messages but require returnValue to be set
       e.returnValue = message;
@@ -160,6 +163,9 @@ export function useUnsavedChanges(
         isHandlingPopstateRef.current = false;
         return;
       }
+
+      // Re-check refs — markNavigating() may have been called since effect setup
+      if (navigationInitiatedRef.current || isSubmittingRef.current) return;
 
       // Store the URL user was trying to go to (will be the URL after popstate)
       pendingPopstateUrlRef.current = window.location.href;
@@ -242,6 +248,16 @@ export function useUnsavedChanges(
   // Mark that programmatic navigation is about to occur
   const markNavigating = useCallback(() => {
     navigationInitiatedRef.current = true;
+    // Clean up sentinel history state so it doesn't create ghost back-button entries.
+    // Replace the sentinel with a normal state at the same URL.
+    if (window.history.state?.unsavedChangesGuard) {
+      const { unsavedChangesGuard: _, ...rest } = window.history.state;
+      window.history.replaceState(
+        Object.keys(rest).length > 0 ? rest : null,
+        "",
+        window.location.href
+      );
+    }
   }, []);
 
   return {

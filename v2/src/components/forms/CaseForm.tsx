@@ -241,7 +241,10 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
   // UNSAVED CHANGES
   // ============================================================================
 
-  const { isDirty, setDirty, shouldShowDialog, requestNavigation, confirmNavigation, cancelNavigation, markNavigating } = useUnsavedChanges({ isSubmitting: rhfIsSubmitting });
+  // Track the real submission state from useFormSubmission (synced via effect below).
+  // rhfIsSubmitting alone is insufficient — the form bypasses RHF's handleSubmit.
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const { isDirty, setDirty, shouldShowDialog, requestNavigation, confirmNavigation, cancelNavigation, markNavigating } = useUnsavedChanges({ isSubmitting: rhfIsSubmitting || formSubmitting });
 
   // Start dirty tracking after form state stabilizes (field registration, auto-calc, etc.)
   useEffect(() => {
@@ -457,6 +460,11 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
     setShowErrorSummary,
     clearAllErrors,
   });
+
+  // Sync real submission state to unsaved changes hook (declared above useUnsavedChanges)
+  useEffect(() => {
+    setFormSubmitting(isSubmitting);
+  }, [isSubmitting]);
 
   const handleSubmit = useCallback(
     (event: React.FormEvent) => submitHandler(event, getValues),
