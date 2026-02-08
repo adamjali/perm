@@ -255,6 +255,125 @@ export const backfillOnboardingForAllUsers = internalMutation({
 });
 
 /**
+ * Create a sample case for onboarding.
+ * Pre-populates a realistic PERM case filled through Recruitment stage.
+ * Called when user completes or skips the onboarding wizard.
+ */
+export const createSampleCase = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getCurrentUserId(ctx);
+
+    // Check if user already has a sample case (idempotent)
+    const existingSample = await ctx.db
+      .query("cases")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("isSample"), true))
+      .first();
+    if (existingSample) return existingSample._id;
+
+    const now = Date.now();
+
+    // Build realistic dates relative to today
+    // Scenario: PWD completed, recruitment in progress (halfway through PERM)
+    const today = new Date();
+    const formatDate = (d: Date) => d.toISOString().split("T")[0]!;
+    const daysAgo = (n: number) => {
+      const d = new Date(today);
+      d.setDate(d.getDate() - n);
+      return formatDate(d);
+    };
+    const daysFromNow = (n: number) => {
+      const d = new Date(today);
+      d.setDate(d.getDate() + n);
+      return formatDate(d);
+    };
+
+    const pwdFilingDate = daysAgo(120);
+    const pwdDeterminationDate = daysAgo(45);
+    const pwdExpirationDate = daysFromNow(320); // ~1 year from determination
+    const jobOrderStartDate = daysAgo(25);
+    const jobOrderEndDate = daysAgo(5);
+    const sundayAdFirstDate = daysAgo(20);
+    const sundayAdSecondDate = daysAgo(13);
+    const noticeOfFilingStartDate = daysAgo(18);
+    const noticeOfFilingEndDate = daysAgo(8);
+
+    const caseId = await ctx.db.insert("cases", {
+      userId,
+      isSample: true,
+      employerName: "Acme Technology Inc.",
+      positionTitle: "Senior Software Engineer",
+      beneficiaryIdentifier: "Sample Beneficiary",
+      caseStatus: "recruitment",
+      progressStatus: "working",
+      progressStatusOverride: true,
+      priorityLevel: "normal",
+      isFavorite: false,
+      isPinned: false,
+      isProfessionalOccupation: true,
+      recruitmentApplicantsCount: 3,
+      additionalRecruitmentMethods: [
+        { method: "Company Website", date: daysAgo(22), description: "Posted on careers page" },
+        { method: "Indeed.com", date: daysAgo(20), description: "Online job board posting" },
+        { method: "Campus Career Office", date: daysAgo(18), description: "University partnership" },
+      ],
+      tags: ["sample"],
+      documents: [],
+      calendarSyncEnabled: true,
+      showOnTimeline: true,
+
+      // PWD dates (completed)
+      pwdFilingDate,
+      pwdDeterminationDate,
+      pwdExpirationDate,
+      pwdCaseNumber: "P-100-00000-000000",
+      pwdWageAmount: 15500000, // $155,000 in cents
+      pwdWageLevel: "Level III",
+
+      // Recruitment dates (in progress)
+      jobOrderStartDate,
+      jobOrderEndDate,
+      sundayAdFirstDate,
+      sundayAdSecondDate,
+      sundayAdNewspaper: "Metro Daily News",
+      noticeOfFilingStartDate,
+      noticeOfFilingEndDate,
+
+      // Derived recruitment dates
+      recruitmentStartDate: jobOrderStartDate,
+      recruitmentEndDate: undefined, // Still in progress
+      recruitmentWindowCloses: undefined,
+      filingWindowOpens: undefined,
+      filingWindowCloses: undefined,
+
+      // No ETA 9089 or I-140 yet (not that far along)
+      rfiEntries: [],
+      rfeEntries: [],
+
+      socCode: "15-1252",
+      socTitle: "Software Developers",
+      jobOrderState: "CA",
+
+      notes: [
+        {
+          id: "sample-note-1",
+          content: "This is a sample case showing what a PERM case looks like mid-recruitment. Delete it anytime from the case menu.",
+          createdAt: now,
+          status: "pending" as const,
+          category: "internal" as const,
+        },
+      ],
+
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return caseId;
+  },
+});
+
+/**
  * Dismiss the entire onboarding checklist.
  */
 export const dismissChecklist = mutation({

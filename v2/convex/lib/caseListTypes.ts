@@ -223,6 +223,7 @@ export interface CaseCardData {
   readonly closedAt?: string; // ISO date string (YYYY-MM-DD)
   // Duplicate tracking
   readonly duplicateOf?: Id<"cases">; // ID of the case this is a duplicate of
+  readonly isSample?: boolean; // Whether this is a sample/demo case
   /** @internal Brand to prevent direct construction */
   readonly [CaseCardDataBrand]: true;
 }
@@ -267,6 +268,8 @@ export function createCaseCardData(params: {
   closedAt?: string;
   // Duplicate tracking
   duplicateOf?: Id<"cases">;
+  // Sample case flag
+  isSample?: boolean;
   // Metadata
   _creationTime: number;
   updatedAt: number;
@@ -311,6 +314,7 @@ export function createCaseCardData(params: {
     closedReason: params.closedReason,
     closedAt: params.closedAt,
     duplicateOf: params.duplicateOf,
+    isSample: params.isSample,
   } as CaseCardData;
 }
 

@@ -42,6 +42,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const completeItem = useMutation(api.onboarding.completeChecklistItem);
   const dismissMutation = useMutation(api.onboarding.dismissChecklist);
   const restartTourMutation = useMutation(api.onboarding.restartTour);
+  const createSampleCaseMutation = useMutation(api.onboarding.createSampleCase);
 
   // Tour state
   const [tourActive, setTourActive] = useState(false);
@@ -118,26 +119,46 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     [updateStep]
   );
 
+  const skipWizard = useCallback(async () => {
+    try {
+      // Create sample case so dashboard isn't empty
+      await createSampleCaseMutation({});
+      // Auto-complete the create_case checklist item
+      await completeItem({ itemId: "create_case" });
+      // Jump straight to completion step (tour prompt)
+      setWizardDismissed(true);
+      await updateStep({ step: "completion" });
+      setWizardDismissed(false); // Re-show wizard at completion step
+    } catch (error) {
+      console.error("Failed to skip wizard:", error);
+      toast.error("Something went wrong. Please try again.");
+    }
+  }, [createSampleCaseMutation, completeItem, updateStep]);
+
   const startTour = useCallback(() => {
     tourEndedRef.current = false; // Allow auto-activation
     setWizardDismissed(true); // Close wizard immediately (don't wait for DB)
     setTourActive(true);
     setTourPhase("dashboard");
+    // Create sample case alongside user's own case (fire-and-forget)
+    createSampleCaseMutation({}).catch(() => {});
     updateStep({ step: "tour_pending" }).catch((error) => {
       console.error("Failed to start tour:", error);
     });
-  }, [updateStep]);
+  }, [updateStep, createSampleCaseMutation]);
 
   const skipTour = useCallback(() => {
     tourEndedRef.current = true; // Block auto-reactivation until mutation lands
     setWizardDismissed(true); // Close wizard immediately (don't wait for DB)
     setTourActive(false);
     setTourPhase(null);
+    // Create sample case alongside user's own case (fire-and-forget)
+    createSampleCaseMutation({}).catch(() => {});
     updateStep({ step: "tour_completed" }).catch((error) => {
       console.error("Failed to skip tour:", error);
     });
     toast("Tour skipped. You can replay it anytime from Settings \u2192 Support.", { icon: "\uD83D\uDCA1" });
-  }, [updateStep]);
+  }, [updateStep, createSampleCaseMutation]);
 
   const advanceTourPhase = useCallback(() => {
     if (tourPhase === null) return;
@@ -247,6 +268,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       onboardingCaseId,
       onboardingCaseInfo,
       advanceWizardStep,
+      skipWizard,
       setOnboardingCaseId,
       setOnboardingCaseInfo,
       completeChecklistItem,
@@ -267,6 +289,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       onboardingCaseId,
       onboardingCaseInfo,
       advanceWizardStep,
+      skipWizard,
       completeChecklistItem,
       dismissChecklist,
       startTour,

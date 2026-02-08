@@ -12,6 +12,9 @@ interface CompletionStepProps {
 export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
   const { onboardingCaseInfo } = useOnboarding();
 
+  // If no case info, user skipped the wizard — sample case was created
+  const didSkip = !onboardingCaseInfo;
+
   return (
     <div className="flex flex-col items-center text-center px-2">
       <div className="mb-6">
@@ -19,7 +22,7 @@ export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
       </div>
 
       <h2 className="font-heading text-2xl sm:text-3xl font-bold mb-2">
-        You&apos;re all set!
+        {didSkip ? "Welcome aboard!" : "You\u2019re all set!"}
       </h2>
 
       {onboardingCaseInfo && (
@@ -36,9 +39,19 @@ export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
         </div>
       )}
 
+      {didSkip && (
+        <div className="inline-flex items-center gap-2 px-4 py-2 mb-4 border-2 border-dashed border-muted-foreground/30 bg-muted/50">
+          <span className="text-sm text-muted-foreground">
+            We added a <span className="font-semibold text-foreground">sample case</span> so you can explore.
+            Delete it anytime.
+          </span>
+        </div>
+      )}
+
       <p className="text-muted-foreground text-sm max-w-xs mb-8">
-        Your first case is ready. Take a quick tour to see where everything is,
-        or jump straight into your dashboard.
+        {didSkip
+          ? "Take a quick tour to see where everything is, or jump straight into your dashboard."
+          : "Your first case is ready. Take a quick tour to see where everything is, or jump straight into your dashboard."}
       </p>
 
       <div className="w-full max-w-sm space-y-3">

@@ -544,9 +544,16 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
           {/* Title - truncate on mobile */}
           <div className="min-w-0 flex-1">
-            <h1 className="font-heading text-xl sm:text-2xl font-bold leading-tight truncate">
-              {caseData.employerName}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-heading text-xl sm:text-2xl font-bold leading-tight truncate">
+                {caseData.employerName}
+              </h1>
+              {caseData.isSample && (
+                <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[0.625rem] font-bold tracking-wider uppercase border-2 border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
+                  SAMPLE
+                </span>
+              )}
+            </div>
             <p className="text-muted-foreground text-sm sm:text-base truncate">
               {caseData.positionTitle}
             </p>

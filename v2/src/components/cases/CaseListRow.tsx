@@ -50,6 +50,7 @@ export const CaseListRow = memo(function CaseListRow({
     progressStatus,
     nextDeadline,
     nextDeadlineLabel,
+    isSample,
   } = caseData;
 
   const { isNavigating, navigateTo } = useNavigationLoading();
@@ -150,7 +151,14 @@ export const CaseListRow = memo(function CaseListRow({
       <div className="flex-1 min-w-0 flex items-center gap-4">
         {/* Employer & Position */}
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm truncate">{employerName}</div>
+          <div className="font-medium text-sm truncate flex items-center gap-1.5">
+            {employerName}
+            {isSample && (
+              <span className="inline-flex items-center px-1.5 py-px text-[0.5rem] font-bold tracking-wider uppercase border border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
+                SAMPLE
+              </span>
+            )}
+          </div>
           <div className="text-xs text-muted-foreground truncate">
             {positionTitle}
           </div>

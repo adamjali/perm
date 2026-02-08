@@ -156,6 +156,7 @@ interface CaseDataForProjection extends CaseDataForDeadlines {
   closureReason?: ClosedReason; // Reason case was closed (schema: closureReason)
   closedAt?: number; // Timestamp from DB, converted to ISO string for card
   duplicateOf?: Id<"cases">; // ID of the case this is a duplicate of
+  isSample?: boolean; // Whether this is a sample/demo case
   _creationTime: number;
   updatedAt: number;
 }
@@ -219,6 +220,8 @@ export function projectCaseForCard(caseData: CaseDataForProjection, todayISO: st
     closedAt: caseData.closedAt ? new Date(caseData.closedAt).toISOString().split("T")[0] : undefined,
     // Duplicate tracking
     duplicateOf: caseData.duplicateOf,
+    // Sample case
+    isSample: caseData.isSample,
     // Metadata
     _creationTime: caseData._creationTime,
     updatedAt: caseData.updatedAt,

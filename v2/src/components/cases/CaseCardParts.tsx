@@ -143,6 +143,7 @@ interface CaseBadgesProps {
   isProfessionalOccupation?: boolean;
   hasActiveRfi?: boolean;
   hasActiveRfe?: boolean;
+  isSample?: boolean;
 }
 
 export function CaseBadges({
@@ -150,9 +151,19 @@ export function CaseBadges({
   isProfessionalOccupation,
   hasActiveRfi,
   hasActiveRfe,
+  isSample,
 }: CaseBadgesProps) {
   return (
     <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+      {isSample && (
+        <Badge
+          variant="outline"
+          className="text-[0.625rem] px-2 py-0.5 border-2 border-dashed border-muted-foreground/50 bg-muted text-muted-foreground font-bold tracking-wider"
+          title="Sample case — delete anytime"
+        >
+          SAMPLE
+        </Badge>
+      )}
       {duplicateOf && (
         <Badge
           variant="outline"

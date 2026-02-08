@@ -282,6 +282,9 @@ export default defineSchema({
     ),
     progressStatusOverride: v.optional(v.boolean()),
 
+    // Sample case flag (for onboarding demo data)
+    isSample: v.optional(v.boolean()),
+
     // PWD phase
     pwdFilingDate: v.optional(v.string()), // ISO date YYYY-MM-DD
     pwdDeterminationDate: v.optional(v.string()),

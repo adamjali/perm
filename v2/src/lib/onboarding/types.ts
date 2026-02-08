@@ -84,6 +84,7 @@ export interface OnboardingContextValue {
   onboardingCaseInfo: { employerName: string; positionTitle: string } | null;
   /** Actions */
   advanceWizardStep: (step: NonNullable<OnboardingStep>) => Promise<void>;
+  skipWizard: () => Promise<void>;
   setOnboardingCaseId: (id: string) => void;
   setOnboardingCaseInfo: (info: { employerName: string; positionTitle: string }) => void;
   completeChecklistItem: (itemId: ChecklistItemId) => Promise<void>;

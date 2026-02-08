@@ -363,6 +363,8 @@ export const create = mutation({
 
     // Duplicate tracking: set when user creates a case knowing it's a duplicate
     duplicateOf: v.optional(v.id("cases")),
+    // Sample case flag (for onboarding demo data)
+    isSample: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const userId = await getCurrentUserId(ctx);
@@ -512,6 +514,9 @@ export const create = mutation({
       // Duplicate tracking
       duplicateOf: args.duplicateOf,
       markedAsDuplicateAt: args.duplicateOf ? now : undefined,
+
+      // Sample case flag
+      isSample: args.isSample,
 
       // Timestamps
       createdAt: now,

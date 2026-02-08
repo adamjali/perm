@@ -86,6 +86,7 @@ export const CaseCard = memo(function CaseCard({
     notes,
     dates,
     duplicateOf,
+    isSample,
   } = caseData;
 
   const isClosed = caseStatus === "closed";
@@ -232,6 +233,7 @@ export const CaseCard = memo(function CaseCard({
             isProfessionalOccupation={isProfessionalOccupation}
             hasActiveRfi={hasActiveRfi}
             hasActiveRfe={hasActiveRfe}
+            isSample={isSample}
           />
         </div>
 

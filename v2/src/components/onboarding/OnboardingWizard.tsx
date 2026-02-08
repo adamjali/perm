@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -39,8 +40,10 @@ const stepVariants = {
 };
 
 export function OnboardingWizard() {
-  const { step, showWizard, advanceWizardStep, startTour, skipTour } =
+  const { step, showWizard, advanceWizardStep, skipWizard, startTour, skipTour } =
     useOnboarding();
+
+  const [isSkipping, setIsSkipping] = useState(false);
 
   const currentStep: OnboardingWizardStep = useMemo(() => {
     if (step === null || !WIZARD_STEPS.includes(step as OnboardingWizardStep)) {
@@ -50,6 +53,16 @@ export function OnboardingWizard() {
   }, [step]);
 
   const currentIndex = WIZARD_STEPS.indexOf(currentStep);
+  const isCompletionStep = currentStep === "completion";
+
+  const handleSkipWizard = async () => {
+    setIsSkipping(true);
+    try {
+      await skipWizard();
+    } finally {
+      setIsSkipping(false);
+    }
+  };
 
   if (!showWizard) return null;
 
@@ -62,6 +75,36 @@ export function OnboardingWizard() {
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogTitle className="sr-only">Onboarding Setup</DialogTitle>
+
+        {/* Skip button — shown on all steps except completion */}
+        {!isCompletionStep && (
+          <button
+            type="button"
+            onClick={handleSkipWizard}
+            disabled={isSkipping}
+            className={cn(
+              "absolute top-3 right-3 z-50",
+              "flex items-center gap-1.5 px-2.5 py-1.5",
+              "text-xs font-mono font-medium uppercase tracking-wider",
+              "text-muted-foreground/70 hover:text-foreground",
+              "border border-transparent hover:border-border",
+              "transition-all duration-150",
+              "hover:bg-muted hover:shadow-hard-sm",
+              "disabled:opacity-50 disabled:cursor-wait"
+            )}
+            aria-label="Skip setup and explore with sample data"
+          >
+            {isSkipping ? (
+              <span className="text-xs">Setting up...</span>
+            ) : (
+              <>
+                <span className="hidden sm:inline">Skip</span>
+                <X className="size-3.5" />
+              </>
+            )}
+          </button>
+        )}
+
         {/* Progress dots */}
         <div className="flex items-center justify-center gap-2 pt-4 sm:pt-6 pb-2 px-4 sm:px-6 flex-shrink-0">
           {WIZARD_STEPS.map((s, i) => (
