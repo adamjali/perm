@@ -129,10 +129,31 @@ export type RFEEntry = RfeEntry;
 // ============================================================================
 
 /**
+ * Sub-entry for recruitment methods that require multiple date entries.
+ *
+ * Used for methods like radio ads or TV ads where each spot/placement
+ * has its own date and description.
+ */
+export interface SubEntry {
+  /** Date of this specific entry (ISO string YYYY-MM-DD) */
+  date: string;
+  /** Optional description (e.g., "WABC 30-second spot") */
+  description?: string;
+}
+
+/**
  * Additional recruitment method for professional occupations.
  *
  * Professional occupation cases require 3+ additional recruitment steps
  * beyond the standard job order and Sunday ads.
+ *
+ * Different methods have different temporal characteristics:
+ * - Date-range methods (job_website_ad, employer_website, private_employment_firm):
+ *   Use startDate + endDate for posting period
+ * - Sub-entry methods (radio_ad, tv_ad):
+ *   Use subEntries array for multiple spots/placements
+ * - Single-date methods (all others):
+ *   Use date field for single occurrence
  */
 export interface AdditionalRecruitmentMethod {
   /** Type of recruitment method (e.g., "trade_journal", "campus_placement") */
@@ -141,4 +162,10 @@ export interface AdditionalRecruitmentMethod {
   date: string;
   /** Optional description or details about the activity */
   description?: string;
+  /** Start date for date-range methods (ISO string YYYY-MM-DD) */
+  startDate?: string;
+  /** End date for date-range methods (ISO string YYYY-MM-DD) */
+  endDate?: string;
+  /** Sub-entries for methods that require multiple date entries (radio_ad, tv_ad) */
+  subEntries?: SubEntry[];
 }

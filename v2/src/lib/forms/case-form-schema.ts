@@ -97,10 +97,18 @@ const noteSchema = z.object({
   dueDate: optionalIsoDateSchema, // Optional due date for task-like notes
 });
 
-const additionalRecruitmentMethodSchema = z.object({
-  method: z.string().min(1, 'Method is required'),
+const subEntrySchema = z.object({
   date: isoDateSchema,
   description: z.string().optional(),
+});
+
+const additionalRecruitmentMethodSchema = z.object({
+  method: z.string().min(1, 'Method is required'),
+  date: z.string(), // Keep for backward compat but may be empty for date-range/sub-entry methods
+  description: z.string().optional(),
+  startDate: optionalIsoDateSchema,
+  endDate: optionalIsoDateSchema,
+  subEntries: z.array(subEntrySchema).optional(),
 });
 
 /**
@@ -252,7 +260,12 @@ interface CrossValidationData {
   sundayAdSecondDate?: string;
   additionalRecruitmentStartDate?: string;
   additionalRecruitmentEndDate?: string;
-  additionalRecruitmentMethods?: Array<{ date?: string }>;
+  additionalRecruitmentMethods?: Array<{
+    date?: string;
+    startDate?: string;
+    endDate?: string;
+    subEntries?: Array<{ date: string; description?: string }>;
+  }>;
   pwdDeterminationDate?: string;
   pwdExpirationDate?: string;
   jobOrderStartDate?: string;

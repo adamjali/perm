@@ -303,6 +303,8 @@ export default defineSchema({
     sundayAdNewspaper: v.optional(v.string()),
 
     // Recruitment - Additional Methods
+    // DEPRECATED: Legacy top-level date fields (Feature 006 moves dates to method level)
+    // Keep for backward compatibility - do NOT remove until data migration is complete
     additionalRecruitmentStartDate: v.optional(v.string()),
     additionalRecruitmentEndDate: v.optional(v.string()),
     additionalRecruitmentMethods: v.array(
@@ -310,6 +312,15 @@ export default defineSchema({
         method: v.string(),
         date: v.string(),
         description: v.optional(v.string()),
+        // Feature 006: Per-method date fields
+        startDate: v.optional(v.string()),   // For date-range methods (job_website_ad, employer_website, private_employment_firm)
+        endDate: v.optional(v.string()),     // For date-range methods
+        subEntries: v.optional(v.array(      // For radio_ad, tv_ad (multiple spots)
+          v.object({
+            date: v.string(),
+            description: v.optional(v.string()),
+          })
+        )),
       })
     ),
     recruitmentNotes: v.optional(v.string()),

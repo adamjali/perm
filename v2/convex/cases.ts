@@ -227,6 +227,14 @@ export const create = mutation({
           method: v.string(),
           date: v.string(),
           description: v.optional(v.string()),
+          startDate: v.optional(v.string()),
+          endDate: v.optional(v.string()),
+          subEntries: v.optional(v.array(
+            v.object({
+              date: v.string(),
+              description: v.optional(v.string()),
+            })
+          )),
         })
       )
     ),
@@ -687,6 +695,14 @@ export const update = mutation({
           method: v.string(),
           date: v.string(),
           description: v.optional(v.string()),
+          startDate: v.optional(v.string()),
+          endDate: v.optional(v.string()),
+          subEntries: v.optional(v.array(
+            v.object({
+              date: v.string(),
+              description: v.optional(v.string()),
+            })
+          )),
         })
       )
     ),
@@ -2134,6 +2150,14 @@ export const importCases = mutation({
               method: v.string(),
               date: v.optional(v.string()),
               description: v.optional(v.string()),
+              startDate: v.optional(v.string()),
+              endDate: v.optional(v.string()),
+              subEntries: v.optional(v.array(
+                v.object({
+                  date: v.string(),
+                  description: v.optional(v.string()),
+                })
+              )),
             })
           )
         ),

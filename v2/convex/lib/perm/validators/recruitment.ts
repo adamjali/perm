@@ -301,3 +301,39 @@ export function validateRecruitment(
 
   return createValidationResult(errors, warnings);
 }
+
+/**
+ * Input for professional method-level date validation (Feature 006).
+ */
+export interface ProfessionalMethodsInput {
+  pwdDeterminationDate?: string | null;
+  pwdExpirationDate?: string | null;
+  firstRecruitmentDate?: string | null;
+  methods: Array<{
+    method: string;
+    date: string;
+    startDate?: string;
+    endDate?: string;
+    subEntries?: Array<{ date: string; description?: string }>;
+  }>;
+}
+
+/**
+ * Validate professional recruitment method-level dates (V-PROF rules).
+ *
+ * Rules enforced:
+ * - V-PROF-01: Date range start must be after PWD determination date
+ * - V-PROF-02: Date range start cannot be after end date
+ * - V-PROF-03: Date range end must be before recruitment window close
+ * - V-PROF-04: Date range end cannot be before start (same as V-PROF-02)
+ * - V-PROF-05: Sub-entries date must be within recruitment window
+ *
+ * @param input - Professional methods with dates to validate
+ * @returns Validation result with errors and warnings
+ */
+export function validateProfessionalMethods(
+  _input: ProfessionalMethodsInput
+): ValidationResult {
+  // STUB: Will be implemented in Task 2 (green phase)
+  return createValidationResult([], []);
+}
