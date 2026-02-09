@@ -93,32 +93,16 @@ export default async function Image() {
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
+              fontSize: "44px",
+              fontWeight: 800,
+              color: "#1c1917",
+              letterSpacing: "-1.5px",
+              lineHeight: 1,
               marginBottom: "16px",
+              whiteSpace: "nowrap",
             }}
           >
-            <div
-              style={{
-                fontSize: "48px",
-                fontWeight: 800,
-                color: "#1c1917",
-                letterSpacing: "-1.5px",
-                lineHeight: 1,
-              }}
-            >
-              PERM
-            </div>
-            <div
-              style={{
-                fontSize: "48px",
-                fontWeight: 800,
-                color: "#1c1917",
-                letterSpacing: "-1.5px",
-                lineHeight: 1,
-              }}
-            >
-              Tracker
-            </div>
+            PERM Tracker
           </div>
 
           {/* Accent line */}
