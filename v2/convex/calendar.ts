@@ -12,6 +12,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
+import { buildDefaultProfile } from "./lib/userDefaults";
 import { loggers } from "./lib/logging";
 
 /**
@@ -237,39 +238,7 @@ export const updateCalendarPreferences = mutation({
     // Create profile if it doesn't exist
     if (!profile) {
       const profileId = await ctx.db.insert("userProfiles", {
-        userId: userId,
-        userType: "individual",
-        emailNotificationsEnabled: true,
-        smsNotificationsEnabled: false,
-        pushNotificationsEnabled: false,
-        urgentDeadlineDays: 7,
-        reminderDaysBefore: [1, 3, 7, 14, 30],
-        emailDeadlineReminders: true,
-        emailStatusUpdates: true,
-        emailRfeAlerts: true,
-        emailWeeklyDigest: false,
-        preferredNotificationEmail: "signup",
-        quietHoursEnabled: false,
-        timezone: "America/New_York",
-        calendarSyncEnabled: true,
-        calendarSyncPwd: true,
-        calendarSyncEta9089: true,
-        calendarSyncI140: true,
-        calendarSyncRfe: true,
-        calendarSyncRfi: true,
-        calendarSyncRecruitment: true,
-        calendarSyncFilingWindow: true,
-        googleCalendarConnected: false,
-        gmailConnected: false,
-        casesSortBy: "updatedAt",
-        casesSortOrder: "desc",
-        casesPerPage: 20,
-        dismissedDeadlines: [],
-        darkModeEnabled: false,
-        autoDeadlineEnforcementEnabled: false,
-        createdAt: now,
-        updatedAt: now,
-        // Initialize calendar preferences with provided values or defaults
+        ...buildDefaultProfile(userId),
         calendarHiddenCases: args.hiddenCases ?? [],
         calendarHiddenDeadlineTypes: args.hiddenDeadlineTypes ?? [],
         calendarShowCompleted: args.showCompleted ?? false,

@@ -55,6 +55,7 @@ import {
   type RawCaseUpdateData,
 } from "./lib/digestHelpers";
 import { purgeAllUserData } from "./lib/deletion";
+import { DEFAULT_NOTIFICATION_PREFS } from "./lib/userDefaults";
 
 // ============================================================================
 // TYPES
@@ -76,18 +77,10 @@ interface DeadlineReminder {
 }
 
 /**
- * Extract default notification preferences when userProfile is missing fields.
+ * Get default notification preferences from the canonical factory.
  */
 function getDefaultPrefs(): UserNotificationPrefs {
-  return {
-    emailNotificationsEnabled: true,
-    emailDeadlineReminders: true,
-    emailStatusUpdates: true,
-    emailRfeAlerts: true,
-    pushNotificationsEnabled: false, // Default to disabled for new users
-    quietHoursEnabled: false,
-    timezone: "America/New_York",
-  };
+  return { ...DEFAULT_NOTIFICATION_PREFS };
 }
 
 /**

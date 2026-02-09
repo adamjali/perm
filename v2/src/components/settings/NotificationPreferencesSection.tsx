@@ -227,7 +227,7 @@ export default function NotificationPreferencesSection({
   const [emailEnabled, setEmailEnabled] = useState(profile.emailNotificationsEnabled ?? true);
   const [deadlineReminders, setDeadlineReminders] = useState(profile.emailDeadlineReminders ?? true);
   const [deadlineRemindersExpanded, setDeadlineRemindersExpanded] = useState(false);
-  const [statusUpdates, setStatusUpdates] = useState(profile.emailStatusUpdates ?? true);
+  const [statusUpdates, setStatusUpdates] = useState(profile.emailStatusUpdates ?? false);
   const [weeklyDigest, setWeeklyDigest] = useState(profile.emailWeeklyDigest ?? true);
 
   // Deadline type states (consolidated into object)

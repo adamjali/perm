@@ -2,10 +2,25 @@
  * Default User Profile Factory
  *
  * Centralizes the default profile values used when creating new user profiles.
- * Previously duplicated across 5 locations with inconsistencies.
+ * ALL default values live here — other files must import, never hardcode.
  */
 
 import type { Id } from "../_generated/dataModel";
+import type { UserNotificationPrefs } from "./notificationHelpers";
+
+/**
+ * Default notification preferences — single source of truth.
+ * Used by scheduledJobs, notificationHelpers, and cases fallback logic.
+ */
+export const DEFAULT_NOTIFICATION_PREFS: UserNotificationPrefs = {
+  emailNotificationsEnabled: true,
+  emailDeadlineReminders: true,
+  emailStatusUpdates: false,
+  emailRfeAlerts: true,
+  pushNotificationsEnabled: false,
+  quietHoursEnabled: false,
+  timezone: "America/New_York",
+};
 
 /**
  * Build a default user profile for a new user.
@@ -28,18 +43,18 @@ export function buildDefaultProfile(
     fullName: overrides?.fullName,
     profilePhotoUrl: overrides?.profilePhotoUrl,
     userType: "individual" as const,
-    emailNotificationsEnabled: true,
+    emailNotificationsEnabled: DEFAULT_NOTIFICATION_PREFS.emailNotificationsEnabled,
     smsNotificationsEnabled: false,
-    pushNotificationsEnabled: false,
+    pushNotificationsEnabled: DEFAULT_NOTIFICATION_PREFS.pushNotificationsEnabled,
     urgentDeadlineDays: 7,
     reminderDaysBefore: [1, 3, 7, 14, 30],
-    emailDeadlineReminders: true,
-    emailStatusUpdates: true,
-    emailRfeAlerts: true,
+    emailDeadlineReminders: DEFAULT_NOTIFICATION_PREFS.emailDeadlineReminders,
+    emailStatusUpdates: DEFAULT_NOTIFICATION_PREFS.emailStatusUpdates,
+    emailRfeAlerts: DEFAULT_NOTIFICATION_PREFS.emailRfeAlerts,
     emailWeeklyDigest: true,
     preferredNotificationEmail: "signup" as const,
-    quietHoursEnabled: false,
-    timezone: "America/New_York",
+    quietHoursEnabled: DEFAULT_NOTIFICATION_PREFS.quietHoursEnabled,
+    timezone: DEFAULT_NOTIFICATION_PREFS.timezone,
     calendarSyncEnabled: true,
     calendarSyncPwd: true,
     calendarSyncEta9089: true,

@@ -548,8 +548,8 @@ export const create = mutation({
         .withIndex("by_user_id", (q) => q.eq("userId", userId))
         .first();
 
-      // Default to creating notification if profile doesn't exist or emailStatusUpdates is true
-      if (!userProfile || userProfile.emailStatusUpdates) {
+      const userPrefs = buildUserNotificationPrefs(userProfile);
+      if (userPrefs.emailStatusUpdates) {
         const notificationId = await ctx.runMutation(internal.notifications.createNotification, {
           userId: userId,
           caseId: caseId,
@@ -560,7 +560,7 @@ export const create = mutation({
         });
 
         // Schedule email if preferences allow
-        if (shouldSendEmail("status_change", "normal", buildUserNotificationPrefs(userProfile))) {
+        if (shouldSendEmail("status_change", "normal", userPrefs)) {
           // Get user email from users table
           const user = await ctx.db.get(userId);
           if (user?.email) {
@@ -1029,10 +1029,11 @@ export const update = mutation({
         .query("userProfiles")
         .withIndex("by_user_id", (q) => q.eq("userId", oldDoc!.userId))
         .first();
+      const userPrefs = buildUserNotificationPrefs(userProfile);
 
       // 1. Case status change notification
       if (caseStatusChanged) {
-        if (!userProfile || userProfile.emailStatusUpdates) {
+        if (userPrefs.emailStatusUpdates) {
           const notificationId = await ctx.runMutation(internal.notifications.createNotification, {
             userId: oldDoc!.userId,
             caseId: args.id,
@@ -1043,7 +1044,7 @@ export const update = mutation({
           });
 
           // Schedule email if preferences allow
-          if (shouldSendEmail("status_change", "normal", buildUserNotificationPrefs(userProfile))) {
+          if (shouldSendEmail("status_change", "normal", userPrefs)) {
             const user = await ctx.db.get(oldDoc!.userId);
             if (user?.email) {
               await ctx.scheduler.runAfter(0, internal.notificationActions.sendStatusChangeEmail, {
@@ -1071,7 +1072,7 @@ export const update = mutation({
 
       // 2. Progress status change notification (only if caseStatus didn't also change)
       if (progressStatusChanged && !caseStatusChanged) {
-        if (!userProfile || userProfile.emailStatusUpdates) {
+        if (userPrefs.emailStatusUpdates) {
           await ctx.runMutation(internal.notifications.createNotification, {
             userId: oldDoc!.userId,
             caseId: args.id,
@@ -1580,9 +1581,9 @@ export const bulkUpdateStatus = mutation({
             .query("userProfiles")
             .withIndex("by_user_id", (q) => q.eq("userId", oldDoc.userId))
             .first();
+          const bulkPrefs = buildUserNotificationPrefs(userProfile);
 
-          // Default to creating notification if profile doesn't exist or emailStatusUpdates is true
-          if (!userProfile || userProfile.emailStatusUpdates) {
+          if (bulkPrefs.emailStatusUpdates) {
             const notificationId = await ctx.runMutation(internal.notifications.createNotification, {
               userId: oldDoc.userId,
               caseId: id,
@@ -1594,7 +1595,7 @@ export const bulkUpdateStatus = mutation({
 
             // Schedule email if preferences allow - limit bulk emails to first 10 cases
             // to prevent overwhelming the user with too many emails at once
-            if (successCount < 10 && shouldSendEmail("status_change", "normal", buildUserNotificationPrefs(userProfile))) {
+            if (successCount < 10 && shouldSendEmail("status_change", "normal", bulkPrefs)) {
               // Get user email from users table
               const user = await ctx.db.get(oldDoc.userId);
               if (user?.email) {

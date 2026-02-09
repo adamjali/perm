@@ -54,10 +54,10 @@ describe("buildDefaultProfile", () => {
     expect(profile.smsNotificationsEnabled).toBe(false);
   });
 
-  it("enables all email notification types by default", () => {
+  it("sets email notification type defaults correctly", () => {
     const profile = buildDefaultProfile(MOCK_USER_ID);
     expect(profile.emailDeadlineReminders).toBe(true);
-    expect(profile.emailStatusUpdates).toBe(true);
+    expect(profile.emailStatusUpdates).toBe(false);
     expect(profile.emailRfeAlerts).toBe(true);
     expect(profile.emailWeeklyDigest).toBe(true);
   });

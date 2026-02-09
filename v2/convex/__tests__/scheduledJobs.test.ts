@@ -67,7 +67,7 @@ async function createTestUserWithProfile(
       urgentDeadlineDays: 7,
       reminderDaysBefore: profileOverrides?.reminderDaysBefore ?? [1, 3, 7, 14, 30],
       emailDeadlineReminders: profileOverrides?.emailDeadlineReminders ?? true,
-      emailStatusUpdates: profileOverrides?.emailStatusUpdates ?? true,
+      emailStatusUpdates: profileOverrides?.emailStatusUpdates ?? false,
       emailRfeAlerts: profileOverrides?.emailRfeAlerts ?? true,
       emailWeeklyDigest: profileOverrides?.emailWeeklyDigest ?? false,
       preferredNotificationEmail: "signup",

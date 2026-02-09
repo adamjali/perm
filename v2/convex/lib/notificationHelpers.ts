@@ -16,6 +16,7 @@ import {
   generateClosureTitle,
   type DeadlineViolation,
 } from "./deadlineEnforcementHelpers";
+import { DEFAULT_NOTIFICATION_PREFS } from "./userDefaults";
 
 // ============================================================================
 // TYPES
@@ -168,15 +169,15 @@ export function buildUserNotificationPrefs(
   userProfile: Partial<UserNotificationPrefs> | null | undefined
 ): UserNotificationPrefs {
   return {
-    emailNotificationsEnabled: userProfile?.emailNotificationsEnabled ?? true,
-    emailDeadlineReminders: userProfile?.emailDeadlineReminders ?? true,
-    emailStatusUpdates: userProfile?.emailStatusUpdates ?? true,
-    emailRfeAlerts: userProfile?.emailRfeAlerts ?? true,
-    pushNotificationsEnabled: userProfile?.pushNotificationsEnabled ?? false,
-    quietHoursEnabled: userProfile?.quietHoursEnabled ?? false,
+    emailNotificationsEnabled: userProfile?.emailNotificationsEnabled ?? DEFAULT_NOTIFICATION_PREFS.emailNotificationsEnabled,
+    emailDeadlineReminders: userProfile?.emailDeadlineReminders ?? DEFAULT_NOTIFICATION_PREFS.emailDeadlineReminders,
+    emailStatusUpdates: userProfile?.emailStatusUpdates ?? DEFAULT_NOTIFICATION_PREFS.emailStatusUpdates,
+    emailRfeAlerts: userProfile?.emailRfeAlerts ?? DEFAULT_NOTIFICATION_PREFS.emailRfeAlerts,
+    pushNotificationsEnabled: userProfile?.pushNotificationsEnabled ?? DEFAULT_NOTIFICATION_PREFS.pushNotificationsEnabled,
+    quietHoursEnabled: userProfile?.quietHoursEnabled ?? DEFAULT_NOTIFICATION_PREFS.quietHoursEnabled,
     quietHoursStart: userProfile?.quietHoursStart,
     quietHoursEnd: userProfile?.quietHoursEnd,
-    timezone: userProfile?.timezone ?? "America/New_York",
+    timezone: userProfile?.timezone ?? DEFAULT_NOTIFICATION_PREFS.timezone,
   };
 }
 
