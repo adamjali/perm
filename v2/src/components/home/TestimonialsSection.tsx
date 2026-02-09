@@ -3,12 +3,12 @@
 /**
  * SocialProofSection (formerly TestimonialsSection)
  *
- * Trust badges, Senja reviews widget, and links to leave a review / G2.
+ * Trust badges, Senja reviews widget, and link to leave a review.
  * Neobrutalist styling consistent with other homepage sections.
  */
 
 import Script from "next/script";
-import { Star, MessageSquarePlus, ExternalLink } from "lucide-react";
+import { Star, MessageSquarePlus } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 interface TrustBadge {
@@ -117,8 +117,8 @@ export function TestimonialsSection() {
             />
           </div>
 
-          {/* Review links */}
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          {/* Review link */}
+          <div className="mt-10 text-center">
             <a
               href="https://senja.io/p/perm-tracker/r/FXAjpr"
               target="_blank"
@@ -127,15 +127,6 @@ export function TestimonialsSection() {
             >
               <MessageSquarePlus className="h-4 w-4" />
               Leave a Review
-            </a>
-            <a
-              href="https://www.g2.com/products/perm-tracker/reviews"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 border-3 border-border bg-background px-5 py-2.5 font-heading text-sm font-bold uppercase tracking-wide text-foreground shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Review us on G2
             </a>
           </div>
         </ScrollReveal>

@@ -17,6 +17,7 @@ import type { Id } from "./_generated/dataModel";
 import { Scrypt } from "lucia";
 import { requireAdmin, getAdminProfile, getAdminDashboardDataHelper, ADMIN_EMAIL } from "./lib/admin";
 import { getCurrentUserId, extractUserIdFromAction } from "./lib/auth";
+import { purgeAllUserData } from "./lib/deletion";
 import { buildDefaultProfile } from "./lib/userDefaults";
 import { render } from "@react-email/render";
 import { AdminEmail } from "../src/emails/AdminEmail";
@@ -852,146 +853,57 @@ export const deleteUserAdmin = mutation({
       throw new Error("Cannot delete your own admin account");
     }
 
-    const userId = args.userId;
-
     // Verify user exists
-    const user = await ctx.db.get(userId);
+    const user = await ctx.db.get(args.userId);
     if (!user) {
       throw new Error("User not found");
     }
 
-    // Delete all user's cases
-    const cases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
+    const result = await purgeAllUserData(ctx, args.userId);
 
-    for (const caseDoc of cases) {
-      await ctx.db.delete(caseDoc._id);
-    }
-
-    // Delete all user's notifications
-    const notifications = await ctx.db
-      .query("notifications")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const notif of notifications) {
-      await ctx.db.delete(notif._id);
-    }
-
-    // Delete conversations, messages, and tool cache
-    const conversations = await ctx.db
-      .query("conversations")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const conv of conversations) {
-      const messages = await ctx.db
-        .query("conversationMessages")
-        .withIndex("by_conversation_id", (q) => q.eq("conversationId", conv._id))
-        .collect();
-      for (const msg of messages) {
-        await ctx.db.delete(msg._id);
-      }
-
-      const cacheEntries = await ctx.db
-        .query("toolCache")
-        .withIndex("by_conversation_tool_hash", (q) => q.eq("conversationId", conv._id))
-        .collect();
-      for (const entry of cacheEntries) {
-        await ctx.db.delete(entry._id);
-      }
-
-      await ctx.db.delete(conv._id);
-    }
-
-    // Delete audit logs
-    const auditLogs = await ctx.db
-      .query("auditLogs")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const logEntry of auditLogs) {
-      await ctx.db.delete(logEntry._id);
-    }
-
-    // Delete custom case order
-    const caseOrders = await ctx.db
-      .query("userCaseOrder")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const order of caseOrders) {
-      await ctx.db.delete(order._id);
-    }
-
-    // Delete timeline preferences
-    const timelinePrefs = await ctx.db
-      .query("timelinePreferences")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const pref of timelinePrefs) {
-      await ctx.db.delete(pref._id);
-    }
-
-    // Delete job description templates
-    const templates = await ctx.db
-      .query("jobDescriptionTemplates")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const template of templates) {
-      await ctx.db.delete(template._id);
-    }
-
-    // Delete user profile
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .first();
-
-    if (profile) {
-      await ctx.db.delete(profile._id);
-    }
-
-    // Delete auth accounts
-    const authAccounts = await ctx.db
-      .query("authAccounts")
-      .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const account of authAccounts) {
-      await ctx.db.delete(account._id);
-    }
-
-    // Delete auth sessions
-    const authSessions = await ctx.db
-      .query("authSessions")
-      .withIndex("userId", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const session of authSessions) {
-      await ctx.db.delete(session._id);
-    }
-
-    // Finally delete the user record
-    await ctx.db.delete(userId);
-
-    console.info(`[admin] deleteUserAdmin: permanently deleted user ${user.email}`, {
-      cases: cases.length,
-      notifications: notifications.length,
-      conversations: conversations.length,
-      auditLogs: auditLogs.length,
-      caseOrders: caseOrders.length,
-      timelinePrefs: timelinePrefs.length,
-      templates: templates.length,
-      authAccounts: authAccounts.length,
-      authSessions: authSessions.length,
-    });
+    console.info(`[admin] deleteUserAdmin: permanently deleted user ${user.email}`, result);
 
     return { success: true, message: `User ${user.email} permanently deleted` };
+  },
+});
+
+/**
+ * Delete orphaned userProfiles whose userId points to a deleted user.
+ * Safety net for incomplete deletion flows.
+ */
+export const cleanupOrphanedProfiles = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const profiles = await ctx.db.query("userProfiles").collect();
+    let deleted = 0;
+
+    for (const profile of profiles) {
+      const user = await ctx.db.get(profile.userId);
+      if (!user) {
+        await ctx.db.delete(profile._id);
+        deleted++;
+        console.info(`[admin] Deleted orphaned profile ${profile._id} (userId: ${profile.userId})`);
+      }
+    }
+
+    return { deleted, totalChecked: profiles.length };
+  },
+});
+
+/**
+ * Purge a user by ID from CLI. Calls the centralized purgeAllUserData.
+ * Use for cleaning up incomplete signups or manual admin deletion.
+ */
+export const purgeUserInternal = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      return { error: "User not found" };
+    }
+    const result = await purgeAllUserData(ctx, args.userId);
+    console.info(`[admin] Purged user ${args.userId} (${user.email})`, result);
+    return result;
   },
 });
 

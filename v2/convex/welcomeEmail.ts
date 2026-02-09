@@ -94,49 +94,31 @@ export const sendTestWelcomeEmail = action({
 /**
  * Send the welcome email to all existing users.
  * One-off blast — queries all users with email addresses
- * and sends them the welcome email.
+ * and schedules individual emails with staggered delays to respect
+ * Resend's 2 req/sec rate limit.
  */
 export const sendWelcomeBlast = internalAction({
   args: {},
-  handler: async (ctx): Promise<{ sent: number; failed: number; total: number }> => {
+  handler: async (ctx): Promise<{ scheduled: number; total: number }> => {
     // Get all users with their profiles
     const users: { email: string; displayName: string }[] = await ctx.runQuery(
       internal.welcomeEmailHelpers.getAllUsersForBlast
     );
 
-    const resend = getResend();
-    let sent = 0;
-    let failed = 0;
-
-    for (const user of users) {
-      try {
-        const html = await render(
-          WelcomeEmail({
-            userName: user.displayName,
-          })
-        );
-
-        const { error } = await resend.emails.send({
-          from: FROM_EMAIL,
-          to: [user.email],
-          subject: "Welcome — let's get your first case tracked",
-          html,
-        });
-
-        if (error) {
-          console.error("Blast: failed to send to", user.email, error.message);
-          failed++;
-        } else {
-          sent++;
-        }
-      } catch (err) {
-        console.error("Blast: error sending to", user.email, err);
-        failed++;
-      }
+    // Schedule individual emails with 800ms stagger to stay under 2 req/sec
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      if (!user) continue;
+      const delayMs = i * 800;
+      await ctx.scheduler.runAfter(
+        delayMs,
+        internal.welcomeEmail.sendWelcomeEmail,
+        { to: user.email, userName: user.displayName }
+      );
     }
 
-    console.log(`Welcome blast complete: ${sent} sent, ${failed} failed, ${users.length} total`);
-    return { sent, failed, total: users.length };
+    console.log(`Welcome blast: scheduled ${users.length} emails`);
+    return { scheduled: users.length, total: users.length };
   },
 });
 

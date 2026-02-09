@@ -54,6 +54,7 @@ import {
   type RawDeadlineData,
   type RawCaseUpdateData,
 } from "./lib/digestHelpers";
+import { purgeAllUserData } from "./lib/deletion";
 
 // ============================================================================
 // TYPES
@@ -998,125 +999,7 @@ export const permanentlyDeleteAccount = internalMutation({
       return { success: false, message: "Grace period has not expired" };
     }
 
-    // Get the user profile
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-
-    // Delete all user's cases
-    const cases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const caseDoc of cases) {
-      await ctx.db.delete(caseDoc._id);
-    }
-
-    // Delete all user's notifications
-    const notifications = await ctx.db
-      .query("notifications")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const notif of notifications) {
-      await ctx.db.delete(notif._id);
-    }
-
-    // Delete conversations, messages, and tool cache
-    const conversations = await ctx.db
-      .query("conversations")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const conv of conversations) {
-      const messages = await ctx.db
-        .query("conversationMessages")
-        .withIndex("by_conversation_id", (q) => q.eq("conversationId", conv._id))
-        .collect();
-      for (const msg of messages) {
-        await ctx.db.delete(msg._id);
-      }
-
-      const cacheEntries = await ctx.db
-        .query("toolCache")
-        .withIndex("by_conversation_tool_hash", (q) => q.eq("conversationId", conv._id))
-        .collect();
-      for (const entry of cacheEntries) {
-        await ctx.db.delete(entry._id);
-      }
-
-      await ctx.db.delete(conv._id);
-    }
-
-    // Delete audit logs
-    const auditLogs = await ctx.db
-      .query("auditLogs")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const logEntry of auditLogs) {
-      await ctx.db.delete(logEntry._id);
-    }
-
-    // Delete custom case order
-    const caseOrders = await ctx.db
-      .query("userCaseOrder")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const order of caseOrders) {
-      await ctx.db.delete(order._id);
-    }
-
-    // Delete timeline preferences
-    const timelinePrefs = await ctx.db
-      .query("timelinePreferences")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const pref of timelinePrefs) {
-      await ctx.db.delete(pref._id);
-    }
-
-    // Delete job description templates
-    const templates = await ctx.db
-      .query("jobDescriptionTemplates")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const template of templates) {
-      await ctx.db.delete(template._id);
-    }
-
-    // Delete user profile
-    if (profile) {
-      await ctx.db.delete(profile._id);
-    }
-
-    // Delete auth accounts (linked OAuth accounts)
-    const authAccounts = await ctx.db
-      .query("authAccounts")
-      .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const account of authAccounts) {
-      await ctx.db.delete(account._id);
-    }
-
-    // Delete auth sessions
-    const authSessions = await ctx.db
-      .query("authSessions")
-      .withIndex("userId", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const session of authSessions) {
-      await ctx.db.delete(session._id);
-    }
-
-    // Finally delete the user record
-    await ctx.db.delete(userId);
+    await purgeAllUserData(ctx, userId);
 
     return {
       success: true,

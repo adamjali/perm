@@ -29,6 +29,9 @@ export const getAllUsersForBlast = internalQuery({
         .withIndex("by_user_id", (q) => q.eq("userId", user._id))
         .unique();
 
+      // Skip users with pending deletion on their profile
+      if (profile?.deletedAt) continue;
+
       const displayName =
         profile?.fullName || user.name || user.email.split("@")[0] || "there";
 

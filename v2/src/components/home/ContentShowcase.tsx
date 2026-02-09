@@ -8,6 +8,7 @@
  * Sits between FAQ and CTA sections.
  */
 
+import Image from "next/image";
 import { BookOpen, ArrowRight, Clock, Loader2 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { NavLink, useNavigationContext } from "@/components/ui/nav-link";
@@ -19,6 +20,8 @@ interface FeaturedArticle {
   title: string;
   description: string;
   readingTime: string;
+  image: string;
+  imageAlt: string;
 }
 
 const articles: FeaturedArticle[] = [
@@ -30,6 +33,8 @@ const articles: FeaturedArticle[] = [
     description:
       "Strategic playbook covering SOC codes, wage levels, recruitment compliance, audit avoidance, and timeline optimization.",
     readingTime: "25 min read",
+    image: "/images/content/perm-tracker-desk.png",
+    imageAlt: "PERM Tracker laptop showing case dashboard with approved immigration documents",
   },
   {
     href: "/tutorials/getting-started",
@@ -39,6 +44,8 @@ const articles: FeaturedArticle[] = [
     description:
       "Set up your account, create your first case, and start tracking deadlines in under 5 minutes.",
     readingTime: "5 min read",
+    image: "/images/features/calendar-planning.jpg",
+    imageAlt: "Calendar view showing PERM case deadlines and planning",
   },
   {
     href: "/blog/common-perm-audit-triggers",
@@ -48,6 +55,8 @@ const articles: FeaturedArticle[] = [
     description:
       "The top reasons cases get audited — and the documentation strategies that keep you off the DOL's radar.",
     readingTime: "8 min read",
+    image: "/images/hero/attorney-at-desk.jpg",
+    imageAlt: "Immigration attorney reviewing PERM case documents at desk",
   },
 ];
 
@@ -65,13 +74,23 @@ function ArticleCard({ article }: { article: FeaturedArticle }) {
           </div>
         )}
 
-        {/* Type badge */}
-        <div className="border-b-2 border-border px-5 py-2.5">
-          <span
-            className={`inline-block border-2 border-black px-2 py-0.5 font-heading text-[10px] font-bold uppercase tracking-wider text-black ${article.typeColor}`}
-          >
-            {article.type}
-          </span>
+        {/* Featured image */}
+        <div className="relative aspect-[16/9] overflow-hidden border-b-3 border-border">
+          <Image
+            src={article.image}
+            alt={article.imageAlt}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          {/* Type badge overlaying image */}
+          <div className="absolute bottom-3 left-3">
+            <span
+              className={`inline-block border-2 border-black px-2 py-0.5 font-heading text-[10px] font-bold uppercase tracking-wider text-black shadow-[2px_2px_0_rgba(0,0,0,0.3)] ${article.typeColor}`}
+            >
+              {article.type}
+            </span>
+          </div>
         </div>
 
         {/* Content */}
