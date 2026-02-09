@@ -45,6 +45,14 @@ export const metadata: Metadata = {
       "Free PERM case tracking software for immigration attorneys. Track deadlines, manage cases, never miss a filing date.",
     url: "/",
     type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "PERM Tracker - Case Management for Immigration Attorneys",
+      },
+    ],
   },
 };
 
