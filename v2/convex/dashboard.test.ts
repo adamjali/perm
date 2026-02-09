@@ -621,12 +621,12 @@ describe("dashboard.getRecentActivity", () => {
     // User A should only see their own activity
     const resultA = await authA.query(api.dashboard.getRecentActivity, {});
     expect(resultA).toHaveLength(2);
-    expect(resultA.every((c) => c.beneficiaryIdentifier.startsWith("USER-A"))).toBe(true);
+    expect(resultA.every((c: { beneficiaryIdentifier: string }) => c.beneficiaryIdentifier.startsWith("USER-A"))).toBe(true);
 
     // User B should only see their own activity
     const resultB = await authB.query(api.dashboard.getRecentActivity, {});
     expect(resultB).toHaveLength(2);
-    expect(resultB.every((c) => c.beneficiaryIdentifier.startsWith("USER-B"))).toBe(true);
+    expect(resultB.every((c: { beneficiaryIdentifier: string }) => c.beneficiaryIdentifier.startsWith("USER-B"))).toBe(true);
   });
 });
 
@@ -727,7 +727,7 @@ describe("dashboard.getUpcomingDeadlines", () => {
     const result = await auth.query(api.dashboard.getUpcomingDeadlines, { days: 30 });
 
     expect(result).toHaveLength(2); // Both overdue and upcoming
-    expect(result.some((d) => d.dueDate === daysAgo(2))).toBe(true); // Overdue included
+    expect(result.some((d: { dueDate: string }) => d.dueDate === daysAgo(2))).toBe(true); // Overdue included
   });
 
   test("sorts by daysUntil ascending", async () => {

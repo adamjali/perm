@@ -1236,7 +1236,7 @@ export const syncAllCases = action({
     });
 
     // Filter to only cases with sync enabled (calendarSyncEnabled !== false)
-    const casesToSync = cases.filter((c) => c.calendarSyncEnabled !== false);
+    const casesToSync = cases.filter((c: { calendarSyncEnabled?: boolean }) => c.calendarSyncEnabled !== false);
 
     if (casesToSync.length === 0) {
       return {

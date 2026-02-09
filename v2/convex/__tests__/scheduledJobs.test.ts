@@ -193,7 +193,7 @@ describe("Scheduled Jobs", () => {
       // Should find 3 cases (1, 7, 30 days) but not the 45-day case
       expect(reminders.length).toBe(3);
 
-      const employerNames = reminders.map((r) => r.employerName);
+      const employerNames = reminders.map((r: { employerName: string }) => r.employerName);
       expect(employerNames).toContain("Company 1 Day");
       expect(employerNames).toContain("Company 7 Days");
       expect(employerNames).toContain("Company 30 Days");
@@ -757,7 +757,7 @@ describe("Scheduled Jobs", () => {
       });
 
       // Should only find the enabled user
-      const userIds = users.map((u) => u.userId);
+      const userIds = users.map((u: { userId: string }) => u.userId);
       expect(userIds).toContain(enabledUserId);
       expect(userIds).not.toContain(disabledUserId);
     });
@@ -877,7 +877,7 @@ describe("Scheduled Jobs", () => {
 
       // Should find the case we created
       expect(reminders.length).toBeGreaterThanOrEqual(1);
-      const reminder = reminders.find((r) => r.employerName === "Action Test Co");
+      const reminder = reminders.find((r: { employerName: string }) => r.employerName === "Action Test Co");
       expect(reminder).toBeDefined();
       expect(reminder!.daysUntilDeadline).toBe(7);
       expect(reminder!.deadlineType).toBe("pwd_expiration");

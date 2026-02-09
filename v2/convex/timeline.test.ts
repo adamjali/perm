@@ -271,7 +271,7 @@ describe("Timeline Preferences", () => {
       await finishScheduledFunctions(t);
 
       const preferences = await user.query(api.timeline.getPreferences, {});
-      const caseCount = preferences.selectedCaseIds?.filter((id) => id === caseId).length;
+      const caseCount = preferences.selectedCaseIds?.filter((id: string) => id === caseId).length;
       expect(caseCount).toBe(1);
     });
 
@@ -478,8 +478,8 @@ describe("Timeline Case Data", () => {
       const cases = await user.query(api.timeline.getCasesForTimeline, {});
 
       expect(cases).toHaveLength(2);
-      expect(cases.map((c) => c.id)).toContain(case1);
-      expect(cases.map((c) => c.id)).toContain(case2);
+      expect(cases.map((c: { id: string }) => c.id)).toContain(case1);
+      expect(cases.map((c: { id: string }) => c.id)).toContain(case2);
     });
 
     it("should exclude deleted cases", async () => {

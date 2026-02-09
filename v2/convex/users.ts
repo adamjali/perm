@@ -80,6 +80,21 @@ export const ensureUserProfile = mutation({
       { fullName: user?.name, profilePhotoUrl: user?.image }
     ));
 
+    // Welcome email for new signup
+    if (user?.email) {
+      try {
+        const displayName = user.name || user.email.split("@")[0] || "there";
+        await ctx.scheduler.runAfter(0, internal.welcomeEmail.sendWelcomeEmail, {
+          to: user.email,
+          userName: displayName,
+        });
+      } catch (welcomeError) {
+        log.error("Failed to schedule welcome email", {
+          error: welcomeError instanceof Error ? welcomeError.message : String(welcomeError),
+        });
+      }
+    }
+
     // Admin notification: new user signup
     // Also here (not just ensureUserProfileInternal) because PendingTermsHandler
     // may create the profile before the auth callback does, racing the internal path
@@ -135,6 +150,21 @@ export const ensureUserProfileInternal = internalMutation({
       args.userId,
       { fullName: user?.name, profilePhotoUrl: user?.image }
     ));
+
+    // Welcome email for new signup
+    if (user?.email) {
+      try {
+        const displayName = user.name || user.email.split("@")[0] || "there";
+        await ctx.scheduler.runAfter(0, internal.welcomeEmail.sendWelcomeEmail, {
+          to: user.email,
+          userName: displayName,
+        });
+      } catch (welcomeError) {
+        log.error("Failed to schedule welcome email", {
+          error: welcomeError instanceof Error ? welcomeError.message : String(welcomeError),
+        });
+      }
+    }
 
     // Admin notification: new user signup
     try {

@@ -104,6 +104,8 @@ import type * as toolCache from "../toolCache.js";
 import type * as userCaseOrder from "../userCaseOrder.js";
 import type * as users from "../users.js";
 import type * as webSearch from "../webSearch.js";
+import type * as welcomeEmail from "../welcomeEmail.js";
+import type * as welcomeEmailHelpers from "../welcomeEmailHelpers.js";
 
 import type {
   ApiFromModules,
@@ -208,6 +210,8 @@ declare const fullApi: ApiFromModules<{
   userCaseOrder: typeof userCaseOrder;
   users: typeof users;
   webSearch: typeof webSearch;
+  welcomeEmail: typeof welcomeEmail;
+  welcomeEmailHelpers: typeof welcomeEmailHelpers;
 }>;
 
 /**

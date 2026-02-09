@@ -453,7 +453,7 @@ describe("Account Deletion", () => {
       // Verify deletedAt is now in the past
       const updatedUser = await authT.run(async (ctx) => {
         return await ctx.db.get(user!._id);
-      });
+      }) as { deletedAt?: number } | null;
       expect(updatedUser?.deletedAt).toBeLessThan(Date.now());
     });
 

@@ -278,7 +278,7 @@ describe("Bulk Operations", () => {
       await finishScheduledFunctions(t);
 
       const logs = await user.query(api.auditLogs.listMine, { tableName: "cases" });
-      const deleteLogs = logs.filter((l) => l.action === "delete");
+      const deleteLogs = logs.filter((l: { action: string }) => l.action === "delete");
 
       expect(deleteLogs.length).toBeGreaterThanOrEqual(2);
     });
@@ -425,7 +425,7 @@ describe("Bulk Operations", () => {
       await finishScheduledFunctions(t);
 
       const logs = await user.query(api.auditLogs.listMine, { tableName: "cases" });
-      const updateLogs = logs.filter((l) => l.action === "update");
+      const updateLogs = logs.filter((l: { action: string }) => l.action === "update");
 
       expect(updateLogs.length).toBeGreaterThanOrEqual(2);
     });
@@ -512,7 +512,7 @@ describe("Audit Logging", () => {
     await finishScheduledFunctions(t);
 
     const logs = await user.query(api.auditLogs.listMine, { tableName: "cases" });
-    const updateLog = logs.find((l) => l.action === "update");
+    const updateLog = logs.find((l: { action: string }) => l.action === "update");
 
     expect(updateLog).toBeDefined();
     // Values are serialized to strings for storage
@@ -542,7 +542,7 @@ describe("Audit Logging", () => {
     await finishScheduledFunctions(t);
 
     const logs = await user.query(api.auditLogs.listMine, { tableName: "cases" });
-    const deleteLog = logs.find((l) => l.action === "delete");
+    const deleteLog = logs.find((l: { action: string }) => l.action === "delete");
 
     expect(deleteLog).toBeDefined();
   });
