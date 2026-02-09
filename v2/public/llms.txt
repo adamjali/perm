@@ -1,0 +1,39 @@
+# PERM Tracker
+
+> PERM Tracker is a free case tracking platform for immigration attorneys managing PERM labor certification cases. It helps track deadlines, validate filings, and manage the full PERM lifecycle.
+
+PERM Tracker provides real-time case management, automated deadline calculations, recruitment tracking, and AI-powered assistance for immigration law practitioners handling Department of Labor PERM (Program Electronic Review Management) cases.
+
+## Key Pages
+
+- [Home](https://permtracker.app/): Landing page with product overview and features
+- [Sign Up](https://permtracker.app/signup): Create a free account
+- [Demo](https://permtracker.app/demo): Interactive product demo
+
+## Content Hub
+
+- [Blog](https://permtracker.app/blog): Immigration law insights and PERM updates
+- [Tutorials](https://permtracker.app/tutorials): Step-by-step guides for using PERM Tracker
+- [Guides](https://permtracker.app/guides): Comprehensive PERM process reference guides
+- [Resources](https://permtracker.app/resources): Tools and comparisons for immigration attorneys
+- [Changelog](https://permtracker.app/changelog): Product updates and new features
+
+## Featured Articles
+
+- [The Ultimate PERM Guide 2026](https://permtracker.app/guides/ultimate-perm-guide-2026): Complete guide to the PERM labor certification process
+- [What is PERM Labor Certification?](https://permtracker.app/blog/what-is-perm-labor-certification): Introduction to the PERM process
+- [PERM Processing Times 2026](https://permtracker.app/blog/perm-processing-times-2026): Current DOL processing timelines
+- [Common PERM Audit Triggers](https://permtracker.app/blog/common-perm-audit-triggers): How to avoid PERM audits
+- [Complete PERM Filing Guide](https://permtracker.app/guides/complete-perm-filing-guide): Step-by-step filing instructions
+- [PERM Recruitment Checklist](https://permtracker.app/guides/perm-recruitment-checklist): Required recruitment steps
+- [Getting Started with PERM Tracker](https://permtracker.app/tutorials/getting-started): Platform onboarding tutorial
+- [Tracking PERM Deadlines](https://permtracker.app/tutorials/tracking-perm-deadlines): Deadline management tutorial
+- [Recruitment Tracking](https://permtracker.app/tutorials/recruitment-tracking): Recruitment step tracking tutorial
+- [Manual vs Automated Tracking](https://permtracker.app/resources/manual-vs-automated-tracking): Comparison of tracking approaches
+- [Best Immigration Case Management Tools](https://permtracker.app/blog/best-immigration-case-management-tools): Tool comparison for immigration attorneys
+
+## Legal
+
+- [Terms of Service](https://permtracker.app/terms)
+- [Privacy Policy](https://permtracker.app/privacy)
+- [Contact](https://permtracker.app/contact)
