@@ -152,6 +152,9 @@ export {
   // Recruitment
   validateRecruitment,
   type RecruitmentValidationInput,
+  // Professional methods (V-PROF rules)
+  validateProfessionalMethods,
+  type ProfessionalMethodsInput,
   // ETA 9089
   validateETA9089,
   type ETA9089ValidationInput,
@@ -188,6 +191,18 @@ export {
   isProfessionalRecruitmentComplete,
   type RecruitmentCheckInput,
 } from './recruitment/isRecruitmentComplete';
+
+// ============================================================================
+// METHOD CATEGORIES
+// ============================================================================
+
+export {
+  DATE_RANGE_METHODS,
+  SUB_ENTRY_METHODS,
+  getMethodCategory,
+  type DateRangeMethod,
+  type SubEntryMethod,
+} from './recruitment/methodCategories';
 
 // ============================================================================
 // STATUS CALCULATION

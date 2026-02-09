@@ -12,6 +12,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useSectionState } from '../useSectionState';
 import type { CaseFormData } from '../../lib/forms';
+import type { ISODateString } from '../../lib/perm';
 
 // ============================================================================
 // Test Data Factory
@@ -691,6 +692,67 @@ describe('useSectionState', () => {
             { method: 'Campus Recruiting', date: '2024-01-20' }, // No description
             { method: 'Job Fair', date: '2024-01-25' },
             { method: 'Professional Organization', date: '2024-02-01' },
+          ],
+        });
+
+        const { result } = renderHook(() => useSectionState(values));
+
+        expect(result.current.isProfessionalComplete).toBe(true);
+      });
+
+      // Feature 006: methods with startDate or subEntries count as complete
+      it('returns true when method has startDate instead of date', () => {
+        const values = createFormData({
+          isProfessionalOccupation: true,
+          additionalRecruitmentMethods: [
+            { method: 'Campus Recruiting', date: '2024-01-20', description: '' },
+            { method: 'Job Fair', date: '2024-01-25', description: '' },
+            { method: 'employer_website', date: '', startDate: '2024-02-01', description: '' },
+          ],
+        });
+
+        const { result } = renderHook(() => useSectionState(values));
+
+        expect(result.current.isProfessionalComplete).toBe(true);
+      });
+
+      it('returns true when method has subEntries instead of date', () => {
+        const values = createFormData({
+          isProfessionalOccupation: true,
+          additionalRecruitmentMethods: [
+            { method: 'Campus Recruiting', date: '2024-01-20', description: '' },
+            { method: 'Job Fair', date: '2024-01-25', description: '' },
+            { method: 'radio_ad', date: '', description: '', subEntries: [{ date: '2024-02-01' as ISODateString, description: 'WABC morning' }] },
+          ],
+        });
+
+        const { result } = renderHook(() => useSectionState(values));
+
+        expect(result.current.isProfessionalComplete).toBe(true);
+      });
+
+      it('returns false when method has empty subEntries array', () => {
+        const values = createFormData({
+          isProfessionalOccupation: true,
+          additionalRecruitmentMethods: [
+            { method: 'Campus Recruiting', date: '2024-01-20', description: '' },
+            { method: 'Job Fair', date: '2024-01-25', description: '' },
+            { method: 'radio_ad', date: '', description: '', subEntries: [] }, // Empty array
+          ],
+        });
+
+        const { result } = renderHook(() => useSectionState(values));
+
+        expect(result.current.isProfessionalComplete).toBe(false);
+      });
+
+      it('returns true with mixed date types (date, startDate, subEntries)', () => {
+        const values = createFormData({
+          isProfessionalOccupation: true,
+          additionalRecruitmentMethods: [
+            { method: 'Job Fair', date: '2024-01-25', description: '' },
+            { method: 'employer_website', date: '', startDate: '2024-02-01', description: '' },
+            { method: 'radio_ad', date: '', description: '', subEntries: [{ date: '2024-02-10' as ISODateString, description: '' }] },
           ],
         });
 

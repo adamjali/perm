@@ -220,6 +220,151 @@ describe("calculateRecruitmentEndDate", () => {
     });
   });
 
+  describe("Feature 006: endDate, startDate, subEntries branches", () => {
+    it("should use method endDate when present", () => {
+      const result = calculateRecruitmentEndDate({
+        sundayAdSecondDate: "2024-01-22",
+        jobOrderEndDate: "2024-02-10",
+        noticeOfFilingEndDate: "2024-01-26",
+        additionalRecruitmentMethods: [
+          { date: "2024-01-15", endDate: "2024-05-01" }, // endDate is latest
+        ],
+        isProfessionalOccupation: true,
+      });
+
+      expect(result).toBe("2024-05-01");
+    });
+
+    it("should fall back to startDate when endDate is absent", () => {
+      const result = calculateRecruitmentEndDate({
+        sundayAdSecondDate: "2024-01-22",
+        jobOrderEndDate: "2024-02-10",
+        noticeOfFilingEndDate: "2024-01-26",
+        additionalRecruitmentMethods: [
+          { startDate: "2024-04-15" }, // No endDate, falls back to startDate
+        ],
+        isProfessionalOccupation: true,
+      });
+
+      expect(result).toBe("2024-04-15");
+    });
+
+    it("should prefer endDate over startDate when both present", () => {
+      const result = calculateRecruitmentEndDate({
+        sundayAdSecondDate: "2024-01-22",
+        jobOrderEndDate: "2024-02-10",
+        noticeOfFilingEndDate: "2024-01-26",
+        additionalRecruitmentMethods: [
+          { startDate: "2024-03-01", endDate: "2024-04-15" },
+        ],
+        isProfessionalOccupation: true,
+      });
+
+      // endDate is used (not startDate since endDate is valid)
+      expect(result).toBe("2024-04-15");
+    });
+
+    it("should use max sub-entry date", () => {
+      const result = calculateRecruitmentEndDate({
+        sundayAdSecondDate: "2024-01-22",
+        jobOrderEndDate: "2024-02-10",
+        noticeOfFilingEndDate: "2024-01-26",
+        additionalRecruitmentMethods: [
+          {
+            subEntries: [
+              { date: "2024-03-01" },
+              { date: "2024-05-15" }, // Latest sub-entry
+              { date: "2024-04-01" },
+            ],
+          },
+        ],
+        isProfessionalOccupation: true,
+      });
+
+      expect(result).toBe("2024-05-15");
+    });
+
+    it("should consider both date and endDate from same method", () => {
+      const result = calculateRecruitmentEndDate({
+        sundayAdSecondDate: "2024-01-22",
+        jobOrderEndDate: null,
+        noticeOfFilingEndDate: null,
+        additionalRecruitmentMethods: [
+          { date: "2024-06-01", endDate: "2024-04-15" }, // date is later
+        ],
+        isProfessionalOccupation: true,
+      });
+
+      // Both date and endDate are collected; date is latest
+      expect(result).toBe("2024-06-01");
+    });
+
+    it("should handle mixed method types (date, endDate, subEntries)", () => {
+      const result = calculateRecruitmentEndDate({
+        sundayAdSecondDate: "2024-01-22",
+        jobOrderEndDate: "2024-02-10",
+        noticeOfFilingEndDate: "2024-01-26",
+        additionalRecruitmentMethods: [
+          { date: "2024-03-01" },                                     // single-date
+          { startDate: "2024-02-01", endDate: "2024-04-01" },         // date-range
+          { subEntries: [{ date: "2024-05-01" }, { date: "2024-06-15" }] }, // sub-entries (latest)
+        ],
+        isProfessionalOccupation: true,
+      });
+
+      expect(result).toBe("2024-06-15");
+    });
+
+    it("should ignore invalid endDate and fall back to startDate", () => {
+      const result = calculateRecruitmentEndDate({
+        sundayAdSecondDate: "2024-01-22",
+        jobOrderEndDate: "2024-02-10",
+        noticeOfFilingEndDate: null,
+        additionalRecruitmentMethods: [
+          { startDate: "2024-04-01", endDate: "invalid-date" },
+        ],
+        isProfessionalOccupation: true,
+      });
+
+      expect(result).toBe("2024-04-01");
+    });
+
+    it("should ignore invalid sub-entry dates", () => {
+      const result = calculateRecruitmentEndDate({
+        sundayAdSecondDate: "2024-01-22",
+        jobOrderEndDate: "2024-02-10",
+        noticeOfFilingEndDate: null,
+        additionalRecruitmentMethods: [
+          {
+            subEntries: [
+              { date: "invalid" },
+              { date: "2024-03-01" },
+            ],
+          },
+        ],
+        isProfessionalOccupation: true,
+      });
+
+      expect(result).toBe("2024-03-01");
+    });
+
+    it("should not use startDate when endDate is valid", () => {
+      // endDate takes priority, startDate should NOT be collected as fallback
+      const result = calculateRecruitmentEndDate({
+        sundayAdSecondDate: null,
+        jobOrderEndDate: null,
+        noticeOfFilingEndDate: null,
+        additionalRecruitmentMethods: [
+          { startDate: "2024-06-01", endDate: "2024-03-15" },
+        ],
+        isProfessionalOccupation: true,
+      });
+
+      // Only endDate is collected (not startDate) since endDate is valid
+      expect(result).toBe("2024-03-15");
+    });
+  });
+
   it("should handle methods with missing dates", () => {
     const result = calculateRecruitmentEndDate({
       sundayAdSecondDate: "2024-01-22",

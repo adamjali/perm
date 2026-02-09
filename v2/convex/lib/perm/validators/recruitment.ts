@@ -1,8 +1,9 @@
-import { parseISO, isBefore, isAfter, getDay, differenceInDays, isValid } from 'date-fns';
+import { parseISO, isBefore, isAfter, getDay, differenceInDays, isValid, addDays } from 'date-fns';
 import type { ValidationResult, ValidationIssue, CaseData } from '../types';
 import { createValidationResult } from '../types';
 import { countBusinessDays } from '../dates/businessDays';
 import { JOB_ORDER_MIN_DAYS, NOTICE_MIN_BUSINESS_DAYS } from '../constants';
+import { DATE_RANGE_METHODS, SUB_ENTRY_METHODS } from '../recruitment/methodCategories';
 
 /**
  * Input data for recruitment validation.
@@ -339,37 +340,17 @@ export function validateProfessionalMethods(
 
   const { pwdDeterminationDate, pwdExpirationDate, firstRecruitmentDate, methods } = input;
 
-  // Categorize methods by date input type
-  const DATE_RANGE_METHODS = ['job_website_ad', 'employer_website', 'private_employment_firm'];
-  const SUB_ENTRY_METHODS = ['radio_ad', 'tv_ad'];
-
-  // Calculate recruitment window max date (same formula as Zod validator)
+  // Calculate recruitment window max date: min(firstRecruitment + 150, pwdExpiration - 30)
   let maxRecruitmentDate: Date | null = null;
-  if (firstRecruitmentDate) {
-    const firstDate = parseISO(firstRecruitmentDate);
-    if (isValid(firstDate)) {
-      const max150 = new Date(firstDate);
-      max150.setDate(max150.getDate() + 150);
+  const firstDate = firstRecruitmentDate ? parseISO(firstRecruitmentDate) : null;
+  const pwdMax = pwdExpirationDate ? parseISO(pwdExpirationDate) : null;
 
-      if (pwdExpirationDate) {
-        const pwdMax = parseISO(pwdExpirationDate);
-        if (isValid(pwdMax)) {
-          const pwdMaxMinus30 = new Date(pwdMax);
-          pwdMaxMinus30.setDate(pwdMaxMinus30.getDate() - 30);
-          maxRecruitmentDate = max150 <= pwdMaxMinus30 ? max150 : pwdMaxMinus30;
-        } else {
-          maxRecruitmentDate = max150;
-        }
-      } else {
-        maxRecruitmentDate = max150;
-      }
-    }
-  } else if (pwdExpirationDate) {
-    const pwdMax = parseISO(pwdExpirationDate);
-    if (isValid(pwdMax)) {
-      maxRecruitmentDate = new Date(pwdMax);
-      maxRecruitmentDate.setDate(maxRecruitmentDate.getDate() - 30);
-    }
+  if (firstDate && isValid(firstDate)) {
+    const max150 = addDays(firstDate, 150);
+    const pwdCap = pwdMax && isValid(pwdMax) ? addDays(pwdMax, -30) : null;
+    maxRecruitmentDate = pwdCap && pwdCap < max150 ? pwdCap : max150;
+  } else if (pwdMax && isValid(pwdMax)) {
+    maxRecruitmentDate = addDays(pwdMax, -30);
   }
 
   const pwdDetDate = pwdDeterminationDate ? parseISO(pwdDeterminationDate) : null;
@@ -377,8 +358,8 @@ export function validateProfessionalMethods(
   // Validate each method
   methods.forEach((method, index) => {
     // Only validate date-range and sub-entry methods
-    const isDateRange = DATE_RANGE_METHODS.includes(method.method);
-    const isSubEntry = SUB_ENTRY_METHODS.includes(method.method);
+    const isDateRange = (DATE_RANGE_METHODS as readonly string[]).includes(method.method);
+    const isSubEntry = (SUB_ENTRY_METHODS as readonly string[]).includes(method.method);
 
     if (!isDateRange && !isSubEntry) {
       return; // Single-date methods are validated by existing validators

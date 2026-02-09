@@ -144,6 +144,114 @@ describe('validateProfessionalMethods (V-PROF rules)', () => {
     });
   });
 
+  describe('boundary cases', () => {
+    it('V-PROF-01: errors when startDate equals PWDDD (must be strictly after)', () => {
+      const result = validateProfessionalMethods({
+        ...baseInput,
+        methods: [{
+          method: 'job_website_ad',
+          date: '',
+          startDate: '2024-01-15', // same as PWDDD
+          endDate: '2024-03-01',
+        }],
+      });
+      expect(result.errors.some(e => e.ruleId === 'V-PROF-01')).toBe(true);
+    });
+
+    it('V-PROF-03: passes when endDate equals max recruitment date', () => {
+      // firstRecruitment=2024-02-01, +150 = 2024-06-30
+      // pwdExpiration=2025-01-15, -30 = 2024-12-16
+      // Effective max = 2024-06-30
+      const result = validateProfessionalMethods({
+        ...baseInput,
+        methods: [{
+          method: 'job_website_ad',
+          date: '',
+          startDate: '2024-02-15',
+          endDate: '2024-06-30', // exactly on max
+        }],
+      });
+      expect(result.errors.some(e => e.ruleId === 'V-PROF-03')).toBe(false);
+    });
+
+    it('V-PROF-05: errors when sub-entry date equals PWDDD (must be strictly after)', () => {
+      const result = validateProfessionalMethods({
+        ...baseInput,
+        methods: [{
+          method: 'radio_ad',
+          date: '',
+          subEntries: [
+            { date: '2024-01-15', description: 'Same as PWDDD' },
+          ],
+        }],
+      });
+      expect(result.errors.some(e => e.ruleId === 'V-PROF-05')).toBe(true);
+    });
+  });
+
+  describe('null context dates', () => {
+    it('skips V-PROF-01 when pwdDeterminationDate is null', () => {
+      const result = validateProfessionalMethods({
+        pwdDeterminationDate: null,
+        pwdExpirationDate: '2025-01-15',
+        firstRecruitmentDate: '2024-02-01',
+        methods: [{
+          method: 'job_website_ad',
+          date: '',
+          startDate: '2024-01-01', // would fail if PWDDD was set
+          endDate: '2024-03-01',
+        }],
+      });
+      expect(result.errors.some(e => e.ruleId === 'V-PROF-01')).toBe(false);
+    });
+
+    it('skips V-PROF-03 when both firstRecruitmentDate and pwdExpirationDate are null', () => {
+      const result = validateProfessionalMethods({
+        pwdDeterminationDate: '2024-01-15',
+        pwdExpirationDate: null,
+        firstRecruitmentDate: null,
+        methods: [{
+          method: 'job_website_ad',
+          date: '',
+          startDate: '2024-02-01',
+          endDate: '2099-12-31', // way in the future
+        }],
+      });
+      expect(result.errors.some(e => e.ruleId === 'V-PROF-03')).toBe(false);
+    });
+
+    it('uses pwdExpirationDate for V-PROF-03 max when firstRecruitmentDate is null', () => {
+      const result = validateProfessionalMethods({
+        pwdDeterminationDate: '2024-01-15',
+        pwdExpirationDate: '2024-06-01', // -30 = 2024-05-02
+        firstRecruitmentDate: null,
+        methods: [{
+          method: 'job_website_ad',
+          date: '',
+          startDate: '2024-02-01',
+          endDate: '2024-06-01', // after pwdExpiration - 30
+        }],
+      });
+      expect(result.errors.some(e => e.ruleId === 'V-PROF-03')).toBe(true);
+    });
+
+    it('skips V-PROF-05 when pwdDeterminationDate is null', () => {
+      const result = validateProfessionalMethods({
+        pwdDeterminationDate: null,
+        pwdExpirationDate: '2025-01-15',
+        firstRecruitmentDate: '2024-02-01',
+        methods: [{
+          method: 'radio_ad',
+          date: '',
+          subEntries: [
+            { date: '2024-01-01', description: 'Early spot' }, // would fail if PWDDD was set
+          ],
+        }],
+      });
+      expect(result.errors.some(e => e.ruleId === 'V-PROF-05')).toBe(false);
+    });
+  });
+
   describe('edge cases', () => {
     it('handles empty methods array', () => {
       const result = validateProfessionalMethods({
@@ -158,8 +266,23 @@ describe('validateProfessionalMethods (V-PROF rules)', () => {
         ...baseInput,
         methods: [{ method: 'job_website_ad', date: '' }],
       });
-      // Should not crash, no V-PROF errors (missing dates are handled by Zod schema)
       expect(result.errors.filter(e => e.ruleId.startsWith('V-PROF')).length).toBe(0);
+    });
+
+    it('skips invalid sub-entry dates without crashing', () => {
+      const result = validateProfessionalMethods({
+        ...baseInput,
+        methods: [{
+          method: 'radio_ad',
+          date: '',
+          subEntries: [
+            { date: 'not-a-date', description: 'invalid' },
+            { date: '2024-03-01', description: 'valid' },
+          ],
+        }],
+      });
+      // Should not crash; valid entry should be checked
+      expect(result.errors.some(e => e.ruleId === 'V-PROF-05' && e.field.includes('subEntries.0'))).toBe(false);
     });
   });
 });

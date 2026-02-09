@@ -8,6 +8,7 @@ import { z } from 'zod';
 import type { Id } from '@/../convex/_generated/dataModel';
 import {
   validateCase,
+  validateProfessionalMethods,
   type ValidationIssue as PermValidationIssue,
   getFirstRecruitmentDate,
   getLastRecruitmentDate,
@@ -104,7 +105,7 @@ const subEntrySchema = z.object({
 
 const additionalRecruitmentMethodSchema = z.object({
   method: z.string().min(1, 'Method is required'),
-  date: z.string(), // Keep for backward compat but may be empty for date-range/sub-entry methods
+  date: z.string().refine((val) => !val || isISODateString(val), { message: ISO_DATE_MESSAGE }), // Empty for date-range/sub-entry methods
   description: z.string().optional(),
   startDate: optionalIsoDateSchema,
   endDate: optionalIsoDateSchema,
@@ -306,24 +307,73 @@ function validateProfessionalRecruitment(data: CrossValidationData, ctx: Validat
   const maxDateInfo = calculateMethodMaxDate(data);
 
   data.additionalRecruitmentMethods.forEach((method, index) => {
-    if (!method.date) return;
-    const methodDate = new Date(method.date);
-
-    // Check min: after PWD determination
-    if (pwdDate && methodDate < pwdDate) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Method date must be on or after PWD determination (${data.pwdDeterminationDate})`,
-        path: ['additionalRecruitmentMethods', index, 'date'],
-      });
+    // Validate single-date methods
+    if (method.date) {
+      const methodDate = new Date(method.date);
+      if (pwdDate && methodDate < pwdDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Method date must be on or after PWD determination (${data.pwdDeterminationDate})`,
+          path: ['additionalRecruitmentMethods', index, 'date'],
+        });
+      }
+      if (maxDateInfo && methodDate > maxDateInfo.date) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Method date must be on or before ${maxDateInfo.dateStr} (${maxDateInfo.reason})`,
+          path: ['additionalRecruitmentMethods', index, 'date'],
+        });
+      }
     }
 
-    // Check max: before deadline
-    if (maxDateInfo && methodDate > maxDateInfo.date) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Method date must be on or before ${maxDateInfo.dateStr} (${maxDateInfo.reason})`,
-        path: ['additionalRecruitmentMethods', index, 'date'],
+    // Validate date-range methods (startDate/endDate)
+    if (method.startDate) {
+      const startDate = new Date(method.startDate);
+      if (pwdDate && startDate < pwdDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Start date must be after PWD determination (${data.pwdDeterminationDate})`,
+          path: ['additionalRecruitmentMethods', index, 'startDate'],
+        });
+      }
+    }
+    if (method.endDate) {
+      const endDate = new Date(method.endDate);
+      if (method.startDate && endDate < new Date(method.startDate)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'End date must be on or after start date',
+          path: ['additionalRecruitmentMethods', index, 'endDate'],
+        });
+      }
+      if (maxDateInfo && endDate > maxDateInfo.date) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `End date must be on or before ${maxDateInfo.dateStr} (${maxDateInfo.reason})`,
+          path: ['additionalRecruitmentMethods', index, 'endDate'],
+        });
+      }
+    }
+
+    // Validate sub-entry methods
+    if (method.subEntries) {
+      method.subEntries.forEach((entry, subIndex) => {
+        if (!entry.date) return;
+        const entryDate = new Date(entry.date);
+        if (pwdDate && entryDate < pwdDate) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Entry date must be after PWD determination (${data.pwdDeterminationDate})`,
+            path: ['additionalRecruitmentMethods', index, 'subEntries', subIndex, 'date'],
+          });
+        }
+        if (maxDateInfo && entryDate > maxDateInfo.date) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Entry date must be on or before ${maxDateInfo.dateStr} (${maxDateInfo.reason})`,
+            path: ['additionalRecruitmentMethods', index, 'subEntries', subIndex, 'date'],
+          });
+        }
       });
     }
   });
@@ -547,6 +597,33 @@ export function validateCaseForm(data: CaseFormData): CaseFormErrors {
     const permResult = validateCase(fullValidationData);
     allErrors.push(...permValidationToFieldErrors(permResult.errors));
     allWarnings.push(...permValidationToFieldErrors(permResult.warnings));
+
+    // Run V-PROF validators for professional methods
+    if (data.isProfessionalOccupation && data.additionalRecruitmentMethods?.length) {
+      const profResult = validateProfessionalMethods({
+        pwdDeterminationDate: data.pwdDeterminationDate || null,
+        pwdExpirationDate: data.pwdExpirationDate || null,
+        firstRecruitmentDate: recruitmentStartDate,
+        methods: data.additionalRecruitmentMethods.map(m => ({
+          method: m.method,
+          date: m.date || '',
+          startDate: m.startDate,
+          endDate: m.endDate,
+          subEntries: m.subEntries,
+        })),
+      });
+      // V-PROF fields are already in camelCase with proper paths — convert directly
+      allErrors.push(...profResult.errors.map(issue => ({
+        field: issue.field,
+        message: issue.message,
+        ruleId: issue.ruleId,
+      })));
+      allWarnings.push(...profResult.warnings.map(issue => ({
+        field: issue.field,
+        message: issue.message,
+        ruleId: issue.ruleId,
+      })));
+    }
   } catch {
     // If lib/perm fails (e.g., due to invalid date formats), ignore
     // The Zod errors will already capture format issues

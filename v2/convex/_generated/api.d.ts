@@ -72,6 +72,7 @@ import type * as lib_perm_deadlines_timezones from "../lib/perm/deadlines/timezo
 import type * as lib_perm_deadlines_types from "../lib/perm/deadlines/types.js";
 import type * as lib_perm_index from "../lib/perm/index.js";
 import type * as lib_perm_recruitment_isRecruitmentComplete from "../lib/perm/recruitment/isRecruitmentComplete.js";
+import type * as lib_perm_recruitment_methodCategories from "../lib/perm/recruitment/methodCategories.js";
 import type * as lib_perm_statusCalculation from "../lib/perm/statusCalculation.js";
 import type * as lib_perm_statusTypes from "../lib/perm/statusTypes.js";
 import type * as lib_perm_types from "../lib/perm/types.js";
@@ -175,6 +176,7 @@ declare const fullApi: ApiFromModules<{
   "lib/perm/deadlines/types": typeof lib_perm_deadlines_types;
   "lib/perm/index": typeof lib_perm_index;
   "lib/perm/recruitment/isRecruitmentComplete": typeof lib_perm_recruitment_isRecruitmentComplete;
+  "lib/perm/recruitment/methodCategories": typeof lib_perm_recruitment_methodCategories;
   "lib/perm/statusCalculation": typeof lib_perm_statusCalculation;
   "lib/perm/statusTypes": typeof lib_perm_statusTypes;
   "lib/perm/types": typeof lib_perm_types;

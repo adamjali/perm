@@ -8,6 +8,8 @@ export { validatePWD, type PWDValidationInput } from './pwd';
 export {
   validateRecruitment,
   type RecruitmentValidationInput,
+  validateProfessionalMethods,
+  type ProfessionalMethodsInput,
 } from './recruitment';
 export { validateETA9089, type ETA9089ValidationInput } from './eta9089';
 export { validateI140, type I140ValidationInput } from './i140';
