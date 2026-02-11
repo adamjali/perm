@@ -304,6 +304,55 @@ export function DemoPageClient() {
       </section>
 
       {/* ================================================================ */}
+      {/* GUIDED TOUR (Supademo) */}
+      {/* ================================================================ */}
+      <section className="relative border-b-3 border-border bg-background py-12 sm:py-16">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <ScrollReveal direction="up">
+            <div className="text-center">
+              <div className="mb-3 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                <MousePointerClick className="h-3.5 w-3.5" />
+                Guided Tour
+              </div>
+              <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl">
+                Click Through the{" "}
+                <span className="inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard-sm">
+                  Full App
+                </span>
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
+                50-step interactive walkthrough — create cases, configure settings, use the AI assistant, and more.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal direction="up" delay={0.1}>
+            <div className="mt-8">
+              <div className="relative border-3 border-border shadow-hard-lg overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                {/* Browser chrome bar */}
+                <div className="flex items-center gap-1.5 border-b-3 border-border bg-muted px-3 py-2">
+                  <div className="h-2.5 w-2.5 border border-border bg-[#FF5F57]" />
+                  <div className="h-2.5 w-2.5 border border-border bg-[#FFBD2E]" />
+                  <div className="h-2.5 w-2.5 border border-border bg-[#28CA41]" />
+                  <span className="ml-3 font-mono text-[10px] text-muted-foreground">
+                    permtracker.app — Interactive Tour
+                  </span>
+                </div>
+                <iframe
+                  src="https://app.supademo.com/embed/cmli1lvlg1lkg5351b6olnd9n?embed_v=2"
+                  loading="lazy"
+                  title="PERM Tracker interactive product tour"
+                  allow="clipboard-write"
+                  className="h-full w-full"
+                  style={{ border: "none", position: "absolute", top: "0", left: "0", width: "100%", height: "100%", paddingTop: "34px" }}
+                />
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ================================================================ */}
       {/* PRODUCT SCREENSHOTS */}
       {/* ================================================================ */}
       <section className="border-b-3 border-border bg-foreground py-12 sm:py-16">
