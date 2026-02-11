@@ -98,6 +98,20 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                 >
                   FAQ
                 </NavLink>
+                <NavLink
+                  href="/signup"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
+                  spinnerClassName="text-primary"
+                >
+                  Sign Up Free
+                </NavLink>
+                <NavLink
+                  href="/login"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
+                  spinnerClassName="text-primary"
+                >
+                  Sign In
+                </NavLink>
               </nav>
             </div>
 
@@ -165,14 +179,13 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                 >
                   Terms of Service
                 </NavLink>
-                <a
+                <NavLink
                   href="/contact"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
+                  spinnerClassName="text-primary"
                 >
                   Contact
-                </a>
+                </NavLink>
               </nav>
             </div>
           </div>
@@ -216,14 +229,13 @@ export default function Footer({ variant = "compact" }: FooterProps) {
           >
             Terms
           </NavLink>
-          <a
+          <NavLink
             href="/contact"
-            target="_blank"
-            rel="noopener noreferrer"
             className="hover-underline text-white transition-colors hover:text-primary"
+            spinnerClassName="text-primary"
           >
             Contact
-          </a>
+          </NavLink>
         </div>
 
         {/* Copyright */}

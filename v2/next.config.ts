@@ -23,7 +23,16 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  // Empty config - plugins add their settings
+  async redirects() {
+    return [
+      // Fix GSC 404s: old .html URLs → clean routes
+      { source: "/demo.html", destination: "/demo", permanent: true },
+      { source: "/register.html", destination: "/signup", permanent: true },
+      { source: "/terms.html", destination: "/terms", permanent: true },
+      { source: "/privacy.html", destination: "/privacy", permanent: true },
+      { source: "/contact.html", destination: "/contact", permanent: true },
+    ];
+  },
 };
 
 // Apply next-intl plugin first, then Serwist
