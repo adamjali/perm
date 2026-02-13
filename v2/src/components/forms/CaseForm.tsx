@@ -79,6 +79,7 @@ import {
   validateStatusSelection,
   type CaseFormData,
   type NoteEntry,
+  getFieldLabel,
 } from "@/lib/forms/case-form-schema";
 import { getAllDateConstraints } from "@/lib/forms/date-constraints";
 import { initializeFormData, mapFieldToInputName } from "./case-form.helpers";
@@ -677,12 +678,17 @@ function ErrorSummary({ errors, errorCount, onDismiss, onFieldClick }: { errors:
           </div>
           <p className="text-sm text-muted-foreground mb-3">Please fix the following errors before saving:</p>
           <ul className="space-y-1">
-            {Object.entries(errors).map(([field, message]) => (
-              <li key={field} className="flex items-start gap-2">
-                <span className="text-destructive font-bold shrink-0">-</span>
-                <button type="button" onClick={() => onFieldClick(field)} className="text-sm text-left hover:underline hover:text-destructive transition-colors cursor-pointer flex-1">{message}</button>
-              </li>
-            ))}
+            {Object.entries(errors).map(([field, message]) => {
+              const label = getFieldLabel(field);
+              return (
+                <li key={field} className="flex items-start gap-2">
+                  <span className="text-destructive font-bold shrink-0">-</span>
+                  <button type="button" onClick={() => onFieldClick(field)} className="text-sm text-left hover:underline hover:text-destructive transition-colors cursor-pointer flex-1">
+                    <span className="font-semibold">{label}:</span> {message}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>

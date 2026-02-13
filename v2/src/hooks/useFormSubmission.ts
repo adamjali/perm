@@ -18,6 +18,8 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import {
   validateCaseForm,
+  stripIncompleteRecruitmentEntries,
+  getFieldLabel,
   type CaseFormData,
 } from "@/lib/forms/case-form-schema";
 import {
@@ -26,7 +28,7 @@ import {
 } from "@/components/forms/case-form.helpers";
 import { prepareUpdatePayload } from "@/lib/forms/prepareUpdatePayload";
 import { ConvexError } from "convex/values";
-import { captureError } from "@/lib/sentry";
+import { captureError, captureMessage, trackValidationError } from "@/lib/sentry";
 
 export interface UseFormSubmissionProps {
   mode: "add" | "edit";
@@ -80,7 +82,11 @@ export function useFormSubmission({
     async (event: React.FormEvent, getValues: () => CaseFormData) => {
       event.preventDefault();
 
-      const currentFormData = getValues();
+      const rawFormData = getValues();
+
+      // Strip incomplete recruitment entries before validation
+      // (prevents false positives from empty method slots)
+      const currentFormData = stripIncompleteRecruitmentEntries(rawFormData);
 
       // Run full validation (Zod + lib/perm)
       const result = validateCaseForm(currentFormData);
@@ -90,16 +96,44 @@ export function useFormSubmission({
         setWarnings(errorsToFieldMap(result.warnings));
         setShowErrorSummary(true);
 
-        // Build informative toast message
-        const errorMessages = result.errors.slice(0, 3).map((e) => e.message);
+        // Build informative toast message with field labels
+        const labeledErrors = result.errors.map((e) => {
+          const label = getFieldLabel(e.field);
+          return `${label}: ${e.message}`;
+        });
+        const errorMessages = labeledErrors.slice(0, 3);
         const remainingCount = result.errors.length - 3;
-        const firstError = result.errors[0];
         const toastMessage =
-          result.errors.length === 1 && firstError
-            ? firstError.message
+          result.errors.length === 1
+            ? errorMessages[0]!
             : `${errorMessages.join("; ")}${remainingCount > 0 ? ` (+${remainingCount} more)` : ""}`;
 
         toast.error(`Validation failed: ${toastMessage}`, { duration: 5000 });
+
+        // Log validation errors for admin visibility
+        const errorDetails = result.errors.map((e) => ({
+          field: e.field,
+          label: getFieldLabel(e.field),
+          message: e.message,
+          value: currentFormData[e.field as keyof CaseFormData],
+        }));
+        console.warn(
+          "[CaseForm] Validation failed on submit:",
+          { errors: errorDetails, mode, caseId }
+        );
+
+        // Send to Sentry so admin can track validation patterns
+        trackValidationError("CaseForm", result.errors.length, result.errors.map((e) => e.field));
+        captureMessage(
+          `Case form validation failed: ${result.errors.map((e) => `${getFieldLabel(e.field)}: ${e.message}`).join("; ")}`,
+          "warning",
+          {
+            operation: "validateCaseForm",
+            resourceId: caseId,
+            extra: { mode, errorDetails },
+          }
+        );
+
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }

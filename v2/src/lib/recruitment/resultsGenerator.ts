@@ -185,6 +185,9 @@ export interface RecruitmentResultsCaseData {
     method: string;
     date: string;
     description?: string;
+    startDate?: string;
+    endDate?: string;
+    subEntries?: Array<{ date: string; description?: string }>;
   }>;
 
   // Additional recruitment date range (for methods with ranges)
@@ -242,12 +245,31 @@ function normalizeSentence(text: string): string {
 }
 
 /**
+ * Check if a method entry has any meaningful date data.
+ */
+function methodHasDateData(method: {
+  date: string;
+  startDate?: string;
+  endDate?: string;
+  subEntries?: Array<{ date: string }>;
+}): boolean {
+  if (method.date) return true;
+  if (method.startDate || method.endDate) return true;
+  if (method.subEntries && method.subEntries.some((s) => !!s.date)) return true;
+  return false;
+}
+
+/**
  * Format method sentence using config template.
+ * Handles all method types: single-date, date-range, and sub-entries (multi).
  */
 function formatMethodSentence(method: {
   method: string;
   date: string;
   description?: string;
+  startDate?: string;
+  endDate?: string;
+  subEntries?: Array<{ date: string; description?: string }>;
 }): string {
   const config = RECRUITMENT_METHOD_TYPES[method.method];
 
@@ -266,16 +288,41 @@ function formatMethodSentence(method: {
     sentence = sentence.replace("{outlet}", outlet);
   }
 
-  // Replace date placeholders
+  // Replace date placeholders based on method type
   if (config.dateType === "single") {
     sentence = sentence.replace("{date}", formatDate(method.date));
   } else if (config.dateType === "range") {
-    // For range types, use the method date as end date
-    // (start date would come from additionalRecruitmentStartDate)
-    sentence = sentence.replace("{fromDate}", formatDate(method.date));
-    sentence = sentence.replace("{toDate}", formatDate(method.date));
+    // Use startDate/endDate if available, fall back to date field
+    const fromDate = method.startDate || method.date;
+    const toDate = method.endDate || method.date;
+    sentence = sentence.replace("{fromDate}", formatDate(fromDate));
+    sentence = sentence.replace("{toDate}", formatDate(toDate));
+    // Add duration if both dates present
+    if (fromDate && toDate) {
+      try {
+        const days = calculateDurationDays(fromDate, toDate);
+        sentence += ` (${days} days)`;
+      } catch {
+        // Skip duration if dates are invalid
+      }
+    }
   } else if (config.dateType === "multi") {
-    sentence = sentence.replace("{dates}", formatDate(method.date));
+    // Use sub-entries if available, fall back to date field
+    if (method.subEntries && method.subEntries.some((s) => !!s.date)) {
+      const dates = method.subEntries
+        .filter((s) => !!s.date)
+        .map((s) => formatDate(s.date));
+      if (dates.length === 1) {
+        sentence = sentence.replace("{dates}", dates[0]!);
+      } else if (dates.length === 2) {
+        sentence = sentence.replace("{dates}", `${dates[0]} and ${dates[1]}`);
+      } else {
+        const last = dates.pop();
+        sentence = sentence.replace("{dates}", `${dates.join(", ")}, and ${last}`);
+      }
+    } else {
+      sentence = sentence.replace("{dates}", formatDate(method.date));
+    }
   }
 
   return sentence;
@@ -356,7 +403,11 @@ export function generateRecruitmentResultsText(
     data.additionalRecruitmentMethods &&
     data.additionalRecruitmentMethods.length > 0
   ) {
-    data.additionalRecruitmentMethods.forEach((method) => {
+    // Filter out entries with no dates (incomplete entries)
+    const methodsWithData = data.additionalRecruitmentMethods.filter(
+      (m) => m.method && methodHasDateData(m)
+    );
+    methodsWithData.forEach((method) => {
       const sentence = formatMethodSentence(method);
       const normalizedSentence = normalizeSentence(sentence);
       lines.push(`${lineNumber}. ${normalizedSentence}`);

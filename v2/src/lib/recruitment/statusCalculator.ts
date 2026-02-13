@@ -103,6 +103,9 @@ export interface RecruitmentCaseData {
     method: string;
     date: string;
     description?: string;
+    startDate?: string;
+    endDate?: string;
+    subEntries?: Array<{ date: string; description?: string }>;
   }>;
   additionalRecruitmentEndDate?: string;
 

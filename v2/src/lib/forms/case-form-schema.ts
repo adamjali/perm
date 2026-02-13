@@ -450,6 +450,142 @@ export interface CaseFormErrors {
 }
 
 // ============================================================================
+// Field Labels
+// ============================================================================
+
+/**
+ * Human-readable field labels for validation error messages.
+ * Used by ErrorSummary and validation logging.
+ */
+export const FIELD_LABELS: Record<string, string> = {
+  // Required
+  employerName: 'Employer Name',
+  positionTitle: 'Position Title',
+  caseStatus: 'Case Status',
+  progressStatus: 'Progress Status',
+
+  // PWD
+  pwdFilingDate: 'PWD Filing Date',
+  pwdDeterminationDate: 'PWD Determination Date',
+  pwdExpirationDate: 'PWD Expiration Date',
+
+  // Recruitment - Job Order
+  jobOrderStartDate: 'Job Order Start Date',
+  jobOrderEndDate: 'Job Order End Date',
+
+  // Recruitment - Sunday Ads
+  sundayAdFirstDate: 'First Sunday Ad Date',
+  sundayAdSecondDate: 'Second Sunday Ad Date',
+
+  // Recruitment - Additional Methods
+  additionalRecruitmentStartDate: 'Additional Recruitment Start Date',
+  additionalRecruitmentEndDate: 'Additional Recruitment End Date',
+
+  // Notice of Filing
+  noticeOfFilingStartDate: 'Notice of Filing Start Date',
+  noticeOfFilingEndDate: 'Notice of Filing End Date',
+
+  // ETA 9089
+  eta9089FilingDate: 'ETA 9089 Filing Date',
+  eta9089AuditDate: 'ETA 9089 Audit Date',
+  eta9089CertificationDate: 'ETA 9089 Certification Date',
+  eta9089ExpirationDate: 'ETA 9089 Expiration Date',
+
+  // I-140
+  i140FilingDate: 'I-140 Filing Date',
+  i140ReceiptDate: 'I-140 Receipt Date',
+  i140ApprovalDate: 'I-140 Approval Date',
+  i140DenialDate: 'I-140 Denial Date',
+};
+
+/**
+ * Get a human-readable label for a field path.
+ * Handles nested paths like "additionalRecruitmentMethods.0.date".
+ */
+export function getFieldLabel(fieldPath: string): string {
+  // Direct match
+  if (FIELD_LABELS[fieldPath]) return FIELD_LABELS[fieldPath];
+
+  // Handle additionalRecruitmentMethods.{index}.{subfield}
+  const methodMatch = fieldPath.match(/^additionalRecruitmentMethods\.(\d+)\.(\w+)$/);
+  if (methodMatch) {
+    const index = Number(methodMatch[1]) + 1;
+    const subfield = methodMatch[2];
+    const subfieldLabels: Record<string, string> = {
+      method: 'Method Type',
+      date: 'Date',
+      startDate: 'Start Date',
+      endDate: 'End Date',
+      description: 'Description',
+    };
+    return `Recruitment Method #${index} ${subfieldLabels[subfield!] ?? subfield}`;
+  }
+
+  // Handle rfiEntries.{index}.{subfield}
+  const rfiMatch = fieldPath.match(/^rfiEntries\.(\d+)\.(\w+)$/);
+  if (rfiMatch) {
+    const subfieldLabels: Record<string, string> = {
+      receivedDate: 'Received Date',
+      responseDueDate: 'Due Date',
+      responseSubmittedDate: 'Submitted Date',
+    };
+    return `RFI ${subfieldLabels[rfiMatch[2]!] ?? rfiMatch[2]}`;
+  }
+
+  // Handle rfeEntries.{index}.{subfield}
+  const rfeMatch = fieldPath.match(/^rfeEntries\.(\d+)\.(\w+)$/);
+  if (rfeMatch) {
+    const subfieldLabels: Record<string, string> = {
+      receivedDate: 'Received Date',
+      responseDueDate: 'Due Date',
+      responseSubmittedDate: 'Submitted Date',
+    };
+    return `RFE ${subfieldLabels[rfeMatch[2]!] ?? rfeMatch[2]}`;
+  }
+
+  // Fallback: convert camelCase to Title Case
+  return fieldPath
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, s => s.toUpperCase())
+    .trim();
+}
+
+// ============================================================================
+// Pre-validation Cleanup
+// ============================================================================
+
+/**
+ * Strip incomplete recruitment method entries before validation.
+ * An entry is incomplete if it has a method type but no dates or sub-entries.
+ * This prevents false validation errors when users add entries but don't fill them.
+ */
+export function stripIncompleteRecruitmentEntries(data: CaseFormData): CaseFormData {
+  if (!data.additionalRecruitmentMethods || data.additionalRecruitmentMethods.length === 0) {
+    return data;
+  }
+
+  const cleanedMethods = data.additionalRecruitmentMethods.filter(m => {
+    // Keep entries that have at least one meaningful date
+    const hasDate = !!m.date;
+    const hasStartDate = !!m.startDate;
+    const hasEndDate = !!m.endDate;
+    const hasSubEntries = m.subEntries && m.subEntries.length > 0 && m.subEntries.some(s => !!s.date);
+
+    // If no method type is set, skip this entry entirely
+    if (!m.method) return false;
+
+    // Keep if any date data is present
+    return hasDate || hasStartDate || hasEndDate || hasSubEntries;
+  });
+
+  if (cleanedMethods.length === data.additionalRecruitmentMethods.length) {
+    return data; // Nothing stripped
+  }
+
+  return { ...data, additionalRecruitmentMethods: cleanedMethods };
+}
+
+// ============================================================================
 // Validation Integration
 // ============================================================================
 
