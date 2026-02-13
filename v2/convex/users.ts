@@ -223,6 +223,7 @@ export const recordLogin = internalMutation({
   },
 });
 
+
 /**
  * Update the current user's profile
  * Allows partial updates to profile fields
