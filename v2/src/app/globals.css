@@ -422,6 +422,18 @@
     50% { transform: translateX(8px); opacity: 1; }
   }
 
+  /* Hero scroll indicator animations */
+  @keyframes scroll-wheel {
+    0%, 100% { transform: translateY(0); opacity: 0.8; }
+    50% { transform: translateY(6px); opacity: 0.15; }
+  }
+  @keyframes scroll-line-pulse {
+    0%, 100% { transform: scaleY(1); opacity: 0.4; }
+    50% { transform: scaleY(0.5); opacity: 0.15; }
+  }
+  .animate-scroll-wheel { animation: scroll-wheel 1.6s ease-in-out infinite; }
+  .animate-scroll-line { animation: scroll-line-pulse 2s ease-in-out infinite; }
+
   /* Floating shapes for parallax with CSS scroll-driven animation */
   .floating-shape {
     position: absolute;

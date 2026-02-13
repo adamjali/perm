@@ -79,12 +79,12 @@ export function HeroSection() {
       <FloatingIcons className="absolute inset-0" />
       <FloatingParticles className="absolute inset-0" />
 
-      {/* Scroll indicator — mouse + line + text at bottom center */}
+      {/* Scroll indicator — mouse + line + text (CSS animations for reliability) */}
       <div
         className="pointer-events-none absolute bottom-10 left-1/2 z-20 hidden -translate-x-1/2 flex-col items-center gap-2 sm:flex"
         aria-hidden="true"
       >
-        <motion.svg width="18" height="28" viewBox="0 0 18 28" fill="none">
+        <svg width="18" height="28" viewBox="0 0 18 28" fill="none">
           <rect
             x="1.25"
             y="1.25"
@@ -95,21 +95,17 @@ export function HeroSection() {
             strokeWidth="2"
             className="text-foreground/50 dark:text-foreground/40"
           />
-          <motion.circle
+          <circle
             cx="9"
+            cy="8"
             r="1.5"
             fill="currentColor"
-            className="text-foreground/60 dark:text-foreground/50"
-            animate={{ cy: [8, 14, 8], opacity: [0.8, 0.15, 0.8] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            className="animate-scroll-wheel text-foreground/60 dark:text-foreground/50"
           />
-        </motion.svg>
-        {/* Animated vertical line — gradient pulse like mining reference */}
-        <motion.div
-          className="h-8 w-[1.5px] origin-top"
+        </svg>
+        <div
+          className="animate-scroll-line h-8 w-[1.5px] origin-top"
           style={{ background: "linear-gradient(to bottom, currentColor, transparent)" }}
-          animate={{ scaleY: [1, 0.5, 1], opacity: [0.4, 0.15, 0.4] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
         <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/40 dark:text-foreground/35">
           Scroll
