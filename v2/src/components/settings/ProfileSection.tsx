@@ -240,10 +240,10 @@ export default function ProfileSection({
               type="email"
               value={userEmail}
               disabled
-              className="pr-32"
+              className="sm:pr-44"
             />
             {isGoogleSignIn && (
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+              <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-xs font-medium border border-primary/20 sm:absolute sm:right-2 sm:top-1/2 sm:mt-0 sm:-translate-y-1/2">
                 <Mail className="w-3 h-3" />
                 <span>Signed in with Google</span>
               </div>
