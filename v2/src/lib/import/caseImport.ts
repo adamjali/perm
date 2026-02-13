@@ -326,11 +326,8 @@ function normalizeDate(value: unknown): string | undefined {
         if (!isNaN(date.getTime())) {
           return date.toISOString().split("T")[0];
         }
-      } catch (error) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn(`[caseImport] Failed to parse ISO date: "${trimmed}"`, error);
-        }
-        captureError(error instanceof Error ? error : new Error(String(error)));
+      } catch {
+        // User-provided date string is unparseable — expected for CSV imports
         return undefined;
       }
     }
@@ -341,11 +338,8 @@ function normalizeDate(value: unknown): string | undefined {
       if (!isNaN(date.getTime())) {
         return date.toISOString().split("T")[0];
       }
-    } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        console.warn(`[caseImport] Failed to parse date string: "${trimmed}"`, error);
-      }
-      captureError(error instanceof Error ? error : new Error(String(error)));
+    } catch {
+      // User-provided date string is unparseable — expected for CSV imports
       return undefined;
     }
   }
@@ -633,7 +627,7 @@ export async function parseCaseImportFile(file: File): Promise<ImportResult> {
         field: "file",
         message: `Invalid JSON format: ${errorDetail}`,
       });
-      captureError(parseError instanceof Error ? parseError : new Error(String(parseError)));
+      captureError(parseError);
       return result;
     }
 
@@ -685,7 +679,7 @@ export async function parseCaseImportFile(file: File): Promise<ImportResult> {
       field: "file",
       message: `Failed to read file: ${error instanceof Error ? error.message : "Unknown error"}`,
     });
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
   }
 
   return result;

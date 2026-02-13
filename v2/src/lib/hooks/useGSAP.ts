@@ -71,7 +71,7 @@ export function useGSAP() {
       setTools({ gsap, ScrollTrigger });
     }).catch((error) => {
       console.error("[useGSAP] Failed to load GSAP:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
     });
   }, []);
 

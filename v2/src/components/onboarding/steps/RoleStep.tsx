@@ -42,7 +42,7 @@ export function RoleStep({ onNext }: RoleStepProps) {
       onNext();
     } catch (error) {
       console.error("Failed to save role:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       toast.error("Failed to save role. Please try again.");
     } finally {
       setIsSaving(false);

@@ -119,7 +119,7 @@ export function ChatWidgetConnected() {
       } catch (err) {
         // Log but don't throw - persistence is best-effort
         console.error('[ChatWidget] Failed to persist tool result:', err);
-        captureError(err instanceof Error ? err : new Error(String(err)));
+        captureError(err);
       }
     },
     [conversationId, updateToolCallResult]
@@ -185,7 +185,7 @@ export function ChatWidgetConnected() {
         hasMarkedAssistant.current = true;
       }).catch((error) => {
         console.error("Failed to mark try_assistant checklist item:", error);
-        captureError(error instanceof Error ? error : new Error(String(error)));
+        captureError(error);
       });
     }
   }, [messages, onboarding]);

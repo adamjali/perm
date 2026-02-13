@@ -49,7 +49,7 @@ export const hasAnyCases = query({
     const userId = await getCurrentUserIdOrNull(ctx);
     if (userId === null) return false;
 
-    // Iterate until we find a non-deleted case (don't assume first is active)
+    // Check first case — if it's soft-deleted, query for an active one
     const cursor = await ctx.db
       .query("cases")
       .withIndex("by_user_id", (q) => q.eq("userId", userId))

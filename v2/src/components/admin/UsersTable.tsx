@@ -264,7 +264,7 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
         });
         toast.success(`Updated ${field}`);
       } catch (error) {
-        captureError(error instanceof Error ? error : new Error(String(error)));
+        captureError(error);
         toast.error(error instanceof Error ? error.message : "Failed to update");
         throw error;
       }
@@ -342,7 +342,7 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
     // Persist to DB (fire-and-forget)
     saveSortPreference({ sortBy: field, sortOrder: newDirection }).catch((error) => {
       console.error("Failed to save sort preference:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
     });
   };
 

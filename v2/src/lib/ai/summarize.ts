@@ -186,7 +186,7 @@ export async function summarizeConversation(
   } catch (error) {
     // Don't let summarization errors affect the main chat flow
     console.error(`[Summarization] Error:`, error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     // Don't rethrow - summarization is non-critical
   }
 }
@@ -213,7 +213,7 @@ export async function checkNeedsSummarization(
     );
   } catch (error) {
     console.error(`[Summarization] Error checking summarization need:`, error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     return false;
   }
 }

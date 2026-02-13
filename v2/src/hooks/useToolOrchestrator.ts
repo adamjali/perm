@@ -216,7 +216,7 @@ export function useToolOrchestrator(
           `[useToolOrchestrator] Failed to parse tool result as JSON`,
           { toolName: toolCall.tool, toolCallKey, error }
         );
-        captureError(error instanceof Error ? error : new Error(String(error)), { operation: 'parseToolResult' });
+        captureError(error, { operation: 'parseToolResult' });
         return;
       }
 

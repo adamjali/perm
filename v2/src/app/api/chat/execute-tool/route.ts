@@ -489,7 +489,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('[Execute Tool] Error:', error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
 
     return NextResponse.json(
       {

@@ -18,7 +18,6 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { captureError } from "@/lib/sentry";
 
 // ============================================================================
 // CONFIGURATION
@@ -71,9 +70,8 @@ interface UseInactivityTimeoutReturn {
 function safeGetItem(key: string): string | null {
   try {
     return localStorage.getItem(key);
-  } catch (error) {
+  } catch {
     // localStorage not available (private browsing, security restrictions)
-    captureError(error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 }
@@ -85,9 +83,8 @@ function safeGetItem(key: string): string | null {
 function safeSetItem(key: string, value: string): void {
   try {
     localStorage.setItem(key, value);
-  } catch (error) {
+  } catch {
     // localStorage not available - continue without persistence
-    captureError(error instanceof Error ? error : new Error(String(error)));
   }
 }
 
@@ -161,9 +158,8 @@ export function useInactivityTimeout({
     if (channelRef.current) {
       try {
         channelRef.current.postMessage({ type: "activity", timestamp: now });
-      } catch (error) {
+      } catch {
         // Channel may be closed - ignore
-        captureError(error instanceof Error ? error : new Error(String(error)));
       }
     }
   }, []);
@@ -265,9 +261,8 @@ export function useInactivityTimeout({
       try {
         channelRef.current = new BroadcastChannel(TIMEOUT_CONFIG.CHANNEL_NAME);
         channelRef.current.onmessage = handleChannelMessage;
-      } catch (error) {
+      } catch {
         // BroadcastChannel not supported - continue without multi-tab sync
-        captureError(error instanceof Error ? error : new Error(String(error)));
       }
     }
 
@@ -350,9 +345,8 @@ export function useInactivityTimeout({
       if (channelRef.current) {
         try {
           channelRef.current.close();
-        } catch (error) {
+        } catch {
           // Ignore close errors
-          captureError(error instanceof Error ? error : new Error(String(error)));
         }
       }
 

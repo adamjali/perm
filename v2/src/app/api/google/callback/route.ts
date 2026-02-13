@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (err) {
     console.error("[Google OAuth] Token exchange failed:", err);
-    captureError(err instanceof Error ? err : new Error(String(err)));
+    captureError(err);
 
     // Determine specific error message
     let errorCode = "token_exchange_failed";

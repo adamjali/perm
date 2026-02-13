@@ -195,7 +195,7 @@ export default function QuietHoursSection({
       setTimeout(() => setJustSaved(false), 1500);
     } catch (error) {
       console.error("Failed to update quiet hours:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       toast.error("Failed to update quiet hours. Please try again.");
     } finally {
       setIsSaving(false);
@@ -217,7 +217,7 @@ export default function QuietHoursSection({
       // Revert on error
       setQuietHoursEnabled(previousValue);
       console.error("Failed to update quiet hours:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       toast.error("Failed to update settings");
     } finally {
       setIsToggling(false);

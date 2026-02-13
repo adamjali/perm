@@ -95,7 +95,7 @@ export function PendingTermsHandler() {
         })
         .catch((error) => {
           console.error("[PendingTermsHandler] Failed to create user profile:", error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           hasCreatedProfile.current = false;
         });
       return;
@@ -122,7 +122,7 @@ export function PendingTermsHandler() {
         })
         .catch((error) => {
           console.error("[PendingTermsHandler] Failed to record terms acceptance:", error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           // Clear anyway to prevent infinite retries
           clearPendingTermsAcceptance();
           // Reset flag so it can retry on next mount if needed

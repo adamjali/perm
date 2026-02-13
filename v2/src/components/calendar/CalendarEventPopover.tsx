@@ -46,6 +46,7 @@ import {
 } from "@/lib/calendar/types";
 import type { CaseStatus } from "@/lib/perm";
 import { captureError } from "@/lib/sentry";
+import { toast } from "@/lib/toast";
 
 // ============================================================================
 // Animation Constants
@@ -234,7 +235,8 @@ export function CalendarEventPopover({
       onClose();
     } catch (error) {
       console.error("Failed to hide case from calendar:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
+      toast.error("Failed to hide case from calendar");
     } finally {
       setIsHiding(false);
     }

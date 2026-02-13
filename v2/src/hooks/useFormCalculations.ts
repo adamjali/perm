@@ -151,7 +151,7 @@ function calculateDependentValue(
       `[useFormCalculations] Failed to calculate ${String(dependentField)} from ${String(sourceField)}:`,
       { sourceValue: formData[sourceField], error }
     );
-    captureError(error instanceof Error ? error : new Error(String(error)), { operation: 'calculateDependentValue' });
+    captureError(error, { operation: 'calculateDependentValue' });
     return undefined;
   }
 }

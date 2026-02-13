@@ -195,7 +195,7 @@ export function useClientActions(
           }
         }
       } catch (error) {
-        captureError(error instanceof Error ? error : new Error(String(error)), { operation: 'executeClientAction' });
+        captureError(error, { operation: 'executeClientAction' });
         result = {
           success: false,
           error:

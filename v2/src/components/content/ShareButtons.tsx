@@ -11,8 +11,6 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link2, Check } from "lucide-react";
-import { captureError } from "@/lib/sentry";
-
 interface ShareButtonsProps {
   title: string;
   url: string;
@@ -31,9 +29,8 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
       await navigator.clipboard.writeText(fullUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.warn("[ShareButtons] Clipboard write failed — likely insecure context or unsupported browser");
-      captureError(error instanceof Error ? error : new Error(String(error)));
+    } catch {
+      // Clipboard API unavailable (HTTP context, denied permission) — expected
     }
   };
 

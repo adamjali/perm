@@ -312,7 +312,7 @@ export function QuickEditFields({
         triggerCalculation(fieldName as keyof CaseFormData, value);
       } catch (e) {
         console.error("[QuickEdit] Calculation error:", e);
-        captureError(e instanceof Error ? e : new Error(String(e)));
+        captureError(e);
         setFieldErrors(prev => ({ ...prev, [fieldName]: "Calculation error — use the full form." }));
       }
     }
@@ -377,7 +377,7 @@ export function QuickEditFields({
       }, 500);
     } catch (error) {
       console.error("[QuickEdit] Save failed:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       setSubmitStatus("error");
       setSubmitError(error instanceof Error ? error.message : "Save failed");
     }

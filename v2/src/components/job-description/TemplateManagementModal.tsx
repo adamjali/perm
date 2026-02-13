@@ -183,7 +183,7 @@ export function TemplateManagementModal({
       toast.success("Template updated");
     } catch (error) {
       console.error("[TemplateManagementModal] Update failed:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       toast.error(error instanceof Error ? error.message : "Failed to update template");
     } finally {
       setIsProcessing(false);
@@ -213,7 +213,7 @@ export function TemplateManagementModal({
       }
     } catch (error) {
       console.error("[TemplateManagementModal] Delete failed:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       toast.error(error instanceof Error ? error.message : "Failed to delete template");
     } finally {
       setIsProcessing(false);

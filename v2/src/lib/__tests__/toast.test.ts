@@ -28,16 +28,9 @@ vi.mock("sonner", () => ({
 }));
 
 describe("Auth-Aware Toast", () => {
-  // Reset module state at suite start to ensure clean isolation
-  beforeAll(() => {
-    updateToastAuthState(false);
-  });
-
   beforeEach(() => {
-    // Reset state FIRST (before clearing mocks) to handle any cross-test pollution
-    updateToastAuthState(false);
     vi.clearAllMocks();
-    // Re-establish mock return values (isolate: false can cause cross-file leakage)
+    // Re-establish mock return values after clearAllMocks (isolate: false can cause cross-file leakage)
     vi.mocked(sonnerToast).mockReturnValue("toast-id-default");
     vi.mocked(sonnerToast.success).mockReturnValue("toast-id-success");
     vi.mocked(sonnerToast.error).mockReturnValue("toast-id-error");
@@ -47,12 +40,6 @@ describe("Auth-Aware Toast", () => {
     vi.mocked(sonnerToast.custom).mockReturnValue("toast-id-custom");
     vi.mocked(sonnerToast.message).mockReturnValue("toast-id-message");
     vi.mocked(sonnerToast.promise).mockImplementation((promise) => promise as never);
-    // Reset state again AFTER clearing mocks to ensure clean state
-    updateToastAuthState(false);
-  });
-
-  afterEach(() => {
-    // Clean up
     updateToastAuthState(false);
   });
 

@@ -121,7 +121,7 @@ export async function getPushSubscriptionStatus(): Promise<PushSubscriptionStatu
       subscribed: subscription !== null,
     };
   } catch (error) {
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     return { supported: true, permission, subscribed: false };
   }
 }
@@ -149,7 +149,7 @@ export async function getCurrentSubscription(): Promise<PushSubscription | null>
     const registration = await navigator.serviceWorker.ready;
     return await registration.pushManager.getSubscription();
   } catch (error) {
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     return null;
   }
 }
@@ -228,7 +228,7 @@ export async function unsubscribeFromPush(): Promise<void> {
     }
   } catch (error) {
     console.error("Failed to unsubscribe from push:", error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
   }
 }
 
@@ -277,7 +277,7 @@ export async function unregisterPushServiceWorker(): Promise<boolean> {
     }
     return false;
   } catch (error) {
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     return false;
   }
 }

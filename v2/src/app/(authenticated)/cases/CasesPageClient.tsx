@@ -88,11 +88,8 @@ function getStoredPageSize(): number {
         return parsed;
       }
     }
-  } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[CasesPage] localStorage read failed:", error);
-    }
-    captureError(error instanceof Error ? error : new Error(String(error)));
+  } catch {
+    // localStorage unavailable (private browsing, SSR) — expected, use default
   }
   return DEFAULT_PAGE_SIZE;
 }
@@ -101,14 +98,8 @@ function setStoredPageSize(size: number): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(size));
-  } catch (error) {
-    // Handle quota exceeded or other storage errors
-    if (error instanceof DOMException && error.name === "QuotaExceededError") {
-      console.warn("[CasesPage] localStorage quota exceeded");
-    } else if (process.env.NODE_ENV === "development") {
-      console.warn("[CasesPage] localStorage write failed:", error);
-    }
-    captureError(error instanceof Error ? error : new Error(String(error)));
+  } catch {
+    // localStorage unavailable or quota exceeded — expected, silently fail
   }
 }
 
@@ -119,11 +110,8 @@ function getStoredViewMode(): ViewMode {
     if (stored === "list" || stored === "card") {
       return stored;
     }
-  } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[CasesPage] localStorage read failed:", error);
-    }
-    captureError(error instanceof Error ? error : new Error(String(error)));
+  } catch {
+    // localStorage unavailable (private browsing, SSR) — expected, use default
   }
   return "card";
 }
@@ -132,13 +120,8 @@ function setStoredViewMode(mode: ViewMode): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
-  } catch (error) {
-    if (error instanceof DOMException && error.name === "QuotaExceededError") {
-      console.warn("[CasesPage] localStorage quota exceeded");
-    } else if (process.env.NODE_ENV === "development") {
-      console.warn("[CasesPage] localStorage write failed:", error);
-    }
-    captureError(error instanceof Error ? error : new Error(String(error)));
+  } catch {
+    // localStorage unavailable or quota exceeded — expected, silently fail
   }
 }
 
@@ -591,7 +574,7 @@ export function CasesPageClient() {
         toast.success("Order saved");
       } catch (error) {
         console.error("Failed to save custom order:", error);
-        captureError(error instanceof Error ? error : new Error(String(error)));
+        captureError(error);
         toast.error("Failed to save order");
         setLocalOrder([]); // Reset on error
       }
@@ -648,7 +631,7 @@ export function CasesPageClient() {
       setSelectedCaseIds(new Set(allIds));
     } catch (error) {
       console.error("Failed to fetch all case IDs:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       // Fallback to current page if query fails
       const currentPageIds = processedCases.map((c) => c._id);
       setSelectedCaseIds(new Set(currentPageIds));
@@ -681,7 +664,7 @@ export function CasesPageClient() {
       toast.success(`Exported ${fullCases.length} cases as CSV`);
     } catch (error) {
       console.error("Failed to export CSV:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       const message = error instanceof Error ? error.message : "Failed to export CSV";
       toast.error(message);
     } finally {
@@ -710,7 +693,7 @@ export function CasesPageClient() {
       toast.success(`Exported ${fullCases.length} cases as JSON`);
     } catch (error) {
       console.error("Failed to export JSON:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       const message = error instanceof Error ? error.message : "Failed to export JSON";
       toast.error(message);
     } finally {
@@ -772,7 +755,7 @@ export function CasesPageClient() {
         setSelectionMode(false);
       } catch (error) {
         console.error("Bulk calendar sync failed:", error);
-        captureError(error instanceof Error ? error : new Error(String(error)));
+        captureError(error);
         toast.error(`Failed to ${enable ? "sync" : "unsync"} cases`);
       } finally {
         setBulkOperationLoading(false);
@@ -820,7 +803,7 @@ export function CasesPageClient() {
       setConfirmDialog({ open: false, type: null, count: 0 });
     } catch (error) {
       console.error("Bulk operation failed:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       toast.error("Bulk operation failed");
     } finally {
       setBulkOperationLoading(false);
@@ -872,7 +855,7 @@ export function CasesPageClient() {
       setSingleCaseConfirm({ open: false, type: null, caseId: null, caseName: "" });
     } catch (error) {
       console.error("Single case operation failed:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       toast.error(
         singleCaseConfirm.type === "delete"
           ? "Failed to delete case. Please try again."
@@ -1005,7 +988,7 @@ export function CasesPageClient() {
         };
       } catch (error) {
         console.error("Import failed:", error);
-        captureError(error instanceof Error ? error : new Error(String(error)));
+        captureError(error);
         toast.error("Failed to import cases");
         throw error;
       }

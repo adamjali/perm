@@ -273,7 +273,7 @@ export function ChatInput({
       setIsRecording(true);
     } catch (error) {
       console.error('Failed to start speech recognition:', error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       recognitionRef.current = null;
       setIsRecording(false);
     }

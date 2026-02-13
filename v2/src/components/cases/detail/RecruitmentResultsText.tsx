@@ -116,7 +116,7 @@ export function RecruitmentResultsText({
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy text:", err);
-      captureError(err instanceof Error ? err : new Error(String(err)));
+      captureError(err);
       toast.error("Failed to copy text to clipboard. Please try again.");
     }
   };

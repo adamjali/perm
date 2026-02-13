@@ -75,7 +75,7 @@ export function TemplateUpdateConfirmDialog({
       onOpenChange(false);
     } catch (error) {
       console.error("[TemplateUpdateConfirmDialog] Overwrite failed:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       // Don't close dialog on error - let user retry or cancel
     } finally {
       setIsProcessing(false);
@@ -92,7 +92,7 @@ export function TemplateUpdateConfirmDialog({
       setNewName("");
     } catch (error) {
       console.error("[TemplateUpdateConfirmDialog] Save as new failed:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       // Don't close dialog on error - let user retry or cancel
     } finally {
       setIsProcessing(false);

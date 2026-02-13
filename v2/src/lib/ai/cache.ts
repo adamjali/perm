@@ -120,7 +120,7 @@ export async function executeWithCache<T>(
   } catch (error) {
     // If cache check fails, continue with execution
     console.warn(`[Cache] Error checking cache for ${toolName}:`, error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
   }
 
   // Cache miss - execute the function
@@ -149,7 +149,7 @@ export async function executeWithCache<T>(
   } catch (error) {
     // If cache store fails, log but don't throw
     console.warn(`[Cache] Error storing result for ${toolName}:`, error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
   }
 
   return result;
@@ -216,7 +216,7 @@ export async function invalidateCaseCaches(
     return count;
   } catch (error) {
     console.warn('[Cache] Error invalidating case caches:', error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     return 0;
   }
 }

@@ -152,7 +152,7 @@ export const sendPushNotification = internalAction({
       } else {
         // Other error - log but don't remove subscription
         log.error('Push notification failed', { error: webPushError.message || 'Unknown error' });
-        await recordError(ctx, "action", "pushNotifications.send.delivery", error, { userId, resourceId: userId });
+        await recordError(ctx, "action", "pushNotifications.send.delivery", error, { userId });
         await reportError(error, {
           module: "push",
           operation: "sendPushNotification",

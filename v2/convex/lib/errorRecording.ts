@@ -2,7 +2,7 @@
  * Error Recording Helper
  *
  * Thin wrapper around systemErrors.record for use in catch blocks.
- * Works in both mutation and action handlers (anything with ctx.scheduler).
+ * Works in mutation and action handlers (anything with ctx.scheduler).
  *
  * Usage:
  *   } catch (error) {
@@ -11,19 +11,26 @@
  *   }
  */
 
+import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 
+// FilterApi generic can't fully resolve internal.systemErrors at the type level.
+// The reference is verified correct — see convex/systemErrors.ts (internalMutation).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const internalApi = internal as any;
+
+/** Accepts both mutation and action contexts (both have scheduler.runAfter). */
 type CtxWithScheduler = {
   scheduler: {
-    runAfter: (...args: any[]) => any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    runAfter: (delay: number, fn: any, args: any) => Promise<any>;
   };
 };
 
-type ErrorSource = "mutation" | "action" | "query" | "cron" | "webhook";
+type ErrorSource = "mutation" | "action" | "cron" | "webhook";
 
 interface RecordErrorOpts {
-  userId?: string;
+  userId?: Id<"users">;
   resourceId?: string;
   extra?: string;
 }
@@ -41,21 +48,17 @@ export async function recordError(
     error instanceof Error ? error.stack : undefined;
 
   try {
-    await ctx.scheduler.runAfter(
-      0,
-      internal.systemErrors.record as unknown as never,
-      {
-        source,
-        operation,
-        message,
-        stack,
-        ...(opts?.userId ? { userId: opts.userId } : {}),
-        ...(opts?.resourceId ? { resourceId: opts.resourceId } : {}),
-        ...(opts?.extra ? { extra: opts.extra } : {}),
-      },
-    );
-  } catch {
+    await ctx.scheduler.runAfter(0, internalApi.systemErrors.record, {
+      source,
+      operation,
+      message,
+      stack,
+      ...(opts?.userId && { userId: opts.userId }),
+      ...(opts?.resourceId && { resourceId: opts.resourceId }),
+      ...(opts?.extra && { extra: opts.extra }),
+    });
+  } catch (recordingError) {
     // Never let error recording itself cause failures
-    console.error(`[errorRecording] Failed to record: ${operation}`, message);
+    console.error(`[errorRecording] Failed to record: ${operation}`, message, recordingError);
   }
 }

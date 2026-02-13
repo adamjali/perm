@@ -14,7 +14,6 @@ import { requireAdmin } from "./lib/admin";
 const ERROR_SOURCE = v.union(
   v.literal("mutation"),
   v.literal("action"),
-  v.literal("query"),
   v.literal("cron"),
   v.literal("webhook"),
 );

@@ -14,7 +14,6 @@
 
 import { OAuth2Client } from "google-auth-library";
 import crypto from "crypto";
-import { captureError } from "@/lib/sentry";
 
 /**
  * Google Calendar events scope only - no Gmail access
@@ -66,8 +65,8 @@ export function decodeState(state: string): StatePayload | null {
     }
 
     return payload;
-  } catch (error) {
-    captureError(error instanceof Error ? error : new Error(String(error)));
+  } catch {
+    // Invalid/tampered state parameter — expected at security boundary
     return null;
   }
 }
@@ -167,12 +166,9 @@ export async function exchangeCodeForTokens(
       if (payload?.email) {
         email = payload.email;
       }
-    } catch (err) {
-      // id_token verification failed, email will remain "unknown"
-      // NOTE: In production, consider monitoring this - frequent failures may indicate
-      // Google API changes or misconfiguration. Track via error monitoring service.
-      console.warn("Failed to verify id_token:", err);
-      captureError(err instanceof Error ? err : new Error(String(err)));
+    } catch {
+      // id_token verification can fail legitimately (clock skew, missing token)
+      // Email falls back to "unknown" — not a bug
     }
   }
 

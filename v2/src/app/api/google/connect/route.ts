@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("[Google OAuth] Connect error:", error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
 
     // Determine specific error code based on error message
     let errorCode = "oauth_init_failed";

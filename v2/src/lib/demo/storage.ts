@@ -87,7 +87,7 @@ export function getDemoCases(): DemoCase[] {
     return parsed as DemoCase[];
   } catch (error) {
     console.error("Error reading demo cases from localStorage:", error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     return [];
   }
 }
@@ -109,7 +109,7 @@ export function setDemoCases(cases: DemoCase[]): StorageResult {
     return { success: true };
   } catch (error) {
     console.error("Error saving demo cases to localStorage:", error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     if (error instanceof DOMException && error.name === "QuotaExceededError") {
       console.warn("localStorage quota exceeded, unable to save demo cases");
       return { success: false, error: "quota_exceeded" };

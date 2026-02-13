@@ -35,7 +35,7 @@ export function getPostBySlug(type: ContentType, slug: string): Post | null {
     raw = fs.readFileSync(filePath, "utf-8");
   } catch (error) {
     console.error(`[content] Failed to read ${type}/${slug}.mdx:`, error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     return null;
   }
 
@@ -47,7 +47,7 @@ export function getPostBySlug(type: ContentType, slug: string): Post | null {
     content = parsed.content;
   } catch (error) {
     console.error(`[content] Failed to parse frontmatter in ${type}/${slug}.mdx:`, error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     return null;
   }
 

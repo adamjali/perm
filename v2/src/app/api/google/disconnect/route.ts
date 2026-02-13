@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       } catch (clearError) {
         // Log but continue - we still want to disconnect even if event clearing fails
         console.warn("[Google OAuth] Error clearing events:", clearError);
-        captureError(clearError instanceof Error ? clearError : new Error(String(clearError)));
+        captureError(clearError);
       }
     }
 
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("[Google OAuth] Disconnect error:", error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     return NextResponse.json(
       {
         error: "Failed to disconnect",

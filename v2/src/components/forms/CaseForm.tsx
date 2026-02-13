@@ -493,7 +493,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
       router.push("/cases");
     } catch (error) {
       console.error("Failed to delete case:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       toast.error("Failed to delete case. Please try again.");
       setIsDeleting(false);
     }

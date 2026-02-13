@@ -134,14 +134,14 @@ export default function SupportSection({ profile }: SupportSectionProps) {
         router.push("/login");
       } catch (signOutError) {
         console.error("Failed to sign out after deletion:", signOutError);
-        captureError(signOutError instanceof Error ? signOutError : new Error(String(signOutError)));
+        captureError(signOutError);
         cancelSignOut();
         // Still redirect since account is deleted
         router.push("/login");
       }
     } catch (error) {
       console.error("Failed to request account deletion:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       const message =
         error instanceof Error
           ? error.message
@@ -161,7 +161,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
       toast.success("Account deletion cancelled");
     } catch (error) {
       console.error("Failed to cancel deletion:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       toast.error("Failed to cancel deletion");
     }
   };

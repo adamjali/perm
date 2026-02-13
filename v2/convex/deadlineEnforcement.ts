@@ -240,14 +240,6 @@ export const checkAndEnforceDeadlines = mutation({
             error: emailError instanceof Error ? emailError.message : String(emailError),
           });
           await recordError(ctx, "mutation", "deadlineEnforcement.checkAndEnforce.emailSchedule", emailError, { userId, resourceId: caseDoc._id });
-          // Report to Sentry via scheduled action (mutations can't fetch directly)
-          await ctx.scheduler.runAfter(0, internal.sentryReporter.report, {
-            errorMessage: emailError instanceof Error ? emailError.message : String(emailError),
-            errorName: "AutoClosureEmailError",
-            module: "deadline",
-            operation: "scheduleAutoClosureEmail",
-            resourceId: caseDoc._id,
-          });
         }
 
         closedCases.push({

@@ -344,7 +344,7 @@ function createTools(
                   errorType: error instanceof Error ? error.constructor.name : typeof error,
                   params: truncateForLog(params),
                 });
-                captureError(error instanceof Error ? error : new Error(String(error)));
+                captureError(error);
                 return {
                   error: 'Failed to query cases',
                   suggestion: 'Please try again or rephrase your question about cases.',
@@ -360,7 +360,7 @@ function createTools(
           return result;
         } catch (error) {
           console.error(`[Chat API] queryCases executeWithCache error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to execute query',
             details: error instanceof Error ? error.message : String(error),
@@ -399,7 +399,7 @@ function createTools(
                 errorType: error instanceof Error ? error.constructor.name : typeof error,
                 params: truncateForLog(params),
               });
-              captureError(error instanceof Error ? error : new Error(String(error)));
+              captureError(error);
               return {
                 error: 'Failed to search knowledge base',
                 suggestion: 'Please try rephrasing your question about PERM regulations.',
@@ -451,7 +451,7 @@ function createTools(
                 errorType: error instanceof Error ? error.constructor.name : typeof error,
                 params: truncateForLog(params),
               });
-              captureError(error instanceof Error ? error : new Error(String(error)));
+              captureError(error);
               return {
                 error: 'Web search temporarily unavailable',
                 suggestion: 'I can still answer using my knowledge base. Try asking a different way.',
@@ -638,7 +638,7 @@ function createTools(
           };
         } catch (error) {
           console.error(`[Chat API] createCase error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to create case',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -726,7 +726,7 @@ function createTools(
           };
         } catch (error) {
           console.error(`[Chat API] updateCase error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
 
           // Extract validation errors for better AI feedback
           const errorMessage = error instanceof Error ? error.message : 'Please try again';
@@ -797,7 +797,7 @@ function createTools(
           };
         } catch (error) {
           console.error(`[Chat API] archiveCase error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to close case',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -853,7 +853,7 @@ function createTools(
           };
         } catch (error) {
           console.error(`[Chat API] reopenCase error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to reopen case',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -943,7 +943,7 @@ function createTools(
           };
         } catch (error) {
           console.error(`[Chat API] syncToCalendar error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to sync to calendar',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -999,7 +999,7 @@ function createTools(
           };
         } catch (error) {
           console.error(`[Chat API] unsyncFromCalendar error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to unsync from calendar',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -1058,7 +1058,7 @@ function createTools(
           };
         } catch (error) {
           console.error(`[Chat API] markNotificationRead error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to mark notification as read',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -1139,7 +1139,7 @@ function createTools(
           };
         } catch (error) {
           console.error(`[Chat API] deleteNotification error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to delete notification',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -1237,7 +1237,7 @@ function createTools(
           };
         } catch (error) {
           console.error(`[Chat API] updateSettings error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to update settings',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -1344,7 +1344,7 @@ function createTools(
           };
         } catch (error) {
           console.error(`[Chat API] getSettings error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to get settings',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -1399,7 +1399,7 @@ AUTONOMOUS: No confirmation needed.`,
               result.currentCaseData = caseData;
             } catch (e) {
               console.error('[Chat API] Error fetching current case data:', e);
-              captureError(e instanceof Error ? e : new Error(String(e)));
+              captureError(e);
             }
           }
         }
@@ -1487,7 +1487,7 @@ AUTONOMOUS: No confirmation needed.`,
           return { success: true, ...result, message: `Updated ${result.successCount} cases to "${params.status}"` };
         } catch (error) {
           console.error(`[Chat API] bulkUpdateStatus error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return { error: 'Failed to bulk update status', suggestion: error instanceof Error ? error.message : 'Please try again' };
         }
       },
@@ -1540,7 +1540,7 @@ AUTONOMOUS: No confirmation needed.`,
           return { success: true, ...result, message: `Archived ${result.successCount} cases` };
         } catch (error) {
           console.error(`[Chat API] bulkArchiveCases error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return { error: 'Failed to bulk archive cases', suggestion: error instanceof Error ? error.message : 'Please try again' };
         }
       },
@@ -1665,7 +1665,7 @@ AUTONOMOUS: No confirmation needed.`,
           };
         } catch (error) {
           console.error(`[Chat API] bulkCalendarSync error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to update calendar sync',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -1715,7 +1715,7 @@ AUTONOMOUS: No confirmation needed.`,
           };
         } catch (error) {
           console.error(`[Chat API] listJobDescriptionTemplates error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to list job description templates',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -1773,7 +1773,7 @@ AUTONOMOUS: No confirmation needed.`,
           };
         } catch (error) {
           console.error(`[Chat API] createJobDescriptionTemplate error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to create job description template',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -1856,7 +1856,7 @@ AUTONOMOUS: No confirmation needed.`,
           };
         } catch (error) {
           console.error(`[Chat API] updateJobDescriptionTemplate error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           return {
             error: 'Failed to update job description template',
             suggestion: error instanceof Error ? error.message : 'Please try again',
@@ -1928,12 +1928,12 @@ function triggerSummarizationCheck(
         // Run summarization in background - don't await
         summarizeConversation(conversationId, token).catch((error) => {
           console.error(`[Chat API] [${sessionId}] Summarization error:`, error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
         });
       }
     } catch (error) {
       console.error(`[Chat API] [${sessionId}] Failed to check summarization need:`, error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
     }
   })();
 }
@@ -2044,7 +2044,7 @@ export async function POST(req: Request) {
         }
       } catch (error) {
         console.warn(`[Chat API] [${sessionId}] Failed to get context, using full history:`, error);
-        captureError(error instanceof Error ? error : new Error(String(error)));
+        captureError(error);
         convertedMessages = await convertToModelMessages(messages);
       }
     } else {
@@ -2068,7 +2068,7 @@ export async function POST(req: Request) {
       console.log(`[Chat API] [${sessionId}] Action mode: ${actionMode}`);
     } catch (error) {
       console.warn(`[Chat API] [${sessionId}] Failed to get action mode, using default (confirm):`, error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
     }
 
     // Build system prompt WITH action mode AND current date context
@@ -2158,7 +2158,7 @@ export async function POST(req: Request) {
     } catch (error) {
       // All models failed (ai-fallback exhausted all options)
       console.error(`[Chat API] [${sessionId}] All models failed:`, error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       return new Response(
         JSON.stringify({
           error: 'All AI providers are currently unavailable. Please try again later.',
@@ -2168,7 +2168,7 @@ export async function POST(req: Request) {
     }
   } catch (error) {
     console.error(`[Chat API] [${sessionId}] Error:`, error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     return new Response(
       JSON.stringify({ error: 'Failed to process chat request' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

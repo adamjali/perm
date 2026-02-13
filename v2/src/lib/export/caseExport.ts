@@ -611,7 +611,7 @@ function downloadBlob(blob: Blob, filename: string): void {
     URL.revokeObjectURL(url);
   } catch (error) {
     console.error("[Export] Download failed:", error);
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     throw new Error("Failed to initiate download. Please check your browser settings and try again.");
   }
 }

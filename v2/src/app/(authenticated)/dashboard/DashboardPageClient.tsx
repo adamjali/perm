@@ -35,7 +35,7 @@ export function DashboardPageClient() {
       hasRunEnforcement.current = true;
       checkDeadlines().catch((error) => {
         console.error("Failed to check deadlines:", error);
-        captureError(error instanceof Error ? error : new Error(String(error)));
+        captureError(error);
       });
     }
   }, [currentUser, isEnforcementEnabled, checkDeadlines]);

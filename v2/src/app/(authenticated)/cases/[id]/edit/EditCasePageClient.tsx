@@ -270,7 +270,7 @@ export function EditCasePageClient() {
         await router.push(`/cases/${caseId}`);
       } catch (error) {
         console.error("Failed to update case:", error);
-        captureError(error instanceof Error ? error : new Error(String(error)));
+        captureError(error);
         let errorMsg = "Failed to update case. Please try again.";
         if (error instanceof ConvexError) {
           const data = error.data;
@@ -340,7 +340,7 @@ export function EditCasePageClient() {
           }
         } catch (error) {
           console.error("Failed to check for duplicates:", error);
-          captureError(error instanceof Error ? error : new Error(String(error)));
+          captureError(error);
           // On error, warn but allow update to proceed
           toast.warning("Could not verify duplicates, proceeding with update");
         }

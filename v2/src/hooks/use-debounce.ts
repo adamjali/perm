@@ -42,12 +42,12 @@ function safeExecute<T extends AnyFunction>(
     if (result instanceof Promise) {
       result.catch((error: unknown) => {
         console.error(`[${hookName}] Async callback error:`, error);
-        captureError(error instanceof Error ? error : new Error(String(error)), { operation: hookName });
+        captureError(error, { operation: hookName });
       });
     }
   } catch (error) {
     console.error(`[${hookName}] Callback error:`, error);
-    captureError(error instanceof Error ? error : new Error(String(error)), { operation: hookName });
+    captureError(error, { operation: hookName });
   }
 }
 

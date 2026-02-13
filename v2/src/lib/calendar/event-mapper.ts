@@ -181,7 +181,7 @@ function milestoneToCalendarEvent(
       `[event-mapper] Failed to parse date for case ${caseId}, field ${milestone.field}: "${milestone.date}"`,
       error
     );
-    captureError(error instanceof Error ? error : new Error(String(error)));
+    captureError(error);
     return null;
   }
 

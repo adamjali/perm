@@ -613,7 +613,7 @@ export function DemoCaseModal({
       onClose();
     } catch (error) {
       console.error("Failed to save demo case:", error);
-      captureError(error instanceof Error ? error : new Error(String(error)));
+      captureError(error);
       toast.error("Failed to save case. Please try again.");
     }
   }, [formData, caseToEdit, validate, onSave, onClose, permValidation, hasDateInlineErrors]);
