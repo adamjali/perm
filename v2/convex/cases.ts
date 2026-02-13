@@ -50,7 +50,7 @@ export const hasAnyCases = query({
     if (userId === null) return false;
 
     // Iterate until we find a non-deleted case (don't assume first is active)
-    let cursor = await ctx.db
+    const cursor = await ctx.db
       .query("cases")
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .first();

@@ -44,6 +44,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Sentry example page (auto-generated)
+src/app/sentry-example-page/
+
 *storybook.log
 storybook-static
 
