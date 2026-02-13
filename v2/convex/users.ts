@@ -198,6 +198,32 @@ export const ensureUserProfileInternal = internalMutation({
 });
 
 /**
+ * Increment login counter on every authentication event.
+ * Called from auth.ts afterUserCreatedOrUpdated callback.
+ * Idempotent-safe: no-ops if profile doesn't exist yet (ensureUserProfileInternal creates it).
+ */
+export const recordLogin = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
+      .unique();
+
+    if (!profile) {
+      // Profile not created yet — ensureUserProfileInternal will handle it.
+      // The next login will pick up the count.
+      return;
+    }
+
+    await ctx.db.patch(profile._id, {
+      loginCount: (profile.loginCount ?? 0) + 1,
+      lastLoginAt: Date.now(),
+    });
+  },
+});
+
+/**
  * Update the current user's profile
  * Allows partial updates to profile fields
  */

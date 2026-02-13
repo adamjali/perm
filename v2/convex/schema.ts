@@ -216,6 +216,10 @@ export default defineSchema({
     /** Whether the user dismissed the getting-started checklist. */
     onboardingChecklistDismissed: v.optional(v.boolean()),
 
+    // Login tracking (persistent — authSessions get cleaned up by Convex Auth)
+    loginCount: v.optional(v.number()),
+    lastLoginAt: v.optional(v.number()),
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),

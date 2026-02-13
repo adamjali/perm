@@ -164,11 +164,10 @@ export async function getAdminDashboardDataHelper(ctx: QueryCtx): Promise<AdminD
       verificationMethod = "unverified";
     }
 
-    // Session stats
-    const lastLoginTime = sessions.length > 0
-      ? Math.max(...sessions.map((s) => s._creationTime))
-      : null;
-    const totalLogins = sessions.length;
+    // Login stats: prefer persistent fields, fall back to session count for pre-existing users
+    const lastLoginTime = profile?.lastLoginAt
+      ?? (sessions.length > 0 ? Math.max(...sessions.map((s) => s._creationTime)) : null);
+    const totalLogins = profile?.loginCount ?? sessions.length;
 
     // Case stats
     const totalCasesCount = userCases.length;
