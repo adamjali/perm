@@ -31,6 +31,7 @@ import { SelectInput, type SelectOption } from "@/components/forms/SelectInput";
 import { Button } from "@/components/ui/button";
 import { User, Mail, Globe, Check } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import { useSettingsSectionDirtyState } from "./SettingsUnsavedChangesContext";
 
 // ============================================================================
@@ -153,6 +154,7 @@ export default function ProfileSection({
       setTimeout(() => setJustSaved(false), 1500);
     } catch (error) {
       console.error("Failed to update profile:", error);
+      captureError(error, { operation: "updateProfile" });
       toast.error("Failed to update profile. Please try again.");
     } finally {
       setIsSaving(false);

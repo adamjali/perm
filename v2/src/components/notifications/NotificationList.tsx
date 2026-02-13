@@ -23,6 +23,7 @@ import { api } from "../../../convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { captureError } from "@/lib/sentry";
 import { cn } from "@/lib/utils";
 import { safeFormatDistanceToNow } from "@/lib/utils/date";
 import {
@@ -454,6 +455,7 @@ export default function NotificationList({
       await markAsRead({ notificationId });
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
+      captureError(error, { operation: "markNotificationRead" });
     }
   };
 
@@ -462,6 +464,7 @@ export default function NotificationList({
       await deleteNotification({ notificationId });
     } catch (error) {
       console.error("Failed to delete notification:", error);
+      captureError(error, { operation: "deleteNotification" });
     }
   };
 

@@ -28,6 +28,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import { api } from "../../convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -105,6 +106,7 @@ export function useNotificationToasts(): void {
         await markAsRead({ notificationId: notification._id });
       } catch (error) {
         console.error("Failed to mark notification as read:", error);
+        captureError(error, { operation: "markNotificationReadFromToast" });
         // Still navigate - the notification will show as unread in dropdown
       }
 

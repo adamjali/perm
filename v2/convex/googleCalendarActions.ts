@@ -26,6 +26,7 @@ import {
 import type { Id } from "./_generated/dataModel";
 import { extractUserIdFromAction } from "./lib/auth";
 import { loggers } from "./lib/logging";
+import { reportError } from "./lib/sentry";
 
 const log = loggers.calendar;
 
@@ -122,6 +123,11 @@ export const refreshAccessToken = internalAction({
       // Token revoked or invalid - auto-disconnect
       log.error('Token refresh failed', {
         error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      await reportError(error, {
+        module: "calendar",
+        operation: "refreshAccessToken",
+        userId: args.userId,
       });
 
       // Clear tokens to auto-disconnect
@@ -369,6 +375,11 @@ export const createCalendarEvent = internalAction({
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       log.error('Failed to create event', { error: message });
+      await reportError(error, {
+        module: "calendar",
+        operation: "createCalendarEvent",
+        extra: { eventType },
+      });
       return {
         eventId: "",
         type: eventType,

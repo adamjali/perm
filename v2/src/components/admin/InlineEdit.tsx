@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Check, X } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 export type EditableField = "name" | "userType";
@@ -40,6 +41,7 @@ export function InlineEdit({
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save inline edit:", error);
+      captureError(error, { operation: "adminInlineEdit" });
       toast.error(error instanceof Error ? error.message : "Failed to save");
       setEditValue(value);
     } finally {

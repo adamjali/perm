@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import { CheckCheck, Trash2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -66,6 +67,7 @@ export default function BulkActions({ className }: BulkActionsProps) {
       }
     } catch (error) {
       console.error("Failed to mark all as read:", error);
+      captureError(error, { operation: "bulkMarkAllRead" });
       toast.error("Failed to mark all as read");
     } finally {
       setIsMarkingAllRead(false);
@@ -84,6 +86,7 @@ export default function BulkActions({ className }: BulkActionsProps) {
       }
     } catch (error) {
       console.error("Failed to delete read notifications:", error);
+      captureError(error, { operation: "bulkDeleteReadNotifications" });
       toast.error("Failed to delete notifications");
     } finally {
       setIsDeletingRead(false);

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import { Loader2, Mail } from "lucide-react";
 import {
   Dialog,
@@ -62,6 +63,7 @@ export function SendEmailModal({ user, onClose }: SendEmailModalProps) {
       onClose();
     } catch (error) {
       console.error("Failed to send email:", error);
+      captureError(error, { operation: "adminSendEmail" });
       toast.error(error instanceof Error ? error.message : "Failed to send email");
     } finally {
       setIsSending(false);

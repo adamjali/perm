@@ -73,6 +73,7 @@ import { useFormErrors } from "@/hooks/useFormErrors";
 import { useFormSubmission } from "@/hooks/useFormSubmission";
 import { useSectionState, type SectionName } from "@/hooks/useSectionState";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { useAuthContext } from "@/lib/contexts/AuthContext";
 import {
   caseFormSchema,
   validateStatusSelection,
@@ -128,6 +129,7 @@ export interface CaseFormProps {
 
 export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: CaseFormProps) {
   const router = useRouter();
+  const { isSigningOut } = useAuthContext();
   const initialDataRef = useRef<string | null>(null);
   const [trackDirty, setTrackDirty] = useState(false);
 
@@ -244,7 +246,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
   // Track the real submission state from useFormSubmission (synced via effect below).
   // rhfIsSubmitting alone is insufficient — the form bypasses RHF's handleSubmit.
   const [formSubmitting, setFormSubmitting] = useState(false);
-  const { isDirty, setDirty, shouldShowDialog, requestNavigation, confirmNavigation, cancelNavigation, markNavigating } = useUnsavedChanges({ isSubmitting: rhfIsSubmitting || formSubmitting });
+  const { isDirty, setDirty, shouldShowDialog, requestNavigation, confirmNavigation, cancelNavigation, markNavigating } = useUnsavedChanges({ isSubmitting: rhfIsSubmitting || formSubmitting, disabled: isSigningOut });
 
   // Start dirty tracking after form state stabilizes (field registration, auto-calc, etc.)
   useEffect(() => {
@@ -459,6 +461,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
     setWarnings,
     setShowErrorSummary,
     clearAllErrors,
+    onAuthError: () => setDirty(false),
   });
 
   // Sync real submission state to unsaved changes hook (declared above useUnsavedChanges)

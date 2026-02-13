@@ -3,6 +3,7 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useCallback } from "react";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { useInactivityTimeout } from "@/lib/hooks/useInactivityTimeout";
 import TimeoutWarningModal from "./TimeoutWarningModal";
@@ -44,6 +45,7 @@ export default function InactivityTimeoutProvider({
       window.location.href = "/login";
     } catch (error) {
       console.error("Logout error:", error);
+      captureError(error, { operation: "inactivitySignOut" });
       cancelSignOut();
       toast.error("Failed to sign out. Please try again.");
     }

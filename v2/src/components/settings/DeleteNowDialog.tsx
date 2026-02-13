@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { AlertTriangle, Zap } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 
 const DELETE_CONFIRMATION_TEXT = "DELETE";
 
@@ -59,6 +60,7 @@ export default function DeleteNowDialog({
     } catch (error) {
       cancelSignOut();
       console.error("Failed to delete account immediately:", error);
+      captureError(error, { operation: "immediateAccountDeletion" });
       const message =
         error instanceof Error ? error.message : "Failed to delete account";
       toast.error(message);

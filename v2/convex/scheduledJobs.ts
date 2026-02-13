@@ -26,6 +26,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id, Doc } from "./_generated/dataModel";
 import { loggers } from "./lib/logging";
+import { reportError } from "./lib/sentry";
 
 const log = loggers.scheduler;
 import {
@@ -679,6 +680,11 @@ export const sendWeeklyDigest = internalAction({
           resourceId: userId,
           step,
           error: errorMessage,
+        });
+        await reportError(error, {
+          module: "scheduler",
+          operation: "sendWeeklyDigest",
+          userId,
         });
         skipped++;
       }

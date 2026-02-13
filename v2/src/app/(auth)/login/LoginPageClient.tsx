@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavLink } from "@/components/ui/nav-link";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 
 type LoginStep = "login" | "verification";
@@ -45,6 +46,7 @@ export function LoginPageClient() {
       }
     } catch (error) {
       console.error("[Login Error]", error);
+      captureError(error, { operation: "signIn" });
 
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
@@ -91,6 +93,7 @@ export function LoginPageClient() {
       router.push("/dashboard");
     } catch (error) {
       console.error("[Login Verification Error]", error);
+      captureError(error, { operation: "signInVerification" });
 
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
@@ -132,6 +135,7 @@ export function LoginPageClient() {
       await signIn("google", { redirectTo: "/dashboard" });
     } catch (error) {
       console.error("[Google Sign In Error]", error);
+      captureError(error, { operation: "googleSignIn" });
 
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
@@ -167,7 +171,7 @@ export function LoginPageClient() {
             <span className="font-semibold text-foreground">{email}</span>
           </p>
 
-          <form onSubmit={handleVerificationSubmit} className="space-y-5">
+          <form method="POST" onSubmit={handleVerificationSubmit} className="space-y-5">
             <input type="hidden" name="email" value={email} />
             <input type="hidden" name="flow" value="email-verification" />
 
@@ -219,7 +223,7 @@ export function LoginPageClient() {
         <CardTitle className="text-3xl font-heading uppercase tracking-tight">Sign In</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form method="POST" onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="email" className="text-xs uppercase mono font-bold tracking-widest">
               Email

@@ -14,6 +14,7 @@
 
 import { useMemo, useState, useCallback } from "react";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
+import { captureError } from "@/lib/sentry";
 import {
   getFirstRecruitmentDate,
   getLastRecruitmentDate,
@@ -113,6 +114,7 @@ function getETA9089WindowStatus(values: Partial<CaseFormData>): WindowStatus {
     };
   } catch (error) {
     console.error('[useSectionState] Failed to calculate ETA 9089 window status:', error);
+    captureError(error, { operation: "calculateETA9089WindowStatus" });
     return DEFAULT_WINDOW_STATUS;
   }
 }

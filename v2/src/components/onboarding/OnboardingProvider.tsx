@@ -13,6 +13,7 @@ import { useQuery, useMutation } from "convex/react";
 import { usePathname } from "next/navigation";
 import { api } from "../../../convex/_generated/api";
 import { toast } from "sonner";
+import { captureError } from "@/lib/sentry";
 import type { ChecklistItemId, OnboardingContextValue, OnboardingStep, TourPhase } from "@/lib/onboarding/types";
 import { TOUR_PHASE_ORDER } from "@/lib/onboarding/constants";
 
@@ -113,6 +114,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         await updateStep({ step: newStep });
       } catch (error) {
         console.error("Failed to advance wizard step:", error);
+        captureError(error, { operation: "advanceWizardStep" });
         toast.error("Something went wrong. Please try again.");
       }
     },
@@ -131,6 +133,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       setWizardDismissed(false); // Re-show wizard at completion step
     } catch (error) {
       console.error("Failed to skip wizard:", error);
+      captureError(error, { operation: "skipWizard" });
       toast.error("Something went wrong. Please try again.");
     }
   }, [createSampleCaseMutation, completeItem, updateStep]);
@@ -197,6 +200,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       setTourPhase("dashboard");
     } catch (error) {
       console.error("Failed to restart tour:", error);
+      captureError(error, { operation: "restartTour" });
       toast.error("Failed to restart tour");
     }
   }, [restartTourMutation]);

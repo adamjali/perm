@@ -6,6 +6,7 @@ import { useOnboarding } from "./OnboardingProvider";
 import { CHECKLIST_ITEMS } from "@/lib/onboarding/constants";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { captureError } from "@/lib/sentry";
 
 export function OnboardingChecklist() {
   const router = useRouter();
@@ -58,6 +59,7 @@ export function OnboardingChecklist() {
               await dismissChecklist();
             } catch (error) {
               console.error("Failed to dismiss checklist:", error);
+              captureError(error, { operation: "dismissChecklist" });
               toast.error("Couldn't dismiss checklist. Please try again.");
             }
           }}

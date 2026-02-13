@@ -24,6 +24,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { AlertTriangle, ChevronDown, ChevronUp, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { captureError } from "@/lib/sentry";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 
 /**
@@ -86,6 +87,7 @@ export default function AutoClosureAlertBanner() {
       await dismissOne({ notificationId });
     } catch (error) {
       console.error("Failed to dismiss alert:", error);
+      captureError(error, { operation: "dismissAutoClosureAlert" });
     }
   };
 
@@ -94,6 +96,7 @@ export default function AutoClosureAlertBanner() {
       await dismissAll({});
     } catch (error) {
       console.error("Failed to dismiss all alerts:", error);
+      captureError(error, { operation: "dismissAllAutoClosureAlerts" });
     }
   };
 

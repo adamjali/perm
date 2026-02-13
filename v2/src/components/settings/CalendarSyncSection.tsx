@@ -42,6 +42,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Calendar, Cloud, AlertTriangle, Check, Loader2, X, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 
 // ============================================================================
 // TYPES
@@ -344,6 +345,7 @@ export default function CalendarSyncSection({
       }
     } catch (error) {
       console.error("Failed to sync all cases:", error);
+      captureError(error, { operation: "syncAllCases" });
       toast.error(error instanceof Error ? error.message : "Failed to sync cases");
     } finally {
       // Clear timer
@@ -399,6 +401,7 @@ export default function CalendarSyncSection({
       }
     } catch (error) {
       console.error("Failed to clear calendar events:", error);
+      captureError(error, { operation: "clearAllCalendarEvents" });
       toast.error(error instanceof Error ? error.message : "Failed to clear events");
     } finally {
       // Clear timer
@@ -449,6 +452,7 @@ export default function CalendarSyncSection({
       setClearProgress(null);
     } catch (error) {
       console.error("Failed to disconnect Google Calendar:", error);
+      captureError(error, { operation: "disconnectGoogleCalendar" });
       toast.error(error instanceof Error ? error.message : "Failed to disconnect");
     } finally {
       setIsDisconnecting(false);
@@ -469,6 +473,7 @@ export default function CalendarSyncSection({
       // Revert on error
       setMasterEnabled(!value);
       console.error("Failed to update calendar sync:", error);
+      captureError(error, { operation: "toggleCalendarSync" });
       toast.error("Failed to update settings");
     } finally {
       setIsUpdatingMaster(false);
@@ -488,6 +493,7 @@ export default function CalendarSyncSection({
       // Revert on error
       setDeadlineToggles((prev) => ({ ...prev, [field]: !value }));
       console.error("Failed to update deadline sync setting:", error);
+      captureError(error, { operation: "toggleDeadlineSync" });
       toast.error("Failed to update settings");
     } finally {
       setUpdatingDeadlineId(null);

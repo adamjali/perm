@@ -29,6 +29,7 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { loggers } from "./lib/logging";
 import { getResend, FROM_EMAIL } from "./lib/email";
+import { reportError } from "./lib/sentry";
 
 const log = loggers.email;
 import { DeadlineReminder } from "../src/emails/DeadlineReminder";
@@ -88,6 +89,10 @@ async function sendNotificationEmail(
 
   if (error) {
     log.error(`Failed to send ${params.logContext} email`, { error: error.message, to: params.to });
+    await reportError(new Error(`Email failed: ${error.message}`), {
+      module: "email",
+      operation: params.logContext,
+    });
     throw new Error(`Email failed: ${error.message}`);
   }
 
@@ -674,14 +679,19 @@ export const sendAdminNotificationEmail = internalAction({
   args: {
     subject: v.string(),
     body: v.string(),
+    to: v.optional(v.string()),
+    recipientName: v.optional(v.string()),
   },
   handler: async (_ctx, args) => {
     const { ADMIN_EMAIL } = await import("./lib/admin");
     const { AdminEmail } = await import("../src/emails/AdminEmail");
 
+    const toEmail = args.to || ADMIN_EMAIL;
+    const name = args.recipientName || "Admin";
+
     const html = await render(
       AdminEmail({
-        recipientName: "Admin",
+        recipientName: name,
         subject: args.subject,
         body: args.body,
       })
@@ -690,7 +700,7 @@ export const sendAdminNotificationEmail = internalAction({
     const resend = getResend();
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
-      to: [ADMIN_EMAIL],
+      to: [toEmail],
       subject: args.subject,
       html,
     });

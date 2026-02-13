@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 
 type ResetStep = "email" | "reset";
 
@@ -33,6 +34,7 @@ export function ResetPasswordPageClient() {
       toast.success("If an account exists with this email, we've sent a reset code.");
     } catch (error) {
       console.error("[Reset Password Request Error]", error);
+      captureError(error, { operation: "resetPasswordRequest" });
 
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
@@ -102,6 +104,7 @@ export function ResetPasswordPageClient() {
       router.push("/login");
     } catch (error) {
       console.error("[Reset Password Error]", error);
+      captureError(error, { operation: "resetPassword" });
 
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
@@ -152,7 +155,7 @@ export function ResetPasswordPageClient() {
             choose a new password.
           </p>
 
-          <form onSubmit={handleResetSubmit} className="space-y-5">
+          <form method="POST" onSubmit={handleResetSubmit} className="space-y-5">
             <input type="hidden" name="email" value={email} />
             <input type="hidden" name="flow" value="reset-verification" />
 
@@ -239,7 +242,7 @@ export function ResetPasswordPageClient() {
           password.
         </p>
 
-        <form onSubmit={handleEmailSubmit} className="space-y-5">
+        <form method="POST" onSubmit={handleEmailSubmit} className="space-y-5">
           <input type="hidden" name="flow" value="reset" />
 
           <div className="space-y-2">

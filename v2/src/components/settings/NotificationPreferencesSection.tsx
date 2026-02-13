@@ -15,6 +15,7 @@ import {
   HelpCircle, AlertCircle, Newspaper, LucideIcon,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import {
   isPushSupported,
   getPushSubscriptionStatus,
@@ -297,6 +298,7 @@ export default function NotificationPreferencesSection({
     } catch (error) {
       setLocal(!value);
       console.error("Failed to update notification setting:", error);
+      captureError(error, { operation: "updateNotificationSetting" });
       toast.error("Failed to update settings");
     }
   }, [updateProfile]);
@@ -310,6 +312,7 @@ export default function NotificationPreferencesSection({
     } catch (error) {
       setDeadlineTypes(prev => ({ ...prev, [key]: !value }));
       console.error("Failed to update deadline type setting:", error);
+      captureError(error, { operation: "updateDeadlineTypeSetting" });
       toast.error("Failed to update settings");
     }
   }, [updateProfile]);
@@ -323,6 +326,7 @@ export default function NotificationPreferencesSection({
     } catch (error) {
       setEmailEnabled(!value);
       console.error("Failed to update email notifications:", error);
+      captureError(error, { operation: "toggleEmailNotifications" });
       toast.error("Failed to update settings");
     }
   }, [updateProfile]);
@@ -357,6 +361,7 @@ export default function NotificationPreferencesSection({
       setPushStatus(newStatus);
     } catch (error) {
       console.error("Failed to update push notifications:", error);
+      captureError(error, { operation: "togglePushNotifications" });
       const errorMessage = error instanceof Error ? error.message : "Failed to update push settings";
       toast.error(errorMessage);
     } finally {
@@ -374,6 +379,7 @@ export default function NotificationPreferencesSection({
       setTimeout(() => setJustSentTestEmail(false), 2000);
     } catch (error) {
       console.error("Failed to send test email:", error);
+      captureError(error, { operation: "sendTestEmail" });
       toast.error("Failed to send test email. Please try again.");
     } finally {
       setIsSendingTestEmail(false);
@@ -390,6 +396,7 @@ export default function NotificationPreferencesSection({
       setTimeout(() => setJustSentTestPush(false), 2000);
     } catch (error) {
       console.error("Failed to send test push:", error);
+      captureError(error, { operation: "sendTestPush" });
       const errorMessage = error instanceof Error ? error.message : "Failed to send test notification";
       toast.error(errorMessage);
     } finally {
@@ -418,6 +425,7 @@ export default function NotificationPreferencesSection({
     } catch (error) {
       setReminderDays(previousDays);
       console.error("Failed to update reminder days:", error);
+      captureError(error, { operation: "updateReminderDays" });
       toast.error("Failed to update reminder days");
     }
   }, [reminderDays, updateProfile]);
@@ -435,6 +443,7 @@ export default function NotificationPreferencesSection({
     } catch (error) {
       setUrgentDays(previousValue);
       console.error("Failed to update urgent threshold:", error);
+      captureError(error, { operation: "updateUrgentThreshold" });
       toast.error("Failed to update urgent threshold");
     } finally {
       setIsUpdatingUrgentDays(false);

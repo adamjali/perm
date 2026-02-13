@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavLink } from "@/components/ui/nav-link";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import { api } from "../../../../convex/_generated/api";
 import { savePendingTermsAcceptance } from "@/lib/auth/termsStorage";
 
@@ -83,6 +84,7 @@ export function SignupPageClient() {
       }
     } catch (error) {
       console.error("[Signup Error]", error);
+      captureError(error, { operation: "signUp" });
 
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
@@ -136,6 +138,7 @@ export function SignupPageClient() {
       router.push("/dashboard");
     } catch (error) {
       console.error("[Verification Error]", error);
+      captureError(error, { operation: "signUpVerification" });
 
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
@@ -188,6 +191,7 @@ export function SignupPageClient() {
       // The PendingTermsHandler component checks localStorage and calls acceptTermsOfService
     } catch (error) {
       console.error("[Google Sign Up Error]", error);
+      captureError(error, { operation: "googleSignUp" });
 
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
@@ -222,7 +226,7 @@ export function SignupPageClient() {
             <span className="font-semibold text-foreground">{email}</span>
           </p>
 
-          <form onSubmit={handleVerificationSubmit} className="space-y-5">
+          <form method="POST" onSubmit={handleVerificationSubmit} className="space-y-5">
             <input type="hidden" name="email" value={email} />
             <input type="hidden" name="flow" value="email-verification" />
 
@@ -271,7 +275,7 @@ export function SignupPageClient() {
         <CardTitle className="text-3xl font-heading uppercase tracking-tight">Sign Up</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <form onSubmit={handleCredentialsSubmit} className="space-y-5">
+        <form method="POST" onSubmit={handleCredentialsSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-xs uppercase mono font-bold tracking-widest">
               Name <span className="text-muted-foreground font-normal lowercase text-[10px]">(optional)</span>

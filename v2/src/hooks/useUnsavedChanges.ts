@@ -43,6 +43,12 @@ export interface UseUnsavedChangesOptions {
   isSubmitting?: boolean;
 
   /**
+   * Force-disable all unsaved changes protection (e.g. during sign-out).
+   * When true, beforeunload and popstate handlers are skipped.
+   */
+  disabled?: boolean;
+
+  /**
    * Custom message for beforeunload (browsers may ignore this)
    */
   message?: string;
@@ -98,6 +104,7 @@ export function useUnsavedChanges(
   const {
     initialDirty = false,
     isSubmitting = false,
+    disabled = false,
     message = "You have unsaved changes. Are you sure you want to leave?",
   } = options;
 
@@ -125,16 +132,21 @@ export function useUnsavedChanges(
   // Track whether navigation was successfully initiated (prevents cleanup interference)
   const navigationInitiatedRef = useRef(false);
 
+  // Keep disabled in a ref so handlers can check current value
+  const disabledRef = useRef(disabled);
+  useEffect(() => {
+    disabledRef.current = disabled;
+  }, [disabled]);
+
   // Warn before browser close/refresh
   useEffect(() => {
     // Don't add warning if navigation is already in progress
     if (navigationInitiatedRef.current) return;
-    if (!isDirty || isSubmitting) return;
+    if (!isDirty || isSubmitting || disabled) return;
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // Re-check refs at fire time — markNavigating() or isSubmitting may have changed
-      // since the effect was set up (refs update without re-running effects)
-      if (navigationInitiatedRef.current || isSubmittingRef.current) return;
+      // Re-check refs at fire time — markNavigating(), isSubmitting, or disabled may have changed
+      if (navigationInitiatedRef.current || isSubmittingRef.current || disabledRef.current) return;
       e.preventDefault();
       // Modern browsers ignore custom messages but require returnValue to be set
       e.returnValue = message;
@@ -143,14 +155,14 @@ export function useUnsavedChanges(
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isDirty, isSubmitting, message]);
+  }, [isDirty, isSubmitting, disabled, message]);
 
   // Intercept browser back/forward navigation
   useEffect(() => {
     // CRITICAL: Don't re-setup if navigation is already in progress
     // This prevents pushing a new history state that would interfere with router.push()
     if (navigationInitiatedRef.current) return;
-    if (!isDirty || isSubmitting) return;
+    if (!isDirty || isSubmitting || disabled) return;
 
     // Push a duplicate state to enable interception
     // This allows us to detect when user tries to navigate away
@@ -164,8 +176,8 @@ export function useUnsavedChanges(
         return;
       }
 
-      // Re-check refs — markNavigating() may have been called since effect setup
-      if (navigationInitiatedRef.current || isSubmittingRef.current) return;
+      // Re-check refs — markNavigating() or disabled may have changed since effect setup
+      if (navigationInitiatedRef.current || isSubmittingRef.current || disabledRef.current) return;
 
       // Store the URL user was trying to go to (will be the URL after popstate)
       pendingPopstateUrlRef.current = window.location.href;
@@ -201,7 +213,7 @@ export function useUnsavedChanges(
         window.history.back();
       }
     };
-  }, [isDirty, isSubmitting]);
+  }, [isDirty, isSubmitting, disabled]);
 
   // Set dirty state
   const setDirty = useCallback((dirty: boolean) => {

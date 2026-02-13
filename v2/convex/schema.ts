@@ -846,4 +846,81 @@ export default defineSchema({
     .index("by_user_id", ["userId"])
     .index("by_user_and_name", ["userId", "name"])
     .index("by_deleted_at", ["deletedAt"]),
+
+  // =========================================================================
+  // Support Emails
+  // =========================================================================
+
+  /**
+   * Inbound support emails received via Resend webhook.
+   * Stores full email content for admin review and threaded replies.
+   */
+  supportEmails: defineTable({
+    // Sender info
+    fromEmail: v.string(),
+    fromName: v.optional(v.string()),
+
+    // Recipient (usually support@permtracker.app)
+    toEmail: v.string(),
+
+    // Email content
+    subject: v.string(),
+    bodyHtml: v.optional(v.string()),
+    bodyText: v.optional(v.string()),
+
+    // Threading headers
+    messageId: v.string(),
+    inReplyTo: v.optional(v.string()),
+    references: v.optional(v.string()),
+
+    // Resend metadata
+    resendEmailId: v.string(),
+
+    // Status tracking
+    status: v.union(
+      v.literal("received"),
+      v.literal("replied"),
+      v.literal("forwarded"),
+      v.literal("archived")
+    ),
+
+    // Admin reply (stored for history)
+    replyBody: v.optional(v.string()),
+    repliedAt: v.optional(v.number()),
+    replyMessageId: v.optional(v.string()),
+
+    // Timestamps
+    createdAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_created_at", ["createdAt"])
+    .index("by_from_email", ["fromEmail"]),
+
+  /**
+   * System Errors
+   *
+   * Stores application errors for admin visibility and debugging.
+   * Frontend errors are captured by Sentry; this table stores
+   * backend (Convex) errors that need admin attention.
+   */
+  systemErrors: defineTable({
+    source: v.union(
+      v.literal("mutation"),
+      v.literal("action"),
+      v.literal("query"),
+      v.literal("cron"),
+      v.literal("webhook"),
+    ),
+    operation: v.string(),
+    message: v.string(),
+    stack: v.optional(v.string()),
+    userId: v.optional(v.id("users")),
+    resourceId: v.optional(v.string()),
+    extra: v.optional(v.string()),
+    resolved: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_resolved", ["resolved", "createdAt"])
+    .index("by_source", ["source", "createdAt"])
+    .index("by_created_at", ["createdAt"]),
 });

@@ -30,6 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 
 // Current Terms of Service version (matches effective date in /terms page)
 const TERMS_VERSION = "2026-01-03";
@@ -62,6 +63,7 @@ export function TermsAcceptanceModal({
       onAccepted();
     } catch (error) {
       console.error("[Terms Acceptance] Failed:", error);
+      captureError(error, { operation: "acceptTerms" });
       toast.error("Failed to record acceptance. Please try again.");
     } finally {
       setIsLoading(false);

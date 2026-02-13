@@ -27,6 +27,7 @@ import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { OnboardingTourWrapper } from "@/components/onboarding/OnboardingTourWrapper";
 import { PageTransition } from "@/components/ui/page-transition";
+import { SentryUserContext } from "@/components/layout/SentryUserContext";
 
 export default function AuthenticatedLayout({
   children,
@@ -35,6 +36,9 @@ export default function AuthenticatedLayout({
 }) {
   return (
     <InactivityTimeoutProvider>
+      {/* Set Sentry user context for error tracking */}
+      <SentryUserContext />
+
       {/* Register service worker for PWA functionality */}
       <ServiceWorkerRegistration />
 

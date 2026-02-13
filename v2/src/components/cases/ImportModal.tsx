@@ -48,6 +48,7 @@ import { cn } from "@/lib/utils";
 import { CaseStageBadge } from "@/components/status/case-stage-badge";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 
 // ============================================================================
 // TYPES
@@ -170,6 +171,7 @@ export function ImportModal({
       setParseResult(result);
     } catch (error) {
       console.error("[ImportModal] Failed to parse file:", error);
+      captureError(error, { operation: "parseImportFile" });
       const message = error instanceof Error ? error.message : "Unknown error parsing file";
       toast.error(`Failed to parse file: ${message}`);
       setParseResult(null);
@@ -338,6 +340,7 @@ export function ImportModal({
       }
     } catch (error) {
       console.error("[ImportModal] Import failed:", error);
+      captureError(error, { operation: "importCases" });
       const message = error instanceof Error ? error.message : "Unknown error occurred";
       toast.error(`Import failed: ${message}. Please try again.`);
       // Keep modal open for retry - do NOT call handleCancel()

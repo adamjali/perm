@@ -38,6 +38,8 @@ export interface UseFormSubmissionProps {
   setWarnings: (warnings: Record<string, string>) => void;
   setShowErrorSummary: (show: boolean) => void;
   clearAllErrors: () => void;
+  /** Called when save fails due to auth/permission error — clears dirty state so user can navigate away */
+  onAuthError?: () => void;
 }
 
 export interface UseFormSubmissionResult {
@@ -69,6 +71,7 @@ export function useFormSubmission({
   setWarnings,
   setShowErrorSummary,
   clearAllErrors,
+  onAuthError,
 }: UseFormSubmissionProps): UseFormSubmissionResult {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const updateMutation = useMutation(api.cases.update);
@@ -191,9 +194,12 @@ export function useFormSubmission({
           } else if (
             errorMessage.includes("permission") ||
             errorMessage.includes("Permission") ||
-            errorMessage.includes("unauthorized")
+            errorMessage.includes("unauthorized") ||
+            errorMessage.includes("Not authenticated") ||
+            errorMessage.includes("not authenticated")
           ) {
-            toast.error("You don't have permission to save this case.");
+            toast.error("Session expired. Please sign in again.");
+            onAuthError?.();
           } else {
             toast.error("Failed to save case. Please try again.");
           }
@@ -213,6 +219,7 @@ export function useFormSubmission({
       setWarnings,
       setShowErrorSummary,
       clearAllErrors,
+      onAuthError,
     ]
   );
 

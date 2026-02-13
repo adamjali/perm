@@ -5,6 +5,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import { Loader2, AlertTriangle } from "lucide-react";
 import {
   Dialog,
@@ -55,6 +56,7 @@ export function UserDeleteConfirmModal({ user, onClose }: UserDeleteConfirmModal
       onClose();
     } catch (error) {
       console.error("Failed to delete user:", error);
+      captureError(error, { operation: "adminDeleteUser" });
       toast.error(error instanceof Error ? error.message : "Failed to delete user");
     } finally {
       setIsDeleting(false);

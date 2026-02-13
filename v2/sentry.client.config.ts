@@ -17,6 +17,9 @@ Sentry.init({
   environment: process.env.NODE_ENV,
   release: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA,
 
+  // Structured logging
+  enableLogs: true,
+
   // Performance monitoring - sample 10% of transactions in production
   tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
 
@@ -24,8 +27,8 @@ Sentry.init({
   replaysSessionSampleRate: 0.1, // 10% of sessions
   replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors
 
-  // Enable debug mode in development
-  debug: process.env.NODE_ENV === "development",
+  // Debug mode (very noisy — only enable when troubleshooting Sentry itself)
+  debug: false,
 
   // Filter out noisy, non-actionable errors
   ignoreErrors: [
@@ -65,7 +68,6 @@ Sentry.init({
       process.env.NODE_ENV === "development" &&
       !process.env.NEXT_PUBLIC_SENTRY_DEBUG
     ) {
-      // Debug logging when dev events are dropped
       console.debug(
         "[Sentry] Would have sent:",
         event.event_id,
@@ -77,13 +79,12 @@ Sentry.init({
     return event;
   },
 
-  // Add replay integration for session recording
   integrations: [
     Sentry.replayIntegration({
-      // Mask all text content by default for privacy
       maskAllText: true,
-      // Block all media (images, videos) by default
       blockAllMedia: true,
     }),
+    // Forward console.warn and console.error to Sentry Logs
+    Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
   ],
 });
