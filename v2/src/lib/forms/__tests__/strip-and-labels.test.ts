@@ -171,6 +171,94 @@ describe('stripIncompleteRecruitmentEntries', () => {
     stripIncompleteRecruitmentEntries(data);
     expect(data.additionalRecruitmentMethods).toHaveLength(2); // Original unchanged
   });
+
+  // Sub-entry edge cases
+  it('cleans empty sub-entries but keeps method when valid sub-entries remain', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        {
+          method: 'radio_ad',
+          date: '',
+          description: 'WNYC',
+          subEntries: [
+            { date: '2024-06-15', description: 'Morning' },
+            { date: '', description: '' }, // empty — should be stripped
+          ],
+        },
+      ],
+    });
+    const result = stripIncompleteRecruitmentEntries(data);
+    expect(result.additionalRecruitmentMethods).toHaveLength(1);
+    expect(result.additionalRecruitmentMethods![0]!.subEntries).toHaveLength(1);
+    expect(result.additionalRecruitmentMethods![0]!.subEntries![0]!.date).toBe('2024-06-15');
+  });
+
+  it('strips method entirely when ALL sub-entries are empty and no other dates', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        {
+          method: 'tv_ad',
+          date: '',
+          description: 'ABC',
+          subEntries: [
+            { date: '', description: '' },
+            { date: '', description: 'placeholder' },
+          ],
+        },
+      ],
+    });
+    const result = stripIncompleteRecruitmentEntries(data);
+    expect(result.additionalRecruitmentMethods).toEqual([]);
+  });
+
+  it('strips method with only description but no method type', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        { method: '', date: '', description: 'Some note' },
+      ],
+    });
+    const result = stripIncompleteRecruitmentEntries(data);
+    expect(result.additionalRecruitmentMethods).toEqual([]);
+  });
+
+  it('strips method with method type but only empty sub-entries', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        {
+          method: 'radio_ad',
+          date: '',
+          description: '',
+          subEntries: [{ date: '', description: '' }],
+        },
+      ],
+    });
+    const result = stripIncompleteRecruitmentEntries(data);
+    expect(result.additionalRecruitmentMethods).toEqual([]);
+  });
+
+  it('handles multiple methods with mixed sub-entry validity', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        {
+          method: 'radio_ad',
+          date: '',
+          description: 'WNYC',
+          subEntries: [{ date: '2024-06-15' }],
+        },
+        {
+          method: 'tv_ad',
+          date: '',
+          description: 'ABC',
+          subEntries: [{ date: '', description: '' }], // all empty — method stripped
+        },
+        { method: 'local_newspaper', date: '2024-06-20', description: 'Times' },
+      ],
+    });
+    const result = stripIncompleteRecruitmentEntries(data);
+    expect(result.additionalRecruitmentMethods).toHaveLength(2);
+    expect(result.additionalRecruitmentMethods![0]!.method).toBe('radio_ad');
+    expect(result.additionalRecruitmentMethods![1]!.method).toBe('local_newspaper');
+  });
 });
 
 // ============================================================================

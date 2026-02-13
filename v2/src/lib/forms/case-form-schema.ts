@@ -564,21 +564,45 @@ export function stripIncompleteRecruitmentEntries(data: CaseFormData): CaseFormD
     return data;
   }
 
-  const cleanedMethods = data.additionalRecruitmentMethods.filter(m => {
-    // Keep entries that have at least one meaningful date
-    const hasDate = !!m.date;
-    const hasStartDate = !!m.startDate;
-    const hasEndDate = !!m.endDate;
-    const hasSubEntries = m.subEntries && m.subEntries.length > 0 && m.subEntries.some(s => !!s.date);
+  let changed = false;
 
-    // If no method type is set, skip this entry entirely
-    if (!m.method) return false;
+  const cleanedMethods = data.additionalRecruitmentMethods
+    .map(m => {
+      // Step 1: Clean up empty sub-entries within each method
+      if (m.subEntries && m.subEntries.length > 0) {
+        const validSubEntries = m.subEntries.filter(s => !!s.date);
+        if (validSubEntries.length !== m.subEntries.length) {
+          changed = true;
+          return { ...m, subEntries: validSubEntries.length > 0 ? validSubEntries : undefined };
+        }
+      }
+      return m;
+    })
+    .filter(m => {
+      // Step 2: Filter out methods that are incomplete
 
-    // Keep if any date data is present
-    return hasDate || hasStartDate || hasEndDate || hasSubEntries;
-  });
+      // No method type selected — skip entirely (leftover empty slot)
+      if (!m.method) {
+        changed = true;
+        return false;
+      }
 
-  if (cleanedMethods.length === data.additionalRecruitmentMethods.length) {
+      // Check if any meaningful date data exists
+      const hasDate = !!m.date;
+      const hasStartDate = !!m.startDate;
+      const hasEndDate = !!m.endDate;
+      const hasSubEntries = m.subEntries && m.subEntries.length > 0;
+
+      // Method selected but no dates at all — strip it (user added but didn't fill)
+      if (!hasDate && !hasStartDate && !hasEndDate && !hasSubEntries) {
+        changed = true;
+        return false;
+      }
+
+      return true;
+    });
+
+  if (!changed) {
     return data; // Nothing stripped
   }
 
