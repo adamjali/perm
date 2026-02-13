@@ -16,6 +16,7 @@ import AuthHeader from "@/components/layout/AuthHeader";
 import Footer from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/home";
 import { PageTransition } from "@/components/ui/page-transition";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 
 export default function PublicLayout({
   children,
@@ -55,6 +56,9 @@ export default function PublicLayout({
 
       {/* Extended Footer for public pages */}
       <Footer variant="extended" />
+
+      {/* Back-to-top button */}
+      <ScrollToTop />
     </div>
   );
 }
