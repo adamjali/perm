@@ -6,6 +6,8 @@ import { CaseDetailSection } from "./CaseDetailSection";
 import { formatISODate } from "@/lib/utils/date";
 import { differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import { getMethodLabel } from "@/lib/recruitment/resultsGenerator";
+import { getMethodCategory } from "@/../convex/lib/perm/recruitment/methodCategories";
 
 // ============================================================================
 // TYPES
@@ -25,6 +27,9 @@ export interface RecruitmentSectionProps {
       method: string;
       date: string;
       description?: string;
+      startDate?: string;
+      endDate?: string;
+      subEntries?: Array<{ date: string; description?: string }>;
     }>;
     recruitmentApplicantsCount?: number;
     recruitmentNotes?: string;
@@ -218,21 +223,63 @@ export function RecruitmentSection({
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
                 Additional Methods ({data.additionalRecruitmentMethods.length})
               </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {data.additionalRecruitmentMethods.map((method, index) => (
-                  <div
-                    key={`${method.method}-${index}`}
-                    className="border-2 border-border bg-muted/30 px-3 py-2"
-                  >
-                    <div className="text-sm font-medium capitalize leading-tight">
-                      {method.method.replace(/_/g, " ")}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {data.additionalRecruitmentMethods.map((method, index) => {
+                  const category = getMethodCategory(method.method);
+                  const label = getMethodLabel(method.method);
+
+                  // Build date display based on method category
+                  let dateDisplay: React.ReactNode = null;
+                  if (category === "date-range") {
+                    const from = method.startDate || method.date;
+                    const to = method.endDate || method.date;
+                    if (from || to) {
+                      dateDisplay = (
+                        <>
+                          {from ? formatISODate(from) : "—"}
+                          <span className="opacity-40 mx-1">→</span>
+                          {to ? formatISODate(to) : "—"}
+                          {from && to && <> · {calculateDuration(from, to)}</>}
+                        </>
+                      );
+                    }
+                  } else if (category === "sub-entries") {
+                    const dates = method.subEntries?.filter((s) => !!s.date) ?? [];
+                    if (dates.length > 0) {
+                      dateDisplay = dates.map((s, i) => (
+                        <span key={i}>
+                          {i > 0 && <span className="opacity-40">, </span>}
+                          {formatISODate(s.date)}
+                        </span>
+                      ));
+                    } else if (method.date) {
+                      dateDisplay = formatISODate(method.date);
+                    }
+                  } else {
+                    if (method.date) dateDisplay = formatISODate(method.date);
+                  }
+
+                  return (
+                    <div
+                      key={`${method.method}-${index}`}
+                      className="border-2 border-border bg-muted/30 px-3 py-2"
+                    >
+                      <div className="text-sm font-medium leading-tight">
+                        {label}
+                      </div>
+                      {method.description && (
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {method.description}
+                        </div>
+                      )}
+                      {dateDisplay && (
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {dateDisplay}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {formatISODate(method.date)}
-                      {method.description && <> · {method.description}</>}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

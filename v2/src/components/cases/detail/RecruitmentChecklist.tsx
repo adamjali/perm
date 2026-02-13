@@ -10,6 +10,7 @@ import {
   getMethodLabel,
   type RecruitmentCaseData,
 } from "@/lib/recruitment";
+import { getMethodCategory } from "@/../convex/lib/perm/recruitment/methodCategories";
 
 // ============================================================================
 // TYPES
@@ -223,14 +224,49 @@ export function RecruitmentChecklist({
   const professionalItems: ChecklistItem[] = [];
 
   if (data.isProfessionalOccupation) {
-    // Add existing methods
+    // Add existing methods with proper labels and dates
     if (status.professionalMethods.methods.length > 0) {
       status.professionalMethods.methods.forEach((method, index) => {
+        const label = getMethodLabel(method.method);
+        const category = getMethodCategory(method.method);
+
+        // Build subtitle with description and date details
+        let subtitle = method.description || "";
+        if (category === "date-range") {
+          const from = method.startDate || method.date;
+          const to = method.endDate || method.date;
+          if (from && to) {
+            subtitle = subtitle
+              ? `${subtitle} · ${formatDate(from)} → ${formatDate(to)}`
+              : `${formatDate(from)} → ${formatDate(to)}`;
+          }
+        } else if (category === "sub-entries" && method.subEntries?.length) {
+          const dates = method.subEntries
+            .filter((s) => !!s.date)
+            .map((s) => formatDate(s.date));
+          if (dates.length > 0) {
+            subtitle = subtitle
+              ? `${subtitle} · ${dates.join(", ")}`
+              : dates.join(", ");
+          }
+        } else if (method.date) {
+          subtitle = subtitle
+            ? `${subtitle} · ${formatDate(method.date)}`
+            : formatDate(method.date);
+        }
+
+        if (!subtitle) subtitle = label;
+
+        // Pick primary date for the date badge
+        let primaryDate = method.date;
+        if (!primaryDate && method.startDate) primaryDate = method.startDate;
+        if (!primaryDate && method.subEntries?.[0]?.date) primaryDate = method.subEntries[0].date;
+
         professionalItems.push({
           id: `additional-${index}`,
-          title: `Additional Method ${index + 1}`,
-          subtitle: method.description || getMethodLabel(method.method),
-          date: method.date,
+          title: label,
+          subtitle,
+          date: primaryDate || undefined,
           complete: true,
         });
       });
