@@ -81,10 +81,10 @@ export function HeroSection() {
 
       {/* Scroll indicator — mouse + line + text at bottom center */}
       <div
-        className="pointer-events-none absolute bottom-3 left-1/2 z-20 hidden -translate-x-1/2 flex-col items-center gap-2 sm:flex"
+        className="pointer-events-none absolute bottom-10 left-1/2 z-20 hidden -translate-x-1/2 flex-col items-center gap-2 sm:flex"
         aria-hidden="true"
       >
-        <svg width="18" height="28" viewBox="0 0 18 28" fill="none">
+        <motion.svg width="18" height="28" viewBox="0 0 18 28" fill="none">
           <rect
             x="1.25"
             y="1.25"
@@ -103,11 +103,12 @@ export function HeroSection() {
             animate={{ cy: [8, 14, 8], opacity: [0.8, 0.15, 0.8] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           />
-        </svg>
+        </motion.svg>
         {/* Animated vertical line — gradient pulse like mining reference */}
         <motion.div
-          className="h-6 w-[1.5px] origin-top bg-gradient-to-b from-foreground/40 to-transparent dark:from-foreground/30"
-          animate={{ scaleY: [1, 0.5, 1], opacity: [1, 0.5, 1] }}
+          className="h-8 w-[1.5px] origin-top"
+          style={{ background: "linear-gradient(to bottom, currentColor, transparent)" }}
+          animate={{ scaleY: [1, 0.5, 1], opacity: [0.4, 0.15, 0.4] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
         <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/40 dark:text-foreground/35">
@@ -116,7 +117,7 @@ export function HeroSection() {
       </div>
 
       {/* Content container */}
-      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] max-w-[1400px] items-center px-4 py-12 sm:px-8 sm:py-16 lg:py-20">
+      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] max-w-[1400px] items-center px-4 pb-24 pt-8 sm:px-8 sm:pb-28 sm:pt-12 lg:pb-32 lg:pt-16">
         <div className="grid w-full items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* Left column - Text content (single stagger container) */}
           <ScrollReveal direction="up" stagger className="flex flex-col gap-6">
