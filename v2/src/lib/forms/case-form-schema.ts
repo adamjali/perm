@@ -14,6 +14,7 @@ import {
   getLastRecruitmentDate,
   isISODateString,
 } from '../perm';
+import { getMethodCategory } from '@/../convex/lib/perm/recruitment/methodCategories';
 import { captureError } from '@/lib/sentry';
 
 // Re-export isISODateString for backward compatibility
@@ -100,7 +101,7 @@ const noteSchema = z.object({
 });
 
 const subEntrySchema = z.object({
-  date: isoDateSchema,
+  date: z.string().refine((val) => !val || isISODateString(val), { message: ISO_DATE_MESSAGE }),
   description: z.string().optional(),
 });
 
@@ -247,6 +248,7 @@ export const caseFormSchema = z
   })
   .superRefine((data, ctx) => {
     validateSundayAdSequence(data, ctx);
+    validateRecruitmentMethodRequiredDates(data, ctx);
     if (data.isProfessionalOccupation) {
       validateProfessionalRecruitment(data, ctx);
     }
@@ -263,6 +265,7 @@ interface CrossValidationData {
   additionalRecruitmentStartDate?: string;
   additionalRecruitmentEndDate?: string;
   additionalRecruitmentMethods?: Array<{
+    method?: string;
     date?: string;
     startDate?: string;
     endDate?: string;
@@ -286,6 +289,44 @@ function validateSundayAdSequence(data: CrossValidationData, ctx: ValidationCont
       path: ['sundayAdSecondDate'],
     });
   }
+}
+
+/** Validate required dates for each recruitment method based on its category */
+function validateRecruitmentMethodRequiredDates(data: CrossValidationData, ctx: ValidationContext): void {
+  if (!data.additionalRecruitmentMethods) return;
+
+  data.additionalRecruitmentMethods.forEach((method, index) => {
+    if (!method.method) return; // Empty slot — no validation needed
+
+    const category = getMethodCategory(method.method);
+
+    if (category === 'single-date') {
+      if (!method.date) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Date is required',
+          path: ['additionalRecruitmentMethods', index, 'date'],
+        });
+      }
+    } else if (category === 'date-range') {
+      if (!method.startDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Start date is required',
+          path: ['additionalRecruitmentMethods', index, 'startDate'],
+        });
+      }
+    } else if (category === 'sub-entries') {
+      const hasValidEntry = method.subEntries?.some(s => !!s.date) ?? false;
+      if (!hasValidEntry) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'At least one broadcast date is required',
+          path: ['additionalRecruitmentMethods', index, 'subEntries', 0, 'date'],
+        });
+      }
+    }
+  });
 }
 
 /** Validate professional occupation recruitment fields */
@@ -506,6 +547,16 @@ export function getFieldLabel(fieldPath: string): string {
   // Direct match
   if (FIELD_LABELS[fieldPath]) return FIELD_LABELS[fieldPath];
 
+  // Handle additionalRecruitmentMethods.{index}.subEntries.{subIndex}.{subfield}
+  const subEntryMatch = fieldPath.match(/^additionalRecruitmentMethods\.(\d+)\.subEntries\.(\d+)\.(\w+)$/);
+  if (subEntryMatch) {
+    const methodNum = Number(subEntryMatch[1]) + 1;
+    const entryNum = Number(subEntryMatch[2]) + 1;
+    const subfield = subEntryMatch[3];
+    const subfieldLabels: Record<string, string> = { date: 'Date', description: 'Description' };
+    return `Recruitment Method #${methodNum} Entry #${entryNum} ${subfieldLabels[subfield!] ?? subfield}`;
+  }
+
   // Handle additionalRecruitmentMethods.{index}.{subfield}
   const methodMatch = fieldPath.match(/^additionalRecruitmentMethods\.(\d+)\.(\w+)$/);
   if (methodMatch) {
@@ -555,58 +606,23 @@ export function getFieldLabel(fieldPath: string): string {
 // ============================================================================
 
 /**
- * Strip incomplete recruitment method entries before validation.
- * An entry is incomplete if it has a method type but no dates or sub-entries.
- * This prevents false validation errors when users add entries but don't fill them.
+ * Strip empty recruitment method slots before validation.
+ * Only removes entries with NO method type selected (empty dropdown slots).
+ * Entries with a method selected but missing dates are kept — validation
+ * handles those with proper required-field errors.
  */
 export function stripIncompleteRecruitmentEntries(data: CaseFormData): CaseFormData {
   if (!data.additionalRecruitmentMethods || data.additionalRecruitmentMethods.length === 0) {
     return data;
   }
 
-  let changed = false;
+  const cleaned = data.additionalRecruitmentMethods.filter(m => !!m.method);
 
-  const cleanedMethods = data.additionalRecruitmentMethods
-    .map(m => {
-      // Step 1: Clean up empty sub-entries within each method
-      if (m.subEntries && m.subEntries.length > 0) {
-        const validSubEntries = m.subEntries.filter(s => !!s.date);
-        if (validSubEntries.length !== m.subEntries.length) {
-          changed = true;
-          return { ...m, subEntries: validSubEntries.length > 0 ? validSubEntries : undefined };
-        }
-      }
-      return m;
-    })
-    .filter(m => {
-      // Step 2: Filter out methods that are incomplete
-
-      // No method type selected — skip entirely (leftover empty slot)
-      if (!m.method) {
-        changed = true;
-        return false;
-      }
-
-      // Check if any meaningful date data exists
-      const hasDate = !!m.date;
-      const hasStartDate = !!m.startDate;
-      const hasEndDate = !!m.endDate;
-      const hasSubEntries = m.subEntries && m.subEntries.length > 0;
-
-      // Method selected but no dates at all — strip it (user added but didn't fill)
-      if (!hasDate && !hasStartDate && !hasEndDate && !hasSubEntries) {
-        changed = true;
-        return false;
-      }
-
-      return true;
-    });
-
-  if (!changed) {
-    return data; // Nothing stripped
+  if (cleaned.length === data.additionalRecruitmentMethods.length) {
+    return data; // Nothing stripped — same reference
   }
 
-  return { ...data, additionalRecruitmentMethods: cleanedMethods };
+  return { ...data, additionalRecruitmentMethods: cleaned };
 }
 
 // ============================================================================

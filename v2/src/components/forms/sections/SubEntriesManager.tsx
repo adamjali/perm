@@ -14,6 +14,9 @@ interface SubEntriesManagerProps {
   dateConstraint?: DateConstraint;
   maxEntries?: number; // default 10
   methodLabel: string; // e.g., "Radio Ad" for display
+  required?: boolean; // show required indicator on date fields
+  errors?: Record<string, string>; // validation errors keyed by field path
+  methodIndex?: number; // parent method index for error path lookup
 }
 
 export function SubEntriesManager({
@@ -22,6 +25,9 @@ export function SubEntriesManager({
   dateConstraint,
   maxEntries = 10,
   methodLabel,
+  required,
+  errors,
+  methodIndex,
 }: SubEntriesManagerProps) {
   const addEntry = () => {
     if (entries.length < maxEntries) {
@@ -45,12 +51,20 @@ export function SubEntriesManager({
         </span>
       </div>
 
-      {entries.map((entry, index) => (
+      {entries.map((entry, index) => {
+        const dateErrorKey = methodIndex !== undefined
+          ? `additionalRecruitmentMethods.${methodIndex}.subEntries.${index}.date`
+          : undefined;
+        const dateError = dateErrorKey ? errors?.[dateErrorKey] : undefined;
+
+        return (
         <div key={index} className="flex items-start gap-2">
           <div className="flex-1 grid gap-2 md:grid-cols-2">
             <FormField
               label={`Date ${index + 1}`}
               name={`sub-entry-date-${index}`}
+              required={required}
+              error={dateError}
             >
               <DateInput
                 id={`sub-entry-date-${index}`}
@@ -59,6 +73,7 @@ export function SubEntriesManager({
                 onChange={(e) => updateEntry(index, 'date', e.target.value)}
                 minDate={dateConstraint?.min}
                 maxDate={dateConstraint?.max}
+                error={!!dateError}
               />
             </FormField>
             <FormField
@@ -87,7 +102,8 @@ export function SubEntriesManager({
             </Button>
           )}
         </div>
-      ))}
+        );
+      })}
 
       {entries.length < maxEntries && (
         <Button

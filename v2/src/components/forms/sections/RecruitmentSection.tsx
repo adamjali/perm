@@ -726,6 +726,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                             methodCategory,
                             method.startDate
                           );
+                          const hasMethod = !!method.method;
 
                           if (methodCategory === 'date-range') {
                             // Date-range methods (job_website_ad, employer_website, private_employment_firm)
@@ -734,6 +735,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                 <FormField
                                   label="Start Date"
                                   name={`method-start-${index}`}
+                                  required={hasMethod}
                                   error={errors?.[`additionalRecruitmentMethods.${index}.startDate`]}
                                   hint={methodConstraints.startDate?.hint}
                                 >
@@ -789,6 +791,9 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                   onChange={(entries) => updateMethod(index, 'subEntries', entries)}
                                   dateConstraint={methodConstraints.entryDate}
                                   methodLabel={RECRUITMENT_METHODS.find(m => m.value === method.method)?.label || 'Entry'}
+                                  required={hasMethod}
+                                  errors={errors}
+                                  methodIndex={index}
                                 />
                                 <FormField
                                   label="Overall Description"
@@ -812,6 +817,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                               <FormField
                                 label="Date"
                                 name={`method-date-${index}`}
+                                required={hasMethod}
                                 error={errors?.[`additionalRecruitmentMethods.${index}.date`]}
                                 hint={methodConstraints.date?.hint || "Date of recruitment activity"}
                               >

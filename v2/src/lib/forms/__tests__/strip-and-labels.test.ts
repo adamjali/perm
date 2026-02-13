@@ -1,20 +1,18 @@
 /**
- * Tests for stripIncompleteRecruitmentEntries and getFieldLabel
- *
- * Covers:
- * - stripIncompleteRecruitmentEntries: filters empty entries before validation
- * - getFieldLabel: human-readable labels for field paths
+ * Tests for stripIncompleteRecruitmentEntries, getFieldLabel, and
+ * validateCaseForm recruitment method required-date validation.
  */
 import { describe, it, expect } from 'vitest';
 import {
   stripIncompleteRecruitmentEntries,
   getFieldLabel,
+  validateCaseForm,
   FIELD_LABELS,
   type CaseFormData,
 } from '../case-form-schema';
+import { mapFieldToInputName } from '../../../components/forms/case-form.helpers';
 
-// Minimal valid form data factory — uses `as CaseFormData` to bypass branded ISODateString
-// since test data doesn't go through Zod parse
+// Minimal valid form data factory
 function createMinimalFormData(
   overrides: Record<string, unknown> = {}
 ): CaseFormData {
@@ -48,7 +46,7 @@ describe('stripIncompleteRecruitmentEntries', () => {
   it('returns same data when no recruitment methods', () => {
     const data = createMinimalFormData({ additionalRecruitmentMethods: [] });
     const result = stripIncompleteRecruitmentEntries(data);
-    expect(result).toBe(data); // Same reference
+    expect(result).toBe(data);
   });
 
   it('returns same data when methods is undefined', () => {
@@ -57,24 +55,24 @@ describe('stripIncompleteRecruitmentEntries', () => {
     expect(result).toBe(data);
   });
 
-  it('strips entries with method but no dates', () => {
+  it('strips entries with no method type selected', () => {
     const data = createMinimalFormData({
       additionalRecruitmentMethods: [
-        { method: 'radio_ad', date: '', description: '' },
+        { method: '', date: '2024-06-01', description: 'leftover' },
       ],
     });
     const result = stripIncompleteRecruitmentEntries(data);
     expect(result.additionalRecruitmentMethods).toEqual([]);
   });
 
-  it('strips entries with no method type', () => {
+  it('keeps entries with method selected even without dates (validation handles it)', () => {
     const data = createMinimalFormData({
       additionalRecruitmentMethods: [
-        { method: '', date: '2024-06-01', description: '' },
+        { method: 'radio_ad', date: '', description: '' },
       ],
     });
     const result = stripIncompleteRecruitmentEntries(data);
-    expect(result.additionalRecruitmentMethods).toEqual([]);
+    expect(result.additionalRecruitmentMethods).toHaveLength(1);
   });
 
   it('keeps entries with method and date', () => {
@@ -84,30 +82,10 @@ describe('stripIncompleteRecruitmentEntries', () => {
       ],
     });
     const result = stripIncompleteRecruitmentEntries(data);
-    expect(result.additionalRecruitmentMethods).toHaveLength(1);
+    expect(result).toBe(data); // Same reference
   });
 
-  it('keeps entries with startDate even without date', () => {
-    const data = createMinimalFormData({
-      additionalRecruitmentMethods: [
-        { method: 'job_website_ad', date: '', description: 'Indeed', startDate: '2024-06-01' },
-      ],
-    });
-    const result = stripIncompleteRecruitmentEntries(data);
-    expect(result.additionalRecruitmentMethods).toHaveLength(1);
-  });
-
-  it('keeps entries with endDate even without date or startDate', () => {
-    const data = createMinimalFormData({
-      additionalRecruitmentMethods: [
-        { method: 'employer_website', date: '', description: '', endDate: '2024-07-01' },
-      ],
-    });
-    const result = stripIncompleteRecruitmentEntries(data);
-    expect(result.additionalRecruitmentMethods).toHaveLength(1);
-  });
-
-  it('keeps entries with populated sub-entries', () => {
+  it('keeps entries with method and sub-entries', () => {
     const data = createMinimalFormData({
       additionalRecruitmentMethods: [
         {
@@ -119,41 +97,15 @@ describe('stripIncompleteRecruitmentEntries', () => {
       ],
     });
     const result = stripIncompleteRecruitmentEntries(data);
-    expect(result.additionalRecruitmentMethods).toHaveLength(1);
+    expect(result).toBe(data); // Same reference
   });
 
-  it('strips entries with empty sub-entries', () => {
-    const data = createMinimalFormData({
-      additionalRecruitmentMethods: [
-        {
-          method: 'radio_ad',
-          date: '',
-          description: 'WNYC',
-          subEntries: [{ date: '', description: '' }],
-        },
-      ],
-    });
-    const result = stripIncompleteRecruitmentEntries(data);
-    expect(result.additionalRecruitmentMethods).toEqual([]);
-  });
-
-  it('returns same reference when nothing stripped', () => {
+  it('strips only empty-method entries from mixed array', () => {
     const data = createMinimalFormData({
       additionalRecruitmentMethods: [
         { method: 'local_newspaper', date: '2024-06-01', description: 'Times' },
-        { method: 'job_website_ad', date: '', description: 'Indeed', startDate: '2024-06-01', endDate: '2024-07-01' },
-      ],
-    });
-    const result = stripIncompleteRecruitmentEntries(data);
-    expect(result).toBe(data); // Same reference = no unnecessary copy
-  });
-
-  it('mixes kept and stripped entries correctly', () => {
-    const data = createMinimalFormData({
-      additionalRecruitmentMethods: [
-        { method: 'local_newspaper', date: '2024-06-01', description: 'Times' },
-        { method: 'tv_ad', date: '', description: '' }, // stripped
-        { method: 'radio_ad', date: '', description: 'WNYC', subEntries: [{ date: '2024-06-15' }] },
+        { method: '', date: '', description: '' }, // empty slot
+        { method: 'radio_ad', date: '', description: '' },
       ],
     });
     const result = stripIncompleteRecruitmentEntries(data);
@@ -162,102 +114,25 @@ describe('stripIncompleteRecruitmentEntries', () => {
     expect(result.additionalRecruitmentMethods![1]!.method).toBe('radio_ad');
   });
 
+  it('returns same reference when nothing stripped', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        { method: 'local_newspaper', date: '2024-06-01', description: 'Times' },
+        { method: 'job_website_ad', date: '', startDate: '2024-06-01', endDate: '2024-07-01' },
+      ],
+    });
+    const result = stripIncompleteRecruitmentEntries(data);
+    expect(result).toBe(data);
+  });
+
   it('does not mutate original data', () => {
     const methods = [
       { method: 'local_newspaper', date: '2024-06-01', description: 'Times' },
-      { method: 'tv_ad', date: '', description: '' },
+      { method: '', date: '', description: '' },
     ];
     const data = createMinimalFormData({ additionalRecruitmentMethods: methods });
     stripIncompleteRecruitmentEntries(data);
-    expect(data.additionalRecruitmentMethods).toHaveLength(2); // Original unchanged
-  });
-
-  // Sub-entry edge cases
-  it('cleans empty sub-entries but keeps method when valid sub-entries remain', () => {
-    const data = createMinimalFormData({
-      additionalRecruitmentMethods: [
-        {
-          method: 'radio_ad',
-          date: '',
-          description: 'WNYC',
-          subEntries: [
-            { date: '2024-06-15', description: 'Morning' },
-            { date: '', description: '' }, // empty — should be stripped
-          ],
-        },
-      ],
-    });
-    const result = stripIncompleteRecruitmentEntries(data);
-    expect(result.additionalRecruitmentMethods).toHaveLength(1);
-    expect(result.additionalRecruitmentMethods![0]!.subEntries).toHaveLength(1);
-    expect(result.additionalRecruitmentMethods![0]!.subEntries![0]!.date).toBe('2024-06-15');
-  });
-
-  it('strips method entirely when ALL sub-entries are empty and no other dates', () => {
-    const data = createMinimalFormData({
-      additionalRecruitmentMethods: [
-        {
-          method: 'tv_ad',
-          date: '',
-          description: 'ABC',
-          subEntries: [
-            { date: '', description: '' },
-            { date: '', description: 'placeholder' },
-          ],
-        },
-      ],
-    });
-    const result = stripIncompleteRecruitmentEntries(data);
-    expect(result.additionalRecruitmentMethods).toEqual([]);
-  });
-
-  it('strips method with only description but no method type', () => {
-    const data = createMinimalFormData({
-      additionalRecruitmentMethods: [
-        { method: '', date: '', description: 'Some note' },
-      ],
-    });
-    const result = stripIncompleteRecruitmentEntries(data);
-    expect(result.additionalRecruitmentMethods).toEqual([]);
-  });
-
-  it('strips method with method type but only empty sub-entries', () => {
-    const data = createMinimalFormData({
-      additionalRecruitmentMethods: [
-        {
-          method: 'radio_ad',
-          date: '',
-          description: '',
-          subEntries: [{ date: '', description: '' }],
-        },
-      ],
-    });
-    const result = stripIncompleteRecruitmentEntries(data);
-    expect(result.additionalRecruitmentMethods).toEqual([]);
-  });
-
-  it('handles multiple methods with mixed sub-entry validity', () => {
-    const data = createMinimalFormData({
-      additionalRecruitmentMethods: [
-        {
-          method: 'radio_ad',
-          date: '',
-          description: 'WNYC',
-          subEntries: [{ date: '2024-06-15' }],
-        },
-        {
-          method: 'tv_ad',
-          date: '',
-          description: 'ABC',
-          subEntries: [{ date: '', description: '' }], // all empty — method stripped
-        },
-        { method: 'local_newspaper', date: '2024-06-20', description: 'Times' },
-      ],
-    });
-    const result = stripIncompleteRecruitmentEntries(data);
-    expect(result.additionalRecruitmentMethods).toHaveLength(2);
-    expect(result.additionalRecruitmentMethods![0]!.method).toBe('radio_ad');
-    expect(result.additionalRecruitmentMethods![1]!.method).toBe('local_newspaper');
+    expect(data.additionalRecruitmentMethods).toHaveLength(2);
   });
 });
 
@@ -287,6 +162,15 @@ describe('getFieldLabel', () => {
     expect(getFieldLabel('additionalRecruitmentMethods.0.description')).toBe('Recruitment Method #1 Description');
   });
 
+  it('handles sub-entry paths', () => {
+    expect(getFieldLabel('additionalRecruitmentMethods.0.subEntries.0.date'))
+      .toBe('Recruitment Method #1 Entry #1 Date');
+    expect(getFieldLabel('additionalRecruitmentMethods.1.subEntries.2.date'))
+      .toBe('Recruitment Method #2 Entry #3 Date');
+    expect(getFieldLabel('additionalRecruitmentMethods.0.subEntries.0.description'))
+      .toBe('Recruitment Method #1 Entry #1 Description');
+  });
+
   it('handles unknown subfield in recruitment methods', () => {
     expect(getFieldLabel('additionalRecruitmentMethods.0.foo')).toBe('Recruitment Method #1 foo');
   });
@@ -309,5 +193,138 @@ describe('getFieldLabel', () => {
 
   it('handles single-word unknown fields', () => {
     expect(getFieldLabel('notes')).toBe('Notes');
+  });
+});
+
+// ============================================================================
+// validateCaseForm - required dates per method category
+// ============================================================================
+
+describe('validateCaseForm required dates', () => {
+  it('requires date for single-date methods', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        { method: 'local_newspaper', date: '', description: '' },
+      ],
+    });
+    const result = validateCaseForm(data);
+    const dateError = result.errors.find(e => e.field === 'additionalRecruitmentMethods.0.date');
+    expect(dateError).toBeDefined();
+    expect(dateError!.message).toBe('Date is required');
+  });
+
+  it('requires startDate for date-range methods', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        { method: 'job_website_ad', date: '', description: '' },
+      ],
+    });
+    const result = validateCaseForm(data);
+    const startError = result.errors.find(e => e.field === 'additionalRecruitmentMethods.0.startDate');
+    expect(startError).toBeDefined();
+    expect(startError!.message).toBe('Start date is required');
+  });
+
+  it('requires at least one broadcast date for sub-entry methods', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        { method: 'radio_ad', date: '', description: '', subEntries: [{ date: '', description: '' }] },
+      ],
+    });
+    const result = validateCaseForm(data);
+    const subError = result.errors.find(e =>
+      e.field.includes('subEntries') && e.message.includes('broadcast date')
+    );
+    expect(subError).toBeDefined();
+  });
+
+  it('passes when single-date method has a date', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        { method: 'local_newspaper', date: '2024-06-01', description: 'Times' },
+      ],
+    });
+    const result = validateCaseForm(data);
+    const dateError = result.errors.find(e => e.field === 'additionalRecruitmentMethods.0.date' && e.message === 'Date is required');
+    expect(dateError).toBeUndefined();
+  });
+
+  it('passes when date-range method has startDate', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        { method: 'job_website_ad', date: '', startDate: '2024-06-01', description: '' },
+      ],
+    });
+    const result = validateCaseForm(data);
+    const startError = result.errors.find(e => e.field === 'additionalRecruitmentMethods.0.startDate' && e.message === 'Start date is required');
+    expect(startError).toBeUndefined();
+  });
+
+  it('passes when sub-entry method has at least one date', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        {
+          method: 'radio_ad', date: '', description: '',
+          subEntries: [{ date: '', description: '' }, { date: '2024-06-15', description: 'Morning' }],
+        },
+      ],
+    });
+    const result = validateCaseForm(data);
+    const subError = result.errors.find(e =>
+      e.field.includes('subEntries') && e.message.includes('broadcast date')
+    );
+    expect(subError).toBeUndefined();
+  });
+
+  it('allows empty sub-entry date strings without Zod error', () => {
+    const data = createMinimalFormData({
+      additionalRecruitmentMethods: [
+        {
+          method: 'tv_ad', date: '', description: '',
+          subEntries: [{ date: '', description: '' }],
+        },
+      ],
+    });
+    const result = validateCaseForm(data);
+    // Should NOT have "Invalid date" Zod error — only the friendly "broadcast date required"
+    const zodDateError = result.errors.find(e =>
+      e.field.includes('subEntries') && e.message.includes('Invalid date')
+    );
+    expect(zodDateError).toBeUndefined();
+  });
+});
+
+// ============================================================================
+// mapFieldToInputName - recruitment method scroll-to-field
+// ============================================================================
+
+describe('mapFieldToInputName', () => {
+  it('maps recruitment method date paths', () => {
+    expect(mapFieldToInputName('additionalRecruitmentMethods.0.date')).toBe('method-date-0');
+    expect(mapFieldToInputName('additionalRecruitmentMethods.2.date')).toBe('method-date-2');
+  });
+
+  it('maps recruitment method startDate/endDate paths', () => {
+    expect(mapFieldToInputName('additionalRecruitmentMethods.0.startDate')).toBe('method-start-0');
+    expect(mapFieldToInputName('additionalRecruitmentMethods.1.endDate')).toBe('method-end-1');
+  });
+
+  it('maps recruitment method select paths', () => {
+    expect(mapFieldToInputName('additionalRecruitmentMethods.0.method')).toBe('method-0');
+  });
+
+  it('maps sub-entry date paths', () => {
+    expect(mapFieldToInputName('additionalRecruitmentMethods.0.subEntries.0.date')).toBe('sub-entry-date-0');
+    expect(mapFieldToInputName('additionalRecruitmentMethods.1.subEntries.2.date')).toBe('sub-entry-date-2');
+  });
+
+  it('maps RFI/RFE paths unchanged', () => {
+    expect(mapFieldToInputName('rfiEntries.0.receivedDate')).toBe('rfi-0-receivedDate');
+    expect(mapFieldToInputName('rfeEntries.1.responseDueDate')).toBe('rfe-1-responseDueDate');
+  });
+
+  it('returns standard field names as-is', () => {
+    expect(mapFieldToInputName('employerName')).toBe('employerName');
+    expect(mapFieldToInputName('pwdFilingDate')).toBe('pwdFilingDate');
   });
 });

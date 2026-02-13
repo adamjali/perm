@@ -280,6 +280,26 @@ export function extractRfeEntryErrors(
  * @returns Name attribute used in the DOM element
  */
 export function mapFieldToInputName(fieldName: string): string {
+  // Handle recruitment method sub-entry paths: additionalRecruitmentMethods.0.subEntries.1.date → sub-entry-date-1
+  const subEntryMatch = fieldName.match(/^additionalRecruitmentMethods\.(\d+)\.subEntries\.(\d+)\.(\w+)$/);
+  if (subEntryMatch) {
+    return `sub-entry-${subEntryMatch[3]}-${subEntryMatch[2]}`;
+  }
+
+  // Handle recruitment method paths: additionalRecruitmentMethods.0.date → method-date-0
+  const methodMatch = fieldName.match(/^additionalRecruitmentMethods\.(\d+)\.(\w+)$/);
+  if (methodMatch) {
+    const fieldMap: Record<string, string> = {
+      method: 'method',
+      date: 'method-date',
+      startDate: 'method-start',
+      endDate: 'method-end',
+      description: 'method-desc',
+    };
+    const prefix = fieldMap[methodMatch[2]!] ?? `method-${methodMatch[2]}`;
+    return `${prefix}-${methodMatch[1]}`;
+  }
+
   // Handle RFI array field paths: rfiEntries.0.receivedDate → rfi-0-receivedDate
   const rfiArrayMatch = fieldName.match(/^rfiEntries\.(\d+)\.(\w+)$/);
   if (rfiArrayMatch) {
