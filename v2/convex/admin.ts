@@ -17,6 +17,7 @@ import type { Id } from "./_generated/dataModel";
 import { Scrypt } from "lucia";
 import { requireAdmin, getAdminProfile, getAdminDashboardDataHelper, ADMIN_EMAIL } from "./lib/admin";
 import { getCurrentUserId, extractUserIdFromAction } from "./lib/auth";
+import { recordError } from "./lib/errorRecording";
 import { purgeAllUserData } from "./lib/deletion";
 import { buildDefaultProfile } from "./lib/userDefaults";
 import { render } from "@react-email/render";
@@ -576,6 +577,7 @@ export const createTestUserAndCopyData = internalAction({
       if (errorMessage.includes("already exists")) {
         console.log("   ℹ Test user already exists, proceeding with copy");
       } else {
+        await recordError(ctx, "action", "admin.createTestUserAndCopyData.createUser", error);
         throw error;
       }
     }

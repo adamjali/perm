@@ -11,6 +11,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
+import { captureError } from '@/lib/sentry';
 import type {
   ConfirmationStatus,
   ToolConfirmationState,
@@ -283,6 +284,7 @@ export function useToolConfirmations(
             );
           } catch (persistErr) {
             console.error('[useToolConfirmations] Failed to persist error result:', persistErr);
+            captureError(persistErr instanceof Error ? persistErr : new Error(String(persistErr)), { operation: 'persistErrorResult' });
           }
 
           onExecutionError?.(toolCallId, errorMsg);
@@ -298,11 +300,13 @@ export function useToolConfirmations(
             );
           } catch (persistErr) {
             console.error('[useToolConfirmations] Failed to persist success result:', persistErr);
+            captureError(persistErr instanceof Error ? persistErr : new Error(String(persistErr)), { operation: 'persistSuccessResult' });
           }
 
           onExecutionComplete?.(toolCallId, result);
         }
       } catch (err) {
+        captureError(err instanceof Error ? err : new Error(String(err)), { operation: 'executeToolApproval' });
         const errorMsg = err instanceof Error ? err.message : 'Network error';
         updateStatus(toolCallId, 'error', {
           error: errorMsg,
@@ -319,6 +323,7 @@ export function useToolConfirmations(
           );
         } catch (persistErr) {
           console.error('[useToolConfirmations] Failed to persist network error:', persistErr);
+          captureError(persistErr instanceof Error ? persistErr : new Error(String(persistErr)), { operation: 'persistNetworkError' });
         }
 
         onExecutionError?.(toolCallId, errorMsg);
@@ -349,6 +354,7 @@ export function useToolConfirmations(
         );
       } catch (persistErr) {
         console.error('[useToolConfirmations] Failed to persist denial:', persistErr);
+        captureError(persistErr instanceof Error ? persistErr : new Error(String(persistErr)), { operation: 'persistDenial' });
       }
     },
     [confirmations, updateStatus, onPersistResult]

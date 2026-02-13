@@ -45,6 +45,7 @@ import {
   URGENCY_COLORS,
 } from "@/lib/calendar/types";
 import type { CaseStatus } from "@/lib/perm";
+import { captureError } from "@/lib/sentry";
 
 // ============================================================================
 // Animation Constants
@@ -233,6 +234,7 @@ export function CalendarEventPopover({
       onClose();
     } catch (error) {
       console.error("Failed to hide case from calendar:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
     } finally {
       setIsHiding(false);
     }

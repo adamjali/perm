@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull, extractUserIdFromAction } from "./lib/auth";
 import { encryptToken, decryptToken } from "./lib/crypto";
 import { loggers } from "./lib/logging";
+import { recordError } from "./lib/errorRecording";
 import { buildDefaultProfile } from "./lib/userDefaults";
 import { formatDateForNotification } from "./lib/formatDate";
 
@@ -92,6 +93,7 @@ export const ensureUserProfile = mutation({
         log.error("Failed to schedule welcome email", {
           error: welcomeError instanceof Error ? welcomeError.message : String(welcomeError),
         });
+        await recordError(ctx, "mutation", "users.ensureUserProfile.welcome", welcomeError, { userId });
       }
     }
 
@@ -117,6 +119,7 @@ export const ensureUserProfile = mutation({
       log.error("Failed to send admin signup notification", {
         error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
       });
+      await recordError(ctx, "mutation", "users.ensureUserProfile.adminNotif", adminNotifError, { userId });
     }
 
     return profileId;
@@ -163,6 +166,7 @@ export const ensureUserProfileInternal = internalMutation({
         log.error("Failed to schedule welcome email", {
           error: welcomeError instanceof Error ? welcomeError.message : String(welcomeError),
         });
+        await recordError(ctx, "mutation", "users.ensureUserProfileInternal.welcome", welcomeError, { userId: args.userId });
       }
     }
 
@@ -186,6 +190,7 @@ export const ensureUserProfileInternal = internalMutation({
       log.error("Failed to send admin signup notification", {
         error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
       });
+      await recordError(ctx, "mutation", "users.ensureUserProfileInternal.adminNotif", adminNotifError, { userId: args.userId });
     }
 
     return profileId;
@@ -307,6 +312,7 @@ export const updateUserProfile = mutation({
         log.error("Failed to send admin signup notification", {
           error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
         });
+        await recordError(ctx, "mutation", "users.updateUserProfile.adminNotif", adminNotifError, { userId });
       }
     }
 
@@ -452,6 +458,7 @@ export const acceptTermsOfService = mutation({
         log.error("Failed to send admin signup notification", {
           error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
         });
+        await recordError(ctx, "mutation", "users.acceptTermsOfService.adminNotif", adminNotifError, { userId });
       }
 
       return { success: true, profileId };
@@ -850,6 +857,7 @@ export const immediateAccountDeletion = action({
         log.error("Failed to send immediate deletion email", {
           error: emailError instanceof Error ? emailError.message : "Unknown error",
         });
+        await recordError(ctx, "action", "users.immediateAccountDeletion.email", emailError, { userId });
       }
     }
 

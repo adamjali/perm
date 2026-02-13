@@ -18,6 +18,7 @@
  */
 
 import { useState, useCallback, useMemo } from "react";
+import { captureError } from "@/lib/sentry";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
@@ -88,6 +89,7 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
         await recordUsageMutation({ id: template._id });
       } catch (error) {
         console.error("[useJobDescriptionTemplates] Failed to record usage:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)), { operation: 'recordTemplateUsage' });
         // Still set template ID - usage tracking is non-critical
       }
       setLoadedTemplateId(template._id);
@@ -104,6 +106,7 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
         return id;
       } catch (error) {
         console.error("[useJobDescriptionTemplates] Failed to create template:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)), { operation: 'createTemplate' });
         throw error; // Re-throw for caller to handle
       }
     },
@@ -117,6 +120,7 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
         await updateMutation({ id, name, description });
       } catch (error) {
         console.error("[useJobDescriptionTemplates] Failed to update template:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)), { operation: 'updateTemplate' });
         throw error; // Re-throw for caller to handle
       }
     },
@@ -134,6 +138,7 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
         }
       } catch (error) {
         console.error("[useJobDescriptionTemplates] Failed to delete template:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)), { operation: 'deleteTemplate' });
         throw error; // Re-throw for caller to handle
       }
     },
@@ -152,6 +157,7 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
         return result;
       } catch (error) {
         console.error("[useJobDescriptionTemplates] Failed to hard delete template:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)), { operation: 'hardDeleteTemplate' });
         throw error; // Re-throw for caller to handle
       }
     },

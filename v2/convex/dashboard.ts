@@ -96,6 +96,7 @@ export const getDeadlines = query({
           resourceId: caseDoc._id,
           error: error instanceof Error ? error.message : String(error),
         });
+        // Note: no ctx.scheduler available in queries for error recording
       }
     }
 
@@ -422,6 +423,7 @@ export const getUpcomingDeadlines = query({
           resourceId: caseDoc._id,
           error: error instanceof Error ? error.message : String(error),
         });
+        // Note: no ctx.scheduler available in queries for error recording
       }
     }
 

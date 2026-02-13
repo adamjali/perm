@@ -14,6 +14,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { captureError } from "@/lib/sentry";
 
 /**
  * ServiceWorkerRegistration Component
@@ -67,6 +68,7 @@ export function ServiceWorkerRegistration(): null {
       })
       .catch((error) => {
         console.error("[SW] Registration failed:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)));
       });
   }, []);
 

@@ -14,6 +14,7 @@ import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import { buildDefaultProfile } from "./lib/userDefaults";
 import { loggers } from "./lib/logging";
+import { recordError } from "./lib/errorRecording";
 
 /**
  * Maps calendar sync preference names to the schema field names for calendarEventIds.
@@ -261,6 +262,9 @@ export const updateCalendarPreferences = mutation({
       } catch (adminNotifError) {
         loggers.auth.error("Failed to send admin signup notification", {
           error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
+        });
+        await recordError(ctx, "mutation", "calendar.updateCalendarPreferences.adminNotification", adminNotifError, {
+          userId,
         });
       }
 

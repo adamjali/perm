@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { PERM_STAGES } from "@/lib/onboarding/constants";
 import { useOnboarding } from "../OnboardingProvider";
 import { cn } from "@/lib/utils";
+import { captureError } from "@/lib/sentry";
 
 interface CreateCaseStepProps {
   onNext: () => void;
@@ -60,6 +61,7 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
       onNext();
     } catch (error) {
       console.error("Failed to create case:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       const message = error instanceof Error ? error.message : "Failed to create case. Please try again.";
       setErrors({ form: message });
     } finally {

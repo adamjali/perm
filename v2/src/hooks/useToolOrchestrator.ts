@@ -20,6 +20,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
+import { captureError } from '@/lib/sentry';
 import { useClientActions } from './useClientActions';
 import { useToolConfirmations } from './useToolConfirmations';
 import { hasClientAction, type ClientAction } from '@/lib/ai/client-actions';
@@ -215,6 +216,7 @@ export function useToolOrchestrator(
           `[useToolOrchestrator] Failed to parse tool result as JSON`,
           { toolName: toolCall.tool, toolCallKey, error }
         );
+        captureError(error instanceof Error ? error : new Error(String(error)), { operation: 'parseToolResult' });
         return;
       }
 

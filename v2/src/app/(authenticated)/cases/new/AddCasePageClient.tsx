@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
 import { useMutation, useConvex } from "convex/react";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import { ChevronRight } from "lucide-react";
 import { api } from "../../../../../convex/_generated/api";
 import { CaseForm } from "@/components/forms/CaseForm";
@@ -73,6 +74,7 @@ export function AddCasePageClient() {
         await router.push(`/cases/${caseId}`);
       } catch (error) {
         console.error("Failed to create case:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)));
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         if (errorMessage.includes("network") || errorMessage.includes("Network")) {
           toast.error("Network error. Please check your connection and try again.");
@@ -121,6 +123,7 @@ export function AddCasePageClient() {
         }
       } catch (error) {
         console.error("Failed to check for duplicates:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)));
         // On error checking duplicates, warn user and ask for confirmation
         toast.warning("Could not verify if this case already exists");
         setPendingFormData(formData);

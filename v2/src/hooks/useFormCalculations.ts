@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
+import { captureError } from "@/lib/sentry";
 import { format } from "date-fns";
 import {
   calculatePWDExpiration,
@@ -150,6 +151,7 @@ function calculateDependentValue(
       `[useFormCalculations] Failed to calculate ${String(dependentField)} from ${String(sourceField)}:`,
       { sourceValue: formData[sourceField], error }
     );
+    captureError(error instanceof Error ? error : new Error(String(error)), { operation: 'calculateDependentValue' });
     return undefined;
   }
 }

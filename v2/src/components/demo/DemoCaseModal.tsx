@@ -29,6 +29,7 @@ import {
 import { useDateFieldValidation } from "@/hooks/useDateFieldValidation";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { DemoCase } from "@/lib/demo/types";
+import { captureError } from "@/lib/sentry";
 
 // ============================================================================
 // Types
@@ -612,6 +613,7 @@ export function DemoCaseModal({
       onClose();
     } catch (error) {
       console.error("Failed to save demo case:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       toast.error("Failed to save case. Please try again.");
     }
   }, [formData, caseToEdit, validate, onSave, onClose, permValidation, hasDateInlineErrors]);

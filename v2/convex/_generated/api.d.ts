@@ -49,6 +49,7 @@ import type * as lib_deletion from "../lib/deletion.js";
 import type * as lib_derivedCalculations from "../lib/derivedCalculations.js";
 import type * as lib_digestHelpers from "../lib/digestHelpers.js";
 import type * as lib_email from "../lib/email.js";
+import type * as lib_errorRecording from "../lib/errorRecording.js";
 import type * as lib_formatDate from "../lib/formatDate.js";
 import type * as lib_googleHelpers from "../lib/googleHelpers.js";
 import type * as lib_logging from "../lib/logging.js";
@@ -160,6 +161,7 @@ declare const fullApi: ApiFromModules<{
   "lib/derivedCalculations": typeof lib_derivedCalculations;
   "lib/digestHelpers": typeof lib_digestHelpers;
   "lib/email": typeof lib_email;
+  "lib/errorRecording": typeof lib_errorRecording;
   "lib/formatDate": typeof lib_formatDate;
   "lib/googleHelpers": typeof lib_googleHelpers;
   "lib/logging": typeof lib_logging;

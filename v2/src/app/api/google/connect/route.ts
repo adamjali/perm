@@ -11,6 +11,7 @@
  * - This route: Used for calendar API access (connecting calendar)
  */
 import { NextRequest, NextResponse } from "next/server";
+import { captureError } from "@/lib/sentry";
 import {
   convexAuthNextjsToken,
   isAuthenticatedNextjs,
@@ -79,6 +80,7 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("[Google OAuth] Connect error:", error);
+    captureError(error instanceof Error ? error : new Error(String(error)));
 
     // Determine specific error code based on error message
     let errorCode = "oauth_init_failed";

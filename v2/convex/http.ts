@@ -2,6 +2,7 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { auth } from "./auth";
+import { recordError } from "./lib/errorRecording";
 
 const http = httpRouter();
 auth.addHttpRoutes(http);
@@ -58,6 +59,7 @@ http.route({
       });
     } catch (error) {
       console.error("Resend inbound webhook error:", error);
+      await recordError(ctx, "webhook", "http.resendInbound.process", error);
       // Return 200 to prevent Resend from retrying on our errors
       return new Response(
         JSON.stringify({

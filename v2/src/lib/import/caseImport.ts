@@ -17,6 +17,7 @@
  */
 
 import type { CaseCardData } from "../../../convex/lib/caseListTypes";
+import { captureError } from "@/lib/sentry";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -329,6 +330,7 @@ function normalizeDate(value: unknown): string | undefined {
         if (process.env.NODE_ENV === "development") {
           console.warn(`[caseImport] Failed to parse ISO date: "${trimmed}"`, error);
         }
+        captureError(error instanceof Error ? error : new Error(String(error)));
         return undefined;
       }
     }
@@ -343,6 +345,7 @@ function normalizeDate(value: unknown): string | undefined {
       if (process.env.NODE_ENV === "development") {
         console.warn(`[caseImport] Failed to parse date string: "${trimmed}"`, error);
       }
+      captureError(error instanceof Error ? error : new Error(String(error)));
       return undefined;
     }
   }
@@ -630,6 +633,7 @@ export async function parseCaseImportFile(file: File): Promise<ImportResult> {
         field: "file",
         message: `Invalid JSON format: ${errorDetail}`,
       });
+      captureError(parseError instanceof Error ? parseError : new Error(String(parseError)));
       return result;
     }
 
@@ -681,6 +685,7 @@ export async function parseCaseImportFile(file: File): Promise<ImportResult> {
       field: "file",
       message: `Failed to read file: ${error instanceof Error ? error.message : "Unknown error"}`,
     });
+    captureError(error instanceof Error ? error : new Error(String(error)));
   }
 
   return result;

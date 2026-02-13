@@ -39,6 +39,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/lib/toast";
 import type { JobDescriptionTemplate } from "./JobDescriptionField";
 import { formatTemplateDate, copyToClipboard, isTemplateNameTaken } from "./shared";
+import { captureError } from "@/lib/sentry";
 
 // ============================================================================
 // TYPES
@@ -182,6 +183,7 @@ export function TemplateManagementModal({
       toast.success("Template updated");
     } catch (error) {
       console.error("[TemplateManagementModal] Update failed:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       toast.error(error instanceof Error ? error.message : "Failed to update template");
     } finally {
       setIsProcessing(false);
@@ -211,6 +213,7 @@ export function TemplateManagementModal({
       }
     } catch (error) {
       console.error("[TemplateManagementModal] Delete failed:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       toast.error(error instanceof Error ? error.message : "Failed to delete template");
     } finally {
       setIsProcessing(false);

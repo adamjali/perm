@@ -14,6 +14,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
+import { captureError } from '@/lib/sentry';
 import type { ClientAction, AnyClientAction } from '@/lib/ai/client-actions';
 
 // =============================================================================
@@ -194,6 +195,7 @@ export function useClientActions(
           }
         }
       } catch (error) {
+        captureError(error instanceof Error ? error : new Error(String(error)), { operation: 'executeClientAction' });
         result = {
           success: false,
           error:

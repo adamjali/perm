@@ -20,6 +20,7 @@
  */
 
 import type { Id } from "../../../convex/_generated/dataModel";
+import { captureError } from "@/lib/sentry";
 
 // ============================================================================
 // EXPORT FORMAT VERSION
@@ -610,6 +611,7 @@ function downloadBlob(blob: Blob, filename: string): void {
     URL.revokeObjectURL(url);
   } catch (error) {
     console.error("[Export] Download failed:", error);
+    captureError(error instanceof Error ? error : new Error(String(error)));
     throw new Error("Failed to initiate download. Please check your browser settings and try again.");
   }
 }

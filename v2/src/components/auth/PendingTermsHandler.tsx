@@ -54,6 +54,7 @@ import {
   clearPendingTermsAcceptance,
 } from "@/lib/auth/termsStorage";
 import { TermsAcceptanceModal } from "./TermsAcceptanceModal";
+import { captureError } from "@/lib/sentry";
 
 export function PendingTermsHandler() {
   const router = useRouter();
@@ -94,6 +95,7 @@ export function PendingTermsHandler() {
         })
         .catch((error) => {
           console.error("[PendingTermsHandler] Failed to create user profile:", error);
+          captureError(error instanceof Error ? error : new Error(String(error)));
           hasCreatedProfile.current = false;
         });
       return;
@@ -120,6 +122,7 @@ export function PendingTermsHandler() {
         })
         .catch((error) => {
           console.error("[PendingTermsHandler] Failed to record terms acceptance:", error);
+          captureError(error instanceof Error ? error : new Error(String(error)));
           // Clear anyway to prevent infinite retries
           clearPendingTermsAcceptance();
           // Reset flag so it can retry on next mount if needed

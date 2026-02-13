@@ -16,6 +16,7 @@ import { validateCase, mapToValidatorFormat, calculateAutoStatus } from "./lib/p
 import { shouldSendEmail, formatCaseStatus, buildUserNotificationPrefs } from "./lib/notificationHelpers";
 import { scheduleCalendarSync, scheduleCalendarSyncBulk } from "./lib/calendarSyncHelpers";
 import { loggers } from "./lib/logging";
+import { recordError } from "./lib/errorRecording";
 
 const log = loggers.cases;
 
@@ -538,6 +539,7 @@ export const create = mutation({
     } catch (auditError) {
       // Log audit failure but don't fail the operation - case was created successfully
       log.error('Failed to log case creation', { resourceId: caseId, error: auditError instanceof Error ? auditError.message : String(auditError) });
+      await recordError(ctx, "mutation", "cases.createCase.audit", auditError, { userId, resourceId: caseId.toString() });
     }
 
     // Create notification for case creation (v1 parity)
@@ -588,6 +590,7 @@ export const create = mutation({
     } catch (notificationError) {
       // Log notification failure but don't fail the operation - case was created successfully
       log.error('Failed to create case creation notification', { resourceId: caseId, error: notificationError instanceof Error ? notificationError.message : String(notificationError) });
+      await recordError(ctx, "mutation", "cases.createCase.notification", notificationError, { userId, resourceId: caseId.toString() });
     }
 
     // Schedule Google Calendar sync for the new case (best-effort, non-blocking)
@@ -601,6 +604,7 @@ export const create = mutation({
       } catch (calendarError) {
         // Log calendar sync failure but don't fail the operation - case was created successfully
         log.error('Failed to schedule sync for new case', { resourceId: caseId, error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
+        await recordError(ctx, "mutation", "cases.createCase.calendar", calendarError, { userId, resourceId: caseId.toString() });
       }
     }
 
@@ -645,6 +649,7 @@ export const create = mutation({
         resourceId: caseId,
         error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
       });
+      await recordError(ctx, "mutation", "cases.createCase.adminNotification", adminNotifError, { userId, resourceId: caseId.toString() });
     }
 
     return caseId;
@@ -999,6 +1004,7 @@ export const update = mutation({
     } catch (auditError) {
       // Log audit failure but don't fail the operation - case was updated successfully
       log.error('Failed to log case update', { resourceId: args.id, error: auditError instanceof Error ? auditError.message : String(auditError) });
+      await recordError(ctx, "mutation", "cases.updateCase.audit", auditError, { userId: oldDoc!.userId, resourceId: args.id.toString() });
     }
 
     // =========================================================================
@@ -1100,6 +1106,7 @@ export const update = mutation({
     } catch (notificationError) {
       // Log notification failure but don't fail the operation - case was updated successfully
       log.error('Failed to create notification', { resourceId: args.id, error: notificationError instanceof Error ? notificationError.message : String(notificationError) });
+      await recordError(ctx, "mutation", "cases.updateCase.notification", notificationError, { userId: oldDoc!.userId, resourceId: args.id.toString() });
     }
 
     // Schedule Google Calendar sync if deadline-relevant fields changed (best-effort, non-blocking)
@@ -1123,6 +1130,7 @@ export const update = mutation({
       } catch (calendarError) {
         // Log calendar sync failure but don't fail the operation - case was updated successfully
         log.error('Failed to schedule sync for updated case', { resourceId: args.id, error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
+        await recordError(ctx, "mutation", "cases.updateCase.calendar", calendarError, { userId: oldDoc!.userId, resourceId: args.id.toString() });
       }
     }
 
@@ -1151,6 +1159,7 @@ export const remove = mutation({
       await logDelete(ctx, "cases", args.id, caseDoc as Record<string, unknown>);
     } catch (auditError) {
       log.error('Failed to log case deletion', { resourceId: args.id, error: auditError instanceof Error ? auditError.message : String(auditError) });
+      await recordError(ctx, "mutation", "cases.deleteCase.audit", auditError, { userId, resourceId: args.id.toString() });
     }
 
     // ===== CASCADE CLEANUP =====
@@ -1166,6 +1175,7 @@ export const remove = mutation({
       }
     } catch (cleanupError) {
       log.error('Failed to cleanup case notifications', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+      await recordError(ctx, "mutation", "cases.deleteCase.cleanupNotifications", cleanupError, { userId, resourceId: args.id.toString() });
     }
 
     // 2. Schedule calendar event deletion (async/background)
@@ -1178,6 +1188,7 @@ export const remove = mutation({
       log.info('Scheduled event deletion for removed case', { resourceId: args.id });
     } catch (calendarError) {
       log.error('Failed to schedule event deletion for removed case', { resourceId: args.id, error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
+      await recordError(ctx, "mutation", "cases.deleteCase.calendar", calendarError, { userId, resourceId: args.id.toString() });
     }
 
     // 3. Remove case ID from userCaseOrder.caseIds array
@@ -1195,6 +1206,7 @@ export const remove = mutation({
       }
     } catch (cleanupError) {
       log.error('Failed to cleanup userCaseOrder', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+      await recordError(ctx, "mutation", "cases.deleteCase.cleanupCaseOrder", cleanupError, { userId, resourceId: args.id.toString() });
     }
 
     // 4. Remove case ID from timelinePreferences.selectedCaseIds array
@@ -1212,6 +1224,7 @@ export const remove = mutation({
       }
     } catch (cleanupError) {
       log.error('Failed to cleanup timelinePreferences', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+      await recordError(ctx, "mutation", "cases.deleteCase.cleanupTimeline", cleanupError, { userId, resourceId: args.id.toString() });
     }
 
     // 5. Remove case ID from userProfiles.dismissedDeadlines array entries
@@ -1229,6 +1242,7 @@ export const remove = mutation({
       }
     } catch (cleanupError) {
       log.error('Failed to cleanup userProfiles.dismissedDeadlines', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+      await recordError(ctx, "mutation", "cases.deleteCase.cleanupDismissedDeadlines", cleanupError, { userId, resourceId: args.id.toString() });
     }
 
     // 6. Clear conversations.metadata.relatedCaseId where it matches
@@ -1251,6 +1265,7 @@ export const remove = mutation({
       }
     } catch (cleanupError) {
       log.error('Failed to cleanup conversations.relatedCaseId', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+      await recordError(ctx, "mutation", "cases.deleteCase.cleanupConversations", cleanupError, { userId, resourceId: args.id.toString() });
     }
 
     // 7. Clear citation references in conversationMessages where caseId matches
@@ -1279,6 +1294,7 @@ export const remove = mutation({
       }
     } catch (cleanupError) {
       log.error('Failed to cleanup conversationMessages citations', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+      await recordError(ctx, "mutation", "cases.deleteCase.cleanupCitations", cleanupError, { userId, resourceId: args.id.toString() });
     }
 
     // ===== HARD DELETE THE CASE =====
@@ -1333,6 +1349,7 @@ export const bulkRemove = mutation({
           await logDelete(ctx, "cases", id, caseDoc as Record<string, unknown>);
         } catch (auditError) {
           log.error('Failed to log bulk case deletion', { resourceId: id, error: auditError instanceof Error ? auditError.message : String(auditError) });
+          await recordError(ctx, "mutation", "cases.bulkRemove.audit", auditError, { userId, resourceId: id.toString() });
         }
 
         // ===== CASCADE CLEANUP =====
@@ -1348,6 +1365,7 @@ export const bulkRemove = mutation({
           }
         } catch (cleanupError) {
           log.error('Failed to cleanup case notifications in bulk', { resourceId: id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+          await recordError(ctx, "mutation", "cases.bulkRemove.cleanupNotifications", cleanupError, { userId, resourceId: id.toString() });
         }
 
         // 2. Schedule calendar event deletion (async/background)
@@ -1359,6 +1377,7 @@ export const bulkRemove = mutation({
           );
         } catch (calendarError) {
           log.error('Failed to schedule event deletion in bulk', { resourceId: id, error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
+          await recordError(ctx, "mutation", "cases.bulkRemove.calendar", calendarError, { userId, resourceId: id.toString() });
         }
 
         // ===== HARD DELETE THE CASE =====
@@ -1369,6 +1388,7 @@ export const bulkRemove = mutation({
       } catch (error) {
         failedCount++;
         errors.push(`Case ${id}: ${error instanceof Error ? error.message : "Unknown error"}`);
+        await recordError(ctx, "mutation", "cases.bulkRemove.deleteCase", error, { userId, resourceId: id.toString() });
       }
     }
 
@@ -1394,6 +1414,7 @@ export const bulkRemove = mutation({
         }
       } catch (cleanupError) {
         log.error('Failed to cleanup userCaseOrder in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+        await recordError(ctx, "mutation", "cases.bulkRemove.cleanupCaseOrder", cleanupError, { userId });
       }
 
       // 4. Remove case IDs from timelinePreferences.selectedCaseIds array
@@ -1414,6 +1435,7 @@ export const bulkRemove = mutation({
         }
       } catch (cleanupError) {
         log.error('Failed to cleanup timelinePreferences in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+        await recordError(ctx, "mutation", "cases.bulkRemove.cleanupTimeline", cleanupError, { userId });
       }
 
       // 5. Remove case IDs from userProfiles.dismissedDeadlines array entries
@@ -1434,6 +1456,7 @@ export const bulkRemove = mutation({
         }
       } catch (cleanupError) {
         log.error('Failed to cleanup userProfiles.dismissedDeadlines in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+        await recordError(ctx, "mutation", "cases.bulkRemove.cleanupDismissedDeadlines", cleanupError, { userId });
       }
 
       // 6. Clear conversations.metadata.relatedCaseId where it matches
@@ -1456,6 +1479,7 @@ export const bulkRemove = mutation({
         }
       } catch (cleanupError) {
         log.error('Failed to cleanup conversations.relatedCaseId in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+        await recordError(ctx, "mutation", "cases.bulkRemove.cleanupConversations", cleanupError, { userId });
       }
 
       // 7. Clear citation references in conversationMessages where caseId matches
@@ -1484,6 +1508,7 @@ export const bulkRemove = mutation({
         }
       } catch (cleanupError) {
         log.error('Failed to cleanup conversationMessages citations in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+        await recordError(ctx, "mutation", "cases.bulkRemove.cleanupCitations", cleanupError, { userId });
       }
     }
 
@@ -1573,6 +1598,7 @@ export const bulkUpdateStatus = mutation({
           );
         } catch (auditError) {
           log.error('Failed to log bulk status update', { resourceId: id, error: auditError instanceof Error ? auditError.message : String(auditError) });
+          await recordError(ctx, "mutation", "cases.bulkUpdateStatus.audit", auditError, { userId, resourceId: id.toString() });
         }
 
         // Create notification for status change (v1 parity)
@@ -1622,6 +1648,7 @@ export const bulkUpdateStatus = mutation({
           }
         } catch (notificationError) {
           log.error('Failed to create bulk status change notification', { resourceId: id, error: notificationError instanceof Error ? notificationError.message : String(notificationError) });
+          await recordError(ctx, "mutation", "cases.bulkUpdateStatus.notification", notificationError, { userId, resourceId: id.toString() });
         }
 
         successCount++;
@@ -1629,6 +1656,7 @@ export const bulkUpdateStatus = mutation({
       } catch (error) {
         failedCount++;
         errors.push(`Case ${id}: ${error instanceof Error ? error.message : "Unknown error"}`);
+        await recordError(ctx, "mutation", "cases.bulkUpdateStatus.updateCase", error, { userId, resourceId: id.toString() });
       }
     }
 
@@ -1643,6 +1671,7 @@ export const bulkUpdateStatus = mutation({
       } catch (calendarError) {
         // Log calendar sync failure but don't fail the operation - status updates were successful
         log.error('Failed to schedule bulk sync for status updates', { error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
+        await recordError(ctx, "mutation", "cases.bulkUpdateStatus.calendar", calendarError, { userId });
       }
     }
 
@@ -1734,6 +1763,7 @@ export const bulkUpdateCalendarSync = mutation({
       } catch (calendarError) {
         // Log but don't fail - the DB updates were successful
         log.error('Error scheduling bulk calendar operations', { error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
+        await recordError(ctx, "mutation", "cases.bulkUpdateCalendarSync.calendar", calendarError, { userId });
       }
     }
 
@@ -1846,6 +1876,7 @@ export const toggleCalendarSync = mutation({
     } catch (calendarError) {
       // Log calendar failure but don't fail the operation - toggle was successful
       log.error('Failed to schedule calendar sync after toggle', { resourceId: args.id, error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
+      await recordError(ctx, "mutation", "cases.toggleCalendarSync.calendar", calendarError, { userId: caseDoc!.userId, resourceId: args.id.toString() });
     }
 
     return newCalendarSyncState;
@@ -1891,6 +1922,7 @@ export const enableCalendarSync = mutation({
           resourceId: args.id,
           error: calendarError instanceof Error ? calendarError.message : String(calendarError),
         });
+        await recordError(ctx, "mutation", "cases.enableCalendarSync.calendar", calendarError, { userId: caseDoc!.userId, resourceId: args.id.toString() });
       }
     }
 
@@ -1939,6 +1971,7 @@ export const disableCalendarSync = mutation({
           resourceId: args.id,
           error: calendarError instanceof Error ? calendarError.message : String(calendarError),
         });
+        await recordError(ctx, "mutation", "cases.disableCalendarSync.calendar", calendarError, { userId: caseDoc!.userId, resourceId: args.id.toString() });
       }
     }
 
@@ -2279,6 +2312,7 @@ export const importCases = mutation({
             await logDelete(ctx, "cases", existingCaseId, existingCase as Record<string, unknown>);
           } catch (auditError) {
             log.error('Failed to log case deletion during import replace', { resourceId: existingCaseId, error: auditError instanceof Error ? auditError.message : String(auditError) });
+            await recordError(ctx, "mutation", "cases.importCases.replaceAudit", auditError, { userId, resourceId: existingCaseId.toString() });
           }
 
           // Cleanup notifications for this case
@@ -2292,6 +2326,7 @@ export const importCases = mutation({
             }
           } catch (cleanupError) {
             log.error('Failed to cleanup notifications during import replace', { resourceId: existingCaseId, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+            await recordError(ctx, "mutation", "cases.importCases.replaceCleanupNotifications", cleanupError, { userId, resourceId: existingCaseId.toString() });
           }
 
           // Schedule calendar event deletion
@@ -2303,6 +2338,7 @@ export const importCases = mutation({
             );
           } catch (calendarError) {
             log.error('Failed to schedule event deletion during import replace', { resourceId: existingCaseId, error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
+            await recordError(ctx, "mutation", "cases.importCases.replaceCalendar", calendarError, { userId, resourceId: existingCaseId.toString() });
           }
 
           // Clean up userCaseOrder
@@ -2319,6 +2355,7 @@ export const importCases = mutation({
             }
           } catch (cleanupError) {
             log.error('Failed to cleanup userCaseOrder during import replace', { resourceId: existingCaseId, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+            await recordError(ctx, "mutation", "cases.importCases.replaceCleanupCaseOrder", cleanupError, { userId, resourceId: existingCaseId.toString() });
           }
 
           // Clean up timelinePreferences
@@ -2335,6 +2372,7 @@ export const importCases = mutation({
             }
           } catch (cleanupError) {
             log.error('Failed to cleanup timelinePreferences during import replace', { resourceId: existingCaseId, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+            await recordError(ctx, "mutation", "cases.importCases.replaceCleanupTimeline", cleanupError, { userId, resourceId: existingCaseId.toString() });
           }
 
           // Clean up dismissedDeadlines
@@ -2351,6 +2389,7 @@ export const importCases = mutation({
             }
           } catch (cleanupError) {
             log.error('Failed to cleanup dismissedDeadlines during import replace', { resourceId: existingCaseId, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+            await recordError(ctx, "mutation", "cases.importCases.replaceCleanupDismissedDeadlines", cleanupError, { userId, resourceId: existingCaseId.toString() });
           }
 
           // Clean up conversation references
@@ -2369,6 +2408,7 @@ export const importCases = mutation({
             }
           } catch (cleanupError) {
             log.error('Failed to cleanup conversations during import replace', { resourceId: existingCaseId, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+            await recordError(ctx, "mutation", "cases.importCases.replaceCleanupConversations", cleanupError, { userId, resourceId: existingCaseId.toString() });
           }
 
           // Hard delete the existing case
@@ -2556,6 +2596,7 @@ export const importCases = mutation({
       } catch (auditError) {
         // Log audit failure but don't fail the operation - case was imported successfully
         log.error('Failed to log case import', { resourceId: caseId, error: auditError instanceof Error ? auditError.message : String(auditError) });
+        await recordError(ctx, "mutation", "cases.importCases.audit", auditError, { userId, resourceId: caseId.toString() });
       }
 
       importedCount++;
@@ -2862,6 +2903,7 @@ export const reopenCase = mutation({
     } catch (auditError) {
       // Log audit failure but don't fail the operation - case was reopened successfully
       log.error('Failed to log case reopen', { resourceId: args.id, error: auditError instanceof Error ? auditError.message : String(auditError) });
+      await recordError(ctx, "mutation", "cases.reopenCase.audit", auditError, { userId: oldDoc!.userId, resourceId: args.id.toString() });
     }
 
     return {

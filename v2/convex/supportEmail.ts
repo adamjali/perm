@@ -16,6 +16,7 @@ import { internal } from "./_generated/api";
 import { getResend, FROM_EMAIL } from "./lib/email";
 import { requireAdmin } from "./lib/admin";
 import { loggers } from "./lib/logging";
+import { recordError } from "./lib/errorRecording";
 
 const log = loggers.email;
 
@@ -100,6 +101,7 @@ export const processInboundEmail = internalAction({
         resendEmailId: args.resendEmailId,
         error: err instanceof Error ? err.message : "Unknown",
       });
+      await recordError(ctx, "action", "supportEmail.processInbound.fetchContent", err, { resourceId: args.resendEmailId });
       // Continue with metadata only — still store the email
     }
 
@@ -157,6 +159,7 @@ export const processInboundEmail = internalAction({
         log.error("Error forwarding email", {
           error: err instanceof Error ? err.message : "Unknown",
         });
+        await recordError(ctx, "action", "supportEmail.processInbound.forward", err, { resourceId: args.resendEmailId });
       }
 
     }

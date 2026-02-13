@@ -25,6 +25,7 @@ import {
 import { shouldSendEmail, formatDeadlineType, buildUserNotificationPrefs, type DeadlineNotificationType } from "./lib/notificationHelpers";
 import { type ViolationType } from "./lib/deadlineEnforcementHelpers";
 import { loggers } from "./lib/logging";
+import { recordError } from "./lib/errorRecording";
 import { DEFAULT_USER_TIMEZONE } from "./lib/perm/deadlines/timezones";
 
 const log = loggers.deadline;
@@ -238,6 +239,7 @@ export const checkAndEnforceDeadlines = mutation({
             resourceId: caseDoc._id,
             error: emailError instanceof Error ? emailError.message : String(emailError),
           });
+          await recordError(ctx, "mutation", "deadlineEnforcement.checkAndEnforce.emailSchedule", emailError, { userId, resourceId: caseDoc._id });
           // Report to Sentry via scheduled action (mutations can't fetch directly)
           await ctx.scheduler.runAfter(0, internal.sentryReporter.report, {
             errorMessage: emailError instanceof Error ? emailError.message : String(emailError),

@@ -26,6 +26,7 @@ import {
 import type { Id } from "./_generated/dataModel";
 import { extractUserIdFromAction } from "./lib/auth";
 import { loggers } from "./lib/logging";
+import { recordError } from "./lib/errorRecording";
 import { reportError } from "./lib/sentry";
 
 const log = loggers.calendar;
@@ -129,6 +130,9 @@ export const refreshAccessToken = internalAction({
         operation: "refreshAccessToken",
         userId: args.userId,
       });
+      await recordError(ctx, "action", "googleCalendarActions.refreshAccessToken.tokenRefresh", error, {
+        userId: args.userId,
+      });
 
       // Clear tokens to auto-disconnect
       await ctx.runMutation(internal.googleAuth.clearGoogleTokensInternal, {
@@ -212,8 +216,11 @@ export const isCalendarConnectedAndValid = internalAction({
         { userId: args.userId }
       );
       return token !== null;
-    } catch {
+    } catch (error) {
       // Token refresh failed, not valid
+      await recordError(ctx, "action", "googleCalendarActions.isCalendarConnectedAndValid.tokenCheck", error, {
+        userId: args.userId,
+      });
       return false;
     }
   },
@@ -380,6 +387,10 @@ export const createCalendarEvent = internalAction({
         operation: "createCalendarEvent",
         extra: { eventType },
       });
+      await recordError(ctx, "action", "googleCalendarActions.createCalendarEvent.create", error, {
+        userId,
+        resourceId: event.caseId,
+      });
       return {
         eventId: "",
         type: eventType,
@@ -480,6 +491,10 @@ export const deleteCalendarEvent = internalAction({
       } catch (error) {
         // Re-throw auth errors with proper message
         if (error instanceof Error && error.message.includes("Authentication failed")) {
+          await recordError(ctx, "action", "googleCalendarActions.deleteCalendarEvent.auth", error, {
+            userId,
+            resourceId: eventId,
+          });
           return {
             success: false,
             error: error.message,
@@ -490,6 +505,10 @@ export const deleteCalendarEvent = internalAction({
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       log.error('Failed to delete event', { eventId, error: message });
+      await recordError(ctx, "action", "googleCalendarActions.deleteCalendarEvent.delete", error, {
+        userId,
+        resourceId: eventId,
+      });
       return {
         success: false,
         error: message,
@@ -672,6 +691,10 @@ export const deleteCaseCalendarEvents = internalAction({
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       log.error('Failed to delete events for case', { resourceId: caseId, error: message });
+      await recordError(ctx, "action", "googleCalendarActions.deleteCaseCalendarEvents.delete", error, {
+        userId,
+        resourceId: caseId,
+      });
       return {
         success: false,
         eventsDeleted: 0,
@@ -805,6 +828,9 @@ export const bulkDeleteEventsByType = internalAction({
         userId,
         eventSchemaFields,
         error: message,
+      });
+      await recordError(ctx, "action", "googleCalendarActions.bulkDeleteEventsByType.bulkDelete", error, {
+        userId,
       });
       return {
         success: false,
@@ -949,6 +975,10 @@ export const syncCaseCalendarEvents = internalAction({
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       log.error('Failed to sync case', { resourceId: caseId, error: message });
+      await recordError(ctx, "action", "googleCalendarActions.syncCaseCalendarEvents.sync", error, {
+        userId,
+        resourceId: caseId,
+      });
       return {
         caseId,
         success: false,
@@ -1097,6 +1127,10 @@ export const clearAllCalendarEvents = internalAction({
                 eventId,
                 error: error instanceof Error ? error.message : String(error),
               });
+              await recordError(ctx, "action", "googleCalendarActions.clearAllCalendarEvents.deleteEvent", error, {
+                userId,
+                resourceId: eventId,
+              });
               errors++;
             }
 
@@ -1134,6 +1168,9 @@ export const clearAllCalendarEvents = internalAction({
       log.error("clearAllCalendarEvents: Failed", {
         resourceId: userId,
         error: message,
+      });
+      await recordError(ctx, "action", "googleCalendarActions.clearAllCalendarEvents.cleanup", error, {
+        userId,
       });
       return {
         success: false,
@@ -1286,6 +1323,10 @@ export const syncAllCases = action({
         log.error('Error syncing case', {
           resourceId: caseItem._id,
           error: error instanceof Error ? error.message : String(error),
+        });
+        await recordError(ctx, "action", "googleCalendarActions.syncAllCases.syncCase", error, {
+          userId,
+          resourceId: caseItem._id,
         });
       }
 

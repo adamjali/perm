@@ -3,6 +3,7 @@
 import { ConvexAuthNextjsProvider } from "@convex-dev/auth/nextjs";
 import { ConvexReactClient } from "convex/react";
 import { ReactNode, useEffect } from "react";
+import { captureError } from "@/lib/sentry";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
@@ -52,6 +53,7 @@ function BeforeUnloadSuppressor({ children }: { children: ReactNode }) {
           if (process.env.NODE_ENV === "development") {
             console.debug("[BeforeUnloadSuppressor] Invalid URL:", link.href, e);
           }
+          captureError(e instanceof Error ? e : new Error(String(e)));
         }
       }
     };

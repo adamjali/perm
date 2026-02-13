@@ -5,6 +5,7 @@ import { ResendOTP } from "./ResendOTP";
 import { ResendPasswordReset } from "./ResendPasswordReset";
 import { DataModel } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
+import { recordError } from "./lib/errorRecording";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
@@ -118,6 +119,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
           `[auth] Failed to ensure user profile for ${userId}:`,
           error instanceof Error ? error.message : error
         );
+        await recordError(ctx, "mutation", "auth.afterUserCreatedOrUpdated.ensureProfile", error, { userId });
       }
     },
   },

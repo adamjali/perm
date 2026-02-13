@@ -27,6 +27,7 @@ import { internal } from "./_generated/api";
 import type { Id, Doc } from "./_generated/dataModel";
 import { loggers } from "./lib/logging";
 import { reportError } from "./lib/sentry";
+import { recordError } from "./lib/errorRecording";
 
 const log = loggers.scheduler;
 import {
@@ -120,6 +121,7 @@ function getCurrentTimeInTimezone(timezone: string): string {
       timezone,
       error: error instanceof Error ? error.message : 'unknown error',
     });
+    // Note: no ctx available for error recording
     const now = new Date();
     return `${now.getUTCHours().toString().padStart(2, "0")}:${now.getUTCMinutes().toString().padStart(2, "0")}`;
   }
@@ -681,6 +683,7 @@ export const sendWeeklyDigest = internalAction({
           step,
           error: errorMessage,
         });
+        await recordError(ctx, "cron", "scheduledJobs.sendWeeklyDigest.process", error, { userId, extra: step });
         await reportError(error, {
           module: "scheduler",
           operation: "sendWeeklyDigest",

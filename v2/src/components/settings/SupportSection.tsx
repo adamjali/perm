@@ -48,6 +48,7 @@ import {
   PlayCircle,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import DeleteNowDialog from "./DeleteNowDialog";
 
@@ -133,12 +134,14 @@ export default function SupportSection({ profile }: SupportSectionProps) {
         router.push("/login");
       } catch (signOutError) {
         console.error("Failed to sign out after deletion:", signOutError);
+        captureError(signOutError instanceof Error ? signOutError : new Error(String(signOutError)));
         cancelSignOut();
         // Still redirect since account is deleted
         router.push("/login");
       }
     } catch (error) {
       console.error("Failed to request account deletion:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       const message =
         error instanceof Error
           ? error.message
@@ -158,6 +161,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
       toast.success("Account deletion cancelled");
     } catch (error) {
       console.error("Failed to cancel deletion:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       toast.error("Failed to cancel deletion");
     }
   };

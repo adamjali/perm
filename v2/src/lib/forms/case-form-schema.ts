@@ -14,6 +14,7 @@ import {
   getLastRecruitmentDate,
   isISODateString,
 } from '../perm';
+import { captureError } from '@/lib/sentry';
 
 // Re-export isISODateString for backward compatibility
 export { isISODateString };
@@ -624,9 +625,10 @@ export function validateCaseForm(data: CaseFormData): CaseFormErrors {
         ruleId: issue.ruleId,
       })));
     }
-  } catch {
+  } catch (error) {
     // If lib/perm fails (e.g., due to invalid date formats), ignore
     // The Zod errors will already capture format issues
+    captureError(error instanceof Error ? error : new Error(String(error)));
   }
 
   return {

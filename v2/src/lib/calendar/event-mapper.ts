@@ -17,6 +17,7 @@ import {
   type CalendarCaseData,
   type DeadlineType,
 } from "./types";
+import { captureError } from "@/lib/sentry";
 
 // Re-export calculateUrgency for backward compatibility with tests
 export { calculateUrgency };
@@ -180,6 +181,7 @@ function milestoneToCalendarEvent(
       `[event-mapper] Failed to parse date for case ${caseId}, field ${milestone.field}: "${milestone.date}"`,
       error
     );
+    captureError(error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 

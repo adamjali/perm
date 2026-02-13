@@ -22,6 +22,8 @@
 
 "use client";
 
+import { captureError } from "@/lib/sentry";
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -78,6 +80,7 @@ export function savePendingTermsAcceptance(version: string): boolean {
     return true;
   } catch (error) {
     console.error("[Terms Storage] Failed to save pending terms:", error);
+    captureError(error instanceof Error ? error : new Error(String(error)));
     return false;
   }
 }
@@ -118,6 +121,7 @@ export function getPendingTermsAcceptance(): string | null {
     return data.version;
   } catch (error) {
     console.error("[Terms Storage] Failed to read pending terms:", error);
+    captureError(error instanceof Error ? error : new Error(String(error)));
     clearPendingTermsAcceptance();
     return null;
   }
@@ -136,6 +140,7 @@ export function clearPendingTermsAcceptance(): void {
     localStorage.removeItem(PENDING_TERMS_KEY);
   } catch (error) {
     console.error("[Terms Storage] Failed to clear pending terms:", error);
+    captureError(error instanceof Error ? error : new Error(String(error)));
   }
 }
 

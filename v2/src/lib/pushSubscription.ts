@@ -27,6 +27,8 @@
  * Created: 2025-12-31
  */
 
+import { captureError } from "@/lib/sentry";
+
 /**
  * Convert VAPID public key from URL-safe base64 to Uint8Array.
  * Required for PushManager.subscribe() applicationServerKey parameter.
@@ -118,7 +120,8 @@ export async function getPushSubscriptionStatus(): Promise<PushSubscriptionStatu
       permission,
       subscribed: subscription !== null,
     };
-  } catch {
+  } catch (error) {
+    captureError(error instanceof Error ? error : new Error(String(error)));
     return { supported: true, permission, subscribed: false };
   }
 }
@@ -145,7 +148,8 @@ export async function getCurrentSubscription(): Promise<PushSubscription | null>
   try {
     const registration = await navigator.serviceWorker.ready;
     return await registration.pushManager.getSubscription();
-  } catch {
+  } catch (error) {
+    captureError(error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 }
@@ -224,6 +228,7 @@ export async function unsubscribeFromPush(): Promise<void> {
     }
   } catch (error) {
     console.error("Failed to unsubscribe from push:", error);
+    captureError(error instanceof Error ? error : new Error(String(error)));
   }
 }
 
@@ -271,7 +276,8 @@ export async function unregisterPushServiceWorker(): Promise<boolean> {
       }
     }
     return false;
-  } catch {
+  } catch (error) {
+    captureError(error instanceof Error ? error : new Error(String(error)));
     return false;
   }
 }

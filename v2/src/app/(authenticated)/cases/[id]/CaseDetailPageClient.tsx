@@ -55,6 +55,7 @@ import { StageProgressIndicator } from "@/components/cases/detail/next-up-sectio
 import { getStageIndex } from "@/components/cases/detail/next-up-section.utils";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useDerivedDates } from "@/hooks/useDerivedDates";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
@@ -414,6 +415,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       router.push("/cases");
     } catch (error) {
       console.error("Failed to delete case:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       toast.error("Failed to delete case. Please try again.");
       setIsDeleting(false);
     }
@@ -426,6 +428,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       toast.success("Case archived successfully");
     } catch (error) {
       console.error("Failed to archive case:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       toast.error("Failed to archive case. Please try again.");
     } finally {
       setIsUpdating(false);
@@ -446,6 +449,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       toast.success(`Case reopened as ${formatStatus(result.newCaseStatus)} - ${result.newProgressStatus.replace(/_/g, " ")}`);
     } catch (error) {
       console.error("Failed to reopen case:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       toast.error("Failed to reopen case. Please try again.");
     } finally {
       setIsUpdating(false);
@@ -464,6 +468,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       }
     } catch (error) {
       console.error("Failed to update timeline:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       toast.error("Failed to update timeline. Please try again.");
     } finally {
       setIsUpdating(false);
@@ -477,6 +482,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       await toggleFavoriteMutation({ id: caseId });
     } catch (error) {
       console.error("Failed to toggle favorite:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       toast.error("Failed to update favorite status. Please try again.");
     } finally {
       setIsTogglingFavorite(false);
@@ -503,6 +509,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       await toggleCalendarSyncMutation({ id: caseId });
     } catch (error) {
       console.error("Failed to toggle calendar sync:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       toast.error("Failed to update calendar sync. Please try again.");
     } finally {
       setIsTogglingCalendarSync(false);

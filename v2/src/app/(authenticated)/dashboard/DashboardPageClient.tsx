@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { captureError } from "@/lib/sentry";
 import { useQuery, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "../../../../convex/_generated/api";
@@ -34,6 +35,7 @@ export function DashboardPageClient() {
       hasRunEnforcement.current = true;
       checkDeadlines().catch((error) => {
         console.error("Failed to check deadlines:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)));
       });
     }
   }, [currentUser, isEnforcementEnabled, checkDeadlines]);

@@ -5,6 +5,7 @@ import { Copy, Check, Pencil, Save, X, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { captureError } from "@/lib/sentry";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -115,6 +116,7 @@ export function RecruitmentResultsText({
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy text:", err);
+      captureError(err instanceof Error ? err : new Error(String(err)));
       toast.error("Failed to copy text to clipboard. Please try again.");
     }
   };

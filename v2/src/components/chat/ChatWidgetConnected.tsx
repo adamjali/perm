@@ -25,6 +25,7 @@ import { useToolOrchestrator } from '@/hooks/useToolOrchestrator';
 import { useAuthContext } from '@/lib/contexts/AuthContext';
 import { usePageContext } from '@/lib/ai/page-context';
 import { useOnboardingOptional } from '@/components/onboarding/OnboardingProvider';
+import { captureError } from '@/lib/sentry';
 
 export function ChatWidgetConnected() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -118,6 +119,7 @@ export function ChatWidgetConnected() {
       } catch (err) {
         // Log but don't throw - persistence is best-effort
         console.error('[ChatWidget] Failed to persist tool result:', err);
+        captureError(err instanceof Error ? err : new Error(String(err)));
       }
     },
     [conversationId, updateToolCallResult]
@@ -183,6 +185,7 @@ export function ChatWidgetConnected() {
         hasMarkedAssistant.current = true;
       }).catch((error) => {
         console.error("Failed to mark try_assistant checklist item:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)));
       });
     }
   }, [messages, onboarding]);

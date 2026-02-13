@@ -25,6 +25,7 @@ import { v } from "convex/values";
 import * as webpush from "web-push";
 import { loggers } from "./lib/logging";
 import { reportError } from "./lib/sentry";
+import { recordError } from "./lib/errorRecording";
 
 const log = loggers.push;
 
@@ -64,6 +65,7 @@ function ensureVapidConfigured(): boolean {
   } catch (error) {
     vapidConfigError = error instanceof Error ? error.message : "Unknown VAPID configuration error";
     log.error('Failed to configure VAPID', { error: vapidConfigError });
+    // Note: no ctx available for error recording
     return false;
   }
 }
@@ -129,6 +131,7 @@ export const sendPushNotification = internalAction({
         resourceId: userId,
         error: parseError instanceof Error ? parseError.message : 'JSON parse failed',
       });
+      await recordError(ctx, "action", "pushNotifications.send.parseSubscription", parseError, { userId, resourceId: userId });
       await ctx.runMutation(internal.pushSubscriptions.clearPushSubscription, { userId });
       return { sent: false, reason: "subscription_corrupted", error: "Invalid subscription data" };
     }
@@ -149,6 +152,7 @@ export const sendPushNotification = internalAction({
       } else {
         // Other error - log but don't remove subscription
         log.error('Push notification failed', { error: webPushError.message || 'Unknown error' });
+        await recordError(ctx, "action", "pushNotifications.send.delivery", error, { userId, resourceId: userId });
         await reportError(error, {
           module: "push",
           operation: "sendPushNotification",
@@ -227,6 +231,7 @@ export const sendTestPush = action({
       } else {
         // Other error
         log.error('Test push notification failed', { error: webPushError.message || 'Unknown error' });
+        await recordError(ctx, "action", "pushNotifications.sendTestPush.delivery", error);
         throw new Error(`Failed to send test notification: ${webPushError.message || "Unknown error"}`);
       }
     }

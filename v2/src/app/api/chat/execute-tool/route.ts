@@ -10,6 +10,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { captureError } from '@/lib/sentry';
 import { isAuthenticatedNextjs, convexAuthNextjsToken } from '@convex-dev/auth/nextjs/server';
 import { fetchMutation, fetchQuery } from 'convex/nextjs';
 import { api } from '@/../convex/_generated/api';
@@ -488,6 +489,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('[Execute Tool] Error:', error);
+    captureError(error instanceof Error ? error : new Error(String(error)));
 
     return NextResponse.json(
       {

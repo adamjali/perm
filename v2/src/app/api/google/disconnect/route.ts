@@ -15,6 +15,7 @@
  * revocation fails (e.g., token already expired or revoked).
  */
 import { NextRequest, NextResponse } from "next/server";
+import { captureError } from "@/lib/sentry";
 import {
   convexAuthNextjsToken,
   isAuthenticatedNextjs,
@@ -71,6 +72,7 @@ export async function POST(request: NextRequest) {
       } catch (clearError) {
         // Log but continue - we still want to disconnect even if event clearing fails
         console.warn("[Google OAuth] Error clearing events:", clearError);
+        captureError(clearError instanceof Error ? clearError : new Error(String(clearError)));
       }
     }
 
@@ -100,6 +102,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("[Google OAuth] Disconnect error:", error);
+    captureError(error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       {
         error: "Failed to disconnect",

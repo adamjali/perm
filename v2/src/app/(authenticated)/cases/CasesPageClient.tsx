@@ -24,6 +24,7 @@ import {
 } from "@dnd-kit/sortable";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import { api } from "../../../../convex/_generated/api";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,7 @@ function getStoredPageSize(): number {
     if (process.env.NODE_ENV === "development") {
       console.warn("[CasesPage] localStorage read failed:", error);
     }
+    captureError(error instanceof Error ? error : new Error(String(error)));
   }
   return DEFAULT_PAGE_SIZE;
 }
@@ -106,6 +108,7 @@ function setStoredPageSize(size: number): void {
     } else if (process.env.NODE_ENV === "development") {
       console.warn("[CasesPage] localStorage write failed:", error);
     }
+    captureError(error instanceof Error ? error : new Error(String(error)));
   }
 }
 
@@ -120,6 +123,7 @@ function getStoredViewMode(): ViewMode {
     if (process.env.NODE_ENV === "development") {
       console.warn("[CasesPage] localStorage read failed:", error);
     }
+    captureError(error instanceof Error ? error : new Error(String(error)));
   }
   return "card";
 }
@@ -134,6 +138,7 @@ function setStoredViewMode(mode: ViewMode): void {
     } else if (process.env.NODE_ENV === "development") {
       console.warn("[CasesPage] localStorage write failed:", error);
     }
+    captureError(error instanceof Error ? error : new Error(String(error)));
   }
 }
 
@@ -586,6 +591,7 @@ export function CasesPageClient() {
         toast.success("Order saved");
       } catch (error) {
         console.error("Failed to save custom order:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)));
         toast.error("Failed to save order");
         setLocalOrder([]); // Reset on error
       }
@@ -642,6 +648,7 @@ export function CasesPageClient() {
       setSelectedCaseIds(new Set(allIds));
     } catch (error) {
       console.error("Failed to fetch all case IDs:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       // Fallback to current page if query fails
       const currentPageIds = processedCases.map((c) => c._id);
       setSelectedCaseIds(new Set(currentPageIds));
@@ -674,6 +681,7 @@ export function CasesPageClient() {
       toast.success(`Exported ${fullCases.length} cases as CSV`);
     } catch (error) {
       console.error("Failed to export CSV:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       const message = error instanceof Error ? error.message : "Failed to export CSV";
       toast.error(message);
     } finally {
@@ -702,6 +710,7 @@ export function CasesPageClient() {
       toast.success(`Exported ${fullCases.length} cases as JSON`);
     } catch (error) {
       console.error("Failed to export JSON:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       const message = error instanceof Error ? error.message : "Failed to export JSON";
       toast.error(message);
     } finally {
@@ -763,6 +772,7 @@ export function CasesPageClient() {
         setSelectionMode(false);
       } catch (error) {
         console.error("Bulk calendar sync failed:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)));
         toast.error(`Failed to ${enable ? "sync" : "unsync"} cases`);
       } finally {
         setBulkOperationLoading(false);
@@ -810,6 +820,7 @@ export function CasesPageClient() {
       setConfirmDialog({ open: false, type: null, count: 0 });
     } catch (error) {
       console.error("Bulk operation failed:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       toast.error("Bulk operation failed");
     } finally {
       setBulkOperationLoading(false);
@@ -861,6 +872,7 @@ export function CasesPageClient() {
       setSingleCaseConfirm({ open: false, type: null, caseId: null, caseName: "" });
     } catch (error) {
       console.error("Single case operation failed:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       toast.error(
         singleCaseConfirm.type === "delete"
           ? "Failed to delete case. Please try again."
@@ -993,6 +1005,7 @@ export function CasesPageClient() {
         };
       } catch (error) {
         console.error("Import failed:", error);
+        captureError(error instanceof Error ? error : new Error(String(error)));
         toast.error("Failed to import cases");
         throw error;
       }

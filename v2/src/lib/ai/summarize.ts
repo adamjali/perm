@@ -16,6 +16,7 @@ import {
   SUMMARIZATION_PROMPT,
   RECENT_MESSAGES_TO_KEEP,
 } from "@/../convex/conversationSummary";
+import { captureError } from "@/lib/sentry";
 
 /**
  * Summarization model - using Gemini 2.0 Flash Lite for speed
@@ -185,6 +186,7 @@ export async function summarizeConversation(
   } catch (error) {
     // Don't let summarization errors affect the main chat flow
     console.error(`[Summarization] Error:`, error);
+    captureError(error instanceof Error ? error : new Error(String(error)));
     // Don't rethrow - summarization is non-critical
   }
 }
@@ -211,6 +213,7 @@ export async function checkNeedsSummarization(
     );
   } catch (error) {
     console.error(`[Summarization] Error checking summarization need:`, error);
+    captureError(error instanceof Error ? error : new Error(String(error)));
     return false;
   }
 }

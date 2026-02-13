@@ -21,6 +21,7 @@ import { getCurrentUserId, getCurrentUserIdOrNull, extractUserIdFromAction } fro
 import { encryptToken, decryptToken } from "./lib/crypto";
 import { isTokenExpired } from "./lib/googleHelpers";
 import { loggers } from "./lib/logging";
+import { recordError } from "./lib/errorRecording";
 
 const log = loggers.googleAuth;
 const oauthLog = loggers.googleOAuth;
@@ -523,6 +524,7 @@ export const disconnectWithRevocation = action({
           oauthLog.error('Token revocation error', {
             error: revokeError instanceof Error ? revokeError.message : String(revokeError),
           });
+          await recordError(ctx, "action", "googleAuth.disconnect.revoke", revokeError, { userId });
           // Continue to clear tokens even if revocation fails
         }
       }
@@ -535,6 +537,7 @@ export const disconnectWithRevocation = action({
       oauthLog.error('Disconnect error', {
         error: error instanceof Error ? error.message : String(error),
       });
+      await recordError(ctx, "action", "googleAuth.disconnect", error, { userId });
       return {
         success: false,
         revoked: false,

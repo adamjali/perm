@@ -273,6 +273,70 @@ if (filingDate > certDate + 180) { ... } // WRONG
 
 ---
 
+## Sentry Error Tracking
+
+**DSN:** Configured via `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` env vars.
+
+### Config Files
+
+| File | Scope |
+|------|-------|
+| `sentry.client.config.ts` | Browser errors, Session Replay, console logging |
+| `sentry.server.config.ts` | Server-side (Node.js) errors |
+| `sentry.edge.config.ts` | Edge/middleware errors |
+| `src/instrumentation.ts` | Loads configs + `onRequestError` hook |
+| `src/app/global-error.tsx` | Root error boundary (last resort) |
+| `src/lib/sentry.ts` | Frontend utility functions (`captureError`, `addBreadcrumb`, `setUser`) |
+| `convex/lib/sentry.ts` | Convex backend reporter (HTTP store API) |
+| `convex/sentryReporter.ts` | Internal action for mutations/queries to report errors |
+
+### Frontend Error Capture
+
+```typescript
+import { captureError, addBreadcrumb } from "@/lib/sentry";
+
+try {
+  await updateCase(caseId, data);
+} catch (error) {
+  captureError(error, { operation: "updateCase", resourceId: caseId });
+  throw error;
+}
+```
+
+### Convex Backend Error Capture
+
+```typescript
+// In actions (have fetch access):
+import { reportError } from "./lib/sentry";
+await reportError(error, { module: "email", operation: "sendReminder" });
+
+// In mutations/queries (no fetch — schedule the reporter action):
+await ctx.scheduler.runAfter(0, internal.sentryReporter.report, {
+  errorMessage: error.message,
+  module: "deadline",
+  operation: "enforceDeadline",
+});
+```
+
+### Performance Spans
+
+```typescript
+import * as Sentry from "@sentry/nextjs";
+
+// Wrap meaningful operations
+Sentry.startSpan({ op: "ui.click", name: "Save Case" }, (span) => {
+  span.setAttribute("caseId", caseId);
+  doSomething();
+});
+
+// Async operations
+await Sentry.startSpan({ op: "http.client", name: "GET /api/cases" }, async () => {
+  return await fetch("/api/cases");
+});
+```
+
+---
+
 ## Troubleshooting
 
 | Issue | Solution |

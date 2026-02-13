@@ -23,6 +23,7 @@ import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { DAILY_LIMITS } from "./apiUsage";
+import { recordError } from "./lib/errorRecording";
 
 // =============================================================================
 // TYPES
@@ -222,6 +223,7 @@ export const searchWeb = action({
         return result;
       } catch (e) {
         console.error("Tavily search failed:", e);
+        await recordError(ctx, "action", "webSearch.searchWeb.tavily", e);
         // Fall through to Brave
       }
     }
@@ -240,6 +242,7 @@ export const searchWeb = action({
         return result;
       } catch (e) {
         console.error("Brave search failed:", e);
+        await recordError(ctx, "action", "webSearch.searchWeb.brave", e);
         // Fall through to graceful degradation
       }
     }

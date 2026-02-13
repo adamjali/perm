@@ -14,6 +14,7 @@ import { rag } from "./lib/rag";
 import { internal } from "./_generated/api";
 import { PERM_KNOWLEDGE_SECTIONS } from "./lib/rag/permKnowledge";
 import { APP_GUIDE_SECTIONS } from "./lib/rag/appGuideKnowledge";
+import { recordError } from "./lib/errorRecording";
 
 /**
  * Source metadata returned with search results
@@ -85,6 +86,7 @@ export const searchKnowledge = action({
       };
     } catch (error) {
       console.error("Knowledge search failed:", error);
+      await recordError(ctx, "action", "knowledge.searchKnowledge.search", error);
       return { context: "", sources: [] };
     }
   },
@@ -126,6 +128,7 @@ export const triggerIngestion = internalAction({
       console.log(
         "Knowledge namespace not found or search failed, triggering ingestion..."
       );
+      await recordError(ctx, "action", "knowledge.triggerIngestion.search", _error);
       await ctx.runAction(internal.lib.rag.ingest.ingestPERMKnowledge, {});
       return { ingested: true, sections: PERM_KNOWLEDGE_SECTIONS.length };
     }
@@ -200,6 +203,7 @@ export const debugSearchRaw = action({
       };
     } catch (error) {
       console.error(`[Debug RAG] Error:`, error);
+      await recordError(ctx, "action", "knowledge.debugSearchRaw.search", error);
       return { error: String(error) };
     }
   },

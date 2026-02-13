@@ -9,6 +9,7 @@
  */
 
 import * as React from "react";
+import { captureError } from "@/lib/sentry";
 
 type GSAPInstance = typeof import("gsap").default;
 type ScrollTriggerPlugin = typeof import("gsap/ScrollTrigger").ScrollTrigger;
@@ -70,6 +71,7 @@ export function useGSAP() {
       setTools({ gsap, ScrollTrigger });
     }).catch((error) => {
       console.error("[useGSAP] Failed to load GSAP:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
     });
   }, []);
 

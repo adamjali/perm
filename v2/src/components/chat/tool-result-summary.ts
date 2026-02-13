@@ -12,6 +12,7 @@
  */
 
 import { isPermissionRequest } from '@/lib/ai/tool-confirmation-types';
+import { captureError } from '@/lib/sentry';
 
 /**
  * Tool call structure from AI SDK
@@ -162,8 +163,9 @@ export function summarizeToolResult(tool: string, result?: string): string {
         }
         return 'Completed';
     }
-  } catch {
+  } catch (error) {
     // If result is not valid JSON, return truncated string
+    captureError(error instanceof Error ? error : new Error(String(error)));
     return truncate(result, 40);
   }
 }
@@ -209,7 +211,8 @@ export function summarizeToolArgs(
     }
 
     return entries.slice(0, 3);
-  } catch {
+  } catch (error) {
+    captureError(error instanceof Error ? error : new Error(String(error)));
     return [];
   }
 }
@@ -431,8 +434,9 @@ function getErrorMessage(result?: string): string {
     if (parsed.denied === true) return 'Action denied by user';
     if (parsed.error) return truncate(String(parsed.error), 50);
     if (parsed.message) return truncate(String(parsed.message), 50);
-  } catch {
+  } catch (error) {
     // Not JSON, use as-is
+    captureError(error instanceof Error ? error : new Error(String(error)));
   }
 
   return truncate(result, 50);
@@ -447,7 +451,8 @@ export function isToolDenied(result?: string): boolean {
   try {
     const parsed = JSON.parse(result);
     return parsed.denied === true;
-  } catch {
+  } catch (error) {
+    captureError(error instanceof Error ? error : new Error(String(error)));
     return false;
   }
 }

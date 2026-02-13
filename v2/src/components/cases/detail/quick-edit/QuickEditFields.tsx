@@ -21,6 +21,7 @@ import { Check, Loader2, AlertCircle, ExternalLink, Info, Clock } from "lucide-r
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
+import { captureError } from "@/lib/sentry";
 import { DateInput, isValidDateString } from "@/components/forms/DateInput";
 import { getAllDateConstraints } from "@/lib/forms/date-constraints";
 import { useFormCalculations } from "@/hooks/useFormCalculations";
@@ -311,6 +312,7 @@ export function QuickEditFields({
         triggerCalculation(fieldName as keyof CaseFormData, value);
       } catch (e) {
         console.error("[QuickEdit] Calculation error:", e);
+        captureError(e instanceof Error ? e : new Error(String(e)));
         setFieldErrors(prev => ({ ...prev, [fieldName]: "Calculation error — use the full form." }));
       }
     }
@@ -375,6 +377,7 @@ export function QuickEditFields({
       }, 500);
     } catch (error) {
       console.error("[QuickEdit] Save failed:", error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       setSubmitStatus("error");
       setSubmitError(error instanceof Error ? error.message : "Save failed");
     }

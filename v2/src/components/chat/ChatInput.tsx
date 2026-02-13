@@ -4,6 +4,7 @@ import { useRef, useState, useEffect, useCallback, KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Send, Mic, MicOff, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { captureError } from '@/lib/sentry';
 
 // Web Speech API types
 interface SpeechRecognitionEvent extends Event {
@@ -272,6 +273,7 @@ export function ChatInput({
       setIsRecording(true);
     } catch (error) {
       console.error('Failed to start speech recognition:', error);
+      captureError(error instanceof Error ? error : new Error(String(error)));
       recognitionRef.current = null;
       setIsRecording(false);
     }
