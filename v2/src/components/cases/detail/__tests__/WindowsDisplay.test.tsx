@@ -7,6 +7,7 @@
  * Requirements:
  * 1. Recruitment Window Card
  *    - Shows ACTIVE status when within 180-day window from first recruitment
+ *    - Shows COMPLETED status when all recruitment steps are done
  *    - Shows EXPIRED status when past 180 days
  *    - Shows NOT_STARTED when no recruitment dates
  * 2. Filing Window Card
@@ -19,8 +20,9 @@
  * 3. UI/UX
  *    - Two side-by-side cards on desktop
  *    - Stacks vertically on mobile
- *    - Color-coded status badges
- *    - Days remaining/elapsed helper text
+ *    - Color-coded status chips
+ *    - Hero number with unit and label
+ *    - Progress bar with short date labels
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -33,8 +35,8 @@ import type { CaseWithDates } from "@/lib/timeline";
 // MOCK SETUP
 // ============================================================================
 
-// Mock current date for consistent testing
-const MOCK_TODAY = new Date("2024-06-15");
+// Mock current date for consistent testing (use local midnight to match component's setHours(0,0,0,0))
+const MOCK_TODAY = new Date(2024, 5, 15); // June 15, 2024 midnight LOCAL
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -65,7 +67,11 @@ function createMockCaseData(overrides?: Partial<CaseWithDates>): CaseWithDates {
 function getRelativeDate(daysFromToday: number): string {
   const date = new Date(MOCK_TODAY);
   date.setDate(date.getDate() + daysFromToday);
-  return date.toISOString().split("T")[0] as string;
+  // Use local date parts (not toISOString which uses UTC) to match component's parseDate
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 // ============================================================================
@@ -78,9 +84,10 @@ describe("WindowsDisplay - Recruitment Window", () => {
 
     renderWithProviders(<WindowsDisplay caseData={mockCase} />);
 
-    // Should show Not Started status
+    // Should show Not Started status chip
     expect(screen.getByText("Not Started")).toBeInTheDocument();
-    expect(screen.getByText("No recruitment activities recorded")).toBeInTheDocument();
+    // Should show hero label for not started
+    expect(screen.getByText("No activities yet")).toBeInTheDocument();
   });
 
   it("shows ACTIVE status when within 180-day window from first recruitment", () => {
@@ -91,10 +98,14 @@ describe("WindowsDisplay - Recruitment Window", () => {
 
     renderWithProviders(<WindowsDisplay caseData={mockCase} />);
 
-    // Should show Active status
+    // Should show Active status chip
     expect(screen.getByText("Active")).toBeInTheDocument();
-    // Should show days remaining (approximately 180 - 30 = 150)
-    expect(screen.getByText(/\d+ days remaining/)).toBeInTheDocument();
+    // Should show hero number (~150 days remaining, may vary by +-1 due to timezone)
+    expect(screen.getByText(/^15[01]$/)).toBeInTheDocument();
+    // Should show unit "days"
+    expect(screen.getByText("days")).toBeInTheDocument();
+    // Should show hero label
+    expect(screen.getByText("remaining in window")).toBeInTheDocument();
   });
 
   it("uses earliest recruitment date as start", () => {
@@ -103,17 +114,20 @@ describe("WindowsDisplay - Recruitment Window", () => {
       jobOrderStartDate: getRelativeDate(-20), // 20 days ago
     });
 
-    renderWithProviders(<WindowsDisplay caseData={mockCase} />);
+    const { container } = renderWithProviders(
+      <WindowsDisplay caseData={mockCase} />
+    );
 
-    // Start date should be 30 days ago
+    // The progress bar should show the start date in short format (e.g. "May 16")
+    // Start date is 30 days before June 15, 2024 = May 16
+    // formatShortDate parses ISO string directly (timezone-independent)
     const startDateStr = getRelativeDate(-30);
-    const formattedDate = new Date(startDateStr).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    const monthNum = parseInt(startDateStr.substring(5, 7), 10);
+    const dayNum = parseInt(startDateStr.substring(8, 10), 10);
+    const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const expectedShortDate = `${SHORT_MONTHS[monthNum - 1]} ${dayNum}`;
 
-    expect(screen.getByText(formattedDate)).toBeInTheDocument();
+    expect(screen.getByText(expectedShortDate)).toBeInTheDocument();
   });
 
   it("shows EXPIRED status when past 180-day window", () => {
@@ -123,22 +137,24 @@ describe("WindowsDisplay - Recruitment Window", () => {
 
     renderWithProviders(<WindowsDisplay caseData={mockCase} />);
 
-    // Should show Expired status
+    // Should show Expired status chip
     expect(screen.getByText("Expired")).toBeInTheDocument();
-    // Should show days elapsed since expiration (approximately 200 - 180 = 20)
-    expect(screen.getByText(/Expired \d+ days ago/)).toBeInTheDocument();
+    // Should show days elapsed since expiration (~200 - 180 = 20, may vary by +-1 due to timezone)
+    expect(screen.getByText(/^[12][09]$/)).toBeInTheDocument();
+    // Should show hero label for expired
+    expect(screen.getByText("past expiration")).toBeInTheDocument();
   });
 
-  it("renders recruitment window card with correct labels", () => {
+  it("renders recruitment window card with correct title", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-30),
     });
 
     renderWithProviders(<WindowsDisplay caseData={mockCase} />);
 
+    // Card title
     expect(screen.getByText("Recruitment Window")).toBeInTheDocument();
-    expect(screen.getByText("Start:")).toBeInTheDocument();
-    expect(screen.getByText("Expires:")).toBeInTheDocument();
+    // Progress bar shows short dates (no "Start:" or "Expires:" labels in redesign)
   });
 });
 
@@ -158,7 +174,8 @@ describe("WindowsDisplay - Filing Window", () => {
     // Should show Not Available for filing window
     const notAvailableElements = screen.getAllByText("Not Available");
     expect(notAvailableElements.length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Complete recruitment to calculate window")).toBeInTheDocument();
+    // Should show hero label for not available
+    expect(screen.getByText("Awaiting recruitment")).toBeInTheDocument();
   });
 
   it("shows FILED status when ETA 9089 already filed", () => {
@@ -172,8 +189,10 @@ describe("WindowsDisplay - Filing Window", () => {
 
     renderWithProviders(<WindowsDisplay caseData={mockCase} />);
 
+    // Should show Filed status chip
     expect(screen.getByText("Filed")).toBeInTheDocument();
-    expect(screen.getByText("ETA 9089 has been filed")).toBeInTheDocument();
+    // Should show hero label
+    expect(screen.getByText("ETA 9089 filed")).toBeInTheDocument();
   });
 
   it("shows OPEN status when within filing window", () => {
@@ -190,6 +209,8 @@ describe("WindowsDisplay - Filing Window", () => {
     // Window opened 30 days after job order end = 10 days ago
     // Window closes in 60 days (PWD expiration)
     expect(screen.getByText("Open")).toBeInTheDocument();
+    // Should show days remaining to file
+    expect(screen.getByText("remaining to file")).toBeInTheDocument();
   });
 
   it("shows OPENING_SOON when within 7 days of window opening", () => {
@@ -202,9 +223,11 @@ describe("WindowsDisplay - Filing Window", () => {
 
     renderWithProviders(<WindowsDisplay caseData={mockCase} />);
 
-    // Window opens 30 days after job order end = in 4 days
+    // Window opens 30 days after job order end = in ~4 days
     expect(screen.getByText("Opening Soon")).toBeInTheDocument();
-    expect(screen.getByText(/Opens in \d+ days/)).toBeInTheDocument();
+    // Should show hero number for days until open (may vary by +-1 due to timezone)
+    expect(screen.getByText(/^[34]$/)).toBeInTheDocument();
+    expect(screen.getByText("until window opens")).toBeInTheDocument();
   });
 
   it("shows CLOSING_SOON when within 14 days of window closing", () => {
@@ -218,21 +241,24 @@ describe("WindowsDisplay - Filing Window", () => {
     renderWithProviders(<WindowsDisplay caseData={mockCase} />);
 
     expect(screen.getByText("Closing Soon")).toBeInTheDocument();
-    expect(screen.getByText(/Only \d+ days left to file!/)).toBeInTheDocument();
+    // Should show days remaining (may vary by +-1 due to timezone)
+    expect(screen.getByText(/^1[01]$/)).toBeInTheDocument();
+    expect(screen.getByText("left to file")).toBeInTheDocument();
   });
 
   it("shows CLOSED when past PWD expiration", () => {
     const mockCase = createMockCaseData({
-      sundayAdFirstDate: getRelativeDate(-200),
-      sundayAdSecondDate: getRelativeDate(-193),
-      jobOrderEndDate: getRelativeDate(-180),
-      pwdExpirationDate: getRelativeDate(-10), // PWD expired 10 days ago
+      sundayAdFirstDate: getRelativeDate(-60),  // Recent enough that 180-day limit is far out
+      sundayAdSecondDate: getRelativeDate(-53),
+      jobOrderEndDate: getRelativeDate(-50),     // Filing opens -50+30 = -20 (already open)
+      pwdExpirationDate: getRelativeDate(-10),   // PWD expired 10 days ago → close date
     });
 
     renderWithProviders(<WindowsDisplay caseData={mockCase} />);
 
     expect(screen.getByText("Closed")).toBeInTheDocument();
-    expect(screen.getByText(/Closed \d+ days ago/)).toBeInTheDocument();
+    expect(screen.getByText("10")).toBeInTheDocument();
+    expect(screen.getByText("since window closed")).toBeInTheDocument();
   });
 
   it("uses earlier of PWD expiration or 180-day limit as close date", () => {
@@ -250,7 +276,7 @@ describe("WindowsDisplay - Filing Window", () => {
     expect(screen.getByText("Closing Soon")).toBeInTheDocument();
   });
 
-  it("renders filing window card with correct labels", () => {
+  it("renders filing window card with correct title", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-60),
       sundayAdSecondDate: getRelativeDate(-53),
@@ -260,9 +286,8 @@ describe("WindowsDisplay - Filing Window", () => {
 
     renderWithProviders(<WindowsDisplay caseData={mockCase} />);
 
-    expect(screen.getByText("ETA 9089 Filing Window")).toBeInTheDocument();
-    expect(screen.getByText("Opens:")).toBeInTheDocument();
-    expect(screen.getByText("Closes:")).toBeInTheDocument();
+    // Redesigned card uses "ETA 9089 Filing" as title
+    expect(screen.getByText("ETA 9089 Filing")).toBeInTheDocument();
   });
 });
 
@@ -271,7 +296,7 @@ describe("WindowsDisplay - Filing Window", () => {
 // ============================================================================
 
 describe("WindowsDisplay - UI/UX", () => {
-  it("renders two cards", () => {
+  it("renders two cards with correct titles", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-30),
       sundayAdSecondDate: getRelativeDate(-23),
@@ -282,7 +307,7 @@ describe("WindowsDisplay - UI/UX", () => {
     renderWithProviders(<WindowsDisplay caseData={mockCase} />);
 
     expect(screen.getByText("Recruitment Window")).toBeInTheDocument();
-    expect(screen.getByText("ETA 9089 Filing Window")).toBeInTheDocument();
+    expect(screen.getByText("ETA 9089 Filing")).toBeInTheDocument();
   });
 
   it("applies grid layout with two columns on larger screens", () => {
@@ -337,11 +362,11 @@ describe("WindowsDisplay - UI/UX", () => {
 });
 
 // ============================================================================
-// STATUS BADGE COLOR TESTS
+// STATUS CHIP COLOR TESTS
 // ============================================================================
 
-describe("WindowsDisplay - Status Badge Colors", () => {
-  it("ACTIVE status has green styling", () => {
+describe("WindowsDisplay - Status Chip Colors", () => {
+  it("ACTIVE status has emerald green chip styling", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-30),
     });
@@ -350,11 +375,12 @@ describe("WindowsDisplay - Status Badge Colors", () => {
       <WindowsDisplay caseData={mockCase} />
     );
 
-    const activeBadge = container.querySelector(".bg-green-100");
+    // Redesigned component uses bg-emerald-100 for ACTIVE
+    const activeBadge = container.querySelector(".bg-emerald-100");
     expect(activeBadge).toBeInTheDocument();
   });
 
-  it("EXPIRED status has red styling", () => {
+  it("EXPIRED status has red chip styling", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-200),
     });
@@ -367,18 +393,19 @@ describe("WindowsDisplay - Status Badge Colors", () => {
     expect(expiredBadge).toBeInTheDocument();
   });
 
-  it("NOT_STARTED status has gray styling", () => {
+  it("NOT_STARTED status has muted chip styling", () => {
     const mockCase = createMockCaseData({});
 
     const { container } = renderWithProviders(
       <WindowsDisplay caseData={mockCase} />
     );
 
-    const grayBadge = container.querySelector(".bg-gray-100");
-    expect(grayBadge).toBeInTheDocument();
+    // Redesigned component uses bg-muted for NOT_STARTED
+    const mutedBadge = container.querySelector(".bg-muted");
+    expect(mutedBadge).toBeInTheDocument();
   });
 
-  it("OPENING_SOON status has yellow styling", () => {
+  it("OPENING_SOON status has amber chip styling", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-30),
       sundayAdSecondDate: getRelativeDate(-26),
@@ -390,11 +417,12 @@ describe("WindowsDisplay - Status Badge Colors", () => {
       <WindowsDisplay caseData={mockCase} />
     );
 
-    const yellowBadge = container.querySelector(".bg-yellow-100");
-    expect(yellowBadge).toBeInTheDocument();
+    // Redesigned component uses bg-amber-100 for OPENING_SOON
+    const amberBadge = container.querySelector(".bg-amber-100");
+    expect(amberBadge).toBeInTheDocument();
   });
 
-  it("CLOSING_SOON status has orange styling", () => {
+  it("CLOSING_SOON status has orange chip styling", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-60),
       sundayAdSecondDate: getRelativeDate(-53),
@@ -410,7 +438,7 @@ describe("WindowsDisplay - Status Badge Colors", () => {
     expect(orangeBadge).toBeInTheDocument();
   });
 
-  it("FILED status has blue styling", () => {
+  it("FILED status has blue chip styling", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-60),
       sundayAdSecondDate: getRelativeDate(-53),
@@ -429,11 +457,11 @@ describe("WindowsDisplay - Status Badge Colors", () => {
 });
 
 // ============================================================================
-// ICON TESTS
+// CARD STRUCTURE TESTS
 // ============================================================================
 
-describe("WindowsDisplay - Icons", () => {
-  it("renders Calendar icon for recruitment window", () => {
+describe("WindowsDisplay - Card Structure", () => {
+  it("renders accent strip at top of each card", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-30),
     });
@@ -442,12 +470,12 @@ describe("WindowsDisplay - Icons", () => {
       <WindowsDisplay caseData={mockCase} />
     );
 
-    // Calendar icon should be present (as SVG)
-    const calendarIcons = container.querySelectorAll("svg");
-    expect(calendarIcons.length).toBeGreaterThanOrEqual(2);
+    // Each card has a 3px accent strip div
+    const accentStrips = container.querySelectorAll(".h-\\[3px\\]");
+    expect(accentStrips.length).toBe(2);
   });
 
-  it("renders status icons in badges", () => {
+  it("renders status chips with uppercase tracking", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-30),
     });
@@ -456,14 +484,9 @@ describe("WindowsDisplay - Icons", () => {
       <WindowsDisplay caseData={mockCase} />
     );
 
-    // Status badges should contain icons
-    const badges = container.querySelectorAll(".inline-flex.items-center.gap-1");
-    expect(badges.length).toBeGreaterThanOrEqual(2);
-
-    badges.forEach((badge) => {
-      const icon = badge.querySelector("svg");
-      expect(icon).toBeInTheDocument();
-    });
+    // Status chips use font-semibold uppercase tracking-wider
+    const chips = container.querySelectorAll(".font-semibold.uppercase.tracking-wider");
+    expect(chips.length).toBe(2);
   });
 });
 
@@ -496,17 +519,18 @@ describe("WindowsDisplay - Edge Cases", () => {
 
     expect(screen.getByText("Active")).toBeInTheDocument();
     // Filing window should calculate from sundayAdSecondDate
-    expect(screen.getByText("ETA 9089 Filing Window")).toBeInTheDocument();
+    expect(screen.getByText("ETA 9089 Filing")).toBeInTheDocument();
   });
 
-  it("shows dash for missing dates", () => {
+  it("shows hero label text when no dates exist", () => {
     const mockCase = createMockCaseData({});
 
     renderWithProviders(<WindowsDisplay caseData={mockCase} />);
 
-    // Should show dashes for missing dates
-    const dashes = screen.getAllByText("-");
-    expect(dashes.length).toBeGreaterThanOrEqual(2);
+    // Recruitment card shows "No activities yet"
+    expect(screen.getByText("No activities yet")).toBeInTheDocument();
+    // Filing card shows "Awaiting recruitment"
+    expect(screen.getByText("Awaiting recruitment")).toBeInTheDocument();
   });
 
   it("handles filing window with no PWD expiration but has 180-day limit", () => {
@@ -520,8 +544,47 @@ describe("WindowsDisplay - Edge Cases", () => {
     renderWithProviders(<WindowsDisplay caseData={mockCase} />);
 
     // Should still calculate filing window using 180-day limit
-    expect(screen.getByText("ETA 9089 Filing Window")).toBeInTheDocument();
+    expect(screen.getByText("ETA 9089 Filing")).toBeInTheDocument();
     expect(screen.getByText("Open")).toBeInTheDocument();
+  });
+});
+
+// ============================================================================
+// PROGRESS BAR TESTS
+// ============================================================================
+
+describe("WindowsDisplay - Progress Bar", () => {
+  it("shows progress bar with short date labels for active recruitment", () => {
+    const startDate = getRelativeDate(-30);
+    const mockCase = createMockCaseData({
+      sundayAdFirstDate: startDate,
+    });
+
+    const { container } = renderWithProviders(
+      <WindowsDisplay caseData={mockCase} />
+    );
+
+    // Progress bar should exist (h-1.5 bar)
+    const progressBars = container.querySelectorAll(".h-1\\.5");
+    expect(progressBars.length).toBeGreaterThanOrEqual(1);
+
+    // Short date labels should be in font-mono style
+    const dateLabels = container.querySelectorAll(".font-mono");
+    expect(dateLabels.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("shows full progress bar for terminal states (completed/expired)", () => {
+    const mockCase = createMockCaseData({
+      sundayAdFirstDate: getRelativeDate(-200),
+    });
+
+    const { container } = renderWithProviders(
+      <WindowsDisplay caseData={mockCase} />
+    );
+
+    // For expired/terminal, progress fill should be 100% with opacity 0.5
+    const progressFill = container.querySelector("[style*='width: 100%']");
+    expect(progressFill).toBeInTheDocument();
   });
 });
 

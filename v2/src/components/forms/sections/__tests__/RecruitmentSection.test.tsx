@@ -337,8 +337,10 @@ describe('RecruitmentSection', () => {
       const methodSelect = container.querySelector('#method-0') as HTMLSelectElement;
       await user.selectOptions(methodSelect, 'radio_ad');
 
+      // radio_ad is a sub-entries method, so category changes from single-date
+      // → date is cleared, subEntries initialized (Feature 006 behavior)
       expect(onChange).toHaveBeenCalledWith('additionalRecruitmentMethods', [
-        { method: 'radio_ad', date: '2024-03-15', description: '' },
+        { method: 'radio_ad', date: '', description: '', startDate: undefined, endDate: undefined, subEntries: [{ date: '', description: '' }] },
       ]);
     });
 
@@ -359,17 +361,7 @@ describe('RecruitmentSection', () => {
       expect(options.length).toBe(12); // 11 methods + placeholder
     });
 
-    it('shows Additional Recruitment Period fields', () => {
-      renderWithProviders(
-        <RecruitmentSection
-          values={{ ...mockValues, isProfessionalOccupation: true }}
-          onChange={mockOnChange}
-        />
-      );
-
-      expect(screen.getByText('Additional Recruitment Period (Optional)')).toBeInTheDocument();
-      expect(screen.getByText('Start Date')).toBeInTheDocument();
-      expect(screen.getByText('End Date')).toBeInTheDocument();
-    });
+    // Feature 006: Legacy "Additional Recruitment Period" section removed.
+    // Dates are now entered at the per-method level (startDate/endDate or subEntries).
   });
 });

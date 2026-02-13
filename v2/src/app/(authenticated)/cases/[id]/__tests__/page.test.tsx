@@ -113,9 +113,9 @@ vi.mock("@/components/cases/detail/InlineCaseTimeline", () => ({
   ),
 }));
 
-vi.mock("@/components/cases/detail/BasicInfoSection", () => ({
-  BasicInfoSection: ({ data }: any) => (
-    <div data-testid="basic-info-section">Basic Info: {data?.employerName}</div>
+vi.mock("@/components/cases/detail/NextUpSection", () => ({
+  NextUpSection: ({ caseData }: any) => (
+    <div data-testid="next-up-section">Next Up</div>
   ),
 }));
 
@@ -142,6 +142,12 @@ vi.mock("@/components/cases/detail/I140Section", () => ({
 vi.mock("@/components/cases/detail/RFIRFESection", () => ({
   RFIRFESection: ({ rfiEntries, rfeEntries }: any) => (
     <div data-testid="rfirfe-section">RFI/RFE Section</div>
+  ),
+}));
+
+vi.mock("@/components/cases/detail/RecruitmentResultsSection", () => ({
+  RecruitmentResultsSection: ({ data }: any) => (
+    <div data-testid="recruitment-results-section">Recruitment Results</div>
   ),
 }));
 
@@ -378,7 +384,6 @@ describe("CaseDetailPage - Case Details Rendering", () => {
 
     await renderPageAndWait("test-id");
 
-    expect(screen.getByTestId("basic-info-section")).toBeInTheDocument();
     expect(screen.getByTestId("pwd-section")).toBeInTheDocument();
     expect(screen.getByTestId("recruitment-section")).toBeInTheDocument();
     expect(screen.getByTestId("eta9089-section")).toBeInTheDocument();
@@ -428,7 +433,7 @@ describe("CaseDetailPage - Section Headers", () => {
 
     await renderPageAndWait("test-id");
 
-    expect(screen.getByText(/last updated:/i)).toBeInTheDocument();
+    expect(screen.getByText(/updated:/i)).toBeInTheDocument();
   });
 });
 

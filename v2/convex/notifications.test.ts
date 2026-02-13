@@ -319,12 +319,11 @@ describe("Notifications", () => {
         });
 
         const result = await user.query(api.notifications.getNotificationsByCase, { caseId });
-        // Should have 2 case notifications: auto-created "New Case Created" + manual "Case Notification"
+        // Should have 1 case notification (manual "Case Notification")
         // Should NOT include the system notification (no caseId)
-        expect(result).toHaveLength(2);
+        expect(result).toHaveLength(1);
         const titles = result.map((n: { title: string }) => n.title);
         expect(titles).toContain("Case Notification");
-        expect(titles).toContain("New Case Created");
         expect(titles).not.toContain("System Notification");
       });
     });

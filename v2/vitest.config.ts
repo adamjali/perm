@@ -121,6 +121,9 @@ export default defineConfig({
       },
     ],
 
+    // Use threads pool for shared memory (faster than default forks)
+    pool: "threads",
+
     // Disable isolation by default for speed (projects override as needed)
     isolate: false,
 
