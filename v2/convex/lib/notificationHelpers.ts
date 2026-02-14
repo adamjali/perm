@@ -49,6 +49,7 @@ export type DeadlineNotificationType =
   | "rfi_due"
   | "rfe_due"
   | "filing_window_opens"
+  | "filing_window_closes"
   | "recruitment_window"
   | "eta9089_expiration"
   | "i140_filing_deadline";
@@ -508,6 +509,8 @@ export function formatDeadlineType(
       return "RFE Response Due";
     case "filing_window_opens":
       return "Filing Window Opens";
+    case "filing_window_closes":
+      return "Filing Window Closes";
     case "recruitment_window":
       return "Recruitment Window";
     case "eta9089_expiration":

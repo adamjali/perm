@@ -303,9 +303,8 @@ export const getCasesNeedingReminders = internalQuery({
       }
 
       // Check filing window closes (superseded when ETA 9089 filed)
-      // Note: Uses "filing_window_opens" as the notification type for backward compatibility
       if (shouldRemindForDeadline("filing_window_closes", caseDataForDeadlines)) {
-        checkDeadline(caseDoc.filingWindowCloses, "filing_window_opens", "filing_window_closes");
+        checkDeadline(caseDoc.filingWindowCloses, "filing_window_closes", "filing_window_closes");
       }
 
       // Check I-140 filing deadline (superseded when I-140 filed)

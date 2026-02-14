@@ -87,7 +87,7 @@ function violationTypeToDeadlineType(violationType: ViolationType): DeadlineNoti
   const mapping: Record<ViolationType, DeadlineNotificationType> = {
     pwd_expired: "pwd_expiration",
     recruitment_window_missed: "recruitment_window",
-    filing_window_missed: "filing_window_opens",
+    filing_window_missed: "filing_window_closes",
     eta9089_expired: "eta9089_expiration",
   };
   return mapping[violationType];

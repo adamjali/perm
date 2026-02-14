@@ -988,6 +988,10 @@ describe("Notifications", () => {
         expect(formatDeadlineType("filing_window_opens")).toBe("Filing Window Opens");
       });
 
+      it("formats filing_window_closes", () => {
+        expect(formatDeadlineType("filing_window_closes")).toBe("Filing Window Closes");
+      });
+
       it("formats recruitment_window", () => {
         expect(formatDeadlineType("recruitment_window")).toBe("Recruitment Window");
       });
