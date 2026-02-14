@@ -2703,12 +2703,6 @@ getOldReadNotifications(args: {
   olderThan: number;
 }): Promise<Id<"notifications">[]>
 
-// Get upcoming deadlines for a user (weekly digest helper)
-getUpcomingDeadlinesForUser(args: {
-  userId: Id<"users">;
-  daysAhead: number;
-}): Promise<UpcomingDeadline[]>
-
 // Get unread count for a user (weekly digest helper)
 getUnreadCountForUser(args: {
   userId: Id<"users">;

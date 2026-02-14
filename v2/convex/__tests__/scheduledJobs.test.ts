@@ -764,42 +764,6 @@ describe("Scheduled Jobs", () => {
   });
 
   // ============================================================================
-  // getUpcomingDeadlinesForUser TESTS
-  // ============================================================================
-
-  describe("getUpcomingDeadlinesForUser", () => {
-    it("returns deadlines within the specified days ahead", async () => {
-      const t = createTestContext();
-      const { userId, authT } = await createTestUserWithProfile(t, "User Upcoming");
-
-      // Create case with PWD expiration in 5 days (within 7 days)
-      await createTestCaseWithDeadlines(t, authT, {
-        employerName: "Near Deadline Co",
-        beneficiaryIdentifier: "Ben Near",
-        pwdExpirationDate: daysFromNow(5),
-      });
-
-      // Create case with PWD expiration in 15 days (outside 7 days)
-      await createTestCaseWithDeadlines(t, authT, {
-        employerName: "Far Deadline Co",
-        beneficiaryIdentifier: "Ben Far",
-        pwdExpirationDate: daysFromNow(15),
-      });
-
-      const deadlines = await authT.run(async (ctx) => {
-        return await ctx.runQuery(internal.scheduledJobs.getUpcomingDeadlinesForUser, {
-          userId,
-          daysAhead: 7,
-        });
-      });
-
-      expect(deadlines.length).toBe(1);
-      expect(deadlines[0].employerName).toBe("Near Deadline Co");
-      expect(deadlines[0].daysUntil).toBe(5);
-    });
-  });
-
-  // ============================================================================
   // getUnreadCountForUser TESTS
   // ============================================================================
 
