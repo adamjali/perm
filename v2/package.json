@@ -149,7 +149,9 @@
     "overrides": {
       "parse5": "^7.1.2",
       "lodash": "^4.17.23",
-      "lodash-es": "^4.17.23"
+      "lodash-es": "^4.17.23",
+      "esbuild": "^0.25.0",
+      "webpack": "^5.104.1"
     },
     "onlyBuiltDependencies": [
       "@swc/core",
