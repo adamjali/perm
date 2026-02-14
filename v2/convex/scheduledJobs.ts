@@ -747,35 +747,45 @@ export const getDeadlinesForDigest = internalQuery({
         }
       };
 
-      // Only add PWD expiration if not yet filed ETA 9089
-      if (!caseDoc.eta9089FilingDate) {
+      // Build case data for centralized supersession checks
+      const caseDataForDeadlines: CaseDataForDeadlines = {
+        _id: caseDoc._id,
+        caseStatus: caseDoc.caseStatus,
+        deletedAt: caseDoc.deletedAt,
+        pwdExpirationDate: caseDoc.pwdExpirationDate,
+        eta9089FilingDate: caseDoc.eta9089FilingDate,
+        eta9089CertificationDate: caseDoc.eta9089CertificationDate,
+        eta9089ExpirationDate: caseDoc.eta9089ExpirationDate,
+        i140FilingDate: caseDoc.i140FilingDate,
+        filingWindowOpens: caseDoc.filingWindowOpens,
+        filingWindowCloses: caseDoc.filingWindowCloses,
+        rfiEntries: caseDoc.rfiEntries,
+        rfeEntries: caseDoc.rfeEntries,
+      };
+
+      if (shouldRemindForDeadline("pwd_expiration", caseDataForDeadlines)) {
         addDeadline(caseDoc.pwdExpirationDate, "PWD Expiration", "pwd_expiration");
       }
 
-      // Only add filing window if not yet filed ETA 9089
-      if (!caseDoc.eta9089FilingDate) {
+      if (shouldRemindForDeadline("filing_window_closes", caseDataForDeadlines)) {
         addDeadline(caseDoc.filingWindowCloses, "Filing Window Closes", "filing_window_closes");
       }
 
-      // Only add I-140 deadline if not yet filed I-140
-      if (!caseDoc.i140FilingDate && caseDoc.eta9089ExpirationDate) {
+      if (shouldRemindForDeadline("i140_filing_deadline", caseDataForDeadlines)) {
         addDeadline(caseDoc.eta9089ExpirationDate, "I-140 Filing Deadline", "i140_filing_deadline");
       }
 
-      // Check RFI/RFE entries (only active ones)
-      if (caseDoc.rfiEntries) {
-        for (const rfi of caseDoc.rfiEntries) {
-          if (!rfi.responseSubmittedDate && rfi.responseDueDate) {
-            addDeadline(rfi.responseDueDate, "RFI Response Due", "rfi_due");
-          }
+      if (shouldRemindForDeadline("rfi_due", caseDataForDeadlines)) {
+        const activeRfi = getActiveRfiEntry(caseDoc.rfiEntries ?? []);
+        if (activeRfi?.responseDueDate) {
+          addDeadline(activeRfi.responseDueDate, "RFI Response Due", "rfi_due");
         }
       }
 
-      if (caseDoc.rfeEntries) {
-        for (const rfe of caseDoc.rfeEntries) {
-          if (!rfe.responseSubmittedDate && rfe.responseDueDate) {
-            addDeadline(rfe.responseDueDate, "RFE Response Due", "rfe_due");
-          }
+      if (shouldRemindForDeadline("rfe_due", caseDataForDeadlines)) {
+        const activeRfe = getActiveRfeEntry(caseDoc.rfeEntries ?? []);
+        if (activeRfe?.responseDueDate) {
+          addDeadline(activeRfe.responseDueDate, "RFE Response Due", "rfe_due");
         }
       }
     }
