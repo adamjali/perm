@@ -70,6 +70,7 @@ function wrapMistralModel<T extends Parameters<typeof wrapLanguageModel>[0]['mod
   return wrapLanguageModel({
     model,
     middleware: {
+      specificationVersion: 'v3' as const,
       // Transform tool results before sending to model
       transformParams: async ({ params }) => {
         // Transform tool call IDs in messages
@@ -160,19 +161,22 @@ function wrapWithRetryableErrors<T extends Parameters<typeof wrapLanguageModel>[
   return wrapLanguageModel({
     model,
     middleware: {
+      specificationVersion: 'v3' as const,
       // Wrap generate to catch errors and make them retryable
       wrapGenerate: async ({ doGenerate }) => {
         try {
           const result = await doGenerate();
 
           // Detect silent failure: error finish reason with no output
-          if (result.finishReason === 'error' || result.finishReason === 'unknown') {
+          // In AI SDK v6, finishReason is { unified, raw } instead of a plain string
+          const reason = result.finishReason.unified;
+          if (reason === 'error' || reason === 'other') {
             const hasOutput = result.content && result.content.length > 0 && result.content.some(
               (part) => (part.type === 'text' && part.text) || part.type === 'tool-call'
             );
             if (!hasOutput) {
               console.error(`[Middleware] Silent failure detected (generate) for ${modelId} - throwing retryable error`);
-              throw new RetryableError(`Model silent failure: finishReason=${result.finishReason} with no output`);
+              throw new RetryableError(`Model silent failure: finishReason=${reason} with no output`);
             }
           }
 
@@ -222,16 +226,16 @@ function wrapWithRetryableErrors<T extends Parameters<typeof wrapLanguageModel>[
                 hasContent = true;
               }
 
-              // Track finish reason
+              // Track finish reason (v6: finishReason is { unified, raw })
               if (chunk.type === 'finish') {
-                finishReason = chunk.finishReason;
+                finishReason = chunk.finishReason.unified;
               }
 
               controller.enqueue(chunk);
             },
             flush(controller) {
               // After stream ends, check if it was a silent failure
-              if ((finishReason === 'error' || finishReason === 'unknown') && !hasContent) {
+              if ((finishReason === 'error' || finishReason === 'other') && !hasContent) {
                 console.error(`[Middleware] Silent failure detected (stream) for ${modelId} - throwing retryable error`);
                 controller.error(new RetryableError(`Model silent failure: finishReason=${finishReason} with no output`));
               }

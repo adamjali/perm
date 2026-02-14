@@ -2,19 +2,28 @@
 
 Packages intentionally NOT on latest, with reasons.
 
-## AI SDK Stack — Pinned to v5 Ecosystem
+## AI SDK Stack — Upgraded to v6 (Feb 2026)
 
 **Date:** 2026-02-14
+**Status:** RESOLVED
 
-| Package | Current | Latest | Why Not Latest |
-|---------|---------|--------|----------------|
-| `ai` | 5.0.133 | 6.x | `@openrouter/ai-sdk-provider@1.5.4` only supports `ai@^5.0.0` |
-| `@ai-sdk/openai` | 2.0.89 | 3.x | v3 requires `ai@^6.0.0` |
-| `@ai-sdk/react` | 2.0.119 | 3.x | v3 requires `ai@^6.0.0` |
-| `@openrouter/ai-sdk-provider` | 1.5.4 | 2.x | v2 requires `ai@^6.0.0` |
+Previously pinned to v5 because `@openrouter/ai-sdk-provider@1.5.4` only supported `ai@^5`.
+OpenRouter v2.2.3+ now supports `ai@^6`. All packages upgraded to latest:
 
-**Constraint chain:** OpenRouter v1.5.4 (`ai@^5`) blocks the entire AI SDK from upgrading to v6. Upgrading requires migrating all four packages simultaneously plus verifying OpenRouter v2 stability and any breaking API changes in `ai@6`, `@ai-sdk/openai@3`, and `@ai-sdk/react@3`.
+| Package | Version |
+|---------|---------|
+| `ai` | 6.0.86 |
+| `@ai-sdk/google` | 3.0.29 |
+| `@ai-sdk/openai` | 3.0.29 |
+| `@ai-sdk/react` | 3.0.88 |
+| `@openrouter/ai-sdk-provider` | 2.2.3 |
+| `ai-fallback` | 2.0.0 |
 
-**When to revisit:** When `@openrouter/ai-sdk-provider` v2.x is stable and the `ai@6` migration guide is available. Check quarterly.
+**Migration notes:**
+- `CoreMessage` → `ModelMessage` (type rename)
+- `finishReason` at provider level is now `{ unified, raw }` object (high-level `FinishReason` unchanged)
+- Middleware requires `specificationVersion: 'v3'`
+- `convertToModelMessages` is async (was already `await`ed in our code)
+- Strict mode defaults to true for tool schemas (compatible with our Zod schemas)
 
-**Related:** Dependabot PRs #19 and #20 were closed for this reason.
+**Related:** Dependabot PRs #19, #20, and #23 superseded by this migration.

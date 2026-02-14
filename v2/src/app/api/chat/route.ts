@@ -19,7 +19,7 @@ import {
   convertToModelMessages,
   stepCountIs,
   type Tool,
-  type CoreMessage,
+  type ModelMessage,
 } from 'ai';
 import { z } from 'zod';
 import { isAuthenticatedNextjs, convexAuthNextjsToken } from '@convex-dev/auth/nextjs/server';
@@ -110,7 +110,7 @@ import { captureError } from '@/lib/sentry';
  */
 interface ToolExecutionOptions {
   toolCallId: string;
-  messages?: CoreMessage[];
+  messages?: ModelMessage[];
   abortSignal?: AbortSignal;
 }
 
@@ -2021,7 +2021,7 @@ export async function POST(req: Request) {
           console.log(`[Chat API] [${sessionId}] Using summarized context (${contextData.totalMessageCount} total messages)`);
 
           // Create messages with summary context
-          const optimizedMessages: CoreMessage[] = [
+          const optimizedMessages: ModelMessage[] = [
             {
               role: "user" as const,
               content: `[Previous conversation context: ${contextData.summary}]`,
@@ -2137,8 +2137,8 @@ export async function POST(req: Request) {
         },
         onFinish: (event) => {
           // Log final stream completion for debugging
-          if (event.finishReason === 'error' || event.finishReason === 'unknown') {
-            console.error(`[Chat API] [${sessionId}] Stream finished with error/unknown: ${event.finishReason}`);
+          if (event.finishReason === 'error' || event.finishReason === 'other') {
+            console.error(`[Chat API] [${sessionId}] Stream finished with error/other: ${event.finishReason}`);
           } else {
             console.log(`[Chat API] [${sessionId}] Stream completed: ${event.finishReason}`);
           }
