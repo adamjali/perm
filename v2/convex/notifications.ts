@@ -26,7 +26,7 @@
  * All mutations check auth via getCurrentUserId and throw if not authenticated.
  */
 
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
@@ -641,6 +641,34 @@ export const cleanupCaseNotifications = internalMutation({
  * Called from notification email actions after successful email delivery.
  * Not exposed to the client API.
  */
+/**
+ * Check if a notification still exists (hasn't been deleted with user).
+ * Used by email actions to guard against sending to deleted users.
+ */
+export const isNotificationValid = internalQuery({
+  args: {
+    notificationId: v.id("notifications"),
+  },
+  handler: async (ctx, { notificationId }): Promise<boolean> => {
+    const notification = await ctx.db.get(notificationId);
+    return notification !== null;
+  },
+});
+
+/**
+ * Check if a user still exists by email address.
+ * Used by email actions (e.g., weekly digest) to guard against sending to deleted users.
+ */
+export const isUserActiveByEmail = internalQuery({
+  args: {
+    email: v.string(),
+  },
+  handler: async (ctx, { email }): Promise<boolean> => {
+    const users = await ctx.db.query("users").collect();
+    return users.some((u) => u.email === email);
+  },
+});
+
 export const markEmailSent = internalMutation({
   args: {
     notificationId: v.id("notifications"),

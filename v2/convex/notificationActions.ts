@@ -62,16 +62,18 @@ function buildEmailUrls(caseId?: string): { appUrl: string; caseUrl?: string; se
  * Send an email via Resend and optionally mark notification as sent.
  *
  * This helper centralizes the email sending pattern used across all notification types:
- * 1. Initialize Resend client
- * 2. Send the email
- * 3. Log errors if any
- * 4. Mark notification as emailed (if notificationId provided)
+ * 1. Guard: verify notification still exists (user may have been deleted)
+ * 2. Initialize Resend client
+ * 3. Send the email
+ * 4. Log errors if any
+ * 5. Mark notification as emailed (if notificationId provided)
  *
  * @throws Error if email sending fails
  */
 async function sendNotificationEmail(
   ctx: {
     runMutation: (fn: typeof internal.notifications.markEmailSent, args: { notificationId: Id<"notifications"> }) => Promise<unknown>;
+    runQuery: (fn: typeof internal.notifications.isNotificationValid, args: { notificationId: Id<"notifications"> }) => Promise<boolean>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     scheduler: { runAfter: (delay: number, fn: any, args: any) => Promise<any> };
   },
@@ -83,6 +85,19 @@ async function sendNotificationEmail(
     logContext: string;
   }
 ): Promise<void> {
+  // Guard: if we have a notificationId, verify it still exists (user may have been deleted)
+  if (params.notificationId) {
+    const isValid = await ctx.runQuery(internal.notifications.isNotificationValid, {
+      notificationId: params.notificationId,
+    });
+    if (!isValid) {
+      log.info(`Skipping ${params.logContext} email: notification deleted (user may have been deleted)`, {
+        to: params.to,
+      });
+      return;
+    }
+  }
+
   const resend = getResend();
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
@@ -519,7 +534,16 @@ export const sendWeeklyDigestEmail = internalAction({
     to: v.string(),
     digestContent: digestContentValidator,
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
+    // Guard: verify user still exists before sending digest
+    const userActive = await ctx.runQuery(internal.notifications.isUserActiveByEmail, {
+      email: args.to,
+    });
+    if (!userActive) {
+      log.info('Skipping weekly digest email: user no longer exists', { to: args.to });
+      return;
+    }
+
     const appUrl = getAppUrl();
     const settingsUrl = `${appUrl}/settings`;
 
