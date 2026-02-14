@@ -102,7 +102,7 @@ import type * as onboarding from "../onboarding.js";
 import type * as pushNotifications from "../pushNotifications.js";
 import type * as pushSubscriptions from "../pushSubscriptions.js";
 import type * as scheduledJobs from "../scheduledJobs.js";
-import type * as sentryReporter from "../sentryReporter.js";
+import type * as sentryReportAction from "../sentryReportAction.js";
 import type * as supportEmail from "../supportEmail.js";
 import type * as systemErrors from "../systemErrors.js";
 import type * as timeline from "../timeline.js";
@@ -214,7 +214,7 @@ declare const fullApi: ApiFromModules<{
   pushNotifications: typeof pushNotifications;
   pushSubscriptions: typeof pushSubscriptions;
   scheduledJobs: typeof scheduledJobs;
-  sentryReporter: typeof sentryReporter;
+  sentryReportAction: typeof sentryReportAction;
   supportEmail: typeof supportEmail;
   systemErrors: typeof systemErrors;
   timeline: typeof timeline;

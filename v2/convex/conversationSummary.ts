@@ -16,7 +16,7 @@
 
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getCurrentUserId } from "./lib/auth";
+import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 
 // =============================================================================
 // CONSTANTS
@@ -74,7 +74,8 @@ export const needsSummarization = query({
     conversationId: v.id("conversations"),
   },
   handler: async (ctx, args): Promise<boolean> => {
-    const userId = await getCurrentUserId(ctx);
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return false;
 
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) {
@@ -137,7 +138,8 @@ export const getContextMessages = query({
     }>;
     totalMessageCount: number;
   }> => {
-    const userId = await getCurrentUserId(ctx);
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return { summary: null, recentMessages: [], totalMessageCount: 0 };
 
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) {
@@ -204,7 +206,8 @@ export const getMessagesToSummarize = query({
     existingSummary: string | null;
     totalMessageCount: number;
   }> => {
-    const userId = await getCurrentUserId(ctx);
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return { messages: [], existingSummary: null, totalMessageCount: 0 };
 
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) {
@@ -314,7 +317,8 @@ export const getConversationSummary = query({
     conversationId: v.id("conversations"),
   },
   handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return null;
 
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) {

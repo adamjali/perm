@@ -2,7 +2,7 @@
 
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,19 +14,38 @@ import { useAuthContext } from "@/lib/contexts/AuthContext";
 
 type LoginStep = "login" | "verification";
 
+function isNetworkError(message: string): boolean {
+  return /network|offline|failed to fetch|load failed/i.test(message);
+}
+
+function isRateLimitError(message: string): boolean {
+  return /toomanyfailedattempts|rate limit|too many/i.test(message);
+}
+
 export function LoginPageClient() {
   const { signIn } = useAuthActions();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { completeSignOut } = useAuthContext();
   const [step, setStep] = useState<LoginStep>("login");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showExpiredBanner, setShowExpiredBanner] = useState(false);
 
   // Reset signing out state when arriving at login page (after sign-out completes)
   useEffect(() => {
     completeSignOut();
   }, [completeSignOut]);
+
+  // Show session expired banner when redirected from auth error
+  useEffect(() => {
+    if (searchParams.get("expired") === "1") {
+      setShowExpiredBanner(true);
+      // Clean the URL without triggering a navigation
+      window.history.replaceState({}, "", "/login");
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,29 +68,14 @@ export function LoginPageClient() {
       captureError(error, { operation: "signIn" });
 
       const message = error instanceof Error ? error.message : String(error);
-      const lower = message.toLowerCase();
-      if (
-        lower.includes("invalidaccountid") ||
-        lower.includes("invalidsecret") ||
-        lower.includes("invalid credentials") ||
-        lower.includes("invalid")
-      ) {
-        toast.error("Invalid email or password. Please try again.");
-      } else if (
-        lower.includes("toomanyfailedattempts") ||
-        lower.includes("rate limit") ||
-        lower.includes("too many")
-      ) {
+      if (isRateLimitError(message)) {
         toast.error("Too many attempts. Please wait a moment and try again.");
-      } else if (
-        lower.includes("network") ||
-        lower.includes("offline") ||
-        lower.includes("failed to fetch") ||
-        lower.includes("load failed")
-      ) {
+      } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
       } else {
-        console.warn("[Login] Unhandled error type:", message);
+        if (!/invalid/i.test(message)) {
+          console.warn("[Login] Unhandled error type:", message);
+        }
         toast.error("Invalid email or password. Please try again.");
       }
     } finally {
@@ -96,29 +100,15 @@ export function LoginPageClient() {
       captureError(error, { operation: "signInVerification" });
 
       const message = error instanceof Error ? error.message : String(error);
-      const lower = message.toLowerCase();
-      if (lower.includes("expired")) {
+      if (/expired/i.test(message)) {
         toast.error(
           "Verification code expired. Go back and sign in again to get a new code."
         );
-      } else if (
-        lower.includes("invalid") ||
-        lower.includes("incorrect") ||
-        lower.includes("could not verify")
-      ) {
+      } else if (/invalid|incorrect|could not verify/i.test(message)) {
         toast.error("Invalid verification code. Please check and try again.");
-      } else if (
-        lower.includes("toomanyfailedattempts") ||
-        lower.includes("rate limit") ||
-        lower.includes("too many")
-      ) {
+      } else if (isRateLimitError(message)) {
         toast.error("Too many attempts. Please wait a moment and try again.");
-      } else if (
-        lower.includes("network") ||
-        lower.includes("offline") ||
-        lower.includes("failed to fetch") ||
-        lower.includes("load failed")
-      ) {
+      } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
       } else {
         console.warn("[Login Verification] Unhandled error type:", message);
@@ -138,15 +128,9 @@ export function LoginPageClient() {
       captureError(error, { operation: "googleSignIn" });
 
       const message = error instanceof Error ? error.message : String(error);
-      const lower = message.toLowerCase();
-      if (lower.includes("popup") || lower.includes("closed")) {
+      if (/popup|closed/i.test(message)) {
         toast.error("Sign in was cancelled. Please try again.");
-      } else if (
-        lower.includes("network") ||
-        lower.includes("offline") ||
-        lower.includes("failed to fetch") ||
-        lower.includes("load failed")
-      ) {
+      } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
       } else {
         console.warn("[Google Sign In] Unhandled error type:", message);
@@ -223,6 +207,15 @@ export function LoginPageClient() {
         <CardTitle className="text-3xl font-heading uppercase tracking-tight">Sign In</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {showExpiredBanner && (
+          <div className="flex items-center gap-2 rounded-md border-2 border-amber-500/50 bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5 text-sm text-amber-700 dark:text-amber-300">
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            Your session expired. Please sign in again.
+          </div>
+        )}
         <form method="POST" onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="email" className="text-xs uppercase mono font-bold tracking-widest">

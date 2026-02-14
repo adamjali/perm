@@ -29,7 +29,7 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { loggers } from "./lib/logging";
 import { getResend, FROM_EMAIL } from "./lib/email";
-import { reportError } from "./lib/sentry";
+import { recordError } from "./lib/errorRecording";
 
 const log = loggers.email;
 import { DeadlineReminder } from "../src/emails/DeadlineReminder";
@@ -70,7 +70,11 @@ function buildEmailUrls(caseId?: string): { appUrl: string; caseUrl?: string; se
  * @throws Error if email sending fails
  */
 async function sendNotificationEmail(
-  ctx: { runMutation: (fn: typeof internal.notifications.markEmailSent, args: { notificationId: Id<"notifications"> }) => Promise<unknown> },
+  ctx: {
+    runMutation: (fn: typeof internal.notifications.markEmailSent, args: { notificationId: Id<"notifications"> }) => Promise<unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    scheduler: { runAfter: (delay: number, fn: any, args: any) => Promise<any> };
+  },
   params: {
     to: string;
     subject: string;
@@ -89,10 +93,7 @@ async function sendNotificationEmail(
 
   if (error) {
     log.error(`Failed to send ${params.logContext} email`, { error: error.message, to: params.to });
-    await reportError(new Error(`Email failed: ${error.message}`), {
-      module: "email",
-      operation: params.logContext,
-    });
+    await recordError(ctx, "action", `notificationActions.${params.logContext}`, new Error(`Email failed: ${error.message}`));
     throw new Error(`Email failed: ${error.message}`);
   }
 

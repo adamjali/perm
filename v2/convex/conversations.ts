@@ -9,7 +9,7 @@
 
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getCurrentUserId } from "./lib/auth";
+import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 
 /**
  * Create a new conversation
@@ -92,7 +92,8 @@ export const get = query({
     id: v.id("conversations"),
   },
   handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return null;
 
     const conversation = await ctx.db.get(args.id);
 
@@ -124,7 +125,8 @@ export const get = query({
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getCurrentUserId(ctx);
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return [];
 
     const conversations = await ctx.db
       .query("conversations")

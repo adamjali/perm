@@ -11,7 +11,7 @@
  * try {
  *   await updateCase(caseId, data);
  * } catch (error) {
- *   captureError(error, { caseId, operation: "updateCase" });
+ *   captureError(error, { resourceId: caseId, operation: "updateCase" });
  *   throw error;
  * }
  * ```
@@ -121,33 +121,6 @@ export function addBreadcrumb(data: BreadcrumbData): void {
 }
 
 /**
- * Add a navigation breadcrumb.
- */
-export function trackNavigation(from: string, to: string): void {
-  addBreadcrumb({
-    category: "navigation",
-    message: `Navigated from ${from} to ${to}`,
-    data: { from, to },
-  });
-}
-
-/**
- * Add a form submission breadcrumb.
- */
-export function trackFormSubmit(
-  formName: string,
-  success: boolean,
-  errorCount?: number
-): void {
-  addBreadcrumb({
-    category: "form",
-    message: `Form "${formName}" ${success ? "submitted successfully" : "failed validation"}`,
-    level: success ? "info" : "warning",
-    data: { formName, success, errorCount },
-  });
-}
-
-/**
  * Add a validation error breadcrumb.
  */
 export function trackValidationError(
@@ -160,22 +133,6 @@ export function trackValidationError(
     message: `Validation failed for "${formName}" with ${errorCount} error(s)`,
     level: "warning",
     data: { formName, errorCount, fields },
-  });
-}
-
-/**
- * Add a mutation breadcrumb.
- */
-export function trackMutation(
-  mutationName: string,
-  success: boolean,
-  resourceId?: string
-): void {
-  addBreadcrumb({
-    category: "mutation",
-    message: `Mutation "${mutationName}" ${success ? "succeeded" : "failed"}`,
-    level: success ? "info" : "error",
-    data: { mutationName, success, resourceId },
   });
 }
 
@@ -202,49 +159,4 @@ export function setUser(user: {
   } else {
     Sentry.setUser(null);
   }
-}
-
-/**
- * Add a tag to all subsequent events.
- */
-export function setTag(key: string, value: string): void {
-  Sentry.setTag(key, value);
-}
-
-/**
- * Set extra context data for all subsequent events.
- */
-export function setExtra(key: string, value: unknown): void {
-  Sentry.setExtra(key, value);
-}
-
-// ============================================================================
-// PERFORMANCE
-// ============================================================================
-
-/**
- * Start a performance span for manual instrumentation.
- *
- * @param name - Span name
- * @param operation - Operation type (e.g., "db.query", "http.request")
- */
-export function startSpan<T>(
-  name: string,
-  operation: string,
-  callback: () => T
-): T {
-  return Sentry.startSpan({ name, op: operation }, callback);
-}
-
-/**
- * Wrap an async operation with performance tracing.
- */
-export async function startAsyncSpan<T>(
-  name: string,
-  operation: string,
-  callback: () => Promise<T>
-): Promise<T> {
-  return Sentry.startSpan({ name, op: operation }, async () => {
-    return await callback();
-  });
 }

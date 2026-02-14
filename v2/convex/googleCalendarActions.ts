@@ -27,7 +27,6 @@ import type { Id } from "./_generated/dataModel";
 import { extractUserIdFromAction } from "./lib/auth";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
-import { reportError } from "./lib/sentry";
 
 const log = loggers.calendar;
 
@@ -124,11 +123,6 @@ export const refreshAccessToken = internalAction({
       // Token revoked or invalid - auto-disconnect
       log.error('Token refresh failed', {
         error: error instanceof Error ? error.message : 'Unknown error',
-      });
-      await reportError(error, {
-        module: "calendar",
-        operation: "refreshAccessToken",
-        userId: args.userId,
       });
       await recordError(ctx, "action", "googleCalendarActions.refreshAccessToken.tokenRefresh", error, {
         userId: args.userId,
@@ -382,11 +376,6 @@ export const createCalendarEvent = internalAction({
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       log.error('Failed to create event', { error: message });
-      await reportError(error, {
-        module: "calendar",
-        operation: "createCalendarEvent",
-        extra: { eventType },
-      });
       await recordError(ctx, "action", "googleCalendarActions.createCalendarEvent.create", error, {
         userId,
         resourceId: event.caseId,

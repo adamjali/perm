@@ -44,6 +44,9 @@ Sentry.init({
     // Extension/plugin interference
     /^chrome-extension:\/\//,
     /^moz-extension:\/\//,
+    // Auth/session expiry (expected, not bugs — handled gracefully by error boundaries)
+    "not authenticated",
+    "User profile not found",
   ],
 
   // Filter transactions for performance monitoring

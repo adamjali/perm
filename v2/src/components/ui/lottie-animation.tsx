@@ -10,6 +10,7 @@
 import * as React from "react";
 import dynamic from "next/dynamic";
 import { useReducedMotion } from "@/lib/animations";
+import { captureError } from "@/lib/sentry";
 
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
@@ -37,7 +38,10 @@ export function LottieAnimation({
     fetch(src)
       .then((res) => res.json())
       .then(setAnimationData)
-      .catch(console.error);
+      .catch((error) => {
+        console.error("[LottieAnimation] Failed to load:", src, error);
+        captureError(error, { operation: "loadLottieAnimation", extra: { src } });
+      });
   }, [src]);
 
   if (!animationData) {

@@ -1,8 +1,11 @@
 /**
  * Error Recording Helper
  *
- * Thin wrapper around systemErrors.record for use in catch blocks.
+ * Unified error reporting: one call → DB + admin email + Sentry.
  * Works in mutation and action handlers (anything with ctx.scheduler).
+ *
+ * - Schedules systemErrors.record → DB insert + rate-limited admin email
+ * - Schedules sentryReportAction.report → Sentry HTTP API
  *
  * Usage:
  *   } catch (error) {
@@ -42,23 +45,41 @@ export async function recordError(
   error: unknown,
   opts?: RecordErrorOpts,
 ): Promise<void> {
-  const message =
-    error instanceof Error ? error.message : String(error);
-  const stack =
-    error instanceof Error ? error.stack : undefined;
+  const message = error instanceof Error ? error.message : String(error);
+  const stack = error instanceof Error ? error.stack : undefined;
 
+  const optionalFields = {
+    ...(opts?.userId && { userId: opts.userId }),
+    ...(opts?.resourceId && { resourceId: opts.resourceId }),
+    ...(opts?.extra && { extra: opts.extra }),
+  };
+
+  // 1. Record to DB + admin email
   try {
     await ctx.scheduler.runAfter(0, internalApi.systemErrors.record, {
       source,
       operation,
       message,
       stack,
-      ...(opts?.userId && { userId: opts.userId }),
-      ...(opts?.resourceId && { resourceId: opts.resourceId }),
-      ...(opts?.extra && { extra: opts.extra }),
+      ...optionalFields,
     });
   } catch (recordingError) {
     // Never let error recording itself cause failures
     console.error(`[errorRecording] Failed to record: ${operation}`, message, recordingError);
+  }
+
+  // 2. Schedule Sentry report (runs asynchronously after scheduling)
+  try {
+    await ctx.scheduler.runAfter(0, internalApi.sentryReportAction.report, {
+      source,
+      operation,
+      message,
+      ...(stack && { stack }),
+      ...optionalFields,
+      // Sentry expects userId as string, not branded Id
+      ...(opts?.userId && { userId: opts.userId.toString() }),
+    });
+  } catch (sentryError) {
+    console.error(`[errorRecording] Failed to schedule Sentry report: ${operation}`, sentryError);
   }
 }

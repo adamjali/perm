@@ -12,6 +12,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+import { isAuthError } from "@/components/error/auth-error";
 
 export default function GlobalError({
   error,
@@ -20,14 +21,44 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const isExpiredSession = isAuthError(error.message);
+
   useEffect(() => {
+    if (isExpiredSession) {
+      window.location.href = "/login?expired=1";
+      return;
+    }
+
     Sentry.captureException(error, {
       tags: {
         component: "GlobalError",
         ...(error.digest && { digest: error.digest }),
       },
     });
-  }, [error]);
+  }, [error, isExpiredSession]);
+
+  // Auth errors: show brief message while redirecting to login
+  if (isExpiredSession) {
+    return (
+      <html lang="en">
+        <body
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100vh",
+            fontFamily: "system-ui, sans-serif",
+            background: "#fafafa",
+            margin: 0,
+          }}
+        >
+          <p style={{ color: "#666", fontSize: 14 }}>
+            Session expired. Redirecting to login&hellip;
+          </p>
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang="en">

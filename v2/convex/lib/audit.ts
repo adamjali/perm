@@ -14,6 +14,7 @@ import { MutationCtx } from "../_generated/server";
 import type { Id, TableNames } from "../_generated/dataModel";
 import { getCurrentUserId } from "./auth";
 import { loggers } from "./logging";
+import { recordError } from "./errorRecording";
 
 const log = loggers.audit;
 
@@ -205,6 +206,10 @@ export async function logAudit(
       action: params.action,
       tableName: params.tableName,
       resourceId: params.documentId.toString(),
+    });
+    await recordError(ctx, "mutation", "audit.logAudit", error, {
+      resourceId: params.documentId.toString(),
+      extra: JSON.stringify({ action: params.action, tableName: params.tableName }),
     });
     // Don't re-throw - audit failure shouldn't break the main operation
   }

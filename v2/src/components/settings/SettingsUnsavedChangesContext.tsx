@@ -29,6 +29,7 @@ import {
 } from "react";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { UnsavedChangesDialog } from "@/components/ui/unsaved-changes-dialog";
+import { useAuthContext } from "@/lib/contexts/AuthContext";
 
 // ============================================================================
 // TYPES
@@ -97,6 +98,8 @@ interface SettingsUnsavedChangesProviderProps {
 export function SettingsUnsavedChangesProvider({
   children,
 }: SettingsUnsavedChangesProviderProps) {
+  const { isSigningOut } = useAuthContext();
+
   // Track dirty state for each section
   const [dirtyStates, setDirtyStates] = useState<Record<string, boolean>>({});
 
@@ -107,6 +110,7 @@ export function SettingsUnsavedChangesProvider({
   );
 
   // Use the unsaved changes hook for browser navigation protection
+  // disabled during sign-out so beforeunload dialog doesn't block session expiry redirect
   const {
     setDirty,
     shouldShowDialog,
@@ -117,6 +121,7 @@ export function SettingsUnsavedChangesProvider({
   } = useUnsavedChanges({
     initialDirty: false,
     message: "You have unsaved changes in your settings. Are you sure you want to leave?",
+    disabled: isSigningOut,
   });
 
   // Keep the hook's dirty state in sync with our aggregated state
@@ -146,14 +151,6 @@ export function SettingsUnsavedChangesProvider({
     });
   }, []);
 
-  // Request navigation (for tab switching)
-  const requestNavigation = useCallback(
-    (callback: () => void): boolean => {
-      return baseRequestNavigation(callback);
-    },
-    [baseRequestNavigation]
-  );
-
   // Mark all changes as saved
   const markAllSaved = useCallback(() => {
     setDirtyStates({});
@@ -173,7 +170,7 @@ export function SettingsUnsavedChangesProvider({
       registerDirtyState,
       unregisterSection,
       hasUnsavedChanges,
-      requestNavigation,
+      requestNavigation: baseRequestNavigation,
       markAllSaved,
       isSectionDirty,
     }),
@@ -181,7 +178,7 @@ export function SettingsUnsavedChangesProvider({
       registerDirtyState,
       unregisterSection,
       hasUnsavedChanges,
-      requestNavigation,
+      baseRequestNavigation,
       markAllSaved,
       isSectionDirty,
     ]

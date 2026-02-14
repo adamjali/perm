@@ -245,7 +245,8 @@ export const list = query({
     conversationId: v.id("conversations"),
   },
   handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return [];
 
     // Verify conversation ownership
     const conversation = await ctx.db.get(args.conversationId);
@@ -295,7 +296,8 @@ export const count = query({
     conversationId: v.id("conversations"),
   },
   handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return 0;
 
     // Verify conversation ownership
     const conversation = await ctx.db.get(args.conversationId);

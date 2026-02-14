@@ -24,7 +24,6 @@ import { api, internal } from "./_generated/api";
 import { v } from "convex/values";
 import * as webpush from "web-push";
 import { loggers } from "./lib/logging";
-import { reportError } from "./lib/sentry";
 import { recordError } from "./lib/errorRecording";
 
 const log = loggers.push;
@@ -153,11 +152,6 @@ export const sendPushNotification = internalAction({
         // Other error - log but don't remove subscription
         log.error('Push notification failed', { error: webPushError.message || 'Unknown error' });
         await recordError(ctx, "action", "pushNotifications.send.delivery", error, { userId });
-        await reportError(error, {
-          module: "push",
-          operation: "sendPushNotification",
-          userId,
-        });
         return {
           sent: false,
           reason: "send_failed",

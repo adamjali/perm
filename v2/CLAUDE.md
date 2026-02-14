@@ -287,8 +287,9 @@ if (filingDate > certDate + 180) { ... } // WRONG
 | `src/instrumentation.ts` | Loads configs + `onRequestError` hook |
 | `src/app/global-error.tsx` | Root error boundary (last resort) |
 | `src/lib/sentry.ts` | Frontend utility functions (`captureError`, `addBreadcrumb`, `setUser`) |
-| `convex/lib/sentry.ts` | Convex backend reporter (HTTP store API) |
-| `convex/sentryReporter.ts` | Internal action for mutations/queries to report errors |
+| `convex/lib/errorRecording.ts` | Unified backend error recording (DB + admin email + Sentry) |
+| `convex/lib/sentry.ts` | Sentry HTTP store API utility (used by sentryReportAction) |
+| `convex/sentryReportAction.ts` | Internal action bridge: mutations → Sentry HTTP API |
 
 ### Frontend Error Capture
 
@@ -306,16 +307,9 @@ try {
 ### Convex Backend Error Capture
 
 ```typescript
-// In actions (have fetch access):
-import { reportError } from "./lib/sentry";
-await reportError(error, { module: "email", operation: "sendReminder" });
-
-// In mutations/queries (no fetch — schedule the reporter action):
-await ctx.scheduler.runAfter(0, internal.sentryReporter.report, {
-  errorMessage: error.message,
-  module: "deadline",
-  operation: "enforceDeadline",
-});
+// ONE call → DB + admin email + Sentry (works in mutations AND actions):
+import { recordError } from "./lib/errorRecording";
+await recordError(ctx, "mutation", "cases.update", error, { resourceId: caseId });
 ```
 
 ### Performance Spans

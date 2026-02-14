@@ -5,12 +5,15 @@
  *
  * Error boundary UI for Next.js App Router error.tsx files.
  * Wrapper around ErrorDisplay with Sentry integration.
+ *
+ * Auth errors (session expiry) redirect gracefully to /login
+ * instead of showing a scary error page.
  */
 
-import * as React from "react";
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { RefreshCcw, Home } from "lucide-react";
+import { isAuthError } from "./auth-error";
 import { ErrorDisplay } from "./ErrorDisplay";
 
 export interface RouteErrorProps {
@@ -26,7 +29,15 @@ export function RouteError({
   title = "Something went wrong",
   homeHref = "/dashboard",
 }: RouteErrorProps) {
+  const isExpiredSession = isAuthError(error.message);
+
   useEffect(() => {
+    if (isExpiredSession) {
+      // Session expired — redirect gracefully, don't report to Sentry
+      window.location.href = "/login?expired=1";
+      return;
+    }
+
     console.error("[RouteError]", error);
 
     Sentry.captureException(error, {
@@ -42,7 +53,18 @@ export function RouteError({
           typeof document !== "undefined" ? document.referrer : undefined,
       },
     });
-  }, [error]);
+  }, [error, isExpiredSession]);
+
+  // Auth errors: show brief message while redirecting to login
+  if (isExpiredSession) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <p className="text-sm text-muted-foreground">
+          Session expired. Redirecting to login&hellip;
+        </p>
+      </div>
+    );
+  }
 
   const isDev = process.env.NODE_ENV === "development";
 

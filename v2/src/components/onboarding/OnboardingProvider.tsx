@@ -144,9 +144,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     setTourActive(true);
     setTourPhase("dashboard");
     // Create sample case alongside user's own case (fire-and-forget)
-    createSampleCaseMutation({}).catch(() => {});
+    createSampleCaseMutation({}).catch((error) => {
+      console.error("Failed to create sample case:", error);
+      captureError(error, { operation: "startTour.createSampleCase" });
+    });
     updateStep({ step: "tour_pending" }).catch((error) => {
       console.error("Failed to start tour:", error);
+      captureError(error, { operation: "startTour" });
     });
   }, [updateStep, createSampleCaseMutation]);
 
@@ -156,9 +160,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     setTourActive(false);
     setTourPhase(null);
     // Create sample case alongside user's own case (fire-and-forget)
-    createSampleCaseMutation({}).catch(() => {});
+    createSampleCaseMutation({}).catch((error) => {
+      console.error("Failed to create sample case:", error);
+      captureError(error, { operation: "skipTour.createSampleCase" });
+    });
     updateStep({ step: "tour_completed" }).catch((error) => {
       console.error("Failed to skip tour:", error);
+      captureError(error, { operation: "skipTour" });
     });
     toast("Tour skipped. You can replay it anytime from Settings \u2192 Support.", { icon: "\uD83D\uDCA1" });
   }, [updateStep, createSampleCaseMutation]);
@@ -174,6 +182,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       setTourPhase(null);
       updateStep({ step: "tour_completed" }).catch((error) => {
         console.error("Failed to complete tour:", error);
+        captureError(error, { operation: "completeTour" });
       });
       toast.success("Tour complete! You can replay it anytime from Settings \u2192 Support.");
     } else {
@@ -230,6 +239,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       if (!completedChecklistItems.includes(itemId)) {
         completeItem({ itemId: itemId as "explore_calendar" | "setup_notifications" | "explore_settings" | "add_dates" }).catch((error) => {
           console.error(`Failed to auto-complete checklist item ${itemId}:`, error);
+          captureError(error, { operation: "autoCompleteChecklist", extra: { itemId } });
         });
       }
     }
