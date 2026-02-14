@@ -2104,7 +2104,7 @@ export async function POST(req: Request) {
         system: systemPrompt,
         messages: convertedMessages,
         tools,
-        stopWhen: stepCountIs(5),
+        stopWhen: stepCountIs(10),
         maxOutputTokens: 4000, // Increased to prevent truncation
         maxRetries: 0, // ai-fallback handles retries internally
         onStepFinish: (event) => {
