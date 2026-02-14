@@ -41,6 +41,8 @@ const isPublicRoute = createRouteMatcher([
   "/sitemap.xml",
   // Google Calendar OAuth callback - must be public because Google redirect loses session cookies
   "/api/google/callback",
+  // Sentry health check (protected by its own secret header)
+  "/api/sentry-check",
 ]);
 
 // Auth routes (should redirect to dashboard if already logged in)
