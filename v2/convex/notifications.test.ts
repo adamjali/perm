@@ -12,7 +12,7 @@
 
 import { describe, it, expect } from "vitest";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions } from "../test-utils/convex";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import {
   generateNotificationTitle,
   generateNotificationMessage,
@@ -1028,6 +1028,130 @@ describe("Notifications", () => {
 
       it("returns info for system", () => {
         expect(getNotificationIcon("system")).toBe("info");
+      });
+    });
+  });
+
+  // ============================================================================
+  // INTERNAL QUERY GUARD TESTS (email deletion guards)
+  // ============================================================================
+
+  describe("Email Guard Queries", () => {
+    describe("isNotificationValid", () => {
+      it("returns true for existing notification", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "User Guard");
+
+        const notificationId = await user.run(async (ctx) => {
+          const now = Date.now();
+          return await ctx.db.insert("notifications", {
+            userId,
+            type: "deadline_reminder",
+            title: "Guard Test",
+            message: "Should exist",
+            priority: "normal",
+            isRead: false,
+            emailSent: false,
+            createdAt: now,
+            updatedAt: now,
+          });
+        });
+
+        const isValid = await user.run(async (ctx) => {
+          return await ctx.runQuery(internal.notifications.isNotificationValid, {
+            notificationId,
+          });
+        });
+
+        expect(isValid).toBe(true);
+      });
+
+      it("returns false for deleted notification", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "User Guard Del");
+
+        const notificationId = await user.run(async (ctx) => {
+          const now = Date.now();
+          return await ctx.db.insert("notifications", {
+            userId,
+            type: "deadline_reminder",
+            title: "Will Delete",
+            message: "Will be gone",
+            priority: "normal",
+            isRead: false,
+            emailSent: false,
+            createdAt: now,
+            updatedAt: now,
+          });
+        });
+
+        // Delete the notification
+        await user.run(async (ctx) => {
+          await ctx.db.delete(notificationId);
+        });
+
+        const isValid = await user.run(async (ctx) => {
+          return await ctx.runQuery(internal.notifications.isNotificationValid, {
+            notificationId,
+          });
+        });
+
+        expect(isValid).toBe(false);
+      });
+    });
+
+    describe("isUserActiveByEmail", () => {
+      it("returns true for active user with email", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "User Active");
+
+        // Set email on the user
+        await user.run(async (ctx) => {
+          await ctx.db.patch(userId, { email: "active@example.com" });
+        });
+
+        const isActive = await user.run(async (ctx) => {
+          return await ctx.runQuery(internal.notifications.isUserActiveByEmail, {
+            email: "active@example.com",
+          });
+        });
+
+        expect(isActive).toBe(true);
+      });
+
+      it("returns false for non-existent email", async () => {
+        const t = createTestContext();
+        const { ctx: user } = await createAuthenticatedContext(t, "User Exists");
+
+        const isActive = await user.run(async (ctx) => {
+          return await ctx.runQuery(internal.notifications.isUserActiveByEmail, {
+            email: "nonexistent@example.com",
+          });
+        });
+
+        expect(isActive).toBe(false);
+      });
+
+      it("returns false after user is deleted", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "User Deleted");
+
+        await user.run(async (ctx) => {
+          await ctx.db.patch(userId, { email: "deleted@example.com" });
+        });
+
+        // Delete the user
+        await user.run(async (ctx) => {
+          await ctx.db.delete(userId);
+        });
+
+        const isActive = await user.run(async (ctx) => {
+          return await ctx.runQuery(internal.notifications.isUserActiveByEmail, {
+            email: "deleted@example.com",
+          });
+        });
+
+        expect(isActive).toBe(false);
       });
     });
   });

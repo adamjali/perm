@@ -1099,6 +1099,223 @@ describe("Scheduled Jobs", () => {
   // processExpiredDeletions TESTS
   // ============================================================================
 
+  // ============================================================================
+  // getDeadlinesForDigest TESTS (supersession via shouldRemindForDeadline)
+  // ============================================================================
+
+  describe("getDeadlinesForDigest", () => {
+    it("includes PWD expiration when ETA 9089 not filed", async () => {
+      const t = createTestContext();
+      const { userId, authT } = await createTestUserWithProfile(t, "User Digest PWD");
+
+      await createTestCaseWithDeadlines(t, authT, {
+        employerName: "Active PWD Co",
+        beneficiaryIdentifier: "Ben PWD",
+        pwdExpirationDate: daysFromNow(7),
+      });
+
+      const deadlines = await authT.run(async (ctx) => {
+        return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
+      });
+
+      expect(deadlines.length).toBeGreaterThanOrEqual(1);
+      const pwdDeadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "PWD Expiration");
+      expect(pwdDeadline).toBeDefined();
+      expect(pwdDeadline!.employerName).toBe("Active PWD Co");
+    });
+
+    it("excludes PWD expiration when ETA 9089 is filed (superseded)", async () => {
+      const t = createTestContext();
+      const { userId, authT } = await createTestUserWithProfile(t, "User Digest Sup");
+
+      const caseId = await createTestCaseWithDeadlines(t, authT, {
+        employerName: "Superseded PWD Co",
+        beneficiaryIdentifier: "Ben Sup",
+        pwdExpirationDate: daysFromNow(7),
+      });
+
+      // Patch the case to set eta9089FilingDate (supersedes PWD)
+      await authT.run(async (ctx) => {
+        await ctx.db.patch(caseId, { eta9089FilingDate: daysAgo(10) });
+      });
+
+      const deadlines = await authT.run(async (ctx) => {
+        return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
+      });
+
+      const pwdDeadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "PWD Expiration");
+      expect(pwdDeadline).toBeUndefined();
+    });
+
+    it("excludes I-140 deadline when not certified (no eta9089CertificationDate)", async () => {
+      const t = createTestContext();
+      const { userId, authT } = await createTestUserWithProfile(t, "User Digest I140 NoCert");
+
+      await createTestCaseWithDeadlines(t, authT, {
+        employerName: "No Cert Co",
+        beneficiaryIdentifier: "Ben NoCert",
+        caseStatus: "eta9089",
+      });
+
+      const deadlines = await authT.run(async (ctx) => {
+        return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
+      });
+
+      const i140Deadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "I-140 Filing Deadline");
+      expect(i140Deadline).toBeUndefined();
+    });
+
+    it("excludes I-140 deadline when I-140 already filed (superseded)", async () => {
+      const t = createTestContext();
+      const { userId, authT } = await createTestUserWithProfile(t, "User Digest I140 Filed");
+
+      const caseId = await createTestCaseWithDeadlines(t, authT, {
+        employerName: "I140 Filed Co",
+        beneficiaryIdentifier: "Ben I140",
+        caseStatus: "i140",
+        eta9089CertificationDate: daysAgo(90),
+      });
+
+      // Set expiration (180 days from cert) and I-140 filing
+      await authT.run(async (ctx) => {
+        await ctx.db.patch(caseId, {
+          eta9089ExpirationDate: daysFromNow(90),
+          i140FilingDate: daysAgo(5),
+        });
+      });
+
+      const deadlines = await authT.run(async (ctx) => {
+        return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
+      });
+
+      const i140Deadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "I-140 Filing Deadline");
+      expect(i140Deadline).toBeUndefined();
+    });
+
+    it("includes I-140 deadline when certified but not yet filed", async () => {
+      const t = createTestContext();
+      const { userId, authT } = await createTestUserWithProfile(t, "User Digest I140 Active");
+
+      const caseId = await createTestCaseWithDeadlines(t, authT, {
+        employerName: "I140 Active Co",
+        beneficiaryIdentifier: "Ben I140A",
+        caseStatus: "i140",
+        eta9089CertificationDate: daysAgo(90),
+      });
+
+      // Set expiration date within digest range but no I-140 filing
+      await authT.run(async (ctx) => {
+        await ctx.db.patch(caseId, {
+          eta9089ExpirationDate: daysFromNow(10),
+        });
+      });
+
+      const deadlines = await authT.run(async (ctx) => {
+        return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
+      });
+
+      const i140Deadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "I-140 Filing Deadline");
+      expect(i140Deadline).toBeDefined();
+      expect(i140Deadline!.employerName).toBe("I140 Active Co");
+    });
+
+    it("excludes RFI deadline when response already submitted", async () => {
+      const t = createTestContext();
+      const { userId, authT } = await createTestUserWithProfile(t, "User Digest RFI Resp");
+
+      await createTestCaseWithDeadlines(t, authT, {
+        employerName: "RFI Responded Co",
+        beneficiaryIdentifier: "Ben RFI Resp",
+        caseStatus: "eta9089",
+        rfiEntries: [
+          {
+            id: "rfi-test-1",
+            receivedDate: daysAgo(20),
+            responseDueDate: daysFromNow(10),
+            responseSubmittedDate: daysAgo(5), // Already responded
+            createdAt: Date.now() - 20 * 24 * 60 * 60 * 1000,
+          },
+        ],
+      });
+
+      const deadlines = await authT.run(async (ctx) => {
+        return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
+      });
+
+      const rfiDeadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "RFI Response Due");
+      expect(rfiDeadline).toBeUndefined();
+    });
+
+    it("excludes deleted cases from digest", async () => {
+      const t = createTestContext();
+      const { userId, authT } = await createTestUserWithProfile(t, "User Digest Deleted");
+
+      const caseId = await createTestCaseWithDeadlines(t, authT, {
+        employerName: "Deleted Case Co",
+        beneficiaryIdentifier: "Ben Del",
+        pwdExpirationDate: daysFromNow(7),
+      });
+
+      // Soft delete the case
+      await authT.mutation(api.cases.remove, { id: caseId });
+      await finishScheduledFunctions(t);
+
+      const deadlines = await authT.run(async (ctx) => {
+        return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
+      });
+
+      expect(deadlines.length).toBe(0);
+    });
+
+    it("excludes closed cases from digest", async () => {
+      const t = createTestContext();
+      const { userId, authT } = await createTestUserWithProfile(t, "User Digest Closed");
+
+      await createTestCaseWithDeadlines(t, authT, {
+        employerName: "Closed Case Co",
+        beneficiaryIdentifier: "Ben Cl",
+        pwdExpirationDate: daysFromNow(7),
+        caseStatus: "closed",
+      });
+
+      const deadlines = await authT.run(async (ctx) => {
+        return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
+      });
+
+      expect(deadlines.length).toBe(0);
+    });
+
+    it("sorts deadlines by date ascending", async () => {
+      const t = createTestContext();
+      const { userId, authT } = await createTestUserWithProfile(t, "User Digest Sort");
+
+      // Create two cases with different PWD dates
+      await createTestCaseWithDeadlines(t, authT, {
+        employerName: "Later Co",
+        beneficiaryIdentifier: "Ben Later",
+        pwdExpirationDate: daysFromNow(10),
+      });
+
+      await createTestCaseWithDeadlines(t, authT, {
+        employerName: "Sooner Co",
+        beneficiaryIdentifier: "Ben Sooner",
+        pwdExpirationDate: daysFromNow(3),
+      });
+
+      const deadlines = await authT.run(async (ctx) => {
+        return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
+      });
+
+      expect(deadlines.length).toBe(2);
+      expect(deadlines[0].employerName).toBe("Sooner Co");
+      expect(deadlines[1].employerName).toBe("Later Co");
+    });
+  });
+
+  // ============================================================================
+  // processExpiredDeletions TESTS
+  // ============================================================================
+
   describe("processExpiredDeletions (query helper)", () => {
     it("getUsersWithExpiredDeletions returns users with expired deletedAt", async () => {
       const t = createTestContext();
