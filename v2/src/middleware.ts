@@ -26,6 +26,9 @@ const isPublicRoute = createRouteMatcher([
   "/changelog/(.*)",
   "/resources",
   "/resources/(.*)",
+  // Service workers (must be public — browsers fetch without auth cookies)
+  "/sw.js",
+  "/sw-push.js",
   // Static assets and SEO routes that need to be public
   "/icon",
   "/favicon.ico",
