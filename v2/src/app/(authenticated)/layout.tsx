@@ -29,6 +29,7 @@ import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { OnboardingTourWrapper } from "@/components/onboarding/OnboardingTourWrapper";
 import { SentryUserContext } from "@/components/layout/SentryUserContext";
+import { SentryClientInit } from "@/components/layout/SentryClientInit";
 import { ConvexClientProvider } from "@/app/providers";
 
 export default function AuthenticatedLayout({
@@ -41,6 +42,9 @@ export default function AuthenticatedLayout({
     <InactivityTimeoutProvider>
       {/* AI chat page context — only needed in authenticated pages */}
       <PageContextProvider>
+
+      {/* Initialize Sentry client SDK (deferred via requestIdleCallback) */}
+      <SentryClientInit />
 
       {/* Set Sentry user context for error tracking */}
       <SentryUserContext />

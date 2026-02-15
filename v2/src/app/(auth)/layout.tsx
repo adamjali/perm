@@ -1,6 +1,7 @@
 import AuthHeader from "@/components/layout/AuthHeader";
 import AuthFooter from "@/components/layout/AuthFooter";
 import { ConvexClientProvider } from "@/app/providers";
+import { SentryClientInit } from "@/components/layout/SentryClientInit";
 
 export default function AuthLayout({
   children,
@@ -9,6 +10,7 @@ export default function AuthLayout({
 }) {
   return (
     <ConvexClientProvider>
+    <SentryClientInit />
     <div className="relative min-h-screen bg-background flex flex-col overflow-y-auto">
       {/* Fixed dot pattern background - matches other layouts */}
       <div
