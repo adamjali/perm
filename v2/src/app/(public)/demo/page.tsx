@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { DemoBanner } from "@/components/demo";
 import { DemoInteractiveLoader } from "./DemoInteractiveLoader";
+import { SupademoEmbed } from "./SupademoEmbed";
 
 export const metadata: Metadata = {
   title: "Try Demo",
@@ -137,38 +138,8 @@ export default function DemoPage() {
             </div>
           </div>
 
-          <div className="page-enter" style={{ animationDelay: "0.1s" }}>
-            <div className="mt-8">
-              <div
-                className="relative overflow-hidden border-3 border-border shadow-hard-lg"
-                style={{ aspectRatio: "16/9" }}
-              >
-                <div className="flex items-center gap-1.5 border-b-3 border-border bg-muted px-3 py-2">
-                  <div className="h-2.5 w-2.5 border border-border bg-[#FF5F57]" />
-                  <div className="h-2.5 w-2.5 border border-border bg-[#FFBD2E]" />
-                  <div className="h-2.5 w-2.5 border border-border bg-[#28CA41]" />
-                  <span className="ml-3 font-mono text-[10px] text-muted-foreground">
-                    permtracker.app — Interactive Tour
-                  </span>
-                </div>
-                <iframe
-                  src="https://app.supademo.com/embed/cmli1lvlg1lkg5351b6olnd9n?embed_v=2"
-                  loading="lazy"
-                  title="PERM Tracker interactive product tour"
-                  allow="clipboard-write"
-                  className="h-full w-full"
-                  style={{
-                    border: "none",
-                    position: "absolute",
-                    top: "0",
-                    left: "0",
-                    width: "100%",
-                    height: "100%",
-                    paddingTop: "34px",
-                  }}
-                />
-              </div>
-            </div>
+          <div className="page-enter mt-8" style={{ animationDelay: "0.1s" }}>
+            <SupademoEmbed />
           </div>
         </div>
       </section>
