@@ -26,7 +26,7 @@ export function HeroSection() {
           src="/images/hero/legal-office-wide.jpg"
           alt=""
           fill
-          priority
+          loading="lazy"
           quality={40}
           className="object-cover"
           sizes="100vw"
