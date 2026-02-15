@@ -16,7 +16,7 @@ import { api } from "../../../../convex/_generated/api";
 import { savePendingTermsAcceptance } from "@/lib/auth/termsStorage";
 
 // Current Terms of Service version (matches effective date in /terms page)
-const TERMS_VERSION = "2026-01-03";
+const TERMS_VERSION = "2026-02-14";
 
 type SignupStep = "credentials" | "verification";
 

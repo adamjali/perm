@@ -31,7 +31,7 @@ export default function TermsPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>
         <p className="text-foreground/60 mb-8">
-          Effective Date: January 3, 2026 | Last Updated: January 17, 2026
+          Effective Date: February 14, 2026 | Last Updated: February 14, 2026
         </p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
@@ -262,7 +262,145 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              9. Indemnification
+              9. AI-Powered Features
+            </h2>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              AI Chat Assistant Disclosure
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              Our Service includes an AI-powered chat assistant that provides
+              case-related suggestions and information. By using this feature,
+              you acknowledge and agree that:
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+              <li>
+                You are interacting with an <strong>artificial intelligence
+                system</strong>, not a human advisor
+              </li>
+              <li>
+                The AI assistant uses automated algorithms to generate responses
+                based on available data
+              </li>
+              <li>
+                Responses are generated in real-time and may not reflect the most
+                current legal developments
+              </li>
+              <li>
+                The AI assistant is a supplemental tool designed to assist, not
+                replace, professional judgment
+              </li>
+            </ul>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              No Legal Advice; Professional Responsibility
+            </h3>
+            <div className="rounded-lg border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
+              <p className="text-foreground/80 leading-relaxed font-medium">
+                <strong>IMPORTANT:</strong> The AI chat assistant does not provide
+                legal advice and does not create an attorney-client relationship.
+                All AI-generated suggestions, recommendations, and information are
+                for informational purposes only.
+              </p>
+            </div>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              You acknowledge that you are solely responsible for independently
+              reviewing, verifying, and validating all AI-generated content before
+              relying on it for any immigration case or filing. The use of AI
+              features does not diminish or transfer your professional
+              responsibility or potential liability as a legal professional.
+            </p>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              Immigration law is complex and frequently changing. AI-generated
+              suggestions regarding PERM processes, deadlines, or requirements
+              must be verified against current USCIS regulations, Department of
+              Labor requirements, and applicable law before use in any matter.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              AI Accuracy Limitations
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              AI-generated content may contain errors, inaccuracies, or
+              &quot;hallucinations&quot; (plausible-sounding but incorrect information). We
+              make no warranties regarding the accuracy, completeness, or
+              currentness of AI-generated suggestions. You acknowledge that AI
+              systems may:
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+              <li>Misinterpret complex or ambiguous queries</li>
+              <li>Generate responses based on outdated training data</li>
+              <li>Produce confident-sounding but factually incorrect information</li>
+              <li>Fail to recognize edge cases or jurisdiction-specific requirements</li>
+              <li>Miss recent regulatory changes or case law developments</li>
+            </ul>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              You agree to independently verify all AI-generated information
+              before relying on it for case strategy, filing decisions, client
+              communications, or deadline calculations.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              AI Data Processing
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              When you use the AI chat assistant, the following data may be
+              processed by third-party AI service providers (including Google
+              Gemini, OpenRouter, Mistral AI, Groq, and Cerebras):
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+              <li>Your queries and messages to the AI system</li>
+              <li>Case-related information referenced in conversations</li>
+              <li>Conversation history for context continuity</li>
+            </ul>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              These providers do not use your data to train AI models. See our{" "}
+              <a href="/privacy" className="text-primary hover:underline">
+                Privacy Policy
+              </a>{" "}
+              for detailed provider-specific data handling and retention policies.
+            </p>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              <strong>Do not include</strong> Social Security numbers, passport
+              numbers, financial account information, or other highly sensitive
+              personal data in AI chat queries.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Immigration-Specific AI Limitations
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              The AI assistant&apos;s suggestions do not override or supersede:
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+              <li>Department of Labor (DOL) regulations and guidance</li>
+              <li>U.S. Citizenship and Immigration Services (USCIS) policies</li>
+              <li>Applicable federal regulations (including 20 CFR Part 656)</li>
+              <li>Published agency interpretations and policy memoranda</li>
+              <li>Binding case law and administrative decisions</li>
+            </ul>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Limitation of Liability for AI Features
+            </h3>
+            <p className="text-foreground/80 leading-relaxed font-bold">
+              TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR
+              ANY DAMAGES ARISING FROM RELIANCE ON AI-GENERATED CONTENT WITHOUT
+              INDEPENDENT VERIFICATION, AI ERRORS OR HALLUCINATIONS, MISSED
+              DEADLINES BASED ON AI SUGGESTIONS, OR PROFESSIONAL MALPRACTICE
+              CLAIMS RELATED TO USE OF AI FEATURES.
+            </p>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              Your use of AI features is at your own risk. You acknowledge that
+              you are a legal professional responsible for all work product and
+              client advice, regardless of what tools or technologies you use to
+              assist in your practice.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+              10. Indemnification
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               You agree to indemnify, defend, and hold harmless PERM Tracker and
@@ -279,7 +417,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              10. Service Modifications & Pricing
+              11. Service Modifications & Pricing
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We reserve the right to:
@@ -300,7 +438,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              11. Termination
+              12. Termination
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We may terminate or suspend your access to the Service immediately,
@@ -320,7 +458,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              12. Governing Law
+              13. Governing Law
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               These Terms shall be governed by and construed in accordance with
@@ -337,7 +475,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              13. Changes to Terms
+              14. Changes to Terms
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We reserve the right to modify these Terms at any time. If we make
@@ -356,7 +494,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              14. Severability
+              15. Severability
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               If any provision of these Terms is found to be unenforceable or
@@ -368,7 +506,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              15. Entire Agreement
+              16. Entire Agreement
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               These Terms, together with our Privacy Policy, constitute the entire
@@ -379,7 +517,7 @@ export default function TermsPage() {
 
           <section id="attorney-privilege">
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              16. Attorney-Client Privilege & Data Storage
+              17. Attorney-Client Privilege & Data Storage
             </h2>
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
@@ -461,7 +599,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              17. Contact Us
+              18. Contact Us
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               If you have any questions about these Terms of Service, please

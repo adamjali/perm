@@ -33,7 +33,7 @@ import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 
 // Current Terms of Service version (matches effective date in /terms page)
-const TERMS_VERSION = "2026-01-03";
+const TERMS_VERSION = "2026-02-14";
 
 interface TermsAcceptanceModalProps {
   open: boolean;

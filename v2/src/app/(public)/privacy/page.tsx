@@ -31,7 +31,7 @@ export default function PrivacyPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Privacy Policy</h1>
         <p className="text-foreground/60 mb-8">
-          Effective Date: November 24, 2025 | Last Updated: November 24, 2025
+          Effective Date: February 14, 2026 | Last Updated: February 14, 2026
         </p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
@@ -62,25 +62,28 @@ export default function PrivacyPage() {
             </h3>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>
-                <strong>Email address</strong> - Used for account creation and
-                notifications
+                <strong>Email address</strong> — Used for account creation,
+                authentication, and notifications
               </li>
               <li>
-                <strong>Name</strong> - Obtained via Google OAuth for
-                personalization
+                <strong>Name</strong> — Obtained via Google OAuth or entered
+                during signup
               </li>
               <li>
-                <strong>Password</strong> - Securely hashed, never stored in plain
-                text
+                <strong>Password</strong> — If you use email/password
+                authentication, your password is securely hashed and never stored
+                in plain text (managed by our authentication provider)
               </li>
             </ul>
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">Case Data</h3>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>Employer names and position titles</li>
+              <li>Beneficiary identifiers</li>
               <li>Case status and progress information</li>
               <li>Important dates (PWD filing, recruitment dates, etc.)</li>
               <li>Notes and case-related documentation references</li>
+              <li>RFI/RFE information and response dates</li>
             </ul>
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
@@ -88,8 +91,10 @@ export default function PrivacyPage() {
             </h3>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>UI settings (dark mode, sorting preferences)</li>
-              <li>Notification preferences</li>
+              <li>Notification preferences (email, push, quiet hours)</li>
               <li>Dismissed deadline alerts</li>
+              <li>Calendar sync preferences</li>
+              <li>AI chat action mode preferences</li>
             </ul>
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
@@ -97,8 +102,10 @@ export default function PrivacyPage() {
             </h3>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>IP address and browser type</li>
-              <li>Device information</li>
+              <li>Device information and screen resolution</li>
               <li>Usage patterns and interaction data</li>
+              <li>Performance metrics (page load times, Core Web Vitals)</li>
+              <li>Error logs and stack traces (for debugging)</li>
             </ul>
           </section>
 
@@ -112,7 +119,10 @@ export default function PrivacyPage() {
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>Provide and maintain the PERM tracking service</li>
               <li>Authenticate your account and ensure security</li>
-              <li>Send email notifications about upcoming deadlines</li>
+              <li>Send email and push notifications about upcoming deadlines</li>
+              <li>Power the AI chat assistant with case context for relevant responses</li>
+              <li>Sync deadlines to your Google Calendar (if enabled)</li>
+              <li>Monitor application errors and improve reliability</li>
               <li>Improve user experience and application features</li>
               <li>Respond to customer support requests</li>
               <li>Comply with legal obligations</li>
@@ -124,8 +134,8 @@ export default function PrivacyPage() {
               4. Google OAuth Disclosure
             </h2>
             <p className="text-foreground/80 leading-relaxed">
-              PERM Tracker uses Google OAuth for authentication. When you sign in
-              with Google:
+              PERM Tracker uses Google OAuth as one of our authentication methods.
+              When you sign in with Google:
             </p>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
@@ -138,8 +148,9 @@ export default function PrivacyPage() {
                 identification
               </li>
               <li>
-                We do <strong>not</strong> access your Google contacts, calendar,
-                or any other Google services
+                We do <strong>not</strong> access your Google contacts, calendar
+                (unless you separately enable Calendar Sync), or any other Google
+                services
               </li>
               <li>
                 We do <strong>not</strong> share your Google account data with any
@@ -165,26 +176,40 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              5. Data Storage & Security
+              5. Data Storage &amp; Security
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               Your data is stored securely using industry-standard practices:
             </p>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
-                <strong>Database:</strong> PostgreSQL hosted on Supabase with
-                Row-Level Security (RLS)
+                <strong>Database:</strong> Convex backend platform hosted on
+                Amazon Web Services (AWS) in US East (N. Virginia)
               </li>
               <li>
-                <strong>Encryption:</strong> All data transmitted via HTTPS/TLS
-                encryption
+                <strong>Encryption at Rest:</strong> 256-bit AES encryption for
+                all stored data
               </li>
               <li>
-                <strong>Access Control:</strong> Each user can only access their
-                own data
+                <strong>Encryption in Transit:</strong> All data transmitted via
+                TLS/HTTPS encryption
               </li>
               <li>
-                <strong>Authentication:</strong> JWT tokens with secure expiration
+                <strong>Access Control:</strong> Server-side authorization ensures
+                each user can only access their own data through authenticated
+                backend functions
+              </li>
+              <li>
+                <strong>Authentication:</strong> Managed by Convex Auth with
+                secure session handling
+              </li>
+              <li>
+                <strong>Compliance:</strong> Our backend provider (Convex) is SOC
+                2 Type II compliant and GDPR compliant
+              </li>
+              <li>
+                <strong>Calendar Tokens:</strong> Google Calendar OAuth tokens are
+                encrypted at rest using AES-256-GCM before storage
               </li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
@@ -196,7 +221,274 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              6. Cookies & Local Storage
+              6. AI Chat Assistant
+            </h2>
+            <p className="text-foreground/80 leading-relaxed">
+              PERM Tracker includes an AI-powered chat assistant to help you
+              understand your cases, deadlines, and PERM processes. When you use
+              the AI chat feature:
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              What Data Is Shared
+            </h3>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>Your chat messages and questions</li>
+              <li>
+                Case data referenced in conversations (employer names, position
+                titles, case status, dates, notes)
+              </li>
+              <li>
+                System-generated context (your name, case counts, current page)
+              </li>
+              <li>Conversation history for context continuity</li>
+            </ul>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              AI Service Providers
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              Your AI chat data is processed by the following third-party
+              providers via their APIs. We use a multi-provider fallback system
+              for reliability:
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+              <li>
+                <strong>Google Gemini</strong> (Google LLC) — Primary AI provider.
+                Retains data for up to 55 days for abuse monitoring only. Does{" "}
+                <strong>not</strong> use API data to train models.
+              </li>
+              <li>
+                <strong>OpenRouter</strong> — AI model routing. Zero Data
+                Retention (ZDR) by default; prompts are not stored.
+              </li>
+              <li>
+                <strong>Mistral AI</strong> — Fallback AI provider. API data is
+                not used for model training.
+              </li>
+              <li>
+                <strong>Groq</strong> — Fast AI inference on US-based Google Cloud
+                servers. Does not use API data for training when ZDR is enabled.
+              </li>
+              <li>
+                <strong>Cerebras</strong> — Emergency fallback AI inference. Does
+                not use API data for model training.
+              </li>
+            </ul>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Web Search
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              When the AI assistant performs web searches on your behalf, search
+              queries are sent to:
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+              <li>
+                <strong>Tavily</strong> — Primary web search provider
+              </li>
+              <li>
+                <strong>Brave Search</strong> — Fallback web search provider
+              </li>
+            </ul>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              Search queries are derived from your questions and do not include
+              your personal information or case data.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Your Controls
+            </h3>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>You can choose not to use the AI chat feature</li>
+              <li>
+                You can configure AI action modes (off, confirm, auto) in
+                Settings
+              </li>
+              <li>
+                You can delete your conversation history at any time
+              </li>
+            </ul>
+
+            <div className="rounded-lg border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
+              <p className="text-foreground/80 leading-relaxed font-medium">
+                <strong>IMPORTANT:</strong> Do not share Social Security numbers,
+                passport numbers, financial account information, or other highly
+                sensitive personal data in AI chat messages. The AI assistant is
+                designed to help with case management, not to process sensitive
+                identity documents.
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+              7. Error Monitoring &amp; Session Replay
+            </h2>
+            <p className="text-foreground/80 leading-relaxed">
+              We use Sentry (Functional Software, Inc.) to monitor application
+              errors and improve reliability.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Error Tracking
+            </h3>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>JavaScript error messages and stack traces</li>
+              <li>Browser and device information (browser type, OS, screen size)</li>
+              <li>User actions leading to errors (page navigation, clicks)</li>
+              <li>Application performance metrics</li>
+            </ul>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Session Replay
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              To help diagnose errors, Sentry records anonymized session replays
+              of page interactions for <strong>10% of normal sessions</strong> and{" "}
+              <strong>100% of sessions where an error occurs</strong>.
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+              <li>
+                <strong>All text content is masked</strong> — replaced with
+                asterisks so no readable text is captured
+              </li>
+              <li>
+                <strong>All images and media are blocked</strong> — replaced with
+                blank placeholders
+              </li>
+              <li>
+                <strong>Form input values are not recorded</strong> — keystrokes
+                are redacted
+              </li>
+              <li>
+                Only page structure, mouse movements, clicks, and scrolls are
+                captured
+              </li>
+            </ul>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Privacy Protections
+            </h3>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>
+                <code>sendDefaultPii</code> is disabled — cookies, user agent
+                strings with PII, and request bodies are not sent
+              </li>
+              <li>Request body data is stripped before transmission to Sentry</li>
+              <li>
+                Sentry automatically scrubs credit card numbers, SSNs, and other
+                PII patterns
+              </li>
+              <li>
+                Development environment events are suppressed (not sent to Sentry)
+              </li>
+            </ul>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              Sentry acts as our data processor under a Data Processing Agreement.
+              For details, see{" "}
+              <a
+                href="https://sentry.io/privacy/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Sentry&apos;s Privacy Policy
+              </a>
+              .
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+              8. Push Notifications
+            </h2>
+            <p className="text-foreground/80 leading-relaxed">
+              When you enable push notifications, your browser generates a unique
+              subscription including an endpoint URL and encryption keys. We store
+              this subscription data on your user profile to deliver deadline
+              reminders and case alerts.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              What We Collect
+            </h3>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>
+                <strong>Endpoint URL</strong> — Browser-generated URL for
+                receiving notifications
+              </li>
+              <li>
+                <strong>Encryption keys</strong> (p256dh, auth) —
+                Browser-generated keys for secure message delivery
+              </li>
+            </ul>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              This data does not contain personally identifiable information and
+              consists of technical identifiers generated by your browser.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Delivery Services
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              Notifications are delivered through your browser&apos;s push service
+              (Google FCM for Chrome, Mozilla Push Service for Firefox, Apple Push
+              Notification service for Safari). These services may collect
+              technical device metadata. Notification content is encrypted
+              end-to-end where supported.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Your Controls
+            </h3>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>Push notifications require explicit opt-in via browser permission</li>
+              <li>Disable anytime in browser settings or in-app notification preferences</li>
+              <li>Configure quiet hours and notification types in Settings</li>
+              <li>Subscription data is deleted when you revoke permissions or delete your account</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+              9. Google Calendar Integration
+            </h2>
+            <p className="text-foreground/80 leading-relaxed">
+              You may optionally connect your Google Calendar to sync PERM
+              deadlines as calendar events.
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+              <li>
+                <strong>OAuth Scope:</strong> We request access only to create,
+                update, and delete calendar events
+                (calendar.events scope)
+              </li>
+              <li>
+                <strong>Data Synced:</strong> Deadline dates, event titles with
+                case information (employer, deadline type), and deadline
+                descriptions
+              </li>
+              <li>
+                <strong>Token Storage:</strong> Your Google Calendar OAuth tokens
+                are encrypted at rest using AES-256-GCM before storage in our
+                database
+              </li>
+              <li>
+                <strong>Disconnect Anytime:</strong> You can disconnect Google
+                Calendar from Settings, which revokes access and removes stored
+                tokens
+              </li>
+            </ul>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              We do not access your existing calendar events, contacts, or other
+              Google services through this integration.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+              10. Cookies &amp; Local Storage
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We use the following storage technologies:
@@ -208,7 +500,13 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>LocalStorage:</strong> Stores preferences such as dark
-                mode settings, authentication tokens, and UI preferences
+                mode settings, UI preferences, and temporary authentication state
+                during OAuth redirects
+              </li>
+              <li>
+                <strong>Error Monitoring:</strong> Sentry uses browser local
+                storage to temporarily buffer error and session replay data before
+                transmission
               </li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
@@ -219,34 +517,65 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              7. Third-Party Services
+              11. Third-Party Services
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We use the following third-party services to operate PERM Tracker:
             </p>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
-                <strong>Convex:</strong> Database hosting and real-time sync
+                <strong>Convex:</strong> Backend platform, database, and
+                authentication (SOC 2 Type II, hosted on AWS)
               </li>
               <li>
-                <strong>Vercel:</strong> Frontend hosting and deployment
+                <strong>Vercel:</strong> Frontend hosting, deployment, and
+                performance monitoring (Speed Insights)
               </li>
               <li>
-                <strong>Resend:</strong> Email notification delivery
+                <strong>Resend:</strong> Transactional email delivery
+                (notifications, OTP verification, password resets)
               </li>
               <li>
-                <strong>Google:</strong> OAuth authentication provider
+                <strong>Google:</strong> OAuth authentication and Calendar API
+                integration
+              </li>
+              <li>
+                <strong>Sentry:</strong> Error tracking, performance monitoring,
+                and session replay (see Section 7)
+              </li>
+              <li>
+                <strong>AI Providers:</strong> Google Gemini, OpenRouter, Mistral
+                AI, Groq, and Cerebras for AI chat assistance (see Section 6)
+              </li>
+              <li>
+                <strong>Search Providers:</strong> Tavily and Brave Search for AI
+                web search capabilities (see Section 6)
+              </li>
+              <li>
+                <strong>Browser Push Services:</strong> Google FCM, Mozilla Push
+                Service, and Apple APNs for push notification delivery (see
+                Section 8)
               </li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
               Each of these services has their own privacy policies. We recommend
-              reviewing their policies for additional information.
+              reviewing their policies for additional information. Convex
+              maintains a public list of sub-processors at{" "}
+              <a
+                href="https://www.convex.dev/legal/subprocessors"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                convex.dev/legal/subprocessors
+              </a>
+              .
             </p>
           </section>
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              8. Data Retention & Deletion
+              12. Data Retention &amp; Deletion
             </h2>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>Your data is retained for as long as your account is active</li>
@@ -259,6 +588,18 @@ export default function PrivacyPage() {
               </li>
               <li>Some data may be retained longer if required by law</li>
             </ul>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              AI Provider Retention
+            </h3>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>Google Gemini: Up to 55 days (abuse monitoring), then deleted</li>
+              <li>OpenRouter: Not stored (Zero Data Retention)</li>
+              <li>Mistral AI: Per their data processing terms</li>
+              <li>Groq: Not stored when ZDR is enabled</li>
+              <li>Cerebras: Per their data processing terms</li>
+            </ul>
+
             <p className="text-foreground/80 leading-relaxed mt-4">
               To request data deletion, please email us at{" "}
               <a
@@ -273,7 +614,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              9. Your Rights
+              13. Your Rights
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               Depending on your location, you may have the following rights
@@ -298,6 +639,9 @@ export default function PrivacyPage() {
                 <strong>Objection:</strong> Object to certain processing of your
                 data
               </li>
+              <li>
+                <strong>AI Opt-Out:</strong> Choose not to use AI chat features
+              </li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
               To exercise any of these rights, please contact us at{" "}
@@ -313,7 +657,24 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              10. Children&apos;s Privacy
+              14. International Data Transfers
+            </h2>
+            <p className="text-foreground/80 leading-relaxed">
+              Your data is primarily stored and processed in the United States.
+              If you are located in the European Economic Area (EEA), United
+              Kingdom, or Switzerland, your data may be transferred to the United
+              States by our service providers (Convex, AI providers, Sentry).
+            </p>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              These transfers are protected by Standard Contractual Clauses (SCCs)
+              approved by the European Commission, as well as Data Processing
+              Agreements with our service providers.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+              15. Children&apos;s Privacy
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               PERM Tracker is not intended for use by individuals under the age of
@@ -325,7 +686,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              11. Changes to This Policy
+              16. Changes to This Policy
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We may update this Privacy Policy from time to time. We will notify
@@ -344,7 +705,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              12. Contact Us
+              17. Contact Us
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               If you have any questions about this Privacy Policy or our data
