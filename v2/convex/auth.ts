@@ -38,18 +38,10 @@ async function onAuthEvent(
     await recordError(ctx, "mutation", "auth.createOrUpdateUser.ensureProfile", error, { userId });
   }
 
-  // Increment persistent login counter (fires on every auth event)
-  try {
-    await ctx.runMutation(internal.users.recordLogin, {
-      userId,
-    });
-  } catch (error) {
-    // Non-critical — don't block auth for login tracking
-    console.error(
-      `[auth] Failed to record login for ${userId}:`,
-      error instanceof Error ? error.message : error
-    );
-  }
+  // NOTE: Login tracking is handled client-side via LoginTracker component.
+  // The createOrUpdateUser callback only fires for OAuth and new accounts,
+  // NOT for password sign-ins of existing users (retrieveAccountWithCredentials
+  // bypasses it). Client-side tracking covers all auth flows reliably.
 }
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({

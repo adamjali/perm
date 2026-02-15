@@ -198,9 +198,7 @@ export const ensureUserProfileInternal = internalMutation({
 });
 
 /**
- * Increment login counter on every authentication event.
- * Called from auth.ts onAuthEvent() (inside createOrUpdateUser callback).
- * Idempotent-safe: no-ops if profile doesn't exist yet (ensureUserProfileInternal creates it).
+ * Increment login counter (internal version, kept for backwards compat).
  */
 export const recordLogin = internalMutation({
   args: { userId: v.id("users") },
@@ -211,10 +209,37 @@ export const recordLogin = internalMutation({
       .unique();
 
     if (!profile) {
-      // Profile not created yet — ensureUserProfileInternal will handle it.
-      // The next login will pick up the count.
       return;
     }
+
+    await ctx.db.patch(profile._id, {
+      loginCount: (profile.loginCount ?? 0) + 1,
+      lastLoginAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Public mutation: record login for the current authenticated user.
+ * Called from the LoginTracker client component on every sign-in.
+ *
+ * The Convex Auth library's createOrUpdateUser callback only fires for
+ * OAuth and new accounts — it does NOT fire for password sign-ins of
+ * existing users (retrieveAccountWithCredentials bypasses it). This
+ * public mutation is called client-side to cover ALL auth flows.
+ */
+export const recordMyLogin = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (!userId) return;
+
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (!profile) return;
 
     await ctx.db.patch(profile._id, {
       loginCount: (profile.loginCount ?? 0) + 1,

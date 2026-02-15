@@ -23,6 +23,7 @@ import InactivityTimeoutProvider from "@/components/layout/InactivityTimeoutProv
 import { ChatWidgetConnected } from "@/components/chat/ChatWidgetConnected";
 import { ServiceWorkerRegistration } from "@/components/pwa";
 import { PendingTermsHandler } from "@/components/auth/PendingTermsHandler";
+import { LoginTracker } from "@/components/auth/LoginTracker";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { OnboardingTourWrapper } from "@/components/onboarding/OnboardingTourWrapper";
@@ -44,6 +45,9 @@ export default function AuthenticatedLayout({
 
       {/* Handle pending terms acceptance from Google OAuth redirect */}
       <PendingTermsHandler />
+
+      {/* Record login once per browser session (covers all auth flows) */}
+      <LoginTracker />
 
       {/* Onboarding: wizard + tour + checklist state management */}
       <OnboardingProvider>
