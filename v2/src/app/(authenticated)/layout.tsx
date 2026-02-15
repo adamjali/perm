@@ -29,6 +29,7 @@ import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { OnboardingTourWrapper } from "@/components/onboarding/OnboardingTourWrapper";
 import { SentryUserContext } from "@/components/layout/SentryUserContext";
+import { ConvexClientProvider } from "@/app/providers";
 
 export default function AuthenticatedLayout({
   children,
@@ -36,6 +37,7 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   return (
+    <ConvexClientProvider>
     <InactivityTimeoutProvider>
       {/* AI chat page context — only needed in authenticated pages */}
       <PageContextProvider>
@@ -102,5 +104,6 @@ export default function AuthenticatedLayout({
       </OnboardingProvider>
       </PageContextProvider>
     </InactivityTimeoutProvider>
+    </ConvexClientProvider>
   );
 }

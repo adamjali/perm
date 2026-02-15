@@ -1,5 +1,6 @@
 import AuthHeader from "@/components/layout/AuthHeader";
 import AuthFooter from "@/components/layout/AuthFooter";
+import { ConvexClientProvider } from "@/app/providers";
 
 export default function AuthLayout({
   children,
@@ -7,6 +8,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
+    <ConvexClientProvider>
     <div className="relative min-h-screen bg-background flex flex-col overflow-y-auto">
       {/* Fixed dot pattern background - matches other layouts */}
       <div
@@ -31,5 +33,6 @@ export default function AuthLayout({
         <AuthFooter />
       </div>
     </div>
+    </ConvexClientProvider>
   );
 }

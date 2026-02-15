@@ -3,10 +3,7 @@
 import { ConvexAuthNextjsProvider } from "@convex-dev/auth/nextjs";
 import { ConvexReactClient } from "convex/react";
 import { ReactNode, useEffect } from "react";
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
-import { NavLinkProvider } from "@/components/ui/nav-link";
 
 // Validate required environment variable with explicit error message
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -77,17 +74,17 @@ function BeforeUnloadSuppressor({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+/**
+ * Convex providers — only used by (auth) and (authenticated) route groups.
+ * Includes Convex WebSocket client, auth token management, and app auth context.
+ * Public pages use SharedProviders instead to avoid this heavy bundle.
+ */
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   return (
     <ConvexAuthNextjsProvider client={convex}>
       <BeforeUnloadSuppressor>
         <AuthProvider>
-          <ThemeProvider>
-            <NavLinkProvider>
-                {children}
-            </NavLinkProvider>
-            <Toaster />
-          </ThemeProvider>
+          {children}
         </AuthProvider>
       </BeforeUnloadSuppressor>
     </ConvexAuthNextjsProvider>
