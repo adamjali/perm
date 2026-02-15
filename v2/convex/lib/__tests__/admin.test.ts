@@ -113,6 +113,19 @@ describe("buildDefaultProfile", () => {
     expect(profile.calendarSyncRfi).toBe(true);
     expect(profile.calendarSyncRfe).toBe(true);
   });
+
+  it("sets loginCount to 0 so recordLogin handles the first increment", () => {
+    const profile = buildDefaultProfile(MOCK_USER_ID);
+    expect(profile.loginCount).toBe(0);
+  });
+
+  it("sets lastLoginAt to creation time", () => {
+    const before = Date.now();
+    const profile = buildDefaultProfile(MOCK_USER_ID);
+    const after = Date.now();
+    expect(profile.lastLoginAt).toBeGreaterThanOrEqual(before);
+    expect(profile.lastLoginAt).toBeLessThanOrEqual(after);
+  });
 });
 
 // ============================================================================

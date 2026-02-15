@@ -71,7 +71,7 @@ export function buildDefaultProfile(
     dismissedDeadlines: [],
     darkModeEnabled: false,
     autoDeadlineEnforcementEnabled: false,
-    loginCount: 1,
+    loginCount: 0,
     lastLoginAt: now,
     ...(overrides?.termsAcceptedAt !== undefined
       ? { termsAcceptedAt: overrides.termsAcceptedAt, termsVersion: overrides.termsVersion }

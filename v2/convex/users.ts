@@ -199,7 +199,7 @@ export const ensureUserProfileInternal = internalMutation({
 
 /**
  * Increment login counter on every authentication event.
- * Called from auth.ts afterUserCreatedOrUpdated callback.
+ * Called from auth.ts onAuthEvent() (inside createOrUpdateUser callback).
  * Idempotent-safe: no-ops if profile doesn't exist yet (ensureUserProfileInternal creates it).
  */
 export const recordLogin = internalMutation({

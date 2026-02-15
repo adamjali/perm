@@ -33,7 +33,7 @@
  * Flow C (Account re-creation after deletion):
  * 1. User deletes account (all data wiped)
  * 2. User signs in with Google again
- * 3. New user created but afterUserCreatedOrUpdated callback may fail
+ * 3. New user created but onAuthEvent callback may fail
  * 4. This component detects null profile + authenticated → creates profile
  * 5. New profile has no termsAcceptedAt → shows TermsAcceptanceModal
  *

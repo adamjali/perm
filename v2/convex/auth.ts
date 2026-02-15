@@ -1,11 +1,56 @@
 import Google from "@auth/core/providers/google";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth } from "@convex-dev/auth/server";
+import { GenericId } from "convex/values";
 import { ResendOTP } from "./ResendOTP";
 import { ResendPasswordReset } from "./ResendPasswordReset";
 import { DataModel } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { recordError } from "./lib/errorRecording";
+
+/**
+ * Post-auth hook: ensure user profile exists and record login.
+ *
+ * IMPORTANT: This logic lives here (not in afterUserCreatedOrUpdated) because
+ * the Convex Auth library skips afterUserCreatedOrUpdated when a custom
+ * createOrUpdateUser callback is defined. Since we define createOrUpdateUser
+ * for email-based account linking, we must call these directly.
+ *
+ * @see https://labs.convex.dev/auth/api_reference/server — createOrUpdateUser
+ * @see node_modules/@convex-dev/auth/src/server/implementation/users.ts
+ */
+async function onAuthEvent(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ctx: any,
+  userId: GenericId<"users">,
+) {
+  // Ensure user profile exists (idempotent — no-op if profile already exists)
+  try {
+    await ctx.runMutation(internal.users.ensureUserProfileInternal, {
+      userId,
+    });
+  } catch (error) {
+    // Log but don't block auth — PendingTermsHandler has a client-side safety net
+    console.error(
+      `[auth] Failed to ensure user profile for ${userId}:`,
+      error instanceof Error ? error.message : error
+    );
+    await recordError(ctx, "mutation", "auth.createOrUpdateUser.ensureProfile", error, { userId });
+  }
+
+  // Increment persistent login counter (fires on every auth event)
+  try {
+    await ctx.runMutation(internal.users.recordLogin, {
+      userId,
+    });
+  } catch (error) {
+    // Non-critical — don't block auth for login tracking
+    console.error(
+      `[auth] Failed to record login for ${userId}:`,
+      error instanceof Error ? error.message : error
+    );
+  }
+}
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
@@ -41,6 +86,10 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
      *
      * Both Google OAuth and our Password provider (with OTP verification) are
      * "trusted" providers - they verify email ownership before allowing sign-in.
+     *
+     * NOTE: afterUserCreatedOrUpdated is NOT called when createOrUpdateUser
+     * is defined (library short-circuits). All post-auth logic (profile creation,
+     * login tracking) is handled via onAuthEvent() at each return point.
      */
     async createOrUpdateUser(ctx, args) {
       // If there's already an existing user (e.g., returning user), use that
@@ -60,6 +109,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
           await ctx.db.patch(args.existingUserId, updates);
         }
 
+        await onAuthEvent(ctx, args.existingUserId);
         return args.existingUserId;
       }
 
@@ -90,48 +140,26 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
             await ctx.db.patch(existingUser._id, updates);
           }
 
+          await onAuthEvent(ctx, existingUser._id);
           return existingUser._id;
         }
       }
 
       // No existing user found, create a new one
-      return ctx.db.insert("users", {
+      const newUserId = await ctx.db.insert("users", {
         name: args.profile.name,
         image: args.profile.image,
         email: args.profile.email,
       });
+
+      await onAuthEvent(ctx, newUserId);
+      return newUserId;
     },
 
-    /**
-     * Auto-create user profile after signup/signin (both password and Google OAuth)
-     * This ensures the userProfiles table is always populated for authenticated users
-     */
-    async afterUserCreatedOrUpdated(ctx, { userId }) {
-      // Call internal mutation to ensure user profile exists
-      // This is idempotent - it does nothing if profile already exists
-      try {
-        await ctx.runMutation(internal.users.ensureUserProfileInternal, {
-          userId: userId,
-        });
-      } catch (error) {
-        // Log but don't block auth - PendingTermsHandler has a safety net
-        console.error(
-          `[auth] Failed to ensure user profile for ${userId}:`,
-          error instanceof Error ? error.message : error
-        );
-        await recordError(ctx, "mutation", "auth.afterUserCreatedOrUpdated.ensureProfile", error, { userId });
-      }
-
-      // Increment persistent login counter (fires on every auth event)
-      try {
-        await ctx.runMutation(internal.users.recordLogin, { userId });
-      } catch (error) {
-        // Non-critical — don't block auth for login tracking
-        console.error(
-          `[auth] Failed to record login for ${userId}:`,
-          error instanceof Error ? error.message : error
-        );
-      }
-    },
+    // NOTE: afterUserCreatedOrUpdated is intentionally removed.
+    // The Convex Auth library skips this callback entirely when createOrUpdateUser
+    // is defined (see node_modules/@convex-dev/auth/src/server/implementation/users.ts
+    // lines 58-63). All post-auth logic is now in onAuthEvent() called from
+    // createOrUpdateUser above.
   },
 });
