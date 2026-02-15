@@ -15,7 +15,7 @@
 import AuthHeader from "@/components/layout/AuthHeader";
 import Footer from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/home";
-import { ScrollToTop } from "@/components/ui/scroll-to-top";
+import { LazyScrollToTop } from "@/components/ui/lazy-scroll-to-top";
 
 export default function PublicLayout({
   children,
@@ -56,8 +56,8 @@ export default function PublicLayout({
       {/* Extended Footer for public pages */}
       <Footer variant="extended" />
 
-      {/* Back-to-top button */}
-      <ScrollToTop />
+      {/* Back-to-top button (lazy — loads motion/react only when needed) */}
+      <LazyScrollToTop />
     </div>
   );
 }

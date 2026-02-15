@@ -33,6 +33,7 @@ const nextConfig: NextConfig = {
       "lucide-react",
       "date-fns",
       "motion/react",
+      "zod",
     ],
   },
   async redirects() {
@@ -77,6 +78,15 @@ const sentryOptions = {
 
   // Automatically instrument API routes and server components
   automaticVercelMonitors: true,
+
+  // Reduce client bundle size (~65-75KB savings)
+  bundleSizeOptimizations: {
+    excludeTracing: true,
+    excludeDebugStatements: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+    excludeReplayWorker: true,
+  },
 };
 
 // Only wrap with Sentry if DSN is configured

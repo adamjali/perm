@@ -19,7 +19,7 @@
  */
 
 import type { Metadata } from "next";
-import { HeroSection, TrustStrip, TestimonialsSection } from "@/components/home";
+import { HeroSection, TrustStrip } from "@/components/home";
 import { LazyHomeSections } from "@/components/home/LazyHomeSections";
 import { getFAQPageSchema } from "@/lib/structuredData";
 
@@ -95,7 +95,6 @@ export default function HomePage() {
       <HeroSection />
       <TrustStrip />
       <LazyHomeSections />
-      <TestimonialsSection />
     </>
   );
 }

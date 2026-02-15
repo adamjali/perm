@@ -34,12 +34,18 @@ const CTASection = dynamic(
   () => import("./CTASection").then((m) => ({ default: m.CTASection })),
   { ssr: false },
 );
+const TestimonialsSection = dynamic(
+  () =>
+    import("./TestimonialsSection").then((m) => ({
+      default: m.TestimonialsSection,
+    })),
+  { ssr: false },
+);
 
 /**
  * Below-fold home page sections with lazy loading.
  * Each section is code-split and only loads when approaching the viewport.
- * Above-fold (HeroSection, TrustStrip) and server components (TestimonialsSection)
- * are imported eagerly in page.tsx.
+ * Above-fold (HeroSection, TrustStrip) are imported eagerly in page.tsx.
  */
 export function LazyHomeSections() {
   return (
@@ -61,6 +67,9 @@ export function LazyHomeSections() {
       </LazySection>
       <LazySection minHeight="300px">
         <ContentShowcase />
+      </LazySection>
+      <LazySection minHeight="300px">
+        <TestimonialsSection />
       </LazySection>
       <LazySection minHeight="300px">
         <CTASection />

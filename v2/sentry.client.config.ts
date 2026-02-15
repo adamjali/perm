@@ -20,8 +20,8 @@ Sentry.init({
   // Structured logging
   enableLogs: true,
 
-  // Performance monitoring - sample 10% of transactions in production
-  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
+  // Client-side tracing excluded via bundleSizeOptimizations to reduce TBT.
+  // Server-side tracing (sentry.server.config.ts) covers API performance.
 
   // Session Replay for debugging user sessions
   replaysSessionSampleRate: 0.1, // 10% of sessions
@@ -48,16 +48,6 @@ Sentry.init({
     "not authenticated",
     "User profile not found",
   ],
-
-  // Filter transactions for performance monitoring
-  tracesSampler: (samplingContext) => {
-    // Don't trace health check routes
-    if (samplingContext.name?.includes("/api/health")) {
-      return 0;
-    }
-    // Use default sample rate for everything else
-    return process.env.NODE_ENV === "production" ? 0.1 : 1.0;
-  },
 
   // Scrub sensitive data before sending
   beforeSend(event) {
