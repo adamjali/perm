@@ -11,7 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         const date = post.meta.updated ?? post.meta.date
         return date > latest ? date : latest
       }, allPosts[0]!.meta.date)
-    : '2026-01-15'
+    : new Date().toISOString().split('T')[0]!
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
@@ -24,7 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/demo`,
-      lastModified: '2026-01-15',
+      lastModified: '2026-02-11',
       changeFrequency: 'monthly',
       priority: 0.8,
     },
@@ -62,20 +62,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Auth pages (medium priority)
     {
       url: `${baseUrl}/login`,
-      lastModified: '2026-01-15',
+      lastModified: '2026-02-13',
       changeFrequency: 'yearly',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/signup`,
-      lastModified: '2026-01-15',
+      lastModified: '2026-02-14',
       changeFrequency: 'yearly',
       priority: 0.5,
     },
     // Utility pages (low priority)
     {
       url: `${baseUrl}/contact`,
-      lastModified: '2026-01-15',
+      lastModified: '2026-02-07',
       changeFrequency: 'yearly',
       priority: 0.5,
     },
