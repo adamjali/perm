@@ -290,8 +290,11 @@ export function HowItWorks() {
                       loop
                       muted
                       playsInline
+                      preload="none"
                       className="w-full"
-                    />
+                    >
+                      <track kind="captions" />
+                    </video>
                   </figure>
                 </div>
               </Lightbox>

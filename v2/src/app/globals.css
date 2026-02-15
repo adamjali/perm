@@ -497,6 +497,30 @@
     display: none;
   }
 
+  /* Hero entrance animation — CSS-only stagger for server-rendered text */
+  @keyframes hero-entrance {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-entrance-item {
+    animation: hero-entrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  .hero-entrance-item:nth-child(1) { animation-delay: 0.05s; }
+  .hero-entrance-item:nth-child(2) { animation-delay: 0.15s; }
+  .hero-entrance-item:nth-child(3) { animation-delay: 0.25s; }
+  .hero-entrance-item:nth-child(4) { animation-delay: 0.35s; }
+  .hero-entrance-item:nth-child(5) { animation-delay: 0.45s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-entrance-item {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+
   /* Hero shimmer text effect - subtle light sweep */
   .hero-shimmer-text {
     position: relative;
@@ -652,13 +676,13 @@ input[type="file"]::file-selector-button:active {
   background: hsl(0 0% 100% / 0.5);
 }
 
-/* Firefox scrollbar */
-* {
+/* Firefox scrollbar — scoped to html to avoid non-composited animation warnings */
+html {
   scrollbar-width: thin;
   scrollbar-color: hsl(0 0% 0% / 0.3) transparent;
 }
 
-.dark * {
+.dark html {
   scrollbar-color: hsl(0 0% 100% / 0.3) transparent;
 }
 

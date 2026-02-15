@@ -23,6 +23,15 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Tree-shake barrel exports for heavy packages to reduce unused JS
+    optimizePackageImports: [
+      "lucide-react",
+      "date-fns",
+      "motion/react",
+      "framer-motion",
+    ],
+  },
   async redirects() {
     return [
       // Fix GSC 404s: old .html URLs → clean routes

@@ -73,9 +73,9 @@ export default function Footer({ variant = "compact" }: FooterProps) {
 
             {/* Product column */}
             <div>
-              <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
+              <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
                 Product
-              </h4>
+              </h3>
               <nav className="flex flex-col gap-3" aria-label="Product links">
                 <NavLink
                   href="/#features"
@@ -117,9 +117,9 @@ export default function Footer({ variant = "compact" }: FooterProps) {
 
             {/* Learn column */}
             <div>
-              <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
+              <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
                 Learn
-              </h4>
+              </h3>
               <nav className="flex flex-col gap-3" aria-label="Content links">
                 <NavLink
                   href="/blog"
@@ -161,9 +161,9 @@ export default function Footer({ variant = "compact" }: FooterProps) {
 
             {/* Legal column */}
             <div>
-              <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
+              <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
                 Legal
-              </h4>
+              </h3>
               <nav className="flex flex-col gap-3" aria-label="Legal links">
                 <NavLink
                   href="/privacy"
@@ -196,11 +196,11 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               <div className="opacity-30" aria-hidden="true">
                 <LawGavelSVG size={28} className="text-white" />
               </div>
-              <div className="mono text-xs text-white/40">
+              <div className="mono text-xs text-white/60">
                 &copy; {currentYear} PERM Tracker. All rights reserved.
               </div>
             </div>
-            <div className="flex items-center gap-1 text-xs text-white/40">
+            <div className="flex items-center gap-1 text-xs text-white/60">
               Made with <Heart className="h-3 w-3 text-primary" /> for immigration attorneys
             </div>
           </div>
