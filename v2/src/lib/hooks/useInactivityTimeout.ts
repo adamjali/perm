@@ -254,7 +254,15 @@ export function useInactivityTimeout({
 
   // Initialize
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      // Reset warning state when hook is disabled (e.g. during sign-out).
+      // Without this, isWarningVisible persists as stale `true` — if the
+      // hook is later re-enabled (e.g. sign-out fails and cancelSignOut()
+      // is called), the modal reappears immediately with a frozen timer.
+      setIsWarningVisible(false);
+      setRemainingSeconds(120);
+      return;
+    }
 
     // Setup BroadcastChannel for multi-tab sync
     if (typeof BroadcastChannel !== "undefined") {

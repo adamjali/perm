@@ -286,6 +286,55 @@ describe("useInactivityTimeout", () => {
   });
 
   // --------------------------------------------------------------------------
+  // ENABLED TOGGLE TESTS (state reset on disable/re-enable)
+  // --------------------------------------------------------------------------
+
+  describe("Enabled toggle", () => {
+    it("resets isWarningVisible when disabled", () => {
+      const onTimeout = vi.fn();
+      const { result, rerender } = renderHook(
+        ({ enabled }) => useInactivityTimeout({ onTimeout, enabled }),
+        { initialProps: { enabled: true } }
+      );
+
+      // Trigger warning
+      act(() => {
+        vi.advanceTimersByTime(13 * 60 * 1000);
+      });
+      expect(result.current.isWarningVisible).toBe(true);
+
+      // Disable the hook (simulates isSigningOut=true)
+      rerender({ enabled: false });
+
+      // Warning state should be reset
+      expect(result.current.isWarningVisible).toBe(false);
+      expect(result.current.remainingSeconds).toBe(120);
+    });
+
+    it("does not show stale warning when re-enabled after disable", () => {
+      const onTimeout = vi.fn();
+      const { result, rerender } = renderHook(
+        ({ enabled }) => useInactivityTimeout({ onTimeout, enabled }),
+        { initialProps: { enabled: true } }
+      );
+
+      // Trigger warning
+      act(() => {
+        vi.advanceTimersByTime(13 * 60 * 1000);
+      });
+      expect(result.current.isWarningVisible).toBe(true);
+
+      // Disable then re-enable (simulates sign-out failure recovery)
+      rerender({ enabled: false });
+      rerender({ enabled: true });
+
+      // Should start fresh — no stale warning
+      expect(result.current.isWarningVisible).toBe(false);
+      expect(result.current.remainingSeconds).toBe(120);
+    });
+  });
+
+  // --------------------------------------------------------------------------
   // CLEANUP TESTS
   // --------------------------------------------------------------------------
 

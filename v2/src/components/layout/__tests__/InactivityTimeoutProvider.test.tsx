@@ -207,7 +207,7 @@ describe("InactivityTimeoutProvider", () => {
       expect(window.location.href).toBe("/login");
     });
 
-    it("shows toast on sign-out error", async () => {
+    it("redirects to /login even when signOut throws (best-effort)", async () => {
       mockSignOut.mockRejectedValueOnce(new Error("Sign out failed"));
       mockIsWarningVisible = true;
 
@@ -223,12 +223,12 @@ describe("InactivityTimeoutProvider", () => {
         fireEvent.click(logoutButton);
       });
 
+      // Should still redirect — never calls cancelSignOut or shows toast
       await waitFor(() => {
-        expect(mockCancelSignOut).toHaveBeenCalledTimes(1);
-        expect(mockToastError).toHaveBeenCalledWith(
-          "Failed to sign out. Please try again."
-        );
+        expect(mockBeginSignOut).toHaveBeenCalledTimes(1);
+        expect(window.location.href).toBe("/login");
       });
+      expect(mockCancelSignOut).not.toHaveBeenCalled();
     });
 
     it("does not trigger signOut if already signing out", async () => {
