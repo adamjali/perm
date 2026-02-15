@@ -11,7 +11,6 @@
  * CSS entrance animation replaces Framer Motion ScrollReveal for text stagger.
  */
 
-import Image from "next/image";
 import { Shield, Zap, Clock } from "lucide-react";
 import { HeroCTAs } from "./HeroCTAs";
 import { DashboardShowcase } from "./DashboardShowcase";
@@ -20,20 +19,18 @@ import { FloatingIcons } from "./DecorativeElements";
 export function HeroSection() {
   return (
     <section id="hero" className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
-      {/* Background photo with dark overlay */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/images/hero/legal-office-wide.jpg"
-          alt=""
-          fill
-          loading="lazy"
-          quality={40}
-          className="object-cover"
-          sizes="100vw"
-          aria-hidden="true"
+      {/* Background texture — CSS only for instant LCP (no image preload) */}
+      <div className="absolute inset-0 z-0" aria-hidden="true">
+        <div className="absolute inset-0 bg-background" />
+        {/* Subtle warm texture via radial gradients (replaces photo through 92% overlay) */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            background:
+              "radial-gradient(ellipse at 20% 50%, var(--primary), transparent 70%), " +
+              "radial-gradient(ellipse at 80% 20%, hsl(var(--muted)), transparent 50%)",
+          }}
         />
-        {/* Dark overlay - light mode vs dark mode */}
-        <div className="absolute inset-0 bg-background/92 dark:bg-background/95" />
         {/* Green gradient accent at bottom */}
         <div
           className="absolute inset-x-0 bottom-0 h-64"
@@ -41,7 +38,6 @@ export function HeroSection() {
             background: "linear-gradient(to top, var(--primary), transparent)",
             opacity: 0.04,
           }}
-          aria-hidden="true"
         />
       </div>
 
