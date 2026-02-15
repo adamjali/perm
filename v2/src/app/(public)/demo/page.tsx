@@ -177,7 +177,7 @@ export default function DemoPage() {
       <section className="border-b-3 border-border bg-foreground py-12 sm:py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="page-enter">
-            <p className="mb-8 text-center font-mono text-xs uppercase tracking-widest text-background/60">
+            <p className="mb-8 text-center font-mono text-xs uppercase tracking-widest text-background/80">
               From the real product
             </p>
             <div className="grid gap-6 md:grid-cols-3">
@@ -204,7 +204,7 @@ export default function DemoPage() {
                       <div className="h-2 w-2 bg-[#FF5F57]" />
                       <div className="h-2 w-2 bg-[#FFBD2E]" />
                       <div className="h-2 w-2 bg-[#28CA41]" />
-                      <span className="ml-2 font-mono text-[9px] text-background/40">
+                      <span className="ml-2 font-mono text-[9px] text-background/70">
                         {screenshot.label}
                       </span>
                     </div>
@@ -217,7 +217,7 @@ export default function DemoPage() {
                       sizes="(max-width: 768px) 100vw, 33vw"
                     />
                   </div>
-                  <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-background/50">
+                  <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-background/70">
                     {screenshot.label}
                   </p>
                 </div>

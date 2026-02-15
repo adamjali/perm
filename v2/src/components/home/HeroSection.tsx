@@ -77,7 +77,7 @@ export function HeroSection() {
             rx="7.75"
             stroke="currentColor"
             strokeWidth="2"
-            className="text-foreground/50 dark:text-foreground/40"
+            className="text-foreground/60 dark:text-foreground/50"
           />
           <circle
             cx="9"
@@ -91,7 +91,7 @@ export function HeroSection() {
           className="animate-scroll-line h-8 w-[1.5px] origin-top"
           style={{ background: "linear-gradient(to bottom, currentColor, transparent)" }}
         />
-        <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/40 dark:text-foreground/35">
+        <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/60 dark:text-foreground/50">
           Scroll
         </span>
       </div>

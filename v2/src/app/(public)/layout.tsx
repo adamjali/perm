@@ -23,7 +23,7 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-screen flex-col bg-background">
+    <div className="bg-dots-inline relative flex min-h-screen flex-col bg-background">
       {/* Scroll progress indicator */}
       <ScrollProgress />
 
@@ -34,12 +34,6 @@ export default function PublicLayout({
       >
         Skip to main content
       </a>
-
-      {/* Fixed dot pattern background */}
-      <div
-        className="bg-dots pointer-events-none fixed inset-0 opacity-30"
-        aria-hidden="true"
-      />
 
       {/* Header */}
       <AuthHeader />

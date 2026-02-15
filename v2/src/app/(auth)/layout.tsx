@@ -11,12 +11,7 @@ export default function AuthLayout({
   return (
     <ConvexClientProvider>
     <SentryClientInit />
-    <div className="relative min-h-screen bg-background flex flex-col overflow-y-auto">
-      {/* Fixed dot pattern background - matches other layouts */}
-      <div
-        className="bg-dots pointer-events-none fixed inset-0 opacity-30"
-        aria-hidden="true"
-      />
+    <div className="bg-dots-inline relative min-h-screen bg-background flex flex-col overflow-y-auto">
 
       {/* Header spacer - reserves space for fixed header */}
       <div className="relative z-20 flex-shrink-0 h-20">
