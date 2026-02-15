@@ -114,7 +114,7 @@ describe("buildDefaultProfile", () => {
     expect(profile.calendarSyncRfe).toBe(true);
   });
 
-  it("sets loginCount to 0 so recordLogin handles the first increment", () => {
+  it("sets loginCount to 0 so recordMyLogin handles the first increment", () => {
     const profile = buildDefaultProfile(MOCK_USER_ID);
     expect(profile.loginCount).toBe(0);
   });

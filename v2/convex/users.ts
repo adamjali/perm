@@ -198,28 +198,6 @@ export const ensureUserProfileInternal = internalMutation({
 });
 
 /**
- * Increment login counter (internal version, kept for backwards compat).
- */
-export const recordLogin = internalMutation({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
-      .unique();
-
-    if (!profile) {
-      return;
-    }
-
-    await ctx.db.patch(profile._id, {
-      loginCount: (profile.loginCount ?? 0) + 1,
-      lastLoginAt: Date.now(),
-    });
-  },
-});
-
-/**
  * Public mutation: record login for the current authenticated user.
  * Called from the LoginTracker client component on every sign-in.
  *
