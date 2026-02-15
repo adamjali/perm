@@ -23,13 +23,16 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
+  reactCompiler: true,
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
   experimental: {
     // Tree-shake barrel exports for heavy packages to reduce unused JS
     optimizePackageImports: [
       "lucide-react",
       "date-fns",
       "motion/react",
-      "framer-motion",
     ],
   },
   async redirects() {

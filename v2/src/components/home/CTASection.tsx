@@ -14,7 +14,7 @@ import Link from "next/link";
 import { Rocket, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MagneticButton } from "@/components/ui/magnetic-button";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { FadeIn } from "@/components/ui/fade-in";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { RocketLaunchSVG } from "@/components/illustrations";
 
@@ -97,7 +97,7 @@ export function CTASection() {
       {/* Content */}
       <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-8">
         {/* Single stagger container (1 Intersection Observer) */}
-        <ScrollReveal direction="up" stagger>
+        <FadeIn direction="up" stagger>
           {/* Rocket illustration */}
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center">
             <RocketLaunchSVG size={80} className="text-black" />
@@ -165,7 +165,7 @@ export function CTASection() {
               </Link>
             </p>
           </div>
-        </ScrollReveal>
+        </FadeIn>
       </div>
     </section>
   );

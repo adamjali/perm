@@ -7,7 +7,6 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
 import { NavLinkProvider } from "@/components/ui/nav-link";
-import { PageContextProvider } from "@/lib/ai/page-context";
 
 // Validate required environment variable with explicit error message
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -85,9 +84,7 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
         <AuthProvider>
           <ThemeProvider>
             <NavLinkProvider>
-              <PageContextProvider>
                 {children}
-              </PageContextProvider>
             </NavLinkProvider>
             <Toaster />
           </ThemeProvider>

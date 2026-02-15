@@ -8,7 +8,7 @@
  * Focus border + shadow transition, clear button.
  */
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { Search, X } from "lucide-react";
 
 interface ContentSearchProps {

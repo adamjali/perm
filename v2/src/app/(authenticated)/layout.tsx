@@ -21,13 +21,13 @@ import Footer from "@/components/layout/Footer";
 import SignOutOverlay from "@/components/layout/SignOutOverlay";
 import InactivityTimeoutProvider from "@/components/layout/InactivityTimeoutProvider";
 import { ChatWidgetConnected } from "@/components/chat/ChatWidgetConnected";
+import { PageContextProvider } from "@/lib/ai/page-context";
 import { ServiceWorkerRegistration } from "@/components/pwa";
 import { PendingTermsHandler } from "@/components/auth/PendingTermsHandler";
 import { LoginTracker } from "@/components/auth/LoginTracker";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { OnboardingTourWrapper } from "@/components/onboarding/OnboardingTourWrapper";
-import { PageTransition } from "@/components/ui/page-transition";
 import { SentryUserContext } from "@/components/layout/SentryUserContext";
 
 export default function AuthenticatedLayout({
@@ -37,6 +37,9 @@ export default function AuthenticatedLayout({
 }) {
   return (
     <InactivityTimeoutProvider>
+      {/* AI chat page context — only needed in authenticated pages */}
+      <PageContextProvider>
+
       {/* Set Sentry user context for error tracking */}
       <SentryUserContext />
 
@@ -63,7 +66,7 @@ export default function AuthenticatedLayout({
           Skip to main content
         </a>
 
-        {/* Fixed dot pattern background - matches other layouts */}
+        {/* Fixed dot pattern background */}
         <div
           className="bg-dots pointer-events-none fixed inset-0 opacity-30"
           aria-hidden="true"
@@ -81,7 +84,7 @@ export default function AuthenticatedLayout({
           className="relative mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8"
           tabIndex={-1}
         >
-          <PageTransition>{children}</PageTransition>
+          <div className="page-enter">{children}</div>
         </main>
 
         {/* Footer */}
@@ -97,6 +100,7 @@ export default function AuthenticatedLayout({
         {/* Multi-page product tour (renders null, manages Driver.js) */}
         <OnboardingTourWrapper />
       </OnboardingProvider>
+      </PageContextProvider>
     </InactivityTimeoutProvider>
   );
 }

@@ -8,7 +8,7 @@
 "use client";
 
 import { ArrowRight, Sparkles, Loader2, Check } from "lucide-react";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { FadeIn } from "@/components/ui/fade-in";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
 export function DemoCTA() {
@@ -20,7 +20,7 @@ export function DemoCTA() {
       aria-labelledby="cta-heading"
     >
       <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <ScrollReveal direction="up">
+        <FadeIn direction="up">
           <div className="border-3 border-border bg-background p-8 shadow-hard-lg sm:p-12 lg:p-16">
             {/* Headline */}
             <h2
@@ -95,7 +95,7 @@ export function DemoCTA() {
               </button>
             </div>
           </div>
-        </ScrollReveal>
+        </FadeIn>
       </div>
     </section>
   );

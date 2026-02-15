@@ -144,8 +144,9 @@ export default async function RootLayout({
           <link
             rel="preconnect"
             href="https://o4510874774667264.ingest.us.sentry.io"
+            crossOrigin="anonymous"
           />
-          <link rel="preconnect" href="https://widget.senja.io" />
+          <link rel="preconnect" href="https://widget.senja.io" crossOrigin="anonymous" />
           {/* JSON-LD structured data for rich search results.
               Content is generated from hardcoded strings in structuredData.ts,
               not user input — safe for JSON-LD injection. */}

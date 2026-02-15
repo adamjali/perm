@@ -83,11 +83,28 @@ Sentry.init({
   },
 
   integrations: [
-    Sentry.replayIntegration({
-      maskAllText: true,
-      blockAllMedia: true,
-    }),
     // Forward console.warn and console.error to Sentry Logs
     Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
+    // Session Replay loaded lazily below to reduce initial bundle size (~50-70 KiB)
   ],
 });
+
+// Lazy-load Session Replay only when sampled (saves ~50-70 KiB from shared bundle)
+if (typeof window !== "undefined") {
+  const client = Sentry.getClient();
+  if (client) {
+    const replaySampleRate =
+      process.env.NODE_ENV === "production" ? 0.1 : 1.0;
+    if (Math.random() < replaySampleRate) {
+      Sentry.lazyLoadIntegration("replayIntegration")
+        .then((replay) => {
+          client.addIntegration(
+            replay({ maskAllText: true, blockAllMedia: true })
+          );
+        })
+        .catch(() => {
+          // Ad-blockers may block Sentry CDN — silently ignore
+        });
+    }
+  }
+}

@@ -15,7 +15,6 @@
 import AuthHeader from "@/components/layout/AuthHeader";
 import Footer from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/home";
-import { PageTransition } from "@/components/ui/page-transition";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 
 export default function PublicLayout({
@@ -36,7 +35,7 @@ export default function PublicLayout({
         Skip to main content
       </a>
 
-      {/* Fixed dot pattern background - matches other layouts */}
+      {/* Fixed dot pattern background */}
       <div
         className="bg-dots pointer-events-none fixed inset-0 opacity-30"
         aria-hidden="true"
@@ -51,7 +50,7 @@ export default function PublicLayout({
         className="relative flex-1 pt-20"
         tabIndex={-1}
       >
-        <PageTransition>{children}</PageTransition>
+        <div className="page-enter">{children}</div>
       </main>
 
       {/* Extended Footer for public pages */}

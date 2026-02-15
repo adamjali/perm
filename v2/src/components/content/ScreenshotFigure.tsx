@@ -9,7 +9,7 @@
  */
 
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { fadeUp } from "@/lib/content/animations";
 import { Lightbox } from "@/components/ui/lightbox";
 

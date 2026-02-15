@@ -12,7 +12,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { FadeIn } from "@/components/ui/fade-in";
 import { useTilt } from "@/lib/hooks/useTilt";
 import {
   CalendarDeadlineSVG,
@@ -182,7 +182,7 @@ export function FeaturesGrid() {
       {/* Content container */}
       <div className="mx-auto max-w-[1400px] px-4 py-20 sm:px-8 sm:py-28">
         {/* Section header */}
-        <ScrollReveal direction="up" className="mb-12 text-center sm:mb-16">
+        <FadeIn direction="up" className="mb-12 text-center sm:mb-16">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5" />
             What You Get
@@ -193,14 +193,14 @@ export function FeaturesGrid() {
           <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
             Stop juggling spreadsheets and calendar reminders. Every tool you need to manage PERM cases, in one place.
           </p>
-        </ScrollReveal>
+        </FadeIn>
 
         {/* Feature cards grid - single stagger container */}
-        <ScrollReveal direction="up" stagger className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <FadeIn direction="up" stagger className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
             <FeatureCard key={feature.title} feature={feature} />
           ))}
-        </ScrollReveal>
+        </FadeIn>
       </div>
     </section>
   );

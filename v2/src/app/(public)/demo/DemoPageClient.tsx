@@ -27,7 +27,7 @@ import {
   DeleteConfirmDialog,
   DemoCTA,
 } from "@/components/demo";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { FadeIn } from "@/components/ui/fade-in";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
 // ============================================================================
@@ -236,7 +236,7 @@ export function DemoPageClient() {
       {/* ================================================================ */}
       <section className="relative overflow-hidden border-b-3 border-border bg-muted pt-14">
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-          <ScrollReveal direction="up">
+          <FadeIn direction="up">
             <div className="text-center">
               <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 <Play className="h-3.5 w-3.5" />
@@ -253,10 +253,10 @@ export function DemoPageClient() {
                 Add cases, edit dates, and watch deadlines calculate automatically — exactly like the real product.
               </p>
             </div>
-          </ScrollReveal>
+          </FadeIn>
 
           {/* What you can try */}
-          <ScrollReveal direction="up" delay={0.1}>
+          <FadeIn direction="up" delay={0.1}>
             <div className="mx-auto mt-10 grid max-w-3xl gap-4 sm:grid-cols-3">
               {[
                 {
@@ -291,15 +291,15 @@ export function DemoPageClient() {
                 </div>
               ))}
             </div>
-          </ScrollReveal>
+          </FadeIn>
 
           {/* Scroll prompt */}
-          <ScrollReveal direction="up" delay={0.2}>
+          <FadeIn direction="up" delay={0.2}>
             <div className="mt-10 flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
               <ArrowDown className="h-4 w-4 animate-bounce" />
               <span>Scroll to explore the demo</span>
             </div>
-          </ScrollReveal>
+          </FadeIn>
         </div>
       </section>
 
@@ -308,7 +308,7 @@ export function DemoPageClient() {
       {/* ================================================================ */}
       <section className="relative border-b-3 border-border bg-background py-12 sm:py-16">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal direction="up">
+          <FadeIn direction="up">
             <div className="text-center">
               <div className="mb-3 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 <MousePointerClick className="h-3.5 w-3.5" />
@@ -324,9 +324,9 @@ export function DemoPageClient() {
                 50-step interactive walkthrough — create cases, configure settings, use the AI assistant, and more.
               </p>
             </div>
-          </ScrollReveal>
+          </FadeIn>
 
-          <ScrollReveal direction="up" delay={0.1}>
+          <FadeIn direction="up" delay={0.1}>
             <div className="mt-8">
               <div className="relative border-3 border-border shadow-hard-lg overflow-hidden" style={{ aspectRatio: "16/9" }}>
                 {/* Browser chrome bar */}
@@ -348,7 +348,7 @@ export function DemoPageClient() {
                 />
               </div>
             </div>
-          </ScrollReveal>
+          </FadeIn>
         </div>
       </section>
 
@@ -357,7 +357,7 @@ export function DemoPageClient() {
       {/* ================================================================ */}
       <section className="border-b-3 border-border bg-foreground py-12 sm:py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal direction="up">
+          <FadeIn direction="up">
             <p className="mb-8 text-center font-mono text-xs uppercase tracking-widest text-background/60">
               From the real product
             </p>
@@ -404,7 +404,7 @@ export function DemoPageClient() {
                 </div>
               ))}
             </div>
-          </ScrollReveal>
+          </FadeIn>
         </div>
       </section>
 
@@ -416,7 +416,7 @@ export function DemoPageClient() {
         {/* Section 1: Stats */}
         {isInitialized && (
           <section className="mb-12" aria-labelledby="stats-heading">
-            <ScrollReveal direction="up">
+            <FadeIn direction="up">
               <SectionLabel
                 number="1"
                 title="Deadline Hub"
@@ -424,7 +424,7 @@ export function DemoPageClient() {
                 icon={<Zap className="h-4 w-4" />}
                 accentColor="var(--primary)"
               />
-            </ScrollReveal>
+            </FadeIn>
             <h2 id="stats-heading" className="sr-only">Case Statistics</h2>
             <StatsGrid cases={cases} />
             {/* Inline tip */}
@@ -452,7 +452,7 @@ export function DemoPageClient() {
         {/* Section 2: Calendar & Timeline */}
         {isInitialized && (
           <section className="mb-12" aria-labelledby="preview-heading">
-            <ScrollReveal direction="up">
+            <FadeIn direction="up">
               <SectionLabel
                 number="2"
                 title="Calendar & Progress"
@@ -460,7 +460,7 @@ export function DemoPageClient() {
                 icon={<CalendarDays className="h-4 w-4" />}
                 accentColor="var(--stage-pwd)"
               />
-            </ScrollReveal>
+            </FadeIn>
             <h2 id="preview-heading" className="sr-only">Overview</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <MiniCalendar cases={cases} />
@@ -492,7 +492,7 @@ export function DemoPageClient() {
         {/* Section 3: Cases */}
         {isInitialized && (
           <section className="mb-12" aria-labelledby="cases-heading">
-            <ScrollReveal direction="up">
+            <FadeIn direction="up">
               <SectionLabel
                 number="3"
                 title="Your Cases"
@@ -500,7 +500,7 @@ export function DemoPageClient() {
                 icon={<LayoutGrid className="h-4 w-4" />}
                 accentColor="var(--stage-recruitment)"
               />
-            </ScrollReveal>
+            </FadeIn>
             <h2 id="cases-heading" className="sr-only">Cases</h2>
             <DemoCasesGrid
               cases={cases}

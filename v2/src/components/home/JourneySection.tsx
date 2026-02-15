@@ -25,7 +25,7 @@ import {
   Map,
   ArrowRight,
 } from "lucide-react";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { FadeIn } from "@/components/ui/fade-in";
 import {
   DocumentStackSVG,
   NewspaperAdSVG,
@@ -161,7 +161,7 @@ export function JourneySection() {
     <section id="journey" className="py-16 sm:py-24 relative overflow-hidden">
       {/* Header */}
       <div className="mx-auto max-w-[1400px] px-4 pb-16 text-center sm:px-8">
-        <ScrollReveal direction="up">
+        <FadeIn direction="up">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <Map className="h-3.5 w-3.5" />
             The PERM Process
@@ -172,7 +172,7 @@ export function JourneySection() {
           <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
             From PWD request to I-140 approval — we calculate every deadline, validate every step, and alert you before anything expires.
           </p>
-        </ScrollReveal>
+        </FadeIn>
       </div>
 
       {/* Horizontal Scroll Container with Timeline BEHIND cards */}

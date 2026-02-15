@@ -10,7 +10,7 @@
 
 import Image from "next/image";
 import { BookOpen, ArrowRight, Clock, Loader2 } from "lucide-react";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { FadeIn } from "@/components/ui/fade-in";
 import { NavLink, useNavigationContext } from "@/components/ui/nav-link";
 
 interface FeaturedArticle {
@@ -124,7 +124,7 @@ export function ContentShowcase() {
     <section className="relative bg-muted">
       <div className="mx-auto max-w-[1400px] px-4 py-20 sm:px-8 sm:py-28">
         {/* Section header */}
-        <ScrollReveal direction="up" className="mb-12 text-center sm:mb-16">
+        <FadeIn direction="up" className="mb-12 text-center sm:mb-16">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <BookOpen className="h-3.5 w-3.5" />
             Learn PERM
@@ -136,10 +136,10 @@ export function ContentShowcase() {
             Deep dives, tutorials, and strategic guides for immigration
             attorneys.
           </p>
-        </ScrollReveal>
+        </FadeIn>
 
         {/* Article cards */}
-        <ScrollReveal
+        <FadeIn
           direction="up"
           stagger
           className="grid gap-8 md:grid-cols-3"
@@ -147,10 +147,10 @@ export function ContentShowcase() {
           {articles.map((article) => (
             <ArticleCard key={article.href} article={article} />
           ))}
-        </ScrollReveal>
+        </FadeIn>
 
         {/* View all link */}
-        <ScrollReveal direction="up" delay={0.3} className="mt-10 text-center">
+        <FadeIn direction="up" delay={0.3} className="mt-10 text-center">
           <NavLink
             href="/blog"
             className="inline-flex items-center gap-2 font-heading text-sm font-bold uppercase tracking-wider text-foreground transition-colors duration-200 hover:text-primary"
@@ -158,7 +158,7 @@ export function ContentShowcase() {
             View all articles
             <ArrowRight className="h-4 w-4" />
           </NavLink>
-        </ScrollReveal>
+        </FadeIn>
       </div>
     </section>
   );

@@ -1,13 +1,11 @@
-"use client";
-
 /**
  * VideoShowcase Component
  *
  * Embeds the PERMExplainer Remotion video on the landing page.
- * Neobrutalist frame with header and ScrollReveal entrance.
+ * Neobrutalist frame with header and FadeIn entrance.
  */
 
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { FadeIn } from "@/components/ui/fade-in";
 import { Play } from "lucide-react";
 import VideoPlayer from "@/components/content/VideoPlayer";
 
@@ -15,7 +13,7 @@ export function VideoShowcase() {
   return (
     <section className="relative bg-muted">
       <div className="mx-auto max-w-[1400px] px-4 py-20 sm:px-8 sm:py-28">
-        <ScrollReveal direction="up" className="text-center">
+        <FadeIn direction="up" className="text-center">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <Play className="h-3.5 w-3.5" />
             Watch: The PERM Process
@@ -26,9 +24,9 @@ export function VideoShowcase() {
           <p className="mx-auto mt-4 max-w-lg text-lg text-muted-foreground">
             From case creation to deadline tracking — watch the entire PERM workflow.
           </p>
-        </ScrollReveal>
+        </FadeIn>
 
-        <ScrollReveal direction="up" delay={0.15} className="mx-auto mt-12 max-w-4xl">
+        <FadeIn direction="up" delay={0.15} className="mx-auto mt-12 max-w-4xl">
           {/* Neobrutalist video frame */}
           <div className="border-3 border-border shadow-hard overflow-hidden">
             {/* Mini browser chrome */}
@@ -42,7 +40,7 @@ export function VideoShowcase() {
             </div>
             <VideoPlayer videoId="PERMExplainer" className="border-0 shadow-none" autoPlay loop />
           </div>
-        </ScrollReveal>
+        </FadeIn>
       </div>
     </section>
   );

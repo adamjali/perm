@@ -13,7 +13,7 @@ import * as React from "react";
 import Link from "next/link";
 import { ChevronDown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { FadeIn } from "@/components/ui/fade-in";
 
 const faqLink = "font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary";
 
@@ -159,7 +159,7 @@ export function FAQSection() {
       {/* Content container */}
       <div className="mx-auto max-w-[800px] px-4 sm:px-8">
         {/* Section header */}
-        <ScrollReveal direction="up" className="mb-12 text-center sm:mb-16">
+        <FadeIn direction="up" className="mb-12 text-center sm:mb-16">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <HelpCircle className="h-3.5 w-3.5" />
             Common Questions
@@ -167,10 +167,10 @@ export function FAQSection() {
           <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
             FAQ
           </h2>
-        </ScrollReveal>
+        </FadeIn>
 
         {/* FAQ accordion list - single stagger container */}
-        <ScrollReveal direction="up" stagger className="flex flex-col gap-4">
+        <FadeIn direction="up" stagger className="flex flex-col gap-4">
           {faqItems.map((item, index) => (
             <FAQAccordionItem
               key={index}
@@ -180,7 +180,7 @@ export function FAQSection() {
               onToggle={() => handleToggle(index)}
             />
           ))}
-        </ScrollReveal>
+        </FadeIn>
       </div>
     </section>
   );
