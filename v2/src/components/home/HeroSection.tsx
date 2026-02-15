@@ -12,19 +12,10 @@
  */
 
 import Image from "next/image";
-import dynamic from "next/dynamic";
 import { Shield, Zap, Clock } from "lucide-react";
 import { HeroCTAs } from "./HeroCTAs";
 import { DashboardShowcase } from "./DashboardShowcase";
-
-// Lazy-load decorative floating icons — purely visual, no LCP impact
-const FloatingIcons = dynamic(
-  () =>
-    import("./DecorativeElements").then((mod) => ({
-      default: mod.FloatingIcons,
-    })),
-  { ssr: false }
-);
+import { FloatingIcons } from "./DecorativeElements";
 
 export function HeroSection() {
   return (
