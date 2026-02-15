@@ -8,7 +8,7 @@
  */
 
 import Image from "next/image";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
 import { NavLink } from "@/components/ui/nav-link";
 import type { PostMeta, ContentType } from "@/lib/content/types";

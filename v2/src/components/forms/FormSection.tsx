@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ChevronDown, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export type SectionStatus = "complete" | "incomplete" | "has-errors" | undefined;

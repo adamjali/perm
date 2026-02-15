@@ -1,19 +1,24 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import {
-  Zap,
+  Rocket,
+  Loader2,
+  Play,
+  RefreshCw,
+  Eye,
+  MousePointerClick,
+  ArrowDown,
   CalendarDays,
   BarChart3,
   LayoutGrid,
-  MousePointerClick,
-  RefreshCw,
-  Rocket,
-  Loader2,
+  Zap,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { useDemoCases, initDemoCases, type DemoCase } from "@/lib/demo";
 import {
+  DemoBanner,
   StatsGrid,
   MiniCalendar,
   MiniTimeline,
@@ -22,13 +27,21 @@ import {
   DeleteConfirmDialog,
   DemoCTA,
 } from "@/components/demo";
-import { FadeIn } from "@/components/ui/fade-in";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface CaseToDelete {
   id: string;
   name: string;
 }
+
+// ============================================================================
+// Section Label
+// ============================================================================
 
 interface SectionLabelProps {
   number: string;
@@ -38,13 +51,7 @@ interface SectionLabelProps {
   accentColor?: string;
 }
 
-function SectionLabel({
-  number,
-  title,
-  description,
-  icon,
-  accentColor = "var(--primary)",
-}: SectionLabelProps) {
+function SectionLabel({ number, title, description, icon, accentColor = "var(--primary)" }: SectionLabelProps) {
   return (
     <div className="mb-6 flex items-start gap-4">
       <div
@@ -60,34 +67,37 @@ function SectionLabel({
             {title}
           </h2>
         </div>
-        <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          {description}
+        </p>
       </div>
     </div>
   );
 }
 
-function FeatureCallout({
-  icon,
-  text,
-}: {
+// ============================================================================
+// Feature Callout — small inline tip cards
+// ============================================================================
+
+interface FeatureCalloutProps {
   icon: React.ReactNode;
   text: string;
-}) {
+}
+
+function FeatureCallout({ icon, text }: FeatureCalloutProps) {
   return (
     <div className="flex items-center gap-2 border-2 border-border bg-muted/50 px-3 py-1.5">
       <span className="text-primary">{icon}</span>
-      <span className="font-mono text-[11px] text-muted-foreground">
-        {text}
-      </span>
+      <span className="font-mono text-[11px] text-muted-foreground">{text}</span>
     </div>
   );
 }
 
-/**
- * Interactive demo sections — stats, calendar, cases grid, modals.
- * Split from static content (hero, tour, screenshots) which is server-rendered in page.tsx.
- */
-export function DemoInteractive() {
+// ============================================================================
+// Component
+// ============================================================================
+
+export function DemoPageClient() {
   const {
     cases,
     deleteCase,
@@ -108,6 +118,7 @@ export function DemoInteractive() {
   const [caseToDelete, setCaseToDelete] = useState<CaseToDelete | null>(null);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     initDemoCases();
   }, []);
 
@@ -137,7 +148,7 @@ export function DemoInteractive() {
         setIsModalOpen(true);
       }
     },
-    [getCase],
+    [getCase]
   );
 
   const handleSave = useCallback(
@@ -181,7 +192,7 @@ export function DemoInteractive() {
       setIsModalOpen(false);
       setCaseToEdit(null);
     },
-    [caseToEdit, addCase, updateCase],
+    [caseToEdit, addCase, updateCase]
   );
 
   const handleDelete = useCallback(
@@ -195,7 +206,7 @@ export function DemoInteractive() {
         setIsDeleteOpen(true);
       }
     },
-    [getCase],
+    [getCase]
   );
 
   const confirmDelete = useCallback(() => {
@@ -217,12 +228,195 @@ export function DemoInteractive() {
   }, []);
 
   return (
-    <>
+    <div className="relative">
+      <DemoBanner />
+
+      {/* ================================================================ */}
+      {/* HERO INTRO */}
+      {/* ================================================================ */}
+      <section className="relative overflow-hidden border-b-3 border-border bg-muted pt-14">
+        <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+          <ScrollReveal direction="up">
+            <div className="text-center">
+              <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                <Play className="h-3.5 w-3.5" />
+                Interactive Demo
+              </div>
+              <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+                See How PERM Tracker{" "}
+                <span className="inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard">
+                  Works
+                </span>
+              </h1>
+              <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+                This is a fully interactive sandbox with 5 sample cases at different PERM stages.
+                Add cases, edit dates, and watch deadlines calculate automatically — exactly like the real product.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          {/* What you can try */}
+          <ScrollReveal direction="up" delay={0.1}>
+            <div className="mx-auto mt-10 grid max-w-3xl gap-4 sm:grid-cols-3">
+              {[
+                {
+                  icon: <Eye className="h-5 w-5" />,
+                  title: "Explore Cases",
+                  desc: "5 sample cases across all PERM stages",
+                  color: "var(--stage-pwd)",
+                },
+                {
+                  icon: <MousePointerClick className="h-5 w-5" />,
+                  title: "Edit & Add",
+                  desc: "Change dates and see deadlines auto-calculate",
+                  color: "var(--stage-recruitment)",
+                },
+                {
+                  icon: <CalendarDays className="h-5 w-5" />,
+                  title: "Calendar View",
+                  desc: "See deadlines on this month's calendar",
+                  color: "var(--stage-eta9089)",
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="border-3 border-border bg-background p-4 text-center shadow-hard-sm"
+                  style={{ borderTopWidth: "4px", borderTopColor: item.color }}
+                >
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center text-foreground">
+                    {item.icon}
+                  </div>
+                  <h3 className="font-heading text-sm font-bold">{item.title}</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </ScrollReveal>
+
+          {/* Scroll prompt */}
+          <ScrollReveal direction="up" delay={0.2}>
+            <div className="mt-10 flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              <ArrowDown className="h-4 w-4 animate-bounce" />
+              <span>Scroll to explore the demo</span>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ================================================================ */}
+      {/* GUIDED TOUR (Supademo) */}
+      {/* ================================================================ */}
+      <section className="relative border-b-3 border-border bg-background py-12 sm:py-16">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <ScrollReveal direction="up">
+            <div className="text-center">
+              <div className="mb-3 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                <MousePointerClick className="h-3.5 w-3.5" />
+                Guided Tour
+              </div>
+              <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl">
+                Click Through the{" "}
+                <span className="inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard-sm">
+                  Full App
+                </span>
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
+                50-step interactive walkthrough — create cases, configure settings, use the AI assistant, and more.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal direction="up" delay={0.1}>
+            <div className="mt-8">
+              <div className="relative border-3 border-border shadow-hard-lg overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                {/* Browser chrome bar */}
+                <div className="flex items-center gap-1.5 border-b-3 border-border bg-muted px-3 py-2">
+                  <div className="h-2.5 w-2.5 border border-border bg-[#FF5F57]" />
+                  <div className="h-2.5 w-2.5 border border-border bg-[#FFBD2E]" />
+                  <div className="h-2.5 w-2.5 border border-border bg-[#28CA41]" />
+                  <span className="ml-3 font-mono text-[10px] text-muted-foreground">
+                    permtracker.app — Interactive Tour
+                  </span>
+                </div>
+                <iframe
+                  src="https://app.supademo.com/embed/cmli1lvlg1lkg5351b6olnd9n?embed_v=2"
+                  loading="lazy"
+                  title="PERM Tracker interactive product tour"
+                  allow="clipboard-write"
+                  className="h-full w-full"
+                  style={{ border: "none", position: "absolute", top: "0", left: "0", width: "100%", height: "100%", paddingTop: "34px" }}
+                />
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ================================================================ */}
+      {/* PRODUCT SCREENSHOTS */}
+      {/* ================================================================ */}
+      <section className="border-b-3 border-border bg-foreground py-12 sm:py-16">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <ScrollReveal direction="up">
+            <p className="mb-8 text-center font-mono text-xs uppercase tracking-widest text-background/60">
+              From the real product
+            </p>
+            <div className="grid gap-6 md:grid-cols-3">
+              {[
+                {
+                  src: "/images/screenshots/dashboard.png",
+                  alt: "Dashboard with deadline hub showing overdue and upcoming deadlines",
+                  label: "Deadline Hub",
+                },
+                {
+                  src: "/images/screenshots/cases.png",
+                  alt: "Case cards with filters, status badges, and progress indicators",
+                  label: "Case Management",
+                },
+                {
+                  src: "/images/screenshots/calendar.png",
+                  alt: "Calendar with color-coded deadlines and AI chat assistant",
+                  label: "Calendar + AI Chat",
+                },
+              ].map((screenshot) => (
+                <div key={screenshot.label} className="group">
+                  <div className="overflow-hidden border-3 border-background/20 transition-all duration-300 hover:-translate-y-1">
+                    <div className="flex items-center gap-1.5 bg-background/10 px-3 py-1.5">
+                      <div className="h-2 w-2 bg-[#FF5F57]" />
+                      <div className="h-2 w-2 bg-[#FFBD2E]" />
+                      <div className="h-2 w-2 bg-[#28CA41]" />
+                      <span className="ml-2 font-mono text-[9px] text-background/40">
+                        {screenshot.label}
+                      </span>
+                    </div>
+                    <Image
+                      src={screenshot.src}
+                      alt={screenshot.alt}
+                      width={600}
+                      height={400}
+                      className="w-full"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                  </div>
+                  <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-background/50">
+                    {screenshot.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ================================================================ */}
+      {/* INTERACTIVE DEMO */}
+      {/* ================================================================ */}
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+
         {/* Section 1: Stats */}
         {isInitialized && (
           <section className="mb-12" aria-labelledby="stats-heading">
-            <FadeIn direction="up">
+            <ScrollReveal direction="up">
               <SectionLabel
                 number="1"
                 title="Deadline Hub"
@@ -230,11 +424,10 @@ export function DemoInteractive() {
                 icon={<Zap className="h-4 w-4" />}
                 accentColor="var(--primary)"
               />
-            </FadeIn>
-            <h2 id="stats-heading" className="sr-only">
-              Case Statistics
-            </h2>
+            </ScrollReveal>
+            <h2 id="stats-heading" className="sr-only">Case Statistics</h2>
             <StatsGrid cases={cases} />
+            {/* Inline tip */}
             <div className="mt-4 flex flex-wrap gap-2">
               <FeatureCallout
                 icon={<Zap className="h-3 w-3" />}
@@ -259,7 +452,7 @@ export function DemoInteractive() {
         {/* Section 2: Calendar & Timeline */}
         {isInitialized && (
           <section className="mb-12" aria-labelledby="preview-heading">
-            <FadeIn direction="up">
+            <ScrollReveal direction="up">
               <SectionLabel
                 number="2"
                 title="Calendar & Progress"
@@ -267,10 +460,8 @@ export function DemoInteractive() {
                 icon={<CalendarDays className="h-4 w-4" />}
                 accentColor="var(--stage-pwd)"
               />
-            </FadeIn>
-            <h2 id="preview-heading" className="sr-only">
-              Overview
-            </h2>
+            </ScrollReveal>
+            <h2 id="preview-heading" className="sr-only">Overview</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <MiniCalendar cases={cases} />
               <MiniTimeline cases={cases} />
@@ -301,7 +492,7 @@ export function DemoInteractive() {
         {/* Section 3: Cases */}
         {isInitialized && (
           <section className="mb-12" aria-labelledby="cases-heading">
-            <FadeIn direction="up">
+            <ScrollReveal direction="up">
               <SectionLabel
                 number="3"
                 title="Your Cases"
@@ -309,10 +500,8 @@ export function DemoInteractive() {
                 icon={<LayoutGrid className="h-4 w-4" />}
                 accentColor="var(--stage-recruitment)"
               />
-            </FadeIn>
-            <h2 id="cases-heading" className="sr-only">
-              Cases
-            </h2>
+            </ScrollReveal>
+            <h2 id="cases-heading" className="sr-only">Cases</h2>
             <DemoCasesGrid
               cases={cases}
               onEdit={handleEdit}
@@ -400,6 +589,6 @@ export function DemoInteractive() {
         caseName={caseToDelete?.name ?? ""}
         onConfirm={confirmDelete}
       />
-    </>
+    </div>
   );
 }

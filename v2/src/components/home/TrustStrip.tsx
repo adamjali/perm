@@ -1,5 +1,7 @@
+"use client";
+
 /**
- * TrustStrip Component (Server Component)
+ * TrustStrip Component
  *
  * Animated marquee strip displaying trust badges with mini SVG illustrations.
  * Features continuous scrolling animation with duplicated content for seamless loop.

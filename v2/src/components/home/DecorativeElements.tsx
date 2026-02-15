@@ -43,7 +43,7 @@ export function ScrollProgress() {
   return (
     <div
       className="scroll-progress"
-      style={{ transform: `scaleX(${progress / 100})` }}
+      style={{ width: `${progress}%` }}
       aria-hidden="true"
     />
   );

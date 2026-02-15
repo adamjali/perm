@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * SocialProofSection (formerly TestimonialsSection)
  *
@@ -7,7 +9,7 @@
 
 import Script from "next/script";
 import { Star, MessageSquarePlus } from "lucide-react";
-import { FadeIn } from "@/components/ui/fade-in";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 interface TrustBadge {
   icon: React.ReactNode;
@@ -72,7 +74,7 @@ export function TestimonialsSection() {
     <section className="relative py-16 sm:py-20 overflow-hidden">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8">
         {/* All content in single stagger container (1 Intersection Observer) */}
-        <FadeIn direction="up" stagger>
+        <ScrollReveal direction="up" stagger>
           {/* Section header */}
           <div className="mb-10 text-center">
             <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
@@ -110,7 +112,7 @@ export function TestimonialsSection() {
               className="senja-embed"
               data-id="3563db96-3a71-4d2a-b7e8-70550d4dd814"
               data-mode="shadow"
-              data-lazyload="true"
+              data-lazyload="false"
               style={{ display: "block", width: "100%" }}
             />
           </div>
@@ -127,7 +129,7 @@ export function TestimonialsSection() {
               Leave a Review
             </a>
           </div>
-        </FadeIn>
+        </ScrollReveal>
       </div>
     </section>
   );

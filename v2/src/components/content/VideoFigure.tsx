@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useRef } from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { fadeUp } from "@/lib/content/animations";
 import { Lightbox } from "@/components/ui/lightbox";
 

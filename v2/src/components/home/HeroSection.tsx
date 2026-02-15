@@ -1,36 +1,69 @@
+"use client";
+
 /**
- * HeroSection Component (Server Component)
+ * HeroSection Component
  *
- * Server-rendered hero section for optimal LCP performance.
- * Static content (background, text, trust badges) renders immediately in HTML.
- * Interactive elements are composed as client islands:
- * - HeroCTAs: CTA buttons with navigation loading + MagneticButton
- * - DashboardShowcase: Scroll-linked parallax + Lightbox
- * - FloatingIcons: Decorative scroll-parallax icons
+ * Visually rich hero section with:
+ * - Background photograph with dark overlay
+ * - SVG illustrations
+ * - Floating SVG icons with parallax
+ * - Shimmer gradient on "Effortlessly" accent
+ * - Dashboard screenshot with neobrutalist frame
+ * - Trust badges with icons
+ * - Animated particles
+ * - Scroll-linked dashboard reveal (scale + opacity + y)
  *
- * CSS entrance animation replaces Framer Motion ScrollReveal for text stagger.
  */
 
-import { Shield, Zap, Clock } from "lucide-react";
-import { HeroCTAs } from "./HeroCTAs";
-import { DashboardShowcase } from "./DashboardShowcase";
-import { FloatingIcons } from "./DecorativeElements";
+import { useRef } from "react";
+import Image from "next/image";
+import { Loader2, Rocket, Play, Shield, Zap, Clock } from "lucide-react";
+import { motion, useScroll, useTransform } from "motion/react";
+import { Button } from "@/components/ui/button";
+import { MagneticButton } from "@/components/ui/magnetic-button";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { useNavigationLoading } from "@/hooks/useNavigationLoading";
+import { useReducedMotion } from "@/lib/animations";
+import { FloatingIcons, FloatingParticles } from "./DecorativeElements";
+import { Lightbox } from "@/components/ui/lightbox";
 
 export function HeroSection() {
+  const { isNavigating, navigateTo, targetPath } = useNavigationLoading();
+  const heroRef = useRef<HTMLElement>(null);
+  const reducedMotion = useReducedMotion();
+
+  // Scroll-linked transforms for the dashboard reveal
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+
+  // Dashboard container transforms — starts full, fades as user scrolls away
+  const dashboardScale = useTransform(scrollYProgress, [0, 0.8], [1, 0.92]);
+  const dashboardOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0.7]);
+  const dashboardY = useTransform(scrollYProgress, [0, 0.8], [0, 40]);
+
+  // Browser chrome staggers slightly ahead
+  const chromeScale = useTransform(scrollYProgress, [0, 0.75], [1, 0.92]);
+  const chromeOpacity = useTransform(scrollYProgress, [0, 0.55], [1, 0.7]);
+  const chromeY = useTransform(scrollYProgress, [0, 0.75], [0, 40]);
+
+
   return (
-    <section id="hero" className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
-      {/* Background texture — CSS only for instant LCP (no image preload) */}
-      <div className="absolute inset-0 z-0" aria-hidden="true">
-        <div className="absolute inset-0 bg-background" />
-        {/* Subtle warm texture via radial gradients (replaces photo through 92% overlay) */}
-        <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            background:
-              "radial-gradient(ellipse at 20% 50%, var(--primary), transparent 70%), " +
-              "radial-gradient(ellipse at 80% 20%, hsl(var(--muted)), transparent 50%)",
-          }}
+    <section ref={heroRef} id="hero" className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
+      {/* Background photo with dark overlay */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/images/hero/legal-office-wide.jpg"
+          alt=""
+          fill
+          priority
+          className="object-cover"
+          sizes="100vw"
+          aria-hidden="true"
         />
+        {/* Dark overlay - light mode vs dark mode */}
+        <div className="absolute inset-0 bg-background/92 dark:bg-background/95" />
         {/* Green gradient accent at bottom */}
         <div
           className="absolute inset-x-0 bottom-0 h-64"
@@ -38,30 +71,13 @@ export function HeroSection() {
             background: "linear-gradient(to top, var(--primary), transparent)",
             opacity: 0.04,
           }}
+          aria-hidden="true"
         />
       </div>
 
-      {/* Floating decorative icons (client island — scroll parallax) */}
+      {/* Floating decorative icons */}
       <FloatingIcons className="absolute inset-0" />
-
-      {/* Floating particles (pure CSS animation, server-rendered) */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        {Array.from({ length: 8 }, (_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full bg-primary"
-            style={{
-              width: `${3 + (i % 3) * 2}px`,
-              height: `${3 + (i % 3) * 2}px`,
-              top: `${10 + i * 11}%`,
-              left: `${5 + ((i * 13) % 90)}%`,
-              opacity: 0.1 + (i % 3) * 0.05,
-              animation: `parallax-float-slow ${6 + i * 2}s ease-in-out infinite`,
-              animationDelay: `${i * 0.5}s`,
-            }}
-          />
-        ))}
-      </div>
+      <FloatingParticles className="absolute inset-0" />
 
       {/* Scroll indicator — mouse + line + text (CSS animations for reliability) */}
       <div
@@ -77,7 +93,7 @@ export function HeroSection() {
             rx="7.75"
             stroke="currentColor"
             strokeWidth="2"
-            className="text-foreground/60 dark:text-foreground/50"
+            className="text-foreground/50 dark:text-foreground/40"
           />
           <circle
             cx="9"
@@ -91,7 +107,7 @@ export function HeroSection() {
           className="animate-scroll-line h-8 w-[1.5px] origin-top"
           style={{ background: "linear-gradient(to bottom, currentColor, transparent)" }}
         />
-        <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/60 dark:text-foreground/50">
+        <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/40 dark:text-foreground/35">
           Scroll
         </span>
       </div>
@@ -99,16 +115,16 @@ export function HeroSection() {
       {/* Content container */}
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] max-w-[1400px] items-center px-4 pb-24 pt-8 sm:px-8 sm:pb-28 sm:pt-12 lg:pb-32 lg:pt-16">
         <div className="grid w-full items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* Left column - Text content (CSS entrance stagger) */}
-          <div className="flex flex-col gap-6">
+          {/* Left column - Text content (single stagger container) */}
+          <ScrollReveal direction="up" stagger className="flex flex-col gap-6">
             {/* Eyebrow with animated dot */}
-            <div className="hero-entrance-item inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
+            <div className="inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
               <span className="pulse-dot h-2 w-2 bg-primary" />
               Free for Immigration Attorneys
             </div>
 
             {/* Headline with shimmer accent */}
-            <h1 className="hero-entrance-item font-heading text-4xl font-black leading-[1.1] tracking-[-0.02em] sm:text-5xl lg:text-6xl xl:text-7xl">
+            <h1 className="font-heading text-4xl font-black leading-[1.1] tracking-[-0.02em] sm:text-5xl lg:text-6xl xl:text-7xl">
               Never Miss a PERM{" "}
               <span className="hero-shimmer-text inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
                 Deadline
@@ -117,15 +133,47 @@ export function HeroSection() {
             </h1>
 
             {/* Subheadline */}
-            <p className="hero-entrance-item max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            <p className="max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
               One missed filing window can kill a case. PERM Tracker auto-calculates every DOL deadline, sends reminders, and keeps your entire caseload organized — so you can focus on your clients, not spreadsheets.
             </p>
 
-            {/* CTAs (client island) */}
-            <HeroCTAs />
+            {/* CTAs */}
+            <div className="flex flex-wrap gap-4 pt-4">
+              <MagneticButton>
+                <Button
+                  size="lg"
+                  className="h-14 border-3 border-border px-8 font-heading text-base font-bold uppercase tracking-[0.05em] shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                  onClick={() => navigateTo("/signup")}
+                  disabled={isNavigating}
+                >
+                  {isNavigating && targetPath === "/signup" ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <Rocket className="mr-2 h-5 w-5" />
+                  )}
+                  Start Tracking Cases Free
+                </Button>
+              </MagneticButton>
+              <MagneticButton>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="h-14 border-3 border-border bg-transparent px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-foreground shadow-hard transition-all duration-150 hover:bg-foreground hover:text-background hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:bg-[#404040] dark:border-[rgba(255,255,255,0.3)] dark:hover:bg-primary dark:hover:text-black dark:hover:border-primary"
+                  onClick={() => navigateTo("/demo")}
+                  disabled={isNavigating}
+                >
+                  {isNavigating && targetPath === "/demo" ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <Play className="mr-2 h-5 w-5" />
+                  )}
+                  View Demo
+                </Button>
+              </MagneticButton>
+            </div>
 
             {/* Trust badges - visual chips */}
-            <div className="hero-entrance-item flex flex-wrap gap-3 pt-2">
+            <div className="flex flex-wrap gap-3 pt-2">
               <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
                 <Shield className="h-3.5 w-3.5 text-primary" />
                 20 CFR 656 Compliant
@@ -139,10 +187,83 @@ export function HeroSection() {
                 Set Up in 2 Minutes
               </div>
             </div>
-          </div>
+          </ScrollReveal>
 
-          {/* Right column - Dashboard showcase (client island — scroll parallax + lightbox) */}
-          <DashboardShowcase />
+          {/* Right column - Visual showcase */}
+          <ScrollReveal direction="right" delay={0.15} className="relative lg:order-last">
+            {/* Decorative corner elements */}
+            <div
+              className="absolute -right-6 -top-6 h-24 w-24 rotate-45 bg-primary opacity-15"
+              aria-hidden="true"
+            />
+            <div
+              className="absolute -bottom-8 -left-8 h-28 w-28 rotate-12 bg-primary opacity-10"
+              aria-hidden="true"
+            />
+
+            {/* Dashboard screenshot with neobrutalist frame + scroll-linked reveal */}
+            <motion.div
+              className="relative"
+              style={
+                reducedMotion
+                  ? undefined
+                  : {
+                      scale: dashboardScale,
+                      opacity: dashboardOpacity,
+                      y: dashboardY,
+                    }
+              }
+            >
+              {/* Browser chrome bar (staggers slightly ahead) */}
+              <motion.div
+                className="flex items-center gap-2 border-4 border-b-0 border-black bg-foreground px-4 py-2.5 dark:border-white/20"
+                style={
+                  reducedMotion
+                    ? undefined
+                    : {
+                        scale: chromeScale,
+                        opacity: chromeOpacity,
+                        y: chromeY,
+                      }
+                }
+              >
+                <div className="flex gap-1.5">
+                  <div className="h-3 w-3 bg-[#FF5F57]" />
+                  <div className="h-3 w-3 bg-[#FFBD2E]" />
+                  <div className="h-3 w-3 bg-[#28CA41]" />
+                </div>
+                <div className="ml-3 flex-1 bg-background/10 px-3 py-1 font-mono text-[10px] text-background/60">
+                  permtracker.app/dashboard
+                </div>
+              </motion.div>
+
+              {/* Screenshot */}
+              <Lightbox src="/images/hero-showcase.png" alt="PERM Tracker dashboard showing case timeline, deadline tracking, and status updates">
+                <div className="border-4 border-black shadow-hard-lg dark:border-white/20">
+                  <Image
+                    src="/images/hero-showcase.png"
+                    alt="PERM Tracker dashboard showing case timeline, deadline tracking, and status updates"
+                    width={800}
+                    height={600}
+                    priority
+                    className="w-full"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                  />
+                </div>
+              </Lightbox>
+
+              {/* Floating badge - bottom left overlapping the screenshot */}
+              <div className="absolute -bottom-4 -left-4 z-10 flex items-center gap-2 border-3 border-border bg-background px-4 py-2.5 shadow-hard">
+                <div className="flex h-8 w-8 items-center justify-center bg-primary">
+                  <Shield className="h-4 w-4 text-black" />
+                </div>
+                <div>
+                  <div className="font-heading text-xs font-bold">100% Free</div>
+                  <div className="font-mono text-[10px] text-muted-foreground">No credit card</div>
+                </div>
+              </div>
+            </motion.div>
+          </ScrollReveal>
         </div>
       </div>
     </section>

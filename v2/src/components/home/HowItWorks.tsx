@@ -13,7 +13,7 @@ import * as React from "react";
 import Image from "next/image";
 import { Route, Play } from "lucide-react";
 import { useInView } from "motion/react";
-import { FadeIn } from "@/components/ui/fade-in";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useReducedMotion } from "@/lib/animations";
 import {
   RocketLaunchSVG,
@@ -175,7 +175,7 @@ export function HowItWorks() {
       {/* Content container */}
       <div ref={sectionRef} className="mx-auto max-w-[1400px] px-4 py-20 sm:px-8 sm:py-28">
         {/* Section header */}
-        <FadeIn direction="up" className="mb-16 text-center">
+        <ScrollReveal direction="up" className="mb-16 text-center">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <Route className="h-3.5 w-3.5" />
             Simple Process
@@ -186,10 +186,10 @@ export function HowItWorks() {
           <p className="mx-auto mt-4 max-w-lg text-lg text-muted-foreground">
             From signup to case tracking in under a minute.
           </p>
-        </FadeIn>
+        </ScrollReveal>
 
         {/* Step cards with connectors - single stagger container */}
-        <FadeIn direction="up" stagger className="relative grid gap-0 md:grid-cols-3">
+        <ScrollReveal direction="up" stagger className="relative grid gap-0 md:grid-cols-3">
           {steps.map((step, index) => (
               <div key={step.number} className="group relative text-center px-6 py-8">
                 {/* Animated SVG connector line */}
@@ -235,10 +235,10 @@ export function HowItWorks() {
                 </p>
               </div>
           ))}
-        </FadeIn>
+        </ScrollReveal>
 
         {/* Product screenshots — see it in action */}
-        <FadeIn direction="up" delay={0.3} className="mt-16">
+        <ScrollReveal direction="up" delay={0.3} className="mt-16">
           <div className="text-center mb-10">
             <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
               <Play className="h-3.5 w-3.5" />
@@ -290,11 +290,8 @@ export function HowItWorks() {
                       loop
                       muted
                       playsInline
-                      preload="none"
                       className="w-full"
-                    >
-                      <track kind="captions" />
-                    </video>
+                    />
                   </figure>
                 </div>
               </Lightbox>
@@ -351,7 +348,7 @@ export function HowItWorks() {
             ))}
           </div>
 
-        </FadeIn>
+        </ScrollReveal>
       </div>
     </section>
   );

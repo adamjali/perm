@@ -12,7 +12,7 @@
  * - mailto: fallback for form submission
  * - Contact link cards (Email Support, Documentation)
  * - Neobrutalist styling matching design system
- * - FadeIn entrance animations
+ * - ScrollReveal entrance animations
  * - Dark mode support
  *
  */
@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { FadeIn } from "@/components/ui/fade-in";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 const SUPPORT_EMAIL = "support@permtracker.app";
 const MIN_MESSAGE_LENGTH = 10;
@@ -220,19 +220,19 @@ export function ContactSection() {
       {/* Content container */}
       <div className="mx-auto max-w-[1400px] px-4 py-20 sm:px-8 sm:py-28">
         {/* Section header */}
-        <FadeIn direction="up" className="mb-12 text-center sm:mb-16">
+        <ScrollReveal direction="up" className="mb-12 text-center sm:mb-16">
           <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
             Get in Touch
           </h2>
           <p className="mt-4 text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
             Questions, feedback, or just want to say hello?
           </p>
-        </FadeIn>
+        </ScrollReveal>
 
         {/* Two-column layout */}
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
           {/* Left column - Contact form */}
-          <FadeIn direction="left" delay={0.1}>
+          <ScrollReveal direction="left" delay={0.1}>
             <div className="bg-card border-2 border-border p-6 sm:p-8 shadow-hard dark:border-white/20">
 
               <h3 className="font-heading font-bold text-lg mb-6">
@@ -322,10 +322,10 @@ export function ContactSection() {
                 </p>
               </form>
             </div>
-          </FadeIn>
+          </ScrollReveal>
 
           {/* Right column - Contact link cards */}
-          <FadeIn direction="right" delay={0.2}>
+          <ScrollReveal direction="right" delay={0.2}>
             <div className="flex flex-col gap-4">
               <h3 className="font-heading font-bold text-lg mb-2">
                 Other ways to reach us
@@ -366,7 +366,7 @@ export function ContactSection() {
                 </p>
               </div>
             </div>
-          </FadeIn>
+          </ScrollReveal>
         </div>
       </div>
     </section>

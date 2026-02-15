@@ -7,7 +7,7 @@
  * GSAP scroll-triggered stagger on card entrance.
  */
 
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import type { PostSummary } from "@/lib/content/types";
 import ContentCard from "./ContentCard";
 

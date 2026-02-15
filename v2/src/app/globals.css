@@ -166,25 +166,15 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   }
 
-  /* Dot pattern background — fixed overlay (legacy, avoid for perf) */
+  /* Dot pattern background - light mode */
   .bg-dots {
     background-image: radial-gradient(circle, rgba(0,0,0,0.5) 1px, transparent 1px);
     background-size: 24px 24px;
   }
 
+  /* Dot pattern background - dark mode */
   .dark .bg-dots {
     background-image: radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-
-  /* Dot pattern as inline background (no fixed overlay — avoids per-frame repaint) */
-  .bg-dots-inline {
-    background-image: radial-gradient(circle, rgba(0,0,0,0.15) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-
-  .dark .bg-dots-inline {
-    background-image: radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px);
     background-size: 24px 24px;
   }
 
@@ -296,11 +286,10 @@
 
   /* Snappy card hover - design3 style
    * 0.15s max for hover responses (Linear.app style)
-   * Explicit properties avoid accidental transitions on layout-triggering props
+   * Ease-out-quad curve for natural deceleration
    */
   .card-snappy {
-    transition: transform 0.15s cubic-bezier(0.165, 0.84, 0.44, 1),
-                box-shadow 0.15s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: all 0.15s cubic-bezier(0.165, 0.84, 0.44, 1);
   }
   .card-snappy:hover {
     transform: translate(-2px, -2px);
@@ -401,17 +390,16 @@
     100% { transform: translateX(-50%); }
   }
 
-  /* Scroll progress bar — composited via scaleX (no layout/paint) */
+  /* Scroll progress bar */
   .scroll-progress {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
+    width: 0%;
     height: 4px;
     background: linear-gradient(90deg, var(--primary), var(--stage-pwd), var(--stage-recruitment));
     z-index: 1000;
-    transform-origin: left;
-    will-change: transform;
+    transition: width 0.1s ease-out;
   }
 
   /* Pulse animation for eyebrow dot */
@@ -507,30 +495,6 @@
   .scrollbar-hide::-webkit-scrollbar,
   .journey-scroll-container::-webkit-scrollbar {
     display: none;
-  }
-
-  /* Hero entrance animation — CSS-only stagger for server-rendered text */
-  @keyframes hero-entrance {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .hero-entrance-item {
-    animation: hero-entrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  }
-
-  .hero-entrance-item:nth-child(1) { animation-delay: 0.05s; }
-  .hero-entrance-item:nth-child(2) { animation-delay: 0.15s; }
-  .hero-entrance-item:nth-child(3) { animation-delay: 0.25s; }
-  .hero-entrance-item:nth-child(4) { animation-delay: 0.35s; }
-  .hero-entrance-item:nth-child(5) { animation-delay: 0.45s; }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hero-entrance-item {
-      animation: none;
-      opacity: 1;
-      transform: none;
-    }
   }
 
   /* Hero shimmer text effect - subtle light sweep */
@@ -688,13 +652,13 @@ input[type="file"]::file-selector-button:active {
   background: hsl(0 0% 100% / 0.5);
 }
 
-/* Firefox scrollbar — scoped to html to avoid non-composited animation warnings */
-html {
+/* Firefox scrollbar */
+* {
   scrollbar-width: thin;
   scrollbar-color: hsl(0 0% 0% / 0.3) transparent;
 }
 
-.dark html {
+.dark * {
   scrollbar-color: hsl(0 0% 100% / 0.3) transparent;
 }
 
@@ -891,7 +855,7 @@ button[disabled] {
  * Creates tactile "button push" sensation
  */
 .press-effect {
-  transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+  transition: all 0.1s ease-out;
 }
 
 .press-effect:hover {
@@ -1433,56 +1397,4 @@ body[data-scroll-locked] {
 
 .dark .driver-popover.neo-popover .driver-popover-arrow-side-bottom .driver-popover-arrow {
   border-bottom-color: var(--primary);
-}
-
-/* ============================================================
-   Page Enter Animation (replaces Framer Motion PageTransition)
-   ============================================================ */
-@keyframes page-enter {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.page-enter {
-  animation: page-enter 0.2s cubic-bezier(0.25, 0.1, 0.25, 1) both;
-}
-@media (prefers-reduced-motion: reduce) {
-  .page-enter { animation: none; opacity: 1; transform: none; }
-}
-
-/* ============================================================
-   FadeIn Utility (replaces ScrollReveal / Framer Motion)
-   ============================================================ */
-.fade-in {
-  opacity: 0;
-  transition: opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
-              transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.fade-in[data-direction="up"] { transform: translateY(20px); }
-.fade-in[data-direction="down"] { transform: translateY(-20px); }
-.fade-in[data-direction="left"] { transform: translateX(20px); }
-.fade-in[data-direction="right"] { transform: translateX(-20px); }
-.fade-in-visible { opacity: 1; transform: translate(0); }
-
-/* Stagger mode — children animate sequentially */
-.fade-in-stagger > * {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-              transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.fade-in-stagger[data-direction="down"] > * { transform: translateY(-20px); }
-.fade-in-stagger[data-direction="left"] > * { transform: translateX(20px); }
-.fade-in-stagger[data-direction="right"] > * { transform: translateX(-20px); }
-.fade-in-stagger-visible > * { opacity: 1; transform: translate(0); }
-.fade-in-stagger-visible > *:nth-child(1) { transition-delay: calc(var(--stagger-base-delay, 0s) + 0s); }
-.fade-in-stagger-visible > *:nth-child(2) { transition-delay: calc(var(--stagger-base-delay, 0s) + 0.08s); }
-.fade-in-stagger-visible > *:nth-child(3) { transition-delay: calc(var(--stagger-base-delay, 0s) + 0.16s); }
-.fade-in-stagger-visible > *:nth-child(4) { transition-delay: calc(var(--stagger-base-delay, 0s) + 0.24s); }
-.fade-in-stagger-visible > *:nth-child(5) { transition-delay: calc(var(--stagger-base-delay, 0s) + 0.32s); }
-.fade-in-stagger-visible > *:nth-child(6) { transition-delay: calc(var(--stagger-base-delay, 0s) + 0.4s); }
-.fade-in-stagger-visible > *:nth-child(n+7) { transition-delay: calc(var(--stagger-base-delay, 0s) + 0.48s); }
-
-@media (prefers-reduced-motion: reduce) {
-  .fade-in { opacity: 1; transform: none; transition: none; }
-  .fade-in-stagger > * { opacity: 1; transform: none; transition: none; }
 }

@@ -9,7 +9,7 @@
  */
 
 import * as React from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link2, Check } from "lucide-react";
 interface ShareButtonsProps {
   title: string;

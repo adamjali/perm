@@ -15,7 +15,8 @@
 import AuthHeader from "@/components/layout/AuthHeader";
 import Footer from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/home";
-import { LazyScrollToTop } from "@/components/ui/lazy-scroll-to-top";
+import { PageTransition } from "@/components/ui/page-transition";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 
 export default function PublicLayout({
   children,
@@ -23,7 +24,7 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-dots-inline relative flex min-h-screen flex-col bg-background">
+    <div className="relative flex min-h-screen flex-col bg-background">
       {/* Scroll progress indicator */}
       <ScrollProgress />
 
@@ -35,6 +36,12 @@ export default function PublicLayout({
         Skip to main content
       </a>
 
+      {/* Fixed dot pattern background - matches other layouts */}
+      <div
+        className="bg-dots pointer-events-none fixed inset-0 opacity-30"
+        aria-hidden="true"
+      />
+
       {/* Header */}
       <AuthHeader />
 
@@ -44,14 +51,14 @@ export default function PublicLayout({
         className="relative flex-1 pt-20"
         tabIndex={-1}
       >
-        <div className="page-enter">{children}</div>
+        <PageTransition>{children}</PageTransition>
       </main>
 
       {/* Extended Footer for public pages */}
       <Footer variant="extended" />
 
-      {/* Back-to-top button (lazy — loads motion/react only when needed) */}
-      <LazyScrollToTop />
+      {/* Back-to-top button */}
+      <ScrollToTop />
     </div>
   );
 }

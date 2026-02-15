@@ -349,7 +349,7 @@ export default function AuthHeader() {
 
                 {/* Learn section */}
                 <div className="border-t border-white/10 pt-2 mt-1">
-                  <p className="py-1 font-heading text-[10px] font-bold uppercase tracking-widest text-white/70">
+                  <p className="py-1 font-heading text-[10px] font-bold uppercase tracking-widest text-white/40">
                     Learn
                   </p>
                   {CONTENT_NAV_LINKS.map((link) => (
@@ -383,7 +383,7 @@ export default function AuthHeader() {
 
                 {/* Learn section */}
                 <div className="border-t border-white/10 pt-2 mt-1">
-                  <p className="py-1 font-heading text-[10px] font-bold uppercase tracking-widest text-white/70">
+                  <p className="py-1 font-heading text-[10px] font-bold uppercase tracking-widest text-white/40">
                     Learn
                   </p>
                   {CONTENT_NAV_LINKS.map((link) => (

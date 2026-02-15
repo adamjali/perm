@@ -8,7 +8,7 @@
  * GSAP ScrollTrigger stagger animation on scroll.
  */
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { PostSummary } from "@/lib/content/types";
 import ContentCard from "./ContentCard";
 

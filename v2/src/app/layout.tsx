@@ -4,7 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale } from "next-intl/server";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
-import { SharedProviders } from "./shared-providers";
+import { ConvexClientProvider } from "./providers";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import {
   getSoftwareApplicationSchema,
@@ -140,16 +140,9 @@ export default async function RootLayout({
     <ConvexAuthNextjsServerProvider>
       <html lang={locale} suppressHydrationWarning>
         <head>
-          {/* Preconnect to critical third-party origins to reduce LCP latency */}
-          <link
-            rel="preconnect"
-            href="https://o4510874774667264.ingest.us.sentry.io"
-            crossOrigin="anonymous"
-          />
-          <link rel="preconnect" href="https://widget.senja.io" crossOrigin="anonymous" />
-          {/* JSON-LD structured data for rich search results.
-              Content is generated from hardcoded strings in structuredData.ts,
-              not user input — safe for JSON-LD injection. */}
+          {/* JSON-LD structured data for rich search results
+              Note: Using dangerouslySetInnerHTML is safe here because structuredData
+              is generated from hardcoded strings in structuredData.ts, not user input */}
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
@@ -162,7 +155,7 @@ export default async function RootLayout({
         >
           <div className="grain-overlay" aria-hidden="true" />
           <NextIntlClientProvider messages={messages}>
-            <SharedProviders>{children}</SharedProviders>
+            <ConvexClientProvider>{children}</ConvexClientProvider>
           </NextIntlClientProvider>
           <SpeedInsights />
         </body>

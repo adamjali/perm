@@ -1,9 +1,11 @@
+"use client";
+
 /**
  * FeatureShowcase Component
  *
  * Six-item showcase highlighting PERM-specific features.
  * Uses simpler layout than FeaturesGrid - feature bullets not full cards.
- * Staggered FadeIn animations for visual polish.
+ * Staggered scroll reveal animations for visual polish.
  *
  */
 
@@ -15,7 +17,7 @@ import {
   Calendar,
   BarChart3,
 } from "lucide-react";
-import { FadeIn } from "@/components/ui/fade-in";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 interface ShowcaseFeature {
   icon: typeof CalendarCheck;
@@ -68,17 +70,17 @@ export function FeatureShowcase() {
       {/* Content container */}
       <div className="mx-auto max-w-7xl px-4 py-20 sm:px-8 sm:py-28">
         {/* Section header */}
-        <FadeIn direction="up" className="mb-16 text-center">
+        <ScrollReveal direction="up" className="mb-16 text-center">
           <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
             Powerful Features
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
             Everything you need to manage PERM cases efficiently
           </p>
-        </FadeIn>
+        </ScrollReveal>
 
         {/* Feature grid - single stagger container */}
-        <FadeIn direction="up" stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ScrollReveal direction="up" stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {showcaseFeatures.map((feature) => (
             <div key={feature.title} className="group flex h-full flex-col gap-4 border-2 border-black bg-card p-6 shadow-hard transition-all hover:-translate-y-1 hover:shadow-hard-lg dark:border-white/20">
               {/* Icon container */}
@@ -97,7 +99,7 @@ export function FeatureShowcase() {
               </div>
             </div>
           ))}
-        </FadeIn>
+        </ScrollReveal>
       </div>
     </section>
   );
