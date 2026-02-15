@@ -60,6 +60,16 @@ const userId = await getCurrentUserId(ctx);      // Throws if not authenticated
 const userId = await getCurrentUserIdOrNull(ctx); // Returns null if not authenticated
 ```
 
+### Auth Callbacks (Convex Auth)
+
+**`createOrUpdateUser`** — defined in `convex/auth.ts` for email-based account linking. Called during OAuth, new accounts, and verification. **NOT called for password sign-ins of existing users** (`retrieveAccountWithCredentials` bypasses it).
+
+**`afterUserCreatedOrUpdated`** — NEVER used. Skipped when `createOrUpdateUser` is defined.
+
+**Login tracking** — handled client-side via `LoginTracker` component (`src/components/auth/LoginTracker.tsx`). Uses `sessionStorage` to fire `recordMyLogin` once per browser session. Covers ALL auth flows.
+
+**Profile creation** — `onAuthEvent()` in auth.ts calls `ensureUserProfileInternal` for OAuth/new accounts. `PendingTermsHandler` is the client-side safety net.
+
 ### Schema Changes
 
 Edit `convex/schema.ts` — `npx convex dev` applies changes automatically.

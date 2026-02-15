@@ -90,7 +90,19 @@ pnpm test:run      # Full suite (~9 min)
 
 Push to main triggers auto-deploy:
 - **Vercel:** Frontend rebuild
-- **Convex:** Backend sync
+- **Convex:** `npx convex deploy -y` (manual, from `v2/`)
+
+### Project Names (avoid confusion)
+
+| Service | Name | Notes |
+|---------|------|-------|
+| GitHub repo | `perm` | `adamjali/perm.git` |
+| Local folder | `perm-tracker/v2/` | All code lives in `v2/` |
+| Vercel project | `perm` | Deploys from `v2/`, hosts `permtracker.app` |
+| Convex prod | `giant-dragon-464` | `npx convex deploy -y` from `v2/` |
+| Convex dev | `giddy-peccary-484` | `npx convex dev` from `v2/` |
+
+**Always run commands from `v2/` directory.** The root has no `.vercel/` config.
 
 ---
 
