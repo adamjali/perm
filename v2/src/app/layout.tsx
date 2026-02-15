@@ -113,10 +113,9 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
-  // Uncomment and add your verification code after setting up Google Search Console
-  // verification: {
-  //   google: "YOUR_GOOGLE_VERIFICATION_CODE",
-  // },
+  verification: {
+    google: "nYVTjXSLwwXIlF8q5qw_Jwr-kVUpVE4HDG956iRenCI",
+  },
 };
 
 export default async function RootLayout({

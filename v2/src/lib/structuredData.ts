@@ -72,9 +72,29 @@ export function getWebSiteSchema(baseUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'PERM Tracker',
+    alternateName: ['PERMTracker', 'PERM Tracker App', 'permtracker'],
     url: baseUrl,
     description:
       'Free PERM case tracking software for immigration attorneys.',
+  };
+}
+
+/**
+ * Generate FAQPage schema for rich results
+ * Used on the homepage to surface FAQ answers in search
+ */
+export function getFAQPageSchema(faqs: { question: string; answer: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
   };
 }
 

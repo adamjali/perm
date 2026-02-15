@@ -6,7 +6,7 @@
  */
 
 import type { PostMeta, ContentType } from "@/lib/content/types";
-import { generateArticleSchema, generateBreadcrumbSchema } from "@/lib/content/seo";
+import { generateArticleSchema, generateBreadcrumbSchema, generateHowToSchema } from "@/lib/content/seo";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 
 interface StructuredDataProps {
@@ -25,7 +25,12 @@ export default function StructuredData({ type, slug, meta }: StructuredDataProps
     { name: meta.title, href: `/${type}/${slug}` },
   ]);
 
-  const jsonLd = JSON.stringify([articleSchema, breadcrumbSchema]);
+  const schemas: object[] = [articleSchema, breadcrumbSchema];
+  if (type === "tutorials") {
+    schemas.push(generateHowToSchema(meta, slug));
+  }
+
+  const jsonLd = JSON.stringify(schemas);
 
   // JSON-LD content is generated server-side from trusted frontmatter data (not user input).
   // This is the recommended Next.js pattern for structured data: https://nextjs.org/docs/app/building-your-application/optimizing/metadata#json-ld
