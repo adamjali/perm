@@ -257,6 +257,12 @@ const status = getFilingWindowStatusFromCase(caseData);
 
 ---
 
+## Sitemap
+
+Static page dates in `src/app/sitemap.ts` are hardcoded. **When editing terms, privacy, login, signup, contact, or demo pages, update their `lastModified` in sitemap.ts.**
+
+---
+
 ## Anti-Patterns
 
 ```typescript

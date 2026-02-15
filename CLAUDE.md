@@ -102,7 +102,7 @@ Push to main triggers auto-deploy:
 | Convex prod | `giant-dragon-464` | `npx convex deploy -y` from `v2/` |
 | Convex dev | `giddy-peccary-484` | `npx convex dev` from `v2/` |
 
-**Always run commands from `v2/` directory.** The root has no `.vercel/` config.
+**Always run commands from `v2/` directory.** Claude is always launched from `v2/`. Vercel CLI is linked to project "perm" via `v2/.vercel/project.json`.
 
 ---
 
