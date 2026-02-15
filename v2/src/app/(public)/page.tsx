@@ -19,18 +19,8 @@
  */
 
 import type { Metadata } from "next";
-import {
-  HeroSection,
-  TrustStrip,
-  JourneySection,
-  FeaturesGrid,
-  HowItWorks,
-  StatsSection,
-  TestimonialsSection,
-  FAQSection,
-  ContentShowcase,
-  CTASection,
-} from "@/components/home";
+import { HeroSection, TrustStrip, TestimonialsSection } from "@/components/home";
+import { LazyHomeSections } from "@/components/home/LazyHomeSections";
 import { getFAQPageSchema } from "@/lib/structuredData";
 
 export const metadata: Metadata = {
@@ -104,14 +94,8 @@ export default function HomePage() {
       />
       <HeroSection />
       <TrustStrip />
-      <JourneySection />
-      <FeaturesGrid />
-      <HowItWorks />
-      <StatsSection />
+      <LazyHomeSections />
       <TestimonialsSection />
-      <FAQSection />
-      <ContentShowcase />
-      <CTASection />
     </>
   );
 }
