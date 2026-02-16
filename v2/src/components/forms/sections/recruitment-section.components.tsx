@@ -6,9 +6,10 @@
  * Extracted components for recruitment deadline display.
  */
 
-import { addDays, differenceInDays, format, parseISO, subDays } from "date-fns";
+import { differenceInDays, format, parseISO } from "date-fns";
 import { AlertTriangle, Clock, CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { calculateRecruitmentWindowCloses, getFirstRecruitmentDate } from "@/lib/perm";
 
 // ============================================================================
 // TYPES
@@ -67,40 +68,27 @@ export function RecruitmentDeadlineIndicator({
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const expirationDate = parseISO(pwdExpirationDate);
 
-  // Calculate PWD-based deadline: 30 days before PWD expires (for 30-day waiting period)
-  const pwdDeadline = subDays(expirationDate, 30);
+  // Use central lib: calculateRecruitmentWindowCloses = MIN(first + 150, pwd - 30)
+  const firstDate = getFirstRecruitmentDate({ sundayAdFirstDate, jobOrderStartDate, noticeOfFilingStartDate });
+  const recWindow = calculateRecruitmentWindowCloses(firstDate, pwdExpirationDate);
 
-  // Calculate 150-day deadline from FIRST recruitment step
-  // Per PERM_SYSTEM_ARCHITECTURE.md: recruitment_window_closes = MIN(first + 150, pwd - 30)
-  // The 150-day rule (not 180) accounts for the mandatory 30-day waiting period before ETA 9089 filing
-  const recruitmentDates = [sundayAdFirstDate, jobOrderStartDate, noticeOfFilingStartDate]
-    .filter((d): d is string => !!d)
-    .map((d) => parseISO(d));
-
-  let firstRecruitmentDate: Date | null = null;
-  let rule150Deadline: Date | null = null;
-
-  if (recruitmentDates.length > 0) {
-    // Get the earliest recruitment date
-    firstRecruitmentDate = recruitmentDates.sort((a, b) => a.getTime() - b.getTime())[0]!;
-    // 150 days from first recruitment (accounts for 30-day waiting period before filing)
-    rule150Deadline = addDays(firstRecruitmentDate, 150);
+  if (!recWindow) {
+    // No first recruitment date yet — show PWD-only deadline
+    const expirationDate = parseISO(pwdExpirationDate);
+    const daysToExpiration = differenceInDays(expirationDate, today);
+    return (
+      <div className="rounded-lg border-2 border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <CalendarClock className="h-4 w-4" />
+          <span>PWD expires {format(expirationDate, "MMM d, yyyy")} ({daysToExpiration} days)</span>
+        </div>
+      </div>
+    );
   }
 
-  // Determine which constraint is limiting: MIN(first + 150, pwd - 30)
-  let recruitmentDeadline: Date;
-  let limitingFactor: 'pwd' | '150-day';
-
-  if (rule150Deadline && rule150Deadline < pwdDeadline) {
-    recruitmentDeadline = rule150Deadline;
-    limitingFactor = '150-day';
-  } else {
-    recruitmentDeadline = pwdDeadline;
-    limitingFactor = 'pwd';
-  }
-
+  const recruitmentDeadline = parseISO(recWindow.closes);
+  const limitingFactor: 'pwd' | '150-day' = recWindow.isPwdLimited ? 'pwd' : '150-day';
   const daysRemaining = differenceInDays(recruitmentDeadline, today);
 
   // Determine status
@@ -179,7 +167,7 @@ export function RecruitmentDeadlineIndicator({
             PWD Expires
           </span>
           <p className="font-medium">
-            {format(expirationDate, "MMM d, yyyy")}
+            {format(parseISO(pwdExpirationDate), "MMM d, yyyy")}
           </p>
         </div>
       </div>
@@ -202,22 +190,11 @@ export function RecruitmentDeadlineIndicator({
       )}
 
       <p className="text-xs text-muted-foreground pt-1">
-        {(() => {
-          // Build dynamic explanation based on available data and limiting factor
-          // Note: At this point pwdExpirationDate is always defined (early returns above)
-          if (!firstRecruitmentDate) {
-            // No recruitment started yet - show both constraints
-            return "Recruitment must complete within 150 days of first step OR 30 days before PWD expiration, whichever is first.";
-          }
-          if (limitingFactor === '150-day' && rule150Deadline) {
-            return `Deadline based on 150-day rule from first recruitment (${format(firstRecruitmentDate, "MMM d, yyyy")}). This is earlier than the PWD constraint.`;
-          }
-          // limitingFactor === 'pwd'
-          if (rule150Deadline) {
-            return `Deadline based on PWD expiration (must complete 30 days before). This is earlier than the 150-day rule (${format(rule150Deadline, "MMM d, yyyy")}).`;
-          }
-          return "Must complete 30 days before PWD expiration to allow for ETA 9089 filing window.";
-        })()}
+        {limitingFactor === '150-day'
+          ? `Deadline based on 150-day rule from first recruitment${firstDate ? ` (${firstDate})` : ""}. This is earlier than the PWD constraint.`
+          : firstDate
+            ? "Deadline based on PWD expiration (must complete 30 days before). This is earlier than the 150-day rule."
+            : "Must complete 30 days before PWD expiration to allow for ETA 9089 filing window."}
       </p>
     </div>
   );

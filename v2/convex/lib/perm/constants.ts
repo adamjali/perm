@@ -139,3 +139,11 @@ export const SECOND_SUNDAY_AD_DEADLINE_DAYS = 150;
  * Formula: min(first + 150, pwd - 30)
  */
 export const SECOND_SUNDAY_AD_PWD_BUFFER_DAYS = 30;
+
+/**
+ * Days after first recruitment by which Notice of Filing must START.
+ * Notice requires 10 business days (~14 calendar days) to complete posting.
+ * Formula: RECRUITMENT_WINDOW_DAYS - 14 = 136
+ * This ensures notice can complete before the recruitment window closes.
+ */
+export const NOTICE_OF_FILING_START_DEADLINE_DAYS = 136;

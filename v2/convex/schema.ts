@@ -294,7 +294,7 @@ export default defineSchema({
     pwdDeterminationDate: v.optional(v.string()),
     pwdExpirationDate: v.optional(v.string()), // Auto-calculated
     pwdCaseNumber: v.optional(v.string()),
-    pwdWageAmount: v.optional(v.number()), // Stored as cents
+    pwdWageAmount: v.optional(v.number()), // Stored as dollars (e.g., 85000 or 85000.50)
     pwdWageLevel: v.optional(v.string()),
 
     // Recruitment - Job Order

@@ -13,6 +13,8 @@ import {
   getFirstRecruitmentDate,
   getLastRecruitmentDate,
   isISODateString,
+  RECRUITMENT_WINDOW_DAYS,
+  PWD_RECRUITMENT_BUFFER_DAYS,
 } from '../perm';
 import { getMethodCategory } from '@/../convex/lib/perm/recruitment/methodCategories';
 import { captureError } from '@/lib/sentry';
@@ -435,27 +437,27 @@ function calculateMethodMaxDate(data: CrossValidationData): { date: Date; dateSt
   let reason = '';
 
   if (firstRecruitmentDate) {
-    const max150 = new Date(firstRecruitmentDate);
-    max150.setDate(max150.getDate() + 150);
+    const maxFromFirst = new Date(firstRecruitmentDate);
+    maxFromFirst.setDate(maxFromFirst.getDate() + RECRUITMENT_WINDOW_DAYS);
 
     if (data.pwdExpirationDate) {
       const pwdMax = new Date(data.pwdExpirationDate);
-      pwdMax.setDate(pwdMax.getDate() - 30);
-      if (max150 <= pwdMax) {
-        maxDate = max150;
-        reason = '150 days from first recruitment';
+      pwdMax.setDate(pwdMax.getDate() - PWD_RECRUITMENT_BUFFER_DAYS);
+      if (maxFromFirst <= pwdMax) {
+        maxDate = maxFromFirst;
+        reason = `${RECRUITMENT_WINDOW_DAYS} days from first recruitment`;
       } else {
         maxDate = pwdMax;
-        reason = '30 days before PWD expiration';
+        reason = `${PWD_RECRUITMENT_BUFFER_DAYS} days before PWD expiration`;
       }
     } else {
-      maxDate = max150;
-      reason = '150 days from first recruitment';
+      maxDate = maxFromFirst;
+      reason = `${RECRUITMENT_WINDOW_DAYS} days from first recruitment`;
     }
   } else if (data.pwdExpirationDate) {
     maxDate = new Date(data.pwdExpirationDate);
-    maxDate.setDate(maxDate.getDate() - 30);
-    reason = '30 days before PWD expiration';
+    maxDate.setDate(maxDate.getDate() - PWD_RECRUITMENT_BUFFER_DAYS);
+    reason = `${PWD_RECRUITMENT_BUFFER_DAYS} days before PWD expiration`;
   }
 
   if (!maxDate) return null;

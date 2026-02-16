@@ -29,6 +29,9 @@ import {
   FIRST_SUNDAY_AD_PWD_BUFFER_DAYS,
   SECOND_SUNDAY_AD_DEADLINE_DAYS,
   SECOND_SUNDAY_AD_PWD_BUFFER_DAYS,
+  NOTICE_OF_FILING_START_DEADLINE_DAYS,
+  FILING_WINDOW_WAIT_DAYS,
+  FILING_WINDOW_CLOSE_DAYS,
 } from "../perm";
 
 // Re-export for consumers that import from here
@@ -109,7 +112,7 @@ export function getRecruitmentFieldDeadline(
 
   // Deadline configuration using centralized constants from convex/lib/perm/constants.ts
   const deadlineConfig: Record<string, { daysFromRecruitment: number; daysBeforePwd: number; isSunday: boolean }> = {
-    noticeOfFilingStartDate: { daysFromRecruitment: RECRUITMENT_WINDOW_DAYS, daysBeforePwd: PWD_RECRUITMENT_BUFFER_DAYS, isSunday: false },
+    noticeOfFilingStartDate: { daysFromRecruitment: NOTICE_OF_FILING_START_DEADLINE_DAYS, daysBeforePwd: PWD_RECRUITMENT_BUFFER_DAYS, isSunday: false },
     jobOrderStartDate: { daysFromRecruitment: JOB_ORDER_START_DEADLINE_DAYS, daysBeforePwd: JOB_ORDER_START_PWD_BUFFER_DAYS, isSunday: false },
     sundayAdFirstDate: { daysFromRecruitment: FIRST_SUNDAY_AD_DEADLINE_DAYS, daysBeforePwd: FIRST_SUNDAY_AD_PWD_BUFFER_DAYS, isSunday: true },
     sundayAdSecondDate: { daysFromRecruitment: SECOND_SUNDAY_AD_DEADLINE_DAYS, daysBeforePwd: SECOND_SUNDAY_AD_PWD_BUFFER_DAYS, isSunday: true },
@@ -410,9 +413,9 @@ export function getETA9089DateConstraints(values: Partial<CaseFormData>) {
   const todayStr = today();
   const { eta9089FilingDate, eta9089AuditDate, pwdExpirationDate } = values;
 
-  // Filing window: opens 30 days after last recruitment, closes 180 days after first
-  const filingWindowOpen = recruitmentEnd ? addDaysToDateStr(recruitmentEnd, 30) : undefined;
-  const filingWindowClose = firstRecruitmentDate ? addDaysToDateStr(firstRecruitmentDate, 180) : undefined;
+  // Filing window: opens FILING_WINDOW_WAIT_DAYS after last recruitment, closes FILING_WINDOW_CLOSE_DAYS after first
+  const filingWindowOpen = recruitmentEnd ? addDaysToDateStr(recruitmentEnd, FILING_WINDOW_WAIT_DAYS) : undefined;
+  const filingWindowClose = firstRecruitmentDate ? addDaysToDateStr(firstRecruitmentDate, FILING_WINDOW_CLOSE_DAYS) : undefined;
 
   // Take earlier of window close or PWD expiration
   const { max: filingMax, pwdTrumps } = getEarlierDate(filingWindowClose, pwdExpirationDate);

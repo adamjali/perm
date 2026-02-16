@@ -20,10 +20,10 @@ import {
 import type { CaseStatus, ProgressStatus } from "@/lib/perm";
 import {
   isProfessionalRecruitmentComplete,
+  isRecruitmentComplete,
   calculateFilingWindowFromCase,
   calculateRecruitmentWindowCloses,
   getFirstRecruitmentDate,
-  getLastRecruitmentDate,
 } from "@/lib/perm";
 import { getUrgencyLevelExtended, type UrgencyLevelExtended } from "@/lib/status";
 import type { AdditionalRecruitmentMethod } from "@/lib/shared/types";
@@ -100,9 +100,6 @@ export interface UrgencyColors {
 // CONSTANTS
 // ============================================================================
 
-/** Days for filing window wait period */
-const FILING_WINDOW_WAIT_DAYS = 30;
-
 /** Milliseconds per day for date calculations */
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -118,16 +115,6 @@ function getTodayUTC(): Date {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
   return today;
-}
-
-/**
- * Add days to a date in UTC (avoids DST issues).
- * Matches the pattern from convex/lib/perm/dates/filingWindow.ts
- */
-function addDaysUTC(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setUTCDate(result.getUTCDate() + days);
-  return result;
 }
 
 /**
@@ -359,32 +346,25 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       }
     }
 
-    // 5. Check if 30-day waiting period has passed
-    // Use canonical getLastRecruitmentDate() to include professional methods if applicable
-    const lastRecruitmentDate = getLastRecruitmentDate(
-      {
-        sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
-        jobOrderEndDate: caseData.jobOrderEndDate || undefined,
-        noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
-        additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
-      },
-      !!caseData.isProfessionalOccupation
-    );
+    // 5. Check if 30-day waiting period has passed (use central filing window calculation)
+    const filingWindow = calculateFilingWindowFromCase({
+      sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+      sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
+      jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+      jobOrderEndDate: caseData.jobOrderEndDate || undefined,
+      noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
+      noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
+      additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
+      pwdExpirationDate: caseData.pwdExpirationDate || undefined,
+      isProfessionalOccupation: !!caseData.isProfessionalOccupation,
+    });
 
-    if (lastRecruitmentDate) {
-      // Use UTC-safe date calculation to avoid DST issues
-      const lastDate = new Date(lastRecruitmentDate);
-      lastDate.setUTCHours(0, 0, 0, 0);
-      const filingWindowOpens = addDaysUTC(lastDate, FILING_WINDOW_WAIT_DAYS);
-      const today = getTodayUTC();
-
-      if (today < filingWindowOpens) {
-        const daysUntil = Math.ceil(
-          (filingWindowOpens.getTime() - today.getTime()) / MS_PER_DAY
-        );
+    if (filingWindow) {
+      const daysUntilOpens = calculateDaysUntil(filingWindow.opens);
+      if (daysUntilOpens > 0) {
         return {
           action: "Wait for Filing Window",
-          description: `ETA 9089 filing window opens in ${daysUntil} days`,
+          description: `ETA 9089 filing window opens in ${daysUntilOpens} days`,
           icon: createElement(Clock, { className: "h-5 w-5" }),
           urgency: "normal",
         };
@@ -503,9 +483,18 @@ export function calculateNextDeadline(caseData: NextUpCaseData): Deadline | null
     }
   }
 
-  // ETA 9089 Filing Window Opens/Closes (during recruitment stage, before ETA 9089 is filed)
-  // Uses canonical calculateFilingWindowFromCase()
-  if (caseData.caseStatus === "recruitment" && !caseData.eta9089FilingDate) {
+  // ETA 9089 Filing Window Opens/Closes (only when recruitment is complete, before ETA 9089 is filed)
+  const recruitmentDone = isRecruitmentComplete({
+    sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+    sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
+    jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+    jobOrderEndDate: caseData.jobOrderEndDate || undefined,
+    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
+    noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
+    isProfessionalOccupation: caseData.isProfessionalOccupation || undefined,
+    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
+  });
+  if (caseData.caseStatus === "recruitment" && !caseData.eta9089FilingDate && recruitmentDone) {
     const filingWindow = calculateFilingWindowFromCase({
       sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
       sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,

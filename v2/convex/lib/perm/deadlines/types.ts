@@ -198,6 +198,7 @@ export const SUPERSESSION_REASONS = {
   I140_FILED: "I-140 has been filed",
   RFI_RESPONDED: "RFI response has been submitted",
   RFE_RESPONDED: "RFE response has been submitted",
+  RECRUITMENT_INCOMPLETE: "Recruitment activities not yet complete",
   NO_DATE: "No date set for this deadline",
   NOT_CERTIFIED: "ETA 9089 not yet certified",
 } as const;

@@ -18,6 +18,7 @@ import type {
   RfeEntry,
 } from "./types";
 import { SUPERSESSION_REASONS } from "./types";
+import { isRecruitmentComplete } from "../recruitment/isRecruitmentComplete";
 
 // ============================================================================
 // MAIN SUPERSESSION CHECK
@@ -116,7 +117,8 @@ function checkPwdExpirationActive(
 }
 
 /**
- * Filing window deadlines are superseded when ETA 9089 is filed.
+ * Filing window deadlines are superseded when ETA 9089 is filed,
+ * or inactive when recruitment is not yet complete.
  *
  * Applies to:
  * - filing_window_opens (30 days after recruitment ends)
@@ -129,6 +131,11 @@ function checkFilingWindowActive(
   // Superseded when ETA 9089 filed
   if (caseData.eta9089FilingDate) {
     return { isActive: false, supersededReason: SUPERSESSION_REASONS.ETA9089_FILED };
+  }
+
+  // Inactive when recruitment is not complete
+  if (!isRecruitmentComplete(caseData)) {
+    return { isActive: false, supersededReason: SUPERSESSION_REASONS.RECRUITMENT_INCOMPLETE };
   }
 
   return { isActive: true };
