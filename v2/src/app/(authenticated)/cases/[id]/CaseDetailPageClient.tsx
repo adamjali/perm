@@ -1,7 +1,6 @@
 "use client";
 
-import * as React from "react";
-import { use, useState } from "react";
+import { use, useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { motion } from "motion/react";
@@ -60,6 +59,7 @@ import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useDerivedDates } from "@/hooks/useDerivedDates";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
+import { useIsMobile } from "@/lib/animations";
 import type { ProgressStatus } from "@/lib/perm";
 
 // ============================================================================
@@ -263,15 +263,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Detect mobile for default section state
   // On mobile (<768px), only first section is open by default
-  const [isMobile, setIsMobile] = React.useState(false);
-  React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const isMobile = useIsMobile();
 
   // Get user profile to check Google Calendar connection status
   const userProfile = useQuery(api.users.currentUserProfile);
@@ -302,7 +295,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
   // Check if case is on timeline
   const timelinePrefs = useQuery(api.timeline.getPreferences);
-  const isOnTimeline = React.useMemo(() => {
+  const isOnTimeline = useMemo(() => {
     if (!timelinePrefs) return true; // Default to true while loading
     if (timelinePrefs.selectedCaseIds === null || timelinePrefs.selectedCaseIds === undefined) {
       // null/undefined means all active cases are on timeline
@@ -316,7 +309,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
   // Update page context for chat AI awareness
   const { setPageData } = usePageContextUpdater();
-  React.useEffect(() => {
+  useEffect(() => {
     setPageData({
       currentCaseId: caseId,
       currentCaseData: {
@@ -329,7 +322,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   }, [caseId, caseData, setPageData]);
 
   // Calculate next deadline for status bar
-  const nextDeadline = React.useMemo(() => {
+  const nextDeadline = useMemo(() => {
     const today = new Date().toISOString().split("T")[0] as string;
     const deadlines: Array<{ label: string; date: string; daysUntil: number }> = [];
 
