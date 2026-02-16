@@ -23,8 +23,10 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  // Enable React Compiler for automatic memoization
-  reactCompiler: true,
+  // React Compiler disabled — known variable scoping bugs with Turbopack
+  // (ReferenceError: _object_property is not defined in production)
+  // Re-enable when SWC plugin ships: https://github.com/vercel/next.js/issues/78163
+  // reactCompiler: true,
 
   // Serve AVIF (30% smaller than WebP) with WebP fallback
   images: {

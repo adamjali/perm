@@ -740,6 +740,14 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                           const foundMethod = RECRUITMENT_METHODS.find(m => m.value === method.method);
                           const methodLabel = foundMethod ? foundMethod.label : 'Entry';
                           const methodDateHint = methodConstraints.date?.hint;
+                          const methodDateMin = methodConstraints.date?.min;
+                          const methodDateMax = methodConstraints.date?.max;
+                          const startDateHint = methodConstraints.startDate?.hint;
+                          const startDateMin = methodConstraints.startDate?.min;
+                          const startDateMax = methodConstraints.startDate?.max;
+                          const endDateHint = methodConstraints.endDate?.hint;
+                          const endDateMin = methodConstraints.endDate?.min;
+                          const endDateMax = methodConstraints.endDate?.max;
 
                           if (methodCategory === 'date-range') {
                             // Date-range methods (job_website_ad, employer_website, private_employment_firm)
@@ -750,15 +758,15 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                   name={`method-start-${index}`}
                                   required={hasMethod}
                                   error={errors?.[`additionalRecruitmentMethods.${index}.startDate`]}
-                                  hint={methodConstraints.startDate?.hint}
+                                  hint={startDateHint}
                                 >
                                   <DateInput
                                     id={`method-start-${index}`}
                                     name={`method-start-${index}`}
                                     value={method.startDate || ''}
                                     onChange={(e) => updateMethod(index, 'startDate', e.target.value)}
-                                    minDate={methodConstraints.startDate?.min}
-                                    maxDate={methodConstraints.startDate?.max}
+                                    minDate={startDateMin}
+                                    maxDate={startDateMax}
                                     error={!!errors?.[`additionalRecruitmentMethods.${index}.startDate`]}
                                   />
                                 </FormField>
@@ -766,15 +774,15 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                   label="End Date"
                                   name={`method-end-${index}`}
                                   error={errors?.[`additionalRecruitmentMethods.${index}.endDate`]}
-                                  hint={methodConstraints.endDate?.hint}
+                                  hint={endDateHint}
                                 >
                                   <DateInput
                                     id={`method-end-${index}`}
                                     name={`method-end-${index}`}
                                     value={method.endDate || ''}
                                     onChange={(e) => updateMethod(index, 'endDate', e.target.value)}
-                                    minDate={methodConstraints.endDate?.min}
-                                    maxDate={methodConstraints.endDate?.max}
+                                    minDate={endDateMin}
+                                    maxDate={endDateMax}
                                     error={!!errors?.[`additionalRecruitmentMethods.${index}.endDate`]}
                                     disabled={!method.startDate}
                                   />
@@ -839,8 +847,8 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                   name={`method-date-${index}`}
                                   value={method.date || ''}
                                   onChange={(e) => updateMethod(index, 'date', e.target.value)}
-                                  minDate={methodConstraints.date?.min}
-                                  maxDate={methodConstraints.date?.max}
+                                  minDate={methodDateMin}
+                                  maxDate={methodDateMax}
                                   error={!!errors?.[`additionalRecruitmentMethods.${index}.date`]}
                                 />
                               </FormField>

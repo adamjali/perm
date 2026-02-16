@@ -427,6 +427,38 @@ export function DemoCaseModal({
     return Object.values(dateInlineErrors).some((e) => Boolean(e));
   }, [dateInlineErrors]);
 
+  // Pre-extract optional chaining to avoid React Compiler + Turbopack hoisting bug
+  const dcPwdFilingMax = dateConstraints.pwdFilingDate?.max;
+  const dcPwdDeterminationMin = dateConstraints.pwdDeterminationDate?.min;
+  const dcPwdDeterminationMax = dateConstraints.pwdDeterminationDate?.max;
+  const dcNoticeOfFilingStartMin = dateConstraints.noticeOfFilingStartDate?.min;
+  const dcNoticeOfFilingStartMax = dateConstraints.noticeOfFilingStartDate?.max;
+  const dcJobOrderStartMin = dateConstraints.jobOrderStartDate?.min;
+  const dcJobOrderStartMax = dateConstraints.jobOrderStartDate?.max;
+  const dcJobOrderEndMin = dateConstraints.jobOrderEndDate?.min;
+  const dcSundayAdFirstMin = dateConstraints.sundayAdFirstDate?.min;
+  const dcSundayAdFirstMax = dateConstraints.sundayAdFirstDate?.max;
+  const dcSundayAdSecondMin = dateConstraints.sundayAdSecondDate?.min;
+  const dcSundayAdSecondMax = dateConstraints.sundayAdSecondDate?.max;
+  const dcEta9089FilingMin = dateConstraints.eta9089FilingDate?.min;
+  const dcEta9089FilingMax = dateConstraints.eta9089FilingDate?.max;
+  const dcEta9089CertMin = dateConstraints.eta9089CertificationDate?.min;
+  const dcEta9089CertMax = dateConstraints.eta9089CertificationDate?.max;
+  const dcI140FilingMin = dateConstraints.i140FilingDate?.min;
+  const dcI140FilingMax = dateConstraints.i140FilingDate?.max;
+  const dcI140ApprovalMin = dateConstraints.i140ApprovalDate?.min;
+  const dcI140ApprovalMax = dateConstraints.i140ApprovalDate?.max;
+
+  const dsPwdDeterminationDisabled = allFieldDisabledStates.pwdDeterminationDate?.disabled;
+  const dsNoticeOfFilingEndDisabled = allFieldDisabledStates.noticeOfFilingEndDate?.disabled;
+  const dsJobOrderEndDisabled = allFieldDisabledStates.jobOrderEndDate?.disabled;
+  const dsSundayAdSecondDisabled = allFieldDisabledStates.sundayAdSecondDate?.disabled;
+  const dsEta9089CertDisabled = allFieldDisabledStates.eta9089CertificationDate?.disabled;
+  const dsI140ApprovalDisabled = allFieldDisabledStates.i140ApprovalDate?.disabled;
+
+  const isProfessionalOccupation = formData.isProfessionalOccupation ?? false;
+  const isFavorite = formData.isFavorite ?? false;
+
   // Revalidate when modal opens with edit data
   useEffect(() => {
     if (isOpen && caseToEdit) {
@@ -715,7 +747,7 @@ export function DemoCaseModal({
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="isProfessionalOccupation"
-                  checked={formData.isProfessionalOccupation ?? false}
+                  checked={isProfessionalOccupation}
                   onCheckedChange={handleCheckboxChange("isProfessionalOccupation")}
                 />
                 <Label htmlFor="isProfessionalOccupation" className="cursor-pointer">
@@ -726,7 +758,7 @@ export function DemoCaseModal({
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="isFavorite"
-                  checked={formData.isFavorite ?? false}
+                  checked={isFavorite}
                   onCheckedChange={handleCheckboxChange("isFavorite")}
                 />
                 <Label htmlFor="isFavorite" className="cursor-pointer">
@@ -757,7 +789,7 @@ export function DemoCaseModal({
                 onClear={handleDateClear("pwdFilingDate")}
                 onBlur={handleFieldBlur("pwdFilingDate")}
                 validationState={dateFieldStates.pwdFilingDate}
-                maxDate={dateConstraints.pwdFilingDate?.max}
+                maxDate={dcPwdFilingMax}
                 error={Boolean(getFieldError("pwdFilingDate"))}
               />
             </FormField>
@@ -776,9 +808,9 @@ export function DemoCaseModal({
                 onClear={handleDateClear("pwdDeterminationDate")}
                 onBlur={handleFieldBlur("pwdDeterminationDate")}
                 validationState={dateFieldStates.pwdDeterminationDate}
-                minDate={dateConstraints.pwdDeterminationDate?.min}
-                maxDate={dateConstraints.pwdDeterminationDate?.max}
-                disabled={allFieldDisabledStates.pwdDeterminationDate?.disabled || !hasValue("pwdFilingDate")}
+                minDate={dcPwdDeterminationMin}
+                maxDate={dcPwdDeterminationMax}
+                disabled={dsPwdDeterminationDisabled || !hasValue("pwdFilingDate")}
                 error={Boolean(getFieldError("pwdDeterminationDate"))}
               />
             </FormField>
@@ -841,8 +873,8 @@ export function DemoCaseModal({
                   onClear={handleDateClear("noticeOfFilingStartDate")}
                   onBlur={handleFieldBlur("noticeOfFilingStartDate")}
                   validationState={dateFieldStates.noticeOfFilingStartDate}
-                  minDate={dateConstraints.noticeOfFilingStartDate?.min}
-                  maxDate={dateConstraints.noticeOfFilingStartDate?.max}
+                  minDate={dcNoticeOfFilingStartMin}
+                  maxDate={dcNoticeOfFilingStartMax}
                   error={Boolean(getFieldError("noticeOfFilingStartDate"))}
                 />
               </FormField>
@@ -861,7 +893,7 @@ export function DemoCaseModal({
                   onChange={handleDateChange("noticeOfFilingEndDate")}
                   onClear={handleDateClear("noticeOfFilingEndDate")}
                   autoCalculated={autoCalcFields.has("noticeOfFilingEndDate")}
-                  disabled={autoCalcFields.has("noticeOfFilingEndDate") || (allFieldDisabledStates.noticeOfFilingEndDate?.disabled ?? false)}
+                  disabled={autoCalcFields.has("noticeOfFilingEndDate") || (dsNoticeOfFilingEndDisabled ?? false)}
                   error={Boolean(getFieldError("noticeOfFilingEndDate"))}
                 />
               </FormField>
@@ -880,8 +912,8 @@ export function DemoCaseModal({
                   onClear={handleDateClear("jobOrderStartDate")}
                   onBlur={handleFieldBlur("jobOrderStartDate")}
                   validationState={dateFieldStates.jobOrderStartDate}
-                  minDate={dateConstraints.jobOrderStartDate?.min}
-                  maxDate={dateConstraints.jobOrderStartDate?.max}
+                  minDate={dcJobOrderStartMin}
+                  maxDate={dcJobOrderStartMax}
                   error={Boolean(getFieldError("jobOrderStartDate"))}
                 />
               </FormField>
@@ -901,9 +933,9 @@ export function DemoCaseModal({
                   onClear={handleDateClear("jobOrderEndDate")}
                   onBlur={handleFieldBlur("jobOrderEndDate")}
                   validationState={dateFieldStates.jobOrderEndDate}
-                  minDate={dateConstraints.jobOrderEndDate?.min}
+                  minDate={dcJobOrderEndMin}
                   autoCalculated={autoCalcFields.has("jobOrderEndDate")}
-                  disabled={autoCalcFields.has("jobOrderEndDate") || (allFieldDisabledStates.jobOrderEndDate?.disabled ?? false)}
+                  disabled={autoCalcFields.has("jobOrderEndDate") || (dsJobOrderEndDisabled ?? false)}
                   error={Boolean(getFieldError("jobOrderEndDate"))}
                 />
               </FormField>
@@ -922,8 +954,8 @@ export function DemoCaseModal({
                   onClear={handleDateClear("sundayAdFirstDate")}
                   onBlur={handleFieldBlur("sundayAdFirstDate")}
                   validationState={dateFieldStates.sundayAdFirstDate}
-                  minDate={dateConstraints.sundayAdFirstDate?.min}
-                  maxDate={dateConstraints.sundayAdFirstDate?.max}
+                  minDate={dcSundayAdFirstMin}
+                  maxDate={dcSundayAdFirstMax}
                   sundayOnly
                   error={Boolean(getFieldError("sundayAdFirstDate"))}
                 />
@@ -943,10 +975,10 @@ export function DemoCaseModal({
                   onClear={handleDateClear("sundayAdSecondDate")}
                   onBlur={handleFieldBlur("sundayAdSecondDate")}
                   validationState={dateFieldStates.sundayAdSecondDate}
-                  minDate={dateConstraints.sundayAdSecondDate?.min}
-                  maxDate={dateConstraints.sundayAdSecondDate?.max}
+                  minDate={dcSundayAdSecondMin}
+                  maxDate={dcSundayAdSecondMax}
                   sundayOnly
-                  disabled={allFieldDisabledStates.sundayAdSecondDate?.disabled || !hasValue("sundayAdFirstDate")}
+                  disabled={dsSundayAdSecondDisabled || !hasValue("sundayAdFirstDate")}
                   error={Boolean(getFieldError("sundayAdSecondDate"))}
                 />
               </FormField>
@@ -991,8 +1023,8 @@ export function DemoCaseModal({
                   onClear={handleDateClear("eta9089FilingDate")}
                   onBlur={handleFieldBlur("eta9089FilingDate")}
                   validationState={dateFieldStates.eta9089FilingDate}
-                  minDate={dateConstraints.eta9089FilingDate?.min}
-                  maxDate={dateConstraints.eta9089FilingDate?.max}
+                  minDate={dcEta9089FilingMin}
+                  maxDate={dcEta9089FilingMax}
                   error={Boolean(getFieldError("eta9089FilingDate"))}
                 />
               </FormField>
@@ -1011,9 +1043,9 @@ export function DemoCaseModal({
                   onClear={handleDateClear("eta9089CertificationDate")}
                   onBlur={handleFieldBlur("eta9089CertificationDate")}
                   validationState={dateFieldStates.eta9089CertificationDate}
-                  minDate={dateConstraints.eta9089CertificationDate?.min}
-                  maxDate={dateConstraints.eta9089CertificationDate?.max}
-                  disabled={allFieldDisabledStates.eta9089CertificationDate?.disabled ?? false}
+                  minDate={dcEta9089CertMin}
+                  maxDate={dcEta9089CertMax}
+                  disabled={dsEta9089CertDisabled ?? false}
                   error={Boolean(getFieldError("eta9089CertificationDate"))}
                 />
               </FormField>
@@ -1061,8 +1093,8 @@ export function DemoCaseModal({
                   onClear={handleDateClear("i140FilingDate")}
                   onBlur={handleFieldBlur("i140FilingDate")}
                   validationState={dateFieldStates.i140FilingDate}
-                  minDate={dateConstraints.i140FilingDate?.min}
-                  maxDate={dateConstraints.i140FilingDate?.max}
+                  minDate={dcI140FilingMin}
+                  maxDate={dcI140FilingMax}
                   error={Boolean(getFieldError("i140FilingDate"))}
                 />
               </FormField>
@@ -1081,9 +1113,9 @@ export function DemoCaseModal({
                   onClear={handleDateClear("i140ApprovalDate")}
                   onBlur={handleFieldBlur("i140ApprovalDate")}
                   validationState={dateFieldStates.i140ApprovalDate}
-                  minDate={dateConstraints.i140ApprovalDate?.min}
-                  maxDate={dateConstraints.i140ApprovalDate?.max}
-                  disabled={allFieldDisabledStates.i140ApprovalDate?.disabled ?? false}
+                  minDate={dcI140ApprovalMin}
+                  maxDate={dcI140ApprovalMax}
+                  disabled={dsI140ApprovalDisabled ?? false}
                   error={Boolean(getFieldError("i140ApprovalDate"))}
                 />
               </FormField>

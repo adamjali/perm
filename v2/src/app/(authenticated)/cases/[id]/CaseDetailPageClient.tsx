@@ -519,6 +519,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   const isClosed = caseData.caseStatus === "closed";
   const caseName = `${caseData.employerName} - ${caseData.positionTitle}`;
   const stageColor = STAGE_ACCENT_COLORS[caseData.caseStatus] ?? "var(--stage-closed)";
+  const isProfessionalOccupation = caseData.isProfessionalOccupation;
+  const isSample = caseData.isSample;
   const currentStage = getStageIndex(caseData.caseStatus);
 
   return (
@@ -576,7 +578,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   <h1 className="font-heading text-xl sm:text-2xl font-bold leading-tight truncate">
                     {caseData.employerName}
                   </h1>
-                  {caseData.isSample && (
+                  {isSample && (
                     <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[0.625rem] font-bold tracking-wider uppercase border-2 border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
                       SAMPLE
                     </span>
@@ -740,7 +742,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
             )}
             <CaseStageBadge stage={caseData.caseStatus} bordered />
             <ProgressStatusBadge status={caseData.progressStatus as ProgressStatus} />
-            {caseData.isProfessionalOccupation && (
+            {isProfessionalOccupation && (
               <span className="inline-flex items-center border border-border bg-muted px-2.5 py-0.5 text-xs font-medium">
                 Professional
               </span>
@@ -802,7 +804,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
             i140DenialDate: caseData.i140DenialDate,
             rfiEntries: caseData.rfiEntries,
             rfeEntries: caseData.rfeEntries,
-            isProfessionalOccupation: caseData.isProfessionalOccupation,
+            isProfessionalOccupation,
             additionalRecruitmentMethods: caseData.additionalRecruitmentMethods,
           }}
         />
@@ -929,7 +931,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               additionalRecruitmentMethods: caseData.additionalRecruitmentMethods,
               additionalRecruitmentStartDate: caseData.additionalRecruitmentStartDate,
               additionalRecruitmentEndDate: caseData.additionalRecruitmentEndDate,
-              isProfessionalOccupation: caseData.isProfessionalOccupation,
+              isProfessionalOccupation,
               pwdExpirationDate: caseData.pwdExpirationDate,
               recruitmentApplicantsCount:
                 caseData.recruitmentApplicantsCount !== undefined

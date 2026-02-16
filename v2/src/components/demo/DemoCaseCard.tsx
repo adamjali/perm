@@ -100,6 +100,8 @@ export function DemoCaseCard({ case: caseData, onEdit, onDelete }: DemoCaseCardP
   const stageBgClass = STAGE_BG_CLASSES[caseData.status];
   const stageLabel = STAGE_LABELS[caseData.status];
 
+  const isProfessionalOccupation = caseData.isProfessionalOccupation;
+  const isFavorite = caseData.isFavorite;
   const nextDeadline = useMemo(() => getNextDeadline(caseData), [caseData]);
   const urgency = useMemo(
     () => (nextDeadline ? getUrgencyFromDeadline(nextDeadline.date) : null),
@@ -129,7 +131,7 @@ export function DemoCaseCard({ case: caseData, onEdit, onDelete }: DemoCaseCardP
           </span>
 
           {/* Professional badge */}
-          {caseData.isProfessionalOccupation && (
+          {isProfessionalOccupation && (
             <span className="inline-flex items-center border-2 border-border bg-muted px-1.5 py-0 text-[10px] font-bold">
               PRO
             </span>
@@ -149,7 +151,7 @@ export function DemoCaseCard({ case: caseData, onEdit, onDelete }: DemoCaseCardP
         </div>
 
         {/* Favorite star */}
-        {caseData.isFavorite && (
+        {isFavorite && (
           <Star className="h-3.5 w-3.5 fill-primary text-primary" />
         )}
       </div>

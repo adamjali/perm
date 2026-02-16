@@ -129,7 +129,8 @@ export function ProfessionalSection({
   onDateChange,
   onBlur,
 }: ProfessionalSectionProps) {
-  const [isExpanded, setIsExpanded] = useState(values.isProfessionalOccupation ?? false);
+  const isProfessionalOccupation = values.isProfessionalOccupation;
+  const [isExpanded, setIsExpanded] = useState(isProfessionalOccupation ?? false);
 
   // Get constraints for each field
   const startConstraint = dateConstraints?.additionalRecruitmentStartDate;
@@ -141,8 +142,8 @@ export function ProfessionalSection({
 
   // Sync expanded state with checkbox value
   useEffect(() => {
-    setIsExpanded(values.isProfessionalOccupation ?? false);
-  }, [values.isProfessionalOccupation]);
+    setIsExpanded(isProfessionalOccupation ?? false);
+  }, [isProfessionalOccupation]);
 
   // Initialize methods array with 3 empty entries if needed
   const methods = values.additionalRecruitmentMethods || [];
@@ -198,7 +199,7 @@ export function ProfessionalSection({
 
   // Count filled methods for warning
   const filledMethodCount = displayMethods.filter(m => m.method && m.date).length;
-  const showWarning = values.isProfessionalOccupation && filledMethodCount < 3;
+  const showWarning = isProfessionalOccupation && filledMethodCount < 3;
 
   return (
     <FormSection title="Professional Occupation" defaultOpen>
@@ -207,7 +208,7 @@ export function ProfessionalSection({
         <div
           className={cn(
             "flex items-start gap-4 p-4 rounded-lg border-2 transition-all duration-300",
-            values.isProfessionalOccupation
+            isProfessionalOccupation
               ? "border-primary bg-primary/5"
               : "border-border hover:border-primary/50"
           )}
@@ -215,7 +216,7 @@ export function ProfessionalSection({
           <div className="flex items-center h-6">
             <Checkbox
               id="isProfessionalOccupation"
-              checked={values.isProfessionalOccupation ?? false}
+              checked={isProfessionalOccupation ?? false}
               onCheckedChange={handleCheckboxChange}
             />
           </div>
@@ -289,7 +290,7 @@ export function ProfessionalSection({
                       label="Method Type"
                       name={`additionalRecruitmentMethods.${index}.method`}
                       error={errors?.[`additionalRecruitmentMethods.${index}.method`]}
-                      required={values.isProfessionalOccupation}
+                      required={isProfessionalOccupation}
                     >
                       <SelectInput
                         id={`method-${index}`}
