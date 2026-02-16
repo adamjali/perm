@@ -199,7 +199,10 @@ describe("WindowsDisplay - Filing Window", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-60),
       sundayAdSecondDate: getRelativeDate(-53),
+      jobOrderStartDate: getRelativeDate(-55),
       jobOrderEndDate: getRelativeDate(-40), // Last recruitment ended 40 days ago
+      noticeOfFilingStartDate: getRelativeDate(-58),
+      noticeOfFilingEndDate: getRelativeDate(-44),
       pwdExpirationDate: getRelativeDate(60), // PWD expires in 60 days
       // No eta9089FilingDate - not filed yet
     });
@@ -217,7 +220,10 @@ describe("WindowsDisplay - Filing Window", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-30),
       sundayAdSecondDate: getRelativeDate(-26),
+      jobOrderStartDate: getRelativeDate(-29),
       jobOrderEndDate: getRelativeDate(-26), // Last recruitment ended 26 days ago
+      noticeOfFilingStartDate: getRelativeDate(-29),
+      noticeOfFilingEndDate: getRelativeDate(-26),
       pwdExpirationDate: getRelativeDate(90), // PWD expires in 90 days
     });
 
@@ -234,7 +240,10 @@ describe("WindowsDisplay - Filing Window", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-60),
       sundayAdSecondDate: getRelativeDate(-53),
+      jobOrderStartDate: getRelativeDate(-55),
       jobOrderEndDate: getRelativeDate(-40),
+      noticeOfFilingStartDate: getRelativeDate(-58),
+      noticeOfFilingEndDate: getRelativeDate(-44),
       pwdExpirationDate: getRelativeDate(10), // PWD expires in 10 days
     });
 
@@ -250,7 +259,10 @@ describe("WindowsDisplay - Filing Window", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-60),  // Recent enough that 180-day limit is far out
       sundayAdSecondDate: getRelativeDate(-53),
+      jobOrderStartDate: getRelativeDate(-58),
       jobOrderEndDate: getRelativeDate(-50),     // Filing opens -50+30 = -20 (already open)
+      noticeOfFilingStartDate: getRelativeDate(-58),
+      noticeOfFilingEndDate: getRelativeDate(-52),
       pwdExpirationDate: getRelativeDate(-10),   // PWD expired 10 days ago → close date
     });
 
@@ -266,7 +278,10 @@ describe("WindowsDisplay - Filing Window", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-170), // 180 days ends in 10 days
       sundayAdSecondDate: getRelativeDate(-163),
+      jobOrderStartDate: getRelativeDate(-168),
       jobOrderEndDate: getRelativeDate(-145),
+      noticeOfFilingStartDate: getRelativeDate(-168),
+      noticeOfFilingEndDate: getRelativeDate(-155),
       pwdExpirationDate: getRelativeDate(60), // PWD expires in 60 days
     });
 
@@ -280,7 +295,10 @@ describe("WindowsDisplay - Filing Window", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-60),
       sundayAdSecondDate: getRelativeDate(-53),
+      jobOrderStartDate: getRelativeDate(-55),
       jobOrderEndDate: getRelativeDate(-40),
+      noticeOfFilingStartDate: getRelativeDate(-58),
+      noticeOfFilingEndDate: getRelativeDate(-44),
       pwdExpirationDate: getRelativeDate(60),
     });
 
@@ -409,7 +427,10 @@ describe("WindowsDisplay - Status Chip Colors", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-30),
       sundayAdSecondDate: getRelativeDate(-26),
+      jobOrderStartDate: getRelativeDate(-29),
       jobOrderEndDate: getRelativeDate(-26),
+      noticeOfFilingStartDate: getRelativeDate(-29),
+      noticeOfFilingEndDate: getRelativeDate(-26),
       pwdExpirationDate: getRelativeDate(90),
     });
 
@@ -426,7 +447,10 @@ describe("WindowsDisplay - Status Chip Colors", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-60),
       sundayAdSecondDate: getRelativeDate(-53),
+      jobOrderStartDate: getRelativeDate(-55),
       jobOrderEndDate: getRelativeDate(-40),
+      noticeOfFilingStartDate: getRelativeDate(-58),
+      noticeOfFilingEndDate: getRelativeDate(-44),
       pwdExpirationDate: getRelativeDate(10),
     });
 
@@ -537,7 +561,10 @@ describe("WindowsDisplay - Edge Cases", () => {
     const mockCase = createMockCaseData({
       sundayAdFirstDate: getRelativeDate(-60),
       sundayAdSecondDate: getRelativeDate(-53),
+      jobOrderStartDate: getRelativeDate(-55),
       jobOrderEndDate: getRelativeDate(-40),
+      noticeOfFilingStartDate: getRelativeDate(-58),
+      noticeOfFilingEndDate: getRelativeDate(-44),
       // No pwdExpirationDate - will use 180-day limit
     });
 

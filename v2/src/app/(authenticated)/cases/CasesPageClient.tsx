@@ -364,6 +364,10 @@ export function CasesPageClient() {
   // ============================================================================
 
   useEffect(() => {
+    // When URL has no params (e.g., navigating to /cases via nav link),
+    // skip syncing from URL — let localStorage restoration handle state.
+    if (searchParams.toString().length === 0) return;
+
     const urlFilters = parseURLFilters(searchParams);
     const urlSort = parseURLSort(searchParams);
     const urlPage = parseURLPage(searchParams);
