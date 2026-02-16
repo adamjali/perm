@@ -9,7 +9,7 @@
  */
 
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Calendar, Clock, Loader2 } from "lucide-react";
 import type { PostSummary } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";

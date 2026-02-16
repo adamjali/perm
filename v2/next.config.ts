@@ -23,6 +23,19 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
+  // Enable React Compiler for automatic memoization
+  reactCompiler: true,
+
+  // Serve AVIF (30% smaller than WebP) with WebP fallback
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
+
+  experimental: {
+    // Tree-shake barrel exports for these packages
+    optimizePackageImports: ["lucide-react", "date-fns", "motion/react", "zod"],
+  },
+
   async redirects() {
     return [
       // Fix GSC 404s: old .html URLs → clean routes
@@ -65,6 +78,15 @@ const sentryOptions = {
 
   // Automatically instrument API routes and server components
   automaticVercelMonitors: true,
+
+  // Strip unused Sentry modules (~137KB savings)
+  bundleSizeOptimizations: {
+    excludeTracing: true,
+    excludeDebugStatements: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+    excludeReplayWorker: true,
+  },
 };
 
 // Only wrap with Sentry if DSN is configured

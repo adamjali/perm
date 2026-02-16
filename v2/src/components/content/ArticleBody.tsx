@@ -7,7 +7,7 @@
  * Handles FM fade-in for content and share buttons.
  */
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import TableOfContents from "./TableOfContents";
 import ShareButtons from "./ShareButtons";
 

@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { useRecruitmentSection } from "@/components/forms/useCaseFormSection";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
