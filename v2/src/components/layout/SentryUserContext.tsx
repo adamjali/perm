@@ -16,10 +16,12 @@ export function SentryUserContext(): null {
 
   useEffect(() => {
     if (user) {
+      const name = user.name;
+      const email = user.email;
       setUser({
         id: user._id,
-        email: user.email ?? undefined,
-        username: user.name ?? undefined,
+        email: email ?? undefined,
+        username: name ?? undefined,
       });
     } else {
       setUser(null);

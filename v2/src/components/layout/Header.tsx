@@ -126,6 +126,8 @@ export default function Header(): React.ReactElement {
   const { signOut } = useAuthActions();
   const { isSigningOut, beginSignOut, cancelSignOut } = useAuthContext();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // NOTE: Extract early to avoid React Compiler bug with optional chaining + ?? in JSX
+  const displayName = user?.name ?? "User";
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -210,7 +212,7 @@ export default function Header(): React.ReactElement {
 
           {/* User dropdown - hidden on mobile, shown in mobile menu */}
           <div className="hidden md:block">
-            {user && <UserMenu userName={user.name ?? "User"} />}
+            {user && <UserMenu userName={displayName} />}
           </div>
 
           {/* Theme toggle - always visible */}
@@ -256,7 +258,7 @@ export default function Header(): React.ReactElement {
             {user && (
               <div className="flex flex-col gap-1 border-t border-white/20 pt-3 mt-2">
                 <span className="text-sm text-white/60 font-semibold px-2 mb-1">
-                  {user.name ?? "User"}
+                  {displayName}
                 </span>
                 <NavLink
                   href="/settings"

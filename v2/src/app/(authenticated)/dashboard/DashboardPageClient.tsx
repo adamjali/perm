@@ -80,7 +80,9 @@ export function DashboardPageClient() {
   }
 
   // Extract first name from full name
-  const firstName = currentUser.name?.split(" ")[0] || "there";
+  // NOTE: Avoid optional chaining + fallback in one expression (React Compiler bug with Turbopack)
+  const rawName = currentUser.name;
+  const firstName = rawName ? rawName.split(" ")[0] : "there";
 
   return (
     <div className="space-y-8">
