@@ -3,10 +3,7 @@
 import { ConvexAuthNextjsProvider } from "@convex-dev/auth/nextjs";
 import { ConvexReactClient } from "convex/react";
 import { ReactNode, useEffect } from "react";
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
-import { NavLinkProvider } from "@/components/ui/nav-link";
 import { PageContextProvider } from "@/lib/ai/page-context";
 
 // Validate required environment variable with explicit error message
@@ -78,21 +75,26 @@ function BeforeUnloadSuppressor({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-export function ConvexClientProvider({ children }: { children: ReactNode }) {
+/**
+ * Convex + Auth providers — only used in auth/authenticated layouts.
+ * Public pages skip this entirely, avoiding Convex WebSocket + auth overhead.
+ */
+export function ConvexProviders({ children }: { children: ReactNode }) {
   return (
     <ConvexAuthNextjsProvider client={convex}>
       <BeforeUnloadSuppressor>
         <AuthProvider>
-          <ThemeProvider>
-            <NavLinkProvider>
-              <PageContextProvider>
-                {children}
-              </PageContextProvider>
-            </NavLinkProvider>
-            <Toaster />
-          </ThemeProvider>
+          <PageContextProvider>
+            {children}
+          </PageContextProvider>
         </AuthProvider>
       </BeforeUnloadSuppressor>
     </ConvexAuthNextjsProvider>
   );
 }
+
+/**
+ * @deprecated Use SharedProviders (root layout) + ConvexProviders (auth layouts) instead.
+ * Kept for backwards compatibility during migration.
+ */
+export { ConvexProviders as ConvexClientProvider };

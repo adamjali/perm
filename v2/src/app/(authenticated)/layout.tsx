@@ -30,6 +30,7 @@ import { OnboardingTourWrapper } from "@/components/onboarding/OnboardingTourWra
 import { PageTransition } from "@/components/ui/page-transition";
 import { SentryUserContext } from "@/components/layout/SentryUserContext";
 import { SentryClientInit } from "@/components/layout/SentryClientInit";
+import { ConvexProviders } from "@/app/providers";
 
 export default function AuthenticatedLayout({
   children,
@@ -37,6 +38,7 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   return (
+    <ConvexProviders>
     <InactivityTimeoutProvider>
       {/* Lazily initialize Sentry on authenticated pages */}
       <SentryClientInit />
@@ -102,5 +104,6 @@ export default function AuthenticatedLayout({
         <OnboardingTourWrapper />
       </OnboardingProvider>
     </InactivityTimeoutProvider>
+    </ConvexProviders>
   );
 }

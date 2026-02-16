@@ -1,6 +1,7 @@
 import AuthHeader from "@/components/layout/AuthHeader";
 import AuthFooter from "@/components/layout/AuthFooter";
 import { SentryClientInit } from "@/components/layout/SentryClientInit";
+import { ConvexProviders } from "@/app/providers";
 
 export default function AuthLayout({
   children,
@@ -8,6 +9,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
+    <ConvexProviders>
     <div className="relative min-h-screen bg-background flex flex-col overflow-y-auto">
       {/* Lazily initialize Sentry on auth pages */}
       <SentryClientInit />
@@ -35,5 +37,6 @@ export default function AuthLayout({
         <AuthFooter />
       </div>
     </div>
+    </ConvexProviders>
   );
 }

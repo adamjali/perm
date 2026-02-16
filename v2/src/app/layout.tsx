@@ -4,7 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale } from "next-intl/server";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
-import { ConvexClientProvider } from "./providers";
+import { SharedProviders } from "./shared-providers";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import {
   getSoftwareApplicationSchema,
@@ -155,7 +155,7 @@ export default async function RootLayout({
         >
           <div className="grain-overlay" aria-hidden="true" />
           <NextIntlClientProvider messages={messages}>
-            <ConvexClientProvider>{children}</ConvexClientProvider>
+            <SharedProviders>{children}</SharedProviders>
           </NextIntlClientProvider>
           <SpeedInsights />
         </body>
