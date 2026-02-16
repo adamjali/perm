@@ -318,7 +318,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.15 }}
-              className="flex items-center justify-between gap-4 px-4 py-3 mb-4 bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
+              className="flex flex-col gap-3 px-4 py-3 mb-4 bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
             >
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 flex-shrink-0" />
@@ -329,7 +329,14 @@ export default function SupportSection({ profile }: SupportSectionProps) {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelDeletion}
+                >
+                  Cancel Deletion
+                </Button>
                 <Button
                   variant="destructive"
                   size="sm"
@@ -337,13 +344,6 @@ export default function SupportSection({ profile }: SupportSectionProps) {
                 >
                   <Zap className="w-3 h-3 mr-1" />
                   Delete Now
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCancelDeletion}
-                >
-                  Cancel Deletion
                 </Button>
               </div>
             </motion.div>
