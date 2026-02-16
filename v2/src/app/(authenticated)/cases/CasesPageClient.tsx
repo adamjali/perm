@@ -271,7 +271,7 @@ export function CasesPageClient() {
   const bulkUpdateCalendarSyncMutation = useMutation(api.cases.bulkUpdateCalendarSync);
   const removeMutation = useMutation(api.cases.remove);
   const updateMutation = useMutation(api.cases.update);
-  const isCalendarConnected = useQuery(api.googleAuth.isGoogleCalendarConnected) ?? false;
+  const isCalendarConnected = !!useQuery(api.googleAuth.isGoogleCalendarConnected);
   const convex = useConvex();
 
   // Drag sensors — PointerSensor for mouse, TouchSensor for mobile (with
@@ -441,8 +441,8 @@ export function CasesPageClient() {
     if (localOrder.length > 0) {
       const orderMap = new Map(localOrder.map((id, index) => [id, index]));
       cases.sort((a, b) => {
-        const aIndex = orderMap.get(a._id) ?? Number.MAX_SAFE_INTEGER;
-        const bIndex = orderMap.get(b._id) ?? Number.MAX_SAFE_INTEGER;
+        const aIndex = orderMap.get(a._id) || Number.MAX_SAFE_INTEGER;
+        const bIndex = orderMap.get(b._id) || Number.MAX_SAFE_INTEGER;
         if (aIndex !== Number.MAX_SAFE_INTEGER && bIndex !== Number.MAX_SAFE_INTEGER) {
           return aIndex - bIndex;
         }
@@ -457,8 +457,8 @@ export function CasesPageClient() {
     if (sort.sortBy === "custom" && customOrderData?.caseIds?.length) {
       const orderMap = new Map(customOrderData.caseIds.map((id, index) => [id, index]));
       cases.sort((a, b) => {
-        const aIndex = orderMap.get(a._id) ?? Number.MAX_SAFE_INTEGER;
-        const bIndex = orderMap.get(b._id) ?? Number.MAX_SAFE_INTEGER;
+        const aIndex = orderMap.get(a._id) || Number.MAX_SAFE_INTEGER;
+        const bIndex = orderMap.get(b._id) || Number.MAX_SAFE_INTEGER;
         if (aIndex !== Number.MAX_SAFE_INTEGER && bIndex !== Number.MAX_SAFE_INTEGER) {
           return aIndex - bIndex;
         }
@@ -914,14 +914,15 @@ export function CasesPageClient() {
             isProfessionalOccupation: c.isProfessionalOccupation as boolean | undefined,
             calendarSyncEnabled: c.calendarSyncEnabled as boolean | undefined,
             showOnTimeline: c.showOnTimeline as boolean | undefined,
+            // SWC minifier bug workaround: use || instead of ?? (swc#760)
             // PWD dates
-            pwdFilingDate: dates?.pwdFiled ?? c.pwdFilingDate,
-            pwdDeterminationDate: dates?.pwdDetermined ?? c.pwdDeterminationDate,
-            pwdExpirationDate: dates?.pwdExpires ?? c.pwdExpirationDate,
+            pwdFilingDate: dates?.pwdFiled || c.pwdFilingDate,
+            pwdDeterminationDate: dates?.pwdDetermined || c.pwdDeterminationDate,
+            pwdExpirationDate: dates?.pwdExpires || c.pwdExpirationDate,
             pwdCaseNumber: c.pwdCaseNumber,
             // Recruitment - Job Order
-            jobOrderStartDate: dates?.recruitmentStart ?? c.jobOrderStartDate,
-            jobOrderEndDate: dates?.recruitmentEnd ?? c.jobOrderEndDate,
+            jobOrderStartDate: dates?.recruitmentStart || c.jobOrderStartDate,
+            jobOrderEndDate: dates?.recruitmentEnd || c.jobOrderEndDate,
             jobOrderState: c.jobOrderState,
             // Recruitment - Sunday Ads
             sundayAdFirstDate: c.sundayAdFirstDate,
@@ -937,15 +938,15 @@ export function CasesPageClient() {
             recruitmentApplicantsCount: c.recruitmentApplicantsCount,
             recruitmentSummaryCustom: c.recruitmentSummaryCustom,
             // ETA 9089
-            eta9089FilingDate: dates?.etaFiled ?? c.eta9089FilingDate,
-            eta9089CertificationDate: dates?.etaCertified ?? c.eta9089CertificationDate,
-            eta9089ExpirationDate: dates?.etaExpires ?? c.eta9089ExpirationDate,
+            eta9089FilingDate: dates?.etaFiled || c.eta9089FilingDate,
+            eta9089CertificationDate: dates?.etaCertified || c.eta9089CertificationDate,
+            eta9089ExpirationDate: dates?.etaExpires || c.eta9089ExpirationDate,
             eta9089CaseNumber: c.eta9089CaseNumber,
             // I-140
-            i140FilingDate: dates?.i140Filed ?? c.i140FilingDate,
+            i140FilingDate: dates?.i140Filed || c.i140FilingDate,
             i140ReceiptDate: c.i140ReceiptDate,
             i140ReceiptNumber: c.i140ReceiptNumber,
-            i140ApprovalDate: dates?.i140Approved ?? c.i140ApprovalDate,
+            i140ApprovalDate: dates?.i140Approved || c.i140ApprovalDate,
             i140DenialDate: c.i140DenialDate,
             // RFI/RFE arrays
             rfiEntries: c.rfiEntries,
@@ -1000,14 +1001,14 @@ export function CasesPageClient() {
   // PAGINATION (from server response)
   // ============================================================================
 
-  const totalCount = caseListData?.pagination.totalCount ?? 0;
-  const totalPages = caseListData?.pagination.totalPages ?? 1;
+  const totalCount = caseListData?.pagination.totalCount || 0;
+  const totalPages = caseListData?.pagination.totalPages || 1;
   // Server already paginated - processedCases IS the current page
   const paginatedCases = processedCases;
 
   // The case currently being dragged — used to render the DragOverlay content.
   const activeDragCase = useMemo(
-    () => (activeDragId ? paginatedCases.find((c) => c._id === activeDragId) ?? null : null),
+    () => (activeDragId ? paginatedCases.find((c) => c._id === activeDragId) || null : null),
     [activeDragId, paginatedCases]
   );
 

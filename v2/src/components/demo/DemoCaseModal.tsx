@@ -106,33 +106,35 @@ function toCascadeField(field: string): string {
   return field.replace(/[A-Z]/g, (m) => "_" + m.toLowerCase());
 }
 
+// SWC minifier bug workaround: use || instead of ?? to avoid temp variable overflow.
+// See swc#760, swc#7953, swc#9468 — SWC drops var declarations when ~20+ ?? in one function.
 function toCaseData(demoCase: Partial<DemoCase>): CaseData {
   return {
-    pwd_filing_date: demoCase.pwdFilingDate ?? null,
-    pwd_determination_date: demoCase.pwdDeterminationDate ?? null,
-    pwd_expiration_date: demoCase.pwdExpirationDate ?? null,
-    sunday_ad_first_date: demoCase.sundayAdFirstDate ?? null,
-    sunday_ad_second_date: demoCase.sundayAdSecondDate ?? null,
-    job_order_start_date: demoCase.jobOrderStartDate ?? null,
-    job_order_end_date: demoCase.jobOrderEndDate ?? null,
-    notice_of_filing_start_date: demoCase.noticeOfFilingStartDate ?? null,
-    notice_of_filing_end_date: demoCase.noticeOfFilingEndDate ?? null,
-    recruitment_start_date: demoCase.recruitmentStartDate ?? null,
-    recruitment_end_date: demoCase.recruitmentEndDate ?? null,
-    is_professional_occupation: demoCase.isProfessionalOccupation ?? false,
-    eta9089_filing_date: demoCase.eta9089FilingDate ?? null,
-    eta9089_certification_date: demoCase.eta9089CertificationDate ?? null,
-    eta9089_expiration_date: demoCase.eta9089ExpirationDate ?? null,
-    i140_filing_date: demoCase.i140FilingDate ?? null,
-    i140_approval_date: demoCase.i140ApprovalDate ?? null,
-    rfi_received_date: demoCase.rfiReceivedDate ?? null,
-    rfi_due_date: demoCase.rfiDueDate ?? null,
-    rfi_submitted_date: demoCase.rfiSubmittedDate ?? null,
-    rfe_received_date: demoCase.rfeReceivedDate ?? null,
-    rfe_due_date: demoCase.rfeDueDate ?? null,
-    rfe_submitted_date: demoCase.rfeSubmittedDate ?? null,
-    case_status: demoCase.status ?? "pwd",
-    progress_status: demoCase.progressStatus ?? "working",
+    pwd_filing_date: demoCase.pwdFilingDate || null,
+    pwd_determination_date: demoCase.pwdDeterminationDate || null,
+    pwd_expiration_date: demoCase.pwdExpirationDate || null,
+    sunday_ad_first_date: demoCase.sundayAdFirstDate || null,
+    sunday_ad_second_date: demoCase.sundayAdSecondDate || null,
+    job_order_start_date: demoCase.jobOrderStartDate || null,
+    job_order_end_date: demoCase.jobOrderEndDate || null,
+    notice_of_filing_start_date: demoCase.noticeOfFilingStartDate || null,
+    notice_of_filing_end_date: demoCase.noticeOfFilingEndDate || null,
+    recruitment_start_date: demoCase.recruitmentStartDate || null,
+    recruitment_end_date: demoCase.recruitmentEndDate || null,
+    is_professional_occupation: !!demoCase.isProfessionalOccupation,
+    eta9089_filing_date: demoCase.eta9089FilingDate || null,
+    eta9089_certification_date: demoCase.eta9089CertificationDate || null,
+    eta9089_expiration_date: demoCase.eta9089ExpirationDate || null,
+    i140_filing_date: demoCase.i140FilingDate || null,
+    i140_approval_date: demoCase.i140ApprovalDate || null,
+    rfi_received_date: demoCase.rfiReceivedDate || null,
+    rfi_due_date: demoCase.rfiDueDate || null,
+    rfi_submitted_date: demoCase.rfiSubmittedDate || null,
+    rfe_received_date: demoCase.rfeReceivedDate || null,
+    rfe_due_date: demoCase.rfeDueDate || null,
+    rfe_submitted_date: demoCase.rfeSubmittedDate || null,
+    case_status: demoCase.status || "pwd",
+    progress_status: demoCase.progressStatus || "working",
   };
 }
 
@@ -166,7 +168,7 @@ function applyCascadeToDemoCase(
 ): Partial<DemoCase> {
   const caseData = toCaseData(formData);
   const cascadeResult = applyCascadeForField(caseData, field, value);
-  const updated = { ...formData, [field]: value ?? undefined };
+  const updated = { ...formData, [field]: value || undefined };
 
   const cascadeFieldMap: Record<string, keyof DemoCase> = {
     pwd_expiration_date: "pwdExpirationDate",
@@ -181,7 +183,7 @@ function applyCascadeToDemoCase(
   for (const [snakeKey, camelKey] of Object.entries(cascadeFieldMap)) {
     const cascadeValue = cascadeResult[snakeKey as keyof CaseData];
     if (cascadeValue !== caseData[snakeKey as keyof CaseData]) {
-      (updated as Record<string, unknown>)[camelKey] = cascadeValue ?? undefined;
+      (updated as Record<string, unknown>)[camelKey] = cascadeValue || undefined;
       if (cascadeValue) {
         cascadedFields.push(camelKey);
       }
@@ -232,7 +234,7 @@ function toCaseFormDataPartial(data: Partial<DemoCase>): Partial<CaseFormData> {
     noticeOfFilingEndDate: data.noticeOfFilingEndDate,
     eta9089FilingDate: data.eta9089FilingDate,
     eta9089CertificationDate: data.eta9089CertificationDate,
-    isProfessionalOccupation: data.isProfessionalOccupation ?? false,
+    isProfessionalOccupation: !!data.isProfessionalOccupation,
     i140FilingDate: data.i140FilingDate,
     i140ApprovalDate: data.i140ApprovalDate,
   } as Partial<CaseFormData>;

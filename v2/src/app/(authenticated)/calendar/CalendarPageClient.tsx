@@ -227,31 +227,32 @@ export function CalendarPageClient() {
         positionTitle: caseData.positionTitle,
         caseStatus: caseData.caseStatus,
         progressStatus: caseData.progressStatus,
+        // SWC minifier bug workaround: use || instead of ?? (swc#760)
         // PWD dates
-        pwdFilingDate: caseData.pwdFilingDate ?? null,
-        pwdDeterminationDate: caseData.pwdDeterminationDate ?? null,
-        pwdExpirationDate: caseData.pwdExpirationDate ?? null,
+        pwdFilingDate: caseData.pwdFilingDate || null,
+        pwdDeterminationDate: caseData.pwdDeterminationDate || null,
+        pwdExpirationDate: caseData.pwdExpirationDate || null,
         // Recruitment dates
-        sundayAdFirstDate: caseData.sundayAdFirstDate ?? null,
-        sundayAdSecondDate: caseData.sundayAdSecondDate ?? null,
-        jobOrderStartDate: caseData.jobOrderStartDate ?? null,
-        jobOrderEndDate: caseData.jobOrderEndDate ?? null,
-        noticeOfFilingEndDate: caseData.noticeOfFilingEndDate ?? null,
+        sundayAdFirstDate: caseData.sundayAdFirstDate || null,
+        sundayAdSecondDate: caseData.sundayAdSecondDate || null,
+        jobOrderStartDate: caseData.jobOrderStartDate || null,
+        jobOrderEndDate: caseData.jobOrderEndDate || null,
+        noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || null,
         // Additional recruitment (for professional occupations)
         additionalRecruitmentStartDate:
-          caseData.additionalRecruitmentStartDate ?? null,
+          caseData.additionalRecruitmentStartDate || null,
         additionalRecruitmentEndDate:
-          caseData.additionalRecruitmentEndDate ?? null,
+          caseData.additionalRecruitmentEndDate || null,
         // ETA 9089 dates
-        eta9089FilingDate: caseData.eta9089FilingDate ?? null,
-        eta9089CertificationDate: caseData.eta9089CertificationDate ?? null,
-        eta9089ExpirationDate: caseData.eta9089ExpirationDate ?? null,
+        eta9089FilingDate: caseData.eta9089FilingDate || null,
+        eta9089CertificationDate: caseData.eta9089CertificationDate || null,
+        eta9089ExpirationDate: caseData.eta9089ExpirationDate || null,
         // I-140 dates
-        i140FilingDate: caseData.i140FilingDate ?? null,
-        i140ApprovalDate: caseData.i140ApprovalDate ?? null,
+        i140FilingDate: caseData.i140FilingDate || null,
+        i140ApprovalDate: caseData.i140ApprovalDate || null,
         // RFI/RFE entries
-        rfiEntries: caseData.rfiEntries ?? null,
-        rfeEntries: caseData.rfeEntries ?? null,
+        rfiEntries: caseData.rfiEntries || null,
+        rfeEntries: caseData.rfeEntries || null,
       };
 
       return caseToCalendarEvents(calendarCaseData);
