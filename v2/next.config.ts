@@ -38,7 +38,9 @@ const nextConfig: NextConfig = {
     // Inline critical CSS to eliminate render-blocking stylesheets
     inlineCss: true,
     // Tree-shake barrel exports for these packages
-    optimizePackageImports: ["lucide-react", "date-fns", "motion/react", "zod"],
+    // motion/react removed — causes "int is not defined" ReferenceError in production
+    // (motion-dom's internal int.mjs export gets incorrectly tree-shaken)
+    optimizePackageImports: ["lucide-react", "date-fns", "zod"],
   },
 
   async redirects() {
