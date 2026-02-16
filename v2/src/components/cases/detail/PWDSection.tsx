@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo } from "react";
 import { FileText } from "lucide-react";
 import { CaseDetailSection, MilestoneTrack, ValueHighlight } from "./CaseDetailSection";
 import { formatISODate } from "@/lib/utils/date";
@@ -97,7 +97,7 @@ export function PWDSection({
   );
 
   // Preview summary for collapsed state
-  const preview = React.useMemo(() => {
+  const preview = useMemo(() => {
     if (data.pwdExpirationDate) return `Exp ${formatDate(data.pwdExpirationDate)}`;
     if (data.pwdDeterminationDate) return `Det ${formatDate(data.pwdDeterminationDate)}`;
     if (data.pwdFilingDate) return `Filed ${formatDate(data.pwdFilingDate)}`;

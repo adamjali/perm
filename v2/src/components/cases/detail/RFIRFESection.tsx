@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AlertTriangle, CheckCircle2, Clock, ChevronLeft, ChevronRight, ChevronsUpDown } from "lucide-react";
 import { CaseDetailSection } from "./CaseDetailSection";
 import { Badge } from "@/components/ui/badge";
@@ -249,10 +249,10 @@ function EntryGroup({
   entries: (RFIEntry | RFEEntry)[];
   activeCount: number;
 }) {
-  const [expanded, setExpanded] = React.useState(false);
-  const [page, setPage] = React.useState(0);
+  const [expanded, setExpanded] = useState(false);
+  const [page, setPage] = useState(0);
 
-  const sorted = React.useMemo(() => sortEntries(entries), [entries]);
+  const sorted = useMemo(() => sortEntries(entries), [entries]);
   const totalCount = sorted.length;
   const hasOverflow = totalCount > INITIAL_VISIBLE_COUNT;
 
@@ -262,7 +262,7 @@ function EntryGroup({
   const PAGE_SIZE = 4;
   const totalPages = usePagination ? Math.ceil(totalCount / PAGE_SIZE) : 1;
 
-  const visibleEntries = React.useMemo(() => {
+  const visibleEntries = useMemo(() => {
     if (!expanded) {
       return sorted.slice(0, INITIAL_VISIBLE_COUNT);
     }
@@ -274,7 +274,7 @@ function EntryGroup({
   }, [sorted, expanded, usePagination, page]);
 
   // Reset page when expanding/collapsing
-  React.useEffect(() => {
+  useEffect(() => {
     if (!expanded) setPage(0);
   }, [expanded]);
 
@@ -393,14 +393,14 @@ export function RFIRFESection({
   const totalCount = rfiEntries.length + rfeEntries.length;
 
   // Preview summary for collapsed state
-  const preview = React.useMemo(() => {
+  const preview = useMemo(() => {
     if (!hasData) return undefined;
     if (totalActive > 0) return `${totalActive} active`;
     return `${totalCount} resolved`;
   }, [hasData, totalActive, totalCount]);
 
   // Title with count badge
-  const titleNode = React.useMemo(() => {
+  const titleNode = useMemo(() => {
     if (totalCount === 0) return "RFI / RFE";
     return `RFI / RFE`;
   }, [totalCount]);

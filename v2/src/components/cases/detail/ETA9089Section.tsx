@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo } from "react";
 import { FileCheck } from "lucide-react";
 import { CaseDetailSection, MilestoneTrack, ValueHighlight } from "./CaseDetailSection";
 import { formatISODate } from "@/lib/utils/date";
@@ -157,7 +157,7 @@ export function ETA9089Section({
   );
 
   // Preview summary for collapsed state
-  const preview = React.useMemo(() => {
+  const preview = useMemo(() => {
     if (data.eta9089CertificationDate) return `Certified ${formatDate(data.eta9089CertificationDate)}`;
     if (data.eta9089FilingDate) return `Filed ${formatDate(data.eta9089FilingDate)}`;
     if (windowStatus.status === "open") return "Window Open";

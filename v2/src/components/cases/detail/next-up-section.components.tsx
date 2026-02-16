@@ -7,8 +7,7 @@
  * Includes inline quick-edit functionality for action cards.
  */
 
-import * as React from "react";
-import { useState, useCallback } from "react";
+import { Fragment, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -122,7 +121,7 @@ export function StageProgressIndicator({ currentStage }: StageProgressIndicatorP
         const Icon = stage.icon;
 
         return (
-          <React.Fragment key={stage.id}>
+          <Fragment key={stage.id}>
             <motion.div
               custom={index}
               variants={stageVariants}
@@ -183,7 +182,7 @@ export function StageProgressIndicator({ currentStage }: StageProgressIndicatorP
                 }}
               />
             )}
-          </React.Fragment>
+          </Fragment>
         );
       })}
     </motion.div>

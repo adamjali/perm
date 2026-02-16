@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import type { CaseWithDates } from "@/lib/timeline";
 import { isRecruitmentComplete } from "@/lib/perm";
@@ -605,12 +605,12 @@ function WindowCard({
  */
 export function WindowsDisplay({ caseData, className }: WindowsDisplayProps) {
   // Calculate windows
-  const recruitmentWindow = React.useMemo(
+  const recruitmentWindow = useMemo(
     () => calculateRecruitmentWindow(caseData),
     [caseData]
   );
 
-  const filingWindow = React.useMemo(
+  const filingWindow = useMemo(
     () => calculateFilingWindow(caseData),
     [caseData]
   );

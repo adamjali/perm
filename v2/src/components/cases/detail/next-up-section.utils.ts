@@ -5,7 +5,7 @@
  * Extracted from NextUpSection.tsx for better maintainability and testing.
  */
 
-import * as React from "react";
+import { createElement, type ReactNode } from "react";
 import {
   AlertTriangle,
   HourglassIcon,
@@ -76,7 +76,7 @@ export interface NextUpCaseData {
 export interface NextAction {
   action: string;
   description: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   urgency: "normal" | "soon" | "urgent" | "overdue";
 }
 
@@ -254,7 +254,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "Respond to RFI",
       description: `RFI response due ${daysUntil < 0 ? "was" : "in"} ${Math.abs(daysUntil)} days`,
-      icon: React.createElement(AlertTriangle, { className: "h-5 w-5" }),
+      icon: createElement(AlertTriangle, { className: "h-5 w-5" }),
       urgency: getUrgencyLevel(daysUntil),
     };
   }
@@ -265,7 +265,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "Respond to RFE",
       description: `RFE response due ${daysUntil < 0 ? "was" : "in"} ${Math.abs(daysUntil)} days`,
-      icon: React.createElement(AlertTriangle, { className: "h-5 w-5" }),
+      icon: createElement(AlertTriangle, { className: "h-5 w-5" }),
       urgency: getUrgencyLevel(daysUntil),
     };
   }
@@ -276,7 +276,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "File PWD",
         description: "Submit Prevailing Wage Determination request to DOL",
-        icon: React.createElement(FileText, { className: "h-5 w-5" }),
+        icon: createElement(FileText, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -284,7 +284,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Wait for PWD",
         description: "Awaiting DOL determination (typically 4-6 months)",
-        icon: React.createElement(HourglassIcon, { className: "h-5 w-5" }),
+        icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -292,7 +292,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "Start Recruitment",
       description: "Begin recruitment activities for labor certification",
-      icon: React.createElement(Briefcase, { className: "h-5 w-5" }),
+      icon: createElement(Briefcase, { className: "h-5 w-5" }),
       urgency: "normal",
     };
   }
@@ -313,7 +313,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Post Job Order",
         description: "Submit job posting to State Workforce Agency (30+ days)",
-        icon: React.createElement(Briefcase, { className: "h-5 w-5" }),
+        icon: createElement(Briefcase, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -323,7 +323,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Post Notice of Filing",
         description: "Post internal notice for 10 consecutive business days",
-        icon: React.createElement(FileText, { className: "h-5 w-5" }),
+        icon: createElement(FileText, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -333,7 +333,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Place Sunday Ads",
         description: "Publish two newspaper ads on consecutive Sundays",
-        icon: React.createElement(FileText, { className: "h-5 w-5" }),
+        icon: createElement(FileText, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -352,7 +352,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
         return {
           action: "Complete Additional Recruitment",
           description: `${completedCount}/3 professional recruitment methods completed`,
-          icon: React.createElement(GraduationCap, { className: "h-5 w-5" }),
+          icon: createElement(GraduationCap, { className: "h-5 w-5" }),
           urgency: "normal",
         };
       }
@@ -384,7 +384,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
         return {
           action: "Wait for Filing Window",
           description: `ETA 9089 filing window opens in ${daysUntil} days`,
-          icon: React.createElement(Clock, { className: "h-5 w-5" }),
+          icon: createElement(Clock, { className: "h-5 w-5" }),
           urgency: "normal",
         };
       }
@@ -393,7 +393,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "File ETA 9089",
       description: "Filing window is open - submit labor certification",
-      icon: React.createElement(FileCheck, { className: "h-5 w-5" }),
+      icon: createElement(FileCheck, { className: "h-5 w-5" }),
       urgency: "soon",
     };
   }
@@ -404,7 +404,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "File ETA 9089",
         description: "Submit labor certification application",
-        icon: React.createElement(FileCheck, { className: "h-5 w-5" }),
+        icon: createElement(FileCheck, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -412,7 +412,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Wait for Certification",
         description: "Awaiting DOL certification decision",
-        icon: React.createElement(HourglassIcon, { className: "h-5 w-5" }),
+        icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -425,7 +425,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "File I-140",
       description: "Submit immigrant petition to USCIS",
-      icon: React.createElement(Award, { className: "h-5 w-5" }),
+      icon: createElement(Award, { className: "h-5 w-5" }),
       // Pass raw days - getUrgencyLevel handles thresholds consistently
       urgency: getUrgencyLevel(daysUntilExpiration),
     };
@@ -437,7 +437,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "File I-140",
         description: "Submit immigrant petition to USCIS",
-        icon: React.createElement(Award, { className: "h-5 w-5" }),
+        icon: createElement(Award, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -445,7 +445,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Wait for I-140 Decision",
         description: "Awaiting USCIS adjudication",
-        icon: React.createElement(HourglassIcon, { className: "h-5 w-5" }),
+        icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -453,7 +453,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Case Complete",
         description: "I-140 approved - PERM process complete!",
-        icon: React.createElement(CheckCircle2, { className: "h-5 w-5" }),
+        icon: createElement(CheckCircle2, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }

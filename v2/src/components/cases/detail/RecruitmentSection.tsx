@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo, type ReactNode } from "react";
 import { Megaphone, Check } from "lucide-react";
 import { CaseDetailSection } from "./CaseDetailSection";
 import { formatISODate } from "@/lib/utils/date";
@@ -101,7 +101,7 @@ export function RecruitmentSection({
   );
 
   // Preview summary for collapsed state
-  const preview = React.useMemo(() => {
+  const preview = useMemo(() => {
     const steps: string[] = [];
     if (data.jobOrderStartDate) steps.push("Job Order");
     if (data.sundayAdFirstDate) steps.push("Ads");
@@ -229,7 +229,7 @@ export function RecruitmentSection({
                   const label = getMethodLabel(method.method);
 
                   // Build date display based on method category
-                  let dateDisplay: React.ReactNode = null;
+                  let dateDisplay: ReactNode = null;
                   if (category === "date-range") {
                     const from = method.startDate || method.date;
                     const to = method.endDate || method.date;

@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo } from "react";
 import { Check, Circle } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -170,7 +170,7 @@ export function RecruitmentChecklist({
   className,
 }: RecruitmentChecklistProps) {
   // Calculate status to get step completion info
-  const status = React.useMemo(
+  const status = useMemo(
     () => calculateRecruitmentStatus(data),
     [data]
   );
