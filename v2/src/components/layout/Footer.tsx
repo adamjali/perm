@@ -73,9 +73,9 @@ export default function Footer({ variant = "compact" }: FooterProps) {
 
             {/* Product column */}
             <div>
-              <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
+              <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
                 Product
-              </h4>
+              </p>
               <nav className="flex flex-col gap-3" aria-label="Product links">
                 <NavLink
                   href="/#features"
@@ -117,9 +117,9 @@ export default function Footer({ variant = "compact" }: FooterProps) {
 
             {/* Learn column */}
             <div>
-              <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
+              <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
                 Learn
-              </h4>
+              </p>
               <nav className="flex flex-col gap-3" aria-label="Content links">
                 <NavLink
                   href="/blog"
@@ -161,9 +161,9 @@ export default function Footer({ variant = "compact" }: FooterProps) {
 
             {/* Legal column */}
             <div>
-              <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
+              <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
                 Legal
-              </h4>
+              </p>
               <nav className="flex flex-col gap-3" aria-label="Legal links">
                 <NavLink
                   href="/privacy"

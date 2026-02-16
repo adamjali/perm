@@ -131,7 +131,9 @@ export function Lightbox({
                 muted
                 playsInline
                 className="max-w-[90vw] max-h-[85vh] border-2 border-white/20 shadow-hard-lg"
-              />
+              >
+                <track kind="captions" />
+              </video>
             ) : src ? (
               <div className="relative border-2 border-white/20 shadow-hard-lg overflow-hidden">
                 <Image

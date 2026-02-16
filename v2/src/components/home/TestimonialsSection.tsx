@@ -112,7 +112,7 @@ export function TestimonialsSection() {
               className="senja-embed"
               data-id="3563db96-3a71-4d2a-b7e8-70550d4dd814"
               data-mode="shadow"
-              data-lazyload="false"
+              data-lazyload="true"
               style={{ display: "block", width: "100%" }}
             />
           </div>

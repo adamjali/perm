@@ -32,6 +32,8 @@ const nextConfig: NextConfig = {
   },
 
   experimental: {
+    // Inline critical CSS to eliminate render-blocking stylesheets
+    inlineCss: true,
     // Tree-shake barrel exports for these packages
     optimizePackageImports: ["lucide-react", "date-fns", "motion/react", "zod"],
   },

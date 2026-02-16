@@ -89,7 +89,9 @@ export default function VideoFigure({
             loop
             className="w-full h-auto"
             aria-label={alt}
-          />
+          >
+            <track kind="captions" />
+          </video>
         </div>
       </Lightbox>
 

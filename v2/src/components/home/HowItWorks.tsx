@@ -290,8 +290,12 @@ export function HowItWorks() {
                       loop
                       muted
                       playsInline
+                      preload="none"
                       className="w-full"
-                    />
+                      aria-label="App walkthrough demo"
+                    >
+                      <track kind="captions" />
+                    </video>
                   </figure>
                 </div>
               </Lightbox>

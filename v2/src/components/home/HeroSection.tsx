@@ -58,6 +58,7 @@ export function HeroSection() {
           alt=""
           fill
           priority
+          fetchPriority="high"
           className="object-cover"
           sizes="100vw"
           aria-hidden="true"
@@ -247,7 +248,7 @@ export function HeroSection() {
                     height={600}
                     priority
                     className="w-full"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                    sizes="(max-width: 768px) 90vw, (max-width: 1200px) 50vw, 600px"
                   />
                 </div>
               </Lightbox>
