@@ -34,12 +34,15 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
 
+  // Force motion-dom through SWC transpilation to fix ESM export scoping
+  // (Webpack's ModuleConcatenationPlugin breaks motion-dom's "int" export)
+  transpilePackages: ["motion-dom"],
+
   experimental: {
     // Inline critical CSS to eliminate render-blocking stylesheets
     inlineCss: true,
     // Tree-shake barrel exports for these packages
-    // motion/react removed — causes "int is not defined" ReferenceError in production
-    // (motion-dom's internal int.mjs export gets incorrectly tree-shaken)
+    // motion/react removed — its dep motion-dom has ESM export bugs with Webpack
     optimizePackageImports: ["lucide-react", "date-fns", "zod"],
   },
 
