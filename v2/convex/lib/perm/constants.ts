@@ -142,8 +142,10 @@ export const SECOND_SUNDAY_AD_PWD_BUFFER_DAYS = 30;
 
 /**
  * Days after first recruitment by which Notice of Filing must START.
- * Notice requires 10 business days (~14 calendar days) to complete posting.
- * Formula: RECRUITMENT_WINDOW_DAYS - 14 = 136
- * This ensures notice can complete before the recruitment window closes.
+ *
+ * @deprecated Use `subtractBusinessDays(recruitmentWindowCloses, NOTICE_MIN_BUSINESS_DAYS)`
+ * for accurate business-day calculation that accounts for federal holidays.
+ * This flat 136-day approximation (150 - 14 calendar days) is inaccurate when
+ * holidays cluster near the deadline. Kept for backwards compatibility only.
  */
 export const NOTICE_OF_FILING_START_DEADLINE_DAYS = 136;

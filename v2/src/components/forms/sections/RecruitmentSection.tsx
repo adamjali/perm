@@ -733,7 +733,8 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                           const methodConstraints = getMethodDateConstraints(
                             values,
                             methodCategory,
-                            method.startDate
+                            method.startDate,
+                            index
                           );
                           const hasMethod = !!method.method;
                           // Extract to avoid React Compiler bug with `?.prop || fallback`

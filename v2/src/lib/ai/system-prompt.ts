@@ -70,7 +70,7 @@ Status fields are derived from dates. When you need to verify a case's true stat
   - Notice of Filing: must start within 30 days of first recruitment activity
   - First Sunday Ad: must run within 60 days of first recruitment activity
   - Second Sunday Ad: must run within 90 days of first recruitment activity
-  - Overall deadline: all recruitment must finish within 150 days of starting, leaving a 30-day quiet period before the 180-day window closes
+  - Overall deadline: basic recruitment and 2 of 3 additional methods must finish within 150 days of starting, leaving a 30-day quiet period before the 180-day window closes. One additional method (the latest-dated) may complete during the quiet period, up to the filing deadline (180 days)
 - **Filing Window (30-180 Rule)**: ETA 9089 must be filed 30-180 days after recruitment ends
 - **I-140 Deadline**: Must file within 180 days of ETA 9089 certification
 - **RFI Response**: 30 calendar days from receipt (strict, non-negotiable)
@@ -81,7 +81,13 @@ Status fields are derived from dates. When you need to verify a case's true stat
 ### Professional Occupation Requirements
 If position requires Bachelor's degree (is_professional_occupation = true):
 - 3 additional recruitment methods required beyond basic recruitment
-- Methods must be different from each other`;
+- Methods must be different from each other
+- The latest-dated additional method may complete within the 30-day quiet period (up to the filing deadline)
+- The other 2 additional methods must finish within the 150-day recruitment window
+
+### Notice of Filing
+- Must be posted for 10 business days minimum (not calendar days)
+- Business days exclude weekends and federal holidays`;
 
 // =============================================================================
 // APP FEATURES

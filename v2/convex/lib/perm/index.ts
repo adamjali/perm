@@ -95,12 +95,16 @@ export {
   formatUTC,
   // Business days
   addBusinessDays,
+  subtractBusinessDays,
   countBusinessDays,
   // Federal holidays
   getFederalHolidays,
   isFederalHoliday,
   isBusinessDay,
   type FederalHoliday,
+  // Method date utilities
+  type MethodDateFields,
+  getMethodLatestDate,
   // Filing window types
   type FilingWindow,
   type FilingWindowStatus,

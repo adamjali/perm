@@ -17,6 +17,7 @@
 import type { CaseStatus, ProgressStatus } from './statusTypes';
 import { isRecruitmentComplete } from './recruitment/isRecruitmentComplete';
 import { FILING_WINDOW_WAIT_DAYS } from './constants';
+import { getLastRecruitmentDate } from './dates/filingWindow';
 import { parseISO, addDays, isAfter } from 'date-fns';
 
 // ============================================================================
@@ -81,34 +82,21 @@ function hasActiveEntry(
 }
 
 /**
- * Get the last recruitment end date from all activities
+ * Get the last recruitment end date for quiet period calculation.
+ * Delegates to canonical getLastRecruitmentDate which excludes the latest
+ * additional method per 20 CFR 656.17(e)(1)(ii).
  */
 function getRecruitmentEndDate(input: StatusCalculationInput): string | null {
-  const dates: string[] = [];
-
-  // Collect all end dates
-  if (input.jobOrderEndDate) dates.push(input.jobOrderEndDate);
-  if (input.sundayAdSecondDate) dates.push(input.sundayAdSecondDate);
-  if (input.noticeOfFilingEndDate) dates.push(input.noticeOfFilingEndDate);
-
-  // For professional occupations, include additional recruitment
-  if (input.isProfessionalOccupation) {
-    if (input.additionalRecruitmentEndDate) {
-      dates.push(input.additionalRecruitmentEndDate);
-    }
-    // Also check additionalRecruitmentMethods array
-    if (input.additionalRecruitmentMethods) {
-      for (const method of input.additionalRecruitmentMethods) {
-        if (method.date) dates.push(method.date);
-      }
-    }
-  }
-
-  if (dates.length === 0) return null;
-
-  // Return the latest date (array is guaranteed non-empty at this point)
-  const sortedDates = dates.sort().reverse();
-  return sortedDates[0] ?? null;
+  return getLastRecruitmentDate(
+    {
+      sundayAdSecondDate: input.sundayAdSecondDate || undefined,
+      jobOrderEndDate: input.jobOrderEndDate || undefined,
+      noticeOfFilingEndDate: input.noticeOfFilingEndDate || undefined,
+      additionalRecruitmentEndDate: input.additionalRecruitmentEndDate || undefined,
+      additionalRecruitmentMethods: input.additionalRecruitmentMethods,
+    },
+    input.isProfessionalOccupation || false
+  ) || null;
 }
 
 /**

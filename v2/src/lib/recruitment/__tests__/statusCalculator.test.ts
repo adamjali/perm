@@ -611,7 +611,7 @@ describe("calculateRecruitmentStatus", () => {
       expect(result.recruitmentEndDate).toBe("2024-05-15");
     });
 
-    it("considers individual additional method dates", () => {
+    it("excludes latest additional method from recruitment end date (special method)", () => {
       vi.setSystemTime(new Date("2024-07-01"));
 
       const data: RecruitmentCaseData = {
@@ -625,13 +625,15 @@ describe("calculateRecruitmentStatus", () => {
         additionalRecruitmentMethods: [
           { method: "job_fair", date: "2024-04-01" },
           { method: "employee_referral", date: "2024-04-15" },
-          { method: "campus_placement", date: "2024-06-01" }, // Latest - later than job order end
+          { method: "campus_placement", date: "2024-06-01" }, // Latest → excluded as "special"
         ],
       };
 
       const result = calculateRecruitmentStatus(data);
 
-      expect(result.recruitmentEndDate).toBe("2024-06-01");
+      // Latest method (Jun 1) excluded as "special" per 20 CFR 656.17(e)(1)(ii)
+      // Remaining: Apr 1, Apr 15, plus basic dates → max = Apr 15
+      expect(result.recruitmentEndDate).toBe("2024-04-15");
     });
 
     // ========================================================================

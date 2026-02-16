@@ -358,7 +358,7 @@ function extractPerStepDeadlines(
   // Map of deadline type → computed date
   const perStepMap: Array<{ type: DeadlineType; date: string }> = [
     { type: "job_order_start_deadline", date: computed.job_order_start_deadline },
-    { type: "notice_of_filing_start_deadline", date: computed.notice_of_filing_deadline },
+    { type: "notice_of_filing_start_deadline", date: computed.notice_of_filing_start_deadline },
     { type: "first_sunday_ad_deadline", date: computed.first_sunday_ad_deadline },
     { type: "second_sunday_ad_deadline", date: computed.second_sunday_ad_deadline },
   ];

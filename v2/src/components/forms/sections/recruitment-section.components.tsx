@@ -195,7 +195,7 @@ export function RecruitmentDeadlineIndicator({
 
       <p className="text-xs text-muted-foreground pt-1">
         {limitingFactor === '150-day'
-          ? `All recruitment must finish within 150 days of the first step${firstDate ? ` (${firstDate})` : ""}, leaving 30 days for the mandatory waiting period before ETA 9089 filing (180 days total).`
+          ? `Basic recruitment and 2 of 3 additional methods must finish within 150 days of the first step${firstDate ? ` (${firstDate})` : ""}, leaving a 30-day quiet period. One additional method may complete up to the filing deadline (180 days total).`
           : firstDate
             ? "Recruitment must complete 30 days before PWD expires to preserve the filing window. This PWD constraint is earlier than the 150-day rule."
             : "Recruitment must complete 30 days before PWD expires to allow for the mandatory waiting period before ETA 9089 filing."}

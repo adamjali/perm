@@ -33,8 +33,8 @@ import {
   parseISOToUTCSafe,
   addDaysToISOSafe,
   getMinDate,
-  getMaxDate,
 } from './dateValidation';
+import { getLastRecruitmentDate } from './perm/dates/filingWindow';
 
 // Re-export for backwards compatibility
 export {
@@ -133,13 +133,10 @@ export function calculateRecruitmentStartDate(
 }
 
 /**
- * Calculate recruitment end date (MAX of all end dates).
- * Last recruitment step = latest of:
- * - Second Sunday ad
- * - Job order end
- * - Notice of filing end
- * - Additional recruitment end (ONLY if isProfessionalOccupation)
- * - Additional method dates (ONLY if isProfessionalOccupation)
+ * Calculate recruitment end date for quiet period calculation.
+ * Delegates to canonical getLastRecruitmentDate which:
+ * - Reads all method date types (date, endDate, startDate, subEntries)
+ * - Excludes the latest additional method per 20 CFR 656.17(e)(1)(ii)
  *
  * @param input - Case data with recruitment fields
  * @returns ISO date string or null if no dates available
@@ -155,47 +152,16 @@ export function calculateRecruitmentEndDate(
     | "isProfessionalOccupation"
   >
 ): string | null {
-  const dates: string[] = [];
-
-  // Base recruitment dates (required for all cases)
-  if (isValidISODate(input.sundayAdSecondDate)) {
-    dates.push(input.sundayAdSecondDate);
-  }
-  if (isValidISODate(input.jobOrderEndDate)) {
-    dates.push(input.jobOrderEndDate);
-  }
-  if (isValidISODate(input.noticeOfFilingEndDate)) {
-    dates.push(input.noticeOfFilingEndDate);
-  }
-
-  // Professional occupation dates (only if applicable)
-  if (input.isProfessionalOccupation) {
-    if (isValidISODate(input.additionalRecruitmentEndDate)) {
-      dates.push(input.additionalRecruitmentEndDate);
-    }
-
-    if (input.additionalRecruitmentMethods) {
-      for (const method of input.additionalRecruitmentMethods) {
-        if (isValidISODate(method.date)) {
-          dates.push(method.date);
-        }
-        if (isValidISODate(method.endDate)) {
-          dates.push(method.endDate);
-        } else if (isValidISODate(method.startDate)) {
-          dates.push(method.startDate);
-        }
-        if (method.subEntries) {
-          for (const entry of method.subEntries) {
-            if (isValidISODate(entry.date)) {
-              dates.push(entry.date);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return getMaxDate(dates);
+  return getLastRecruitmentDate(
+    {
+      sundayAdSecondDate: input.sundayAdSecondDate || undefined,
+      jobOrderEndDate: input.jobOrderEndDate || undefined,
+      noticeOfFilingEndDate: input.noticeOfFilingEndDate || undefined,
+      additionalRecruitmentEndDate: input.additionalRecruitmentEndDate || undefined,
+      additionalRecruitmentMethods: input.additionalRecruitmentMethods,
+    },
+    input.isProfessionalOccupation
+  ) || null;
 }
 
 /**

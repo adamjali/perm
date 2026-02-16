@@ -699,5 +699,49 @@ describe('cross-field validation', () => {
       const result = caseFormSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
+
+    it('special method (latest) gets relaxed 180-day deadline', () => {
+      // firstRecruitment = Jan 21 (Sunday), +150 = Jun 19, +180 = Jul 19
+      // pwdExpiration = Dec 31 (not limiting)
+      const data = createValidCaseFormData({
+        isProfessionalOccupation: true,
+        pwdExpirationDate: '2024-12-31',
+        sundayAdFirstDate: '2024-01-21',
+        jobOrderStartDate: '2024-01-22',
+        noticeOfFilingStartDate: '2024-01-25',
+        additionalRecruitmentMethods: [
+          { method: 'job_fair', date: '2024-05-01', description: 'Job fair' },  // within 150 days
+          { method: 'campus_recruitment', date: '2024-07-10', description: 'Campus' }, // > 150, < 180 → special
+        ],
+      });
+      const result = caseFormSchema.safeParse(data);
+      // Latest method (Jul 10) should be accepted as special
+      expect(result.success).toBe(true);
+    });
+
+    it('non-special method fails when after 150-day deadline', () => {
+      // firstRecruitment = Jan 21, +150 = Jun 19
+      const data = createValidCaseFormData({
+        isProfessionalOccupation: true,
+        pwdExpirationDate: '2024-12-31',
+        sundayAdFirstDate: '2024-01-21',
+        jobOrderStartDate: '2024-01-22',
+        noticeOfFilingStartDate: '2024-01-25',
+        additionalRecruitmentMethods: [
+          { method: 'job_fair', date: '2024-06-25', description: 'Job fair' },  // > 150 days, not special
+          { method: 'campus_recruitment', date: '2024-07-10', description: 'Campus' }, // latest → special
+        ],
+      });
+      const result = caseFormSchema.safeParse(data);
+      // Non-special method (Jun 25) exceeds normal 150-day max (Jun 19)
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const error = result.error.issues.find(
+          (issue) => issue.path.join('.') === 'additionalRecruitmentMethods.0.date'
+        );
+        expect(error).toBeDefined();
+        expect(error?.message).toContain('on or before');
+      }
+    });
   });
 });
