@@ -34,10 +34,6 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
 
-  // Force motion-dom through SWC transpilation to fix ESM export scoping
-  // (Webpack's ModuleConcatenationPlugin breaks motion-dom's "int" export)
-  transpilePackages: ["motion-dom"],
-
   experimental: {
     // Inline critical CSS to eliminate render-blocking stylesheets
     inlineCss: true,
@@ -45,6 +41,15 @@ const nextConfig: NextConfig = {
     // motion/react removed — its dep motion-dom has ESM export bugs with Webpack
     // zod removed — optimizePackageImports breaks ZodNumber.int() (ReferenceError: int is not defined)
     optimizePackageImports: ["lucide-react", "date-fns"],
+  },
+
+  // Disable Webpack ModuleConcatenationPlugin on client bundles
+  // Scope hoisting breaks motion-dom's "int" export (ReferenceError: int is not defined)
+  webpack: (config, { isServer }) => {
+    if (!isServer && config.optimization) {
+      config.optimization.concatenateModules = false;
+    }
+    return config;
   },
 
   async redirects() {
