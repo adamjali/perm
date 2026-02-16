@@ -43,7 +43,8 @@ const nextConfig: NextConfig = {
     inlineCss: true,
     // Tree-shake barrel exports for these packages
     // motion/react removed — its dep motion-dom has ESM export bugs with Webpack
-    optimizePackageImports: ["lucide-react", "date-fns", "zod"],
+    // zod removed — optimizePackageImports breaks ZodNumber.int() (ReferenceError: int is not defined)
+    optimizePackageImports: ["lucide-react", "date-fns"],
   },
 
   async redirects() {
