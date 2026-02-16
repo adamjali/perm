@@ -385,7 +385,7 @@ export function DemoPageClient() {
                       <div className="h-2 w-2 bg-[#FF5F57]" />
                       <div className="h-2 w-2 bg-[#FFBD2E]" />
                       <div className="h-2 w-2 bg-[#28CA41]" />
-                      <span className="ml-2 font-mono text-[9px] text-background/40">
+                      <span className="ml-2 font-mono text-[9px] text-background/70">
                         {screenshot.label}
                       </span>
                     </div>

@@ -10,7 +10,6 @@
  * @see https://nextjs.org/docs/app/building-your-application/routing/error-handling#handling-global-errors
  */
 
-import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 import { isAuthError } from "@/components/error/auth-error";
 
@@ -29,12 +28,19 @@ export default function GlobalError({
       return;
     }
 
-    Sentry.captureException(error, {
-      tags: {
-        component: "GlobalError",
-        ...(error.digest && { digest: error.digest }),
-      },
-    });
+    // Dynamic import — Sentry may not be initialized on public pages
+    import("@sentry/nextjs")
+      .then((Sentry) => {
+        Sentry.captureException(error, {
+          tags: {
+            component: "GlobalError",
+            ...(error.digest && { digest: error.digest }),
+          },
+        });
+      })
+      .catch(() => {
+        /* Sentry unavailable */
+      });
   }, [error, isExpiredSession]);
 
   // Auth errors: show brief message while redirecting to login

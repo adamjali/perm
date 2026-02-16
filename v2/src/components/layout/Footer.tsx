@@ -196,11 +196,11 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               <div className="opacity-30" aria-hidden="true">
                 <LawGavelSVG size={28} className="text-white" />
               </div>
-              <div className="mono text-xs text-white/40">
+              <div className="mono text-xs text-white/70">
                 &copy; {currentYear} PERM Tracker. All rights reserved.
               </div>
             </div>
-            <div className="flex items-center gap-1 text-xs text-white/40">
+            <div className="flex items-center gap-1 text-xs text-white/70">
               Made with <Heart className="h-3 w-3 text-primary" /> for immigration attorneys
             </div>
           </div>

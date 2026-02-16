@@ -1,5 +1,6 @@
 import AuthHeader from "@/components/layout/AuthHeader";
 import AuthFooter from "@/components/layout/AuthFooter";
+import { SentryClientInit } from "@/components/layout/SentryClientInit";
 
 export default function AuthLayout({
   children,
@@ -8,6 +9,9 @@ export default function AuthLayout({
 }) {
   return (
     <div className="relative min-h-screen bg-background flex flex-col overflow-y-auto">
+      {/* Lazily initialize Sentry on auth pages */}
+      <SentryClientInit />
+
       {/* Fixed dot pattern background - matches other layouts */}
       <div
         className="bg-dots pointer-events-none fixed inset-0 opacity-30"
