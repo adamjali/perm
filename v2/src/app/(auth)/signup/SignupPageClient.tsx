@@ -24,6 +24,7 @@ export function SignupPageClient() {
   const { signIn } = useAuthActions();
   const router = useRouter();
   const acceptTerms = useMutation(api.users.acceptTermsOfService);
+  const recordMyLogin = useMutation(api.users.recordMyLogin);
   const [step, setStep] = useState<SignupStep>("credentials");
   const [email, setEmail] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -76,6 +77,8 @@ export function SignupPageClient() {
           // Terms may already be recorded — non-blocking
         }
         toast.success("Welcome to PERM Tracker!");
+        localStorage.setItem("perm_last_login_at", String(Date.now()));
+        recordMyLogin().catch(() => {});
         router.push("/dashboard");
       } else {
         // OTP sent — move to verification step
@@ -135,6 +138,8 @@ export function SignupPageClient() {
       }
 
       toast.success("Account verified! Welcome to PERM Tracker.");
+      localStorage.setItem("perm_last_login_at", String(Date.now()));
+      recordMyLogin().catch(() => {});
       router.push("/dashboard");
     } catch (error) {
       console.error("[Verification Error]", error);

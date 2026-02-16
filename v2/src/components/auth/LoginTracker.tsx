@@ -1,16 +1,14 @@
 /**
  * LoginTracker
  *
- * Records a login event once per browser session. Uses localStorage
- * with a 30-minute time threshold to ensure accurate counting.
+ * Fallback login counter for OAuth flows (Google sign-in) where we
+ * can't call recordMyLogin() directly because the page redirects.
  *
- * Desktop browsers keep tabs alive for days, so sessionStorage alone
- * misses re-visits. The timestamp approach catches those: if the
- * last recorded login was >30 min ago, we count it as a new session.
+ * For password logins, recordMyLogin() is called directly in
+ * LoginPageClient after successful signIn().
  *
- * The Convex Auth library's createOrUpdateUser callback only fires for
- * OAuth and new accounts, NOT for password sign-ins of existing users.
- * This client-side component covers ALL auth flows reliably.
+ * Uses localStorage with a 30-second debounce to avoid double-counting
+ * when both this component and the login page fire for the same login.
  */
 
 "use client";
@@ -20,7 +18,7 @@ import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 
 const LAST_LOGIN_KEY = "perm_last_login_at";
-const SESSION_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
+const DEBOUNCE_MS = 30 * 1000; // 30 seconds — avoid double-counting
 
 export function LoginTracker() {
   const { isAuthenticated } = useConvexAuth();
@@ -30,19 +28,16 @@ export function LoginTracker() {
   useEffect(() => {
     if (!isAuthenticated || hasFired.current) return;
 
-    // Check if enough time has passed since last recorded login
+    // Skip if login was already recorded recently (by LoginPageClient)
     const lastLoginStr = localStorage.getItem(LAST_LOGIN_KEY);
     const lastLogin = lastLoginStr ? Number(lastLoginStr) : 0;
-    const timeSinceLastLogin = Date.now() - lastLogin;
-
-    if (timeSinceLastLogin < SESSION_THRESHOLD_MS) return;
+    if (Date.now() - lastLogin < DEBOUNCE_MS) return;
 
     hasFired.current = true;
     localStorage.setItem(LAST_LOGIN_KEY, String(Date.now()));
 
     recordMyLogin().catch((error) => {
       console.error("[LoginTracker] Failed to record login:", error);
-      // Reset so it can retry next mount
       localStorage.removeItem(LAST_LOGIN_KEY);
       hasFired.current = false;
     });

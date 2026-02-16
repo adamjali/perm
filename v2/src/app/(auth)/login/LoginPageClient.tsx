@@ -3,6 +3,8 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +26,7 @@ function isRateLimitError(message: string): boolean {
 
 export function LoginPageClient() {
   const { signIn } = useAuthActions();
+  const recordMyLogin = useMutation(api.users.recordMyLogin);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { completeSignOut } = useAuthContext();
@@ -56,6 +59,8 @@ export function LoginPageClient() {
       const result = await signIn("password", formData);
 
       if (result.signingIn) {
+        localStorage.setItem("perm_last_login_at", String(Date.now()));
+        recordMyLogin().catch(() => {});
         router.push("/dashboard");
       } else {
         // Email not verified — provider re-sent a verification code
@@ -94,6 +99,8 @@ export function LoginPageClient() {
       await signIn("password", formData);
 
       toast.success("Email verified! Signing you in.");
+      localStorage.setItem("perm_last_login_at", String(Date.now()));
+      recordMyLogin().catch(() => {});
       router.push("/dashboard");
     } catch (error) {
       console.error("[Login Verification Error]", error);
