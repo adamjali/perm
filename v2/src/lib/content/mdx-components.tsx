@@ -139,12 +139,14 @@ function Step({
 }
 
 function ComparisonTable({
-  headers,
-  rows,
+  headers = [],
+  rows = [],
 }: {
-  headers: string[];
-  rows: string[][];
+  headers?: string[];
+  rows?: string[][];
 }) {
+  if (!headers.length || !rows.length) return null;
+
   if (process.env.NODE_ENV === "development") {
     for (let i = 0; i < rows.length; i++) {
       if (rows[i]!.length !== headers.length) {
