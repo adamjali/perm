@@ -1254,7 +1254,7 @@ export function DemoCaseModal({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={hasDateInlineErrors}>
+          <Button onClick={handleSave}>
             {isEditMode ? "Save Changes" : "Add Case"}
           </Button>
         </DialogFooter>
