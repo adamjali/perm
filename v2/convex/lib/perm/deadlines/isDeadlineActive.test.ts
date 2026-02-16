@@ -191,6 +191,23 @@ describe("isDeadlineActive", () => {
       expect(result.isActive).toBe(false);
       expect(result.supersededReason).toBe(SUPERSESSION_REASONS.ETA9089_FILED);
     });
+
+    it("is superseded when all recruitment is complete", () => {
+      const caseData: CaseDataForDeadlines = {
+        recruitmentWindowCloses: "2025-05-01",
+        jobOrderStartDate: "2024-01-10",
+        jobOrderEndDate: "2024-02-10",
+        sundayAdFirstDate: "2024-01-15",
+        sundayAdSecondDate: "2024-01-22",
+        noticeOfFilingStartDate: "2024-01-12",
+        noticeOfFilingEndDate: "2024-01-26",
+      };
+
+      const result = isDeadlineActive("recruitment_window_closes", caseData);
+
+      expect(result.isActive).toBe(false);
+      expect(result.supersededReason).toBe(SUPERSESSION_REASONS.RECRUITMENT_COMPLETE);
+    });
   });
 
   // ==========================================================================

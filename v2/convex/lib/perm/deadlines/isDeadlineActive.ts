@@ -155,15 +155,18 @@ function checkFilingWindowActive(
 }
 
 /**
- * Recruitment window deadline is superseded when ETA 9089 is filed.
- * Unlike filing window deadlines, this does NOT require recruitment to be complete
- * (it IS the deadline for completing recruitment).
+ * Recruitment window deadline is superseded when ETA 9089 is filed
+ * or when all recruitment activities are complete.
  */
 function checkRecruitmentWindowActive(
   caseData: CaseDataForDeadlines
 ): DeadlineActiveStatus {
   if (caseData.eta9089FilingDate) {
     return { isActive: false, supersededReason: SUPERSESSION_REASONS.ETA9089_FILED };
+  }
+
+  if (isRecruitmentComplete(caseData)) {
+    return { isActive: false, supersededReason: SUPERSESSION_REASONS.RECRUITMENT_COMPLETE };
   }
 
   return { isActive: true };

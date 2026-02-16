@@ -214,6 +214,7 @@ export const SUPERSESSION_REASONS = {
   FIRST_SUNDAY_AD_PLACED: "First Sunday ad has been placed",
   SECOND_SUNDAY_AD_PLACED: "Second Sunday ad has been placed",
   NO_FIRST_RECRUITMENT: "No recruitment activity started yet",
+  RECRUITMENT_COMPLETE: "All recruitment activities completed",
 } as const;
 
 export type SupersessionReason =
