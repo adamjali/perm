@@ -1,4 +1,3 @@
-import { parseISO, isBefore } from 'date-fns';
 import { calculatePWDExpiration } from './calculators/pwd';
 import { calculateNoticeOfFilingEnd, calculateJobOrderEnd } from './calculators/recruitment';
 import { calculateETA9089Expiration } from './calculators/eta9089';
@@ -13,7 +12,6 @@ type CascadeField = keyof CaseData;
 interface CascadeRule {
   target: CascadeField;
   calculate: (value: string) => string;
-  extendOnly?: boolean;
 }
 
 /**
@@ -28,12 +26,10 @@ const CASCADE_RULES: Partial<Record<CascadeField, CascadeRule>> = {
   notice_of_filing_start_date: {
     target: 'notice_of_filing_end_date',
     calculate: calculateNoticeOfFilingEnd,
-    extendOnly: true,
   },
   job_order_start_date: {
     target: 'job_order_end_date',
     calculate: calculateJobOrderEnd,
-    extendOnly: true,
   },
   eta9089_certification_date: {
     target: 'eta9089_expiration_date',
@@ -50,29 +46,12 @@ const CASCADE_RULES: Partial<Record<CascadeField, CascadeRule>> = {
 };
 
 /**
- * Apply extend-only logic: only update if new value extends beyond current.
- */
-function applyExtendOnly(
-  currentValue: string | null,
-  newValue: string
-): string | null {
-  if (currentValue === null) {
-    return newValue;
-  }
-
-  const current = parseISO(currentValue);
-  const calculated = parseISO(newValue);
-
-  return isBefore(current, calculated) ? newValue : currentValue;
-}
-
-/**
  * Apply cascade rules for a single field change.
  *
  * Cascade rules (DAG structure, no cycles):
  * - V-CASCADE-01: pwd_determination_date -> pwd_expiration_date
- * - V-CASCADE-04: notice_of_filing_start_date -> notice_of_filing_end_date (extend-only)
- * - V-CASCADE-05: job_order_start_date -> job_order_end_date (extend-only)
+ * - V-CASCADE-04: notice_of_filing_start_date -> notice_of_filing_end_date
+ * - V-CASCADE-05: job_order_start_date -> job_order_end_date
  * - eta9089_certification_date -> eta9089_expiration_date
  * - rfi_received_date -> rfi_due_date (strict 30 days)
  *
@@ -99,12 +78,7 @@ export function applyCascade(
   // Calculate new value
   const calculatedValue = rule.calculate(change.value);
 
-  // Apply extend-only logic if configured
-  const finalValue = rule.extendOnly
-    ? applyExtendOnly(currentState[rule.target] as string | null, calculatedValue)
-    : calculatedValue;
-
-  return { ...newState, [rule.target]: finalValue };
+  return { ...newState, [rule.target]: calculatedValue };
 }
 
 /**

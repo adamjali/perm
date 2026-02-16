@@ -135,6 +135,10 @@ export function ProfessionalSection({
   const startConstraint = dateConstraints?.additionalRecruitmentStartDate;
   const endConstraint = dateConstraints?.additionalRecruitmentEndDate;
 
+  // NOTE: Extract hint expressions to avoid React Compiler bug with `?.prop || fallback` in JSX
+  const startHint = startConstraint?.hint;
+  const endHint = endConstraint?.hint;
+
   // Sync expanded state with checkbox value
   useEffect(() => {
     setIsExpanded(values.isProfessionalOccupation ?? false);
@@ -342,7 +346,7 @@ export function ProfessionalSection({
                   label="Start Date"
                   name="additionalRecruitmentStartDate"
                   error={errors?.additionalRecruitmentStartDate}
-                  hint={startConstraint?.hint || "Overall start of additional recruitment"}
+                  hint={startHint || "Overall start of additional recruitment"}
                   validationState={validationStates?.additionalRecruitmentStartDate}
                 >
                   <DateInput
@@ -365,7 +369,7 @@ export function ProfessionalSection({
                   label="End Date"
                   name="additionalRecruitmentEndDate"
                   error={errors?.additionalRecruitmentEndDate}
-                  hint={endConstraint?.hint || "Overall end of additional recruitment"}
+                  hint={endHint || "Overall end of additional recruitment"}
                   validationState={validationStates?.additionalRecruitmentEndDate}
                 >
                   <DateInput

@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavLink } from "@/components/ui/nav-link";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
+import { handleStaleDeployment } from "@/components/error/auth-error";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 
 type LoginStep = "login" | "verification";
@@ -69,10 +70,12 @@ export function LoginPageClient() {
         toast.info("Your email isn't verified yet. We've sent a new verification code.");
       }
     } catch (error) {
+      if (handleStaleDeployment(error)) return;
+
+      const message = error instanceof Error ? error.message : String(error);
       console.error("[Login Error]", error);
       captureError(error, { operation: "signIn" });
 
-      const message = error instanceof Error ? error.message : String(error);
       if (isRateLimitError(message)) {
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (isNetworkError(message)) {
@@ -103,10 +106,12 @@ export function LoginPageClient() {
       recordMyLogin().catch(() => {});
       router.push("/dashboard");
     } catch (error) {
+      if (handleStaleDeployment(error)) return;
+
+      const message = error instanceof Error ? error.message : String(error);
       console.error("[Login Verification Error]", error);
       captureError(error, { operation: "signInVerification" });
 
-      const message = error instanceof Error ? error.message : String(error);
       if (/expired/i.test(message)) {
         toast.error(
           "Verification code expired. Go back and sign in again to get a new code."
@@ -131,10 +136,12 @@ export function LoginPageClient() {
     try {
       await signIn("google", { redirectTo: "/dashboard" });
     } catch (error) {
+      if (handleStaleDeployment(error)) return;
+
+      const message = error instanceof Error ? error.message : String(error);
       console.error("[Google Sign In Error]", error);
       captureError(error, { operation: "googleSignIn" });
 
-      const message = error instanceof Error ? error.message : String(error);
       if (/popup|closed/i.test(message)) {
         toast.error("Sign in was cancelled. Please try again.");
       } else if (isNetworkError(message)) {

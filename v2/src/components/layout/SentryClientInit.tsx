@@ -1,14 +1,30 @@
 "use client";
 
 import { useEffect } from "react";
+import { isStaleDeploymentError } from "@/components/error/auth-error";
 
 let sentryInitialized = false;
 
 /**
  * Lazily initializes Sentry client SDK.
  * Only loaded in auth/authenticated layouts — public pages get zero Sentry JS.
+ *
+ * Also installs a global handler for stale deployment errors
+ * (UnrecognizedActionError) to prompt users to refresh.
  */
 export function SentryClientInit() {
+  // Catch stale Server Action errors from deployment mismatches
+  useEffect(() => {
+    const handler = (event: PromiseRejectionEvent) => {
+      if (isStaleDeploymentError(event.reason)) {
+        event.preventDefault(); // Suppress console noise
+        window.location.reload();
+      }
+    };
+    window.addEventListener("unhandledrejection", handler);
+    return () => window.removeEventListener("unhandledrejection", handler);
+  }, []);
+
   useEffect(() => {
     if (sentryInitialized) return;
     sentryInitialized = true;
@@ -34,6 +50,9 @@ export function SentryClientInit() {
           /^moz-extension:\/\//,
           "not authenticated",
           "User profile not found",
+          // Deployment cache mismatch — client has stale Server Action hashes
+          "Server Action",
+          "UnrecognizedActionError",
         ],
         tracesSampler: (samplingContext) => {
           if (samplingContext.name?.includes("/api/health")) return 0;

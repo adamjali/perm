@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavLink } from "@/components/ui/nav-link";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
+import { handleStaleDeployment } from "@/components/error/auth-error";
 import { api } from "../../../../convex/_generated/api";
 import { savePendingTermsAcceptance } from "@/lib/auth/termsStorage";
 
@@ -86,6 +87,8 @@ export function SignupPageClient() {
         toast.success("Verification code sent to your email");
       }
     } catch (error) {
+      if (handleStaleDeployment(error)) return;
+
       console.error("[Signup Error]", error);
       captureError(error, { operation: "signUp" });
 
@@ -142,6 +145,8 @@ export function SignupPageClient() {
       recordMyLogin().catch(() => {});
       router.push("/dashboard");
     } catch (error) {
+      if (handleStaleDeployment(error)) return;
+
       console.error("[Verification Error]", error);
       captureError(error, { operation: "signUpVerification" });
 
@@ -195,6 +200,8 @@ export function SignupPageClient() {
       // Note: For Google OAuth, terms acceptance is recorded after redirect
       // The PendingTermsHandler component checks localStorage and calls acceptTermsOfService
     } catch (error) {
+      if (handleStaleDeployment(error)) return;
+
       console.error("[Google Sign Up Error]", error);
       captureError(error, { operation: "googleSignUp" });
 

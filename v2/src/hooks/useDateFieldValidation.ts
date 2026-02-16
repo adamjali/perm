@@ -237,7 +237,10 @@ export function useDateFieldValidation(formValues: Partial<CaseFormData>) {
   );
 
   const getHint = useCallback(
-    (field: string, defaultHint?: string): string | undefined => constraints[field]?.hint || defaultHint,
+    (field: string, defaultHint?: string): string | undefined => {
+      const constraint = constraints[field];
+      return constraint?.hint || defaultHint;
+    },
     [constraints]
   );
 

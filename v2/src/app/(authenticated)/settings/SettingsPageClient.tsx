@@ -133,6 +133,13 @@ export function SettingsPageClient() {
     isSigningOut ? "skip" : undefined
   );
 
+  // NOTE: Extract to avoid React Compiler bug with `?.prop ?? fallback` in JSX
+  const userEmail = user?.email ?? "";
+  const userName = user?.name;
+  const userImage = user?.image;
+  const profileFullName = profile?.fullName;
+  const profilePhotoUrl = profile?.profilePhotoUrl;
+
   // Show skeleton while loading
   if (profile === undefined || user === undefined) {
     return <SettingsPageSkeleton />;
@@ -146,12 +153,12 @@ export function SettingsPageClient() {
           <ProfileSection
             profile={{
               // Fall back to user.name from auth if profile.fullName not set
-              fullName: profile?.fullName ?? user?.name,
+              fullName: profileFullName ?? userName,
               // Fall back to user.image from auth (Google profile photo)
-              profilePhotoUrl: profile?.profilePhotoUrl ?? user?.image,
+              profilePhotoUrl: profilePhotoUrl ?? userImage,
               timezone: profile?.timezone,
             }}
-            userEmail={user?.email ?? ""}
+            userEmail={userEmail}
           />
         );
       case "notifications":
@@ -171,7 +178,7 @@ export function SettingsPageClient() {
               reminderDaysBefore: profile?.reminderDaysBefore,
               urgentDeadlineDays: profile?.urgentDeadlineDays,
             }}
-            userEmail={user?.email ?? ""}
+            userEmail={userEmail}
           />
         );
       case "quiet-hours":
@@ -218,12 +225,12 @@ export function SettingsPageClient() {
           <ProfileSection
             profile={{
               // Fall back to user.name from auth if profile.fullName not set
-              fullName: profile?.fullName ?? user?.name,
+              fullName: profileFullName ?? userName,
               // Fall back to user.image from auth (Google profile photo)
-              profilePhotoUrl: profile?.profilePhotoUrl ?? user?.image,
+              profilePhotoUrl: profilePhotoUrl ?? userImage,
               timezone: profile?.timezone,
             }}
-            userEmail={user?.email ?? ""}
+            userEmail={userEmail}
           />
         );
     }

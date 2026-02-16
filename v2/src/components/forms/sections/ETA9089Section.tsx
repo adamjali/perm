@@ -283,6 +283,13 @@ export function ETA9089Section(props: ETA9089SectionProps) {
   const auditDisabled = fieldDisabledStates?.eta9089AuditDate;
   const certificationDisabled = fieldDisabledStates?.eta9089CertificationDate;
 
+  // NOTE: Extract hint expressions to avoid React Compiler bug with `?.prop || fallback` in JSX
+  const filingHint = filingConstraint?.hint;
+  const auditHint = auditConstraint?.hint;
+  const certHint = certificationConstraint?.hint;
+  const auditIsDisabled = auditDisabled?.disabled;
+  const certIsDisabled = certificationDisabled?.disabled;
+
   // Calculate filing window status (includes individual method dates for professional occupations)
   const recruitmentEndDate = calculateRecruitmentEndDate(
     values.sundayAdSecondDate,
@@ -324,7 +331,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
             label="Filing Date"
             name="eta9089FilingDate"
             error={errors?.eta9089FilingDate}
-            hint={filingConstraint?.hint || "Date ETA 9089 was filed (30-180 days after recruitment)"}
+            hint={filingHint || "Date ETA 9089 was filed (30-180 days after recruitment)"}
             validationState={validationStates?.eta9089FilingDate}
           >
             <DateInput
@@ -345,7 +352,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
             label="Audit Date (optional)"
             name="eta9089AuditDate"
             error={errors?.eta9089AuditDate}
-            hint={auditDisabled?.disabled ? auditDisabled.reason : (auditConstraint?.hint || "Date case was selected for audit, if applicable")}
+            hint={auditIsDisabled ? auditDisabled.reason : (auditHint || "Date case was selected for audit, if applicable")}
             validationState={validationStates?.eta9089AuditDate}
           >
             <DateInput
@@ -367,7 +374,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
             label="Certification Date"
             name="eta9089CertificationDate"
             error={errors?.eta9089CertificationDate}
-            hint={certificationDisabled?.disabled ? certificationDisabled.reason : (certificationConstraint?.hint || "Date ETA 9089 was certified by DOL")}
+            hint={certIsDisabled ? certificationDisabled.reason : (certHint || "Date ETA 9089 was certified by DOL")}
             validationState={validationStates?.eta9089CertificationDate}
           >
             <DateInput

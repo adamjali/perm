@@ -224,6 +224,15 @@ export function I140Section(props: I140SectionProps) {
   const approvalDisabled = fieldDisabledStates?.i140ApprovalDate;
   const denialDisabled = fieldDisabledStates?.i140DenialDate;
 
+  // NOTE: Extract hint/disabled expressions to avoid React Compiler bug with `?.prop || fallback` in JSX
+  const filingHint = filingConstraint?.hint;
+  const receiptHint = receiptConstraint?.hint;
+  const approvalHint = approvalConstraint?.hint;
+  const denialHint = denialConstraint?.hint;
+  const receiptIsDisabled = receiptDisabled?.disabled;
+  const approvalIsDisabled = approvalDisabled?.disabled;
+  const denialIsDisabled = denialDisabled?.disabled;
+
   // Calculate filing window data
   const windowData = buildI140FilingWindowData(
     values.eta9089CertificationDate,
@@ -260,7 +269,7 @@ export function I140Section(props: I140SectionProps) {
             label="Filing Date"
             name="i140FilingDate"
             error={errors?.i140FilingDate}
-            hint={filingConstraint?.hint || "Date I-140 was filed (within 180 days of ETA 9089 cert)"}
+            hint={filingHint || "Date I-140 was filed (within 180 days of ETA 9089 cert)"}
             validationState={validationStates?.i140FilingDate}
           >
             <DateInput
@@ -281,7 +290,7 @@ export function I140Section(props: I140SectionProps) {
             label="Receipt Date"
             name="i140ReceiptDate"
             error={errors?.i140ReceiptDate}
-            hint={receiptDisabled?.disabled ? receiptDisabled.reason : (receiptConstraint?.hint || "Date USCIS receipt notice was received (optional)")}
+            hint={receiptIsDisabled ? receiptDisabled.reason : (receiptHint || "Date USCIS receipt notice was received (optional)")}
             validationState={validationStates?.i140ReceiptDate}
           >
             <DateInput
@@ -351,7 +360,7 @@ export function I140Section(props: I140SectionProps) {
             label="Approval Date"
             name="i140ApprovalDate"
             error={errors?.i140ApprovalDate}
-            hint={approvalDisabled?.disabled ? approvalDisabled.reason : (approvalConstraint?.hint || "Date I-140 was approved (triggers completion status)")}
+            hint={approvalIsDisabled ? approvalDisabled.reason : (approvalHint || "Date I-140 was approved (triggers completion status)")}
             validationState={validationStates?.i140ApprovalDate}
           >
             <DateInput
@@ -373,7 +382,7 @@ export function I140Section(props: I140SectionProps) {
             label="Denial Date"
             name="i140DenialDate"
             error={errors?.i140DenialDate}
-            hint={denialDisabled?.disabled ? denialDisabled.reason : (denialConstraint?.hint || "Date I-140 was denied (optional)")}
+            hint={denialIsDisabled ? denialDisabled.reason : (denialHint || "Date I-140 was denied (optional)")}
             validationState={validationStates?.i140DenialDate}
           >
             <DateInput

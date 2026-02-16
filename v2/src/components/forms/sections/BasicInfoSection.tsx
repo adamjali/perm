@@ -163,9 +163,9 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
   };
 
   // Get color for current case status
-  const statusColor = CASE_STATUS_OPTIONS.find(
-    opt => opt.value === values.caseStatus
-  )?.color || '#6B7280';
+  // NOTE: Extract to avoid React Compiler bug with `.find()?.prop || fallback`
+  const statusOption = CASE_STATUS_OPTIONS.find(opt => opt.value === values.caseStatus);
+  const statusColor = statusOption ? statusOption.color : '#6B7280';
 
   return (
     <FormSection title="Basic Information" defaultOpen>

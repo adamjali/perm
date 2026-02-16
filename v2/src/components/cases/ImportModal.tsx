@@ -413,11 +413,14 @@ export function ImportModal({
       },
     };
     const format = formatLabels[parseResult.detectedFormat] ?? formatLabels.unknown;
+    // NOTE: Extract to avoid React Compiler bug with `?.prop ?? fallback` in JSX
+    const formatColor = format?.color ?? "bg-gray-100 text-gray-800";
+    const formatLabel = format?.label ?? "Unknown";
     return (
       <span
-        className={cn("px-2 py-1 text-xs font-medium rounded", format?.color ?? "bg-gray-100 text-gray-800")}
+        className={cn("px-2 py-1 text-xs font-medium rounded", formatColor)}
       >
-        {format?.label ?? "Unknown"}
+        {formatLabel}
       </span>
     );
   };

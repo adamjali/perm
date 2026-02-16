@@ -268,7 +268,8 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
 
   // Feature 006: Handle method type change - clear incompatible date fields
   const handleMethodTypeChange = (index: number, newMethod: string) => {
-    const oldCategory = getMethodCategory(methods[index]?.method || '');
+    const existingMethod = methods[index]?.method;
+    const oldCategory = getMethodCategory(existingMethod || '');
     const newCategory = getMethodCategory(newMethod);
 
     const updated: AdditionalRecruitmentMethod = { ...methods[index]!, method: newMethod };
@@ -310,6 +311,14 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
   const sundaySecondDisabled = fieldDisabledStates?.sundayAdSecondDate;
   const jobOrderEndDisabled = fieldDisabledStates?.jobOrderEndDate;
 
+  // NOTE: Extract hint/disabled expressions to avoid React Compiler bug with `?.prop || fallback` in JSX
+  const sundayFirstHint = sundayFirstConstraint?.hint;
+  const sundaySecondHint = sundaySecondConstraint?.hint;
+  const jobOrderStartHint = jobOrderStartConstraint?.hint;
+  const jobOrderEndHint = jobOrderEndConstraint?.hint;
+  const noticeStartHint = noticeStartConstraint?.hint;
+  const jobOrderEndIsDisabled = jobOrderEndDisabled?.disabled;
+
   // ========== QUICK SELECT FOR SECOND SUNDAY AD ==========
   const firstSundayIsValid = isValidSunday(values.sundayAdFirstDate);
   const secondSundayIsValid = isValidSunday(values.sundayAdSecondDate);
@@ -326,7 +335,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
     if (daysDiff !== null && daysDiff >= 7) {
       return `✓ Valid Sunday (${daysDiff} days after first ad)`;
     }
-    return sundaySecondConstraint?.hint || "Must be a Sunday, after first ad";
+    return sundaySecondHint || "Must be a Sunday, after first ad";
   })();
 
   // Handler for quick select buttons
@@ -365,7 +374,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
               label="First Sunday Ad"
               name="sundayAdFirstDate"
               error={errors?.sundayAdFirstDate}
-              hint={sundayFirstConstraint?.hint || "Must be a Sunday"}
+              hint={sundayFirstHint || "Must be a Sunday"}
               validationState={validationStates?.sundayAdFirstDate}
             >
               <DateInput
@@ -477,7 +486,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
               label="Job Order Start"
               name="jobOrderStartDate"
               error={errors?.jobOrderStartDate}
-              hint={jobOrderStartConstraint?.hint || "Start date of job order posting"}
+              hint={jobOrderStartHint || "Start date of job order posting"}
               validationState={validationStates?.jobOrderStartDate}
             >
               <DateInput
@@ -499,7 +508,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
               name="jobOrderEndDate"
               error={errors?.jobOrderEndDate}
               autoCalculated={isJobOrderEndAutoCalculated}
-              hint={jobOrderEndDisabled?.disabled ? jobOrderEndDisabled.reason : (jobOrderEndConstraint?.hint || "Auto-suggested +30 days, editable")}
+              hint={jobOrderEndIsDisabled ? jobOrderEndDisabled.reason : (jobOrderEndHint || "Auto-suggested +30 days, editable")}
               validationState={validationStates?.jobOrderEndDate}
             >
               <DateInput
@@ -547,7 +556,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
               label="Notice Start"
               name="noticeOfFilingStartDate"
               error={errors?.noticeOfFilingStartDate}
-              hint={noticeStartConstraint?.hint || "Notice of filing start date"}
+              hint={noticeStartHint || "Notice of filing start date"}
               validationState={validationStates?.noticeOfFilingStartDate}
             >
               <DateInput
@@ -727,6 +736,10 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                             method.startDate
                           );
                           const hasMethod = !!method.method;
+                          // Extract to avoid React Compiler bug with `?.prop || fallback`
+                          const foundMethod = RECRUITMENT_METHODS.find(m => m.value === method.method);
+                          const methodLabel = foundMethod ? foundMethod.label : 'Entry';
+                          const methodDateHint = methodConstraints.date?.hint;
 
                           if (methodCategory === 'date-range') {
                             // Date-range methods (job_website_ad, employer_website, private_employment_firm)
@@ -790,7 +803,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                   entries={method.subEntries || [{ date: '', description: '' }]}
                                   onChange={(entries) => updateMethod(index, 'subEntries', entries)}
                                   dateConstraint={methodConstraints.entryDate}
-                                  methodLabel={RECRUITMENT_METHODS.find(m => m.value === method.method)?.label || 'Entry'}
+                                  methodLabel={methodLabel}
                                   required={hasMethod}
                                   errors={errors}
                                   methodIndex={index}
@@ -819,7 +832,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                 name={`method-date-${index}`}
                                 required={hasMethod}
                                 error={errors?.[`additionalRecruitmentMethods.${index}.date`]}
-                                hint={methodConstraints.date?.hint || "Date of recruitment activity"}
+                                hint={methodDateHint || "Date of recruitment activity"}
                               >
                                 <DateInput
                                   id={`method-date-${index}`}

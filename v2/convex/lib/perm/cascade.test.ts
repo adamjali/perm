@@ -94,7 +94,7 @@ describe('applyCascade', () => {
     });
   });
 
-  describe('V-CASCADE-04: Notice of Filing start → end (extend-only)', () => {
+  describe('V-CASCADE-04: Notice of Filing start → end', () => {
     it('should calculate Notice end when start is set (+10 business days)', () => {
       const currentState = createTestCase();
       const result = applyCascade(currentState, {
@@ -123,7 +123,7 @@ describe('applyCascade', () => {
       expect(result.notice_of_filing_end_date).toBe('2024-02-02'); // New end (extended)
     });
 
-    it('should NOT shorten Notice end when start moves backward', () => {
+    it('should recalculate Notice end when start moves backward', () => {
       const currentState = createTestCase({
         notice_of_filing_start_date: '2024-01-20',
         notice_of_filing_end_date: '2024-02-05',
@@ -131,11 +131,12 @@ describe('applyCascade', () => {
 
       const result = applyCascade(currentState, {
         field: 'notice_of_filing_start_date',
-        value: '2024-01-15', // Move start backward
+        value: '2024-01-15', // Move start backward (Monday)
       });
 
       expect(result.notice_of_filing_start_date).toBe('2024-01-15');
-      expect(result.notice_of_filing_end_date).toBe('2024-02-05'); // Keep existing end (extend-only)
+      // 2024-01-15 (Mon) + 10 business days = 2024-01-29 (Mon)
+      expect(result.notice_of_filing_end_date).toBe('2024-01-29');
     });
 
     it('should clear Notice end when start is cleared', () => {
@@ -154,7 +155,7 @@ describe('applyCascade', () => {
     });
   });
 
-  describe('V-CASCADE-05: Job Order start → end (extend-only)', () => {
+  describe('V-CASCADE-05: Job Order start → end', () => {
     it('should calculate Job Order end when start is set (+30 calendar days)', () => {
       const currentState = createTestCase();
       const result = applyCascade(currentState, {
@@ -181,7 +182,7 @@ describe('applyCascade', () => {
       expect(result.job_order_end_date).toBe('2024-02-19'); // New end (extended)
     });
 
-    it('should NOT shorten Job Order end when start moves backward', () => {
+    it('should recalculate Job Order end when start moves backward', () => {
       const currentState = createTestCase({
         job_order_start_date: '2024-01-20',
         job_order_end_date: '2024-02-19',
@@ -193,7 +194,7 @@ describe('applyCascade', () => {
       });
 
       expect(result.job_order_start_date).toBe('2024-01-15');
-      expect(result.job_order_end_date).toBe('2024-02-19'); // Keep existing end (extend-only)
+      expect(result.job_order_end_date).toBe('2024-02-14'); // Recalculated: Jan 15 + 30 days
     });
 
     it('should clear Job Order end when start is cleared', () => {
@@ -401,7 +402,7 @@ describe('applyCascadeMultiple', () => {
     // First set notice start, then change it
     const result = applyCascadeMultiple(currentState, [
       { field: 'notice_of_filing_start_date', value: '2024-01-15' }, // End = 2024-01-29
-      { field: 'notice_of_filing_start_date', value: '2024-01-20' }, // End = 2024-02-02 (extend-only)
+      { field: 'notice_of_filing_start_date', value: '2024-01-20' }, // End = 2024-02-02
     ]);
 
     expect(result.notice_of_filing_start_date).toBe('2024-01-20');

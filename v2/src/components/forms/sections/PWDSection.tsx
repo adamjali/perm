@@ -176,6 +176,11 @@ export function PWDSection(props: PWDSectionProps) {
   // Get disabled states for fields with dependencies
   const determinationDisabled = fieldDisabledStates?.pwdDeterminationDate;
 
+  // NOTE: Extract hint expressions to avoid React Compiler bug with `?.prop || fallback` in JSX
+  const filingHint = filingConstraint?.hint;
+  const determinationHint = determinationConstraint?.hint;
+  const detIsDisabled = determinationDisabled?.disabled;
+
   return (
     <FormSection title="PWD (Prevailing Wage Determination)" defaultOpen>
       <div className="grid gap-4 md:grid-cols-3">
@@ -186,7 +191,7 @@ export function PWDSection(props: PWDSectionProps) {
           label="Filing Date"
           name="pwdFilingDate"
           error={errors?.pwdFilingDate}
-          hint={filingConstraint?.hint || "Date PWD application was filed"}
+          hint={filingHint || "Date PWD application was filed"}
           validationState={validationStates?.pwdFilingDate}
         >
           <DateInput
@@ -206,7 +211,7 @@ export function PWDSection(props: PWDSectionProps) {
           label="Determination Date"
           name="pwdDeterminationDate"
           error={errors?.pwdDeterminationDate}
-          hint={determinationDisabled?.disabled ? determinationDisabled.reason : (determinationConstraint?.hint || "Determination date triggers expiration calculation")}
+          hint={detIsDisabled ? determinationDisabled.reason : (determinationHint || "Determination date triggers expiration calculation")}
           validationState={validationStates?.pwdDeterminationDate}
         >
           <DateInput

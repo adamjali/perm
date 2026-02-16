@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
+import { handleStaleDeployment } from "@/components/error/auth-error";
 
 type ResetStep = "email" | "reset";
 
@@ -35,6 +36,8 @@ export function ResetPasswordPageClient() {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
+
+      if (handleStaleDeployment(error)) return;
 
       if (
         lower.includes("toomanyfailedattempts") ||
@@ -93,11 +96,14 @@ export function ResetPasswordPageClient() {
       toast.success("Password reset successful! Please sign in.");
       router.push("/login");
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const lower = message.toLowerCase();
+
+      if (handleStaleDeployment(error)) return;
+
       console.error("[Reset Password Error]", error);
       captureError(error, { operation: "resetPassword" });
 
-      const message = error instanceof Error ? error.message : String(error);
-      const lower = message.toLowerCase();
       if (lower.includes("expired")) {
         toast.error("Reset code expired. Please request a new one.");
       } else if (lower.includes("invalid password")) {

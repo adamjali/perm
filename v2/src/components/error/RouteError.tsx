@@ -13,7 +13,7 @@
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { RefreshCcw, Home } from "lucide-react";
-import { isAuthError } from "./auth-error";
+import { isAuthError, isStaleDeploymentError } from "./auth-error";
 import { ErrorDisplay } from "./ErrorDisplay";
 
 export interface RouteErrorProps {
@@ -30,8 +30,15 @@ export function RouteError({
   homeHref = "/dashboard",
 }: RouteErrorProps) {
   const isExpiredSession = isAuthError(error.message);
+  const isStaleDeployment = isStaleDeploymentError(error);
 
   useEffect(() => {
+    // Stale deployment — silently reload to pick up new Server Action hashes
+    if (isStaleDeployment) {
+      window.location.reload();
+      return;
+    }
+
     if (isExpiredSession) {
       // Session expired — redirect gracefully, don't report to Sentry
       window.location.href = "/login?expired=1";
@@ -53,7 +60,18 @@ export function RouteError({
           typeof document !== "undefined" ? document.referrer : undefined,
       },
     });
-  }, [error, isExpiredSession]);
+  }, [error, isExpiredSession, isStaleDeployment]);
+
+  // Stale deployment: show brief message while reloading
+  if (isStaleDeployment) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <p className="text-sm text-muted-foreground">
+          Updating to latest version&hellip;
+        </p>
+      </div>
+    );
+  }
 
   // Auth errors: show brief message while redirecting to login
   if (isExpiredSession) {

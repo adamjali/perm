@@ -237,8 +237,11 @@ function StatusBadge({ status }: { status: string }) {
 
 export function UsersTable({ users, initialSort }: UsersTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<SortField>((initialSort?.sortBy as SortField) || "lastActivity");
-  const [sortDirection, setSortDirection] = useState<SortDirection>(initialSort?.sortOrder || "desc");
+  // NOTE: Extract to avoid React Compiler bug with `?.prop || fallback` in useState
+  const defaultSortField = (initialSort?.sortBy as SortField) || "lastActivity";
+  const defaultSortDirection = initialSort?.sortOrder || "desc";
+  const [sortField, setSortField] = useState<SortField>(defaultSortField);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(defaultSortDirection);
   const [currentPage, setCurrentPage] = useState(0);
 
   // Modal states

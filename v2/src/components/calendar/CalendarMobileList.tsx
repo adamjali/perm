@@ -233,6 +233,8 @@ export function CalendarMobileList({
           <div className="space-y-2">
             {group.events.map((event, eventIndex) => {
               const caseData = caseDataMap?.get(event.caseId as string);
+              // NOTE: Extract to avoid React Compiler bug with `?.prop ?? fallback` in JSX
+              const employerName = caseData?.employerName;
               const stageColor = STAGE_COLORS[event.stage] ?? "#6B7280";
               const urgencyColor = URGENCY_COLORS[event.urgency] ?? "#059669";
               const isOverdueOrUrgent =
@@ -258,7 +260,7 @@ export function CalendarMobileList({
                     "text-left",
                     "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                   )}
-                  aria-label={`${event.title} - ${caseData?.employerName ?? "Case"} - ${formatEventDate(event.start)}`}
+                  aria-label={`${event.title} - ${employerName ?? "Case"} - ${formatEventDate(event.start)}`}
                 >
                   {/* Stage color indicator */}
                   <div
@@ -278,7 +280,7 @@ export function CalendarMobileList({
 
                     {/* Case name */}
                     <p className="text-sm text-muted-foreground truncate">
-                      {caseData?.employerName ?? "Unknown Case"}
+                      {employerName ?? "Unknown Case"}
                       {caseData?.positionTitle && (
                         <span className="hidden sm:inline">
                           {" "}

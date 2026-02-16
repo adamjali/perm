@@ -11,7 +11,7 @@
  */
 
 import { useEffect } from "react";
-import { isAuthError } from "@/components/error/auth-error";
+import { isAuthError, isStaleDeploymentError } from "@/components/error/auth-error";
 
 export default function GlobalError({
   error,
@@ -21,8 +21,15 @@ export default function GlobalError({
   reset: () => void;
 }) {
   const isExpiredSession = isAuthError(error.message);
+  const isStaleDeployment = isStaleDeploymentError(error);
 
   useEffect(() => {
+    // Stale deployment: silently reload to pick up new Server Action hashes
+    if (isStaleDeployment) {
+      window.location.reload();
+      return;
+    }
+
     if (isExpiredSession) {
       window.location.href = "/login?expired=1";
       return;
@@ -41,7 +48,30 @@ export default function GlobalError({
       .catch(() => {
         /* Sentry unavailable */
       });
-  }, [error, isExpiredSession]);
+  }, [error, isExpiredSession, isStaleDeployment]);
+
+  // Stale deployment: show brief message while reloading
+  if (isStaleDeployment) {
+    return (
+      <html lang="en">
+        <body
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100vh",
+            fontFamily: "system-ui, sans-serif",
+            background: "#fafafa",
+            margin: 0,
+          }}
+        >
+          <p style={{ color: "#666", fontSize: 14 }}>
+            Updating to latest version&hellip;
+          </p>
+        </body>
+      </html>
+    );
+  }
 
   // Auth errors: show brief message while redirecting to login
   if (isExpiredSession) {
