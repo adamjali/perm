@@ -3,6 +3,7 @@ import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale } from "next-intl/server";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { SharedProviders } from "./shared-providers";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
@@ -158,6 +159,7 @@ export default async function RootLayout({
             <SharedProviders>{children}</SharedProviders>
           </NextIntlClientProvider>
           <SpeedInsights />
+          <Analytics />
         </body>
       </html>
     </ConvexAuthNextjsServerProvider>
