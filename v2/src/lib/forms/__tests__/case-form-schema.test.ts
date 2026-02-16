@@ -688,9 +688,12 @@ describe('cross-field validation', () => {
         additionalRecruitmentStartDate: '2024-02-01',
         additionalRecruitmentEndDate: '2024-03-15',
         additionalRecruitmentMethods: [
+          // single-date category
           { method: 'job_fair', date: '2024-02-10', description: 'Job fair 1' },
-          { method: 'radio_ad', date: '2024-02-20', description: 'Radio ad' },
-          { method: 'employer_website', date: '2024-03-01', description: 'Website posting' },
+          // sub-entries category (radio_ad requires subEntries with dates)
+          { method: 'radio_ad', date: '2024-02-20', description: 'Radio ad', subEntries: [{ date: '2024-02-20', description: 'Broadcast 1' }] },
+          // date-range category (employer_website requires startDate)
+          { method: 'employer_website', date: '2024-03-01', description: 'Website posting', startDate: '2024-02-15', endDate: '2024-03-01' },
         ],
       });
       const result = caseFormSchema.safeParse(data);
