@@ -33,26 +33,15 @@ export function ResetPasswordPageClient() {
       setStep("reset");
       toast.success("If an account exists with this email, we've sent a reset code.");
     } catch (error) {
-      console.error("[Reset Password Request Error]", error);
-      captureError(error, { operation: "resetPasswordRequest" });
-
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
 
-      // Security: don't reveal whether email exists — show same success message
-      // and proceed to code step for non-existent emails too
       if (
-        lower.includes("invalidaccountid") ||
-        lower.includes("invalid") ||
-        lower.includes("account")
-      ) {
-        setStep("reset");
-        toast.success("If an account exists with this email, we've sent a reset code.");
-      } else if (
         lower.includes("toomanyfailedattempts") ||
         lower.includes("rate limit") ||
         lower.includes("too many")
       ) {
+        captureError(error, { operation: "resetPasswordRequest" });
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (
         lower.includes("network") ||
@@ -60,11 +49,12 @@ export function ResetPasswordPageClient() {
         lower.includes("failed to fetch") ||
         lower.includes("load failed")
       ) {
+        captureError(error, { operation: "resetPasswordRequest" });
         toast.error("Network error. Please check your connection and try again.");
       } else {
-        // In production, Convex strips error messages — treat unknown errors
-        // the same as success to avoid leaking email existence
-        console.warn("[Reset Password Request] Unhandled error type:", message);
+        // Expected: InvalidAccountId (no password account), or Convex production
+        // "Server Error" masking. Don't report to Sentry — these are normal.
+        // Security: always show same success message to avoid leaking email existence.
         setStep("reset");
         toast.success("If an account exists with this email, we've sent a reset code.");
       }
