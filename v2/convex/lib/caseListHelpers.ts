@@ -120,6 +120,7 @@ function getDeadlineCardLabel(deadlineType: ExtractedDeadline["type"]): string {
     rfi_due: "RFI due",
     rfe_due: "RFE due",
     i140_filing_deadline: "I-140 deadline",
+    filing_window_opens: "Filing opens",
     recruitment_window: "ETA window closes",
     recruitment_window_closes: "Recruitment closes",
     eta9089_expiration: "ETA expires",
