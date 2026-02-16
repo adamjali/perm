@@ -65,6 +65,12 @@ Status fields are derived from dates. When you need to verify a case's true stat
 ### Key Deadlines & Regulations (20 CFR 656)
 - **PWD Expiration**: Valid for 90 days if determined Apr 2 - Jun 30, otherwise until following Jun 30
 - **Recruitment Window**: Must complete within 180 days of starting AND before PWD expiration
+- **Per-Step Recruitment Deadlines** (calculated from earliest recruitment start date):
+  - Job Order: must start within 14 days of first recruitment activity
+  - Notice of Filing: must start within 30 days of first recruitment activity
+  - First Sunday Ad: must run within 60 days of first recruitment activity
+  - Second Sunday Ad: must run within 90 days of first recruitment activity
+  - Overall deadline: all recruitment must finish within 150 days of starting, leaving a 30-day quiet period before the 180-day window closes
 - **Filing Window (30-180 Rule)**: ETA 9089 must be filed 30-180 days after recruitment ends
 - **I-140 Deadline**: Must file within 180 days of ETA 9089 certification
 - **RFI Response**: 30 calendar days from receipt (strict, non-negotiable)

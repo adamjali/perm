@@ -120,10 +120,15 @@ function getDeadlineCardLabel(deadlineType: ExtractedDeadline["type"]): string {
     rfe_due: "RFE due",
     i140_filing_deadline: "I-140 deadline",
     recruitment_window: "ETA window closes",
+    recruitment_window_closes: "Recruitment closes",
     eta9089_expiration: "ETA expires",
     rfi_response: "RFI response",
     rfe_response: "RFE response",
     i140_filing_window: "I-140 window",
+    job_order_start_deadline: "Job order by",
+    notice_of_filing_start_deadline: "Notice by",
+    first_sunday_ad_deadline: "1st Sunday ad by",
+    second_sunday_ad_deadline: "2nd Sunday ad by",
   };
   return labelMap[deadlineType] || "Deadline";
 }

@@ -90,8 +90,12 @@ describe("extractMilestones", () => {
   describe("calculated milestones", () => {
     it("should calculate Ready to File date correctly", () => {
       const caseData: CaseWithDates = {
+        sundayAdFirstDate: "2024-03-03",
         sundayAdSecondDate: "2024-03-10",
+        jobOrderStartDate: "2024-03-01",
         jobOrderEndDate: "2024-03-31", // Latest
+        noticeOfFilingStartDate: "2024-03-01",
+        noticeOfFilingEndDate: "2024-03-15",
       };
 
       const milestones = extractMilestones(caseData);
@@ -109,7 +113,11 @@ describe("extractMilestones", () => {
     it("should calculate Filing Deadline (recruitment expires) date correctly", () => {
       const caseData: CaseWithDates = {
         sundayAdFirstDate: "2024-03-03", // Earliest
+        sundayAdSecondDate: "2024-03-10",
         jobOrderStartDate: "2024-03-15",
+        jobOrderEndDate: "2024-04-15",
+        noticeOfFilingStartDate: "2024-03-05",
+        noticeOfFilingEndDate: "2024-03-19",
       };
 
       const milestones = extractMilestones(caseData);

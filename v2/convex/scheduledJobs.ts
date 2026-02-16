@@ -43,6 +43,7 @@ import {
   shouldRemindForDeadline,
   getActiveRfiEntry,
   getActiveRfeEntry,
+  extractActiveDeadlines,
   type CaseDataForDeadlines,
 } from "./lib/perm/deadlines";
 import {
@@ -293,6 +294,11 @@ export const getCasesNeedingReminders = internalQuery({
         i140FilingDate: caseDoc.i140FilingDate,
         filingWindowOpens: caseDoc.filingWindowOpens,
         filingWindowCloses: caseDoc.filingWindowCloses,
+        recruitmentWindowCloses: caseDoc.recruitmentWindowCloses,
+        sundayAdFirstDate: caseDoc.sundayAdFirstDate,
+        sundayAdSecondDate: caseDoc.sundayAdSecondDate,
+        jobOrderStartDate: caseDoc.jobOrderStartDate,
+        noticeOfFilingStartDate: caseDoc.noticeOfFilingStartDate,
         rfiEntries: caseDoc.rfiEntries,
         rfeEntries: caseDoc.rfeEntries,
       };
@@ -326,6 +332,32 @@ export const getCasesNeedingReminders = internalQuery({
         const activeRfe = getActiveRfeEntry(caseDoc.rfeEntries ?? []);
         if (activeRfe?.responseDueDate) {
           checkDeadline(activeRfe.responseDueDate, "rfe_due", "rfe_due");
+        }
+      }
+
+      // Check recruitment window closes (superseded when ETA 9089 filed)
+      if (shouldRemindForDeadline("recruitment_window_closes", caseDataForDeadlines)) {
+        checkDeadline(caseDoc.recruitmentWindowCloses, "recruitment_window_closes", "recruitment_window_closes");
+      }
+
+      // Per-step recruitment deadlines (computed from central system)
+      // Extract once, then check each per-step type
+      const perStepTypes = [
+        "job_order_start_deadline",
+        "notice_of_filing_start_deadline",
+        "first_sunday_ad_deadline",
+        "second_sunday_ad_deadline",
+      ] as const;
+      const needsPerStep = perStepTypes.some((t) => shouldRemindForDeadline(t, caseDataForDeadlines));
+      if (needsPerStep) {
+        const extracted = extractActiveDeadlines(caseDataForDeadlines);
+        for (const pType of perStepTypes) {
+          if (shouldRemindForDeadline(pType, caseDataForDeadlines)) {
+            const match = extracted.find((d) => d.type === pType);
+            if (match) {
+              checkDeadline(match.date, pType, pType);
+            }
+          }
         }
       }
     }
@@ -759,6 +791,11 @@ export const getDeadlinesForDigest = internalQuery({
         i140FilingDate: caseDoc.i140FilingDate,
         filingWindowOpens: caseDoc.filingWindowOpens,
         filingWindowCloses: caseDoc.filingWindowCloses,
+        recruitmentWindowCloses: caseDoc.recruitmentWindowCloses,
+        sundayAdFirstDate: caseDoc.sundayAdFirstDate,
+        sundayAdSecondDate: caseDoc.sundayAdSecondDate,
+        jobOrderStartDate: caseDoc.jobOrderStartDate,
+        noticeOfFilingStartDate: caseDoc.noticeOfFilingStartDate,
         rfiEntries: caseDoc.rfiEntries,
         rfeEntries: caseDoc.rfeEntries,
       };
@@ -786,6 +823,27 @@ export const getDeadlinesForDigest = internalQuery({
         const activeRfe = getActiveRfeEntry(caseDoc.rfeEntries ?? []);
         if (activeRfe?.responseDueDate) {
           addDeadline(activeRfe.responseDueDate, "RFE Response Due", "rfe_due");
+        }
+      }
+
+      // Per-step recruitment deadlines for digest
+      if (shouldRemindForDeadline("recruitment_window_closes", caseDataForDeadlines)) {
+        addDeadline(caseDoc.recruitmentWindowCloses, "Recruitment Window Closes", "recruitment_window_closes");
+      }
+      const digestPerStepTypes = [
+        "job_order_start_deadline",
+        "notice_of_filing_start_deadline",
+        "first_sunday_ad_deadline",
+        "second_sunday_ad_deadline",
+      ] as const;
+      const digestNeedsPerStep = digestPerStepTypes.some((t) => shouldRemindForDeadline(t, caseDataForDeadlines));
+      if (digestNeedsPerStep) {
+        const extracted = extractActiveDeadlines(caseDataForDeadlines);
+        for (const pType of digestPerStepTypes) {
+          const match = extracted.find((d) => d.type === pType);
+          if (match) {
+            addDeadline(match.date, match.label, pType);
+          }
         }
       }
     }

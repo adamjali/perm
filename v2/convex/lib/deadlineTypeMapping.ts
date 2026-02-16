@@ -40,8 +40,13 @@ export type MappableCalendarDeadlineType =
   | "rfeDue"
   | "filingWindowOpens"
   | "filingWindowCloses"
+  | "recruitmentWindowCloses"
   | "eta9089Expires"
-  | "i140Filed";
+  | "i140Filed"
+  | "jobOrderStartDeadline"
+  | "noticeOfFilingStartDeadline"
+  | "firstSundayAdDeadline"
+  | "secondSundayAdDeadline";
 
 /**
  * Mapping from dashboard (snake_case) to calendar (camelCase) deadline types.
@@ -55,8 +60,13 @@ export const DASHBOARD_TO_CALENDAR_MAP: Partial<
   rfe_due: "rfeDue",
   filing_window_opens: "filingWindowOpens",
   recruitment_window: "filingWindowCloses",
+  recruitment_window_closes: "recruitmentWindowCloses",
   eta9089_expiration: "eta9089Expires",
   i140_filing_deadline: "i140Filed",
+  job_order_start_deadline: "jobOrderStartDeadline",
+  notice_of_filing_start_deadline: "noticeOfFilingStartDeadline",
+  first_sunday_ad_deadline: "firstSundayAdDeadline",
+  second_sunday_ad_deadline: "secondSundayAdDeadline",
 } as const;
 
 /**
@@ -71,8 +81,13 @@ export const CALENDAR_TO_DASHBOARD_MAP: Record<
   rfeDue: "rfe_due",
   filingWindowOpens: "filing_window_opens",
   filingWindowCloses: "recruitment_window",
+  recruitmentWindowCloses: "recruitment_window_closes",
   eta9089Expires: "eta9089_expiration",
   i140Filed: "i140_filing_deadline",
+  jobOrderStartDeadline: "job_order_start_deadline",
+  noticeOfFilingStartDeadline: "notice_of_filing_start_deadline",
+  firstSundayAdDeadline: "first_sunday_ad_deadline",
+  secondSundayAdDeadline: "second_sunday_ad_deadline",
 } as const;
 
 /**

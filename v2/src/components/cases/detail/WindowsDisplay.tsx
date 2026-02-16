@@ -6,7 +6,7 @@ import type { CaseWithDates } from "@/lib/timeline";
 import {
   isRecruitmentComplete,
   getFirstRecruitmentDate,
-  calculateRecruitmentWindowFromCase,
+  FILING_WINDOW_CLOSE_DAYS,
   getFilingWindowStatusFromCase,
   daysBetween,
   getTodayISO,
@@ -278,16 +278,21 @@ export function WindowsDisplay({ caseData, className }: WindowsDisplayProps) {
     eta9089FilingDate: caseData.eta9089FilingDate ?? undefined,
   }), [caseData]);
 
-  // ---- Recruitment Window (from central lib) ----
+  // ---- Recruitment Window (180-day overall window) ----
   const recruitmentDisplay = useMemo(() => {
     const firstDate = getFirstRecruitmentDate(cd);
-    const recWindow = calculateRecruitmentWindowFromCase(cd);
 
-    if (!firstDate || !recWindow) {
+    if (!firstDate) {
       return { status: "NOT_STARTED" as const, startDate: null, endDate: null, daysRemaining: null, daysElapsed: null };
     }
 
-    const closes = recWindow.closes;
+    // 180-day overall window: MIN(first + 180, PWD expiration)
+    const naturalCloseDate = new Date(firstDate + "T00:00:00Z");
+    naturalCloseDate.setUTCDate(naturalCloseDate.getUTCDate() + FILING_WINDOW_CLOSE_DAYS);
+    const naturalClose = naturalCloseDate.toISOString().split("T")[0] || firstDate;
+    const closes = cd.pwdExpirationDate && cd.pwdExpirationDate < naturalClose
+      ? cd.pwdExpirationDate
+      : naturalClose;
     const today = getTodayISO();
 
     if (isRecruitmentComplete(cd)) {
@@ -301,7 +306,7 @@ export function WindowsDisplay({ caseData, className }: WindowsDisplayProps) {
     return { status: "ACTIVE" as const, startDate: firstDate, endDate: closes, daysRemaining: daysBetween(today, closes), daysElapsed: null };
   }, [cd]);
 
-  // ---- Filing Window (from central lib) ----
+  // ---- Filing Window (gated on recruitment completeness) ----
   const filingDisplay = useMemo(() => {
     const isFiled = !!cd.eta9089FilingDate;
     const centralStatus = getFilingWindowStatusFromCase(cd);
@@ -309,10 +314,13 @@ export function WindowsDisplay({ caseData, className }: WindowsDisplayProps) {
     const today = getTodayISO();
 
     if (isFiled) {
-      return { status: "FILED" as const, opensDate: window?.opens || null, closesDate: window?.closes || null, daysUntilOpen: null, daysRemaining: null, daysElapsed: null };
+      const opens = window ? window.opens : null;
+      const closes = window ? window.closes : null;
+      return { status: "FILED" as const, opensDate: opens, closesDate: closes, daysUntilOpen: null, daysRemaining: null, daysElapsed: null };
     }
 
-    if (!window) {
+    // Gate: recruitment must be complete before showing filing window
+    if (!isRecruitmentComplete(cd) || !window) {
       return { status: "NOT_AVAILABLE" as const, opensDate: null, closesDate: null, daysUntilOpen: null, daysRemaining: null, daysElapsed: null };
     }
 

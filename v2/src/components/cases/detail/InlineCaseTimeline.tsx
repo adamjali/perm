@@ -372,7 +372,7 @@ export function InlineCaseTimeline({
                   return (
                     <motion.div
                       key={`${rangeBar.field}-${rangeBar.startDate}`}
-                      initial={{ scaleX: 0, opacity: 0 }}
+                      initial={false}
                       animate={{ scaleX: 1, opacity: 1 }}
                       transition={{
                         ...springConfig,
@@ -400,7 +400,7 @@ export function InlineCaseTimeline({
                   return (
                     <motion.div
                       key={`${milestone.field}-${milestone.date}`}
-                      initial={{ scale: 0, opacity: 0 }}
+                      initial={false}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{
                         ...springConfig,

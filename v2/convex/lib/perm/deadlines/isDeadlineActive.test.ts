@@ -89,8 +89,19 @@ describe("isDeadlineActive", () => {
   // ==========================================================================
 
   describe("filing_window_opens", () => {
-    it("is active when ETA 9089 not filed", () => {
+    // Filing window requires completed recruitment
+    const completedRecruitment = {
+      jobOrderStartDate: "2024-08-01",
+      jobOrderEndDate: "2024-09-01",
+      sundayAdFirstDate: "2024-08-04",
+      sundayAdSecondDate: "2024-08-11",
+      noticeOfFilingStartDate: "2024-08-01",
+      noticeOfFilingEndDate: "2024-08-15",
+    };
+
+    it("is active when ETA 9089 not filed and recruitment complete", () => {
       const caseData: CaseDataForDeadlines = {
+        ...completedRecruitment,
         filingWindowOpens: "2025-03-01",
       };
 
@@ -99,8 +110,20 @@ describe("isDeadlineActive", () => {
       expect(result.isActive).toBe(true);
     });
 
+    it("is inactive when recruitment incomplete", () => {
+      const caseData: CaseDataForDeadlines = {
+        filingWindowOpens: "2025-03-01",
+      };
+
+      const result = isDeadlineActive("filing_window_opens", caseData);
+
+      expect(result.isActive).toBe(false);
+      expect(result.supersededReason).toBe(SUPERSESSION_REASONS.RECRUITMENT_INCOMPLETE);
+    });
+
     it("is superseded when ETA 9089 is filed", () => {
       const caseData: CaseDataForDeadlines = {
+        ...completedRecruitment,
         filingWindowOpens: "2025-03-01",
         eta9089FilingDate: "2024-12-01",
       };
@@ -113,8 +136,18 @@ describe("isDeadlineActive", () => {
   });
 
   describe("filing_window_closes", () => {
-    it("is active when ETA 9089 not filed", () => {
+    const completedRecruitment = {
+      jobOrderStartDate: "2024-08-01",
+      jobOrderEndDate: "2024-09-01",
+      sundayAdFirstDate: "2024-08-04",
+      sundayAdSecondDate: "2024-08-11",
+      noticeOfFilingStartDate: "2024-08-01",
+      noticeOfFilingEndDate: "2024-08-15",
+    };
+
+    it("is active when ETA 9089 not filed and recruitment complete", () => {
       const caseData: CaseDataForDeadlines = {
+        ...completedRecruitment,
         filingWindowCloses: "2025-06-15",
       };
 

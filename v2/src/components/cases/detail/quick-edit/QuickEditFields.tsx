@@ -171,7 +171,7 @@ function WaitingInfoDisplay({ waitingInfo }: WaitingInfoDisplayProps) {
   return (
     <motion.div
       variants={fieldVariants}
-      initial="hidden"
+      initial={false}
       animate="visible"
       className="space-y-3"
     >
@@ -203,7 +203,7 @@ function ComplexActionDisplay({ message, onNavigateToForm }: ComplexActionDispla
   return (
     <motion.div
       variants={fieldVariants}
-      initial="hidden"
+      initial={false}
       animate="visible"
       className="space-y-3"
     >
@@ -431,7 +431,7 @@ export function QuickEditFields({
   return (
     <motion.div
       variants={fieldVariants}
-      initial="hidden"
+      initial={false}
       animate="visible"
       className={cn("space-y-4", className)}
     >

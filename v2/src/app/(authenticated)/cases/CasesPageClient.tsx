@@ -69,6 +69,8 @@ import type { CaseStatus, ProgressStatus } from "../../../../convex/lib/dashboar
 const DEFAULT_PAGE_SIZE = 12;
 const PAGE_SIZE_STORAGE_KEY = "perm-tracker-page-size";
 const VIEW_MODE_STORAGE_KEY = "perm-tracker-view-mode";
+const SORT_STORAGE_KEY = "perm-tracker-sort";
+const FILTERS_STORAGE_KEY = "perm-tracker-filters";
 const DEFAULT_SORT: CaseListSort = {
   sortBy: "deadline",
   sortOrder: "asc",
@@ -125,6 +127,56 @@ function setStoredViewMode(mode: ViewMode): void {
   }
 }
 
+function getStoredSort(): CaseListSort | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem(SORT_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed.sortBy === "string" && typeof parsed.sortOrder === "string") {
+        return parsed as CaseListSort;
+      }
+    }
+  } catch {
+    // localStorage unavailable or corrupt data — expected, use default
+  }
+  return null;
+}
+
+function setStoredSort(sort: CaseListSort): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(sort));
+  } catch {
+    // localStorage unavailable or quota exceeded — expected, silently fail
+  }
+}
+
+function getStoredFilters(): CaseListFilters | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem(FILTERS_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === "object") {
+        return parsed as CaseListFilters;
+      }
+    }
+  } catch {
+    // localStorage unavailable or corrupt data — expected, use default
+  }
+  return null;
+}
+
+function setStoredFilters(filters: CaseListFilters): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
+  } catch {
+    // localStorage unavailable or quota exceeded — expected, silently fail
+  }
+}
+
 // ============================================================================
 // URL PARAM PARSING
 // ============================================================================
@@ -176,12 +228,18 @@ export function CasesPageClient() {
   // URL STATE
   // ============================================================================
 
-  const [filters, setFilters] = useState<CaseListFilters>(() =>
-    parseURLFilters(searchParams)
-  );
-  const [sort, setSort] = useState<CaseListSort>(() =>
-    parseURLSort(searchParams)
-  );
+  // Restore sort/filters from localStorage when URL has no params
+  const hasURLParams = searchParams.toString().length > 0;
+  const [filters, setFilters] = useState<CaseListFilters>(() => {
+    if (hasURLParams) return parseURLFilters(searchParams);
+    const stored = getStoredFilters();
+    return stored || parseURLFilters(searchParams);
+  });
+  const [sort, setSort] = useState<CaseListSort>(() => {
+    if (hasURLParams) return parseURLSort(searchParams);
+    const stored = getStoredSort();
+    return stored || DEFAULT_SORT;
+  });
   const [currentPage, setCurrentPage] = useState(() =>
     parseURLPage(searchParams)
   );
@@ -361,6 +419,7 @@ export function CasesPageClient() {
       // Use transition to keep old content visible while loading new results
       startTransition(() => {
         setFilters(newFilters);
+        setStoredFilters(newFilters); // Persist to localStorage
         setCurrentPage(1); // Reset to page 1 on filter change
         setLocalOrder([]); // Clear drag order when changing filters
         updateURL(newFilters, sort, 1);
@@ -372,6 +431,7 @@ export function CasesPageClient() {
   const handleSortChange = useCallback(
     (newSort: CaseListSort) => {
       setSort(newSort);
+      setStoredSort(newSort); // Persist to localStorage
       setCurrentPage(1); // Reset to page 1 on sort change
       setLocalOrder([]); // Clear drag order when changing sort
       updateURL(filters, newSort, 1);

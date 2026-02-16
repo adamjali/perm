@@ -51,8 +51,13 @@ export type DeadlineNotificationType =
   | "filing_window_opens"
   | "filing_window_closes"
   | "recruitment_window"
+  | "recruitment_window_closes"
   | "eta9089_expiration"
-  | "i140_filing_deadline";
+  | "i140_filing_deadline"
+  | "job_order_start_deadline"
+  | "notice_of_filing_start_deadline"
+  | "first_sunday_ad_deadline"
+  | "second_sunday_ad_deadline";
 
 /**
  * Context for generating notification titles and messages.
@@ -512,11 +517,20 @@ export function formatDeadlineType(
     case "filing_window_closes":
       return "Filing Window Closes";
     case "recruitment_window":
-      return "Recruitment Window";
+    case "recruitment_window_closes":
+      return "Recruitment Window Closes";
     case "eta9089_expiration":
       return "ETA 9089 Expiration";
     case "i140_filing_deadline":
       return "I-140 Filing Deadline";
+    case "job_order_start_deadline":
+      return "Start Job Order By";
+    case "notice_of_filing_start_deadline":
+      return "Start Notice of Filing By";
+    case "first_sunday_ad_deadline":
+      return "First Sunday Ad By";
+    case "second_sunday_ad_deadline":
+      return "Second Sunday Ad By";
     default:
       return deadlineType;
   }

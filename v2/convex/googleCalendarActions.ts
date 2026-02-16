@@ -587,6 +587,11 @@ const EVENT_TYPE_TO_SCHEMA_FIELD: Record<CalendarEventType, string> = {
   eta9089_expiration: "eta9089_expiration",
   filing_window_opens: "eta9089_filing_window",
   recruitment_expires: "recruitment_end",
+  recruitment_window_closes: "recruitment_window_closes",
+  job_order_start_deadline: "job_order_start_deadline",
+  notice_of_filing_start_deadline: "notice_of_filing_start_deadline",
+  first_sunday_ad_deadline: "first_sunday_ad_deadline",
+  second_sunday_ad_deadline: "second_sunday_ad_deadline",
   i140_deadline: "i140_filing_deadline",
   rfi_due: "rfi_due",
   rfe_due: "rfe_due",
@@ -789,6 +794,11 @@ export const bulkDeleteEventsByType = internalAction({
               rfi_due: updatedEventIds.rfi_due,
               rfe_due: updatedEventIds.rfe_due,
               recruitment_end: updatedEventIds.recruitment_end,
+              recruitment_window_closes: updatedEventIds.recruitment_window_closes,
+              job_order_start_deadline: updatedEventIds.job_order_start_deadline,
+              notice_of_filing_start_deadline: updatedEventIds.notice_of_filing_start_deadline,
+              first_sunday_ad_deadline: updatedEventIds.first_sunday_ad_deadline,
+              second_sunday_ad_deadline: updatedEventIds.second_sunday_ad_deadline,
             },
           }
         );
@@ -949,6 +959,11 @@ export const syncCaseCalendarEvents = internalAction({
             rfi_due: newEventIds["rfi_due"],
             rfe_due: newEventIds["rfe_due"],
             recruitment_end: newEventIds["recruitment_end"],
+            recruitment_window_closes: newEventIds["recruitment_window_closes"],
+            job_order_start_deadline: newEventIds["job_order_start_deadline"],
+            notice_of_filing_start_deadline: newEventIds["notice_of_filing_start_deadline"],
+            first_sunday_ad_deadline: newEventIds["first_sunday_ad_deadline"],
+            second_sunday_ad_deadline: newEventIds["second_sunday_ad_deadline"],
           },
         }
       );

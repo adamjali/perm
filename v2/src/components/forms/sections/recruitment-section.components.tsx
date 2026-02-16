@@ -29,11 +29,15 @@ export interface RecruitmentDeadlineIndicatorProps {
 
 /**
  * Displays the recruitment deadline based on two constraints:
- * 1. PWD expiration: Must complete 30 days before PWD expires (for waiting period)
+ * 1. PWD expiration: Must complete 30 days before PWD expires (for the 30-day waiting period)
  * 2. 150-day rule: Must complete within 150 days of FIRST recruitment step
- *    (150 days accounts for the mandatory 30-day waiting period before ETA 9089 filing)
+ *    (the overall ETA 9089 window is 180 days; 150 + 30-day wait = 180 total)
  *
- * The earlier of these two deadlines is shown, with indication of which is limiting.
+ * Individual recruitment steps (job order, notice of filing, Sunday ads) each have
+ * their own per-step deadlines computed from the first recruitment date and PWD
+ * expiration — these are shown in the What's Next section on the case detail page.
+ *
+ * The earlier of the two overall constraints is shown, with indication of which is limiting.
  */
 export function RecruitmentDeadlineIndicator({
   pwdDeterminationDate,
@@ -191,10 +195,10 @@ export function RecruitmentDeadlineIndicator({
 
       <p className="text-xs text-muted-foreground pt-1">
         {limitingFactor === '150-day'
-          ? `Deadline based on 150-day rule from first recruitment${firstDate ? ` (${firstDate})` : ""}. This is earlier than the PWD constraint.`
+          ? `All recruitment must finish within 150 days of the first step${firstDate ? ` (${firstDate})` : ""}, leaving 30 days for the mandatory waiting period before ETA 9089 filing (180 days total).`
           : firstDate
-            ? "Deadline based on PWD expiration (must complete 30 days before). This is earlier than the 150-day rule."
-            : "Must complete 30 days before PWD expiration to allow for ETA 9089 filing window."}
+            ? "Recruitment must complete 30 days before PWD expires to preserve the filing window. This PWD constraint is earlier than the 150-day rule."
+            : "Recruitment must complete 30 days before PWD expires to allow for the mandatory waiting period before ETA 9089 filing."}
       </p>
     </div>
   );

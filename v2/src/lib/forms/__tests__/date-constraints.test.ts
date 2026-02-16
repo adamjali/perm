@@ -24,19 +24,20 @@ const formatDate = (date: Date) => format(date, "yyyy-MM-dd");
 
 describe("getRecruitmentFieldDeadline", () => {
   describe("notice of filing deadline", () => {
-    it("returns 150 days from first recruitment when no PWD expiration", () => {
+    it("returns 136 days from first recruitment when no PWD expiration", () => {
       const firstRecruitment = "2024-02-01";
       const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', firstRecruitment, undefined);
 
-      const expected = formatDate(addDays(new Date(firstRecruitment + "T00:00:00"), 150));
+      // 136 days = RECRUITMENT_WINDOW_DAYS (150) - 14 (notice posting duration)
+      const expected = formatDate(addDays(new Date(firstRecruitment + "T00:00:00"), 136));
       expect(result.maxDate).toBe(expected);
       expect(result.limitingFactor).toBe('recruitment');
-      expect(result.hint).toContain("150 days from first recruitment");
+      expect(result.hint).toContain("136 days from first recruitment");
     });
 
     it("returns 30 days before PWD exp when earlier", () => {
       const firstRecruitment = "2024-02-01";
-      const pwdExpiration = "2024-05-15"; // 30 days before = Apr 15, which is < 150 days from Feb 1 = Jul 1
+      const pwdExpiration = "2024-05-15"; // 30 days before = Apr 15, which is < 136 days from Feb 1 = Jun 16
       const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', firstRecruitment, pwdExpiration);
 
       const expected = formatDate(subDays(new Date(pwdExpiration + "T00:00:00"), 30));

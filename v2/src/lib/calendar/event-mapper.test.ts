@@ -557,7 +557,10 @@ describe("caseToCalendarEvents", () => {
         caseStatus: "eta9089",
         sundayAdFirstDate: "2024-03-03",
         sundayAdSecondDate: "2024-03-10",
+        jobOrderStartDate: "2024-03-01",
         jobOrderEndDate: "2024-04-09",
+        noticeOfFilingStartDate: "2024-03-01",
+        noticeOfFilingEndDate: "2024-03-15",
         // No eta9089FilingDate - triggers filing window calculation
       });
 

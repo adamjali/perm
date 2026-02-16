@@ -51,6 +51,11 @@ export const getCaseForCalendarSync = internalQuery({
       eta9089ExpirationDate: caseDoc.eta9089ExpirationDate,
       filingWindowOpens: caseDoc.filingWindowOpens,
       recruitmentWindowCloses: caseDoc.recruitmentWindowCloses,
+      sundayAdFirstDate: caseDoc.sundayAdFirstDate,
+      sundayAdSecondDate: caseDoc.sundayAdSecondDate,
+      jobOrderStartDate: caseDoc.jobOrderStartDate,
+      noticeOfFilingStartDate: caseDoc.noticeOfFilingStartDate,
+      noticeOfFilingEndDate: caseDoc.noticeOfFilingEndDate,
       i140FilingDate: caseDoc.i140FilingDate,
       rfiEntries: caseDoc.rfiEntries?.map((entry) => ({
         id: entry.id,
@@ -166,6 +171,11 @@ export const updateCaseCalendarEventIds = internalMutation({
       rfi_due: v.optional(v.string()),
       rfe_due: v.optional(v.string()),
       recruitment_end: v.optional(v.string()),
+      recruitment_window_closes: v.optional(v.string()),
+      job_order_start_deadline: v.optional(v.string()),
+      notice_of_filing_start_deadline: v.optional(v.string()),
+      first_sunday_ad_deadline: v.optional(v.string()),
+      second_sunday_ad_deadline: v.optional(v.string()),
     }),
   },
   handler: async (ctx, args): Promise<void> => {

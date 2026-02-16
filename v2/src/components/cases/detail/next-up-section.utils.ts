@@ -20,10 +20,11 @@ import {
 import type { CaseStatus, ProgressStatus } from "@/lib/perm";
 import {
   isProfessionalRecruitmentComplete,
-  isRecruitmentComplete,
   calculateFilingWindowFromCase,
   calculateRecruitmentWindowCloses,
   getFirstRecruitmentDate,
+  extractActiveDeadlines,
+  type CaseDataForDeadlines,
 } from "@/lib/perm";
 import { getUrgencyLevelExtended, type UrgencyLevelExtended } from "@/lib/status";
 import type { AdditionalRecruitmentMethod } from "@/lib/shared/types";
@@ -444,47 +445,44 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
 }
 
 /**
- * Calculate the most urgent upcoming deadline
+ * Calculate the most urgent upcoming deadline.
+ *
+ * Delegates to the central extractActiveDeadlines system which handles
+ * all supersession logic, per-step recruitment deadlines, and filing window gating.
  */
 export function calculateNextDeadline(caseData: NextUpCaseData): Deadline | null {
-  const deadlines: Deadline[] = [];
+  // Pre-compute derived fields that extractActiveDeadlines expects as stored values
+  const firstRecruit = getFirstRecruitmentDate({
+    sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+    jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
+  });
 
-  // PWD Expiration (before ETA 9089 is filed)
-  if (caseData.pwdExpirationDate && !caseData.eta9089FilingDate) {
-    deadlines.push({
-      label: "PWD Expires",
-      date: caseData.pwdExpirationDate,
-      daysUntil: calculateDaysUntil(caseData.pwdExpirationDate),
-    });
-  }
+  const recruitWindow = firstRecruit
+    ? calculateRecruitmentWindowCloses(firstRecruit, caseData.pwdExpirationDate || undefined)
+    : undefined;
 
-  // Recruitment Window Closes (during recruitment stage, before ETA 9089 is filed)
-  // Uses canonical calculateRecruitmentWindowCloses()
-  if (caseData.caseStatus === "recruitment" && !caseData.eta9089FilingDate) {
-    const firstRecruitmentDate = getFirstRecruitmentDate({
-      sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
-      jobOrderStartDate: caseData.jobOrderStartDate || undefined,
-      noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
-    });
+  const filingWindow = calculateFilingWindowFromCase({
+    sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+    sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
+    jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+    jobOrderEndDate: caseData.jobOrderEndDate || undefined,
+    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
+    noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
+    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
+    pwdExpirationDate: caseData.pwdExpirationDate || undefined,
+    isProfessionalOccupation: !!caseData.isProfessionalOccupation,
+  });
 
-    if (firstRecruitmentDate) {
-      const recruitmentWindow = calculateRecruitmentWindowCloses(
-        firstRecruitmentDate,
-        caseData.pwdExpirationDate || undefined
-      );
-
-      if (recruitmentWindow) {
-        deadlines.push({
-          label: "Recruitment Window Closes",
-          date: recruitmentWindow.closes,
-          daysUntil: calculateDaysUntil(recruitmentWindow.closes),
-        });
-      }
-    }
-  }
-
-  // ETA 9089 Filing Window Opens/Closes (only when recruitment is complete, before ETA 9089 is filed)
-  const recruitmentDone = isRecruitmentComplete({
+  // Build CaseDataForDeadlines with pre-computed derived fields
+  const centralData: CaseDataForDeadlines = {
+    caseStatus: caseData.caseStatus,
+    progressStatus: caseData.progressStatus,
+    pwdExpirationDate: caseData.pwdExpirationDate || undefined,
+    eta9089FilingDate: caseData.eta9089FilingDate || undefined,
+    eta9089CertificationDate: caseData.eta9089CertificationDate || undefined,
+    eta9089ExpirationDate: caseData.eta9089ExpirationDate || undefined,
+    i140FilingDate: caseData.i140FilingDate || undefined,
     sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
     sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
     jobOrderStartDate: caseData.jobOrderStartDate || undefined,
@@ -493,74 +491,25 @@ export function calculateNextDeadline(caseData: NextUpCaseData): Deadline | null
     noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
     isProfessionalOccupation: caseData.isProfessionalOccupation || undefined,
     additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
-  });
-  if (caseData.caseStatus === "recruitment" && !caseData.eta9089FilingDate && recruitmentDone) {
-    const filingWindow = calculateFilingWindowFromCase({
-      sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
-      sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
-      jobOrderStartDate: caseData.jobOrderStartDate || undefined,
-      jobOrderEndDate: caseData.jobOrderEndDate || undefined,
-      noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
-      noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
-      additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
-      pwdExpirationDate: caseData.pwdExpirationDate || undefined,
-      isProfessionalOccupation: !!caseData.isProfessionalOccupation,
-    });
+    // Runtime data has full RfiEntry/RfeEntry shape; inline type is narrower
+    rfiEntries: (caseData.rfiEntries || undefined) as CaseDataForDeadlines["rfiEntries"],
+    rfeEntries: (caseData.rfeEntries || undefined) as CaseDataForDeadlines["rfeEntries"],
+    // Derived fields (extractActiveDeadlines reads these directly)
+    filingWindowOpens: filingWindow ? filingWindow.opens : undefined,
+    filingWindowCloses: filingWindow ? filingWindow.closes : undefined,
+    recruitmentWindowCloses: recruitWindow ? recruitWindow.closes : undefined,
+  };
 
-    if (filingWindow) {
-      // Filing Window Opens (show only if still in waiting period)
-      const daysUntilOpens = calculateDaysUntil(filingWindow.opens);
-      if (daysUntilOpens > 0) {
-        deadlines.push({
-          label: "Filing Window Opens",
-          date: filingWindow.opens,
-          daysUntil: daysUntilOpens,
-        });
-      }
-
-      // Filing Window Closes (always show if window exists)
-      deadlines.push({
-        label: "Filing Window Closes",
-        date: filingWindow.closes,
-        daysUntil: calculateDaysUntil(filingWindow.closes),
-      });
-    }
-  }
-
-  // ETA 9089 Expiration / I-140 Filing Deadline (after certification)
-  if (
-    caseData.eta9089ExpirationDate &&
-    caseData.eta9089CertificationDate &&
-    !caseData.i140FilingDate
-  ) {
-    deadlines.push({
-      label: "I-140 Filing Deadline",
-      date: caseData.eta9089ExpirationDate,
-      daysUntil: calculateDaysUntil(caseData.eta9089ExpirationDate),
-    });
-  }
-
-  // Active RFI due date (uses DRY helper)
-  const activeRfi = findActiveEntry(caseData.rfiEntries);
-  if (activeRfi?.responseDueDate) {
-    deadlines.push({
-      label: "RFI Response Due",
-      date: activeRfi.responseDueDate,
-      daysUntil: calculateDaysUntil(activeRfi.responseDueDate),
-    });
-  }
-
-  // Active RFE due date (uses DRY helper)
-  const activeRfe = findActiveEntry(caseData.rfeEntries);
-  if (activeRfe?.responseDueDate) {
-    deadlines.push({
-      label: "RFE Response Due",
-      date: activeRfe.responseDueDate,
-      daysUntil: calculateDaysUntil(activeRfe.responseDueDate),
-    });
-  }
-
-  // Return most urgent deadline
+  // Central system handles all supersession, per-step deadlines, and sorting
+  const deadlines = extractActiveDeadlines(centralData);
   if (deadlines.length === 0) return null;
-  return deadlines.sort((a, b) => a.daysUntil - b.daysUntil)[0] || null;
+
+  const first = deadlines[0];
+  if (!first) return null;
+
+  return {
+    label: first.label,
+    date: first.date,
+    daysUntil: first.daysUntil,
+  };
 }

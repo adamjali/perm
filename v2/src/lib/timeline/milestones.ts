@@ -61,11 +61,20 @@ function toCaseDataForDeadlines(caseData: CaseWithDates): CaseDataForDeadlines {
   return {
     // Note: caseStatus and deletedAt not available in CaseWithDates
     // Timeline is only shown for active cases, so these are implicitly "not closed/deleted"
-    pwdExpirationDate: caseData.pwdExpirationDate ?? undefined,
-    eta9089FilingDate: caseData.eta9089FilingDate ?? undefined,
-    eta9089CertificationDate: caseData.eta9089CertificationDate ?? undefined,
-    eta9089ExpirationDate: caseData.eta9089ExpirationDate ?? undefined,
-    i140FilingDate: caseData.i140FilingDate ?? undefined,
+    pwdExpirationDate: caseData.pwdExpirationDate || undefined,
+    eta9089FilingDate: caseData.eta9089FilingDate || undefined,
+    eta9089CertificationDate: caseData.eta9089CertificationDate || undefined,
+    eta9089ExpirationDate: caseData.eta9089ExpirationDate || undefined,
+    i140FilingDate: caseData.i140FilingDate || undefined,
+    // Recruitment fields needed for isRecruitmentComplete check (filing window gate)
+    sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+    sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
+    jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+    jobOrderEndDate: caseData.jobOrderEndDate || undefined,
+    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
+    noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
+    isProfessionalOccupation: caseData.isProfessionalOccupation || undefined,
+    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
   };
 }
 

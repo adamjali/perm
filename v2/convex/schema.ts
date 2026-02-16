@@ -478,6 +478,11 @@ export default defineSchema({
         rfi_due: v.optional(v.string()),
         rfe_due: v.optional(v.string()),
         recruitment_end: v.optional(v.string()),
+        recruitment_window_closes: v.optional(v.string()),
+        job_order_start_deadline: v.optional(v.string()),
+        notice_of_filing_start_deadline: v.optional(v.string()),
+        first_sunday_ad_deadline: v.optional(v.string()),
+        second_sunday_ad_deadline: v.optional(v.string()),
       })
     ),
     calendarSyncEnabled: v.boolean(),

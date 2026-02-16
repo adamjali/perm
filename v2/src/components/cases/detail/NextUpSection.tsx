@@ -18,7 +18,6 @@
  * ```
  */
 
-import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -74,7 +73,7 @@ export function NextUpSection({ caseData, caseId, className, showStageProgress =
   return (
     <motion.section
       variants={containerVariants}
-      initial="hidden"
+      initial={false}
       animate="visible"
       className={cn(
         "border-2 border-border bg-card p-4 sm:p-6 shadow-hard",

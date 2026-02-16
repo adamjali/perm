@@ -92,8 +92,19 @@ describe("extractActiveDeadlines", () => {
   });
 
   describe("filing window", () => {
+    // Filing window requires recruitment to be complete
+    const completedRecruitment = {
+      jobOrderStartDate: "2024-08-01",
+      jobOrderEndDate: "2024-09-01",
+      sundayAdFirstDate: "2024-08-04",
+      sundayAdSecondDate: "2024-08-11",
+      noticeOfFilingStartDate: "2024-08-01",
+      noticeOfFilingEndDate: "2024-08-15",
+    };
+
     it("extracts filing window opens when active", () => {
       const caseData: CaseDataForDeadlines = {
+        ...completedRecruitment,
         filingWindowOpens: "2025-03-01",
       };
 
@@ -104,6 +115,7 @@ describe("extractActiveDeadlines", () => {
 
     it("extracts filing window closes when active", () => {
       const caseData: CaseDataForDeadlines = {
+        ...completedRecruitment,
         filingWindowCloses: "2025-06-15",
       };
 
@@ -112,8 +124,21 @@ describe("extractActiveDeadlines", () => {
       expect(result.find((d) => d.type === "filing_window_closes")).toBeDefined();
     });
 
+    it("does not extract filing window when recruitment incomplete", () => {
+      const caseData: CaseDataForDeadlines = {
+        filingWindowOpens: "2025-03-01",
+        filingWindowCloses: "2025-06-15",
+      };
+
+      const result = extractActiveDeadlines(caseData, TODAY);
+
+      expect(result.find((d) => d.type === "filing_window_opens")).toBeUndefined();
+      expect(result.find((d) => d.type === "filing_window_closes")).toBeUndefined();
+    });
+
     it("does not extract filing window when ETA 9089 filed", () => {
       const caseData: CaseDataForDeadlines = {
+        ...completedRecruitment,
         filingWindowOpens: "2025-03-01",
         filingWindowCloses: "2025-06-15",
         eta9089FilingDate: "2024-12-01",
@@ -240,8 +265,19 @@ describe("extractActiveDeadlines", () => {
   });
 
   describe("sorting", () => {
+    // Filing window requires completed recruitment
+    const completedRecruitment = {
+      jobOrderStartDate: "2024-08-01",
+      jobOrderEndDate: "2024-09-01",
+      sundayAdFirstDate: "2024-08-04",
+      sundayAdSecondDate: "2024-08-11",
+      noticeOfFilingStartDate: "2024-08-01",
+      noticeOfFilingEndDate: "2024-08-15",
+    };
+
     it("sorts deadlines by daysUntil (most urgent first)", () => {
       const caseData: CaseDataForDeadlines = {
+        ...completedRecruitment,
         pwdExpirationDate: "2025-06-30", // Far future
         filingWindowOpens: "2025-01-01", // Soon
         rfiEntries: [
@@ -264,6 +300,7 @@ describe("extractActiveDeadlines", () => {
 
     it("handles overdue deadlines (negative daysUntil)", () => {
       const caseData: CaseDataForDeadlines = {
+        ...completedRecruitment,
         pwdExpirationDate: "2024-12-01", // Overdue
         filingWindowOpens: "2025-01-01", // Future
       };
@@ -279,6 +316,12 @@ describe("extractActiveDeadlines", () => {
   describe("multiple deadlines", () => {
     it("extracts all active deadlines from complex case", () => {
       const caseData: CaseDataForDeadlines = {
+        jobOrderStartDate: "2024-08-01",
+        jobOrderEndDate: "2024-09-01",
+        sundayAdFirstDate: "2024-08-04",
+        sundayAdSecondDate: "2024-08-11",
+        noticeOfFilingStartDate: "2024-08-01",
+        noticeOfFilingEndDate: "2024-08-15",
         pwdExpirationDate: "2025-06-30",
         filingWindowOpens: "2025-03-01",
         filingWindowCloses: "2025-06-15",
@@ -304,6 +347,15 @@ describe("extractActiveDeadlines", () => {
 
 describe("timezoneRule on extracted deadlines", () => {
   const TODAY = "2024-12-15";
+  // Filing window requires completed recruitment
+  const completedRecruitment = {
+    jobOrderStartDate: "2024-08-01",
+    jobOrderEndDate: "2024-09-01",
+    sundayAdFirstDate: "2024-08-04",
+    sundayAdSecondDate: "2024-08-11",
+    noticeOfFilingStartDate: "2024-08-01",
+    noticeOfFilingEndDate: "2024-08-15",
+  };
 
   it("sets timezoneRule to 'local' for pwd_expiration", () => {
     const caseData: CaseDataForDeadlines = {
@@ -316,6 +368,7 @@ describe("timezoneRule on extracted deadlines", () => {
 
   it("sets timezoneRule to 'local' for filing_window_opens", () => {
     const caseData: CaseDataForDeadlines = {
+      ...completedRecruitment,
       filingWindowOpens: "2025-03-01",
     };
     const result = extractActiveDeadlines(caseData, TODAY);
@@ -325,6 +378,7 @@ describe("timezoneRule on extracted deadlines", () => {
 
   it("sets timezoneRule to 'dol' for filing_window_closes", () => {
     const caseData: CaseDataForDeadlines = {
+      ...completedRecruitment,
       filingWindowCloses: "2025-06-15",
     };
     const result = extractActiveDeadlines(caseData, TODAY);
@@ -332,12 +386,14 @@ describe("timezoneRule on extracted deadlines", () => {
     expect(fwc?.timezoneRule).toBe("dol");
   });
 
-  it("does not extract recruitment_window_closes (handled separately)", () => {
+  it("extracts recruitment_window_closes when active", () => {
     const caseData: CaseDataForDeadlines = {
       recruitmentWindowCloses: "2025-04-01",
     };
     const result = extractActiveDeadlines(caseData, TODAY);
-    expect(result.find((d) => d.type === "recruitment_window_closes")).toBeUndefined();
+    const rwc = result.find((d) => d.type === "recruitment_window_closes");
+    expect(rwc).toBeDefined();
+    expect(rwc?.timezoneRule).toBe("local");
   });
 
   it("sets timezoneRule to 'local' for i140_filing_deadline", () => {
@@ -384,6 +440,7 @@ describe("timezoneRule on extracted deadlines", () => {
 
   it("all DOL deadlines are only filing_window_closes and rfi_due", () => {
     const caseData: CaseDataForDeadlines = {
+      ...completedRecruitment,
       pwdExpirationDate: "2025-06-30",
       filingWindowOpens: "2025-03-01",
       filingWindowCloses: "2025-06-15",
@@ -436,6 +493,13 @@ describe("timezone-aware daysUntil", () => {
     const caseData: CaseDataForDeadlines = {
       pwdExpirationDate: "2025-07-01", // local deadline: due July 1
       filingWindowCloses: "2025-07-01", // DOL deadline: due July 1
+      // Completed recruitment required for filing window
+      jobOrderStartDate: "2025-01-01",
+      jobOrderEndDate: "2025-02-01",
+      sundayAdFirstDate: "2025-01-05",
+      sundayAdSecondDate: "2025-01-12",
+      noticeOfFilingStartDate: "2025-01-01",
+      noticeOfFilingEndDate: "2025-01-15",
     };
 
     // Call WITHOUT todayISO, user in Pacific Time
@@ -458,6 +522,13 @@ describe("getActiveDeadlineTypes", () => {
     const caseData: CaseDataForDeadlines = {
       pwdExpirationDate: "2025-06-30",
       filingWindowOpens: "2025-03-01",
+      // Completed recruitment required for filing window
+      jobOrderStartDate: "2024-08-01",
+      jobOrderEndDate: "2024-09-01",
+      sundayAdFirstDate: "2024-08-04",
+      sundayAdSecondDate: "2024-08-11",
+      noticeOfFilingStartDate: "2024-08-01",
+      noticeOfFilingEndDate: "2024-08-15",
     };
 
     const result = getActiveDeadlineTypes(caseData);
