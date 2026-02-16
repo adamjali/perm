@@ -228,23 +228,31 @@ export function CasesPageClient() {
   // URL STATE
   // ============================================================================
 
-  // Restore sort/filters from localStorage when URL has no params
-  const hasURLParams = searchParams.toString().length > 0;
-  const [filters, setFilters] = useState<CaseListFilters>(() => {
-    if (hasURLParams) return parseURLFilters(searchParams);
-    const stored = getStoredFilters();
-    return stored || parseURLFilters(searchParams);
-  });
-  const [sort, setSort] = useState<CaseListSort>(() => {
-    if (hasURLParams) return parseURLSort(searchParams);
-    const stored = getStoredSort();
-    return stored || DEFAULT_SORT;
-  });
+  // Parse URL state (always the initial source of truth)
+  const [filters, setFilters] = useState<CaseListFilters>(() =>
+    parseURLFilters(searchParams)
+  );
+  const [sort, setSort] = useState<CaseListSort>(() =>
+    parseURLSort(searchParams)
+  );
   const [currentPage, setCurrentPage] = useState(() =>
     parseURLPage(searchParams)
   );
   const [pageSize, setPageSize] = useState(() => getStoredPageSize());
   const [viewMode, setViewMode] = useState<ViewMode>(() => getStoredViewMode());
+
+  // Restore sort/filters from localStorage on mount when URL has no params.
+  // useState initializers can't reliably access localStorage during SSR/hydration,
+  // so we restore in useEffect (client-only, runs once after mount).
+  const hasURLParams = searchParams.toString().length > 0;
+  useEffect(() => {
+    if (hasURLParams) return;
+    const storedFilters = getStoredFilters();
+    if (storedFilters) setFilters(storedFilters);
+    const storedSort = getStoredSort();
+    if (storedSort) setSort(storedSort);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ============================================================================
   // VIEW MODE HANDLER

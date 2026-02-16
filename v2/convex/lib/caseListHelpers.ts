@@ -15,6 +15,7 @@ import {
   type ExtractedDeadline,
 } from "./dashboardHelpers";
 import { createCaseCardData } from "./caseListTypes";
+import { isRecruitmentComplete } from "./perm";
 
 // ============================================================================
 // NEXT DEADLINE CALCULATION
@@ -177,9 +178,9 @@ export function projectCaseForCard(caseData: CaseDataForProjection, todayISO: st
     ?.substring(0, 200); // Truncate to 200 chars
 
   // Calculate ETA 9089 window opens date (30 days after recruitment ends)
-  // Uses derived recruitmentEndDate (MAX of all end dates) as source of truth
+  // Only show when ALL basic recruitment steps are complete (not just end dates)
   let eta9089WindowOpens: string | undefined;
-  if (caseData.recruitmentEndDate) {
+  if (caseData.recruitmentEndDate && isRecruitmentComplete(caseData) && !caseData.eta9089FilingDate) {
     const endDate = new Date(caseData.recruitmentEndDate);
     endDate.setDate(endDate.getDate() + 30);
     eta9089WindowOpens = endDate.toISOString().split("T")[0];
