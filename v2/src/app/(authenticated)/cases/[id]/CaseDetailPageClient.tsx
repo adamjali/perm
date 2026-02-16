@@ -844,7 +844,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         </div>
         <div className="relative overflow-visible">
           <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none z-10 sm:hidden" aria-hidden="true" />
-          <div className="overflow-x-auto overflow-y-visible -mx-3 px-3 sm:mx-0 sm:px-0 scroll-smooth touch-pan-x">
+          <div className="overflow-x-auto overscroll-x-none overflow-y-visible -mx-3 px-3 sm:mx-0 sm:px-0 scroll-smooth touch-pan-x">
             <InlineCaseTimeline caseData={caseData} className="min-w-[500px] sm:min-w-0" />
           </div>
         </div>

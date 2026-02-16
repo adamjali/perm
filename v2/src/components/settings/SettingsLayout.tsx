@@ -240,7 +240,7 @@ export default function SettingsLayout({
   return (
     <div className="flex flex-col md:flex-row gap-8">
       {/* Mobile tabs */}
-      <div className="md:hidden overflow-x-auto -mx-4 px-4 pb-4 mb-4 border-b-2 border-black dark:border-white/50">
+      <div className="md:hidden overflow-x-auto overscroll-x-none -mx-4 px-4 pb-4 mb-4 border-b-2 border-black dark:border-white/50">
         <NavList
           activeSection={activeSection}
           onSectionChange={handleSectionChange}

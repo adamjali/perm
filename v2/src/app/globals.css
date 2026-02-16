@@ -383,6 +383,15 @@
     gap: 4rem;
     animation: marquee 30s linear infinite;
     white-space: nowrap;
+    cursor: grab;
+  }
+
+  .marquee:hover {
+    animation-play-state: paused;
+  }
+
+  .marquee:active {
+    cursor: grabbing;
   }
 
   @keyframes marquee {
@@ -575,8 +584,8 @@
     @apply border-border;
   }
   html {
-    /* Prevent iOS elastic overscroll showing blank areas */
-    overscroll-behavior: none;
+    /* Prevent iOS elastic overscroll on vertical axis only — keep horizontal for browser back/forward swipe */
+    overscroll-behavior-y: none;
     /* Fill available viewport height */
     height: 100%;
     height: -webkit-fill-available;
@@ -586,8 +595,8 @@
   }
   body {
     @apply bg-background text-foreground font-body;
-    /* Prevent overscroll bounce showing blank areas */
-    overscroll-behavior: none;
+    /* Prevent overscroll bounce on vertical axis only — keep horizontal for browser back/forward swipe */
+    overscroll-behavior-y: none;
     /* Ensure height fills viewport */
     min-height: 100%;
     min-height: 100vh;
@@ -1006,6 +1015,7 @@ body[data-scroll-locked] {
   border: 2px solid var(--border);
   padding: 1.25em;
   overflow-x: auto;
+  overscroll-behavior-x: none;
   margin: 1.5em 0;
 }
 

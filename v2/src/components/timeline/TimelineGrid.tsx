@@ -166,7 +166,7 @@ export function TimelineGrid({
       aria-label={`Timeline showing ${cases.length} cases over ${timeRange} months`}
     >
       {/* Scrollable container - overflow-x-auto handles horizontal scroll */}
-      <div className="overflow-x-auto overflow-y-visible">
+      <div className="overflow-x-auto overscroll-x-none overflow-y-visible">
         {/* Minimum width to prevent squishing on small screens */}
         <div className="min-w-[600px]">
           {/* Header Row */}

@@ -8,6 +8,8 @@
  *
  */
 
+import { useRef, useCallback, useEffect } from "react";
+
 interface TrustBadge {
   icon: React.ReactNode;
   text: string;
@@ -97,9 +99,56 @@ const trustBadges: TrustBadge[] = [
 export function TrustStrip() {
   // Duplicate badges for seamless infinite scroll
   const allBadges = [...trustBadges, ...trustBadges];
+  const containerRef = useRef<HTMLElement>(null);
+  const dragState = useRef({ isDragging: false, startX: 0, scrollLeft: 0 });
+
+  // Only capture intentional horizontal scroll (trackpad sideways swipe) — let vertical scroll pass through
+  const handleWheel = useCallback((e: WheelEvent) => {
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 2) {
+      e.preventDefault();
+      const container = containerRef.current;
+      if (container) {
+        container.scrollLeft += e.deltaX;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
+  }, [handleWheel]);
+
+  // Mouse drag to scroll horizontally
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    const container = containerRef.current;
+    if (!container) return;
+    dragState.current = { isDragging: true, startX: e.pageX - container.offsetLeft, scrollLeft: container.scrollLeft };
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!dragState.current.isDragging) return;
+    e.preventDefault();
+    const container = containerRef.current;
+    if (!container) return;
+    const x = e.pageX - container.offsetLeft;
+    container.scrollLeft = dragState.current.scrollLeft - (x - dragState.current.startX);
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    dragState.current.isDragging = false;
+  }, []);
 
   return (
-    <section className="bg-foreground text-background overflow-hidden py-5 relative">
+    <section
+      ref={containerRef}
+      className="bg-foreground text-background overflow-hidden py-5 relative overscroll-x-none"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+    >
       {/* Subtle top/bottom border accents */}
       <div className="absolute inset-x-0 top-0 h-[2px] bg-primary opacity-40" aria-hidden="true" />
       <div className="absolute inset-x-0 bottom-0 h-[2px] bg-primary opacity-20" aria-hidden="true" />

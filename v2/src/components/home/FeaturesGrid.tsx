@@ -115,7 +115,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
     <div
       ref={ref}
       style={style}
-      className="feature-card group relative border-3 border-border bg-background overflow-hidden shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
+      className="feature-card group relative flex h-full flex-col border-3 border-border bg-background overflow-hidden shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
     >
       {/* Background image - subtle, tinted */}
       <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
@@ -144,7 +144,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
       />
 
       {/* Content */}
-      <div className="relative p-8 sm:p-10">
+      <div className="relative flex flex-1 flex-col p-8 sm:p-10">
         {/* Illustration */}
         <div className="mb-6 flex h-[100px] items-center">
           <div className="transition-transform duration-500 group-hover:scale-105">
@@ -158,7 +158,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
         </h3>
 
         {/* Description */}
-        <p className="relative text-[15px] text-muted-foreground leading-relaxed">
+        <p className="relative flex-1 text-[15px] text-muted-foreground leading-relaxed">
           {feature.description}
         </p>
 

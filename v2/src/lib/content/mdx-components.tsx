@@ -154,7 +154,7 @@ function ComparisonTable({
   }
 
   return (
-    <div className="my-6 overflow-x-auto">
+    <div className="my-6 overflow-x-auto overscroll-x-none">
       <table className="w-full border-2 border-border text-sm">
         <thead>
           <tr className="bg-muted">
@@ -303,7 +303,7 @@ export const mdxComponents: MDXComponents = {
   ),
   pre: ({ children, ...props }) => (
     <pre
-      className="my-6 overflow-x-auto border-2 border-border bg-[#0d1117] p-4 text-sm shadow-hard-sm"
+      className="my-6 overflow-x-auto overscroll-x-none border-2 border-border bg-[#0d1117] p-4 text-sm shadow-hard-sm"
       {...props}
     >
       {children}
@@ -348,7 +348,7 @@ export const mdxComponents: MDXComponents = {
 
   // Table
   table: ({ children, ...props }) => (
-    <div className="my-6 overflow-x-auto">
+    <div className="my-6 overflow-x-auto overscroll-x-none">
       <table className="w-full border-2 border-border text-sm" {...props}>
         {children}
       </table>

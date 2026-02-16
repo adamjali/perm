@@ -200,7 +200,7 @@ export function JourneySection() {
         {/* Cards container - scroll-snap with hidden scrollbar */}
         <div
           ref={scrollContainerRef}
-          className="journey-scroll-container scrollbar-hide relative flex gap-8 overflow-x-auto py-8 px-[max(1rem,calc((100vw-1400px)/2+2rem))] [&::-webkit-scrollbar]:hidden"
+          className="journey-scroll-container scrollbar-hide relative flex gap-8 overflow-x-auto overscroll-x-none py-8 px-[max(1rem,calc((100vw-1400px)/2+2rem))] [&::-webkit-scrollbar]:hidden"
           style={{
             scrollSnapType: "x mandatory",
             WebkitOverflowScrolling: "touch",

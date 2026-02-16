@@ -79,7 +79,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
     pre: ({ children }) => (
       <pre
         className={cn(
-          'my-2 p-3 overflow-x-auto',
+          'my-2 p-3 overflow-x-auto overscroll-x-none',
           'border-2 border-current/20',
           'font-mono text-xs leading-relaxed',
           isUser
@@ -146,7 +146,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
 
     // Tables
     table: ({ children }) => (
-      <div className="my-2 overflow-x-auto">
+      <div className="my-2 overflow-x-auto overscroll-x-none">
         <table
           className={cn(
             'w-full text-xs',
