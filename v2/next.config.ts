@@ -23,10 +23,10 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  // React Compiler disabled — known variable scoping bugs with Turbopack
-  // (ReferenceError: _object_property is not defined in production)
-  // Re-enable when SWC plugin ships: https://github.com/vercel/next.js/issues/78163
-  // reactCompiler: true,
+  // React Compiler: auto-memoization. Safe with Webpack builds.
+  // Turbopack has variable scoping bugs (vercel/next.js#72232, #78163)
+  // so production uses --webpack. Dev still uses Turbopack (fast, no prod bundling).
+  reactCompiler: true,
 
   // Serve AVIF (30% smaller than WebP) with WebP fallback
   images: {
