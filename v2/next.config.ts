@@ -23,10 +23,11 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  // React Compiler: auto-memoization. Safe with Webpack builds.
-  // Turbopack has variable scoping bugs (vercel/next.js#72232, #78163)
-  // so production uses --webpack. Dev still uses Turbopack (fast, no prod bundling).
-  reactCompiler: true,
+  // React Compiler disabled — causes ReferenceError with both Turbopack and Webpack:
+  // Turbopack: _ref, _caseData_isProfessionalOccupation (variable scoping)
+  // Webpack: int (motion-dom export mangling via Babel)
+  // Re-enable when SWC plugin ships: https://github.com/vercel/next.js/issues/78163
+  // reactCompiler: true,
 
   // Serve AVIF (30% smaller than WebP) with WebP fallback
   images: {
