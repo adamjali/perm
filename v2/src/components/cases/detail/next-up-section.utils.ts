@@ -341,13 +341,14 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     // 4. Additional Recruitment for Professional Occupations (fourth)
     // Use canonical isProfessionalRecruitmentComplete() check
     if (caseData.isProfessionalOccupation) {
+      const methods = caseData.additionalRecruitmentMethods || [];
       const professionalComplete = isProfessionalRecruitmentComplete({
         isProfessionalOccupation: caseData.isProfessionalOccupation,
-        additionalRecruitmentMethods: caseData.additionalRecruitmentMethods ?? [],
+        additionalRecruitmentMethods: methods,
       });
 
       if (!professionalComplete) {
-        const completedCount = (caseData.additionalRecruitmentMethods ?? [])
+        const completedCount = methods
           .filter((m) => m.method && m.date).length;
         return {
           action: "Complete Additional Recruitment",
@@ -362,12 +363,12 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     // Use canonical getLastRecruitmentDate() to include professional methods if applicable
     const lastRecruitmentDate = getLastRecruitmentDate(
       {
-        sundayAdSecondDate: caseData.sundayAdSecondDate ?? undefined,
-        jobOrderEndDate: caseData.jobOrderEndDate ?? undefined,
-        noticeOfFilingEndDate: caseData.noticeOfFilingEndDate ?? undefined,
-        additionalRecruitmentMethods: caseData.additionalRecruitmentMethods ?? undefined,
+        sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
+        jobOrderEndDate: caseData.jobOrderEndDate || undefined,
+        noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
+        additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
       },
-      caseData.isProfessionalOccupation ?? false
+      !!caseData.isProfessionalOccupation
     );
 
     if (lastRecruitmentDate) {
@@ -481,15 +482,15 @@ export function calculateNextDeadline(caseData: NextUpCaseData): Deadline | null
   // Uses canonical calculateRecruitmentWindowCloses()
   if (caseData.caseStatus === "recruitment" && !caseData.eta9089FilingDate) {
     const firstRecruitmentDate = getFirstRecruitmentDate({
-      sundayAdFirstDate: caseData.sundayAdFirstDate ?? undefined,
-      jobOrderStartDate: caseData.jobOrderStartDate ?? undefined,
-      noticeOfFilingStartDate: caseData.noticeOfFilingStartDate ?? undefined,
+      sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+      jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+      noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
     });
 
     if (firstRecruitmentDate) {
       const recruitmentWindow = calculateRecruitmentWindowCloses(
         firstRecruitmentDate,
-        caseData.pwdExpirationDate ?? undefined
+        caseData.pwdExpirationDate || undefined
       );
 
       if (recruitmentWindow) {
@@ -506,15 +507,15 @@ export function calculateNextDeadline(caseData: NextUpCaseData): Deadline | null
   // Uses canonical calculateFilingWindowFromCase()
   if (caseData.caseStatus === "recruitment" && !caseData.eta9089FilingDate) {
     const filingWindow = calculateFilingWindowFromCase({
-      sundayAdFirstDate: caseData.sundayAdFirstDate ?? undefined,
-      sundayAdSecondDate: caseData.sundayAdSecondDate ?? undefined,
-      jobOrderStartDate: caseData.jobOrderStartDate ?? undefined,
-      jobOrderEndDate: caseData.jobOrderEndDate ?? undefined,
-      noticeOfFilingStartDate: caseData.noticeOfFilingStartDate ?? undefined,
-      noticeOfFilingEndDate: caseData.noticeOfFilingEndDate ?? undefined,
-      additionalRecruitmentMethods: caseData.additionalRecruitmentMethods ?? undefined,
-      pwdExpirationDate: caseData.pwdExpirationDate ?? undefined,
-      isProfessionalOccupation: caseData.isProfessionalOccupation ?? false,
+      sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+      sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
+      jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+      jobOrderEndDate: caseData.jobOrderEndDate || undefined,
+      noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
+      noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
+      additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
+      pwdExpirationDate: caseData.pwdExpirationDate || undefined,
+      isProfessionalOccupation: !!caseData.isProfessionalOccupation,
     });
 
     if (filingWindow) {
@@ -572,5 +573,5 @@ export function calculateNextDeadline(caseData: NextUpCaseData): Deadline | null
 
   // Return most urgent deadline
   if (deadlines.length === 0) return null;
-  return deadlines.sort((a, b) => a.daysUntil - b.daysUntil)[0] ?? null;
+  return deadlines.sort((a, b) => a.daysUntil - b.daysUntil)[0] || null;
 }
