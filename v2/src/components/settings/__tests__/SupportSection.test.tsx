@@ -26,6 +26,7 @@ vi.mock("convex/react", () => ({
     return mockRequestDeletion;
   },
   useAction: () => mockImmediateDelete,
+  useConvex: () => ({ query: vi.fn().mockResolvedValue({}) }),
 }));
 
 const mockToastSuccess = vi.fn();

@@ -81,13 +81,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/terms`,
-      lastModified: '2026-02-14',
+      lastModified: '2026-02-17',
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${baseUrl}/privacy`,
-      lastModified: '2026-02-14',
+      lastModified: '2026-02-17',
       changeFrequency: 'yearly',
       priority: 0.3,
     },

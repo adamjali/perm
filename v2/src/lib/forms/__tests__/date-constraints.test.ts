@@ -55,7 +55,7 @@ describe("getRecruitmentFieldDeadline", () => {
       const expected = formatDate(addDays(new Date(firstRecruitment + "T00:00:00"), 120));
       expect(result.maxDate).toBe(expected);
       expect(result.limitingFactor).toBe('recruitment');
-      expect(result.hint).toContain("120 days from first recruitment");
+      expect(result.hint).toContain("must be posted 30 days before recruitment deadline");
     });
 
     it("returns 60 days before PWD exp when earlier", () => {
@@ -66,7 +66,7 @@ describe("getRecruitmentFieldDeadline", () => {
       const expected = formatDate(subDays(new Date(pwdExpiration + "T00:00:00"), 60));
       expect(result.maxDate).toBe(expected);
       expect(result.limitingFactor).toBe('pwd');
-      expect(result.hint).toContain("60 days before PWD exp");
+      expect(result.hint).toContain("before PWD expires");
     });
   });
 
@@ -81,7 +81,7 @@ describe("getRecruitmentFieldDeadline", () => {
       const expectedDate = dayOfWeek === 0 ? deadline143 : subDays(deadline143, dayOfWeek);
 
       expect(result.maxDate).toBe(formatDate(expectedDate));
-      expect(result.hint).toContain("must be Sunday");
+      expect(result.hint).toContain("(Sunday)");
     });
 
     it("second Sunday deadline is last Sunday on or before 150 days from recruitment", () => {
@@ -94,7 +94,7 @@ describe("getRecruitmentFieldDeadline", () => {
       const expectedDate = dayOfWeek === 0 ? deadline150 : subDays(deadline150, dayOfWeek);
 
       expect(result.maxDate).toBe(formatDate(expectedDate));
-      expect(result.hint).toContain("must be Sunday");
+      expect(result.hint).toContain("(Sunday)");
     });
   });
 
@@ -328,7 +328,7 @@ describe("getProfessionalDateConstraints", () => {
 
       const expected150Days = formatDate(addDays(new Date(firstRecruitment + "T00:00:00"), 150));
       expect(constraints.additionalRecruitmentStartDate.max).toBe(expected150Days);
-      expect(constraints.additionalRecruitmentStartDate.hint).toContain("150 days from first recruitment");
+      expect(constraints.additionalRecruitmentStartDate.hint).toContain("recruitment deadline");
     });
 
     it("uses 30 days before PWD expiration when earlier", () => {

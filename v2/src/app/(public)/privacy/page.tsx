@@ -31,7 +31,7 @@ export default function PrivacyPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Privacy Policy</h1>
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 14, 2026 | Last Updated: February 14, 2026
+          Effective Date: February 17, 2026 | Last Updated: February 17, 2026
         </p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
@@ -40,10 +40,12 @@ export default function PrivacyPage() {
               1. Introduction
             </h2>
             <p className="text-foreground/80 leading-relaxed">
-              Welcome to PERM Tracker (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). This Privacy Policy
-              explains how we collect, use, disclose, and safeguard your
-              information when you use our web application for tracking Permanent
-              Labor Certification (PERM) cases.
+              Welcome to PERM Tracker. PERM Tracker LLC (&quot;we,&quot; &quot;our,&quot; or
+              &quot;us&quot;), a District of Columbia limited liability company, operates
+              permtracker.app. This Privacy Policy explains how we collect, use,
+              disclose, and safeguard your information when you use our web
+              application for tracking Permanent Labor Certification (PERM)
+              cases.
             </p>
             <p className="text-foreground/80 leading-relaxed mt-4">
               By using PERM Tracker, you agree to the collection and use of
@@ -210,6 +212,11 @@ export default function PrivacyPage() {
               <li>
                 <strong>Calendar Tokens:</strong> Google Calendar OAuth tokens are
                 encrypted at rest using AES-256-GCM before storage
+              </li>
+              <li>
+                <strong>Employer FEIN:</strong> Federal Employer Identification
+                Numbers are encrypted at rest using AES-256-GCM and decrypted
+                only when displayed to the authenticated case owner
               </li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
@@ -581,10 +588,24 @@ export default function PrivacyPage() {
               <li>Your data is retained for as long as your account is active</li>
               <li>
                 You may request deletion of your account and all associated data
-                at any time
+                at any time from Settings
               </li>
               <li>
-                Upon deletion request, we will remove your data within 30 days
+                Upon deletion request, your account enters a 30-day grace
+                period during which you can cancel. After the grace period,
+                all data is permanently deleted
+              </li>
+              <li>
+                <strong>AI conversation data</strong> is automatically deleted
+                after 90 days of inactivity, even if your account remains active
+              </li>
+              <li>
+                <strong>Read notifications</strong> older than 90 days are
+                automatically cleaned up
+              </li>
+              <li>
+                <strong>Rate limit records</strong> are automatically cleaned up
+                after 24 hours
               </li>
               <li>Some data may be retained longer if required by law</li>
             </ul>
@@ -622,8 +643,9 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
-                <strong>Access:</strong> Request a copy of the data we hold about
-                you
+                <strong>Access:</strong> Download all your data at any time via
+                the &quot;Export All My Data&quot; button in Settings, or request a copy by
+                contacting us
               </li>
               <li>
                 <strong>Correction:</strong> Request correction of inaccurate data
@@ -723,6 +745,9 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>Application:</strong> PERM Tracker
+              </li>
+              <li>
+                <strong>Operator:</strong> PERM Tracker LLC, Washington, DC 20001
               </li>
             </ul>
           </section>

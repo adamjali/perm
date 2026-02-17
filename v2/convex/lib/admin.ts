@@ -10,17 +10,22 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { getCurrentUserId } from "./auth";
 
 /**
- * Admin email address (must match frontend constant)
+ * Admin email address — configurable via ADMIN_EMAIL env var.
+ * No fallback: if ADMIN_EMAIL is unset, admin access is denied (fail-closed).
  */
-export const ADMIN_EMAIL = "admin@yahoo.com";
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 /**
  * Admin authorization guard.
  * Throws if current user is not an admin.
  *
- * @throws {Error} If not authenticated or not admin
+ * @throws {Error} If not authenticated, not admin, or ADMIN_EMAIL not configured
  */
 export async function requireAdmin(ctx: QueryCtx): Promise<void> {
+  if (!ADMIN_EMAIL) {
+    throw new Error("Admin not configured: ADMIN_EMAIL environment variable is not set");
+  }
+
   const userId = await getCurrentUserId(ctx);
 
   const user = await ctx.db.get(userId);
@@ -59,6 +64,29 @@ export async function getAdminProfile(ctx: QueryCtx): Promise<Doc<"userProfiles"
  * Bulk-loads all 5 tables, builds lookup maps, assembles per-user summary in one pass.
  * Sorted by lastActivity descending (most recently active first).
  */
+export type UserSummaryRow = {
+  userId: Id<"users">;
+  email: string;
+  name: string;
+  emailVerified: boolean;
+  verificationMethod: string;
+  authProviders: string[];
+  accountCreated: number;
+  lastLoginTime: number | null;
+  totalLogins: number;
+  totalCases: number;
+  activeCases: number;
+  deletedCases: number;
+  lastCaseUpdate: number | null;
+  userType: string;
+  firmName: string | null;
+  accountStatus: "active" | "pending_deletion" | "deleted";
+  deletedAt: number | null;
+  termsAccepted: number | null;
+  termsVersion: string | null;
+  lastActivity: number;
+};
+
 export interface AdminDashboardData {
   generatedAt: number;
   totalUsers: number;
@@ -67,38 +95,64 @@ export interface AdminDashboardData {
   pendingDeletion: number;
   usersWithCases: number;
   totalCasesInSystem: number;
-  users: Array<{
-    userId: Id<"users">;
-    email: string;
-    name: string;
-    emailVerified: boolean;
-    verificationMethod: string;
-    authProviders: string[];
-    accountCreated: number;
-    lastLoginTime: number | null;
-    totalLogins: number;
-    totalCases: number;
-    activeCases: number;
-    deletedCases: number;
-    lastCaseUpdate: number | null;
-    userType: string;
-    firmName: string | null;
-    accountStatus: "active" | "pending_deletion" | "deleted";
-    deletedAt: number | null;
-    termsAccepted: number | null;
-    termsVersion: string | null;
-    lastActivity: number;
-  }>;
+  users: UserSummaryRow[];
+  totalCount: number;
+  totalPages: number;
+  page: number;
 }
 
-export async function getAdminDashboardDataHelper(ctx: QueryCtx): Promise<AdminDashboardData> {
-  // Bulk-load all 5 tables
+export interface AdminPaginationOpts {
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  search?: string;
+}
+
+function compareUserField(
+  a: UserSummaryRow,
+  b: UserSummaryRow,
+  field: string,
+  order: "asc" | "desc"
+): number {
+  const aVal = a[field as keyof UserSummaryRow];
+  const bVal = b[field as keyof UserSummaryRow];
+
+  if (aVal === null && bVal === null) return 0;
+  if (aVal === null || aVal === undefined) return 1;
+  if (bVal === null || bVal === undefined) return -1;
+
+  let cmp = 0;
+  if (typeof aVal === "boolean" && typeof bVal === "boolean") {
+    cmp = Number(aVal) - Number(bVal);
+  } else if (typeof aVal === "string" && typeof bVal === "string") {
+    cmp = aVal.localeCompare(bVal);
+  } else if (typeof aVal === "number" && typeof bVal === "number") {
+    cmp = aVal - bVal;
+  } else if (Array.isArray(aVal) && Array.isArray(bVal)) {
+    cmp = aVal.join(",").localeCompare(bVal.join(","));
+  }
+
+  return order === "asc" ? cmp : -cmp;
+}
+
+export async function getAdminDashboardDataHelper(
+  ctx: QueryCtx,
+  opts: AdminPaginationOpts = {}
+): Promise<AdminDashboardData> {
+  const page = opts.page ?? 0;
+  const pageSize = Math.min(opts.pageSize ?? 25, 100);
+  const sortBy = opts.sortBy ?? "lastActivity";
+  const sortOrder = opts.sortOrder ?? "desc";
+  const search = opts.search?.toLowerCase().trim();
+
+  // Bulk-load all 5 tables (with safety cap)
   const [users, authAccounts, authSessions, userProfiles, cases] = await Promise.all([
-    ctx.db.query("users").collect(),
-    ctx.db.query("authAccounts").collect(),
-    ctx.db.query("authSessions").collect(),
-    ctx.db.query("userProfiles").collect(),
-    ctx.db.query("cases").collect(),
+    ctx.db.query("users").take(2000),
+    ctx.db.query("authAccounts").take(5000),
+    ctx.db.query("authSessions").take(10000),
+    ctx.db.query("userProfiles").take(2000),
+    ctx.db.query("cases").take(10000),
   ]);
 
   // Build lookup maps: userId -> docs[]
@@ -232,8 +286,27 @@ export async function getAdminDashboardDataHelper(ctx: QueryCtx): Promise<AdminD
     };
   });
 
-  // Sort by lastActivity descending
-  userSummaries.sort((a, b) => b.lastActivity - a.lastActivity);
+  // Search filter
+  const filtered = search
+    ? userSummaries.filter((u) =>
+        u.email.toLowerCase().includes(search) ||
+        u.name.toLowerCase().includes(search) ||
+        u.userType.toLowerCase().includes(search) ||
+        u.accountStatus.toLowerCase().includes(search) ||
+        (u.firmName?.toLowerCase().includes(search) ?? false) ||
+        u.userId.toLowerCase().includes(search)
+      )
+    : userSummaries;
+
+  // Sort
+  filtered.sort((a, b) => compareUserField(a, b, sortBy, sortOrder));
+
+  // Paginate
+  const totalCount = filtered.length;
+  const totalPagesCalc = Math.max(1, Math.ceil(totalCount / pageSize));
+  const safePage = Math.min(page, totalPagesCalc - 1);
+  const start = safePage * pageSize;
+  const pageUsers = filtered.slice(start, start + pageSize);
 
   return {
     generatedAt: Date.now(),
@@ -243,6 +316,9 @@ export async function getAdminDashboardDataHelper(ctx: QueryCtx): Promise<AdminD
     pendingDeletion,
     usersWithCases,
     totalCasesInSystem: cases.length,
-    users: userSummaries,
+    users: pageUsers,
+    totalCount,
+    totalPages: totalPagesCalc,
+    page: safePage,
   };
 }

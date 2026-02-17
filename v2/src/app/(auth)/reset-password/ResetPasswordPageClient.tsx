@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -18,9 +20,23 @@ type ResetStep = "email" | "reset";
 export function ResetPasswordPageClient() {
   const { signIn } = useAuthActions();
   const router = useRouter();
+  const checkRateLimit = useMutation(api.authRateLimit.checkAuthRateLimit);
   const [step, setStep] = useState<ResetStep>("email");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const enforceRateLimit = useCallback(async (emailValue: string) => {
+    try {
+      const result = await checkRateLimit({ email: emailValue, action: "password_reset" });
+      if (!result.allowed) {
+        toast.error(result.message || "Too many attempts. Please wait and try again.");
+        return false;
+      }
+      return true;
+    } catch {
+      return true; // Fail open for availability
+    }
+  }, [checkRateLimit]);
 
   const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,6 +46,12 @@ export function ResetPasswordPageClient() {
       const formData = new FormData(e.currentTarget);
       const emailValue = formData.get("email") as string;
       setEmail(emailValue);
+
+      // Pre-flight rate limit check
+      if (!await enforceRateLimit(emailValue)) {
+        setIsLoading(false);
+        return;
+      }
 
       await signIn("password", formData);
       setStep("reset");
@@ -179,6 +201,7 @@ export function ResetPasswordPageClient() {
               <PasswordInput
                 id="newPassword"
                 name="newPassword"
+                autoComplete="new-password"
                 placeholder="••••••••"
                 minLength={8}
                 required
@@ -196,6 +219,7 @@ export function ResetPasswordPageClient() {
               <PasswordInput
                 id="confirmPassword"
                 name="confirmPassword"
+                autoComplete="new-password"
                 placeholder="••••••••"
                 minLength={8}
                 required
@@ -248,6 +272,7 @@ export function ResetPasswordPageClient() {
               id="email"
               name="email"
               type="email"
+              autoComplete="email"
               placeholder="you@example.com"
               required
               disabled={isLoading}

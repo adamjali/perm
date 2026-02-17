@@ -19,7 +19,7 @@ export const listMine = query({
       return [];
     }
 
-    const limit = args.limit ?? 50;
+    const limit = Math.min(args.limit ?? 50, 500);
 
     // Query by user ID index
     const logs = await ctx.db

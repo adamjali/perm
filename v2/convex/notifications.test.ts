@@ -993,7 +993,7 @@ describe("Notifications", () => {
       });
 
       it("formats recruitment_window", () => {
-        expect(formatDeadlineType("recruitment_window")).toBe("Recruitment Window");
+        expect(formatDeadlineType("recruitment_window")).toBe("Recruitment Window Closes");
       });
 
       it("formats eta9089_expiration", () => {

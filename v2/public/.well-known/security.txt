@@ -1,0 +1,4 @@
+Contact: mailto:support@permtracker.app
+Preferred-Languages: en
+Canonical: https://permtracker.app/.well-known/security.txt
+Expires: 2027-02-17T00:00:00.000Z

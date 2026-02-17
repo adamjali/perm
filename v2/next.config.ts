@@ -23,6 +23,7 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   // React Compiler disabled — causes ReferenceError with both Turbopack and Webpack:
   // Turbopack: _ref, _caseData_isProfessionalOccupation (variable scoping)
   // Webpack: int (motion-dom export mangling via Babel)
@@ -60,6 +61,46 @@ const nextConfig: NextConfig = {
       { source: "/terms.html", destination: "/terms", permanent: true },
       { source: "/privacy.html", destination: "/privacy", permanent: true },
       { source: "/contact.html", destination: "/contact", permanent: true },
+    ];
+  },
+
+  // Security headers (SOC 2 CC6/CC9)
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vercel.live",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self'",
+              "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://va.vercel-scripts.com https://*.sentry.io",
+              "worker-src 'self' blob:",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join("; "),
+          },
+        ],
+      },
     ];
   },
 };

@@ -3,6 +3,7 @@ import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { auth } from "./auth";
 import { recordError } from "./lib/errorRecording";
+import { Webhook } from "svix";
 
 const http = httpRouter();
 auth.addHttpRoutes(http);
@@ -16,7 +17,44 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
-      const body = await request.json();
+      const rawBody = await request.text();
+
+      // Verify webhook signature via svix
+      const svixId = request.headers.get("svix-id");
+      const svixTimestamp = request.headers.get("svix-timestamp");
+      const svixSignature = request.headers.get("svix-signature");
+
+      if (!svixId || !svixTimestamp || !svixSignature) {
+        return new Response(JSON.stringify({ error: "Missing signature headers" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        console.error("RESEND_WEBHOOK_SECRET not configured");
+        return new Response(JSON.stringify({ error: "Webhook not configured" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      const wh = new Webhook(webhookSecret);
+      try {
+        wh.verify(rawBody, {
+          "svix-id": svixId,
+          "svix-timestamp": svixTimestamp,
+          "svix-signature": svixSignature,
+        });
+      } catch {
+        return new Response(JSON.stringify({ error: "Invalid signature" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      const body = JSON.parse(rawBody);
 
       // Resend sends email.received events
       if (body.type !== "email.received") {

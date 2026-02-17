@@ -30,6 +30,7 @@ import { query, mutation, internalMutation, internalQuery } from "./_generated/s
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
+import { logDelete } from "./lib/audit";
 import type { QueryCtx } from "./_generated/server";
 
 // ============================================================================
@@ -514,6 +515,9 @@ export const deleteNotification = mutation({
       throw new Error("Access denied: you do not own this notification");
     }
 
+    // Audit: notification deletion
+    await logDelete(ctx, "notifications", notificationId, notification as Record<string, unknown>);
+
     // Actually delete from database (no soft delete for notifications)
     await ctx.db.delete(notificationId);
 
@@ -543,6 +547,15 @@ export const deleteAllRead = mutation({
 
     const hasMore = readNotifications.length > BATCH_SIZE;
     const toProcess = readNotifications.slice(0, BATCH_SIZE);
+
+    // Audit: batch deletion (single summarized entry)
+    if (toProcess.length > 0) {
+      await logDelete(ctx, "notifications", toProcess[0]!._id, {
+        batchDelete: true,
+        count: toProcess.length,
+        notificationIds: toProcess.map((n) => n._id.toString()),
+      });
+    }
 
     // Delete batch
     for (const notification of toProcess) {

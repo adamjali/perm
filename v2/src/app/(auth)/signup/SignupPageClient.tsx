@@ -2,7 +2,7 @@
 
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useMutation } from "convex/react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import { api } from "../../../../convex/_generated/api";
 import { savePendingTermsAcceptance } from "@/lib/auth/termsStorage";
 
 // Current Terms of Service version (matches effective date in /terms page)
-const TERMS_VERSION = "2026-02-14";
+const TERMS_VERSION = "2026-02-17";
 
 type SignupStep = "credentials" | "verification";
 
@@ -27,11 +27,25 @@ export function SignupPageClient() {
   const router = useRouter();
   const acceptTerms = useMutation(api.users.acceptTermsOfService);
   const recordMyLogin = useMutation(api.users.recordMyLogin);
+  const checkRateLimit = useMutation(api.authRateLimit.checkAuthRateLimit);
   const [step, setStep] = useState<SignupStep>("credentials");
   const [email, setEmail] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const enforceRateLimit = useCallback(async (emailValue: string, action: "signup" | "otp_verify") => {
+    try {
+      const result = await checkRateLimit({ email: emailValue, action });
+      if (!result.allowed) {
+        toast.error(result.message || "Too many attempts. Please wait and try again.");
+        return false;
+      }
+      return true;
+    } catch {
+      return true; // Fail open for availability
+    }
+  }, [checkRateLimit]);
 
   const handleCredentialsSubmit = async (
     e: React.FormEvent<HTMLFormElement>
@@ -65,6 +79,12 @@ export function SignupPageClient() {
 
       const emailValue = formData.get("email") as string;
       setEmail(emailValue);
+
+      // Pre-flight rate limit check
+      if (!await enforceRateLimit(emailValue, "signup")) {
+        setIsLoading(false);
+        return;
+      }
 
       // Remove confirmPassword from formData before sending
       formData.delete("confirmPassword");
@@ -131,6 +151,13 @@ export function SignupPageClient() {
 
     try {
       const formData = new FormData(e.currentTarget);
+
+      // Pre-flight rate limit check for OTP verification
+      if (!await enforceRateLimit(email, "otp_verify")) {
+        setIsLoading(false);
+        return;
+      }
+
       await signIn("password", formData);
 
       // Record terms acceptance after successful verification
@@ -297,6 +324,7 @@ export function SignupPageClient() {
               id="name"
               name="name"
               type="text"
+              autoComplete="name"
               placeholder="John Doe"
               disabled={isLoading}
             />
@@ -310,6 +338,7 @@ export function SignupPageClient() {
               id="email"
               name="email"
               type="email"
+              autoComplete="email"
               placeholder="you@example.com"
               required
               disabled={isLoading}
@@ -323,6 +352,7 @@ export function SignupPageClient() {
             <PasswordInput
               id="password"
               name="password"
+              autoComplete="new-password"
               placeholder="••••••••"
               minLength={8}
               required
@@ -340,6 +370,7 @@ export function SignupPageClient() {
             <PasswordInput
               id="confirmPassword"
               name="confirmPassword"
+              autoComplete="new-password"
               placeholder="••••••••"
               minLength={8}
               required
@@ -378,6 +409,8 @@ export function SignupPageClient() {
               >
                 Privacy Policy
               </a>
+              , including the use of AI-powered features and analytics as
+              described therein
             </label>
           </div>
 

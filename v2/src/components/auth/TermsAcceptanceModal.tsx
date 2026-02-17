@@ -33,7 +33,7 @@ import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 
 // Current Terms of Service version (matches effective date in /terms page)
-const TERMS_VERSION = "2026-02-14";
+const TERMS_VERSION = "2026-02-17";
 
 interface TermsAcceptanceModalProps {
   open: boolean;
@@ -118,6 +118,8 @@ export function TermsAcceptanceModal({
               >
                 Privacy Policy
               </a>
+              , including the use of AI-powered features and analytics as
+              described therein
             </label>
           </div>
 

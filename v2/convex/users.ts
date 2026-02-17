@@ -3,6 +3,8 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull, extractUserIdFromAction } from "./lib/auth";
 import { encryptToken, decryptToken } from "./lib/crypto";
+import { logCreate, logUpdate } from "./lib/audit";
+import { validateInputLengths, INPUT_LIMITS } from "./lib/validation";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
 import { buildDefaultProfile } from "./lib/userDefaults";
@@ -149,10 +151,14 @@ export const ensureUserProfileInternal = internalMutation({
     const user = await ctx.db.get(args.userId);
 
     // Create new profile with default values
-    const profileId = await ctx.db.insert("userProfiles", buildDefaultProfile(
+    const defaultProfile = buildDefaultProfile(
       args.userId,
       { fullName: user?.name, profilePhotoUrl: user?.image }
-    ));
+    );
+    const profileId = await ctx.db.insert("userProfiles", defaultProfile);
+
+    // Audit: profile creation (explicit userId since internalMutation has no auth context)
+    await logCreate(ctx, "userProfiles", profileId, defaultProfile as Record<string, unknown>, undefined, args.userId);
 
     // Welcome email for new signup
     if (user?.email) {
@@ -308,6 +314,14 @@ export const updateUserProfile = mutation({
   handler: async (ctx, args) => {
     const userId = await getCurrentUserId(ctx);
 
+    // Input length validation (PI1 — Processing Integrity)
+    validateInputLengths([
+      { value: args.fullName, name: "Full Name", limit: INPUT_LIMITS.SHORT },
+      { value: args.company, name: "Company", limit: INPUT_LIMITS.SHORT },
+      { value: args.jobTitle, name: "Job Title", limit: INPUT_LIMITS.SHORT },
+      { value: args.firmName, name: "Firm Name", limit: INPUT_LIMITS.SHORT },
+    ]);
+
     // Get current profile or create one if it doesn't exist (upsert pattern)
     let profile = await ctx.db
       .query("userProfiles")
@@ -368,11 +382,20 @@ export const updateUserProfile = mutation({
         : undefined;
     }
 
+    // Capture old doc for audit
+    const oldDoc = { ...profile } as Record<string, unknown>;
+
     // Apply the update with proper typing
     await ctx.db.patch(profile._id, {
       ...updateData,
       updatedAt: Date.now(),
     });
+
+    // Audit: profile update
+    const updatedProfile = await ctx.db.get(profile._id);
+    if (updatedProfile) {
+      await logUpdate(ctx, "userProfiles", profile._id, oldDoc, updatedProfile as Record<string, unknown>);
+    }
 
     return profile._id;
   },
@@ -467,10 +490,14 @@ export const acceptTermsOfService = mutation({
     if (!profile) {
       // Create profile first if it doesn't exist
       const user = await ctx.db.get(userId);
-      const profileId = await ctx.db.insert("userProfiles", buildDefaultProfile(
+      const defaultProfile = buildDefaultProfile(
         userId,
         { fullName: user?.name, profilePhotoUrl: user?.image, termsAcceptedAt: Date.now(), termsVersion }
-      ));
+      );
+      const profileId = await ctx.db.insert("userProfiles", defaultProfile);
+
+      // Audit: profile creation with terms acceptance
+      await logCreate(ctx, "userProfiles", profileId, defaultProfile as Record<string, unknown>);
 
       // Admin notification: new user signup (terms acceptance path)
       try {
@@ -494,12 +521,21 @@ export const acceptTermsOfService = mutation({
       return { success: true, profileId };
     }
 
+    // Capture old doc for audit
+    const oldDoc = { ...profile } as Record<string, unknown>;
+
     // Update existing profile with terms acceptance
     await ctx.db.patch(profile._id, {
       termsAcceptedAt: Date.now(),
       termsVersion,
       updatedAt: Date.now(),
     });
+
+    // Audit: terms acceptance (legal record — CRITICAL)
+    const updatedProfile = await ctx.db.get(profile._id);
+    if (updatedProfile) {
+      await logUpdate(ctx, "userProfiles", profile._id, oldDoc, updatedProfile as Record<string, unknown>);
+    }
 
     return { success: true, profileId: profile._id };
   },
@@ -548,12 +584,21 @@ export const savePushSubscription = mutation({
       throw e;
     }
 
+    // Capture old doc for audit
+    const oldDoc = { ...profile } as Record<string, unknown>;
+
     // Update profile with subscription
     await ctx.db.patch(profile._id, {
       pushSubscription: subscription,
       pushNotificationsEnabled: true,
       updatedAt: Date.now(),
     });
+
+    // Audit: push subscription saved
+    const updatedProfile = await ctx.db.get(profile._id);
+    if (updatedProfile) {
+      await logUpdate(ctx, "userProfiles", profile._id, oldDoc, updatedProfile as Record<string, unknown>);
+    }
 
     return { success: true };
   },
@@ -582,12 +627,21 @@ export const removePushSubscription = mutation({
       throw new Error("User profile not found");
     }
 
+    // Capture old doc for audit
+    const oldDoc = { ...profile } as Record<string, unknown>;
+
     // Clear subscription and disable push
     await ctx.db.patch(profile._id, {
       pushSubscription: undefined,
       pushNotificationsEnabled: false,
       updatedAt: Date.now(),
     });
+
+    // Audit: push subscription removed
+    const updatedProfile = await ctx.db.get(profile._id);
+    if (updatedProfile) {
+      await logUpdate(ctx, "userProfiles", profile._id, oldDoc, updatedProfile as Record<string, unknown>);
+    }
 
     return { success: true };
   },
@@ -657,10 +711,19 @@ export const updateActionMode = mutation({
       throw new Error("User profile not found. Please ensure your profile exists.");
     }
 
+    // Capture old doc for audit
+    const oldDoc = { ...profile } as Record<string, unknown>;
+
     await ctx.db.patch(profile._id, {
       actionMode: args.actionMode,
       updatedAt: Date.now(),
     });
+
+    // Audit: action mode change
+    const updatedProfile = await ctx.db.get(profile._id);
+    if (updatedProfile) {
+      await logUpdate(ctx, "userProfiles", profile._id, oldDoc, updatedProfile as Record<string, unknown>);
+    }
 
     return { success: true, actionMode: args.actionMode };
   },
@@ -694,6 +757,9 @@ export const requestAccountDeletion = mutation({
       throw new Error("User profile not found");
     }
 
+    // Capture old doc for audit
+    const oldDoc = { ...profile } as Record<string, unknown>;
+
     // Calculate grace period (30 days from now)
     const gracePeriodMs = 30 * 24 * 60 * 60 * 1000;
     const deletionDate = Date.now() + gracePeriodMs;
@@ -716,6 +782,12 @@ export const requestAccountDeletion = mutation({
     await ctx.db.patch(userId, {
       deletedAt: deletionDate,
     });
+
+    // Audit: account deletion requested (CRITICAL — legal record)
+    const updatedProfile = await ctx.db.get(profile._id);
+    if (updatedProfile) {
+      await logUpdate(ctx, "userProfiles", profile._id, oldDoc, updatedProfile as Record<string, unknown>);
+    }
 
     // Get user email to send confirmation
     const user = await ctx.db.get(userId);
@@ -766,6 +838,9 @@ export const cancelAccountDeletion = mutation({
       throw new Error("User profile not found");
     }
 
+    // Capture old doc for audit
+    const oldDoc = { ...profile } as Record<string, unknown>;
+
     // Verify deletion was actually scheduled
     if (!profile.deletedAt) {
       throw new Error("No deletion scheduled for this account");
@@ -792,6 +867,12 @@ export const cancelAccountDeletion = mutation({
     await ctx.db.patch(userId, {
       deletedAt: undefined,
     });
+
+    // Audit: account deletion cancelled (CRITICAL — legal record)
+    const updatedProfile = await ctx.db.get(profile._id);
+    if (updatedProfile) {
+      await logUpdate(ctx, "userProfiles", profile._id, oldDoc, updatedProfile as Record<string, unknown>);
+    }
 
     return { success: true };
   },

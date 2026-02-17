@@ -17,115 +17,12 @@ import type { Id } from "./_generated/dataModel";
 import { Scrypt } from "lucia";
 import { requireAdmin, getAdminProfile, getAdminDashboardDataHelper, ADMIN_EMAIL } from "./lib/admin";
 import { getCurrentUserId, extractUserIdFromAction } from "./lib/auth";
+import { logUpdate, logDelete } from "./lib/audit";
 import { recordError } from "./lib/errorRecording";
 import { purgeAllUserData } from "./lib/deletion";
 import { buildDefaultProfile } from "./lib/userDefaults";
 import { render } from "@react-email/render";
 import { AdminEmail } from "../src/emails/AdminEmail";
-
-/**
- * Test password verification for debugging.
- */
-export const testPasswordVerification = internalAction({
-  args: { email: v.string(), password: v.string() },
-  handler: async (ctx, args): Promise<{
-    success: boolean;
-    email: string;
-    secretLength?: number;
-    secretPrefix?: string;
-    error?: string;
-  }> => {
-    // Get the auth account
-    const result = await ctx.runQuery(internal.admin.getAuthAccountSecret, {
-      email: args.email,
-    }) as { found: boolean; secret?: string; provider?: string };
-
-    if (!result.secret) {
-      return { success: false, error: "No secret found", email: args.email };
-    }
-
-    // Try to verify the password
-    const scrypt = new Scrypt();
-    const isValid = await scrypt.verify(result.secret, args.password);
-
-    return {
-      success: isValid,
-      email: args.email,
-      secretLength: result.secret.length,
-      secretPrefix: result.secret.substring(0, 20),
-    };
-  },
-});
-
-/**
- * Helper query to get auth account secret.
- */
-export const getAuthAccountSecret = internalQuery({
-  args: { email: v.string() },
-  handler: async (ctx, args) => {
-    const authAccount = await ctx.db
-      .query("authAccounts")
-      .filter((q) => q.eq(q.field("providerAccountId"), args.email))
-      .first();
-
-    return {
-      found: !!authAccount,
-      secret: authAccount?.secret,
-      provider: authAccount?.provider,
-    };
-  },
-});
-
-/**
- * Debug query to check auth accounts for a given email.
- */
-export const debugAuthAccount = internalQuery({
-  args: { email: v.string() },
-  handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("email"), args.email))
-      .first();
-
-    if (!user) {
-      return { error: "User not found", email: args.email };
-    }
-
-    const authAccounts = await ctx.db
-      .query("authAccounts")
-      .filter((q) => q.eq(q.field("userId"), user._id))
-      .collect();
-
-    const authAccountByEmail = await ctx.db
-      .query("authAccounts")
-      .filter((q) => q.eq(q.field("providerAccountId"), args.email))
-      .collect();
-
-    return {
-      user: {
-        _id: user._id,
-        email: user.email,
-        name: user.name,
-      },
-      authAccountsByUserId: authAccounts.map((a) => ({
-        _id: a._id,
-        provider: a.provider,
-        providerAccountId: a.providerAccountId,
-        hasSecret: !!a.secret,
-        secretLength: a.secret?.length,
-        emailVerified: a.emailVerified,
-      })),
-      authAccountsByEmail: authAccountByEmail.map((a) => ({
-        _id: a._id,
-        provider: a.provider,
-        providerAccountId: a.providerAccountId,
-        hasSecret: !!a.secret,
-        secretLength: a.secret?.length,
-        emailVerified: a.emailVerified,
-      })),
-    };
-  },
-});
 
 /**
  * Copy all data from one user to another.
@@ -690,10 +587,22 @@ export const getAdminNotificationPrefs = internalQuery({
  * @throws {Error} If not admin
  */
 export const getAdminDashboardData = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    page: v.optional(v.number()),
+    pageSize: v.optional(v.number()),
+    sortBy: v.optional(v.string()),
+    sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
     const adminProfile = await getAdminProfile(ctx);
-    const data = await getAdminDashboardDataHelper(ctx);
+    const data = await getAdminDashboardDataHelper(ctx, {
+      page: args.page ?? 0,
+      pageSize: Math.min(args.pageSize ?? 25, 100),
+      sortBy: args.sortBy ?? adminProfile.adminSortBy ?? "lastActivity",
+      sortOrder: args.sortOrder ?? adminProfile.adminSortOrder ?? "desc",
+      search: args.search,
+    });
 
     return {
       ...data,
@@ -793,6 +702,9 @@ export const updateUserAdmin = mutation({
       throw new Error("User profile not found");
     }
 
+    // Capture old doc for audit
+    const oldDoc = { ...profile } as Record<string, unknown>;
+
     // Build patch object
     const profilePatch: Partial<{
       fullName: string;
@@ -817,6 +729,12 @@ export const updateUserAdmin = mutation({
       await ctx.db.patch(args.userId, {
         name: args.fullName,
       });
+    }
+
+    // Audit: admin user update
+    const updatedProfile = await ctx.db.get(profile._id);
+    if (updatedProfile) {
+      await logUpdate(ctx, "userProfiles", profile._id, oldDoc, updatedProfile as Record<string, unknown>);
     }
 
     return { success: true };
@@ -860,6 +778,13 @@ export const deleteUserAdmin = mutation({
     if (!user) {
       throw new Error("User not found");
     }
+
+    // Audit: admin user deletion (log BEFORE purge destroys data)
+    await logDelete(ctx, "users", args.userId, {
+      email: user.email,
+      name: user.name,
+      adminAction: true,
+    });
 
     const result = await purgeAllUserData(ctx, args.userId);
 

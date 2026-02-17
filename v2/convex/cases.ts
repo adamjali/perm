@@ -4,6 +4,8 @@ import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull, verifyOwnership } from "./lib/auth";
 import { logCreate, logUpdate, logDelete } from "./lib/audit";
+import { validateInputLengths, INPUT_LIMITS } from "./lib/validation";
+import { encryptToken, decryptToken, isEncryptedToken } from "./lib/crypto";
 import {
   createCaseListPagination,
   type CaseListResponse,
@@ -19,6 +21,29 @@ import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
 
 const log = loggers.cases;
+
+/**
+ * Encrypt FEIN for storage (returns undefined if input is undefined/null)
+ */
+async function encryptFein(fein: string | undefined | null): Promise<string | undefined> {
+  if (!fein) return undefined;
+  // Let encryptToken throw if OAUTH_ENCRYPTION_KEY is missing — never store plaintext
+  return await encryptToken(fein);
+}
+
+/**
+ * Decrypt FEIN for display (handles legacy plaintext gracefully)
+ */
+async function decryptFein(fein: string | undefined): Promise<string | undefined> {
+  if (!fein) return undefined;
+  if (!isEncryptedToken(fein)) return fein; // Legacy plaintext
+  try {
+    return await decryptToken(fein);
+  } catch {
+    // Corrupted or key mismatch — return as-is
+    return fein;
+  }
+}
 
 /**
  * Fields that affect calendar event deadlines
@@ -124,7 +149,13 @@ export const list = query({
       filteredCases = filteredCases.filter((c) => c.isFavorite === true);
     }
 
-    return filteredCases;
+    // Decrypt FEIN for display
+    return Promise.all(
+      filteredCases.map(async (c) => ({
+        ...c,
+        employerFein: await decryptFein(c.employerFein),
+      }))
+    );
   },
 });
 
@@ -180,7 +211,8 @@ export const get = query({
       return null;
     }
 
-    return caseDoc;
+    // Decrypt FEIN for display
+    return { ...caseDoc, employerFein: await decryptFein(caseDoc.employerFein) };
   },
 });
 
@@ -378,6 +410,16 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getCurrentUserId(ctx);
 
+    // Input length validation (PI1 — Processing Integrity)
+    validateInputLengths([
+      { value: args.employerName, name: "Employer Name", limit: INPUT_LIMITS.SHORT },
+      { value: args.positionTitle, name: "Position Title", limit: INPUT_LIMITS.SHORT },
+      { value: args.beneficiaryIdentifier, name: "Beneficiary Identifier", limit: INPUT_LIMITS.SHORT },
+      { value: args.jobDescription, name: "Job Description", limit: INPUT_LIMITS.LONG },
+      { value: args.recruitmentNotes, name: "Recruitment Notes", limit: INPUT_LIMITS.MEDIUM },
+      { value: args.recruitmentSummaryCustom, name: "Recruitment Summary", limit: INPUT_LIMITS.MEDIUM },
+    ]);
+
     const now = Date.now();
 
     // Calculate derived dates for queryability
@@ -511,7 +553,7 @@ export const create = mutation({
       // Optional text fields
       caseNumber: args.caseNumber,
       internalCaseNumber: args.internalCaseNumber,
-      employerFein: args.employerFein,
+      employerFein: await encryptFein(args.employerFein),
       jobTitle: args.jobTitle,
       socCode: args.socCode,
       socTitle: args.socTitle,
@@ -848,6 +890,16 @@ export const update = mutation({
     jobDescriptionTemplateId: v.optional(v.id("jobDescriptionTemplates")),
   },
   handler: async (ctx, args) => {
+    // Input length validation (PI1 — Processing Integrity)
+    validateInputLengths([
+      { value: args.employerName, name: "Employer Name", limit: INPUT_LIMITS.SHORT },
+      { value: args.positionTitle, name: "Position Title", limit: INPUT_LIMITS.SHORT },
+      { value: args.beneficiaryIdentifier, name: "Beneficiary Identifier", limit: INPUT_LIMITS.SHORT },
+      { value: typeof args.jobDescription === "string" ? args.jobDescription : undefined, name: "Job Description", limit: INPUT_LIMITS.LONG },
+      { value: args.recruitmentNotes, name: "Recruitment Notes", limit: INPUT_LIMITS.MEDIUM },
+      { value: args.recruitmentSummaryCustom, name: "Recruitment Summary", limit: INPUT_LIMITS.MEDIUM },
+    ]);
+
     const caseDoc = await ctx.db.get(args.id);
 
     // Verify ownership (throws if not found or not owned by user)
@@ -868,6 +920,11 @@ export const update = mutation({
     const updates: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(rawUpdates)) {
       updates[key] = val === null ? undefined : val;
+    }
+
+    // Encrypt FEIN if being updated
+    if (updates.employerFein !== undefined) {
+      updates.employerFein = await encryptFein(updates.employerFein as string);
     }
 
     // Resolve a field value for update merge:
@@ -2578,7 +2635,7 @@ export const importCases = mutation({
         // Optional text fields
         caseNumber: caseData.caseNumber,
         internalCaseNumber: caseData.internalCaseNumber,
-        employerFein: caseData.employerFein,
+        employerFein: await encryptFein(caseData.employerFein),
         jobTitle: caseData.jobTitle,
         socCode: caseData.socCode,
         socTitle: caseData.socTitle,
@@ -2951,9 +3008,9 @@ export const listByIds = query({
       if (caseDoc.deletedAt !== undefined) continue;
       if (caseDoc.userId !== userId) continue;
 
-      // Return full case data (excluding userId for privacy)
+      // Return full case data (excluding userId for privacy), decrypt FEIN
       const { userId: _userId, ...caseData } = caseDoc;
-      cases.push(caseData);
+      cases.push({ ...caseData, employerFein: await decryptFein(caseData.employerFein) });
     }
 
     return cases;

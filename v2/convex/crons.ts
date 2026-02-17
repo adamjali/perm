@@ -118,4 +118,22 @@ crons.hourly(
   internal.scheduledJobs.cleanupRateLimits
 );
 
+// ============================================================================
+// CONVERSATION TTL CLEANUP
+// ============================================================================
+
+/**
+ * Daily cleanup of expired AI conversations (older than 90 days)
+ *
+ * Removes conversations and their messages to limit retention of
+ * AI chat data per SOC 2 Confidentiality controls.
+ *
+ * Runs at 3:00 AM UTC to minimize user impact.
+ */
+crons.daily(
+  "conversation-ttl-cleanup",
+  { hourUTC: 3, minuteUTC: 0 },
+  internal.scheduledJobs.cleanupExpiredConversations
+);
+
 export default crons;

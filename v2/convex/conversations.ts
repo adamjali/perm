@@ -10,6 +10,8 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
+import { logDelete } from "./lib/audit";
+import { validateStringLength, INPUT_LIMITS } from "./lib/validation";
 
 /**
  * Create a new conversation
@@ -48,6 +50,9 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getCurrentUserId(ctx);
     const now = Date.now();
+
+    // Input validation
+    validateStringLength(args.title, "Conversation title", INPUT_LIMITS.SHORT);
 
     // Build metadata with defaults
     const metadata = {
@@ -161,6 +166,9 @@ export const updateTitle = mutation({
   handler: async (ctx, args) => {
     const userId = await getCurrentUserId(ctx);
 
+    // Input validation
+    validateStringLength(args.title, "Conversation title", INPUT_LIMITS.SHORT);
+
     const conversation = await ctx.db.get(args.id);
 
     if (!conversation) {
@@ -219,6 +227,9 @@ export const deleteConversation = mutation({
       await ctx.db.delete(message._id);
     }
 
+    // Audit: conversation deletion
+    await logDelete(ctx, "conversations", args.id, conversation as Record<string, unknown>);
+
     // Delete the conversation itself
     await ctx.db.delete(args.id);
   },
@@ -264,6 +275,15 @@ export const deleteAll = mutation({
 
       // Delete the conversation itself
       await ctx.db.delete(conversation._id);
+    }
+
+    // Audit: batch deletion (single summarized entry to avoid flooding)
+    if (conversations.length > 0) {
+      await logDelete(ctx, "conversations", conversations[0]!._id, {
+        batchDelete: true,
+        count: conversations.length,
+        conversationIds: conversations.map((c) => c._id.toString()),
+      });
     }
 
     return conversations.length;

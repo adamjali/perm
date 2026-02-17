@@ -31,7 +31,7 @@ export default function TermsPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 14, 2026 | Last Updated: February 14, 2026
+          Effective Date: February 17, 2026 | Last Updated: February 17, 2026
         </p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
@@ -40,13 +40,15 @@ export default function TermsPage() {
               1. Agreement to Terms
             </h2>
             <p className="text-foreground/80 leading-relaxed">
-              By accessing or using PERM Tracker (&quot;the Service&quot;), you agree to be
-              bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to
-              these Terms, please do not use the Service.
+              PERM Tracker is operated by PERM Tracker LLC, a District of Columbia
+              limited liability company. By accessing or using PERM Tracker
+              (&quot;the Service&quot;), you agree to be bound by these Terms of Service
+              (&quot;Terms&quot;). If you do not agree to these Terms, please do not use the
+              Service.
             </p>
             <p className="text-foreground/80 leading-relaxed mt-4">
               These Terms constitute a legally binding agreement between you and
-              PERM Tracker regarding your use of the Service.
+              PERM Tracker LLC regarding your use of the Service.
             </p>
           </section>
 
@@ -396,6 +398,36 @@ export default function TermsPage() {
               client advice, regardless of what tools or technologies you use to
               assist in your practice.
             </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Consent to AI Data Processing
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              By using PERM Tracker, you consent to the processing of your data
+              by third-party AI service providers as described above and in our{" "}
+              <a href="/privacy" className="text-primary hover:underline">
+                Privacy Policy
+              </a>
+              . AI conversation data is retained for 90 days and then
+              automatically deleted. You may delete individual conversations at
+              any time from the AI chat interface.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Analytics & Session Recording
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              We use analytics services (Vercel Analytics) and error tracking
+              with session replay (Sentry) to improve the Service. Session
+              replay captures anonymized user interactions to help us diagnose
+              and fix issues. No sensitive case data is included in session
+              recordings. By using the Service, you consent to this data
+              collection as described in our{" "}
+              <a href="/privacy" className="text-primary hover:underline">
+                Privacy Policy
+              </a>
+              .
+            </p>
           </section>
 
           <section>
@@ -617,6 +649,9 @@ export default function TermsPage() {
               </li>
               <li>
                 <strong>Application:</strong> PERM Tracker
+              </li>
+              <li>
+                <strong>Operator:</strong> PERM Tracker LLC, Washington, DC 20001
               </li>
             </ul>
           </section>

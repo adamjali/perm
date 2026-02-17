@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
@@ -33,6 +33,8 @@ function isServerError(message: string): boolean {
 export function LoginPageClient() {
   const { signIn } = useAuthActions();
   const recordMyLogin = useMutation(api.users.recordMyLogin);
+  const checkRateLimit = useMutation(api.authRateLimit.checkAuthRateLimit);
+  const clearRateLimitMut = useMutation(api.authRateLimit.clearAuthRateLimit);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { completeSignOut } = useAuthContext();
@@ -41,6 +43,20 @@ export function LoginPageClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showExpiredBanner, setShowExpiredBanner] = useState(false);
+
+  const enforceRateLimit = useCallback(async (emailValue: string, action: "login" | "otp_verify") => {
+    try {
+      const result = await checkRateLimit({ email: emailValue, action });
+      if (!result.allowed) {
+        toast.error(result.message || "Too many attempts. Please wait and try again.");
+        return false;
+      }
+      return true;
+    } catch {
+      // Rate limit check failed — allow the attempt (fail open for availability)
+      return true;
+    }
+  }, [checkRateLimit]);
 
   // Reset signing out state when arriving at login page (after sign-out completes)
   useEffect(() => {
@@ -62,9 +78,18 @@ export function LoginPageClient() {
 
     try {
       const formData = new FormData(e.currentTarget);
+      const emailValue = formData.get("email") as string;
+
+      // Pre-flight rate limit check
+      if (!await enforceRateLimit(emailValue, "login")) {
+        setIsLoading(false);
+        return;
+      }
+
       const result = await signIn("password", formData);
 
       if (result.signingIn) {
+        clearRateLimitMut({ email: emailValue, action: "login" }).catch(() => {});
         localStorage.setItem("perm_last_login_at", String(Date.now()));
         recordMyLogin().catch(() => {});
         router.push("/dashboard");
@@ -106,6 +131,13 @@ export function LoginPageClient() {
 
     try {
       const formData = new FormData(e.currentTarget);
+
+      // Pre-flight rate limit check for OTP verification
+      if (!await enforceRateLimit(email, "otp_verify")) {
+        setIsLoading(false);
+        return;
+      }
+
       await signIn("password", formData);
 
       toast.success("Email verified! Signing you in.");
@@ -246,6 +278,7 @@ export function LoginPageClient() {
               id="email"
               name="email"
               type="email"
+              autoComplete="email"
               placeholder="you@example.com"
               required
               disabled={isLoading}
@@ -259,6 +292,7 @@ export function LoginPageClient() {
             <PasswordInput
               id="password"
               name="password"
+              autoComplete="current-password"
               placeholder="••••••••"
               required
               disabled={isLoading}

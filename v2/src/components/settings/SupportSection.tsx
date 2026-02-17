@@ -21,7 +21,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useMutation } from "convex/react";
+import { useMutation, useConvex } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "../../../convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";
@@ -46,6 +46,7 @@ import {
   AlertTriangle,
   Zap,
   PlayCircle,
+  Download,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
@@ -90,6 +91,10 @@ export default function SupportSection({ profile }: SupportSectionProps) {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteNowOpen, setDeleteNowOpen] = useState(false);
+
+  // Data export state
+  const [isExporting, setIsExporting] = useState(false);
+  const convex = useConvex();
 
   // Auth for sign out
   const { signOut } = useAuthActions();
@@ -171,6 +176,31 @@ export default function SupportSection({ profile }: SupportSectionProps) {
     setConfirmDeleteOpen(open);
     if (!open) {
       setDeleteConfirmation("");
+    }
+  };
+
+  // Handle full account data export (DSAR)
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const data = await convex.query(api.dataExport.getFullAccountData, {});
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `perm-tracker-export-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Account data exported successfully");
+    } catch (error) {
+      console.error("Failed to export account data:", error);
+      captureError(error);
+      toast.error("Failed to export account data");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -290,6 +320,33 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             </div>
           </button>
         </div>
+      </div>
+
+      {/* Data Export Card */}
+      <div
+        className="bg-card border-2 border-black dark:border-white/20 p-6"
+        style={{ boxShadow: "4px 4px 0px #000" }}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <Download className="w-5 h-5 text-foreground" />
+          <h3 className="font-heading font-bold text-lg text-foreground">
+            Your Data
+          </h3>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Download all your account data as a JSON file, including your profile,
+          cases, conversations, notifications, and audit logs.
+        </p>
+        <Button
+          variant="outline"
+          onClick={handleExportData}
+          disabled={isExporting}
+          loading={isExporting}
+          loadingText="Exporting..."
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Export All My Data
+        </Button>
       </div>
 
       {/* Account Deletion Section */}

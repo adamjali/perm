@@ -20,8 +20,8 @@ import { recordError } from "./lib/errorRecording";
 
 const log = loggers.email;
 
-/** Email address that ImprovMX previously forwarded to */
-const CATCH_ALL_FORWARD_TO = "owner@gmail.com";
+/** Email address to forward non-support emails to (replaces ImprovMX catch-all) */
+const CATCH_ALL_FORWARD_TO = process.env.SUPPORT_FORWARD_EMAIL || "support@permtracker.app";
 
 // ============================================================================
 // INTERNAL MUTATIONS

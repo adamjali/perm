@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { Search, Mail, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -22,14 +22,22 @@ import { InlineEdit } from "./InlineEdit";
 import type { EditableField } from "./InlineEdit";
 import type { UserSummary } from "@/lib/admin/types";
 import { captureError } from "@/lib/sentry";
+import { useState } from "react";
 
 interface UsersTableProps {
   users: UserSummary[];
-  initialSort?: { sortBy: string; sortOrder: "asc" | "desc" };
+  totalCount: number;
+  totalPages: number;
+  page: number;
+  onPageChange: (page: number) => void;
+  sortField: string;
+  sortOrder: "asc" | "desc";
+  onSortChange: (field: string, order: "asc" | "desc") => void;
+  search: string;
+  onSearchChange: (value: string) => void;
 }
 
 type SortField = keyof UserSummary;
-type SortDirection = "asc" | "desc";
 
 const PAGE_SIZE = 25;
 
@@ -235,26 +243,24 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export function UsersTable({ users, initialSort }: UsersTableProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  // NOTE: Extract to avoid React Compiler bug with `?.prop || fallback` in useState
-  const defaultSortField = (initialSort?.sortBy as SortField) || "lastActivity";
-  const defaultSortDirection = initialSort?.sortOrder || "desc";
-  const [sortField, setSortField] = useState<SortField>(defaultSortField);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(defaultSortDirection);
-  const [currentPage, setCurrentPage] = useState(0);
-
+export function UsersTable({
+  users,
+  totalCount,
+  totalPages,
+  page,
+  onPageChange,
+  sortField,
+  sortOrder,
+  onSortChange,
+  search,
+  onSearchChange,
+}: UsersTableProps) {
   // Modal states
   const [deleteModalUser, setDeleteModalUser] = useState<UserSummary | null>(null);
   const [emailModalUser, setEmailModalUser] = useState<UserSummary | null>(null);
 
   const updateUser = useMutation(api.admin.updateUserAdmin);
   const saveSortPreference = useMutation(api.admin.saveAdminSortPreference);
-
-  // Reset page when search changes
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [searchQuery]);
 
   // Inline save handler
   const handleInlineSave = useCallback(
@@ -275,79 +281,19 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
     [updateUser]
   );
 
-  // Filter
-  const filteredUsers = useMemo(() => {
-    if (!searchQuery.trim()) return users;
-    const q = searchQuery.toLowerCase();
-    return users.filter(
-      (u) =>
-        u.email.toLowerCase().includes(q) ||
-        u.name.toLowerCase().includes(q) ||
-        u.userType.toLowerCase().includes(q) ||
-        u.accountStatus.toLowerCase().includes(q) ||
-        (u.firmName?.toLowerCase().includes(q) ?? false) ||
-        u.userId.toLowerCase().includes(q)
-    );
-  }, [users, searchQuery]);
-
-  // Sort
-  const sortedUsers = useMemo(() => {
-    const sorted = [...filteredUsers];
-    sorted.sort((a, b) => {
-      const aVal = a[sortField];
-      const bVal = b[sortField];
-
-      if (aVal === null && bVal === null) return 0;
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
-
-      if (typeof aVal === "boolean" && typeof bVal === "boolean") {
-        return sortDirection === "asc" ? Number(aVal) - Number(bVal) : Number(bVal) - Number(aVal);
-      }
-
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      }
-
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
-      }
-
-      // arrays (authProviders)
-      if (Array.isArray(aVal) && Array.isArray(bVal)) {
-        return sortDirection === "asc"
-          ? aVal.join(",").localeCompare(bVal.join(","))
-          : bVal.join(",").localeCompare(aVal.join(","));
-      }
-
-      return 0;
-    });
-    return sorted;
-  }, [filteredUsers, sortField, sortDirection]);
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(sortedUsers.length / PAGE_SIZE));
-  const safePage = Math.min(currentPage, totalPages - 1);
-  const paginatedUsers = sortedUsers.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
-  const showPagination = sortedUsers.length > PAGE_SIZE;
-
   const handleSort = (field: SortField) => {
-    let newDirection: SortDirection;
-    if (sortField === field) {
-      newDirection = sortDirection === "asc" ? "desc" : "asc";
-      setSortDirection(newDirection);
-    } else {
-      newDirection = "desc";
-      setSortField(field);
-      setSortDirection(newDirection);
-    }
-    setCurrentPage(0);
+    const newOrder = sortField === field && sortOrder === "asc" ? "desc"
+      : sortField === field && sortOrder === "desc" ? "asc"
+      : "desc";
+    onSortChange(field, newOrder);
     // Persist to DB (fire-and-forget)
-    saveSortPreference({ sortBy: field, sortOrder: newDirection }).catch((error) => {
+    saveSortPreference({ sortBy: field, sortOrder: newOrder }).catch((error) => {
       console.error("Failed to save sort preference:", error);
       captureError(error);
     });
   };
+
+  const showPagination = totalCount > PAGE_SIZE;
 
   return (
     <>
@@ -355,19 +301,19 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
         <CardHeader className="border-b-2 border-border">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle className="font-heading text-xl font-bold uppercase tracking-wide">
-              Users ({filteredUsers.length}{filteredUsers.length !== users.length ? ` of ${users.length}` : ""})
+              Users ({totalCount})
             </CardTitle>
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1 sm:min-w-[300px]">
                 <Input
                   placeholder="Search email, name, type, status, ID..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={search}
+                  onChange={(e) => onSearchChange(e.target.value)}
                   className="pl-10"
                 />
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground/60 pointer-events-none" />
               </div>
-              <ExportButton users={sortedUsers} />
+              <ExportButton users={users} />
             </div>
           </div>
         </CardHeader>
@@ -398,7 +344,7 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
                 </tr>
               </thead>
               <tbody>
-                {paginatedUsers.map((user) => (
+                {users.map((user) => (
                   <tr
                     key={user.userId}
                     className="border-b border-border hover:bg-muted/30 transition-colors"
@@ -443,9 +389,9 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
               </tbody>
             </table>
 
-            {sortedUsers.length === 0 && (
+            {users.length === 0 && (
               <div className="p-12 text-center text-muted-foreground">
-                {searchQuery ? (
+                {search ? (
                   <div>
                     <p className="font-bold">No users found</p>
                     <p className="text-sm mt-1">Try a different search term</p>
@@ -461,14 +407,14 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
           {showPagination && (
             <div className="flex items-center justify-between border-t-2 border-border px-4 py-3">
               <span className="text-sm text-muted-foreground">
-                Showing {safePage * PAGE_SIZE + 1}\u2013{Math.min((safePage + 1) * PAGE_SIZE, sortedUsers.length)} of {sortedUsers.length}
+                Showing {page * PAGE_SIZE + 1}&ndash;{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}
               </span>
               <div className="flex items-center gap-1">
                 <Button
                   size="icon-sm"
                   variant="outline"
-                  onClick={() => setCurrentPage(0)}
-                  disabled={safePage === 0}
+                  onClick={() => onPageChange(0)}
+                  disabled={page === 0}
                   title="First page"
                 >
                   <ChevronsLeft className="size-4" />
@@ -476,20 +422,20 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
                 <Button
                   size="icon-sm"
                   variant="outline"
-                  onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                  disabled={safePage === 0}
+                  onClick={() => onPageChange(Math.max(0, page - 1))}
+                  disabled={page === 0}
                   title="Previous page"
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
                 <span className="px-3 text-sm font-bold tabular-nums">
-                  {safePage + 1} / {totalPages}
+                  {page + 1} / {totalPages}
                 </span>
                 <Button
                   size="icon-sm"
                   variant="outline"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
-                  disabled={safePage >= totalPages - 1}
+                  onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
+                  disabled={page >= totalPages - 1}
                   title="Next page"
                 >
                   <ChevronRight className="size-4" />
@@ -497,8 +443,8 @@ export function UsersTable({ users, initialSort }: UsersTableProps) {
                 <Button
                   size="icon-sm"
                   variant="outline"
-                  onClick={() => setCurrentPage(totalPages - 1)}
-                  disabled={safePage >= totalPages - 1}
+                  onClick={() => onPageChange(totalPages - 1)}
+                  disabled={page >= totalPages - 1}
                   title="Last page"
                 >
                   <ChevronsRight className="size-4" />

@@ -151,7 +151,6 @@ export default defineSchema({
       })
     ),
     darkModeEnabled: v.boolean(),
-    privacyModeEnabled: v.optional(v.boolean()), // Hide sensitive info in UI
 
     // Chatbot action mode
     /**

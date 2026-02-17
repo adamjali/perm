@@ -10,9 +10,10 @@ import { api } from "../../../convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 
 /**
- * Admin email address (must match backend constant)
+ * Admin email address — configurable via NEXT_PUBLIC_ADMIN_EMAIL env var.
+ * No fallback: if unset, no user is considered admin (fail-closed).
  */
-export const ADMIN_EMAIL = "admin@yahoo.com";
+export const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 /**
  * Hook to check if current user is admin.
@@ -23,7 +24,7 @@ export function useAdminAuth() {
   const user = useQuery(api.users.currentUser, isSigningOut ? "skip" : undefined);
 
   return {
-    isAdmin: user?.email === ADMIN_EMAIL,
+    isAdmin: !!ADMIN_EMAIL && user?.email === ADMIN_EMAIL,
     isLoading: user === undefined,
     isSigningOut,
     user: user ?? null,

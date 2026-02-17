@@ -18,7 +18,7 @@ import {
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { getCurrentUserId, getCurrentUserIdOrNull, extractUserIdFromAction } from "./lib/auth";
-import { encryptToken, decryptToken } from "./lib/crypto";
+import { encryptToken, decryptToken, isEncryptedToken } from "./lib/crypto";
 import { isTokenExpired } from "./lib/googleHelpers";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
@@ -211,24 +211,33 @@ export const getGoogleTokens = internalQuery({
     let refreshToken: string | null = null;
 
     if (profile.googleAccessToken) {
-      try {
-        accessToken = await decryptToken(profile.googleAccessToken);
-      } catch (error) {
-        // Token may be unencrypted (legacy) or corrupted
-        log.warn('Access token decryption failed', {
-          error: error instanceof Error ? error.message : 'unknown error',
-        });
+      if (isEncryptedToken(profile.googleAccessToken)) {
+        try {
+          accessToken = await decryptToken(profile.googleAccessToken);
+        } catch (error) {
+          log.error('Access token decryption failed — key may have been rotated', {
+            error: error instanceof Error ? error.message : 'unknown error',
+          });
+          accessToken = null; // Force re-auth instead of using garbage
+        }
+      } else {
+        // Legacy unencrypted token — use as-is
         accessToken = profile.googleAccessToken;
       }
     }
 
     if (profile.googleRefreshToken) {
-      try {
-        refreshToken = await decryptToken(profile.googleRefreshToken);
-      } catch (error) {
-        log.warn('Refresh token decryption failed', {
-          error: error instanceof Error ? error.message : 'unknown error',
-        });
+      if (isEncryptedToken(profile.googleRefreshToken)) {
+        try {
+          refreshToken = await decryptToken(profile.googleRefreshToken);
+        } catch (error) {
+          log.error('Refresh token decryption failed — key may have been rotated', {
+            error: error instanceof Error ? error.message : 'unknown error',
+          });
+          refreshToken = null; // Force re-auth
+        }
+      } else {
+        // Legacy unencrypted token — use as-is
         refreshToken = profile.googleRefreshToken;
       }
     }

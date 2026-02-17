@@ -184,10 +184,12 @@ export async function logAudit(
     oldDoc?: Record<string, unknown> | null;
     newDoc?: Record<string, unknown> | null;
     metadata?: AuditMetadata;
+    /** Override userId for internal mutations where getCurrentUserId() is unavailable */
+    userId?: Id<"users">;
   }
 ): Promise<void> {
   try {
-    const userId = await getCurrentUserId(ctx);
+    const userId = params.userId ?? await getCurrentUserId(ctx);
     const changes = calculateChanges(params.oldDoc ?? null, params.newDoc ?? null);
 
     await ctx.db.insert("auditLogs", {
@@ -229,7 +231,8 @@ export async function logCreate(
   tableName: string,
   documentId: Id<TableNames>,
   newDoc: Record<string, unknown>,
-  metadata?: AuditMetadata
+  metadata?: AuditMetadata,
+  userId?: Id<"users">
 ): Promise<void> {
   await logAudit(ctx, {
     tableName,
@@ -237,18 +240,12 @@ export async function logCreate(
     action: "create",
     newDoc,
     metadata,
+    userId,
   });
 }
 
 /**
  * Log a document update
- *
- * @param ctx - Mutation context
- * @param tableName - Name of the table
- * @param documentId - ID of updated document
- * @param oldDoc - Previous document state
- * @param newDoc - New document state
- * @param metadata - Optional audit metadata
  */
 export async function logUpdate(
   ctx: MutationCtx,
@@ -256,7 +253,8 @@ export async function logUpdate(
   documentId: Id<TableNames>,
   oldDoc: Record<string, unknown>,
   newDoc: Record<string, unknown>,
-  metadata?: AuditMetadata
+  metadata?: AuditMetadata,
+  userId?: Id<"users">
 ): Promise<void> {
   await logAudit(ctx, {
     tableName,
@@ -265,24 +263,20 @@ export async function logUpdate(
     oldDoc,
     newDoc,
     metadata,
+    userId,
   });
 }
 
 /**
  * Log a document deletion
- *
- * @param ctx - Mutation context
- * @param tableName - Name of the table
- * @param documentId - ID of deleted document
- * @param oldDoc - Deleted document data
- * @param metadata - Optional audit metadata
  */
 export async function logDelete(
   ctx: MutationCtx,
   tableName: string,
   documentId: Id<TableNames>,
   oldDoc: Record<string, unknown>,
-  metadata?: AuditMetadata
+  metadata?: AuditMetadata,
+  userId?: Id<"users">
 ): Promise<void> {
   await logAudit(ctx, {
     tableName,
@@ -290,5 +284,6 @@ export async function logDelete(
     action: "delete",
     oldDoc,
     metadata,
+    userId,
   });
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
@@ -9,13 +10,54 @@ import { AdminNotificationSettings } from "@/components/admin/AdminNotificationS
 import { UsersTable } from "@/components/admin/UsersTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function AdminDashboardClient() {
   const { isAdmin, isLoading: authLoading, isSigningOut } = useAdminAuth();
+
+  // Server-side pagination state
+  const [page, setPage] = useState(0);
+  const [sortField, setSortField] = useState<string>("lastActivity");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
+
   const dashboardData = useQuery(
     api.admin.getAdminDashboardData,
-    isSigningOut ? "skip" : undefined
+    isSigningOut ? "skip" : {
+      page,
+      pageSize: 25,
+      sortBy: sortField,
+      sortOrder,
+      search: debouncedSearch || undefined,
+    }
   );
+
+  // Apply server-provided sort preference on initial load
+  const [hasAppliedServerSort, setHasAppliedServerSort] = useState(false);
+  if (dashboardData && !hasAppliedServerSort) {
+    const pref = dashboardData.adminSortPreference;
+    if (pref.sortBy !== sortField || pref.sortOrder !== sortOrder) {
+      setSortField(pref.sortBy);
+      setSortOrder(pref.sortOrder);
+    }
+    setHasAppliedServerSort(true);
+  }
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+  }, []);
+
+  const handleSortChange = useCallback((field: string, order: "asc" | "desc") => {
+    setSortField(field);
+    setSortOrder(order);
+    setPage(0);
+  }, []);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value);
+    setPage(0);
+  }, []);
 
   // Loading state
   if (authLoading || dashboardData === undefined) {
@@ -88,7 +130,18 @@ export default function AdminDashboardClient() {
       <AdminNotificationSettings preferences={dashboardData.adminNotificationPreferences} />
 
       {/* Users Table */}
-      <UsersTable users={dashboardData.users} initialSort={dashboardData.adminSortPreference} />
+      <UsersTable
+        users={dashboardData.users}
+        totalCount={dashboardData.totalCount}
+        totalPages={dashboardData.totalPages}
+        page={dashboardData.page}
+        onPageChange={handlePageChange}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        onSortChange={handleSortChange}
+        search={search}
+        onSearchChange={handleSearchChange}
+      />
     </div>
   );
 }

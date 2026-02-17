@@ -1071,3 +1071,58 @@ export const cleanupRateLimits = internalMutation({
     return { deleted: oldRecords.length };
   },
 });
+
+// ============================================================================
+// CONVERSATION TTL CLEANUP
+// ============================================================================
+
+/**
+ * Delete AI conversations older than 90 days.
+ *
+ * Removes conversations (and their messages) where updatedAt is older than 90 days.
+ * Processes in batches to avoid timeout. Returns count and hasMore for re-scheduling.
+ *
+ * SOC 2 C1 — Confidentiality: Limit retention of AI conversation data.
+ */
+export const cleanupExpiredConversations = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<{ deleted: number; hasMore: boolean }> => {
+    const RETENTION_DAYS = 90;
+    const BATCH_SIZE = 50;
+    const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
+
+    // Find conversations older than retention period
+    const oldConversations = await ctx.db
+      .query("conversations")
+      .filter((q) => q.lt(q.field("updatedAt"), cutoff))
+      .take(BATCH_SIZE + 1);
+
+    const hasMore = oldConversations.length > BATCH_SIZE;
+    const toProcess = oldConversations.slice(0, BATCH_SIZE);
+
+    let deleted = 0;
+    for (const conversation of toProcess) {
+      // Delete all messages in this conversation
+      const messages = await ctx.db
+        .query("conversationMessages")
+        .withIndex("by_conversation_id", (q) =>
+          q.eq("conversationId", conversation._id)
+        )
+        .collect();
+
+      for (const message of messages) {
+        await ctx.db.delete(message._id);
+      }
+
+      // Delete the conversation itself
+      await ctx.db.delete(conversation._id);
+      deleted++;
+    }
+
+    if (deleted > 0) {
+      log.info("Conversation TTL cleanup complete", { deleted, hasMore });
+    }
+
+    return { deleted, hasMore };
+  },
+});

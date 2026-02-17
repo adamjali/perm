@@ -18,6 +18,7 @@ import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { getCurrentUserId, getCurrentUserIdOrNull, verifyOwnership } from "./lib/auth";
 import { logCreate, logUpdate, logDelete } from "./lib/audit";
+import { validateInputLengths, INPUT_LIMITS } from "./lib/validation";
 
 // ============================================================================
 // QUERIES
@@ -145,6 +146,12 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getCurrentUserId(ctx);
 
+    // Input length validation (PI1 — Processing Integrity)
+    validateInputLengths([
+      { value: args.name, name: "Template Name", limit: INPUT_LIMITS.SHORT },
+      { value: args.description, name: "Job Description", limit: INPUT_LIMITS.LONG },
+    ]);
+
     // Validate name
     const name = args.name.trim();
     if (!name) {
@@ -208,6 +215,12 @@ export const update = mutation({
     description: v.string(),
   },
   handler: async (ctx, args) => {
+    // Input length validation (PI1 — Processing Integrity)
+    validateInputLengths([
+      { value: args.name, name: "Template Name", limit: INPUT_LIMITS.SHORT },
+      { value: args.description, name: "Job Description", limit: INPUT_LIMITS.LONG },
+    ]);
+
     const template = await ctx.db.get(args.id);
     if (!template) {
       throw new Error("Template not found");

@@ -712,6 +712,10 @@ export const sendAdminNotificationEmail = internalAction({
     const { AdminEmail } = await import("../src/emails/AdminEmail");
 
     const toEmail = args.to || ADMIN_EMAIL;
+    if (!toEmail) {
+      log.error("No recipient email for admin notification (ADMIN_EMAIL not configured)");
+      return;
+    }
     const name = args.recipientName || "Admin";
 
     const html = await render(
