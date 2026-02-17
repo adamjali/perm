@@ -83,26 +83,29 @@ export function NavLink({
   const [localIsNavigating, setLocalIsNavigating] = useState(false);
   const previousPathnameRef = useRef(pathname);
 
-  const targetPath = typeof href === "string" ? href : href.pathname;
+  const targetHref = typeof href === "string" ? href : href.pathname || "";
+  // Extract just the pathname portion (before any hash)
+  const targetPath = targetHref.split("#")[0] || "/";
   const isCurrentPage = pathname === targetPath;
+  const isHashOnly = targetHref.includes("#") && isCurrentPage;
 
   // Use context if available, otherwise fall back to local state
   const isNavigating = context
-    ? context.activeNavigation === targetPath
+    ? context.activeNavigation === targetHref
     : localIsNavigating;
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // Call original onClick if provided
     onClick?.(e);
 
-    // If default was prevented or it's the current page, don't show loading
-    if (e.defaultPrevented || isCurrentPage) return;
+    // Skip loading for hash navigation on the same page — no route change occurs
+    if (e.defaultPrevented || isCurrentPage || isHashOnly) return;
 
     // Set this link as actively navigating (clears other NavLinks)
     // Always coordinate via context so other components can detect navigation,
     // even when this NavLink doesn't show its own spinner (showLoading=false)
     if (context) {
-      context.setActiveNavigation(targetPath || "/");
+      context.setActiveNavigation(targetHref || "/");
     } else if (showLoading) {
       setLocalIsNavigating(true);
     }
