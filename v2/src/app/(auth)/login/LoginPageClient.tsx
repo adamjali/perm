@@ -26,6 +26,10 @@ function isRateLimitError(message: string): boolean {
   return /toomanyfailedattempts|rate limit|too many/i.test(message);
 }
 
+function isServerError(message: string): boolean {
+  return /server error/i.test(message);
+}
+
 export function LoginPageClient() {
   const { signIn } = useAuthActions();
   const recordMyLogin = useMutation(api.users.recordMyLogin);
@@ -81,6 +85,8 @@ export function LoginPageClient() {
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
+      } else if (isServerError(message)) {
+        toast.error("Something went wrong on our end. Please try again or contact support.");
       } else {
         if (!/invalid/i.test(message)) {
           console.warn("[Login] Unhandled error type:", message);

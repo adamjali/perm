@@ -18,7 +18,12 @@ export const ResendOTP = Email({
              <p>This code expires in 10 minutes.</p>`,
     });
     if (error) {
-      throw new Error(`Failed to send email: ${error.message}`);
+      // Log but don't throw — the verification token is already stored in the DB.
+      // Throwing here crashes the entire auth:signIn action and surfaces as an
+      // opaque "Server Error" to the client (Convex redacts plain Error messages).
+      // By not throwing, the auth flow completes normally and the client transitions
+      // to the verification step. The user can retry sign-in to resend the code.
+      console.error(`[ResendOTP] Failed to send verification email to ${email}:`, error.message);
     }
   },
 });
