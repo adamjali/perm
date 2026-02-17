@@ -230,7 +230,7 @@ export function ActionModeToggle({
 
             {/* Portal-based Tooltip */}
             <TooltipPortal
-              targetRef={{ current: buttonRefs.current.get(m) ?? null }}
+              targetRef={{ current: buttonRefs.current.get(m) || null }}
               visible={isHovered && !disabled}
             >
               {config.tooltip}
