@@ -4,48 +4,27 @@ import {
   nextjsMiddlewareRedirect,
 } from "@convex-dev/auth/nextjs/server";
 
-// Public routes (no auth required)
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/login",
-  "/signup",
-  "/reset-password",
-  "/demo",
-  // Legal/info pages (footer links)
-  "/contact",
-  "/privacy",
-  "/terms",
-  // Content hub pages (SEO)
-  "/blog",
-  "/blog/(.*)",
-  "/tutorials",
-  "/tutorials/(.*)",
-  "/guides",
-  "/guides/(.*)",
-  "/changelog",
-  "/changelog/(.*)",
-  "/resources",
-  "/resources/(.*)",
-  // Service workers (must be public — browsers fetch without auth cookies)
-  "/sw.js",
-  "/sw-push.js",
-  // Static assets and SEO routes that need to be public
-  "/icon",
-  "/favicon.ico",
-  "/apple-touch-icon.png",
-  "/icon-192.png",
-  "/icon-512.png",
-  "/manifest.webmanifest",
-  // Open Graph / Twitter card images for social sharing
-  "/opengraph-image",
-  "/twitter-image",
-  // SEO files
-  "/robots.txt",
-  "/sitemap.xml",
-  // Google Calendar OAuth callback - must be public because Google redirect loses session cookies
-  "/api/google/callback",
-  // Sentry health check (protected by its own secret header)
-  "/api/sentry-check",
+// Protected routes (auth required) — unknown routes fall through to Next.js (404 naturally)
+const isProtectedRoute = createRouteMatcher([
+  "/dashboard",
+  "/dashboard/(.*)",
+  "/cases",
+  "/cases/(.*)",
+  "/calendar",
+  "/calendar/(.*)",
+  "/timeline",
+  "/timeline/(.*)",
+  "/settings",
+  "/settings/(.*)",
+  "/notifications",
+  "/notifications/(.*)",
+  "/admin",
+  "/admin/(.*)",
+  // Protected API routes
+  "/api/chat",
+  "/api/chat/(.*)",
+  "/api/google/connect",
+  "/api/google/disconnect",
 ]);
 
 // Auth routes (should redirect to dashboard if already logged in)
@@ -53,22 +32,23 @@ const isAuthRoute = createRouteMatcher(["/login", "/signup"]);
 
 export default convexAuthNextjsMiddleware(
   async (request, { convexAuth }) => {
-    // OPTIMIZATION: Skip auth check entirely for truly public routes (not auth routes)
-    // Auth routes need the check to redirect authenticated users to dashboard
-    if (isPublicRoute(request) && !isAuthRoute(request)) {
-      return; // No auth check needed, instant response
+    const needsAuth = isProtectedRoute(request);
+    const isAuth = isAuthRoute(request);
+
+    // Skip auth check for routes that don't need it
+    if (!needsAuth && !isAuth) {
+      return;
     }
 
-    // Only check auth for routes that need it (auth routes + protected routes)
     const isAuthenticated = await convexAuth.isAuthenticated();
 
     // Redirect authenticated users away from login/signup pages
-    if (isAuthRoute(request) && isAuthenticated) {
+    if (isAuth && isAuthenticated) {
       return nextjsMiddlewareRedirect(request, "/dashboard");
     }
 
-    // Redirect unauthenticated users to login (for protected routes)
-    if (!isPublicRoute(request) && !isAuthenticated) {
+    // Redirect unauthenticated users to login (for protected routes only)
+    if (needsAuth && !isAuthenticated) {
       return nextjsMiddlewareRedirect(request, "/login");
     }
   },
