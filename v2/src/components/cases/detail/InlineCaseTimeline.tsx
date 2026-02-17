@@ -42,8 +42,10 @@ export interface InlineCaseTimelineProps {
 // CONSTANTS
 // ============================================================================
 
-const MONTHS_BEFORE = 3;
-const MONTHS_AFTER = 3;
+/** Minimum padding (months) around data so edges don't sit flush */
+const MIN_PAD_MONTHS = 1;
+/** Minimum total window size in months (never smaller than this) */
+const MIN_WINDOW_MONTHS = 4;
 
 const MONTH_NAMES = [
   "Jan",
@@ -98,7 +100,11 @@ const LEGEND_STAGES: Array<{ stage: Stage; label: string }> = [
 /**
  * Generate array of month data for the timeline window
  */
-function generateMonthHeaders(today: Date): Array<{
+function generateMonthHeaders(
+  startDate: Date,
+  endDate: Date,
+  today: Date
+): Array<{
   year: number;
   month: number;
   label: string;
@@ -114,18 +120,97 @@ function generateMonthHeaders(today: Date): Array<{
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
 
-  for (let i = -MONTHS_BEFORE; i < MONTHS_AFTER; i++) {
-    const date = new Date(currentYear, currentMonth + i, 1);
-    const monthIndex = date.getMonth();
+  // Iterate from start month to end month
+  const d = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+  while (d <= endDate) {
+    const monthIndex = d.getMonth();
     months.push({
-      year: date.getFullYear(),
+      year: d.getFullYear(),
       month: monthIndex,
       label: MONTH_NAMES[monthIndex] ?? "???",
-      isCurrentMonth: i === 0,
+      isCurrentMonth:
+        d.getFullYear() === currentYear && monthIndex === currentMonth,
     });
+    d.setMonth(d.getMonth() + 1);
   }
 
   return months;
+}
+
+/**
+ * Compute a window that fits ALL milestones and range bars, with padding.
+ * Falls back to ±3 months around today if there's no data.
+ */
+function computeAutoWindow(
+  milestones: Milestone[],
+  rangeBars: RangeBar[],
+  today: Date
+): { startDate: Date; endDate: Date } {
+  // Collect every date timestamp from milestones and range bars
+  const timestamps: number[] = [];
+  for (const m of milestones) {
+    timestamps.push(new Date(m.date).getTime());
+  }
+  for (const rb of rangeBars) {
+    timestamps.push(new Date(rb.startDate).getTime());
+    timestamps.push(new Date(rb.endDate).getTime());
+  }
+  // Always include today so the "Today" marker is visible
+  timestamps.push(today.getTime());
+
+  if (timestamps.length === 0) {
+    // Fallback: 3 months before/after today
+    return {
+      startDate: new Date(today.getFullYear(), today.getMonth() - 3, 1),
+      endDate: new Date(today.getFullYear(), today.getMonth() + 3, 0, 23, 59, 59, 999),
+    };
+  }
+
+  const minTs = Math.min(...timestamps);
+  const maxTs = Math.max(...timestamps);
+  const minDate = new Date(minTs);
+  const maxDate = new Date(maxTs);
+
+  // Expand to start-of-month / end-of-month, then add padding
+  let startMonth = minDate.getMonth() - MIN_PAD_MONTHS;
+  let startYear = minDate.getFullYear();
+  let endMonth = maxDate.getMonth() + MIN_PAD_MONTHS;
+  let endYear = maxDate.getFullYear();
+
+  // Normalize overflow
+  while (startMonth < 0) {
+    startMonth += 12;
+    startYear -= 1;
+  }
+  while (endMonth > 11) {
+    endMonth -= 12;
+    endYear += 1;
+  }
+
+  // Ensure minimum window size
+  const totalMonths =
+    (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
+  if (totalMonths < MIN_WINDOW_MONTHS) {
+    const deficit = MIN_WINDOW_MONTHS - totalMonths;
+    const addBefore = Math.ceil(deficit / 2);
+    const addAfter = deficit - addBefore;
+    startMonth -= addBefore;
+    endMonth += addAfter;
+    // Re-normalize
+    while (startMonth < 0) {
+      startMonth += 12;
+      startYear -= 1;
+    }
+    while (endMonth > 11) {
+      endMonth -= 12;
+      endYear += 1;
+    }
+  }
+
+  return {
+    startDate: new Date(startYear, startMonth, 1),
+    endDate: new Date(endYear, endMonth + 1, 0, 23, 59, 59, 999),
+  };
 }
 
 /**
@@ -139,18 +224,6 @@ function calculatePosition(
   const dateMs = new Date(dateStr).getTime();
   const position = ((dateMs - windowStartMs) / windowDurationMs) * 100;
   return position;
-}
-
-/**
- * Check if a date is within the visible timeline window
- */
-function isDateInWindow(
-  dateStr: string,
-  windowStartMs: number,
-  windowEndMs: number
-): boolean {
-  const dateMs = new Date(dateStr).getTime();
-  return dateMs >= windowStartMs && dateMs <= windowEndMs;
 }
 
 /**
@@ -201,33 +274,6 @@ export function InlineCaseTimeline({
   // Get today's date for window calculation
   const today = useMemo(() => new Date(), []);
 
-  // Calculate timeline window (3 months before + 3 months after today)
-  const { windowStartMs, windowEndMs, windowDurationMs } = useMemo(() => {
-    const startDate = new Date(
-      today.getFullYear(),
-      today.getMonth() - MONTHS_BEFORE,
-      1
-    );
-    const endDate = new Date(
-      today.getFullYear(),
-      today.getMonth() + MONTHS_AFTER,
-      0, // Last day of the month before
-      23,
-      59,
-      59,
-      999
-    );
-
-    return {
-      windowStartMs: startDate.getTime(),
-      windowEndMs: endDate.getTime(),
-      windowDurationMs: endDate.getTime() - startDate.getTime(),
-    };
-  }, [today]);
-
-  // Generate month headers
-  const monthHeaders = useMemo(() => generateMonthHeaders(today), [today]);
-
   // Extract milestones and range bars from case data
   const milestones = useMemo(
     () => extractMilestones(caseData),
@@ -238,35 +284,31 @@ export function InlineCaseTimeline({
     [caseData]
   );
 
-  // Filter to only milestones visible in the window
-  const visibleMilestones = useMemo(
-    () =>
-      milestones.filter((m) =>
-        isDateInWindow(m.date, windowStartMs, windowEndMs)
-      ),
-    [milestones, windowStartMs, windowEndMs]
-  );
+  // Auto-fit window to include ALL milestones and range bars
+  const { windowStartMs, windowDurationMs, windowStart, windowEnd } = useMemo(() => {
+    const { startDate, endDate } = computeAutoWindow(milestones, rangeBars, today);
+    return {
+      windowStartMs: startDate.getTime(),
+      windowDurationMs: endDate.getTime() - startDate.getTime(),
+      windowStart: startDate,
+      windowEnd: endDate,
+    };
+  }, [milestones, rangeBars, today]);
 
-  // Filter range bars that overlap with the window
-  const visibleRangeBars = useMemo(
-    () =>
-      rangeBars.filter((rb) => {
-        const startMs = new Date(rb.startDate).getTime();
-        const endMs = new Date(rb.endDate).getTime();
-        // Range overlaps if start is before window end AND end is after window start
-        return startMs <= windowEndMs && endMs >= windowStartMs;
-      }),
-    [rangeBars, windowStartMs, windowEndMs]
+  // Generate month headers from the auto-fit window
+  const monthHeaders = useMemo(
+    () => generateMonthHeaders(windowStart, windowEnd, today),
+    [windowStart, windowEnd, today]
   );
 
   // Calculate today's position for the marker
   const todayPosition = useMemo(() => {
-    const todayStr = today.toISOString().split("T")[0] ?? "";
+    const todayStr = today.toISOString().split("T")[0] || "";
     return calculatePosition(todayStr, windowStartMs, windowDurationMs);
   }, [today, windowStartMs, windowDurationMs]);
 
   // Return null if no data to display
-  if (visibleMilestones.length === 0 && visibleRangeBars.length === 0) {
+  if (milestones.length === 0 && rangeBars.length === 0) {
     return null;
   }
 
@@ -341,11 +383,11 @@ export function InlineCaseTimeline({
             {/* Gantt Rows - 4 tiers */}
           {GANTT_ROWS.map((row, rowIndex) => {
             const rowMilestones = getMilestonesForRow(
-              visibleMilestones,
+              milestones,
               row.stage,
               row.relatedStages
             );
-            const rowRangeBars = getRangeBarsForRow(visibleRangeBars, row.stage);
+            const rowRangeBars = getRangeBarsForRow(rangeBars, row.stage);
 
             return (
               <div
