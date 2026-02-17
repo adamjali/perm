@@ -45,12 +45,12 @@ const faqItems: FAQItem[] = [
   {
     question: "Is PERM Tracker really free?",
     answer:
-      "Yes, completely free. No credit card, no trial period, no case limits. Immigration attorneys deserve quality tools without typical SaaS pricing. We may introduce optional premium features in the future, but the core tracking and deadline management will always be free.",
+      "Yes, currently completely free. No credit card, no trial period, no case limits. Immigration attorneys deserve quality tools without typical SaaS pricing. We may introduce paid plans in the future, but we're committed to keeping PERM Tracker accessible.",
   },
   {
     question: "Is my client data secure?",
     answer:
-      "Yes. We use industry-standard encryption, secure Google OAuth authentication, and row-level database security. Your data is isolated — no other firm can see your cases. We also offer Privacy Mode to hide sensitive information during screen sharing or presentations.",
+      "Yes. We use industry-standard encryption, secure Google OAuth authentication, and row-level database security. Your data is isolated — no other firm can see your cases.",
   },
   {
     question: "Can I import my existing cases?",
