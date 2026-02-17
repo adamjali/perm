@@ -6,9 +6,10 @@
  * Extracted components for recruitment deadline display.
  */
 
-import { addDays, differenceInDays, format, parseISO, subDays } from "date-fns";
+import { differenceInDays, format, parseISO } from "date-fns";
 import { AlertTriangle, Clock, CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { calculateRecruitmentWindowCloses, getFirstRecruitmentDate } from "@/lib/perm";
 
 // ============================================================================
 // TYPES
@@ -28,11 +29,15 @@ export interface RecruitmentDeadlineIndicatorProps {
 
 /**
  * Displays the recruitment deadline based on two constraints:
- * 1. PWD expiration: Must complete 30 days before PWD expires (for waiting period)
+ * 1. PWD expiration: Must complete 30 days before PWD expires (for the 30-day waiting period)
  * 2. 150-day rule: Must complete within 150 days of FIRST recruitment step
- *    (150 days accounts for the mandatory 30-day waiting period before ETA 9089 filing)
+ *    (the overall ETA 9089 window is 180 days; 150 + 30-day wait = 180 total)
  *
- * The earlier of these two deadlines is shown, with indication of which is limiting.
+ * Individual recruitment steps (job order, notice of filing, Sunday ads) each have
+ * their own per-step deadlines computed from the first recruitment date and PWD
+ * expiration — these are shown in the What's Next section on the case detail page.
+ *
+ * The earlier of the two overall constraints is shown, with indication of which is limiting.
  */
 export function RecruitmentDeadlineIndicator({
   pwdDeterminationDate,
@@ -67,40 +72,27 @@ export function RecruitmentDeadlineIndicator({
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const expirationDate = parseISO(pwdExpirationDate);
 
-  // Calculate PWD-based deadline: 30 days before PWD expires (for 30-day waiting period)
-  const pwdDeadline = subDays(expirationDate, 30);
+  // Use central lib: calculateRecruitmentWindowCloses = MIN(first + 150, pwd - 30)
+  const firstDate = getFirstRecruitmentDate({ sundayAdFirstDate, jobOrderStartDate, noticeOfFilingStartDate });
+  const recWindow = calculateRecruitmentWindowCloses(firstDate, pwdExpirationDate);
 
-  // Calculate 150-day deadline from FIRST recruitment step
-  // Per PERM_SYSTEM_ARCHITECTURE.md: recruitment_window_closes = MIN(first + 150, pwd - 30)
-  // The 150-day rule (not 180) accounts for the mandatory 30-day waiting period before ETA 9089 filing
-  const recruitmentDates = [sundayAdFirstDate, jobOrderStartDate, noticeOfFilingStartDate]
-    .filter((d): d is string => !!d)
-    .map((d) => parseISO(d));
-
-  let firstRecruitmentDate: Date | null = null;
-  let rule150Deadline: Date | null = null;
-
-  if (recruitmentDates.length > 0) {
-    // Get the earliest recruitment date
-    firstRecruitmentDate = recruitmentDates.sort((a, b) => a.getTime() - b.getTime())[0]!;
-    // 150 days from first recruitment (accounts for 30-day waiting period before filing)
-    rule150Deadline = addDays(firstRecruitmentDate, 150);
+  if (!recWindow) {
+    // No first recruitment date yet — show PWD-only deadline
+    const expirationDate = parseISO(pwdExpirationDate);
+    const daysToExpiration = differenceInDays(expirationDate, today);
+    return (
+      <div className="rounded-lg border-2 border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <CalendarClock className="h-4 w-4" />
+          <span>PWD expires {format(expirationDate, "MMM d, yyyy")} ({daysToExpiration} days)</span>
+        </div>
+      </div>
+    );
   }
 
-  // Determine which constraint is limiting: MIN(first + 150, pwd - 30)
-  let recruitmentDeadline: Date;
-  let limitingFactor: 'pwd' | '150-day';
-
-  if (rule150Deadline && rule150Deadline < pwdDeadline) {
-    recruitmentDeadline = rule150Deadline;
-    limitingFactor = '150-day';
-  } else {
-    recruitmentDeadline = pwdDeadline;
-    limitingFactor = 'pwd';
-  }
-
+  const recruitmentDeadline = parseISO(recWindow.closes);
+  const limitingFactor: 'pwd' | '150-day' = recWindow.isPwdLimited ? 'pwd' : '150-day';
   const daysRemaining = differenceInDays(recruitmentDeadline, today);
 
   // Determine status
@@ -179,7 +171,7 @@ export function RecruitmentDeadlineIndicator({
             PWD Expires
           </span>
           <p className="font-medium">
-            {format(expirationDate, "MMM d, yyyy")}
+            {format(parseISO(pwdExpirationDate), "MMM d, yyyy")}
           </p>
         </div>
       </div>
@@ -202,22 +194,11 @@ export function RecruitmentDeadlineIndicator({
       )}
 
       <p className="text-xs text-muted-foreground pt-1">
-        {(() => {
-          // Build dynamic explanation based on available data and limiting factor
-          // Note: At this point pwdExpirationDate is always defined (early returns above)
-          if (!firstRecruitmentDate) {
-            // No recruitment started yet - show both constraints
-            return "Recruitment must complete within 150 days of first step OR 30 days before PWD expiration, whichever is first.";
-          }
-          if (limitingFactor === '150-day' && rule150Deadline) {
-            return `Deadline based on 150-day rule from first recruitment (${format(firstRecruitmentDate, "MMM d, yyyy")}). This is earlier than the PWD constraint.`;
-          }
-          // limitingFactor === 'pwd'
-          if (rule150Deadline) {
-            return `Deadline based on PWD expiration (must complete 30 days before). This is earlier than the 150-day rule (${format(rule150Deadline, "MMM d, yyyy")}).`;
-          }
-          return "Must complete 30 days before PWD expiration to allow for ETA 9089 filing window.";
-        })()}
+        {limitingFactor === '150-day'
+          ? `Basic recruitment and 2 of 3 additional methods must finish within 150 days of the first step${firstDate ? ` (${firstDate})` : ""}, leaving a 30-day quiet period. One additional method may complete up to the filing deadline (180 days total).`
+          : firstDate
+            ? "Recruitment must complete 30 days before PWD expires to preserve the filing window. This PWD constraint is earlier than the 150-day rule."
+            : "Recruitment must complete 30 days before PWD expires to allow for the mandatory waiting period before ETA 9089 filing."}
       </p>
     </div>
   );

@@ -85,61 +85,70 @@ const fieldVariants = {
  * Fills in required fields with defaults where not present.
  */
 function convertToCaseFormData(caseData: NextUpCaseData): CaseFormData {
+  // Pre-compute complex expressions into local variables to avoid SWC minifier bug.
+  // SWC drops var declarations for overflow temp variables when a function has 20+
+  // nullish coalescing (??) / optional chaining (?.) operations. Using || and
+  // explicit ternaries avoids generating temp vars entirely.
+  // See: https://github.com/swc-project/swc/issues/760
+  const rfiEntries = caseData.rfiEntries
+    ? caseData.rfiEntries.map(e => ({
+        id: crypto.randomUUID(),
+        receivedDate: e.receivedDate as ISODateString,
+        responseDueDate: e.responseDueDate as ISODateString,
+        responseSubmittedDate: e.responseSubmittedDate as ISODateString | undefined,
+        createdAt: Date.now(),
+      }))
+    : [];
+  const rfeEntries = caseData.rfeEntries
+    ? caseData.rfeEntries.map(e => ({
+        id: crypto.randomUUID(),
+        receivedDate: e.receivedDate as ISODateString,
+        responseDueDate: e.responseDueDate as ISODateString,
+        responseSubmittedDate: e.responseSubmittedDate as ISODateString | undefined,
+        createdAt: Date.now(),
+      }))
+    : [];
+  const additionalMethods = caseData.additionalRecruitmentMethods
+    ? caseData.additionalRecruitmentMethods.map(m => ({
+        ...m,
+        date: m.date as ISODateString,
+        startDate: m.startDate as ISODateString | undefined,
+        endDate: m.endDate as ISODateString | undefined,
+        subEntries: m.subEntries
+          ? m.subEntries.map(e => ({
+              date: e.date as ISODateString,
+              description: e.description,
+            }))
+          : undefined,
+      }))
+    : [];
+
   return {
-    // Required fields - use empty strings as defaults
     employerName: "",
     beneficiaryIdentifier: "",
     positionTitle: "",
-    // Status fields
     caseStatus: caseData.caseStatus,
     progressStatus: caseData.progressStatus,
-    // PWD fields
-    pwdFilingDate: caseData.pwdFilingDate ?? undefined,
-    pwdDeterminationDate: caseData.pwdDeterminationDate ?? undefined,
-    pwdExpirationDate: caseData.pwdExpirationDate ?? undefined,
-    // Recruitment fields
-    jobOrderStartDate: caseData.jobOrderStartDate ?? undefined,
-    jobOrderEndDate: caseData.jobOrderEndDate ?? undefined,
-    sundayAdFirstDate: caseData.sundayAdFirstDate ?? undefined,
-    sundayAdSecondDate: caseData.sundayAdSecondDate ?? undefined,
-    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate ?? undefined,
-    noticeOfFilingEndDate: caseData.noticeOfFilingEndDate ?? undefined,
-    // ETA 9089 fields
-    eta9089FilingDate: caseData.eta9089FilingDate ?? undefined,
-    eta9089CertificationDate: caseData.eta9089CertificationDate ?? undefined,
-    eta9089ExpirationDate: caseData.eta9089ExpirationDate ?? undefined,
-    // I-140 fields
-    i140FilingDate: caseData.i140FilingDate ?? undefined,
-    i140ApprovalDate: caseData.i140ApprovalDate ?? undefined,
-    i140DenialDate: caseData.i140DenialDate ?? undefined,
-    // RFI/RFE entries - cast dates from plain strings to ISODateString branded type
-    rfiEntries: caseData.rfiEntries?.map(e => ({
-      id: crypto.randomUUID(),
-      receivedDate: e.receivedDate as ISODateString,
-      responseDueDate: e.responseDueDate as ISODateString,
-      responseSubmittedDate: e.responseSubmittedDate as ISODateString | undefined,
-      createdAt: Date.now(),
-    })) ?? [],
-    rfeEntries: caseData.rfeEntries?.map(e => ({
-      id: crypto.randomUUID(),
-      receivedDate: e.receivedDate as ISODateString,
-      responseDueDate: e.responseDueDate as ISODateString,
-      responseSubmittedDate: e.responseSubmittedDate as ISODateString | undefined,
-      createdAt: Date.now(),
-    })) ?? [],
-    // Professional occupation
-    isProfessionalOccupation: caseData.isProfessionalOccupation ?? false,
-    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods?.map(m => ({
-      ...m,
-      date: m.date as ISODateString,
-      startDate: m.startDate as ISODateString | undefined,
-      endDate: m.endDate as ISODateString | undefined,
-      subEntries: m.subEntries?.map(e => ({
-        date: e.date as ISODateString,
-        description: e.description,
-      })),
-    })) ?? [],
-    // Default values for other required fields
+    // Use || undefined instead of ?? undefined to avoid SWC temp vars
+    pwdFilingDate: caseData.pwdFilingDate || undefined,
+    pwdDeterminationDate: caseData.pwdDeterminationDate || undefined,
+    pwdExpirationDate: caseData.pwdExpirationDate || undefined,
+    jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+    jobOrderEndDate: caseData.jobOrderEndDate || undefined,
+    sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+    sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
+    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
+    noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
+    eta9089FilingDate: caseData.eta9089FilingDate || undefined,
+    eta9089CertificationDate: caseData.eta9089CertificationDate || undefined,
+    eta9089ExpirationDate: caseData.eta9089ExpirationDate || undefined,
+    i140FilingDate: caseData.i140FilingDate || undefined,
+    i140ApprovalDate: caseData.i140ApprovalDate || undefined,
+    i140DenialDate: caseData.i140DenialDate || undefined,
+    rfiEntries,
+    rfeEntries,
+    isProfessionalOccupation: !!caseData.isProfessionalOccupation,
+    additionalRecruitmentMethods: additionalMethods,
     priorityLevel: "normal",
     isFavorite: false,
     recruitmentApplicantsCount: 0,
@@ -162,7 +171,7 @@ function WaitingInfoDisplay({ waitingInfo }: WaitingInfoDisplayProps) {
   return (
     <motion.div
       variants={fieldVariants}
-      initial="hidden"
+      initial={false}
       animate="visible"
       className="space-y-3"
     >
@@ -194,7 +203,7 @@ function ComplexActionDisplay({ message, onNavigateToForm }: ComplexActionDispla
   return (
     <motion.div
       variants={fieldVariants}
-      initial="hidden"
+      initial={false}
       animate="visible"
       className="space-y-3"
     >
@@ -422,7 +431,7 @@ export function QuickEditFields({
   return (
     <motion.div
       variants={fieldVariants}
-      initial="hidden"
+      initial={false}
       animate="visible"
       className={cn("space-y-4", className)}
     >

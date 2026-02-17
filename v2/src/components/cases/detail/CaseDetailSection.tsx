@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -11,10 +11,10 @@ import { cn } from "@/lib/utils";
 
 export interface CaseDetailSectionProps {
   title: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   defaultOpen?: boolean;
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   /** Summary text shown in collapsed header (e.g. "Expires Jun 30, 2025") */
   preview?: string;
   /** CSS color for accent top strip (e.g. "var(--stage-pwd)") */
@@ -55,7 +55,7 @@ export function CaseDetailSection({
   preview,
   accentColor,
 }: CaseDetailSectionProps) {
-  const [isOpen, setIsOpen] = React.useState(defaultOpen);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <div
@@ -290,7 +290,7 @@ export function DetailField({
   mono = false,
 }: DetailFieldProps) {
   // Format value for display
-  const displayValue = React.useMemo(() => {
+  const displayValue = useMemo(() => {
     if (value === undefined || value === null || value === "") {
       return "-";
     }

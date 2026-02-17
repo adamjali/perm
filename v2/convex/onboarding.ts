@@ -328,7 +328,7 @@ export const createSampleCase = mutation({
       pwdDeterminationDate,
       pwdExpirationDate,
       pwdCaseNumber: "P-100-00000-000000",
-      pwdWageAmount: 15500000, // $155,000 in cents
+      pwdWageAmount: 155000, // $155,000
       pwdWageLevel: "Level III",
 
       // Recruitment dates (in progress)

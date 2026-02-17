@@ -18,6 +18,7 @@ import type {
   RfeEntry,
 } from "./types";
 import { SUPERSESSION_REASONS } from "./types";
+import { isRecruitmentComplete } from "../recruitment/isRecruitmentComplete";
 
 // ============================================================================
 // MAIN SUPERSESSION CHECK
@@ -71,8 +72,22 @@ export function isDeadlineActive(
 
     case "filing_window_opens":
     case "filing_window_closes":
-    case "recruitment_window_closes":
       return checkFilingWindowActive(caseData);
+
+    case "recruitment_window_closes":
+      return checkRecruitmentWindowActive(caseData);
+
+    case "job_order_start_deadline":
+      return checkPerStepActive(caseData, caseData.jobOrderStartDate, SUPERSESSION_REASONS.JOB_ORDER_STARTED);
+
+    case "notice_of_filing_start_deadline":
+      return checkPerStepActive(caseData, caseData.noticeOfFilingStartDate, SUPERSESSION_REASONS.NOTICE_OF_FILING_STARTED);
+
+    case "first_sunday_ad_deadline":
+      return checkPerStepActive(caseData, caseData.sundayAdFirstDate, SUPERSESSION_REASONS.FIRST_SUNDAY_AD_PLACED);
+
+    case "second_sunday_ad_deadline":
+      return checkPerStepActive(caseData, caseData.sundayAdSecondDate, SUPERSESSION_REASONS.SECOND_SUNDAY_AD_PLACED);
 
     case "i140_filing_deadline":
       return checkI140DeadlineActive(caseData);
@@ -116,12 +131,12 @@ function checkPwdExpirationActive(
 }
 
 /**
- * Filing window deadlines are superseded when ETA 9089 is filed.
+ * Filing window deadlines (opens/closes) are superseded when ETA 9089 is filed,
+ * or inactive when recruitment is not yet complete.
  *
  * Applies to:
  * - filing_window_opens (30 days after recruitment ends)
  * - filing_window_closes (180 days from first recruitment or PWD expiration)
- * - recruitment_window_closes (150 days from first recruitment or 30 days before PWD)
  */
 function checkFilingWindowActive(
   caseData: CaseDataForDeadlines
@@ -129,6 +144,54 @@ function checkFilingWindowActive(
   // Superseded when ETA 9089 filed
   if (caseData.eta9089FilingDate) {
     return { isActive: false, supersededReason: SUPERSESSION_REASONS.ETA9089_FILED };
+  }
+
+  // Inactive when recruitment is not complete
+  if (!isRecruitmentComplete(caseData)) {
+    return { isActive: false, supersededReason: SUPERSESSION_REASONS.RECRUITMENT_INCOMPLETE };
+  }
+
+  return { isActive: true };
+}
+
+/**
+ * Recruitment window deadline is superseded when ETA 9089 is filed
+ * or when all recruitment activities are complete.
+ */
+function checkRecruitmentWindowActive(
+  caseData: CaseDataForDeadlines
+): DeadlineActiveStatus {
+  if (caseData.eta9089FilingDate) {
+    return { isActive: false, supersededReason: SUPERSESSION_REASONS.ETA9089_FILED };
+  }
+
+  if (isRecruitmentComplete(caseData)) {
+    return { isActive: false, supersededReason: SUPERSESSION_REASONS.RECRUITMENT_COMPLETE };
+  }
+
+  return { isActive: true };
+}
+
+/**
+ * Per-step recruitment deadline supersession.
+ * Active when:
+ * - ETA 9089 not yet filed
+ * - The step has NOT been completed (no date set for the corresponding field)
+ * - First recruitment has started (needed to calculate the deadline)
+ */
+function checkPerStepActive(
+  caseData: CaseDataForDeadlines,
+  stepCompletionDate: string | undefined,
+  completionReason: string
+): DeadlineActiveStatus {
+  // Superseded when ETA 9089 filed
+  if (caseData.eta9089FilingDate) {
+    return { isActive: false, supersededReason: SUPERSESSION_REASONS.ETA9089_FILED };
+  }
+
+  // Superseded when the step is already completed
+  if (stepCompletionDate) {
+    return { isActive: false, supersededReason: completionReason };
   }
 
   return { isActive: true };
@@ -251,6 +314,11 @@ export function hasAnyActiveDeadline(caseData: CaseDataForDeadlines): boolean {
     "pwd_expiration",
     "filing_window_opens",
     "filing_window_closes",
+    "recruitment_window_closes",
+    "job_order_start_deadline",
+    "notice_of_filing_start_deadline",
+    "first_sunday_ad_deadline",
+    "second_sunday_ad_deadline",
     "i140_filing_deadline",
     "rfi_due",
     "rfe_due",

@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo } from "react";
 import { Award, CheckCircle2, XCircle, Clock, Zap, Building2, Tag } from "lucide-react";
 import { CaseDetailSection, MilestoneTrack, ValueHighlight } from "./CaseDetailSection";
 import { Badge } from "@/components/ui/badge";
@@ -347,7 +347,7 @@ export function I140Section({
   const isDenied = !!data.i140DenialDate && !isApproved;
 
   // Preview summary for collapsed state
-  const preview = React.useMemo(() => {
+  const preview = useMemo(() => {
     if (isApproved) return "Approved";
     if (isDenied) return "Denied";
     if (data.i140FilingDate) return `Filed ${formatISODate(data.i140FilingDate)}`;

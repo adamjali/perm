@@ -17,32 +17,33 @@ import {
   getI140DateConstraints,
   getAllDateConstraints,
   getRecruitmentFieldDeadline,
+  getMethodDateConstraints,
 } from "../date-constraints";
 
 // Helper to format dates consistently
 const formatDate = (date: Date) => format(date, "yyyy-MM-dd");
 
 describe("getRecruitmentFieldDeadline", () => {
-  describe("notice of filing deadline", () => {
-    it("returns 150 days from first recruitment when no PWD expiration", () => {
-      const firstRecruitment = "2024-02-01";
-      const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', firstRecruitment, undefined);
-
-      const expected = formatDate(addDays(new Date(firstRecruitment + "T00:00:00"), 150));
-      expect(result.maxDate).toBe(expected);
-      expect(result.limitingFactor).toBe('recruitment');
-      expect(result.hint).toContain("150 days from first recruitment");
+  describe("notice of filing deadline (now dynamic via subtractBusinessDays)", () => {
+    it("returns undefined from getRecruitmentFieldDeadline (NOF removed from config)", () => {
+      // NOF is now computed via getNofStartDeadline using calculateRecruitmentDeadlines
+      const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', "2024-02-01", undefined);
+      expect(result.maxDate).toBeUndefined();
     });
 
-    it("returns 30 days before PWD exp when earlier", () => {
-      const firstRecruitment = "2024-02-01";
-      const pwdExpiration = "2024-05-15"; // 30 days before = Apr 15, which is < 150 days from Feb 1 = Jul 1
-      const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', firstRecruitment, pwdExpiration);
+    it("is computed dynamically in getRecruitmentDateConstraints", () => {
+      // NOF deadline now comes from central calculateRecruitmentDeadlines
+      const constraints = getRecruitmentDateConstraints({
+        jobOrderStartDate: "2024-02-01",
+        sundayAdFirstDate: "2024-02-04", // Sunday
+        pwdExpirationDate: "2025-06-30",
+        pwdDeterminationDate: "2024-01-15",
+      });
 
-      const expected = formatDate(subDays(new Date(pwdExpiration + "T00:00:00"), 30));
-      expect(result.maxDate).toBe(expected);
-      expect(result.limitingFactor).toBe('pwd');
-      expect(result.hint).toContain("30 days before PWD exp");
+      // Should have a NOF max date computed by central calculator
+      expect(constraints.noticeOfFilingStartDate.max).toBeDefined();
+      // Hint should mention business days
+      expect(constraints.noticeOfFilingStartDate.hint).toContain("business days");
     });
   });
 
@@ -106,13 +107,10 @@ describe("getRecruitmentFieldDeadline", () => {
       expect(result.hint).toBe('');
     });
 
-    it("only uses PWD when no first recruitment", () => {
-      const pwdExpiration = "2024-06-30";
-      const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', undefined, pwdExpiration);
-
-      const expected = formatDate(subDays(new Date(pwdExpiration + "T00:00:00"), 30));
-      expect(result.maxDate).toBe(expected);
-      expect(result.limitingFactor).toBe('pwd');
+    it("returns undefined for NOF from getRecruitmentFieldDeadline (handled dynamically)", () => {
+      // NOF is no longer in the deadline config — it's computed by getNofStartDeadline
+      const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', undefined, "2024-06-30");
+      expect(result.maxDate).toBeUndefined();
     });
 
     it("returns undefined for unknown field", () => {
@@ -489,5 +487,85 @@ describe("getAllDateConstraints", () => {
     expect(constraints.additionalRecruitmentStartDate).toBeDefined();
     expect(constraints.eta9089FilingDate).toBeDefined();
     expect(constraints.i140FilingDate).toBeDefined();
+  });
+});
+
+// ============================================================================
+// Per-Method Date Constraints (special method gets relaxed deadline)
+// ============================================================================
+
+describe("getMethodDateConstraints", () => {
+  const baseValues = {
+    pwdDeterminationDate: "2024-01-15",
+    pwdExpirationDate: "2025-06-30",
+    jobOrderStartDate: "2024-02-01",
+    sundayAdFirstDate: "2024-02-04",
+    noticeOfFilingStartDate: "2024-02-05",
+    isProfessionalOccupation: true,
+    additionalRecruitmentMethods: [
+      { method: "job_fair", date: "2024-04-01" },         // index 0 — earlier
+      { method: "campus_recruitment", date: "2024-05-15" }, // index 1 — latest (special)
+    ],
+  };
+
+  it("non-special method uses normal deadline (150 days / pwd-30)", () => {
+    const result = getMethodDateConstraints(
+      baseValues,
+      "single-date",
+      undefined,
+      0 // index 0 — not the latest
+    );
+    // Normal max: min(first+150, pwd-30)
+    const expectedMax150 = formatDate(addDays(new Date("2024-02-01T00:00:00"), 150));
+    // single-date returns { date: { min, max, hint } }
+    const r0 = result as { date: { max: string | undefined } };
+    expect(r0.date.max).toBe(expectedMax150);
+  });
+
+  it("special (latest) method uses relaxed deadline (180 days / pwd)", () => {
+    const result = getMethodDateConstraints(
+      baseValues,
+      "single-date",
+      undefined,
+      1 // index 1 — the latest
+    );
+    // Special max: min(first+180, pwd) = first+180 (since pwd is 2025-06-30, much later)
+    const expectedMax180 = formatDate(addDays(new Date("2024-02-01T00:00:00"), 180));
+    const r1 = result as { date: { max: string | undefined } };
+    expect(r1.date.max).toBe(expectedMax180);
+  });
+
+  it("single method is always special", () => {
+    const singleMethod = {
+      ...baseValues,
+      additionalRecruitmentMethods: [
+        { method: "job_fair", date: "2024-04-01" },
+      ],
+    };
+    const result = getMethodDateConstraints(singleMethod, "single-date", undefined, 0);
+    // Only method → special → relaxed deadline
+    const expectedMax180 = formatDate(addDays(new Date("2024-02-01T00:00:00"), 180));
+    const r2 = result as { date: { max: string | undefined } };
+    expect(r2.date.max).toBe(expectedMax180);
+  });
+
+  it("no methodIndex → uses normal deadline", () => {
+    const result = getMethodDateConstraints(baseValues, "single-date", undefined);
+    const expectedMax150 = formatDate(addDays(new Date("2024-02-01T00:00:00"), 150));
+    const r3 = result as { date: { max: string | undefined } };
+    expect(r3.date.max).toBe(expectedMax150);
+  });
+
+  it("date-range special method gets relaxed max on both start and end", () => {
+    const result = getMethodDateConstraints(
+      baseValues,
+      "date-range",
+      "2024-03-01",
+      1 // special
+    );
+    const expectedMax180 = formatDate(addDays(new Date("2024-02-01T00:00:00"), 180));
+    const r4 = result as { startDate: { max: string | undefined }; endDate: { max: string | undefined } };
+    expect(r4.startDate.max).toBe(expectedMax180);
+    expect(r4.endDate.max).toBe(expectedMax180);
   });
 });

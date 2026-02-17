@@ -27,6 +27,7 @@ import {
   isDeadlineActive,
   getActiveRfiEntry,
   getActiveRfeEntry,
+  extractActiveDeadlines as centralExtractActiveDeadlines,
   type CaseDataForDeadlines as PermCaseDataForDeadlines,
 } from "./perm/deadlines";
 import { daysBetween } from "./dateValidation";
@@ -175,6 +176,15 @@ function toPermCaseData(caseData: CaseDataForDeadlines): PermCaseDataForDeadline
     rfeEntries: caseData.rfeEntries,
     filingWindowOpens: caseData.filingWindowOpens,
     filingWindowCloses: caseData.filingWindowCloses,
+    recruitmentWindowCloses: caseData.recruitmentWindowCloses,
+    sundayAdFirstDate: caseData.sundayAdFirstDate,
+    sundayAdSecondDate: caseData.sundayAdSecondDate,
+    jobOrderStartDate: caseData.jobOrderStartDate,
+    jobOrderEndDate: caseData.jobOrderEndDate,
+    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate,
+    noticeOfFilingEndDate: caseData.noticeOfFilingEndDate,
+    isProfessionalOccupation: caseData.isProfessionalOccupation,
+    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods,
   };
 }
 
@@ -359,6 +369,29 @@ export function extractDeadlines(
           error: error instanceof Error ? error.message : String(error),
         });
       }
+    }
+  }
+
+  // Recruitment window closes + per-step recruitment deadlines
+  // Use central extractActiveDeadlines for these to avoid duplication
+  const permData = toPermCaseData(caseData);
+  const centralDeadlines = centralExtractActiveDeadlines(permData, todayISO);
+  const perStepTypes: ReadonlySet<string> = new Set([
+    "recruitment_window_closes",
+    "job_order_start_deadline",
+    "notice_of_filing_start_deadline",
+    "first_sunday_ad_deadline",
+    "second_sunday_ad_deadline",
+  ]);
+
+  for (const d of centralDeadlines) {
+    if (perStepTypes.has(d.type)) {
+      deadlines.push({
+        type: d.type as DeadlineType,
+        label: d.label,
+        date: d.date,
+        daysUntil: d.daysUntil,
+      });
     }
   }
 

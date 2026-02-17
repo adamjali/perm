@@ -6,7 +6,7 @@
  * - Status types: incomplete, waiting, ready, expired
  * - Mandatory steps validation: NOF, Job Order, Sunday Ads
  * - Professional occupation methods (3 additional required)
- * - Filing window calculation (30-180 days after recruitment ends)
+ * - Filing window calculation (opens 30 days after last, closes 180 days after first)
  * - PWD expiration truncating the filing window
  * - formatFilingWindowRange: helper for display formatting
  */
@@ -343,8 +343,8 @@ describe("calculateRecruitmentStatus", () => {
     });
 
     it("returns ready in the middle of the filing window", () => {
-      // Recruitment ends March 31, 2024
-      // Window: April 30 - September 27, 2024
+      // First recruitment March 1, 2024; last March 31, 2024
+      // Window: April 30 - August 28, 2024 (opens = last+30, closes = first+180)
       vi.setSystemTime(new Date("2024-07-01")); // Mid-window
 
       const data: RecruitmentCaseData = {
@@ -364,9 +364,9 @@ describe("calculateRecruitmentStatus", () => {
     });
 
     it("returns ready on the last day of the filing window", () => {
-      // Recruitment ends March 31, 2024
-      // Window closes September 27, 2024 (180 days later)
-      vi.setSystemTime(new Date("2024-09-27")); // Last day of window
+      // First recruitment March 1, 2024
+      // Window closes August 28, 2024 (first + 180 days)
+      vi.setSystemTime(new Date("2024-08-28")); // Last day of window
 
       const data: RecruitmentCaseData = {
         noticeOfFilingStartDate: "2024-03-01",
@@ -385,9 +385,9 @@ describe("calculateRecruitmentStatus", () => {
     });
 
     it("calculates days remaining in window correctly", () => {
-      // Recruitment ends March 31, 2024
-      // Window closes September 27, 2024
-      vi.setSystemTime(new Date("2024-09-17")); // 10 days before window closes
+      // First recruitment March 1, 2024
+      // Window closes August 28, 2024 (first + 180)
+      vi.setSystemTime(new Date("2024-08-18")); // 10 days before window closes
 
       const data: RecruitmentCaseData = {
         noticeOfFilingStartDate: "2024-03-01",
@@ -418,11 +418,11 @@ describe("calculateRecruitmentStatus", () => {
     });
   });
 
-  describe("expired status - past 180 days", () => {
-    it("returns expired after 180 days from recruitment end", () => {
-      // Recruitment ends March 31, 2024
-      // Window closes September 27, 2024
-      vi.setSystemTime(new Date("2024-09-28")); // 1 day after window closes
+  describe("expired status - past 180 days from first recruitment", () => {
+    it("returns expired after 180 days from first recruitment", () => {
+      // First recruitment March 1, 2024
+      // Window closes August 28, 2024 (first + 180)
+      vi.setSystemTime(new Date("2024-08-29")); // 1 day after window closes
 
       const data: RecruitmentCaseData = {
         noticeOfFilingStartDate: "2024-03-01",
@@ -455,8 +455,8 @@ describe("calculateRecruitmentStatus", () => {
 
   describe("PWD expiration truncates filing window", () => {
     it("uses PWD expiration as window close when earlier than 180 days", () => {
-      // Recruitment ends March 31, 2024
-      // Normal window would close September 27, 2024
+      // First recruitment March 1, 2024
+      // Normal window would close August 28, 2024 (first + 180)
       // But PWD expires June 30, 2024
       vi.setSystemTime(new Date("2024-05-15")); // During truncated window
 
@@ -480,8 +480,8 @@ describe("calculateRecruitmentStatus", () => {
     });
 
     it("returns expired when past PWD expiration even if within 180 days", () => {
-      // Recruitment ends March 31, 2024
-      // Normal window would close September 27, 2024
+      // First recruitment March 1, 2024
+      // Normal window would close August 28, 2024 (first + 180)
       // But PWD expires June 30, 2024
       vi.setSystemTime(new Date("2024-07-01")); // After PWD expiration
 
@@ -502,10 +502,10 @@ describe("calculateRecruitmentStatus", () => {
     });
 
     it("uses 180-day window when PWD expiration is later", () => {
-      // Recruitment ends March 31, 2024
-      // Normal window closes September 27, 2024
+      // First recruitment March 1, 2024
+      // Normal window closes August 28, 2024 (first + 180)
       // PWD expires December 31, 2024 (later than 180 days)
-      vi.setSystemTime(new Date("2024-09-15")); // Near end of 180-day window
+      vi.setSystemTime(new Date("2024-08-15")); // Near end of 180-day window
 
       const data: RecruitmentCaseData = {
         noticeOfFilingStartDate: "2024-03-01",
@@ -521,12 +521,12 @@ describe("calculateRecruitmentStatus", () => {
       const result = calculateRecruitmentStatus(data);
 
       expect(result.status).toBe("ready");
-      expect(result.filingWindowCloses).toBe("2024-09-27"); // 180 days, not PWD
+      expect(result.filingWindowCloses).toBe("2024-08-28"); // first + 180 days, not PWD
     });
 
     it("correctly calculates days remaining when PWD truncates window", () => {
-      // Recruitment ends March 31, 2024
-      // PWD expires June 15, 2024
+      // First recruitment March 1, 2024; normal close August 28, 2024
+      // PWD expires June 15, 2024 (truncates window)
       vi.setSystemTime(new Date("2024-06-10")); // 5 days before PWD expires
 
       const data: RecruitmentCaseData = {
@@ -611,7 +611,7 @@ describe("calculateRecruitmentStatus", () => {
       expect(result.recruitmentEndDate).toBe("2024-05-15");
     });
 
-    it("considers individual additional method dates", () => {
+    it("excludes latest additional method from recruitment end date (special method)", () => {
       vi.setSystemTime(new Date("2024-07-01"));
 
       const data: RecruitmentCaseData = {
@@ -625,13 +625,15 @@ describe("calculateRecruitmentStatus", () => {
         additionalRecruitmentMethods: [
           { method: "job_fair", date: "2024-04-01" },
           { method: "employee_referral", date: "2024-04-15" },
-          { method: "campus_placement", date: "2024-06-01" }, // Latest - later than job order end
+          { method: "campus_placement", date: "2024-06-01" }, // Latest → excluded as "special"
         ],
       };
 
       const result = calculateRecruitmentStatus(data);
 
-      expect(result.recruitmentEndDate).toBe("2024-06-01");
+      // Latest method (Jun 1) excluded as "special" per 20 CFR 656.17(e)(1)(ii)
+      // Remaining: Apr 1, Apr 15, plus basic dates → max = Apr 15
+      expect(result.recruitmentEndDate).toBe("2024-04-15");
     });
 
     // ========================================================================

@@ -221,18 +221,45 @@ describe('validateProfessionalMethods (V-PROF rules)', () => {
     });
 
     it('uses pwdExpirationDate for V-PROF-03 max when firstRecruitmentDate is null', () => {
+      // With only 1 method, it's the "special" one → max = pwd (no 30-day buffer)
+      // So endDate must be AFTER pwd to trigger V-PROF-03
       const result = validateProfessionalMethods({
         pwdDeterminationDate: '2024-01-15',
-        pwdExpirationDate: '2024-06-01', // -30 = 2024-05-02
+        pwdExpirationDate: '2024-06-01',
         firstRecruitmentDate: null,
         methods: [{
           method: 'job_website_ad',
           date: '',
           startDate: '2024-02-01',
-          endDate: '2024-06-01', // after pwdExpiration - 30
+          endDate: '2024-06-02', // after pwdExpiration (special method max = pwd itself)
         }],
       });
       expect(result.errors.some(e => e.ruleId === 'V-PROF-03')).toBe(true);
+    });
+
+    it('non-special method uses pwd-30 when firstRecruitmentDate is null', () => {
+      // With 2 methods, the non-special one gets normal max = pwd - 30
+      const result = validateProfessionalMethods({
+        pwdDeterminationDate: '2024-01-15',
+        pwdExpirationDate: '2024-06-01', // -30 = 2024-05-02
+        firstRecruitmentDate: null,
+        methods: [
+          {
+            method: 'job_website_ad',
+            date: '',
+            startDate: '2024-02-01',
+            endDate: '2024-05-15', // after pwd-30 (May 2), non-special
+          },
+          {
+            method: 'employer_website',
+            date: '',
+            startDate: '2024-02-01',
+            endDate: '2024-05-20', // latest → special
+          },
+        ],
+      });
+      // First method (non-special) endDate (May 15) > normalMax (May 2) → error
+      expect(result.errors.some(e => e.ruleId === 'V-PROF-03' && e.field.includes('.0.'))).toBe(true);
     });
 
     it('skips V-PROF-05 when pwdDeterminationDate is null', () => {
@@ -283,6 +310,117 @@ describe('validateProfessionalMethods (V-PROF rules)', () => {
       });
       // Should not crash; valid entry should be checked
       expect(result.errors.some(e => e.ruleId === 'V-PROF-05' && e.field.includes('subEntries.0'))).toBe(false);
+    });
+  });
+
+  describe('per-method special logic (latest method gets relaxed deadline)', () => {
+    it('latest date-range method (special) uses min(first+180, pwd) deadline', () => {
+      // firstRecruitment=2024-02-01, +180 = 2024-07-30
+      // pwdExpiration=2025-01-15, so pwd constraint is not limiting
+      // Normal max = first+150 = 2024-06-30
+      // Special max = first+180 = 2024-07-30
+      const result = validateProfessionalMethods({
+        ...baseInput,
+        methods: [
+          {
+            method: 'job_website_ad', // date-range
+            date: '',
+            startDate: '2024-03-01',
+            endDate: '2024-06-15', // within normal window
+          },
+          {
+            method: 'employer_website', // date-range
+            date: '',
+            startDate: '2024-03-01',
+            endDate: '2024-07-20', // latest → special, within 180
+          },
+        ],
+      });
+      // No V-PROF-03 errors: special method (Jul 20) within 180-day deadline
+      expect(result.errors.some(e => e.ruleId === 'V-PROF-03')).toBe(false);
+    });
+
+    it('non-special date-range method errors when exceeding normal 150-day window', () => {
+      // Normal max = first+150 = 2024-06-30
+      // Use date-range methods because V-PROF-03 only fires for date-range/sub-entry
+      const result = validateProfessionalMethods({
+        ...baseInput,
+        methods: [
+          {
+            method: 'job_website_ad', // date-range
+            date: '',
+            startDate: '2024-03-01',
+            endDate: '2024-07-05', // index 0: Jul 5 > Jun 30, NOT special
+          },
+          {
+            method: 'employer_website', // date-range
+            date: '',
+            startDate: '2024-03-01',
+            endDate: '2024-07-20', // index 1: latest → special
+          },
+        ],
+      });
+      // The non-special method (Jul 5) should trigger V-PROF-03
+      const errors = result.errors.filter(e => e.ruleId === 'V-PROF-03' && e.field.includes('.0.'));
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('special date-range method errors when exceeding 180-day window', () => {
+      // firstRecruitment=2024-02-01, +180 = 2024-07-30
+      const result = validateProfessionalMethods({
+        ...baseInput,
+        methods: [
+          {
+            method: 'job_website_ad',
+            date: '',
+            startDate: '2024-03-01',
+            endDate: '2024-04-01',
+          },
+          {
+            method: 'employer_website',
+            date: '',
+            startDate: '2024-03-01',
+            endDate: '2024-08-15', // latest → special, but > 180 days
+          },
+        ],
+      });
+      // Special method should get V-PROF-03 error — exceeds extended deadline
+      const errors = result.errors.filter(e => e.ruleId === 'V-PROF-03' && e.field.includes('.1.'));
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('single date-range method is always special and gets relaxed deadline', () => {
+      // Only 1 method → it is the "special" one
+      const result = validateProfessionalMethods({
+        ...baseInput,
+        methods: [
+          {
+            method: 'employer_website',
+            date: '',
+            startDate: '2024-03-01',
+            endDate: '2024-07-20', // within 180 days (Jul 30)
+          },
+        ],
+      });
+      expect(result.errors.some(e => e.ruleId === 'V-PROF-03')).toBe(false);
+    });
+
+    it('date-range special method uses endDate for comparison', () => {
+      // endDate = 2024-07-25 is within special 180-day window
+      const result = validateProfessionalMethods({
+        ...baseInput,
+        methods: [
+          { method: 'job_fair', date: '2024-04-01' },
+          {
+            method: 'employer_website',
+            date: '',
+            startDate: '2024-03-01',
+            endDate: '2024-07-25', // latest → special, within 180 days
+          },
+        ],
+      });
+      const endDateErrors = result.errors.filter(e => e.ruleId === 'V-PROF-03');
+      expect(endDateErrors.length).toBe(0);
     });
   });
 });

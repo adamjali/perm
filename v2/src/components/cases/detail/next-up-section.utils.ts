@@ -5,7 +5,7 @@
  * Extracted from NextUpSection.tsx for better maintainability and testing.
  */
 
-import * as React from "react";
+import { createElement, type ReactNode } from "react";
 import {
   AlertTriangle,
   HourglassIcon,
@@ -23,7 +23,8 @@ import {
   calculateFilingWindowFromCase,
   calculateRecruitmentWindowCloses,
   getFirstRecruitmentDate,
-  getLastRecruitmentDate,
+  extractActiveDeadlines,
+  type CaseDataForDeadlines,
 } from "@/lib/perm";
 import { getUrgencyLevelExtended, type UrgencyLevelExtended } from "@/lib/status";
 import type { AdditionalRecruitmentMethod } from "@/lib/shared/types";
@@ -76,7 +77,7 @@ export interface NextUpCaseData {
 export interface NextAction {
   action: string;
   description: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   urgency: "normal" | "soon" | "urgent" | "overdue";
 }
 
@@ -100,9 +101,6 @@ export interface UrgencyColors {
 // CONSTANTS
 // ============================================================================
 
-/** Days for filing window wait period */
-const FILING_WINDOW_WAIT_DAYS = 30;
-
 /** Milliseconds per day for date calculations */
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -118,16 +116,6 @@ function getTodayUTC(): Date {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
   return today;
-}
-
-/**
- * Add days to a date in UTC (avoids DST issues).
- * Matches the pattern from convex/lib/perm/dates/filingWindow.ts
- */
-function addDaysUTC(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setUTCDate(result.getUTCDate() + days);
-  return result;
 }
 
 /**
@@ -254,7 +242,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "Respond to RFI",
       description: `RFI response due ${daysUntil < 0 ? "was" : "in"} ${Math.abs(daysUntil)} days`,
-      icon: React.createElement(AlertTriangle, { className: "h-5 w-5" }),
+      icon: createElement(AlertTriangle, { className: "h-5 w-5" }),
       urgency: getUrgencyLevel(daysUntil),
     };
   }
@@ -265,7 +253,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "Respond to RFE",
       description: `RFE response due ${daysUntil < 0 ? "was" : "in"} ${Math.abs(daysUntil)} days`,
-      icon: React.createElement(AlertTriangle, { className: "h-5 w-5" }),
+      icon: createElement(AlertTriangle, { className: "h-5 w-5" }),
       urgency: getUrgencyLevel(daysUntil),
     };
   }
@@ -276,7 +264,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "File PWD",
         description: "Submit Prevailing Wage Determination request to DOL",
-        icon: React.createElement(FileText, { className: "h-5 w-5" }),
+        icon: createElement(FileText, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -284,7 +272,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Wait for PWD",
         description: "Awaiting DOL determination (typically 4-6 months)",
-        icon: React.createElement(HourglassIcon, { className: "h-5 w-5" }),
+        icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -292,7 +280,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "Start Recruitment",
       description: "Begin recruitment activities for labor certification",
-      icon: React.createElement(Briefcase, { className: "h-5 w-5" }),
+      icon: createElement(Briefcase, { className: "h-5 w-5" }),
       urgency: "normal",
     };
   }
@@ -313,7 +301,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Post Job Order",
         description: "Submit job posting to State Workforce Agency (30+ days)",
-        icon: React.createElement(Briefcase, { className: "h-5 w-5" }),
+        icon: createElement(Briefcase, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -323,7 +311,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Post Notice of Filing",
         description: "Post internal notice for 10 consecutive business days",
-        icon: React.createElement(FileText, { className: "h-5 w-5" }),
+        icon: createElement(FileText, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -333,7 +321,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Place Sunday Ads",
         description: "Publish two newspaper ads on consecutive Sundays",
-        icon: React.createElement(FileText, { className: "h-5 w-5" }),
+        icon: createElement(FileText, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -341,50 +329,44 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     // 4. Additional Recruitment for Professional Occupations (fourth)
     // Use canonical isProfessionalRecruitmentComplete() check
     if (caseData.isProfessionalOccupation) {
+      const methods = caseData.additionalRecruitmentMethods || [];
       const professionalComplete = isProfessionalRecruitmentComplete({
         isProfessionalOccupation: caseData.isProfessionalOccupation,
-        additionalRecruitmentMethods: caseData.additionalRecruitmentMethods ?? [],
+        additionalRecruitmentMethods: methods,
       });
 
       if (!professionalComplete) {
-        const completedCount = (caseData.additionalRecruitmentMethods ?? [])
+        const completedCount = methods
           .filter((m) => m.method && m.date).length;
         return {
           action: "Complete Additional Recruitment",
           description: `${completedCount}/3 professional recruitment methods completed`,
-          icon: React.createElement(GraduationCap, { className: "h-5 w-5" }),
+          icon: createElement(GraduationCap, { className: "h-5 w-5" }),
           urgency: "normal",
         };
       }
     }
 
-    // 5. Check if 30-day waiting period has passed
-    // Use canonical getLastRecruitmentDate() to include professional methods if applicable
-    const lastRecruitmentDate = getLastRecruitmentDate(
-      {
-        sundayAdSecondDate: caseData.sundayAdSecondDate ?? undefined,
-        jobOrderEndDate: caseData.jobOrderEndDate ?? undefined,
-        noticeOfFilingEndDate: caseData.noticeOfFilingEndDate ?? undefined,
-        additionalRecruitmentMethods: caseData.additionalRecruitmentMethods ?? undefined,
-      },
-      caseData.isProfessionalOccupation ?? false
-    );
+    // 5. Check if 30-day waiting period has passed (use central filing window calculation)
+    const filingWindow = calculateFilingWindowFromCase({
+      sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+      sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
+      jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+      jobOrderEndDate: caseData.jobOrderEndDate || undefined,
+      noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
+      noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
+      additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
+      pwdExpirationDate: caseData.pwdExpirationDate || undefined,
+      isProfessionalOccupation: !!caseData.isProfessionalOccupation,
+    });
 
-    if (lastRecruitmentDate) {
-      // Use UTC-safe date calculation to avoid DST issues
-      const lastDate = new Date(lastRecruitmentDate);
-      lastDate.setUTCHours(0, 0, 0, 0);
-      const filingWindowOpens = addDaysUTC(lastDate, FILING_WINDOW_WAIT_DAYS);
-      const today = getTodayUTC();
-
-      if (today < filingWindowOpens) {
-        const daysUntil = Math.ceil(
-          (filingWindowOpens.getTime() - today.getTime()) / MS_PER_DAY
-        );
+    if (filingWindow) {
+      const daysUntilOpens = calculateDaysUntil(filingWindow.opens);
+      if (daysUntilOpens > 0) {
         return {
           action: "Wait for Filing Window",
-          description: `ETA 9089 filing window opens in ${daysUntil} days`,
-          icon: React.createElement(Clock, { className: "h-5 w-5" }),
+          description: `ETA 9089 filing window opens in ${daysUntilOpens} days`,
+          icon: createElement(Clock, { className: "h-5 w-5" }),
           urgency: "normal",
         };
       }
@@ -393,7 +375,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "File ETA 9089",
       description: "Filing window is open - submit labor certification",
-      icon: React.createElement(FileCheck, { className: "h-5 w-5" }),
+      icon: createElement(FileCheck, { className: "h-5 w-5" }),
       urgency: "soon",
     };
   }
@@ -404,7 +386,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "File ETA 9089",
         description: "Submit labor certification application",
-        icon: React.createElement(FileCheck, { className: "h-5 w-5" }),
+        icon: createElement(FileCheck, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -412,7 +394,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Wait for Certification",
         description: "Awaiting DOL certification decision",
-        icon: React.createElement(HourglassIcon, { className: "h-5 w-5" }),
+        icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -425,7 +407,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "File I-140",
       description: "Submit immigrant petition to USCIS",
-      icon: React.createElement(Award, { className: "h-5 w-5" }),
+      icon: createElement(Award, { className: "h-5 w-5" }),
       // Pass raw days - getUrgencyLevel handles thresholds consistently
       urgency: getUrgencyLevel(daysUntilExpiration),
     };
@@ -437,7 +419,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "File I-140",
         description: "Submit immigrant petition to USCIS",
-        icon: React.createElement(Award, { className: "h-5 w-5" }),
+        icon: createElement(Award, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -445,7 +427,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Wait for I-140 Decision",
         description: "Awaiting USCIS adjudication",
-        icon: React.createElement(HourglassIcon, { className: "h-5 w-5" }),
+        icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -453,7 +435,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Case Complete",
         description: "I-140 approved - PERM process complete!",
-        icon: React.createElement(CheckCircle2, { className: "h-5 w-5" }),
+        icon: createElement(CheckCircle2, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -463,114 +445,71 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
 }
 
 /**
- * Calculate the most urgent upcoming deadline
+ * Calculate the most urgent upcoming deadline.
+ *
+ * Delegates to the central extractActiveDeadlines system which handles
+ * all supersession logic, per-step recruitment deadlines, and filing window gating.
  */
 export function calculateNextDeadline(caseData: NextUpCaseData): Deadline | null {
-  const deadlines: Deadline[] = [];
+  // Pre-compute derived fields that extractActiveDeadlines expects as stored values
+  const firstRecruit = getFirstRecruitmentDate({
+    sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+    jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
+  });
 
-  // PWD Expiration (before ETA 9089 is filed)
-  if (caseData.pwdExpirationDate && !caseData.eta9089FilingDate) {
-    deadlines.push({
-      label: "PWD Expires",
-      date: caseData.pwdExpirationDate,
-      daysUntil: calculateDaysUntil(caseData.pwdExpirationDate),
-    });
-  }
+  const recruitWindow = firstRecruit
+    ? calculateRecruitmentWindowCloses(firstRecruit, caseData.pwdExpirationDate || undefined)
+    : undefined;
 
-  // Recruitment Window Closes (during recruitment stage, before ETA 9089 is filed)
-  // Uses canonical calculateRecruitmentWindowCloses()
-  if (caseData.caseStatus === "recruitment" && !caseData.eta9089FilingDate) {
-    const firstRecruitmentDate = getFirstRecruitmentDate({
-      sundayAdFirstDate: caseData.sundayAdFirstDate ?? undefined,
-      jobOrderStartDate: caseData.jobOrderStartDate ?? undefined,
-      noticeOfFilingStartDate: caseData.noticeOfFilingStartDate ?? undefined,
-    });
+  const filingWindow = calculateFilingWindowFromCase({
+    sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+    sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
+    jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+    jobOrderEndDate: caseData.jobOrderEndDate || undefined,
+    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
+    noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
+    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
+    pwdExpirationDate: caseData.pwdExpirationDate || undefined,
+    isProfessionalOccupation: !!caseData.isProfessionalOccupation,
+  });
 
-    if (firstRecruitmentDate) {
-      const recruitmentWindow = calculateRecruitmentWindowCloses(
-        firstRecruitmentDate,
-        caseData.pwdExpirationDate ?? undefined
-      );
+  // Build CaseDataForDeadlines with pre-computed derived fields
+  const centralData: CaseDataForDeadlines = {
+    caseStatus: caseData.caseStatus,
+    progressStatus: caseData.progressStatus,
+    pwdExpirationDate: caseData.pwdExpirationDate || undefined,
+    eta9089FilingDate: caseData.eta9089FilingDate || undefined,
+    eta9089CertificationDate: caseData.eta9089CertificationDate || undefined,
+    eta9089ExpirationDate: caseData.eta9089ExpirationDate || undefined,
+    i140FilingDate: caseData.i140FilingDate || undefined,
+    sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+    sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
+    jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+    jobOrderEndDate: caseData.jobOrderEndDate || undefined,
+    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
+    noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
+    isProfessionalOccupation: caseData.isProfessionalOccupation || undefined,
+    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
+    // Runtime data has full RfiEntry/RfeEntry shape; inline type is narrower
+    rfiEntries: (caseData.rfiEntries || undefined) as CaseDataForDeadlines["rfiEntries"],
+    rfeEntries: (caseData.rfeEntries || undefined) as CaseDataForDeadlines["rfeEntries"],
+    // Derived fields (extractActiveDeadlines reads these directly)
+    filingWindowOpens: filingWindow ? filingWindow.opens : undefined,
+    filingWindowCloses: filingWindow ? filingWindow.closes : undefined,
+    recruitmentWindowCloses: recruitWindow ? recruitWindow.closes : undefined,
+  };
 
-      if (recruitmentWindow) {
-        deadlines.push({
-          label: "Recruitment Window Closes",
-          date: recruitmentWindow.closes,
-          daysUntil: calculateDaysUntil(recruitmentWindow.closes),
-        });
-      }
-    }
-  }
-
-  // ETA 9089 Filing Window Opens/Closes (during recruitment stage, before ETA 9089 is filed)
-  // Uses canonical calculateFilingWindowFromCase()
-  if (caseData.caseStatus === "recruitment" && !caseData.eta9089FilingDate) {
-    const filingWindow = calculateFilingWindowFromCase({
-      sundayAdFirstDate: caseData.sundayAdFirstDate ?? undefined,
-      sundayAdSecondDate: caseData.sundayAdSecondDate ?? undefined,
-      jobOrderStartDate: caseData.jobOrderStartDate ?? undefined,
-      jobOrderEndDate: caseData.jobOrderEndDate ?? undefined,
-      noticeOfFilingStartDate: caseData.noticeOfFilingStartDate ?? undefined,
-      noticeOfFilingEndDate: caseData.noticeOfFilingEndDate ?? undefined,
-      additionalRecruitmentMethods: caseData.additionalRecruitmentMethods ?? undefined,
-      pwdExpirationDate: caseData.pwdExpirationDate ?? undefined,
-      isProfessionalOccupation: caseData.isProfessionalOccupation ?? false,
-    });
-
-    if (filingWindow) {
-      // Filing Window Opens (show only if still in waiting period)
-      const daysUntilOpens = calculateDaysUntil(filingWindow.opens);
-      if (daysUntilOpens > 0) {
-        deadlines.push({
-          label: "Filing Window Opens",
-          date: filingWindow.opens,
-          daysUntil: daysUntilOpens,
-        });
-      }
-
-      // Filing Window Closes (always show if window exists)
-      deadlines.push({
-        label: "Filing Window Closes",
-        date: filingWindow.closes,
-        daysUntil: calculateDaysUntil(filingWindow.closes),
-      });
-    }
-  }
-
-  // ETA 9089 Expiration / I-140 Filing Deadline (after certification)
-  if (
-    caseData.eta9089ExpirationDate &&
-    caseData.eta9089CertificationDate &&
-    !caseData.i140FilingDate
-  ) {
-    deadlines.push({
-      label: "I-140 Filing Deadline",
-      date: caseData.eta9089ExpirationDate,
-      daysUntil: calculateDaysUntil(caseData.eta9089ExpirationDate),
-    });
-  }
-
-  // Active RFI due date (uses DRY helper)
-  const activeRfi = findActiveEntry(caseData.rfiEntries);
-  if (activeRfi?.responseDueDate) {
-    deadlines.push({
-      label: "RFI Response Due",
-      date: activeRfi.responseDueDate,
-      daysUntil: calculateDaysUntil(activeRfi.responseDueDate),
-    });
-  }
-
-  // Active RFE due date (uses DRY helper)
-  const activeRfe = findActiveEntry(caseData.rfeEntries);
-  if (activeRfe?.responseDueDate) {
-    deadlines.push({
-      label: "RFE Response Due",
-      date: activeRfe.responseDueDate,
-      daysUntil: calculateDaysUntil(activeRfe.responseDueDate),
-    });
-  }
-
-  // Return most urgent deadline
+  // Central system handles all supersession, per-step deadlines, and sorting
+  const deadlines = extractActiveDeadlines(centralData);
   if (deadlines.length === 0) return null;
-  return deadlines.sort((a, b) => a.daysUntil - b.daysUntil)[0] ?? null;
+
+  const first = deadlines[0];
+  if (!first) return null;
+
+  return {
+    label: first.label,
+    date: first.date,
+    daysUntil: first.daysUntil,
+  };
 }

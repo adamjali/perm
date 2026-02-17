@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo } from "react";
 import { FileText } from "lucide-react";
 import { CaseDetailSection, MilestoneTrack, ValueHighlight } from "./CaseDetailSection";
 import { formatISODate } from "@/lib/utils/date";
@@ -28,20 +28,18 @@ export interface PWDSectionProps {
 // ============================================================================
 
 /**
- * Format wage amount from cents to display string
+ * Format wage amount (stored as dollars) to display string
  */
-function formatWageAmount(cents: number | undefined): string {
-  if (cents === undefined || cents === null) {
+function formatWageAmount(amount: number | undefined): string {
+  if (amount === undefined || amount === null) {
     return "-";
   }
-  // Convert cents to dollars and format with commas
-  const dollars = cents / 100;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(dollars);
+  }).format(amount);
 }
 
 /**
@@ -76,7 +74,7 @@ function formatDate(isoDate: string | undefined): string {
  *     pwdDeterminationDate: "2024-03-01",
  *     pwdExpirationDate: "2025-06-30",
  *     pwdCaseNumber: "PWD-2024-001",
- *     pwdWageAmount: 8500000, // $85,000.00 in cents
+ *     pwdWageAmount: 85000, // $85,000.00
  *     pwdWageLevel: "Level II",
  *   }}
  * />
@@ -97,7 +95,7 @@ export function PWDSection({
   );
 
   // Preview summary for collapsed state
-  const preview = React.useMemo(() => {
+  const preview = useMemo(() => {
     if (data.pwdExpirationDate) return `Exp ${formatDate(data.pwdExpirationDate)}`;
     if (data.pwdDeterminationDate) return `Det ${formatDate(data.pwdDeterminationDate)}`;
     if (data.pwdFilingDate) return `Filed ${formatDate(data.pwdFilingDate)}`;

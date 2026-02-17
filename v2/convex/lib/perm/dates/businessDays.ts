@@ -1,4 +1,4 @@
-import { parseISO, format, addDays } from 'date-fns';
+import { parseISO, format, addDays, subDays } from 'date-fns';
 import { isBusinessDay } from './holidays';
 
 /**
@@ -20,6 +20,31 @@ export function addBusinessDays(startDate: string, days: number): string {
     const dateStr = format(date, 'yyyy-MM-dd');
     if (isBusinessDay(dateStr)) {
       added++;
+    }
+  }
+
+  return format(date, 'yyyy-MM-dd');
+}
+
+/**
+ * Subtract N business days from a date, walking backward and skipping weekends and federal holidays.
+ *
+ * @param startDate - ISO date string (YYYY-MM-DD)
+ * @param days - Number of business days to subtract
+ * @returns ISO date string after subtracting N business days
+ *
+ * @example
+ * subtractBusinessDays('2025-01-30', 10) // '2025-01-15' (skips weekends and MLK Day)
+ */
+export function subtractBusinessDays(startDate: string, days: number): string {
+  let date = parseISO(startDate);
+  let subtracted = 0;
+
+  while (subtracted < days) {
+    date = subDays(date, 1);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    if (isBusinessDay(dateStr)) {
+      subtracted++;
     }
   }
 

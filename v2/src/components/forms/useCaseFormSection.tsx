@@ -315,24 +315,25 @@ export function useBasicInfoSection(props?: {
 }): BasicInfoSectionHookReturn {
   const context = useFormSectionContextOptional();
 
+  // SWC minifier bug workaround: use || instead of ?? where safe (swc#760)
   // If context exists, use it; otherwise, fall back to props
-  const values = props?.values ?? {
-    employerName: context?.formData.employerName ?? "",
-    beneficiaryIdentifier: context?.formData.beneficiaryIdentifier ?? "",
-    positionTitle: context?.formData.positionTitle ?? "",
+  const values = props?.values || {
+    employerName: context?.formData.employerName || "",
+    beneficiaryIdentifier: context?.formData.beneficiaryIdentifier || "",
+    positionTitle: context?.formData.positionTitle || "",
     caseNumber: context?.formData.caseNumber,
-    caseStatus: context?.formData.caseStatus ?? "pwd",
-    progressStatus: context?.formData.progressStatus ?? "working",
+    caseStatus: context?.formData.caseStatus || "pwd",
+    progressStatus: context?.formData.progressStatus || "working",
   };
 
-  const errors = props?.errors ?? context?.errors ?? {};
+  const errors = props?.errors || context?.errors || {};
   // Cast FormFieldChangeHandler to simpler signature for backward compatibility
-  const onChange = (props?.onChange ?? context?.onChange ?? (() => {})) as (field: string, value: string) => void;
+  const onChange = (props?.onChange || context?.onChange || (() => {})) as (field: string, value: string) => void;
   // Don't provide noop fallback - let component handle undefined for fallback logic
-  const onCaseStatusChange = props?.onCaseStatusChange ?? context?.onCaseStatusChange;
-  const onProgressStatusChange = props?.onProgressStatusChange ?? context?.onProgressStatusChange;
+  const onCaseStatusChange = props?.onCaseStatusChange || context?.onCaseStatusChange;
+  const onProgressStatusChange = props?.onProgressStatusChange || context?.onProgressStatusChange;
   const isAutoStatusEnabled = props?.isAutoStatusEnabled ?? context?.isAutoStatusEnabled ?? true;
-  const onAutoStatusToggle = props?.onAutoStatusToggle ?? context?.onAutoStatusToggle ?? (() => {});
+  const onAutoStatusToggle = props?.onAutoStatusToggle || context?.onAutoStatusToggle || (() => {});
   const suggestedCaseStatus = props?.suggestedCaseStatus ?? context?.suggestedCaseStatus ?? null;
 
   const isProgressStatusAutoDetected =
@@ -390,14 +391,14 @@ export function usePWDSection(props?: {
 
   return {
     values,
-    errors: props?.errors ?? context?.errors ?? {},
-    autoCalculatedFields: props?.autoCalculatedFields ?? context?.autoCalculatedFields ?? new Set(),
-    dateConstraints: props?.dateConstraints ?? context?.dateConstraints ?? {},
-    validationStates: props?.validationStates ?? context?.validationStates ?? {},
-    fieldDisabledStates: props?.fieldDisabledStates ?? context?.fieldDisabledStates ?? {},
-    onChange: props?.onChange ?? context?.onChange ?? (() => {}),
-    onDateChange: props?.onDateChange ?? context?.onDateChange ?? (() => {}),
-    onBlur: props?.onBlur ?? context?.onBlur ?? (() => {}),
+    errors: props?.errors || context?.errors || {},
+    autoCalculatedFields: props?.autoCalculatedFields || context?.autoCalculatedFields || new Set(),
+    dateConstraints: props?.dateConstraints || context?.dateConstraints || {},
+    validationStates: props?.validationStates || context?.validationStates || {},
+    fieldDisabledStates: props?.fieldDisabledStates || context?.fieldDisabledStates || {},
+    onChange: props?.onChange || context?.onChange || (() => {}),
+    onDateChange: props?.onDateChange || context?.onDateChange || (() => {}),
+    onBlur: props?.onBlur || context?.onBlur || (() => {}),
   };
 }
 
@@ -421,15 +422,15 @@ export function useRecruitmentSection(props?: {
   const noopOnChange: FormFieldChangeHandler = () => {};
 
   return {
-    values: props?.values ?? context?.formData ?? {},
-    errors: props?.errors ?? context?.errors ?? {},
-    autoCalculatedFields: props?.autoCalculatedFields ?? context?.autoCalculatedFields ?? new Set(),
-    dateConstraints: props?.dateConstraints ?? context?.dateConstraints ?? {},
-    validationStates: props?.validationStates ?? context?.validationStates ?? {},
-    fieldDisabledStates: props?.fieldDisabledStates ?? context?.fieldDisabledStates ?? {},
-    onChange: props?.onChange ?? context?.onChange ?? noopOnChange,
-    onDateChange: props?.onDateChange ?? context?.onDateChange ?? (() => {}),
-    onBlur: props?.onBlur ?? context?.onBlur ?? (() => {}),
+    values: props?.values || context?.formData || {},
+    errors: props?.errors || context?.errors || {},
+    autoCalculatedFields: props?.autoCalculatedFields || context?.autoCalculatedFields || new Set(),
+    dateConstraints: props?.dateConstraints || context?.dateConstraints || {},
+    validationStates: props?.validationStates || context?.validationStates || {},
+    fieldDisabledStates: props?.fieldDisabledStates || context?.fieldDisabledStates || {},
+    onChange: props?.onChange || context?.onChange || noopOnChange,
+    onDateChange: props?.onDateChange || context?.onDateChange || (() => {}),
+    onBlur: props?.onBlur || context?.onBlur || (() => {}),
   };
 }
 
@@ -451,16 +452,16 @@ export function useETA9089Section(props?: {
   const context = useFormSectionContextOptional();
 
   return {
-    values: props?.values ?? context?.formData ?? {},
-    errors: props?.errors ?? context?.errors ?? {},
-    warnings: props?.warnings ?? context?.warnings ?? {},
-    autoCalculatedFields: props?.autoCalculatedFields ?? context?.autoCalculatedFields ?? new Set(),
-    dateConstraints: props?.dateConstraints ?? context?.dateConstraints ?? {},
-    validationStates: props?.validationStates ?? context?.validationStates ?? {},
-    fieldDisabledStates: props?.fieldDisabledStates ?? context?.fieldDisabledStates ?? {},
-    onChange: props?.onChange ?? context?.onChange ?? (() => {}),
-    onDateChange: props?.onDateChange ?? context?.onDateChange ?? (() => {}),
-    onBlur: props?.onBlur ?? context?.onBlur ?? (() => {}),
+    values: props?.values || context?.formData || {},
+    errors: props?.errors || context?.errors || {},
+    warnings: props?.warnings || context?.warnings || {},
+    autoCalculatedFields: props?.autoCalculatedFields || context?.autoCalculatedFields || new Set(),
+    dateConstraints: props?.dateConstraints || context?.dateConstraints || {},
+    validationStates: props?.validationStates || context?.validationStates || {},
+    fieldDisabledStates: props?.fieldDisabledStates || context?.fieldDisabledStates || {},
+    onChange: props?.onChange || context?.onChange || (() => {}),
+    onDateChange: props?.onDateChange || context?.onDateChange || (() => {}),
+    onBlur: props?.onBlur || context?.onBlur || (() => {}),
   };
 }
 
@@ -482,15 +483,15 @@ export function useI140Section(props?: {
   const context = useFormSectionContextOptional();
 
   return {
-    values: props?.values ?? context?.formData ?? {},
-    errors: props?.errors ?? context?.errors ?? {},
-    warnings: props?.warnings ?? context?.warnings ?? {},
-    autoCalculatedFields: props?.autoCalculatedFields ?? context?.autoCalculatedFields ?? new Set(),
-    dateConstraints: props?.dateConstraints ?? context?.dateConstraints ?? {},
-    validationStates: props?.validationStates ?? context?.validationStates ?? {},
-    fieldDisabledStates: props?.fieldDisabledStates ?? context?.fieldDisabledStates ?? {},
-    onChange: props?.onChange ?? context?.onChange ?? (() => {}),
-    onDateChange: props?.onDateChange ?? context?.onDateChange ?? (() => {}),
-    onBlur: props?.onBlur ?? context?.onBlur ?? (() => {}),
+    values: props?.values || context?.formData || {},
+    errors: props?.errors || context?.errors || {},
+    warnings: props?.warnings || context?.warnings || {},
+    autoCalculatedFields: props?.autoCalculatedFields || context?.autoCalculatedFields || new Set(),
+    dateConstraints: props?.dateConstraints || context?.dateConstraints || {},
+    validationStates: props?.validationStates || context?.validationStates || {},
+    fieldDisabledStates: props?.fieldDisabledStates || context?.fieldDisabledStates || {},
+    onChange: props?.onChange || context?.onChange || (() => {}),
+    onDateChange: props?.onDateChange || context?.onDateChange || (() => {}),
+    onBlur: props?.onBlur || context?.onBlur || (() => {}),
   };
 }

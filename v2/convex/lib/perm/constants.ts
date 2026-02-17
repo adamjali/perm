@@ -139,3 +139,13 @@ export const SECOND_SUNDAY_AD_DEADLINE_DAYS = 150;
  * Formula: min(first + 150, pwd - 30)
  */
 export const SECOND_SUNDAY_AD_PWD_BUFFER_DAYS = 30;
+
+/**
+ * Days after first recruitment by which Notice of Filing must START.
+ *
+ * @deprecated Use `subtractBusinessDays(recruitmentWindowCloses, NOTICE_MIN_BUSINESS_DAYS)`
+ * for accurate business-day calculation that accounts for federal holidays.
+ * This flat 136-day approximation (150 - 14 calendar days) is inaccurate when
+ * holidays cluster near the deadline. Kept for backwards compatibility only.
+ */
+export const NOTICE_OF_FILING_START_DEADLINE_DAYS = 136;

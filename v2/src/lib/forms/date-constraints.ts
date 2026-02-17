@@ -19,7 +19,9 @@ import type { CaseFormData } from "./case-form-schema";
 import {
   getFirstRecruitmentDate,
   getLastRecruitmentDate,
+  getMethodLatestDate,
   isRecruitmentComplete,
+  calculateRecruitmentDeadlines,
   // Import centralized constants
   RECRUITMENT_WINDOW_DAYS,
   PWD_RECRUITMENT_BUFFER_DAYS,
@@ -29,6 +31,8 @@ import {
   FIRST_SUNDAY_AD_PWD_BUFFER_DAYS,
   SECOND_SUNDAY_AD_DEADLINE_DAYS,
   SECOND_SUNDAY_AD_PWD_BUFFER_DAYS,
+  FILING_WINDOW_WAIT_DAYS,
+  FILING_WINDOW_CLOSE_DAYS,
 } from "../perm";
 
 // Re-export for consumers that import from here
@@ -108,12 +112,12 @@ export function getRecruitmentFieldDeadline(
   // - 2nd Sunday Ad: 150 days from first recruitment OR 30 days before PWD exp (must be Sunday)
 
   // Deadline configuration using centralized constants from convex/lib/perm/constants.ts
+  // NOTE: noticeOfFilingStartDate is NOT in this config — it uses dynamic subtractBusinessDays via calculateRecruitmentDeadlines
   const deadlineConfig: Record<string, { daysFromRecruitment: number; daysBeforePwd: number; isSunday: boolean }> = {
-    noticeOfFilingStartDate: { daysFromRecruitment: RECRUITMENT_WINDOW_DAYS, daysBeforePwd: PWD_RECRUITMENT_BUFFER_DAYS, isSunday: false },
     jobOrderStartDate: { daysFromRecruitment: JOB_ORDER_START_DEADLINE_DAYS, daysBeforePwd: JOB_ORDER_START_PWD_BUFFER_DAYS, isSunday: false },
     sundayAdFirstDate: { daysFromRecruitment: FIRST_SUNDAY_AD_DEADLINE_DAYS, daysBeforePwd: FIRST_SUNDAY_AD_PWD_BUFFER_DAYS, isSunday: true },
     sundayAdSecondDate: { daysFromRecruitment: SECOND_SUNDAY_AD_DEADLINE_DAYS, daysBeforePwd: SECOND_SUNDAY_AD_PWD_BUFFER_DAYS, isSunday: true },
-    // Additional recruitment follows same rules as notice of filing
+    // Additional recruitment: normal methods use min(first+150, pwd-30)
     additionalRecruitmentStartDate: { daysFromRecruitment: RECRUITMENT_WINDOW_DAYS, daysBeforePwd: PWD_RECRUITMENT_BUFFER_DAYS, isSunday: false },
     additionalRecruitmentEndDate: { daysFromRecruitment: RECRUITMENT_WINDOW_DAYS, daysBeforePwd: PWD_RECRUITMENT_BUFFER_DAYS, isSunday: false },
   };
@@ -211,6 +215,58 @@ export function getPWDDateConstraints(values: Partial<CaseFormData>) {
 }
 
 /**
+ * Compute Notice of Filing START deadline using central calculator.
+ * Uses subtractBusinessDays(recruitmentWindowCloses, 10) for accuracy
+ * instead of the deprecated flat 136-day approximation.
+ */
+function getNofStartDeadline(
+  firstRecruitmentDate: string | undefined,
+  pwdExpiration: string | undefined
+): { maxDate: string | undefined; limitingFactor: 'recruitment' | 'pwd' | undefined; hint: string } {
+  if (!firstRecruitmentDate || !pwdExpiration) {
+    return { maxDate: undefined, limitingFactor: undefined, hint: '' };
+  }
+
+  try {
+    const computed = calculateRecruitmentDeadlines(firstRecruitmentDate, pwdExpiration);
+    const maxDate = computed.notice_of_filing_start_deadline;
+    return {
+      maxDate,
+      limitingFactor: 'recruitment',
+      hint: `By ${formatDateForDisplay(maxDate)} (10 business days before recruitment window closes)`,
+    };
+  } catch {
+    return { maxDate: undefined, limitingFactor: undefined, hint: '' };
+  }
+}
+
+/**
+ * Determine which additional recruitment method is the "special" (latest-dated) one.
+ * Per 20 CFR 656.17(e)(1)(ii), the latest-dated additional method may complete
+ * within the quiet period, so it gets a relaxed deadline: min(first+180, pwd).
+ *
+ * @returns Index of the special method, or -1 if no methods have dates
+ */
+function getSpecialMethodIndex(
+  methods: Array<{ method?: string; date?: string; startDate?: string; endDate?: string; subEntries?: Array<{ date?: string; description?: string }> }> | undefined
+): number {
+  if (!methods || methods.length === 0) return -1;
+
+  let latestDate: string | undefined;
+  let latestIndex = -1;
+
+  methods.forEach((method, index) => {
+    const methodDate = getMethodLatestDate(method);
+    if (methodDate && (!latestDate || methodDate > latestDate)) {
+      latestDate = methodDate;
+      latestIndex = index;
+    }
+  });
+
+  return latestIndex;
+}
+
+/**
  * Calculate date constraints for Recruitment Section fields
  *
  * Per perm_flow.md, recruitment fields have BOTH min and max constraints:
@@ -228,7 +284,7 @@ export function getRecruitmentDateConstraints(values: Partial<CaseFormData>) {
     sundayFirst: getRecruitmentFieldDeadline('sundayAdFirstDate', firstRecruitmentDate, pwdExpiration),
     sundaySecond: getRecruitmentFieldDeadline('sundayAdSecondDate', firstRecruitmentDate, pwdExpiration),
     jobOrder: getRecruitmentFieldDeadline('jobOrderStartDate', firstRecruitmentDate, pwdExpiration),
-    notice: getRecruitmentFieldDeadline('noticeOfFilingStartDate', firstRecruitmentDate, pwdExpiration),
+    notice: getNofStartDeadline(firstRecruitmentDate, pwdExpiration),
   };
 
   // Min date after PWD determination
@@ -328,24 +384,36 @@ function buildAfterHint(
 
 /**
  * Get date constraints for a specific method's date fields based on its category.
- * Uses the same formula as legacy getProfessionalDateConstraints.
  *
- * Feature 006: Per-method date constraints for date-range, sub-entries, and single-date methods.
+ * Per 20 CFR 656.17(e)(1)(ii), the latest-dated additional method (the "special" one)
+ * may complete within the quiet period, so it gets a relaxed deadline:
+ * - Special method: min(first+180, pwd)
+ * - Other methods: min(first+150, pwd-30)
  *
  * @param values - Current form values
  * @param methodType - Method category ('date-range' | 'sub-entries' | 'single-date')
  * @param methodStartDate - For date-range methods, the start date (to constrain end date)
+ * @param methodIndex - Index of this method in the additionalRecruitmentMethods array
  * @returns Date constraints object with min, max, hint for applicable fields
  */
 export function getMethodDateConstraints(
   values: Partial<CaseFormData>,
   methodType: 'date-range' | 'sub-entries' | 'single-date',
-  methodStartDate?: string
+  methodStartDate?: string,
+  methodIndex?: number
 ) {
   const firstRecruitmentDate = getFirstRecruitmentStartDate(values);
   const { pwdExpirationDate: pwdExpiration, pwdDeterminationDate: pwdDet } = values;
 
-  const deadline = getRecruitmentFieldDeadline('additionalRecruitmentStartDate', firstRecruitmentDate, pwdExpiration);
+  // Determine if this method is the "special" one (latest-dated, gets relaxed deadline)
+  const specialIndex = getSpecialMethodIndex(values.additionalRecruitmentMethods);
+  const isSpecial = methodIndex !== undefined && methodIndex === specialIndex;
+
+  // Special method: min(first+180, pwd) — no 30-day buffer needed
+  // Normal method: min(first+150, pwd-30) — standard recruitment window
+  const deadline = isSpecial
+    ? getSpecialMethodDeadline(firstRecruitmentDate, pwdExpiration)
+    : getRecruitmentFieldDeadline('additionalRecruitmentStartDate', firstRecruitmentDate, pwdExpiration);
   const minAfterPwd = pwdDet ? addDaysToDateStr(pwdDet, 1) : undefined;
 
   if (methodType === 'date-range') {
@@ -386,6 +454,56 @@ export function getMethodDateConstraints(
 }
 
 /**
+ * Calculate the relaxed deadline for the "special" additional method.
+ * Per 20 CFR 656.17(e)(1)(ii), this method may complete during the quiet period.
+ * Max = min(first+180, pwd) — no 30-day buffer needed.
+ */
+function getSpecialMethodDeadline(
+  firstRecruitmentDate: string | undefined,
+  pwdExpiration: string | undefined
+): { maxDate: string | undefined; limitingFactor: 'recruitment' | 'pwd' | undefined; hint: string } {
+  let maxFromRecruitment: string | undefined;
+  let maxFromPwd: string | undefined;
+
+  if (firstRecruitmentDate) {
+    maxFromRecruitment = format(addDays(new Date(firstRecruitmentDate + "T00:00:00"), FILING_WINDOW_CLOSE_DAYS), "yyyy-MM-dd");
+  }
+  if (pwdExpiration) {
+    maxFromPwd = pwdExpiration; // No buffer — special method can complete up to PWD expiration
+  }
+
+  let maxDate: string | undefined;
+  let limitingFactor: 'recruitment' | 'pwd' | undefined;
+
+  if (maxFromRecruitment && maxFromPwd) {
+    if (maxFromRecruitment <= maxFromPwd) {
+      maxDate = maxFromRecruitment;
+      limitingFactor = 'recruitment';
+    } else {
+      maxDate = maxFromPwd;
+      limitingFactor = 'pwd';
+    }
+  } else if (maxFromRecruitment) {
+    maxDate = maxFromRecruitment;
+    limitingFactor = 'recruitment';
+  } else if (maxFromPwd) {
+    maxDate = maxFromPwd;
+    limitingFactor = 'pwd';
+  }
+
+  let hint = '';
+  if (maxDate) {
+    if (limitingFactor === 'recruitment') {
+      hint = `By ${formatDateForDisplay(maxDate)} (${FILING_WINDOW_CLOSE_DAYS} days from first recruitment — extended deadline)`;
+    } else if (limitingFactor === 'pwd') {
+      hint = `By ${formatDateForDisplay(maxDate)} (PWD expiration — extended deadline)`;
+    }
+  }
+
+  return { maxDate, limitingFactor, hint };
+}
+
+/**
  * Calculate the LAST recruitment end date from all recruitment activities
  * Used for the 30-day waiting period before ETA 9089 filing per perm_flow.md
  *
@@ -410,9 +528,9 @@ export function getETA9089DateConstraints(values: Partial<CaseFormData>) {
   const todayStr = today();
   const { eta9089FilingDate, eta9089AuditDate, pwdExpirationDate } = values;
 
-  // Filing window: opens 30 days after last recruitment, closes 180 days after first
-  const filingWindowOpen = recruitmentEnd ? addDaysToDateStr(recruitmentEnd, 30) : undefined;
-  const filingWindowClose = firstRecruitmentDate ? addDaysToDateStr(firstRecruitmentDate, 180) : undefined;
+  // Filing window: opens FILING_WINDOW_WAIT_DAYS after last recruitment, closes FILING_WINDOW_CLOSE_DAYS after first
+  const filingWindowOpen = recruitmentEnd ? addDaysToDateStr(recruitmentEnd, FILING_WINDOW_WAIT_DAYS) : undefined;
+  const filingWindowClose = firstRecruitmentDate ? addDaysToDateStr(firstRecruitmentDate, FILING_WINDOW_CLOSE_DAYS) : undefined;
 
   // Take earlier of window close or PWD expiration
   const { max: filingMax, pwdTrumps } = getEarlierDate(filingWindowClose, pwdExpirationDate);

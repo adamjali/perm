@@ -14,7 +14,7 @@ export {
 } from './dateUtils';
 
 // Business day utilities
-export { addBusinessDays, countBusinessDays } from './businessDays';
+export { addBusinessDays, subtractBusinessDays, countBusinessDays } from './businessDays';
 
 // Federal holiday utilities
 export {
@@ -36,7 +36,10 @@ export {
   type FilingWindowStatus,
   type FilingWindowInput,
   type RecruitmentWindow,
+  // Types
+  type MethodDateFields,
   // Functions
+  getMethodLatestDate,
   calculateFilingWindow,
   getFilingWindowStatus,
   formatFilingWindow,

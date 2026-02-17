@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo, type ComponentType } from "react";
 import { Clock, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -34,7 +34,7 @@ export interface RecruitmentStatusProps {
 const STATUS_CONFIG: Record<
   RecruitmentStatusType,
   {
-    icon: React.ComponentType<{ className?: string }>;
+    icon: ComponentType<{ className?: string }>;
     bgClass: string;
     borderClass: string;
     textClass: string;
@@ -107,7 +107,7 @@ const STATUS_CONFIG: Record<
  */
 export function RecruitmentStatus({ data, className }: RecruitmentStatusProps) {
   // Calculate status
-  const status = React.useMemo(
+  const status = useMemo(
     () => calculateRecruitmentStatus(data),
     [data]
   );
@@ -117,7 +117,7 @@ export function RecruitmentStatus({ data, className }: RecruitmentStatusProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className={cn(

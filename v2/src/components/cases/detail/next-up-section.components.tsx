@@ -7,8 +7,7 @@
  * Includes inline quick-edit functionality for action cards.
  */
 
-import * as React from "react";
-import { useState, useCallback } from "react";
+import { Fragment, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -122,7 +121,7 @@ export function StageProgressIndicator({ currentStage }: StageProgressIndicatorP
         const Icon = stage.icon;
 
         return (
-          <React.Fragment key={stage.id}>
+          <Fragment key={stage.id}>
             <motion.div
               custom={index}
               variants={stageVariants}
@@ -146,7 +145,7 @@ export function StageProgressIndicator({ currentStage }: StageProgressIndicatorP
                 <Icon className="h-4 w-4 sm:h-5 sm:w-5 relative z-10" />
                 {isCompleted && (
                   <motion.div
-                    initial={{ scale: 0 }}
+                    initial={false}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 600, damping: 25 }}
                     className="absolute -top-1.5 -right-1.5 w-4 h-4 border-2 border-background flex items-center justify-center"
@@ -174,7 +173,7 @@ export function StageProgressIndicator({ currentStage }: StageProgressIndicatorP
             {/* Connector line — colored if prior stage completed */}
             {index < STAGES.length - 1 && (
               <motion.div
-                initial={{ scaleX: 0 }}
+                initial={false}
                 animate={{ scaleX: 1 }}
                 transition={{ delay: 0.1 + index * 0.03, duration: 0.15 }}
                 className="flex-1 h-0.5 min-w-[16px] sm:min-w-[24px] origin-left"
@@ -183,7 +182,7 @@ export function StageProgressIndicator({ currentStage }: StageProgressIndicatorP
                 }}
               />
             )}
-          </React.Fragment>
+          </Fragment>
         );
       })}
     </motion.div>
@@ -387,8 +386,6 @@ interface DeadlineCountdownProps {
 export function DeadlineCountdown({ deadline }: DeadlineCountdownProps) {
   const urgency = getUrgencyLevel(deadline.daysUntil);
   const urgencyColors = getUrgencyColors(urgency);
-  const _isUrgent = urgency === "urgent" || urgency === "overdue"; // Reserved for future pulse animation
-
   // Format date for display (using ISO parser to avoid timezone issues)
   const formattedDate = formatISODate(deadline.date);
 

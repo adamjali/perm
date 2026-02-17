@@ -44,7 +44,12 @@ export type DeadlineType =
   | "eta9089_expiration"
   | "i140_filing_window"
   | "recruitment_window"
-  | "filing_window_opens";
+  | "filing_window_opens"
+  | "job_order_start_deadline"
+  | "notice_of_filing_start_deadline"
+  | "first_sunday_ad_deadline"
+  | "second_sunday_ad_deadline"
+  | "recruitment_window_closes";
 
 // ============================================================================
 // CASE DATA TYPE (for deadline extraction)
@@ -129,6 +134,7 @@ export interface CaseDataForDeadlines {
    */
   filingWindowOpens?: string;
   filingWindowCloses?: string;
+  recruitmentWindowCloses?: string;
 }
 
 // ============================================================================

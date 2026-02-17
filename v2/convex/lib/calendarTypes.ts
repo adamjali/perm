@@ -28,6 +28,11 @@ export type CalendarEventType =
   | "eta9089_expiration"
   | "filing_window_opens"
   | "recruitment_expires"
+  | "recruitment_window_closes"
+  | "job_order_start_deadline"
+  | "notice_of_filing_start_deadline"
+  | "first_sunday_ad_deadline"
+  | "second_sunday_ad_deadline"
   | "i140_deadline"
   | "rfi_due"
   | "rfe_due";
@@ -41,6 +46,11 @@ export const CALENDAR_EVENT_LABELS: Record<CalendarEventType, string> = {
   eta9089_expiration: "ETA 9089 Expiration",
   filing_window_opens: "Ready to File",
   recruitment_expires: "Recruitment Expires",
+  recruitment_window_closes: "Recruitment Window Closes",
+  job_order_start_deadline: "Start Job Order By",
+  notice_of_filing_start_deadline: "Start Notice of Filing By",
+  first_sunday_ad_deadline: "First Sunday Ad By",
+  second_sunday_ad_deadline: "Second Sunday Ad By",
   i140_deadline: "I-140 Deadline",
   rfi_due: "RFI Response Due",
   rfe_due: "RFE Response Due",
@@ -77,6 +87,11 @@ export const EVENT_TYPE_TO_PREF: Record<CalendarEventType, CalendarSyncPreferenc
   eta9089_expiration: "calendarSyncEta9089",
   filing_window_opens: "calendarSyncFilingWindow",
   recruitment_expires: "calendarSyncRecruitment",
+  recruitment_window_closes: "calendarSyncRecruitment",
+  job_order_start_deadline: "calendarSyncRecruitment",
+  notice_of_filing_start_deadline: "calendarSyncRecruitment",
+  first_sunday_ad_deadline: "calendarSyncRecruitment",
+  second_sunday_ad_deadline: "calendarSyncRecruitment",
   i140_deadline: "calendarSyncI140",
   rfi_due: "calendarSyncRfi",
   rfe_due: "calendarSyncRfe",
@@ -200,6 +215,13 @@ export interface CaseDataForCalendar {
   // Filing window dates (stored derived fields)
   filingWindowOpens?: string;
   recruitmentWindowCloses?: string;
+
+  // Recruitment dates (for per-step deadline computation)
+  sundayAdFirstDate?: string;
+  sundayAdSecondDate?: string;
+  jobOrderStartDate?: string;
+  noticeOfFilingStartDate?: string;
+  noticeOfFilingEndDate?: string;
 
   // I-140 dates
   i140FilingDate?: string;

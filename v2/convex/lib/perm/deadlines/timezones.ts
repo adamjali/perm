@@ -55,6 +55,10 @@ export const DEADLINE_TIMEZONE_RULES = {
   filing_window_opens: "local",
   filing_window_closes: "dol", // ETA-9089 filed through DOL FLAG system
   recruitment_window_closes: "local",
+  job_order_start_deadline: "local", // Employer activity
+  notice_of_filing_start_deadline: "local", // Employer activity
+  first_sunday_ad_deadline: "local", // Employer activity
+  second_sunday_ad_deadline: "local", // Employer activity
   i140_filing_deadline: "local", // I-140 filed with USCIS
   rfi_due: "dol", // Response submitted to DOL
   rfe_due: "local", // Response submitted to USCIS

@@ -220,11 +220,20 @@ describe("calculateNextDeadline", () => {
   });
 
   describe("when case has recruitment window deadline", () => {
+    // Filing window requires recruitment to be complete (all basic steps done)
+    const completedRecruitmentBase = {
+      jobOrderStartDate: "2024-11-01",
+      jobOrderEndDate: "2024-12-01",
+      noticeOfFilingStartDate: "2024-11-01",
+      noticeOfFilingEndDate: "2024-11-15",
+    };
+
     it("returns filing_window_opens when that is the most urgent deadline", () => {
       // Per PERM rules: Window opens 30 days after last recruitment ends
       // Here sundayAdSecondDate (2024-12-08) is the last since isProfessionalOccupation is false
       // Window opens: 2024-12-08 + 30 = 2025-01-07 (overdue from TODAY = 2025-01-15)
       const caseData = createMockCase({
+        ...completedRecruitmentBase,
         sundayAdFirstDate: "2024-12-01",
         sundayAdSecondDate: "2024-12-08",
         additionalRecruitmentEndDate: "2024-12-15", // Ignored since not professional
@@ -244,8 +253,11 @@ describe("calculateNextDeadline", () => {
 
     it("returns recruitment_window when filing window already open", () => {
       // When filing window already opened (in the past), recruitment_window is next
-      // Set dates far in the future so filing window opens is also in future but closes sooner
       const caseData = createMockCase({
+        jobOrderStartDate: "2024-09-01",
+        jobOrderEndDate: "2024-10-01",
+        noticeOfFilingStartDate: "2024-09-01",
+        noticeOfFilingEndDate: "2024-09-15",
         sundayAdFirstDate: "2024-10-01",
         sundayAdSecondDate: "2024-10-08",
         eta9089FilingDate: undefined,
@@ -254,7 +266,6 @@ describe("calculateNextDeadline", () => {
       const result = calculateNextDeadline(caseData, TODAY);
 
       // Filing window opens: 2024-10-08 + 30 = 2024-11-07 (in the past, -69 days)
-      // Recruitment window closes: 2024-10-01 + 180 = 2025-03-30 (74 days)
       // Most urgent is filing_window_opens (overdue)
       expect(result?.type).toBe("filing_window_opens");
       expect(result?.urgency).toBe("overdue");
@@ -262,7 +273,9 @@ describe("calculateNextDeadline", () => {
 
     it("returns null when ETA already filed", () => {
       const caseData = createMockCase({
+        ...completedRecruitmentBase,
         sundayAdFirstDate: "2024-12-01",
+        sundayAdSecondDate: "2024-12-08",
         additionalRecruitmentEndDate: "2024-12-15",
         eta9089FilingDate: "2025-01-10",
       });
@@ -278,48 +291,49 @@ describe("calculateNextDeadline", () => {
   // ------------------------------------------
 
   describe("deadline priority ordering", () => {
+    // Completed recruitment fields required for filing window to be active
+    const completedRecruitmentEarly = {
+      jobOrderStartDate: "2024-09-01",
+      jobOrderEndDate: "2024-10-01",
+      noticeOfFilingStartDate: "2024-09-01",
+      noticeOfFilingEndDate: "2024-09-15",
+    };
+
     it("returns filing_window_opens over recruitment_window when both exist and opens is more urgent", () => {
-      // Scenario: Filing window opens is overdue (-8 days), recruitment window is in future (74 days)
-      // filing_window_opens should be returned because it's more urgent (lower daysUntil)
       const caseData = createMockCase({
-        sundayAdFirstDate: "2024-10-01", // Recruitment window closes: 2024-10-01 + 180 = 2025-03-30
-        sundayAdSecondDate: "2024-10-08", // Filing window opens: 2024-10-08 + 30 = 2024-11-07
+        ...completedRecruitmentEarly,
+        sundayAdFirstDate: "2024-10-01",
+        sundayAdSecondDate: "2024-10-08",
         eta9089FilingDate: undefined,
       });
 
       const result = calculateNextDeadline(caseData, TODAY);
 
-      // filing_window_opens should take priority (overdue is more urgent than 74 days)
       expect(result?.type).toBe("filing_window_opens");
       expect(result?.urgency).toBe("overdue");
     });
 
     it("returns recruitment_window when it is the most urgent remaining deadline", () => {
-      // Scenario: Both deadlines exist, but recruitment_window (filing_deadline) is closer
-      // This happens when window already opened (opens in past) and closes date is next
-      // Note: In practice, once window opens passes, both dates are calculated
-      // The more urgent one (recruitment_window closer) would be returned
-      // Testing with dates where recruitment window is the closest future deadline
-
-      // For recruitment_window to be returned, filing_window_opens must be in the past
-      // AND recruitment_window must be the closest deadline
       const caseData = createMockCase({
-        sundayAdFirstDate: "2024-08-01", // Window closes: 2024-08-01 + 180 = 2025-01-28 (13 days)
-        sundayAdSecondDate: "2024-08-08", // Window opens: 2024-08-08 + 30 = 2024-09-07 (past, overdue)
+        jobOrderStartDate: "2024-07-01",
+        jobOrderEndDate: "2024-08-01",
+        noticeOfFilingStartDate: "2024-07-01",
+        noticeOfFilingEndDate: "2024-07-15",
+        sundayAdFirstDate: "2024-08-01",
+        sundayAdSecondDate: "2024-08-08",
         eta9089FilingDate: undefined,
       });
 
       const result = calculateNextDeadline(caseData, TODAY);
 
       // filing_window_opens is in the past (overdue), so most urgent is filing_window_opens
-      // In practice, when filing window is open, both dates exist but overdue takes priority
       expect(result?.type).toBe("filing_window_opens");
-      expect(result?.daysUntil).toBeLessThan(0); // Overdue
+      expect(result?.daysUntil).toBeLessThan(0);
     });
 
     it("prioritizes RFI due over filing window when RFI is more urgent", () => {
-      // RFI deadlines take priority over filing window deadlines when more urgent
       const caseData = createMockCase({
+        ...completedRecruitmentEarly,
         sundayAdFirstDate: "2024-10-01",
         sundayAdSecondDate: "2024-10-08",
         eta9089FilingDate: undefined,
@@ -327,7 +341,7 @@ describe("calculateNextDeadline", () => {
           {
             id: "rfi-urgent",
             receivedDate: "2025-01-01",
-            responseDueDate: "2025-01-18", // 3 days from TODAY
+            responseDueDate: "2025-01-18",
             createdAt: Date.now(),
           },
         ],
@@ -335,24 +349,25 @@ describe("calculateNextDeadline", () => {
 
       const result = calculateNextDeadline(caseData, TODAY);
 
-      // RFI due in 3 days should beat filing window (which may be overdue or future)
-      // The most urgent non-overdue deadline wins if there are no overdue deadlines
-      // But overdue takes absolute priority
-      expect(result?.type).toBe("filing_window_opens"); // Overdue wins
+      // Overdue filing_window_opens beats near-future RFI
+      expect(result?.type).toBe("filing_window_opens");
       expect(result?.urgency).toBe("overdue");
     });
 
     it("prioritizes overdue RFI over future filing window", () => {
-      // Overdue RFI should take priority over future filing window
       const caseData = createMockCase({
-        sundayAdFirstDate: "2024-12-15", // Window opens: 2025-01-14 (future)
-        sundayAdSecondDate: "2024-12-22", // Window closes: 2025-06-13
+        jobOrderStartDate: "2024-11-15",
+        jobOrderEndDate: "2024-12-15",
+        noticeOfFilingStartDate: "2024-11-15",
+        noticeOfFilingEndDate: "2024-11-29",
+        sundayAdFirstDate: "2024-12-15",
+        sundayAdSecondDate: "2024-12-22",
         eta9089FilingDate: undefined,
         rfiEntries: [
           {
             id: "rfi-overdue",
             receivedDate: "2024-12-01",
-            responseDueDate: "2025-01-10", // 5 days overdue
+            responseDueDate: "2025-01-10",
             createdAt: Date.now(),
           },
         ],
@@ -360,7 +375,6 @@ describe("calculateNextDeadline", () => {
 
       const result = calculateNextDeadline(caseData, TODAY);
 
-      // RFI overdue should be returned as most urgent
       expect(result?.type).toBe("rfi_due");
       expect(result?.daysUntil).toBe(-5);
       expect(result?.urgency).toBe("overdue");

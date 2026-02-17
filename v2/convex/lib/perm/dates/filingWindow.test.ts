@@ -341,36 +341,38 @@ describe("filing-window", () => {
         expect(result).toBe("2024-03-01");
       });
 
-      it("includes individual additional method dates when isProfessionalOccupation is true", () => {
+      it("excludes latest additional method (special) from recruitment end date", () => {
         const result = getLastRecruitmentDate(
           {
             sundayAdSecondDate: "2024-02-15",
             additionalRecruitmentMethods: [
               { date: "2024-02-20" },
-              { date: "2024-03-05" },
+              { date: "2024-03-05" }, // latest → special, excluded
               { date: "2024-02-25" },
             ],
           },
           true
         );
-        expect(result).toBe("2024-03-05");
+        // Latest method (Mar 5) excluded as special; remaining max = Feb 25
+        expect(result).toBe("2024-02-25");
       });
 
-      it("includes both additionalRecruitmentEndDate and methods when professional", () => {
+      it("excludes latest method but keeps legacy additionalRecruitmentEndDate", () => {
         const result = getLastRecruitmentDate(
           {
             sundayAdSecondDate: "2024-02-15",
             jobOrderEndDate: "2024-02-20",
             additionalRecruitmentEndDate: "2024-03-01",
             additionalRecruitmentMethods: [
-              { date: "2024-03-10" },
+              { date: "2024-03-10" }, // latest → special, excluded
               { date: "2024-03-05" },
             ],
           },
           true
         );
-        // Latest should be 2024-03-10 from additional methods
-        expect(result).toBe("2024-03-10");
+        // Latest method (Mar 10) excluded; legacy field (Mar 1) NOT eligible for special
+        // Remaining: Mar 5 (method), Mar 1 (legacy), Feb 20 (jobOrder), Feb 15 (sundayAd)
+        expect(result).toBe("2024-03-05");
       });
 
       it("returns base recruitment date even if additional dates are later (non-professional)", () => {

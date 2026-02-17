@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo } from "react";
 import { Check, Circle } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -66,7 +66,7 @@ interface ChecklistItemRowProps {
 function ChecklistItemRow({ item, index }: ChecklistItemRowProps) {
   return (
     <motion.li
-      initial={{ opacity: 0, x: -20 }}
+      initial={false}
       animate={{ opacity: 1, x: 0 }}
       transition={{
         duration: 0.2,
@@ -170,7 +170,7 @@ export function RecruitmentChecklist({
   className,
 }: RecruitmentChecklistProps) {
   // Calculate status to get step completion info
-  const status = React.useMemo(
+  const status = useMemo(
     () => calculateRecruitmentStatus(data),
     [data]
   );

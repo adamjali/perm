@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import {
@@ -199,10 +199,10 @@ export function InlineCaseTimeline({
   className,
 }: InlineCaseTimelineProps) {
   // Get today's date for window calculation
-  const today = React.useMemo(() => new Date(), []);
+  const today = useMemo(() => new Date(), []);
 
   // Calculate timeline window (3 months before + 3 months after today)
-  const { windowStartMs, windowEndMs, windowDurationMs } = React.useMemo(() => {
+  const { windowStartMs, windowEndMs, windowDurationMs } = useMemo(() => {
     const startDate = new Date(
       today.getFullYear(),
       today.getMonth() - MONTHS_BEFORE,
@@ -226,20 +226,20 @@ export function InlineCaseTimeline({
   }, [today]);
 
   // Generate month headers
-  const monthHeaders = React.useMemo(() => generateMonthHeaders(today), [today]);
+  const monthHeaders = useMemo(() => generateMonthHeaders(today), [today]);
 
   // Extract milestones and range bars from case data
-  const milestones = React.useMemo(
+  const milestones = useMemo(
     () => extractMilestones(caseData),
     [caseData]
   );
-  const rangeBars = React.useMemo(
+  const rangeBars = useMemo(
     () => extractRangeBars(caseData),
     [caseData]
   );
 
   // Filter to only milestones visible in the window
-  const visibleMilestones = React.useMemo(
+  const visibleMilestones = useMemo(
     () =>
       milestones.filter((m) =>
         isDateInWindow(m.date, windowStartMs, windowEndMs)
@@ -248,7 +248,7 @@ export function InlineCaseTimeline({
   );
 
   // Filter range bars that overlap with the window
-  const visibleRangeBars = React.useMemo(
+  const visibleRangeBars = useMemo(
     () =>
       rangeBars.filter((rb) => {
         const startMs = new Date(rb.startDate).getTime();
@@ -260,7 +260,7 @@ export function InlineCaseTimeline({
   );
 
   // Calculate today's position for the marker
-  const todayPosition = React.useMemo(() => {
+  const todayPosition = useMemo(() => {
     const todayStr = today.toISOString().split("T")[0] ?? "";
     return calculatePosition(todayStr, windowStartMs, windowDurationMs);
   }, [today, windowStartMs, windowDurationMs]);
@@ -372,7 +372,7 @@ export function InlineCaseTimeline({
                   return (
                     <motion.div
                       key={`${rangeBar.field}-${rangeBar.startDate}`}
-                      initial={{ scaleX: 0, opacity: 0 }}
+                      initial={false}
                       animate={{ scaleX: 1, opacity: 1 }}
                       transition={{
                         ...springConfig,
@@ -400,7 +400,7 @@ export function InlineCaseTimeline({
                   return (
                     <motion.div
                       key={`${milestone.field}-${milestone.date}`}
-                      initial={{ scale: 0, opacity: 0 }}
+                      initial={false}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{
                         ...springConfig,

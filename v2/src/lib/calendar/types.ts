@@ -93,6 +93,12 @@ export type DeadlineType =
   // Filing window (calculated)
   | "filingWindowOpens"
   | "filingWindowCloses"
+  // Recruitment deadlines (calculated per-step)
+  | "recruitmentWindowCloses"
+  | "jobOrderStartDeadline"
+  | "noticeOfFilingStartDeadline"
+  | "firstSundayAdDeadline"
+  | "secondSundayAdDeadline"
   // RFI/RFE deadlines
   | "rfiDue"
   | "rfeDue";
@@ -145,6 +151,11 @@ export const DEADLINE_TYPE_LABELS: Record<DeadlineType, string> = {
   i140Approved: "I-140 Approved",
   filingWindowOpens: "ETA Window Opens",
   filingWindowCloses: "ETA Window Closes",
+  recruitmentWindowCloses: "Recruitment Closes",
+  jobOrderStartDeadline: "Job Order Due",
+  noticeOfFilingStartDeadline: "Notice Due",
+  firstSundayAdDeadline: "1st Ad Due",
+  secondSundayAdDeadline: "2nd Ad Due",
   rfiDue: "RFI Due",
   rfeDue: "RFE Due",
 } as const;

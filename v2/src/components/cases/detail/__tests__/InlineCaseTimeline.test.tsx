@@ -552,10 +552,20 @@ describe("InlineCaseTimeline - Month Headers", () => {
 // ============================================================================
 
 describe("InlineCaseTimeline - Calculated Milestones", () => {
+  // Complete recruitment data required for isRecruitmentComplete() to return true,
+  // which gates the "Ready to File" calculated milestone via filing window active check.
+  const completeRecruitment = {
+    jobOrderStartDate: getRelativeDate(-75),
+    jobOrderEndDate: getRelativeDate(-45),
+    sundayAdFirstDate: getRelativeDate(-70),
+    sundayAdSecondDate: getRelativeDate(-63),
+    noticeOfFilingStartDate: getRelativeDate(-70),
+    noticeOfFilingEndDate: getRelativeDate(-56),
+  };
+
   it("shows Ready to File calculated milestone when ETA 9089 not filed", () => {
     const mockCase = createMockCaseData({
-      sundayAdSecondDate: getRelativeDate(-45),
-      jobOrderEndDate: getRelativeDate(-30),
+      ...completeRecruitment,
       // eta9089FilingDate is undefined - not filed yet
     });
 
@@ -569,8 +579,7 @@ describe("InlineCaseTimeline - Calculated Milestones", () => {
 
   it("hides Ready to File when ETA 9089 is filed", () => {
     const mockCase = createMockCaseData({
-      sundayAdSecondDate: getRelativeDate(-45),
-      jobOrderEndDate: getRelativeDate(-30),
+      ...completeRecruitment,
       eta9089FilingDate: getRelativeDate(-10), // Filed!
     });
 
@@ -584,9 +593,7 @@ describe("InlineCaseTimeline - Calculated Milestones", () => {
 
   it("shows calculated milestones with dashed border", () => {
     const mockCase = createMockCaseData({
-      sundayAdFirstDate: getRelativeDate(-60),
-      sundayAdSecondDate: getRelativeDate(-53),
-      jobOrderEndDate: getRelativeDate(-30),
+      ...completeRecruitment,
     });
 
     const { container } = renderWithProviders(

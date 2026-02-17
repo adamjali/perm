@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo } from "react";
 import { FileCheck } from "lucide-react";
 import { CaseDetailSection, MilestoneTrack, ValueHighlight } from "./CaseDetailSection";
 import { formatISODate } from "@/lib/utils/date";
@@ -21,6 +21,8 @@ export interface ETA9089SectionProps {
   };
   filingWindowOpensDate?: string;
   filingWindowClosesDate?: string;
+  /** When false, filing window indicator is hidden (recruitment not yet complete) */
+  isRecruitmentComplete?: boolean;
   defaultOpen?: boolean;
   accentColor?: string;
 }
@@ -139,6 +141,7 @@ export function ETA9089Section({
   data,
   filingWindowOpensDate,
   filingWindowClosesDate,
+  isRecruitmentComplete: recruitmentDone,
   defaultOpen = true,
   accentColor,
 }: ETA9089SectionProps) {
@@ -157,7 +160,7 @@ export function ETA9089Section({
   );
 
   // Preview summary for collapsed state
-  const preview = React.useMemo(() => {
+  const preview = useMemo(() => {
     if (data.eta9089CertificationDate) return `Certified ${formatDate(data.eta9089CertificationDate)}`;
     if (data.eta9089FilingDate) return `Filed ${formatDate(data.eta9089FilingDate)}`;
     if (windowStatus.status === "open") return "Window Open";
@@ -174,8 +177,8 @@ export function ETA9089Section({
     >
       {hasData || windowStatus.status !== "unknown" ? (
         <div className="space-y-4">
-          {/* Filing Window Indicator (if not filed) */}
-          {!data.eta9089FilingDate && windowStatus.status !== "unknown" && (
+          {/* Filing Window Indicator (if not filed and recruitment is complete) */}
+          {!data.eta9089FilingDate && recruitmentDone !== false && windowStatus.status !== "unknown" && (
             <div
               className={cn(
                 "border-2 p-3 text-sm",
@@ -234,8 +237,8 @@ export function ETA9089Section({
             </div>
           )}
 
-          {/* Filing Window with Progress Bar */}
-          {(filingWindowOpensDate || filingWindowClosesDate) && (
+          {/* Filing Window with Progress Bar (only if recruitment done or already filed) */}
+          {(recruitmentDone !== false || data.eta9089FilingDate) && (filingWindowOpensDate || filingWindowClosesDate) && (
             <div className="pt-3 border-t border-border/50">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">

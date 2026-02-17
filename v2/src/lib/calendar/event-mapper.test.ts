@@ -246,7 +246,10 @@ describe("caseToCalendarEvents", () => {
         caseStatus: "eta9089",
         sundayAdFirstDate: "2024-03-03",
         sundayAdSecondDate: "2024-03-10",
+        jobOrderStartDate: "2024-03-01",
         jobOrderEndDate: "2024-04-09",
+        noticeOfFilingStartDate: "2024-03-01",
+        noticeOfFilingEndDate: "2024-03-15",
         // No eta9089FilingDate - so filing window should be calculated
       });
 
@@ -270,8 +273,8 @@ describe("caseToCalendarEvents", () => {
       expect(openEvent!.start.toISOString().split("T")[0]).toBe("2024-05-09");
       expect(openEvent!.title).toContain("ETA Window Opens");
 
-      // Filing deadline = sundayAdFirst (2024-03-03) + 180 days = 2024-08-30
-      expect(closeEvent!.start.toISOString().split("T")[0]).toBe("2024-08-30");
+      // Filing deadline = first recruitment (2024-03-01) + 180 days = 2024-08-28
+      expect(closeEvent!.start.toISOString().split("T")[0]).toBe("2024-08-28");
       expect(closeEvent!.title).toContain("ETA Window Closes");
     });
 
@@ -554,7 +557,10 @@ describe("caseToCalendarEvents", () => {
         caseStatus: "eta9089",
         sundayAdFirstDate: "2024-03-03",
         sundayAdSecondDate: "2024-03-10",
+        jobOrderStartDate: "2024-03-01",
         jobOrderEndDate: "2024-04-09",
+        noticeOfFilingStartDate: "2024-03-01",
+        noticeOfFilingEndDate: "2024-03-15",
         // No eta9089FilingDate - triggers filing window calculation
       });
 

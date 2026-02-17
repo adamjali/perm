@@ -1,5 +1,5 @@
 import { parseISO, format, addDays, min, subDays } from 'date-fns';
-import { addBusinessDays, lastSundayOnOrBefore } from '../dates';
+import { addBusinessDays, subtractBusinessDays, lastSundayOnOrBefore } from '../dates';
 import {
   JOB_ORDER_MIN_DAYS,
   NOTICE_MIN_BUSINESS_DAYS,
@@ -17,6 +17,8 @@ import {
 export interface RecruitmentDeadlines {
   /** Latest date to complete Notice of Filing (min(first+150, pwd-30)) */
   notice_of_filing_deadline: string;
+  /** Latest date to START Notice of Filing (subtractBusinessDays from notice_of_filing_deadline by 10) */
+  notice_of_filing_start_deadline: string;
   /** Latest date to start Job Order (min(first+120, pwd-60)) */
   job_order_start_deadline: string;
   /** Latest Sunday for second newspaper ad (lastSunday of notice deadline) */
@@ -98,8 +100,16 @@ export function calculateRecruitmentDeadlines(
   const notice_of_filing_deadline = format(noticeDeadline, 'yyyy-MM-dd');
   const job_order_start_deadline = format(jobOrderDeadline, 'yyyy-MM-dd');
 
+  // NOF start deadline: subtract 10 business days (accounting for weekends + federal holidays)
+  // This replaces the old flat 136-day approximation (NOTICE_OF_FILING_START_DEADLINE_DAYS)
+  const notice_of_filing_start_deadline = subtractBusinessDays(
+    notice_of_filing_deadline,
+    NOTICE_MIN_BUSINESS_DAYS
+  );
+
   return {
     notice_of_filing_deadline,
+    notice_of_filing_start_deadline,
     job_order_start_deadline,
     second_sunday_ad_deadline: lastSundayOnOrBefore(notice_of_filing_deadline),
     first_sunday_ad_deadline: lastSundayOnOrBefore(

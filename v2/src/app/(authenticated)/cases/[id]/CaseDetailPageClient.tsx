@@ -60,7 +60,7 @@ import { useDerivedDates } from "@/hooks/useDerivedDates";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
 import { useIsMobile } from "@/lib/animations";
-import type { ProgressStatus } from "@/lib/perm";
+import { isRecruitmentComplete, type ProgressStatus } from "@/lib/perm";
 
 // ============================================================================
 // ANIMATION VARIANTS
@@ -519,7 +519,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   return (
     <motion.div
       variants={containerVariants}
-      initial="hidden"
+      initial={false}
       animate="visible"
       className="space-y-6"
     >
@@ -880,6 +880,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           }}
           filingWindowOpensDate={derivedDates.filingWindowOpens}
           filingWindowClosesDate={derivedDates.filingWindowCloses}
+          isRecruitmentComplete={isRecruitmentComplete(caseData)}
           defaultOpen={!isMobile}
           accentColor={caseData.caseStatus === "eta9089" ? stageColor : undefined}
         />

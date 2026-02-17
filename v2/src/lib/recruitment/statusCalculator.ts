@@ -5,8 +5,8 @@
  * Per 20 CFR 656.17: ETA 9089 must be filed 30-180 days after recruitment ends.
  */
 
-import { addDays, differenceInDays, parseISO, format } from "date-fns";
-import { getLastRecruitmentDate, countBusinessDays } from "../perm";
+import { differenceInDays, parseISO, format } from "date-fns";
+import { getLastRecruitmentDate, calculateFilingWindowFromCase, countBusinessDays } from "../perm";
 
 // ============================================================================
 // TYPES
@@ -287,41 +287,23 @@ export function calculateRecruitmentStatus(
     };
   }
 
-  const recruitmentEnd = parseISO(recruitmentEndDate);
+  // Use central filing window calculation (correctly uses first+180 for closes, not last+180)
+  const filingWindow = calculateFilingWindowFromCase(data);
 
-  // Validate parsed date - parseISO can return Invalid Date
-  if (isNaN(recruitmentEnd.getTime())) {
-    console.error(
-      `[statusCalculator] Invalid recruitment end date: "${recruitmentEndDate}"`
-    );
+  if (!filingWindow) {
     return {
       status: "incomplete",
-      message: "Invalid recruitment end date format",
+      message: "Unable to calculate filing window from recruitment dates",
       mandatorySteps,
       professionalMethods,
     };
   }
 
-  const windowOpens = addDays(recruitmentEnd, 30);
-  const windowCloses = addDays(recruitmentEnd, 180);
+  const windowOpens = parseISO(filingWindow.opens);
+  const effectiveWindowCloses = parseISO(filingWindow.closes);
 
-  // Apply PWD expiration constraint (window cannot extend past PWD expiration)
-  let pwdExpiration: Date | null = null;
-  if (data.pwdExpirationDate) {
-    const parsed = parseISO(data.pwdExpirationDate);
-    if (!isNaN(parsed.getTime())) {
-      pwdExpiration = parsed;
-    } else {
-      console.warn(
-        `[statusCalculator] Invalid PWD expiration date: "${data.pwdExpirationDate}", ignoring for window calculation`
-      );
-    }
-  }
-  const effectiveWindowCloses =
-    pwdExpiration && pwdExpiration < windowCloses ? pwdExpiration : windowCloses;
-
-  const windowOpensStr = format(windowOpens, "yyyy-MM-dd");
-  const windowClosesStr = format(effectiveWindowCloses, "yyyy-MM-dd");
+  const windowOpensStr = filingWindow.opens;
+  const windowClosesStr = filingWindow.closes;
 
   const daysUntilWindowOpens = differenceInDays(windowOpens, today);
   const daysRemainingInWindow = differenceInDays(effectiveWindowCloses, today);

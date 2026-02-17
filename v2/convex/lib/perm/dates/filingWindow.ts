@@ -361,6 +361,64 @@ export function calculateRecruitmentWindowFromCase(caseData: {
 }
 
 // ============================================================================
+// METHOD DATE UTILITIES
+// ============================================================================
+
+/**
+ * Shape of an additional recruitment method with all possible date fields.
+ * Supports single-date, date-range, and sub-entries method types.
+ */
+export interface MethodDateFields {
+  date?: string;
+  startDate?: string;
+  endDate?: string;
+  subEntries?: Array<{ date?: string }>;
+}
+
+/**
+ * Get the latest (most relevant) date from a single additional recruitment method.
+ *
+ * For quiet period and deadline calculations, we need one representative date per method:
+ * - date-range methods → endDate (fallback startDate)
+ * - sub-entries methods → max of all sub-entry dates
+ * - single-date methods → date
+ *
+ * @param method - Additional recruitment method with date fields
+ * @returns ISO date string or undefined if no date filled in
+ */
+export function getMethodLatestDate(method: MethodDateFields): string | undefined {
+  const candidates: string[] = [];
+
+  // Prefer endDate for date-range methods; fall back to startDate if endDate is invalid
+  if (method.endDate && safeParseISO(method.endDate)) {
+    candidates.push(method.endDate);
+  } else if (method.startDate) {
+    candidates.push(method.startDate);
+  }
+
+  // Include sub-entry dates
+  if (method.subEntries) {
+    for (const entry of method.subEntries) {
+      if (entry.date) candidates.push(entry.date);
+    }
+  }
+
+  // Include single date
+  if (method.date) {
+    candidates.push(method.date);
+  }
+
+  if (candidates.length === 0) return undefined;
+
+  const parsed = candidates
+    .map((d) => safeParseISO(d))
+    .filter((d): d is Date => d !== null);
+  if (parsed.length === 0) return undefined;
+
+  return formatUTC(max(parsed));
+}
+
+// ============================================================================
 // CONVENIENCE EXTRACTORS
 // ============================================================================
 
@@ -394,9 +452,12 @@ export function getFirstRecruitmentDate(data: {
 }
 
 /**
- * Extract last recruitment date from case data.
+ * Extract last recruitment date for quiet period calculation.
+ *
  * Last = latest of (second Sunday ad, job order end, notice of filing end)
- * For professional occupations: also includes additional recruitment end dates
+ * For professional occupations: also includes additional recruitment end dates,
+ * BUT excludes the latest-dated additional method per 20 CFR 656.17(e)(1)(ii)
+ * which allows one additional method to complete within the quiet period.
  *
  * IMPORTANT: Additional recruitment dates (additionalRecruitmentEndDate, additionalRecruitmentMethods)
  * should ONLY be included if isProfessionalOccupation is true. Non-professional cases
@@ -412,7 +473,7 @@ export function getLastRecruitmentDate(
     jobOrderEndDate?: string;
     noticeOfFilingEndDate?: string;
     additionalRecruitmentEndDate?: string;
-    additionalRecruitmentMethods?: Array<{ date?: string }>;
+    additionalRecruitmentMethods?: Array<MethodDateFields>;
   },
   isProfessionalOccupation: boolean = false
 ): string | undefined {
@@ -425,15 +486,25 @@ export function getLastRecruitmentDate(
 
   // Professional occupation dates (only if applicable)
   if (isProfessionalOccupation) {
+    // Legacy flat field — always contributes (NOT eligible for "special" exclusion)
     if (data.additionalRecruitmentEndDate) {
       dates.push(data.additionalRecruitmentEndDate);
     }
 
-    // Include individual additional method dates
+    // Per-method dates: exclude the latest-dated method (the "special" one)
+    // Per 20 CFR 656.17(e)(1)(ii), one additional method may complete within the quiet period
     if (data.additionalRecruitmentMethods) {
-      data.additionalRecruitmentMethods.forEach((method) => {
-        if (method.date) dates.push(method.date);
-      });
+      const methodDates = data.additionalRecruitmentMethods
+        .map((method) => getMethodLatestDate(method))
+        .filter((d): d is string => !!d);
+
+      if (methodDates.length > 0) {
+        // Sort descending to find the latest
+        const sorted = [...methodDates].sort().reverse();
+        // Exclude the latest (first after sort) — it's the "special" method
+        const nonSpecialDates = sorted.slice(1);
+        dates.push(...nonSpecialDates);
+      }
     }
   }
 
@@ -463,7 +534,7 @@ export function calculateFilingWindowFromCase(caseData: {
   noticeOfFilingStartDate?: string;
   noticeOfFilingEndDate?: string;
   additionalRecruitmentEndDate?: string;
-  additionalRecruitmentMethods?: Array<{ date?: string }>;
+  additionalRecruitmentMethods?: Array<MethodDateFields>;
   pwdExpirationDate?: string;
   isProfessionalOccupation?: boolean;
 }): FilingWindow | null {
@@ -491,7 +562,7 @@ export function getFilingWindowStatusFromCase(
     noticeOfFilingStartDate?: string;
     noticeOfFilingEndDate?: string;
     additionalRecruitmentEndDate?: string;
-    additionalRecruitmentMethods?: Array<{ date?: string }>;
+    additionalRecruitmentMethods?: Array<MethodDateFields>;
     pwdExpirationDate?: string;
     isProfessionalOccupation?: boolean;
   },

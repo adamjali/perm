@@ -688,13 +688,60 @@ describe('cross-field validation', () => {
         additionalRecruitmentStartDate: '2024-02-01',
         additionalRecruitmentEndDate: '2024-03-15',
         additionalRecruitmentMethods: [
+          // single-date category
           { method: 'job_fair', date: '2024-02-10', description: 'Job fair 1' },
-          { method: 'radio_ad', date: '2024-02-20', description: 'Radio ad' },
-          { method: 'employer_website', date: '2024-03-01', description: 'Website posting' },
+          // sub-entries category (radio_ad requires subEntries with dates)
+          { method: 'radio_ad', date: '2024-02-20', description: 'Radio ad', subEntries: [{ date: '2024-02-20', description: 'Broadcast 1' }] },
+          // date-range category (employer_website requires startDate)
+          { method: 'employer_website', date: '2024-03-01', description: 'Website posting', startDate: '2024-02-15', endDate: '2024-03-01' },
         ],
       });
       const result = caseFormSchema.safeParse(data);
       expect(result.success).toBe(true);
+    });
+
+    it('special method (latest) gets relaxed 180-day deadline', () => {
+      // firstRecruitment = Jan 21 (Sunday), +150 = Jun 19, +180 = Jul 19
+      // pwdExpiration = Dec 31 (not limiting)
+      const data = createValidCaseFormData({
+        isProfessionalOccupation: true,
+        pwdExpirationDate: '2024-12-31',
+        sundayAdFirstDate: '2024-01-21',
+        jobOrderStartDate: '2024-01-22',
+        noticeOfFilingStartDate: '2024-01-25',
+        additionalRecruitmentMethods: [
+          { method: 'job_fair', date: '2024-05-01', description: 'Job fair' },  // within 150 days
+          { method: 'campus_recruitment', date: '2024-07-10', description: 'Campus' }, // > 150, < 180 → special
+        ],
+      });
+      const result = caseFormSchema.safeParse(data);
+      // Latest method (Jul 10) should be accepted as special
+      expect(result.success).toBe(true);
+    });
+
+    it('non-special method fails when after 150-day deadline', () => {
+      // firstRecruitment = Jan 21, +150 = Jun 19
+      const data = createValidCaseFormData({
+        isProfessionalOccupation: true,
+        pwdExpirationDate: '2024-12-31',
+        sundayAdFirstDate: '2024-01-21',
+        jobOrderStartDate: '2024-01-22',
+        noticeOfFilingStartDate: '2024-01-25',
+        additionalRecruitmentMethods: [
+          { method: 'job_fair', date: '2024-06-25', description: 'Job fair' },  // > 150 days, not special
+          { method: 'campus_recruitment', date: '2024-07-10', description: 'Campus' }, // latest → special
+        ],
+      });
+      const result = caseFormSchema.safeParse(data);
+      // Non-special method (Jun 25) exceeds normal 150-day max (Jun 19)
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const error = result.error.issues.find(
+          (issue) => issue.path.join('.') === 'additionalRecruitmentMethods.0.date'
+        );
+        expect(error).toBeDefined();
+        expect(error?.message).toContain('on or before');
+      }
     });
   });
 });

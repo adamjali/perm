@@ -12,6 +12,8 @@
 
 import { isFutureDate } from "./calendarHelpers";
 import { calculateI140FilingDeadline } from "./perm/calculators/i140";
+import { calculateRecruitmentDeadlines } from "./perm/calculators/recruitment";
+import { getFirstRecruitmentDate } from "./perm/dates";
 import {
   EVENT_TYPE_TO_PREF,
 } from "./calendarTypes";
@@ -187,6 +189,35 @@ export function extractCalendarEvents(
 
   // Recruitment Window Closes (when recruitment expires)
   tryAddEvent("recruitment_expires", caseData.recruitmentWindowCloses);
+
+  // Recruitment Window Closes (overall 180-day window)
+  tryAddEvent("recruitment_window_closes", caseData.recruitmentWindowCloses);
+
+  // Per-step recruitment deadlines (computed from first recruitment + PWD)
+  const firstRecruitDate = getFirstRecruitmentDate({
+    sundayAdFirstDate: caseData.sundayAdFirstDate,
+    jobOrderStartDate: caseData.jobOrderStartDate,
+    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate,
+  });
+  if (firstRecruitDate && caseData.pwdExpirationDate) {
+    try {
+      const deadlines = calculateRecruitmentDeadlines(firstRecruitDate, caseData.pwdExpirationDate);
+      if (!caseData.jobOrderStartDate) {
+        tryAddEvent("job_order_start_deadline", deadlines.job_order_start_deadline);
+      }
+      if (!caseData.noticeOfFilingStartDate) {
+        tryAddEvent("notice_of_filing_start_deadline", deadlines.notice_of_filing_deadline);
+      }
+      if (!caseData.sundayAdFirstDate) {
+        tryAddEvent("first_sunday_ad_deadline", deadlines.first_sunday_ad_deadline);
+      }
+      if (!caseData.sundayAdSecondDate) {
+        tryAddEvent("second_sunday_ad_deadline", deadlines.second_sunday_ad_deadline);
+      }
+    } catch {
+      // Calculation may fail for invalid dates — skip per-step deadlines
+    }
+  }
 
   // I-140 Filing Deadline
   // Calculate if ETA 9089 is certified but I-140 not yet filed

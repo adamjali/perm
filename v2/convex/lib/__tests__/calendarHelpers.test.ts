@@ -391,6 +391,11 @@ describe("getEventTypeLabel", () => {
     eta9089_expiration: "ETA 9089 Expiration",
     filing_window_opens: "Ready to File",
     recruitment_expires: "Recruitment Expires",
+    recruitment_window_closes: "Recruitment Window Closes",
+    job_order_start_deadline: "Start Job Order By",
+    notice_of_filing_start_deadline: "Start Notice of Filing By",
+    first_sunday_ad_deadline: "First Sunday Ad By",
+    second_sunday_ad_deadline: "Second Sunday Ad By",
     i140_deadline: "I-140 Deadline",
     rfi_due: "RFI Response Due",
     rfe_due: "RFE Response Due",
@@ -682,8 +687,8 @@ describe("withExponentialBackoff", () => {
 // ============================================================================
 
 describe("ALL_CALENDAR_EVENT_TYPES", () => {
-  it("contains all 8 event types", () => {
-    expect(ALL_CALENDAR_EVENT_TYPES).toHaveLength(8);
+  it("contains all 13 event types", () => {
+    expect(ALL_CALENDAR_EVENT_TYPES).toHaveLength(13);
   });
 
   it("includes all expected types", () => {
@@ -692,6 +697,11 @@ describe("ALL_CALENDAR_EVENT_TYPES", () => {
     expect(ALL_CALENDAR_EVENT_TYPES).toContain("eta9089_expiration");
     expect(ALL_CALENDAR_EVENT_TYPES).toContain("filing_window_opens");
     expect(ALL_CALENDAR_EVENT_TYPES).toContain("recruitment_expires");
+    expect(ALL_CALENDAR_EVENT_TYPES).toContain("recruitment_window_closes");
+    expect(ALL_CALENDAR_EVENT_TYPES).toContain("job_order_start_deadline");
+    expect(ALL_CALENDAR_EVENT_TYPES).toContain("notice_of_filing_start_deadline");
+    expect(ALL_CALENDAR_EVENT_TYPES).toContain("first_sunday_ad_deadline");
+    expect(ALL_CALENDAR_EVENT_TYPES).toContain("second_sunday_ad_deadline");
     expect(ALL_CALENDAR_EVENT_TYPES).toContain("i140_deadline");
     expect(ALL_CALENDAR_EVENT_TYPES).toContain("rfi_due");
     expect(ALL_CALENDAR_EVENT_TYPES).toContain("rfe_due");

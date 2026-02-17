@@ -188,19 +188,20 @@ describe("calculateRecruitmentEndDate", () => {
       expect(result).toBe("2024-02-10");
     });
 
-    it("should INCLUDE additionalRecruitmentMethods when isProfessionalOccupation is true", () => {
+    it("should INCLUDE additionalRecruitmentMethods but exclude latest (special) when professional", () => {
       const result = calculateRecruitmentEndDate({
         sundayAdSecondDate: "2024-01-22",
         jobOrderEndDate: "2024-02-10",
         noticeOfFilingEndDate: "2024-01-26",
         additionalRecruitmentMethods: [
-          { date: "2024-04-01" }, // Latest
+          { date: "2024-04-01" }, // Latest → special, excluded
           { date: "2024-03-20" },
         ],
         isProfessionalOccupation: true,
       });
 
-      expect(result).toBe("2024-04-01");
+      // Latest method (Apr 1) excluded as special; remaining max = Mar 20
+      expect(result).toBe("2024-03-20");
     });
 
     it("should consider all additional dates for professional occupations", () => {
@@ -221,13 +222,18 @@ describe("calculateRecruitmentEndDate", () => {
   });
 
   describe("Feature 006: endDate, startDate, subEntries branches", () => {
+    // NOTE: Single additional method is always "special" (excluded from quiet period).
+    // To test that getMethodLatestDate reads endDate/startDate/subEntries correctly,
+    // we add a second method with a later date so the tested method stays non-special.
+
     it("should use method endDate when present", () => {
       const result = calculateRecruitmentEndDate({
         sundayAdSecondDate: "2024-01-22",
         jobOrderEndDate: "2024-02-10",
         noticeOfFilingEndDate: "2024-01-26",
         additionalRecruitmentMethods: [
-          { date: "2024-01-15", endDate: "2024-05-01" }, // endDate is latest
+          { date: "2024-01-15", endDate: "2024-05-01" }, // non-special (endDate tested)
+          { date: "2024-06-01" }, // latest → special, excluded
         ],
         isProfessionalOccupation: true,
       });
@@ -241,7 +247,8 @@ describe("calculateRecruitmentEndDate", () => {
         jobOrderEndDate: "2024-02-10",
         noticeOfFilingEndDate: "2024-01-26",
         additionalRecruitmentMethods: [
-          { startDate: "2024-04-15" }, // No endDate, falls back to startDate
+          { startDate: "2024-04-15" }, // non-special (startDate fallback tested)
+          { date: "2024-06-01" }, // latest → special, excluded
         ],
         isProfessionalOccupation: true,
       });
@@ -255,7 +262,8 @@ describe("calculateRecruitmentEndDate", () => {
         jobOrderEndDate: "2024-02-10",
         noticeOfFilingEndDate: "2024-01-26",
         additionalRecruitmentMethods: [
-          { startDate: "2024-03-01", endDate: "2024-04-15" },
+          { startDate: "2024-03-01", endDate: "2024-04-15" }, // non-special
+          { date: "2024-06-01" }, // latest → special, excluded
         ],
         isProfessionalOccupation: true,
       });
@@ -276,7 +284,8 @@ describe("calculateRecruitmentEndDate", () => {
               { date: "2024-05-15" }, // Latest sub-entry
               { date: "2024-04-01" },
             ],
-          },
+          }, // non-special (sub-entries tested)
+          { date: "2024-07-01" }, // latest → special, excluded
         ],
         isProfessionalOccupation: true,
       });
@@ -290,12 +299,14 @@ describe("calculateRecruitmentEndDate", () => {
         jobOrderEndDate: null,
         noticeOfFilingEndDate: null,
         additionalRecruitmentMethods: [
-          { date: "2024-06-01", endDate: "2024-04-15" }, // date is later
+          { date: "2024-06-01", endDate: "2024-04-15" }, // getMethodLatestDate returns max(date, endDate) = Jun 1
+          { date: "2024-07-01" }, // latest → special, excluded
         ],
         isProfessionalOccupation: true,
       });
 
-      // Both date and endDate are collected; date is latest
+      // getMethodLatestDate collects both date and endDate, returns max = Jun 1
+      // method1 (Jul 1) is special, excluded. method0 (Jun 1) stays.
       expect(result).toBe("2024-06-01");
     });
 
@@ -307,12 +318,14 @@ describe("calculateRecruitmentEndDate", () => {
         additionalRecruitmentMethods: [
           { date: "2024-03-01" },                                     // single-date
           { startDate: "2024-02-01", endDate: "2024-04-01" },         // date-range
-          { subEntries: [{ date: "2024-05-01" }, { date: "2024-06-15" }] }, // sub-entries (latest)
+          { subEntries: [{ date: "2024-05-01" }, { date: "2024-06-15" }] }, // sub-entries (latest → special)
         ],
         isProfessionalOccupation: true,
       });
 
-      expect(result).toBe("2024-06-15");
+      // Latest method is sub-entries (Jun 15) → special, excluded
+      // Remaining: single-date (Mar 1), date-range (Apr 1) + base dates
+      expect(result).toBe("2024-04-01");
     });
 
     it("should ignore invalid endDate and fall back to startDate", () => {
@@ -321,7 +334,8 @@ describe("calculateRecruitmentEndDate", () => {
         jobOrderEndDate: "2024-02-10",
         noticeOfFilingEndDate: null,
         additionalRecruitmentMethods: [
-          { startDate: "2024-04-01", endDate: "invalid-date" },
+          { startDate: "2024-04-01", endDate: "invalid-date" }, // non-special
+          { date: "2024-06-01" }, // latest → special, excluded
         ],
         isProfessionalOccupation: true,
       });
@@ -340,7 +354,8 @@ describe("calculateRecruitmentEndDate", () => {
               { date: "invalid" },
               { date: "2024-03-01" },
             ],
-          },
+          }, // non-special
+          { date: "2024-06-01" }, // latest → special, excluded
         ],
         isProfessionalOccupation: true,
       });
@@ -355,7 +370,8 @@ describe("calculateRecruitmentEndDate", () => {
         jobOrderEndDate: null,
         noticeOfFilingEndDate: null,
         additionalRecruitmentMethods: [
-          { startDate: "2024-06-01", endDate: "2024-03-15" },
+          { startDate: "2024-06-01", endDate: "2024-03-15" }, // non-special
+          { date: "2024-07-01" }, // latest → special, excluded
         ],
         isProfessionalOccupation: true,
       });
@@ -694,14 +710,15 @@ describe("calculateDerivedDates", () => {
       jobOrderEndDate: "2024-02-10",
       noticeOfFilingStartDate: "2024-01-12",
       noticeOfFilingEndDate: "2024-01-26",
-      additionalRecruitmentEndDate: "2024-05-01", // Included
-      additionalRecruitmentMethods: [{ date: "2024-06-01" }], // Latest
+      additionalRecruitmentEndDate: "2024-05-01", // Legacy field, NOT eligible for special
+      additionalRecruitmentMethods: [{ date: "2024-06-01" }], // Only method → special, excluded
       pwdExpirationDate: "2024-12-31",
       isProfessionalOccupation: true,
     });
 
-    expect(professional.recruitmentEndDate).toBe("2024-06-01"); // Method date is latest
-    expect(professional.filingWindowOpens).toBe("2024-07-01");  // Jun 1 + 30 days
+    // Method (Jun 1) excluded as special; legacy (May 1) stays; max = May 1
+    expect(professional.recruitmentEndDate).toBe("2024-05-01");
+    expect(professional.filingWindowOpens).toBe("2024-05-31");  // May 1 + 30 days
   });
 });
 

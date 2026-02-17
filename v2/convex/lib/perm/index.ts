@@ -85,6 +85,7 @@ export {
   FIRST_SUNDAY_AD_PWD_BUFFER_DAYS,
   SECOND_SUNDAY_AD_DEADLINE_DAYS,
   SECOND_SUNDAY_AD_PWD_BUFFER_DAYS,
+  NOTICE_OF_FILING_START_DEADLINE_DAYS,
 } from './constants';
 
 export {
@@ -94,12 +95,16 @@ export {
   formatUTC,
   // Business days
   addBusinessDays,
+  subtractBusinessDays,
   countBusinessDays,
   // Federal holidays
   getFederalHolidays,
   isFederalHoliday,
   isBusinessDay,
   type FederalHoliday,
+  // Method date utilities
+  type MethodDateFields,
+  getMethodLatestDate,
   // Filing window types
   type FilingWindow,
   type FilingWindowStatus,

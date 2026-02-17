@@ -578,7 +578,7 @@ export function DemoPageClient() {
       <DemoCaseModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        caseToEdit={caseToEdit ?? undefined}
+        caseToEdit={caseToEdit || undefined}
         onSave={handleSave}
       />
 
@@ -586,7 +586,7 @@ export function DemoPageClient() {
       <DeleteConfirmDialog
         isOpen={isDeleteOpen}
         onClose={handleCloseDelete}
-        caseName={caseToDelete?.name ?? ""}
+        caseName={caseToDelete ? caseToDelete.name : ""}
         onConfirm={confirmDelete}
       />
     </div>

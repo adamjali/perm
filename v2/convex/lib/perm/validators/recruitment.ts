@@ -2,7 +2,14 @@ import { parseISO, isBefore, isAfter, getDay, differenceInDays, isValid, addDays
 import type { ValidationResult, ValidationIssue, CaseData } from '../types';
 import { createValidationResult } from '../types';
 import { countBusinessDays } from '../dates/businessDays';
-import { JOB_ORDER_MIN_DAYS, NOTICE_MIN_BUSINESS_DAYS } from '../constants';
+import { getMethodLatestDate } from '../dates/filingWindow';
+import {
+  JOB_ORDER_MIN_DAYS,
+  NOTICE_MIN_BUSINESS_DAYS,
+  RECRUITMENT_WINDOW_DAYS,
+  PWD_RECRUITMENT_BUFFER_DAYS,
+  FILING_WINDOW_CLOSE_DAYS,
+} from '../constants';
 import { DATE_RANGE_METHODS, SUB_ENTRY_METHODS } from '../recruitment/methodCategories';
 
 /**
@@ -322,12 +329,16 @@ export interface ProfessionalMethodsInput {
 /**
  * Validate professional recruitment method-level dates (V-PROF rules).
  *
+ * Per 20 CFR 656.17(e)(1)(ii), the latest-dated additional method (the "special" one)
+ * may complete within the quiet period, getting a relaxed deadline: min(first+180, pwd).
+ * Other methods use the normal deadline: min(first+150, pwd-30).
+ *
  * Rules enforced:
  * - V-PROF-01: Date range start must be after PWD determination date
  * - V-PROF-02: Date range start cannot be after end date
- * - V-PROF-03: Date range end must be before recruitment window close
+ * - V-PROF-03: Date range end must be within method's max date
  * - V-PROF-04: Date range end cannot be before start (same as V-PROF-02)
- * - V-PROF-05: Sub-entries date must be within recruitment window
+ * - V-PROF-05: Sub-entries date must be within method's max date
  *
  * @param input - Professional methods with dates to validate
  * @returns Validation result with errors and warnings
@@ -340,23 +351,38 @@ export function validateProfessionalMethods(
 
   const { pwdDeterminationDate, pwdExpirationDate, firstRecruitmentDate, methods } = input;
 
-  // Calculate recruitment window max date: min(firstRecruitment + 150, pwdExpiration - 30)
-  let maxRecruitmentDate: Date | null = null;
   const firstDate = firstRecruitmentDate ? parseISO(firstRecruitmentDate) : null;
   const pwdMax = pwdExpirationDate ? parseISO(pwdExpirationDate) : null;
 
+  // Normal max: min(first+150, pwd-30)
+  let normalMaxDate: Date | null = null;
   if (firstDate && isValid(firstDate)) {
-    const max150 = addDays(firstDate, 150);
-    const pwdCap = pwdMax && isValid(pwdMax) ? addDays(pwdMax, -30) : null;
-    maxRecruitmentDate = pwdCap && pwdCap < max150 ? pwdCap : max150;
+    const maxFromFirst = addDays(firstDate, RECRUITMENT_WINDOW_DAYS);
+    const pwdCap = pwdMax && isValid(pwdMax) ? addDays(pwdMax, -PWD_RECRUITMENT_BUFFER_DAYS) : null;
+    normalMaxDate = pwdCap && pwdCap < maxFromFirst ? pwdCap : maxFromFirst;
   } else if (pwdMax && isValid(pwdMax)) {
-    maxRecruitmentDate = addDays(pwdMax, -30);
+    normalMaxDate = addDays(pwdMax, -PWD_RECRUITMENT_BUFFER_DAYS);
   }
 
+  // Special max: min(first+180, pwd)
+  let specialMaxDate: Date | null = null;
+  if (firstDate && isValid(firstDate)) {
+    const maxFromFirst = addDays(firstDate, FILING_WINDOW_CLOSE_DAYS);
+    const pwdCap = pwdMax && isValid(pwdMax) ? pwdMax : null;
+    specialMaxDate = pwdCap && pwdCap < maxFromFirst ? pwdCap : maxFromFirst;
+  } else if (pwdMax && isValid(pwdMax)) {
+    specialMaxDate = pwdMax;
+  }
+
+  // Find the "special" method (latest-dated)
+  const specialIndex = findSpecialMethodIndex(methods);
   const pwdDetDate = pwdDeterminationDate ? parseISO(pwdDeterminationDate) : null;
 
   // Validate each method
   methods.forEach((method, index) => {
+    const isSpecial = index === specialIndex;
+    const maxRecruitmentDate = isSpecial ? specialMaxDate : normalMaxDate;
+
     // Only validate date-range and sub-entry methods
     const isDateRange = (DATE_RANGE_METHODS as readonly string[]).includes(method.method);
     const isSubEntry = (SUB_ENTRY_METHODS as readonly string[]).includes(method.method);
@@ -396,16 +422,17 @@ export function validateProfessionalMethods(
         }
       }
 
-      // V-PROF-03: endDate must be within recruitment window
+      // V-PROF-03: endDate must be within method's max date
       if (endDate && maxRecruitmentDate) {
         const end = parseISO(endDate);
         if (isValid(end) && isAfter(end, maxRecruitmentDate)) {
           const maxDateStr = maxRecruitmentDate.toISOString().split('T')[0];
+          const label = isSpecial ? 'extended deadline' : 'recruitment window closes';
           errors.push({
             ruleId: 'V-PROF-03',
             severity: 'error',
             field: `additionalRecruitmentMethods.${index}.endDate`,
-            message: `Method end date must be on or before ${maxDateStr} (recruitment window closes)`,
+            message: `Method end date must be on or before ${maxDateStr} (${label})`,
           });
         }
       }
@@ -427,14 +454,15 @@ export function validateProfessionalMethods(
           });
         }
 
-        // V-PROF-05: sub-entry date must be within recruitment window
+        // V-PROF-05: sub-entry date must be within method's max date
         if (maxRecruitmentDate && isAfter(entryDate, maxRecruitmentDate)) {
           const maxDateStr = maxRecruitmentDate.toISOString().split('T')[0];
+          const label = isSpecial ? 'extended deadline' : 'recruitment window closes';
           errors.push({
             ruleId: 'V-PROF-05',
             severity: 'error',
             field: `additionalRecruitmentMethods.${index}.subEntries.${subIndex}.date`,
-            message: `Entry date must be on or before ${maxDateStr} (recruitment window closes)`,
+            message: `Entry date must be on or before ${maxDateStr} (${label})`,
           });
         }
       });
@@ -442,4 +470,24 @@ export function validateProfessionalMethods(
   });
 
   return createValidationResult(errors, warnings);
+}
+
+/**
+ * Find the "special" method index (latest-dated additional method).
+ */
+function findSpecialMethodIndex(
+  methods: ProfessionalMethodsInput['methods']
+): number {
+  let latestDate: string | undefined;
+  let latestIndex = -1;
+
+  methods.forEach((method, index) => {
+    const methodDate = getMethodLatestDate(method);
+    if (methodDate && (!latestDate || methodDate > latestDate)) {
+      latestDate = methodDate;
+      latestIndex = index;
+    }
+  });
+
+  return latestIndex;
 }

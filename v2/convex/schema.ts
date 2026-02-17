@@ -294,7 +294,7 @@ export default defineSchema({
     pwdDeterminationDate: v.optional(v.string()),
     pwdExpirationDate: v.optional(v.string()), // Auto-calculated
     pwdCaseNumber: v.optional(v.string()),
-    pwdWageAmount: v.optional(v.number()), // Stored as cents
+    pwdWageAmount: v.optional(v.number()), // Stored as dollars (e.g., 85000 or 85000.50)
     pwdWageLevel: v.optional(v.string()),
 
     // Recruitment - Job Order
@@ -478,6 +478,11 @@ export default defineSchema({
         rfi_due: v.optional(v.string()),
         rfe_due: v.optional(v.string()),
         recruitment_end: v.optional(v.string()),
+        recruitment_window_closes: v.optional(v.string()),
+        job_order_start_deadline: v.optional(v.string()),
+        notice_of_filing_start_deadline: v.optional(v.string()),
+        first_sunday_ad_deadline: v.optional(v.string()),
+        second_sunday_ad_deadline: v.optional(v.string()),
       })
     ),
     calendarSyncEnabled: v.boolean(),

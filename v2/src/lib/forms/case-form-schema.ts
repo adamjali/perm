@@ -12,7 +12,11 @@ import {
   type ValidationIssue as PermValidationIssue,
   getFirstRecruitmentDate,
   getLastRecruitmentDate,
+  getMethodLatestDate,
   isISODateString,
+  RECRUITMENT_WINDOW_DAYS,
+  PWD_RECRUITMENT_BUFFER_DAYS,
+  FILING_WINDOW_CLOSE_DAYS,
 } from '../perm';
 import { getMethodCategory } from '@/../convex/lib/perm/recruitment/methodCategories';
 import { captureError } from '@/lib/sentry';
@@ -346,9 +350,18 @@ function validateProfessionalRecruitment(data: CrossValidationData, ctx: Validat
   if (!data.additionalRecruitmentMethods || data.additionalRecruitmentMethods.length === 0) return;
 
   const pwdDate = data.pwdDeterminationDate ? new Date(data.pwdDeterminationDate) : null;
-  const maxDateInfo = calculateMethodMaxDate(data);
+
+  // Determine which method is the "special" one (latest-dated, gets relaxed deadline)
+  const specialIndex = findSpecialMethodIndex(data.additionalRecruitmentMethods);
+
+  // Compute normal and special max dates
+  const normalMaxInfo = calculateMethodMaxDate(data, false);
+  const specialMaxInfo = calculateMethodMaxDate(data, true);
 
   data.additionalRecruitmentMethods.forEach((method, index) => {
+    const isSpecial = index === specialIndex;
+    const maxDateInfo = isSpecial ? specialMaxInfo : normalMaxInfo;
+
     // Validate single-date methods
     if (method.date) {
       const methodDate = new Date(method.date);
@@ -421,8 +434,40 @@ function validateProfessionalRecruitment(data: CrossValidationData, ctx: Validat
   });
 }
 
-/** Calculate maximum allowed date for recruitment methods */
-function calculateMethodMaxDate(data: CrossValidationData): { date: Date; dateStr: string; reason: string } | null {
+/**
+ * Find which method is the "special" one (latest-dated).
+ * Returns index of the latest method, or -1 if none have dates.
+ */
+function findSpecialMethodIndex(
+  methods: CrossValidationData['additionalRecruitmentMethods']
+): number {
+  if (!methods || methods.length === 0) return -1;
+
+  let latestDate: string | undefined;
+  let latestIndex = -1;
+
+  methods.forEach((method, index) => {
+    const methodDate = getMethodLatestDate(method);
+    if (methodDate && (!latestDate || methodDate > latestDate)) {
+      latestDate = methodDate;
+      latestIndex = index;
+    }
+  });
+
+  return latestIndex;
+}
+
+/**
+ * Calculate maximum allowed date for recruitment methods.
+ *
+ * @param data - Form data
+ * @param isSpecial - If true, use relaxed deadline: min(first+180, pwd).
+ *                    If false, use normal deadline: min(first+150, pwd-30).
+ */
+function calculateMethodMaxDate(
+  data: CrossValidationData,
+  isSpecial: boolean
+): { date: Date; dateStr: string; reason: string } | null {
   const recruitmentDates = [
     data.jobOrderStartDate,
     data.sundayAdFirstDate,
@@ -431,31 +476,48 @@ function calculateMethodMaxDate(data: CrossValidationData): { date: Date; dateSt
 
   const firstRecruitmentDate = recruitmentDates.length > 0 ? recruitmentDates.sort()[0] : null;
 
+  // Special method: min(first+180, pwd) — can complete during quiet period
+  // Normal method: min(first+150, pwd-30)
+  const daysFromFirst = isSpecial ? FILING_WINDOW_CLOSE_DAYS : RECRUITMENT_WINDOW_DAYS;
+  const pwdBuffer = isSpecial ? 0 : PWD_RECRUITMENT_BUFFER_DAYS;
+
   let maxDate: Date | null = null;
   let reason = '';
 
   if (firstRecruitmentDate) {
-    const max150 = new Date(firstRecruitmentDate);
-    max150.setDate(max150.getDate() + 150);
+    const maxFromFirst = new Date(firstRecruitmentDate);
+    maxFromFirst.setDate(maxFromFirst.getDate() + daysFromFirst);
 
     if (data.pwdExpirationDate) {
       const pwdMax = new Date(data.pwdExpirationDate);
-      pwdMax.setDate(pwdMax.getDate() - 30);
-      if (max150 <= pwdMax) {
-        maxDate = max150;
-        reason = '150 days from first recruitment';
+      if (pwdBuffer > 0) {
+        pwdMax.setDate(pwdMax.getDate() - pwdBuffer);
+      }
+      if (maxFromFirst <= pwdMax) {
+        maxDate = maxFromFirst;
+        reason = isSpecial
+          ? `${daysFromFirst} days from first recruitment (extended deadline)`
+          : `${daysFromFirst} days from first recruitment`;
       } else {
         maxDate = pwdMax;
-        reason = '30 days before PWD expiration';
+        reason = isSpecial
+          ? 'PWD expiration (extended deadline)'
+          : `${pwdBuffer} days before PWD expiration`;
       }
     } else {
-      maxDate = max150;
-      reason = '150 days from first recruitment';
+      maxDate = maxFromFirst;
+      reason = isSpecial
+        ? `${daysFromFirst} days from first recruitment (extended deadline)`
+        : `${daysFromFirst} days from first recruitment`;
     }
   } else if (data.pwdExpirationDate) {
     maxDate = new Date(data.pwdExpirationDate);
-    maxDate.setDate(maxDate.getDate() - 30);
-    reason = '30 days before PWD expiration';
+    if (pwdBuffer > 0) {
+      maxDate.setDate(maxDate.getDate() - pwdBuffer);
+    }
+    reason = isSpecial
+      ? 'PWD expiration (extended deadline)'
+      : `${pwdBuffer} days before PWD expiration`;
   }
 
   if (!maxDate) return null;

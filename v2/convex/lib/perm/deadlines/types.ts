@@ -24,6 +24,10 @@ export type DeadlineType =
   | "filing_window_opens"
   | "filing_window_closes"
   | "recruitment_window_closes"
+  | "job_order_start_deadline"
+  | "notice_of_filing_start_deadline"
+  | "first_sunday_ad_deadline"
+  | "second_sunday_ad_deadline"
   | "i140_filing_deadline"
   | "rfi_due"
   | "rfe_due";
@@ -36,6 +40,10 @@ export const DEADLINE_LABELS: Record<DeadlineType, string> = {
   filing_window_opens: "ETA 9089 Filing Window Opens",
   filing_window_closes: "ETA 9089 Filing Window Closes",
   recruitment_window_closes: "Recruitment Window Closes",
+  job_order_start_deadline: "Start Job Order By",
+  notice_of_filing_start_deadline: "Start Notice of Filing By",
+  first_sunday_ad_deadline: "First Sunday Ad By",
+  second_sunday_ad_deadline: "Second Sunday Ad By",
   i140_filing_deadline: "I-140 Filing Deadline",
   rfi_due: "RFI Response Due",
   rfe_due: "RFE Response Due",
@@ -198,8 +206,15 @@ export const SUPERSESSION_REASONS = {
   I140_FILED: "I-140 has been filed",
   RFI_RESPONDED: "RFI response has been submitted",
   RFE_RESPONDED: "RFE response has been submitted",
+  RECRUITMENT_INCOMPLETE: "Recruitment activities not yet complete",
   NO_DATE: "No date set for this deadline",
   NOT_CERTIFIED: "ETA 9089 not yet certified",
+  JOB_ORDER_STARTED: "Job order has been started",
+  NOTICE_OF_FILING_STARTED: "Notice of filing has been started",
+  FIRST_SUNDAY_AD_PLACED: "First Sunday ad has been placed",
+  SECOND_SUNDAY_AD_PLACED: "Second Sunday ad has been placed",
+  NO_FIRST_RECRUITMENT: "No recruitment activity started yet",
+  RECRUITMENT_COMPLETE: "All recruitment activities completed",
 } as const;
 
 export type SupersessionReason =

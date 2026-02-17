@@ -69,6 +69,8 @@ import type { CaseStatus, ProgressStatus } from "../../../../convex/lib/dashboar
 const DEFAULT_PAGE_SIZE = 12;
 const PAGE_SIZE_STORAGE_KEY = "perm-tracker-page-size";
 const VIEW_MODE_STORAGE_KEY = "perm-tracker-view-mode";
+const SORT_STORAGE_KEY = "perm-tracker-sort";
+const FILTERS_STORAGE_KEY = "perm-tracker-filters";
 const DEFAULT_SORT: CaseListSort = {
   sortBy: "deadline",
   sortOrder: "asc",
@@ -125,6 +127,56 @@ function setStoredViewMode(mode: ViewMode): void {
   }
 }
 
+function getStoredSort(): CaseListSort | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem(SORT_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed.sortBy === "string" && typeof parsed.sortOrder === "string") {
+        return parsed as CaseListSort;
+      }
+    }
+  } catch {
+    // localStorage unavailable or corrupt data — expected, use default
+  }
+  return null;
+}
+
+function setStoredSort(sort: CaseListSort): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(sort));
+  } catch {
+    // localStorage unavailable or quota exceeded — expected, silently fail
+  }
+}
+
+function getStoredFilters(): CaseListFilters | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem(FILTERS_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === "object") {
+        return parsed as CaseListFilters;
+      }
+    }
+  } catch {
+    // localStorage unavailable or corrupt data — expected, use default
+  }
+  return null;
+}
+
+function setStoredFilters(filters: CaseListFilters): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
+  } catch {
+    // localStorage unavailable or quota exceeded — expected, silently fail
+  }
+}
+
 // ============================================================================
 // URL PARAM PARSING
 // ============================================================================
@@ -176,6 +228,7 @@ export function CasesPageClient() {
   // URL STATE
   // ============================================================================
 
+  // Parse URL state (always the initial source of truth)
   const [filters, setFilters] = useState<CaseListFilters>(() =>
     parseURLFilters(searchParams)
   );
@@ -187,6 +240,19 @@ export function CasesPageClient() {
   );
   const [pageSize, setPageSize] = useState(() => getStoredPageSize());
   const [viewMode, setViewMode] = useState<ViewMode>(() => getStoredViewMode());
+
+  // Restore sort/filters from localStorage on mount when URL has no params.
+  // useState initializers can't reliably access localStorage during SSR/hydration,
+  // so we restore in useEffect (client-only, runs once after mount).
+  const hasURLParams = searchParams.toString().length > 0;
+  useEffect(() => {
+    if (hasURLParams) return;
+    const storedFilters = getStoredFilters();
+    if (storedFilters) setFilters(storedFilters);
+    const storedSort = getStoredSort();
+    if (storedSort) setSort(storedSort);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ============================================================================
   // VIEW MODE HANDLER
@@ -271,7 +337,7 @@ export function CasesPageClient() {
   const bulkUpdateCalendarSyncMutation = useMutation(api.cases.bulkUpdateCalendarSync);
   const removeMutation = useMutation(api.cases.remove);
   const updateMutation = useMutation(api.cases.update);
-  const isCalendarConnected = useQuery(api.googleAuth.isGoogleCalendarConnected) ?? false;
+  const isCalendarConnected = !!useQuery(api.googleAuth.isGoogleCalendarConnected);
   const convex = useConvex();
 
   // Drag sensors — PointerSensor for mouse, TouchSensor for mobile (with
@@ -298,6 +364,10 @@ export function CasesPageClient() {
   // ============================================================================
 
   useEffect(() => {
+    // When URL has no params (e.g., navigating to /cases via nav link),
+    // skip syncing from URL — let localStorage restoration handle state.
+    if (searchParams.toString().length === 0) return;
+
     const urlFilters = parseURLFilters(searchParams);
     const urlSort = parseURLSort(searchParams);
     const urlPage = parseURLPage(searchParams);
@@ -361,6 +431,7 @@ export function CasesPageClient() {
       // Use transition to keep old content visible while loading new results
       startTransition(() => {
         setFilters(newFilters);
+        setStoredFilters(newFilters); // Persist to localStorage
         setCurrentPage(1); // Reset to page 1 on filter change
         setLocalOrder([]); // Clear drag order when changing filters
         updateURL(newFilters, sort, 1);
@@ -372,6 +443,7 @@ export function CasesPageClient() {
   const handleSortChange = useCallback(
     (newSort: CaseListSort) => {
       setSort(newSort);
+      setStoredSort(newSort); // Persist to localStorage
       setCurrentPage(1); // Reset to page 1 on sort change
       setLocalOrder([]); // Clear drag order when changing sort
       updateURL(filters, newSort, 1);
@@ -441,8 +513,8 @@ export function CasesPageClient() {
     if (localOrder.length > 0) {
       const orderMap = new Map(localOrder.map((id, index) => [id, index]));
       cases.sort((a, b) => {
-        const aIndex = orderMap.get(a._id) ?? Number.MAX_SAFE_INTEGER;
-        const bIndex = orderMap.get(b._id) ?? Number.MAX_SAFE_INTEGER;
+        const aIndex = orderMap.get(a._id) || Number.MAX_SAFE_INTEGER;
+        const bIndex = orderMap.get(b._id) || Number.MAX_SAFE_INTEGER;
         if (aIndex !== Number.MAX_SAFE_INTEGER && bIndex !== Number.MAX_SAFE_INTEGER) {
           return aIndex - bIndex;
         }
@@ -457,8 +529,8 @@ export function CasesPageClient() {
     if (sort.sortBy === "custom" && customOrderData?.caseIds?.length) {
       const orderMap = new Map(customOrderData.caseIds.map((id, index) => [id, index]));
       cases.sort((a, b) => {
-        const aIndex = orderMap.get(a._id) ?? Number.MAX_SAFE_INTEGER;
-        const bIndex = orderMap.get(b._id) ?? Number.MAX_SAFE_INTEGER;
+        const aIndex = orderMap.get(a._id) || Number.MAX_SAFE_INTEGER;
+        const bIndex = orderMap.get(b._id) || Number.MAX_SAFE_INTEGER;
         if (aIndex !== Number.MAX_SAFE_INTEGER && bIndex !== Number.MAX_SAFE_INTEGER) {
           return aIndex - bIndex;
         }
@@ -914,14 +986,15 @@ export function CasesPageClient() {
             isProfessionalOccupation: c.isProfessionalOccupation as boolean | undefined,
             calendarSyncEnabled: c.calendarSyncEnabled as boolean | undefined,
             showOnTimeline: c.showOnTimeline as boolean | undefined,
+            // SWC minifier bug workaround: use || instead of ?? (swc#760)
             // PWD dates
-            pwdFilingDate: dates?.pwdFiled ?? c.pwdFilingDate,
-            pwdDeterminationDate: dates?.pwdDetermined ?? c.pwdDeterminationDate,
-            pwdExpirationDate: dates?.pwdExpires ?? c.pwdExpirationDate,
+            pwdFilingDate: dates?.pwdFiled || c.pwdFilingDate,
+            pwdDeterminationDate: dates?.pwdDetermined || c.pwdDeterminationDate,
+            pwdExpirationDate: dates?.pwdExpires || c.pwdExpirationDate,
             pwdCaseNumber: c.pwdCaseNumber,
             // Recruitment - Job Order
-            jobOrderStartDate: dates?.recruitmentStart ?? c.jobOrderStartDate,
-            jobOrderEndDate: dates?.recruitmentEnd ?? c.jobOrderEndDate,
+            jobOrderStartDate: dates?.recruitmentStart || c.jobOrderStartDate,
+            jobOrderEndDate: dates?.recruitmentEnd || c.jobOrderEndDate,
             jobOrderState: c.jobOrderState,
             // Recruitment - Sunday Ads
             sundayAdFirstDate: c.sundayAdFirstDate,
@@ -937,15 +1010,15 @@ export function CasesPageClient() {
             recruitmentApplicantsCount: c.recruitmentApplicantsCount,
             recruitmentSummaryCustom: c.recruitmentSummaryCustom,
             // ETA 9089
-            eta9089FilingDate: dates?.etaFiled ?? c.eta9089FilingDate,
-            eta9089CertificationDate: dates?.etaCertified ?? c.eta9089CertificationDate,
-            eta9089ExpirationDate: dates?.etaExpires ?? c.eta9089ExpirationDate,
+            eta9089FilingDate: dates?.etaFiled || c.eta9089FilingDate,
+            eta9089CertificationDate: dates?.etaCertified || c.eta9089CertificationDate,
+            eta9089ExpirationDate: dates?.etaExpires || c.eta9089ExpirationDate,
             eta9089CaseNumber: c.eta9089CaseNumber,
             // I-140
-            i140FilingDate: dates?.i140Filed ?? c.i140FilingDate,
+            i140FilingDate: dates?.i140Filed || c.i140FilingDate,
             i140ReceiptDate: c.i140ReceiptDate,
             i140ReceiptNumber: c.i140ReceiptNumber,
-            i140ApprovalDate: dates?.i140Approved ?? c.i140ApprovalDate,
+            i140ApprovalDate: dates?.i140Approved || c.i140ApprovalDate,
             i140DenialDate: c.i140DenialDate,
             // RFI/RFE arrays
             rfiEntries: c.rfiEntries,
@@ -1000,14 +1073,14 @@ export function CasesPageClient() {
   // PAGINATION (from server response)
   // ============================================================================
 
-  const totalCount = caseListData?.pagination.totalCount ?? 0;
-  const totalPages = caseListData?.pagination.totalPages ?? 1;
+  const totalCount = caseListData?.pagination.totalCount || 0;
+  const totalPages = caseListData?.pagination.totalPages || 1;
   // Server already paginated - processedCases IS the current page
   const paginatedCases = processedCases;
 
   // The case currently being dragged — used to render the DragOverlay content.
   const activeDragCase = useMemo(
-    () => (activeDragId ? paginatedCases.find((c) => c._id === activeDragId) ?? null : null),
+    () => (activeDragId ? paginatedCases.find((c) => c._id === activeDragId) || null : null),
     [activeDragId, paginatedCases]
   );
 

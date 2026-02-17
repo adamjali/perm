@@ -27,6 +27,8 @@ import {
   getTodayForDeadline,
   DEFAULT_USER_TIMEZONE,
 } from "./timezones";
+import { calculateRecruitmentDeadlines } from "../calculators/recruitment";
+import { getFirstRecruitmentDate } from "../dates";
 
 const log = loggers.deadline;
 
@@ -93,6 +95,14 @@ export function extractActiveDeadlines(
   // RFE due
   const rfeDeadline = extractRfeDeadline(caseData, resolveToday("rfe_due"));
   if (rfeDeadline) deadlines.push(rfeDeadline);
+
+  // Recruitment window closes
+  const recruitWindowDeadline = extractRecruitmentWindowCloses(caseData, resolveToday("recruitment_window_closes"));
+  if (recruitWindowDeadline) deadlines.push(recruitWindowDeadline);
+
+  // Per-step recruitment deadlines (computed from first recruitment + PWD)
+  const perStepDeadlines = extractPerStepDeadlines(caseData, resolveToday);
+  deadlines.push(...perStepDeadlines);
 
   // Sort by daysUntil (most urgent first)
   return deadlines.sort((a, b) => a.daysUntil - b.daysUntil);
@@ -286,6 +296,98 @@ function extractRfeDeadline(
   }
 }
 
+/**
+ * Extract recruitment window closes deadline if active.
+ */
+function extractRecruitmentWindowCloses(
+  caseData: CaseDataForDeadlines,
+  todayISO: string
+): ExtractedDeadline | null {
+  const status = isDeadlineActive("recruitment_window_closes", caseData);
+  if (!status.isActive) return null;
+
+  const date = caseData.recruitmentWindowCloses;
+  if (!date) return null;
+
+  try {
+    return {
+      type: "recruitment_window_closes",
+      label: DEADLINE_LABELS.recruitment_window_closes,
+      date,
+      daysUntil: daysBetween(todayISO, date),
+      timezoneRule: DEADLINE_TIMEZONE_RULES.recruitment_window_closes,
+    };
+  } catch (error) {
+    log.error('Failed to extract recruitment window closes', {
+      date,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
+/**
+ * Extract per-step recruitment deadlines (job order, notice, Sunday ads).
+ *
+ * These are computed from firstRecruitmentDate + pwdExpirationDate using
+ * the central calculateRecruitmentDeadlines function.
+ */
+function extractPerStepDeadlines(
+  caseData: CaseDataForDeadlines,
+  resolveToday: (type: DeadlineType) => string
+): ExtractedDeadline[] {
+  const deadlines: ExtractedDeadline[] = [];
+
+  // Need both first recruitment date and PWD expiration to compute deadlines
+  const firstRecruit = getFirstRecruitmentDate(caseData);
+  if (!firstRecruit || !caseData.pwdExpirationDate) return deadlines;
+
+  // Compute all per-step deadline dates from central calculator
+  let computed;
+  try {
+    computed = calculateRecruitmentDeadlines(firstRecruit, caseData.pwdExpirationDate);
+  } catch (error) {
+    log.error('Failed to compute recruitment deadlines', {
+      firstRecruit,
+      pwdExpiration: caseData.pwdExpirationDate,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return deadlines;
+  }
+
+  // Map of deadline type → computed date
+  const perStepMap: Array<{ type: DeadlineType; date: string }> = [
+    { type: "job_order_start_deadline", date: computed.job_order_start_deadline },
+    { type: "notice_of_filing_start_deadline", date: computed.notice_of_filing_start_deadline },
+    { type: "first_sunday_ad_deadline", date: computed.first_sunday_ad_deadline },
+    { type: "second_sunday_ad_deadline", date: computed.second_sunday_ad_deadline },
+  ];
+
+  for (const { type, date } of perStepMap) {
+    const status = isDeadlineActive(type, caseData);
+    if (!status.isActive) continue;
+
+    const today = resolveToday(type);
+    try {
+      deadlines.push({
+        type,
+        label: DEADLINE_LABELS[type],
+        date,
+        daysUntil: daysBetween(today, date),
+        timezoneRule: DEADLINE_TIMEZONE_RULES[type],
+      });
+    } catch (error) {
+      log.error('Failed to extract per-step deadline', {
+        type,
+        date,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return deadlines;
+}
+
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
@@ -312,6 +414,11 @@ export function getActiveDeadlineTypes(
     "pwd_expiration",
     "filing_window_opens",
     "filing_window_closes",
+    "recruitment_window_closes",
+    "job_order_start_deadline",
+    "notice_of_filing_start_deadline",
+    "first_sunday_ad_deadline",
+    "second_sunday_ad_deadline",
     "i140_filing_deadline",
     "rfi_due",
     "rfe_due",
@@ -344,6 +451,16 @@ export function shouldRemindForDeadline(
       return !!caseData.filingWindowOpens;
     case "filing_window_closes":
       return !!caseData.filingWindowCloses;
+    case "recruitment_window_closes":
+      return !!caseData.recruitmentWindowCloses;
+    case "job_order_start_deadline":
+    case "notice_of_filing_start_deadline":
+    case "first_sunday_ad_deadline":
+    case "second_sunday_ad_deadline": {
+      // Per-step deadlines need first recruitment + PWD to compute dates
+      const first = getFirstRecruitmentDate(caseData);
+      return !!first && !!caseData.pwdExpirationDate;
+    }
     case "i140_filing_deadline":
       return !!caseData.eta9089ExpirationDate;
     case "rfi_due":
