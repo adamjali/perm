@@ -21,6 +21,7 @@ export interface RecruitmentDeadlineIndicatorProps {
   sundayAdFirstDate?: string;
   jobOrderStartDate?: string;
   noticeOfFilingStartDate?: string;
+  isProfessionalOccupation?: boolean;
 }
 
 // ============================================================================
@@ -45,6 +46,7 @@ export function RecruitmentDeadlineIndicator({
   sundayAdFirstDate,
   jobOrderStartDate,
   noticeOfFilingStartDate,
+  isProfessionalOccupation,
 }: RecruitmentDeadlineIndicatorProps) {
   // If no PWD determination, show initial state
   if (!pwdDeterminationDate) {
@@ -195,10 +197,10 @@ export function RecruitmentDeadlineIndicator({
 
       <p className="text-xs text-muted-foreground pt-1">
         {limitingFactor === '150-day'
-          ? `Basic recruitment and 2 of 3 additional methods must finish within 150 days of the first step${firstDate ? ` (${firstDate})` : ""}, leaving a 30-day quiet period. One additional method may complete up to the filing deadline (180 days total).`
+          ? `Recruitment must be complete within 150 days of the first recruitment step${firstDate ? ` (${format(parseISO(firstDate), "MMM d, yyyy")})` : ""}, leaving a 30-day quiet period (180 days total).${isProfessionalOccupation ? " One additional recruitment method for professional positions may be completed during the 30-day quiet period." : ""}`
           : firstDate
-            ? "Recruitment must complete 30 days before PWD expires to preserve the filing window. This PWD constraint is earlier than the 150-day rule."
-            : "Recruitment must complete 30 days before PWD expires to allow for the mandatory waiting period before ETA 9089 filing."}
+            ? `Recruitment must complete 30 days before PWD expires to preserve the filing window. This PWD constraint is earlier than the 150-day rule.${isProfessionalOccupation ? " One additional recruitment method for professional positions may be completed during the 30-day quiet period." : ""}`
+            : `Recruitment must complete 30 days before PWD expires to allow for the mandatory waiting period before ETA 9089 filing.${isProfessionalOccupation ? " One additional recruitment method for professional positions may be completed during the 30-day quiet period." : ""}`}
       </p>
     </div>
   );

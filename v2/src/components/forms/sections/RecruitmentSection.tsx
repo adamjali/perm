@@ -361,6 +361,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
           sundayAdFirstDate={values.sundayAdFirstDate}
           jobOrderStartDate={values.jobOrderStartDate}
           noticeOfFilingStartDate={values.noticeOfFilingStartDate}
+          isProfessionalOccupation={values.isProfessionalOccupation}
         />
 
         {/* ========== SUNDAY NEWSPAPER ADS ========== */}

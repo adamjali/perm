@@ -51,6 +51,12 @@ export function SubEntriesManager({
         </span>
       </div>
 
+      {dateConstraint?.hint && (
+        <p className="text-xs text-muted-foreground">
+          {dateConstraint.hint}
+        </p>
+      )}
+
       {entries.map((entry, index) => {
         const dateErrorKey = methodIndex !== undefined
           ? `additionalRecruitmentMethods.${methodIndex}.subEntries.${index}.date`

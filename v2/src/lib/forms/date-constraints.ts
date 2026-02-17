@@ -162,14 +162,40 @@ export function getRecruitmentFieldDeadline(
     limitingFactor = 'pwd';
   }
 
+  // Field-specific reasons explaining WHY the deadline is what it is
+  // Each traces back to the two rules everyone knows: 180-day window and PWD expiration
+  const fieldReasons: Record<string, { recruitment: string; pwd: string }> = {
+    jobOrderStartDate: {
+      recruitment: 'must be posted 30 days before recruitment deadline',
+      pwd: 'must be posted 30 days + 30-day quiet period before PWD expires',
+    },
+    sundayAdFirstDate: {
+      recruitment: 'second ad needed 7+ days later before recruitment deadline',
+      pwd: 'second ad needed 7+ days later + 30-day quiet period before PWD expires',
+    },
+    sundayAdSecondDate: {
+      recruitment: 'recruitment deadline',
+      pwd: '30 days before PWD expires',
+    },
+    additionalRecruitmentStartDate: {
+      recruitment: 'recruitment deadline',
+      pwd: '30 days before PWD expires',
+    },
+    additionalRecruitmentEndDate: {
+      recruitment: 'recruitment deadline',
+      pwd: '30 days before PWD expires',
+    },
+  };
+
   // Build hint explaining both constraints
   let hint = '';
   if (maxDate) {
-    const sundayNote = config.isSunday ? ' (must be Sunday)' : '';
-    if (limitingFactor === 'recruitment') {
-      hint = `By ${formatDateForDisplay(maxDate)}${sundayNote} (${config.daysFromRecruitment} days from first recruitment)`;
-    } else if (limitingFactor === 'pwd') {
-      hint = `By ${formatDateForDisplay(maxDate)}${sundayNote} (${config.daysBeforePwd} days before PWD exp)`;
+    const sundayNote = config.isSunday ? ' (Sunday)' : '';
+    const reasons = fieldReasons[field];
+    if (limitingFactor === 'recruitment' && reasons) {
+      hint = `By ${formatDateForDisplay(maxDate)}${sundayNote} — ${reasons.recruitment}`;
+    } else if (limitingFactor === 'pwd' && reasons) {
+      hint = `By ${formatDateForDisplay(maxDate)}${sundayNote} — ${reasons.pwd}`;
     }
   }
 
@@ -233,7 +259,7 @@ function getNofStartDeadline(
     return {
       maxDate,
       limitingFactor: 'recruitment',
-      hint: `By ${formatDateForDisplay(maxDate)} (10 business days before recruitment window closes)`,
+      hint: `By ${formatDateForDisplay(maxDate)} — must be posted 10 business days before recruitment deadline`,
     };
   } catch {
     return { maxDate: undefined, limitingFactor: undefined, hint: '' };
@@ -494,9 +520,9 @@ function getSpecialMethodDeadline(
   let hint = '';
   if (maxDate) {
     if (limitingFactor === 'recruitment') {
-      hint = `By ${formatDateForDisplay(maxDate)} (${FILING_WINDOW_CLOSE_DAYS} days from first recruitment — extended deadline)`;
+      hint = `By ${formatDateForDisplay(maxDate)} — may complete during the 30-day quiet period`;
     } else if (limitingFactor === 'pwd') {
-      hint = `By ${formatDateForDisplay(maxDate)} (PWD expiration — extended deadline)`;
+      hint = `By ${formatDateForDisplay(maxDate)} — may complete up to PWD expiration`;
     }
   }
 
