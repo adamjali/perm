@@ -359,17 +359,17 @@ export function JobDescriptionField({
       <AnimatePresence initial={false}>
         {isExpanded && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            initial={{ height: 0, opacity: 0, overflow: "hidden" }}
+            animate={{ height: "auto", opacity: 1, overflow: "visible" }}
+            exit={{ height: 0, opacity: 0, overflow: "hidden" }}
             transition={{
               type: "spring",
               visualDuration: 0.15,
               bounce: 0.1,
+              overflow: { delay: 0.15 },
             }}
-            className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-4">
+            <div className="px-4 pb-4 pt-1 space-y-4">
               {/* Template selector row */}
               <div className="flex items-center gap-2 flex-wrap">
                 <TemplateSelector
