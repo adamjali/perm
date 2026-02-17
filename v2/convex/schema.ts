@@ -151,6 +151,7 @@ export default defineSchema({
       })
     ),
     darkModeEnabled: v.boolean(),
+    privacyModeEnabled: v.optional(v.boolean()),
 
     // Chatbot action mode
     /**
