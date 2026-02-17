@@ -27,6 +27,7 @@ import {
   isDeadlineActive,
   type CaseDataForDeadlines,
 } from "../perm";
+import { getMethodLabel } from "../recruitment/resultsGenerator";
 
 // ============================================================================
 // Static Milestone Extraction
@@ -384,7 +385,7 @@ export function extractAdditionalMethodMilestones(
     if (method.date) {
       milestones.push({
         field: `additionalMethod_${index}`,
-        label: method.method || `Addl Method #${index + 1}`,
+        label: method.method ? getMethodLabel(method.method) : `Addl Method #${index + 1}`,
         date: method.date,
         stage: "recruitment",
         color: STAGE_COLORS.recruitment,
