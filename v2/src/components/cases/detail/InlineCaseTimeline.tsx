@@ -469,12 +469,12 @@ export function InlineCaseTimeline({
                           className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-sm"
                           style={{ backgroundColor: rangeBar.color }}
                         />
-                        {/* Label inside bar (hidden if too narrow) */}
+                        {/* Label inside bar — truncated to fit */}
                         <span
-                          className="absolute inset-0 flex items-center pl-2 text-[10px] font-semibold truncate pointer-events-none"
+                          className="absolute inset-0 flex items-center pl-2 pr-1 text-[10px] font-semibold truncate pointer-events-none"
                           style={{ color: rangeBar.color }}
                         >
-                          {width > 8 ? rangeBar.label : ""}
+                          {rangeBar.label}
                         </span>
                         {/* Hover tooltip */}
                         <div
