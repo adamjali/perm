@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/lib/toast";
@@ -175,10 +176,9 @@ export function ResetPasswordPageClient() {
               <Label htmlFor="newPassword" className="text-xs uppercase mono font-bold tracking-widest">
                 New Password
               </Label>
-              <Input
+              <PasswordInput
                 id="newPassword"
                 name="newPassword"
-                type="password"
                 placeholder="••••••••"
                 minLength={8}
                 required
@@ -193,10 +193,9 @@ export function ResetPasswordPageClient() {
               <Label htmlFor="confirmPassword" className="text-xs uppercase mono font-bold tracking-widest">
                 Confirm Password
               </Label>
-              <Input
+              <PasswordInput
                 id="confirmPassword"
                 name="confirmPassword"
-                type="password"
                 placeholder="••••••••"
                 minLength={8}
                 required

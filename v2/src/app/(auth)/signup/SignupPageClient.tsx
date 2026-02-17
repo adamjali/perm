@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -319,10 +320,9 @@ export function SignupPageClient() {
             <Label htmlFor="password" className="text-xs uppercase mono font-bold tracking-widest">
               Password
             </Label>
-            <Input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               placeholder="••••••••"
               minLength={8}
               required
@@ -337,10 +337,9 @@ export function SignupPageClient() {
             <Label htmlFor="confirmPassword" className="text-xs uppercase mono font-bold tracking-widest">
               Confirm Password
             </Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
               name="confirmPassword"
-              type="password"
               placeholder="••••••••"
               minLength={8}
               required
