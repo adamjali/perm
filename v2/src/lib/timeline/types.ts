@@ -80,9 +80,11 @@ export interface RangeBar {
   /** End date (ISO string YYYY-MM-DD) */
   endDate: string;
   /** Stage this range belongs to */
-  stage: "recruitment";
+  stage: Stage;
   /** Hex color for the range bar */
   color: string;
+  /** Whether this is a calculated/derived range (shown with dashed outline) */
+  isCalculated?: boolean;
 }
 
 // ============================================================================
@@ -113,11 +115,12 @@ export const MILESTONE_CONFIG: readonly MilestoneConfig[] = [
   { field: "noticeOfFilingStartDate", label: "Notice Posted", stage: "recruitment" },
   { field: "noticeOfFilingEndDate", label: "Notice End", stage: "recruitment" },
   // Professional occupation additional recruitment (only shown if isProfessionalOccupation)
-  { field: "additionalRecruitmentStartDate", label: "Addl Recruitment Start", stage: "recruitment" },
-  { field: "additionalRecruitmentEndDate", label: "Addl Recruitment End", stage: "recruitment" },
+  { field: "additionalRecruitmentStartDate", label: "Additional Recruitment Start", stage: "recruitment" },
+  { field: "additionalRecruitmentEndDate", label: "Additional Recruitment End", stage: "recruitment" },
 
   // ETA 9089 phase
   { field: "eta9089FilingDate", label: "ETA 9089 Filed", stage: "eta9089" },
+  { field: "eta9089AuditDate", label: "Audit Selected", stage: "eta9089" },
   {
     field: "eta9089CertificationDate",
     label: "ETA 9089 Certified",
@@ -131,7 +134,9 @@ export const MILESTONE_CONFIG: readonly MilestoneConfig[] = [
 
   // I-140 phase
   { field: "i140FilingDate", label: "I-140 Filed", stage: "i140" },
+  { field: "i140ReceiptDate", label: "I-140 Receipt", stage: "i140" },
   { field: "i140ApprovalDate", label: "I-140 Approved", stage: "i140" },
+  { field: "i140DenialDate", label: "I-140 Denied", stage: "i140" },
 ] as const;
 
 // ============================================================================
@@ -171,12 +176,15 @@ export interface CaseWithDates {
 
   // ETA 9089 phase
   eta9089FilingDate?: string | null;
+  eta9089AuditDate?: string | null;
   eta9089CertificationDate?: string | null;
   eta9089ExpirationDate?: string | null;
 
   // I-140 phase
   i140FilingDate?: string | null;
+  i140ReceiptDate?: string | null;
   i140ApprovalDate?: string | null;
+  i140DenialDate?: string | null;
 
   // RFI/RFE entries
   rfiEntries?: RfiEntry[] | null;

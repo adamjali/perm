@@ -95,6 +95,7 @@ export function TimelineMilestone({
 
       {/* Tooltip - appears on hover, position-aware to avoid edge clipping */}
       <div
+        aria-hidden="true"
         className={cn(
           "absolute bottom-full mb-3",
           "px-2.5 py-1.5 bg-foreground text-background text-xs font-medium",

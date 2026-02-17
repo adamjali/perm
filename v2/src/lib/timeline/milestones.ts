@@ -177,15 +177,70 @@ export function extractMilestones(caseData: CaseWithDates): Milestone[] {
 export function extractRangeBars(caseData: CaseWithDates): RangeBar[] {
   const rangeBars: RangeBar[] = [];
 
+  // PWD Validity Period (determination → expiration)
+  if (caseData.pwdDeterminationDate && caseData.pwdExpirationDate) {
+    rangeBars.push({
+      field: "pwdValidity",
+      label: "PWD Valid",
+      startDate: caseData.pwdDeterminationDate,
+      endDate: caseData.pwdExpirationDate,
+      stage: "pwd",
+      color: STAGE_COLORS.pwd,
+    });
+  }
+
   // Job Order period
   if (caseData.jobOrderStartDate && caseData.jobOrderEndDate) {
     rangeBars.push({
       field: "jobOrder",
-      label: "Job Order Period",
+      label: "Job Order",
       startDate: caseData.jobOrderStartDate,
       endDate: caseData.jobOrderEndDate,
       stage: "recruitment",
       color: STAGE_COLORS.recruitment,
+    });
+  }
+
+  // Notice of Filing period
+  if (caseData.noticeOfFilingStartDate && caseData.noticeOfFilingEndDate) {
+    rangeBars.push({
+      field: "noticeOfFiling",
+      label: "NOF Posted",
+      startDate: caseData.noticeOfFilingStartDate,
+      endDate: caseData.noticeOfFilingEndDate,
+      stage: "recruitment",
+      color: STAGE_COLORS.recruitment,
+    });
+  }
+
+  // Filing Window (Ready to File → Filing Deadline) — calculated range
+  const permCaseData = toCaseDataForDeadlines(caseData);
+  const filingWindowActive = isDeadlineActive("filing_window_opens", permCaseData).isActive;
+  if (filingWindowActive) {
+    const readyDate = calculateReadyToFileDate(caseData);
+    const expiresDate = calculateRecruitmentExpiresDate(caseData);
+    if (readyDate && expiresDate) {
+      rangeBars.push({
+        field: "filingWindow",
+        label: "Filing Window",
+        startDate: readyDate,
+        endDate: expiresDate,
+        stage: "eta9089",
+        color: STAGE_COLORS.eta9089,
+        isCalculated: true,
+      });
+    }
+  }
+
+  // ETA 9089 Certification Validity (certification → expiration, 180 days to file I-140)
+  if (caseData.eta9089CertificationDate && caseData.eta9089ExpirationDate) {
+    rangeBars.push({
+      field: "eta9089Validity",
+      label: "Cert Valid",
+      startDate: caseData.eta9089CertificationDate,
+      endDate: caseData.eta9089ExpirationDate,
+      stage: "eta9089",
+      color: STAGE_COLORS.eta9089,
     });
   }
 

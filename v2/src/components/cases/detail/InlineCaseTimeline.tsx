@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { formatISODate } from "@/lib/utils/date";
 import {
   extractMilestones,
   extractRangeBars,
@@ -13,7 +14,6 @@ import {
   type RangeBar,
 } from "@/lib/timeline";
 import { TimelineMilestone } from "./TimelineMilestone";
-import { TimelineRangeBar } from "./TimelineRangeBar";
 
 // Animation configuration
 const springConfig = {
@@ -239,10 +239,15 @@ function getMilestonesForRow(
 }
 
 /**
- * Filter range bars for a specific row/stage
+ * Filter range bars for a specific row/stage (includes relatedStages)
  */
-function getRangeBarsForRow(rangeBars: RangeBar[], stage: Stage): RangeBar[] {
-  return rangeBars.filter((rb) => rb.stage === stage);
+function getRangeBarsForRow(
+  rangeBars: RangeBar[],
+  stage: Stage,
+  relatedStages?: Stage[]
+): RangeBar[] {
+  const stages = [stage, ...(relatedStages || [])];
+  return rangeBars.filter((rb) => stages.includes(rb.stage));
 }
 
 // ============================================================================
@@ -312,6 +317,13 @@ export function InlineCaseTimeline({
     return null;
   }
 
+  // Pre-compute row data for dynamic heights
+  const rowData = GANTT_ROWS.map((row) => {
+    const rowMilestones = getMilestonesForRow(milestones, row.stage, row.relatedStages);
+    const rowRangeBars = getRangeBarsForRow(rangeBars, row.stage, row.relatedStages);
+    return { ...row, milestones: rowMilestones, rangeBars: rowRangeBars };
+  });
+
   return (
     <div className={cn("w-full", className)}>
       {/* 4-Tier Gantt Chart Layout */}
@@ -320,23 +332,26 @@ export function InlineCaseTimeline({
         <div className="flex flex-col shrink-0 w-20 sm:w-24">
           {/* Empty space for month headers */}
           <div className="h-8 border-b-2 border-border" />
-          {/* Stage labels */}
-          {GANTT_ROWS.map((row) => (
-            <div
-              key={row.stage}
-              className="h-12 flex items-center justify-start pl-1 sm:pl-2 border-b border-border last:border-b-0"
-            >
-              <span
-                className={cn("text-xs font-semibold truncate", row.textClass)}
+          {/* Stage labels - height matches dynamic row content */}
+          {rowData.map((row) => {
+            // Row height: 20px milestone track + 24px per range bar + 8px padding
+            const barCount = Math.max(row.rangeBars.length, 0);
+            const rowHeight = 20 + barCount * 24 + 8;
+            return (
+              <div
+                key={row.stage}
+                className="flex items-center justify-start pl-1 sm:pl-2 border-b border-border last:border-b-0"
+                style={{ height: `${Math.max(rowHeight, 40)}px` }}
               >
-                {row.label}
-              </span>
-            </div>
-          ))}
+                <span className={cn("text-xs font-bold truncate", row.textClass)}>
+                  {row.label}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         {/* Timeline Grid - Right side */}
-        {/* overflow-visible allows dots and tooltips to escape container boundaries */}
         <div className="flex-1 relative overflow-visible">
           {/* Month headers */}
           <div className="flex border-b-2 border-border h-8">
@@ -345,16 +360,15 @@ export function InlineCaseTimeline({
                 key={`${month.year}-${month.month}`}
                 className={cn(
                   "flex-1 flex items-center justify-center text-xs font-medium",
-                  "border-r border-border last:border-r-0",
+                  "border-r border-border/50 last:border-r-0",
                   month.isCurrentMonth
-                    ? "bg-primary/10 text-primary font-semibold"
+                    ? "bg-primary/10 text-primary font-bold"
                     : "text-muted-foreground"
                 )}
               >
                 {month.label}
-                {/* Show year for first month or January */}
                 {(index === 0 || month.month === 0) && (
-                  <span className="ml-1 text-[10px] opacity-60">
+                  <span className="ml-1 text-[10px] opacity-50">
                     {month.year.toString().slice(-2)}
                   </span>
                 )}
@@ -362,118 +376,180 @@ export function InlineCaseTimeline({
             ))}
           </div>
 
-          {/* Gantt Rows Container - contains today marker and rows */}
+          {/* Gantt Rows Container */}
           <div className="relative">
-            {/* Today marker - spans only the Gantt rows, not headers */}
+            {/* Today marker line */}
             <div
-              className="absolute top-0 bottom-0 w-0.5 bg-destructive z-20 pointer-events-none"
+              className="absolute top-0 bottom-0 w-0.5 bg-destructive/80 z-20 pointer-events-none"
               style={{ left: `${todayPosition}%` }}
-              title="Today"
+              aria-hidden="true"
             />
-            {/* Today label - positioned at top of Gantt rows */}
+            {/* Today label */}
             <div
-              className="absolute top-0 z-30 pointer-events-none -translate-y-1/2"
-              style={{ left: `${todayPosition}%`, transform: `translateX(-50%) translateY(-50%)` }}
+              className="absolute top-0 z-30 pointer-events-none"
+              style={{ left: `${todayPosition}%`, transform: "translateX(-50%) translateY(-50%)" }}
+              aria-hidden="true"
             >
-              <span className="text-[10px] font-bold text-destructive bg-background px-1.5 py-0.5 rounded-full whitespace-nowrap border-2 border-destructive shadow-sm">
+              <span className="text-[9px] font-bold text-destructive bg-background px-1.5 py-0.5 rounded-full whitespace-nowrap border-2 border-destructive shadow-sm">
                 Today
               </span>
             </div>
 
-            {/* Gantt Rows - 4 tiers */}
-          {GANTT_ROWS.map((row, rowIndex) => {
-            const rowMilestones = getMilestonesForRow(
-              milestones,
-              row.stage,
-              row.relatedStages
-            );
-            const rowRangeBars = getRangeBarsForRow(rangeBars, row.stage);
+            {/* Gantt Rows - 4 tiers with dynamic height */}
+            {rowData.map((row, rowIndex) => {
+              const barCount = Math.max(row.rangeBars.length, 0);
+              const rowHeight = 20 + barCount * 24 + 8;
 
-            return (
-              <div
-                key={row.stage}
-                className={cn(
-                  "relative h-12 border-b border-border last:border-b-0",
-                  "bg-muted/20",
-                  rowIndex % 2 === 1 && "bg-muted/30"
-                )}
-              >
-                {/* Range bars for this row */}
-                {rowRangeBars.map((rangeBar, index) => {
-                  const startPos = calculatePosition(
-                    rangeBar.startDate,
-                    windowStartMs,
-                    windowDurationMs
-                  );
-                  const endPos = calculatePosition(
-                    rangeBar.endDate,
-                    windowStartMs,
-                    windowDurationMs
-                  );
-
-                  return (
-                    <motion.div
-                      key={`${rangeBar.field}-${rangeBar.startDate}`}
-                      initial={false}
-                      animate={{ scaleX: 1, opacity: 1 }}
-                      transition={{
-                        ...springConfig,
-                        delay: rowIndex * 0.05 + index * 0.02,
-                      }}
-                      style={{ originX: 0 }}
-                    >
-                      <TimelineRangeBar
-                        rangeBar={rangeBar}
-                        startPosition={Math.max(0, startPos)}
-                        endPosition={Math.min(100, endPos)}
+              return (
+                <div
+                  key={row.stage}
+                  className={cn(
+                    "relative border-b border-border last:border-b-0",
+                    rowIndex % 2 === 0 ? "bg-muted/10" : "bg-muted/20"
+                  )}
+                  style={{ height: `${Math.max(rowHeight, 40)}px` }}
+                >
+                  {/* Vertical month grid lines */}
+                  <div className="absolute inset-0 flex pointer-events-none" aria-hidden="true">
+                    {monthHeaders.map((month) => (
+                      <div
+                        key={`grid-${month.year}-${month.month}`}
+                        className="flex-1 border-r border-border/20 last:border-r-0"
                       />
-                    </motion.div>
-                  );
-                })}
+                    ))}
+                  </div>
 
-                {/* Milestones for this row */}
-                {rowMilestones.map((milestone, index) => {
-                  const position = calculatePosition(
-                    milestone.date,
-                    windowStartMs,
-                    windowDurationMs
-                  );
+                  {/* Range bars — stacked vertically, each 20px tall with 4px gap */}
+                  {row.rangeBars.map((rangeBar, barIndex) => {
+                    const startPos = calculatePosition(rangeBar.startDate, windowStartMs, windowDurationMs);
+                    const endPos = calculatePosition(rangeBar.endDate, windowStartMs, windowDurationMs);
+                    const clampedStart = Math.max(0, Math.min(100, startPos));
+                    const clampedEnd = Math.max(0, Math.min(100, endPos));
+                    const width = Math.max(0, clampedEnd - clampedStart);
+                    // Stack below milestone track (top 20px reserved for dots)
+                    const topOffset = 20 + barIndex * 24;
 
-                  return (
-                    <motion.div
-                      key={`${milestone.field}-${milestone.date}`}
-                      initial={false}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{
-                        ...springConfig,
-                        delay: 0.1 + rowIndex * 0.05 + index * 0.03,
-                      }}
-                    >
-                      <TimelineMilestone
-                        milestone={milestone}
-                        position={position}
-                      />
-                    </motion.div>
-                  );
-                })}
-              </div>
-            );
-          })}
+                    if (width <= 0) return null;
+
+                    return (
+                      <motion.div
+                        key={`${rangeBar.field}-${rangeBar.startDate}`}
+                        className="absolute group cursor-pointer z-10 hover:z-[100]"
+                        style={{
+                          left: `${clampedStart}%`,
+                          width: `${width}%`,
+                          top: `${topOffset}px`,
+                          height: "20px",
+                        }}
+                        initial={false}
+                        animate={{ scaleX: 1, opacity: 1 }}
+                        transition={{
+                          ...springConfig,
+                          delay: rowIndex * 0.04 + barIndex * 0.02,
+                        }}
+                        aria-label={`${rangeBar.label}: ${rangeBar.startDate} to ${rangeBar.endDate}`}
+                      >
+                        {/* Bar background */}
+                        <div
+                          className={cn(
+                            "absolute inset-0 rounded-sm",
+                            "border border-current/20",
+                            "transition-all duration-150",
+                            "group-hover:brightness-110 group-hover:shadow-sm",
+                            rangeBar.isCalculated && "border-dashed"
+                          )}
+                          style={{
+                            backgroundColor: `${rangeBar.color}30`,
+                            borderColor: `${rangeBar.color}60`,
+                            color: rangeBar.color,
+                          }}
+                        />
+                        {/* Left edge accent */}
+                        <div
+                          className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-sm"
+                          style={{ backgroundColor: rangeBar.color }}
+                        />
+                        {/* Label inside bar (hidden if too narrow) */}
+                        <span
+                          className="absolute inset-0 flex items-center pl-2 text-[10px] font-semibold truncate pointer-events-none"
+                          style={{ color: rangeBar.color }}
+                        >
+                          {width > 8 ? rangeBar.label : ""}
+                        </span>
+                        {/* Hover tooltip */}
+                        <div
+                          className={cn(
+                            "absolute bottom-full mb-2 left-1/2 -translate-x-1/2",
+                            "px-2.5 py-1.5 bg-foreground text-background text-xs font-medium",
+                            "whitespace-nowrap rounded-lg shadow-xl",
+                            "opacity-0 group-hover:opacity-100",
+                            "transition-opacity duration-150",
+                            "pointer-events-none z-50"
+                          )}
+                          aria-hidden="true"
+                        >
+                          <span className="font-bold">{rangeBar.label}</span>
+                          <span className="mx-1.5 opacity-40">|</span>
+                          {formatISODate(rangeBar.startDate)} — {formatISODate(rangeBar.endDate)}
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+
+                  {/* Milestones — on the top milestone track (h-5 = 20px) */}
+                  <div className="absolute inset-x-0 top-0 h-5">
+                    {row.milestones.map((milestone, index) => {
+                      const position = calculatePosition(milestone.date, windowStartMs, windowDurationMs);
+
+                      return (
+                        <motion.div
+                          key={`${milestone.field}-${milestone.date}`}
+                          initial={false}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{
+                            ...springConfig,
+                            delay: 0.08 + rowIndex * 0.04 + index * 0.02,
+                          }}
+                        >
+                          <TimelineMilestone
+                            milestone={milestone}
+                            position={position}
+                          />
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
 
-      {/* Legend - 2 columns on mobile, flex on larger */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-sm sm:flex sm:flex-wrap sm:gap-4">
+      {/* Legend */}
+      <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3">
         {LEGEND_STAGES.map(({ stage, label }) => (
-          <div key={stage} className="flex items-center gap-1.5 min-h-[28px]">
+          <div key={stage} className="flex items-center gap-1.5">
             <div
-              className="w-4 h-4 shrink-0 rounded-full border-2 border-foreground"
+              className="w-3 h-3 shrink-0 rounded-full border-2 border-foreground"
               style={{ backgroundColor: STAGE_COLORS[stage] }}
             />
-            <span className="text-muted-foreground">{label}</span>
+            <span className="text-xs text-muted-foreground font-medium">{label}</span>
           </div>
         ))}
+        {/* Range bar legend item */}
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 h-2.5 rounded-sm bg-muted-foreground/20 border border-muted-foreground/40" />
+          <span className="text-xs text-muted-foreground font-medium">Date Range</span>
+        </div>
+        {/* Calculated legend item */}
+        <div className="flex items-center gap-1.5">
+          <div
+            className="w-3 h-3 shrink-0 rounded-full border-2 border-dashed border-foreground"
+          />
+          <span className="text-xs text-muted-foreground font-medium">Calculated</span>
+        </div>
       </div>
     </div>
   );

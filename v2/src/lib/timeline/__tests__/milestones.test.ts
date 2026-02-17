@@ -254,7 +254,7 @@ describe("extractRangeBars", () => {
     expect(rangeBars).toHaveLength(1);
     expect(rangeBars[0]).toMatchObject({
       field: "jobOrder",
-      label: "Job Order Period",
+      label: "Job Order",
       startDate: "2024-03-01",
       endDate: "2024-03-31",
       stage: "recruitment",
