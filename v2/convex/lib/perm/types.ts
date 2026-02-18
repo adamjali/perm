@@ -95,7 +95,7 @@ export interface ValidationResult {
   readonly errors: readonly ValidationIssue[];
   readonly warnings: readonly ValidationIssue[];
   /** @internal Brand to prevent direct construction */
-  readonly [ValidationResultBrand]?: true;
+  readonly [ValidationResultBrand]: true;
 }
 
 /**
@@ -116,7 +116,7 @@ export function createValidationResult(
     valid: errors.length === 0,
     errors,
     warnings,
-  } as ValidationResult;
+  } as unknown as ValidationResult;
 }
 
 /**

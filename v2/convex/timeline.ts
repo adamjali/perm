@@ -318,7 +318,7 @@ export const getCasesForTimeline = query({
   args: {
     timeRange: v.optional(v.union(v.literal(3), v.literal(6), v.literal(12), v.literal(24))),
   },
-  handler: async (ctx, args): Promise<TimelineCaseData[]> => {
+  handler: async (ctx, _args): Promise<TimelineCaseData[]> => {
     // Use null-safe auth check for graceful sign-out handling
     const userId = await getCurrentUserIdOrNull(ctx);
     if (userId === null) {
@@ -330,10 +330,6 @@ export const getCasesForTimeline = query({
       .query("timelinePreferences")
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .first();
-
-    // Use provided timeRange or preference or default
-    // NOTE: _timeRange calculated but not currently used (reserved for future time filtering)
-    void (args.timeRange ?? preferences?.timeRange ?? DEFAULT_TIME_RANGE);
 
     // Fetch non-deleted cases for user with reasonable limit
     const allCases = await ctx.db

@@ -2045,37 +2045,6 @@ const timezone = profile?.timezone ?? "America/New_York";
 
 ---
 
-#### `getDecryptedGoogleTokens` - Query
-
-Get decrypted Google OAuth tokens for API calls.
-
-```typescript
-getDecryptedGoogleTokens(): Promise<{
-  accessToken: string | null;
-  refreshToken: string | null;
-  tokenExpiry: number | null;
-  googleEmail: string | null;
-} | null>
-```
-
-**Returns:** Decrypted Google OAuth tokens or null if not available
-
-**Authentication:** Uses `getCurrentUserIdOrNull()` - returns null if unauthenticated
-
-**Security:** Tokens are encrypted at rest and decrypted only when needed
-
-**Example:**
-```typescript
-const tokens = useQuery(api.users.getDecryptedGoogleTokens);
-
-// Use tokens for Google Calendar API
-if (tokens?.accessToken) {
-  const calendar = await getGoogleCalendarEvents(tokens.accessToken);
-}
-```
-
----
-
 #### `ensureUserProfile` - Mutation
 
 Ensure a user profile exists for the current user (idempotent).

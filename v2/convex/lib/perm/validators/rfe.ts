@@ -2,8 +2,7 @@ import { parseISO, isAfter, isBefore, differenceInDays } from 'date-fns';
 import type { ValidationResult, ValidationIssue } from '../types';
 import { createValidationResult } from '../types';
 import { getTodayISO, error, warning } from '../utils/validation';
-
-const RFE_WARNING_DAYS = 7;
+import { RFE_WARNING_DAYS } from '../constants';
 
 /**
  * Input data for RFE validation.

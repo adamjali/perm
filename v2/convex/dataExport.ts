@@ -20,8 +20,9 @@ async function decryptFeinForExport(fein: string | undefined): Promise<string | 
   if (!isEncryptedToken(fein)) return fein;
   try {
     return await decryptToken(fein);
-  } catch {
-    return fein;
+  } catch (e) {
+    console.error("FEIN decryption failed during data export", e);
+    return "[DECRYPTION_FAILED]";
   }
 }
 

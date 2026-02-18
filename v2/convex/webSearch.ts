@@ -209,6 +209,9 @@ export const searchWeb = action({
     query: v.string(),
   },
   handler: async (ctx, { query }): Promise<SearchResponse> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
     // Check Tavily quota first
     const tavilyUsage = await ctx.runQuery(internal.apiUsage.getUsageInternal, {
       provider: "tavily",

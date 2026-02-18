@@ -121,7 +121,7 @@ export async function getPushSubscriptionStatus(): Promise<PushSubscriptionStatu
       subscribed: subscription !== null,
     };
   } catch (error) {
-    captureError(error);
+    captureError(error, { operation: "getPushSubscriptionStatus" });
     return { supported: true, permission, subscribed: false };
   }
 }

@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { createTestContext } from "../../test-utils/convex";
+import { createTestContext, createAuthenticatedContext } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
 
 // ============================================================================
@@ -114,11 +114,12 @@ describe("webSearch", () => {
   describe("result structure", () => {
     it("returns correct structure from Tavily (primary provider)", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Mock Tavily response
       mockFetch.mockResolvedValueOnce(createTavilyResponse(3, true));
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "PERM labor certification requirements",
       });
 
@@ -150,6 +151,7 @@ describe("webSearch", () => {
 
     it("returns correct structure from Brave (fallback provider)", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Fill Tavily quota to force Brave fallback
       for (let i = 0; i < 30; i++) {
@@ -159,7 +161,7 @@ describe("webSearch", () => {
       // Mock Brave response
       mockFetch.mockResolvedValueOnce(createBraveResponse(3));
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "PERM labor certification requirements",
       });
 
@@ -183,6 +185,7 @@ describe("webSearch", () => {
 
     it("returns empty results structure when all providers unavailable", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Fill both quotas
       for (let i = 0; i < 30; i++) {
@@ -192,7 +195,7 @@ describe("webSearch", () => {
         await t.mutation(internal.apiUsage.trackUsage, { provider: "brave" });
       }
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "PERM labor certification requirements",
       });
 
@@ -213,6 +216,7 @@ describe("webSearch", () => {
   describe("rate limit enforcement", () => {
     it("uses Tavily when under limit", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Track some usage but stay under limit
       for (let i = 0; i < 10; i++) {
@@ -221,7 +225,7 @@ describe("webSearch", () => {
 
       mockFetch.mockResolvedValueOnce(createTavilyResponse());
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "test query",
       });
 
@@ -237,6 +241,7 @@ describe("webSearch", () => {
 
     it("falls back to Brave when Tavily is at limit", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Fill Tavily quota exactly to limit
       for (let i = 0; i < 30; i++) {
@@ -245,7 +250,7 @@ describe("webSearch", () => {
 
       mockFetch.mockResolvedValueOnce(createBraveResponse());
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "test query",
       });
 
@@ -261,6 +266,7 @@ describe("webSearch", () => {
 
     it("returns empty when both providers are at limit", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Fill both quotas
       for (let i = 0; i < 30; i++) {
@@ -270,7 +276,7 @@ describe("webSearch", () => {
         await t.mutation(internal.apiUsage.trackUsage, { provider: "brave" });
       }
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "test query",
       });
 
@@ -281,6 +287,7 @@ describe("webSearch", () => {
 
     it("tracks usage after successful Tavily search", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Verify initial count
       const initialUsage = await t.query(api.apiUsage.getUsage, {
@@ -290,7 +297,7 @@ describe("webSearch", () => {
 
       mockFetch.mockResolvedValueOnce(createTavilyResponse());
 
-      await t.action(api.webSearch.searchWeb, {
+      await user.action(api.webSearch.searchWeb, {
         query: "test query",
       });
 
@@ -303,6 +310,7 @@ describe("webSearch", () => {
 
     it("tracks usage after successful Brave search", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Force Brave fallback
       for (let i = 0; i < 30; i++) {
@@ -317,7 +325,7 @@ describe("webSearch", () => {
 
       mockFetch.mockResolvedValueOnce(createBraveResponse());
 
-      await t.action(api.webSearch.searchWeb, {
+      await user.action(api.webSearch.searchWeb, {
         query: "test query",
       });
 
@@ -336,13 +344,14 @@ describe("webSearch", () => {
   describe("fallback behavior", () => {
     it("falls back to Brave when Tavily API fails", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Mock Tavily failure
       mockFetch.mockResolvedValueOnce(createErrorResponse(500, "Internal Server Error"));
       // Mock Brave success
       mockFetch.mockResolvedValueOnce(createBraveResponse());
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "test query",
       });
 
@@ -353,12 +362,13 @@ describe("webSearch", () => {
 
     it("returns empty when both providers fail", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Mock both failures
       mockFetch.mockResolvedValueOnce(createErrorResponse(500, "Tavily Error"));
       mockFetch.mockResolvedValueOnce(createErrorResponse(500, "Brave Error"));
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "test query",
       });
 
@@ -370,10 +380,11 @@ describe("webSearch", () => {
 
     it("does not fall back to Brave when Tavily succeeds", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       mockFetch.mockResolvedValueOnce(createTavilyResponse());
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "test query",
       });
 
@@ -383,6 +394,7 @@ describe("webSearch", () => {
 
     it("skips Brave if also at limit after Tavily failure", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Fill Brave quota but leave Tavily available
       for (let i = 0; i < 60; i++) {
@@ -392,7 +404,7 @@ describe("webSearch", () => {
       // Mock Tavily failure
       mockFetch.mockResolvedValueOnce(createErrorResponse(500, "Tavily Error"));
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "test query",
       });
 
@@ -411,10 +423,11 @@ describe("webSearch", () => {
   describe("API request formatting", () => {
     it("sends correct request to Tavily API", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       mockFetch.mockResolvedValueOnce(createTavilyResponse());
 
-      await t.action(api.webSearch.searchWeb, {
+      await user.action(api.webSearch.searchWeb, {
         query: "PERM deadline rules",
       });
 
@@ -441,6 +454,7 @@ describe("webSearch", () => {
 
     it("sends correct request to Brave API", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Force Brave fallback
       for (let i = 0; i < 30; i++) {
@@ -449,7 +463,7 @@ describe("webSearch", () => {
 
       mockFetch.mockResolvedValueOnce(createBraveResponse());
 
-      await t.action(api.webSearch.searchWeb, {
+      await user.action(api.webSearch.searchWeb, {
         query: "PERM deadline rules",
       });
 
@@ -478,10 +492,11 @@ describe("webSearch", () => {
   describe("edge cases", () => {
     it("handles empty results from Tavily", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       mockFetch.mockResolvedValueOnce(createTavilyResponse(0, false));
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "very obscure query",
       });
 
@@ -492,6 +507,7 @@ describe("webSearch", () => {
 
     it("handles empty results from Brave", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Force Brave
       for (let i = 0; i < 30; i++) {
@@ -505,7 +521,7 @@ describe("webSearch", () => {
         }),
       });
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "very obscure query",
       });
 
@@ -515,6 +531,7 @@ describe("webSearch", () => {
 
     it("handles missing web property in Brave response", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Force Brave
       for (let i = 0; i < 30; i++) {
@@ -526,7 +543,7 @@ describe("webSearch", () => {
         json: async () => ({}), // No web property
       });
 
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "test query",
       });
 
@@ -536,6 +553,7 @@ describe("webSearch", () => {
 
     it("handles usage exactly at limit boundary", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
       // Track usage to exactly one below limit
       for (let i = 0; i < 29; i++) {
@@ -545,7 +563,7 @@ describe("webSearch", () => {
       mockFetch.mockResolvedValueOnce(createTavilyResponse());
 
       // Should still use Tavily (29 < 30)
-      const result = await t.action(api.webSearch.searchWeb, {
+      const result = await user.action(api.webSearch.searchWeb, {
         query: "test query",
       });
 
@@ -554,6 +572,16 @@ describe("webSearch", () => {
       // Usage should now be at 30
       const usage = await t.query(api.apiUsage.getUsage, { provider: "tavily" });
       expect(usage).toBe(30);
+    });
+
+    it("rejects unauthenticated requests", async () => {
+      const t = createTestContext();
+
+      mockFetch.mockResolvedValueOnce(createTavilyResponse());
+
+      await expect(
+        t.action(api.webSearch.searchWeb, { query: "test" })
+      ).rejects.toThrow("Not authenticated");
     });
   });
 });

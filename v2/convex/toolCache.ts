@@ -15,6 +15,7 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
+import { getCurrentUserId } from "./lib/auth";
 
 // =============================================================================
 // TTL CONSTANTS (in milliseconds)
@@ -92,6 +93,10 @@ export const get = query({
     queryHash: v.string(),
   },
   handler: async (ctx, args): Promise<string | null> => {
+    const userId = await getCurrentUserId(ctx);
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation || conversation.userId !== userId) return null;
+
     const now = Date.now();
 
     const cached = await ctx.db
@@ -135,8 +140,14 @@ export const set = mutation({
     result: v.string(),
   },
   handler: async (ctx, args): Promise<void> => {
+    const userId = await getCurrentUserId(ctx);
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation || conversation.userId !== userId) {
+      throw new Error("Not authorized to access this conversation's cache");
+    }
+
     const now = Date.now();
-    const ttl = TOOL_TTLS[args.toolName] ?? DEFAULT_TTL;
+    const ttl = TOOL_TTLS[args.toolName] || DEFAULT_TTL;
     const expiresAt = now + ttl;
 
     // Check if entry already exists
@@ -184,6 +195,10 @@ export const invalidateCaseCaches = mutation({
     conversationId: v.id("conversations"),
   },
   handler: async (ctx, args): Promise<number> => {
+    const userId = await getCurrentUserId(ctx);
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation || conversation.userId !== userId) return 0;
+
     // Find all query_cases entries for this conversation
     const entries = await ctx.db
       .query("toolCache")

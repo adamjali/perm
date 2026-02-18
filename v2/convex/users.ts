@@ -2,7 +2,7 @@ import { query, mutation, action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull, extractUserIdFromAction } from "./lib/auth";
-import { encryptToken, decryptToken } from "./lib/crypto";
+import { encryptToken } from "./lib/crypto";
 import { logCreate, logUpdate } from "./lib/audit";
 import { validateInputLengths, INPUT_LIMITS } from "./lib/validation";
 import { loggers } from "./lib/logging";
@@ -416,66 +416,6 @@ export const updateUserProfile = mutation({
     }
 
     return profile._id;
-  },
-});
-
-/**
- * Get decrypted Google OAuth tokens for API calls
- * Only returns tokens if they exist and are encrypted
- * Used internally for Google Calendar/Gmail API integration
- */
-export const getDecryptedGoogleTokens = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getCurrentUserIdOrNull(ctx);
-    if (userId === null) {
-      return null;
-    }
-
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-
-    if (!profile) {
-      return null;
-    }
-
-    // Decrypt tokens if they exist
-    let accessToken: string | null = null;
-    let refreshToken: string | null = null;
-
-    if (profile.googleAccessToken) {
-      try {
-        accessToken = await decryptToken(profile.googleAccessToken);
-      } catch (error) {
-        // Token may be unencrypted (legacy) or corrupted
-        // Log for migration tracking - helps identify when migration is complete
-        log.warn('Access token decryption failed, using as-is for backwards compatibility', {
-          error: error instanceof Error ? error.message : 'unknown error',
-        });
-        accessToken = profile.googleAccessToken;
-      }
-    }
-
-    if (profile.googleRefreshToken) {
-      try {
-        refreshToken = await decryptToken(profile.googleRefreshToken);
-      } catch (error) {
-        // Token may be unencrypted (legacy) or corrupted
-        log.warn('Refresh token decryption failed, using as-is for backwards compatibility', {
-          error: error instanceof Error ? error.message : 'unknown error',
-        });
-        refreshToken = profile.googleRefreshToken;
-      }
-    }
-
-    return {
-      accessToken,
-      refreshToken,
-      tokenExpiry: profile.googleTokenExpiry ?? null,
-      googleEmail: profile.googleEmail ?? null,
-    };
   },
 });
 

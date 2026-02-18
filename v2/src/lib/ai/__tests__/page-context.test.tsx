@@ -17,8 +17,8 @@ import { renderHook, act } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 // Mock next/navigation
-const mockPathname = vi.fn(() => '/');
-const mockSearchParams = vi.fn(() => new URLSearchParams());
+const mockPathname = vi.fn<() => string>(() => '/');
+const mockSearchParams = vi.fn<() => URLSearchParams>(() => new URLSearchParams());
 
 vi.mock('next/navigation', () => ({
   usePathname: () => mockPathname(),
@@ -55,7 +55,9 @@ function createSearchParams(params: Record<string, string>): URLSearchParams {
 
 describe('detectPageType', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockPathname.mockReset();
+    mockSearchParams.mockReset();
+    mockPathname.mockReturnValue('/');
     mockSearchParams.mockReturnValue(new URLSearchParams());
   });
 
@@ -89,7 +91,9 @@ describe('detectPageType', () => {
 
 describe('extractCaseId', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockPathname.mockReset();
+    mockSearchParams.mockReset();
+    mockPathname.mockReturnValue('/');
     mockSearchParams.mockReturnValue(new URLSearchParams());
   });
 
@@ -134,7 +138,8 @@ describe('extractCaseId', () => {
 
 describe('extractFiltersFromURL', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockPathname.mockReset();
+    mockSearchParams.mockReset();
     mockPathname.mockReturnValue('/cases');
   });
 
@@ -270,7 +275,8 @@ describe('extractFiltersFromURL', () => {
 
 describe('settings tab extraction', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockPathname.mockReset();
+    mockSearchParams.mockReset();
     mockPathname.mockReturnValue('/settings');
   });
 
@@ -301,7 +307,9 @@ describe('settings tab extraction', () => {
 
 describe('PageContextProvider', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockPathname.mockReset();
+    mockSearchParams.mockReset();
+    mockPathname.mockReturnValue('/');
     mockSearchParams.mockReturnValue(new URLSearchParams());
   });
 
@@ -369,7 +377,8 @@ describe('PageContextProvider', () => {
 
 describe('usePageContextUpdater', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockPathname.mockReset();
+    mockSearchParams.mockReset();
     mockPathname.mockReturnValue('/cases');
     mockSearchParams.mockReturnValue(new URLSearchParams());
   });
@@ -738,7 +747,9 @@ describe('summarizePageContext', () => {
 
 describe('page context integration', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockPathname.mockReset();
+    mockSearchParams.mockReset();
+    mockPathname.mockReturnValue('/');
   });
 
   it('case detail page has correct context structure', () => {

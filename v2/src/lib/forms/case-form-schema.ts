@@ -17,6 +17,8 @@ import {
   RECRUITMENT_WINDOW_DAYS,
   PWD_RECRUITMENT_BUFFER_DAYS,
   FILING_WINDOW_CLOSE_DAYS,
+  CASE_STATUSES,
+  PROGRESS_STATUSES,
 } from '../perm';
 import { getMethodCategory } from '@/../convex/lib/perm/recruitment/methodCategories';
 import { captureError } from '@/lib/sentry';
@@ -162,15 +164,8 @@ export const caseFormSchema = z
     employerName: z.string().min(1, 'Employer name is required'),
     beneficiaryIdentifier: z.string().optional().default(''),
     positionTitle: z.string().min(1, 'Position title is required'),
-    caseStatus: z.enum(['pwd', 'recruitment', 'eta9089', 'i140', 'closed']),
-    progressStatus: z.enum([
-      'working',
-      'waiting_intake',
-      'filed',
-      'approved',
-      'under_review',
-      'rfi_rfe',
-    ]),
+    caseStatus: z.enum(CASE_STATUSES),
+    progressStatus: z.enum(PROGRESS_STATUSES),
 
     // Optional string fields
     caseNumber: z.string().optional(),
@@ -784,7 +779,7 @@ function formDataToValidationData(data: CaseFormData) {
 }
 
 // NOTE: Recruitment date calculations now use lib/perm as canonical source
-// See: src/lib/lib/perm/filing-window.ts
+// See: convex/lib/perm/dates/filingWindow.ts
 
 /**
  * Calculate recruitment start date (MIN of all start dates - first recruitment step).
@@ -866,7 +861,7 @@ export function validateCaseForm(data: CaseFormData): CaseFormErrors {
   } catch (error) {
     // If lib/perm fails (e.g., due to invalid date formats), ignore
     // The Zod errors will already capture format issues
-    captureError(error);
+    captureError(error, { operation: "validateCaseForm.permValidation" });
   }
 
   return {

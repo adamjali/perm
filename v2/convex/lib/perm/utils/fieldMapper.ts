@@ -9,7 +9,8 @@
  * @module
  */
 
-import type { CaseData, CaseStatus, ProgressStatus } from '../types';
+import type { CaseData } from '../types';
+import type { CaseStatus, ProgressStatus } from '../statusTypes';
 
 /**
  * RFI/RFE entry structure from the database
@@ -75,8 +76,8 @@ export interface CamelCaseFields {
   rfeEntries?: RfiRfeEntry[];
 
   // Status
-  caseStatus?: CaseStatus | string;
-  progressStatus?: ProgressStatus | string;
+  caseStatus?: CaseStatus;
+  progressStatus?: ProgressStatus;
 }
 
 /**
@@ -161,8 +162,8 @@ export function mapToValidatorFormat(fields: CamelCaseFields): CaseData {
     rfe_due_date: activeRfe?.responseDueDate || null,
     rfe_submitted_date: activeRfe?.responseSubmittedDate || null,
 
-    // Status fields (with defaults — keep ?? for non-string fields)
-    case_status: (fields.caseStatus ?? 'pwd') as CaseStatus,
-    progress_status: (fields.progressStatus ?? 'working') as ProgressStatus,
+    // Status fields with defaults
+    case_status: fields.caseStatus || 'pwd',
+    progress_status: fields.progressStatus || 'working',
   };
 }

@@ -606,7 +606,10 @@ export const sendTestEmail = action({
   args: {
     email: v.string(),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
     const appUrl = getAppUrl();
     const settingsUrl = `${appUrl}/settings/notifications`;
 
@@ -654,10 +657,10 @@ export const sendAdminNotificationEmail = internalAction({
     recipientName: v.optional(v.string()),
   },
   handler: async (_ctx, args) => {
-    const { ADMIN_EMAIL } = await import("./lib/admin");
+    const { getAdminEmail } = await import("./lib/admin");
     const { AdminEmail } = await import("../src/emails/AdminEmail");
 
-    const toEmail = args.to || ADMIN_EMAIL;
+    const toEmail = args.to || getAdminEmail();
     if (!toEmail) {
       log.error("No recipient email for admin notification (ADMIN_EMAIL not configured)");
       return;

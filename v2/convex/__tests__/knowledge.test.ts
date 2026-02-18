@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { createTestContext } from "../../test-utils/convex";
+import { createTestContext, createAuthenticatedContext } from "../../test-utils/convex";
 import { api } from "../_generated/api";
 import { PERM_KNOWLEDGE_SECTIONS } from "../lib/rag/permKnowledge";
 import { APP_GUIDE_SECTIONS } from "../lib/rag/appGuideKnowledge";
@@ -77,13 +77,14 @@ describe("knowledge", () => {
      * These tests verify the action's handling of edge cases.
      * Since RAG search requires actual embeddings (not available in tests),
      * we test the pre-search validation and error handling.
+     * searchKnowledge requires authentication (auth gate added in security audit).
      */
 
     it("returns empty results for empty query", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
-      // searchKnowledge is an action - use t.action()
-      const result = await t.action(api.knowledge.searchKnowledge, {
+      const result = await user.action(api.knowledge.searchKnowledge, {
         query: "",
       });
 
@@ -95,8 +96,9 @@ describe("knowledge", () => {
 
     it("returns empty results for single character query", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
-      const result = await t.action(api.knowledge.searchKnowledge, {
+      const result = await user.action(api.knowledge.searchKnowledge, {
         query: "a",
       });
 
@@ -108,8 +110,9 @@ describe("knowledge", () => {
 
     it("returns empty results for whitespace-only query", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
-      const result = await t.action(api.knowledge.searchKnowledge, {
+      const result = await user.action(api.knowledge.searchKnowledge, {
         query: "   ",
       });
 
@@ -121,14 +124,12 @@ describe("knowledge", () => {
 
     it("returns object with correct structure for valid query", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
-      // Note: Without actual embeddings/ingestion, this will return empty
-      // but should still return correct structure
-      const result = await t.action(api.knowledge.searchKnowledge, {
+      const result = await user.action(api.knowledge.searchKnowledge, {
         query: "PWD expiration rules",
       });
 
-      // Verify response shape (may be empty if not ingested)
       expect(result).toHaveProperty("context");
       expect(result).toHaveProperty("sources");
       expect(typeof result.context).toBe("string");
@@ -137,15 +138,22 @@ describe("knowledge", () => {
 
     it("handles search errors gracefully (returns empty results)", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
-      // Even if search fails internally, it should return empty results
-      // not throw an error
-      const result = await t.action(api.knowledge.searchKnowledge, {
+      const result = await user.action(api.knowledge.searchKnowledge, {
         query: "test query that might fail",
       });
 
       expect(result).toHaveProperty("context");
       expect(result).toHaveProperty("sources");
+    });
+
+    it("rejects unauthenticated requests", async () => {
+      const t = createTestContext();
+
+      await expect(
+        t.action(api.knowledge.searchKnowledge, { query: "test" })
+      ).rejects.toThrow("Not authenticated");
     });
   });
 
@@ -301,8 +309,9 @@ describe("knowledge", () => {
   describe("response types", () => {
     it("KnowledgeSearchResult has expected shape", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
-      const result = await t.action(api.knowledge.searchKnowledge, {
+      const result = await user.action(api.knowledge.searchKnowledge, {
         query: "test",
       });
 
@@ -322,8 +331,9 @@ describe("knowledge", () => {
 
     it("sources array contains properly typed items when populated", async () => {
       const t = createTestContext();
+      const user = await createAuthenticatedContext(t);
 
-      const result = await t.action(api.knowledge.searchKnowledge, {
+      const result = await user.action(api.knowledge.searchKnowledge, {
         query: "PWD determination date rules",
       });
 

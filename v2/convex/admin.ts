@@ -15,7 +15,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { Scrypt } from "lucia";
-import { requireAdmin, getAdminProfile, getAdminDashboardDataHelper, ADMIN_EMAIL } from "./lib/admin";
+import { requireAdmin, getAdminProfile, getAdminDashboardDataHelper, getAdminEmail } from "./lib/admin";
 import { getCurrentUserId, extractUserIdFromAction } from "./lib/auth";
 import { logUpdate, logDelete } from "./lib/audit";
 import { createLogger } from "./lib/logging";
@@ -536,7 +536,7 @@ export const getUserSummary = internalQuery({
 /**
  * Get admin notification preferences (internal query).
  *
- * Looks up the admin user by ADMIN_EMAIL and returns notification prefs.
+ * Looks up the admin user by getAdminEmail() and returns notification prefs.
  * Must be internalQuery because it's called from non-admin user context
  * (e.g., during signup or case creation by any user).
  */
@@ -545,11 +545,11 @@ export const getAdminNotificationPrefs = internalQuery({
   handler: async (ctx) => {
     const adminUser = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("email"), ADMIN_EMAIL))
+      .filter((q) => q.eq(q.field("email"), getAdminEmail()))
       .first();
 
     if (!adminUser) {
-      console.warn(`[admin] getAdminNotificationPrefs: admin user not found for email ${ADMIN_EMAIL}`);
+      console.warn(`[admin] getAdminNotificationPrefs: admin user not found for email ${getAdminEmail()}`);
       return { adminNotifyNewUser: false, adminNotifyFirstCase: false, adminNotifyAnyCase: false };
     }
 
@@ -868,7 +868,7 @@ export const sendAdminEmail = action({
     }
     const userId = extractUserIdFromAction(identity.subject);
     const user = await ctx.runQuery(internal.admin.getUserEmail, { userId });
-    if (!user || user.email !== ADMIN_EMAIL) {
+    if (!user || user.email !== getAdminEmail()) {
       throw new Error("Unauthorized: Admin access required");
     }
 

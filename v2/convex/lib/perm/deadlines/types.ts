@@ -9,6 +9,7 @@
 
 import type { Id } from "../../../_generated/dataModel";
 import type { TimezoneRule } from "./timezones";
+import type { CaseStatus, ProgressStatus } from "../statusTypes";
 
 // ============================================================================
 // DEADLINE TYPE ENUM
@@ -99,8 +100,8 @@ export interface CaseDataForDeadlines {
   beneficiaryIdentifier?: string;
 
   // Status fields (for filtering)
-  caseStatus?: string;
-  progressStatus?: string;
+  caseStatus?: CaseStatus;
+  progressStatus?: ProgressStatus;
   deletedAt?: number;
 
   // PWD dates

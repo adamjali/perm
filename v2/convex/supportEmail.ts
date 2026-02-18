@@ -20,6 +20,11 @@ import { recordError } from "./lib/errorRecording";
 
 const log = loggers.email;
 
+/** Escape HTML special characters to prevent XSS in forwarded email templates */
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 /** Email address to forward non-support emails to (replaces ImprovMX catch-all) */
 const CATCH_ALL_FORWARD_TO = process.env.SUPPORT_FORWARD_EMAIL || "support@permtracker.app";
 
@@ -139,7 +144,7 @@ export const processInboundEmail = internalAction({
           replyTo: args.fromEmail,
           text: `---------- Forwarded Email ----------\nFrom: ${args.fromName ? `${args.fromName} <${args.fromEmail}>` : args.fromEmail}\nTo: ${toEmail}\nSubject: ${args.subject}\n-------------------------------------\n\n${bodyText || "(No text content)"}`,
           html: bodyHtml
-            ? `<div style="padding:12px;background:#f4f4f5;border-radius:8px;margin-bottom:16px;font-size:13px;color:#71717a"><strong>Forwarded Email</strong><br/>From: ${args.fromName ? `${args.fromName} &lt;${args.fromEmail}&gt;` : args.fromEmail}<br/>To: ${toEmail}<br/>Subject: ${args.subject}</div>${bodyHtml}`
+            ? `<div style="padding:12px;background:#f4f4f5;border-radius:8px;margin-bottom:16px;font-size:13px;color:#71717a"><strong>Forwarded Email</strong><br/>From: ${args.fromName ? `${escapeHtml(args.fromName)} &lt;${escapeHtml(args.fromEmail)}&gt;` : escapeHtml(args.fromEmail)}<br/>To: ${escapeHtml(toEmail)}<br/>Subject: ${escapeHtml(args.subject)}</div>${bodyHtml}`
             : undefined,
         });
 

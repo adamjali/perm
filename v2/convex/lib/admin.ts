@@ -10,9 +10,15 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { getCurrentUserId } from "./auth";
 
 /**
- * Admin email address — configurable via ADMIN_EMAIL env var.
- * No fallback: if ADMIN_EMAIL is unset, admin access is denied (fail-closed).
+ * Get the admin email address from ADMIN_EMAIL env var.
+ * Read at call time (not module load time) so tests can set it dynamically
+ * and Convex env var changes take effect without redeployment.
  */
+export function getAdminEmail(): string | undefined {
+  return process.env.ADMIN_EMAIL;
+}
+
+/** @deprecated Use getAdminEmail() — kept for backwards compat in tests */
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 /**
@@ -22,7 +28,8 @@ export const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
  * @throws {Error} If not authenticated, not admin, or ADMIN_EMAIL not configured
  */
 export async function requireAdmin(ctx: QueryCtx): Promise<void> {
-  if (!ADMIN_EMAIL) {
+  const adminEmail = getAdminEmail();
+  if (!adminEmail) {
     throw new Error("Admin not configured: ADMIN_EMAIL environment variable is not set");
   }
 
@@ -30,7 +37,7 @@ export async function requireAdmin(ctx: QueryCtx): Promise<void> {
 
   const user = await ctx.db.get(userId);
 
-  if (!user || user.email !== ADMIN_EMAIL) {
+  if (!user || user.email !== adminEmail) {
     throw new Error("Unauthorized: Admin access required");
   }
 }
@@ -69,7 +76,7 @@ export type UserSummaryRow = {
   email: string;
   name: string;
   emailVerified: boolean;
-  verificationMethod: string;
+  verificationMethod: "google" | "password_otp" | "no_auth_account" | "unverified";
   authProviders: string[];
   accountCreated: number;
   lastLoginTime: number | null;
@@ -78,7 +85,7 @@ export type UserSummaryRow = {
   activeCases: number;
   deletedCases: number;
   lastCaseUpdate: number | null;
-  userType: string;
+  userType: "individual" | "firm_admin" | "firm_member";
   firmName: string | null;
   accountStatus: "active" | "pending_deletion" | "deleted";
   deletedAt: number | null;
@@ -207,7 +214,7 @@ export async function getAdminDashboardDataHelper(
     const emailVerified = hasGoogle || hasPasswordVerified;
 
     // Verification method
-    let verificationMethod: string;
+    let verificationMethod: UserSummaryRow["verificationMethod"];
     if (accounts.length === 0) {
       verificationMethod = "no_auth_account";
     } else if (hasGoogle) {
@@ -276,7 +283,7 @@ export async function getAdminDashboardDataHelper(
       activeCases,
       deletedCases,
       lastCaseUpdate,
-      userType: profile ? profile.userType : "(no profile)",
+      userType: (profile?.userType || "individual") as UserSummaryRow["userType"],
       firmName: profile?.firmName ?? null,
       accountStatus,
       deletedAt: user.deletedAt ?? null,

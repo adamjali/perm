@@ -399,7 +399,7 @@ export function extractDeadlines(
 }
 
 // NOTE: calculateRecruitmentEndDate has been removed from this file.
-// Use calcRecruitmentEndDate from derivedCalculations.ts as the canonical source.
+// Use calculateRecruitmentEndDate from derivedCalculations.ts as the canonical source.
 // See: convex/lib/derivedCalculations.ts
 
 // ============================================================================

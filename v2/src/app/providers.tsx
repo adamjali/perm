@@ -92,9 +92,3 @@ export function ConvexProviders({ children }: { children: ReactNode }) {
     </ConvexAuthNextjsProvider>
   );
 }
-
-/**
- * @deprecated Use SharedProviders (root layout) + ConvexProviders (auth layouts) instead.
- * Kept for backwards compatibility during migration.
- */
-export { ConvexProviders as ConvexClientProvider };

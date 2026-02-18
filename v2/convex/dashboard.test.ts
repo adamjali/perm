@@ -9,8 +9,6 @@
  *
  * IMPORTANT: These tests use convex-test with real database operations.
  * Each test gets isolated database state via createTestContext().
- *
- * TDD NOTE: Tests written BEFORE implementation - queries don't exist yet!
  */
 
 import { expect, test, describe } from "vitest";

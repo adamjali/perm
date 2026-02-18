@@ -1,10 +1,13 @@
 /**
  * Convex Cron Jobs Configuration
  *
- * Scheduled jobs for automated notification tasks:
+ * Scheduled jobs (6 total):
  * - Daily deadline reminder checks (9 AM EST / 14:00 UTC)
- * - Hourly cleanup of old read notifications (90+ days old)
+ * - Hourly cleanup of old read notifications (90+ days, at :30)
  * - Weekly digest emails (Mondays at 9 AM EST / 14:00 UTC)
+ * - Hourly account deletion cleanup (safety net, at :45)
+ * - Hourly rate limit record cleanup (24h+ old, at :15)
+ * - Daily AI conversation TTL cleanup (90+ days, 3:00 AM UTC)
  *
  * IMPORTANT: All cron handlers use `internal` functions for security.
  * Never expose scheduled job handlers to the public API.

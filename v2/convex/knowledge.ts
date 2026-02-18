@@ -32,6 +32,7 @@ export interface KnowledgeSource {
 export interface KnowledgeSearchResult {
   context: string;
   sources: KnowledgeSource[];
+  error?: string;
 }
 
 /**
@@ -52,15 +53,15 @@ export interface KnowledgeSearchResult {
 export const searchKnowledge = action({
   args: { query: v.string() },
   handler: async (ctx, { query }): Promise<KnowledgeSearchResult> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
     // Return empty for empty/very short queries
     if (!query || query.trim().length < 2) {
       return { context: "", sources: [] };
     }
 
     try {
-      // Debug: Log search query
-      console.log(`[Knowledge Search] Query: "${query}"`);
-
       const { text, entries } = await rag.search(ctx, {
         namespace: "perm_knowledge",
         query,
@@ -69,9 +70,6 @@ export const searchKnowledge = action({
         // Lower threshold from 0.5 to 0.3 to catch more results
         vectorScoreThreshold: 0.3,
       });
-
-      // Debug: Log results
-      console.log(`[Knowledge Search] Found ${entries.length} entries, text length: ${text.length}`);
 
       return {
         context: text,
@@ -87,7 +85,7 @@ export const searchKnowledge = action({
     } catch (error) {
       console.error("Knowledge search failed:", error);
       await recordError(ctx, "action", "knowledge.searchKnowledge.search", error);
-      return { context: "", sources: [] };
+      return { context: "", sources: [], error: "Knowledge search temporarily unavailable" };
     }
   },
 });
@@ -155,56 +153,5 @@ export const getIngestionStatus = query({
       permSections: PERM_KNOWLEDGE_SECTIONS.length,
       appGuideSections: APP_GUIDE_SECTIONS.length,
     };
-  },
-});
-
-/**
- * Debug action to verify RAG entries exist
- */
-export const debugSearchRaw = action({
-  args: { query: v.string() },
-  handler: async (ctx, { query }) => {
-    console.log(`[Debug RAG] Testing raw search for: "${query}"`);
-
-    try {
-      // Try search without threshold
-      const result = await rag.search(ctx, {
-        namespace: "perm_knowledge",
-        query,
-        limit: 10,
-        // No threshold - get everything
-      });
-
-      console.log(`[Debug RAG] Raw search returned:`, {
-        textLength: result.text.length,
-        entriesCount: result.entries.length,
-        resultsCount: result.results.length,
-      });
-
-      // Log each result's score
-      if (result.results.length > 0) {
-        console.log(`[Debug RAG] Result scores:`, result.results.map((r, i) => ({
-          index: i,
-          score: r.score,
-          order: r.order,
-        })));
-      }
-
-      return {
-        textLength: result.text.length,
-        textPreview: result.text.slice(0, 200),
-        entriesCount: result.entries.length,
-        resultsCount: result.results.length,
-        entries: result.entries.map(e => ({
-          title: e.title,
-          status: e.status,
-        })),
-        scores: result.results.map(r => r.score),
-      };
-    } catch (error) {
-      console.error(`[Debug RAG] Error:`, error);
-      await recordError(ctx, "action", "knowledge.debugSearchRaw.search", error);
-      return { error: String(error) };
-    }
   },
 });

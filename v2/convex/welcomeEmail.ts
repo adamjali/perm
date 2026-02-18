@@ -8,13 +8,13 @@
  * - sendWelcomeEmail: Send welcome email to a single user
  * - sendWelcomeBlast: Send welcome email to all existing users
  *
- * PUBLIC ACTIONS:
+ * INTERNAL ACTIONS:
  * - sendTestWelcomeEmail: Send test email to a specific address
  *
  * @module
  */
 
-import { action, internalAction, internalMutation } from "./_generated/server";
+import { internalAction, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { render } from "@react-email/render";
 import { internal } from "./_generated/api";
@@ -62,7 +62,7 @@ export const sendWelcomeEmail = internalAction({
  * Send a test welcome email to a specific address.
  * For testing the template before blast.
  */
-export const sendTestWelcomeEmail = action({
+export const sendTestWelcomeEmail = internalAction({
   args: {
     to: v.string(),
     userName: v.optional(v.string()),

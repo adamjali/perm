@@ -161,6 +161,8 @@ export function calculateAutoStatus(input: StatusCalculationInput): AutoStatusRe
     return { caseStatus: 'i140', progressStatus: 'approved' };
   }
   if (input.i140DenialDate) {
+    // progressStatus 'approved' here means the ETA 9089 was approved/certified
+    // before the I-140 was denied — the case closes but retains the last progress milestone
     return { caseStatus: 'closed', progressStatus: 'approved' };
   }
   if (input.i140FilingDate) {

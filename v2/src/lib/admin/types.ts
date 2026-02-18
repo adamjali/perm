@@ -13,7 +13,7 @@ export interface UserSummary {
   email: string;
   name: string;
   emailVerified: boolean;
-  verificationMethod: string;
+  verificationMethod: "google" | "password_otp" | "no_auth_account" | "unverified";
   authProviders: string[];
   accountCreated: number;
   lastLoginTime: number | null;
@@ -22,9 +22,9 @@ export interface UserSummary {
   activeCases: number;
   deletedCases: number;
   lastCaseUpdate: number | null;
-  userType: string;
+  userType: "individual" | "firm_admin" | "firm_member";
   firmName: string | null;
-  accountStatus: string;
+  accountStatus: "active" | "pending_deletion" | "deleted";
   deletedAt: number | null;
   termsAccepted: number | null;
   termsVersion: string | null;

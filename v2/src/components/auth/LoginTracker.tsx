@@ -16,6 +16,7 @@
 import { useEffect, useRef } from "react";
 import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { captureError } from "@/lib/sentry";
 
 const LAST_LOGIN_KEY = "perm_last_login_at";
 const DEBOUNCE_MS = 30 * 1000; // 30 seconds — avoid double-counting
@@ -38,6 +39,7 @@ export function LoginTracker() {
 
     recordMyLogin().catch((error) => {
       console.error("[LoginTracker] Failed to record login:", error);
+      captureError(error, { operation: "LoginTracker.recordMyLogin" });
       localStorage.removeItem(LAST_LOGIN_KEY);
       hasFired.current = false;
     });

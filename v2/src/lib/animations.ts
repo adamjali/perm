@@ -263,33 +263,6 @@ export const popIn = createScaleVariant(0, quickSpringConfig);
 // ============================================================================
 
 /**
- * Calculate parallax Y offset range for useTransform.
- *
- * @deprecated Use createParallaxRange() instead for a clearer API.
- * The first parameter is unused and this function exists only for backward compatibility.
- *
- * @param _scrollProgress - Unused (kept for backward compatibility)
- * @param intensity - Movement range in pixels (default: 50)
- * @returns [start, end] tuple for useTransform output range
- *
- * @example
- * ```tsx
- * // DEPRECATED usage:
- * const y = useTransform(scrollYProgress, [0, 1], parallaxY(undefined, 100));
- *
- * // PREFERRED: use createParallaxRange for clearer API
- * const y = useTransform(scrollYProgress, [0, 1], createParallaxRange(100, 'up'));
- * ```
- */
-export function parallaxY(
-  _scrollProgress?: number,
-  intensity = 50
-): [number, number] {
-  // Returns [start, end] values for useTransform
-  return [intensity, -intensity];
-}
-
-/**
  * Create parallax transform values for useTransform
  *
  * @param intensity - Movement range in pixels

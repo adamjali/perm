@@ -6,15 +6,26 @@
  * - Stack trace extraction
  * - Optional fields (userId, resourceId, extra) passed correctly
  * - Self-healing: recording failures don't propagate
+ *
+ * Note: vi.mock for _generated/api is unreliable with isolate:false + threads pool.
+ * We assert on mock.calls[N][2] (the args object) directly instead of using
+ * toHaveBeenCalledWith on the function reference (2nd argument), because the
+ * real FunctionReference object leaks in from other test files and can't be
+ * serialized by vitest's pretty-format.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock the internal API before importing the module
+// Mock the internal API before importing the module.
+// With isolate:false this mock may not fully intercept — assertions
+// below avoid comparing the function reference directly.
 vi.mock("../../_generated/api", () => ({
   internal: {
     systemErrors: {
-      record: "mock-function-ref",
+      record: "mock-system-errors-record",
+    },
+    sentryReportAction: {
+      report: "mock-sentry-report",
     },
   },
 }));
@@ -31,58 +42,48 @@ describe("recordError", () => {
     vi.clearAllMocks();
   });
 
+  /** Helper: get the args object from the first runAfter call (systemErrors.record). */
+  function getRecordArgs() {
+    return mockRunAfter.mock.calls[0][2] as Record<string, unknown>;
+  }
+
   describe("error message extraction", () => {
     it("extracts message from Error instances", async () => {
       await recordError(mockCtx, "mutation", "test.op", new Error("boom"));
 
-      expect(mockRunAfter).toHaveBeenCalledWith(
-        0,
-        "mock-function-ref",
-        expect.objectContaining({ message: "boom" }),
-      );
+      expect(mockRunAfter).toHaveBeenCalled();
+      expect(getRecordArgs().message).toBe("boom");
     });
 
     it("extracts stack from Error instances", async () => {
       const error = new Error("boom");
       await recordError(mockCtx, "action", "test.op", error);
 
-      expect(mockRunAfter).toHaveBeenCalledWith(
-        0,
-        "mock-function-ref",
-        expect.objectContaining({
-          stack: expect.stringContaining("Error: boom"),
-        }),
-      );
+      expect(mockRunAfter).toHaveBeenCalled();
+      expect(getRecordArgs().stack).toEqual(expect.stringContaining("Error: boom"));
     });
 
     it("converts non-Error values to string message", async () => {
       await recordError(mockCtx, "mutation", "test.op", "string error");
 
-      expect(mockRunAfter).toHaveBeenCalledWith(
-        0,
-        "mock-function-ref",
-        expect.objectContaining({ message: "string error", stack: undefined }),
-      );
+      expect(mockRunAfter).toHaveBeenCalled();
+      const args = getRecordArgs();
+      expect(args.message).toBe("string error");
+      expect(args.stack).toBeUndefined();
     });
 
     it("handles null/undefined errors", async () => {
       await recordError(mockCtx, "cron", "test.op", null);
 
-      expect(mockRunAfter).toHaveBeenCalledWith(
-        0,
-        "mock-function-ref",
-        expect.objectContaining({ message: "null" }),
-      );
+      expect(mockRunAfter).toHaveBeenCalled();
+      expect(getRecordArgs().message).toBe("null");
     });
 
     it("handles number errors", async () => {
       await recordError(mockCtx, "webhook", "test.op", 42);
 
-      expect(mockRunAfter).toHaveBeenCalledWith(
-        0,
-        "mock-function-ref",
-        expect.objectContaining({ message: "42" }),
-      );
+      expect(mockRunAfter).toHaveBeenCalled();
+      expect(getRecordArgs().message).toBe("42");
     });
   });
 
@@ -90,14 +91,10 @@ describe("recordError", () => {
     it("passes source and operation through", async () => {
       await recordError(mockCtx, "cron", "scheduledJobs.cleanup", new Error("fail"));
 
-      expect(mockRunAfter).toHaveBeenCalledWith(
-        0,
-        "mock-function-ref",
-        expect.objectContaining({
-          source: "cron",
-          operation: "scheduledJobs.cleanup",
-        }),
-      );
+      expect(mockRunAfter).toHaveBeenCalled();
+      const args = getRecordArgs();
+      expect(args.source).toBe("cron");
+      expect(args.operation).toBe("scheduledJobs.cleanup");
     });
   });
 
@@ -107,8 +104,7 @@ describe("recordError", () => {
         userId: "user123" as any,
       });
 
-      const args = mockRunAfter.mock.calls[0][2];
-      expect(args.userId).toBe("user123");
+      expect(getRecordArgs().userId).toBe("user123");
     });
 
     it("includes resourceId when provided", async () => {
@@ -116,8 +112,7 @@ describe("recordError", () => {
         resourceId: "case456",
       });
 
-      const args = mockRunAfter.mock.calls[0][2];
-      expect(args.resourceId).toBe("case456");
+      expect(getRecordArgs().resourceId).toBe("case456");
     });
 
     it("includes extra when provided", async () => {
@@ -125,14 +120,13 @@ describe("recordError", () => {
         extra: JSON.stringify({ key: "val" }),
       });
 
-      const args = mockRunAfter.mock.calls[0][2];
-      expect(args.extra).toBe('{"key":"val"}');
+      expect(getRecordArgs().extra).toBe('{"key":"val"}');
     });
 
     it("omits optional fields when not provided", async () => {
       await recordError(mockCtx, "mutation", "op", new Error("x"));
 
-      const args = mockRunAfter.mock.calls[0][2];
+      const args = getRecordArgs();
       expect(args.userId).toBeUndefined();
       expect(args.resourceId).toBeUndefined();
       expect(args.extra).toBeUndefined();
@@ -144,7 +138,7 @@ describe("recordError", () => {
         extra: "",
       });
 
-      const args = mockRunAfter.mock.calls[0][2];
+      const args = getRecordArgs();
       expect(args.resourceId).toBeUndefined();
       expect(args.extra).toBeUndefined();
     });

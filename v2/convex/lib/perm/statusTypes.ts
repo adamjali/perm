@@ -5,7 +5,7 @@
  * All other files should import from here to ensure consistency.
  *
  * Used by:
- * - src/lib/lib/perm/types.ts
+ * - src/lib/perm/ (frontend re-exports)
  * - convex/lib/dashboardTypes.ts
  * - convex/schema.ts (indirectly - schema uses v.literal() strings)
  */

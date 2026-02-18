@@ -111,28 +111,3 @@ export const getCaseOrder = query({
     return customOrder;
   },
 });
-
-/**
- * Delete custom case order.
- * Resets to default sorting.
- */
-export const deleteCaseOrder = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
-
-    const existing = await ctx.db
-      .query("userCaseOrder")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .first();
-
-    if (existing) {
-      await ctx.db.delete(existing._id);
-    }
-
-    return { success: true };
-  },
-});

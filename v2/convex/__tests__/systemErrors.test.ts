@@ -9,14 +9,18 @@
  * - Filtering by resolved status
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   createTestContext,
   createAuthenticatedContext,
   setupSchedulerTests,
 } from "../../test-utils/convex";
 import { api } from "../_generated/api";
-import { ADMIN_EMAIL } from "../lib/admin";
+
+// ADMIN_EMAIL is read from process.env at module load time.
+// Set it before importing admin.ts so requireAdmin() passes in tests.
+const TEST_ADMIN_EMAIL = "admin@test.com";
+process.env.ADMIN_EMAIL = TEST_ADMIN_EMAIL;
 
 // FilterApi generic can't resolve api.systemErrors at the type level.
 // The reference is verified correct — see convex/systemErrors.ts (query).
@@ -28,13 +32,13 @@ describe("systemErrors", () => {
 
   /**
    * Helper: create an admin user context.
-   * Sets the user's email to ADMIN_EMAIL so requireAdmin() passes.
+   * Sets the user's email to TEST_ADMIN_EMAIL so requireAdmin() passes.
    */
   async function createAdminContext(t: ReturnType<typeof createTestContext>) {
     const { ctx, userId } = await createAuthenticatedContext(t, "Admin User");
     // Set the admin email on the user record
     await t.run(async (dbCtx) => {
-      await dbCtx.db.patch(userId, { email: ADMIN_EMAIL });
+      await dbCtx.db.patch(userId, { email: TEST_ADMIN_EMAIL });
     });
     return { ctx, userId };
   }
