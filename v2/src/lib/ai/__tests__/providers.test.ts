@@ -79,10 +79,10 @@ describe('AI Providers', () => {
     expect(providers.size).toBe(5);
   });
 
-  it('primary model is Groq Llama 3.3 70B Versatile', async () => {
+  it('primary model is Gemini 2.5 Flash', async () => {
     const { SUPPORTED_MODELS } = await import('../providers');
-    expect(SUPPORTED_MODELS[0].id).toBe('llama-3.3-70b-versatile');
-    expect(SUPPORTED_MODELS[0].provider).toBe('Groq');
+    expect(SUPPORTED_MODELS[0].id).toBe('gemini-2.5-flash');
+    expect(SUPPORTED_MODELS[0].provider).toBe('Google');
   });
 });
 
