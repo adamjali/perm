@@ -134,7 +134,24 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
   } = useAIChat({
     // id intentionally omitted - changing it mid-request breaks status tracking
     // We manually clear messages instead when conversation changes
-    transport: new DefaultChatTransport({ api: '/api/chat' }),
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      fetch: async (input, init) => {
+        const response = await fetch(input, init);
+        // Log AI model debug info from response headers
+        const model = response.headers.get('X-AI-Model');
+        const attempt = response.headers.get('X-AI-Attempt');
+        const session = response.headers.get('X-AI-Session');
+        if (model) {
+          const isFallback = Number(attempt) > 1;
+          console.log(
+            `%c[AI] Model: ${model}${isFallback ? ` (fallback #${attempt})` : ''} [${session}]`,
+            isFallback ? 'color: #f59e0b; font-weight: bold' : 'color: #22c55e; font-weight: bold'
+          );
+        }
+        return response;
+      },
+    }),
     onFinish: async ({ message }) => {
       // Use ref to get current conversationId (prevents stale closure)
       const currentConversationId = conversationIdRef.current;

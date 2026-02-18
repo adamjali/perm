@@ -276,7 +276,16 @@ export async function POST(req: Request) {
       // Log cache stats for the session
       cacheStats.log(sessionId);
 
+      // Build debug headers so client can see which model was used
+      const debugHeaders: Record<string, string> = {
+        'X-AI-Model': chatModel.lastUsedModel || 'unknown',
+        'X-AI-Attempt': String(chatModel.lastAttemptCount || 0),
+        'X-AI-Session': sessionId,
+      };
+      console.log(`[Chat API] [${sessionId}] Model used: ${debugHeaders['X-AI-Model']} (attempt #${debugHeaders['X-AI-Attempt']})`);
+
       return result.toUIMessageStreamResponse({
+        headers: debugHeaders,
         onError: (error) => {
           // AI SDK v6: transform errors into user-friendly messages for the stream
           const msg = error instanceof Error ? error.message : String(error);

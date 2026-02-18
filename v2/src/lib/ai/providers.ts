@@ -196,6 +196,12 @@ function formatError(error: unknown): string {
 export class FallbackModel implements LanguageModelV3 {
   readonly specificationVersion = 'v3' as const;
 
+  /** Last model that succeeded (set per-request, useful for debug headers). */
+  lastUsedModel = '';
+
+  /** Number of models tried in the last request (1 = primary succeeded). */
+  lastAttemptCount = 0;
+
   get modelId(): string {
     return this.configs[0]?.name || 'fallback';
   }
@@ -225,6 +231,8 @@ export class FallbackModel implements LanguageModelV3 {
         const result = await config.model.doGenerate(options);
         console.log(`[Fallback] ${config.name} succeeded (generate)`);
         addBreadcrumb({ category: 'ai.fallback', message: `${config.name} succeeded (generate)`, data: { modelIndex: i } });
+        this.lastUsedModel = config.name;
+        this.lastAttemptCount = i + 1;
         return result;
       } catch (error) {
         const errorStr = formatError(error);
@@ -259,6 +267,8 @@ export class FallbackModel implements LanguageModelV3 {
         const result = await config.model.doStream(options);
         console.log(`[Fallback] ${config.name} stream started successfully`);
         addBreadcrumb({ category: 'ai.fallback', message: `${config.name} stream started`, data: { modelIndex: i } });
+        this.lastUsedModel = config.name;
+        this.lastAttemptCount = i + 1;
         return result;
       } catch (error) {
         const errorStr = formatError(error);
