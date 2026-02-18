@@ -29,6 +29,24 @@ export const currentUser = query({
 });
 
 /**
+ * Check if the current user is an admin.
+ * Returns { isAdmin: boolean } — server-side check, no secrets exposed to client.
+ */
+export const isAdmin = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return { isAdmin: false };
+
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail) return { isAdmin: false };
+
+    const user = await ctx.db.get(userId);
+    return { isAdmin: user?.email === adminEmail };
+  },
+});
+
+/**
  * Get the current user's profile
  * Returns null if not authenticated or if profile doesn't exist
  */

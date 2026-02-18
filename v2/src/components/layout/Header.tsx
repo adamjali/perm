@@ -13,7 +13,7 @@ import { api } from "../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { AUTHENTICATED_NAV_LINKS, ADMIN_NAV_LINK } from "@/lib/constants/navigation";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
-import { ADMIN_EMAIL } from "@/lib/admin/adminAuth";
+import { useAdminAuth } from "@/lib/admin/adminAuth";
 import ThemeToggle from "./ThemeToggle";
 import { NavLink } from "@/components/ui/nav-link";
 import { NotificationBell, NotificationDropdown } from "@/components/notifications";
@@ -153,8 +153,8 @@ export default function Header(): React.ReactElement {
   // Enable toast notifications for new notifications
   useNotificationToasts();
 
-  // Check if user is admin
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  // Check if user is admin (server-side, no secrets on client)
+  const { isAdmin } = useAdminAuth();
 
   // Build nav links with conditional admin link
   const navLinks = isAdmin

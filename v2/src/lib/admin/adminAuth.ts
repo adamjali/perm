@@ -2,7 +2,7 @@
  * Admin Authentication
  *
  * Provides admin authentication helpers for the frontend.
- * Only the email defined in ADMIN_EMAIL is considered an admin.
+ * Admin check is performed server-side — no secrets exposed to the client.
  */
 
 import { useQuery } from "convex/react";
@@ -10,22 +10,18 @@ import { api } from "../../../convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 
 /**
- * Admin email address — configurable via NEXT_PUBLIC_ADMIN_EMAIL env var.
- * No fallback: if unset, no user is considered admin (fail-closed).
- */
-export const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-
-/**
  * Hook to check if current user is admin.
+ * Uses server-side query — admin email never leaves the backend.
  * Skips query during sign-out to avoid server errors.
  */
 export function useAdminAuth() {
   const { isSigningOut } = useAuthContext();
   const user = useQuery(api.users.currentUser, isSigningOut ? "skip" : undefined);
+  const adminCheck = useQuery(api.users.isAdmin, isSigningOut ? "skip" : undefined);
 
   return {
-    isAdmin: !!ADMIN_EMAIL && user?.email === ADMIN_EMAIL,
-    isLoading: user === undefined,
+    isAdmin: adminCheck?.isAdmin || false,
+    isLoading: user === undefined || adminCheck === undefined,
     isSigningOut,
     user: user ?? null,
   };
