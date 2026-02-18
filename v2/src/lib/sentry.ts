@@ -41,7 +41,8 @@ export type BreadcrumbCategory =
   | "validation"
   | "mutation"
   | "query"
-  | "auth";
+  | "auth"
+  | "ai.fallback";
 
 export interface BreadcrumbData {
   category: BreadcrumbCategory;

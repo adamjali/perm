@@ -217,7 +217,7 @@ export async function POST(req: Request) {
     const tools = createTools(token, typedConversationId, cacheStats, actionMode, pageContext);
 
     try {
-      console.log(`[Chat API] [${sessionId}] Streaming with ${PRIMARY_MODEL_NAME} (auto-fallback enabled)`);
+      console.log(`[Chat API] [${sessionId}] Streaming with ${PRIMARY_MODEL_NAME} (fallback across 6 models)`);
 
       const result = streamText({
         model: chatModel,
@@ -226,7 +226,12 @@ export async function POST(req: Request) {
         tools,
         stopWhen: stepCountIs(10),
         maxOutputTokens: 4000,
-        maxRetries: 0, // ai-fallback handles retries internally
+        maxRetries: 0, // FallbackModel handles retries internally
+        onError({ error }) {
+          // AI SDK v6: errors during streaming become part of the stream
+          console.error(`[Chat API] [${sessionId}] streamText onError:`, error instanceof Error ? error.message : String(error));
+          captureError(error);
+        },
         onStepFinish: (event) => {
           console.log(`[Chat API] [${sessionId}] Step finished, reason: ${event.finishReason}`);
 
@@ -271,9 +276,17 @@ export async function POST(req: Request) {
       // Log cache stats for the session
       cacheStats.log(sessionId);
 
-      return result.toUIMessageStreamResponse();
+      return result.toUIMessageStreamResponse({
+        onError: (error) => {
+          // AI SDK v6: transform errors into user-friendly messages for the stream
+          const msg = error instanceof Error ? error.message : String(error);
+          console.error(`[Chat API] [${sessionId}] toUIMessageStreamResponse onError:`, msg.slice(0, 300));
+          return 'AI service temporarily unavailable. Please try again in a moment.';
+        },
+      });
     } catch (error) {
-      // All models failed (ai-fallback exhausted all options)
+      // All models failed (FallbackModel exhausted all options)
+      // This fires when model.doStream() throws before streaming starts
       const errMsg = error instanceof Error ? error.message : String(error);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const errAny = error as any;
@@ -286,7 +299,7 @@ export async function POST(req: Request) {
       captureError(error);
       return new Response(
         JSON.stringify({
-          error: `All AI providers failed. Last error: ${errMsg?.slice(0, 200)}`,
+          error: `All AI providers are currently unavailable. Please try again in a moment.`,
         }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       );

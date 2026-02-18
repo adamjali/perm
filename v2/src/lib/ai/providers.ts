@@ -1,8 +1,8 @@
 /**
  * AI Provider Configuration
  *
- * Multi-provider setup for chat functionality with automatic fallback.
- * Uses ai-fallback for mid-stream error recovery and automatic provider switching.
+ * Multi-provider setup with automatic fallback. Tries each model in order;
+ * if one fails (rate limit, quota, auth, 404, any error), moves to the next.
  *
  * Provider Chain (Feb 2026):
  *
@@ -18,19 +18,30 @@
  *   - Llama 3.3 70B (OpenRouter free, often rate-limited)
  *   - Llama 3.1 8B (Cerebras, emergency ultra-fast)
  *
- * Total: 6 models across 5 providers with automatic mid-stream recovery.
- * Tested: Feb 2026 - All models verified working with streaming + tool calling.
+ * Total: 6 models across 5 providers.
  *
  * REMOVED (Feb 2026):
  *   - devstral-2512:free — OpenRouter free period ended (returns 404)
  *   - cerebras llama-3.3-70b — deprecated on Cerebras Feb 16 2026
+ *
+ * WHY NOT ai-fallback:
+ *   ai-fallback v2's shouldRetryThisError callback is NOT called for thrown
+ *   exceptions during streaming — only for error-type stream chunks, which
+ *   AI SDK v3 providers never emit. This caused the fallback chain to silently
+ *   fail. Replaced with a simple sequential fallback that's easy to debug.
  */
 
 import { google } from '@ai-sdk/google';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { createOpenAI } from '@ai-sdk/openai';
-import { createFallback } from 'ai-fallback';
 import { wrapLanguageModel } from 'ai';
+import type {
+  LanguageModelV3,
+  LanguageModelV3CallOptions,
+  LanguageModelV3GenerateResult,
+  LanguageModelV3StreamResult,
+} from '@ai-sdk/provider';
+import { captureError, addBreadcrumb } from '@/lib/sentry';
 
 // =============================================================================
 // Mistral Tool Call ID Fix
@@ -39,19 +50,14 @@ import { wrapLanguageModel } from 'ai';
 /**
  * Mistral requires tool call IDs to be exactly 9 alphanumeric characters.
  * The Vercel AI SDK generates longer IDs, so we need to transform them.
- *
- * This function creates a consistent 9-char ID from any input ID using
- * a hash-like approach to maintain uniqueness.
  */
 function toMistralToolCallId(id: string): string {
-  // Simple hash: take alphanumeric chars, pad/truncate to 9 chars
   const alphanumeric = id.replace(/[^a-zA-Z0-9]/g, '');
 
   if (alphanumeric.length >= 9) {
-    return alphanumeric.slice(-9); // Take last 9 chars
+    return alphanumeric.slice(-9);
   }
 
-  // Pad with deterministic chars derived from the id
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let padded = alphanumeric;
   let i = 0;
@@ -64,28 +70,20 @@ function toMistralToolCallId(id: string): string {
 
 /**
  * Wrap a Mistral-based model with middleware that fixes tool call IDs.
- * This ensures all tool call IDs are exactly 9 alphanumeric characters.
- *
- * Uses ReturnType inference to match the model's type.
  */
 function wrapMistralModel<T extends Parameters<typeof wrapLanguageModel>[0]['model']>(model: T): T {
   return wrapLanguageModel({
     model,
     middleware: {
       specificationVersion: 'v3' as const,
-      // Transform tool results before sending to model
       transformParams: async ({ params }) => {
-        // Transform tool call IDs in messages
         const transformedMessages = params.prompt.map((msg) => {
           if (msg.role === 'assistant' && Array.isArray(msg.content)) {
             return {
               ...msg,
               content: msg.content.map((part) => {
                 if (part.type === 'tool-call') {
-                  return {
-                    ...part,
-                    toolCallId: toMistralToolCallId(part.toolCallId),
-                  };
+                  return { ...part, toolCallId: toMistralToolCallId(part.toolCallId) };
                 }
                 return part;
               }),
@@ -96,10 +94,7 @@ function wrapMistralModel<T extends Parameters<typeof wrapLanguageModel>[0]['mod
               ...msg,
               content: msg.content.map((part) => {
                 if (part.type === 'tool-result') {
-                  return {
-                    ...part,
-                    toolCallId: toMistralToolCallId(part.toolCallId),
-                  };
+                  return { ...part, toolCallId: toMistralToolCallId(part.toolCallId) };
                 }
                 return part;
               }),
@@ -114,294 +109,192 @@ function wrapMistralModel<T extends Parameters<typeof wrapLanguageModel>[0]['mod
   }) as T;
 }
 
-/**
- * Custom error class that is always retryable.
- * This forces ai-fallback to continue to the next model instead of stopping.
- *
- * ai-fallback checks error.statusCode and error.message patterns to determine
- * if an error is retryable. We preserve the statusCode from the original error
- * and ensure the message contains retryable patterns.
- */
-class RetryableError extends Error {
-  isRetryable = true;
-  statusCode?: number;
-
-  constructor(message: string, public originalError?: Error) {
-    // Ensure message contains patterns ai-fallback recognizes as retryable
-    const retryableMessage = message.includes('rate') || message.includes('429') || message.includes('quota')
-      ? message
-      : `rate_limit: ${message}`; // Prefix to ensure ai-fallback recognizes it
-    super(retryableMessage);
-    this.name = 'RetryableError';
-
-    // Extract statusCode from original error if available
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const origError = originalError as any;
-    if (origError?.statusCode) {
-      this.statusCode = origError.statusCode;
-    } else if (origError?.status) {
-      this.statusCode = origError.status;
-    } else {
-      // Default to 429 (rate limit) to ensure ai-fallback treats it as retryable
-      this.statusCode = 429;
-    }
-  }
-}
-
-/**
- * Wrap any model to make ALL errors retryable.
- * This ensures ai-fallback continues to the next model on ANY failure,
- * not just rate limits or 5xx errors.
- *
- * Also detects Gemini's silent failures (finishReason: 'error' with 0 output).
- * Logs which model successfully handled the request.
- */
-function wrapWithRetryableErrors<T extends Parameters<typeof wrapLanguageModel>[0]['model']>(model: T): T {
-  // Get model ID for logging
-  const modelId = 'modelId' in model ? (model as { modelId: string }).modelId : 'unknown';
-
-  return wrapLanguageModel({
-    model,
-    middleware: {
-      specificationVersion: 'v3' as const,
-      // Wrap generate to catch errors and make them retryable
-      wrapGenerate: async ({ doGenerate }) => {
-        try {
-          const result = await doGenerate();
-
-          // Detect silent failure: error finish reason with no output
-          // In AI SDK v6, finishReason is { unified, raw } instead of a plain string
-          const reason = result.finishReason.unified;
-          if (reason === 'error' || reason === 'other') {
-            const hasOutput = result.content && result.content.length > 0 && result.content.some(
-              (part) => (part.type === 'text' && part.text) || part.type === 'tool-call'
-            );
-            if (!hasOutput) {
-              console.error(`[Middleware] Silent failure detected (generate) for ${modelId} - throwing retryable error`);
-              throw new RetryableError(`Model silent failure: finishReason=${reason} with no output`);
-            }
-          }
-
-          // Log success
-          console.log(`[Middleware] Model ${modelId} completed successfully (generate)`);
-          return result;
-        } catch (error) {
-          // Make ALL errors retryable so fallback continues
-          if (error instanceof RetryableError) {
-            throw error; // Already retryable
-          }
-          const message = error instanceof Error ? error.message : String(error);
-          console.error(`[Middleware] Error from ${modelId}, converting to retryable:`, message);
-          throw new RetryableError(message, error instanceof Error ? error : undefined);
-        }
-      },
-
-      // Wrap stream to catch errors and make them retryable
-      wrapStream: async ({ doStream }) => {
-        try {
-          const { stream, ...rest } = await doStream();
-
-          let hasContent = false;
-          let finishReason: string | null = null;
-          let logged = false;
-
-          // Transform stream to detect silent failures
-          const transformStream = new TransformStream({
-            transform(chunk, controller) {
-              // Track if we've seen any actual content
-              if (chunk.type === 'text-delta' && chunk.textDelta) {
-                hasContent = true;
-                // Log success on first content (only once)
-                if (!logged) {
-                  console.log(`[Middleware] Model ${modelId} streaming response`);
-                  logged = true;
-                }
-              }
-              if (chunk.type === 'tool-call') {
-                hasContent = true;
-                if (!logged) {
-                  console.log(`[Middleware] Model ${modelId} calling tool`);
-                  logged = true;
-                }
-              }
-              if (chunk.type === 'tool-call-delta') {
-                hasContent = true;
-              }
-
-              // Track finish reason (v6: finishReason is { unified, raw })
-              if (chunk.type === 'finish') {
-                finishReason = chunk.finishReason.unified;
-              }
-
-              controller.enqueue(chunk);
-            },
-            flush(controller) {
-              // After stream ends, check if it was a silent failure
-              if ((finishReason === 'error' || finishReason === 'other') && !hasContent) {
-                console.error(`[Middleware] Silent failure detected (stream) for ${modelId} - throwing retryable error`);
-                controller.error(new RetryableError(`Model silent failure: finishReason=${finishReason} with no output`));
-              }
-            },
-          });
-
-          return {
-            stream: stream.pipeThrough(transformStream),
-            ...rest,
-          };
-        } catch (error) {
-          // Make ALL errors retryable so fallback continues
-          if (error instanceof RetryableError) {
-            throw error; // Already retryable
-          }
-          const message = error instanceof Error ? error.message : String(error);
-          console.error(`[Middleware] Stream error from ${modelId}, converting to retryable:`, message);
-          throw new RetryableError(message, error instanceof Error ? error : undefined);
-        }
-      },
-    },
-  }) as T;
-}
-
-
 // =============================================================================
 // Provider Clients
 // =============================================================================
 
-// OpenRouter client (300+ models, many free)
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY!,
+  apiKey: process.env.OPENROUTER_API_KEY || '',
 });
 
-// Groq client (OpenAI-compatible API, fast inference)
 const groq = createOpenAI({
   baseURL: 'https://api.groq.com/openai/v1',
-  apiKey: process.env.GROQ_API_KEY!,
+  apiKey: process.env.GROQ_API_KEY || '',
 });
 
-// Cerebras client (OpenAI-compatible API, ultra-fast inference)
 const cerebras = createOpenAI({
   baseURL: 'https://api.cerebras.ai/v1',
-  apiKey: process.env.CEREBRAS_API_KEY!,
+  apiKey: process.env.CEREBRAS_API_KEY || '',
 });
 
-// Mistral client (OpenAI-compatible API)
 const mistral = createOpenAI({
   baseURL: 'https://api.mistral.ai/v1',
-  apiKey: process.env.MISTRAL_API_KEY!,
+  apiKey: process.env.MISTRAL_API_KEY || '',
 });
 
 // =============================================================================
 // Model Configuration
 // =============================================================================
 
+interface ModelConfig {
+  model: LanguageModelV3;
+  name: string;
+}
+
 /**
- * All models in fallback order (primary + fallbacks)
- *
- * IMPORTANT: ALL models are wrapped with wrapWithRetryableErrors() to ensure
- * the fallback chain continues on ANY error (not just rate limits/5xx).
- *
- * Note:
- * - Gemini is PRIMARY for best quality (20 RPD free tier per model)
- * - Groq/Mistral have generous free tiers and catch Gemini overflow
- * - OpenRouter free models are unreliable (rate limited, free periods end)
- * - Mistral-based models also get wrapMistralModel() for tool ID fix
+ * All models in fallback order. Each request tries from index 0.
+ * No shared state between requests — every request gets a fresh attempt.
  */
-const allModels = [
+const MODEL_CONFIGS: ModelConfig[] = [
   // Tier 1: Primary (Google Gemini — best quality)
-  wrapWithRetryableErrors(google('gemini-2.5-flash')),                      // Primary, 20 RPD free
-  wrapWithRetryableErrors(google('gemini-3-flash-preview')),                // Preview, separate quota
+  { model: google('gemini-2.5-flash'), name: 'Gemini 2.5 Flash' },
+  { model: google('gemini-3-flash-preview'), name: 'Gemini 3 Flash Preview' },
 
   // Tier 2: High-quota fallbacks (catch Gemini overflow)
-  wrapWithRetryableErrors(groq('llama-3.3-70b-versatile')),                               // 30 RPM, 14400 RPD free
-  wrapWithRetryableErrors(wrapMistralModel(mistral('mistral-small-latest'))),             // Generous free tier
+  { model: groq('llama-3.3-70b-versatile'), name: 'Llama 3.3 70B (Groq)' },
+  { model: wrapMistralModel(mistral('mistral-small-latest')), name: 'Mistral Small' },
 
   // Tier 3: Unreliable free / Emergency
-  wrapWithRetryableErrors(openrouter('meta-llama/llama-3.3-70b-instruct:free')),          // Often rate-limited
-  wrapWithRetryableErrors(cerebras('llama3.1-8b')),                         // Emergency fallback
+  { model: openrouter('meta-llama/llama-3.3-70b-instruct:free'), name: 'Llama 3.3 70B (OpenRouter)' },
+  { model: cerebras('llama3.1-8b'), name: 'Llama 3.1 8B (Cerebras)' },
 ];
 
-/**
- * Model names for logging (matches allModels order)
- */
-const MODEL_NAMES = [
-  'Gemini 2.5 Flash',
-  'Gemini 3 Flash Preview',
-  'Llama 3.3 70B Versatile (Groq)',
-  'Mistral Small',
-  'Llama 3.3 70B (OpenRouter)',
-  'Llama 3.1 8B (Cerebras)',
-] as const;
+// =============================================================================
+// Simple Fallback Model
+// =============================================================================
 
 /**
- * Chat model with automatic fallback on quota/rate limit/server errors.
- * Uses ai-fallback for mid-stream error recovery.
- *
- * Configuration:
- * - retryAfterOutput: true - Recover from mid-stream errors (restarts generation)
- * - modelResetInterval: 5 minutes - Re-test failed models periodically
- * - All 6 models tried in order before giving up
+ * Format error for logging: extract message, status code, and type.
  */
+function formatError(error: unknown): string {
+  if (!(error instanceof Error)) return String(error);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const errAny = error as any;
+  const status = errAny?.statusCode || errAny?.status || '';
+  const name = errAny?.name || 'Error';
+  const msg = error.message?.slice(0, 300) || 'unknown';
+
+  return status ? `[${name} ${status}] ${msg}` : `[${name}] ${msg}`;
+}
+
 /**
- * Custom retry checker that ensures ALL errors are considered retryable.
- * This overrides ai-fallback's default logic which only checks specific
- * status codes and message patterns.
+ * Simple sequential fallback model. Tries each model in order for every request.
+ *
+ * Unlike ai-fallback, this has:
+ * - No shared state between requests (no currentModelIndex)
+ * - No complex stream wrapping or mid-stream recovery
+ * - Clear, sequential logging of every model attempt
+ * - ALL errors are retried (no shouldRetryThisError issues)
+ *
+ * Trade-off: no mid-stream recovery. If a model starts streaming and fails
+ * mid-stream, the error propagates. This is acceptable because:
+ * - Most errors (rate limit, quota, auth, 404) happen at connection time
+ * - Mid-stream failures are rare
+ * - Simplicity prevents the bugs that caused the fallback to silently fail
  */
-function shouldRetryThisError(error: Error): boolean {
-  // Always retry RetryableError instances
-  if (error instanceof RetryableError || (error as { isRetryable?: boolean }).isRetryable) {
-    return true;
+export class FallbackModel implements LanguageModelV3 {
+  readonly specificationVersion = 'v3' as const;
+
+  get modelId(): string {
+    return this.configs[0]?.name || 'fallback';
   }
 
-  // Check for common retryable status codes
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const statusCode = (error as any)?.statusCode ?? (error as any)?.status;
-  if (statusCode) {
-    const retryableCodes = [401, 403, 408, 409, 413, 429, 498, 500, 502, 503, 504];
-    if (retryableCodes.includes(statusCode) || statusCode >= 500) {
-      return true;
+  get provider(): string {
+    return 'fallback';
+  }
+
+  get supportedUrls(): Record<string, RegExp[]> {
+    return {};
+  }
+
+  constructor(private configs: ModelConfig[]) {
+    if (configs.length === 0) {
+      throw new Error('[FallbackModel] No models configured');
     }
   }
 
-  // Check for common retryable patterns in error message
-  const message = (error.message || '').toLowerCase();
-  const retryablePatterns = [
-    'overloaded', 'service unavailable', 'bad gateway',
-    'too many requests', 'internal server error', 'gateway timeout',
-    'rate_limit', 'ratelimit', 'rate limit', 'wrong-key',
-    'unexpected', 'capacity', 'timeout', 'server_error',
-    'quota', 'exceeded', 'resource_exhausted',
-    '429', '500', '502', '503', '504'
-  ];
-  if (retryablePatterns.some(pattern => message.includes(pattern))) {
-    return true;
+  async doGenerate(options: LanguageModelV3CallOptions): Promise<LanguageModelV3GenerateResult> {
+    const errors: Array<{ name: string; error: string }> = [];
+
+    for (let i = 0; i < this.configs.length; i++) {
+      const config = this.configs[i]!;
+      try {
+        console.log(`[Fallback] Trying ${config.name} (${i + 1}/${this.configs.length}) for generate...`);
+        addBreadcrumb({ category: 'ai.fallback', message: `Trying ${config.name} for generate`, data: { modelIndex: i, totalModels: this.configs.length } });
+        const result = await config.model.doGenerate(options);
+        console.log(`[Fallback] ${config.name} succeeded (generate)`);
+        addBreadcrumb({ category: 'ai.fallback', message: `${config.name} succeeded (generate)`, data: { modelIndex: i } });
+        return result;
+      } catch (error) {
+        const errorStr = formatError(error);
+        errors.push({ name: config.name, error: errorStr });
+        console.warn(`[Fallback] ${config.name} FAILED (generate): ${errorStr}`);
+        addBreadcrumb({ category: 'ai.fallback', message: `${config.name} FAILED (generate)`, level: 'warning', data: { modelIndex: i, error: errorStr } });
+        captureError(error, { operation: 'ai.fallback.doGenerate', extra: { model: config.name, modelIndex: i, fallbackAttempt: true } });
+      }
+    }
+
+    // All models failed — throw with comprehensive info
+    const summary = errors.map((e, i) => `  ${i + 1}. ${e.name}: ${e.error}`).join('\n');
+    console.error(`[Fallback] ALL ${this.configs.length} models failed (generate):\n${summary}`);
+    const allFailedError = new Error(
+      `All ${this.configs.length} AI models failed (generate).\n${summary}`
+    );
+    captureError(allFailedError, { operation: 'ai.fallback.allFailed', extra: { mode: 'generate', modelCount: this.configs.length, errors: JSON.stringify(errors) } });
+    const lastErr = errors[errors.length - 1];
+    throw new Error(
+      `All ${this.configs.length} AI models failed. Last: ${lastErr ? lastErr.error : 'unknown'}`
+    );
   }
 
-  // For safety: retry most errors since we have fallback models
-  // Only skip if it's clearly a client error (bad request, not found, etc.)
-  console.log(`[Providers] Allowing retry for error: ${error.message?.slice(0, 100)}`);
-  return true;
+  async doStream(options: LanguageModelV3CallOptions): Promise<LanguageModelV3StreamResult> {
+    const errors: Array<{ name: string; error: string }> = [];
+
+    for (let i = 0; i < this.configs.length; i++) {
+      const config = this.configs[i]!;
+      try {
+        console.log(`[Fallback] Trying ${config.name} (${i + 1}/${this.configs.length}) for stream...`);
+        addBreadcrumb({ category: 'ai.fallback', message: `Trying ${config.name} for stream`, data: { modelIndex: i, totalModels: this.configs.length } });
+        const result = await config.model.doStream(options);
+        console.log(`[Fallback] ${config.name} stream started successfully`);
+        addBreadcrumb({ category: 'ai.fallback', message: `${config.name} stream started`, data: { modelIndex: i } });
+        return result;
+      } catch (error) {
+        const errorStr = formatError(error);
+        errors.push({ name: config.name, error: errorStr });
+        console.warn(`[Fallback] ${config.name} FAILED (stream): ${errorStr}`);
+        addBreadcrumb({ category: 'ai.fallback', message: `${config.name} FAILED (stream)`, level: 'warning', data: { modelIndex: i, error: errorStr } });
+        captureError(error, { operation: 'ai.fallback.doStream', extra: { model: config.name, modelIndex: i, fallbackAttempt: true } });
+      }
+    }
+
+    // All models failed — throw with comprehensive info
+    const summary = errors.map((e, i) => `  ${i + 1}. ${e.name}: ${e.error}`).join('\n');
+    console.error(`[Fallback] ALL ${this.configs.length} models failed (stream):\n${summary}`);
+    const allFailedError = new Error(
+      `All ${this.configs.length} AI models failed (stream).\n${summary}`
+    );
+    captureError(allFailedError, { operation: 'ai.fallback.allFailed', extra: { mode: 'stream', modelCount: this.configs.length, errors: JSON.stringify(errors) } });
+    const lastErr = errors[errors.length - 1];
+    throw new Error(
+      `All ${this.configs.length} AI models failed. Last: ${lastErr ? lastErr.error : 'unknown'}`
+    );
+  }
 }
 
-export const chatModel = createFallback({
-  models: allModels,
-  retryAfterOutput: true,
-  modelResetInterval: 5 * 60 * 1000, // 5 minutes
-  shouldRetryThisError,
-  onError: (error, modelId) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const errAny = error as any;
-    console.warn(`[Providers] Model ${modelId} failed (status=${errAny?.statusCode || errAny?.status || 'none'}), falling back:`, error.message?.slice(0, 300));
-  },
-});
+// =============================================================================
+// Exports
+// =============================================================================
 
 /**
- * Primary model name for logging
+ * Chat model with automatic fallback across 6 models / 5 providers.
+ * Every request starts from model #1 (Gemini). If it fails, tries #2, #3, etc.
  */
-export const PRIMARY_MODEL_NAME = MODEL_NAMES[0];
+export const chatModel = new FallbackModel(MODEL_CONFIGS);
 
-/**
- * List of supported models for debugging/UI
- */
+export const PRIMARY_MODEL_NAME = MODEL_CONFIGS[0]!.name;
+
 export const SUPPORTED_MODELS = [
   // Tier 1: Primary (Google Gemini)
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', tier: 1, toolCalling: '~90%' },
