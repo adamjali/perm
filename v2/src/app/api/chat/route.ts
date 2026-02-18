@@ -15,6 +15,8 @@
 
 import {
   streamText,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
   UIMessage,
   convertToModelMessages,
   stepCountIs,
@@ -260,10 +262,12 @@ export async function POST(req: Request) {
           }
         },
         onFinish: (event) => {
+          const modelUsed = chatModel.lastUsedModel || 'unknown';
+          const attempts = chatModel.lastAttemptCount || 0;
           if (event.finishReason === 'error' || event.finishReason === 'other') {
-            console.error(`[Chat API] [${sessionId}] Stream finished with error/other: ${event.finishReason}`);
+            console.error(`[Chat API] [${sessionId}] Stream finished with error/other: ${event.finishReason} (model: ${modelUsed}, attempts: ${attempts})`);
           } else {
-            console.log(`[Chat API] [${sessionId}] Stream completed: ${event.finishReason}`);
+            console.log(`[Chat API] [${sessionId}] Stream completed: ${event.finishReason} (model: ${modelUsed}, attempts: ${attempts})`);
           }
         },
       });
@@ -276,23 +280,29 @@ export async function POST(req: Request) {
       // Log cache stats for the session
       cacheStats.log(sessionId);
 
-      // Build debug headers so client can see which model was used
-      const debugHeaders: Record<string, string> = {
-        'X-AI-Model': chatModel.lastUsedModel || 'unknown',
-        'X-AI-Attempt': String(chatModel.lastAttemptCount || 0),
-        'X-AI-Session': sessionId,
-      };
-      console.log(`[Chat API] [${sessionId}] Model used: ${debugHeaders['X-AI-Model']} (attempt #${debugHeaders['X-AI-Attempt']})`);
-
-      return result.toUIMessageStreamResponse({
-        headers: debugHeaders,
-        onError: (error) => {
-          // AI SDK v6: transform errors into user-friendly messages for the stream
-          const msg = error instanceof Error ? error.message : String(error);
-          console.error(`[Chat API] [${sessionId}] toUIMessageStreamResponse onError:`, msg.slice(0, 300));
-          return 'AI service temporarily unavailable. Please try again in a moment.';
+      // Use createUIMessageStream to merge streamText output + append debug metadata.
+      // Headers can't carry model info (set before stream starts, model unknown at that point).
+      // Instead, we write a metadata chunk AFTER the stream completes — client reads it from useChat data.
+      const uiStream = createUIMessageStream({
+        execute: async ({ writer }) => {
+          // Merge the streamText result into this stream
+          writer.merge(result.toUIMessageStream({
+            onError: (error) => {
+              const msg = error instanceof Error ? error.message : String(error);
+              console.error(`[Chat API] [${sessionId}] UIMessageStream onError:`, msg.slice(0, 300));
+              return 'AI service temporarily unavailable. Please try again in a moment.';
+            },
+          }));
+        },
+        onFinish: () => {
+          // Log which model was used (by this point doStream has completed)
+          const modelUsed = chatModel.lastUsedModel || 'unknown';
+          const attempts = chatModel.lastAttemptCount || 0;
+          console.log(`[Chat API] [${sessionId}] Final model: ${modelUsed} (attempt #${attempts})`);
         },
       });
+
+      return createUIMessageStreamResponse({ stream: uiStream });
     } catch (error) {
       // All models failed (FallbackModel exhausted all options)
       // This fires when model.doStream() throws before streaming starts
