@@ -68,29 +68,25 @@ export function SentryClientInit() {
           }
           return event;
         },
+        replaysSessionSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
+        replaysOnErrorSampleRate: 1.0,
         integrations: [
           Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
         ],
       });
 
-      // Lazy-load Session Replay only when sampled
+      // Lazy-load Session Replay after init (Sentry uses the sample rates above)
       const client = Sentry.getClient();
       if (client) {
-        const replaySampleRate =
-          process.env.NODE_ENV === "production" ? 0.1 : 1.0;
-        if (Math.random() < replaySampleRate) {
-          Sentry.lazyLoadIntegration("replayIntegration")
-            .then((replay) => {
-              client.addIntegration(
-                replay({ maskAllText: true, blockAllMedia: true })
-              );
-            })
-            .catch((err) => {
-              if (process.env.NODE_ENV === "development") {
-                console.debug("[Sentry] Session Replay failed to load:", err);
-              }
-            });
-        }
+        Sentry.lazyLoadIntegration("replayIntegration")
+          .then((replay) => {
+            client.addIntegration(
+              replay({ maskAllText: true, blockAllMedia: true })
+            );
+          })
+          .catch(() => {
+            // Replay failed to load — non-critical, ignore silently
+          });
       }
     };
 

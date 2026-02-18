@@ -53,6 +53,7 @@ export default function VideoPlayerInner({
         controls
         autoPlay={autoPlay}
         loop={loop}
+        acknowledgeRemotionLicense
       />
     </div>
   );

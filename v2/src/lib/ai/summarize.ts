@@ -19,10 +19,10 @@ import {
 import { captureError } from "@/lib/sentry";
 
 /**
- * Summarization model - using Gemini 2.0 Flash Lite for speed
- * This is a lightweight model optimized for summarization tasks.
+ * Summarization model - using Gemini 2.5 Flash for speed and reliability.
+ * Previously used gemini-2.0-flash-lite which hit free tier quota limits.
  */
-const summarizationModel = google("gemini-2.0-flash-lite");
+const summarizationModel = google("gemini-2.5-flash");
 
 /**
  * Approximate tokens per character for rough token counting
