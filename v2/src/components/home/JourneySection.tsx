@@ -158,7 +158,7 @@ export function JourneySection() {
   }, []);
 
   return (
-    <section id="journey" className="py-12 sm:py-20 relative overflow-hidden">
+    <section id="journey" className="pt-12 pb-8 sm:pt-20 sm:pb-12 relative overflow-hidden">
       {/* Header */}
       <div className="mx-auto max-w-[1400px] px-4 pb-12 text-center sm:px-8">
         <ScrollReveal direction="up">
