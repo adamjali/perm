@@ -87,7 +87,7 @@ async function importKey(keyBytes: Uint8Array): Promise<CryptoKey> {
 /**
  * Encrypt a token using AES-256-GCM
  * @param plaintext - The token to encrypt
- * @returns Base64-encoded ciphertext (IV + encrypted data + tag)
+ * @returns Base64-encoded string containing [12-byte IV][ciphertext][16-byte GCM auth tag]
  */
 export async function encryptToken(plaintext: string): Promise<string> {
   const keyBytes = getEncryptionKey();
@@ -141,7 +141,7 @@ export async function decryptToken(ciphertext: string): Promise<string> {
 
 /**
  * Check if a string appears to be an encrypted token (base64-encoded)
- * Used to determine if migration is needed
+ * Used at runtime to distinguish encrypted tokens from legacy plaintext values
  */
 export function isEncryptedToken(value: string): boolean {
   // Encrypted tokens are base64 and at least IV_LENGTH bytes when decoded

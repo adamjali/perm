@@ -304,12 +304,23 @@ describe("extractDeadlines", () => {
   // ------------------------------------------
 
   describe("filing window - stored vs calculated fallback", () => {
+    // All filing window tests need complete recruitment so isRecruitmentComplete() returns true
+    // sundayAdFirstDate = earliest start (used in 180-day close calc)
+    // jobOrderEndDate = latest end (used in filing window opens calc = end + 30)
+    const completeRecruitment = {
+      sundayAdFirstDate: "2025-02-15",
+      sundayAdSecondDate: "2025-02-20",
+      jobOrderStartDate: "2025-02-16",
+      jobOrderEndDate: "2025-02-25",
+      noticeOfFilingStartDate: "2025-02-16",
+      noticeOfFilingEndDate: "2025-02-24",
+    };
+
     it("uses stored filingWindowOpens when available", () => {
       const caseData = createMinimalCase({
         caseStatus: "recruitment",
         filingWindowOpens: "2025-04-01", // Stored value
-        sundayAdSecondDate: "2025-02-20", // Would calculate to different date
-        jobOrderEndDate: "2025-02-25",
+        ...completeRecruitment,
       });
 
       const deadlines = extractDeadlines(caseData, TODAY_ISO);
@@ -325,8 +336,7 @@ describe("extractDeadlines", () => {
       const caseData = createMinimalCase({
         caseStatus: "recruitment",
         filingWindowOpens: undefined, // No stored value
-        sundayAdSecondDate: "2025-02-20",
-        jobOrderEndDate: "2025-02-25", // This is later, so recruitment ends here
+        ...completeRecruitment,
       });
 
       const deadlines = extractDeadlines(caseData, TODAY_ISO);
@@ -335,7 +345,7 @@ describe("extractDeadlines", () => {
       );
 
       expect(windowOpens).toBeDefined();
-      // Recruitment ends Feb 25, window opens Feb 25 + 30 = Mar 27
+      // Recruitment ends Feb 25 (jobOrderEndDate, latest), window opens Feb 25 + 30 = Mar 27
       expect(windowOpens?.date).toBe("2025-03-27");
     });
 
@@ -343,8 +353,8 @@ describe("extractDeadlines", () => {
       const caseData = createMinimalCase({
         caseStatus: "recruitment",
         filingWindowCloses: "2025-08-15", // Stored value
-        sundayAdFirstDate: "2025-02-15",
-        pwdExpirationDate: "2025-12-31", // Would truncate to different date
+        pwdExpirationDate: "2025-12-31",
+        ...completeRecruitment,
       });
 
       const deadlines = extractDeadlines(caseData, TODAY_ISO);
@@ -360,8 +370,8 @@ describe("extractDeadlines", () => {
       const caseData = createMinimalCase({
         caseStatus: "recruitment",
         filingWindowCloses: undefined, // No stored value
-        sundayAdFirstDate: "2025-02-15",
         pwdExpirationDate: "2025-12-31",
+        ...completeRecruitment,
       });
 
       const deadlines = extractDeadlines(caseData, TODAY_ISO);
@@ -380,12 +390,23 @@ describe("extractDeadlines", () => {
   // ------------------------------------------
 
   describe("PWD expiration truncation", () => {
+    // Complete recruitment fields so isRecruitmentComplete() returns true
+    // sundayAdFirstDate = earliest start (used in 180-day close calc)
+    const completeRecruitment = {
+      sundayAdFirstDate: "2025-02-15",
+      sundayAdSecondDate: "2025-02-22",
+      jobOrderStartDate: "2025-02-16",
+      jobOrderEndDate: "2025-02-25",
+      noticeOfFilingStartDate: "2025-02-16",
+      noticeOfFilingEndDate: "2025-02-24",
+    };
+
     it("truncates filing window close to PWD expiration when earlier", () => {
       const caseData = createMinimalCase({
         caseStatus: "recruitment",
         filingWindowCloses: undefined, // Force calculation
-        sundayAdFirstDate: "2025-02-15", // Window would close Aug 14
-        pwdExpirationDate: "2025-06-30", // But PWD expires earlier
+        pwdExpirationDate: "2025-06-30", // But PWD expires earlier than 180-day window
+        ...completeRecruitment,
       });
 
       const deadlines = extractDeadlines(caseData, TODAY_ISO);
@@ -402,8 +423,8 @@ describe("extractDeadlines", () => {
       const caseData = createMinimalCase({
         caseStatus: "recruitment",
         filingWindowCloses: undefined, // Force calculation
-        sundayAdFirstDate: "2025-02-15", // Window closes Aug 14
         pwdExpirationDate: "2026-02-15", // PWD expires much later
+        ...completeRecruitment,
       });
 
       const deadlines = extractDeadlines(caseData, TODAY_ISO);
@@ -428,7 +449,10 @@ describe("extractDeadlines", () => {
         eta9089FilingDate: "2025-03-15",
         sundayAdFirstDate: "2025-02-15",
         sundayAdSecondDate: "2025-02-20",
+        jobOrderStartDate: "2025-02-16",
         jobOrderEndDate: "2025-02-25",
+        noticeOfFilingStartDate: "2025-02-16",
+        noticeOfFilingEndDate: "2025-02-24",
       });
 
       const deadlines = extractDeadlines(caseData, TODAY_ISO);

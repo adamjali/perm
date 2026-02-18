@@ -4,7 +4,7 @@
  * Provides filing window and recruitment window dates with fallback calculations.
  * Uses stored values when available, otherwise recalculates from raw recruitment dates.
  *
- * @see convex/lib/derivedCalculations.ts - Backend canonical source
+ * @see convex/lib/derivedCalculations.ts - Backend canonical source (NOTE: backend applies "special method" exclusion per 20 CFR 656.17(e)(1)(ii); this hook does not)
  */
 
 import { useMemo } from "react";

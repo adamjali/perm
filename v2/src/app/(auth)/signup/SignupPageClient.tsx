@@ -42,8 +42,10 @@ export function SignupPageClient() {
         return false;
       }
       return true;
-    } catch {
-      return true; // Fail open for availability
+    } catch (error) {
+      // Fail open for availability, but log for observability
+      captureError(error, { operation: "enforceRateLimit" });
+      return true;
     }
   }, [checkRateLimit]);
 
@@ -100,7 +102,7 @@ export function SignupPageClient() {
         }
         toast.success("Welcome to PERM Tracker!");
         localStorage.setItem("perm_last_login_at", String(Date.now()));
-        recordMyLogin().catch(() => {});
+        recordMyLogin().catch((e) => console.warn("[recordMyLogin] failed:", e));
         router.push("/dashboard");
       } else {
         // OTP sent — move to verification step
@@ -170,7 +172,7 @@ export function SignupPageClient() {
 
       toast.success("Account verified! Welcome to PERM Tracker.");
       localStorage.setItem("perm_last_login_at", String(Date.now()));
-      recordMyLogin().catch(() => {});
+      recordMyLogin().catch((e) => console.warn("[recordMyLogin] failed:", e));
       router.push("/dashboard");
     } catch (error) {
       if (handleStaleDeployment(error)) return;

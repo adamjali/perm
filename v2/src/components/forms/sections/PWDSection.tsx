@@ -176,7 +176,7 @@ export function PWDSection(props: PWDSectionProps) {
   // Get disabled states for fields with dependencies
   const determinationDisabled = fieldDisabledStates?.pwdDeterminationDate;
 
-  // NOTE: Extract hint expressions to avoid React Compiler bug with `?.prop || fallback` in JSX
+  // Extracted to local variable (React Compiler disabled; kept for SWC safety)
   const filingHint = filingConstraint?.hint;
   const determinationHint = determinationConstraint?.hint;
   const detIsDisabled = determinationDisabled?.disabled;

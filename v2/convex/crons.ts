@@ -68,7 +68,7 @@ crons.hourly(
 /**
  * Weekly digest email (Mondays at 9 AM EST / 14:00 UTC)
  *
- * Sends a summary email to users with daily digest enabled, containing:
+ * Sends a summary email to users with weekly digest enabled, containing:
  * - All upcoming deadlines for the week
  * - Any unread notifications
  * - Summary of recent case status changes
@@ -126,7 +126,7 @@ crons.hourly(
  * Daily cleanup of expired AI conversations (older than 90 days)
  *
  * Removes conversations and their messages to limit retention of
- * AI chat data per SOC 2 Confidentiality controls.
+ * AI chat data per SOC 2 C1 — Confidentiality.
  *
  * Runs at 3:00 AM UTC to minimize user impact.
  */

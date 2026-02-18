@@ -25,7 +25,7 @@ export type {
   SupersessionReason,
 } from "./types";
 
-export { DEADLINE_LABELS, SUPERSESSION_REASONS } from "./types";
+export { ALL_DEADLINE_TYPES, DEADLINE_LABELS, SUPERSESSION_REASONS } from "./types";
 
 // ============================================================================
 // SUPERSESSION LOGIC

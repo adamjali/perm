@@ -196,7 +196,7 @@ function milestoneToCalendarEvent(
     // Additional recruitment method dates (e.g., additionalMethod_0, additionalMethod_1)
     deadlineType = "additionalMethod";
   } else {
-    const mappedType = FIELD_TO_DEADLINE_TYPE[milestone.field];
+    const mappedType = FIELD_TO_DEADLINE_TYPE[milestone.field as keyof typeof FIELD_TO_DEADLINE_TYPE];
     if (mappedType) {
       deadlineType = mappedType;
     } else {

@@ -429,7 +429,7 @@ export function DemoCaseModal({
     return Object.values(dateInlineErrors).some((e) => Boolean(e));
   }, [dateInlineErrors]);
 
-  // Pre-extract optional chaining to avoid React Compiler + Turbopack hoisting bug
+  // Extracted to local variable (React Compiler disabled; kept for SWC safety)
   const dcPwdFilingMax = dateConstraints.pwdFilingDate?.max;
   const dcPwdDeterminationMin = dateConstraints.pwdDeterminationDate?.min;
   const dcPwdDeterminationMax = dateConstraints.pwdDeterminationDate?.max;

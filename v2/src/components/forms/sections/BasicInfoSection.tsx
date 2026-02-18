@@ -163,7 +163,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
   };
 
   // Get color for current case status
-  // NOTE: Extract to avoid React Compiler bug with `.find()?.prop || fallback`
+  // Extracted to local variable (React Compiler disabled; kept for SWC safety)
   const statusOption = CASE_STATUS_OPTIONS.find(opt => opt.value === values.caseStatus);
   const statusColor = statusOption ? statusOption.color : '#6B7280';
 

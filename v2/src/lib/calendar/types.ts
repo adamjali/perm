@@ -106,7 +106,7 @@ export type DeadlineType =
 /**
  * Mapping from milestone field names to DeadlineType.
  */
-export const FIELD_TO_DEADLINE_TYPE: Record<string, DeadlineType> = {
+export const FIELD_TO_DEADLINE_TYPE = {
   pwdFilingDate: "pwdFiled",
   pwdDeterminationDate: "pwdDetermined",
   pwdExpirationDate: "pwdExpires",
@@ -126,7 +126,7 @@ export const FIELD_TO_DEADLINE_TYPE: Record<string, DeadlineType> = {
   i140ApprovalDate: "i140Approved",
   readyToFile: "filingWindowOpens",
   recruitmentExpires: "filingWindowCloses",
-} as const;
+} as const satisfies Record<string, DeadlineType>;
 
 /**
  * Labels for calendar event titles.

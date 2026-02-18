@@ -80,7 +80,7 @@ export function DashboardPageClient() {
   }
 
   // Extract first name from full name
-  // NOTE: Avoid optional chaining + fallback in one expression (React Compiler bug with Turbopack)
+  // Extracted to local variable (React Compiler disabled; kept for SWC safety)
   const rawName = currentUser.name;
   const firstName = rawName ? rawName.split(" ")[0] : "there";
 

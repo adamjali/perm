@@ -11,7 +11,7 @@
  *   (or 30 days before PWD expiration, whichever is earlier)
  *
  * @see convex/lib/perm/constants.ts - SINGLE SOURCE OF TRUTH for all constants
- * @see convex/lib/derivedCalculations.ts - Convex backend version
+ * @see convex/lib/derivedCalculations.ts - Convex mutation orchestrator that calls these functions
  * @module
  */
 

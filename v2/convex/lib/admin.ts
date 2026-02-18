@@ -62,7 +62,7 @@ export async function getAdminProfile(ctx: QueryCtx): Promise<Doc<"userProfiles"
  * Shared between the public query and internal query.
  *
  * Bulk-loads all 5 tables, builds lookup maps, assembles per-user summary in one pass.
- * Sorted by lastActivity descending (most recently active first).
+ * Default sort: lastActivity descending. Supports dynamic sorting via opts.sortBy/sortOrder.
  */
 export type UserSummaryRow = {
   userId: Id<"users">;

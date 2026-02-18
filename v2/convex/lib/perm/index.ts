@@ -85,6 +85,7 @@ export {
   FIRST_SUNDAY_AD_PWD_BUFFER_DAYS,
   SECOND_SUNDAY_AD_DEADLINE_DAYS,
   SECOND_SUNDAY_AD_PWD_BUFFER_DAYS,
+  /** @deprecated Use subtractBusinessDays from calculateRecruitmentDeadlines instead */
   NOTICE_OF_FILING_START_DEADLINE_DAYS,
 } from './constants';
 

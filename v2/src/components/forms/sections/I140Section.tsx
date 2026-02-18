@@ -224,7 +224,7 @@ export function I140Section(props: I140SectionProps) {
   const approvalDisabled = fieldDisabledStates?.i140ApprovalDate;
   const denialDisabled = fieldDisabledStates?.i140DenialDate;
 
-  // NOTE: Extract hint/disabled expressions to avoid React Compiler bug with `?.prop || fallback` in JSX
+  // Extracted to local variable (React Compiler disabled; kept for SWC safety)
   const filingHint = filingConstraint?.hint;
   const receiptHint = receiptConstraint?.hint;
   const approvalHint = approvalConstraint?.hint;

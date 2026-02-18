@@ -33,8 +33,10 @@ export function ResetPasswordPageClient() {
         return false;
       }
       return true;
-    } catch {
-      return true; // Fail open for availability
+    } catch (error) {
+      // Fail open for availability, but log for observability
+      captureError(error, { operation: "enforceRateLimit" });
+      return true;
     }
   }, [checkRateLimit]);
 

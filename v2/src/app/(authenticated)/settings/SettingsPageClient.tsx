@@ -133,7 +133,7 @@ export function SettingsPageClient() {
     isSigningOut ? "skip" : undefined
   );
 
-  // NOTE: Extract to avoid React Compiler bug with `?.prop ?? fallback` in JSX
+  // Extracted to local variable (React Compiler disabled; kept for SWC safety)
   const userEmail = user?.email ?? "";
   const userName = user?.name;
   const userImage = user?.image;

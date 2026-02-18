@@ -233,7 +233,7 @@ export function CalendarMobileList({
           <div className="space-y-2">
             {group.events.map((event, eventIndex) => {
               const caseData = caseDataMap?.get(event.caseId as string);
-              // NOTE: Extract to avoid React Compiler bug with `?.prop ?? fallback` in JSX
+              // Extracted to local variable (React Compiler disabled; kept for SWC safety)
               const employerName = caseData?.employerName;
               const stageColor = STAGE_COLORS[event.stage] ?? "#6B7280";
               const urgencyColor = URGENCY_COLORS[event.urgency] ?? "#059669";

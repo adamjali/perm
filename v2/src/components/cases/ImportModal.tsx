@@ -413,7 +413,7 @@ export function ImportModal({
       },
     };
     const format = formatLabels[parseResult.detectedFormat] ?? formatLabels.unknown;
-    // NOTE: Extract to avoid React Compiler bug with `?.prop ?? fallback` in JSX
+    // Extracted to local variable (React Compiler disabled; kept for SWC safety)
     const formatColor = format?.color ?? "bg-gray-100 text-gray-800";
     const formatLabel = format?.label ?? "Unknown";
     return (

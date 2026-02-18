@@ -261,7 +261,8 @@ function getNofStartDeadline(
       limitingFactor: 'recruitment',
       hint: `By ${formatDateForDisplay(maxDate)} — must be posted 10 business days before recruitment deadline`,
     };
-  } catch {
+  } catch (error) {
+    console.warn("[getNofStartDeadline] Failed to compute deadline:", error);
     return { maxDate: undefined, limitingFactor: undefined, hint: '' };
   }
 }

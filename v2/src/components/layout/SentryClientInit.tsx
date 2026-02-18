@@ -85,8 +85,10 @@ export function SentryClientInit() {
                 replay({ maskAllText: true, blockAllMedia: true })
               );
             })
-            .catch(() => {
-              /* ad-blockers may block this */
+            .catch((err) => {
+              if (process.env.NODE_ENV === "development") {
+                console.debug("[Sentry] Session Replay failed to load:", err);
+              }
             });
         }
       }

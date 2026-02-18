@@ -136,7 +136,7 @@ export function ProfessionalSection({
   const startConstraint = dateConstraints?.additionalRecruitmentStartDate;
   const endConstraint = dateConstraints?.additionalRecruitmentEndDate;
 
-  // NOTE: Extract hint expressions to avoid React Compiler bug with `?.prop || fallback` in JSX
+  // Extracted to local variable (React Compiler disabled; kept for SWC safety)
   const startHint = startConstraint?.hint;
   const endHint = endConstraint?.hint;
 

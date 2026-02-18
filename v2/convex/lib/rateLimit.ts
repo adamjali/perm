@@ -60,8 +60,7 @@ function getRateLimitKey(identifier: string, action: string): string {
 /**
  * Check rate limit for an action
  *
- * This is a lightweight in-memory check using Convex's system tables.
- * For production, consider using a dedicated rate limiting table.
+ * Queries the rateLimits table with sliding window logic.
  *
  * @param ctx - Query or mutation context
  * @param identifier - Unique identifier (email, IP, user ID)

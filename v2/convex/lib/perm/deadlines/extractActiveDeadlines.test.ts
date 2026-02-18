@@ -551,6 +551,80 @@ describe("getActiveDeadlineTypes", () => {
   });
 });
 
+describe("per-step recruitment deadlines", () => {
+    const TODAY = "2024-12-15";
+    const baseCase: CaseDataForDeadlines = {
+      pwdExpirationDate: "2025-06-30",
+      sundayAdFirstDate: "2024-08-04", // first recruitment date
+    };
+
+    it("extracts job_order_start_deadline when conditions met", () => {
+      const result = extractActiveDeadlines(baseCase, TODAY);
+      const deadline = result.find((d) => d.type === "job_order_start_deadline");
+      expect(deadline).toBeDefined();
+      expect(deadline?.label).toBe("Start Job Order By");
+    });
+
+    it("does not extract job_order_start_deadline when step completed", () => {
+      const caseData: CaseDataForDeadlines = {
+        ...baseCase,
+        jobOrderStartDate: "2024-09-01",
+      };
+      const result = extractActiveDeadlines(caseData, TODAY);
+      expect(result.find((d) => d.type === "job_order_start_deadline")).toBeUndefined();
+    });
+
+    it("extracts notice_of_filing_start_deadline when conditions met", () => {
+      const result = extractActiveDeadlines(baseCase, TODAY);
+      const deadline = result.find((d) => d.type === "notice_of_filing_start_deadline");
+      expect(deadline).toBeDefined();
+      expect(deadline?.label).toBe("Start Notice of Filing By");
+    });
+
+    it("does not extract notice_of_filing_start_deadline when step completed", () => {
+      const caseData: CaseDataForDeadlines = {
+        ...baseCase,
+        noticeOfFilingStartDate: "2024-09-01",
+      };
+      const result = extractActiveDeadlines(caseData, TODAY);
+      expect(result.find((d) => d.type === "notice_of_filing_start_deadline")).toBeUndefined();
+    });
+
+    it("extracts first_sunday_ad_deadline when first ad not placed but other recruitment started", () => {
+      const caseData: CaseDataForDeadlines = {
+        pwdExpirationDate: "2025-06-30",
+        jobOrderStartDate: "2024-08-01", // first recruitment = job order
+      };
+      const result = extractActiveDeadlines(caseData, TODAY);
+      const deadline = result.find((d) => d.type === "first_sunday_ad_deadline");
+      expect(deadline).toBeDefined();
+    });
+
+    it("does not extract per-step deadlines without firstRecruitmentDate", () => {
+      const caseData: CaseDataForDeadlines = {
+        pwdExpirationDate: "2025-06-30",
+        // No recruitment dates at all
+      };
+      const result = extractActiveDeadlines(caseData, TODAY);
+      const perStepTypes = ["job_order_start_deadline", "notice_of_filing_start_deadline", "first_sunday_ad_deadline", "second_sunday_ad_deadline"];
+      for (const type of perStepTypes) {
+        expect(result.find((d) => d.type === type)).toBeUndefined();
+      }
+    });
+
+    it("does not extract per-step deadlines without pwdExpirationDate", () => {
+      const caseData: CaseDataForDeadlines = {
+        sundayAdFirstDate: "2024-08-04",
+        // No PWD expiration
+      };
+      const result = extractActiveDeadlines(caseData, TODAY);
+      const perStepTypes = ["job_order_start_deadline", "notice_of_filing_start_deadline", "first_sunday_ad_deadline", "second_sunday_ad_deadline"];
+      for (const type of perStepTypes) {
+        expect(result.find((d) => d.type === type)).toBeUndefined();
+      }
+    });
+});
+
 describe("shouldRemindForDeadline", () => {
   it("returns true when deadline is active and has date", () => {
     const caseData: CaseDataForDeadlines = {

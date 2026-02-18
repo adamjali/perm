@@ -126,7 +126,7 @@ export default function Header(): React.ReactElement {
   const { signOut } = useAuthActions();
   const { isSigningOut, beginSignOut, cancelSignOut } = useAuthContext();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  // NOTE: Extract early to avoid React Compiler bug with optional chaining + ?? in JSX
+  // Extracted to local variable (React Compiler disabled; kept for SWC safety)
   const displayName = user?.name ?? "User";
 
   // Close mobile menu on route change

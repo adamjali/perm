@@ -16,6 +16,7 @@ import {
   RATE_LIMITS,
   type RateLimitConfig,
 } from "./lib/rateLimit";
+import { getCurrentUserIdOrNull } from "./lib/auth";
 
 const ACTION_CONFIG: Record<string, RateLimitConfig> = {
   login: RATE_LIMITS.LOGIN,
@@ -73,6 +74,9 @@ export const clearAuthRateLimit = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    // Only allow clearing for authenticated users
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (!userId) return;
     await clearRateLimit(ctx, args.email.toLowerCase(), args.action);
   },
 });

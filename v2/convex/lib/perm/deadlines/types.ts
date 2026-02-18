@@ -33,6 +33,24 @@ export type DeadlineType =
   | "rfe_due";
 
 /**
+ * All deadline types as a constant array.
+ * Used by hasAnyActiveDeadline, getActiveDeadlineTypes, etc.
+ */
+export const ALL_DEADLINE_TYPES: readonly DeadlineType[] = [
+  "pwd_expiration",
+  "filing_window_opens",
+  "filing_window_closes",
+  "recruitment_window_closes",
+  "job_order_start_deadline",
+  "notice_of_filing_start_deadline",
+  "first_sunday_ad_deadline",
+  "second_sunday_ad_deadline",
+  "i140_filing_deadline",
+  "rfi_due",
+  "rfe_due",
+] as const;
+
+/**
  * Human-readable labels for each deadline type.
  */
 export const DEADLINE_LABELS: Record<DeadlineType, string> = {
@@ -153,34 +171,6 @@ export interface ExtractedDeadline {
   entryId?: string;
 }
 
-/**
- * Factory function to create an ExtractedDeadline.
- *
- * Enforces the invariant that `label` is always derived from `type` via
- * DEADLINE_LABELS, ensuring consistency across the codebase.
- *
- * Callers should pass `DEADLINE_TIMEZONE_RULES[type]` for `timezoneRule`.
- *
- * @param params - Deadline parameters (type, date, daysUntil, timezoneRule, optional entryId)
- * @returns ExtractedDeadline with label derived from type
- */
-export function createExtractedDeadline(params: {
-  type: DeadlineType;
-  date: string;
-  daysUntil: number;
-  timezoneRule: TimezoneRule;
-  entryId?: string;
-}): ExtractedDeadline {
-  return {
-    type: params.type,
-    label: DEADLINE_LABELS[params.type],
-    date: params.date,
-    daysUntil: params.daysUntil,
-    timezoneRule: params.timezoneRule,
-    entryId: params.entryId,
-  };
-}
-
 // ============================================================================
 // SUPERSESSION STATUS
 // ============================================================================
@@ -193,7 +183,7 @@ export interface DeadlineActiveStatus {
   isActive: boolean;
 
   /** Reason why the deadline is inactive (if applicable) */
-  supersededReason?: string;
+  supersededReason?: SupersessionReason;
 }
 
 /**

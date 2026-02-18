@@ -311,7 +311,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
   const sundaySecondDisabled = fieldDisabledStates?.sundayAdSecondDate;
   const jobOrderEndDisabled = fieldDisabledStates?.jobOrderEndDate;
 
-  // NOTE: Extract hint/disabled expressions to avoid React Compiler bug with `?.prop || fallback` in JSX
+  // Extracted to local variable (React Compiler disabled; kept for SWC safety)
   const sundayFirstHint = sundayFirstConstraint?.hint;
   const sundaySecondHint = sundaySecondConstraint?.hint;
   const jobOrderStartHint = jobOrderStartConstraint?.hint;
@@ -738,7 +738,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                             index
                           );
                           const hasMethod = !!method.method;
-                          // Extract to avoid React Compiler bug with `?.prop || fallback`
+                          // Extracted to local variable (React Compiler disabled; kept for SWC safety)
                           const foundMethod = RECRUITMENT_METHODS.find(m => m.value === method.method);
                           const methodLabel = foundMethod ? foundMethod.label : 'Entry';
                           const methodDateHint = methodConstraints.date?.hint;

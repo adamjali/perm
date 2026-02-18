@@ -45,8 +45,8 @@ export default function GlobalError({
           },
         });
       })
-      .catch(() => {
-        /* Sentry unavailable */
+      .catch((err) => {
+        console.error("[GlobalError] Could not report to Sentry:", err);
       });
   }, [error, isExpiredSession, isStaleDeployment]);
 

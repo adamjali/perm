@@ -456,6 +456,98 @@ describe("getActiveRfeEntry", () => {
   });
 });
 
+// ==========================================================================
+// Per-Step Recruitment Deadlines
+// ==========================================================================
+
+describe("per-step recruitment deadline supersession", () => {
+  describe("job_order_start_deadline", () => {
+    it("is active when ETA 9089 not filed and job order not started", () => {
+      const caseData: CaseDataForDeadlines = {};
+      const result = isDeadlineActive("job_order_start_deadline", caseData);
+      expect(result.isActive).toBe(true);
+    });
+
+    it("is superseded when job order is started", () => {
+      const caseData: CaseDataForDeadlines = {
+        jobOrderStartDate: "2024-08-01",
+      };
+      const result = isDeadlineActive("job_order_start_deadline", caseData);
+      expect(result.isActive).toBe(false);
+      expect(result.supersededReason).toBe(SUPERSESSION_REASONS.JOB_ORDER_STARTED);
+    });
+
+    it("is superseded when ETA 9089 is filed", () => {
+      const caseData: CaseDataForDeadlines = {
+        eta9089FilingDate: "2024-12-01",
+      };
+      const result = isDeadlineActive("job_order_start_deadline", caseData);
+      expect(result.isActive).toBe(false);
+      expect(result.supersededReason).toBe(SUPERSESSION_REASONS.ETA9089_FILED);
+    });
+  });
+
+  describe("notice_of_filing_start_deadline", () => {
+    it("is active when ETA 9089 not filed and notice not started", () => {
+      const caseData: CaseDataForDeadlines = {};
+      const result = isDeadlineActive("notice_of_filing_start_deadline", caseData);
+      expect(result.isActive).toBe(true);
+    });
+
+    it("is superseded when notice of filing is started", () => {
+      const caseData: CaseDataForDeadlines = {
+        noticeOfFilingStartDate: "2024-08-01",
+      };
+      const result = isDeadlineActive("notice_of_filing_start_deadline", caseData);
+      expect(result.isActive).toBe(false);
+      expect(result.supersededReason).toBe(SUPERSESSION_REASONS.NOTICE_OF_FILING_STARTED);
+    });
+
+    it("is superseded when ETA 9089 is filed", () => {
+      const caseData: CaseDataForDeadlines = {
+        eta9089FilingDate: "2024-12-01",
+      };
+      const result = isDeadlineActive("notice_of_filing_start_deadline", caseData);
+      expect(result.isActive).toBe(false);
+      expect(result.supersededReason).toBe(SUPERSESSION_REASONS.ETA9089_FILED);
+    });
+  });
+
+  describe("first_sunday_ad_deadline", () => {
+    it("is active when ETA 9089 not filed and first ad not placed", () => {
+      const caseData: CaseDataForDeadlines = {};
+      const result = isDeadlineActive("first_sunday_ad_deadline", caseData);
+      expect(result.isActive).toBe(true);
+    });
+
+    it("is superseded when first Sunday ad is placed", () => {
+      const caseData: CaseDataForDeadlines = {
+        sundayAdFirstDate: "2024-08-04",
+      };
+      const result = isDeadlineActive("first_sunday_ad_deadline", caseData);
+      expect(result.isActive).toBe(false);
+      expect(result.supersededReason).toBe(SUPERSESSION_REASONS.FIRST_SUNDAY_AD_PLACED);
+    });
+  });
+
+  describe("second_sunday_ad_deadline", () => {
+    it("is active when ETA 9089 not filed and second ad not placed", () => {
+      const caseData: CaseDataForDeadlines = {};
+      const result = isDeadlineActive("second_sunday_ad_deadline", caseData);
+      expect(result.isActive).toBe(true);
+    });
+
+    it("is superseded when second Sunday ad is placed", () => {
+      const caseData: CaseDataForDeadlines = {
+        sundayAdSecondDate: "2024-08-11",
+      };
+      const result = isDeadlineActive("second_sunday_ad_deadline", caseData);
+      expect(result.isActive).toBe(false);
+      expect(result.supersededReason).toBe(SUPERSESSION_REASONS.SECOND_SUNDAY_AD_PLACED);
+    });
+  });
+});
+
 describe("hasAnyActiveDeadline", () => {
   it("returns true when PWD expiration is active", () => {
     const caseData: CaseDataForDeadlines = {

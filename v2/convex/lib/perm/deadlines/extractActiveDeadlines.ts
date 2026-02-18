@@ -14,7 +14,7 @@ import type {
   DeadlineType,
   ExtractedDeadline,
 } from "./types";
-import { DEADLINE_LABELS } from "./types";
+import { ALL_DEADLINE_TYPES, DEADLINE_LABELS } from "./types";
 import {
   isDeadlineActive,
   getActiveRfiEntry,
@@ -72,33 +72,28 @@ export function extractActiveDeadlines(
   const resolveToday = (type: DeadlineType): string =>
     todayISO ?? getTodayForDeadline(type, userTimezone);
 
-  // PWD expiration
-  const pwdDeadline = extractPwdExpiration(caseData, resolveToday("pwd_expiration"));
-  if (pwdDeadline) deadlines.push(pwdDeadline);
+  // Field-based deadlines (type → date field)
+  const fieldDeadlines: Array<{ type: DeadlineType; date: string | undefined }> = [
+    { type: "pwd_expiration", date: caseData.pwdExpirationDate },
+    { type: "filing_window_opens", date: caseData.filingWindowOpens },
+    { type: "filing_window_closes", date: caseData.filingWindowCloses },
+    { type: "i140_filing_deadline", date: caseData.eta9089ExpirationDate },
+    { type: "recruitment_window_closes", date: caseData.recruitmentWindowCloses },
+  ];
 
-  // Filing window opens
-  const filingOpensDeadline = extractFilingWindowOpens(caseData, resolveToday("filing_window_opens"));
-  if (filingOpensDeadline) deadlines.push(filingOpensDeadline);
+  for (const { type, date } of fieldDeadlines) {
+    const deadline = extractSingleDeadline(type, date, caseData, resolveToday(type));
+    if (deadline) deadlines.push(deadline);
+  }
 
-  // Filing window closes
-  const filingClosesDeadline = extractFilingWindowCloses(caseData, resolveToday("filing_window_closes"));
-  if (filingClosesDeadline) deadlines.push(filingClosesDeadline);
-
-  // I-140 filing deadline
-  const i140Deadline = extractI140Deadline(caseData, resolveToday("i140_filing_deadline"));
-  if (i140Deadline) deadlines.push(i140Deadline);
-
-  // RFI due
-  const rfiDeadline = extractRfiDeadline(caseData, resolveToday("rfi_due"));
+  // RFI/RFE deadlines (use active entry date + entryId)
+  const activeRfi = getActiveRfiEntry(caseData.rfiEntries ?? []);
+  const rfiDeadline = extractSingleDeadline("rfi_due", activeRfi?.responseDueDate, caseData, resolveToday("rfi_due"), activeRfi?.id);
   if (rfiDeadline) deadlines.push(rfiDeadline);
 
-  // RFE due
-  const rfeDeadline = extractRfeDeadline(caseData, resolveToday("rfe_due"));
+  const activeRfe = getActiveRfeEntry(caseData.rfeEntries ?? []);
+  const rfeDeadline = extractSingleDeadline("rfe_due", activeRfe?.responseDueDate, caseData, resolveToday("rfe_due"), activeRfe?.id);
   if (rfeDeadline) deadlines.push(rfeDeadline);
-
-  // Recruitment window closes
-  const recruitWindowDeadline = extractRecruitmentWindowCloses(caseData, resolveToday("recruitment_window_closes"));
-  if (recruitWindowDeadline) deadlines.push(recruitWindowDeadline);
 
   // Per-step recruitment deadlines (computed from first recruitment + PWD)
   const perStepDeadlines = extractPerStepDeadlines(caseData, resolveToday);
@@ -113,212 +108,31 @@ export function extractActiveDeadlines(
 // ============================================================================
 
 /**
- * Extract PWD expiration deadline if active.
+ * Generic extractor for a single deadline type.
+ * Checks supersession, validates date, computes daysUntil.
  */
-function extractPwdExpiration(
+function extractSingleDeadline(
+  type: DeadlineType,
+  date: string | undefined,
   caseData: CaseDataForDeadlines,
-  todayISO: string
+  todayISO: string,
+  entryId?: string
 ): ExtractedDeadline | null {
-  const status = isDeadlineActive("pwd_expiration", caseData);
+  const status = isDeadlineActive(type, caseData);
   if (!status.isActive) return null;
-
-  const date = caseData.pwdExpirationDate;
   if (!date) return null;
 
   try {
     return {
-      type: "pwd_expiration",
-      label: DEADLINE_LABELS.pwd_expiration,
+      type,
+      label: DEADLINE_LABELS[type],
       date,
       daysUntil: daysBetween(todayISO, date),
-      timezoneRule: DEADLINE_TIMEZONE_RULES.pwd_expiration,
+      timezoneRule: DEADLINE_TIMEZONE_RULES[type],
+      entryId,
     };
   } catch (error) {
-    log.error('Failed to extract PWD expiration', {
-      date,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return null;
-  }
-}
-
-/**
- * Extract filing window opens deadline if active.
- */
-function extractFilingWindowOpens(
-  caseData: CaseDataForDeadlines,
-  todayISO: string
-): ExtractedDeadline | null {
-  const status = isDeadlineActive("filing_window_opens", caseData);
-  if (!status.isActive) return null;
-
-  const date = caseData.filingWindowOpens;
-  if (!date) return null;
-
-  try {
-    return {
-      type: "filing_window_opens",
-      label: DEADLINE_LABELS.filing_window_opens,
-      date,
-      daysUntil: daysBetween(todayISO, date),
-      timezoneRule: DEADLINE_TIMEZONE_RULES.filing_window_opens,
-    };
-  } catch (error) {
-    log.error('Failed to extract filing window opens', {
-      date,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return null;
-  }
-}
-
-/**
- * Extract filing window closes deadline if active.
- */
-function extractFilingWindowCloses(
-  caseData: CaseDataForDeadlines,
-  todayISO: string
-): ExtractedDeadline | null {
-  const status = isDeadlineActive("filing_window_closes", caseData);
-  if (!status.isActive) return null;
-
-  const date = caseData.filingWindowCloses;
-  if (!date) return null;
-
-  try {
-    return {
-      type: "filing_window_closes",
-      label: DEADLINE_LABELS.filing_window_closes,
-      date,
-      daysUntil: daysBetween(todayISO, date),
-      timezoneRule: DEADLINE_TIMEZONE_RULES.filing_window_closes,
-    };
-  } catch (error) {
-    log.error('Failed to extract filing window closes', {
-      date,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return null;
-  }
-}
-
-/**
- * Extract I-140 filing deadline if active.
- *
- * The I-140 deadline is the ETA 9089 expiration date (180 days from certification).
- */
-function extractI140Deadline(
-  caseData: CaseDataForDeadlines,
-  todayISO: string
-): ExtractedDeadline | null {
-  const status = isDeadlineActive("i140_filing_deadline", caseData);
-  if (!status.isActive) return null;
-
-  const date = caseData.eta9089ExpirationDate;
-  if (!date) return null;
-
-  try {
-    return {
-      type: "i140_filing_deadline",
-      label: DEADLINE_LABELS.i140_filing_deadline,
-      date,
-      daysUntil: daysBetween(todayISO, date),
-      timezoneRule: DEADLINE_TIMEZONE_RULES.i140_filing_deadline,
-    };
-  } catch (error) {
-    log.error('Failed to extract I-140 deadline', {
-      date,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return null;
-  }
-}
-
-/**
- * Extract RFI response due deadline if active.
- */
-function extractRfiDeadline(
-  caseData: CaseDataForDeadlines,
-  todayISO: string
-): ExtractedDeadline | null {
-  const status = isDeadlineActive("rfi_due", caseData);
-  if (!status.isActive) return null;
-
-  const activeRfi = getActiveRfiEntry(caseData.rfiEntries ?? []);
-  if (!activeRfi?.responseDueDate) return null;
-
-  try {
-    return {
-      type: "rfi_due",
-      label: DEADLINE_LABELS.rfi_due,
-      date: activeRfi.responseDueDate,
-      daysUntil: daysBetween(todayISO, activeRfi.responseDueDate),
-      timezoneRule: DEADLINE_TIMEZONE_RULES.rfi_due,
-      entryId: activeRfi.id,
-    };
-  } catch (error) {
-    log.error('Failed to extract RFI deadline', {
-      date: activeRfi.responseDueDate,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return null;
-  }
-}
-
-/**
- * Extract RFE response due deadline if active.
- */
-function extractRfeDeadline(
-  caseData: CaseDataForDeadlines,
-  todayISO: string
-): ExtractedDeadline | null {
-  const status = isDeadlineActive("rfe_due", caseData);
-  if (!status.isActive) return null;
-
-  const activeRfe = getActiveRfeEntry(caseData.rfeEntries ?? []);
-  if (!activeRfe?.responseDueDate) return null;
-
-  try {
-    return {
-      type: "rfe_due",
-      label: DEADLINE_LABELS.rfe_due,
-      date: activeRfe.responseDueDate,
-      daysUntil: daysBetween(todayISO, activeRfe.responseDueDate),
-      timezoneRule: DEADLINE_TIMEZONE_RULES.rfe_due,
-      entryId: activeRfe.id,
-    };
-  } catch (error) {
-    log.error('Failed to extract RFE deadline', {
-      date: activeRfe.responseDueDate,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return null;
-  }
-}
-
-/**
- * Extract recruitment window closes deadline if active.
- */
-function extractRecruitmentWindowCloses(
-  caseData: CaseDataForDeadlines,
-  todayISO: string
-): ExtractedDeadline | null {
-  const status = isDeadlineActive("recruitment_window_closes", caseData);
-  if (!status.isActive) return null;
-
-  const date = caseData.recruitmentWindowCloses;
-  if (!date) return null;
-
-  try {
-    return {
-      type: "recruitment_window_closes",
-      label: DEADLINE_LABELS.recruitment_window_closes,
-      date,
-      daysUntil: daysBetween(todayISO, date),
-      timezoneRule: DEADLINE_TIMEZONE_RULES.recruitment_window_closes,
-    };
-  } catch (error) {
-    log.error('Failed to extract recruitment window closes', {
+    log.error(`Failed to extract ${type}`, {
       date,
       error: error instanceof Error ? error.message : String(error),
     });
@@ -410,21 +224,7 @@ export { isDeadlineActive } from "./isDeadlineActive";
 export function getActiveDeadlineTypes(
   caseData: CaseDataForDeadlines
 ): DeadlineType[] {
-  const allTypes: DeadlineType[] = [
-    "pwd_expiration",
-    "filing_window_opens",
-    "filing_window_closes",
-    "recruitment_window_closes",
-    "job_order_start_deadline",
-    "notice_of_filing_start_deadline",
-    "first_sunday_ad_deadline",
-    "second_sunday_ad_deadline",
-    "i140_filing_deadline",
-    "rfi_due",
-    "rfe_due",
-  ];
-
-  return allTypes.filter((type) => isDeadlineActive(type, caseData).isActive);
+  return ALL_DEADLINE_TYPES.filter((type) => isDeadlineActive(type, caseData).isActive);
 }
 
 /**

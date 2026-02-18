@@ -187,11 +187,8 @@ export function extractCalendarEvents(
   // Filing Window Opens (when 30-day waiting period ends)
   tryAddEvent("filing_window_opens", caseData.filingWindowOpens);
 
-  // Recruitment Window Closes (when recruitment expires)
-  tryAddEvent("recruitment_expires", caseData.recruitmentWindowCloses);
-
   // Recruitment Window Closes (overall 180-day window)
-  tryAddEvent("recruitment_window_closes", caseData.recruitmentWindowCloses);
+  tryAddEvent("recruitment_expires", caseData.recruitmentWindowCloses);
 
   // Per-step recruitment deadlines (computed from first recruitment + PWD)
   const firstRecruitDate = getFirstRecruitmentDate({
@@ -206,7 +203,7 @@ export function extractCalendarEvents(
         tryAddEvent("job_order_start_deadline", deadlines.job_order_start_deadline);
       }
       if (!caseData.noticeOfFilingStartDate) {
-        tryAddEvent("notice_of_filing_start_deadline", deadlines.notice_of_filing_deadline);
+        tryAddEvent("notice_of_filing_start_deadline", deadlines.notice_of_filing_start_deadline);
       }
       if (!caseData.sundayAdFirstDate) {
         tryAddEvent("first_sunday_ad_deadline", deadlines.first_sunday_ad_deadline);
@@ -214,8 +211,8 @@ export function extractCalendarEvents(
       if (!caseData.sundayAdSecondDate) {
         tryAddEvent("second_sunday_ad_deadline", deadlines.second_sunday_ad_deadline);
       }
-    } catch {
-      // Calculation may fail for invalid dates — skip per-step deadlines
+    } catch (error) {
+      console.error("[calendarEventExtractor] Failed to compute per-step recruitment deadlines:", error instanceof Error ? error.message : String(error));
     }
   }
 

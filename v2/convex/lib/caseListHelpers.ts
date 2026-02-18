@@ -261,26 +261,19 @@ function compareCaseStatus(a: string, b: string): number {
 }
 
 /**
+ * Null-safe comparison: nulls always sort last regardless of sort direction.
+ * Returns a number if one/both values are null (handling complete),
+ * or undefined if both values are present (caller should compare normally).
+ */
+function compareNullsLast<T>(a: T | null | undefined, b: T | null | undefined): number | undefined {
+  if (!a && !b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
+  return undefined;
+}
+
+/**
  * Sort cases by specified field and order.
- *
- * Sort fields:
- * - deadline: Next deadline date (nulls last)
- * - updated: Last updated timestamp
- * - employer: Employer name (case-insensitive)
- * - status: Case status (pwd → recruitment → eta9089 → i140 → closed)
- * - pwdFiled: PWD filing date (nulls last)
- * - etaFiled: ETA 9089 filing date (nulls last)
- * - i140Filed: I-140 filing date (nulls last)
- *
- * @param cases - Array of case card data
- * @param sortBy - Field to sort by
- * @param sortOrder - Sort direction ("asc" or "desc")
- * @returns Sorted array (new array, original unchanged)
- *
- * @example
- * sortCases(cases, "deadline", "asc")  // Soonest deadline first
- * sortCases(cases, "employer", "desc") // Z-A employer names
- * sortCases(cases, "updated", "desc")  // Most recently updated first
  */
 export function sortCases(
   cases: readonly CaseCardData[],
@@ -291,37 +284,25 @@ export function sortCases(
     let comparison = 0;
 
     switch (sortBy) {
-      case "deadline":
-        // Nulls last for both asc and desc
-        if (!a.nextDeadline && !b.nextDeadline) return 0;
-        if (!a.nextDeadline) return 1;
-        if (!b.nextDeadline) return -1;
-        comparison = a.nextDeadline.localeCompare(b.nextDeadline);
+      case "deadline": {
+        const nullResult = compareNullsLast(a.nextDeadline, b.nextDeadline);
+        if (nullResult !== undefined) return nullResult;
+        comparison = a.nextDeadline!.localeCompare(b.nextDeadline!);
         break;
+      }
 
       case "updated":
         comparison = a.dates.updated - b.dates.updated;
         break;
 
       case "employer": {
-        // Custom sort: alphabetic first (A-Z), then non-alphabetic (#)
-        // This matches the client-side group display order
         const aName = a.employerName.toLowerCase();
         const bName = b.employerName.toLowerCase();
-        const aFirstChar = aName.charAt(0);
-        const bFirstChar = bName.charAt(0);
-        const aIsAlpha = /[a-z]/.test(aFirstChar);
-        const bIsAlpha = /[a-z]/.test(bFirstChar);
-
-        // Non-alphabetic names go last
-        if (aIsAlpha && !bIsAlpha) {
-          comparison = -1; // a (alphabetic) comes before b (non-alphabetic)
-        } else if (!aIsAlpha && bIsAlpha) {
-          comparison = 1; // b (alphabetic) comes before a (non-alphabetic)
-        } else {
-          // Both same category - use standard alphabetic comparison
-          comparison = aName.localeCompare(bName);
-        }
+        const aIsAlpha = /[a-z]/.test(aName.charAt(0));
+        const bIsAlpha = /[a-z]/.test(bName.charAt(0));
+        if (aIsAlpha && !bIsAlpha) comparison = -1;
+        else if (!aIsAlpha && bIsAlpha) comparison = 1;
+        else comparison = aName.localeCompare(bName);
         break;
       }
 
@@ -329,29 +310,26 @@ export function sortCases(
         comparison = compareCaseStatus(a.caseStatus, b.caseStatus);
         break;
 
-      case "pwdFiled":
-        // Nulls last
-        if (!a.dates.pwdFiled && !b.dates.pwdFiled) return 0;
-        if (!a.dates.pwdFiled) return 1;
-        if (!b.dates.pwdFiled) return -1;
-        comparison = a.dates.pwdFiled.localeCompare(b.dates.pwdFiled);
+      case "pwdFiled": {
+        const nullResult = compareNullsLast(a.dates.pwdFiled, b.dates.pwdFiled);
+        if (nullResult !== undefined) return nullResult;
+        comparison = a.dates.pwdFiled!.localeCompare(b.dates.pwdFiled!);
         break;
+      }
 
-      case "etaFiled":
-        // Nulls last
-        if (!a.dates.etaFiled && !b.dates.etaFiled) return 0;
-        if (!a.dates.etaFiled) return 1;
-        if (!b.dates.etaFiled) return -1;
-        comparison = a.dates.etaFiled.localeCompare(b.dates.etaFiled);
+      case "etaFiled": {
+        const nullResult = compareNullsLast(a.dates.etaFiled, b.dates.etaFiled);
+        if (nullResult !== undefined) return nullResult;
+        comparison = a.dates.etaFiled!.localeCompare(b.dates.etaFiled!);
         break;
+      }
 
-      case "i140Filed":
-        // Nulls last
-        if (!a.dates.i140Filed && !b.dates.i140Filed) return 0;
-        if (!a.dates.i140Filed) return 1;
-        if (!b.dates.i140Filed) return -1;
-        comparison = a.dates.i140Filed.localeCompare(b.dates.i140Filed);
+      case "i140Filed": {
+        const nullResult = compareNullsLast(a.dates.i140Filed, b.dates.i140Filed);
+        if (nullResult !== undefined) return nullResult;
+        comparison = a.dates.i140Filed!.localeCompare(b.dates.i140Filed!);
         break;
+      }
 
       case "favorites":
         // Favorites first (true before false)

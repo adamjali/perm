@@ -14,10 +14,11 @@ import type {
   CaseDataForDeadlines,
   DeadlineType,
   DeadlineActiveStatus,
+  SupersessionReason,
   RfiEntry,
   RfeEntry,
 } from "./types";
-import { SUPERSESSION_REASONS } from "./types";
+import { ALL_DEADLINE_TYPES, SUPERSESSION_REASONS } from "./types";
 import { isRecruitmentComplete } from "../recruitment/isRecruitmentComplete";
 
 // ============================================================================
@@ -98,9 +99,11 @@ export function isDeadlineActive(
     case "rfe_due":
       return checkRfeActive(caseData);
 
-    default:
-      // Unknown deadline type - assume active
-      return { isActive: true };
+    default: {
+      // Exhaustiveness check — compile error if a new DeadlineType is added without a case
+      const _exhaustive: never = deadlineType;
+      return _exhaustive;
+    }
   }
 }
 
@@ -182,7 +185,7 @@ function checkRecruitmentWindowActive(
 function checkPerStepActive(
   caseData: CaseDataForDeadlines,
   stepCompletionDate: string | undefined,
-  completionReason: string
+  completionReason: SupersessionReason
 ): DeadlineActiveStatus {
   // Superseded when ETA 9089 filed
   if (caseData.eta9089FilingDate) {
@@ -309,20 +312,5 @@ export function hasAnyActiveDeadline(caseData: CaseDataForDeadlines): boolean {
     return false;
   }
 
-  // Check each deadline type
-  const deadlineTypes: DeadlineType[] = [
-    "pwd_expiration",
-    "filing_window_opens",
-    "filing_window_closes",
-    "recruitment_window_closes",
-    "job_order_start_deadline",
-    "notice_of_filing_start_deadline",
-    "first_sunday_ad_deadline",
-    "second_sunday_ad_deadline",
-    "i140_filing_deadline",
-    "rfi_due",
-    "rfe_due",
-  ];
-
-  return deadlineTypes.some((type) => isDeadlineActive(type, caseData).isActive);
+  return ALL_DEADLINE_TYPES.some((type) => isDeadlineActive(type, caseData).isActive);
 }

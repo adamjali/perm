@@ -498,129 +498,33 @@ export function mapDeadlineType(
 // ============================================================================
 
 /**
- * Build PWD stage subtext.
- *
- * Formula (per perm_flow.md):
- * - working = working + waiting_intake + under_review
- * - filed = filed + approved
- *
- * @param breakdown - PWD progress breakdown
+ * Generic subtext builder: filters out zero-count entries and joins.
+ * @param entries - Array of [count, label] pairs
  * @returns Formatted subtext (e.g., "5 working, 3 filed")
- *
- * @example
- * buildPwdSubtext({ working: 5, filed: 3 })  // "5 working, 3 filed"
- * buildPwdSubtext({ working: 0, filed: 0 })  // ""
- * buildPwdSubtext({ working: 1, filed: 0 })  // "1 working"
  */
+function buildSubtext(entries: Array<[number, string]>): string {
+  return entries
+    .filter(([count]) => count > 0)
+    .map(([count, label]) => `${count} ${label}`)
+    .join(", ");
+}
+
+/** Build PWD stage subtext. */
 export function buildPwdSubtext(breakdown: PwdBreakdown): string {
-  const parts: string[] = [];
-
-  if (breakdown.working > 0) {
-    parts.push(`${breakdown.working} working`);
-  }
-
-  if (breakdown.filed > 0) {
-    parts.push(`${breakdown.filed} filed`);
-  }
-
-  return parts.join(", ");
+  return buildSubtext([[breakdown.working, "working"], [breakdown.filed, "filed"]]);
 }
 
-/**
- * Build Recruitment stage subtext.
- *
- * Formula (per perm_flow.md):
- * - ready = working + waiting_intake
- * - inProgress = under_review + filed + approved
- *
- * @param breakdown - Recruitment progress breakdown
- * @returns Formatted subtext (e.g., "5 ready, 3 in progress")
- *
- * @example
- * buildRecruitmentSubtext({ ready: 5, inProgress: 3 })  // "5 ready, 3 in progress"
- * buildRecruitmentSubtext({ ready: 0, inProgress: 0 })  // ""
- * buildRecruitmentSubtext({ ready: 1, inProgress: 0 })  // "1 ready"
- */
-export function buildRecruitmentSubtext(
-  breakdown: RecruitmentBreakdown
-): string {
-  const parts: string[] = [];
-
-  if (breakdown.ready > 0) {
-    parts.push(`${breakdown.ready} ready`);
-  }
-
-  if (breakdown.inProgress > 0) {
-    parts.push(`${breakdown.inProgress} in progress`);
-  }
-
-  return parts.join(", ");
+/** Build Recruitment stage subtext. */
+export function buildRecruitmentSubtext(breakdown: RecruitmentBreakdown): string {
+  return buildSubtext([[breakdown.ready, "ready"], [breakdown.inProgress, "in progress"]]);
 }
 
-/**
- * Build ETA 9089 stage subtext.
- *
- * Formula (per perm_flow.md):
- * - prep = working + waiting_intake + under_review
- * - rfi = rfi_rfe
- * - filed = filed + approved
- *
- * @param breakdown - ETA 9089 progress breakdown
- * @returns Formatted subtext (e.g., "3 prep, 1 RFI, 2 filed")
- *
- * @example
- * buildEta9089Subtext({ prep: 3, rfi: 1, filed: 2 })  // "3 prep, 1 RFI, 2 filed"
- * buildEta9089Subtext({ prep: 0, rfi: 0, filed: 0 })  // ""
- * buildEta9089Subtext({ prep: 3, rfi: 0, filed: 2 })  // "3 prep, 2 filed"
- */
+/** Build ETA 9089 stage subtext. */
 export function buildEta9089Subtext(breakdown: Eta9089Breakdown): string {
-  const parts: string[] = [];
-
-  if (breakdown.prep > 0) {
-    parts.push(`${breakdown.prep} prep`);
-  }
-
-  if (breakdown.rfi > 0) {
-    parts.push(`${breakdown.rfi} RFI`);
-  }
-
-  if (breakdown.filed > 0) {
-    parts.push(`${breakdown.filed} filed`);
-  }
-
-  return parts.join(", ");
+  return buildSubtext([[breakdown.prep, "prep"], [breakdown.rfi, "RFI"], [breakdown.filed, "filed"]]);
 }
 
-/**
- * Build I-140 stage subtext.
- *
- * Formula (per perm_flow.md):
- * - prep = working + waiting_intake + under_review
- * - rfe = rfi_rfe
- * - filed = filed + approved
- *
- * @param breakdown - I-140 progress breakdown
- * @returns Formatted subtext (e.g., "4 prep, 2 RFE, 3 filed")
- *
- * @example
- * buildI140Subtext({ prep: 4, rfe: 2, filed: 3 })  // "4 prep, 2 RFE, 3 filed"
- * buildI140Subtext({ prep: 0, rfe: 0, filed: 0 })  // ""
- * buildI140Subtext({ prep: 4, rfe: 0, filed: 3 })  // "4 prep, 3 filed"
- */
+/** Build I-140 stage subtext. */
 export function buildI140Subtext(breakdown: I140Breakdown): string {
-  const parts: string[] = [];
-
-  if (breakdown.prep > 0) {
-    parts.push(`${breakdown.prep} prep`);
-  }
-
-  if (breakdown.rfe > 0) {
-    parts.push(`${breakdown.rfe} RFE`);
-  }
-
-  if (breakdown.filed > 0) {
-    parts.push(`${breakdown.filed} filed`);
-  }
-
-  return parts.join(", ");
+  return buildSubtext([[breakdown.prep, "prep"], [breakdown.rfe, "RFE"], [breakdown.filed, "filed"]]);
 }

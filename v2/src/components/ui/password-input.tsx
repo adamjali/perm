@@ -1,13 +1,12 @@
 "use client";
 
-import * as React from "react";
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface PasswordInputProps
-  extends Omit<React.ComponentProps<"input">, "type"> {
+  extends Omit<ComponentProps<"input">, "type"> {
   /** Override the initial visibility state */
   defaultVisible?: boolean;
 }

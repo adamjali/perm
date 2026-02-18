@@ -27,7 +27,7 @@ const log = loggers.cases;
  */
 async function encryptFein(fein: string | undefined | null): Promise<string | undefined> {
   if (!fein) return undefined;
-  // Let encryptToken throw if OAUTH_ENCRYPTION_KEY is missing — never store plaintext
+  // Let encryptToken throw if OAUTH_ENCRYPTION_KEY is missing — never store plaintext. Key shared for OAuth tokens and FEIN encryption.
   return await encryptToken(fein);
 }
 
@@ -40,8 +40,9 @@ async function decryptFein(fein: string | undefined): Promise<string | undefined
   try {
     return await decryptToken(fein);
   } catch {
-    // Corrupted or key mismatch — return as-is
-    return fein;
+    // Corrupted or key mismatch — log and return undefined so UI shows empty field
+    console.error("[decryptFein] Failed to decrypt FEIN — key mismatch or data corruption");
+    return undefined;
   }
 }
 

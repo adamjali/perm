@@ -283,7 +283,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
   const auditDisabled = fieldDisabledStates?.eta9089AuditDate;
   const certificationDisabled = fieldDisabledStates?.eta9089CertificationDate;
 
-  // NOTE: Extract hint expressions to avoid React Compiler bug with `?.prop || fallback` in JSX
+  // Extracted to local variable (React Compiler disabled; kept for SWC safety)
   const filingHint = filingConstraint?.hint;
   const auditHint = auditConstraint?.hint;
   const certHint = certificationConstraint?.hint;

@@ -52,8 +52,9 @@ export function LoginPageClient() {
         return false;
       }
       return true;
-    } catch {
-      // Rate limit check failed — allow the attempt (fail open for availability)
+    } catch (error) {
+      // Fail open for availability, but log for observability
+      captureError(error, { operation: "enforceRateLimit" });
       return true;
     }
   }, [checkRateLimit]);
@@ -89,9 +90,9 @@ export function LoginPageClient() {
       const result = await signIn("password", formData);
 
       if (result.signingIn) {
-        clearRateLimitMut({ email: emailValue, action: "login" }).catch(() => {});
+        clearRateLimitMut({ email: emailValue, action: "login" }).catch((e) => console.warn("[clearRateLimit] failed:", e));
         localStorage.setItem("perm_last_login_at", String(Date.now()));
-        recordMyLogin().catch(() => {});
+        recordMyLogin().catch((e) => console.warn("[recordMyLogin] failed:", e));
         router.push("/dashboard");
       } else {
         // Email not verified — provider re-sent a verification code
@@ -142,7 +143,7 @@ export function LoginPageClient() {
 
       toast.success("Email verified! Signing you in.");
       localStorage.setItem("perm_last_login_at", String(Date.now()));
-      recordMyLogin().catch(() => {});
+      recordMyLogin().catch((e) => console.warn("[recordMyLogin] failed:", e));
       router.push("/dashboard");
     } catch (error) {
       if (handleStaleDeployment(error)) return;

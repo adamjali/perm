@@ -2,7 +2,7 @@
  * Admin Functions
  *
  * Contains both internal admin utilities (test user creation, data copying)
- * and public admin endpoints (dashboard data, user management, notification
+ * and public admin endpoints (dashboard data with server-side pagination, user management, notification
  * settings, email sending).
  *
  * SECURITY: Public functions enforce admin access via requireAdmin() guard.
