@@ -1,6 +1,8 @@
 import { Email } from "@convex-dev/auth/providers/Email";
 import { Resend as ResendAPI } from "resend";
+import { render } from "@react-email/render";
 import { generateSecureOTP } from "./lib/crypto";
+import { VerificationCode } from "../src/emails/VerificationCode";
 
 export const ResendOTP = Email({
   id: "resend-otp",
@@ -10,12 +12,14 @@ export const ResendOTP = Email({
   },
   async sendVerificationRequest({ identifier: email, token }) {
     const resend = new ResendAPI(process.env.AUTH_RESEND_KEY!);
+
+    const html = await render(VerificationCode({ code: token }));
+
     const { error } = await resend.emails.send({
       from: "PERM Tracker <noreply@permtracker.app>",
       to: [email],
-      subject: "Verify your email",
-      html: `<p>Your verification code is: <strong>${token}</strong></p>
-             <p>This code expires in 10 minutes.</p>`,
+      subject: "PERM Tracker: Your verification code",
+      html,
     });
     if (error) {
       // Log but don't throw — the verification token is already stored in the DB.

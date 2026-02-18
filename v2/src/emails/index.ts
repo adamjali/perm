@@ -33,6 +33,15 @@ export type { AutoClosureProps } from "./AutoClosure";
 export { WeeklyDigest } from "./WeeklyDigest";
 export type { WeeklyDigestProps } from "./WeeklyDigest";
 
+export { VerificationCode } from "./VerificationCode";
+export type { VerificationCodeProps } from "./VerificationCode";
+
+export { PasswordResetCode } from "./PasswordResetCode";
+export type { PasswordResetCodeProps } from "./PasswordResetCode";
+
+export { TestEmail } from "./TestEmail";
+export type { TestEmailProps } from "./TestEmail";
+
 // Shared components
 export {
   EmailLayout,

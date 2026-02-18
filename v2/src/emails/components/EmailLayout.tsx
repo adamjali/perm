@@ -32,6 +32,10 @@ export interface EmailLayoutProps {
   children: React.ReactNode;
   /** Optional settings URL override */
   settingsUrl?: string;
+  /** Optional footer text override (default: notification-related text) */
+  footerText?: string;
+  /** Hide "Manage notification settings" link (for auth emails) */
+  hideSettingsLink?: boolean;
 }
 
 /**
@@ -120,6 +124,8 @@ export function EmailLayout({
   previewText,
   children,
   settingsUrl = "https://permtracker.app/settings",
+  footerText,
+  hideSettingsLink = false,
 }: EmailLayoutProps) {
   return (
     <Html>
@@ -145,14 +151,17 @@ export function EmailLayout({
           {/* Footer */}
           <Section style={styles.footer}>
             <Text className="em-text-secondary" style={styles.footerText}>
-              You&apos;re receiving this email because you have notifications
-              enabled for your PERM Tracker account.
+              {footerText || "You\u0027re receiving this email because you have notifications enabled for your PERM Tracker account."}
             </Text>
             <Text className="em-text-secondary" style={styles.footerLinks}>
-              <Link href={settingsUrl} className="em-link" style={styles.footerLink}>
-                Manage notification settings
-              </Link>
-              {" | "}
+              {!hideSettingsLink && (
+                <>
+                  <Link href={settingsUrl} className="em-link" style={styles.footerLink}>
+                    Manage notification settings
+                  </Link>
+                  {" | "}
+                </>
+              )}
               <Link href="https://permtracker.app" className="em-link" style={styles.footerLink}>
                 Open PERM Tracker
               </Link>

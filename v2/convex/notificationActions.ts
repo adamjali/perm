@@ -610,71 +610,17 @@ export const sendTestEmail = action({
     const appUrl = getAppUrl();
     const settingsUrl = `${appUrl}/settings/notifications`;
 
-    // Simple test email HTML (inline, no template needed)
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Test Email - PERM Tracker</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-    <tr>
-      <td>
-        <div style="background-color: #ffffff; border: 2px solid #000000; box-shadow: 4px 4px 0px #000000; padding: 32px;">
-          <!-- Header -->
-          <div style="text-align: center; margin-bottom: 24px;">
-            <div style="display: inline-block; background-color: #228B22; color: #ffffff; font-weight: bold; font-size: 24px; padding: 8px 16px; border: 2px solid #000000;">
-              PERM Tracker
-            </div>
-          </div>
-
-          <!-- Content -->
-          <h1 style="color: #000000; font-size: 24px; font-weight: bold; margin: 0 0 16px 0; text-align: center;">
-            Test Email Successful!
-          </h1>
-
-          <p style="color: #71717a; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0; text-align: center;">
-            Your email notifications are working correctly. You will receive deadline reminders, status updates, and alerts at this email address.
-          </p>
-
-          <!-- Success Badge -->
-          <div style="text-align: center; margin-bottom: 24px;">
-            <div style="display: inline-block; background-color: #dcfce7; color: #166534; font-size: 14px; font-weight: 600; padding: 8px 16px; border: 2px solid #166534;">
-              Email configuration verified
-            </div>
-          </div>
-
-          <!-- CTA Button -->
-          <div style="text-align: center; margin-bottom: 24px;">
-            <a href="${settingsUrl}" style="display: inline-block; background-color: #228B22; color: #ffffff; font-weight: bold; font-size: 14px; padding: 12px 24px; text-decoration: none; border: 2px solid #000000; box-shadow: 4px 4px 0px #000000;">
-              Manage Notification Settings
-            </a>
-          </div>
-
-          <!-- Footer -->
-          <div style="border-top: 1px solid #e4e4e7; padding-top: 24px; text-align: center;">
-            <p style="color: #a1a1aa; font-size: 12px; margin: 0;">
-              This is a test email from PERM Tracker.<br>
-              You received this because you requested a test email.
-            </p>
-          </div>
-        </div>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-    `.trim();
+    // Render branded test email template
+    const { render } = await import("@react-email/render");
+    const { TestEmail } = await import("../src/emails/TestEmail");
+    const html = await render(TestEmail({ settingsUrl }));
 
     // Send email via Resend
     const resend = getResend();
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [args.email],
-      subject: "Test Email - PERM Tracker",
+      subject: "PERM Tracker: Test email successful",
       html,
     });
 

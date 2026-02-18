@@ -1,6 +1,8 @@
 import { Email } from "@convex-dev/auth/providers/Email";
 import { Resend as ResendAPI } from "resend";
+import { render } from "@react-email/render";
 import { generateSecureOTP } from "./lib/crypto";
+import { PasswordResetCode } from "../src/emails/PasswordResetCode";
 
 export const ResendPasswordReset = Email({
   id: "resend-password-reset",
@@ -10,15 +12,20 @@ export const ResendPasswordReset = Email({
   },
   async sendVerificationRequest({ identifier: email, token }) {
     const resend = new ResendAPI(process.env.AUTH_RESEND_KEY!);
+
+    const html = await render(PasswordResetCode({ code: token }));
+
     const { error } = await resend.emails.send({
       from: "PERM Tracker <noreply@permtracker.app>",
       to: [email],
-      subject: "Reset your password",
-      html: `<p>Your password reset code is: <strong>${token}</strong></p>
-             <p>This code expires in 10 minutes.</p>`,
+      subject: "PERM Tracker: Password reset code",
+      html,
     });
     if (error) {
-      throw new Error(`Failed to send email: ${error.message}`);
+      // Log but don't throw — same rationale as ResendOTP.
+      // The auth flow should complete so the user sees the code entry form.
+      // They can retry to resend. Throwing here causes opaque "Server Error".
+      console.error(`[ResendPasswordReset] Failed to send reset email to ${email}:`, error.message);
     }
   },
 });
