@@ -56,6 +56,29 @@ type PriorityLevel = 'low' | 'normal' | 'high' | 'urgent';
 type I140Category = 'EB-1' | 'EB-2' | 'EB-3';
 
 // ============================================================================
+// Convex ID Validation
+// ============================================================================
+
+/**
+ * Validate that a string looks like a Convex document ID.
+ * Convex IDs are base32-encoded strings starting with a table prefix.
+ * Rejects MongoDB ObjectIds and other non-Convex formats.
+ */
+function assertConvexId(value: unknown, tableName: string): asserts value is string {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`Invalid ${tableName} ID: expected a non-empty string`);
+  }
+  // Convex IDs are alphanumeric base32 (lowercase), typically 32+ chars
+  // MongoDB ObjectIds are exactly 24 hex chars — reject those explicitly
+  if (/^[0-9a-f]{24}$/.test(value)) {
+    throw new Error(
+      `Invalid ${tableName} ID: "${value}" appears to be a MongoDB ObjectId, not a Convex ID. ` +
+      `Please use the actual case ID from the system.`
+    );
+  }
+}
+
+// ============================================================================
 // Tool Execution Functions
 // ============================================================================
 
@@ -130,6 +153,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
 
   updateCase: async (args, token) => {
     const { caseId, foreignWorkerId, ...otherFields } = args;
+    assertConvexId(caseId, 'cases');
 
     // Fetch case details first for accurate confirmation message
     const caseDetails = await getCaseDetails(caseId as Id<'cases'>, token);
@@ -172,6 +196,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
   },
 
   archiveCase: async (args, token) => {
+    assertConvexId(args.caseId, 'cases');
     // Fetch case details before archiving for accurate confirmation message
     const caseDetails = await getCaseDetails(args.caseId as Id<'cases'>, token);
 
@@ -195,6 +220,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
   },
 
   reopenCase: async (args, token) => {
+    assertConvexId(args.caseId, 'cases');
     // Fetch case details for accurate confirmation message
     const caseDetails = await getCaseDetails(args.caseId as Id<'cases'>, token);
 
@@ -217,6 +243,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
   },
 
   deleteCase: async (args, token) => {
+    assertConvexId(args.caseId, 'cases');
     // Fetch case details before deleting for accurate confirmation message
     const caseDetails = await getCaseDetails(args.caseId as Id<'cases'>, token);
 
@@ -241,6 +268,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
 
   // Calendar sync tools
   syncToCalendar: async (args, token) => {
+    assertConvexId(args.caseId, 'cases');
     // Fetch case details for accurate confirmation message
     const caseDetails = await getCaseDetails(args.caseId as Id<'cases'>, token);
 
@@ -264,6 +292,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
   },
 
   unsyncFromCalendar: async (args, token) => {
+    assertConvexId(args.caseId, 'cases');
     // Fetch case details for accurate confirmation message
     const caseDetails = await getCaseDetails(args.caseId as Id<'cases'>, token);
 
@@ -288,6 +317,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
 
   // Notification tools
   markNotificationRead: async (args, token) => {
+    assertConvexId(args.notificationId, 'notifications');
     await fetchMutation(
       api.notifications.markAsRead,
       { notificationId: args.notificationId as Id<'notifications'> },
@@ -313,6 +343,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
   },
 
   deleteNotification: async (args, token) => {
+    assertConvexId(args.notificationId, 'notifications');
     await fetchMutation(
       api.notifications.deleteNotification,
       { notificationId: args.notificationId as Id<'notifications'> },
@@ -359,6 +390,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
   // Bulk operations
   bulkUpdateStatus: async (args, token) => {
     const caseIds = args.caseIds as string[];
+    for (const id of caseIds) assertConvexId(id, 'cases');
     const status = args.status as CaseStatus;
 
     const result = await fetchMutation(
@@ -382,6 +414,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
 
   bulkArchiveCases: async (args, token) => {
     const caseIds = args.caseIds as string[];
+    for (const id of caseIds) assertConvexId(id, 'cases');
 
     const result = await fetchMutation(
       api.cases.bulkRemove,
@@ -400,6 +433,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
 
   bulkDeleteCases: async (args, token) => {
     const caseIds = args.caseIds as string[];
+    for (const id of caseIds) assertConvexId(id, 'cases');
 
     const result = await fetchMutation(
       api.cases.bulkRemove,
@@ -418,6 +452,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
 
   bulkCalendarSync: async (args, token) => {
     const caseIds = args.caseIds as string[];
+    for (const id of caseIds) assertConvexId(id, 'cases');
     const enabled = args.enabled as boolean;
 
     const result = await fetchMutation(

@@ -87,6 +87,7 @@ import {
   checkToolAllowed,
   checkNeedsConfirmation,
   resolveBulkCaseIds,
+  validateConvexId,
 } from '@/lib/ai/tool-helpers';
 
 // =============================================================================
@@ -444,7 +445,7 @@ AUTONOMOUS: No confirmation needed.`,
           result.currentCaseId = pageContext.currentCaseId;
           result.hint = 'User is viewing a specific case. Use this ID for operations on "this case".';
 
-          if (params.includeVisibleCaseData) {
+          if (params.includeVisibleCaseData && !validateConvexId(pageContext.currentCaseId, 'case ID')) {
             try {
               const caseData = await fetchQuery(
                 api.cases.get,
@@ -499,6 +500,8 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: ViewCaseInputSchema,
       execute: async (params: ViewCaseInput) => {
         console.log(`[Chat API] viewCase called with:`, truncateForLog(params));
+        const idError = validateConvexId(params.caseId, 'case ID');
+        if (idError) return idError;
         return {
           success: true,
           clientAction: { type: 'viewCase' as const, payload: { caseId: params.caseId, section: params.section } },
@@ -618,6 +621,9 @@ AUTONOMOUS: No confirmation needed.`,
         const startTime = Date.now();
         console.log(`[Chat API] updateCase called with:`, truncateForLog(params));
 
+        const idError = validateConvexId(params.caseId, 'case ID');
+        if (idError) return idError;
+
         const disabled = checkToolAllowed('updateCase', actionMode, 'Case updates are disabled', 'update cases');
         if (disabled) return disabled;
 
@@ -685,6 +691,9 @@ AUTONOMOUS: No confirmation needed.`,
         const startTime = Date.now();
         console.log(`[Chat API] archiveCase called with:`, truncateForLog(params));
 
+        const idError = validateConvexId(params.caseId, 'case ID');
+        if (idError) return idError;
+
         const disabled = checkToolAllowed('archiveCase', actionMode, 'Case archiving is disabled', 'archive cases');
         if (disabled) return disabled;
 
@@ -714,6 +723,9 @@ AUTONOMOUS: No confirmation needed.`,
       execute: async (params: ReopenCaseInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
         console.log(`[Chat API] reopenCase called with:`, truncateForLog(params));
+
+        const idError = validateConvexId(params.caseId, 'case ID');
+        if (idError) return idError;
 
         const disabled = checkToolAllowed('reopenCase', actionMode, 'Case reopening is disabled', 'reopen cases');
         if (disabled) return disabled;
@@ -750,6 +762,9 @@ AUTONOMOUS: No confirmation needed.`,
       execute: async (params: DeleteCaseInput, { toolCallId }: ToolExecutionOptions) => {
         console.log(`[Chat API] deleteCase called with:`, truncateForLog(params));
 
+        const idError = validateConvexId(params.caseId, 'case ID');
+        if (idError) return idError;
+
         const disabled = checkToolAllowed('deleteCase', actionMode, 'Case deletion is disabled', 'delete cases');
         if (disabled) return disabled;
 
@@ -773,6 +788,9 @@ AUTONOMOUS: No confirmation needed.`,
       execute: async (params: SyncToCalendarInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
         console.log(`[Chat API] syncToCalendar called with:`, truncateForLog(params));
+
+        const idError = validateConvexId(params.caseId, 'case ID');
+        if (idError) return idError;
 
         const disabled = checkToolAllowed('syncToCalendar', actionMode, 'Calendar sync is disabled', 'sync cases to calendar');
         if (disabled) return disabled;
@@ -804,6 +822,9 @@ AUTONOMOUS: No confirmation needed.`,
       execute: async (params: UnsyncFromCalendarInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
         console.log(`[Chat API] unsyncFromCalendar called with:`, truncateForLog(params));
+
+        const idError = validateConvexId(params.caseId, 'case ID');
+        if (idError) return idError;
 
         const disabled = checkToolAllowed('unsyncFromCalendar', actionMode, 'Calendar unsync is disabled', 'unsync cases from calendar');
         if (disabled) return disabled;
@@ -839,6 +860,9 @@ AUTONOMOUS: No confirmation needed.`,
       execute: async (params: MarkNotificationReadInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
         console.log(`[Chat API] markNotificationRead called with:`, truncateForLog(params));
+
+        const idError = validateConvexId(params.notificationId, 'notification ID');
+        if (idError) return idError;
 
         const disabled = checkToolAllowed('markNotificationRead', actionMode, 'Notification actions are disabled');
         if (disabled) return disabled;
@@ -885,6 +909,9 @@ AUTONOMOUS: No confirmation needed.`,
       execute: async (params: DeleteNotificationInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
         console.log(`[Chat API] deleteNotification called with:`, truncateForLog(params));
+
+        const idError = validateConvexId(params.notificationId, 'notification ID');
+        if (idError) return idError;
 
         const disabled = checkToolAllowed('deleteNotification', actionMode, 'Notification actions are disabled');
         if (disabled) return disabled;
@@ -1248,6 +1275,9 @@ AUTONOMOUS: No confirmation needed.`,
         const startTime = Date.now();
         console.log(`[Chat API] updateJobDescriptionTemplate called with:`, truncateForLog(params));
 
+        const idError = validateConvexId(params.templateId, 'template ID');
+        if (idError) return idError;
+
         const disabled = checkToolAllowed('updateJobDescriptionTemplate', actionMode, 'Template updates are disabled', 'update templates');
         if (disabled) return disabled;
 
@@ -1297,6 +1327,9 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: DeleteJobDescriptionTemplateInputSchema,
       execute: async (params: DeleteJobDescriptionTemplateInput, { toolCallId }: ToolExecutionOptions) => {
         console.log(`[Chat API] deleteJobDescriptionTemplate called with:`, truncateForLog(params));
+
+        const idError = validateConvexId(params.templateId, 'template ID');
+        if (idError) return idError;
 
         const disabled = checkToolAllowed('deleteJobDescriptionTemplate', actionMode, 'Template deletion is disabled', 'delete templates');
         if (disabled) return disabled;

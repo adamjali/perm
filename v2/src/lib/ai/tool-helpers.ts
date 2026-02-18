@@ -107,6 +107,31 @@ export function checkNeedsConfirmation(
 }
 
 /**
+ * Validate that a string is a plausible Convex document ID.
+ * Rejects MongoDB ObjectIds (24 hex chars) and empty strings.
+ * Returns an error response object if invalid, null if valid.
+ */
+export function validateConvexId(
+  value: unknown,
+  label = 'ID'
+): { error: string; suggestion: string } | null {
+  if (typeof value !== 'string' || value.length === 0) {
+    return {
+      error: `Invalid ${label}: expected a non-empty string`,
+      suggestion: `Please provide a valid ${label}.`,
+    };
+  }
+  // MongoDB ObjectIds are exactly 24 hex chars — AI sometimes hallucinates these
+  if (/^[0-9a-f]{24}$/.test(value)) {
+    return {
+      error: `Invalid ${label}: "${value}" is not a valid case ID`,
+      suggestion: `The ID appears to be in the wrong format. Use the queryCases tool to find the correct case ID.`,
+    };
+  }
+  return null;
+}
+
+/**
  * Resolve bulk case IDs from "all" flag or explicit list.
  * Shared across bulkUpdateStatus, bulkArchiveCases, bulkDeleteCases, bulkCalendarSync.
  */
@@ -116,6 +141,15 @@ export async function resolveBulkCaseIds(
   options?: { idsOnly?: boolean; toolName?: string }
 ): Promise<string[]> {
   let caseIds = params.caseIds || [];
+  // Validate explicit caseIds from AI (skip if fetching via all=true, those come from Convex)
+  if (!params.all && caseIds.length > 0) {
+    for (const id of caseIds) {
+      const error = validateConvexId(id, 'case ID');
+      if (error) {
+        throw new Error(error.error);
+      }
+    }
+  }
   if (params.all) {
     if (options?.toolName) {
       console.log(`[Chat API] ${options.toolName}: all=true, fetching all case IDs`);
