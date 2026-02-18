@@ -19,8 +19,8 @@ interface ArticleBodyProps {
 
 export default function ArticleBody({ title, url, children }: ArticleBodyProps) {
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8 sm:py-14">
-      <div className="flex gap-12">
+    <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
+      <div className="flex gap-10">
         {/* Main content */}
         <div className="min-w-0 flex-1">
           <motion.div
@@ -34,7 +34,7 @@ export default function ArticleBody({ title, url, children }: ArticleBodyProps) 
 
           {/* Share buttons */}
           <motion.div
-            className="mt-12 border-t-2 border-border pt-8"
+            className="mt-10 border-t-2 border-border pt-6"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}

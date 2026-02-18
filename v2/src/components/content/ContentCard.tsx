@@ -77,7 +77,7 @@ export default function ContentCard({ post, showType }: ContentCardProps) {
             )}
 
             {/* Title */}
-            <h3 className="mb-2 font-heading text-lg font-bold leading-tight transition-colors duration-200 group-hover:text-primary sm:text-xl">
+            <h3 className="mb-2 font-heading text-base font-bold leading-tight transition-colors duration-200 group-hover:text-primary sm:text-lg">
               {meta.title}
             </h3>
 
@@ -94,6 +94,7 @@ export default function ContentCard({ post, showType }: ContentCardProps) {
                   month: "short",
                   day: "numeric",
                   year: "numeric",
+                  timeZone: "UTC",
                 })}
               </span>
               <span className="flex items-center gap-1">

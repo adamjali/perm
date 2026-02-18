@@ -9,7 +9,7 @@ export default function BlogLoading() {
     <>
       {/* Hero skeleton */}
       <div className="border-b-2 border-border bg-card">
-        <div className="mx-auto max-w-[1400px] px-4 py-16 sm:px-8 sm:py-20">
+        <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
           <Skeleton variant="line" className="mb-4 h-6 w-20" />
           <Skeleton variant="line" className="mb-4 h-12 w-80" />
           <Skeleton variant="line" className="h-6 w-96" />
@@ -17,7 +17,7 @@ export default function BlogLoading() {
       </div>
 
       {/* Grid skeleton */}
-      <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8 sm:py-14">
+      <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="border-2 border-border bg-card shadow-hard">

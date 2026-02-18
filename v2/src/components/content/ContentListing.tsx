@@ -48,7 +48,7 @@ export default function ContentListing({
   }, [posts, activeTag, search]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <CategoryFilter

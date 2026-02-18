@@ -20,9 +20,9 @@ export default function RelatedPosts({ posts }: RelatedPostsProps) {
 
   return (
     <section className="border-t-2 border-border bg-muted/30">
-      <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
+      <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-12">
         <motion.h2
-          className="mb-8 font-heading text-2xl font-bold"
+          className="mb-6 font-heading text-xl font-bold"
           initial={{ opacity: 0, x: -20 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}

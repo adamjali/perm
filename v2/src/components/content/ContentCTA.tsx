@@ -42,7 +42,7 @@ export default function ContentCTA({
         <div className="absolute -bottom-16 -right-16 h-48 w-48 bg-primary/5 -rotate-6" />
       </div>
 
-      <div className="relative mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
+      <div className="relative mx-auto max-w-[1400px] px-4 py-10 sm:px-8 sm:py-12">
         <motion.div
           className="text-center"
           variants={stagger}
@@ -52,7 +52,7 @@ export default function ContentCTA({
         >
           <motion.h2
             variants={fadeUp}
-            className="mb-3 font-heading text-2xl font-bold sm:text-3xl"
+            className="mb-3 font-heading text-xl font-bold sm:text-2xl"
           >
             {title}
           </motion.h2>

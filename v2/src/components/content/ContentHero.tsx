@@ -89,7 +89,7 @@ export default function ContentHero({
         />
       </div>
 
-      <div className="relative mx-auto max-w-[1400px] px-4 py-16 sm:px-8 sm:py-20">
+      <div className="relative mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
         <motion.div
           variants={stagger}
           initial="hidden"
@@ -106,7 +106,7 @@ export default function ContentHero({
           {/* Title */}
           <motion.h1
             variants={fadeUp}
-            className="mb-4 font-heading text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl"
+            className="mb-4 font-heading text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl"
           >
             {title ?? config.plural}
           </motion.h1>
@@ -114,7 +114,7 @@ export default function ContentHero({
           {/* Description */}
           <motion.p
             variants={fadeUp}
-            className="max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl"
+            className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg"
           >
             {description ?? config.description}
           </motion.p>

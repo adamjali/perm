@@ -27,7 +27,7 @@ export default function ResourcesPage() {
   return (
     <>
       <ContentHero type="resources" postCount={posts.length} />
-      <section className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8 sm:py-14">
+      <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
         <ContentListing posts={posts} tags={tags} />
       </section>
     </>

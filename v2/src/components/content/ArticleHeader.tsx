@@ -25,7 +25,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
 
   return (
     <header className="border-b-2 border-border bg-card">
-      <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8 sm:py-14">
+      <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
         <motion.div
           variants={stagger}
           initial="hidden"
@@ -59,7 +59,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
           {/* Title */}
           <motion.h1
             variants={fadeUp}
-            className="mb-4 font-heading text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl"
+            className="mb-4 font-heading text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl"
           >
             {meta.title}
           </motion.h1>
@@ -67,7 +67,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
           {/* Description */}
           <motion.p
             variants={fadeUp}
-            className="mb-6 max-w-3xl text-lg leading-relaxed text-muted-foreground"
+            className="mb-5 max-w-3xl text-base leading-relaxed text-muted-foreground"
           >
             {meta.description}
           </motion.p>
@@ -87,6 +87,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
                 month: "long",
                 day: "numeric",
                 year: "numeric",
+                timeZone: "UTC",
               })}
             </span>
             <span className="flex items-center gap-1.5">

@@ -29,7 +29,7 @@ export default function ChangelogPage() {
   return (
     <>
       <ContentHero type="changelog" postCount={posts.length} />
-      <section className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8 sm:py-14">
+      <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
         <ChangelogTimeline posts={posts} />
       </section>
     </>

@@ -44,7 +44,7 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
   }
 
   return (
-    <div ref={timelineRef} className="relative space-y-8">
+    <div ref={timelineRef} className="relative space-y-6">
       {/* Vertical line */}
       <motion.div
         className="absolute left-4 top-0 bottom-0 w-[2px] origin-top bg-border sm:left-8"
@@ -81,7 +81,7 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
               </div>
             )}
 
-            <div className="p-5 sm:p-6">
+            <div className="p-4 sm:p-5">
               {/* Date */}
               <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
                 <Calendar className="h-3.5 w-3.5" />
@@ -89,11 +89,12 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
                   month: "long",
                   day: "numeric",
                   year: "numeric",
+                  timeZone: "UTC",
                 })}
               </div>
 
               {/* Title */}
-              <h2 className="mb-2 font-heading text-xl font-bold sm:text-2xl">
+              <h2 className="mb-2 font-heading text-lg font-bold sm:text-xl">
                 {post.meta.title}
               </h2>
 
