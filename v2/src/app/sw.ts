@@ -87,3 +87,22 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// Clean up stale caches from previous SW versions.
+// Old SW cached cross-origin images (Gravatar, ImageKit, ui-avatars) which
+// caused CSP violations. Delete any cached entries for non-same-origin URLs.
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.open("images-cache").then(async (cache) => {
+      const keys = await cache.keys();
+      const origin = self.location.origin;
+      const deletions = keys
+        .filter((req) => !req.url.startsWith(origin))
+        .map((req) => cache.delete(req));
+      if (deletions.length > 0) {
+        console.log(`[SW] Cleaning ${deletions.length} stale cross-origin image cache entries`);
+      }
+      return Promise.all(deletions);
+    })
+  );
+});
