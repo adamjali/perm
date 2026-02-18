@@ -55,7 +55,7 @@ export function DashboardPageClient() {
   // Loading state
   if (currentUser === undefined) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div
           className="animate-in fade-in fill-mode-forwards"
           style={{ animationDuration: "0.2s" }}
@@ -85,10 +85,10 @@ export function DashboardPageClient() {
   const firstName = rawName ? rawName.split(" ")[0] : "there";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Welcome Header */}
       <div>
-        <h1 className="font-heading text-3xl font-bold">
+        <h1 className="font-heading text-2xl font-bold">
           Welcome back, {firstName}
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -109,7 +109,7 @@ export function DashboardPageClient() {
       <OnboardingChecklist />
 
       {/* Two-column layout: Upcoming Deadlines | Recent Activity */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <UpcomingDeadlinesWidget />
         <RecentActivityWidget />
       </div>

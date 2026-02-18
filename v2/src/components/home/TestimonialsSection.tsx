@@ -71,26 +71,26 @@ const trustBadges: TrustBadge[] = [
 
 export function TestimonialsSection() {
   return (
-    <section className="relative py-16 sm:py-20 overflow-hidden">
+    <section className="relative py-12 sm:py-16 overflow-hidden">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8">
         {/* All content in single stagger container (1 Intersection Observer) */}
         <ScrollReveal direction="up" stagger>
           {/* Section header */}
-          <div className="mb-10 text-center">
+          <div className="mb-8 text-center">
             <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
               <Star className="h-3.5 w-3.5" />
               Trusted by Practitioners
             </div>
-            <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+            <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
               What Our Users Say
             </h2>
-            <p className="mx-auto mt-4 max-w-lg text-lg text-muted-foreground">
+            <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
               Immigration attorneys trust PERM Tracker to manage their cases and never miss a deadline.
             </p>
           </div>
 
           {/* Trust badges row */}
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 mb-12">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mb-10">
             {trustBadges.map((badge) => (
               <div
                 key={badge.label}

@@ -22,7 +22,7 @@ export function CTASection() {
   const { isNavigating, navigateTo, targetPath } = useNavigationLoading();
 
   return (
-    <section className="relative overflow-hidden bg-primary py-20 text-center sm:py-28">
+    <section className="relative overflow-hidden bg-primary py-16 text-center sm:py-20">
       {/* Background photo with heavy green overlay */}
       <div className="absolute inset-0 opacity-[0.08] mix-blend-multiply">
         <Image
@@ -99,25 +99,25 @@ export function CTASection() {
         {/* Single stagger container (1 Intersection Observer) */}
         <ScrollReveal direction="up" stagger>
           {/* Rocket illustration */}
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center">
-            <RocketLaunchSVG size={80} className="text-black" />
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center">
+            <RocketLaunchSVG size={64} className="text-black" />
           </div>
 
           <div>
-            <h2 className="font-heading text-3xl font-black text-black sm:text-4xl lg:text-5xl">
+            <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl">
               Stop Tracking Deadlines Manually
             </h2>
-            <p className="mx-auto mt-4 max-w-lg text-lg text-black/70">
+            <p className="mx-auto mt-3 max-w-lg text-base text-black/70">
               Set up in 2 minutes. Free forever. No credit card required.
             </p>
           </div>
 
-          <div className="mt-8 flex flex-col items-center gap-6">
+          <div className="mt-6 flex flex-col items-center gap-5">
            <div className="flex flex-wrap justify-center gap-4">
             <MagneticButton>
               <Button
                 size="lg"
-                className="h-14 border-3 border-black bg-black px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-white transition-all duration-150 hover:bg-white hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-black dark:text-white dark:hover:bg-white dark:hover:text-black"
+                className="h-12 border-3 border-black bg-black px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] text-white transition-all duration-150 hover:bg-white hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-black dark:text-white dark:hover:bg-white dark:hover:text-black"
                 style={{ boxShadow: "4px 4px 0px #000" }}
                 onClick={() => navigateTo("/signup")}
                 disabled={isNavigating}
@@ -134,7 +134,7 @@ export function CTASection() {
               <Button
                 variant="outline"
                 size="lg"
-                className="h-14 border-3 border-black bg-transparent px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-black transition-all duration-150 hover:bg-black hover:text-white hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-transparent dark:text-black dark:hover:bg-black dark:hover:text-white"
+                className="h-12 border-3 border-black bg-transparent px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] text-black transition-all duration-150 hover:bg-black hover:text-white hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-transparent dark:text-black dark:hover:bg-black dark:hover:text-white"
                 style={{ boxShadow: "4px 4px 0px #000" }}
                 onClick={() => navigateTo("/demo")}
                 disabled={isNavigating}

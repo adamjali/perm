@@ -128,7 +128,7 @@ export default function AuthHeader() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-50 border-b-3 border-white/20 bg-black transition-[padding] duration-200",
-        isScrolled ? "py-2" : "py-4"
+        isScrolled ? "py-1.5" : "py-3"
       )}
     >
       <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 sm:px-8">

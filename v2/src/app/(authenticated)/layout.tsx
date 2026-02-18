@@ -84,7 +84,7 @@ export default function AuthenticatedLayout({
         {/* Main content - grows to fill space */}
         <main
           id="main-content"
-          className="relative mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8"
+          className="relative mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-8"
           tabIndex={-1}
         >
           <PageTransition>{children}</PageTransition>

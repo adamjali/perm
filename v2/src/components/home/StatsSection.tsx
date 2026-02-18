@@ -167,7 +167,7 @@ function StatItem({ stat, isInView, reducedMotion }: StatItemProps) {
   const count = useCountUp(stat.value, isInView, reducedMotion);
 
   return (
-    <div className="group relative border-3 border-transparent p-6 text-center transition-all duration-300 hover:border-primary/30">
+    <div className="group relative border-3 border-transparent p-5 text-center transition-all duration-300 hover:border-primary/30">
       {/* Icon with SVG ring */}
       <div className="relative mx-auto mb-3 flex h-12 w-12 items-center justify-center">
         {/* Animated ring */}
@@ -204,7 +204,7 @@ function StatItem({ stat, isInView, reducedMotion }: StatItemProps) {
       </div>
 
       {/* Number */}
-      <div className="font-heading text-4xl font-bold text-primary sm:text-5xl lg:text-6xl count-up">
+      <div className="font-heading text-3xl font-bold text-primary sm:text-4xl lg:text-5xl count-up">
         {count}
         {stat.suffix}
       </div>
@@ -223,7 +223,7 @@ export function StatsSection() {
   const reducedMotion = useReducedMotion();
 
   return (
-    <section ref={ref} className="relative bg-foreground py-16 text-background sm:py-20 overflow-hidden">
+    <section ref={ref} className="relative bg-foreground py-12 text-background sm:py-16 overflow-hidden">
       {/* Background image with heavy dark overlay */}
       <div className="absolute inset-0 opacity-[0.06]">
         <Image
@@ -254,7 +254,7 @@ export function StatsSection() {
       </div>
 
       {/* Stats grid */}
-      <div className="relative z-10 mx-auto grid max-w-[1400px] grid-cols-2 gap-8 px-4 sm:px-8 lg:grid-cols-4">
+      <div className="relative z-10 mx-auto grid max-w-[1400px] grid-cols-2 gap-6 px-4 sm:px-6 lg:grid-cols-4">
         {stats.map((stat) => (
           <StatItem key={stat.label} stat={stat} isInView={isInView} reducedMotion={reducedMotion} />
         ))}

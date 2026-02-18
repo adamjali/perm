@@ -120,7 +120,7 @@ function DeadlineHeroEmptyState({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <AlertTriangle className="size-7 text-muted-foreground" />
-            <h2 className="text-3xl font-bold font-heading">Deadline Hub</h2>
+            <h2 className="text-2xl font-bold font-heading">Deadline Hub</h2>
             <Badge variant="secondary" className="text-sm px-3 py-1">
               0
             </Badge>
@@ -141,7 +141,7 @@ function DeadlineHeroEmptyState({
             </Button>
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center rounded-none border-2 border-border bg-background p-12 text-center">
+        <div className="flex flex-col items-center justify-center rounded-none border-2 border-border bg-background p-8 text-center">
           <p className="mb-4 text-lg text-muted-foreground">
             No upcoming deadlines
           </p>

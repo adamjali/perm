@@ -27,10 +27,10 @@ export default function Footer({ variant = "compact" }: FooterProps) {
 
   if (variant === "extended") {
     return (
-      <footer className="relative z-50 border-t-4 border-black bg-black dark:border-white dark:bg-black">
-        <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-8">
+      <footer className="relative z-50 border-t-3 border-black bg-black dark:border-white dark:bg-black">
+        <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8">
           {/* Multi-column grid */}
-          <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             {/* Brand column */}
             <div className="lg:col-span-1">
               <div className="font-heading text-xl font-bold text-white mb-4">
@@ -191,7 +191,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
           </div>
 
           {/* Bottom bar with illustration */}
-          <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
+          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
             <div className="flex items-center gap-3">
               <div className="opacity-30" aria-hidden="true">
                 <LawGavelSVG size={28} className="text-white" />
@@ -211,7 +211,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
 
   // Compact variant (default - for authenticated pages)
   return (
-    <footer className="relative z-50 border-t-4 border-black bg-black dark:border-white dark:bg-black">
+    <footer className="relative z-50 border-t-3 border-black bg-black dark:border-white dark:bg-black">
       <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-3 px-4 py-4 sm:flex-row sm:px-8">
         {/* Footer Links */}
         <div className="flex items-center gap-6 text-sm">

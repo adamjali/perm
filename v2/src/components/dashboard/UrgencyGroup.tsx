@@ -58,7 +58,7 @@ export default function UrgencyGroup({
   return (
     <div
       className={`
-        p-5 min-h-[140px]
+        p-4 min-h-[120px]
         ${style.gradient} ${style.darkGradient}
         ${!isLast ? "border-r-2 border-black dark:border-white/20" : ""}
         md:border-b-0
@@ -78,7 +78,7 @@ export default function UrgencyGroup({
         <span className="font-heading font-extrabold text-sm uppercase tracking-widest flex items-center gap-2">
           {title}
         </span>
-        <span className="font-mono font-extrabold text-2xl">{items.length}</span>
+        <span className="font-mono font-extrabold text-xl">{items.length}</span>
       </div>
 
       {/* Items list */}

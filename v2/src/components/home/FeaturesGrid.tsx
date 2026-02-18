@@ -37,7 +37,7 @@ const features: Feature[] = [
     title: "Auto Deadline Calculation",
     description:
       "Enter one date and every downstream deadline updates instantly — PWD expiration, filing windows, I-140 cutoffs. No more manual math or spreadsheet formulas.",
-    illustration: <CalendarDeadlineSVG size={100} className="text-foreground" />,
+    illustration: <CalendarDeadlineSVG size={80} className="text-foreground" />,
     bgImage: "/images/features/calendar-planning.jpg",
     accentColor: "var(--stage-pwd)",
     learnMoreHref: "/tutorials/tracking-perm-deadlines",
@@ -47,7 +47,7 @@ const features: Feature[] = [
     title: "Deadline Alerts",
     description:
       "Get email and push notifications before deadlines hit. Your team stays informed even when you're in court or on vacation.",
-    illustration: <NotificationBellSVG size={100} className="text-foreground" />,
+    illustration: <NotificationBellSVG size={80} className="text-foreground" />,
     bgImage: "/images/features/notification-phone.jpg",
     accentColor: "var(--primary)",
   },
@@ -55,7 +55,7 @@ const features: Feature[] = [
     title: "Google Calendar Sync",
     description:
       "Every PERM deadline appears on your Google Calendar automatically. Access your filing schedule from any device.",
-    illustration: <CalendarSyncSVG size={100} className="text-foreground" />,
+    illustration: <CalendarSyncSVG size={80} className="text-foreground" />,
     bgImage: "/images/features/team-meeting.jpg",
     accentColor: "var(--stage-recruitment)",
   },
@@ -64,8 +64,8 @@ const features: Feature[] = [
     description:
       "See exactly where each case stands with a color-coded timeline. Instantly spot which cases need attention and which are on track.",
     illustration: (
-      <div className="flex items-center justify-center w-[100px] h-[100px]">
-        <TimelineSVG size={180} className="text-foreground" />
+      <div className="flex items-center justify-center w-[80px] h-[80px]">
+        <TimelineSVG size={150} className="text-foreground" />
       </div>
     ),
     bgImage: "/images/journey/filing-forms.jpg",
@@ -75,7 +75,7 @@ const features: Feature[] = [
     title: "DOL Compliance Checks",
     description:
       "Built-in validation catches missing recruitment steps, expired PWDs, and filing window violations before they become audit problems.",
-    illustration: <ShieldCheckSVG size={100} className="text-foreground" />,
+    illustration: <ShieldCheckSVG size={80} className="text-foreground" />,
     bgImage: "/images/journey/pwd-documents.jpg",
     accentColor: "var(--stage-i140)",
     learnMoreHref: "/blog/common-perm-audit-triggers",
@@ -86,7 +86,7 @@ const features: Feature[] = [
     description:
       "Ask questions in plain English — \"What cases have deadlines this week?\" or \"Start a new case for John Smith.\" It handles the rest.",
     illustration: (
-      <svg width="100" height="100" viewBox="0 0 200 200" fill="none" className="text-foreground" aria-hidden="true">
+      <svg width="80" height="80" viewBox="0 0 200 200" fill="none" className="text-foreground" aria-hidden="true">
         {/* Chat bubble */}
         <rect x="30" y="40" width="140" height="90" rx="8" fill="currentColor" opacity="0.08" stroke="currentColor" strokeWidth="3" />
         <polygon points="60,130 80,130 70,150" fill="currentColor" opacity="0.08" stroke="currentColor" strokeWidth="3" />
@@ -144,9 +144,9 @@ function FeatureCard({ feature }: { feature: Feature }) {
       />
 
       {/* Content */}
-      <div className="relative flex flex-1 flex-col p-8 sm:p-10">
+      <div className="relative flex flex-1 flex-col p-6 sm:p-8">
         {/* Illustration */}
-        <div className="mb-6 flex h-[100px] items-center">
+        <div className="mb-5 flex h-[80px] items-center">
           <div className="transition-transform duration-500 group-hover:scale-105">
             {feature.illustration}
           </div>
@@ -180,23 +180,23 @@ export function FeaturesGrid() {
   return (
     <section id="features" className="relative">
       {/* Content container */}
-      <div className="mx-auto max-w-[1400px] px-4 py-20 sm:px-8 sm:py-28">
+      <div className="mx-auto max-w-[1400px] px-4 py-16 sm:px-8 sm:py-20">
         {/* Section header */}
-        <ScrollReveal direction="up" className="mb-12 text-center sm:mb-16">
+        <ScrollReveal direction="up" className="mb-10 text-center sm:mb-12">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5" />
             What You Get
           </div>
-          <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+          <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
             Built for PERM Practitioners
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
+          <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
             Stop juggling spreadsheets and calendar reminders. Every tool you need to manage PERM cases, in one place.
           </p>
         </ScrollReveal>
 
         {/* Feature cards grid - single stagger container */}
-        <ScrollReveal direction="up" stagger className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <ScrollReveal direction="up" stagger className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
             <FeatureCard key={feature.title} feature={feature} />
           ))}

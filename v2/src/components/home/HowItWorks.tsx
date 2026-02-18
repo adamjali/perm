@@ -91,9 +91,9 @@ function AnimatedConnector({
     <div
       className="absolute hidden md:block"
       style={{
-        top: "52px",
-        left: "calc(50% + 48px)",
-        width: "calc(100% - 96px)",
+        top: "42px",
+        left: "calc(50% + 40px)",
+        width: "calc(100% - 80px)",
         height: "12px",
         zIndex: 1,
       }}
@@ -173,17 +173,17 @@ export function HowItWorks() {
   return (
     <section id="how" className="relative bg-muted">
       {/* Content container */}
-      <div ref={sectionRef} className="mx-auto max-w-[1400px] px-4 py-20 sm:px-8 sm:py-28">
+      <div ref={sectionRef} className="mx-auto max-w-[1400px] px-4 py-16 sm:px-8 sm:py-20">
         {/* Section header */}
-        <ScrollReveal direction="up" className="mb-16 text-center">
+        <ScrollReveal direction="up" className="mb-12 text-center">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <Route className="h-3.5 w-3.5" />
             Simple Process
           </div>
-          <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+          <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
             Get Started in 3 Steps
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-lg text-muted-foreground">
+          <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
             From signup to case tracking in under a minute.
           </p>
         </ScrollReveal>
@@ -202,12 +202,12 @@ export function HowItWorks() {
                 )}
 
                 {/* Step number - big and bold with spring hover */}
-                <div className="relative z-10 mx-auto mb-6 inline-flex h-16 w-16 items-center justify-center border-3 border-border bg-primary text-2xl font-heading font-black text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 hover:rotate-[-3deg]">
+                <div className="relative z-10 mx-auto mb-5 inline-flex h-12 w-12 items-center justify-center border-3 border-border bg-primary text-xl font-heading font-black text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 hover:rotate-[-3deg]">
                   {step.number}
                 </div>
 
                 {/* Illustration card */}
-                <div className="relative mx-auto mb-6 h-24 w-24 overflow-hidden border-2 border-border/30 bg-background/50 p-2">
+                <div className="relative mx-auto mb-5 h-20 w-20 overflow-hidden border-2 border-border/30 bg-background/50 p-2">
                   {/* Background image tint */}
                   <div className="absolute inset-0 opacity-[0.06]">
                     <Image
@@ -238,13 +238,13 @@ export function HowItWorks() {
         </ScrollReveal>
 
         {/* Product screenshots — see it in action */}
-        <ScrollReveal direction="up" delay={0.3} className="mt-16">
-          <div className="text-center mb-10">
+        <ScrollReveal direction="up" delay={0.3} className="mt-12">
+          <div className="text-center mb-8">
             <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
               <Play className="h-3.5 w-3.5" />
               Watch: The PERM Process
             </div>
-            <h3 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
+            <h3 className="font-heading text-xl font-black tracking-tight sm:text-2xl lg:text-3xl">
               See How It Works in 20 Seconds
             </h3>
             <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
@@ -252,7 +252,7 @@ export function HowItWorks() {
             </p>
           </div>
           {/* Product demo + Create case — side by side */}
-          <div className="grid gap-8 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2">
             {/* Product Demo video */}
             <div>
               <div className="border-3 border-border shadow-hard overflow-hidden">
@@ -306,7 +306,7 @@ export function HowItWorks() {
           </div>
 
           {/* Product screenshots */}
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
             {[
               {
                 src: "/images/screenshots/dashboard.png",

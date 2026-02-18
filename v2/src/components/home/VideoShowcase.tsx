@@ -14,21 +14,21 @@ import VideoPlayer from "@/components/content/VideoPlayer";
 export function VideoShowcase() {
   return (
     <section className="relative bg-muted">
-      <div className="mx-auto max-w-[1400px] px-4 py-20 sm:px-8 sm:py-28">
+      <div className="mx-auto max-w-[1400px] px-4 py-16 sm:px-8 sm:py-20">
         <ScrollReveal direction="up" className="text-center">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <Play className="h-3.5 w-3.5" />
             Watch: The PERM Process
           </div>
-          <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+          <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
             See How It Works in 20 Seconds
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-lg text-muted-foreground">
+          <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
             From case creation to deadline tracking — watch the entire PERM workflow.
           </p>
         </ScrollReveal>
 
-        <ScrollReveal direction="up" delay={0.15} className="mx-auto mt-12 max-w-4xl">
+        <ScrollReveal direction="up" delay={0.15} className="mx-auto mt-10 max-w-4xl">
           {/* Neobrutalist video frame */}
           <div className="border-3 border-border shadow-hard overflow-hidden">
             {/* Mini browser chrome */}

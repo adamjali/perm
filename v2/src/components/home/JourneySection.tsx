@@ -158,18 +158,18 @@ export function JourneySection() {
   }, []);
 
   return (
-    <section id="journey" className="py-16 sm:py-24 relative overflow-hidden">
+    <section id="journey" className="py-12 sm:py-20 relative overflow-hidden">
       {/* Header */}
-      <div className="mx-auto max-w-[1400px] px-4 pb-16 text-center sm:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 pb-12 text-center sm:px-8">
         <ScrollReveal direction="up">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <Map className="h-3.5 w-3.5" />
             The PERM Process
           </div>
-          <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+          <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
             Every PERM Stage, Tracked
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
+          <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
             From PWD request to I-140 approval — we calculate every deadline, validate every step, and alert you before anything expires.
           </p>
         </ScrollReveal>
@@ -200,7 +200,7 @@ export function JourneySection() {
         {/* Cards container - scroll-snap with hidden scrollbar */}
         <div
           ref={scrollContainerRef}
-          className="journey-scroll-container scrollbar-hide relative flex gap-8 overflow-x-auto overscroll-x-none py-8 px-[max(1rem,calc((100vw-1400px)/2+2rem))] [&::-webkit-scrollbar]:hidden"
+          className="journey-scroll-container scrollbar-hide relative flex gap-6 overflow-x-auto overscroll-x-none py-6 px-[max(1rem,calc((100vw-1400px)/2+2rem))] [&::-webkit-scrollbar]:hidden"
           style={{
             scrollSnapType: "x mandatory",
             WebkitOverflowScrolling: "touch",
@@ -212,7 +212,7 @@ export function JourneySection() {
           {stages.map((stage) => (
             <article
               key={stage.title}
-              className="group relative flex-shrink-0 w-80 border-3 border-border bg-background overflow-hidden shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
+              className="group relative flex-shrink-0 w-72 border-3 border-border bg-background overflow-hidden shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
               style={{
                 scrollSnapAlign: "center",
                 borderLeftWidth: "6px",
@@ -241,10 +241,10 @@ export function JourneySection() {
               />
 
               {/* Content */}
-              <div className="relative p-8">
+              <div className="relative p-6">
                 {/* Stage number badge */}
                 <div
-                  className="absolute -top-0 right-6 flex h-12 w-12 items-center justify-center border-3 border-border font-heading text-xl font-bold shadow-hard-sm"
+                  className="absolute -top-0 right-5 flex h-10 w-10 items-center justify-center border-3 border-border font-heading text-lg font-bold shadow-hard-sm"
                   style={{
                     backgroundColor: stageColors[stage.stage],
                     color: "#000",
@@ -255,7 +255,7 @@ export function JourneySection() {
                 </div>
 
                 {/* Illustration */}
-                <div className="mb-5 flex h-[70px] items-center">
+                <div className="mb-4 flex h-[60px] items-center">
                   <div className="transition-transform duration-500 group-hover:scale-110">
                     {stage.illustration}
                   </div>

@@ -104,7 +104,7 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
         aria-controls={contentId}
         onClick={onToggle}
         className={cn(
-          "flex w-full items-center justify-between gap-4 p-6 text-left",
+          "flex w-full items-center justify-between gap-4 p-5 text-left",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           "transition-colors duration-150 hover:bg-muted group"
         )}
@@ -135,7 +135,7 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
         )}
       >
         <div ref={contentRef} className="overflow-hidden">
-          <div className="border-t-2 border-border px-6 pb-6 pt-6">
+          <div className="border-t-2 border-border px-5 pb-5 pt-5">
             <p className="text-sm leading-relaxed text-muted-foreground sm:text-base sm:leading-7">
               {item.answer}
             </p>
@@ -155,16 +155,16 @@ export function FAQSection() {
   };
 
   return (
-    <section id="faq" className="relative py-20 sm:py-32">
+    <section id="faq" className="relative py-16 sm:py-24">
       {/* Content container */}
       <div className="mx-auto max-w-[800px] px-4 sm:px-8">
         {/* Section header */}
-        <ScrollReveal direction="up" className="mb-12 text-center sm:mb-16">
+        <ScrollReveal direction="up" className="mb-10 text-center sm:mb-12">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <HelpCircle className="h-3.5 w-3.5" />
             Common Questions
           </div>
-          <h2 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+          <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
             FAQ
           </h2>
         </ScrollReveal>

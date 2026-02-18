@@ -114,8 +114,8 @@ export function HeroSection() {
       </div>
 
       {/* Content container */}
-      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] max-w-[1400px] items-center px-4 pb-24 pt-8 sm:px-8 sm:pb-28 sm:pt-12 lg:pb-32 lg:pt-16">
-        <div className="grid w-full items-center gap-12 lg:grid-cols-2 lg:gap-16">
+      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] max-w-[1400px] items-center px-4 pb-16 pt-6 sm:px-8 sm:pb-20 sm:pt-10 lg:pb-24 lg:pt-12">
+        <div className="grid w-full items-center gap-10 lg:grid-cols-2 lg:gap-12">
           {/* Left column - Text content (single stagger container) */}
           <ScrollReveal direction="up" stagger className="flex flex-col gap-6">
             {/* Eyebrow with animated dot */}
@@ -125,7 +125,7 @@ export function HeroSection() {
             </div>
 
             {/* Headline with shimmer accent */}
-            <h1 className="font-heading text-4xl font-black leading-[1.1] tracking-[-0.02em] sm:text-5xl lg:text-6xl xl:text-7xl">
+            <h1 className="font-heading text-3xl font-black leading-[1.1] tracking-[-0.02em] sm:text-4xl lg:text-5xl xl:text-6xl">
               Never Miss a PERM{" "}
               <span className="hero-shimmer-text inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
                 Deadline
@@ -134,7 +134,7 @@ export function HeroSection() {
             </h1>
 
             {/* Subheadline */}
-            <p className="max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
               One missed filing window can kill a case. PERM Tracker auto-calculates every DOL deadline, sends reminders, and keeps your entire caseload organized — so you can focus on your clients, not spreadsheets.
             </p>
 
@@ -143,7 +143,7 @@ export function HeroSection() {
               <MagneticButton>
                 <Button
                   size="lg"
-                  className="h-14 border-3 border-border px-8 font-heading text-base font-bold uppercase tracking-[0.05em] shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                  className="h-12 border-3 border-border px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
                   onClick={() => navigateTo("/signup")}
                   disabled={isNavigating}
                 >
@@ -159,7 +159,7 @@ export function HeroSection() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="h-14 border-3 border-border bg-transparent px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-foreground shadow-hard transition-all duration-150 hover:bg-foreground hover:text-background hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:bg-[#404040] dark:border-[rgba(255,255,255,0.3)] dark:hover:bg-primary dark:hover:text-black dark:hover:border-primary"
+                  className="h-12 border-3 border-border bg-transparent px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] text-foreground shadow-hard transition-all duration-150 hover:bg-foreground hover:text-background hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:bg-[#404040] dark:border-[rgba(255,255,255,0.3)] dark:hover:bg-primary dark:hover:text-black dark:hover:border-primary"
                   onClick={() => navigateTo("/demo")}
                   disabled={isNavigating}
                 >

@@ -117,7 +117,7 @@ export default function SummaryTile({
       <NavigableCard
         href={href}
         loadingIndicator="overlay"
-        className="group relative bg-card border-4 border-black dark:border-white/20 shadow-hard hover:shadow-hard-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 p-6 overflow-hidden"
+        className="group relative bg-card border-3 border-black dark:border-white/20 shadow-hard hover:shadow-hard-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 p-5 overflow-hidden"
       >
         {/* Corner decoration */}
         <CornerDecoration variant={cornerVariant} color={color} status={status} />
@@ -149,7 +149,7 @@ export default function SummaryTile({
                 />
                 {/* Count centered inside ring */}
                 <div
-                  className="absolute inset-0 flex items-center justify-center mono text-2xl sm:text-3xl font-bold text-foreground transition-colors group-hover:text-[var(--tile-color)]"
+                  className="absolute inset-0 flex items-center justify-center mono text-xl sm:text-2xl font-bold text-foreground transition-colors group-hover:text-[var(--tile-color)]"
                   data-testid="main-count"
                 >
                   {count}
@@ -157,7 +157,7 @@ export default function SummaryTile({
               </div>
             ) : (
               <div
-                className="mono text-3xl sm:text-4xl font-bold text-foreground transition-colors group-hover:text-[var(--tile-color)]"
+                className="mono text-2xl sm:text-3xl font-bold text-foreground transition-colors group-hover:text-[var(--tile-color)]"
                 data-testid="main-count"
               >
                 {count}

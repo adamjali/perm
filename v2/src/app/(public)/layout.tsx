@@ -45,10 +45,10 @@ export default function PublicLayout({
       {/* Header */}
       <AuthHeader />
 
-      {/* Main content - grows to fill space, pt-20 for fixed header (~80px) */}
+      {/* Main content - grows to fill space, pt-16 for fixed header (~64px) */}
       <main
         id="main-content"
-        className="relative flex-1 pt-20"
+        className="relative flex-1 pt-16"
         tabIndex={-1}
       >
         <PageTransition>{children}</PageTransition>
