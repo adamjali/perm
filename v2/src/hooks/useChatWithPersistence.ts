@@ -203,11 +203,17 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
       });
     },
     onError: (err) => {
-      // Log error with context for debugging
+      // Log error with full context for debugging
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errAny = err as any;
       console.error('[Chat] AI SDK error:', {
         message: err.message,
         name: err.name,
         conversationId: conversationIdRef.current,
+        status: errAny?.status || errAny?.statusCode,
+        cause: errAny?.cause?.message || errAny?.cause,
+        responseBody: errAny?.responseBody,
+        stack: err.stack?.split('\n').slice(0, 3).join(' | '),
       });
       // Clear optimistic states on error to prevent stale UI
       setOptimisticMessage(null);

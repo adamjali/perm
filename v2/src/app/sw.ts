@@ -47,10 +47,14 @@ const serwist = new Serwist({
       handler: new NetworkOnly(),
     },
 
-    // Safe: Cache images with long expiration
-    // Images rarely change and are safe to cache
+    // Safe: Cache same-origin images with long expiration
+    // ONLY same-origin — cross-origin images (Senja avatars from Gravatar,
+    // ImageKit, ui-avatars) must bypass the SW because the SW's fetch()
+    // is governed by connect-src CSP, not img-src. Letting them through
+    // causes CSP violations and broken images.
     {
-      matcher: ({ request }) => request.destination === "image",
+      matcher: ({ request, sameOrigin }) =>
+        request.destination === "image" && sameOrigin,
       handler: new CacheFirst({
         cacheName: "images-cache",
         plugins: [
@@ -62,10 +66,13 @@ const serwist = new Serwist({
       }),
     },
 
-    // Safe: Cache fonts with long expiration
-    // Fonts are static assets that never change
+    // Safe: Cache same-origin fonts with long expiration
+    // next/font/google self-hosts fonts at build time so all app fonts
+    // are same-origin in production. Cross-origin font requests (e.g.
+    // from third-party widgets like Senja) must bypass the SW.
     {
-      matcher: ({ request }) => request.destination === "font",
+      matcher: ({ request, sameOrigin }) =>
+        request.destination === "font" && sameOrigin,
       handler: new CacheFirst({
         cacheName: "fonts-cache",
         plugins: [

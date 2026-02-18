@@ -274,11 +274,19 @@ export async function POST(req: Request) {
       return result.toUIMessageStreamResponse();
     } catch (error) {
       // All models failed (ai-fallback exhausted all options)
-      console.error(`[Chat API] [${sessionId}] All models failed:`, error);
+      const errMsg = error instanceof Error ? error.message : String(error);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errAny = error as any;
+      console.error(`[Chat API] [${sessionId}] All models failed:`, {
+        message: errMsg?.slice(0, 500),
+        status: errAny?.statusCode || errAny?.status,
+        cause: errAny?.cause?.message,
+        name: errAny?.name,
+      });
       captureError(error);
       return new Response(
         JSON.stringify({
-          error: 'All AI providers are currently unavailable. Please try again later.',
+          error: `All AI providers failed. Last error: ${errMsg?.slice(0, 200)}`,
         }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       );

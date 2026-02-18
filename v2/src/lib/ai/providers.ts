@@ -317,7 +317,7 @@ const allModels = [
   wrapWithRetryableErrors(groq('llama-3.3-70b-versatile')),                               // 77.3% tool calling
 
   // Tier 3: Emergency ultra-fast inference
-  wrapWithRetryableErrors(cerebras('llama-3.3-70b')),                       // 2000+ tok/s
+  // llama-3.3-70b removed — deprecated on Cerebras Feb 16 2026
   wrapWithRetryableErrors(cerebras('llama3.1-8b')),                         // Emergency fallback
 ];
 
@@ -331,7 +331,6 @@ const MODEL_NAMES = [
   'Llama 3.3 70B',
   'Mistral Small',
   'Llama 3.3 70B Versatile',
-  'Llama 3.3 70B (Cerebras)',
   'Llama 3.1 8B (Cerebras)',
 ] as const;
 
@@ -391,7 +390,9 @@ export const chatModel = createFallback({
   modelResetInterval: 5 * 60 * 1000, // 5 minutes
   shouldRetryThisError,
   onError: (error, modelId) => {
-    console.warn(`[Providers] Model ${modelId} failed, falling back:`, error.message?.slice(0, 200));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const errAny = error as any;
+    console.warn(`[Providers] Model ${modelId} failed (status=${errAny?.statusCode || errAny?.status || 'none'}), falling back:`, error.message?.slice(0, 300));
   },
 });
 
@@ -415,6 +416,5 @@ export const SUPPORTED_MODELS = [
   { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', provider: 'Groq', tier: 2, toolCalling: '77.3%' },
 
   // Tier 3: Emergency (ultra-fast inference)
-  { id: 'llama-3.3-70b', name: 'Llama 3.3 70B', provider: 'Cerebras', tier: 3, toolCalling: '77.3%' },
   { id: 'llama3.1-8b', name: 'Llama 3.1 8B', provider: 'Cerebras', tier: 3, toolCalling: '~50%' },
 ] as const;

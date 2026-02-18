@@ -92,7 +92,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://va.vercel-scripts.com https://*.sentry.io https://browser.sentry-cdn.com https://*.senja.io https://fonts.googleapis.com https://fonts.gstatic.com",
+              "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://va.vercel-scripts.com https://*.sentry.io https://browser.sentry-cdn.com https://*.senja.io",
               "media-src 'self' blob: data:",
               "frame-src 'self' https://app.supademo.com",
               "worker-src 'self' blob:",
