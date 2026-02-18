@@ -2,13 +2,13 @@
  * Conversation Summarization Module
  *
  * Provides client-side function to trigger LLM-based conversation summarization.
- * Uses a fast, lightweight model (Gemini 2.0 Flash Lite) for efficient summarization.
+ * Uses Groq Llama 3.3 70B for efficient summarization (generous free tier).
  *
  * @module lib/ai/summarize
  */
 
 import { generateText } from "ai";
-import { google } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
 import { fetchQuery, fetchMutation } from "convex/nextjs";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
@@ -19,10 +19,15 @@ import {
 import { captureError } from "@/lib/sentry";
 
 /**
- * Summarization model - using Gemini 2.5 Flash for speed and reliability.
- * Previously used gemini-2.0-flash-lite which hit free tier quota limits.
+ * Summarization model - using Groq Llama 3.3 70B for speed and generous quota.
+ * Groq free tier: 30 RPM, 14400 RPD vs Gemini free tier: 20 RPD.
+ * Previously used gemini-2.5-flash which shared the same 20 RPD quota as chat.
  */
-const summarizationModel = google("gemini-2.5-flash");
+const groq = createOpenAI({
+  baseURL: 'https://api.groq.com/openai/v1',
+  apiKey: process.env.GROQ_API_KEY!,
+});
+const summarizationModel = groq("llama-3.3-70b-versatile");
 
 /**
  * Approximate tokens per character for rough token counting

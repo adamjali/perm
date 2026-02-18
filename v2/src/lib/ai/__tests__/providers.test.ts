@@ -47,10 +47,10 @@ describe('AI Providers', () => {
     expect(typeof PRIMARY_MODEL_NAME).toBe('string');
   });
 
-  it('exports SUPPORTED_MODELS list with 8 models', async () => {
+  it('exports SUPPORTED_MODELS list with 6 models', async () => {
     const { SUPPORTED_MODELS } = await import('../providers');
     expect(SUPPORTED_MODELS).toBeDefined();
-    expect(SUPPORTED_MODELS.length).toBe(8);
+    expect(SUPPORTED_MODELS.length).toBe(6);
 
     // Check structure
     expect(SUPPORTED_MODELS[0]).toHaveProperty('id');
@@ -59,12 +59,12 @@ describe('AI Providers', () => {
     expect(SUPPORTED_MODELS[0]).toHaveProperty('tier');
     expect(SUPPORTED_MODELS[0]).toHaveProperty('toolCalling');
 
-    // Verify tier distribution: 2 Tier 1, 4 Tier 2, 2 Tier 3
+    // Verify tier distribution: 2 Tier 1 (high-quota), 2 Tier 2 (limited quota), 2 Tier 3 (emergency)
     const tier1 = SUPPORTED_MODELS.filter(m => m.tier === 1);
     const tier2 = SUPPORTED_MODELS.filter(m => m.tier === 2);
     const tier3 = SUPPORTED_MODELS.filter(m => m.tier === 3);
     expect(tier1.length).toBe(2);
-    expect(tier2.length).toBe(4);
+    expect(tier2.length).toBe(2);
     expect(tier3.length).toBe(2);
   });
 
@@ -79,10 +79,10 @@ describe('AI Providers', () => {
     expect(providers.size).toBe(5);
   });
 
-  it('primary model is Gemini 2.5 Flash', async () => {
+  it('primary model is Groq Llama 3.3 70B Versatile', async () => {
     const { SUPPORTED_MODELS } = await import('../providers');
-    expect(SUPPORTED_MODELS[0].id).toBe('gemini-2.5-flash');
-    expect(SUPPORTED_MODELS[0].provider).toBe('Google');
+    expect(SUPPORTED_MODELS[0].id).toBe('llama-3.3-70b-versatile');
+    expect(SUPPORTED_MODELS[0].provider).toBe('Groq');
   });
 });
 

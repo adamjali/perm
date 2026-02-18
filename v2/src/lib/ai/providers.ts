@@ -4,24 +4,26 @@
  * Multi-provider setup for chat functionality with automatic fallback.
  * Uses ai-fallback for mid-stream error recovery and automatic provider switching.
  *
- * Provider Chain (by intelligence & tool calling - Jan 2026):
+ * Provider Chain (ordered by free-tier reliability - Feb 2026):
  *
- * Tier 1 (Primary - Google Gemini):
- *   - Gemini 2.5 Flash Lite (15 RPM, 1000 RPD) - PRIMARY
- *   - Gemini 2.5 Flash (10 RPM, 250 RPD) - More capable
+ * Tier 1 (High quota free tiers):
+ *   - Groq Llama 3.3 70B Versatile (30 RPM, 14400 RPD free) - PRIMARY
+ *   - Mistral Small (generous free tier, reliable)
  *
- * Tier 2 (Strong models with tool calling):
- *   - Devstral 2 (OpenRouter) - 72.2% tool calling score
- *   - Llama 3.3 70B (OpenRouter) - 77.3% tool calling score
- *   - Mistral Small (Mistral API) - ~70% tool calling
- *   - Llama 3.3 70B Versatile (Groq) - 77.3% tool calling, fast
+ * Tier 2 (Limited quota):
+ *   - Gemini 2.5 Flash (20 RPD free tier)
+ *   - Gemini 3 Flash Preview (20 RPD free tier)
  *
- * Tier 3 (Emergency - ultra-fast inference):
- *   - Llama 3.3 70B (Cerebras) - 2000+ tokens/s
- *   - Llama 3.1 8B (Cerebras) - Fast fallback
+ * Tier 3 (Unreliable free / Emergency):
+ *   - Llama 3.3 70B (OpenRouter free, often rate-limited)
+ *   - Llama 3.1 8B (Cerebras, emergency ultra-fast)
  *
- * Total: 8 models across 5 providers with automatic mid-stream recovery.
- * Tested: Jan 2026 - All models verified working with streaming + tool calling.
+ * Total: 6 models across 5 providers with automatic mid-stream recovery.
+ * Tested: Feb 2026 - All models verified working with streaming + tool calling.
+ *
+ * REMOVED (Feb 2026):
+ *   - devstral-2512:free — OpenRouter free period ended (returns 404)
+ *   - cerebras llama-3.3-70b — deprecated on Cerebras Feb 16 2026
  */
 
 import { google } from '@ai-sdk/google';
@@ -294,30 +296,28 @@ const mistral = createOpenAI({
 
 /**
  * All models in fallback order (primary + fallbacks)
- * Tier 1: Gemini, Tier 2: Strong tool calling, Tier 3: Emergency
+ * Ordered by free-tier quota generosity and reliability, NOT raw capability.
  *
  * IMPORTANT: ALL models are wrapped with wrapWithRetryableErrors() to ensure
  * the fallback chain continues on ANY error (not just rate limits/5xx).
  *
  * Note:
- * - gemini-2.5-flash-LITE has a tool calling bug (UNEXPECTED_TOOL_CALL)
- * - gemini-2.5-flash (without -lite) is stable and recommended
- * - gemini-1.5-* models are RETIRED and return 404
+ * - Groq has the most generous free tier (30 RPM, 14400 RPD) — PRIMARY
+ * - Gemini free tier is very limited (20 RPD per model) — used as backup
+ * - OpenRouter free models are unreliable (rate limited, free periods end)
  * - Mistral-based models also get wrapMistralModel() for tool ID fix
  */
 const allModels = [
-  // Tier 1: Gemini (primary)
-  wrapWithRetryableErrors(google('gemini-2.5-flash')),                      // Primary
-  wrapWithRetryableErrors(google('gemini-3-flash-preview')),                // Newest
+  // Tier 1: High-quota free tiers (handle most traffic)
+  wrapWithRetryableErrors(groq('llama-3.3-70b-versatile')),                               // 30 RPM, 14400 RPD free
+  wrapWithRetryableErrors(wrapMistralModel(mistral('mistral-small-latest'))),             // Generous free tier
 
-  // Tier 2: Strong tool calling models
-  wrapWithRetryableErrors(wrapMistralModel(openrouter('mistralai/devstral-2512:free'))),  // 72.2% tool calling
-  wrapWithRetryableErrors(openrouter('meta-llama/llama-3.3-70b-instruct:free')),          // 77.3% tool calling
-  wrapWithRetryableErrors(wrapMistralModel(mistral('mistral-small-latest'))),             // ~70% tool calling
-  wrapWithRetryableErrors(groq('llama-3.3-70b-versatile')),                               // 77.3% tool calling
+  // Tier 2: Limited quota (20 RPD each on Google free tier)
+  wrapWithRetryableErrors(google('gemini-2.5-flash')),                      // Best quality, limited quota
+  wrapWithRetryableErrors(google('gemini-3-flash-preview')),                // Preview, separate quota pool
 
-  // Tier 3: Emergency ultra-fast inference
-  // llama-3.3-70b removed — deprecated on Cerebras Feb 16 2026
+  // Tier 3: Unreliable free / Emergency
+  wrapWithRetryableErrors(openrouter('meta-llama/llama-3.3-70b-instruct:free')),          // Often rate-limited
   wrapWithRetryableErrors(cerebras('llama3.1-8b')),                         // Emergency fallback
 ];
 
@@ -325,12 +325,11 @@ const allModels = [
  * Model names for logging (matches allModels order)
  */
 const MODEL_NAMES = [
+  'Llama 3.3 70B Versatile (Groq)',
+  'Mistral Small',
   'Gemini 2.5 Flash',
   'Gemini 3 Flash Preview',
-  'Devstral 2',
-  'Llama 3.3 70B',
-  'Mistral Small',
-  'Llama 3.3 70B Versatile',
+  'Llama 3.3 70B (OpenRouter)',
   'Llama 3.1 8B (Cerebras)',
 ] as const;
 
@@ -341,7 +340,7 @@ const MODEL_NAMES = [
  * Configuration:
  * - retryAfterOutput: true - Recover from mid-stream errors (restarts generation)
  * - modelResetInterval: 5 minutes - Re-test failed models periodically
- * - All 8 models tried in order before giving up
+ * - All 6 models tried in order before giving up
  */
 /**
  * Custom retry checker that ensures ALL errors are considered retryable.
@@ -405,16 +404,15 @@ export const PRIMARY_MODEL_NAME = MODEL_NAMES[0];
  * List of supported models for debugging/UI
  */
 export const SUPPORTED_MODELS = [
-  // Tier 1: Primary (Google Gemini)
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', tier: 1, toolCalling: '~90%' },
-  { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', provider: 'Google', tier: 1, toolCalling: '~95%' },
+  // Tier 1: High-quota free tiers (primary)
+  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', provider: 'Groq', tier: 1, toolCalling: '77.3%' },
+  { id: 'mistral-small-latest', name: 'Mistral Small', provider: 'Mistral', tier: 1, toolCalling: '~70%' },
 
-  // Tier 2: Fallback (reliable tool calling models)
-  { id: 'devstral-2512', name: 'Devstral 2', provider: 'OpenRouter', tier: 2, toolCalling: '72.2%' },
-  { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', provider: 'OpenRouter', tier: 2, toolCalling: '77.3%' },
-  { id: 'mistral-small-latest', name: 'Mistral Small', provider: 'Mistral', tier: 2, toolCalling: '~70%' },
-  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', provider: 'Groq', tier: 2, toolCalling: '77.3%' },
+  // Tier 2: Limited quota (Google free tier = 20 RPD)
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', tier: 2, toolCalling: '~90%' },
+  { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', provider: 'Google', tier: 2, toolCalling: '~95%' },
 
-  // Tier 3: Emergency (ultra-fast inference)
+  // Tier 3: Unreliable free / Emergency
+  { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', provider: 'OpenRouter', tier: 3, toolCalling: '77.3%' },
   { id: 'llama3.1-8b', name: 'Llama 3.1 8B', provider: 'Cerebras', tier: 3, toolCalling: '~50%' },
 ] as const;
