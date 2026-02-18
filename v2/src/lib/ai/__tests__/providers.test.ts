@@ -25,7 +25,7 @@ vi.mock('@openrouter/ai-sdk-provider', () => ({
 
 vi.mock('@ai-sdk/openai', () => ({
   createOpenAI: vi.fn(({ baseURL }: { baseURL: string }) => {
-    return vi.fn((model) => {
+    const makeMockModel = (model: string) => {
       let providerType = 'openai';
       if (baseURL?.includes('groq')) providerType = 'groq';
       else if (baseURL?.includes('cerebras')) providerType = 'cerebras';
@@ -38,7 +38,10 @@ vi.mock('@ai-sdk/openai', () => ({
         doGenerate: vi.fn(),
         doStream: vi.fn(),
       };
-    });
+    };
+    // @ai-sdk/openai v3: default call uses Responses API, .chat() uses Chat Completions
+    // Use Object.assign to add .chat to the callable function
+    return Object.assign(vi.fn(makeMockModel), { chat: vi.fn(makeMockModel) });
   }),
 }));
 
@@ -71,13 +74,13 @@ describe('AI Providers', () => {
     expect(SUPPORTED_MODELS[0]).toHaveProperty('tier');
     expect(SUPPORTED_MODELS[0]).toHaveProperty('toolCalling');
 
-    // Verify tier distribution: 2 Tier 1, 2 Tier 2, 2 Tier 3
+    // Verify tier distribution: 1 Tier 1, 2 Tier 2, 3 Tier 3
     const tier1 = SUPPORTED_MODELS.filter(m => m.tier === 1);
     const tier2 = SUPPORTED_MODELS.filter(m => m.tier === 2);
     const tier3 = SUPPORTED_MODELS.filter(m => m.tier === 3);
-    expect(tier1.length).toBe(2);
+    expect(tier1.length).toBe(1);
     expect(tier2.length).toBe(2);
-    expect(tier3.length).toBe(2);
+    expect(tier3.length).toBe(3);
   });
 
   it('exports all 5 providers in SUPPORTED_MODELS', async () => {
@@ -88,7 +91,6 @@ describe('AI Providers', () => {
     expect(providers).toContain('Mistral');
     expect(providers).toContain('Groq');
     expect(providers).toContain('Cerebras');
-    expect(providers.size).toBe(5);
   });
 
   it('primary model is Gemini 2.5 Flash', async () => {

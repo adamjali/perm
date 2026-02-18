@@ -8,13 +8,13 @@
  *
  * Tier 1 (Primary - Google Gemini):
  *   - Gemini 2.5 Flash (20 RPD free tier) - PRIMARY
- *   - Gemini 3 Flash Preview (20 RPD free tier)
  *
  * Tier 2 (High-quota fallbacks):
  *   - Groq Llama 3.3 70B Versatile (30 RPM, 14400 RPD free)
  *   - Mistral Small (generous free tier, reliable)
  *
- * Tier 3 (Unreliable free / Emergency):
+ * Tier 3 (Free / Emergency):
+ *   - Gemini 2.0 Flash (OpenRouter free, good tool calling)
  *   - Llama 3.3 70B (OpenRouter free, often rate-limited)
  *   - Llama 3.1 8B (Cerebras, emergency ultra-fast)
  *
@@ -23,12 +23,13 @@
  * REMOVED (Feb 2026):
  *   - devstral-2512:free — OpenRouter free period ended (returns 404)
  *   - cerebras llama-3.3-70b — deprecated on Cerebras Feb 16 2026
+ *   - gemini-3-flash-preview — requires thought_signature for tool calls,
+ *     broken with @ai-sdk/google v3 (issues #11413, #12351)
  *
- * WHY NOT ai-fallback:
- *   ai-fallback v2's shouldRetryThisError callback is NOT called for thrown
- *   exceptions during streaming — only for error-type stream chunks, which
- *   AI SDK v3 providers never emit. This caused the fallback chain to silently
- *   fail. Replaced with a simple sequential fallback that's easy to debug.
+ * CRITICAL: @ai-sdk/openai v3 changed the default model type from
+ * Chat Completions (/chat/completions) to Responses API (/responses).
+ * Non-OpenAI providers (Groq, Mistral, Cerebras) don't support /responses.
+ * ALWAYS use provider.chat('model-id') — NEVER provider('model-id').
  */
 
 import { google } from '@ai-sdk/google';
@@ -144,19 +145,23 @@ interface ModelConfig {
 /**
  * All models in fallback order. Each request tries from index 0.
  * No shared state between requests — every request gets a fresh attempt.
+ *
+ * IMPORTANT: Use provider.chat('model') for createOpenAI-based providers.
+ * The default provider('model') uses Responses API which non-OpenAI providers
+ * don't support (returns 404 on Mistral/Cerebras, 400 on Groq).
  */
 const MODEL_CONFIGS: ModelConfig[] = [
-  // Tier 1: Primary (Google Gemini — best quality)
+  // Tier 1: Primary (Google Gemini — best quality, 20 RPD free)
   { model: google('gemini-2.5-flash'), name: 'Gemini 2.5 Flash' },
-  { model: google('gemini-3-flash-preview'), name: 'Gemini 3 Flash Preview' },
 
   // Tier 2: High-quota fallbacks (catch Gemini overflow)
-  { model: groq('llama-3.3-70b-versatile'), name: 'Llama 3.3 70B (Groq)' },
-  { model: wrapMistralModel(mistral('mistral-small-latest')), name: 'Mistral Small' },
+  { model: groq.chat('llama-3.3-70b-versatile'), name: 'Llama 3.3 70B (Groq)' },
+  { model: wrapMistralModel(mistral.chat('mistral-small-latest')), name: 'Mistral Small' },
 
-  // Tier 3: Unreliable free / Emergency
+  // Tier 3: Free / Emergency
+  { model: openrouter('google/gemini-2.0-flash-exp:free'), name: 'Gemini 2.0 Flash (OpenRouter)' },
   { model: openrouter('meta-llama/llama-3.3-70b-instruct:free'), name: 'Llama 3.3 70B (OpenRouter)' },
-  { model: cerebras('llama3.1-8b'), name: 'Llama 3.1 8B (Cerebras)' },
+  { model: cerebras.chat('llama3.1-8b'), name: 'Llama 3.1 8B (Cerebras)' },
 ];
 
 // =============================================================================
@@ -308,13 +313,13 @@ export const PRIMARY_MODEL_NAME = MODEL_CONFIGS[0]!.name;
 export const SUPPORTED_MODELS = [
   // Tier 1: Primary (Google Gemini)
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', tier: 1, toolCalling: '~90%' },
-  { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', provider: 'Google', tier: 1, toolCalling: '~95%' },
 
   // Tier 2: High-quota fallbacks
   { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', provider: 'Groq', tier: 2, toolCalling: '77.3%' },
   { id: 'mistral-small-latest', name: 'Mistral Small', provider: 'Mistral', tier: 2, toolCalling: '~70%' },
 
-  // Tier 3: Unreliable free / Emergency
+  // Tier 3: Free / Emergency
+  { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash', provider: 'OpenRouter', tier: 3, toolCalling: '~90%' },
   { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', provider: 'OpenRouter', tier: 3, toolCalling: '77.3%' },
   { id: 'llama3.1-8b', name: 'Llama 3.1 8B', provider: 'Cerebras', tier: 3, toolCalling: '~50%' },
 ] as const;
