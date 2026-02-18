@@ -85,8 +85,8 @@ if (error) {
 ```
 
 **Files modified:**
-- `/Users/dev/cc/perm-tracker-test/v2/convex/ResendOTP.ts`
-- `/Users/dev/cc/perm-tracker-test/v2/convex/ResendPasswordReset.ts`
+- `./v2/convex/ResendOTP.ts`
+- `./v2/convex/ResendPasswordReset.ts`
 
 **Verification:** Build passes successfully with `npm run build`.
 
@@ -118,7 +118,7 @@ npx convex env set SITE_URL http://localhost:3000
 ```
 
 **Files modified:**
-- `/Users/dev/cc/perm-tracker-test/v2/convex/auth.config.ts`
+- `./v2/convex/auth.config.ts`
 
 **Verification:** Build passes successfully with `npm run build`.
 
@@ -146,7 +146,7 @@ documents: v.array(
 ```
 
 **Files modified:**
-- `/Users/dev/cc/perm-tracker-test/v2/convex/schema.ts`
+- `./v2/convex/schema.ts`
 
 ---
 
@@ -166,7 +166,7 @@ documents: v.array(
 These helpers are ready to be called from case deletion mutations in Phase 21.
 
 **Files created:**
-- `/Users/dev/cc/perm-tracker-test/v2/convex/lib/userProfileHelpers.ts`
+- `./v2/convex/lib/userProfileHelpers.ts`
 
 ---
 
@@ -183,7 +183,7 @@ These helpers are ready to be called from case deletion mutations in Phase 21.
 ```
 
 **Files modified:**
-- `/Users/dev/cc/perm-tracker-test/v2/convex/schema.ts`
+- `./v2/convex/schema.ts`
 
 ---
 

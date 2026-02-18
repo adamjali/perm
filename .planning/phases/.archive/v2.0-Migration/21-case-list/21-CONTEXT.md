@@ -217,7 +217,7 @@ All agents/subagents working on Phase 21 MUST read these files:
 2. **Design Doc 3:** `.planning/phases/17-design-system/design3`
 3. **Design Doc 4:** `.planning/phases/17-design-system/design4`
 4. **Design Doc 5:** `.planning/phases/17-design-system/design5`
-5. **PERM Flow (Source of Truth):** `/Users/dev/cc/perm-tracker-test/perm_flow.md`
+5. **PERM Flow (Source of Truth):** `./perm_flow.md`
 6. **v2 Design System:** `v2/docs/DESIGN_SYSTEM.md`
 
 ### Feature Parity

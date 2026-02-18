@@ -66,8 +66,8 @@ Output: Extended schema, types, validation, and UI with method-type-aware date i
 </objective>
 
 <execution_context>
-@/Users/dev/.claude/get-shit-done/workflows/execute-plan.md
-@/Users/dev/.claude/get-shit-done/templates/summary.md
+:execute-plan
+:summary-template
 </execution_context>
 
 <context>
@@ -415,7 +415,7 @@ export function validateProfessionalMethods(
 Commit: `test(006): add V-PROF validation tests and extend types/schema for method-level dates`
   </action>
   <verify>
-    1. `cd /Users/dev/cc/perm-tracker/v2 && npx tsc --noEmit` passes (types compile)
+    1. `cd ./v2 && npx tsc --noEmit` passes (types compile)
     2. `pnpm vitest run convex/lib/perm/validators/__tests__/professionalRecruitment.test.ts` - tests run but V-PROF rule assertions FAIL (red phase: stub returns no errors)
     3. Verify the `SubEntry` type is exported from `src/lib/shared/types.ts`
     4. Verify `getMethodCategory('radio_ad')` returns `'sub-entries'`
@@ -605,7 +605,7 @@ Commit: `feat(006): implement V-PROF validators and update backend date calculat
   </action>
   <verify>
     1. `pnpm vitest run convex/lib/perm/validators/__tests__/professionalRecruitment.test.ts` - ALL tests pass (green phase)
-    2. `cd /Users/dev/cc/perm-tracker/v2 && npx tsc --noEmit` passes
+    2. `cd ./v2 && npx tsc --noEmit` passes
     3. `pnpm test:fast` - no regressions in existing tests
     4. Verify that `calculateRecruitmentEndDate` with a method having `endDate: '2024-06-01'` includes that date in the max calculation
     5. Verify `isRecruitmentComplete` with 3 methods where one uses `startDate` instead of `date` returns true
@@ -825,7 +825,7 @@ And remove from the constraint variable declarations:
 Commit: `feat(006): add SubEntriesManager component and update RecruitmentSection with method-type-aware date inputs`
   </action>
   <verify>
-    1. `cd /Users/dev/cc/perm-tracker/v2 && npx tsc --noEmit` passes
+    1. `cd ./v2 && npx tsc --noEmit` passes
     2. `pnpm test:fast` - no regressions
     3. `pnpm vitest run convex/lib/perm/validators/__tests__/professionalRecruitment.test.ts` - still passing
     4. Visual check: `pnpm dev` and navigate to case edit form. Enable professional occupation checkbox:

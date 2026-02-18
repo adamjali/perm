@@ -132,7 +132,7 @@ V1 had a working multi-provider setup:
 - **Global Fixes** — Fixes should be global, not repeated
 
 ### Mandatory References (All Agents MUST Read)
-1. **PERM Source of Truth**: `/Users/dev/cc/perm-tracker-test/perm_flow.md`
+1. **PERM Source of Truth**: `./perm_flow.md`
 2. **Design Skill**: Use `frontend-design` skill plugin for ALL UI work
 3. **Design Docs**: `.planning/phases/17-design-system/design*.html` (design1-5)
 4. **Design System**: `v2/docs/DESIGN_SYSTEM.md`

@@ -59,7 +59,7 @@ npx convex env set SITE_URL https://permtracker.app
 ```
 
 Also add Google OAuth redirect URI in Google Cloud Console:
-`https://giddy-peccary-484.convex.site/api/auth/callback/google`
+`https://[convex-dev].convex.site/api/auth/callback/google`
 
 ---
 *Phase: 18-auth*

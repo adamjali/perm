@@ -31,7 +31,7 @@ pnpm dev
 | Coverage | `pnpm test:coverage` | Coverage report |
 | **E2E tests** | `pnpm test:e2e` | Playwright E2E tests |
 | Storybook | `pnpm storybook` | Component dev (port 6006) |
-| **Admin query** | `cd /Users/dev/cc/perm-tracker/v2 && npx convex run admin:getUserSummary '{}' --prod \| jq .` | User summary (prod) |
+| **Admin query** | `npx convex run admin:getUserSummary '{}' --prod \| jq .` | User summary (prod, run from `v2/`) |
 
 **Two terminals required:** `npx convex dev` (Terminal 1) + `pnpm dev` (Terminal 2)
 

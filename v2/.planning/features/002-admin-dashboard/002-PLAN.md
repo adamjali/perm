@@ -62,14 +62,14 @@ must_haves:
 <objective>
 Build a complete /admin route with full admin panel for user management.
 
-Purpose: Give the sole admin (admin@yahoo.com) a protected dashboard to view all users, edit profiles, delete accounts, export data as CSV, and send emails -- all within the existing neobrutalist design system.
+Purpose: Give the sole admin ([ADMIN_EMAIL env var]) a protected dashboard to view all users, edit profiles, delete accounts, export data as CSV, and send emails -- all within the existing neobrutalist design system.
 
 Output: Working /admin page with stats grid, searchable/sortable users table, and action modals (edit, delete, send email, export CSV).
 </objective>
 
 <execution_context>
-@/Users/dev/.claude/get-shit-done/workflows/execute-plan.md
-@/Users/dev/.claude/get-shit-done/templates/summary.md
+:execute-plan
+:summary-template
 </execution_context>
 
 <context>
@@ -97,14 +97,14 @@ Output: Working /admin page with stats grid, searchable/sortable users table, an
   </files>
   <action>
     **1. Create `src/lib/admin/adminAuth.ts`:**
-    - Export `ADMIN_EMAIL = "admin@yahoo.com"` constant
+    - Export `ADMIN_EMAIL = "[ADMIN_EMAIL env var]"` constant
     - Export `useAdminAuth()` hook that:
       - Calls `useQuery(api.users.currentUser)`
       - Returns `{ isAdmin: boolean, isLoading: boolean, user }` where `isAdmin = user?.email === ADMIN_EMAIL`
       - `isLoading` is true when `user === undefined` (Convex loading state)
 
     **2. Create `convex/lib/admin.ts`:**
-    - Export `ADMIN_EMAIL = "admin@yahoo.com"` (backend mirror)
+    - Export `ADMIN_EMAIL = "[ADMIN_EMAIL env var]"` (backend mirror)
     - Export `async function isAdmin(ctx: QueryCtx | MutationCtx): Promise<void>` that:
       - Gets userId via `getCurrentUserId(ctx)` from `./auth`
       - Loads user doc via `ctx.db.get(userId as Id<"users">)`
@@ -313,7 +313,7 @@ Output: Working /admin page with stats grid, searchable/sortable users table, an
 <verification>
 1. Auth guard: Non-admin email calling `getAdminDashboardData` query throws "Unauthorized"
 2. Auth guard: Non-admin navigating to /admin in browser is redirected to /dashboard
-3. Header: Admin link visible ONLY when logged in as admin@yahoo.com
+3. Header: Admin link visible ONLY when logged in as [ADMIN_EMAIL env var]
 4. Stats: Numbers match actual database state (totalUsers, activeUsers, etc.)
 5. Search: Typing in search box filters table by name/email/firm
 6. Sort: Clicking column headers toggles sort direction

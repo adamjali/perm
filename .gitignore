@@ -1,5 +1,8 @@
 # PERM Tracker - Git Ignore File
 
+# Audit reports
+page_audits/
+
 # Environment Variables
 .env
 .env.local

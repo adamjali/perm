@@ -71,7 +71,7 @@
 |--------|-------------|--------|
 | Test Supabase | lkbhdshknusfrvxgtahz | Empty (test env) |
 | Prod Supabase | evmxfeeogcidjsbtuxmt | Contains v1 data |
-| Convex Dev | giddy-peccary-484 | 3 users, 131 active cases |
+| Convex Dev | [convex-dev] | 3 users, 131 active cases |
 
 ## Issues Encountered
 

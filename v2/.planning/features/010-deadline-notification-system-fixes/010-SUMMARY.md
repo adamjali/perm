@@ -69,4 +69,4 @@ Fixed 4 bugs in the deadline notification system and added comprehensive tests.
 ## Deployed
 
 - Pushed to main: `9799e49`
-- Convex production deployed: `https://giant-dragon-464.convex.cloud`
+- Convex production deployed: `https://[convex-prod].convex.cloud`

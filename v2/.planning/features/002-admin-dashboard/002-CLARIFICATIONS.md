@@ -7,7 +7,7 @@
 
 ### Admin Access
 **Q:** Which email(s) should have admin access?
-**A:** admin@yahoo.com only
+**A:** [ADMIN_EMAIL env var] only
 
 ### Navigation
 **Q:** Should the admin link show in the main nav bar?

@@ -1,13 +1,17 @@
-Copyright (c) 2026 Maria Garcia. All Rights Reserved.
+Copyright (c) 2026 PERM Tracker LLC. All Rights Reserved.
 
-This software and associated documentation files (the "Software") are the
-proprietary property of Maria Garcia. No part of the Software may be copied,
-modified, distributed, sublicensed, sold, or otherwise transferred without
-the prior written permission of the copyright holder.
+This source code is made available for reference purposes only.
 
-Unauthorized use, reproduction, or distribution of this Software, or any
-portion of it, may result in civil and criminal penalties and will be
-prosecuted to the maximum extent possible under the law.
+You MAY:
+- View and read the source code
+- Fork the repository for contributing bug fixes back to this project
+
+You MAY NOT:
+- Copy, modify, or distribute this software
+- Use this code in your own projects or products
+- Deploy or self-host this software
+- Create derivative works based on this code
+- Use this software for commercial purposes
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

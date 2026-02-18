@@ -71,8 +71,8 @@ Output: Working "Delete Now" flow (backend mutation + confirmation dialog) and a
 </objective>
 
 <execution_context>
-@/Users/dev/.claude/get-shit-done/workflows/execute-plan.md
-@/Users/dev/.claude/get-shit-done/templates/summary.md
+:execute-plan
+:summary-template
 </execution_context>
 
 <context>
@@ -254,11 +254,11 @@ Tests to write:
 6. `"returns success message"` — verify return value has `{ success: true, message: "Account permanently deleted" }`
   </action>
   <verify>
-Run: `cd /Users/dev/cc/perm-tracker/v2 && pnpm vitest run convex/users.test.ts --reporter=verbose`
+Run: `cd ./v2 && pnpm vitest run convex/users.test.ts --reporter=verbose`
 
 All existing account deletion tests still pass. All 6 new immediateAccountDeletion tests pass.
 
-Also verify TypeScript compiles: `cd /Users/dev/cc/perm-tracker/v2 && npx tsc --noEmit --project tsconfig.json 2>&1 | head -20` (no errors in modified files).
+Also verify TypeScript compiles: `cd ./v2 && npx tsc --noEmit --project tsconfig.json 2>&1 | head -20` (no errors in modified files).
   </verify>
   <done>
 - `immediateAccountDeletion` mutation exists in `convex/users.ts`, exported and callable via `api.users.immediateAccountDeletion`
@@ -613,7 +613,7 @@ Tests to write:
   <verify>
 Run all modified test files:
 ```bash
-cd /Users/dev/cc/perm-tracker/v2 && pnpm vitest run \
+cd ./v2 && pnpm vitest run \
   src/components/settings/__tests__/DeleteNowDialog.test.tsx \
   src/components/settings/__tests__/SupportSection.test.tsx \
   src/components/layout/__tests__/DeletionBanner.test.tsx \

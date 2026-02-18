@@ -9,7 +9,7 @@
 
 ## Overview
 
-Built a comprehensive admin dashboard for managing users and viewing system statistics. The dashboard is restricted to a single admin email (`admin@yahoo.com`) and provides full CRUD operations on users, email sending capabilities, and CSV export functionality.
+Built a comprehensive admin dashboard for managing users and viewing system statistics. The dashboard is restricted to a single admin email (`[ADMIN_EMAIL env var]`) and provides full CRUD operations on users, email sending capabilities, and CSV export functionality.
 
 ---
 

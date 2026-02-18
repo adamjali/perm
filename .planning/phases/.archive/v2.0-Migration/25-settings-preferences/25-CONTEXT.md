@@ -94,7 +94,7 @@ Everything must be **properly connected** - when a toggle is flipped, the underl
 ### Profile Photo
 - Display Google profile photo if signed in with Google OAuth
 - Use initials fallback if no photo (pattern from v0 reference)
-- Check `/Users/dev/workspace/perm-tracker-new` for implementation pattern
+- Check `./v2` for implementation pattern
 
 ### Auto-Close Toggle
 - Must be in Settings page (currently has component: `DeadlineEnforcementToggle.tsx`)

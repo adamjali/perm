@@ -364,7 +364,7 @@ Client action types:
 ## Additional Context
 
 ### Reference Materials
-- `/Users/dev/cc/perm-tracker-test/chatbot.md` - Full chatbot requirements
+- `./chatbot.md` - Full chatbot requirements
 - v1 chatbot for inspiration (InChatConfirmationCard, permission flow, ~28 tools)
 - v2 existing: ToolCallCard, tool-icons, confirmation dialog patterns
 

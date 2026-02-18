@@ -12,27 +12,27 @@
 ## Media Assets (upload in this order)
 
 ### Gallery Image #1 — Dashboard
-- **File:** `/Users/dev/cc/perm-tracker/v2/public/images/screenshots/dashboard.png`
+- **File:** `./public/images/screenshots/dashboard.png`
 - **Alt text:** PERM Tracker dashboard showing case summary tiles with deadline urgency columns
 - **Caption:** The dashboard gives you a bird's-eye view of every case — organized by stage with deadline urgency at a glance.
 
 ### Gallery Image #2 — Create Case Video
-- **File:** `/Users/dev/cc/perm-tracker/v2/public/images/screenshots/create-case.mp4`
+- **File:** `./public/images/screenshots/create-case.mp4`
 - **Alt text:** Creating a new PERM case with automatic deadline calculation
 - **Caption:** Create a case in seconds — deadlines, recruitment steps, and filing windows are calculated automatically per DOL regulations.
 
 ### Gallery Image #3 — Cases Grid
-- **File:** `/Users/dev/cc/perm-tracker/v2/public/images/screenshots/cases.png`
+- **File:** `./public/images/screenshots/cases.png`
 - **Alt text:** Case management grid showing PERM cases with status badges and progress tracking
 - **Caption:** Manage all your cases in one place with real-time status tracking, filtering, and search.
 
 ### Gallery Image #4 — Calendar
-- **File:** `/Users/dev/cc/perm-tracker/v2/public/images/screenshots/calendar.png`
+- **File:** `./public/images/screenshots/calendar.png`
 - **Alt text:** Calendar view showing PERM deadlines and filing windows
 - **Caption:** Never miss a deadline — the calendar view highlights every critical date across all your cases.
 
 ### Gallery Image #5 — AI Chat
-- **File:** `/Users/dev/cc/perm-tracker/v2/public/images/screenshots/chat-walkthrough.mp4`
+- **File:** `./public/images/screenshots/chat-walkthrough.mp4`
 - **Alt text:** AI chat assistant answering PERM process questions
 - **Caption:** Ask the AI assistant anything about the PERM process — deadlines, regulations, next steps.
 
@@ -40,16 +40,16 @@
 
 | File | Alt Text | Caption |
 |------|----------|---------|
-| `/Users/dev/cc/perm-tracker/v2/public/images/screenshots/cases-walkthrough.mp4` | Cases page walkthrough showing filtering and case details | Browse, filter, and drill into any case with one click. |
-| `/Users/dev/cc/perm-tracker/v2/public/images/screenshots/settings-walkthrough.mp4` | Settings page with notification preferences | Configure email and push notifications so you never miss a deadline. |
-| `/Users/dev/cc/perm-tracker/v2/public/images/screenshots/case-summary.png` | Case summary with stage-by-stage breakdown | Every case shows exactly where you are in the PERM process. |
+| `./public/images/screenshots/cases-walkthrough.mp4` | Cases page walkthrough showing filtering and case details | Browse, filter, and drill into any case with one click. |
+| `./public/images/screenshots/settings-walkthrough.mp4` | Settings page with notification preferences | Configure email and push notifications so you never miss a deadline. |
+| `./public/images/screenshots/case-summary.png` | Case summary with stage-by-stage breakdown | Every case shows exactly where you are in the PERM process. |
 
 ### Logo / Branding
 
 | Purpose | File |
 |---------|------|
-| App icon / logo | `/Users/dev/cc/perm-tracker/v2/public/icon-512.png` |
-| OG / social image | `/Users/dev/cc/perm-tracker/v2/public/og-image.png` |
+| App icon / logo | `./public/icon-512.png` |
+| OG / social image | `./public/og-image.png` |
 
 ---
 

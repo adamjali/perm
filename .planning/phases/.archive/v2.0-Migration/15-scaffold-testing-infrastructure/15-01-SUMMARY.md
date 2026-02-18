@@ -73,7 +73,7 @@
 ## Next Phase Readiness
 
 - v2/ scaffold complete and verified
-- Convex dev deployment active at `giddy-peccary-484`
+- Convex dev deployment active at `[convex-dev]`
 - Ready for 15-02-PLAN.md (Testing Infrastructure: Vitest + Playwright)
 
 ---

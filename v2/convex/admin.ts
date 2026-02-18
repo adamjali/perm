@@ -18,6 +18,9 @@ import { Scrypt } from "lucia";
 import { requireAdmin, getAdminProfile, getAdminDashboardDataHelper, ADMIN_EMAIL } from "./lib/admin";
 import { getCurrentUserId, extractUserIdFromAction } from "./lib/auth";
 import { logUpdate, logDelete } from "./lib/audit";
+import { createLogger } from "./lib/logging";
+
+const log = createLogger("Admin");
 import { recordError } from "./lib/errorRecording";
 import { purgeAllUserData } from "./lib/deletion";
 import { buildDefaultProfile } from "./lib/userDefaults";
@@ -76,7 +79,7 @@ export const copyUserData = internalMutation({
       );
     }
 
-    console.log(`Copying data from ${sourceUser.email} to ${targetUser.email}`);
+    log.info(`Copying data from ${sourceUser.email} to ${targetUser.email}`);
 
     // Build case ID mapping: oldId -> newId
     const caseIdMap = new Map<Id<"cases">, Id<"cases">>();
@@ -89,7 +92,7 @@ export const copyUserData = internalMutation({
       .withIndex("by_user_id", (q) => q.eq("userId", sourceUser._id))
       .collect();
 
-    console.log(`Found ${sourceCases.length} cases to copy`);
+    log.info(`Found ${sourceCases.length} cases to copy`);
 
     for (const sourceCase of sourceCases) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -112,7 +115,7 @@ export const copyUserData = internalMutation({
       caseIdMap.set(_id, newCaseId);
     }
 
-    console.log(`Copied ${caseIdMap.size} cases`);
+    log.info(`Copied ${caseIdMap.size} cases`);
 
     // ========================================
     // 2. Copy user profile settings
@@ -186,7 +189,7 @@ export const copyUserData = internalMutation({
           updatedAt: Date.now(),
         });
 
-        console.log("Copied user profile settings");
+        log.info("Copied user profile settings");
       }
     }
 
@@ -203,7 +206,7 @@ export const copyUserData = internalMutation({
       .withIndex("by_user_id", (q) => q.eq("userId", sourceUser._id))
       .collect();
 
-    console.log(`Found ${sourceConversations.length} conversations to copy`);
+    log.info(`Found ${sourceConversations.length} conversations to copy`);
 
     for (const conv of sourceConversations) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -246,7 +249,7 @@ export const copyUserData = internalMutation({
       }
     }
 
-    console.log(
+    log.info(
       `Copied ${conversationIdMap.size} conversations with messages`
     );
 
@@ -280,7 +283,7 @@ export const copyUserData = internalMutation({
       notifCount++;
     }
 
-    console.log(`Copied ${notifCount} notifications`);
+    log.info(`Copied ${notifCount} notifications`);
 
     // ========================================
     // 5. Copy user case order
@@ -315,7 +318,7 @@ export const copyUserData = internalMutation({
         caseIds: mappedCaseIds,
       });
 
-      console.log("Copied user case order");
+      log.info("Copied user case order");
     }
 
     // ========================================
@@ -352,7 +355,7 @@ export const copyUserData = internalMutation({
         selectedCaseIds: mappedSelectedCaseIds,
       });
 
-      console.log("Copied timeline preferences");
+      log.info("Copied timeline preferences");
     }
 
     // ========================================
@@ -426,7 +429,7 @@ export const createTestUserInternal = internalMutation({
       { fullName: args.name, termsAcceptedAt: Date.now(), termsVersion: "2025-01-01" }
     ));
 
-    console.log(`Created test user: ${args.email} with ID: ${userId}`);
+    log.info(`Created test user: ${args.email} with ID: ${userId}`);
 
     return {
       success: true,
@@ -455,24 +458,24 @@ export const createTestUserAndCopyData = internalAction({
     testUser: { email: string; password: string; name: string };
     copied: { cases: number; conversations: number; notifications: number };
   }> => {
-    console.log("=".repeat(50));
-    console.log("Creating test user and copying data");
-    console.log("=".repeat(50));
+    log.info("=".repeat(50));
+    log.info("Creating test user and copying data");
+    log.info("=".repeat(50));
 
     // Step 1: Create the test user
-    console.log(`\n1. Creating test user: ${args.testEmail}`);
+    log.info(`\n1. Creating test user: ${args.testEmail}`);
     try {
       await ctx.runMutation(internal.admin.createTestUserInternal, {
         email: args.testEmail,
         password: args.testPassword,
         name: args.testName,
       });
-      console.log("   ✓ Test user created");
+      log.info("   ✓ Test user created");
     } catch (error) {
       // User might already exist, that's okay
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already exists")) {
-        console.log("   ℹ Test user already exists, proceeding with copy");
+        log.info("   ℹ Test user already exists, proceeding with copy");
       } else {
         await recordError(ctx, "action", "admin.createTestUserAndCopyData.createUser", error);
         throw error;
@@ -480,22 +483,18 @@ export const createTestUserAndCopyData = internalAction({
     }
 
     // Step 2: Copy all data from source user to test user
-    console.log(`\n2. Copying data from ${args.sourceUserEmail} to ${args.testEmail}`);
+    log.info(`\n2. Copying data from ${args.sourceUserEmail} to ${args.testEmail}`);
     const copyResult = await ctx.runMutation(internal.admin.copyUserData, {
       sourceUserEmail: args.sourceUserEmail,
       targetUserEmail: args.testEmail,
     }) as { copiedCases: number; copiedConversations: number; copiedNotifications: number };
 
-    console.log("\n" + "=".repeat(50));
-    console.log("DONE! Test account created successfully.");
-    console.log("=".repeat(50));
-    console.log(`\nLogin credentials:`);
-    console.log(`  Email: ${args.testEmail}`);
-    console.log(`  Password: ${args.testPassword}`);
-    console.log(`\nCopied data:`);
-    console.log(`  Cases: ${copyResult.copiedCases}`);
-    console.log(`  Conversations: ${copyResult.copiedConversations}`);
-    console.log(`  Notifications: ${copyResult.copiedNotifications}`);
+    log.info("Test account created successfully", {
+      email: args.testEmail,
+      copiedCases: copyResult.copiedCases,
+      copiedConversations: copyResult.copiedConversations,
+      copiedNotifications: copyResult.copiedNotifications,
+    });
 
     return {
       success: true,
