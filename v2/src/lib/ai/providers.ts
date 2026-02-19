@@ -150,8 +150,9 @@ function formatError(error: unknown): string {
  * - Clear, sequential logging of every model attempt
  * - ALL errors are retried (no shouldRetryThisError issues)
  *
- * Trade-off: no mid-stream recovery. If a model starts streaming and fails
- * mid-stream, the error propagates. This is acceptable because:
+ * Trade-off: no mid-stream recovery. The try/catch wraps doStream() which
+ * resolves when the stream connects. Errors during stream consumption (after
+ * doStream resolves) are outside the fallback loop entirely. Acceptable because:
  * - Most errors (rate limit, quota, auth, 404) happen at connection time
  * - Mid-stream failures are rare
  * - Simplicity prevents the bugs that caused the fallback to silently fail

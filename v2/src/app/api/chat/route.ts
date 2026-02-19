@@ -153,19 +153,34 @@ export async function POST(req: Request) {
         if (contextData.summary) {
           console.log(`[Chat API] [${sessionId}] Using summarized context (${contextData.totalMessageCount} total messages)`);
 
+          // Truncate summary and messages to control context size.
+          // Without this, tool results in recent messages can bloat context to 18k+ tokens,
+          // exceeding Groq TPM (12k) and Cerebras context (8k) limits.
+          const MAX_SUMMARY_LENGTH = 800;
+          const MAX_MESSAGE_LENGTH = 500;
+
+          const truncatedSummary = contextData.summary.length > MAX_SUMMARY_LENGTH
+            ? contextData.summary.slice(0, MAX_SUMMARY_LENGTH) + '...'
+            : contextData.summary;
+
           const optimizedMessages: ModelMessage[] = [
             {
               role: "user" as const,
-              content: `[Previous conversation context: ${contextData.summary}]`,
+              content: `[Previous conversation context: ${truncatedSummary}]`,
             },
             {
               role: "assistant" as const,
-              content: "I understand the context from our previous conversation. How can I help you?",
+              content: "I understand the context. How can I help?",
             },
-            ...contextData.recentMessages.map((m) => ({
-              role: m.role as "user" | "assistant" | "system",
-              content: m.content,
-            })),
+            ...contextData.recentMessages
+              // Filter empty messages — Mistral 400s on assistant messages with no content
+              .filter((m) => m.content && m.content.trim().length > 0)
+              .map((m) => ({
+                role: m.role as "user" | "assistant" | "system",
+                content: m.content.length > MAX_MESSAGE_LENGTH
+                  ? m.content.slice(0, MAX_MESSAGE_LENGTH) + '...'
+                  : m.content,
+              })),
           ];
 
           convertedMessages = optimizedMessages;
@@ -232,7 +247,7 @@ export async function POST(req: Request) {
         tools,
         stopWhen: stepCountIs(10),
         maxOutputTokens: 4000,
-        maxRetries: 0, // FallbackModel handles retries internally
+        maxRetries: 0, // Disable per-model retries; FallbackModel handles model-to-model fallback
         onError({ error }) {
           // AI SDK v6: errors during streaming become part of the stream
           console.error(`[Chat API] [${sessionId}] streamText onError:`, error instanceof Error ? error.message : String(error));

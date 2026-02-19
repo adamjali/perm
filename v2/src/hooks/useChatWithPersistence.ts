@@ -147,7 +147,7 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
         .join('');
 
       // Extract tool calls from message parts
-      // AI SDK v5 uses 'tool-{toolName}' or 'dynamic-tool' type for tool parts
+      // AI SDK v6 uses 'tool-{toolName}' or 'dynamic-tool' type for tool parts
       // with state: 'input-available' | 'output-available' | 'output-error' etc.
       // See: https://ai-sdk.dev/docs/ai-sdk-ui/chatbot-message-structure
       const toolCalls: Array<{
@@ -280,7 +280,7 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
   }, [options.actionMode, setAIMessages]);
 
   // Map AI SDK status to our status type
-  // NOTE: AI SDK v5 can hit React's update limit during rapid streaming, triggering
+  // NOTE: AI SDK v6 can hit React's update limit during rapid streaming, triggering
   // "Maximum update depth exceeded" errors. These are React rendering errors, NOT
   // actual API failures - the request completes successfully. We ignore these errors.
   const status: ChatStatus = useMemo(() => {
@@ -332,7 +332,7 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     const lastMessage = streamingMessages[streamingMessages.length - 1];
     if (!lastMessage || lastMessage.role !== 'assistant') return null;
 
-    // AI SDK v5 uses parts array
+    // AI SDK v6 uses parts array
     return lastMessage.parts
       ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
       .map((p) => p.text)

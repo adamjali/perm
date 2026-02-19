@@ -75,7 +75,8 @@ export function SentryClientInit() {
         ],
       });
 
-      // Lazy-load Session Replay after init (Sentry uses the sample rates above)
+      // Lazy-load Session Replay for all sessions — Sentry SDK internally
+      // respects replaysSessionSampleRate/replaysOnErrorSampleRate from init().
       const client = Sentry.getClient();
       if (client) {
         Sentry.lazyLoadIntegration("replayIntegration")
