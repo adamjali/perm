@@ -1,11 +1,16 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@/../convex/_generated/api";
 import { captureError } from "@/lib/sentry";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { useInactivityTimeout } from "@/lib/hooks/useInactivityTimeout";
 import TimeoutWarningModal from "./TimeoutWarningModal";
+
+/** Heartbeat interval: 5 minutes */
+const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
 
 interface InactivityTimeoutProviderProps {
   children: React.ReactNode;
@@ -18,6 +23,21 @@ export default function InactivityTimeoutProvider({
 }: InactivityTimeoutProviderProps): React.ReactElement {
   const { signOut } = useAuthActions();
   const { isSigningOut, beginSignOut } = useAuthContext();
+  const recordActivity = useMutation(api.users.recordActivity);
+
+  // Server-side heartbeat: update lastActiveAt every 5 minutes while active.
+  // Fires on mount + interval. Stops during sign-out (enabled=false).
+  useEffect(() => {
+    if (!enabled || isSigningOut) return;
+
+    recordActivity().catch(() => {}); // Fire immediately on mount
+
+    const interval = setInterval(() => {
+      recordActivity().catch(() => {});
+    }, HEARTBEAT_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [enabled, isSigningOut, recordActivity]);
 
   const performSignOut = useCallback(async (): Promise<void> => {
     if (isSigningOut) return;

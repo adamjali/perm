@@ -246,10 +246,32 @@ export const recordMyLogin = mutation({
     await ctx.db.patch(profile._id, {
       loginCount: (profile.loginCount ?? 0) + 1,
       lastLoginAt: Date.now(),
+      lastActiveAt: Date.now(),
     });
   },
 });
 
+/**
+ * Record user activity for server-side inactivity enforcement.
+ * Called by the client heartbeat every 5 minutes while the user is active.
+ * Same pattern as recordMyLogin — only updates the caller's own profile.
+ */
+export const recordActivity = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (!userId) return;
+
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (!profile) return;
+
+    await ctx.db.patch(profile._id, { lastActiveAt: Date.now() });
+  },
+});
 
 /**
  * Update the current user's profile

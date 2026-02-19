@@ -218,6 +218,32 @@ export function useInactivityTimeout({
 
   useEffect(() => {
     handleActivityRef.current = () => {
+      // Catch-all: check if timeout elapsed during sleep/background.
+      // JS timers freeze when the laptop sleeps — this ensures we log out
+      // even if visibilitychange didn't fire (macOS can skip it on full suspend).
+      const elapsed = Date.now() - getLastActivity();
+      if (elapsed >= TIMEOUT_CONFIG.INACTIVITY_TIMEOUT) {
+        clearAllTimers();
+        onTimeoutRef.current();
+        return;
+      }
+      if (elapsed >= TIMEOUT_CONFIG.WARNING_TIME && !isWarningVisibleRef.current) {
+        // In warning zone — show warning with correct remaining time, don't reset
+        clearAllTimers();
+        const remaining = Math.ceil(
+          (TIMEOUT_CONFIG.INACTIVITY_TIMEOUT - elapsed) / 1000
+        );
+        setIsWarningVisible(true);
+        setRemainingSeconds(remaining);
+        startCountdown();
+        logoutTimerRef.current = setTimeout(() => {
+          setIsWarningVisible(false);
+          onTimeoutRef.current();
+        }, TIMEOUT_CONFIG.INACTIVITY_TIMEOUT - elapsed);
+        onWarningRef.current?.();
+        return;
+      }
+
       // Debounce activity events
       if (debounceTimerRef.current) return;
 
@@ -230,7 +256,7 @@ export function useInactivityTimeout({
         resetTimeout();
       }
     };
-  }, [resetTimeout]);
+  }, [resetTimeout, clearAllTimers, startCountdown]);
 
   // Stable activity handler for event listeners
   const handleActivity = useCallback(() => {
@@ -335,8 +361,30 @@ export function useInactivityTimeout({
     };
 
     const handleWindowFocus = () => {
-      // Treat window focus as user activity (swiping back to app, clicking tab)
-      // but only if warning isn't already showing
+      // On focus (laptop wake, tab switch), check elapsed time FIRST.
+      // Laptop wake triggers focus but isn't intentional user interaction —
+      // don't blindly reset the timer or it defeats the inactivity timeout.
+      const elapsed = Date.now() - getLastActivity();
+      if (elapsed >= TIMEOUT_CONFIG.INACTIVITY_TIMEOUT) {
+        clearAllTimers();
+        onTimeoutRef.current();
+        return;
+      }
+      if (elapsed >= TIMEOUT_CONFIG.WARNING_TIME && !isWarningVisibleRef.current) {
+        clearAllTimers();
+        const remaining = Math.ceil(
+          (TIMEOUT_CONFIG.INACTIVITY_TIMEOUT - elapsed) / 1000
+        );
+        setIsWarningVisible(true);
+        setRemainingSeconds(remaining);
+        startCountdown();
+        logoutTimerRef.current = setTimeout(() => {
+          setIsWarningVisible(false);
+          onTimeoutRef.current();
+        }, TIMEOUT_CONFIG.INACTIVITY_TIMEOUT - elapsed);
+        return;
+      }
+      // Short absence — treat as activity only if warning isn't showing
       if (!isWarningVisibleRef.current) {
         handleActivity();
       }

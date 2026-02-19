@@ -220,6 +220,9 @@ export default defineSchema({
     loginCount: v.optional(v.number()),
     lastLoginAt: v.optional(v.number()),
 
+    // Server-side inactivity tracking (heartbeat writes this every 5 min)
+    lastActiveAt: v.optional(v.number()),
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
