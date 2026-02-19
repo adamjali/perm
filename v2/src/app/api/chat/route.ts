@@ -221,8 +221,12 @@ export async function POST(req: Request) {
     try {
       console.log(`[Chat API] [${sessionId}] Streaming with ${PRIMARY_MODEL_NAME} (fallback across 5 models)`);
 
+      // Per-request model instance to isolate lastUsedModel/lastAttemptCount
+      // from concurrent requests (singleton chatModel would race)
+      const requestModel = chatModel.forRequest();
+
       const result = streamText({
-        model: chatModel,
+        model: requestModel,
         system: systemPrompt,
         messages: convertedMessages,
         tools,
@@ -262,8 +266,8 @@ export async function POST(req: Request) {
           }
         },
         onFinish: (event) => {
-          const modelUsed = chatModel.lastUsedModel || 'unknown';
-          const attempts = chatModel.lastAttemptCount || 0;
+          const modelUsed = requestModel.lastUsedModel || 'unknown';
+          const attempts = requestModel.lastAttemptCount || 0;
           if (event.finishReason === 'error' || event.finishReason === 'other') {
             console.error(`[Chat API] [${sessionId}] Stream finished with error/other: ${event.finishReason} (model: ${modelUsed}, attempts: ${attempts})`);
           } else {
@@ -295,10 +299,7 @@ export async function POST(req: Request) {
           }));
         },
         onFinish: () => {
-          // Log which model was used (by this point doStream has completed)
-          const modelUsed = chatModel.lastUsedModel || 'unknown';
-          const attempts = chatModel.lastAttemptCount || 0;
-          console.log(`[Chat API] [${sessionId}] Final model: ${modelUsed} (attempt #${attempts})`);
+          // Model info already logged in streamText.onFinish above (per-request instance)
         },
       });
 

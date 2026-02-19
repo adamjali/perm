@@ -52,7 +52,7 @@ import { captureError, addBreadcrumb } from '@/lib/sentry';
 // Provider Clients (all native SDKs — no createOpenAI() wrappers)
 // =============================================================================
 
-const groq = createGroq({
+export const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY || '',
 });
 
@@ -117,7 +117,7 @@ function formatError(error: unknown): string {
  * Simple sequential fallback model. Tries each model in order for every request.
  *
  * Unlike ai-fallback, this has:
- * - No shared state between requests (no currentModelIndex)
+ * - No shared state between requests (use forRequest() for per-request isolation)
  * - No complex stream wrapping or mid-stream recovery
  * - Clear, sequential logging of every model attempt
  * - ALL errors are retried (no shouldRetryThisError issues)
@@ -131,7 +131,7 @@ function formatError(error: unknown): string {
 export class FallbackModel implements LanguageModelV3 {
   readonly specificationVersion = 'v3' as const;
 
-  /** Last model that succeeded (set per-request, useful for debug headers). */
+  /** Last model that succeeded (per-instance — use forRequest() for isolation). */
   lastUsedModel = '';
 
   /** Number of models tried in the last request (1 = primary succeeded). */
@@ -155,36 +155,49 @@ export class FallbackModel implements LanguageModelV3 {
     }
   }
 
-  async doGenerate(options: LanguageModelV3CallOptions): Promise<LanguageModelV3GenerateResult> {
+  /**
+   * Create a per-request instance with independent state.
+   * Shares the same model configs (zero overhead) but isolates
+   * lastUsedModel/lastAttemptCount from concurrent requests.
+   */
+  forRequest(): FallbackModel {
+    return new FallbackModel(this.configs);
+  }
+
+  private async tryModels<T>(
+    mode: 'generate' | 'stream',
+    invoke: (model: LanguageModelV3) => PromiseLike<T>,
+  ): Promise<T> {
     const errors: Array<{ name: string; error: string }> = [];
 
     for (let i = 0; i < this.configs.length; i++) {
       const config = this.configs[i]!;
       try {
-        console.log(`[Fallback] Trying ${config.name} (${i + 1}/${this.configs.length}) for generate...`);
-        addBreadcrumb({ category: 'ai.fallback', message: `Trying ${config.name} for generate`, data: { modelIndex: i, totalModels: this.configs.length } });
-        const result = await config.model.doGenerate(options);
-        console.log(`[Fallback] ${config.name} succeeded (generate)`);
-        addBreadcrumb({ category: 'ai.fallback', message: `${config.name} succeeded (generate)`, data: { modelIndex: i } });
+        console.log(`[Fallback] Trying ${config.name} (${i + 1}/${this.configs.length}) for ${mode}...`);
+        addBreadcrumb({ category: 'ai.fallback', message: `Trying ${config.name} for ${mode}`, data: { modelIndex: i, totalModels: this.configs.length } });
+        const result = await invoke(config.model);
+        const successMsg = mode === 'stream'
+          ? `${config.name} stream started successfully`
+          : `${config.name} succeeded (${mode})`;
+        console.log(`[Fallback] ${successMsg}`);
+        addBreadcrumb({ category: 'ai.fallback', message: `${config.name} succeeded (${mode})`, data: { modelIndex: i } });
         this.lastUsedModel = config.name;
         this.lastAttemptCount = i + 1;
         return result;
       } catch (error) {
         const errorStr = formatError(error);
         errors.push({ name: config.name, error: errorStr });
-        console.warn(`[Fallback] ${config.name} FAILED (generate): ${errorStr}`);
-        addBreadcrumb({ category: 'ai.fallback', message: `${config.name} FAILED (generate)`, level: 'warning', data: { modelIndex: i, error: errorStr } });
-        // Individual model failures are expected (rate limits, quotas, token limits).
-        // Only captureError when ALL models fail (below) to avoid Sentry noise.
+        console.warn(`[Fallback] ${config.name} FAILED (${mode}): ${errorStr}`);
+        addBreadcrumb({ category: 'ai.fallback', message: `${config.name} FAILED (${mode})`, level: 'warning', data: { modelIndex: i, error: errorStr } });
       }
     }
 
     // All models failed — throw with comprehensive info and report to Sentry
     const summary = errors.map((e, i) => `  ${i + 1}. ${e.name}: ${e.error}`).join('\n');
-    console.error(`[Fallback] ALL ${this.configs.length} models failed (generate):\n${summary}`);
+    console.error(`[Fallback] ALL ${this.configs.length} models failed (${mode}):\n${summary}`);
     captureError(
-      new Error(`All ${this.configs.length} AI models failed (generate).\n${summary}`),
-      { operation: 'ai.fallback.allFailed', extra: { mode: 'generate', modelCount: this.configs.length, errors: JSON.stringify(errors) } }
+      new Error(`All ${this.configs.length} AI models failed (${mode}).\n${summary}`),
+      { operation: 'ai.fallback.allFailed', extra: { mode, modelCount: this.configs.length, errors: JSON.stringify(errors) } }
     );
     const lastErr = errors[errors.length - 1];
     throw new Error(
@@ -192,41 +205,12 @@ export class FallbackModel implements LanguageModelV3 {
     );
   }
 
+  async doGenerate(options: LanguageModelV3CallOptions): Promise<LanguageModelV3GenerateResult> {
+    return this.tryModels('generate', (model) => model.doGenerate(options));
+  }
+
   async doStream(options: LanguageModelV3CallOptions): Promise<LanguageModelV3StreamResult> {
-    const errors: Array<{ name: string; error: string }> = [];
-
-    for (let i = 0; i < this.configs.length; i++) {
-      const config = this.configs[i]!;
-      try {
-        console.log(`[Fallback] Trying ${config.name} (${i + 1}/${this.configs.length}) for stream...`);
-        addBreadcrumb({ category: 'ai.fallback', message: `Trying ${config.name} for stream`, data: { modelIndex: i, totalModels: this.configs.length } });
-        const result = await config.model.doStream(options);
-        console.log(`[Fallback] ${config.name} stream started successfully`);
-        addBreadcrumb({ category: 'ai.fallback', message: `${config.name} stream started`, data: { modelIndex: i } });
-        this.lastUsedModel = config.name;
-        this.lastAttemptCount = i + 1;
-        return result;
-      } catch (error) {
-        const errorStr = formatError(error);
-        errors.push({ name: config.name, error: errorStr });
-        console.warn(`[Fallback] ${config.name} FAILED (stream): ${errorStr}`);
-        addBreadcrumb({ category: 'ai.fallback', message: `${config.name} FAILED (stream)`, level: 'warning', data: { modelIndex: i, error: errorStr } });
-        // Individual model failures are expected (rate limits, quotas, token limits).
-        // Only captureError when ALL models fail (below) to avoid Sentry noise.
-      }
-    }
-
-    // All models failed — throw with comprehensive info and report to Sentry
-    const summary = errors.map((e, i) => `  ${i + 1}. ${e.name}: ${e.error}`).join('\n');
-    console.error(`[Fallback] ALL ${this.configs.length} models failed (stream):\n${summary}`);
-    captureError(
-      new Error(`All ${this.configs.length} AI models failed (stream).\n${summary}`),
-      { operation: 'ai.fallback.allFailed', extra: { mode: 'stream', modelCount: this.configs.length, errors: JSON.stringify(errors) } }
-    );
-    const lastErr = errors[errors.length - 1];
-    throw new Error(
-      `All ${this.configs.length} AI models failed. Last: ${lastErr ? lastErr.error : 'unknown'}`
-    );
+    return this.tryModels('stream', (model) => model.doStream(options));
   }
 }
 

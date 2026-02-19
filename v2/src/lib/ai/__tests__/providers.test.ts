@@ -361,6 +361,55 @@ describe('FallbackModel', () => {
     expect(() => new FallbackModel([])).toThrow('No models configured');
   });
 
+  it('forRequest() creates independent instance (no race condition)', async () => {
+    const { FallbackModel } = await import('../providers');
+
+    const model1 = {
+      specificationVersion: 'v3' as const,
+      provider: 'test',
+      modelId: 'model-1',
+      supportedUrls: {},
+      doGenerate: vi.fn().mockResolvedValue({ text: 'ok' }),
+      doStream: vi.fn().mockResolvedValue({ stream: 'ok' }),
+    };
+    const model2 = {
+      specificationVersion: 'v3' as const,
+      provider: 'test',
+      modelId: 'model-2',
+      supportedUrls: {},
+      doGenerate: vi.fn().mockResolvedValue({ text: 'fallback' }),
+      doStream: vi.fn().mockResolvedValue({ stream: 'fallback' }),
+    };
+
+    const parent = new FallbackModel([
+      { model: model1, name: 'Model 1' },
+      { model: model2, name: 'Model 2' },
+    ]);
+
+    const reqA = parent.forRequest();
+    const reqB = parent.forRequest();
+
+    // Both are FallbackModel instances but different objects
+    expect(reqA).toBeInstanceOf(FallbackModel);
+    expect(reqB).toBeInstanceOf(FallbackModel);
+    expect(reqA).not.toBe(reqB);
+    expect(reqA).not.toBe(parent);
+
+    // Simulate concurrent requests — reqA succeeds on model 1
+    const options = { prompt: [] } as any;
+    await reqA.doStream(options);
+    expect(reqA.lastUsedModel).toBe('Model 1');
+    expect(reqA.lastAttemptCount).toBe(1);
+
+    // reqB state is independent
+    expect(reqB.lastUsedModel).toBe('');
+    expect(reqB.lastAttemptCount).toBe(0);
+
+    // Parent state is also independent
+    expect(parent.lastUsedModel).toBe('');
+    expect(parent.lastAttemptCount).toBe(0);
+  });
+
   it('logs each model attempt (console.log and console.warn)', async () => {
     const { FallbackModel } = await import('../providers');
 

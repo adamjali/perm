@@ -8,7 +8,6 @@
  */
 
 import { generateText } from "ai";
-import { createGroq } from "@ai-sdk/groq";
 import { fetchQuery, fetchMutation } from "convex/nextjs";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
@@ -17,15 +16,13 @@ import {
   RECENT_MESSAGES_TO_KEEP,
 } from "@/../convex/conversationSummary";
 import { captureError } from "@/lib/sentry";
+import { groq } from "./providers";
 
 /**
  * Summarization model - using Groq Llama 3.3 70B for speed and generous quota.
  * Groq free tier: 30 RPM, 14400 RPD vs Gemini free tier: 20 RPD.
- * Previously used gemini-2.5-flash which shared the same 20 RPD quota as chat.
+ * Previously used gemini-2.0-flash-lite which shared the same 20 RPD quota as chat.
  */
-const groq = createGroq({
-  apiKey: process.env.GROQ_API_KEY || '',
-});
 const summarizationModel = groq("llama-3.3-70b-versatile");
 
 /**
