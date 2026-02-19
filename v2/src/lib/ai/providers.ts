@@ -52,20 +52,28 @@ import { captureError, addBreadcrumb } from '@/lib/sentry';
 // Provider Clients (all native SDKs — no createOpenAI() wrappers)
 // =============================================================================
 
+function getApiKey(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    console.warn(`[AI Providers] Missing env var: ${name} — this provider will fail at runtime`);
+  }
+  return value || '';
+}
+
 export const groq = createGroq({
-  apiKey: process.env.GROQ_API_KEY || '',
+  apiKey: getApiKey('GROQ_API_KEY'),
 });
 
 const mistral = createMistral({
-  apiKey: process.env.MISTRAL_API_KEY || '',
+  apiKey: getApiKey('MISTRAL_API_KEY'),
 });
 
 const cerebras = createCerebras({
-  apiKey: process.env.CEREBRAS_API_KEY || '',
+  apiKey: getApiKey('CEREBRAS_API_KEY'),
 });
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY || '',
+  apiKey: getApiKey('OPENROUTER_API_KEY'),
 });
 
 // =============================================================================
@@ -75,23 +83,43 @@ const openrouter = createOpenRouter({
 interface ModelConfig {
   model: LanguageModelV3;
   name: string;
+  /** Max estimated input tokens. Skip this model if input exceeds this. */
+  maxInputTokens?: number;
+}
+
+/**
+ * Estimate total input token count from call options.
+ * Serializes the entire options object and uses ~3.5 chars per token (conservative).
+ * This is a rough estimate — good enough for skipping models with tiny limits.
+ */
+function estimateInputTokens(options: LanguageModelV3CallOptions): number {
+  try {
+    const serialized = JSON.stringify(options);
+    return Math.ceil(serialized.length / 3.5);
+  } catch {
+    return 0; // Can't estimate — don't skip
+  }
 }
 
 /**
  * All models in fallback order. Each request tries from index 0.
  * No shared state between requests — every request gets a fresh attempt.
+ *
+ * maxInputTokens: set below the provider's TPM/context limit with buffer.
+ * - Groq free tier: 12k TPM total → cap at 10k to leave room for output
+ * - Cerebras: 8192 context window → cap at 6k to leave room for output
  */
 const MODEL_CONFIGS: ModelConfig[] = [
-  // Tier 1: Primary (Google Gemini — best quality, 20 RPD free)
+  // Tier 1: Primary (Google Gemini — best quality, 20 RPD free, 1M context)
   { model: google('gemini-2.5-flash'), name: 'Gemini 2.5 Flash' },
 
   // Tier 2: High-quota fallbacks (catch Gemini overflow)
-  { model: groq('llama-3.3-70b-versatile'), name: 'Llama 3.3 70B (Groq)' },
+  { model: groq('llama-3.3-70b-versatile'), name: 'Llama 3.3 70B (Groq)', maxInputTokens: 10000 },
   { model: mistral('mistral-small-latest'), name: 'Mistral Small' },
 
   // Tier 3: Free / Emergency (OpenRouter free models are often 429'd)
   { model: openrouter('meta-llama/llama-3.3-70b-instruct:free'), name: 'Llama 3.3 70B (OpenRouter)' },
-  { model: cerebras('llama3.1-8b'), name: 'Llama 3.1 8B (Cerebras)' },
+  { model: cerebras('llama3.1-8b'), name: 'Llama 3.1 8B (Cerebras)', maxInputTokens: 6000 },
 ];
 
 // =============================================================================
@@ -167,11 +195,23 @@ export class FallbackModel implements LanguageModelV3 {
   private async tryModels<T>(
     mode: 'generate' | 'stream',
     invoke: (model: LanguageModelV3) => PromiseLike<T>,
+    options?: LanguageModelV3CallOptions,
   ): Promise<T> {
     const errors: Array<{ name: string; error: string }> = [];
+    const estimatedTokens = options ? estimateInputTokens(options) : undefined;
 
     for (let i = 0; i < this.configs.length; i++) {
       const config = this.configs[i]!;
+
+      // Skip models with insufficient context/TPM limits
+      if (config.maxInputTokens && estimatedTokens && estimatedTokens > config.maxInputTokens) {
+        const msg = `Input too large (~${estimatedTokens} tokens, limit ${config.maxInputTokens})`;
+        errors.push({ name: config.name, error: msg });
+        console.warn(`[Fallback] ${config.name} SKIPPED (${i + 1}/${this.configs.length}): ${msg}`);
+        addBreadcrumb({ category: 'ai.fallback', message: `${config.name} SKIPPED`, level: 'warning', data: { modelIndex: i, estimatedTokens, limit: config.maxInputTokens } });
+        continue;
+      }
+
       try {
         console.log(`[Fallback] Trying ${config.name} (${i + 1}/${this.configs.length}) for ${mode}...`);
         addBreadcrumb({ category: 'ai.fallback', message: `Trying ${config.name} for ${mode}`, data: { modelIndex: i, totalModels: this.configs.length } });
@@ -206,11 +246,11 @@ export class FallbackModel implements LanguageModelV3 {
   }
 
   async doGenerate(options: LanguageModelV3CallOptions): Promise<LanguageModelV3GenerateResult> {
-    return this.tryModels('generate', (model) => model.doGenerate(options));
+    return this.tryModels('generate', (model) => model.doGenerate(options), options);
   }
 
   async doStream(options: LanguageModelV3CallOptions): Promise<LanguageModelV3StreamResult> {
-    return this.tryModels('stream', (model) => model.doStream(options));
+    return this.tryModels('stream', (model) => model.doStream(options), options);
   }
 }
 

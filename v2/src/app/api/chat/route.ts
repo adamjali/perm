@@ -294,6 +294,7 @@ export async function POST(req: Request) {
             onError: (error) => {
               const msg = error instanceof Error ? error.message : String(error);
               console.error(`[Chat API] [${sessionId}] UIMessageStream onError:`, msg.slice(0, 300));
+              captureError(error, { operation: 'chat.uiMessageStream', extra: { sessionId } });
               return 'AI service temporarily unavailable. Please try again in a moment.';
             },
           }));

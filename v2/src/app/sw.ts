@@ -103,6 +103,9 @@ self.addEventListener("activate", (event) => {
         console.log(`[SW] Cleaning ${deletions.length} stale cross-origin image cache entries`);
       }
       return Promise.all(deletions);
+    }).catch((err) => {
+      // Cache cleanup is best-effort; don't block SW activation
+      console.warn('[SW] Failed to clean stale cache entries:', err);
     })
   );
 });

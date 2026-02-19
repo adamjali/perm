@@ -187,7 +187,10 @@ export async function summarizeConversation(
   } catch (error) {
     // Don't let summarization errors affect the main chat flow
     console.error(`[Summarization] Error:`, error);
-    captureError(error);
+    captureError(error, {
+      operation: 'summarization.generate',
+      extra: { conversationId },
+    });
     // Don't rethrow - summarization is non-critical
   }
 }

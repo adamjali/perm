@@ -534,6 +534,8 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     createUserMessage({
       conversationId: activeConversationId,
       content: messageContent,
+    }).catch((err: unknown) => {
+      console.error('[Chat] Failed to persist user message:', err);
     });
   }, [input, conversationId, startNewConversation, createUserMessage, sendMessage, options.pageContext]);
 

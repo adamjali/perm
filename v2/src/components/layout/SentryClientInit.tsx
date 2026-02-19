@@ -84,8 +84,17 @@ export function SentryClientInit() {
               replay({ maskAllText: true, blockAllMedia: true })
             );
           })
-          .catch(() => {
-            // Replay failed to load — non-critical, ignore silently
+          .catch((err) => {
+            // Replay is non-critical, but log so we know if it's broken
+            if (process.env.NODE_ENV === 'development') {
+              console.debug('[Sentry] Session Replay failed to load:', err);
+            }
+            Sentry.addBreadcrumb({
+              category: 'sentry.init',
+              message: 'Session Replay failed to load',
+              level: 'warning',
+              data: { error: err instanceof Error ? err.message : String(err) },
+            });
           });
       }
     };
