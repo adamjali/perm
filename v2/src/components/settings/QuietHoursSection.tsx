@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Moon, Clock, Globe, Check, Info, AlertTriangle } from "lucide-react";
 import { toast } from "@/lib/toast";
-import { captureError } from "@/lib/sentry";
+import { handleOperationError } from "@/lib/errors";
 import { useSettingsSectionDirtyState } from "./SettingsUnsavedChangesContext";
 
 // ============================================================================
@@ -194,9 +194,9 @@ export default function QuietHoursSection({
       setJustSaved(true);
       setTimeout(() => setJustSaved(false), 1500);
     } catch (error) {
-      console.error("Failed to update quiet hours:", error);
-      captureError(error);
-      toast.error("Failed to update quiet hours. Please try again.");
+      handleOperationError(error, {
+        userMessage: "Failed to update quiet hours. Please try again.",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -216,9 +216,9 @@ export default function QuietHoursSection({
     } catch (error) {
       // Revert on error
       setQuietHoursEnabled(previousValue);
-      console.error("Failed to update quiet hours:", error);
-      captureError(error);
-      toast.error("Failed to update settings");
+      handleOperationError(error, {
+        userMessage: "Failed to update settings",
+      });
     } finally {
       setIsToggling(false);
     }

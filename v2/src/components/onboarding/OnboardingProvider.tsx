@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
 import { api } from "../../../convex/_generated/api";
 import { toast } from "sonner";
 import { captureError } from "@/lib/sentry";
+import { handleOperationError } from "@/lib/errors";
 import type { ChecklistItemId, OnboardingContextValue, OnboardingStep, TourPhase } from "@/lib/onboarding/types";
 import { TOUR_PHASE_ORDER } from "@/lib/onboarding/constants";
 
@@ -113,9 +114,10 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       try {
         await updateStep({ step: newStep });
       } catch (error) {
-        console.error("Failed to advance wizard step:", error);
-        captureError(error, { operation: "advanceWizardStep" });
-        toast.error("Something went wrong. Please try again.");
+        handleOperationError(error, {
+          userMessage: "Something went wrong. Please try again.",
+          context: { operation: "advanceWizardStep" },
+        });
       }
     },
     [updateStep]
@@ -132,9 +134,10 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       await updateStep({ step: "completion" });
       setWizardDismissed(false); // Re-show wizard at completion step
     } catch (error) {
-      console.error("Failed to skip wizard:", error);
-      captureError(error, { operation: "skipWizard" });
-      toast.error("Something went wrong. Please try again.");
+      handleOperationError(error, {
+        userMessage: "Something went wrong. Please try again.",
+        context: { operation: "skipWizard" },
+      });
     }
   }, [createSampleCaseMutation, completeItem, updateStep]);
 
@@ -208,9 +211,10 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       setTourActive(true);
       setTourPhase("dashboard");
     } catch (error) {
-      console.error("Failed to restart tour:", error);
-      captureError(error, { operation: "restartTour" });
-      toast.error("Failed to restart tour");
+      handleOperationError(error, {
+        userMessage: "Failed to restart tour",
+        context: { operation: "restartTour" },
+      });
     }
   }, [restartTourMutation]);
 

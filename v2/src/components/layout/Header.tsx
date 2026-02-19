@@ -6,8 +6,7 @@ import { useState, useEffect } from "react";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { toast } from "@/lib/toast";
-import { captureError } from "@/lib/sentry";
+import { handleOperationError } from "@/lib/errors";
 import { ChevronDown, Settings, LogOut, FileText, Loader2, Menu, X } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
@@ -54,10 +53,11 @@ function UserMenu({ userName }: UserMenuProps) {
       await signOut();
       window.location.href = "/login";
     } catch (error) {
-      console.error("Sign out error:", error);
-      captureError(error, { operation: "signOut" });
+      handleOperationError(error, {
+        userMessage: "Failed to sign out. Please try again.",
+        context: { operation: "signOut" },
+      });
       cancelSignOut();
-      toast.error("Failed to sign out. Please try again.");
     }
   }
 
@@ -143,10 +143,11 @@ export default function Header(): React.ReactElement {
       await signOut();
       window.location.href = "/login";
     } catch (error) {
-      console.error("Sign out error:", error);
-      captureError(error, { operation: "mobileSignOut" });
+      handleOperationError(error, {
+        userMessage: "Failed to sign out. Please try again.",
+        context: { operation: "mobileSignOut" },
+      });
       cancelSignOut();
-      toast.error("Failed to sign out. Please try again.");
     }
   }
 

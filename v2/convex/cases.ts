@@ -2725,22 +2725,6 @@ export const listFiltered = query({
     // 3. Filter out soft-deleted cases
     let filteredCases = allCases.filter((c) => c.deletedAt === undefined);
 
-    // DEBUG: Log initial counts
-    console.log("[listFiltered DEBUG]", {
-      userId,
-      totalFromDB: allCases.length,
-      afterSoftDeleteFilter: filteredCases.length,
-      args: {
-        activeOnly: args.activeOnly,
-        status: args.status,
-        progressStatus: args.progressStatus,
-        favoritesOnly: args.favoritesOnly,
-        duplicatesOnly: args.duplicatesOnly,
-        page: args.page,
-        pageSize: args.pageSize,
-      },
-    });
-
     // 4. Apply status filter
     if (args.status !== undefined) {
       filteredCases = filteredCases.filter((c) => c.caseStatus === args.status);
@@ -2794,13 +2778,6 @@ export const listFiltered = query({
     const page = args.page ?? 1;
     const pageSize = args.pageSize ?? 12;
     const totalCount = sortedCases.length;
-
-    // DEBUG: Log final count
-    console.log("[listFiltered RESULT]", {
-      totalCount,
-      page,
-      pageSize,
-    });
 
     // If pageSize is 0, return all cases (no pagination)
     const paginatedCases = pageSize === 0

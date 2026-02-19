@@ -25,10 +25,10 @@ import {
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
+import { handleOperationError } from "@/lib/errors";
 import { api } from "../../../../convex/_generated/api";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -42,12 +42,12 @@ import { SortableCaseCard } from "@/components/cases/SortableCaseCard";
 import { CaseCard } from "@/components/cases/CaseCard";
 import { CaseFilterBar } from "@/components/cases/CaseFilterBar";
 import { CasePagination } from "@/components/cases/CasePagination";
-import { CaseListEmptyState } from "@/components/cases/CaseListEmptyState";
 import { SelectionBar } from "@/components/cases/SelectionBar";
 import { ImportModal } from "@/components/cases/ImportModal";
 import { ViewToggle, type ViewMode } from "@/components/cases/ViewToggle";
 import { CaseListView } from "@/components/cases/CaseListView";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
+import { CasesLoadingSkeleton, NewUserEmptyState, NoResultsEmptyState } from "./components";
 import { sortCases } from "../../../../convex/lib/caseListHelpers";
 import {
   exportFullCasesJSON,
@@ -57,164 +57,21 @@ import {
 import type {
   CaseListFilters,
   CaseListSort,
-  CaseListSortField,
-  SortOrder,
 } from "../../../../convex/lib/caseListTypes";
-import type { CaseStatus, ProgressStatus } from "../../../../convex/lib/dashboardTypes";
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const DEFAULT_PAGE_SIZE = 12;
-const PAGE_SIZE_STORAGE_KEY = "perm-tracker-page-size";
-const VIEW_MODE_STORAGE_KEY = "perm-tracker-view-mode";
-const SORT_STORAGE_KEY = "perm-tracker-sort";
-const FILTERS_STORAGE_KEY = "perm-tracker-filters";
-const DEFAULT_SORT: CaseListSort = {
-  sortBy: "deadline",
-  sortOrder: "asc",
-};
-
-// ============================================================================
-// LOCAL STORAGE HELPERS
-// ============================================================================
-
-function getStoredPageSize(): number {
-  if (typeof window === "undefined") return DEFAULT_PAGE_SIZE;
-  try {
-    const stored = localStorage.getItem(PAGE_SIZE_STORAGE_KEY);
-    if (stored) {
-      const parsed = parseInt(stored, 10);
-      if (!isNaN(parsed) && parsed > 0 && parsed <= 100) {
-        return parsed;
-      }
-    }
-  } catch {
-    // localStorage unavailable (private browsing, SSR) — expected, use default
-  }
-  return DEFAULT_PAGE_SIZE;
-}
-
-function setStoredPageSize(size: number): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(size));
-  } catch {
-    // localStorage unavailable or quota exceeded — expected, silently fail
-  }
-}
-
-function getStoredViewMode(): ViewMode {
-  if (typeof window === "undefined") return "card";
-  try {
-    const stored = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-    if (stored === "list" || stored === "card") {
-      return stored;
-    }
-  } catch {
-    // localStorage unavailable (private browsing, SSR) — expected, use default
-  }
-  return "card";
-}
-
-function setStoredViewMode(mode: ViewMode): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
-  } catch {
-    // localStorage unavailable or quota exceeded — expected, silently fail
-  }
-}
-
-function getStoredSort(): CaseListSort | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const stored = localStorage.getItem(SORT_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (parsed && typeof parsed.sortBy === "string" && typeof parsed.sortOrder === "string") {
-        return parsed as CaseListSort;
-      }
-    }
-  } catch {
-    // localStorage unavailable or corrupt data — expected, use default
-  }
-  return null;
-}
-
-function setStoredSort(sort: CaseListSort): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(sort));
-  } catch {
-    // localStorage unavailable or quota exceeded — expected, silently fail
-  }
-}
-
-function getStoredFilters(): CaseListFilters | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const stored = localStorage.getItem(FILTERS_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (parsed && typeof parsed === "object") {
-        return parsed as CaseListFilters;
-      }
-    }
-  } catch {
-    // localStorage unavailable or corrupt data — expected, use default
-  }
-  return null;
-}
-
-function setStoredFilters(filters: CaseListFilters): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
-  } catch {
-    // localStorage unavailable or quota exceeded — expected, silently fail
-  }
-}
-
-// ============================================================================
-// URL PARAM PARSING
-// ============================================================================
-
-function parseURLFilters(searchParams: URLSearchParams): CaseListFilters {
-  const status = searchParams.get("status") as CaseStatus | null;
-  const progressStatus = searchParams.get("progress") as ProgressStatus | null;
-  const searchQuery = searchParams.get("search");
-  const favoritesOnly = searchParams.get("favorites") === "true";
-  const duplicatesOnly = searchParams.get("duplicates") === "true";
-  // activeOnly defaults to true (Active tab is default), false only when explicitly set
-  const activeOnlyParam = searchParams.get("activeOnly");
-  const activeOnly = activeOnlyParam === "false" ? false : true;
-
-  return {
-    status: status || undefined,
-    progressStatus: progressStatus || undefined,
-    searchQuery: searchQuery || undefined,
-    favoritesOnly: favoritesOnly || undefined,
-    duplicatesOnly: duplicatesOnly || undefined,
-    activeOnly,
-  };
-}
-
-function parseURLSort(searchParams: URLSearchParams): CaseListSort {
-  const sortBy = searchParams.get("sort") as CaseListSortField | null;
-  const sortOrder = searchParams.get("order") as SortOrder | null;
-
-  return {
-    sortBy: sortBy || DEFAULT_SORT.sortBy,
-    sortOrder: sortOrder || DEFAULT_SORT.sortOrder,
-  };
-}
-
-function parseURLPage(searchParams: URLSearchParams): number {
-  const page = searchParams.get("page");
-  return page ? Math.max(1, parseInt(page, 10)) : 1;
-}
+import {
+  DEFAULT_SORT,
+  getStoredPageSize,
+  setStoredPageSize,
+  getStoredViewMode,
+  setStoredViewMode,
+  getStoredSort,
+  setStoredSort,
+  getStoredFilters,
+  setStoredFilters,
+  parseURLFilters,
+  parseURLSort,
+  parseURLPage,
+} from "./cases-storage";
 
 // ============================================================================
 // COMPONENT
@@ -645,9 +502,9 @@ export function CasesPageClient() {
         setLocalOrder([]);
         toast.success("Order saved");
       } catch (error) {
-        console.error("Failed to save custom order:", error);
-        captureError(error);
-        toast.error("Failed to save order");
+        handleOperationError(error, {
+          userMessage: "Failed to save order",
+        });
         setLocalOrder([]); // Reset on error
       }
     },
@@ -826,9 +683,9 @@ export function CasesPageClient() {
         setSelectedCaseIds(new Set());
         setSelectionMode(false);
       } catch (error) {
-        console.error("Bulk calendar sync failed:", error);
-        captureError(error);
-        toast.error(`Failed to ${enable ? "sync" : "unsync"} cases`);
+        handleOperationError(error, {
+          userMessage: `Failed to ${enable ? "sync" : "unsync"} cases`,
+        });
       } finally {
         setBulkOperationLoading(false);
       }
@@ -874,9 +731,9 @@ export function CasesPageClient() {
       setSelectedCaseIds(new Set());
       setConfirmDialog({ open: false, type: null, count: 0 });
     } catch (error) {
-      console.error("Bulk operation failed:", error);
-      captureError(error);
-      toast.error("Bulk operation failed");
+      handleOperationError(error, {
+        userMessage: "Bulk operation failed",
+      });
     } finally {
       setBulkOperationLoading(false);
     }
@@ -1060,9 +917,9 @@ export function CasesPageClient() {
           validationWarnings: result.validationWarnings,
         };
       } catch (error) {
-        console.error("Import failed:", error);
-        captureError(error);
-        toast.error("Failed to import cases");
+        handleOperationError(error, {
+          userMessage: "Failed to import cases",
+        });
         throw error;
       }
     },
@@ -1089,45 +946,7 @@ export function CasesPageClient() {
   // ============================================================================
 
   if (caseListData === undefined) {
-    return (
-      <div className="space-y-6">
-        {/* Header Skeleton */}
-        <div
-          className="flex items-center justify-between animate-in fade-in fill-mode-forwards"
-          style={{ animationDuration: "0.2s" }}
-        >
-          <div>
-            <Skeleton variant="line" className="w-32 h-10 mb-2" />
-            <Skeleton variant="line" className="w-48 h-6" />
-          </div>
-          <Skeleton variant="block" className="w-32 h-10" />
-        </div>
-
-        {/* Filter Bar Skeleton */}
-        <div
-          className="animate-in fade-in slide-in-from-bottom-2 fill-mode-forwards"
-          style={{ animationDelay: "50ms", animationDuration: "0.3s" }}
-        >
-          <Skeleton variant="block" className="h-40" />
-        </div>
-
-        {/* Grid Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="animate-in fade-in slide-in-from-bottom-4 fill-mode-forwards"
-              style={{
-                animationDelay: `${100 + i * 50}ms`,
-                animationDuration: "0.3s",
-              }}
-            >
-              <Skeleton variant="block" className="h-64 mt-8" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <CasesLoadingSkeleton />;
   }
 
   // ============================================================================
@@ -1137,74 +956,28 @@ export function CasesPageClient() {
   // No cases at all (new user) - check if no filters are set and no results
   const hasNoFilters = !filters.status && !filters.progressStatus && !filters.searchQuery && !filters.favoritesOnly && !filters.duplicatesOnly;
   if (caseListData.cases.length === 0 && hasNoFilters) {
-    return (
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-heading text-3xl font-bold">Cases</h1>
-            <p className="text-muted-foreground mt-1">0 total cases</p>
-          </div>
-          <Button
-            onClick={handleAddCase}
-            loading={isAddingCase}
-            loadingText="Adding..."
-          >
-            <Plus className="size-4 mr-2" />
-            Add Case
-          </Button>
-        </div>
-
-        <CaseListEmptyState
-          type="new-user"
-          onAddCase={handleAddCase}
-        />
-      </div>
-    );
+    return <NewUserEmptyState onAddCase={handleAddCase} isAddingCase={isAddingCase} />;
   }
 
   // No cases match filters
   if (processedCases.length === 0) {
     return (
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-heading text-3xl font-bold">Cases</h1>
-            <p className="text-muted-foreground mt-1">
-              No cases match your filters
-            </p>
-          </div>
-          <Button
-            onClick={handleAddCase}
-            loading={isAddingCase}
-            loadingText="Adding..."
-          >
-            <Plus className="size-4 mr-2" />
-            Add Case
-          </Button>
-        </div>
-
-        {/* Filter Bar */}
-        <CaseFilterBar
-          filters={filters}
-          sort={sort}
-          onFiltersChange={handleFiltersChange}
-          onSortChange={handleSortChange}
-          pageSize={pageSize}
-          onPageSizeChange={handlePageSizeChange}
-        />
-
-        <CaseListEmptyState
-          type="no-results"
-          onClearFilters={() => {
-            setFilters({});
-            setSort(DEFAULT_SORT);
-            setCurrentPage(1);
-            updateURL({}, DEFAULT_SORT, 1);
-          }}
-        />
-      </div>
+      <NoResultsEmptyState
+        filters={filters}
+        sort={sort}
+        pageSize={pageSize}
+        onAddCase={handleAddCase}
+        isAddingCase={isAddingCase}
+        onFiltersChange={handleFiltersChange}
+        onSortChange={handleSortChange}
+        onPageSizeChange={handlePageSizeChange}
+        onClearFilters={() => {
+          setFilters({});
+          setSort(DEFAULT_SORT);
+          setCurrentPage(1);
+          updateURL({}, DEFAULT_SORT, 1);
+        }}
+      />
     );
   }
 

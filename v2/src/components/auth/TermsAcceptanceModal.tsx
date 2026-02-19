@@ -30,7 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/lib/toast";
-import { captureError } from "@/lib/sentry";
+import { handleOperationError } from "@/lib/errors";
 
 // Current Terms of Service version (matches effective date in /terms page)
 const TERMS_VERSION = "2026-02-17";
@@ -62,9 +62,10 @@ export function TermsAcceptanceModal({
       toast.success("Terms accepted. Welcome to PERM Tracker!");
       onAccepted();
     } catch (error) {
-      console.error("[Terms Acceptance] Failed:", error);
-      captureError(error, { operation: "acceptTerms" });
-      toast.error("Failed to record acceptance. Please try again.");
+      handleOperationError(error, {
+        userMessage: "Failed to record acceptance. Please try again.",
+        context: { operation: "acceptTerms" },
+      });
     } finally {
       setIsLoading(false);
     }

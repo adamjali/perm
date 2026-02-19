@@ -1,16 +1,12 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 import withSerwistInit from "@serwist/next";
-import createNextIntlPlugin from "next-intl/plugin";
 import bundleAnalyzer from "@next/bundle-analyzer";
 
 // Create bundle analyzer wrapper
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
-
-// Create next-intl plugin pointing to our i18n config
-const withNextIntl = createNextIntlPlugin("./src/i18n.ts");
 
 // Create Serwist plugin with strict caching rules
 // CRITICAL: Only cache static assets (images, fonts)
@@ -107,9 +103,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Apply next-intl plugin first, then Serwist
-const configWithIntl = withNextIntl(nextConfig);
-const configWithSerwist = withSerwist(configWithIntl);
+const configWithSerwist = withSerwist(nextConfig);
 
 // Sentry configuration options
 const sentryOptions = {

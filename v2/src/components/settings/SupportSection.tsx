@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
+import { handleOperationError } from "@/lib/errors";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import DeleteNowDialog from "./DeleteNowDialog";
 
@@ -165,9 +166,9 @@ export default function SupportSection({ profile }: SupportSectionProps) {
       await cancelDeletion({});
       toast.success("Account deletion cancelled");
     } catch (error) {
-      console.error("Failed to cancel deletion:", error);
-      captureError(error);
-      toast.error("Failed to cancel deletion");
+      handleOperationError(error, {
+        userMessage: "Failed to cancel deletion",
+      });
     }
   };
 
@@ -196,9 +197,9 @@ export default function SupportSection({ profile }: SupportSectionProps) {
       URL.revokeObjectURL(url);
       toast.success("Account data exported successfully");
     } catch (error) {
-      console.error("Failed to export account data:", error);
-      captureError(error);
-      toast.error("Failed to export account data");
+      handleOperationError(error, {
+        userMessage: "Failed to export account data",
+      });
     } finally {
       setIsExporting(false);
     }

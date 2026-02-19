@@ -17,8 +17,7 @@ import { Label } from "@/components/ui/label";
 import { AlertTriangle, Shield } from "lucide-react";
 import { useState } from "react";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
-import { captureError } from "@/lib/sentry";
-import { toast } from "@/lib/toast";
+import { handleOperationError } from "@/lib/errors";
 
 export default function DeadlineEnforcementToggle() {
   const { isSigningOut } = useAuthContext();
@@ -42,9 +41,9 @@ export default function DeadlineEnforcementToggle() {
         autoDeadlineEnforcementEnabled: checked,
       });
     } catch (error) {
-      console.error("Failed to update deadline enforcement setting:", error);
-      captureError(error);
-      toast.error("Failed to update enforcement setting");
+      handleOperationError(error, {
+        userMessage: "Failed to update enforcement setting",
+      });
     } finally {
       setIsUpdating(false);
     }

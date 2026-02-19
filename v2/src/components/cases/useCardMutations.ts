@@ -5,7 +5,7 @@
 
 import { useMutation } from "convex/react";
 import { toast } from "@/lib/toast";
-import { captureError } from "@/lib/sentry";
+import { handleOperationError } from "@/lib/errors";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { formatCaseStatus } from "./case-card.utils";
@@ -42,9 +42,10 @@ export function useCardMutations({
     try {
       await toggleFavoriteMutation({ id: caseId });
     } catch (error) {
-      console.error("Failed to toggle favorite:", error);
-      captureError(error, { operation: "toggleFavorite" });
-      toast.error("Failed to update favorite status. Please try again.");
+      handleOperationError(error, {
+        userMessage: "Failed to update favorite status. Please try again.",
+        context: { operation: "toggleFavorite" },
+      });
     } finally {
       setTogglingFavorite(false);
     }
@@ -55,9 +56,10 @@ export function useCardMutations({
     try {
       await togglePinnedMutation({ id: caseId });
     } catch (error) {
-      console.error("Failed to toggle pin:", error);
-      captureError(error, { operation: "togglePinned" });
-      toast.error("Failed to update pin status. Please try again.");
+      handleOperationError(error, {
+        userMessage: "Failed to update pin status. Please try again.",
+        context: { operation: "togglePinned" },
+      });
     } finally {
       setTogglingPinned(false);
     }
@@ -72,9 +74,10 @@ export function useCardMutations({
       const progressLabel = result.newProgressStatus.replace(/_/g, " ");
       toast.success(`Case reopened as ${statusLabel} - ${progressLabel}`);
     } catch (error) {
-      console.error("Failed to reopen case:", error);
-      captureError(error, { operation: "reopenCase" });
-      toast.error("Failed to reopen case. Please try again.");
+      handleOperationError(error, {
+        userMessage: "Failed to reopen case. Please try again.",
+        context: { operation: "reopenCase" },
+      });
     } finally {
       setReopening(false);
     }

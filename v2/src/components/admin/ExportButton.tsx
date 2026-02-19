@@ -4,7 +4,7 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportUsersToCSV, downloadCSV } from "@/lib/admin/csvExport";
 import { toast } from "@/lib/toast";
-import { captureError } from "@/lib/sentry";
+import { handleOperationError } from "@/lib/errors";
 import type { UserSummary } from "@/lib/admin/types";
 
 interface ExportButtonProps {
@@ -21,9 +21,10 @@ export function ExportButton({ users }: ExportButtonProps) {
       downloadCSV(csvContent, filename);
       toast.success(`Exported ${users.length} user${users.length !== 1 ? "s" : ""} to CSV`);
     } catch (error) {
-      console.error("Failed to export CSV:", error);
-      captureError(error, { operation: "exportUsersCSV" });
-      toast.error("Failed to export CSV");
+      handleOperationError(error, {
+        userMessage: "Failed to export CSV",
+        context: { operation: "exportUsersCSV" },
+      });
     }
   };
 

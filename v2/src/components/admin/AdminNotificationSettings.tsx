@@ -3,8 +3,7 @@
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useState } from "react";
-import { toast } from "@/lib/toast";
-import { captureError } from "@/lib/sentry";
+import { handleOperationError } from "@/lib/errors";
 import { UserPlus, FolderPlus, FolderOpen } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -57,9 +56,10 @@ export function AdminNotificationSettings({ preferences }: AdminNotificationSett
       await savePrefs(updated);
     } catch (error) {
       setLocalPrefs(previous);
-      console.error("Failed to save notification preferences:", error);
-      captureError(error, { operation: "saveAdminNotificationPreferences" });
-      toast.error("Failed to save notification settings");
+      handleOperationError(error, {
+        userMessage: "Failed to save notification settings",
+        context: { operation: "saveAdminNotificationPreferences" },
+      });
     } finally {
       setSaving(false);
     }

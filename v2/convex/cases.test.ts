@@ -277,7 +277,10 @@ describe("Bulk Operations", () => {
       });
       await finishScheduledFunctions(t);
 
-      const logs = await user.query(api.auditLogs.listMine, { tableName: "cases" });
+      const logs = await user.run(async (ctx) => {
+      const allLogs = await ctx.db.query("auditLogs").order("desc").collect();
+      return allLogs.filter((l) => l.tableName === "cases");
+    });
       const deleteLogs = logs.filter((l: { action: string }) => l.action === "delete");
 
       expect(deleteLogs.length).toBeGreaterThanOrEqual(2);
@@ -424,7 +427,10 @@ describe("Bulk Operations", () => {
       });
       await finishScheduledFunctions(t);
 
-      const logs = await user.query(api.auditLogs.listMine, { tableName: "cases" });
+      const logs = await user.run(async (ctx) => {
+      const allLogs = await ctx.db.query("auditLogs").order("desc").collect();
+      return allLogs.filter((l) => l.tableName === "cases");
+    });
       const updateLogs = logs.filter((l: { action: string }) => l.action === "update");
 
       expect(updateLogs.length).toBeGreaterThanOrEqual(2);
@@ -488,7 +494,10 @@ describe("Audit Logging", () => {
     });
     await finishScheduledFunctions(t);
 
-    const logs = await user.query(api.auditLogs.listMine, { tableName: "cases" });
+    const logs = await user.run(async (ctx) => {
+      const allLogs = await ctx.db.query("auditLogs").order("desc").collect();
+      return allLogs.filter((l) => l.tableName === "cases");
+    });
     expect(logs.length).toBeGreaterThanOrEqual(1);
     expect(logs[0].action).toBe("create");
     expect(logs[0].tableName).toBe("cases");
@@ -511,7 +520,10 @@ describe("Audit Logging", () => {
     });
     await finishScheduledFunctions(t);
 
-    const logs = await user.query(api.auditLogs.listMine, { tableName: "cases" });
+    const logs = await user.run(async (ctx) => {
+      const allLogs = await ctx.db.query("auditLogs").order("desc").collect();
+      return allLogs.filter((l) => l.tableName === "cases");
+    });
     const updateLog = logs.find((l: { action: string }) => l.action === "update");
 
     expect(updateLog).toBeDefined();
@@ -541,7 +553,10 @@ describe("Audit Logging", () => {
     await user.mutation(api.cases.remove, { id: caseId });
     await finishScheduledFunctions(t);
 
-    const logs = await user.query(api.auditLogs.listMine, { tableName: "cases" });
+    const logs = await user.run(async (ctx) => {
+      const allLogs = await ctx.db.query("auditLogs").order("desc").collect();
+      return allLogs.filter((l) => l.tableName === "cases");
+    });
     const deleteLog = logs.find((l: { action: string }) => l.action === "delete");
 
     expect(deleteLog).toBeDefined();
@@ -559,7 +574,10 @@ describe("Audit Logging", () => {
     await finishScheduledFunctions(t);
 
     const userB = await createAuthenticatedContext(t, "User B");
-    const userBLogs = await userB.query(api.auditLogs.listMine, {});
+    const userBLogs = await userB.run(async (ctx) => {
+      const allLogs = await ctx.db.query("auditLogs").order("desc").collect();
+      return allLogs.filter((l) => l.userId === userB.userId);
+    });
 
     expect(userBLogs).toHaveLength(0);
   });

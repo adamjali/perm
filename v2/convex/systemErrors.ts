@@ -7,9 +7,8 @@
  */
 
 import { v } from "convex/values";
-import { internalMutation, query } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { requireAdmin } from "./lib/admin";
 
 const ERROR_SOURCE = v.union(
   v.literal("mutation"),
@@ -55,48 +54,5 @@ export const record = internalMutation({
     }
 
     return errorId;
-  },
-});
-
-/**
- * List recent system errors (admin only).
- */
-export const list = query({
-  args: {
-    resolved: v.optional(v.boolean()),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    await requireAdmin(ctx);
-
-    const limit = args.limit ?? 50;
-
-    if (args.resolved !== undefined) {
-      return ctx.db
-        .query("systemErrors")
-        .withIndex("by_resolved", (q) => q.eq("resolved", args.resolved!))
-        .order("desc")
-        .take(limit);
-    }
-
-    return ctx.db
-      .query("systemErrors")
-      .withIndex("by_created_at")
-      .order("desc")
-      .take(limit);
-  },
-});
-
-/**
- * Mark error(s) as resolved (admin only).
- */
-export const resolve = internalMutation({
-  args: {
-    errorIds: v.array(v.id("systemErrors")),
-  },
-  handler: async (ctx, args) => {
-    for (const id of args.errorIds) {
-      await ctx.db.patch(id, { resolved: true });
-    }
   },
 });

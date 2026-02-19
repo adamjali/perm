@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
-import { NextIntlClientProvider } from "next-intl";
-import { getMessages, getLocale } from "next-intl/server";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -124,10 +122,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Get locale and messages for i18n
-  const locale = await getLocale();
-  const messages = await getMessages();
-
   // Generate structured data for SEO (static data, not user input - safe for JSON-LD)
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
@@ -139,7 +133,7 @@ export default async function RootLayout({
 
   return (
     <ConvexAuthNextjsServerProvider>
-      <html lang={locale} suppressHydrationWarning>
+      <html lang="en" suppressHydrationWarning>
         <head>
           {/* JSON-LD structured data for rich search results
               Note: Using dangerouslySetInnerHTML is safe here because structuredData
@@ -155,9 +149,7 @@ export default async function RootLayout({
           className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} font-body antialiased`}
         >
           <div className="grain-overlay" aria-hidden="true" />
-          <NextIntlClientProvider messages={messages}>
-            <SharedProviders>{children}</SharedProviders>
-          </NextIntlClientProvider>
+          <SharedProviders>{children}</SharedProviders>
           <SpeedInsights />
           <Analytics />
         </body>

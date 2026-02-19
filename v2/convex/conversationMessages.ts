@@ -437,13 +437,6 @@ export const updateToolCallResult = mutation({
       )
       .collect();
 
-    console.log(
-      `[updateToolCallResult] Searching for toolCallId: ${args.toolCallId} in ${messages.length} messages`
-    );
-
-    // Track what we find for debugging
-    const foundToolCallIds: string[] = [];
-
     // Find the message and tool call index
     for (const message of messages) {
       if (!message.toolCalls) continue;
@@ -456,17 +449,11 @@ export const updateToolCallResult = mutation({
         // The permission request is stored as JSON: { requiresPermission: true, toolCallId: "...", ... }
         try {
           const parsedResult = JSON.parse(toolCall.result);
-          if (parsedResult.requiresPermission === true && parsedResult.toolCallId) {
-            foundToolCallIds.push(parsedResult.toolCallId);
-          }
           if (
             parsedResult.requiresPermission === true &&
             parsedResult.toolCallId === args.toolCallId
           ) {
             // Found the tool call - update it
-            console.log(
-              `[updateToolCallResult] Found match! Updating tool call ${toolCall.tool} in message ${message._id}`
-            );
             const updatedToolCalls = [...message.toolCalls];
             updatedToolCalls[i] = {
               tool: toolCall.tool,
@@ -480,9 +467,6 @@ export const updateToolCallResult = mutation({
               toolCalls: updatedToolCalls,
             });
 
-            console.log(
-              `[updateToolCallResult] Successfully updated to status: ${args.status}`
-            );
             return true;
           }
         } catch {
@@ -491,11 +475,6 @@ export const updateToolCallResult = mutation({
         }
       }
     }
-
-    // Tool call not found - log diagnostic info
-    console.warn(
-      `[updateToolCallResult] Tool call NOT found. Looking for: ${args.toolCallId}, found these toolCallIds: ${JSON.stringify(foundToolCallIds)}`
-    );
 
     // Tool call not found - this can happen if the message hasn't been persisted yet
     // or if the toolCallId doesn't match. Return false rather than throwing.

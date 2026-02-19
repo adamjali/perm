@@ -25,8 +25,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { toast } from "@/lib/toast";
-import { captureError } from "@/lib/sentry";
+import { handleOperationError } from "@/lib/errors";
 import { Bell, Calendar, AlertTriangle, RefreshCw, Info, Clock, X, Loader2, type LucideIcon } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -329,9 +328,10 @@ export default function NotificationDropdown() {
     try {
       await markAsRead({ notificationId });
     } catch (error) {
-      console.error("Failed to mark notification as read:", error);
-      captureError(error, { operation: "markNotificationRead" });
-      toast.error("Failed to mark notification as read");
+      handleOperationError(error, {
+        userMessage: "Failed to mark notification as read",
+        context: { operation: "markNotificationRead" },
+      });
     }
   };
 
@@ -339,9 +339,10 @@ export default function NotificationDropdown() {
     try {
       await markAllAsRead({});
     } catch (error) {
-      console.error("Failed to mark all notifications as read:", error);
-      captureError(error, { operation: "markAllNotificationsRead" });
-      toast.error("Failed to mark all notifications as read");
+      handleOperationError(error, {
+        userMessage: "Failed to mark all notifications as read",
+        context: { operation: "markAllNotificationsRead" },
+      });
     }
   };
 
@@ -355,9 +356,10 @@ export default function NotificationDropdown() {
     try {
       await deleteNotification({ notificationId });
     } catch (error) {
-      console.error("Failed to delete notification:", error);
-      captureError(error, { operation: "deleteNotification" });
-      toast.error("Failed to delete notification");
+      handleOperationError(error, {
+        userMessage: "Failed to delete notification",
+        context: { operation: "deleteNotification" },
+      });
     }
   };
 
