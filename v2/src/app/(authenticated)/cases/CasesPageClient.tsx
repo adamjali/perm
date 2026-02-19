@@ -973,8 +973,11 @@ export function CasesPageClient() {
         onPageSizeChange={handlePageSizeChange}
         onClearFilters={() => {
           setFilters({});
+          setStoredFilters({}); // Persist cleared filters to localStorage
           setSort(DEFAULT_SORT);
+          setStoredSort(DEFAULT_SORT); // Persist cleared sort to localStorage
           setCurrentPage(1);
+          setLocalOrder([]);
           updateURL({}, DEFAULT_SORT, 1);
         }}
       />
