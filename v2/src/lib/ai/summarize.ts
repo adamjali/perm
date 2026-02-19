@@ -8,7 +8,7 @@
  */
 
 import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
+import { createGroq } from "@ai-sdk/groq";
 import { fetchQuery, fetchMutation } from "convex/nextjs";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
@@ -23,9 +23,8 @@ import { captureError } from "@/lib/sentry";
  * Groq free tier: 30 RPM, 14400 RPD vs Gemini free tier: 20 RPD.
  * Previously used gemini-2.5-flash which shared the same 20 RPD quota as chat.
  */
-const groq = createOpenAI({
-  baseURL: 'https://api.groq.com/openai/v1',
-  apiKey: process.env.GROQ_API_KEY!,
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY || '',
 });
 const summarizationModel = groq("llama-3.3-70b-versatile");
 

@@ -1,53 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the external providers to prevent API calls
+// Helper to create a mock model
+const makeMockModel = (provider: string) => (model: string) => ({
+  specificationVersion: 'v3',
+  provider,
+  modelId: model,
+  supportedUrls: {},
+  doGenerate: vi.fn(),
+  doStream: vi.fn(),
+});
+
+// Mock all native AI SDK providers to prevent API calls
 vi.mock('@ai-sdk/google', () => ({
-  google: vi.fn((model) => ({
-    specificationVersion: 'v3',
-    provider: 'google',
-    modelId: model,
-    supportedUrls: {},
-    doGenerate: vi.fn(),
-    doStream: vi.fn(),
-  })),
+  google: vi.fn(makeMockModel('google')),
+}));
+
+vi.mock('@ai-sdk/groq', () => ({
+  createGroq: vi.fn(() => vi.fn(makeMockModel('groq'))),
+}));
+
+vi.mock('@ai-sdk/mistral', () => ({
+  createMistral: vi.fn(() => vi.fn(makeMockModel('mistral'))),
+}));
+
+vi.mock('@ai-sdk/cerebras', () => ({
+  createCerebras: vi.fn(() => vi.fn(makeMockModel('cerebras'))),
 }));
 
 vi.mock('@openrouter/ai-sdk-provider', () => ({
-  createOpenRouter: vi.fn(() => vi.fn((model) => ({
-    specificationVersion: 'v3',
-    provider: 'openrouter',
-    modelId: model,
-    supportedUrls: {},
-    doGenerate: vi.fn(),
-    doStream: vi.fn(),
-  }))),
-}));
-
-vi.mock('@ai-sdk/openai', () => ({
-  createOpenAI: vi.fn(({ baseURL }: { baseURL: string }) => {
-    const makeMockModel = (model: string) => {
-      let providerType = 'openai';
-      if (baseURL?.includes('groq')) providerType = 'groq';
-      else if (baseURL?.includes('cerebras')) providerType = 'cerebras';
-      else if (baseURL?.includes('mistral')) providerType = 'mistral';
-      return {
-        specificationVersion: 'v3',
-        provider: providerType,
-        modelId: model,
-        supportedUrls: {},
-        doGenerate: vi.fn(),
-        doStream: vi.fn(),
-      };
-    };
-    // @ai-sdk/openai v3: default call uses Responses API, .chat() uses Chat Completions
-    // Use Object.assign to add .chat to the callable function
-    return Object.assign(vi.fn(makeMockModel), { chat: vi.fn(makeMockModel) });
-  }),
-}));
-
-// Mock wrapLanguageModel to pass through
-vi.mock('ai', () => ({
-  wrapLanguageModel: ({ model }: { model: unknown }) => model,
+  createOpenRouter: vi.fn(() => vi.fn(makeMockModel('openrouter'))),
 }));
 
 describe('AI Providers', () => {

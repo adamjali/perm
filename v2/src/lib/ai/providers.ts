@@ -19,22 +19,27 @@
  *
  * Total: 5 models across 5 providers.
  *
+ * All providers use NATIVE AI SDK packages (@ai-sdk/google, @ai-sdk/groq,
+ * @ai-sdk/mistral, @ai-sdk/cerebras, @openrouter/ai-sdk-provider).
+ * Native providers handle each API's streaming format correctly, including
+ * tool call parsing. Using createOpenAI() as a generic wrapper causes
+ * "Expected 'function' type." errors on streaming tool calls (vercel/ai#5350).
+ *
  * REMOVED (Feb 2026):
+ *   - createOpenAI() for Groq/Mistral/Cerebras — caused "Expected 'function'
+ *     type." on streaming tool calls + defaulted to /responses API (404/400)
+ *   - Mistral tool call ID middleware — native @ai-sdk/mistral handles IDs
  *   - devstral-2512:free — OpenRouter free period ended (returns 404)
  *   - cerebras llama-3.3-70b — deprecated on Cerebras Feb 16 2026
  *   - gemini-3-flash-preview — requires thought_signature for tool calls,
  *     broken with @ai-sdk/google v3 (issues #11413, #12351)
- *
- * CRITICAL: @ai-sdk/openai v3 changed the default model type from
- * Chat Completions (/chat/completions) to Responses API (/responses).
- * Non-OpenAI providers (Groq, Mistral, Cerebras) don't support /responses.
- * ALWAYS use provider.chat('model-id') — NEVER provider('model-id').
  */
 
 import { google } from '@ai-sdk/google';
+import { createGroq } from '@ai-sdk/groq';
+import { createMistral } from '@ai-sdk/mistral';
+import { createCerebras } from '@ai-sdk/cerebras';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { createOpenAI } from '@ai-sdk/openai';
-import { wrapLanguageModel } from 'ai';
 import type {
   LanguageModelV3,
   LanguageModelV3CallOptions,
@@ -44,92 +49,23 @@ import type {
 import { captureError, addBreadcrumb } from '@/lib/sentry';
 
 // =============================================================================
-// Mistral Tool Call ID Fix
+// Provider Clients (all native SDKs — no createOpenAI() wrappers)
 // =============================================================================
 
-/**
- * Mistral requires tool call IDs to be exactly 9 alphanumeric characters.
- * The Vercel AI SDK generates longer IDs, so we need to transform them.
- */
-function toMistralToolCallId(id: string): string {
-  const alphanumeric = id.replace(/[^a-zA-Z0-9]/g, '');
-
-  if (alphanumeric.length >= 9) {
-    return alphanumeric.slice(-9);
-  }
-
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let padded = alphanumeric;
-  let i = 0;
-  while (padded.length < 9) {
-    padded += chars[(id.charCodeAt(i % id.length) + i) % chars.length];
-    i++;
-  }
-  return padded.slice(0, 9);
-}
-
-/**
- * Wrap a Mistral-based model with middleware that fixes tool call IDs.
- */
-function wrapMistralModel<T extends Parameters<typeof wrapLanguageModel>[0]['model']>(model: T): T {
-  return wrapLanguageModel({
-    model,
-    middleware: {
-      specificationVersion: 'v3' as const,
-      transformParams: async ({ params }) => {
-        const transformedMessages = params.prompt.map((msg) => {
-          if (msg.role === 'assistant' && Array.isArray(msg.content)) {
-            return {
-              ...msg,
-              content: msg.content.map((part) => {
-                if (part.type === 'tool-call') {
-                  return { ...part, toolCallId: toMistralToolCallId(part.toolCallId) };
-                }
-                return part;
-              }),
-            };
-          }
-          if (msg.role === 'tool' && Array.isArray(msg.content)) {
-            return {
-              ...msg,
-              content: msg.content.map((part) => {
-                if (part.type === 'tool-result') {
-                  return { ...part, toolCallId: toMistralToolCallId(part.toolCallId) };
-                }
-                return part;
-              }),
-            };
-          }
-          return msg;
-        });
-
-        return { ...params, prompt: transformedMessages };
-      },
-    },
-  }) as T;
-}
-
-// =============================================================================
-// Provider Clients
-// =============================================================================
-
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY || '',
-});
-
-const groq = createOpenAI({
-  baseURL: 'https://api.groq.com/openai/v1',
+const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY || '',
 });
 
-const cerebras = createOpenAI({
-  baseURL: 'https://api.cerebras.ai/v1',
+const mistral = createMistral({
+  apiKey: process.env.MISTRAL_API_KEY || '',
+});
+
+const cerebras = createCerebras({
   apiKey: process.env.CEREBRAS_API_KEY || '',
 });
 
-const mistral = createOpenAI({
-  baseURL: 'https://api.mistral.ai/v1',
-  apiKey: process.env.MISTRAL_API_KEY || '',
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY || '',
 });
 
 // =============================================================================
@@ -144,22 +80,18 @@ interface ModelConfig {
 /**
  * All models in fallback order. Each request tries from index 0.
  * No shared state between requests — every request gets a fresh attempt.
- *
- * IMPORTANT: Use provider.chat('model') for createOpenAI-based providers.
- * The default provider('model') uses Responses API which non-OpenAI providers
- * don't support (returns 404 on Mistral/Cerebras, 400 on Groq).
  */
 const MODEL_CONFIGS: ModelConfig[] = [
   // Tier 1: Primary (Google Gemini — best quality, 20 RPD free)
   { model: google('gemini-2.5-flash'), name: 'Gemini 2.5 Flash' },
 
   // Tier 2: High-quota fallbacks (catch Gemini overflow)
-  { model: groq.chat('llama-3.3-70b-versatile'), name: 'Llama 3.3 70B (Groq)' },
-  { model: wrapMistralModel(mistral.chat('mistral-small-latest')), name: 'Mistral Small' },
+  { model: groq('llama-3.3-70b-versatile'), name: 'Llama 3.3 70B (Groq)' },
+  { model: mistral('mistral-small-latest'), name: 'Mistral Small' },
 
   // Tier 3: Free / Emergency (OpenRouter free models are often 429'd)
   { model: openrouter('meta-llama/llama-3.3-70b-instruct:free'), name: 'Llama 3.3 70B (OpenRouter)' },
-  { model: cerebras.chat('llama3.1-8b'), name: 'Llama 3.1 8B (Cerebras)' },
+  { model: cerebras('llama3.1-8b'), name: 'Llama 3.1 8B (Cerebras)' },
 ];
 
 // =============================================================================
