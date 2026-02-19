@@ -242,17 +242,18 @@ export class FallbackModel implements LanguageModelV3 {
         errors.push({ name: config.name, error: errorStr });
         console.warn(`[Fallback] ${config.name} FAILED (generate): ${errorStr}`);
         addBreadcrumb({ category: 'ai.fallback', message: `${config.name} FAILED (generate)`, level: 'warning', data: { modelIndex: i, error: errorStr } });
-        captureError(error, { operation: 'ai.fallback.doGenerate', extra: { model: config.name, modelIndex: i, fallbackAttempt: true } });
+        // Individual model failures are expected (rate limits, quotas, token limits).
+        // Only captureError when ALL models fail (below) to avoid Sentry noise.
       }
     }
 
-    // All models failed — throw with comprehensive info
+    // All models failed — throw with comprehensive info and report to Sentry
     const summary = errors.map((e, i) => `  ${i + 1}. ${e.name}: ${e.error}`).join('\n');
     console.error(`[Fallback] ALL ${this.configs.length} models failed (generate):\n${summary}`);
-    const allFailedError = new Error(
-      `All ${this.configs.length} AI models failed (generate).\n${summary}`
+    captureError(
+      new Error(`All ${this.configs.length} AI models failed (generate).\n${summary}`),
+      { operation: 'ai.fallback.allFailed', extra: { mode: 'generate', modelCount: this.configs.length, errors: JSON.stringify(errors) } }
     );
-    captureError(allFailedError, { operation: 'ai.fallback.allFailed', extra: { mode: 'generate', modelCount: this.configs.length, errors: JSON.stringify(errors) } });
     const lastErr = errors[errors.length - 1];
     throw new Error(
       `All ${this.configs.length} AI models failed. Last: ${lastErr ? lastErr.error : 'unknown'}`
@@ -278,17 +279,18 @@ export class FallbackModel implements LanguageModelV3 {
         errors.push({ name: config.name, error: errorStr });
         console.warn(`[Fallback] ${config.name} FAILED (stream): ${errorStr}`);
         addBreadcrumb({ category: 'ai.fallback', message: `${config.name} FAILED (stream)`, level: 'warning', data: { modelIndex: i, error: errorStr } });
-        captureError(error, { operation: 'ai.fallback.doStream', extra: { model: config.name, modelIndex: i, fallbackAttempt: true } });
+        // Individual model failures are expected (rate limits, quotas, token limits).
+        // Only captureError when ALL models fail (below) to avoid Sentry noise.
       }
     }
 
-    // All models failed — throw with comprehensive info
+    // All models failed — throw with comprehensive info and report to Sentry
     const summary = errors.map((e, i) => `  ${i + 1}. ${e.name}: ${e.error}`).join('\n');
     console.error(`[Fallback] ALL ${this.configs.length} models failed (stream):\n${summary}`);
-    const allFailedError = new Error(
-      `All ${this.configs.length} AI models failed (stream).\n${summary}`
+    captureError(
+      new Error(`All ${this.configs.length} AI models failed (stream).\n${summary}`),
+      { operation: 'ai.fallback.allFailed', extra: { mode: 'stream', modelCount: this.configs.length, errors: JSON.stringify(errors) } }
     );
-    captureError(allFailedError, { operation: 'ai.fallback.allFailed', extra: { mode: 'stream', modelCount: this.configs.length, errors: JSON.stringify(errors) } });
     const lastErr = errors[errors.length - 1];
     throw new Error(
       `All ${this.configs.length} AI models failed. Last: ${lastErr ? lastErr.error : 'unknown'}`

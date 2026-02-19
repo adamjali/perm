@@ -41,7 +41,11 @@ export function ChatMessage({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevContentRef = useRef(content);
 
-  // Typewriter effect - runs while streaming OR while catching up
+  // Typewriter effect - runs while streaming OR while catching up.
+  // IMPORTANT: displayedLength is NOT in the dependency array. Including it caused
+  // cascading re-renders (React error #185 "Maximum update depth exceeded") because
+  // every interval tick changed displayedLength → re-triggered the effect → cleared
+  // and recreated the interval. The interval self-manages via functional setState.
   useEffect(() => {
     // If content changed completely (new message), reset
     if (content !== prevContentRef.current && !content.startsWith(prevContentRef.current)) {
@@ -49,27 +53,22 @@ export function ChatMessage({
     }
     prevContentRef.current = content;
 
-    // If already caught up and not streaming, nothing to do
-    if (displayedLength >= content.length && !isStreaming) {
-      return;
-    }
-
-    // Start/continue typewriter effect
+    // Clear any existing interval before starting a new one
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
 
+    // Start typewriter interval - it self-clears when caught up
     intervalRef.current = setInterval(() => {
       setDisplayedLength((prev) => {
         if (prev >= content.length) {
-          // Caught up
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
           }
           return prev;
         }
-        // Reveal more characters
         return Math.min(prev + CHARS_PER_TICK, content.length);
       });
     }, TICK_INTERVAL);
@@ -79,7 +78,8 @@ export function ChatMessage({
         clearInterval(intervalRef.current);
       }
     };
-  }, [isStreaming, content, displayedLength]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStreaming, content]);
 
   const displayedContent = content.slice(0, displayedLength);
   const isTyping = displayedLength < content.length;

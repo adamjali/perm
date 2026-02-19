@@ -253,14 +253,17 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
   }, [conversationId, setAIMessages]);
 
   // Inject a system-like message when action mode changes mid-conversation
-  // This tells the AI the mode changed so it doesn't follow old response patterns
+  // This tells the AI the mode changed so it doesn't follow old response patterns.
+  // Uses refs for streamingMessages check to avoid re-running on every streaming chunk.
   const prevActionModeRef = useRef<string | undefined>(options.actionMode);
+  const streamingMessagesRef = useRef(streamingMessages);
+  streamingMessagesRef.current = streamingMessages;
   useEffect(() => {
     const currentMode = options.actionMode;
     const prevMode = prevActionModeRef.current;
 
     // Only inject if mode actually changed (not initial mount) and we have messages
-    if (prevMode && currentMode && prevMode !== currentMode && streamingMessages.length > 0) {
+    if (prevMode && currentMode && prevMode !== currentMode && streamingMessagesRef.current.length > 0) {
       const modeLabels = { off: 'OFF', confirm: 'CONFIRM', auto: 'AUTO' };
       // Append a user message that informs the AI of the change
       setAIMessages(prev => [
@@ -274,7 +277,7 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
       ]);
     }
     prevActionModeRef.current = currentMode;
-  }, [options.actionMode, setAIMessages, streamingMessages.length]);
+  }, [options.actionMode, setAIMessages]);
 
   // Map AI SDK status to our status type
   // NOTE: AI SDK v5 can hit React's update limit during rapid streaming, triggering
