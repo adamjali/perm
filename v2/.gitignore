@@ -61,3 +61,7 @@ scripts/migration/data/verification_result.json
 scripts/migration/backups/*.zip
 scripts/migration/backups/latest_backup.txt
 !scripts/migration/backups/.gitkeep
+
+# Private launch/outreach docs
+LAUNCH_GUIDE.md
+outreach/
