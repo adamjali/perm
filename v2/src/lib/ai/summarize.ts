@@ -69,7 +69,7 @@ function formatMessagesForSummary(
 
   // Format each message
   for (const msg of messages) {
-    const roleLabel = msg.role === "user" ? "User" : "Assistant";
+    const roleLabel = msg.role === "user" ? "User" : msg.role === "system" ? "System" : "Assistant";
     promptContent += `\n**${roleLabel}:** ${msg.content}\n`;
 
     // Include tool call information if present
