@@ -62,10 +62,10 @@ describe('AI Providers', () => {
     expect(typeof PRIMARY_MODEL_NAME).toBe('string');
   });
 
-  it('exports SUPPORTED_MODELS list with 6 models', async () => {
+  it('exports SUPPORTED_MODELS list with 5 models', async () => {
     const { SUPPORTED_MODELS } = await import('../providers');
     expect(SUPPORTED_MODELS).toBeDefined();
-    expect(SUPPORTED_MODELS.length).toBe(6);
+    expect(SUPPORTED_MODELS.length).toBe(5);
 
     // Check structure
     expect(SUPPORTED_MODELS[0]).toHaveProperty('id');
@@ -74,13 +74,13 @@ describe('AI Providers', () => {
     expect(SUPPORTED_MODELS[0]).toHaveProperty('tier');
     expect(SUPPORTED_MODELS[0]).toHaveProperty('toolCalling');
 
-    // Verify tier distribution: 1 Tier 1, 2 Tier 2, 3 Tier 3
+    // Verify tier distribution: 1 Tier 1, 2 Tier 2, 2 Tier 3
     const tier1 = SUPPORTED_MODELS.filter(m => m.tier === 1);
     const tier2 = SUPPORTED_MODELS.filter(m => m.tier === 2);
     const tier3 = SUPPORTED_MODELS.filter(m => m.tier === 3);
     expect(tier1.length).toBe(1);
     expect(tier2.length).toBe(2);
-    expect(tier3.length).toBe(3);
+    expect(tier3.length).toBe(2);
   });
 
   it('exports all 5 providers in SUPPORTED_MODELS', async () => {

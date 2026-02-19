@@ -14,11 +14,10 @@
  *   - Mistral Small (generous free tier, reliable)
  *
  * Tier 3 (Free / Emergency):
- *   - Gemini 2.0 Flash (OpenRouter free, good tool calling)
  *   - Llama 3.3 70B (OpenRouter free, often rate-limited)
  *   - Llama 3.1 8B (Cerebras, emergency ultra-fast)
  *
- * Total: 6 models across 5 providers.
+ * Total: 5 models across 5 providers.
  *
  * REMOVED (Feb 2026):
  *   - devstral-2512:free — OpenRouter free period ended (returns 404)
@@ -158,8 +157,7 @@ const MODEL_CONFIGS: ModelConfig[] = [
   { model: groq.chat('llama-3.3-70b-versatile'), name: 'Llama 3.3 70B (Groq)' },
   { model: wrapMistralModel(mistral.chat('mistral-small-latest')), name: 'Mistral Small' },
 
-  // Tier 3: Free / Emergency
-  { model: openrouter('google/gemini-2.0-flash-exp:free'), name: 'Gemini 2.0 Flash (OpenRouter)' },
+  // Tier 3: Free / Emergency (OpenRouter free models are often 429'd)
   { model: openrouter('meta-llama/llama-3.3-70b-instruct:free'), name: 'Llama 3.3 70B (OpenRouter)' },
   { model: cerebras.chat('llama3.1-8b'), name: 'Llama 3.1 8B (Cerebras)' },
 ];
@@ -303,7 +301,7 @@ export class FallbackModel implements LanguageModelV3 {
 // =============================================================================
 
 /**
- * Chat model with automatic fallback across 6 models / 5 providers.
+ * Chat model with automatic fallback across 5 models / 5 providers.
  * Every request starts from model #1 (Gemini). If it fails, tries #2, #3, etc.
  */
 export const chatModel = new FallbackModel(MODEL_CONFIGS);
@@ -319,7 +317,6 @@ export const SUPPORTED_MODELS = [
   { id: 'mistral-small-latest', name: 'Mistral Small', provider: 'Mistral', tier: 2, toolCalling: '~70%' },
 
   // Tier 3: Free / Emergency
-  { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash', provider: 'OpenRouter', tier: 3, toolCalling: '~90%' },
   { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', provider: 'OpenRouter', tier: 3, toolCalling: '77.3%' },
   { id: 'llama3.1-8b', name: 'Llama 3.1 8B', provider: 'Cerebras', tier: 3, toolCalling: '~50%' },
 ] as const;

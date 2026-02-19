@@ -219,7 +219,7 @@ export async function POST(req: Request) {
     const tools = createTools(token, typedConversationId, cacheStats, actionMode, pageContext);
 
     try {
-      console.log(`[Chat API] [${sessionId}] Streaming with ${PRIMARY_MODEL_NAME} (fallback across 6 models)`);
+      console.log(`[Chat API] [${sessionId}] Streaming with ${PRIMARY_MODEL_NAME} (fallback across 5 models)`);
 
       const result = streamText({
         model: chatModel,
