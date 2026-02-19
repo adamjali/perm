@@ -64,7 +64,7 @@ export const groq = createGroq({
   apiKey: getApiKey('GROQ_API_KEY'),
 });
 
-const mistral = createMistral({
+export const mistral = createMistral({
   apiKey: getApiKey('MISTRAL_API_KEY'),
 });
 

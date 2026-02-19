@@ -16,14 +16,14 @@ import {
   RECENT_MESSAGES_TO_KEEP,
 } from "@/../convex/conversationSummary";
 import { captureError } from "@/lib/sentry";
-import { groq } from "./providers";
+import { mistral } from "./providers";
 
 /**
- * Summarization model - using Groq Llama 3.3 70B for speed and generous quota.
- * Groq free tier: 30 RPM, 14400 RPD vs Gemini free tier: 20 RPD.
- * Previously used gemini-2.0-flash-lite which shared the same 20 RPD quota as chat.
+ * Summarization model - using Mistral Small to avoid Groq TPM contention.
+ * Groq is tier 2 chat fallback (12k TPM limit), so summarization would compete.
+ * Mistral has a generous free tier and isn't the primary chat model.
  */
-const summarizationModel = groq("llama-3.3-70b-versatile");
+const summarizationModel = mistral("mistral-small-latest");
 
 /**
  * Approximate tokens per character for rough token counting

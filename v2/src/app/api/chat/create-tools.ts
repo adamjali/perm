@@ -1345,6 +1345,80 @@ AUTONOMOUS: No confirmation needed.`,
     },
   };
 
-  console.log(`[Chat API] Tools created:`, Object.keys(toolsObj));
-  return toolsObj;
+  // Context-aware tool selection: only include tools relevant to current page
+  // Full set is 29 tools (~4k+ tokens). Reducing to 8-12 saves ~2-3k tokens,
+  // critical for fallback models with tight TPM/context limits (Groq 12k, Cerebras 8k).
+  const selectedTools = selectRelevantTools(toolsObj, pageContext, actionMode);
+  console.log(`[Chat API] Tools created: ${Object.keys(selectedTools).length} of ${Object.keys(toolsObj).length} (${Object.keys(selectedTools).join(', ')})`);
+  return selectedTools;
+}
+
+/**
+ * Select only tools relevant to the current page context and action mode.
+ * Core tools (query, search, navigate) are always included.
+ * Page-specific tools are added based on pageType.
+ */
+function selectRelevantTools(
+  allTools: Record<string, Tool>,
+  pageContext?: PageContext,
+  actionMode?: ActionMode,
+): Record<string, Tool> {
+  // Core tools — always included
+  const coreNames = ['queryCases', 'searchKnowledge', 'searchWeb', 'getPageContext', 'navigate', 'viewCase'];
+
+  // CRUD tools — included when actions are enabled
+  const crudNames = ['createCase', 'updateCase', 'archiveCase', 'reopenCase', 'deleteCase'];
+
+  // Start with core tools
+  const selected: Record<string, Tool> = {};
+  for (const name of coreNames) {
+    if (allTools[name]) selected[name] = allTools[name];
+  }
+
+  // Add CRUD tools if actions are enabled
+  if (actionMode !== 'off') {
+    for (const name of crudNames) {
+      if (allTools[name]) selected[name] = allTools[name];
+    }
+  }
+
+  // Add page-specific tools
+  const pageType = pageContext?.pageType;
+
+  if (pageType === 'case-detail' || pageType === 'case-edit') {
+    for (const name of ['syncToCalendar', 'unsyncFromCalendar', 'scrollTo', 'refreshPage']) {
+      if (allTools[name]) selected[name] = allTools[name];
+    }
+  }
+
+  if (pageType === 'cases-list' || pageType === 'cases') {
+    // Add bulk ops only when cases are selected
+    if (pageContext?.selectedCaseIds && pageContext.selectedCaseIds.length > 0) {
+      for (const name of ['bulkUpdateStatus', 'bulkArchiveCases', 'bulkDeleteCases', 'bulkCalendarSync']) {
+        if (allTools[name]) selected[name] = allTools[name];
+      }
+    }
+    if (allTools['refreshPage']) selected['refreshPage'] = allTools['refreshPage'];
+  }
+
+  if (pageType === 'settings') {
+    for (const name of ['updateSettings', 'getSettings']) {
+      if (allTools[name]) selected[name] = allTools[name];
+    }
+  }
+
+  if (pageType === 'notifications') {
+    for (const name of ['markNotificationRead', 'markAllNotificationsRead', 'deleteNotification', 'clearAllNotifications']) {
+      if (allTools[name]) selected[name] = allTools[name];
+    }
+  }
+
+  // Job description templates — only on case creation/edit pages
+  if (pageType === 'case-edit' || pageType === 'case-create') {
+    for (const name of ['listJobDescriptionTemplates', 'createJobDescriptionTemplate', 'updateJobDescriptionTemplate', 'deleteJobDescriptionTemplate']) {
+      if (allTools[name]) selected[name] = allTools[name];
+    }
+  }
+
+  return selected;
 }

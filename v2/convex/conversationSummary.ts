@@ -32,7 +32,7 @@ export const SUMMARY_TRIGGER_MESSAGE_COUNT = 12;
  * Number of recent messages to keep verbatim (not summarized).
  * These are the most recent messages that provide immediate context.
  */
-export const RECENT_MESSAGES_TO_KEEP = 6;
+export const RECENT_MESSAGES_TO_KEEP = 4;
 
 /**
  * System prompt for the summarization LLM.
@@ -107,6 +107,13 @@ export const needsSummarization = query({
       return true;
     }
 
+    // Prevent double-summarization from concurrent requests.
+    // If summary was updated in the last 30 seconds, skip.
+    if (conversation.summary.lastSummarizedAt &&
+        Date.now() - conversation.summary.lastSummarizedAt < 30000) {
+      return false;
+    }
+
     // Check if enough new messages have accumulated since last summary
     const messagesSinceSummary =
       messageCount - conversation.summary.messageCountAtSummary;
@@ -162,9 +169,11 @@ export const getContextMessages = query({
     const sortedMessages = messages.sort((a, b) => a.createdAt - b.createdAt);
     const totalMessageCount = sortedMessages.length;
 
-    // Get the most recent messages
+    // Get the most recent messages, filtering out empty ones
+    // (tool-call-only responses have content="" which breaks some providers like Mistral)
     const recentMessages = sortedMessages
       .slice(-RECENT_MESSAGES_TO_KEEP)
+      .filter((m) => m.content && m.content.trim().length > 0)
       .map((m) => ({
         role: m.role,
         content: m.content,

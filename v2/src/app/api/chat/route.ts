@@ -291,11 +291,6 @@ export async function POST(req: Request) {
         },
       });
 
-      // Trigger async summarization check after successful stream start
-      if (typedConversationId) {
-        triggerSummarizationCheck(typedConversationId, token, sessionId);
-      }
-
       // Log cache stats for the session
       cacheStats.log(sessionId);
 
@@ -315,7 +310,13 @@ export async function POST(req: Request) {
           }));
         },
         onFinish: () => {
-          // Model info already logged in streamText.onFinish above (per-request instance)
+          // Trigger summarization AFTER stream completes (not at stream start).
+          // This ensures the assistant response is fully generated before checking.
+          // The client still needs to persist the message, so the summary may lag
+          // by 1 message pair — acceptable, as those messages are in the "recent" window.
+          if (typedConversationId) {
+            triggerSummarizationCheck(typedConversationId, token, sessionId);
+          }
         },
       });
 
