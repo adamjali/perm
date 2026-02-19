@@ -88,7 +88,6 @@ export const ensureUserProfile = mutation({
       .unique();
 
     if (existingProfile) {
-      // Profile already exists, nothing to do
       return existingProfile._id;
     }
 

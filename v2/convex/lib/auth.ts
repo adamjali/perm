@@ -17,62 +17,22 @@ import type { Doc, Id } from "../_generated/dataModel";
 type AuthContext = QueryCtx | MutationCtx;
 
 /**
- * Server-side inactivity timeout (ms).
- * Slightly longer than the client-side 15 min to avoid races where the server
- * rejects a call while the client is showing the warning / signing out.
- */
-const SERVER_INACTIVITY_TIMEOUT_MS = 16 * 60 * 1000; // 16 minutes
-
-/**
- * Check if the user's session is expired due to inactivity.
- * Returns true if lastActiveAt exists and is stale.
- * Returns false (allow) if lastActiveAt is missing (pre-heartbeat users).
- */
-async function isSessionExpiredByInactivity(
-  ctx: AuthContext,
-  userId: Id<"users">
-): Promise<boolean> {
-  const profile = await ctx.db
-    .query("userProfiles")
-    .withIndex("by_user_id", (q) => q.eq("userId", userId))
-    .filter((q) => q.eq(q.field("deletedAt"), undefined))
-    .first();
-
-  // No profile or no lastActiveAt → don't enforce (backwards compatible)
-  if (!profile?.lastActiveAt) return false;
-
-  return Date.now() - profile.lastActiveAt > SERVER_INACTIVITY_TIMEOUT_MS;
-}
-
-/**
  * Get the current authenticated user's ID
- * @throws {Error} If user is not authenticated or session expired
+ * @throws {Error} If user is not authenticated
  */
 export async function getCurrentUserId(ctx: AuthContext): Promise<Id<"users">> {
   const userId = await getAuthUserId(ctx);
   if (userId === null) {
     throw new Error("not authenticated");
   }
-
-  if (await isSessionExpiredByInactivity(ctx, userId)) {
-    throw new Error("Session expired due to inactivity");
-  }
-
   return userId;
 }
 
 /**
- * Get the current authenticated user's ID, or null if not authenticated/expired
+ * Get the current authenticated user's ID, or null if not authenticated
  */
 export async function getCurrentUserIdOrNull(ctx: AuthContext): Promise<Id<"users"> | null> {
-  const userId = await getAuthUserId(ctx);
-  if (userId === null) return null;
-
-  if (await isSessionExpiredByInactivity(ctx, userId)) {
-    return null;
-  }
-
-  return userId;
+  return await getAuthUserId(ctx);
 }
 
 /**
