@@ -92,7 +92,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                   Demo
                 </NavLink>
                 <NavLink
-                  href="/#faq"
+                  href="/faq"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
                 >

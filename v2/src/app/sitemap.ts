@@ -59,6 +59,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.7,
     },
+    // FAQ page
+    {
+      url: `${baseUrl}/faq`,
+      lastModified: '2026-02-21',
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
     // Auth pages (medium priority)
     {
       url: `${baseUrl}/login`,
