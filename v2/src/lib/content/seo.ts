@@ -8,6 +8,11 @@ import type { PostMeta, ContentType, PostSummary } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
 
+/** Convert YYYY-MM-DD date string to ISO 8601 with timezone for schema.org */
+function toISO8601(dateStr: string): string {
+  return `${dateStr}T00:00:00+00:00`;
+}
+
 /** Generate Article schema for blog posts */
 export function generateArticleSchema(
   meta: PostMeta,
@@ -20,8 +25,8 @@ export function generateArticleSchema(
     headline: meta.title,
     description: meta.description,
     image: meta.image ? `${BASE_URL}${meta.image}` : `${BASE_URL}/opengraph-image`,
-    datePublished: meta.date,
-    dateModified: meta.updated || meta.date,
+    datePublished: toISO8601(meta.date),
+    dateModified: toISO8601(meta.updated || meta.date),
     author: {
       "@type": "Organization",
       name: meta.author,
@@ -97,7 +102,7 @@ export function generateVideoObjectSchema(
     name: alt,
     description: `${alt} — from ${meta.title}`,
     thumbnailUrl: meta.image ? `${BASE_URL}${meta.image}` : `${BASE_URL}/opengraph-image`,
-    uploadDate: meta.date,
+    uploadDate: toISO8601(meta.date),
     contentUrl: `${BASE_URL}${src}`,
     publisher: {
       "@type": "Organization",

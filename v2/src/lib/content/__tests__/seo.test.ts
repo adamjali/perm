@@ -61,14 +61,14 @@ describe("generateArticleSchema", () => {
       updated: "2025-06-01",
     });
     const schema = generateArticleSchema(meta, slug, type);
-    expect(schema.datePublished).toBe("2025-01-01");
-    expect(schema.dateModified).toBe("2025-06-01");
+    expect(schema.datePublished).toBe("2025-01-01T00:00:00+00:00");
+    expect(schema.dateModified).toBe("2025-06-01T00:00:00+00:00");
   });
 
   it("falls back to meta.date for dateModified when no updated", () => {
     const meta = createTestMeta({ date: "2025-03-10", updated: undefined });
     const schema = generateArticleSchema(meta, slug, type);
-    expect(schema.dateModified).toBe("2025-03-10");
+    expect(schema.dateModified).toBe("2025-03-10T00:00:00+00:00");
   });
 
   it("constructs correct mainEntityOfPage URL from type and slug", () => {
