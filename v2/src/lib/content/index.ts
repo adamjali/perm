@@ -136,3 +136,46 @@ export function getAllTags(type?: ContentType): string[] {
 export function getFeaturedPosts(type?: ContentType): PostSummary[] {
   return getAllPosts(type).filter((p) => p.meta.featured);
 }
+
+/** Extract H2 headings from MDX content for HowTo schema steps */
+export function extractHeadings(content: string): { name: string; text: string }[] {
+  const steps: { name: string; text: string }[] = [];
+  const lines = content.split('\n');
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i]!;
+    const headingMatch = line.match(/^##\s+(.+)$/);
+    if (headingMatch) {
+      const name = headingMatch[1]!.replace(/[*_`\[\]]/g, '').trim();
+      // Collect text until next heading or end
+      const textLines: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i]!.match(/^##\s/)) {
+        const l = lines[i]!.trim();
+        // Skip MDX components, tables, code blocks
+        if (l && !l.startsWith('<') && !l.startsWith('|') && !l.startsWith('```')) {
+          textLines.push(l);
+        }
+        i++;
+      }
+      const text = textLines.slice(0, 3).join(' ') || name;
+      steps.push({ name, text });
+    } else {
+      i++;
+    }
+  }
+
+  return steps;
+}
+
+/** Extract video references from MDX content */
+export function extractVideoRefs(content: string): { src: string; alt: string }[] {
+  const videos: { src: string; alt: string }[] = [];
+  const videoFigureRegex = /<VideoFigure\s[^>]*src="([^"]+)"[^>]*alt="([^"]+)"/g;
+  let match;
+  while ((match = videoFigureRegex.exec(content)) !== null) {
+    videos.push({ src: match[1]!, alt: match[2]! });
+  }
+  return videos;
+}

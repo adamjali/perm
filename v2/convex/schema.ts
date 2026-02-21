@@ -67,12 +67,6 @@ export default defineSchema({
     // 1:1 relationship with users table
     userId: v.id("users"),
 
-    // Legacy migration tracking (temporary - cleared after migration verification)
-    // Used during v1→v2 migration for ID resolution
-    // Safe to remove these fields after migration is complete and verified
-    legacyId: v.optional(v.string()), // Original PostgreSQL UUID from public.users
-    legacyAuthId: v.optional(v.string()), // Original PostgreSQL UUID from auth.users
-
     // Profile section
     fullName: v.optional(v.string()),
     jobTitle: v.optional(v.string()),
@@ -238,11 +232,7 @@ export default defineSchema({
   })
     .index("by_user_id", ["userId"])
     .index("by_firm_id", ["firmId"])
-    .index("by_deleted_at", ["deletedAt"])
-    // Migration index: lookup by legacy PostgreSQL UUID
-    // Used during v1→v2 migration to resolve user references
-    // Safe to remove after migration is complete and verified
-    .index("by_legacy_id", ["legacyId"]),
+    .index("by_deleted_at", ["deletedAt"]),
 
   // PERM case tracking
   cases: defineTable({
@@ -250,12 +240,6 @@ export default defineSchema({
     userId: v.id("users"),
     caseNumber: v.optional(v.string()), // DOL case number
     internalCaseNumber: v.optional(v.string()), // Attorney's reference
-
-    // Legacy migration tracking (temporary - cleared after migration verification)
-    // Used during v1→v2 migration for ID resolution
-    // Safe to remove these fields after migration is complete and verified
-    legacyId: v.optional(v.string()), // Original PostgreSQL UUID from cases table
-    legacyUserId: v.optional(v.string()), // Original PostgreSQL UUID of the user (for resolution)
 
     // Employer info
     employerName: v.string(),
@@ -544,12 +528,7 @@ export default defineSchema({
     .index("by_user_and_filing_deadline", ["userId", "filingWindowCloses"])
     .index("by_user_and_pwd_expiration", ["userId", "pwdExpirationDate"])
     .index("by_user_and_recruitment_end", ["userId", "recruitmentEndDate"])
-    .index("by_user_and_recruitment_window", ["userId", "recruitmentWindowCloses"])
-    // Migration indexes: lookup by legacy PostgreSQL UUIDs
-    // Used during v1→v2 migration for ID resolution
-    // Safe to remove after migration is complete and verified
-    .index("by_legacy_id", ["legacyId"])
-    .index("by_legacy_user_id", ["legacyUserId"]),
+    .index("by_user_and_recruitment_window", ["userId", "recruitmentWindowCloses"]),
 
   // Notifications for deadline alerts and system messages
   notifications: defineTable({

@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** February 2026
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-02-21
 
 ## Production URLs
 
@@ -10,30 +10,13 @@
 ## Tech Stack
 
 - **Frontend:** Next.js 16.1 + React 19 + TypeScript (Vercel)
-- **Backend:** Convex 1.31 (serverless functions)
+- **Backend:** Convex 1.32 (serverless functions)
 - **Database:** Convex (built-in, real-time)
 - **Authentication:** Convex Auth + Google OAuth
 - **Email:** Resend
 - **Push Notifications:** Web Push (VAPID)
-- **AI Chat:** Vercel AI SDK + Multi-provider (Gemini, OpenRouter, Groq)
-- **Testing:** Vitest (3600+ tests) + Playwright (E2E)
-
----
-
-## Quick Start
-
-```bash
-cd v2
-pnpm install
-
-# Terminal 1: Convex dev server
-npx convex dev
-
-# Terminal 2: Next.js dev server
-pnpm dev
-```
-
-**Test Credentials:** See `v2/.env` (gitignored)
+- **AI Chat:** Vercel AI SDK v6 + Multi-provider (Gemini, Groq, Mistral, OpenRouter, Cerebras)
+- **Testing:** Vitest 4 (3600+ tests) + Playwright (E2E)
 
 ---
 
@@ -47,42 +30,39 @@ pnpm dev
 | Animation Catalog | [v2/docs/ANIMATION_STORYBOARD.md](v2/docs/ANIMATION_STORYBOARD.md) |
 | PERM Workflow (canonical) | [perm_flow.md](perm_flow.md) |
 | Testing Guide | [v2/TEST_README.md](v2/TEST_README.md) |
-| Codebase Architecture | [.planning/codebase/](.planning/codebase/) |
+| **Codebase Map (7 docs)** | [.planning/codebase/](.planning/codebase/) |
 | Planning & Roadmap | [.planning/](.planning/) |
 
-**See [v2/CLAUDE.md](v2/CLAUDE.md) for complete developer documentation.**
+**See [v2/CLAUDE.md](v2/CLAUDE.md) for Quick Start, commands, patterns, and all developer docs.**
 
 ---
 
-## Critical Business Logic
+## Codebase Map
 
-All PERM business logic is centralized in:
-- **Backend:** `v2/convex/lib/perm/`
-- **Frontend:** `v2/src/lib/perm/` (re-exports)
+Deep-dive documentation in `.planning/codebase/` (3,856 lines, last updated 2026-02-21). **Read these before making significant changes.**
 
-**NEVER recreate deadline/validation logic elsewhere.**
+| Document | Lines | What It Covers | When To Read |
+|----------|-------|----------------|--------------|
+| [STACK.md](.planning/codebase/STACK.md) | 279 | All dependencies with versions, config files inventory, runtime details, CI/CD, pnpm overrides, version compatibility notes | Adding/upgrading dependencies, debugging build issues |
+| [INTEGRATIONS.md](.planning/codebase/INTEGRATIONS.md) | 459 | Every external API (AI, email, push, calendar, search, Sentry), env vars inventory, webhook flows, auth providers, sequence diagrams | Working with external services, adding integrations, env var questions |
+| [ARCHITECTURE.md](.planning/codebase/ARCHITECTURE.md) | 595 | System architecture with Mermaid diagrams, data flows (case CRUD, auth, AI chat, notifications), state management, API layer, database tables, dependency graph | Understanding how systems connect, planning new features, debugging data flow |
+| [STRUCTURE.md](.planning/codebase/STRUCTURE.md) | 720 | Every directory and file with descriptions, naming conventions, import patterns, barrel exports, module boundaries, where to add new code | Finding files, understanding organization, adding new features |
+| [CONVENTIONS.md](.planning/codebase/CONVENTIONS.md) | 580 | TypeScript patterns, React patterns, Convex patterns, error handling, date protocol, form patterns, CSS/styling, naming rules, anti-patterns with examples | Writing new code, code review, understanding project patterns |
+| [TESTING.md](.planning/codebase/TESTING.md) | 800 | All 151 test files listed, Vitest config (3 projects), test utilities inventory, mocking patterns, coverage setup, flaky tests, factory patterns | Writing tests, debugging test failures, understanding test infrastructure |
+| [CONCERNS.md](.planning/codebase/CONCERNS.md) | 423 | Risk matrix, tech debt (SWC bug, disabled React Compiler), dead code audit, security concerns, performance bottlenecks, dependency vulnerabilities, prioritized recommendations | Before refactoring, sprint planning, addressing tech debt |
 
-```typescript
-import {
-  calculatePWDExpiration,
-  validateCase,
-  applyCascade,
-  isRecruitmentComplete,
-} from '@/lib/perm';
-```
-
----
-
-## Testing
+### How To Use
 
 ```bash
-cd v2
-pnpm test          # Watch mode (development)
-pnpm test:fast     # Quick validation (~30s)
-pnpm test:run      # Full suite (~9 min)
-```
+# Read a specific document
+cat .planning/codebase/ARCHITECTURE.md
 
-**3600+ tests** | 100% coverage on PERM logic
+# Search across all codebase docs
+grep -r "FallbackModel" .planning/codebase/
+
+# Refresh the map after major changes
+/gsd:map-codebase
+```
 
 ---
 
@@ -111,7 +91,3 @@ Push to main triggers auto-deploy:
 - **Convex:** https://docs.convex.dev
 - **DOL PERM:** https://flag.dol.gov/programs/perm
 - **20 CFR 656.40:** https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40
-
----
-
-**Repository:** https://github.com

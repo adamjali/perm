@@ -216,9 +216,6 @@ export function FloatingIcons({ className = "" }: FloatingIconsProps) {
   );
 }
 
-// Keep old name as alias for backwards compatibility
-export const FloatingShapes = FloatingIcons;
-
 export function FloatingParticles({ className = "" }: { className?: string }) {
   return (
     <div className={`pointer-events-none ${className}`} aria-hidden="true">
@@ -241,5 +238,5 @@ export function FloatingParticles({ className = "" }: { className?: string }) {
   );
 }
 
-const DecorativeElements = { ScrollProgress, FloatingIcons, FloatingShapes, FloatingParticles };
+const DecorativeElements = { ScrollProgress, FloatingIcons, FloatingParticles };
 export default DecorativeElements;

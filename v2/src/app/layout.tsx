@@ -135,6 +135,7 @@ export default async function RootLayout({
     <ConvexAuthNextjsServerProvider>
       <html lang="en" suppressHydrationWarning>
         <head>
+          <link rel="alternate" type="application/rss+xml" title="PERM Tracker RSS Feed" href="/feed.xml" />
           {/* JSON-LD structured data for rich search results
               Note: Using dangerouslySetInnerHTML is safe here because structuredData
               is generated from hardcoded strings in structuredData.ts, not user input */}

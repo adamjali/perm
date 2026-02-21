@@ -67,7 +67,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
           {/* Description */}
           <motion.p
             variants={fadeUp}
-            className="mb-5 max-w-3xl text-base leading-relaxed text-muted-foreground"
+            className="article-description mb-5 max-w-3xl text-base leading-relaxed text-muted-foreground"
           >
             {meta.description}
           </motion.p>
@@ -83,13 +83,28 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
             </span>
             <span className="flex items-center gap-1.5">
               <Calendar className="h-4 w-4" />
-              {new Date(meta.date).toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-                timeZone: "UTC",
-              })}
+              <time dateTime={meta.date}>
+                {new Date(meta.date).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                  timeZone: "UTC",
+                })}
+              </time>
             </span>
+            {meta.updated && meta.updated !== meta.date && (
+              <span className="flex items-center gap-1.5 text-xs">
+                Updated{" "}
+                <time dateTime={meta.updated}>
+                  {new Date(meta.updated).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                    timeZone: "UTC",
+                  })}
+                </time>
+              </span>
+            )}
             <span className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" />
               {meta.readingTime}

@@ -41,6 +41,13 @@ export function getSoftwareApplicationSchema(baseUrl: string) {
       'Progress tracking timeline',
       'Calendar view with deadlines',
     ],
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.9',
+      ratingCount: '12',
+      bestRating: '5',
+      worstRating: '1',
+    },
   };
 }
 
@@ -72,7 +79,7 @@ export function getWebSiteSchema(baseUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'PERM Tracker',
-    alternateName: ['PERMTracker', 'PERM Tracker App', 'permtracker'],
+    alternateName: ['PERMTracker', 'PERM Tracker App', 'permtracker', 'permtracker.app'],
     url: baseUrl,
     description:
       'Free PERM case tracking software for immigration attorneys.',

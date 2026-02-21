@@ -41,7 +41,6 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@hookform/resolvers": "^5.2.2",
     "@openrouter/ai-sdk-provider": "^2.2.3",
     "@oslojs/crypto": "^1.0.1",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -153,7 +152,9 @@
       "lodash-es": "^4.17.23",
       "esbuild": "^0.25.0",
       "webpack": "^5.104.1",
-      "ajv": "^8.18.0"
+      "ajv": "^8.18.0",
+      "minimatch": ">=10.2.1",
+      "bn.js": ">=5.2.3"
     },
     "onlyBuiltDependencies": [
       "@swc/core",

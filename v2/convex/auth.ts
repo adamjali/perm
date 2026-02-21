@@ -108,12 +108,10 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       // Check if a user with this email already exists
       const email = args.profile.email;
       if (email) {
-        // Note: Using filter() instead of withIndex() because the auth callback
-        // context has limited type information. The "email" index exists on the
-        // users table but isn't visible to TypeScript in this callback context.
-        const existingUser = await ctx.db
-          .query("users")
-          .filter((q) => q.eq(q.field("email"), email))
+        // Use the "email" index (schema.ts line 62) for O(1) lookup instead of full table scan.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const existingUser = await (ctx.db.query("users") as any)
+          .withIndex("email", (q: any) => q.eq("email", email))
           .first();
 
         if (existingUser) {

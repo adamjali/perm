@@ -9,7 +9,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { getPostBySlug, getPostSlugs, getRelatedPosts } from "@/lib/content";
+import { getPostBySlug, getPostSlugs, getRelatedPosts, extractHeadings, extractVideoRefs } from "@/lib/content";
 import { mdxComponents } from "@/lib/content/mdx-components";
 import { ArticleLayout } from "@/components/content";
 import StructuredData from "@/components/content/StructuredData";
@@ -67,10 +67,18 @@ export function createContentDetailPage(type: ContentType) {
     if (!post) notFound();
 
     const related = getRelatedPosts({ slug, type, meta: post.meta });
+    const steps = type === "tutorials" ? extractHeadings(post.content) : undefined;
+    const videos = extractVideoRefs(post.content);
 
     return (
       <>
-        <StructuredData type={type} slug={slug} meta={post.meta} />
+        <StructuredData
+          type={type}
+          slug={slug}
+          meta={post.meta}
+          steps={steps}
+          videos={videos.length > 0 ? videos : undefined}
+        />
         <ArticleLayout meta={post.meta} type={type} slug={slug} related={related}>
           <MDXRemote
             source={post.content}

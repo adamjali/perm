@@ -24,7 +24,7 @@ export default function ArticleBody({ title, url, children }: ArticleBodyProps) 
         {/* Main content */}
         <div className="min-w-0 flex-1">
           <motion.div
-            className="prose-neobrutalist max-w-none"
+            className="article-content prose-neobrutalist max-w-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}

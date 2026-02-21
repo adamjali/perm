@@ -1,7 +1,7 @@
 # CLAUDE.md - PERM Tracker v2
 
-> **Stack:** Next.js 16.1 + Convex 1.31 + React 19 + TypeScript (strict mode)
-> **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-02-06
+> **Stack:** Next.js 16.1 + Convex 1.32 + React 19 + TypeScript (strict mode)
+> **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-02-21
 
 ## Quick Start
 
@@ -23,19 +23,26 @@ pnpm dev
 
 | Script | Command | Description |
 |--------|---------|-------------|
-| Dev server | `pnpm dev` | Next.js dev server (port 3000) |
-| Build | `pnpm build` | Production build |
+| Dev server | `pnpm dev` | Next.js dev (Turbopack, port 3000) |
+| Build | `pnpm build` | Production build (Webpack) |
 | **Unit tests** | `pnpm test` | Vitest watch mode |
-| Quick check | `pnpm test:fast` | Unit + PERM tests (~30s) |
+| Quick check | `pnpm test:fast` | Unit + PERM tests (~40s, ~1300 tests) |
 | Full suite | `pnpm test:run` | All 3600+ tests (~9 min) |
-| Coverage | `pnpm test:coverage` | Coverage report |
-| **E2E tests** | `pnpm test:e2e` | Playwright E2E tests |
+| PERM only | `pnpm test:perm` | PERM calculators/validators only |
+| Components | `pnpm test:components` | Component tests only |
+| Convex | `pnpm test:convex` | Convex integration tests only |
+| Changed | `pnpm test:changed` | Files changed since last commit |
+| Coverage | `pnpm test:coverage` | Coverage report (V8 provider) |
+| **E2E tests** | `pnpm test:e2e` | Playwright E2E (starts servers) |
 | Storybook | `pnpm storybook` | Component dev (port 6006) |
+| Type check | `pnpm typecheck` | tsgo --noEmit (fast native TS) |
 | **Admin query** | `npx convex run admin:getUserSummary '{}' --prod \| jq .` | User summary (prod, run from `v2/`) |
 
 **Two terminals required:** `npx convex dev` (Terminal 1) + `pnpm dev` (Terminal 2)
 
-> Full testing docs: `TEST_README.md`
+**Note:** Dev uses Turbopack, build uses Webpack. SWC minifier bugs only appear in production builds. See [CONCERNS.md](../.planning/codebase/CONCERNS.md) TD-01.
+
+> Full testing docs: `TEST_README.md` | Test infrastructure deep-dive: [TESTING.md](../.planning/codebase/TESTING.md)
 
 ---
 
@@ -101,18 +108,40 @@ import { calculatePWDExpiration, validateCase, applyCascade } from '../lib/perm'
 
 ```
 convex/lib/perm/
-├── index.ts              <- Main entry point
+├── index.ts              <- Main barrel export
 ├── types.ts              <- ISODateString, CaseData, ValidationResult
 ├── statusTypes.ts        <- CaseStatus, ProgressStatus enums
+├── constants.ts          <- Filing window days, deadlines, all PERM constants
 ├── cascade.ts            <- applyCascade, applyCascadeMultiple
-├── calculators/          <- PWD, ETA9089, recruitment, I-140, RFI
-├── validators/           <- All validation rules + validateCase
-├── dates/                <- Business days, holidays, filing window
-├── recruitment/          <- isRecruitmentComplete
+├── statusCalculation.ts  <- Auto-status determination from dates
+├── calculators/          <- PWD, ETA9089, recruitment, I-140, RFI calculators
+├── validators/           <- All validation rules + validateCase orchestrator
+├── dates/                <- Business days, holidays, filing window, method dates
+├── deadlines/            <- Deadline extraction, supersession, timezone rules
+├── recruitment/          <- isRecruitmentComplete, method categories
 └── utils/                <- fieldMapper (snake_case <-> camelCase)
 ```
 
-> Full API reference with examples: `docs/API.md`
+> Full API reference: `docs/API.md` | Architecture deep-dive: [ARCHITECTURE.md](../.planning/codebase/ARCHITECTURE.md)
+
+### Common Usage
+
+```typescript
+// Form with cascade
+import { applyCascade } from '@/lib/perm';
+const handleDateChange = (field: string, value: string) => {
+  setFormData(applyCascade(formData, { field, value }));
+};
+
+// Validation on save
+import { validateCase } from '@/lib/perm';
+const result = validateCase(formData);
+if (!result.valid) { setErrors(result.errors); return; }
+
+// Filing window status
+import { getFilingWindowStatusFromCase } from '@/lib/perm';
+const status = getFilingWindowStatusFromCase(caseData);
+```
 
 ---
 
@@ -133,45 +162,94 @@ const result = format(addDays(parseISO('2024-06-15'), 30), 'yyyy-MM-dd');
 
 ```
 v2/
-├── convex/                  # Convex backend
-│   ├── lib/
-│   │   ├── perm/           # CENTRAL PERM LOGIC (canonical)
-│   │   ├── auth.ts         # Auth helpers (getCurrentUserId)
-│   │   └── notificationHelpers.ts
-│   ├── cases.ts            # Case CRUD
-│   ├── notifications.ts    # Notification queries/mutations
-│   ├── notificationActions.ts  # Email/notification actions
-│   ├── pushNotifications.ts    # Web push
-│   ├── scheduledJobs.ts    # Scheduled job processing
-│   ├── deadlineEnforcement.ts  # Deadline reminders
-│   ├── crons.ts            # Cron definitions
-│   └── schema.ts           # Database schema
-├── content/                 # MDX content hub articles
-│   ├── blog/               # Blog posts
-│   ├── tutorials/          # Step-by-step tutorials
-│   ├── guides/             # Reference guides
-│   ├── changelog/          # Product changelog entries
-│   └── resources/          # PERM resources
+├── convex/                      # Convex backend (~40 function files)
+│   ├── lib/                     # Shared backend helpers (~30 files)
+│   │   ├── perm/               # CENTRAL PERM LOGIC (canonical)
+│   │   ├── auth.ts             # Auth guards (getCurrentUserId, verifyOwnership)
+│   │   ├── admin.ts            # Admin authorization (requireAdmin)
+│   │   ├── audit.ts            # Audit logging (logCreate, logUpdate, logDelete)
+│   │   ├── validation.ts       # Input validation + sanitization
+│   │   ├── email.ts            # Shared email config (getResend, FROM_EMAIL)
+│   │   ├── crypto.ts           # Token encryption (FEIN, OAuth)
+│   │   ├── errorRecording.ts   # Unified error recording (DB + email + Sentry)
+│   │   ├── logging.ts          # Structured logging with named loggers
+│   │   └── rag/                # RAG knowledge base content
+│   ├── schema.ts               # Database schema (14+ tables)
+│   ├── cases.ts                # Case CRUD
+│   ├── dashboard.ts            # Dashboard queries
+│   ├── admin.ts                # Admin dashboard queries/mutations
+│   ├── users.ts                # User profile queries/mutations
+│   ├── notifications.ts        # Notification queries/mutations
+│   ├── notificationActions.ts  # Email sending actions (Resend)
+│   ├── conversations.ts        # Chat conversation CRUD
+│   ├── conversationMessages.ts # Chat message queries/mutations
+│   ├── pushNotifications.ts    # Web Push actions ("use node")
+│   ├── calendar.ts             # Calendar view queries
+│   ├── googleCalendarSync.ts   # Calendar sync mutations
+│   ├── googleCalendarActions.ts # Google Calendar API actions
+│   ├── deadlineEnforcement.ts  # Auto-closure for expired deadlines
+│   ├── scheduledJobs.ts        # Cron job handlers
+│   ├── crons.ts                # Cron definitions (6 scheduled tasks)
+│   ├── knowledge.ts            # RAG knowledge base search
+│   ├── webSearch.ts            # Web search (Tavily + Brave)
+│   └── http.ts                 # HTTP routes (Resend webhook)
+├── content/                     # MDX content hub articles
+│   ├── blog/                   # Blog posts (3)
+│   ├── tutorials/              # Step-by-step tutorials (3)
+│   ├── guides/                 # Reference guides (3)
+│   ├── changelog/              # Product changelog (2)
+│   └── resources/              # PERM resources (1)
 ├── src/
-│   ├── app/                # Next.js App Router pages
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── (public)/           # Marketing: home, blog, guides, contact, demo
+│   │   ├── (auth)/             # Login, signup, password reset
+│   │   ├── (authenticated)/    # Dashboard, cases, calendar, settings, admin
+│   │   └── api/                # API routes: chat, google, health, sentry-check
 │   ├── components/
-│   │   ├── ui/             # Core UI (shadcn/ui)
-│   │   ├── content/        # Content hub components (17 components)
-│   │   ├── status/         # PERM status badges
-│   │   ├── dashboard/      # Dashboard components
-│   │   └── layout/         # Layout (Header, Footer)
+│   │   ├── ui/                 # Core UI primitives (shadcn/ui + custom)
+│   │   ├── admin/              # Admin dashboard components
+│   │   ├── auth/               # LoginTracker, PendingTermsHandler
+│   │   ├── calendar/           # Calendar view components
+│   │   ├── cases/              # Case cards, list, filters, detail, quick-edit
+│   │   ├── chat/               # AI chatbot (ChatWidget, ChatPanel, ToolCallCard)
+│   │   ├── content/            # Content hub components (22 components)
+│   │   ├── dashboard/          # Dashboard widgets (deadlines, summary, activity)
+│   │   ├── demo/               # Demo page components
+│   │   ├── forms/              # Case form system + PERM sections
+│   │   ├── home/               # Homepage sections (15 components)
+│   │   ├── layout/             # Header, Footer, InactivityTimeout, SentryUserContext
+│   │   ├── notifications/      # Notification list, filters
+│   │   ├── onboarding/         # OnboardingWizard, Tour, Checklist
+│   │   ├── settings/           # Settings page sections
+│   │   ├── skeletons/          # Loading skeleton components
+│   │   ├── status/             # PERM status/progress badges
+│   │   └── timeline/           # Timeline view components
+│   ├── hooks/                  # Custom hooks (17 hooks)
 │   ├── lib/
-│   │   ├── perm/           # Frontend PERM re-exports
-│   │   └── content/        # MDX processing + mdx-components
-│   ├── emails/             # React Email templates
-│   └── remotion/           # Remotion video compositions
+│   │   ├── perm/               # Frontend PERM re-exports
+│   │   ├── ai/                 # AI chat: providers, tools, prompts, summarization
+│   │   ├── content/            # MDX processing + mdx-components
+│   │   ├── hooks/              # Lib hooks: useTilt, useGSAP, useInactivityTimeout
+│   │   ├── auth/               # Auth utilities
+│   │   ├── forms/              # Form utilities
+│   │   ├── calendar/           # Calendar utilities
+│   │   ├── export/             # Data export (CSV/JSON)
+│   │   ├── import/             # Case import (CSV parsing)
+│   │   ├── sentry.ts           # Sentry frontend (captureError, addBreadcrumb)
+│   │   ├── toast.ts            # Toast utilities (auth-aware, use instead of sonner)
+│   │   └── errors.ts           # Error handling (handleOperationError)
+│   ├── emails/                 # React Email templates (13 templates)
+│   └── remotion/               # Remotion video compositions (3 compositions)
 ├── public/images/
-│   ├── screenshots/        # App screenshots + GIFs for articles
-│   ├── journey/            # PERM journey photos
-│   └── features/           # Feature illustrations
-├── docs/API.md             # Convex API reference
-└── test-utils/             # Test utilities and fixtures
+│   ├── screenshots/            # App screenshots + walkthrough videos
+│   ├── journey/                # PERM journey photos
+│   └── features/               # Feature illustrations
+├── test-utils/                 # Shared test fixtures and utilities
+├── docs/API.md                 # Convex API reference
+└── tests/e2e/                  # Playwright E2E tests
 ```
+
+> **Full file inventory:** [STRUCTURE.md](../.planning/codebase/STRUCTURE.md) lists every file with descriptions.
 
 ---
 
@@ -195,71 +273,7 @@ Registered in `src/lib/content/mdx-components.tsx`:
 | `VideoFigure` | `src`, `alt`, `caption?`, `step?`, `maxWidth?`, `poster?` | Video with neobrutalist border, Lightbox expand, IntersectionObserver autoplay |
 | `VideoPlayer` | `videoId` | Remotion video player (lazy-loaded, SSR-disabled) |
 
-### Screenshot Assets
-
-App screenshots in `public/images/screenshots/`:
-
-| File | Content |
-|------|---------|
-| `dashboard.png` | Case Summary tiles with stage counts |
-| `cases.png` | Case management grid with cards |
-| `calendar.png` | Calendar view with deadline markers |
-| `homepage.png` | Landing page hero |
-| `create-case.mp4` | App walkthrough video (autoplay, loop) |
-| `cases-walkthrough.mp4` | Cases page walkthrough video (autoplay, loop) |
-| `settings-walkthrough.mp4` | Settings page walkthrough video (autoplay, loop) |
-| `chat-walkthrough.mp4` | AI chat assistant walkthrough video (autoplay, loop) |
-
-### Adding Screenshots to Articles
-
-```mdx
-<ScreenshotFigure
-  src="/images/screenshots/dashboard.png"
-  alt="Dashboard showing deadline urgency columns"
-  caption="The Deadline Hub organizes deadlines by urgency."
-  step={1}
-/>
-```
-
-### Adding Videos to Articles
-
-```mdx
-<VideoFigure
-  src="/images/screenshots/cases-walkthrough.mp4"
-  alt="Cases page walkthrough"
-  caption="The Cases page with filtering, search, and case details."
-  step={2}
-/>
-```
-
-Videos use IntersectionObserver — they autoplay when visible, pause when scrolled away, and are click-to-expand via Lightbox.
-
----
-
-## Common Patterns
-
-```typescript
-// Form with cascade
-import { applyCascade } from '@/lib/perm';
-const handleDateChange = (field: string, value: string) => {
-  setFormData(applyCascade(formData, { field, value }));
-};
-
-// Validation on save
-import { validateCase } from '@/lib/perm';
-const result = validateCase(formData);
-if (!result.valid) { setErrors(result.errors); return; }
-
-// Filing window status
-import { getFilingWindowStatusFromCase } from '@/lib/perm';
-const status = getFilingWindowStatusFromCase(caseData);
-```
-
----
-
-## Sitemap
-
-Static page dates in `src/app/sitemap.ts` are hardcoded. **When editing terms, privacy, login, signup, contact, or demo pages, update their `lastModified` in sitemap.ts.**
+Screenshots and videos in `public/images/screenshots/`. Videos use IntersectionObserver for autoplay-on-visible and Lightbox for expand.
 
 ---
 
@@ -276,16 +290,39 @@ if (filingDate > certDate + 180) { ... } // WRONG
 
 // DON'T: Manual business day calculation
 // DO: import { addBusinessDays } from '@/lib/perm';
+
+// DON'T: Use ?? in dense expressions (SWC minifier drops vars with ~20+ ?? chains)
+const value = a ?? b ?? c ?? d ?? e; // WRONG — production ReferenceError
+// DO: Use || or ternary instead
+const value = a || b || c || d || e;
+
+// DON'T: Store Date objects in Convex
+await ctx.db.patch(id, { pwdFilingDate: new Date() }); // WRONG
+// DO: Use ISO strings (YYYY-MM-DD)
+await ctx.db.patch(id, { pwdFilingDate: format(new Date(), "yyyy-MM-dd") });
+
+// DON'T: Import toast from sonner directly (not auth-aware)
+import { toast } from "sonner"; // WRONG — fires during sign-out
+// DO: Use the app wrapper that suppresses during sign-out
+import { toast } from "@/lib/toast";
 ```
+
+> **SWC minifier bug details:** See [CONCERNS.md](../.planning/codebase/CONCERNS.md) TD-01.
 
 ---
 
 ## Code Style
 
-- **TypeScript strict mode** — no `any` types
-- **ISO date strings** — YYYY-MM-DD everywhere
+- **TypeScript strict mode** — no `any` types, `noUncheckedIndexedAccess` enabled
+- **ISO date strings** — YYYY-MM-DD everywhere, never `Date` objects
 - **Central imports** — always from `@/lib/perm` or `convex/lib/perm`
 - **TDD** — tests before implementation for business logic
+- **Named exports** preferred; default exports only for page components
+- **Import order** — framework → third-party → `@/` aliases → relative → types
+- **Soft deletes** — all tables use `deletedAt` timestamp, filter with `q.eq(q.field("deletedAt"), undefined)`
+- **Error handling** — frontend: `handleOperationError()` from `@/lib/errors`; backend: `recordError()` from `convex/lib/errorRecording`
+
+> **Full conventions:** [CONVENTIONS.md](../.planning/codebase/CONVENTIONS.md) — TypeScript patterns, React patterns, Convex patterns, CSS/styling, naming rules.
 
 ---
 
@@ -328,22 +365,28 @@ import { recordError } from "./lib/errorRecording";
 await recordError(ctx, "mutation", "cases.update", error, { resourceId: caseId });
 ```
 
-### Performance Spans
+> **Full Sentry details:** [INTEGRATIONS.md](../.planning/codebase/INTEGRATIONS.md) — performance spans, Session Replay, env var inventory.
 
-```typescript
-import * as Sentry from "@sentry/nextjs";
+---
 
-// Wrap meaningful operations
-Sentry.startSpan({ op: "ui.click", name: "Save Case" }, (span) => {
-  span.setAttribute("caseId", caseId);
-  doSomething();
-});
+## AI Chat
 
-// Async operations
-await Sentry.startSpan({ op: "http.client", name: "GET /api/cases" }, async () => {
-  return await fetch("/api/cases");
-});
-```
+Multi-provider AI assistant with 5-provider fallback: Groq → Mistral → Gemini 2.5 Flash → Gemini 3 Flash → OpenRouter → Cerebras.
+
+- **API route:** `src/app/api/chat/route.ts` — streaming via `createUIMessageStream`
+- **Providers:** `src/lib/ai/providers.ts` — custom `FallbackModel` class (replaced `ai-fallback`)
+- **Tools:** `src/lib/ai/tools/` — case lookup, deadline check, web search, knowledge base
+- **Prompts:** `src/lib/ai/prompts/` — system prompts with PERM expertise
+- **Backend:** `convex/conversations.ts` + `convex/conversationMessages.ts` — CRUD with summarization
+- **Components:** `src/components/chat/` — `ChatWidget`, `ChatPanel`, `ToolCallCard`
+
+> **Full AI architecture:** [ARCHITECTURE.md](../.planning/codebase/ARCHITECTURE.md) — data flow diagram, provider details. [INTEGRATIONS.md](../.planning/codebase/INTEGRATIONS.md) — API keys, rate limits, env vars.
+
+---
+
+## Codebase Map
+
+7 deep-dive docs (3,856 lines) in `../.planning/codebase/` — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS. **See [root CLAUDE.md](../CLAUDE.md#codebase-map) for the full table with descriptions and when-to-read guidance.**
 
 ---
 
@@ -355,3 +398,11 @@ await Sentry.startSpan({ op: "http.client", name: "GET /api/cases" }, async () =
 | Validation not catching error | Check you're using the right validator |
 | Cascade not triggering | Ensure `applyCascade()` called on change |
 | Import not found | `@/lib/perm` (frontend) vs `convex/lib/perm` (backend) |
+| `ReferenceError: _ref is not defined` (prod only) | SWC minifier bug — replace `??` with `\|\|` in affected file. See [CONCERNS.md](../.planning/codebase/CONCERNS.md) TD-01 |
+| `X is not defined` in prod build | Check: SWC minifier, `optimizePackageImports`, `concatenateModules`, React Compiler |
+| Auth callback not firing | `createOrUpdateUser` skips password sign-ins — use client-side `LoginTracker` |
+| Toast appears during sign-out | Import from `@/lib/toast`, not `sonner` directly |
+| Convex action can't call another action | Use `ctx.scheduler.runAfter(0, ...)` to schedule instead |
+| Sitemap dates stale after page edit | Update `lastModified` in `src/app/sitemap.ts` for static pages |
+
+> **Deployment & project names:** See [root CLAUDE.md](../CLAUDE.md#deployment) — Vercel/Convex deploy commands, project name mapping.
