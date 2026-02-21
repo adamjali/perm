@@ -24,7 +24,7 @@ export default function AdminDashboardClient() {
 
   const dashboardData = useQuery(
     api.admin.getAdminDashboardData,
-    isSigningOut ? "skip" : {
+    isSigningOut || authLoading || !isAdmin ? "skip" : {
       page,
       pageSize: 25,
       sortBy: sortField,
