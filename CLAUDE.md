@@ -66,6 +66,41 @@ grep -r "FallbackModel" .planning/codebase/
 
 ---
 
+## GSD Workflow
+
+GSD (Get Shit Done) is the project management system used for all structured development. It's a meta-prompting framework that spawns fresh subagents for research, planning, and execution — solving context rot across long-running projects.
+
+**Install:** Fork at `~/gsd-adam` (upstream: `gsd-build/get-shit-done`, 29+ commits ahead). Install with `npx ~/gsd-adam`.
+
+### Project History
+
+| Milestone | Phases | Plans | Status |
+|-----------|--------|-------|--------|
+| v1.0 Core MVP | 10 | 21 | Shipped |
+| v2.0 Complete Migration | 22 | 95 | Shipped 2026-01-15 |
+| Post-v2.0 features | Per-feature | Per-feature | Ongoing (feature 010+) |
+
+### Key Commands
+
+| Command | When to Use |
+|---------|-------------|
+| `/gsd:feature` | New feature with full GSD guarantees (explore, architect, atomic commits) |
+| `/gsd:quick` | Small task with GSD guarantees but skip optional agents |
+| `/gsd:map-codebase` | Refresh `.planning/codebase/` docs after major changes |
+| `/gsd:progress` | Check project state, show context, route to next action |
+| `/gsd:resume-work` | Resume from previous session with full context restoration |
+| `/gsd:new-milestone` | Start a new milestone cycle |
+| `/gsd:debug` | Systematic debugging with persistent state |
+| `/gsd:help` | Full command reference |
+
+### Current Config
+
+Mode: `interactive` | Profile: `quality` | All gates enabled (research, plan_check, verifier)
+
+> **Full reference:** `/gsd:help` | **Deep dive:** `~/.claude/explanations/20260223_gsd_deep_dive/`
+
+---
+
 ## Deployment
 
 Push to main triggers auto-deploy:

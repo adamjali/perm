@@ -390,6 +390,28 @@ Multi-provider AI assistant with 5-provider fallback: Groq → Mistral → Gemin
 
 ---
 
+## GSD Development Workflow
+
+All structured development uses the GSD framework. See [root CLAUDE.md](../CLAUDE.md#gsd-workflow) for overview, install, and full command list.
+
+### Command Decision Matrix
+
+| Scenario | Command | What Happens |
+|----------|---------|--------------|
+| New feature (any size) | `/gsd:feature` | Explore → architect → plan → execute with atomic commits |
+| Small fix or chore | `/gsd:quick` | Streamlined: skip optional agents, still get commits + state tracking |
+| Small fix, full rigor | `/gsd:quick --full` | Like `/gsd:quick` but with code review + verification |
+| Investigating a bug | `/gsd:debug` | Scientific method debugging with checkpoints |
+| Starting a new version | `/gsd:new-milestone` | Requirements → roadmap → phase breakdown |
+
+### When to Refresh Codebase Map
+
+Run `/gsd:map-codebase` after: adding a new module or directory, schema changes, major dependency upgrades, or starting a new milestone.
+
+> **TDD integration with GSD:** See global `~/.claude/CLAUDE.md` — TDD is mandatory for all GSD plan execution.
+
+---
+
 ## Troubleshooting
 
 | Issue | Solution |
