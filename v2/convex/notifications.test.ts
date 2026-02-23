@@ -13,6 +13,7 @@
 import { describe, it, expect } from "vitest";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions } from "../test-utils/convex";
 import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import {
   generateNotificationTitle,
   generateNotificationMessage,
@@ -1040,7 +1041,7 @@ describe("Notifications", () => {
     /** Insert an authAccount for a user so email verification checks pass. */
     async function addVerifiedAuthAccount(
       userCtx: ReturnType<ReturnType<typeof createTestContext>["withIdentity"]>,
-      userId: string,
+      userId: Id<"users">,
       opts: { provider: "password" | "google"; email: string; emailVerified?: string }
     ) {
       await userCtx.run(async (ctx) => {
