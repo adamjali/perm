@@ -48,10 +48,15 @@ async function createTestUserWithProfile(
     return identity!.subject as Id<"users">;
   });
 
-  // Update user with email
+  // Update user with email and create verified authAccount
+  const userEmail = `${name.toLowerCase().replace(/\s/g, ".")}@example.com`;
   await authT.run(async (ctx) => {
-    await ctx.db.patch(userId, {
-      email: `${name.toLowerCase().replace(/\s/g, ".")}@example.com`,
+    await ctx.db.patch(userId, { email: userEmail });
+    await ctx.db.insert("authAccounts", {
+      userId,
+      provider: "password",
+      providerAccountId: userEmail,
+      emailVerified: userEmail,
     });
   });
 
@@ -70,7 +75,6 @@ async function createTestUserWithProfile(
       emailStatusUpdates: profileOverrides?.emailStatusUpdates ?? false,
       emailRfeAlerts: profileOverrides?.emailRfeAlerts ?? true,
       emailWeeklyDigest: profileOverrides?.emailWeeklyDigest ?? false,
-      preferredNotificationEmail: "signup",
       quietHoursEnabled: profileOverrides?.quietHoursEnabled ?? false,
       quietHoursStart: profileOverrides?.quietHoursStart,
       quietHoursEnd: profileOverrides?.quietHoursEnd,

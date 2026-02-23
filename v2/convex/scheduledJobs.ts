@@ -27,6 +27,7 @@ import { internal } from "./_generated/api";
 import type { Id, Doc } from "./_generated/dataModel";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
+import { getVerifiedUserIds } from "./lib/auth";
 
 const log = loggers.scheduler;
 import {
@@ -193,15 +194,18 @@ export const getCasesNeedingReminders = internalQuery({
       profilesByUserId.set(profile.userId, profile);
     }
 
-    // Get all users to find their emails
-    const users = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
-      .collect();
+    // Get all active users and verified user IDs (from authAccounts)
+    const [users, verifiedUserIds] = await Promise.all([
+      ctx.db
+        .query("users")
+        .filter((q) => q.eq(q.field("deletedAt"), undefined))
+        .collect(),
+      getVerifiedUserIds(ctx),
+    ]);
 
     const userEmailById = new Map<Id<"users">, string>();
     for (const user of users) {
-      if (user.email) {
+      if (user.email && verifiedUserIds.has(user._id)) {
         userEmailById.set(user._id, user.email);
       }
     }
@@ -398,9 +402,11 @@ export const getUsersForWeeklyDigest = internalQuery({
       profile: Doc<"userProfiles">;
     }> = [];
 
+    const verifiedUserIds = await getVerifiedUserIds(ctx);
+
     for (const profile of profiles) {
       const user = await ctx.db.get(profile.userId);
-      if (user?.email && !user.deletedAt) {
+      if (user?.email && !user.deletedAt && verifiedUserIds.has(profile.userId)) {
         results.push({
           userId: profile.userId,
           email: user.email,
@@ -439,7 +445,9 @@ export const checkDeadlineReminders = internalAction({
     let processed = 0;
     let emailsScheduled = 0;
 
-    // Stagger emails by 600ms each to stay under Resend's 2 req/sec rate limit
+    // Stagger emails by 1000ms each to stay under Resend's 2 req/sec rate limit.
+    // Note: sendEmailWithRetry adds its own backoff (1-4.5s) on 429 errors, so
+    // actual send timing may vary. The stagger prevents initial burst.
     let emailIndex = 0;
 
     for (const reminder of reminders) {
@@ -498,11 +506,9 @@ export const checkDeadlineReminders = internalAction({
       );
 
       if (sendEmail) {
-        // Schedule appropriate email based on notification type
-        // Stagger by 600ms to stay under Resend's 2 req/sec rate limit
         const formattedDate = formatDateForEmail(reminder.deadlineDate);
         const formattedDeadlineType = formatDeadlineType(reminder.deadlineType);
-        const delayMs = emailIndex * 600;
+        const delayMs = emailIndex * 1000;
 
         if (notificationType === "rfi_alert") {
           await ctx.scheduler.runAfter(delayMs, internal.notificationActions.sendRfiAlertEmail, {
@@ -651,7 +657,8 @@ export const sendWeeklyDigest = internalAction({
     let sent = 0;
     let skipped = 0;
 
-    // Stagger emails by 600ms each to stay under Resend's 2 req/sec rate limit
+    // Stagger emails by 1000ms each to stay under Resend's 2 req/sec rate limit.
+    // sendEmailWithRetry adds additional backoff on 429 errors.
     let emailIndex = 0;
 
     for (const { userId, email, userName } of users) {
@@ -696,9 +703,8 @@ export const sendWeeklyDigest = internalAction({
           rawCaseUpdates,
         });
 
-        // Schedule the email with staggered delay (600ms apart to stay under 2 req/sec)
         step = "scheduling email";
-        const delayMs = emailIndex * 600;
+        const delayMs = emailIndex * 1000;
         await ctx.scheduler.runAfter(delayMs, internal.notificationActions.sendWeeklyDigestEmail, {
           to: email,
           digestContent,

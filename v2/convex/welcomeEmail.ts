@@ -7,8 +7,6 @@
  * INTERNAL ACTIONS:
  * - sendWelcomeEmail: Send welcome email to a single user
  * - sendWelcomeBlast: Send welcome email to all existing users
- *
- * INTERNAL ACTIONS:
  * - sendTestWelcomeEmail: Send test email to a specific address
  *
  * @module
@@ -18,8 +16,40 @@ import { internalAction, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { render } from "@react-email/render";
 import { internal } from "./_generated/api";
-import { getResend, FROM_EMAIL } from "./lib/email";
+import { getResend, FROM_EMAIL, sendEmailWithRetry } from "./lib/email";
 import { WelcomeEmail } from "../src/emails/WelcomeEmail";
+import { createLogger } from "./lib/logging";
+import { recordError } from "./lib/errorRecording";
+
+const log = createLogger("WelcomeEmail");
+
+const WELCOME_SUBJECT = "Welcome — let's get your first case tracked";
+
+/** Shared logic for rendering and sending the welcome email. */
+async function renderAndSend(
+  ctx: Parameters<typeof recordError>[0],
+  to: string,
+  userName: string,
+  label: string
+): Promise<void> {
+  const html = await render(WelcomeEmail({ userName }));
+  const resend = getResend();
+
+  const { error } = await sendEmailWithRetry(resend, {
+    from: FROM_EMAIL,
+    to: [to],
+    subject: WELCOME_SUBJECT,
+    html,
+  });
+
+  if (error) {
+    log.error(`Failed to send ${label}`, { error: error.message, email: to });
+    await recordError(ctx, "action", `welcomeEmail.${label}`, new Error(error.message), { extra: `to: ${to}` });
+    throw new Error(`${label} failed: ${error.message}`);
+  }
+
+  log.info(`${label} sent`, { email: to });
+}
 
 /**
  * Send a welcome email to a single user.
@@ -30,31 +60,8 @@ export const sendWelcomeEmail = internalAction({
     to: v.string(),
     userName: v.string(),
   },
-  handler: async (_ctx, args) => {
-    const resend = getResend();
-
-    const html = await render(
-      WelcomeEmail({
-        userName: args.userName,
-      })
-    );
-
-    const { error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: [args.to],
-      subject: "Welcome — let's get your first case tracked",
-      html,
-    });
-
-    if (error) {
-      console.error("Failed to send welcome email", {
-        error: error.message,
-        to: args.to,
-      });
-      throw new Error(`Welcome email failed: ${error.message}`);
-    }
-
-    console.log("Welcome email sent", { to: args.to });
+  handler: async (ctx, args) => {
+    await renderAndSend(ctx, args.to, args.userName, "welcome email");
   },
 });
 
@@ -67,26 +74,8 @@ export const sendTestWelcomeEmail = internalAction({
     to: v.string(),
     userName: v.optional(v.string()),
   },
-  handler: async (_ctx, args) => {
-    const resend = getResend();
-
-    const html = await render(
-      WelcomeEmail({
-        userName: args.userName ?? "Test User",
-      })
-    );
-
-    const { error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: [args.to],
-      subject: "Welcome — let's get your first case tracked",
-      html,
-    });
-
-    if (error) {
-      throw new Error(`Test welcome email failed: ${error.message}`);
-    }
-
+  handler: async (ctx, args) => {
+    await renderAndSend(ctx, args.to, args.userName ?? "Test User", "test welcome email");
     return { success: true, to: args.to };
   },
 });
@@ -105,11 +94,11 @@ export const sendWelcomeBlast = internalAction({
       internal.welcomeEmailHelpers.getAllUsersForBlast
     );
 
-    // Schedule individual emails with 800ms stagger to stay under 2 req/sec
+    // Schedule individual emails with 1000ms stagger to stay under 2 req/sec
     for (let i = 0; i < users.length; i++) {
       const user = users[i];
       if (!user) continue;
-      const delayMs = i * 800;
+      const delayMs = i * 1000;
       await ctx.scheduler.runAfter(
         delayMs,
         internal.welcomeEmail.sendWelcomeEmail,
@@ -117,7 +106,7 @@ export const sendWelcomeBlast = internalAction({
       );
     }
 
-    console.log(`Welcome blast: scheduled ${users.length} emails`);
+    log.info("Welcome blast scheduled", { count: users.length });
     return { scheduled: users.length, total: users.length };
   },
 });
@@ -138,7 +127,7 @@ export const scheduleWelcomeBlast = internalMutation({
       {}
     );
     const scheduledFor = new Date(args.scheduledTime).toISOString();
-    console.log(`Welcome blast scheduled for ${scheduledFor}`);
+    log.info("Welcome blast timed", { scheduledFor });
     return { scheduledFor };
   },
 });

@@ -29,9 +29,12 @@
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
-import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
+import { getCurrentUserId, getCurrentUserIdOrNull, isEmailVerified } from "./lib/auth";
 import { logDelete } from "./lib/audit";
+import { createLogger } from "./lib/logging";
 import type { QueryCtx } from "./_generated/server";
+
+const log = createLogger("Notifications");
 
 // ============================================================================
 // CONSTANTS & VALIDATORS
@@ -649,14 +652,36 @@ export const cleanupCaseNotifications = internalMutation({
 });
 
 /**
- * Mark a notification as having been sent via email (internal use only).
- *
- * Called from notification email actions after successful email delivery.
- * Not exposed to the client API.
+ * Shared guard: check that a user exists, is not soft-deleted, and has a
+ * verified email (via authAccounts). Returns false and logs the reason on
+ * any failure. Used by both isNotificationValid and isUserActiveByEmail.
  */
+async function isUserActiveAndVerified(
+  ctx: QueryCtx,
+  user: Doc<"users"> | null,
+  caller: string,
+  logExtra?: Record<string, string>
+): Promise<boolean> {
+  if (!user) {
+    log.warn(`${caller}: user not found`, logExtra ?? {});
+    return false;
+  }
+  if (user.deletedAt) {
+    log.warn(`${caller}: user soft-deleted`, { resourceId: String(user._id) });
+    return false;
+  }
+  if (!(await isEmailVerified(ctx, user._id))) {
+    log.warn(`${caller}: email not verified`, { resourceId: String(user._id) });
+    return false;
+  }
+  return true;
+}
+
 /**
- * Check if a notification still exists (hasn't been deleted with user).
- * Used by email actions to guard against sending to deleted users.
+ * Check if a notification's user is active with a verified email.
+ * Used by email actions to guard against sending to deleted/unverified users.
+ *
+ * Checks: notification exists -> user exists -> user not deleted -> email verified.
  */
 export const isNotificationValid = internalQuery({
   args: {
@@ -664,21 +689,34 @@ export const isNotificationValid = internalQuery({
   },
   handler: async (ctx, { notificationId }): Promise<boolean> => {
     const notification = await ctx.db.get(notificationId);
-    return notification !== null;
+    if (!notification) {
+      log.warn("isNotificationValid: notification not found", { resourceId: notificationId });
+      return false;
+    }
+    const user = await ctx.db.get(notification.userId);
+    return isUserActiveAndVerified(ctx, user, "isNotificationValid", {
+      resourceId: String(notification.userId),
+    });
   },
 });
 
 /**
- * Check if a user still exists by email address.
- * Used by email actions (e.g., weekly digest) to guard against sending to deleted users.
+ * Check if a user (looked up by email) is active with a verified email.
+ * Used by email actions (e.g., weekly digest) to guard against sending
+ * to deleted or unverified users.
+ *
+ * Checks: user exists by email -> user not deleted -> email verified.
  */
 export const isUserActiveByEmail = internalQuery({
   args: {
     email: v.string(),
   },
   handler: async (ctx, { email }): Promise<boolean> => {
-    const users = await ctx.db.query("users").collect();
-    return users.some((u) => u.email === email);
+    const user = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", email))
+      .first();
+    return isUserActiveAndVerified(ctx, user, "isUserActiveByEmail", { email });
   },
 });
 

@@ -2113,7 +2113,6 @@ updateUserProfile(args: {
   emailDeadlineReminders?: boolean;
   emailStatusUpdates?: boolean;
   emailRfeAlerts?: boolean;
-  preferredNotificationEmail?: "signup" | "google" | "both";
   // Quiet hours
   quietHoursEnabled?: boolean;
   quietHoursStart?: string;  // HH:MM format

@@ -125,7 +125,6 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
           if (args.profile.image && !existingUser.image) {
             updates.image = args.profile.image;
           }
-
           if (Object.keys(updates).length > 0) {
             await ctx.db.patch(existingUser._id, updates);
           }

@@ -8,20 +8,29 @@
  */
 
 import { internalQuery } from "./_generated/server";
+import { getVerifiedUserIds } from "./lib/auth";
 
 /**
- * Get all users with email addresses for the welcome blast.
- * Returns display name and email for each user.
+ * Get all users with verified email addresses for the welcome blast.
+ *
+ * Filters out: users without email, soft-deleted users, users without
+ * a verified auth method (Google or password+OTP), and users whose
+ * profile has pending deletion.
+ *
+ * Returns display name and email for each eligible user.
  */
 export const getAllUsersForBlast = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const users = await ctx.db.query("users").collect();
+    const [users, verifiedUserIds] = await Promise.all([
+      ctx.db.query("users").collect(),
+      getVerifiedUserIds(ctx),
+    ]);
 
     const results: { email: string; displayName: string }[] = [];
 
     for (const user of users) {
-      if (!user.email || user.deletedAt) continue;
+      if (!user.email || user.deletedAt || !verifiedUserIds.has(user._id)) continue;
 
       // Try to get their profile for a better display name
       const profile = await ctx.db

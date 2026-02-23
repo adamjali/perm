@@ -52,7 +52,6 @@ export function buildDefaultProfile(
     emailStatusUpdates: DEFAULT_NOTIFICATION_PREFS.emailStatusUpdates,
     emailRfeAlerts: DEFAULT_NOTIFICATION_PREFS.emailRfeAlerts,
     emailWeeklyDigest: true,
-    preferredNotificationEmail: "signup" as const,
     quietHoursEnabled: DEFAULT_NOTIFICATION_PREFS.quietHoursEnabled,
     timezone: DEFAULT_NOTIFICATION_PREFS.timezone,
     calendarSyncEnabled: true,

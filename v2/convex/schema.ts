@@ -56,7 +56,10 @@ export default defineSchema({
     email: v.optional(v.string()),
     isAnonymous: v.optional(v.boolean()),
     phone: v.optional(v.string()),
-    emailVerificationTime: v.optional(v.number()), // Set by @convex-dev/auth on email verification
+    // DEPRECATED: Unreliable — custom createOrUpdateUser bypasses the library's
+    // default setter. Use authAccounts table via isEmailVerified() instead.
+    // Kept as optional for backwards compat with existing documents.
+    emailVerificationTime: v.optional(v.number()),
     deletedAt: v.optional(v.number()),
   })
     .index("email", ["email"])
@@ -102,11 +105,13 @@ export default defineSchema({
     emailStatusUpdates: v.boolean(),
     emailRfeAlerts: v.boolean(),
     emailWeeklyDigest: v.optional(v.boolean()), // Weekly summary email (Mondays 9 AM EST) - defaults to false
-    preferredNotificationEmail: v.union(
+    // DEPRECATED: No longer used — emails always go to signup email.
+    // Kept as optional for backwards compat with existing documents.
+    preferredNotificationEmail: v.optional(v.union(
       v.literal("signup"),
       v.literal("google"),
       v.literal("both")
-    ),
+    )),
 
     // Quiet hours
     quietHoursEnabled: v.boolean(),

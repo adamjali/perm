@@ -13,7 +13,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalAction, internalQuery, query } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { getResend, FROM_EMAIL } from "./lib/email";
+import { getResend, FROM_EMAIL, sendEmailWithRetry } from "./lib/email";
 import { requireAdmin } from "./lib/admin";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
@@ -137,7 +137,7 @@ export const processInboundEmail = internalAction({
     // Non-support emails also get forwarded to catch-all
     if (!isSupport) {
       try {
-        const { error } = await resend.emails.send({
+        const { error } = await sendEmailWithRetry(resend, {
           from: FROM_EMAIL,
           to: [CATCH_ALL_FORWARD_TO],
           subject: `[Fwd] ${args.subject}`,
@@ -153,6 +153,7 @@ export const processInboundEmail = internalAction({
             error: error.message,
             to: toEmail,
           });
+          await recordError(ctx, "action", "supportEmail.processInbound.forwardApi", new Error(error.message), { resourceId: args.resendEmailId });
         } else {
           log.info("Email also forwarded to catch-all", {
             from: args.fromEmail,
@@ -229,7 +230,7 @@ export const replyToEmail = internalAction({
       })
     );
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await sendEmailWithRetry(resend, {
       from: fromHeader,
       to: [original.fromEmail],
       subject: `Re: ${original.subject}`,
@@ -246,6 +247,7 @@ export const replyToEmail = internalAction({
         error: error.message,
         supportEmailId: args.supportEmailId,
       });
+      await recordError(ctx, "action", "supportEmail.replyToEmail", new Error(error.message), { resourceId: String(args.supportEmailId) });
       throw new Error(`Failed to send reply: ${error.message}`);
     }
 

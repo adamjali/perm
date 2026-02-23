@@ -1104,7 +1104,6 @@ describe("Calendar Sync Integration", () => {
         emailStatusUpdates: true,
         emailRfeAlerts: true,
         emailWeeklyDigest: false,
-        preferredNotificationEmail: "signup" as const,
         // Quiet hours (required)
         quietHoursEnabled: false,
         timezone: "America/New_York",

@@ -174,3 +174,61 @@ export async function verifyFirmAccess<T extends { userId: string }>(
 export function extractUserIdFromAction(subject: string): Id<"users"> {
   return subject.split("|")[0] as Id<"users">;
 }
+
+// ============================================================================
+// EMAIL VERIFICATION HELPERS (source of truth: authAccounts table)
+// ============================================================================
+
+/**
+ * Verification predicate: an auth account proves email ownership if it is
+ * Google OAuth (always verified) or a password account with emailVerified set.
+ */
+function isVerifiedAccount(account: { provider: string; emailVerified?: string }): boolean {
+  return account.provider === "google" || (account.provider === "password" && !!account.emailVerified);
+}
+
+/**
+ * Check if a user's email is verified via the authAccounts table.
+ *
+ * Uses authAccounts as the canonical source of truth:
+ * - Google OAuth = always verified (Google verifies email ownership)
+ * - Password provider with emailVerified field set = verified (OTP-confirmed)
+ *
+ * This replaces checking users.emailVerificationTime, which was unreliable
+ * because the custom createOrUpdateUser callback bypassed the library's
+ * default setter for that field.
+ *
+ * Use for per-user checks (1 indexed query). For batch jobs that process
+ * all users, use getVerifiedUserIds() instead to avoid N+1 queries.
+ */
+export async function isEmailVerified(ctx: QueryCtx, userId: Id<"users">): Promise<boolean> {
+  const accounts = await ctx.db
+    .query("authAccounts")
+    .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
+    .collect();
+
+  return accounts.some(isVerifiedAccount);
+}
+
+/**
+ * Bulk-check email verification for all users.
+ *
+ * Loads all authAccounts once and builds a Set of verified user IDs.
+ * Use in batch/cron jobs (getCasesNeedingReminders, getUsersForWeeklyDigest,
+ * getAllUsersForBlast) to avoid N+1 per-user queries.
+ *
+ * Verification logic matches isEmailVerified(): Google = verified,
+ * password + emailVerified = verified.
+ */
+export async function getVerifiedUserIds(ctx: QueryCtx): Promise<Set<Id<"users">>> {
+  const allAccounts = await ctx.db.query("authAccounts").collect();
+  const verified = new Set<Id<"users">>();
+
+  for (const account of allAccounts) {
+    if (isVerifiedAccount(account)) {
+      verified.add(account.userId);
+    }
+  }
+
+  return verified;
+}

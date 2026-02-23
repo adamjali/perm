@@ -1037,10 +1037,32 @@ describe("Notifications", () => {
   // ============================================================================
 
   describe("Email Guard Queries", () => {
+    /** Insert an authAccount for a user so email verification checks pass. */
+    async function addVerifiedAuthAccount(
+      userCtx: ReturnType<ReturnType<typeof createTestContext>["withIdentity"]>,
+      userId: string,
+      opts: { provider: "password" | "google"; email: string; emailVerified?: string }
+    ) {
+      await userCtx.run(async (ctx) => {
+        await ctx.db.insert("authAccounts", {
+          userId,
+          provider: opts.provider,
+          providerAccountId: opts.provider === "google" ? `google-${userId}` : opts.email,
+          ...(opts.emailVerified ? { emailVerified: opts.emailVerified } : {}),
+        });
+      });
+    }
+
     describe("isNotificationValid", () => {
       it("returns true for existing notification", async () => {
         const t = createTestContext();
         const { ctx: user, userId } = await createAuthenticatedContext(t, "User Guard");
+
+        await addVerifiedAuthAccount(user, userId, {
+          provider: "password",
+          email: "guard-user@example.com",
+          emailVerified: "guard-user@example.com",
+        });
 
         const notificationId = await user.run(async (ctx) => {
           const now = Date.now();
@@ -1064,6 +1086,78 @@ describe("Notifications", () => {
         });
 
         expect(isValid).toBe(true);
+      });
+
+      it("returns false for soft-deleted user", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "Soft Del Guard");
+
+        await addVerifiedAuthAccount(user, userId, {
+          provider: "google",
+          email: "soft-del-guard@example.com",
+        });
+
+        // Soft-delete the user
+        await user.run(async (ctx) => {
+          await ctx.db.patch(userId, { deletedAt: Date.now() });
+        });
+
+        const notificationId = await user.run(async (ctx) => {
+          const now = Date.now();
+          return await ctx.db.insert("notifications", {
+            userId,
+            type: "deadline_reminder",
+            title: "Soft Del Guard",
+            message: "User is soft-deleted",
+            priority: "normal",
+            isRead: false,
+            emailSent: false,
+            createdAt: now,
+            updatedAt: now,
+          });
+        });
+
+        const isValid = await user.run(async (ctx) => {
+          return await ctx.runQuery(internal.notifications.isNotificationValid, {
+            notificationId,
+          });
+        });
+
+        expect(isValid).toBe(false);
+      });
+
+      it("returns false for unverified user email", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "Unverified Guard");
+
+        // Add password account WITHOUT emailVerified
+        await addVerifiedAuthAccount(user, userId, {
+          provider: "password",
+          email: "unverified-guard@example.com",
+        });
+
+        const notificationId = await user.run(async (ctx) => {
+          const now = Date.now();
+          return await ctx.db.insert("notifications", {
+            userId,
+            type: "deadline_reminder",
+            title: "Unverified Guard",
+            message: "User email not verified",
+            priority: "normal",
+            isRead: false,
+            emailSent: false,
+            createdAt: now,
+            updatedAt: now,
+          });
+        });
+
+        const isValid = await user.run(async (ctx) => {
+          return await ctx.runQuery(internal.notifications.isNotificationValid, {
+            notificationId,
+          });
+        });
+
+        expect(isValid).toBe(false);
       });
 
       it("returns false for deleted notification", async () => {
@@ -1105,9 +1199,13 @@ describe("Notifications", () => {
         const t = createTestContext();
         const { ctx: user, userId } = await createAuthenticatedContext(t, "User Active");
 
-        // Set email on the user
         await user.run(async (ctx) => {
           await ctx.db.patch(userId, { email: "active@example.com" });
+        });
+        await addVerifiedAuthAccount(user, userId, {
+          provider: "password",
+          email: "active@example.com",
+          emailVerified: "active@example.com",
         });
 
         const isActive = await user.run(async (ctx) => {
@@ -1148,6 +1246,91 @@ describe("Notifications", () => {
         const isActive = await user.run(async (ctx) => {
           return await ctx.runQuery(internal.notifications.isUserActiveByEmail, {
             email: "deleted@example.com",
+          });
+        });
+
+        expect(isActive).toBe(false);
+      });
+
+      it("returns false for user without verified authAccount", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "Unverified User");
+
+        await user.run(async (ctx) => {
+          await ctx.db.patch(userId, { email: "unverified@example.com" });
+        });
+        // Password account WITHOUT emailVerified field
+        await addVerifiedAuthAccount(user, userId, {
+          provider: "password",
+          email: "unverified@example.com",
+        });
+
+        const isActive = await user.run(async (ctx) => {
+          return await ctx.runQuery(internal.notifications.isUserActiveByEmail, {
+            email: "unverified@example.com",
+          });
+        });
+
+        expect(isActive).toBe(false);
+      });
+
+      it("returns true for Google OAuth user (always verified)", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "Google User");
+
+        await user.run(async (ctx) => {
+          await ctx.db.patch(userId, { email: "google@example.com" });
+        });
+        await addVerifiedAuthAccount(user, userId, {
+          provider: "google",
+          email: "google@example.com",
+        });
+
+        const isActive = await user.run(async (ctx) => {
+          return await ctx.runQuery(internal.notifications.isUserActiveByEmail, {
+            email: "google@example.com",
+          });
+        });
+
+        expect(isActive).toBe(true);
+      });
+
+      it("returns false for soft-deleted user even with verified email", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "Soft Deleted");
+
+        await user.run(async (ctx) => {
+          await ctx.db.patch(userId, {
+            email: "softdeleted@example.com",
+            deletedAt: Date.now(),
+          });
+        });
+        await addVerifiedAuthAccount(user, userId, {
+          provider: "google",
+          email: "softdeleted@example.com",
+        });
+
+        const isActive = await user.run(async (ctx) => {
+          return await ctx.runQuery(internal.notifications.isUserActiveByEmail, {
+            email: "softdeleted@example.com",
+          });
+        });
+
+        expect(isActive).toBe(false);
+      });
+
+      it("returns false for user with no authAccounts at all", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "No Auth");
+
+        await user.run(async (ctx) => {
+          await ctx.db.patch(userId, { email: "noauth@example.com" });
+          // No authAccounts inserted — orphaned user
+        });
+
+        const isActive = await user.run(async (ctx) => {
+          return await ctx.runQuery(internal.notifications.isUserActiveByEmail, {
+            email: "noauth@example.com",
           });
         });
 

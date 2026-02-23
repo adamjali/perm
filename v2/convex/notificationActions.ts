@@ -28,7 +28,7 @@ import { render } from "@react-email/render";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { loggers } from "./lib/logging";
-import { getResend, FROM_EMAIL } from "./lib/email";
+import { getResend, FROM_EMAIL, sendEmailWithRetry } from "./lib/email";
 import { recordError } from "./lib/errorRecording";
 
 const log = loggers.email;
@@ -85,13 +85,13 @@ async function sendNotificationEmail(
     logContext: string;
   }
 ): Promise<void> {
-  // Guard: if we have a notificationId, verify it still exists (user may have been deleted)
+  // Guard: verify notification + user are valid for email (exists, active, verified)
   if (params.notificationId) {
     const isValid = await ctx.runQuery(internal.notifications.isNotificationValid, {
       notificationId: params.notificationId,
     });
     if (!isValid) {
-      log.info(`Skipping ${params.logContext} email: notification deleted (user may have been deleted)`, {
+      log.info(`Skipping ${params.logContext} email: notification or user invalid (deleted/unverified)`, {
         to: params.to,
       });
       return;
@@ -99,7 +99,7 @@ async function sendNotificationEmail(
   }
 
   const resend = getResend();
-  const { error } = await resend.emails.send({
+  const { error } = await sendEmailWithRetry(resend, {
     from: FROM_EMAIL,
     to: [params.to],
     subject: params.subject,
@@ -416,7 +416,7 @@ export const sendAccountDeletionEmail = internalAction({
     deletionDate: v.optional(v.string()),
     immediate: v.optional(v.boolean()),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     const appUrl = getAppUrl();
     const isImmediate = args.immediate ?? false;
     const supportUrl = "mailto:support@permtracker.app";
@@ -445,7 +445,7 @@ export const sendAccountDeletionEmail = internalAction({
       : "Account Deletion Scheduled - PERM Tracker";
 
     const resend = getResend();
-    const { error } = await resend.emails.send({
+    const { error } = await sendEmailWithRetry(resend, {
       from: FROM_EMAIL,
       to: [args.to],
       subject,
@@ -454,6 +454,7 @@ export const sendAccountDeletionEmail = internalAction({
 
     if (error) {
       log.error('Failed to send account deletion email', { error: error.message, to: args.to, immediate: isImmediate });
+      await recordError(ctx, "action", "notificationActions.sendAccountDeletionEmail", new Error(error.message), { extra: `to: ${args.to}` });
       throw new Error(`Email failed: ${error.message}`);
     }
 
@@ -540,7 +541,7 @@ export const sendWeeklyDigestEmail = internalAction({
       email: args.to,
     });
     if (!userActive) {
-      log.info('Skipping weekly digest email: user no longer exists', { to: args.to });
+      log.info('Skipping weekly digest email: user invalid (deleted/unverified)', { to: args.to });
       return;
     }
 
@@ -572,9 +573,8 @@ export const sendWeeklyDigestEmail = internalAction({
       subject = "Your Weekly PERM Summary";
     }
 
-    // Send email via Resend
     const resend = getResend();
-    const { error } = await resend.emails.send({
+    const { error } = await sendEmailWithRetry(resend, {
       from: FROM_EMAIL,
       to: [args.to],
       subject,
@@ -583,6 +583,7 @@ export const sendWeeklyDigestEmail = internalAction({
 
     if (error) {
       log.error('Failed to send weekly digest email', { error: error.message, to: args.to });
+      await recordError(ctx, "action", "notificationActions.sendWeeklyDigestEmail", new Error(error.message), { extra: `to: ${args.to}` });
       throw new Error(`Email failed: ${error.message}`);
     }
 
@@ -618,9 +619,8 @@ export const sendTestEmail = action({
     const { TestEmail } = await import("../src/emails/TestEmail");
     const html = await render(TestEmail({ settingsUrl }));
 
-    // Send email via Resend
     const resend = getResend();
-    const { error } = await resend.emails.send({
+    const { error } = await sendEmailWithRetry(resend, {
       from: FROM_EMAIL,
       to: [args.email],
       subject: "PERM Tracker: Test email successful",
@@ -629,6 +629,7 @@ export const sendTestEmail = action({
 
     if (error) {
       log.error('Failed to send test email', { error: error.message, to: args.email });
+      await recordError(ctx, "action", "notificationActions.sendTestEmail", new Error(error.message), { extra: `to: ${args.email}` });
       throw new Error(`Email failed: ${error.message}`);
     }
 
@@ -656,7 +657,7 @@ export const sendAdminNotificationEmail = internalAction({
     to: v.optional(v.string()),
     recipientName: v.optional(v.string()),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     const { getAdminEmail } = await import("./lib/admin");
     const { AdminEmail } = await import("../src/emails/AdminEmail");
 
@@ -676,7 +677,7 @@ export const sendAdminNotificationEmail = internalAction({
     );
 
     const resend = getResend();
-    const { error } = await resend.emails.send({
+    const { error } = await sendEmailWithRetry(resend, {
       from: FROM_EMAIL,
       to: [toEmail],
       subject: args.subject,
@@ -688,6 +689,7 @@ export const sendAdminNotificationEmail = internalAction({
         error: error.message,
         subject: args.subject,
       });
+      await recordError(ctx, "action", "notificationActions.sendAdminNotificationEmail", new Error(error.message), { extra: `subject: ${args.subject}` });
       return;
     }
 

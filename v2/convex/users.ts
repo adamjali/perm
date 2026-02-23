@@ -308,11 +308,6 @@ export const updateUserProfile = mutation({
     emailStatusUpdates: v.optional(v.boolean()),
     emailRfeAlerts: v.optional(v.boolean()),
     emailWeeklyDigest: v.optional(v.boolean()),
-    preferredNotificationEmail: v.optional(v.union(
-      v.literal("signup"),
-      v.literal("google"),
-      v.literal("both")
-    )),
     // Quiet hours
     quietHoursEnabled: v.optional(v.boolean()),
     quietHoursStart: v.optional(v.string()), // HH:MM format

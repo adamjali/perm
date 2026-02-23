@@ -57,20 +57,18 @@ export const copyUserData = internalMutation({
     targetUserEmail: v.string(),
   },
   handler: async (ctx, args) => {
-    // Find source user
     const sourceUser = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("email"), args.sourceUserEmail))
+      .withIndex("email", (q) => q.eq("email", args.sourceUserEmail))
       .first();
 
     if (!sourceUser) {
       throw new Error(`Source user not found: ${args.sourceUserEmail}`);
     }
 
-    // Find target user
     const targetUser = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("email"), args.targetUserEmail))
+      .withIndex("email", (q) => q.eq("email", args.targetUserEmail))
       .first();
 
     if (!targetUser) {
@@ -389,10 +387,9 @@ export const createTestUserInternal = internalMutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    // Check if user already exists
     const existingUser = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("email"), args.email))
+      .withIndex("email", (q) => q.eq("email", args.email))
       .first();
 
     if (existingUser) {
@@ -545,7 +542,7 @@ export const getAdminNotificationPrefs = internalQuery({
   handler: async (ctx) => {
     const adminUser = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("email"), getAdminEmail()))
+      .withIndex("email", (q) => q.eq("email", getAdminEmail()))
       .first();
 
     if (!adminUser) {
@@ -882,11 +879,11 @@ export const sendAdminEmail = action({
     );
 
     // Initialize Resend
-    const { getResend, FROM_EMAIL } = await import("./lib/email");
+    const { getResend, FROM_EMAIL, sendEmailWithRetry } = await import("./lib/email");
     const resend = getResend();
 
     // Send email with both HTML and plain text fallback
-    const { error } = await resend.emails.send({
+    const { error } = await sendEmailWithRetry(resend, {
       from: FROM_EMAIL,
       to: [args.toEmail],
       subject: args.subject,
@@ -895,9 +892,12 @@ export const sendAdminEmail = action({
     });
 
     if (error) {
+      log.error("sendAdminEmail failed", { error: error.message, toEmail: args.toEmail });
+      await recordError(ctx, "action", "admin.sendAdminEmail", new Error(error.message), { extra: `to: ${args.toEmail}` });
       throw new Error(`Email failed: ${error.message}`);
     }
 
+    log.info("Admin email sent", { toEmail: args.toEmail, subject: args.subject });
     return { success: true };
   },
 });

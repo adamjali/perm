@@ -41,7 +41,6 @@ async function insertProfile(
       emailDeadlineReminders: true,
       emailStatusUpdates: true,
       emailRfeAlerts: true,
-      preferredNotificationEmail: "signup" as const,
       quietHoursEnabled: false,
       timezone: "America/New_York",
       calendarSyncEnabled: true,
