@@ -27,17 +27,8 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      # Keep @ai-sdk/google on v2 (v3 requires AI SDK v6)
-      - dependency-name: "@ai-sdk/google"
-        update-types: ["version-update:semver-major"]
       # Keep @types/node on v22 (matches Vercel Node 22 runtime)
       - dependency-name: "@types/node"
-        update-types: ["version-update:semver-major"]
-      # Keep ai-fallback on v1 (v2 requires AI SDK v6, OpenRouter needs v5)
-      - dependency-name: "ai-fallback"
-        update-types: ["version-update:semver-major"]
-      # Keep ai on v5 (OpenRouter provider only compatible with v5)
-      - dependency-name: "ai"
         update-types: ["version-update:semver-major"]
       # Keep next pinned (exact version in package.json, upgrade deliberately)
       - dependency-name: "next"
