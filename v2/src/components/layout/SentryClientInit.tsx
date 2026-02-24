@@ -50,6 +50,8 @@ export function SentryClientInit() {
           /^moz-extension:\/\//,
           "not authenticated",
           "User profile not found",
+          // iOS network flake during Convex auth token refresh (mobile suspend/resume)
+          "Load failed",
           // Deployment cache mismatch — client has stale Server Action hashes
           "Server Action",
           "UnrecognizedActionError",
