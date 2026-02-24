@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { buildDefaultProfile } from "../userDefaults";
+import { buildDefaultProfile, TERMS_VERSION } from "../userDefaults";
 import { formatDateForNotification } from "../formatDate";
 import { FROM_EMAIL } from "../email";
 import type { Id } from "../../_generated/dataModel";
@@ -87,10 +87,13 @@ describe("buildDefaultProfile", () => {
     expect(profile.termsVersion).toBe("2.0");
   });
 
-  it("does not include terms fields when not provided", () => {
+  it("auto-stamps terms when not provided (passive consent)", () => {
+    const before = Date.now();
     const profile = buildDefaultProfile(MOCK_USER_ID);
-    expect(profile.termsAcceptedAt).toBeUndefined();
-    expect(profile.termsVersion).toBeUndefined();
+    const after = Date.now();
+    expect(profile.termsAcceptedAt).toBeGreaterThanOrEqual(before);
+    expect(profile.termsAcceptedAt).toBeLessThanOrEqual(after);
+    expect(profile.termsVersion).toBe(TERMS_VERSION);
   });
 
   it("sets createdAt and updatedAt to current time", () => {

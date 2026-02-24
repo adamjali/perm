@@ -9,6 +9,13 @@ import type { Id } from "../_generated/dataModel";
 import type { UserNotificationPrefs } from "./notificationHelpers";
 
 /**
+ * Current Terms of Service version — single source of truth.
+ * Matches the effective date on the /terms page (YYYY-MM-DD).
+ * Update this when terms change.
+ */
+export const TERMS_VERSION = "2026-02-17";
+
+/**
  * Default notification preferences — single source of truth.
  * Used by scheduledJobs, notificationHelpers, and cases fallback logic.
  */
@@ -72,9 +79,8 @@ export function buildDefaultProfile(
     autoDeadlineEnforcementEnabled: false,
     loginCount: 0,
     lastLoginAt: now,
-    ...(overrides?.termsAcceptedAt !== undefined
-      ? { termsAcceptedAt: overrides.termsAcceptedAt, termsVersion: overrides.termsVersion }
-      : {}),
+    termsAcceptedAt: overrides?.termsAcceptedAt ?? now,
+    termsVersion: overrides?.termsVersion ?? TERMS_VERSION,
     createdAt: now,
     updatedAt: now,
   };

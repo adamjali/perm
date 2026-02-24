@@ -8,30 +8,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { NavLink } from "@/components/ui/nav-link";
 import { analytics } from "@/lib/analytics";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleStaleDeployment } from "@/components/error/auth-error";
 import { api } from "../../../../convex/_generated/api";
-import { savePendingTermsAcceptance } from "@/lib/auth/termsStorage";
-
-// Current Terms of Service version (matches effective date in /terms page)
-const TERMS_VERSION = "2026-02-17";
 
 type SignupStep = "credentials" | "verification";
 
 export function SignupPageClient() {
   const { signIn } = useAuthActions();
   const router = useRouter();
-  const acceptTerms = useMutation(api.users.acceptTermsOfService);
   const recordMyLogin = useMutation(api.users.recordMyLogin);
   const checkRateLimit = useMutation(api.authRateLimit.checkAuthRateLimit);
   const [step, setStep] = useState<SignupStep>("credentials");
   const [email, setEmail] = useState("");
-  const [termsAccepted, setTermsAccepted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -62,13 +55,6 @@ export function SignupPageClient() {
       const password = formData.get("password") as string;
       const confirmPassword = formData.get("confirmPassword") as string;
 
-      // Client-side validation
-      if (!termsAccepted) {
-        toast.error("Please accept the Terms of Service and Privacy Policy");
-        setIsLoading(false);
-        return;
-      }
-
       if (password !== confirmPassword) {
         toast.error("Passwords do not match");
         setIsLoading(false);
@@ -97,11 +83,6 @@ export function SignupPageClient() {
 
       if (result.signingIn) {
         // Account already verified (e.g., re-signup with existing verified account)
-        try {
-          await acceptTerms({ termsVersion: TERMS_VERSION });
-        } catch {
-          // Terms may already be recorded — non-blocking
-        }
         toast.success("Welcome to PERM Tracker!");
         localStorage.setItem("perm_last_login_at", String(Date.now()));
         recordMyLogin().catch((e) => console.warn("[recordMyLogin] failed:", e));
@@ -165,14 +146,6 @@ export function SignupPageClient() {
 
       await signIn("password", formData);
 
-      // Record terms acceptance after successful verification
-      try {
-        await acceptTerms({ termsVersion: TERMS_VERSION });
-      } catch (termsError) {
-        // Log but don't block - user is already authenticated
-        console.warn("[Terms Acceptance] Failed to record:", termsError);
-      }
-
       toast.success("Account verified! Welcome to PERM Tracker.");
       localStorage.setItem("perm_last_login_at", String(Date.now()));
       recordMyLogin().catch((e) => console.warn("[recordMyLogin] failed:", e));
@@ -217,23 +190,10 @@ export function SignupPageClient() {
   };
 
   const handleGoogleSignIn = async () => {
-    // Validate terms acceptance first
-    if (!termsAccepted) {
-      toast.error("Please accept the Terms of Service and Privacy Policy");
-      return;
-    }
-
     setIsGoogleLoading(true);
     try {
-      // Save terms acceptance to localStorage BEFORE OAuth redirect
-      // This persists the checkbox state through the Google redirect flow
-      // After redirect, the dashboard will check localStorage and record acceptance
-      savePendingTermsAcceptance(TERMS_VERSION);
-
       analytics.capture("signup_google_initiated");
       await signIn("google", { redirectTo: "/dashboard" });
-      // Note: For Google OAuth, terms acceptance is recorded after redirect
-      // The PendingTermsHandler component checks localStorage and calls acceptTermsOfService
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
@@ -263,9 +223,9 @@ export function SignupPageClient() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-3xl font-heading uppercase tracking-tight">
+          <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">
             Verify Email
-          </CardTitle>
+          </h1>
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-sm text-muted-foreground">
@@ -308,7 +268,7 @@ export function SignupPageClient() {
               onClick={() => setStep("credentials")}
               className="text-sm font-bold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
             >
-              ← Back to signup
+              &larr; Back to signup
             </button>
           </div>
         </CardContent>
@@ -385,42 +345,6 @@ export function SignupPageClient() {
             />
           </div>
 
-          {/* Terms acceptance checkbox */}
-          <div className="flex items-start gap-3 pt-2">
-            <Checkbox
-              id="terms"
-              checked={termsAccepted}
-              onCheckedChange={(checked) => setTermsAccepted(checked === true)}
-              disabled={isLoading}
-              className="mt-0.5"
-            />
-            <label
-              htmlFor="terms"
-              className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
-            >
-              I agree to the{" "}
-              <a
-                href="/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-foreground font-semibold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
-              >
-                Terms of Service
-              </a>{" "}
-              and{" "}
-              <a
-                href="/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-foreground font-semibold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
-              >
-                Privacy Policy
-              </a>
-              , including the use of AI-powered features and analytics as
-              described therein
-            </label>
-          </div>
-
           <input type="hidden" name="flow" value="signUp" />
 
           <Button
@@ -474,6 +398,29 @@ export function SignupPageClient() {
           </svg>
           SIGN UP WITH GOOGLE
         </Button>
+
+        {/* Passive consent — terms acceptance via sign-in wrap */}
+        <p className="text-xs text-muted-foreground text-center leading-relaxed">
+          By creating an account, you agree to our{" "}
+          <a
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-foreground underline underline-offset-2 hover:text-primary transition-colors"
+          >
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-foreground underline underline-offset-2 hover:text-primary transition-colors"
+          >
+            Privacy Policy
+          </a>
+          .
+        </p>
 
         {/* Cloud storage disclaimer */}
         <p className="text-xs text-muted-foreground text-center leading-relaxed">

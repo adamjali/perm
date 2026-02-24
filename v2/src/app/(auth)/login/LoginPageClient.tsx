@@ -364,6 +364,29 @@ export function LoginPageClient() {
           SIGN IN WITH GOOGLE
         </Button>
 
+        {/* Passive consent — terms acceptance via sign-in wrap */}
+        <p className="text-xs text-muted-foreground text-center leading-relaxed">
+          By signing in, you agree to our{" "}
+          <a
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-foreground underline underline-offset-2 hover:text-primary transition-colors"
+          >
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-foreground underline underline-offset-2 hover:text-primary transition-colors"
+          >
+            Privacy Policy
+          </a>
+          .
+        </p>
+
         <div className="pt-4 text-center border-t-2 border-black">
           <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}

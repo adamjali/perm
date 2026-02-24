@@ -442,10 +442,11 @@ export const updateUserProfile = mutation({
 /**
  * Record user acceptance of Terms of Service and Privacy Policy.
  *
- * Called after successful signup when user has checked the terms acceptance checkbox.
- * Stores the timestamp and version of terms accepted.
+ * Terms are now auto-stamped at profile creation via buildDefaultProfile().
+ * This mutation is retained for future re-consent flows (e.g., when terms are updated
+ * and existing users need to accept a new version).
  *
- * @param termsVersion - The effective date of the ToS being accepted (e.g., "2025-01-03")
+ * @param termsVersion - The effective date of the ToS being accepted (e.g., "2026-02-17")
  * @returns Success indicator
  */
 export const acceptTermsOfService = mutation({
