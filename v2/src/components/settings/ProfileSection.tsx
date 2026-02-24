@@ -23,6 +23,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
+import { analytics } from "@/lib/analytics";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { FormField } from "@/components/forms/FormField";
@@ -148,6 +149,7 @@ export default function ProfileSection({
       }
 
       await updateProfile(updates);
+      analytics.capture("profile_updated");
       toast.success("Profile updated successfully");
       // Show success animation briefly
       setJustSaved(true);

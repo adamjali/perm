@@ -73,7 +73,7 @@ const userId = await getCurrentUserIdOrNull(ctx); // Returns null if not authent
 
 **`afterUserCreatedOrUpdated`** — NEVER used. Skipped when `createOrUpdateUser` is defined.
 
-**Login tracking** — handled client-side via `LoginTracker` component (`src/components/auth/LoginTracker.tsx`). Uses `sessionStorage` to fire `recordMyLogin` once per browser session. Covers ALL auth flows.
+**Login tracking** — handled client-side via `LoginTracker` component (`src/components/auth/LoginTracker.tsx`). Uses `localStorage` with 30-second debounce to fire `recordMyLogin` once per login. Covers ALL auth flows.
 
 **Profile creation** — `onAuthEvent()` in auth.ts calls `ensureUserProfileInternal` for OAuth/new accounts. `PendingTermsHandler` is the client-side safety net.
 

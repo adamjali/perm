@@ -49,6 +49,26 @@ const nextConfig: NextConfig = {
     return config;
   },
 
+  async rewrites() {
+    return [
+      // PostHog reverse proxy — reduces ad-blocker interference
+      {
+        source: "/ingest/static/:path*",
+        destination: "https://us-assets.i.posthog.com/static/:path*",
+      },
+      {
+        source: "/ingest/:path*",
+        destination: "https://us.i.posthog.com/:path*",
+      },
+    ];
+  },
+
+  // Required for PostHog reverse proxy: PostHog client sends requests with
+  // trailing slashes (e.g., /ingest/decide/) which Next.js would otherwise
+  // 308-redirect, breaking analytics. Side effect: all app routes now accept
+  // trailing slashes without redirect (SEO handled by canonical tags).
+  skipTrailingSlashRedirect: true,
+
   async redirects() {
     return [
       // Fix GSC 404s: old .html URLs → clean routes
@@ -88,7 +108,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live wss://vercel.live https://*.sentry.io https://browser.sentry-cdn.com https://*.senja.io https://senja.io https://fonts.googleapis.com https://fonts.gstatic.com",
+              "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live wss://vercel.live https://*.sentry.io https://browser.sentry-cdn.com https://*.senja.io https://senja.io https://fonts.googleapis.com https://fonts.gstatic.com https://us.i.posthog.com https://us-assets.i.posthog.com",
               "media-src 'self' blob: data:",
               "frame-src 'self' https://app.supademo.com",
               "worker-src 'self' blob:",

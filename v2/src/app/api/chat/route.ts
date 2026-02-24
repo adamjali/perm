@@ -35,6 +35,7 @@ import { getSystemPrompt } from '@/lib/ai/system-prompt';
 import type { ActionMode } from '@/lib/ai/tool-permissions';
 import { createCacheStats } from '@/lib/ai/cache';
 import { captureError } from '@/lib/sentry';
+import { getPostHogClient } from '@/lib/posthog-server';
 import { createTools, truncateForLog } from './create-tools';
 
 // Allow up to 60 seconds for streaming responses (extra time for fallbacks + tool calls)
@@ -200,16 +201,20 @@ export async function POST(req: Request) {
     // Create cache stats tracker for this request
     const cacheStats = createCacheStats();
 
-    // Fetch user's action mode preference for permission checking
+    // Fetch action mode + user profile in parallel (profile needed for PostHog attribution)
     let actionMode: ActionMode = 'confirm'; // Default to safest mode
+    const actionModePromise = fetchQuery(api.users.getActionMode, {}, { token });
+    const profilePromise = fetchQuery(api.users.currentUserProfile, {}, { token }).catch(() => null);
     try {
-      const userActionMode = await fetchQuery(api.users.getActionMode, {}, { token });
+      const userActionMode = await actionModePromise;
       actionMode = userActionMode as ActionMode;
       console.log(`[Chat API] [${sessionId}] Action mode: ${actionMode}`);
     } catch (error) {
       console.warn(`[Chat API] [${sessionId}] Failed to get action mode, using default (confirm):`, error);
       captureError(error);
     }
+    const userProfile = await profilePromise;
+    const posthogUserId = userProfile?._id || "anonymous";
 
     // Build system prompt WITH action mode AND current date context
     const now = new Date();
@@ -232,6 +237,17 @@ export async function POST(req: Request) {
 
     // Create tools for this request (pass pageContext for context-aware tools)
     const tools = createTools(token, typedConversationId, cacheStats, actionMode, pageContext);
+
+    // Track chat message sent (fire-and-forget, non-blocking)
+    try {
+      getPostHogClient()?.capture({
+        distinctId: posthogUserId,
+        event: "chat_message_sent",
+        properties: { session_id: sessionId, has_conversation_id: !!conversationId },
+      });
+    } catch (error) {
+      console.warn(`[Chat API] [${sessionId}] PostHog capture failed:`, error instanceof Error ? error.message : error);
+    }
 
     try {
       console.log(`[Chat API] [${sessionId}] Streaming with ${PRIMARY_MODEL_NAME} (fallback across 5 models)`);
@@ -287,6 +303,18 @@ export async function POST(req: Request) {
             console.error(`[Chat API] [${sessionId}] Stream finished with error/other: ${event.finishReason} (model: ${modelUsed}, attempts: ${attempts})`);
           } else {
             console.log(`[Chat API] [${sessionId}] Stream completed: ${event.finishReason} (model: ${modelUsed}, attempts: ${attempts})`);
+          }
+          // Track provider fallback when more than 1 attempt was needed
+          if (attempts > 1) {
+            try {
+              getPostHogClient()?.capture({
+                distinctId: posthogUserId,
+                event: "chat_provider_fallback",
+                properties: { session_id: sessionId, model_used: modelUsed, attempts },
+              });
+            } catch (error) {
+              console.warn(`[Chat API] [${sessionId}] PostHog capture failed:`, error instanceof Error ? error.message : error);
+            }
           }
         },
       });

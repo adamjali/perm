@@ -28,6 +28,7 @@ import {
 } from "@/components/forms/case-form.helpers";
 import { prepareUpdatePayload } from "@/lib/forms/prepareUpdatePayload";
 import { ConvexError } from "convex/values";
+import { analytics } from "@/lib/analytics";
 import { captureError, captureMessage, trackValidationError } from "@/lib/sentry";
 
 export interface UseFormSubmissionProps {
@@ -134,6 +135,12 @@ export function useFormSubmission({
           }
         );
 
+        analytics.capture("case_form_validation_failed", {
+          mode,
+          error_count: result.errors.length,
+          fields: result.errors.map((e) => e.field),
+        });
+
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
@@ -168,6 +175,7 @@ export function useFormSubmission({
             ...prepareUpdatePayload(currentFormData as Record<string, unknown>),
           });
 
+          analytics.capture("case_updated", { case_id: caseId });
           toast.success("Case updated successfully");
           try {
             markNavigating();

@@ -23,6 +23,7 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
+import { analytics } from "@/lib/analytics";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleOperationError } from "@/lib/errors";
@@ -590,6 +591,7 @@ export function CasesPageClient() {
       }
 
       exportFullCasesCSV(fullCases as FullCaseData[]);
+      analytics.capture("cases_exported", { format: "csv", count: fullCases.length });
       toast.success(`Exported ${fullCases.length} cases as CSV`);
     } catch (error) {
       console.error("Failed to export CSV:", error);
@@ -619,6 +621,7 @@ export function CasesPageClient() {
       }
 
       exportFullCasesJSON(fullCases as FullCaseData[]);
+      analytics.capture("cases_exported", { format: "json", count: fullCases.length });
       toast.success(`Exported ${fullCases.length} cases as JSON`);
     } catch (error) {
       console.error("Failed to export JSON:", error);
@@ -703,6 +706,7 @@ export function CasesPageClient() {
       if (confirmDialog.type === "delete") {
         const result = await bulkRemoveMutation({ ids });
         if (result.successCount > 0) {
+          analytics.capture("case_deleted", { count: result.successCount, bulk: true });
           toast.success(`Deleted ${result.successCount} case${result.successCount !== 1 ? "s" : ""}`);
         }
         if (result.failedCount > 0) {
@@ -711,6 +715,7 @@ export function CasesPageClient() {
       } else if (confirmDialog.type === "archive") {
         const result = await bulkUpdateStatusMutation({ ids, status: "closed" });
         if (result.successCount > 0) {
+          analytics.capture("case_archived", { count: result.successCount, bulk: true });
           toast.success(`Archived ${result.successCount} case${result.successCount !== 1 ? "s" : ""}`);
         }
         if (result.failedCount > 0) {
@@ -774,9 +779,11 @@ export function CasesPageClient() {
     try {
       if (singleCaseConfirm.type === "delete") {
         await removeMutation({ id: caseId });
+        analytics.capture("case_deleted", { case_id: caseId, bulk: false });
         toast.success("Case deleted successfully");
       } else if (singleCaseConfirm.type === "archive") {
         await updateMutation({ id: caseId, caseStatus: "closed" });
+        analytics.capture("case_archived", { case_id: caseId, bulk: false });
         toast.success("Case archived successfully");
       }
 
@@ -907,6 +914,11 @@ export function CasesPageClient() {
         }
 
         // Show toast without validation warning count (modal will handle that)
+        analytics.capture("cases_imported", {
+          imported_count: result.importedCount,
+          replaced_count: result.replacedCount,
+          skipped_count: result.skippedCount,
+        });
         toast.success(`Import complete: ${parts.join(", ")}`);
 
         // Return result so ImportModal can display validation warnings

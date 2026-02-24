@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavLink } from "@/components/ui/nav-link";
+import { analytics } from "@/lib/analytics";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleStaleDeployment } from "@/components/error/auth-error";
@@ -39,6 +40,7 @@ export function SignupPageClient() {
       const result = await checkRateLimit({ email: emailValue, action });
       if (!result.allowed) {
         toast.error(result.message || "Too many attempts. Please wait and try again.");
+        analytics.capture("signup_rate_limited", { action });
         return false;
       }
       return true;
@@ -103,6 +105,7 @@ export function SignupPageClient() {
         toast.success("Welcome to PERM Tracker!");
         localStorage.setItem("perm_last_login_at", String(Date.now()));
         recordMyLogin().catch((e) => console.warn("[recordMyLogin] failed:", e));
+        analytics.capture("user_signed_up", { method: "email_password" });
         router.push("/dashboard");
       } else {
         // OTP sent — move to verification step
@@ -173,6 +176,7 @@ export function SignupPageClient() {
       toast.success("Account verified! Welcome to PERM Tracker.");
       localStorage.setItem("perm_last_login_at", String(Date.now()));
       recordMyLogin().catch((e) => console.warn("[recordMyLogin] failed:", e));
+      analytics.capture("user_signed_up", { method: "email_password_verified" });
       router.push("/dashboard");
     } catch (error) {
       if (handleStaleDeployment(error)) return;
@@ -226,6 +230,7 @@ export function SignupPageClient() {
       // After redirect, the dashboard will check localStorage and record acceptance
       savePendingTermsAcceptance(TERMS_VERSION);
 
+      analytics.capture("signup_google_initiated");
       await signIn("google", { redirectTo: "/dashboard" });
       // Note: For Google OAuth, terms acceptance is recorded after redirect
       // The PendingTermsHandler component checks localStorage and calls acceptTermsOfService

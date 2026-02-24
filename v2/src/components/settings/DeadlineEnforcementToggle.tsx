@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, Shield } from "lucide-react";
 import { useState } from "react";
+import { analytics } from "@/lib/analytics";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { handleOperationError } from "@/lib/errors";
 
@@ -40,6 +41,7 @@ export default function DeadlineEnforcementToggle() {
       await updateProfile({
         autoDeadlineEnforcementEnabled: checked,
       });
+      analytics.capture("deadline_enforcement_toggled", { enabled: checked });
     } catch (error) {
       handleOperationError(error, {
         userMessage: "Failed to update enforcement setting",

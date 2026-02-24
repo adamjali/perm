@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { analytics } from "@/lib/analytics";
 import { useMutation, useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
@@ -294,6 +295,7 @@ export default function NotificationPreferencesSection({
     setLocal(value);
     try {
       await updateProfile({ [field]: value });
+      analytics.capture("notification_preferences_updated", { field, value });
       toast.success("Settings updated");
     } catch (error) {
       setLocal(!value);

@@ -65,3 +65,7 @@ scripts/migration/backups/latest_backup.txt
 # Private launch/outreach docs
 LAUNCH_GUIDE.md
 outreach/
+.env.local
+
+# Claude Code project-local config
+.claude/

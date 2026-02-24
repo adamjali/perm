@@ -101,6 +101,9 @@ test-results/
 .DS_Store
 Thumbs.db
 
+# Harbor SEO
+.planning/harbor-seo-profile.md
+
 # Secrets
 secrets/
 *.key

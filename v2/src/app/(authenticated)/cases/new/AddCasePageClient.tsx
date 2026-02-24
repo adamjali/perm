@@ -4,6 +4,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
 import { useMutation, useConvex } from "convex/react";
+import { analytics } from "@/lib/analytics";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { ChevronRight } from "lucide-react";
@@ -70,6 +71,10 @@ export function AddCasePageClient() {
           duplicateOf,
         });
 
+        analytics.capture("case_created", {
+          case_id: caseId,
+          is_duplicate_override: !!duplicateOf,
+        });
         toast.success("Case created successfully");
         await router.push(`/cases/${caseId}`);
       } catch (error) {
@@ -117,6 +122,9 @@ export function AddCasePageClient() {
           setPendingFormData(formData);
           setDuplicateCaseId(result.duplicates[0]!.existingCaseId);
           setShowDuplicateDialog(true);
+          analytics.capture("case_duplicate_detected", {
+            existing_case_id: result.duplicates[0]!.existingCaseId,
+          });
         } else {
           // No duplicate - proceed with create
           await createCase(formData);
@@ -140,6 +148,9 @@ export function AddCasePageClient() {
     if (!pendingFormData) return;
 
     setShowDuplicateDialog(false);
+    analytics.capture("case_created_despite_duplicate", {
+      existing_case_id: duplicateCaseId,
+    });
     // Pass the existing case ID so we can track the duplicate relationship
     await createCase(pendingFormData, duplicateCaseId as Id<"cases"> | undefined);
     setPendingFormData(null);

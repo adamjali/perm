@@ -25,6 +25,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { updateToastAuthState } from "@/lib/toast";
+import { analytics } from "@/lib/analytics";
 
 // ============================================================================
 // TYPES
@@ -84,6 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState((current) => {
       // Only transition from idle to signingOut
       if (current === "idle") {
+        // Reset PostHog identity so the next user isn't attributed to the previous one
+        analytics.reset();
         return "signingOut";
       }
       return current;

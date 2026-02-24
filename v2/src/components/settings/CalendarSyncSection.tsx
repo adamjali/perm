@@ -35,6 +35,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
+import { analytics } from "@/lib/analytics";
 import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
@@ -245,6 +246,7 @@ export default function CalendarSyncSection({
     const errorDetails = searchParams.get("error_details");
 
     if (connected === "true") {
+      analytics.capture("calendar_sync_enabled");
       toast.success("Google Calendar connected successfully");
       // Clean up URL params
       router.replace("/settings?tab=calendar-sync", { scroll: false });
@@ -439,6 +441,7 @@ export default function CalendarSyncSection({
       const data = await response.json();
 
       // Show detailed message about events cleared
+      analytics.capture("calendar_sync_disabled");
       if (data.eventsCleared && data.eventsCleared.eventsDeleted > 0) {
         toast.success(
           `Google Calendar disconnected. ${data.eventsCleared.eventsDeleted} event${data.eventsCleared.eventsDeleted !== 1 ? "s" : ""} removed from calendar.`

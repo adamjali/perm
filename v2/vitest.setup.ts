@@ -66,6 +66,27 @@ vi.mock("next-themes", () => ({
 }));
 
 // ============================================================================
+// POSTHOG-JS MOCK
+// ============================================================================
+
+/**
+ * Mock posthog-js to prevent analytics calls from interfering with tests.
+ * The real posthog-js requires browser APIs and network access.
+ */
+vi.mock("posthog-js", () => ({
+  default: {
+    init: vi.fn(),
+    capture: vi.fn(),
+    identify: vi.fn(),
+    reset: vi.fn(),
+    opt_out_capturing: vi.fn(),
+    opt_in_capturing: vi.fn(),
+    isFeatureEnabled: vi.fn(),
+    getFeatureFlag: vi.fn(),
+  },
+}));
+
+// ============================================================================
 // MOTION/REACT MOCK
 // ============================================================================
 
