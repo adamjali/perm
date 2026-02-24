@@ -314,7 +314,7 @@ export function SignupPageClient() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-3xl font-heading uppercase tracking-tight">Sign Up</CardTitle>
+        <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">Sign Up</h1>
       </CardHeader>
       <CardContent className="space-y-6">
         <form method="POST" onSubmit={handleCredentialsSubmit} className="space-y-5">

@@ -258,7 +258,7 @@ export function LoginPageClient() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-3xl font-heading uppercase tracking-tight">Sign In</CardTitle>
+        <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">Sign In</h1>
       </CardHeader>
       <CardContent className="space-y-6">
         {showExpiredBanner && (
