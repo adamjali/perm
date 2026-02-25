@@ -23,6 +23,24 @@ if (posthogKey) {
     defaults: "2026-01-30",
     capture_exceptions: true,
     debug: process.env.NODE_ENV === "development",
+    before_send: (event) => {
+      if (!event) return event;
+      if (event.event === "$exception") {
+        const msg = (event.properties?.$exception_message || "") as string;
+        // Stale deployment — normal during deploys, error boundaries reload the page
+        if (
+          msg.includes("Server Action") &&
+          msg.includes("was not found on the server")
+        ) {
+          return null;
+        }
+        // Browser extension parsing JSON-LD structured data (not app code)
+        if (msg.includes("@context") && msg.includes("toLowerCase")) {
+          return null;
+        }
+      }
+      return event;
+    },
   });
 } else if (process.env.NODE_ENV === "development") {
   console.warn(
