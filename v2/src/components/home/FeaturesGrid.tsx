@@ -36,17 +36,17 @@ const features: Feature[] = [
   {
     title: "Auto Deadline Calculation",
     description:
-      "Enter one date and every downstream deadline updates instantly — PWD expiration, filing windows, I-140 cutoffs. No more manual math or spreadsheet formulas.",
+      "Enter one date and 11 downstream deadlines update \u2014 PWD expiration, filing windows, I-140 cutoffs, recruitment method dates. No manual math.",
     illustration: <CalendarDeadlineSVG size={64} className="text-foreground" />,
     bgImage: "/images/features/calendar-planning.jpg",
     accentColor: "var(--stage-pwd)",
     learnMoreHref: "/tutorials/tracking-perm-deadlines",
-    learnMoreText: "See how deadlines work →",
+    learnMoreText: "See how deadlines work \u2192",
   },
   {
-    title: "Deadline Alerts",
+    title: "Smart Alerts",
     description:
-      "Get email and push notifications before deadlines hit. Your team stays informed even when you're in court or on vacation.",
+      "Email, push, and in-app notifications before deadlines. Configure reminders at 1, 3, 7, 14, or 30 days. Weekly Monday digest included.",
     illustration: <NotificationBellSVG size={64} className="text-foreground" />,
     bgImage: "/images/features/notification-phone.jpg",
     accentColor: "var(--primary)",
@@ -74,17 +74,17 @@ const features: Feature[] = [
   {
     title: "DOL Compliance Checks",
     description:
-      "Built-in validation catches missing recruitment steps, expired PWDs, and filing window violations before they become audit problems.",
+      "Built-in validation catches missing recruitment steps, expired PWDs, and filing window violations before they become problems.",
     illustration: <ShieldCheckSVG size={64} className="text-foreground" />,
     bgImage: "/images/journey/pwd-documents.jpg",
     accentColor: "var(--stage-i140)",
     learnMoreHref: "/blog/common-perm-audit-triggers",
-    learnMoreText: "Common audit triggers →",
+    learnMoreText: "Common audit triggers \u2192",
   },
   {
     title: "AI Case Assistant",
     description:
-      "Ask questions in plain English — \"What cases have deadlines this week?\" or \"Start a new case for John Smith.\" It handles the rest.",
+      "Ask questions about your cases, create and update cases, check deadlines, search PERM regulations \u2014 all in plain English.",
     illustration: (
       <svg width="64" height="64" viewBox="0 0 200 200" fill="none" className="text-foreground" aria-hidden="true">
         {/* Chat bubble */}

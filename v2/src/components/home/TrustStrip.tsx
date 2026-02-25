@@ -19,36 +19,23 @@ const trustBadges: TrustBadge[] = [
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-        <path d="M11 2 L19 6 L19 12 Q19 18 11 20 Q3 18 3 12 L3 6 Z" fill="none" stroke="currentColor" strokeWidth="2" />
-        <path d="M7.5 11.5 L10 14 L15 8.5" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="square" />
-      </svg>
-    ),
-    text: "Bank-Level Security",
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
         <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
-        <path d="M7 11 L10 14 L15 8" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="square" />
+        <line x1="11" y1="6" x2="11" y2="11" stroke="currentColor" strokeWidth="2.5" />
+        <line x1="11" y1="11" x2="15" y2="13" stroke="var(--primary)" strokeWidth="2" />
       </svg>
     ),
-    text: "DOL Compliant",
+    text: "11 Auto-Calculated Deadlines",
   },
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-        <path d="M11 2 L13.5 7.5 L19.5 8 L15 12.5 L16 18.5 L11 15.5 L6 18.5 L7 12.5 L2.5 8 L8.5 7.5 Z" fill="var(--primary)" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M6 9 Q6 3 11 3 Q16 3 16 9 L16 10 L6 10 Z" fill="var(--primary)" opacity="0.3" stroke="currentColor" strokeWidth="2" />
+        <path d="M4 10 L18 10" stroke="currentColor" strokeWidth="2.5" />
+        <line x1="11" y1="10" x2="11" y2="16" stroke="currentColor" strokeWidth="2" />
+        <circle cx="11" cy="17" r="1.5" fill="var(--primary)" />
       </svg>
     ),
-    text: "5-Star Rated",
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-        <path d="M13 2 L9 12 L14 12 L10 20" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="square" />
-      </svg>
-    ),
-    text: "Real-time Updates",
+    text: "Email + Push Alerts",
   },
   {
     icon: (
@@ -60,39 +47,56 @@ const trustBadges: TrustBadge[] = [
         <circle cx="11" cy="14" r="2" fill="var(--primary)" />
       </svg>
     ),
-    text: "Calendar Sync",
+    text: "Google Calendar Sync",
   },
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-        <path d="M6 9 Q6 3 11 3 Q16 3 16 9 L16 10 L6 10 Z" fill="var(--primary)" opacity="0.3" stroke="currentColor" strokeWidth="2" />
-        <path d="M4 10 L18 10" stroke="currentColor" strokeWidth="2.5" />
-        <line x1="11" y1="10" x2="11" y2="16" stroke="currentColor" strokeWidth="2" />
-        <circle cx="11" cy="17" r="1.5" fill="var(--primary)" />
+        <path d="M13 2 L9 12 L14 12 L10 20" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="square" />
       </svg>
     ),
-    text: "Smart Notifications",
+    text: "AI Case Assistant",
+  },
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <rect x="3" y="4" width="16" height="12" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M3 4 L11 11 L19 4" fill="none" stroke="var(--primary)" strokeWidth="2" />
+      </svg>
+    ),
+    text: "Weekly Deadline Digest",
+  },
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <line x1="4" y1="6" x2="18" y2="6" stroke="currentColor" strokeWidth="2" />
+        <line x1="4" y1="11" x2="18" y2="11" stroke="currentColor" strokeWidth="2" />
+        <line x1="4" y1="16" x2="18" y2="16" stroke="currentColor" strokeWidth="2" />
+        <circle cx="7" cy="6" r="2" fill="var(--primary)" />
+        <circle cx="13" cy="11" r="2" fill="var(--primary)" />
+        <circle cx="10" cy="16" r="2" fill="var(--primary)" />
+      </svg>
+    ),
+    text: "Visual Case Timeline",
+  },
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <path d="M11 2 L19 6 L19 12 Q19 18 11 20 Q3 18 3 12 L3 6 Z" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M7.5 11.5 L10 14 L15 8.5" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="square" />
+      </svg>
+    ),
+    text: "256-bit Encryption",
   },
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
         <rect x="4" y="3" width="14" height="16" fill="none" stroke="currentColor" strokeWidth="2" />
         <rect x="4" y="3" width="14" height="4" fill="var(--primary)" stroke="currentColor" strokeWidth="2" />
-        <line x1="7" y1="11" x2="15" y2="11" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
-        <line x1="7" y1="14" x2="13" y2="14" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
+        <path d="M8 12 L14 12 M11 12 L11 16 L14 16" fill="none" stroke="currentColor" strokeWidth="1.5" />
       </svg>
     ),
-    text: "Case Tracking",
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-        <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
-        <line x1="11" y1="6" x2="11" y2="11" stroke="currentColor" strokeWidth="2.5" />
-        <line x1="11" y1="11" x2="15" y2="13" stroke="var(--primary)" strokeWidth="2" />
-      </svg>
-    ),
-    text: "Auto Deadlines",
+    text: "CSV + JSON Export",
   },
 ];
 

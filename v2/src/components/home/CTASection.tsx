@@ -10,8 +10,7 @@
  */
 
 import Image from "next/image";
-import Link from "next/link";
-import { Rocket, Play, Loader2 } from "lucide-react";
+import { Rocket, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
@@ -104,16 +103,18 @@ export function CTASection() {
           </div>
 
           <div>
+            <p className="mb-3 font-mono text-sm text-black/60 uppercase tracking-wider">
+              The next filing window is already counting down.
+            </p>
             <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl">
               Stop Tracking Deadlines Manually
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-base text-black/70">
-              Set up in 2 minutes. Free forever. No credit card required.
+              No credit card required. Set up in under 5 minutes.
             </p>
           </div>
 
           <div className="mt-6 flex flex-col items-center gap-5">
-           <div className="flex flex-wrap justify-center gap-4">
             <MagneticButton>
               <Button
                 size="lg"
@@ -127,43 +128,9 @@ export function CTASection() {
                 ) : (
                   <Rocket className="mr-2 h-5 w-5" />
                 )}
-                Start Tracking Cases Free
+                Start Tracking Cases
               </Button>
             </MagneticButton>
-            <MagneticButton>
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-12 border-3 border-black bg-transparent px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] text-black transition-all duration-150 hover:bg-black hover:text-white hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-transparent dark:text-black dark:hover:bg-black dark:hover:text-white"
-                style={{ boxShadow: "4px 4px 0px #000" }}
-                onClick={() => navigateTo("/demo")}
-                disabled={isNavigating}
-              >
-                {isNavigating && targetPath === "/demo" ? (
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                ) : (
-                  <Play className="mr-2 h-5 w-5" />
-                )}
-                View Demo
-              </Button>
-            </MagneticButton>
-           </div>
-
-            {/* Content links */}
-            <p className="text-sm text-black/50">
-              Or explore:{" "}
-              <Link href="/guides/ultimate-perm-guide-2026" className="text-black/60 underline decoration-black/20 underline-offset-2 transition-colors hover:text-black/90 hover:decoration-black/50">
-                Ultimate PERM Guide
-              </Link>
-              {" · "}
-              <Link href="/tutorials/getting-started" className="text-black/60 underline decoration-black/20 underline-offset-2 transition-colors hover:text-black/90 hover:decoration-black/50">
-                Getting Started
-              </Link>
-              {" · "}
-              <Link href="/blog" className="text-black/60 underline decoration-black/20 underline-offset-2 transition-colors hover:text-black/90 hover:decoration-black/50">
-                Blog
-              </Link>
-            </p>
           </div>
         </ScrollReveal>
       </div>

@@ -42,7 +42,7 @@ export function DemoCTA() {
             {/* Feature highlights */}
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {[
-                { title: "Free to Use", desc: "No credit card required" },
+                { title: "No Credit Card", desc: "Get started immediately" },
                 { title: "2 Min Setup", desc: "Sign in with Google" },
                 { title: "AI Assistant", desc: "Ask questions in plain English" },
               ].map((item) => (
@@ -67,8 +67,11 @@ export function DemoCTA() {
               <span>AI-powered case management included</span>
             </div>
 
-            {/* CTA buttons */}
-            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            {/* CTA */}
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Your first case takes 2 minutes to set up.
+            </p>
+            <div className="mt-4 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <button
                 type="button"
                 className="inline-flex h-14 w-full items-center justify-center gap-2 border-3 border-border bg-primary px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-black shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none sm:w-auto"
@@ -80,18 +83,7 @@ export function DemoCTA() {
                 ) : (
                   <ArrowRight className="h-5 w-5" />
                 )}
-                Start Tracking Cases Free
-              </button>
-              <button
-                type="button"
-                className="inline-flex h-14 w-full items-center justify-center gap-2 border-3 border-border bg-background px-8 font-heading text-base font-bold uppercase tracking-[0.05em] shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg sm:w-auto"
-                onClick={() => navigateTo("/")}
-                disabled={isNavigating}
-              >
-                {isNavigating && targetPath === "/" ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : null}
-                Learn More
+                Start Tracking Cases
               </button>
             </div>
           </div>

@@ -243,10 +243,11 @@ export function DemoPageClient() {
                 Interactive Demo
               </div>
               <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-                See How PERM Tracker{" "}
+                See How Deadline{" "}
                 <span className="inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard">
-                  Works
-                </span>
+                  Tracking
+                </span>{" "}
+                Works
               </h1>
               <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
                 This is a fully interactive sandbox with 5 sample cases at different PERM stages.

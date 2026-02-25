@@ -1,0 +1,263 @@
+"use client";
+
+/**
+ * StakesSection Component
+ *
+ * Horizontal scrolling section showing what happens when PERM deadlines are missed.
+ * Repurposes JourneySection's scroll-snap + progress bar mechanic,
+ * but with warning-style red/orange cards instead of stage colors.
+ *
+ */
+
+import * as React from "react";
+import { AlertTriangle, ArrowRight, Shield } from "lucide-react";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
+
+interface StakeCard {
+  number: string;
+  title: string;
+  consequence: string;
+  prevention: string;
+  severity: "critical" | "high";
+}
+
+const stakes: StakeCard[] = [
+  {
+    number: "1",
+    title: "30-Day Audit Response",
+    consequence:
+      "Miss the DOL's 30-day audit window and the case is automatically abandoned. No extensions, no appeals. Start the entire process over.",
+    prevention:
+      "Auto-calculated deadline + alerts at 14, 7, 3, and 1 day before",
+    severity: "critical",
+  },
+  {
+    number: "2",
+    title: "PWD Expiration",
+    consequence:
+      "Your prevailing wage determination expires per 20 CFR 656.40. File after expiration and you restart from zero \u2014 months of waiting, wasted.",
+    prevention:
+      "Expiration auto-calculated from determination date using DOL rules",
+    severity: "critical",
+  },
+  {
+    number: "3",
+    title: "180-Day Filing Window",
+    consequence:
+      "The ETA 9089 must be filed 30\u2013180 days after recruitment ends and before PWD expires. Miss this window and recruitment must be redone.",
+    prevention:
+      "Filing window open/close dates computed from your recruitment dates",
+    severity: "high",
+  },
+  {
+    number: "4",
+    title: "I-140 Filing Deadline",
+    consequence:
+      "You have 180 days after PERM certification to file the I-140. Miss it and the approved labor certification expires.",
+    prevention:
+      "180-day deadline auto-set when certification date is entered",
+    severity: "high",
+  },
+  {
+    number: "5",
+    title: "Recruitment Timing",
+    consequence:
+      "Sunday ads, job orders, and notice of filing all have precise timing requirements. Documentation gaps trigger DOL audits.",
+    prevention:
+      "All recruitment method deadlines calculated with business day awareness",
+    severity: "high",
+  },
+];
+
+const severityColors = {
+  critical: "var(--urgency-urgent, #DC2626)",
+  high: "var(--urgency-soon, #EA580C)",
+};
+
+export function StakesSection() {
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = React.useState(0);
+  const rafRef = React.useRef<number | null>(null);
+
+  // Update progress on scroll
+  React.useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      if (rafRef.current !== null) return;
+
+      rafRef.current = requestAnimationFrame(() => {
+        const scrollLeft = container.scrollLeft;
+        const scrollWidth = container.scrollWidth - container.clientWidth;
+        const progress = scrollWidth > 0 ? (scrollLeft / scrollWidth) * 100 : 0;
+        setScrollProgress(progress);
+        rafRef.current = null;
+      });
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <section id="stakes" className="pt-12 pb-8 sm:pt-20 sm:pb-12 relative overflow-hidden">
+      {/* Header */}
+      <div className="mx-auto max-w-[1400px] px-4 pb-12 text-center sm:px-8">
+        <ScrollReveal direction="up">
+          <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            The Stakes
+          </div>
+          <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
+            What a Missed Deadline Actually Costs
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
+            Every PERM case has filing windows measured in days, not months. One
+            slip means starting over &mdash; or worse.
+          </p>
+        </ScrollReveal>
+      </div>
+
+      {/* Horizontal Scroll Container with Timeline BEHIND cards */}
+      <div className="relative w-full">
+        {/* Progress Timeline - positioned BEHIND cards */}
+        <div
+          className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-muted"
+          style={{ zIndex: 0 }}
+          aria-hidden="true"
+        >
+          <div
+            className="h-full transition-all duration-500 ease-out"
+            style={{
+              width: `${scrollProgress}%`,
+              background: `linear-gradient(90deg,
+                #DC2626 0%,
+                #DC2626 40%,
+                #EA580C 70%,
+                #EA580C 100%)`,
+            }}
+          />
+        </div>
+
+        {/* Cards container - scroll-snap with hidden scrollbar */}
+        <div
+          ref={scrollContainerRef}
+          className="scrollbar-hide relative flex gap-6 overflow-x-auto overscroll-x-none py-6 px-[max(1rem,calc((100vw-1400px)/2+2rem))] [&::-webkit-scrollbar]:hidden"
+          style={{
+            scrollSnapType: "x mandatory",
+            WebkitOverflowScrolling: "touch",
+            zIndex: 1,
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
+          }}
+        >
+          {stakes.map((stake) => (
+            <article
+              key={stake.title}
+              className="group relative flex-shrink-0 w-80 border-3 border-border bg-background overflow-hidden shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
+              style={{
+                scrollSnapAlign: "center",
+                borderLeftWidth: "6px",
+                borderLeftColor: severityColors[stake.severity],
+              }}
+            >
+              {/* Hazard tint at top */}
+              <div
+                className="absolute inset-x-0 top-0 h-24 opacity-[0.04]"
+                style={{
+                  background: `linear-gradient(to bottom, ${severityColors[stake.severity]}, transparent)`,
+                }}
+                aria-hidden="true"
+              />
+
+              {/* Subtle diagonal hazard stripes */}
+              <div
+                className="absolute top-0 right-0 h-16 w-16 opacity-[0.03]"
+                style={{
+                  background: `repeating-linear-gradient(
+                    -45deg,
+                    ${severityColors[stake.severity]},
+                    ${severityColors[stake.severity]} 3px,
+                    transparent 3px,
+                    transparent 8px
+                  )`,
+                }}
+                aria-hidden="true"
+              />
+
+              {/* Content */}
+              <div className="relative p-6">
+                {/* Number badge */}
+                <div
+                  className="absolute -top-0 right-5 flex h-10 w-10 items-center justify-center border-3 border-border font-heading text-lg font-bold shadow-hard-sm"
+                  style={{
+                    backgroundColor: severityColors[stake.severity],
+                    color: "#fff",
+                    top: "-1px",
+                  }}
+                >
+                  {stake.number}
+                </div>
+
+                {/* Warning icon */}
+                <div className="mb-4 flex h-[60px] items-center">
+                  <div className="transition-transform duration-500 group-hover:scale-110">
+                    <AlertTriangle
+                      className="h-12 w-12"
+                      style={{ color: severityColors[stake.severity] }}
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                </div>
+
+                {/* Title */}
+                <h3 className="mb-2 font-heading text-xl font-bold">
+                  {stake.title}
+                </h3>
+
+                {/* Consequence */}
+                <p className="mb-5 text-[15px] leading-relaxed text-muted-foreground">
+                  {stake.consequence}
+                </p>
+
+                {/* Prevention line */}
+                <div className="border-t-2 border-border pt-4">
+                  <div className="flex items-start gap-2">
+                    <Shield
+                      className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary"
+                    />
+                    <p className="text-xs font-semibold text-foreground leading-relaxed">
+                      PERM Tracker prevents this:{" "}
+                      <span className="font-normal text-muted-foreground">
+                        {stake.prevention}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      {/* Scroll hint + bottom CTA */}
+      <div className="flex flex-col items-center gap-4 pt-8">
+        <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          <span>Scroll to explore</span>
+          <ArrowRight className="h-4 w-4 scroll-hint-icon" />
+        </div>
+        <p className="text-sm text-muted-foreground text-center">
+          Every one of these deadlines is calculated automatically.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+export default StakesSection;

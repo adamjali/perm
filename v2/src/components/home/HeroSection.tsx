@@ -17,7 +17,7 @@
 
 import { useRef } from "react";
 import Image from "next/image";
-import { Loader2, Rocket, Play, Shield, Zap, Clock } from "lucide-react";
+import { Loader2, Rocket, Shield, Zap, Clock } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { MagneticButton } from "@/components/ui/magnetic-button";
@@ -121,21 +121,20 @@ export function HeroSection() {
             {/* Eyebrow with animated dot */}
             <div className="inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
               <span className="pulse-dot h-2 w-2 bg-primary" />
-              Free for Immigration Attorneys
+              PERM Deadline Management
             </div>
 
             {/* Headline with shimmer accent */}
             <h1 className="font-heading text-3xl font-black leading-[1.1] tracking-[-0.02em] sm:text-4xl lg:text-5xl xl:text-6xl">
-              Never Miss a PERM{" "}
+              Never Lose a Case to a{" "}
               <span className="hero-shimmer-text inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-                Deadline
-              </span>{" "}
-              Again
+                Missed Deadline
+              </span>
             </h1>
 
             {/* Subheadline */}
             <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              One missed filing window can kill a case. PERM Tracker auto-calculates every DOL deadline, sends reminders, and keeps your entire caseload organized — so you can focus on your clients, not spreadsheets.
+              PERM Tracker auto-calculates every filing window, PWD expiration, and audit response deadline &mdash; then alerts you before they hit.
             </p>
 
             {/* CTAs */}
@@ -152,23 +151,7 @@ export function HeroSection() {
                   ) : (
                     <Rocket className="mr-2 h-5 w-5" />
                   )}
-                  Start Tracking Cases Free
-                </Button>
-              </MagneticButton>
-              <MagneticButton>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="h-12 border-3 border-border bg-transparent px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] text-foreground shadow-hard transition-all duration-150 hover:bg-foreground hover:text-background hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:bg-[#404040] dark:border-[rgba(255,255,255,0.3)] dark:hover:bg-primary dark:hover:text-black dark:hover:border-primary"
-                  onClick={() => navigateTo("/demo")}
-                  disabled={isNavigating}
-                >
-                  {isNavigating && targetPath === "/demo" ? (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  ) : (
-                    <Play className="mr-2 h-5 w-5" />
-                  )}
-                  View Demo
+                  Start Tracking Cases
                 </Button>
               </MagneticButton>
             </div>
@@ -177,7 +160,7 @@ export function HeroSection() {
             <div className="flex flex-wrap gap-3 pt-2">
               <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
                 <Shield className="h-3.5 w-3.5 text-primary" />
-                20 CFR 656 Compliant
+                256-bit Encrypted
               </div>
               <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
                 <Zap className="h-3.5 w-3.5 text-primary" />
@@ -185,7 +168,7 @@ export function HeroSection() {
               </div>
               <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
                 <Clock className="h-3.5 w-3.5 text-primary" />
-                Set Up in 2 Minutes
+                11 Deadline Types Tracked
               </div>
             </div>
           </ScrollReveal>
@@ -259,8 +242,8 @@ export function HeroSection() {
                   <Shield className="h-4 w-4 text-black" />
                 </div>
                 <div>
-                  <div className="font-heading text-xs font-bold">100% Free</div>
-                  <div className="font-mono text-[10px] text-muted-foreground">No credit card</div>
+                  <div className="font-heading text-xs font-bold">No Credit Card</div>
+                  <div className="font-mono text-[10px] text-muted-foreground">Get started free</div>
                 </div>
               </div>
             </motion.div>
