@@ -26,10 +26,6 @@ function isRateLimitError(message: string): boolean {
   return /toomanyfailedattempts|rate limit|too many/i.test(message);
 }
 
-function isServerError(message: string): boolean {
-  return /server error/i.test(message);
-}
-
 export function LoginPageClient() {
   const { signIn } = useAuthActions();
   const recordMyLogin = useMutation(api.users.recordMyLogin);
