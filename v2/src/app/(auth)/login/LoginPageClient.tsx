@@ -110,11 +110,13 @@ export function LoginPageClient() {
       } else {
         // Server errors during signIn are typically InvalidAccountId
         // (e.g. Google-only user trying password login, or wrong email).
-        // Treat the same as invalid credentials — don't leak account existence.
+        // Suggest Google as alternative without leaking account existence.
         if (!/invalid|server error/i.test(message)) {
           console.warn("[Login] Unhandled error type:", message);
         }
-        toast.error("Invalid email or password. Please try again.");
+        toast.error(
+          "Invalid email or password. If you signed up with Google, use the Google button below."
+        );
       }
     } finally {
       setIsLoading(false);
