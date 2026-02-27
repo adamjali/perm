@@ -26,7 +26,16 @@ if (posthogKey) {
     before_send: (event) => {
       if (!event) return event;
       if (event.event === "$exception") {
-        const msg = (event.properties?.$exception_message || "") as string;
+        // Build a single string from all exception message sources for filtering.
+        // PostHog stores messages in $exception_message AND/OR $exception_list[].value
+        const exList = event.properties?.$exception_list as
+          | Array<{ value?: string }>
+          | undefined;
+        const msg = [
+          event.properties?.$exception_message || "",
+          ...(exList || []).map((e) => e.value || ""),
+        ].join(" ");
+
         // Stale deployment — normal during deploys, error boundaries reload the page
         if (
           msg.includes("Server Action") &&

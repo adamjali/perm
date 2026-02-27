@@ -55,6 +55,8 @@ export function SentryClientInit() {
           // Deployment cache mismatch — client has stale Server Action hashes
           "Server Action",
           "UnrecognizedActionError",
+          // Browser extension parsing JSON-LD structured data (not app code)
+          /@context.*toLowerCase/,
         ],
         tracesSampler: (samplingContext) => {
           if (samplingContext.name?.includes("/api/health")) return 0;
