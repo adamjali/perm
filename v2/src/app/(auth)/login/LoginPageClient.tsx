@@ -111,10 +111,11 @@ export function LoginPageClient() {
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
-      } else if (isServerError(message)) {
-        toast.error("Something went wrong on our end. Please try again or contact support.");
       } else {
-        if (!/invalid/i.test(message)) {
+        // Server errors during signIn are typically InvalidAccountId
+        // (e.g. Google-only user trying password login, or wrong email).
+        // Treat the same as invalid credentials — don't leak account existence.
+        if (!/invalid|server error/i.test(message)) {
           console.warn("[Login] Unhandled error type:", message);
         }
         toast.error("Invalid email or password. Please try again.");
