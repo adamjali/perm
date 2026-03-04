@@ -57,6 +57,11 @@ export function SentryClientInit() {
           "UnrecognizedActionError",
           // Browser extension parsing JSON-LD structured data (not app code)
           /@context.*toLowerCase/,
+          // Browser extension mutating DOM → React reconciler insertBefore fails
+          /insertBefore.*not a child/,
+          // Network/deploy: stale chunk hashes, timeouts
+          "ChunkLoadError",
+          /Loading chunk.*failed/,
         ],
         tracesSampler: (samplingContext) => {
           if (samplingContext.name?.includes("/api/health")) return 0;

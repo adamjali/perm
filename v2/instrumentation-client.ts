@@ -47,6 +47,17 @@ if (posthogKey) {
         if (msg.includes("@context") && msg.includes("toLowerCase")) {
           return null;
         }
+        // Browser extension mutating DOM → React reconciler fails (not app code)
+        if (msg.includes("insertBefore") && msg.includes("not a child")) {
+          return null;
+        }
+        // Network/deploy: chunk load failures, timeouts, stale hashes
+        if (/ChunkLoadError|Loading chunk.*failed/i.test(msg)) {
+          return null;
+        }
+        if (/Load failed|Failed to fetch/i.test(msg)) {
+          return null;
+        }
       }
       return event;
     },
