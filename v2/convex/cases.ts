@@ -958,7 +958,14 @@ export const update = mutation({
     // Recalculate derived dates based on merged data
     const derivedDates = calculateDerivedDates(mergedData);
 
-    // Validate merged case data before updating
+    // Skip full validation for status-only updates (archive/close/reopen).
+    // Every other status-change path (bulkUpdateStatus, reopenCase, deadlineEnforcement)
+    // already skips validation — this brings cases:update in line.
+    const STATUS_ONLY_FIELDS = new Set(["caseStatus", "progressStatus", "progressStatusOverride"]);
+    const updateKeys = Object.keys(rawUpdates);
+    const isStatusOnlyUpdate = updateKeys.length > 0 && updateKeys.every((k) => STATUS_ONLY_FIELDS.has(k));
+
+    // Merge case data (always needed for auto-status calculation)
     const fullCaseData = {
       // PWD dates
       pwdFilingDate: resolve(args.pwdFilingDate, caseDoc!.pwdFilingDate),
@@ -990,13 +997,15 @@ export const update = mutation({
       caseStatus: args.caseStatus ?? caseDoc!.caseStatus,
       progressStatus: args.progressStatus ?? caseDoc!.progressStatus,
     };
-    const validationInput = mapToValidatorFormat(fullCaseData);
-    const validationResult = validateCase(validationInput);
-    if (!validationResult.valid) {
-      const errorMessages = validationResult.errors
-        .map((e) => `[${e.ruleId}] ${e.field}: ${e.message}`)
-        .join('; ');
-      throw new ConvexError(`Validation failed: ${errorMessages}`);
+    if (!isStatusOnlyUpdate) {
+      const validationInput = mapToValidatorFormat(fullCaseData);
+      const validationResult = validateCase(validationInput);
+      if (!validationResult.valid) {
+        const errorMessages = validationResult.errors
+          .map((e) => `[${e.ruleId}] ${e.field}: ${e.message}`)
+          .join('; ');
+        throw new ConvexError(`Validation failed: ${errorMessages}`);
+      }
     }
 
     // Auto-calculate status from merged dates unless explicitly overridden
