@@ -119,6 +119,8 @@ export interface CaseListPagination {
   readonly pageSize: number;
   readonly totalCount: number;
   readonly totalPages: number;
+  /** Total non-deleted cases for the user, ignoring all filters. Used to distinguish "new user" from "filters hide everything". */
+  readonly totalUnfilteredCount: number;
   /** @internal Brand to prevent direct construction */
   readonly [CaseListPaginationBrand]: true;
 }
@@ -130,6 +132,7 @@ export function createCaseListPagination(params: {
   page: number;
   pageSize: number;
   totalCount: number;
+  totalUnfilteredCount?: number;
 }): CaseListPagination {
   const totalPages = params.totalCount === 0 ? 0 : Math.ceil(params.totalCount / params.pageSize);
 
@@ -138,6 +141,7 @@ export function createCaseListPagination(params: {
     pageSize: params.pageSize,
     totalCount: params.totalCount,
     totalPages,
+    totalUnfilteredCount: params.totalUnfilteredCount ?? params.totalCount,
   } as CaseListPagination;
 }
 

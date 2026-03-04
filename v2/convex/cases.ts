@@ -2733,6 +2733,7 @@ export const listFiltered = query({
 
     // 3. Filter out soft-deleted cases
     let filteredCases = allCases.filter((c) => c.deletedAt === undefined);
+    const totalUnfilteredCount = filteredCases.length;
 
     // 4. Apply status filter
     if (args.status !== undefined) {
@@ -2800,6 +2801,7 @@ export const listFiltered = query({
         page,
         pageSize,
         totalCount,
+        totalUnfilteredCount,
       }),
     };
   },

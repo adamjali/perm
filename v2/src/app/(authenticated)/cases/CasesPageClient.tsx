@@ -965,9 +965,9 @@ export function CasesPageClient() {
   // EMPTY STATES
   // ============================================================================
 
-  // No cases at all (new user) - check if no filters are set and no results
-  const hasNoFilters = !filters.status && !filters.progressStatus && !filters.searchQuery && !filters.favoritesOnly && !filters.duplicatesOnly;
-  if (caseListData.cases.length === 0 && hasNoFilters) {
+  // No cases at all (truly new user) — use totalUnfilteredCount to distinguish
+  // "new user with 0 cases" from "has cases but filters (incl. activeOnly) hide them all"
+  if (caseListData.pagination.totalUnfilteredCount === 0) {
     return <NewUserEmptyState onAddCase={handleAddCase} isAddingCase={isAddingCase} />;
   }
 
