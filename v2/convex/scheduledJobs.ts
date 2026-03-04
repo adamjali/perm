@@ -59,6 +59,21 @@ import {
 } from "./lib/digestHelpers";
 import { purgeAllUserData } from "./lib/deletion";
 import { DEFAULT_NOTIFICATION_PREFS } from "./lib/userDefaults";
+import {
+  checkDeadlineViolations,
+  generateClosureTitle,
+  generateClosureMessage,
+  type CaseDataForEnforcement,
+  type ViolationType,
+} from "./lib/deadlineEnforcementHelpers";
+
+/** Map ViolationType → DeadlineNotificationType for email formatting */
+const VIOLATION_TO_DEADLINE_TYPE: Record<ViolationType, DeadlineNotificationType> = {
+  pwd_expired: "pwd_expiration",
+  recruitment_window_missed: "recruitment_window",
+  filing_window_missed: "filing_window_closes",
+  eta9089_expired: "eta9089_expiration",
+};
 
 // ============================================================================
 // TYPES
@@ -1130,5 +1145,206 @@ export const cleanupExpiredConversations = internalMutation({
     }
 
     return { deleted, hasMore };
+  },
+});
+
+// ============================================================================
+// DEADLINE ENFORCEMENT (daily cron)
+// ============================================================================
+
+/**
+ * Get users who have auto deadline enforcement enabled.
+ * Returns only active, verified users with enforcement ON.
+ */
+export const getUsersForDeadlineEnforcement = internalQuery({
+  args: {},
+  handler: async (ctx): Promise<Array<{
+    userId: Id<"users">;
+    email: string;
+    profile: Doc<"userProfiles">;
+  }>> => {
+    const profiles = await ctx.db
+      .query("userProfiles")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("deletedAt"), undefined),
+          q.eq(q.field("autoDeadlineEnforcementEnabled"), true)
+        )
+      )
+      .collect();
+
+    const results: Array<{
+      userId: Id<"users">;
+      email: string;
+      profile: Doc<"userProfiles">;
+    }> = [];
+
+    const verifiedUserIds = await getVerifiedUserIds(ctx);
+
+    for (const profile of profiles) {
+      const user = await ctx.db.get(profile.userId);
+      if (user?.email && !user.deletedAt && verifiedUserIds.has(profile.userId)) {
+        results.push({
+          userId: profile.userId,
+          email: user.email,
+          profile,
+        });
+      }
+    }
+
+    return results;
+  },
+});
+
+/**
+ * Get all active (non-deleted, non-closed) cases for a user.
+ * Used by the daily deadline enforcement cron.
+ */
+export const getActiveCasesForEnforcement = internalQuery({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, { userId }) => {
+    const cases = await ctx.db
+      .query("cases")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .collect();
+
+    return cases.filter(
+      (c) => c.deletedAt === undefined && c.caseStatus !== "closed"
+    );
+  },
+});
+
+/**
+ * Daily deadline enforcement cron job.
+ *
+ * Checks all active cases for users with enforcement enabled. Closes cases
+ * with deadline violations, creates notifications, and sends emails.
+ *
+ * The login-triggered checkAndEnforceDeadlines mutation remains as a same-day
+ * fallback — it naturally no-ops for already-closed cases.
+ *
+ * Per-user error isolation: one user failing does not block others.
+ * Email staggering: 1s per email to stay under Resend rate limits.
+ */
+export const enforceDeadlinesForAllUsers = internalAction({
+  args: {},
+  handler: async (ctx): Promise<{ processed: number; closed: number; skipped: number }> => {
+    const users = await ctx.runQuery(
+      internal.scheduledJobs.getUsersForDeadlineEnforcement
+    );
+
+    let processed = 0;
+    let closed = 0;
+    let skipped = 0;
+    let emailIndex = 0;
+
+    for (const { userId, email, profile } of users) {
+      let step = "initializing";
+      try {
+        step = "fetching active cases";
+        const activeCases = await ctx.runQuery(
+          internal.scheduledJobs.getActiveCasesForEnforcement,
+          { userId }
+        );
+
+        const userTimezone = profile.timezone || DEFAULT_USER_TIMEZONE;
+        const now = Date.now();
+
+        step = "processing cases";
+        for (const caseDoc of activeCases) {
+          const caseData: CaseDataForEnforcement = {
+            caseStatus: caseDoc.caseStatus,
+            deletedAt: caseDoc.deletedAt,
+            pwdExpirationDate: caseDoc.pwdExpirationDate,
+            recruitmentStartDate: caseDoc.recruitmentStartDate,
+            recruitmentWindowCloses: caseDoc.recruitmentWindowCloses,
+            filingWindowCloses: caseDoc.filingWindowCloses,
+            eta9089FilingDate: caseDoc.eta9089FilingDate,
+            eta9089CertificationDate: caseDoc.eta9089CertificationDate,
+            eta9089ExpirationDate: caseDoc.eta9089ExpirationDate,
+            i140FilingDate: caseDoc.i140FilingDate,
+          };
+
+          const violation = checkDeadlineViolations(caseData, undefined, userTimezone);
+          if (!violation || violation.suggestedAction !== "close") continue;
+
+          step = `closing case ${caseDoc._id}`;
+          const title = generateClosureTitle(violation);
+          const message = generateClosureMessage(
+            violation,
+            caseDoc.employerName,
+            caseDoc.beneficiaryIdentifier ?? ""
+          );
+
+          const notificationId = await ctx.runMutation(
+            internal.deadlineEnforcement.closeCaseAndNotify,
+            {
+              caseId: caseDoc._id,
+              userId,
+              title,
+              message,
+              violationType: violation.type,
+              closedAt: now,
+            }
+          );
+
+          closed++;
+
+          // Schedule email (auto-closure bypasses quiet hours — critical notification)
+          const userPrefs = buildUserPrefs(profile);
+          if (shouldSendEmail("auto_closure", "urgent", userPrefs)) {
+            const delayMs = emailIndex * 1000;
+            await ctx.scheduler.runAfter(
+              delayMs,
+              internal.notificationActions.sendAutoClosureEmail,
+              {
+                notificationId,
+                to: email,
+                beneficiaryName: caseDoc.beneficiaryIdentifier || "Beneficiary",
+                companyName: caseDoc.employerName,
+                violationType: formatDeadlineType(
+                  VIOLATION_TO_DEADLINE_TYPE[violation.type]
+                ),
+                reason: violation.reason,
+                closedAt: new Date(now).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+                caseId: caseDoc._id.toString(),
+                caseNumber: caseDoc.internalCaseNumber,
+              }
+            );
+            emailIndex++;
+          }
+        }
+
+        processed++;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        log.error("Deadline enforcement failed for user", {
+          resourceId: userId,
+          step,
+          error: errorMessage,
+        });
+        await recordError(
+          ctx,
+          "cron",
+          "scheduledJobs.enforceDeadlinesForAllUsers",
+          error,
+          { userId, extra: step }
+        );
+        skipped++;
+      }
+    }
+
+    if (closed > 0 || skipped > 0) {
+      log.info("Deadline enforcement cron complete", { processed, closed, skipped });
+    }
+    return { processed, closed, skipped };
   },
 });

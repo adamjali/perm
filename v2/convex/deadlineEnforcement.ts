@@ -11,7 +11,7 @@
  * @module
  */
 
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id, Doc } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
@@ -205,12 +205,7 @@ export const checkAndEnforceDeadlines = mutation({
         // Schedule auto-closure email
         // Auto-closure emails ALWAYS send if master switch is enabled (critical notification)
         try {
-          const userProfile = await ctx.db
-            .query("userProfiles")
-            .withIndex("by_user_id", (q) => q.eq("userId", userId))
-            .first();
-
-          if (shouldSendEmail("auto_closure", "urgent", buildUserNotificationPrefs(userProfile))) {
+          if (shouldSendEmail("auto_closure", "urgent", buildUserNotificationPrefs(profile))) {
             // Get user email from users table
             const user = await ctx.db.get(userId);
             if (user?.email) {
@@ -425,5 +420,54 @@ export const isEnforcementEnabled = query({
       .unique();
 
     return profile?.autoDeadlineEnforcementEnabled ?? false;
+  },
+});
+
+// ============================================================================
+// INTERNAL MUTATIONS (for cron job)
+// ============================================================================
+
+/**
+ * Close a case and create its auto-closure notification.
+ * Called by the daily enforcement cron (enforceDeadlinesForAllUsers action).
+ * Returns the notification ID for email scheduling.
+ */
+export const closeCaseAndNotify = internalMutation({
+  args: {
+    caseId: v.id("cases"),
+    userId: v.id("users"),
+    title: v.string(),
+    message: v.string(),
+    violationType: v.union(
+      v.literal("pwd_expired"),
+      v.literal("recruitment_window_missed"),
+      v.literal("filing_window_missed"),
+      v.literal("eta9089_expired"),
+    ),
+    closedAt: v.number(),
+  },
+  handler: async (ctx, args): Promise<Id<"notifications">> => {
+    // Close the case
+    await ctx.db.patch(args.caseId, {
+      caseStatus: "closed" as const,
+      closureReason: args.violationType,
+      closedAt: args.closedAt,
+      updatedAt: args.closedAt,
+    });
+
+    // Create notification
+    return await ctx.db.insert("notifications", {
+      userId: args.userId,
+      caseId: args.caseId,
+      type: "auto_closure",
+      title: args.title,
+      message: args.message,
+      priority: "urgent",
+      deadlineType: args.violationType,
+      isRead: false,
+      emailSent: false,
+      createdAt: args.closedAt,
+      updatedAt: args.closedAt,
+    });
   },
 });

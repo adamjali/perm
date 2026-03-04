@@ -1,7 +1,8 @@
 /**
  * Convex Cron Jobs Configuration
  *
- * Scheduled jobs (6 total):
+ * Scheduled jobs (7 total):
+ * - Daily deadline enforcement (6 AM EST / 10:00 UTC)
  * - Daily deadline reminder checks (9 AM EST / 14:00 UTC)
  * - Hourly cleanup of old read notifications (90+ days, at :30)
  * - Weekly digest emails (Mondays at 9 AM EST / 14:00 UTC)
@@ -43,6 +44,27 @@ crons.daily(
   "deadline-reminders",
   { hourUTC: 14, minuteUTC: 0 },
   internal.scheduledJobs.checkDeadlineReminders
+);
+
+// ============================================================================
+// DEADLINE ENFORCEMENT
+// ============================================================================
+
+/**
+ * Daily deadline enforcement at 6 AM EST (10:00 UTC)
+ *
+ * Closes cases with deadline violations for users who have
+ * autoDeadlineEnforcementEnabled = true. Creates notifications and
+ * sends auto-closure emails immediately (not waiting for user login).
+ *
+ * Runs before US business hours so enforcement is complete before users
+ * log in. The login-triggered checkAndEnforceDeadlines mutation remains
+ * as a same-day fallback — it naturally no-ops for already-closed cases.
+ */
+crons.daily(
+  "deadline-enforcement",
+  { hourUTC: 10, minuteUTC: 0 },
+  internal.scheduledJobs.enforceDeadlinesForAllUsers
 );
 
 // ============================================================================
