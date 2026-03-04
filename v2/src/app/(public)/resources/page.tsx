@@ -26,10 +26,9 @@ export const metadata: Metadata = {
 export default function ResourcesPage() {
   const posts = getAllPosts("resources");
   const tags = getAllTags("resources");
-  const schemas = [
-    generateItemListSchema(posts, "resources"),
-    generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "Resources", href: "/resources" }]),
-  ];
+  const { '@context': _1, ...itemList } = generateItemListSchema(posts, "resources");
+  const { '@context': _2, ...breadcrumb } = generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "Resources", href: "/resources" }]);
+  const schemas = { '@context': 'https://schema.org', '@graph': [itemList, breadcrumb] };
 
   return (
     <>

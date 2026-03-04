@@ -125,12 +125,16 @@ export default async function RootLayout({
   // Generate structured data for SEO (static data, not user input - safe for JSON-LD)
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+  // Strip per-schema @context — the @graph wrapper provides it once
+  const { '@context': _1, ...software } = getSoftwareApplicationSchema(baseUrl);
+  const { '@context': _2, ...org } = getOrganizationSchema(baseUrl);
+  const { '@context': _3, ...website } = getWebSiteSchema(baseUrl);
   const structuredData = {
     '@context': 'https://schema.org',
     '@graph': [
-      { ...getSoftwareApplicationSchema(baseUrl), '@id': `${baseUrl}/#software` },
-      { ...getOrganizationSchema(baseUrl), '@id': `${baseUrl}/#organization` },
-      { ...getWebSiteSchema(baseUrl), '@id': `${baseUrl}/#website` },
+      { ...software, '@id': `${baseUrl}/#software` },
+      { ...org, '@id': `${baseUrl}/#organization` },
+      { ...website, '@id': `${baseUrl}/#website` },
     ],
   };
 

@@ -28,11 +28,12 @@ export const metadata: Metadata = {
 
 export default function ChangelogPage() {
   const posts = getAllPosts("changelog");
-  const breadcrumbSchema = generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "Changelog", href: "/changelog" }]);
+  const { '@context': _1, ...breadcrumb } = generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "Changelog", href: "/changelog" }]);
+  const schemas = { '@context': 'https://schema.org', '@graph': [breadcrumb] };
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <ContentHero type="changelog" postCount={posts.length} />
       <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
         <ChangelogTimeline posts={posts} />

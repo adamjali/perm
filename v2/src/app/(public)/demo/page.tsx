@@ -40,10 +40,11 @@ export const metadata: Metadata = {
 };
 
 export default function DemoPage() {
-  const breadcrumb = generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "Demo", href: "/demo" }]);
+  const { '@context': _1, ...breadcrumb } = generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "Demo", href: "/demo" }]);
+  const schemas = { '@context': 'https://schema.org', '@graph': [breadcrumb] };
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <DemoPageClient />
     </>
   );

@@ -89,7 +89,7 @@ export function getWebSiteSchema(baseUrl: string) {
 
 /**
  * Generate FAQPage schema for rich results
- * Used on the homepage to surface FAQ answers in search
+ * Used on pages with FAQ content (homepage, /faq) to surface answers in search
  */
 export function getFAQPageSchema(faqs: { question: string; answer: string }[]) {
   return {

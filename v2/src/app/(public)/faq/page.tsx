@@ -115,10 +115,9 @@ const faqData = [
 const allFAQs = faqData.flatMap((section) => section.items);
 
 export default function FAQPage() {
-  const schemas = [
-    getFAQPageSchema(allFAQs),
-    generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "FAQ", href: "/faq" }]),
-  ];
+  const { '@context': _1, ...faqSchema } = getFAQPageSchema(allFAQs);
+  const { '@context': _2, ...breadcrumb } = generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "FAQ", href: "/faq" }]);
+  const schemas = { '@context': 'https://schema.org', '@graph': [faqSchema, breadcrumb] };
 
   return (
     <>

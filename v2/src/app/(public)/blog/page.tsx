@@ -29,14 +29,12 @@ export const metadata: Metadata = {
 export default function BlogPage() {
   const posts = getAllPosts("blog");
   const tags = getAllTags("blog");
-  // Server-generated from trusted content data (not user input) — safe for JSON-LD
-  const schemas = [
-    generateItemListSchema(posts, "blog"),
-    generateBreadcrumbSchema([
-      { name: "Home", href: "/" },
-      { name: "Blog", href: "/blog" },
-    ]),
-  ];
+  const { '@context': _1, ...itemList } = generateItemListSchema(posts, "blog");
+  const { '@context': _2, ...breadcrumb } = generateBreadcrumbSchema([
+    { name: "Home", href: "/" },
+    { name: "Blog", href: "/blog" },
+  ]);
+  const schemas = { '@context': 'https://schema.org', '@graph': [itemList, breadcrumb] };
 
   return (
     <>
