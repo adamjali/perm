@@ -2,9 +2,11 @@
  * Deadline Enforcement Mutations & Queries
  *
  * Provides automatic deadline enforcement functionality:
- * - Check and enforce deadlines on login
- * - Query for auto-closure alerts
- * - Dismiss alerts
+ * - Check and enforce deadlines on login (mutation)
+ * - Close case + notify for cron-based enforcement (internalMutation)
+ * - Query for auto-closure alerts (query)
+ * - Dismiss alerts — single or all (mutations)
+ * - Check if enforcement is enabled (query)
  *
  * @see ./lib/deadlineEnforcementHelpers.ts - Pure enforcement logic
  * @see /perm_flow.md - Source of truth for business rules
@@ -13,17 +15,17 @@
 
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-import type { Id, Doc } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import {
   checkDeadlineViolations,
   generateClosureMessage,
   generateClosureTitle,
-  type CaseDataForEnforcement,
+  mapCaseToEnforcementData,
+  VIOLATION_TO_DEADLINE_TYPE,
 } from "./lib/deadlineEnforcementHelpers";
-import { shouldSendEmail, formatDeadlineType, buildUserNotificationPrefs, type DeadlineNotificationType } from "./lib/notificationHelpers";
-import { type ViolationType } from "./lib/deadlineEnforcementHelpers";
+import { shouldSendEmail, formatDeadlineType, buildUserNotificationPrefs } from "./lib/notificationHelpers";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
 import { DEFAULT_USER_TIMEZONE } from "./lib/perm/deadlines/timezones";
@@ -70,48 +72,8 @@ export interface AutoClosureAlert {
 // HELPER FUNCTIONS
 // ============================================================================
 
-/**
- * Convert ViolationType to DeadlineNotificationType for formatting.
- *
- * ViolationType (from deadlineEnforcementHelpers):
- *   - pwd_expired, recruitment_window_missed, filing_window_missed, eta9089_expired
- *
- * DeadlineNotificationType (from notificationHelpers):
- *   - pwd_expiration, rfi_due, rfe_due, filing_window_opens, recruitment_window,
- *     eta9089_expiration, i140_filing_deadline
- *
- * @param violationType - The violation type from deadline enforcement
- * @returns Corresponding DeadlineNotificationType for formatting
- */
-function violationTypeToDeadlineType(violationType: ViolationType): DeadlineNotificationType {
-  const mapping: Record<ViolationType, DeadlineNotificationType> = {
-    pwd_expired: "pwd_expiration",
-    recruitment_window_missed: "recruitment_window",
-    filing_window_missed: "filing_window_closes",
-    eta9089_expired: "eta9089_expiration",
-  };
-  return mapping[violationType];
-}
-
-/**
- * Map a case document to the enforcement check format.
- */
-function mapCaseToEnforcementData(
-  caseDoc: Doc<"cases">
-): CaseDataForEnforcement {
-  return {
-    caseStatus: caseDoc.caseStatus,
-    deletedAt: caseDoc.deletedAt,
-    pwdExpirationDate: caseDoc.pwdExpirationDate,
-    recruitmentStartDate: caseDoc.recruitmentStartDate,
-    recruitmentWindowCloses: caseDoc.recruitmentWindowCloses,
-    filingWindowCloses: caseDoc.filingWindowCloses,
-    eta9089FilingDate: caseDoc.eta9089FilingDate,
-    eta9089CertificationDate: caseDoc.eta9089CertificationDate,
-    eta9089ExpirationDate: caseDoc.eta9089ExpirationDate,
-    i140FilingDate: caseDoc.i140FilingDate,
-  };
-}
+// violationTypeToDeadlineType and mapCaseToEnforcementData now imported from
+// ./lib/deadlineEnforcementHelpers (VIOLATION_TO_DEADLINE_TYPE, mapCaseToEnforcementData)
 
 // ============================================================================
 // MUTATIONS
@@ -214,7 +176,7 @@ export const checkAndEnforceDeadlines = mutation({
                 to: user.email,
                 beneficiaryName: caseDoc.beneficiaryIdentifier || "Beneficiary",
                 companyName: caseDoc.employerName,
-                violationType: formatDeadlineType(violationTypeToDeadlineType(violation.type)),
+                violationType: formatDeadlineType(VIOLATION_TO_DEADLINE_TYPE[violation.type]),
                 reason: violation.reason,
                 closedAt: new Date(now).toLocaleDateString("en-US", {
                   year: "numeric",
@@ -430,7 +392,10 @@ export const isEnforcementEnabled = query({
 /**
  * Close a case and create its auto-closure notification.
  * Called by the daily enforcement cron (enforceDeadlinesForAllUsers action).
- * Returns the notification ID for email scheduling.
+ * Returns the notification ID for email scheduling, or null if already handled.
+ *
+ * Security: No ownership verification — caller must ensure authorization.
+ * Internal-only (not exposed to client).
  */
 export const closeCaseAndNotify = internalMutation({
   args: {
@@ -446,16 +411,20 @@ export const closeCaseAndNotify = internalMutation({
     ),
     closedAt: v.number(),
   },
-  handler: async (ctx, args): Promise<Id<"notifications">> => {
-    // Close the case
+  handler: async (ctx, args): Promise<Id<"notifications"> | null> => {
+    // Idempotency guard: skip if already closed or deleted (race with login-triggered enforcement)
+    const caseDoc = await ctx.db.get(args.caseId);
+    if (!caseDoc || caseDoc.caseStatus === "closed" || caseDoc.deletedAt !== undefined) {
+      return null;
+    }
+
     await ctx.db.patch(args.caseId, {
-      caseStatus: "closed" as const,
+      caseStatus: "closed",
       closureReason: args.violationType,
       closedAt: args.closedAt,
       updatedAt: args.closedAt,
     });
 
-    // Create notification
     return await ctx.db.insert("notifications", {
       userId: args.userId,
       caseId: args.caseId,

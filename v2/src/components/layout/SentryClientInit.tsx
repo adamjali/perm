@@ -110,9 +110,9 @@ export function SentryClientInit() {
     };
 
     if ("requestIdleCallback" in window) {
-      window.requestIdleCallback(() => init(), { timeout: 5000 });
+      window.requestIdleCallback(() => { init().catch(console.error); }, { timeout: 5000 });
     } else {
-      setTimeout(init, 100);
+      setTimeout(() => { init().catch(console.error); }, 100);
     }
   }, []);
 

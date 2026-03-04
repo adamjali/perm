@@ -699,6 +699,13 @@ export const create = mutation({
   },
 });
 
+/** Fields that represent status-only changes (skip full validation). */
+const STATUS_ONLY_FIELDS = new Set([
+  "caseStatus",
+  "progressStatus",
+  "progressStatusOverride",
+]);
+
 /**
  * Update an existing case
  * Verifies ownership before allowing updates
@@ -961,7 +968,6 @@ export const update = mutation({
     // Skip full validation for status-only updates (archive/close/reopen).
     // Every other status-change path (bulkUpdateStatus, reopenCase, deadlineEnforcement)
     // already skips validation — this brings cases:update in line.
-    const STATUS_ONLY_FIELDS = new Set(["caseStatus", "progressStatus", "progressStatusOverride"]);
     const updateKeys = Object.keys(rawUpdates);
     const isStatusOnlyUpdate = updateKeys.length > 0 && updateKeys.every((k) => STATUS_ONLY_FIELDS.has(k));
 

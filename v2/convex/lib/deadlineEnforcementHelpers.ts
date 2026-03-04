@@ -31,6 +31,9 @@ import {
 // Re-export for backwards compatibility
 export { getTodayISO };
 
+// Re-export type for shared mapping
+import type { DeadlineNotificationType } from "./notificationHelpers";
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -40,6 +43,14 @@ export const MIN_DAYS_FOR_RESTART = 60;
 
 /** Days for ETA 9089 certification validity (I-140 must file within this) */
 export const ETA9089_VALIDITY_DAYS = 180;
+
+/** Map ViolationType to DeadlineNotificationType for email formatting. Single source of truth. */
+export const VIOLATION_TO_DEADLINE_TYPE: Record<ViolationType, DeadlineNotificationType> = {
+  pwd_expired: "pwd_expiration",
+  recruitment_window_missed: "recruitment_window",
+  filing_window_missed: "filing_window_closes",
+  eta9089_expired: "eta9089_expiration",
+};
 
 // ============================================================================
 // TYPES
@@ -97,6 +108,27 @@ export interface CaseDataForEnforcement {
 
   // I-140 phase
   i140FilingDate?: string | null;
+}
+
+/**
+ * Map a case document to the enforcement check format.
+ * Accepts any object with these optional fields (e.g., Doc<"cases">).
+ */
+export function mapCaseToEnforcementData(
+  caseDoc: CaseDataForEnforcement & Record<string, unknown>
+): CaseDataForEnforcement {
+  return {
+    caseStatus: caseDoc.caseStatus,
+    deletedAt: caseDoc.deletedAt,
+    pwdExpirationDate: caseDoc.pwdExpirationDate,
+    recruitmentStartDate: caseDoc.recruitmentStartDate,
+    recruitmentWindowCloses: caseDoc.recruitmentWindowCloses,
+    filingWindowCloses: caseDoc.filingWindowCloses,
+    eta9089FilingDate: caseDoc.eta9089FilingDate,
+    eta9089CertificationDate: caseDoc.eta9089CertificationDate,
+    eta9089ExpirationDate: caseDoc.eta9089ExpirationDate,
+    i140FilingDate: caseDoc.i140FilingDate,
+  };
 }
 
 // ============================================================================

@@ -14,8 +14,9 @@
  * Never expose scheduled job handlers to the public API.
  *
  * Time Reference:
- * - EST = UTC - 5 hours (standard time)
- * - 9 AM EST = 14:00 UTC
+ * - EST (Nov–Mar) = UTC - 5 hours | EDT (Mar–Nov) = UTC - 4 hours
+ * - 9 AM EST = 14:00 UTC | 9 AM EDT = 13:00 UTC
+ * - Cron times are fixed UTC; local wall-clock shifts with DST
  *
  * @see https://docs.convex.dev/scheduling/cron-jobs
  * @module

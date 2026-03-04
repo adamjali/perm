@@ -55,7 +55,7 @@ if (posthogKey) {
         if (/ChunkLoadError|Loading chunk.*failed/i.test(msg)) {
           return null;
         }
-        if (/Load failed|Failed to fetch/i.test(msg)) {
+        if (/^(Load failed|Failed to fetch)$/i.test(msg.trim())) {
           return null;
         }
       }

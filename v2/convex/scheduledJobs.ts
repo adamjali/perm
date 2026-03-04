@@ -36,6 +36,7 @@ import {
   calculatePriority,
   formatDeadlineType,
   shouldSendEmail,
+  buildUserNotificationPrefs,
   type NotificationType,
   type DeadlineNotificationType,
   type UserNotificationPrefs,
@@ -63,17 +64,9 @@ import {
   checkDeadlineViolations,
   generateClosureTitle,
   generateClosureMessage,
-  type CaseDataForEnforcement,
-  type ViolationType,
+  mapCaseToEnforcementData,
+  VIOLATION_TO_DEADLINE_TYPE,
 } from "./lib/deadlineEnforcementHelpers";
-
-/** Map ViolationType → DeadlineNotificationType for email formatting */
-const VIOLATION_TO_DEADLINE_TYPE: Record<ViolationType, DeadlineNotificationType> = {
-  pwd_expired: "pwd_expiration",
-  recruitment_window_missed: "recruitment_window",
-  filing_window_missed: "filing_window_closes",
-  eta9089_expired: "eta9089_expiration",
-};
 
 // ============================================================================
 // TYPES
@@ -101,22 +94,7 @@ function getDefaultPrefs(): UserNotificationPrefs {
   return { ...DEFAULT_NOTIFICATION_PREFS };
 }
 
-/**
- * Build UserNotificationPrefs from a userProfile document.
- */
-function buildUserPrefs(profile: Doc<"userProfiles">): UserNotificationPrefs {
-  return {
-    emailNotificationsEnabled: profile.emailNotificationsEnabled,
-    emailDeadlineReminders: profile.emailDeadlineReminders,
-    emailStatusUpdates: profile.emailStatusUpdates,
-    emailRfeAlerts: profile.emailRfeAlerts,
-    pushNotificationsEnabled: profile.pushNotificationsEnabled ?? false,
-    quietHoursEnabled: profile.quietHoursEnabled,
-    quietHoursStart: profile.quietHoursStart,
-    quietHoursEnd: profile.quietHoursEnd,
-    timezone: profile.timezone,
-  };
-}
+// buildUserPrefs removed — use buildUserNotificationPrefs from notificationHelpers
 
 /**
  * Get current time in user's timezone as HH:MM format.
@@ -258,7 +236,7 @@ export const getCasesNeedingReminders = internalQuery({
       // Skip if no email address
       if (!userEmail) continue;
 
-      const userPrefs = profile ? buildUserPrefs(profile) : getDefaultPrefs();
+      const userPrefs = profile ? buildUserNotificationPrefs(profile) : getDefaultPrefs();
       const reminderDays = profile?.reminderDaysBefore ?? [1, 3, 7, 14, 30];
       const userTz = profile?.timezone || DEFAULT_USER_TIMEZONE;
 
@@ -1254,18 +1232,7 @@ export const enforceDeadlinesForAllUsers = internalAction({
 
         step = "processing cases";
         for (const caseDoc of activeCases) {
-          const caseData: CaseDataForEnforcement = {
-            caseStatus: caseDoc.caseStatus,
-            deletedAt: caseDoc.deletedAt,
-            pwdExpirationDate: caseDoc.pwdExpirationDate,
-            recruitmentStartDate: caseDoc.recruitmentStartDate,
-            recruitmentWindowCloses: caseDoc.recruitmentWindowCloses,
-            filingWindowCloses: caseDoc.filingWindowCloses,
-            eta9089FilingDate: caseDoc.eta9089FilingDate,
-            eta9089CertificationDate: caseDoc.eta9089CertificationDate,
-            eta9089ExpirationDate: caseDoc.eta9089ExpirationDate,
-            i140FilingDate: caseDoc.i140FilingDate,
-          };
+          const caseData = mapCaseToEnforcementData(caseDoc);
 
           const violation = checkDeadlineViolations(caseData, undefined, userTimezone);
           if (!violation || violation.suggestedAction !== "close") continue;
@@ -1290,36 +1257,49 @@ export const enforceDeadlinesForAllUsers = internalAction({
             }
           );
 
+          // Null means case was already closed (race with login enforcement) — skip email
+          if (notificationId === null) continue;
+
           closed++;
 
-          // Schedule email (auto-closure bypasses quiet hours — critical notification)
-          const userPrefs = buildUserPrefs(profile);
-          if (shouldSendEmail("auto_closure", "urgent", userPrefs)) {
-            const delayMs = emailIndex * 1000;
-            await ctx.scheduler.runAfter(
-              delayMs,
-              internal.notificationActions.sendAutoClosureEmail,
-              {
-                notificationId,
-                to: email,
-                beneficiaryName: caseDoc.beneficiaryIdentifier || "Beneficiary",
-                companyName: caseDoc.employerName,
-                violationType: formatDeadlineType(
-                  VIOLATION_TO_DEADLINE_TYPE[violation.type]
-                ),
-                reason: violation.reason,
-                closedAt: new Date(now).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-                caseId: caseDoc._id.toString(),
-                caseNumber: caseDoc.internalCaseNumber,
-              }
-            );
-            emailIndex++;
+          // Schedule email with isolated error handling (case closure already succeeded)
+          try {
+            const userPrefs = buildUserNotificationPrefs(profile);
+            if (shouldSendEmail("auto_closure", "urgent", userPrefs)) {
+              const delayMs = emailIndex * 1000;
+              await ctx.scheduler.runAfter(
+                delayMs,
+                internal.notificationActions.sendAutoClosureEmail,
+                {
+                  notificationId,
+                  to: email,
+                  beneficiaryName: caseDoc.beneficiaryIdentifier || "Beneficiary",
+                  companyName: caseDoc.employerName,
+                  violationType: formatDeadlineType(
+                    VIOLATION_TO_DEADLINE_TYPE[violation.type]
+                  ),
+                  reason: violation.reason,
+                  closedAt: new Date(now).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+                  caseId: caseDoc._id.toString(),
+                  caseNumber: caseDoc.internalCaseNumber,
+                }
+              );
+              emailIndex++;
+            }
+          } catch (emailError) {
+            log.error("Failed to schedule auto-closure email", {
+              resourceId: caseDoc._id,
+              error: emailError instanceof Error ? emailError.message : String(emailError),
+            });
+            await recordError(ctx, "cron", "scheduledJobs.enforceDeadlinesForAllUsers.emailSchedule", emailError, {
+              userId, resourceId: caseDoc._id.toString(),
+            });
           }
         }
 

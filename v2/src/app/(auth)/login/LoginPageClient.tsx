@@ -107,11 +107,12 @@ export function LoginPageClient() {
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
+      } else if (/server error/i.test(message)) {
+        toast.error("Something went wrong. Please try again or contact support.");
       } else {
-        // Server errors during signIn are typically InvalidAccountId
-        // (e.g. Google-only user trying password login, or wrong email).
-        // Suggest Google as alternative without leaking account existence.
-        if (!/invalid|server error/i.test(message)) {
+        // Auth errors (InvalidAccountId, InvalidSecret) surface as vague messages.
+        // Show unified message + Google suggestion without leaking account existence.
+        if (!/invalid/i.test(message)) {
           console.warn("[Login] Unhandled error type:", message);
         }
         toast.error(

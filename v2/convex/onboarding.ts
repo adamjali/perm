@@ -376,10 +376,10 @@ export const dismissChecklist = mutation({
 /**
  * Build PERM-compliant sample case dates relative to today.
  * All dates pass validateCase() — Sunday ads on Sundays, job order >= 30 days,
- * notice of filing >= 10 business days, PWD expiration from real calculator.
+ * notice of filing >= 14 calendar days (~10 business days), PWD expiration from real calculator.
  */
-function buildSampleCaseDates() {
-  const today = new Date();
+function buildSampleCaseDates(referenceDate?: Date) {
+  const today = referenceDate ?? new Date();
   const fmt = (d: Date) => d.toISOString().split("T")[0]!;
   const daysAgo = (n: number) => {
     const d = new Date(today);
