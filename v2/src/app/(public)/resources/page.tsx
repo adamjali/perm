@@ -4,7 +4,7 @@
 
 import type { Metadata } from "next";
 import { getAllPosts, getAllTags } from "@/lib/content";
-import { generateItemListSchema } from "@/lib/content/seo";
+import { generateItemListSchema, generateBreadcrumbSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
 import ContentListing from "@/components/content/ContentListing";
 
@@ -24,13 +24,14 @@ export const metadata: Metadata = {
 export default function ResourcesPage() {
   const posts = getAllPosts("resources");
   const tags = getAllTags("resources");
-  const itemListSchema = generateItemListSchema(posts, "resources");
+  const schemas = [
+    generateItemListSchema(posts, "resources"),
+    generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "Resources", href: "/resources" }]),
+  ];
 
   return (
     <>
-      <script type="application/ld+json"
-        // Trusted server-generated JSON-LD from frontmatter data
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <ContentHero type="resources" postCount={posts.length} />
       <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
         <ContentListing posts={posts} tags={tags} />

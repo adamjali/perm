@@ -18,6 +18,7 @@
  */
 
 import type { Metadata } from "next";
+import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { DemoPageClient } from "./DemoPageClient";
 
 export const metadata: Metadata = {
@@ -37,5 +38,11 @@ export const metadata: Metadata = {
 };
 
 export default function DemoPage() {
-  return <DemoPageClient />;
+  const breadcrumb = generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "Demo", href: "/demo" }]);
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      <DemoPageClient />
+    </>
+  );
 }

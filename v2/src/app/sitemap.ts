@@ -15,89 +15,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
-    // Primary pages (high priority)
-    {
-      url: baseUrl,
-      lastModified: '2026-02-15',
-      changeFrequency: 'weekly',
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/demo`,
-      lastModified: '2026-02-11',
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    // Content hub listing pages (use latest content date)
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: latestPostDate,
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/tutorials`,
-      lastModified: latestPostDate,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/guides`,
-      lastModified: latestPostDate,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/changelog`,
-      lastModified: latestPostDate,
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/resources`,
-      lastModified: latestPostDate,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    // FAQ page
-    {
-      url: `${baseUrl}/faq`,
-      lastModified: '2026-02-21',
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    // Auth pages (medium priority)
-    {
-      url: `${baseUrl}/login`,
-      lastModified: '2026-02-13',
-      changeFrequency: 'yearly',
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/signup`,
-      lastModified: '2026-02-14',
-      changeFrequency: 'yearly',
-      priority: 0.5,
-    },
-    // Utility pages (low priority)
-    {
-      url: `${baseUrl}/contact`,
-      lastModified: '2026-02-07',
-      changeFrequency: 'yearly',
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/terms`,
-      lastModified: '2026-02-17',
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    {
-      url: `${baseUrl}/privacy`,
-      lastModified: '2026-02-17',
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
+    { url: baseUrl, lastModified: '2026-02-15' },
+    { url: `${baseUrl}/demo`, lastModified: '2026-02-11' },
+    { url: `${baseUrl}/blog`, lastModified: latestPostDate },
+    { url: `${baseUrl}/tutorials`, lastModified: latestPostDate },
+    { url: `${baseUrl}/guides`, lastModified: latestPostDate },
+    { url: `${baseUrl}/changelog`, lastModified: latestPostDate },
+    { url: `${baseUrl}/resources`, lastModified: latestPostDate },
+    { url: `${baseUrl}/faq`, lastModified: '2026-02-21' },
+    { url: `${baseUrl}/login`, lastModified: '2026-02-13' },
+    { url: `${baseUrl}/signup`, lastModified: '2026-02-14' },
+    { url: `${baseUrl}/contact`, lastModified: '2026-02-07' },
+    { url: `${baseUrl}/terms`, lastModified: '2026-02-17' },
+    { url: `${baseUrl}/privacy`, lastModified: '2026-02-17' },
   ]
 
   // Dynamic content pages (blog, tutorials, guides, resources)
@@ -106,8 +36,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     .map((post) => ({
       url: `${baseUrl}/${post.type}/${post.slug}`,
       lastModified: post.meta.updated ?? post.meta.date,
-      changeFrequency: 'monthly' as const,
-      priority: post.meta.featured ? 0.8 : 0.6,
     }))
 
   return [...staticPages, ...contentPages]

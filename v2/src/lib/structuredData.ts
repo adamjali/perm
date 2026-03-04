@@ -3,8 +3,9 @@
  *
  * Provides type-safe schema generators for:
  * - SoftwareApplication (main site schema)
- * - BreadcrumbList (for nested pages)
  * - Organization (site publisher info)
+ * - WebSite (site name for Google Search)
+ * - FAQPage (FAQ rich results)
  */
 
 /**
@@ -43,8 +44,8 @@ export function getSoftwareApplicationSchema(baseUrl: string) {
     ],
     aggregateRating: {
       '@type': 'AggregateRating',
-      ratingValue: '4.9',
-      ratingCount: '12',
+      ratingValue: '5',
+      reviewCount: '2',
       bestRating: '5',
       worstRating: '1',
     },
@@ -105,36 +106,3 @@ export function getFAQPageSchema(faqs: { question: string; answer: string }[]) {
   };
 }
 
-/**
- * Breadcrumb item type
- */
-export interface BreadcrumbItem {
-  name: string;
-  url: string;
-}
-
-/**
- * Generate BreadcrumbList schema for nested pages
- *
- * @param items - Array of breadcrumb items (name + url)
- * @param baseUrl - Site base URL
- */
-export function getBreadcrumbSchema(items: BreadcrumbItem[], baseUrl: string) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: item.name,
-      item: `${baseUrl}${item.url}`,
-    })),
-  };
-}
-
-/**
- * Combine multiple schemas into a single array for JSON-LD
- */
-export function combineSchemas(...schemas: object[]) {
-  return schemas;
-}

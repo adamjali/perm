@@ -4,7 +4,7 @@
 
 import type { Metadata } from "next";
 import { getAllPosts, getAllTags } from "@/lib/content";
-import { generateItemListSchema } from "@/lib/content/seo";
+import { generateItemListSchema, generateBreadcrumbSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
 import ContentListing from "@/components/content/ContentListing";
 
@@ -24,12 +24,17 @@ export const metadata: Metadata = {
 export default function TutorialsPage() {
   const posts = getAllPosts("tutorials");
   const tags = getAllTags("tutorials");
-  // Server-generated from trusted content data — safe for JSON-LD
-  const itemListSchema = generateItemListSchema(posts, "tutorials");
+  const schemas = [
+    generateItemListSchema(posts, "tutorials"),
+    generateBreadcrumbSchema([
+      { name: "Home", href: "/" },
+      { name: "Tutorials", href: "/tutorials" },
+    ]),
+  ];
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <ContentHero type="tutorials" postCount={posts.length} />
       <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
         <ContentListing posts={posts} tags={tags} />

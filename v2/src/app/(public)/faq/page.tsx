@@ -8,6 +8,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getFAQPageSchema } from "@/lib/structuredData";
+import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { FAQPageClient } from "./FAQPageClient";
 
 export const metadata: Metadata = {
@@ -112,13 +113,14 @@ const faqData = [
 const allFAQs = faqData.flatMap((section) => section.items);
 
 export default function FAQPage() {
-  // FAQPage JSON-LD — generated from hardcoded server-side content, not user input
-  const faqSchema = getFAQPageSchema(allFAQs);
-  const jsonLd = JSON.stringify(faqSchema);
+  const schemas = [
+    getFAQPageSchema(allFAQs),
+    generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "FAQ", href: "/faq" }]),
+  ];
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
 
       <section className="border-b-2 border-border bg-card">
         <div className="mx-auto max-w-[800px] px-4 py-10 sm:px-8 sm:py-14">

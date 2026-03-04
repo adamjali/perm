@@ -6,6 +6,7 @@ export default function robots(): MetadataRoute.Robots {
   const authDisallow = [
     '/api/',           // API routes - internal only
     '/dashboard/',     // Authenticated dashboard
+    '/admin/',         // Authenticated admin dashboard
     '/cases/',         // Authenticated case management (all /cases/* routes)
     '/calendar/',      // Authenticated calendar view
     '/timeline/',      // Authenticated timeline view
@@ -15,58 +16,19 @@ export default function robots(): MetadataRoute.Robots {
 
   return {
     rules: [
-      // Default rule for all crawlers
+      // Default rule: allow public content, block authenticated routes
+      // AI search bots (ClaudeBot, OAI-SearchBot, PerplexityBot, ChatGPT-User,
+      // Amazonbot) inherit from this wildcard — no separate rules needed
       {
         userAgent: '*',
         allow: '/',
         disallow: authDisallow,
       },
-      // Explicitly allow AI search crawlers (public content only)
-      {
-        userAgent: 'GPTBot',
-        allow: '/',
-        disallow: authDisallow,
-      },
-      {
-        userAgent: 'OAI-SearchBot',
-        allow: '/',
-        disallow: authDisallow,
-      },
-      {
-        userAgent: 'ChatGPT-User',
-        allow: '/',
-        disallow: authDisallow,
-      },
-      {
-        userAgent: 'ClaudeBot',
-        allow: '/',
-        disallow: authDisallow,
-      },
-      {
-        userAgent: 'PerplexityBot',
-        allow: '/',
-        disallow: authDisallow,
-      },
-      {
-        userAgent: 'Google-Extended',
-        allow: '/',
-        disallow: authDisallow,
-      },
-      {
-        userAgent: 'Amazonbot',
-        allow: '/',
-        disallow: authDisallow,
-      },
-      {
-        userAgent: 'anthropic-ai',
-        allow: '/',
-        disallow: authDisallow,
-      },
-      {
-        userAgent: 'cohere-ai',
-        allow: '/',
-        disallow: authDisallow,
-      },
+      // Block AI training crawlers (protect content from model training datasets)
+      { userAgent: 'GPTBot', disallow: '/' },
+      { userAgent: 'anthropic-ai', disallow: '/' },
+      { userAgent: 'Google-Extended', disallow: '/' },
+      { userAgent: 'CCBot', disallow: '/' },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
   }
