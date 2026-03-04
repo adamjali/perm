@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { LoginPageClient } from "./LoginPageClient";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Sign In",
   description:

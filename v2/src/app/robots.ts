@@ -29,6 +29,8 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: 'anthropic-ai', disallow: '/' },
       { userAgent: 'Google-Extended', disallow: '/' },
       { userAgent: 'CCBot', disallow: '/' },
+      // Block aggressive SEO crawlers (no value unless subscribed to their service)
+      { userAgent: 'AhrefsBot', disallow: '/' },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
   }

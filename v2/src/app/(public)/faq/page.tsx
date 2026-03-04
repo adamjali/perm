@@ -11,6 +11,8 @@ import { getFAQPageSchema } from "@/lib/structuredData";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { FAQPageClient } from "./FAQPageClient";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
   description:

@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export const runtime = "nodejs";
+export const revalidate = false;
 
 export const alt = "PERM Tracker - Case Management for Immigration Attorneys";
 export const size = {

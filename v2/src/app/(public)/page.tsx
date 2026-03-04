@@ -34,6 +34,8 @@ import {
 } from "@/components/home";
 import { getFAQPageSchema } from "@/lib/structuredData";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "PERM Tracker - Deadline Management for Immigration Attorneys",
   description:

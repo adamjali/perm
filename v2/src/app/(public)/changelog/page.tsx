@@ -11,6 +11,8 @@ import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
 import ChangelogTimeline from "@/components/content/ChangelogTimeline";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Changelog",
   description:

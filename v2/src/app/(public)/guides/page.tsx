@@ -8,6 +8,8 @@ import { generateItemListSchema, generateBreadcrumbSchema } from "@/lib/content/
 import { ContentHero } from "@/components/content";
 import ContentListing from "@/components/content/ContentListing";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Guides",
   description:

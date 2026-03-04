@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { SignupPageClient } from "./SignupPageClient";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Create Account",
   description:

@@ -21,6 +21,8 @@ import type { Metadata } from "next";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { DemoPageClient } from "./DemoPageClient";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Try Demo",
   description:
