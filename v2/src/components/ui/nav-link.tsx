@@ -80,8 +80,6 @@ export function NavLink({
 }: NavLinkProps) {
   const pathname = usePathname();
   const context = useContext(NavLinkContext);
-  const [localIsNavigating, setLocalIsNavigating] = useState(false);
-  const previousPathnameRef = useRef(pathname);
 
   const targetHref = typeof href === "string" ? href : href.pathname || "";
   // Extract just the pathname portion (before any hash)
@@ -89,10 +87,7 @@ export function NavLink({
   const isCurrentPage = pathname === targetPath;
   const isHashOnly = targetHref.includes("#") && isCurrentPage;
 
-  // Use context if available, otherwise fall back to local state
-  const isNavigating = context
-    ? context.activeNavigation === targetHref
-    : localIsNavigating;
+  const isNavigating = context?.activeNavigation === targetHref;
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // Call original onClick if provided
@@ -106,22 +101,9 @@ export function NavLink({
     // even when this NavLink doesn't show its own spinner (showLoading=false)
     if (context) {
       context.setActiveNavigation(targetHref || "/");
-    } else if (showLoading) {
-      setLocalIsNavigating(true);
     }
     // Let the Link handle navigation naturally - this triggers loading.tsx immediately
   };
-
-  // Fallback: Reset local state when pathname changes (for NavLinks outside provider)
-  useEffect(() => {
-    if (!context && pathname !== previousPathnameRef.current) {
-      if (localIsNavigating) {
-        setLocalIsNavigating(false);
-        window.scrollTo({ top: 0, behavior: "instant" });
-      }
-      previousPathnameRef.current = pathname;
-    }
-  }, [pathname, localIsNavigating, context]);
 
   return (
     <Link

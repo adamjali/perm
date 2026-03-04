@@ -39,14 +39,13 @@ export default function AuthFooter() {
           >
             Terms
           </NavLink>
-          <a
+          <NavLink
             href="/contact"
-            target="_blank"
-            rel="noopener noreferrer"
             className="hover-underline text-white transition-colors hover:text-primary"
+            spinnerClassName="text-primary"
           >
             Contact
-          </a>
+          </NavLink>
         </div>
 
         {/* Copyright */}

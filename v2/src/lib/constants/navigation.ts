@@ -57,8 +57,7 @@ export const CONTENT_NAV_LINKS: NavLink[] = [
  */
 export const HOME_SECTION_LINKS: NavLink[] = [
   { href: "#hero", label: "Home" },
-  { href: "#journey", label: "Journey" },
-  { href: "#features", label: "Features" },
   { href: "#how", label: "Process" },
+  { href: "#features", label: "Features" },
   { href: "#faq", label: "FAQ" },
 ];

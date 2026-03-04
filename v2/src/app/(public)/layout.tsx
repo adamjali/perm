@@ -17,6 +17,7 @@ import Footer from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/home";
 import { PageTransition } from "@/components/ui/page-transition";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
+import { HashScrollHandler } from "@/components/ui/hash-scroll-handler";
 
 export default function PublicLayout({
   children,
@@ -44,6 +45,7 @@ export default function PublicLayout({
 
       {/* Header */}
       <AuthHeader />
+      <HashScrollHandler />
 
       {/* Main content - grows to fill space, pt-16 for fixed header (~64px) */}
       <main

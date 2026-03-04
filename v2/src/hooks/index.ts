@@ -31,13 +31,6 @@ export { useSectionState } from "./useSectionState";
 // Unsaved changes detection
 export { useUnsavedChanges } from "./useUnsavedChanges";
 
-// Case form submission logic
-export {
-  useCaseFormSubmit,
-  type UseCaseFormSubmitOptions,
-  type UseCaseFormSubmitResult,
-} from "./use-case-form-submit";
-
 // Notification toast display
 export { useNotificationToasts } from "./useNotificationToasts";
 

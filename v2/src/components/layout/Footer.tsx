@@ -14,6 +14,7 @@
  *
  */
 
+import { usePathname } from "next/navigation";
 import { Github, Twitter, Linkedin, Heart } from "lucide-react";
 import { NavLink } from "@/components/ui/nav-link";
 import { LawGavelSVG } from "@/components/illustrations";
@@ -23,6 +24,7 @@ interface FooterProps {
 }
 
 export default function Footer({ variant = "compact" }: FooterProps) {
+  const pathname = usePathname();
   const currentYear = new Date().getFullYear();
 
   if (variant === "extended") {
@@ -77,13 +79,18 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                 Product
               </p>
               <nav className="flex flex-col gap-3" aria-label="Product links">
-                <NavLink
+                <a
                   href="/#features"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  onClick={(e) => {
+                    if (pathname === "/") {
+                      e.preventDefault();
+                      document.getElementById("features")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+                  }}
                 >
                   Features
-                </NavLink>
+                </a>
                 <NavLink
                   href="/demo"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
