@@ -14,12 +14,12 @@ export interface NavLink {
  * Navigation links for authenticated pages
  * Used in the main Header component
  */
-export const AUTHENTICATED_NAV_LINKS: NavLink[] = [
+export const AUTHENTICATED_NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/cases", label: "Cases" },
   { href: "/calendar", label: "Calendar" },
   { href: "/timeline", label: "Timeline" },
-];
+] as const satisfies readonly NavLink[];
 
 /**
  * Admin navigation link (conditionally shown based on user email)
@@ -33,31 +33,31 @@ export const ADMIN_NAV_LINK: NavLink = {
  * Navigation links for public/auth pages (non-home)
  * Used in AuthHeader component on pages like /demo, /login, /signup
  */
-export const AUTH_NAV_LINKS: NavLink[] = [
+export const AUTH_NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/demo", label: "Demo" },
-];
+] as const satisfies readonly NavLink[];
 
 /**
  * Content hub navigation links
  * Used in footer and content section headers
  */
-export const CONTENT_NAV_LINKS: NavLink[] = [
+export const CONTENT_NAV_LINKS = [
   { href: "/blog", label: "Blog" },
   { href: "/tutorials", label: "Tutorials" },
   { href: "/guides", label: "Guides" },
   { href: "/changelog", label: "Changelog" },
   { href: "/resources", label: "Resources" },
-];
+] as const satisfies readonly NavLink[];
 
 /**
  * Section navigation for home page
  * Uses scroll-spy to highlight current section
  * Links to #section IDs within the home page
  */
-export const HOME_SECTION_LINKS: NavLink[] = [
+export const HOME_SECTION_LINKS = [
   { href: "#hero", label: "Home" },
   { href: "#how", label: "Process" },
   { href: "#features", label: "Features" },
   { href: "#faq", label: "FAQ" },
-];
+] as const satisfies readonly NavLink[];

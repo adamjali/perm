@@ -586,7 +586,7 @@
   html {
     /* Smooth scroll for anchor/hash navigation */
     scroll-behavior: smooth;
-    /* Offset for fixed header on hash navigation */
+    /* Offset for fixed header on hash navigation (4rem header + 1rem breathing room) */
     scroll-padding-top: 5rem;
     /* Prevent iOS elastic overscroll on vertical axis only — keep horizontal for browser back/forward swipe */
     overscroll-behavior-y: none;

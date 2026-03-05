@@ -8,10 +8,7 @@
  * - Shows loading spinner while navigating
  * - Lets Next.js handle navigation naturally (triggers loading.tsx immediately)
  * - Properly handles interrupted navigation (clicking another link clears other loading states)
- * - Scrolls to top after navigation completes
- *
- * Phase: 20-02 (Dashboard Data Layer)
- * Updated: 2026-01-02
+ * - Scrolls to top after NavLink-initiated navigation completes (via NavLinkProvider)
  */
 
 import Link from "next/link";
@@ -93,7 +90,7 @@ export function NavLink({
     // Call original onClick if provided
     onClick?.(e);
 
-    // Skip loading for hash navigation on the same page — no route change occurs
+    // Skip loading state for same-page navigation (including hash links) — no route change occurs
     if (e.defaultPrevented || isCurrentPage || isHashOnly) return;
 
     // Set this link as actively navigating (clears other NavLinks)

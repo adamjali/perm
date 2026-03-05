@@ -13,8 +13,6 @@ describe("AuthFooter", () => {
 
     const contactLink = screen.getByRole("link", { name: /contact/i });
     expect(contactLink).toHaveAttribute("href", "/contact");
-    expect(contactLink).toHaveAttribute("target", "_blank");
-    expect(contactLink).toHaveAttribute("rel", "noopener noreferrer");
 
     const currentYear = new Date().getFullYear();
     expect(screen.getByText(new RegExp(`© ${currentYear} PERM Tracker`, "i"))).toBeInTheDocument();

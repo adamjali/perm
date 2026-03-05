@@ -237,16 +237,16 @@ export function EditCasePageClient() {
    * Perform the actual update mutation.
    *
    * NOTE: This is called by handleFormSuccess which receives formData from CaseForm.
-   * The useCaseFormSubmit hook in CaseForm validates but does NOT call the mutation
+   * The useFormSubmission hook in CaseForm validates but does NOT call the mutation
    * for add mode - it passes formData to onSuccess for the page to handle.
-   * For edit mode, useCaseFormSubmit calls mutation internally, then passes caseId.
+   * For edit mode, useFormSubmission calls mutation internally, then passes caseId.
    *
    * However, this edit page uses a hybrid approach:
    * - We pass handleFormSuccess which expects formData for duplicate checking
    * - For normal edits without duplicate conflict, we call performUpdate
    * - For duplicate resolution, we call performUpdate with markAsDuplicate=true
    *
-   * IMPORTANT: CaseForm's useCaseFormSubmit handles mutation in edit mode internally,
+   * IMPORTANT: CaseForm's useFormSubmission handles mutation in edit mode internally,
    * so this performUpdate is used for the duplicate resolution flow only when a
    * duplicate is detected and the user confirms they want to proceed.
    */
@@ -287,21 +287,21 @@ export function EditCasePageClient() {
   /**
    * Success handler passed to CaseForm.
    *
-   * In edit mode, useCaseFormSubmit calls the mutation internally then passes
+   * In edit mode, useFormSubmission calls the mutation internally then passes
    * the caseId to this handler. However, this page needs formData to check for
    * duplicates BEFORE the mutation happens.
    *
-   * CURRENT BEHAVIOR: The mutation happens in useCaseFormSubmit first, then
+   * CURRENT BEHAVIOR: The mutation happens in useFormSubmission first, then
    * this handler is called. Duplicate checking here is a post-update verification.
    *
    * @param formDataOrId - Either CaseFormData (add mode) or Id<"cases"> (edit mode)
    */
   const handleFormSuccess = useCallback(
     async (formDataOrId: CaseFormData | Id<"cases">) => {
-      // In edit mode, useCaseFormSubmit passes caseId after mutation.
+      // In edit mode, useFormSubmission passes caseId after mutation.
       // Navigation happens here - duplicate checking already happened in mutation.
       if (typeof formDataOrId === "string") {
-        // Edit mode: mutation already done by useCaseFormSubmit, just navigate
+        // Edit mode: mutation already done by useFormSubmission, just navigate
         await router.push(`/cases/${formDataOrId}`);
         return;
       }

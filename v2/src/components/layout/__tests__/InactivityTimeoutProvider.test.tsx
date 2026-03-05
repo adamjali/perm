@@ -37,6 +37,11 @@ vi.mock("@convex-dev/auth/react", () => ({
   useAuthActions: () => ({ signOut: mockSignOut }),
 }));
 
+// Mock convex/react (InactivityTimeoutProvider uses useMutation for recordActivity)
+vi.mock("convex/react", () => ({
+  useMutation: () => vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock auth-aware toast wrapper (not sonner directly)
 const mockToastError = vi.fn();
 vi.mock("@/lib/toast", () => ({

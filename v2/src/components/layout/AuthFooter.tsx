@@ -10,9 +10,6 @@
  * - Neobrutalist top border (border-t-4, border-black)
  * - Black background with white text
  * - Loading states for internal navigation links
- *
- * Phase: 20-02 (Dashboard Data Layer)
- * Updated: 2026-01-02
  */
 
 import { NavLink } from "@/components/ui/nav-link";
