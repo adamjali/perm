@@ -666,6 +666,22 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 will-change-transform" onCloseAutoFocus={(e) => e.preventDefault()}>
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      handleEdit();
+                    }}
+                    disabled={isAnyNavigating}
+                    className="min-h-[44px]"
+                  >
+                    {isEditNavigating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pencil className="h-4 w-4" />
+                    )}
+                    Edit Case
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleToggleTimeline} disabled={isUpdating} className="min-h-[44px]">
                     {isOnTimeline ? (
                       <>
