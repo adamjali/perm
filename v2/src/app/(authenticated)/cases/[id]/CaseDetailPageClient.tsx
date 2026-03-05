@@ -994,12 +994,11 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       </motion.div>
 
       {/* Edit Case */}
-      <motion.div variants={itemVariants} className="pt-4">
+      <motion.div variants={itemVariants} className="pt-4 flex justify-center">
         <Button
           onClick={handleEdit}
           disabled={isAnyNavigating}
           size="lg"
-          className="w-full font-bold"
         >
           {isEditNavigating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
