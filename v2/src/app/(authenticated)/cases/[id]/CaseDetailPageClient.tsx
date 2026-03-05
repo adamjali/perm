@@ -998,7 +998,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         <Button
           onClick={handleEdit}
           disabled={isAnyNavigating}
-          className="w-full border-2 border-border shadow-hard font-bold min-h-[44px]"
+          size="lg"
+          className="w-full font-bold"
         >
           {isEditNavigating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
