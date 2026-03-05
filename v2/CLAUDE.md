@@ -369,6 +369,77 @@ await recordError(ctx, "mutation", "cases.update", error, { resourceId: caseId }
 
 ---
 
+## Resend Email
+
+Three ways to interact with Resend — choose based on the task:
+
+### Tool Decision Matrix
+
+| Scenario | Use | Why |
+|----------|-----|-----|
+| List/read sent or received emails | **MCP** (`list-emails`, `get-email`, `list-received-emails`, `get-received-email`) | Clean, integrated |
+| Simple send (no threading) | **MCP** (`send-email`) | Supports html, text, attachments, CC/BCC, replyTo, scheduling, tags |
+| Send with threading (reply) | **curl / Resend API** | MCP `send-email` doesn't support `headers` param — need `In-Reply-To` + `References` |
+| Send with idempotency key | **curl / Resend API** | MCP doesn't expose `Idempotency-Key` header |
+| Contact/segment/domain/webhook mgmt | **MCP** | Full CRUD available |
+| Broadcast (newsletter/bulk) | **MCP** (`create-broadcast` + `send-broadcast`) | Audience targeting, personalization |
+| Send from app admin UI | **Convex** (`admin.sendAdminEmail`) | Requires auth session, auto-renders `AdminEmail` template |
+
+### MCP Tools (46 tools via `resend-mcp`)
+
+| Category | Tools |
+|----------|-------|
+| Send/manage | `send-email`, `send-batch-emails`, `list-emails`, `get-email`, `cancel-email`, `update-email` |
+| Receive/inbox | `list-received-emails`, `get-received-email` + attachment tools |
+| Broadcasts | `create-broadcast`, `send-broadcast`, `list/get/update/remove-broadcast` |
+| Contacts | `create/list/get/update/remove-contact`, segment + topic membership |
+| Infrastructure | Domains, webhooks, API keys, segments, topics, contact properties |
+
+### curl / API (for threading & custom headers)
+
+```bash
+curl -X POST "https://api.resend.com/emails" \
+  -H "Authorization: Bearer $AUTH_RESEND_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "PERM Tracker <notifications@permtracker.app>",
+    "to": ["recipient@example.com"],
+    "subject": "Re: Original Subject",
+    "headers": {
+      "In-Reply-To": "<message-id-from-get-received-email>",
+      "References": "<message-id>"
+    },
+    "html": "...",
+    "text": "..."
+  }'
+```
+
+Get the Message-ID for threading: MCP `get-received-email` exposes it.
+
+### Email Flow
+
+- **Outbound:** `FROM_EMAIL` = `PERM Tracker <notifications@permtracker.app>`
+- **Inbound:** Replies to `notifications@permtracker.app` → Resend webhook → forwarded to `SUPPORT_FORWARD_EMAIL`
+- **Admin emails:** `convex/admin.ts:sendAdminEmail` — uses `AdminEmail` React Email template, requires auth session
+- **Branded HTML for CLI sends:** Copy template HTML from a previous email via `get-email`, swap body content
+
+### Error Handling (API direct)
+
+| Status | Action |
+|--------|--------|
+| 400/422 | Fix params, don't retry |
+| 401/403 | Check API key / domain verification |
+| 429 | Rate limited — exponential backoff |
+| 500 | Server error — retry with backoff (max 3-5) |
+
+### Docs
+
+- Setup: `resend.com/docs/ai-onboarding`
+- Full API: `resend.com/docs/llms-full.txt`
+- MCP: `resend.com/docs/mcp`
+
+---
+
 ## AI Chat
 
 Multi-provider AI assistant with 5-provider fallback: Groq → Mistral → Gemini 2.5 Flash → Gemini 3 Flash → OpenRouter → Cerebras.
