@@ -416,12 +416,15 @@ export default function TermsPage() {
               Analytics & Session Recording
             </h3>
             <p className="text-foreground/80 leading-relaxed">
-              We use analytics services (Vercel Analytics) and error tracking
-              with session replay (Sentry) to improve the Service. Session
-              replay captures anonymized user interactions to help us diagnose
-              and fix issues. No sensitive case data is included in session
-              recordings. By using the Service, you consent to this data
-              collection as described in our{" "}
+              We use PostHog for product analytics (event tracking, feature
+              usage), Sentry for error tracking with anonymized session replay,
+              and Vercel for performance monitoring (Speed Insights). Analytics
+              data from PostHog is routed through our domain
+              (permtracker.app/ingest) rather than directly to a third-party
+              domain. Session replay captures anonymized user interactions to
+              help us diagnose and fix issues — no sensitive case data is
+              included in session recordings. By using the Service, you consent
+              to this data collection as described in our{" "}
               <a href="/privacy" className="text-primary hover:underline">
                 Privacy Policy
               </a>
@@ -559,11 +562,19 @@ export default function TermsPage() {
               provide software tools for case management and do not:
             </p>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Access, review, or analyze the content of your case data</li>
               <li>Provide legal advice or participate in attorney-client relationships</li>
               <li>Make decisions about your cases or client matters</li>
               <li>Share your data with third parties except as required for service operation</li>
             </ul>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              Authorized PERM Tracker personnel have technical access to the
+              database infrastructure and may access your case data only when
+              necessary to: provide technical support you have requested,
+              diagnose and fix bugs affecting your account, maintain the security
+              and reliability of the service, or comply with legal obligations.
+              We do not routinely browse, review, or analyze the content of your
+              case data outside of these limited circumstances.
+            </p>
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Cloud Infrastructure
@@ -575,9 +586,9 @@ export default function TermsPage() {
             </p>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>Encryption in transit (TLS/HTTPS) and at rest</li>
-              <li>Row-level security ensuring users can only access their own data</li>
+              <li>Row-level security ensuring users cannot access other users&apos; data</li>
               <li>Regular security audits and updates</li>
-              <li>No administrative access to case content by PERM Tracker staff</li>
+              <li>Internal database access restricted to authorized personnel for service operation only (see Service Provider Status above)</li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
               You acknowledge that your case data is stored on cloud

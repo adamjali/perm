@@ -199,7 +199,11 @@ export default function PrivacyPage() {
               <li>
                 <strong>Access Control:</strong> Server-side authorization ensures
                 each user can only access their own data through authenticated
-                backend functions
+                backend functions. Internal access to the database is restricted
+                to authorized PERM Tracker personnel who may access your data
+                only to provide technical support you have requested, diagnose
+                and fix bugs, maintain service security and reliability, or
+                fulfill legal obligations
               </li>
               <li>
                 <strong>Authentication:</strong> Managed by Convex Auth with
@@ -330,7 +334,61 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              7. Error Monitoring &amp; Session Replay
+              7. Product Analytics
+            </h2>
+            <p className="text-foreground/80 leading-relaxed">
+              We use PostHog (PostHog, Inc.) for product analytics to understand
+              how the application is used and to improve features.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              What We Collect
+            </h3>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>Page views and navigation patterns</li>
+              <li>Feature usage events (e.g., creating a case, using AI chat)</li>
+              <li>Browser exceptions and JavaScript errors</li>
+              <li>Browser type, device information, and screen resolution</li>
+            </ul>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              User Identification
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              When you are logged in, analytics events are linked to your
+              account to help us understand usage patterns. Your identity is
+              reset on logout so anonymous browsing is not linked to your
+              account.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Data Routing
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              Analytics data is sent through a reverse proxy on our domain
+              (permtracker.app/ingest) to PostHog&apos;s US servers
+              (us.posthog.com). This means analytics requests appear as
+              first-party traffic in your browser&apos;s network tab rather than
+              as requests to a third-party domain.
+            </p>
+
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              PostHog acts as our data processor. For details, see{" "}
+              <a
+                href="https://posthog.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                PostHog&apos;s Privacy Policy
+              </a>
+              .
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+              8. Error Monitoring &amp; Session Replay
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We use Sentry (Functional Software, Inc.) to monitor application
@@ -408,7 +466,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              8. Push Notifications
+              9. Push Notifications
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               When you enable push notifications, your browser generates a unique
@@ -459,7 +517,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              9. Google Calendar Integration
+              10. Google Calendar Integration
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               You may optionally connect your Google Calendar to sync PERM
@@ -495,7 +553,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              10. Cookies &amp; Local Storage
+              11. Cookies &amp; Local Storage
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We use the following storage technologies:
@@ -515,16 +573,23 @@ export default function PrivacyPage() {
                 storage to temporarily buffer error and session replay data before
                 transmission
               </li>
+              <li>
+                <strong>Analytics:</strong> PostHog uses cookies and local
+                storage to identify your device across sessions for analytics
+                purposes. Analytics data is routed through our domain
+                (permtracker.app/ingest) rather than directly to PostHog
+              </li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
-              These are <strong>strictly necessary</strong> for the application to
-              function and do not track you across other websites.
+              These storage technologies are used for application functionality
+              and service improvement. They do not track you across other
+              websites.
             </p>
           </section>
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              11. Third-Party Services
+              12. Third-Party Services
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We use the following third-party services to operate PERM Tracker:
@@ -547,8 +612,12 @@ export default function PrivacyPage() {
                 integration
               </li>
               <li>
+                <strong>PostHog:</strong> Product analytics and event tracking
+                (see Section 7)
+              </li>
+              <li>
                 <strong>Sentry:</strong> Error tracking, performance monitoring,
-                and session replay (see Section 7)
+                and session replay (see Section 8)
               </li>
               <li>
                 <strong>AI Providers:</strong> Google Gemini, OpenRouter, Mistral
@@ -561,7 +630,7 @@ export default function PrivacyPage() {
               <li>
                 <strong>Browser Push Services:</strong> Google FCM, Mozilla Push
                 Service, and Apple APNs for push notification delivery (see
-                Section 8)
+                Section 9)
               </li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
@@ -582,7 +651,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              12. Data Retention &amp; Deletion
+              13. Data Retention &amp; Deletion
             </h2>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>Your data is retained for as long as your account is active</li>
@@ -635,7 +704,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              13. Your Rights
+              14. Your Rights
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               Depending on your location, you may have the following rights
@@ -679,13 +748,14 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              14. International Data Transfers
+              15. International Data Transfers
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               Your data is primarily stored and processed in the United States.
               If you are located in the European Economic Area (EEA), United
               Kingdom, or Switzerland, your data may be transferred to the United
-              States by our service providers (Convex, AI providers, Sentry).
+              States by our service providers (Convex, AI providers, Sentry,
+              PostHog).
             </p>
             <p className="text-foreground/80 leading-relaxed mt-4">
               These transfers are protected by Standard Contractual Clauses (SCCs)
@@ -696,7 +766,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              15. Children&apos;s Privacy
+              16. Children&apos;s Privacy
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               PERM Tracker is not intended for use by individuals under the age of
@@ -708,7 +778,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              16. Changes to This Policy
+              17. Changes to This Policy
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We may update this Privacy Policy from time to time. We will notify
@@ -727,7 +797,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              17. Contact Us
+              18. Contact Us
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               If you have any questions about this Privacy Policy or our data
