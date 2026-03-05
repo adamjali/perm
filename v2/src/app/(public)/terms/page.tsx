@@ -31,7 +31,7 @@ export default function TermsPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: February 17, 2026
+          Effective Date: February 17, 2026 | Last Updated: March 4, 2026
         </p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
@@ -40,15 +40,14 @@ export default function TermsPage() {
               1. Agreement to Terms
             </h2>
             <p className="text-foreground/80 leading-relaxed">
-              PERM Tracker is operated by PERM Tracker LLC, a District of Columbia
-              limited liability company. By accessing or using PERM Tracker
+              By accessing or using PERM Tracker
               (&quot;the Service&quot;), you agree to be bound by these Terms of Service
               (&quot;Terms&quot;). If you do not agree to these Terms, please do not use the
               Service.
             </p>
             <p className="text-foreground/80 leading-relaxed mt-4">
               These Terms constitute a legally binding agreement between you and
-              PERM Tracker LLC regarding your use of the Service.
+              PERM Tracker regarding your use of the Service.
             </p>
           </section>
 
@@ -651,7 +650,7 @@ export default function TermsPage() {
                 <strong>Application:</strong> PERM Tracker
               </li>
               <li>
-                <strong>Operator:</strong> PERM Tracker LLC, Washington, DC 20001
+                <strong>Operator:</strong> PERM Tracker, Washington, DC 20001
               </li>
             </ul>
           </section>

@@ -31,7 +31,7 @@ export default function PrivacyPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Privacy Policy</h1>
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: February 17, 2026
+          Effective Date: February 17, 2026 | Last Updated: March 4, 2026
         </p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
@@ -40,9 +40,9 @@ export default function PrivacyPage() {
               1. Introduction
             </h2>
             <p className="text-foreground/80 leading-relaxed">
-              Welcome to PERM Tracker. PERM Tracker LLC (&quot;we,&quot; &quot;our,&quot; or
-              &quot;us&quot;), a District of Columbia limited liability company, operates
-              permtracker.app. This Privacy Policy explains how we collect, use,
+              Welcome to PERM Tracker. PERM Tracker (&quot;we,&quot; &quot;our,&quot; or
+              &quot;us&quot;) operates permtracker.app. This Privacy Policy explains
+              how we collect, use,
               disclose, and safeguard your information when you use our web
               application for tracking Permanent Labor Certification (PERM)
               cases.
@@ -747,7 +747,7 @@ export default function PrivacyPage() {
                 <strong>Application:</strong> PERM Tracker
               </li>
               <li>
-                <strong>Operator:</strong> PERM Tracker LLC, Washington, DC 20001
+                <strong>Operator:</strong> PERM Tracker, Washington, DC 20001
               </li>
             </ul>
           </section>

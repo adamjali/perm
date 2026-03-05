@@ -26,8 +26,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/login`, lastModified: '2026-02-13' },
     { url: `${baseUrl}/signup`, lastModified: '2026-02-14' },
     { url: `${baseUrl}/contact`, lastModified: '2026-02-07' },
-    { url: `${baseUrl}/terms`, lastModified: '2026-02-17' },
-    { url: `${baseUrl}/privacy`, lastModified: '2026-02-17' },
+    { url: `${baseUrl}/terms`, lastModified: '2026-03-04' },
+    { url: `${baseUrl}/privacy`, lastModified: '2026-03-04' },
   ]
 
   // Dynamic content pages (blog, tutorials, guides, resources)
