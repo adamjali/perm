@@ -3,7 +3,7 @@
 **Component:** `v2/src/components/cases/CaseCard.tsx`
 **Design Metaphor:** Manila folder with neobrutalist styling
 **Version:** 2.0 (Phase 21)
-**Last Updated:** 2025-12-25
+**Last Updated:** 2026-03-05
 
 ## Overview
 
@@ -232,16 +232,9 @@ The CaseCard is wrapped by `SortableCaseCard` for drag-and-drop functionality:
 
 ### Automated Tests
 
-**Location:** TBD - `/v2/src/components/cases/__tests__/CaseCard.test.tsx`
+**Location:** `v2/src/components/cases/__tests__/CaseCard.test.tsx`
 
-**Planned:**
-1. Renders with required props
-2. Shows/hides expanded content on hover
-3. Handles favorite toggle
-4. Displays correct stage colors
-5. Formats dates correctly
-6. Handles selection mode
-7. Renders closed state correctly
+Tests cover rendering, hover expansion, favorite toggle, stage colors, date formatting, selection mode, and closed state.
 
 ## Known Issues & Limitations
 

@@ -208,16 +208,9 @@ transition: transform 150ms ease-out
 
 ### Automated Testing
 
-**Status:** Not yet implemented
-**Location:** Will be in `/v2/src/components/cases/__tests__/`
+**Location:** `v2/src/components/cases/__tests__/`
 
-**Planned tests:**
-1. `SortableCaseCard` renders correctly
-2. Drag-drop updates local order
-3. `saveCaseOrder` mutation is called on drop
-4. Custom order persists across page reloads
-5. New cases are placed correctly
-6. Filter snapshot is saved and restored
+Tests cover SortableCaseCard rendering, drag-drop order updates, saveCaseOrder mutation calls, persistence, new case placement, and filter snapshots.
 
 ## Future Enhancements
 
@@ -286,5 +279,5 @@ transition: transform 150ms ease-out
 ---
 
 **Maintained by:** Claude Code
-**Last Updated:** 2025-12-25
-**Version:** 1.1 (Updated for Phase 21 animation changes)
+**Last Updated:** 2026-03-05
+**Version:** 1.2

@@ -1,7 +1,7 @@
 # Animation Storyboard
 
 > Complete animation catalog for PERM Tracker v2
-> Last updated: 2026-02-06
+> Last updated: 2026-03-05
 
 ---
 
@@ -140,7 +140,7 @@ const fadeUp = {
 **Modal Implementation:**
 
 ```tsx
-// Framer Motion variants
+// Motion variants
 const modalVariants = {
   hidden: { opacity: 0, scale: 0.95 },
   visible: {
@@ -276,7 +276,7 @@ const useScrollY = () => {
 
 ### Intersection Observer for Reveals
 
-Using native Intersection Observer (via Framer Motion's `whileInView`) instead of scroll event listeners:
+Using native Intersection Observer (via Motion's `whileInView`) instead of scroll event listeners:
 
 ```tsx
 <motion.div
@@ -328,7 +328,7 @@ Using native Intersection Observer (via Framer Motion's `whileInView`) instead o
 ### Adding a New Scroll Reveal
 
 ```tsx
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { fadeInUp } from '@/lib/animations';
 
 export function NewSection() {
@@ -364,7 +364,7 @@ export function StaggeredList({ items }) {
 ### Respecting Reduced Motion
 
 ```tsx
-import { useReducedMotion } from 'framer-motion';
+import { useReducedMotion } from 'motion/react';
 
 export function AnimatedComponent() {
   const prefersReducedMotion = useReducedMotion();

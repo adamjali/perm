@@ -1,14 +1,16 @@
 # PERM Tracker v2 Design System
 
-**Framework:** Next.js 16 + React 19 + Tailwind CSS
+**Framework:** Next.js 16 + React 19 + Tailwind CSS v4
 **Style:** Neobrutalism
-**Version:** 2.0
-**Last Updated:** 2026-02-06
+**Version:** 2.1
+**Last Updated:** 2026-03-05
 
 **Source Files:**
-- Design tokens: `v2/src/app/globals.css`
-- Component library: `v2/src/components/ui/` and `v2/src/components/status/`
-- Storybook: Run `npm run storybook` (http://localhost:6006)
+- Design tokens: `v2/src/app/globals.css` (canonical, 1400+ lines)
+- Tailwind config: `@theme inline` block in globals.css (Tailwind v4 — no tailwind.config file)
+- Component library: `v2/src/components/ui/` (48 files) and `v2/src/components/status/` (5 files)
+- Animation utilities: `v2/src/lib/animations.ts`
+- Storybook: Run `pnpm storybook` (http://localhost:6006, 32 story files)
 
 ---
 
@@ -19,7 +21,7 @@ The v2 design system follows **Neobrutalism** principles:
 1. **Bold & Direct** - Hard shadows, thick borders, zero border radius
 2. **Functional First** - Every element serves a purpose
 3. **High Contrast** - Black borders on white backgrounds
-4. **Forest Green Accent** - Professional, accessible single accent color
+4. **Lime Green Accent** - Vibrant, accessible single accent color (`#2ECC40`)
 5. **Tactile Interactions** - Components feel pressable and reactive
 
 **Migration from v1:** v2 uses React components (shadcn/ui) instead of v1's CSS classes.
@@ -31,38 +33,51 @@ The v2 design system follows **Neobrutalism** principles:
 ### Base Colors (CSS Variables)
 
 ```css
-/* Light mode (default) */
---background: #ffffff;
+/* Light mode (default) — from globals.css :root */
+--background: #FAFAFA;
 --foreground: #000000;
---card: #ffffff;
+--card: #FAFAFA;
 --card-foreground: #000000;
---popover: #ffffff;
+--popover: #FAFAFA;
 --popover-foreground: #000000;
---primary: #228B22;          /* Forest Green */
---primary-foreground: #ffffff;
---secondary: #f5f5f5;
+--primary: #2ECC40;          /* Lime Green — same in both modes */
+--primary-foreground: #000000;
+--secondary: #F5F5F5;
 --secondary-foreground: #000000;
---muted: #f5f5f5;
---muted-foreground: #737373;
---accent: #f5f5f5;
+--muted: #F5F5F5;
+--muted-foreground: #666666;
+--accent: #2ECC40;
 --accent-foreground: #000000;
---destructive: #ef4444;
---destructive-foreground: #ffffff;
+--destructive: #FF4747;
+--destructive-foreground: #FAFAFA;
 --border: #000000;           /* Black borders everywhere */
 --input: #000000;
---ring: #228B22;             /* Forest Green focus ring */
+--ring: #2ECC40;             /* Lime Green focus ring */
 ```
 
 ### Dark Mode
 
-Dark mode uses brighter Forest Green (`#2ECC40`) and inverted backgrounds while maintaining the hard-edge aesthetic.
+Dark mode inverts backgrounds/borders while keeping the same Lime Green (`#2ECC40`) accent.
 
-**Manila Folder Colors (Dark Mode):**
-- Base: `#C4A97A` (darker, warmer tone)
-- Dark: `#A8916A` (shadow variant)
-- Shadow: `#8A7552` (deepest shadow)
+```css
+/* Dark mode — from globals.css .dark */
+--background: #0A0A0A;
+--foreground: #FAFAFA;
+--card: #1A1A1A;
+--border: #FAFAFA;           /* White borders in dark mode */
+--muted-foreground: #A0A0A0;
+--shadow-hard-*: rgba(255,255,255,0.3);  /* Translucent white shadows */
+```
 
-*Note: Dark mode manila colors are intentionally darker than light mode for better contrast on dark backgrounds.*
+**Manila Folder Colors:**
+
+| Token | Light | Dark |
+|-------|-------|------|
+| `--manila` | `#F5E6C8` | `#C4A97A` |
+| `--manila-dark` | `#E8D4A8` | `#A8916A` |
+| `--manila-shadow` | `#D4C090` | `#8A7552` |
+
+*Dark mode manila colors are intentionally darker for better contrast on dark backgrounds.*
 
 ### Stage Status Colors
 
@@ -79,11 +94,13 @@ From v1, preserved in v2:
 
 ### Urgency Colors
 
-| Level | Variable | Hex | Days Until |
-|-------|----------|-----|------------|
+| Level | Variable | Hex | Condition |
+|-------|----------|-----|-----------|
+| Completed | `--urgency-completed` | `#059669` | Done |
+| Overdue | `--urgency-overdue` | `#991B1B` | ≤ 0 days |
 | Urgent | `--urgency-urgent` | `#DC2626` | ≤ 7 days |
 | Soon | `--urgency-soon` | `#EA580C` | 8-30 days |
-| Normal | `--urgency-normal` | `#059669` | 30+ days |
+| Normal | `--urgency-normal` | `#2563EB` | 30+ days |
 
 ---
 
@@ -92,18 +109,20 @@ From v1, preserved in v2:
 ### Font Families
 
 ```css
---font-heading: 'Space Grotesk', sans-serif;  /* Geometric, quirky */
---font-body: 'Inter', sans-serif;             /* Readable, modern */
---font-mono: 'JetBrains Mono', monospace;     /* Technical labels */
+--font-heading: 'Space Grotesk', system-ui, sans-serif;
+--font-body: 'Inter', system-ui, sans-serif;
+--font-mono: 'JetBrains Mono', monospace;
 ```
 
+Loaded via `next/font/google` in `layout.tsx` with CSS variable binding.
+
 **Usage:**
-- `Space Grotesk` - Headings, buttons, bold UI elements
+- `Space Grotesk` - Headings, buttons, bold UI elements, tab labels
 - `Inter` - Body text, labels, descriptions
 - `JetBrains Mono` - Case numbers, dates, technical codes (use `.mono` class)
 
 **Weights:**
-- Space Grotesk: 700 (bold)
+- Space Grotesk: 500 (medium), 700 (bold)
 - Inter: 400 (regular), 500 (medium), 600 (semibold)
 - JetBrains Mono: 400 (regular), 500 (medium)
 
@@ -483,12 +502,15 @@ focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
 - **shadcn/ui docs:** https://ui.shadcn.com/
 - **Tailwind CSS:** https://tailwindcss.com/docs
 - **next-themes:** https://github.com/pacocoursey/next-themes
-- **Motion (Framer Motion):** https://motion.dev/docs/react-quick-start
-- **Design references:** `.planning/phases/17-design-system/design1-5/`
-- **Design skill:** `.planning/FRONTEND_DESIGN_SKILL.md` (frontend-design skill, its a plug-in)
+- **Motion:** https://motion.dev/docs/react-quick-start (import as `motion/react`)
+- **Design skill:** `.planning/FRONTEND_DESIGN_SKILL.md` (frontend-design plugin reference for subagents)
+
+**Related Docs:**
+- [ANIMATION_STORYBOARD.md](ANIMATION_STORYBOARD.md) - Animation catalog and timing tokens
+- [CASE_CARD.md](CASE_CARD.md) - CaseCard component design specs
+- [DRAG_DROP_REORDERING.md](DRAG_DROP_REORDERING.md) - Drag-drop feature specs
 
 ---
 
 **Maintained by:** Claude Code
-**Last Review:** 2026-02-06
-**Phase:** Content Hub Visual Aids
+**Last Review:** 2026-03-05
