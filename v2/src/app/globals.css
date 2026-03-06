@@ -539,6 +539,94 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* ================================================================
+   * MANILA FOLDER TAB SYSTEM
+   * Tab bar + body for case detail tabbed layout.
+   * Uses --manila, --manila-dark, --manila-shadow tokens.
+   * ================================================================ */
+
+  .folder-tab-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    position: relative;
+    z-index: 5;
+  }
+
+  .folder-tab {
+    border: 3px solid var(--border);
+    border-bottom: 3px solid var(--border);
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
+    transition: background 0.12s, color 0.12s;
+    position: relative;
+    margin-bottom: -3px;
+    background: var(--manila-dark);
+    color: var(--foreground);
+    border-radius: 6px 6px 0 0;
+    opacity: 0.8;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  @media (min-width: 640px) {
+    .folder-tab {
+      padding: 12px 24px;
+      font-size: 0.75rem;
+    }
+  }
+
+  .folder-tab:hover {
+    opacity: 1;
+    background: var(--manila);
+  }
+
+  .folder-tab[aria-selected="true"] {
+    background: var(--manila);
+    color: var(--foreground);
+    opacity: 1;
+    z-index: 10;
+    border-bottom-color: var(--manila);
+  }
+
+  .folder-tab[aria-selected="true"]:first-child::after {
+    content: '';
+    position: absolute;
+    left: -3px;
+    bottom: -3px;
+    width: 3px;
+    height: 3px;
+    background: var(--border);
+  }
+
+  .folder-body {
+    background-color: var(--manila);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    border: 3px solid var(--border);
+    box-shadow: var(--shadow-hard);
+    position: relative;
+    min-height: 400px;
+  }
+
+  .folder-content {
+    padding: 24px 20px;
+  }
+
+  @media (min-width: 640px) {
+    .folder-content {
+      padding: 28px 32px;
+    }
+  }
+
   /* Blink animation for streaming cursor */
   .animate-blink {
     animation: blink 1s step-end infinite;

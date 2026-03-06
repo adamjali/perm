@@ -37,3 +37,16 @@ export type { TimelineMilestoneProps } from "./TimelineMilestone";
 
 export { TimelineRangeBar } from "./TimelineRangeBar";
 export type { TimelineRangeBarProps } from "./TimelineRangeBar";
+
+// Tabbed layout components
+export { CaseDetailTabs, TabPanel } from "./CaseDetailTabs";
+export type { TabId } from "./CaseDetailTabs";
+export { OverviewTab } from "./OverviewTab";
+export { RecruitmentTab } from "./RecruitmentTab";
+export { ETA9089Tab } from "./ETA9089Tab";
+export { I140Tab } from "./I140Tab";
+export { DocumentsTab } from "./DocumentsTab";
+export { NotesTab } from "./NotesTab";
+export { QuickStatsPanel } from "./QuickStatsPanel";
+export { VerticalTimeline } from "./VerticalTimeline";
+export type { CaseDetailData } from "./case-detail-types";

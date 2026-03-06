@@ -40,18 +40,19 @@ import {
 } from "@/components/ui/dialog";
 import { CaseStageBadge } from "@/components/status/case-stage-badge";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
-import { PWDSection } from "@/components/cases/detail/PWDSection";
-import { RecruitmentSection } from "@/components/cases/detail/RecruitmentSection";
-import { RecruitmentResultsSection } from "@/components/cases/detail/RecruitmentResultsSection";
-import { ETA9089Section } from "@/components/cases/detail/ETA9089Section";
-import { I140Section } from "@/components/cases/detail/I140Section";
-import { RFIRFESection } from "@/components/cases/detail/RFIRFESection";
-import { JobDescriptionDetailView } from "@/components/job-description";
-import { InlineCaseTimeline } from "@/components/cases/detail/InlineCaseTimeline";
-import { WindowsDisplay } from "@/components/cases/detail/WindowsDisplay";
-import { NextUpSection } from "@/components/cases/detail/NextUpSection";
 import { StageProgressIndicator } from "@/components/cases/detail/next-up-section.components";
 import { getStageIndex } from "@/components/cases/detail/next-up-section.utils";
+import {
+  CaseDetailTabs,
+  TabPanel,
+  type TabId,
+} from "@/components/cases/detail/CaseDetailTabs";
+import { OverviewTab } from "@/components/cases/detail/OverviewTab";
+import { RecruitmentTab } from "@/components/cases/detail/RecruitmentTab";
+import { ETA9089Tab } from "@/components/cases/detail/ETA9089Tab";
+import { I140Tab } from "@/components/cases/detail/I140Tab";
+import { DocumentsTab } from "@/components/cases/detail/DocumentsTab";
+import { NotesTab } from "@/components/cases/detail/NotesTab";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
@@ -60,7 +61,7 @@ import { useDerivedDates } from "@/hooks/useDerivedDates";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
 import { useIsMobile } from "@/lib/animations";
-import { isRecruitmentComplete, type ProgressStatus } from "@/lib/perm";
+import { type ProgressStatus } from "@/lib/perm";
 
 // ============================================================================
 // ANIMATION VARIANTS
@@ -509,6 +510,9 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
     }
   };
 
+  // Active tab state for manila folder tabs
+  const [activeTab, setActiveTab] = useState<TabId>("overview");
+
   const isClosed = caseData.caseStatus === "closed";
   const caseName = `${caseData.employerName} - ${caseData.positionTitle}`;
   const stageColor = STAGE_ACCENT_COLORS[caseData.caseStatus] ?? "var(--stage-closed)";
@@ -771,242 +775,81 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       </motion.div>
 
       {/* ================================================================ */}
-      {/* NEXT UP — action + deadline (stage progress hidden here now)    */}
+      {/* MANILA FOLDER TABS — organized case detail sections              */}
       {/* ================================================================ */}
       <motion.div variants={itemVariants}>
-        <NextUpSection
-          caseId={caseId}
-          showStageProgress={false}
-          caseData={{
-            caseStatus: caseData.caseStatus,
-            progressStatus: caseData.progressStatus as ProgressStatus,
-            pwdFilingDate: caseData.pwdFilingDate,
-            pwdDeterminationDate: caseData.pwdDeterminationDate,
-            pwdExpirationDate: caseData.pwdExpirationDate,
-            jobOrderStartDate: caseData.jobOrderStartDate,
-            jobOrderEndDate: caseData.jobOrderEndDate,
-            sundayAdFirstDate: caseData.sundayAdFirstDate,
-            sundayAdSecondDate: caseData.sundayAdSecondDate,
-            noticeOfFilingStartDate: caseData.noticeOfFilingStartDate,
-            noticeOfFilingEndDate: caseData.noticeOfFilingEndDate,
-            eta9089FilingDate: caseData.eta9089FilingDate,
-            eta9089CertificationDate: caseData.eta9089CertificationDate,
-            eta9089ExpirationDate: caseData.eta9089ExpirationDate,
-            i140FilingDate: caseData.i140FilingDate,
-            i140ApprovalDate: caseData.i140ApprovalDate,
-            i140DenialDate: caseData.i140DenialDate,
-            rfiEntries: caseData.rfiEntries,
-            rfeEntries: caseData.rfeEntries,
-            isProfessionalOccupation,
-            additionalRecruitmentMethods: caseData.additionalRecruitmentMethods,
-          }}
-        />
-      </motion.div>
-
-      {/* Recruitment & Filing Windows */}
-      <motion.div variants={itemVariants}>
-        <WindowsDisplay caseData={caseData} />
-      </motion.div>
-
-      {/* ================================================================ */}
-      {/* CASE TIMELINE — moved up for at-a-glance visibility              */}
-      {/* ================================================================ */}
-      <motion.div
-        variants={itemVariants}
-        className="border-2 border-border bg-card p-3 sm:p-4 shadow-hard-sm hover:shadow-hard hover:-translate-y-0.5 transition-all duration-150 overflow-visible"
-      >
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <h2 className="font-heading font-semibold text-base sm:text-lg">Case Timeline</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggleTimeline}
-            disabled={isUpdating}
-            className="gap-2 min-h-[36px] sm:min-h-[40px]"
-          >
-            {isOnTimeline ? (
-              <>
-                <CalendarMinus className="h-4 w-4" />
-                <span className="hidden sm:inline">Remove from Timeline</span>
-              </>
-            ) : (
-              <>
-                <CalendarPlus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add to Timeline</span>
-              </>
-            )}
-          </Button>
-        </div>
-        <div className="relative overflow-visible">
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none z-10 sm:hidden" aria-hidden="true" />
-          <div className="overflow-x-auto overscroll-x-none overflow-y-visible -mx-3 px-3 sm:mx-0 sm:px-0 scroll-smooth touch-pan-x">
-            <InlineCaseTimeline caseData={caseData} className="min-w-[500px] sm:min-w-0" />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* ================================================================ */}
-      {/* DETAIL SECTIONS — with stage accent on active section            */}
-      {/* ================================================================ */}
-      <motion.div
-        variants={itemVariants}
-        className="grid gap-4 sm:gap-6 lg:grid-cols-2"
-      >
-        {/* PWD Section */}
-        <PWDSection
-          data={{
-            pwdFilingDate: caseData.pwdFilingDate,
-            pwdDeterminationDate: caseData.pwdDeterminationDate,
-            pwdExpirationDate: caseData.pwdExpirationDate,
-            pwdCaseNumber: caseData.pwdCaseNumber,
-            pwdWageAmount:
-              caseData.pwdWageAmount !== undefined
-                ? Number(caseData.pwdWageAmount)
-                : undefined,
-            pwdWageLevel: caseData.pwdWageLevel,
-          }}
-          defaultOpen={!isMobile}
-          accentColor={caseData.caseStatus === "pwd" ? stageColor : undefined}
-        />
-
-        {/* ETA 9089 Section */}
-        <ETA9089Section
-          data={{
-            eta9089FilingDate: caseData.eta9089FilingDate,
-            eta9089AuditDate: caseData.eta9089AuditDate,
-            eta9089CertificationDate: caseData.eta9089CertificationDate,
-            eta9089ExpirationDate: caseData.eta9089ExpirationDate,
-            eta9089CaseNumber: caseData.eta9089CaseNumber,
-          }}
-          filingWindowOpensDate={derivedDates.filingWindowOpens}
-          filingWindowClosesDate={derivedDates.filingWindowCloses}
-          isRecruitmentComplete={isRecruitmentComplete(caseData)}
-          defaultOpen={!isMobile}
-          accentColor={caseData.caseStatus === "eta9089" ? stageColor : undefined}
-        />
-
-        {/* Recruitment Section - Full Width */}
-        <div className="lg:col-span-2">
-          <RecruitmentSection
-            data={{
-              jobOrderStartDate: caseData.jobOrderStartDate,
-              jobOrderEndDate: caseData.jobOrderEndDate,
-              jobOrderState: caseData.jobOrderState,
-              sundayAdFirstDate: caseData.sundayAdFirstDate,
-              sundayAdSecondDate: caseData.sundayAdSecondDate,
-              sundayAdNewspaper: caseData.sundayAdNewspaper,
-              noticeOfFilingStartDate: caseData.noticeOfFilingStartDate,
-              noticeOfFilingEndDate: caseData.noticeOfFilingEndDate,
-              additionalRecruitmentMethods: caseData.additionalRecruitmentMethods,
-              recruitmentApplicantsCount:
-                caseData.recruitmentApplicantsCount !== undefined
-                  ? Number(caseData.recruitmentApplicantsCount)
-                  : undefined,
-              recruitmentNotes: caseData.recruitmentNotes,
-            }}
-            defaultOpen={!isMobile}
-            accentColor={caseData.caseStatus === "recruitment" ? stageColor : undefined}
-          />
-        </div>
-
-        {/* Recruitment Results Section - Full Width */}
-        <div className="lg:col-span-2">
-          <RecruitmentResultsSection
-            data={{
-              employerName: caseData.employerName,
-              noticeOfFilingStartDate: caseData.noticeOfFilingStartDate,
-              noticeOfFilingEndDate: caseData.noticeOfFilingEndDate,
-              jobOrderStartDate: caseData.jobOrderStartDate,
-              jobOrderEndDate: caseData.jobOrderEndDate,
-              jobOrderState: caseData.jobOrderState,
-              sundayAdFirstDate: caseData.sundayAdFirstDate,
-              sundayAdSecondDate: caseData.sundayAdSecondDate,
-              sundayAdNewspaper: caseData.sundayAdNewspaper,
-              additionalRecruitmentMethods: caseData.additionalRecruitmentMethods,
-              additionalRecruitmentStartDate: caseData.additionalRecruitmentStartDate,
-              additionalRecruitmentEndDate: caseData.additionalRecruitmentEndDate,
-              isProfessionalOccupation,
-              pwdExpirationDate: caseData.pwdExpirationDate,
-              recruitmentApplicantsCount:
-                caseData.recruitmentApplicantsCount !== undefined
-                  ? Number(caseData.recruitmentApplicantsCount)
-                  : undefined,
-              recruitmentNotes: caseData.recruitmentNotes,
-              recruitmentSummaryCustom: caseData.recruitmentSummaryCustom,
-            }}
-            defaultOpen={!isMobile}
-            readOnly={true}
-            accentColor={caseData.caseStatus === "recruitment" ? stageColor : undefined}
-          />
-        </div>
-
-        {/* I-140 Section */}
-        <I140Section
-          data={{
-            i140FilingDate: caseData.i140FilingDate,
-            i140ReceiptDate: caseData.i140ReceiptDate,
-            i140ReceiptNumber: caseData.i140ReceiptNumber,
-            i140ApprovalDate: caseData.i140ApprovalDate,
-            i140DenialDate: caseData.i140DenialDate,
-            i140Category: caseData.i140Category,
-            i140PremiumProcessing: caseData.i140PremiumProcessing,
-            i140ServiceCenter: caseData.i140ServiceCenter,
-          }}
-          eta9089CertificationDate={caseData.eta9089CertificationDate}
-          eta9089ExpirationDate={caseData.eta9089ExpirationDate}
-          defaultOpen={!isMobile}
-          accentColor={caseData.caseStatus === "i140" ? stageColor : undefined}
-        />
-
-        {/* RFI/RFE Section */}
-        <RFIRFESection
-          rfiEntries={caseData.rfiEntries}
-          rfeEntries={caseData.rfeEntries}
-          defaultOpen={!isMobile}
-        />
-
-        {/* Job Description Section - Full Width */}
-        {(caseData.jobDescription || caseData.jobDescriptionPositionTitle) && (
-          <div className="lg:col-span-2">
-            <JobDescriptionDetailView
-              positionTitle={caseData.jobDescriptionPositionTitle}
-              description={caseData.jobDescription}
-              onClear={async () => {
-                await clearJobDescriptionMutation({ id: caseId });
+        <CaseDetailTabs activeTab={activeTab} onTabChange={setActiveTab}>
+          <TabPanel id="overview" activeTab={activeTab}>
+            <OverviewTab
+              caseId={caseId}
+              caseData={caseData}
+              stageColor={stageColor}
+              isMobile={isMobile}
+              isOnTimeline={isOnTimeline}
+              isUpdating={isUpdating}
+              onToggleTimeline={handleToggleTimeline}
+              jobDescHandlers={{
+                templates: jobDescTemplates.map((t) => ({
+                  _id: t._id,
+                  name: t.name,
+                  description: t.description,
+                  createdAt: t.createdAt,
+                  updatedAt: t.updatedAt,
+                  usageCount: t.usageCount,
+                })),
+                onClear: async () => {
+                  await clearJobDescriptionMutation({ id: caseId });
+                },
+                onUpdate: async (positionTitle, description, templateId) => {
+                  await updateMutation({
+                    id: caseId,
+                    jobDescriptionPositionTitle: positionTitle,
+                    jobDescription: description,
+                    jobDescriptionTemplateId: templateId as Id<"jobDescriptionTemplates"> | undefined,
+                  });
+                },
+                onLoadTemplate: async (template) => {
+                  await loadJobDescTemplate({
+                    _id: template._id as Id<"jobDescriptionTemplates">,
+                    name: template.name,
+                    description: template.description,
+                    createdAt: template.createdAt,
+                    updatedAt: template.updatedAt,
+                    usageCount: template.usageCount,
+                  });
+                },
+                onDeleteTemplate: (id) => hardDeleteJobDescTemplate(id as Id<"jobDescriptionTemplates">),
+                onUpdateTemplate: (id, name, desc) => updateJobDescTemplate(id as Id<"jobDescriptionTemplates">, name, desc),
+                onSaveAsNewTemplate: saveJobDescAsNewTemplate,
               }}
-              onUpdate={async (positionTitle, description, templateId) => {
-                await updateMutation({
-                  id: caseId,
-                  jobDescriptionPositionTitle: positionTitle,
-                  jobDescription: description,
-                  jobDescriptionTemplateId: templateId as Id<"jobDescriptionTemplates"> | undefined,
-                });
-              }}
-              templates={jobDescTemplates.map((t) => ({
-                _id: t._id,
-                name: t.name,
-                description: t.description,
-                createdAt: t.createdAt,
-                updatedAt: t.updatedAt,
-                usageCount: t.usageCount,
-              }))}
-              onLoadTemplate={async (template) => {
-                await loadJobDescTemplate({
-                  _id: template._id as Id<"jobDescriptionTemplates">,
-                  name: template.name,
-                  description: template.description,
-                  createdAt: template.createdAt,
-                  updatedAt: template.updatedAt,
-                  usageCount: template.usageCount,
-                });
-              }}
-              onDeleteTemplate={(id) => hardDeleteJobDescTemplate(id as Id<"jobDescriptionTemplates">)}
-              onUpdateTemplate={(id, name, desc) => updateJobDescTemplate(id as Id<"jobDescriptionTemplates">, name, desc)}
-              onSaveAsNewTemplate={saveJobDescAsNewTemplate}
-              defaultOpen={!isMobile}
             />
-          </div>
-        )}
+          </TabPanel>
+
+          <TabPanel id="recruitment" activeTab={activeTab}>
+            <RecruitmentTab caseData={caseData} stageColor={stageColor} />
+          </TabPanel>
+
+          <TabPanel id="eta9089" activeTab={activeTab}>
+            <ETA9089Tab
+              caseData={caseData}
+              stageColor={stageColor}
+              filingWindowOpens={derivedDates.filingWindowOpens}
+              filingWindowCloses={derivedDates.filingWindowCloses}
+            />
+          </TabPanel>
+
+          <TabPanel id="i140" activeTab={activeTab}>
+            <I140Tab caseData={caseData} stageColor={stageColor} />
+          </TabPanel>
+
+          <TabPanel id="documents" activeTab={activeTab}>
+            <DocumentsTab documents={caseData.documents ?? []} />
+          </TabPanel>
+
+          <TabPanel id="notes" activeTab={activeTab}>
+            <NotesTab notes={caseData.notes ?? []} />
+          </TabPanel>
+        </CaseDetailTabs>
       </motion.div>
 
       {/* Edit Case */}
