@@ -5,6 +5,18 @@ import { Check, Clock, Circle } from "lucide-react";
 import { extractMilestones } from "@/lib/timeline/milestones";
 import type { CaseDetailData } from "./case-detail-types";
 
+// All key PERM stages to always show
+const ALL_STAGES: { field: string; label: string }[] = [
+  { field: "pwdFilingDate", label: "PWD Filed" },
+  { field: "pwdDeterminationDate", label: "PWD Determined" },
+  { field: "recruitmentStartDate", label: "Recruitment Started" },
+  { field: "recruitmentEndDate", label: "Recruitment Completed" },
+  { field: "eta9089FilingDate", label: "ETA 9089 Filed" },
+  { field: "eta9089CertificationDate", label: "ETA 9089 Certified" },
+  { field: "i140FilingDate", label: "I-140 Filed" },
+  { field: "i140ApprovalDate", label: "I-140 Approved" },
+];
+
 interface VerticalTimelineProps {
   caseData: CaseDetailData;
 }
@@ -17,19 +29,34 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
 
   const today = new Date().toISOString().split("T")[0] as string;
 
-  // Map milestones to done/current/pending status
+  // Build full steps: merge extracted milestones with all stages skeleton
   const steps = useMemo(() => {
+    // Create a set of fields that have milestones
+    const milestoneByField = new Map(milestones.map((m) => [m.field, m]));
+
+    // Build combined list: use milestone data if exists, else show as pending
+    const combined: { field: string; label: string; date: string; status: "done" | "current" | "pending"; isCalculated?: boolean }[] = [];
     let foundCurrent = false;
-    return milestones.map((m) => {
-      if (m.date <= today && !m.isCalculated) {
-        return { ...m, status: "done" as const };
-      }
-      if (!foundCurrent) {
+
+    for (const stage of ALL_STAGES) {
+      const m = milestoneByField.get(stage.field);
+      if (m && m.date && m.date <= today && !m.isCalculated) {
+        combined.push({ ...m, label: m.label || stage.label, status: "done" });
+        milestoneByField.delete(stage.field);
+      } else if (m && !foundCurrent) {
         foundCurrent = true;
-        return { ...m, status: "current" as const };
+        combined.push({ ...m, label: m.label || stage.label, status: "current" });
+        milestoneByField.delete(stage.field);
+      } else if (!m && !foundCurrent) {
+        foundCurrent = true;
+        combined.push({ field: stage.field, label: stage.label, date: "", status: "current" });
+      } else {
+        combined.push({ field: stage.field, label: stage.label, date: m?.date || "", status: "pending" });
+        if (m) milestoneByField.delete(stage.field);
       }
-      return { ...m, status: "pending" as const };
-    });
+    }
+
+    return combined;
   }, [milestones, today]);
 
   return (

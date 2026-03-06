@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   Bookmark,
   Loader2,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -739,14 +740,19 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   style={isActive ? { background: colors[stage] } : undefined}
                   data-s={stage}
                 >
-                  <span
-                    className={cn(
-                      "w-[9px] h-[9px] rounded-full border-2 shrink-0",
-                      isDone && "bg-[var(--primary)] border-[var(--primary)]",
-                      isActive && "bg-white border-white",
-                      !isDone && !isActive && "border-current"
-                    )}
-                  />
+                  {isDone ? (
+                    <span className="w-[14px] h-[14px] rounded-full bg-emerald-600 dark:bg-emerald-500 flex items-center justify-center shrink-0">
+                      <Check className="h-[9px] w-[9px] text-white" strokeWidth={3.5} />
+                    </span>
+                  ) : (
+                    <span
+                      className={cn(
+                        "w-[9px] h-[9px] rounded-full border-2 shrink-0",
+                        isActive && "bg-white border-white",
+                        !isActive && "border-current"
+                      )}
+                    />
+                  )}
                   {labels[stage]}
                 </div>
               );
