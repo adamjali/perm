@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatISODate } from "@/lib/utils/date";
 import { differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import { getUrgencyLevelExtended, getDaysUntilDeadline, type UrgencyLevelExtended } from "@/lib/status/urgency";
 import {
   getI140ProcessingTime,
   getI140CompletionDateRange,
@@ -42,13 +43,13 @@ export interface I140SectionProps {
 // ============================================================================
 
 /**
- * Calculate I-140 filing deadline status
+ * Calculate I-140 filing deadline status using canonical urgency thresholds.
  */
 function getDeadlineStatus(
   filingDate: string | undefined,
   expirationDate: string | undefined
 ): {
-  status: "filed" | "urgent" | "soon" | "normal" | "unknown";
+  status: "filed" | UrgencyLevelExtended | "unknown";
   daysRemaining?: number;
 } {
   if (filingDate) {
@@ -59,21 +60,10 @@ function getDeadlineStatus(
     return { status: "unknown" };
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const deadline = new Date(expirationDate + "T00:00:00");
-  const daysRemaining = differenceInDays(deadline, today);
+  const daysRemaining = getDaysUntilDeadline(expirationDate);
+  const status = getUrgencyLevelExtended(daysRemaining);
 
-  if (daysRemaining <= 0) {
-    return { status: "urgent", daysRemaining: 0 };
-  }
-  if (daysRemaining <= 7) {
-    return { status: "urgent", daysRemaining };
-  }
-  if (daysRemaining <= 30) {
-    return { status: "soon", daysRemaining };
-  }
-  return { status: "normal", daysRemaining };
+  return { status, daysRemaining: Math.max(0, daysRemaining) };
 }
 
 /**

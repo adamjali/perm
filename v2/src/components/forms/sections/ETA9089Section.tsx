@@ -7,12 +7,12 @@ import { DateInput } from "@/components/forms/DateInput";
 import { FilingWindowIndicator, type FilingWindowData } from "@/components/forms/FilingWindowIndicator";
 import { Input } from "@/components/ui/input";
 import { RFIEntryList } from "@/components/forms/sections/RFIEntryList";
-// Use shared filing window calculation (see @/lib/lib/perm/filing-window.ts for single source of truth)
-import { differenceInDays, max, format, addDays } from "date-fns";
+import { differenceInDays, format, addDays } from "date-fns";
 import { useETA9089Section } from "@/components/forms/useCaseFormSection";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 import { isRecruitmentComplete } from "@/lib/forms/date-constraints";
+import { getFirstRecruitmentDate, getLastRecruitmentDate, FILING_WINDOW_WAIT_DAYS, FILING_WINDOW_CLOSE_DAYS } from "@/lib/perm";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
 
 // ============================================================================
@@ -77,68 +77,12 @@ export interface ETA9089SectionProps {
 // ============================================================================
 
 /**
- * Calculate the recruitment end date (latest of all recruitment activities)
- *
- * For professional occupations, includes individual additional recruitment
- * method dates in addition to the general additionalRecruitmentEndDate.
- */
-function calculateRecruitmentEndDate(
-  sundayAdSecond?: string,
-  jobOrderEnd?: string,
-  noticeOfFilingEnd?: string,
-  additionalRecruitmentEnd?: string,
-  additionalRecruitmentMethods?: Array<{ method: string; date: string; description?: string }>
-): Date | null {
-  const dateStrings = [
-    sundayAdSecond,
-    jobOrderEnd,
-    noticeOfFilingEnd,
-    additionalRecruitmentEnd,
-  ].filter((d): d is string => !!d);
-
-  // Include individual method dates if present
-  if (additionalRecruitmentMethods) {
-    for (const method of additionalRecruitmentMethods) {
-      if (method.date) {
-        dateStrings.push(method.date);
-      }
-    }
-  }
-
-  if (dateStrings.length === 0) return null;
-
-  const dates = dateStrings.map((d) => new Date(d + "T00:00:00"));
-  return max(dates);
-}
-
-/**
- * Get the earliest recruitment start date (for 180-day rule)
- */
-function getFirstRecruitmentDate(
-  sundayAdFirst?: string,
-  jobOrderStart?: string,
-  noticeOfFilingStart?: string
-): Date | null {
-  const dates = [
-    sundayAdFirst,
-    jobOrderStart,
-    noticeOfFilingStart,
-  ]
-    .filter((d): d is string => !!d)
-    .map((d) => new Date(d + "T00:00:00"));
-
-  if (dates.length === 0) return null;
-
-  // Return earliest date
-  return dates.sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
-}
-
-/**
- * Build filing window data for the FilingWindowIndicator component
+ * Build filing window data for the FilingWindowIndicator component.
+ * Uses canonical FILING_WINDOW_WAIT_DAYS (30) and FILING_WINDOW_CLOSE_DAYS (180).
  */
 function buildFilingWindowData(
-  recruitmentEndDate: Date | null,
-  firstRecruitmentDate: Date | null,
+  lastRecruitmentDate: string | undefined,
+  firstRecruitmentDate: string | undefined,
   pwdExpirationDate: string | undefined,
   recruitmentComplete: boolean
 ): FilingWindowData {
@@ -147,20 +91,23 @@ function buildFilingWindowData(
     return { isOpen: false, isRecruitmentComplete: false };
   }
 
-  if (!recruitmentEndDate || !firstRecruitmentDate) {
+  if (!lastRecruitmentDate || !firstRecruitmentDate) {
     return { isOpen: false };
   }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Window opens 30 days after recruitment ends
-  const opensOn = format(addDays(recruitmentEndDate, 30), "yyyy-MM-dd");
-  const opensDate = addDays(recruitmentEndDate, 30);
+  const lastDate = new Date(lastRecruitmentDate + "T00:00:00");
+  const firstDate = new Date(firstRecruitmentDate + "T00:00:00");
 
-  // Window closes 180 days after FIRST recruitment activity
-  let closesOn = format(addDays(firstRecruitmentDate, 180), "yyyy-MM-dd");
-  let closesDate = addDays(firstRecruitmentDate, 180);
+  // Window opens FILING_WINDOW_WAIT_DAYS after recruitment ends
+  const opensDate = addDays(lastDate, FILING_WINDOW_WAIT_DAYS);
+  const opensOn = format(opensDate, "yyyy-MM-dd");
+
+  // Window closes FILING_WINDOW_CLOSE_DAYS after FIRST recruitment activity
+  let closesDate = addDays(firstDate, FILING_WINDOW_CLOSE_DAYS);
+  let closesOn = format(closesDate, "yyyy-MM-dd");
   let isPwdLimited = false;
 
   // PWD expiration can truncate the window
@@ -290,27 +237,16 @@ export function ETA9089Section(props: ETA9089SectionProps) {
   const auditIsDisabled = auditDisabled?.disabled;
   const certIsDisabled = certificationDisabled?.disabled;
 
-  // Calculate filing window status (includes individual method dates for professional occupations)
-  const recruitmentEndDate = calculateRecruitmentEndDate(
-    values.sundayAdSecondDate,
-    values.jobOrderEndDate,
-    values.noticeOfFilingEndDate,
-    values.additionalRecruitmentEndDate,
-    values.isProfessionalOccupation ? values.additionalRecruitmentMethods : undefined
-  );
-
-  const firstRecruitmentDate = getFirstRecruitmentDate(
-    values.sundayAdFirstDate,
-    values.jobOrderStartDate,
-    values.noticeOfFilingStartDate
-  );
+  // Calculate filing window using canonical functions (includes special method exclusion rule)
+  const lastRecruitDate = getLastRecruitmentDate(values, values.isProfessionalOccupation ?? false);
+  const firstRecruitDate = getFirstRecruitmentDate(values);
 
   // Check if recruitment is complete before showing window
   const recruitmentComplete = isRecruitmentComplete(values);
 
   const windowData = buildFilingWindowData(
-    recruitmentEndDate,
-    firstRecruitmentDate,
+    lastRecruitDate,
+    firstRecruitDate,
     values.pwdExpirationDate,
     recruitmentComplete
   );

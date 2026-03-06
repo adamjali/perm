@@ -6,8 +6,8 @@ import { CaseDetailSection } from "./CaseDetailSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatISODate } from "@/lib/utils/date";
-import { differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import { getUrgencyLevelFull, getDaysUntilDeadline, type UrgencyLevelFull } from "@/lib/status/urgency";
 import type { RFIEntry, RFEEntry } from "@/lib/shared/types";
 
 // Re-export types for consumers of this module
@@ -36,11 +36,14 @@ function formatDate(isoDate: string | undefined): string {
   return formatISODate(isoDate);
 }
 
+/**
+ * Calculate urgency for RFI/RFE entries using canonical thresholds.
+ */
 function getUrgency(
   dueDate: string | undefined,
   submittedDate: string | undefined
 ): {
-  level: "completed" | "overdue" | "urgent" | "soon" | "normal";
+  level: UrgencyLevelFull;
   daysRemaining?: number;
 } {
   if (submittedDate) {
@@ -51,21 +54,10 @@ function getUrgency(
     return { level: "normal" };
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const deadline = new Date(dueDate + "T00:00:00");
-  const daysRemaining = differenceInDays(deadline, today);
+  const daysRemaining = getDaysUntilDeadline(dueDate);
+  const level = getUrgencyLevelFull({ daysUntil: daysRemaining, isCompleted: false });
 
-  if (daysRemaining < 0) {
-    return { level: "overdue", daysRemaining };
-  }
-  if (daysRemaining <= 7) {
-    return { level: "urgent", daysRemaining };
-  }
-  if (daysRemaining <= 30) {
-    return { level: "soon", daysRemaining };
-  }
-  return { level: "normal", daysRemaining };
+  return { level, daysRemaining };
 }
 
 /**
