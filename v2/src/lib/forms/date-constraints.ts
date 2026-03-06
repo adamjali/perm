@@ -732,7 +732,7 @@ export function getEta9089WindowOpenDate(values: Partial<CaseFormData>): string 
   const parsed = safeParseISO(recruitmentEndDate);
   if (!parsed) return undefined;
 
-  const windowOpenDate = addDays(parsed, 30);
+  const windowOpenDate = addDays(parsed, FILING_WINDOW_WAIT_DAYS);
   return format(windowOpenDate, "yyyy-MM-dd");
 }
 
@@ -761,7 +761,7 @@ export function getDaysUntilEta9089Window(values: Partial<CaseFormData>): number
   const parsed = safeParseISO(recruitmentEndDate);
   if (!parsed) return undefined;
 
-  const windowOpenDate = addDays(parsed, 30);
+  const windowOpenDate = addDays(parsed, FILING_WINDOW_WAIT_DAYS);
   const today = new Date();
   const diffTime = windowOpenDate.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
