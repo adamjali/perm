@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { FileText, AlertTriangle, Clock } from "lucide-react";
+import { isRecruitmentComplete } from "@/lib/perm";
 import type { CaseDetailData } from "./case-detail-types";
 
 const itemVariants = {
@@ -37,6 +38,11 @@ export function ETA9089Tab({
 }: ETA9089TabProps) {
   const rfiEntries = caseData.rfiEntries || [];
 
+  // Filing window only shown if recruitment is complete (or ETA already filed)
+  const recruitDone = isRecruitmentComplete(caseData);
+  const isFiled = !!caseData.eta9089FilingDate;
+  const showFilingWindow = (recruitDone || isFiled) && !!filingWindowOpens && !!filingWindowCloses;
+
   // Filing window calc
   let windowDays = 0;
   let windowLabel = "";
@@ -44,7 +50,7 @@ export function ETA9089Tab({
   let windowChip = "Not Available";
   let windowChipStyle: React.CSSProperties = { background: "var(--muted)", color: "var(--muted-foreground)" };
 
-  if (filingWindowOpens && filingWindowCloses) {
+  if (showFilingWindow && filingWindowOpens && filingWindowCloses) {
     const total = differenceInDays(parseISO(filingWindowCloses), parseISO(filingWindowOpens));
     const now = new Date();
     const opensDate = parseISO(filingWindowOpens);
@@ -71,7 +77,6 @@ export function ETA9089Tab({
     }
   }
 
-  const isFiled = !!caseData.eta9089FilingDate;
   const isCertified = !!caseData.eta9089CertificationDate;
 
   return (
@@ -81,8 +86,8 @@ export function ETA9089Tab({
       variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
       className="space-y-6"
     >
-      {/* Filing Window Card */}
-      {filingWindowOpens && filingWindowCloses && (
+      {/* Filing Window Card — only shown when recruitment is complete or ETA already filed */}
+      {showFilingWindow && (
         <motion.div variants={itemVariants}>
           <div className="win-card">
             <div className="win-accent" style={{ background: "var(--stage-eta9089)" }} />

@@ -502,9 +502,12 @@ export function calculateNextDeadline(caseData: NextUpCaseData): Deadline | null
 
   // Central system handles all supersession, per-step deadlines, and sorting
   const deadlines = extractActiveDeadlines(centralData);
-  if (deadlines.length === 0) return null;
+  // Filter to future/current deadlines only — past deadlines (negative daysUntil)
+  // are not "next up" (e.g. filing_window_opens after the window already opened)
+  const upcoming = deadlines.filter(d => d.daysUntil >= 0);
+  if (upcoming.length === 0) return null;
 
-  const first = deadlines[0];
+  const first = upcoming[0];
   if (!first) return null;
 
   return {

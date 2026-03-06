@@ -330,7 +330,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
             <div className="detail-card-body" style={{ padding: 0 }}>
               {methods.length > 0 ? (
                 methods.map((method, i) => {
-                  const hasDate = !!(method.date || method.startDate);
+                  const hasDate = !!(method.date || method.startDate || (method.subEntries && method.subEntries.length > 0));
                   const dateDisplay = method.startDate && method.endDate
                     ? `${fmtShort(method.startDate)} \u2013 ${fmtShort(method.endDate)}`
                     : method.date
@@ -349,6 +349,16 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                         <div className="recruit-title">{getMethodLabel(method.method)}</div>
                         {method.description && (
                           <div className="recruit-detail">{method.description}</div>
+                        )}
+                        {method.subEntries && method.subEntries.length > 0 && (
+                          <div className="recruit-sub-entries">
+                            {method.subEntries.map((sub, j) => (
+                              <div key={j} className="recruit-sub-entry">
+                                {sub.date && <span className="recruit-sub-date">{fmt(sub.date)}</span>}
+                                {sub.description && <span className="recruit-sub-desc">{sub.description}</span>}
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
                       {dateDisplay && (

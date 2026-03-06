@@ -997,11 +997,11 @@
 
 /* NOF mini-calendar */
 .nof-months { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: flex-start; width: 100%; }
-.nof-months > div { flex: 0 0 auto; width: 210px; }
+.nof-months > div { flex: 1 1 0; min-width: 200px; max-width: 320px; }
 .nof-month-label { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-align: center; padding: 6px 0 4px; color: var(--foreground); }
 .nof-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; border: 2px solid var(--border); font-family: var(--font-mono); font-size: 0.82rem; text-align: center; }
-.nof-calendar .nof-hdr { padding: 8px 4px; font-weight: 700; background: var(--muted); border-bottom: 2px solid var(--border); color: var(--muted-foreground); font-size: 0.68rem; }
-.nof-calendar .nof-day { padding: 10px 4px; border-right: 1px solid var(--manila-dark); border-bottom: 1px solid var(--manila-dark); }
+.nof-calendar .nof-hdr { padding: 4px 0; font-weight: 700; background: var(--muted); border-bottom: 2px solid var(--border); color: var(--muted-foreground); font-size: 0.68rem; aspect-ratio: auto; }
+.nof-calendar .nof-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--manila-dark); border-bottom: 1px solid var(--manila-dark); }
 .nof-calendar .nof-day:nth-child(7n+8) { border-right: none; }
 .nof-calendar .nof-day.empty { color: transparent; }
 .nof-calendar .nof-day.outside { background: var(--muted); color: var(--muted-foreground); }
@@ -1011,8 +1011,12 @@
 /* Recruitment method row — mockup matching */
 .recruit-info { flex: 1; min-width: 0; }
 .recruit-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.875rem; }
-.recruit-detail { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted-foreground); }
+.recruit-detail { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted-foreground); word-break: break-word; }
 .recruit-date-text { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; color: var(--muted-foreground); }
+.recruit-sub-entries { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+.recruit-sub-entry { display: flex; align-items: baseline; gap: 6px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted-foreground); }
+.recruit-sub-date { font-weight: 600; white-space: nowrap; }
+.recruit-sub-desc { word-break: break-word; }
 
 @layer base {
   * {

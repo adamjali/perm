@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Check, Clock, Circle } from "lucide-react";
 import { parseISO, format } from "date-fns";
 import { extractMilestones } from "@/lib/timeline/milestones";
+import { isRecruitmentComplete } from "@/lib/perm";
 import type { CaseDetailData } from "./case-detail-types";
 
 // All key PERM stages to always show
@@ -42,11 +43,21 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
     const directFields: Record<string, string | undefined | null> = {
       jobOrderStartDate: caseRecord.jobOrderStartDate as string | undefined,
       noticeOfFilingStartDate: caseRecord.noticeOfFilingStartDate as string | undefined,
-      recruitmentEndDate: caseRecord.recruitmentEndDate as string | undefined,
     };
     for (const [field, date] of Object.entries(directFields)) {
       if (date && !milestoneByField.has(field)) {
         milestoneByField.set(field, { field, label: "", date, stage: "recruitment" as const, color: "#9333ea", isCalculated: false });
+      }
+    }
+
+    // Recruitment Completed — only mark as done if central isRecruitmentComplete passes
+    const recruitComplete = isRecruitmentComplete(caseData);
+    if (recruitComplete) {
+      // Use recruitmentEndDate or derive from latest recruitment date
+      const endDate = (caseRecord.recruitmentEndDate as string | undefined)
+        || [caseRecord.jobOrderEndDate, caseRecord.sundayAdSecondDate, caseRecord.noticeOfFilingEndDate].filter(Boolean).sort().reverse()[0] as string | undefined;
+      if (endDate && !milestoneByField.has("recruitmentEndDate")) {
+        milestoneByField.set("recruitmentEndDate", { field: "recruitmentEndDate", label: "", date: endDate, stage: "recruitment" as const, color: "#9333ea", isCalculated: false });
       }
     }
 

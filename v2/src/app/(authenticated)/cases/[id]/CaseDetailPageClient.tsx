@@ -539,9 +539,9 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         {/* Stage accent strip */}
         <div className="h-1" style={{ backgroundColor: stageColor }} />
 
-        <div className="p-3 sm:px-8 sm:py-3.5 space-y-2.5">
+        <div className="px-4 py-3 sm:px-10 sm:py-4 space-y-3">
           {/* Breadcrumb nav */}
-          <nav className="flex items-center gap-2 mb-2.5">
+          <nav className="flex items-center gap-2 mb-3">
             <Button
               variant="outline"
               size="icon"
