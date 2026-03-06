@@ -228,10 +228,11 @@ export function TimelineRow({
             "cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-sm"
           )}
           data-testid={`timeline-case-name-${caseData.id}`}
+          title={caseData.employerName}
         >
           {caseData.employerName}
         </button>
-        <div className="truncate text-xs text-muted-foreground leading-tight">
+        <div className="truncate text-xs text-muted-foreground leading-tight" title={caseData.positionTitle}>
           {caseData.positionTitle}
         </div>
       </div>

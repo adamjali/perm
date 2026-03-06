@@ -160,10 +160,10 @@ export default function AutoClosureAlertBanner() {
           >
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-amber-900 dark:text-amber-100 truncate">
+                <span className="font-semibold text-amber-900 dark:text-amber-100 truncate" title={alert.employerName}>
                   {alert.employerName}
                 </span>
-                <span className="text-amber-700 dark:text-amber-300 text-sm">
+                <span className="text-amber-700 dark:text-amber-300 text-sm truncate" title={alert.positionTitle}>
                   - {alert.positionTitle}
                 </span>
               </div>

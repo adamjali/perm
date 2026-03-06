@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { NavigableCard } from "@/components/ui/navigable-card";
 import { formatCountdown, safeFormatShortDate } from "@/lib/utils/date";
 import { CaseStageBadge } from "@/components/status/case-stage-badge";
+import { URGENCY_THRESHOLDS } from "@/lib/status/urgency";
 
 interface UpcomingDeadlineItemProps {
   deadline: DeadlineItem;
@@ -25,9 +26,9 @@ interface UpcomingDeadlineItemProps {
 export default function UpcomingDeadlineItem({ deadline }: UpcomingDeadlineItemProps) {
   const { caseId, employerName, label, dueDate, daysUntil, caseStatus } = deadline;
 
-  // Urgency styling (≤7 days = urgent red, ≤14 = warning orange)
-  const isUrgent = daysUntil <= 7;
-  const isWarning = daysUntil > 7 && daysUntil <= 14;
+  // Urgency styling — uses canonical thresholds from @/lib/status/urgency
+  const isUrgent = daysUntil <= URGENCY_THRESHOLDS.URGENT_DAYS;
+  const isWarning = daysUntil > URGENCY_THRESHOLDS.URGENT_DAYS && daysUntil <= URGENCY_THRESHOLDS.SOON_DAYS;
 
   // Determine testid based on urgency level
   const urgencyTestId = isUrgent ? "urgent-deadline" : isWarning ? "warning-deadline" : "deadline";
@@ -47,10 +48,10 @@ export default function UpcomingDeadlineItem({ deadline }: UpcomingDeadlineItemP
     >
       {/* Left: Employer + deadline type */}
       <div className="flex-1 min-w-0">
-        <p className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary transition-colors">
+        <p className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary transition-colors" title={employerName}>
           {employerName}
         </p>
-        <p className="text-xs text-muted-foreground uppercase tracking-wide truncate">
+        <p className="text-xs text-muted-foreground uppercase tracking-wide truncate" title={label}>
           {label}
         </p>
       </div>

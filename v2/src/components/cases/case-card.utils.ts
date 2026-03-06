@@ -3,6 +3,8 @@
  * Pure functions for formatting and display logic in CaseCard component.
  */
 
+import { getDaysUntilDeadline } from "@/lib/status/urgency";
+
 /**
  * Format closure reason for display.
  * Returns just the reason label (not the date).
@@ -41,11 +43,8 @@ function parseLocalDate(dateStr: string): Date {
  * ALWAYS shows the actual date, plus relative time for context.
  */
 export function formatDeadline(deadline: string): string {
-  const now = new Date();
   const deadlineDate = parseLocalDate(deadline);
-  const daysUntil = Math.ceil(
-    (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const daysUntil = getDaysUntilDeadline(deadline);
 
   const dateStr = deadlineDate.toLocaleDateString("en-US", {
     month: "short",

@@ -44,7 +44,7 @@ export default function RecentActivityCard({ activity }: RecentActivityCardProps
       {/* Left: Case info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary transition-colors">
+          <span className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary transition-colors" title={activity.employerName}>
             {activity.employerName}
           </span>
           <span className="text-sm text-muted-foreground mono shrink-0">
@@ -52,9 +52,9 @@ export default function RecentActivityCard({ activity }: RecentActivityCardProps
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="truncate">{activity.positionTitle}</span>
+          <span className="truncate" title={activity.positionTitle}>{activity.positionTitle}</span>
           <span className="shrink-0">•</span>
-          <span className="truncate">{activity.action}</span>
+          <span className="truncate" title={activity.action}>{activity.action}</span>
         </div>
       </div>
 

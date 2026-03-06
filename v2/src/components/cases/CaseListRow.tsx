@@ -20,6 +20,7 @@ import {
   formatCaseStatus,
   getStageColorVar,
 } from "./case-card.utils";
+import { getUrgencyFromDeadlineExtended } from "@/lib/status/urgency";
 import type { CaseCardData } from "../../../convex/lib/caseListTypes";
 
 export interface CaseListRowProps {
@@ -94,8 +95,8 @@ export const CaseListRow = memo(function CaseListRow({
     [_id, navigateTo, selectionMode, onSelect]
   );
 
-  // Deadline urgency styling
-  const deadlineUrgency = nextDeadline ? getDeadlineUrgency(nextDeadline) : null;
+  // Deadline urgency styling — uses canonical thresholds from @/lib/status/urgency
+  const deadlineUrgency = nextDeadline ? getUrgencyFromDeadlineExtended(nextDeadline) : null;
 
   return (
     <motion.div
@@ -151,7 +152,7 @@ export const CaseListRow = memo(function CaseListRow({
       <div className="flex-1 min-w-0 flex items-center gap-4">
         {/* Employer & Position */}
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm truncate flex items-center gap-1.5">
+          <div className="font-medium text-sm truncate flex items-center gap-1.5" title={employerName}>
             {employerName}
             {isSample && (
               <span className="inline-flex items-center px-1.5 py-px text-[0.5rem] font-bold tracking-wider uppercase border border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
@@ -159,7 +160,7 @@ export const CaseListRow = memo(function CaseListRow({
               </span>
             )}
           </div>
-          <div className="text-xs text-muted-foreground truncate">
+          <div className="text-xs text-muted-foreground truncate" title={positionTitle}>
             {positionTitle}
           </div>
         </div>
@@ -193,6 +194,7 @@ export const CaseListRow = memo(function CaseListRow({
                   "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800",
                 deadlineUrgency === "soon" &&
                   "bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800",
+                deadlineUrgency === "normal" && "bg-muted text-muted-foreground",
                 !deadlineUrgency && "bg-muted text-muted-foreground"
               )}
               title={nextDeadlineLabel}
@@ -212,21 +214,3 @@ export const CaseListRow = memo(function CaseListRow({
   );
 });
 
-// ============================================================================
-// Helpers
-// ============================================================================
-
-type DeadlineUrgency = "overdue" | "urgent" | "soon" | null;
-
-function getDeadlineUrgency(deadline: string): DeadlineUrgency {
-  const now = new Date();
-  const deadlineDate = new Date(`${deadline}T12:00:00`);
-  const daysUntil = Math.ceil(
-    (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  if (daysUntil < 0) return "overdue";
-  if (daysUntil <= 3) return "urgent";
-  if (daysUntil <= 7) return "soon";
-  return null;
-}
