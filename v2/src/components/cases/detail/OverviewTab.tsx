@@ -1,17 +1,22 @@
 "use client";
 
 import { motion } from "motion/react";
-import { PWDSection } from "./PWDSection";
+import { format, parseISO } from "date-fns";
+import { Flag, CalendarMinus, CalendarPlus } from "lucide-react";
 import { NextUpSection } from "./NextUpSection";
 import { InlineCaseTimeline } from "./InlineCaseTimeline";
 import { JobDescriptionDetailView } from "@/components/job-description";
 import { QuickStatsPanel } from "./QuickStatsPanel";
 import { VerticalTimeline } from "./VerticalTimeline";
 import { Button } from "@/components/ui/button";
-import { CalendarMinus, CalendarPlus } from "lucide-react";
 import { type ProgressStatus } from "@/lib/perm";
 import type { Id } from "@/../convex/_generated/dataModel";
 import type { CaseDetailData } from "./case-detail-types";
+
+function fmtDate(d?: string | null) {
+  if (!d) return "\u2014";
+  try { return format(parseISO(d), "MMM d, yyyy"); } catch { return d; }
+}
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -58,7 +63,6 @@ interface OverviewTabProps {
 export function OverviewTab({
   caseId,
   caseData,
-  stageColor,
   isMobile,
   isOnTimeline,
   isUpdating,
@@ -119,21 +123,61 @@ export function OverviewTab({
           {/* PWD + Quick Stats side by side (mockup: 1.8fr 1fr) */}
           <div className="grid gap-6 md:grid-cols-[1.8fr_1fr]">
             <motion.div variants={itemVariants}>
-              <PWDSection
-                data={{
-                  pwdFilingDate: caseData.pwdFilingDate,
-                  pwdDeterminationDate: caseData.pwdDeterminationDate,
-                  pwdExpirationDate: caseData.pwdExpirationDate,
-                  pwdCaseNumber: caseData.pwdCaseNumber,
-                  pwdWageAmount:
-                    caseData.pwdWageAmount !== undefined
-                      ? Number(caseData.pwdWageAmount)
-                      : undefined,
-                  pwdWageLevel: caseData.pwdWageLevel,
-                }}
-                defaultOpen={true}
-                accentColor={caseData.caseStatus === "pwd" ? stageColor : undefined}
-              />
+              <div className="detail-card">
+                <div className="detail-card-head ch-pwd">
+                  <span className="flex items-center gap-1.5">
+                    <Flag className="h-3.5 w-3.5" />
+                    Prevailing Wage
+                  </span>
+                  {caseData.pwdDeterminationDate && (
+                    <span className="head-badge">Complete</span>
+                  )}
+                </div>
+                <div className="field-grid" style={{ padding: 0 }}>
+                  <div className="field-cell">
+                    <div className="fc-label">PWD Case #</div>
+                    <div className={`fc-val mono ${!caseData.pwdCaseNumber ? "dim" : ""}`}>
+                      {caseData.pwdCaseNumber || "\u2014"}
+                    </div>
+                  </div>
+                  <div className="field-cell">
+                    <div className="fc-label">Filed</div>
+                    <div className={`fc-val mono ${!caseData.pwdFilingDate ? "dim" : ""}`}>
+                      {fmtDate(caseData.pwdFilingDate)}
+                    </div>
+                  </div>
+                  <div className="field-cell">
+                    <div className="fc-label">Determined</div>
+                    <div className={`fc-val mono ${!caseData.pwdDeterminationDate ? "dim" : ""}`}>
+                      {fmtDate(caseData.pwdDeterminationDate)}
+                    </div>
+                  </div>
+                  <div className="field-cell">
+                    <div className="fc-label">Wage Level</div>
+                    <div className={`fc-val ${!caseData.pwdWageLevel ? "dim" : ""}`}>
+                      {caseData.pwdWageLevel || "\u2014"}
+                    </div>
+                  </div>
+                  <div className="field-cell">
+                    <div className="fc-label">PWD Amount</div>
+                    <div className={`fc-val ${caseData.pwdWageAmount === undefined ? "dim" : ""}`}>
+                      {caseData.pwdWageAmount !== undefined
+                        ? `${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(caseData.pwdWageAmount))} / yr`
+                        : "\u2014"}
+                    </div>
+                  </div>
+                  <div className="field-cell">
+                    <div className="fc-label">Expires</div>
+                    <div className={`fc-val mono ${!caseData.pwdExpirationDate ? "dim" : ""}`}>
+                      {caseData.pwdExpirationDate ? (
+                        <span style={{ color: "var(--stage-eta9089)" }}>
+                          {fmtDate(caseData.pwdExpirationDate)}
+                        </span>
+                      ) : "\u2014"}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </motion.div>
 
             <motion.div variants={itemVariants}>
