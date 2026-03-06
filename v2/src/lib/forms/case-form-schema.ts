@@ -236,7 +236,7 @@ export const caseFormSchema = z
     priorityLevel: z.enum(['low', 'normal', 'high', 'urgent']),
     isFavorite: z.boolean(),
     notes: z.array(noteSchema),
-    tags: z.array(z.string()),
+    tags: z.array(z.string().max(100)),
     calendarSyncEnabled: z.boolean(),
     showOnTimeline: z.boolean(),
 

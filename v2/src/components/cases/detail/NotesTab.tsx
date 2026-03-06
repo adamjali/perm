@@ -200,7 +200,7 @@ export function NotesTab({ notes }: NotesTabProps) {
                   </div>
 
                   {/* Body */}
-                  <div className="preview-body" style={{ fontSize: "1rem", lineHeight: 1.7 }}>
+                  <div className="preview-body max-h-[400px] overflow-y-auto" style={{ fontSize: "1rem", lineHeight: 1.7 }}>
                     {selectedNote.content}
                   </div>
 

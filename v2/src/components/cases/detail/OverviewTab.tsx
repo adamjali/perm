@@ -242,7 +242,7 @@ export function OverviewTab({
                 <div className="field-grid" style={{ padding: 0 }}>
                   <div className="field-cell">
                     <div className="fc-label">PWD Case #</div>
-                    <div className={`fc-val mono ${!caseData.pwdCaseNumber ? "dim" : ""}`} title={caseData.pwdCaseNumber || undefined}>
+                    <div className={`fc-val fc-val-text mono ${!caseData.pwdCaseNumber ? "dim" : ""}`} title={caseData.pwdCaseNumber || undefined}>
                       {caseData.pwdCaseNumber || "\u2014"}
                     </div>
                   </div>
@@ -352,6 +352,7 @@ export function OverviewTab({
                         value={editPositionTitle}
                         onChange={(e) => setEditPositionTitle(e.target.value)}
                         placeholder="e.g., Software Engineer"
+                        maxLength={200}
                         className="w-full border-[3px] border-border bg-card px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary"
                       />
                     </div>
@@ -424,7 +425,7 @@ export function OverviewTab({
                     <div className="field-grid" style={{ padding: 0 }}>
                       <div className="field-cell">
                         <div className="fc-label">Position</div>
-                        <div className={`fc-val ${!caseData.jobDescriptionPositionTitle ? "dim" : ""}`} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div className={`fc-val fc-val-text ${!caseData.jobDescriptionPositionTitle ? "dim" : ""}`} title={caseData.jobDescriptionPositionTitle || undefined}>
                           {caseData.jobDescriptionPositionTitle || "\u2014"}
                         </div>
                       </div>

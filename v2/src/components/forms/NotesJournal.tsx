@@ -355,6 +355,7 @@ export function NotesJournal({
             onKeyDown={handleKeyDown}
             placeholder={`Add a note... (${shortcutKey}+Enter to save)`}
             rows={3}
+            maxLength={5000}
             className="border-2 border-border shadow-[3px_3px_0px_0px_rgba(0,0,0,0.1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.05)]"
           />
         </div>

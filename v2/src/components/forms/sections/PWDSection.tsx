@@ -264,6 +264,7 @@ export function PWDSection(props: PWDSectionProps) {
             onChange={handleInputChange}
             aria-invalid={!!errors?.pwdCaseNumber}
             placeholder="e.g., PWD-2024-001"
+            maxLength={50}
           />
         </FormField>
 

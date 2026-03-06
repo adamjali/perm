@@ -584,7 +584,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               <p className="font-heading text-[0.85rem] text-muted-foreground font-medium flex items-center gap-2 mt-0.5 truncate" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? ` — ${caseData.beneficiaryIdentifier}` : ""}`}>
                 {caseData.positionTitle}
                 {caseData.beneficiaryIdentifier && (
-                  <span className="font-mono text-[0.72rem] opacity-60 shrink-0">&mdash; {caseData.beneficiaryIdentifier}</span>
+                  <span className="font-mono text-[0.72rem] opacity-60 shrink-0 max-w-[200px] truncate" title={caseData.beneficiaryIdentifier}>&mdash; {caseData.beneficiaryIdentifier}</span>
                 )}
               </p>
             </div>

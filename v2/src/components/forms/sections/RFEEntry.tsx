@@ -285,6 +285,7 @@ function RFEEntryComponent({
             value={title || ""}
             onChange={handleInputChange("title")}
             placeholder="e.g., Additional evidence of ability to pay"
+            maxLength={200}
           />
         </FormField>
 
@@ -300,6 +301,7 @@ function RFEEntryComponent({
             onChange={handleInputChange("description")}
             placeholder="Describe the evidence requested..."
             rows={2}
+            maxLength={2000}
           />
         </FormField>
 
@@ -368,6 +370,7 @@ function RFEEntryComponent({
             onChange={handleInputChange("notes")}
             placeholder="Add any relevant notes..."
             rows={2}
+            maxLength={2000}
           />
         </FormField>
       </div>

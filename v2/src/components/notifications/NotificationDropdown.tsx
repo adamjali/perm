@@ -197,13 +197,13 @@ function NotificationItem({
         </p>
 
         {/* Message - 2 line truncate */}
-        <p className="text-xs text-muted-foreground line-clamp-2">
+        <p className="text-xs text-muted-foreground line-clamp-2" title={notification.message}>
           {notification.message}
         </p>
 
         {/* Case info if available */}
         {notification.caseInfo?.employerName && (
-          <p className="text-xs text-muted-foreground/70 truncate">
+          <p className="text-xs text-muted-foreground/70 truncate" title={`${notification.caseInfo.employerName}${notification.caseInfo.positionTitle ? ` - ${notification.caseInfo.positionTitle}` : notification.caseInfo.beneficiaryIdentifier ? ` - ${notification.caseInfo.beneficiaryIdentifier}` : ""}`}>
             {notification.caseInfo.employerName}
             {(notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier) &&
               ` - ${notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier}`}

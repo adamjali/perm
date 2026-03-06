@@ -236,6 +236,7 @@ export function ValueHighlight({ label, value, mono }: ValueHighlightProps) {
           "text-sm font-medium leading-tight truncate",
           mono && "font-mono"
         )}
+        title={typeof value === "string" || typeof value === "number" ? String(value) : undefined}
       >
         {value}
       </div>

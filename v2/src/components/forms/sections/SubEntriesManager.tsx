@@ -92,6 +92,7 @@ export function SubEntriesManager({
                 value={entry.description || ''}
                 onChange={(e) => updateEntry(index, 'description', e.target.value)}
                 placeholder="e.g., WABC morning show"
+                maxLength={500}
               />
             </FormField>
           </div>

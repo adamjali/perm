@@ -763,6 +763,7 @@
 .fc-val.mono { font-family: var(--font-mono); }
 .fc-val.dim { color: var(--muted-foreground); }
 .fc-val { overflow-wrap: break-word; word-break: break-word; }
+.fc-val-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Quick Stats grid */
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; }

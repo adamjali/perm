@@ -362,6 +362,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
               onChange={handleInputChange}
               aria-invalid={!!errors?.eta9089CaseNumber}
               placeholder="e.g., A-12345-67890"
+              maxLength={50}
             />
           </FormField>
         </div>

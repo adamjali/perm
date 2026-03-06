@@ -292,6 +292,7 @@ function RFIEntryComponent({
             value={title || ""}
             onChange={handleInputChange("title")}
             placeholder="e.g., Clarification on job duties"
+            maxLength={200}
           />
         </FormField>
 
@@ -307,6 +308,7 @@ function RFIEntryComponent({
             onChange={handleInputChange("description")}
             placeholder="Describe the information requested..."
             rows={2}
+            maxLength={2000}
           />
         </FormField>
 
@@ -376,6 +378,7 @@ function RFIEntryComponent({
             onChange={handleInputChange("notes")}
             placeholder="Add any relevant notes..."
             rows={2}
+            maxLength={2000}
           />
         </FormField>
       </div>

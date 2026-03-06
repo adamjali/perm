@@ -254,7 +254,7 @@ export const CaseCard = memo(function CaseCard({
                 </span>
               </div>
             ) : isClosed ? (
-              <span className="text-sm text-gray-500 dark:text-gray-400 italic">
+              <span className="text-sm text-gray-500 dark:text-gray-400 italic truncate" title={`Closed ${caseData.closedAt ? formatCompactDate(caseData.closedAt) : ""}${formatClosureReasonLabel(caseData.closedReason) ? ` - ${formatClosureReasonLabel(caseData.closedReason)}` : ""}`}>
                 Closed{" "}
                 {caseData.closedAt ? formatCompactDate(caseData.closedAt) : ""}
                 {formatClosureReasonLabel(caseData.closedReason) && (

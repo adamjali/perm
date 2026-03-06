@@ -409,7 +409,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
           {(caseData.recruitmentNotes || caseData.recruitmentSummaryCustom) && (
             <div style={{ padding: "16px 20px" }}>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", color: "var(--muted-foreground)", marginBottom: 6 }}>Result</div>
-              <div style={{ fontSize: "0.88rem", lineHeight: 1.55 }}>
+              <div className="line-clamp-4" style={{ fontSize: "0.88rem", lineHeight: 1.55 }} title={caseData.recruitmentSummaryCustom || caseData.recruitmentNotes || undefined}>
                 {caseData.recruitmentSummaryCustom || caseData.recruitmentNotes}
               </div>
             </div>

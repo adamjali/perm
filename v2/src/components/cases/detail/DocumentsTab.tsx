@@ -198,7 +198,7 @@ export function DocumentsTab({ documents }: DocumentsTabProps) {
                     </div>
 
                     {/* Title */}
-                    <div className="preview-title">{selectedDoc.name}</div>
+                    <div className="preview-title" title={selectedDoc.name}>{selectedDoc.name}</div>
 
                     {/* Meta */}
                     <div className="preview-meta">

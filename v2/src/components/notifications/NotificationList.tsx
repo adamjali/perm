@@ -255,12 +255,12 @@ function NotificationListItem({
           </span>
         </div>
 
-        <p className="text-sm text-muted-foreground line-clamp-2">
+        <p className="text-sm text-muted-foreground line-clamp-2" title={notification.message}>
           {notification.message}
         </p>
 
         {notification.caseInfo?.employerName && (
-          <p className="text-xs text-muted-foreground/70 truncate">
+          <p className="text-xs text-muted-foreground/70 truncate" title={`${notification.caseInfo.employerName}${notification.caseInfo.positionTitle ? ` - ${notification.caseInfo.positionTitle}` : notification.caseInfo.beneficiaryIdentifier ? ` - ${notification.caseInfo.beneficiaryIdentifier}` : ""}`}>
             {notification.caseInfo.employerName}
             {(notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier) &&
               ` - ${notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier}`}

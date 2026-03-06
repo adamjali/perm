@@ -330,6 +330,7 @@ export function ProfessionalSection({
                         value={method.description || ''}
                         onChange={(e) => handleMethodChange(index, 'description', e.target.value)}
                         placeholder="e.g., Chicago Tribune"
+                        maxLength={1000}
                       />
                     </FormField>
                   </div>

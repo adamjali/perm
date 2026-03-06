@@ -471,6 +471,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                 onChange={handleInputChange}
                 aria-invalid={!!errors?.sundayAdNewspaper}
                 placeholder="e.g., New York Times"
+                maxLength={200}
               />
             </FormField>
           </div>
@@ -799,6 +800,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                     value={method.description || ''}
                                     onChange={(e) => updateMethod(index, 'description', e.target.value)}
                                     placeholder="e.g., posting details"
+                                    maxLength={1000}
                                   />
                                 </FormField>
                               </div>
@@ -828,6 +830,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                     value={method.description || ''}
                                     onChange={(e) => updateMethod(index, 'description', e.target.value)}
                                     placeholder="e.g., Metro NYC area"
+                                    maxLength={1000}
                                   />
                                 </FormField>
                               </div>
@@ -864,6 +867,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                   value={method.description || ''}
                                   onChange={(e) => updateMethod(index, 'description', e.target.value)}
                                   placeholder="e.g., publication name"
+                                  maxLength={1000}
                                 />
                               </FormField>
                             </div>

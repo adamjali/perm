@@ -168,14 +168,14 @@ function EntryCard({ type, entry, compact }: EntryCardProps) {
 
       {/* Title (if present) */}
       {entry.title && (
-        <h4 className={cn("font-semibold", compact ? "text-sm mb-1" : "mb-2")}>
+        <h4 className={cn("font-semibold truncate", compact ? "text-sm mb-1" : "mb-2")} title={entry.title}>
           {entry.title}
         </h4>
       )}
 
       {/* Description (if present, truncated in compact mode) */}
       {entry.description && !compact && (
-        <p className="text-sm text-muted-foreground mb-3">{entry.description}</p>
+        <p className="text-sm text-muted-foreground mb-3 line-clamp-3" title={entry.description}>{entry.description}</p>
       )}
 
       {/* Dates Grid */}
@@ -222,7 +222,7 @@ function EntryCard({ type, entry, compact }: EntryCardProps) {
       {/* Notes (if present, only in non-compact) */}
       {entry.notes && !compact && (
         <div className="mt-3 pt-3 border-t border-border/50">
-          <p className="text-xs text-muted-foreground">{entry.notes}</p>
+          <p className="text-xs text-muted-foreground line-clamp-2" title={entry.notes}>{entry.notes}</p>
         </div>
       )}
     </div>

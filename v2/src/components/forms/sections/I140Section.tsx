@@ -322,6 +322,7 @@ export function I140Section(props: I140SectionProps) {
               onChange={handleInputChange}
               aria-invalid={!!errors?.i140ReceiptNumber}
               placeholder="e.g., WAC2412345678"
+              maxLength={50}
             />
           </FormField>
 

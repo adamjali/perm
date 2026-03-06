@@ -441,6 +441,7 @@ export function JobDescriptionField({
                     }}
                     placeholder="e.g., Software Engineer"
                     disabled={isLoading}
+                    maxLength={200}
                     className="border-2 min-h-[44px]"
                   />
                   {positionTitle !== inheritedPositionTitle && positionTitle && (
