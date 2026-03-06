@@ -39,9 +39,9 @@ describe("UpcomingDeadlineItem", () => {
   it.each([
     [7, "urgent-deadline"],
     [8, "warning-deadline"],
-    [14, "warning-deadline"],
-    [15, "deadline"],
-    [30, "deadline"],
+    [15, "warning-deadline"],
+    [30, "warning-deadline"],
+    [31, "deadline"],
   ])("applies correct urgency testid for daysUntil=%i → %s", (daysUntil, testId) => {
     render(<UpcomingDeadlineItem deadline={createMockDeadline({ daysUntil })} />);
     expect(screen.getByTestId(testId)).toBeInTheDocument();

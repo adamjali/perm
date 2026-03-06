@@ -95,7 +95,7 @@ export const NOTE_CATEGORY_LABELS: Record<NoteCategory, string> = {
 
 const noteSchema = z.object({
   id: z.string().min(1),
-  content: z.string().min(1),
+  content: z.string().min(1).max(5000, 'Note must be 5,000 characters or less'),
   createdAt: z.number(),
   status: z.enum(['pending', 'done', 'deleted']),
   // Extended fields for full journal functionality (optional for backward compatibility)
@@ -108,13 +108,13 @@ const noteSchema = z.object({
 
 const subEntrySchema = z.object({
   date: z.string().refine((val) => !val || isISODateString(val), { message: ISO_DATE_MESSAGE }),
-  description: z.string().optional(),
+  description: z.string().max(500, 'Description must be 500 characters or less').optional(),
 });
 
 const additionalRecruitmentMethodSchema = z.object({
-  method: z.string().min(1, 'Method is required'),
+  method: z.string().min(1, 'Method is required').max(200, 'Method must be 200 characters or less'),
   date: z.string().refine((val) => !val || isISODateString(val), { message: ISO_DATE_MESSAGE }), // Empty for date-range/sub-entry methods
-  description: z.string().optional(),
+  description: z.string().max(1000, 'Description must be 1,000 characters or less').optional(),
   startDate: optionalIsoDateSchema,
   endDate: optionalIsoDateSchema,
   subEntries: z.array(subEntrySchema).optional(),
@@ -126,9 +126,9 @@ const additionalRecruitmentMethodSchema = z.object({
  */
 const rfiEntrySchema = z.object({
   id: z.string().min(1),
-  title: z.string().optional(),
-  description: z.string().optional(),
-  notes: z.string().optional(),
+  title: z.string().max(200, 'Title must be 200 characters or less').optional(),
+  description: z.string().max(2000, 'Description must be 2,000 characters or less').optional(),
+  notes: z.string().max(2000, 'Notes must be 2,000 characters or less').optional(),
   receivedDate: isoDateSchema,
   responseDueDate: isoDateSchema, // Auto-calculated: +30 days
   responseSubmittedDate: optionalIsoDateSchema,
@@ -141,9 +141,9 @@ const rfiEntrySchema = z.object({
  */
 const rfeEntrySchema = z.object({
   id: z.string().min(1),
-  title: z.string().optional(),
-  description: z.string().optional(),
-  notes: z.string().optional(),
+  title: z.string().max(200, 'Title must be 200 characters or less').optional(),
+  description: z.string().max(2000, 'Description must be 2,000 characters or less').optional(),
+  notes: z.string().max(2000, 'Notes must be 2,000 characters or less').optional(),
   receivedDate: isoDateSchema,
   responseDueDate: isoDateSchema, // USER EDITABLE
   responseSubmittedDate: optionalIsoDateSchema,
@@ -161,27 +161,27 @@ export type RFEEntry = z.infer<typeof rfeEntrySchema>;
 export const caseFormSchema = z
   .object({
     // Required fields
-    employerName: z.string().min(1, 'Employer name is required'),
-    beneficiaryIdentifier: z.string().optional().default(''),
-    positionTitle: z.string().min(1, 'Position title is required'),
+    employerName: z.string().min(1, 'Employer name is required').max(200, 'Employer name must be 200 characters or less'),
+    beneficiaryIdentifier: z.string().max(200, 'Beneficiary identifier must be 200 characters or less').optional().default(''),
+    positionTitle: z.string().min(1, 'Position title is required').max(200, 'Position title must be 200 characters or less'),
     caseStatus: z.enum(CASE_STATUSES),
     progressStatus: z.enum(PROGRESS_STATUSES),
 
     // Optional string fields
-    caseNumber: z.string().optional(),
-    internalCaseNumber: z.string().optional(),
-    employerFein: z.string().optional(),
-    jobTitle: z.string().optional(),
-    socCode: z.string().optional(),
-    socTitle: z.string().optional(),
-    jobOrderState: z.string().optional(),
+    caseNumber: z.string().max(50, 'Case number must be 50 characters or less').optional(),
+    internalCaseNumber: z.string().max(50, 'Internal case number must be 50 characters or less').optional(),
+    employerFein: z.string().max(20, 'FEIN must be 20 characters or less').optional(),
+    jobTitle: z.string().max(200, 'Job title must be 200 characters or less').optional(),
+    socCode: z.string().max(20, 'SOC code must be 20 characters or less').optional(),
+    socTitle: z.string().max(200, 'SOC title must be 200 characters or less').optional(),
+    jobOrderState: z.string().max(50, 'Job order state must be 50 characters or less').optional(),
     progressStatusOverride: z.boolean().optional(),
 
     // PWD dates
     pwdFilingDate: optionalIsoDateSchema,
     pwdDeterminationDate: optionalIsoDateSchema,
     pwdExpirationDate: optionalIsoDateSchema,
-    pwdCaseNumber: z.string().optional(),
+    pwdCaseNumber: z.string().max(50, 'PWD case number must be 50 characters or less').optional(),
     pwdWageAmount: z.number().optional(),
     pwdWageLevel: z.string().optional(),
 
@@ -192,15 +192,15 @@ export const caseFormSchema = z
     // Recruitment - Sunday Ads (with Sunday validation)
     sundayAdFirstDate: sundayDateSchema,
     sundayAdSecondDate: sundayDateSchema,
-    sundayAdNewspaper: z.string().optional(),
+    sundayAdNewspaper: z.string().max(200, 'Newspaper name must be 200 characters or less').optional(),
 
     // Recruitment - Additional Methods
     additionalRecruitmentStartDate: optionalIsoDateSchema,
     additionalRecruitmentEndDate: optionalIsoDateSchema,
     additionalRecruitmentMethods: z.array(additionalRecruitmentMethodSchema),
-    recruitmentNotes: z.string().optional(),
+    recruitmentNotes: z.string().max(2000, 'Recruitment notes must be 2,000 characters or less').optional(),
     recruitmentApplicantsCount: z.number().int().min(0).default(0),
-    recruitmentSummaryCustom: z.string().optional(),
+    recruitmentSummaryCustom: z.string().max(2000, 'Recruitment summary must be 2,000 characters or less').optional(),
 
     // Professional occupation
     isProfessionalOccupation: z.boolean(),
@@ -214,7 +214,7 @@ export const caseFormSchema = z
     eta9089AuditDate: optionalIsoDateSchema,
     eta9089CertificationDate: optionalIsoDateSchema,
     eta9089ExpirationDate: optionalIsoDateSchema,
-    eta9089CaseNumber: z.string().optional(),
+    eta9089CaseNumber: z.string().max(50, 'ETA 9089 case number must be 50 characters or less').optional(),
 
     // RFI entries (strict 30-day due, one active at a time)
     rfiEntries: z.array(rfiEntrySchema),
@@ -225,11 +225,11 @@ export const caseFormSchema = z
     // I-140
     i140FilingDate: optionalIsoDateSchema,
     i140ReceiptDate: optionalIsoDateSchema,
-    i140ReceiptNumber: z.string().optional(),
+    i140ReceiptNumber: z.string().max(50, 'I-140 receipt number must be 50 characters or less').optional(),
     i140ApprovalDate: optionalIsoDateSchema,
     i140DenialDate: optionalIsoDateSchema,
     i140Category: z.enum(['EB-1', 'EB-2', 'EB-2-NIW', 'EB-3']).optional(),
-    i140ServiceCenter: z.string().optional(),
+    i140ServiceCenter: z.string().max(100, 'Service center must be 100 characters or less').optional(),
     i140PremiumProcessing: z.boolean().optional(),
 
     // Organization & Metadata
@@ -241,7 +241,7 @@ export const caseFormSchema = z
     showOnTimeline: z.boolean(),
 
     // Job Description (for PERM postings)
-    jobDescriptionPositionTitle: z.string().optional(),
+    jobDescriptionPositionTitle: z.string().max(200, 'Job description position title must be 200 characters or less').optional(),
     jobDescription: z.string().max(10000, 'Job description must be 10,000 characters or less').optional(),
     jobDescriptionTemplateId: z.custom<Id<"jobDescriptionTemplates">>().optional(), // Template ID reference
   })

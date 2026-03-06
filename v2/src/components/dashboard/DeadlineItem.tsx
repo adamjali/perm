@@ -191,7 +191,7 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Case #
           </div>
-          <div className="mono text-sm font-medium text-foreground">
+          <div className="mono text-sm font-medium text-foreground truncate" title={deadline.caseNumber || "N/A"}>
             {deadline.caseNumber || "N/A"}
           </div>
         </div>
@@ -199,7 +199,7 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Position
           </div>
-          <div className="text-sm font-medium text-foreground">
+          <div className="text-sm font-medium text-foreground truncate" title={deadline.positionTitle || deadline.beneficiaryName || "N/A"}>
             {deadline.positionTitle || deadline.beneficiaryName || "N/A"}
           </div>
         </div>
@@ -263,10 +263,10 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
 
           {/* Left side: Employer + Type */}
           <div className={cn("flex-1 min-w-0", isOverdue && "pl-2")}>
-            <div className="font-bold text-base truncate text-foreground">
+            <div className="font-bold text-base truncate text-foreground" title={deadline.employerName}>
               {deadline.employerName}
             </div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wide">
+            <div className="text-xs text-muted-foreground uppercase tracking-wide truncate" title={deadline.label}>
               {deadline.label}
             </div>
           </div>

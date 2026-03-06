@@ -16,19 +16,7 @@ import "tippy.js/dist/tippy.css";
 import type { EventProps } from "react-big-calendar";
 import { useRouter } from "next/navigation";
 
-import type { CalendarEvent as CalendarEventType } from "@/lib/calendar/types";
-
-// ============================================================================
-// Stage Colors (matching v1)
-// ============================================================================
-
-const STAGE_COLORS: Record<string, string> = {
-  pwd: "#0066FF",        // Blue
-  recruitment: "#9333ea", // Purple
-  eta9089: "#D97706",    // Orange/Amber
-  i140: "#059669",       // Green
-  closed: "#6B7280",     // Gray
-};
+import { type CalendarEvent as CalendarEventType, STAGE_COLORS } from "@/lib/calendar/types";
 
 // ============================================================================
 // Types

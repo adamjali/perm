@@ -241,11 +241,12 @@ function NotificationListItem({
         <div className="flex items-start justify-between gap-2">
           <p
             className={cn(
-              "text-base leading-tight",
+              "text-base leading-tight truncate",
               notification.isRead
                 ? "font-medium text-foreground/80"
                 : "font-bold text-foreground font-heading"
             )}
+            title={notification.title}
           >
             {notification.title}
           </p>

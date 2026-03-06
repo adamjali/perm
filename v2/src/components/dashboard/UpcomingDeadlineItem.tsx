@@ -5,7 +5,7 @@
  * Shows employer name, deadline label, case stage badge, due date, and countdown.
  *
  * Design: Neobrutalist with stage-tag badge and lift-shadow hover effect.
- * Urgency styling: red (≤7 days), orange (8-14 days), muted (>14 days).
+ * Urgency styling: red (≤7 days), orange (8-30 days), muted (>30 days).
  *
  * @see v2/docs/DESIGN_SYSTEM.md
  */

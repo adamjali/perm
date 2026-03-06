@@ -309,7 +309,7 @@ export function CalendarEventPopover({
                 <span className="text-sm text-muted-foreground w-20 shrink-0">
                   Employer:
                 </span>
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-sm font-semibold text-foreground truncate" title={caseData.employerName}>
                   {caseData.employerName}
                 </span>
               </motion.div>
@@ -327,7 +327,7 @@ export function CalendarEventPopover({
                 <span className="text-sm text-muted-foreground w-20 shrink-0">
                   Foreign Worker:
                 </span>
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-sm font-semibold text-foreground truncate" title={caseData.beneficiaryIdentifier}>
                   {caseData.beneficiaryIdentifier}
                 </span>
               </motion.div>
@@ -345,7 +345,7 @@ export function CalendarEventPopover({
                 <span className="text-sm text-muted-foreground w-20 shrink-0">
                   Position:
                 </span>
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-sm font-semibold text-foreground truncate" title={caseData.positionTitle}>
                   {caseData.positionTitle}
                 </span>
               </motion.div>

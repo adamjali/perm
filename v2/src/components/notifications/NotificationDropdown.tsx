@@ -186,11 +186,12 @@ function NotificationItem({
         {/* Title - bold if unread */}
         <p
           className={cn(
-            "text-sm leading-tight",
+            "text-sm leading-tight truncate",
             notification.isRead
               ? "font-medium text-foreground/80"
               : "font-bold text-foreground font-heading"
           )}
+          title={notification.title}
         >
           {notification.title}
         </p>
