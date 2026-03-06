@@ -40,7 +40,6 @@ import {
 } from "@/components/ui/dialog";
 import { CaseStageBadge } from "@/components/status/case-stage-badge";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
-import { StageProgressIndicator } from "@/components/cases/detail/next-up-section.components";
 import { getStageIndex } from "@/components/cases/detail/next-up-section.utils";
 import {
   CaseDetailTabs,
@@ -537,58 +536,61 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       />
 
       {/* ================================================================ */}
-      {/* CASE HERO HEADER — stage accent, title, badges, stage progress  */}
+      {/* CASE HERO HEADER — mockup-matching layout                       */}
       {/* ================================================================ */}
       <motion.div
         variants={headerVariants}
-        className="border-2 border-border bg-card shadow-hard overflow-hidden"
+        className="bg-card border-b-[3px] border-border relative z-[2] overflow-hidden"
       >
         {/* Stage accent strip */}
         <div className="h-1" style={{ backgroundColor: stageColor }} />
 
-        <div className="p-4 sm:p-6 space-y-4">
-          {/* Row 1: Back + Title + Actions */}
-          <div className="flex items-start justify-between gap-3 sm:gap-4">
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => navigateTo("/cases")}
-                className={cn(
-                  "shrink-0 border-2 border-border",
-                  "hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard transition-all",
-                  "min-h-[44px] min-w-[44px]",
-                  isNavigating && "opacity-70 pointer-events-none"
-                )}
-                disabled={isAnyNavigating}
-              >
-                {isNavigating ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <ArrowLeft className="h-5 w-5" />
-                )}
-                <span className="sr-only">Back to cases</span>
-              </Button>
+        <div className="p-3 sm:px-8 sm:py-3.5 space-y-2.5">
+          {/* Breadcrumb nav */}
+          <nav className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigateTo("/cases")}
+              className={cn(
+                "shrink-0 h-9 w-9",
+                isNavigating && "opacity-70 pointer-events-none"
+              )}
+              disabled={isAnyNavigating}
+            >
+              {isNavigating ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <ArrowLeft className="h-5 w-5" />
+              )}
+              <span className="sr-only">Back to cases</span>
+            </Button>
+            <span className="font-mono text-[0.68rem] text-muted-foreground">Cases / Detail</span>
+          </nav>
 
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h1 className="font-heading text-xl sm:text-2xl font-bold leading-tight truncate">
-                    {caseData.employerName}
-                  </h1>
-                  {isSample && (
-                    <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[0.625rem] font-bold tracking-wider uppercase border-2 border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
-                      SAMPLE
-                    </span>
-                  )}
-                </div>
-                <p className="text-muted-foreground text-sm sm:text-base truncate">
-                  {caseData.positionTitle}
-                </p>
+          {/* Row 1: Title + Actions */}
+          <div className="flex items-center justify-between gap-3 sm:gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="font-heading text-xl sm:text-2xl font-bold leading-tight truncate tracking-tight">
+                  {caseData.employerName}
+                </h1>
+                {isSample && (
+                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[0.625rem] font-bold tracking-wider uppercase border-2 border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
+                    SAMPLE
+                  </span>
+                )}
               </div>
+              <p className="font-heading text-sm text-muted-foreground font-medium flex items-center gap-2">
+                {caseData.positionTitle}
+                {caseData.beneficiaryIdentifier && (
+                  <span className="font-mono text-[0.72rem] opacity-60">&mdash; {caseData.beneficiaryIdentifier}</span>
+                )}
+              </p>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Button
                 variant="outline"
                 size="icon"
@@ -596,10 +598,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 disabled={isTogglingFavorite}
                 className={cn(
                   "shrink-0 border-2 transition-all cursor-pointer",
-                  "min-h-[44px] min-w-[44px]",
+                  "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.isFavorite
                     ? "border-yellow-500 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30"
-                    : "border-border hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard"
+                    : "border-border bg-muted hover:bg-manila-dark hover:-translate-y-0.5 hover:shadow-hard-sm"
                 )}
                 aria-label={caseData.isFavorite ? "Remove from favorites" : "Add to favorites"}
                 aria-pressed={caseData.isFavorite}
@@ -625,12 +627,12 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 disabled={isTogglingCalendarSync}
                 className={cn(
                   "shrink-0 border-2 transition-all cursor-pointer",
-                  "min-h-[44px] min-w-[44px]",
+                  "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.calendarSyncEnabled && isGoogleConnected
                     ? "border-[#228B22] bg-[#228B22]/10 hover:bg-[#228B22]/20 dark:bg-[#228B22]/20 dark:hover:bg-[#228B22]/30"
                     : caseData.calendarSyncEnabled && !isGoogleConnected
                       ? "border-amber-500 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
-                      : "border-border hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard"
+                      : "border-border bg-muted hover:bg-manila-dark hover:-translate-y-0.5 hover:shadow-hard-sm"
                 )}
                 title={
                   caseData.calendarSyncEnabled && isGoogleConnected
@@ -653,15 +655,33 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 )}
               </Button>
 
+              {/* Edit Case — prominent green button like mockup */}
+              <Button
+                onClick={handleEdit}
+                disabled={isAnyNavigating}
+                className={cn(
+                  "shrink-0 border-2 border-border bg-[var(--primary)] text-[var(--primary-fg)] font-heading font-bold text-xs",
+                  "shadow-hard-sm hover:-translate-y-0.5 hover:shadow-hard transition-all",
+                  "min-h-[38px] gap-1.5"
+                )}
+              >
+                {isEditNavigating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Pencil className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Edit Case</span>
+              </Button>
+
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="icon"
                     className={cn(
-                      "shrink-0 border-2 border-border",
-                      "hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard transition-all",
-                      "min-h-[44px] min-w-[44px]"
+                      "shrink-0 border-2 border-border bg-muted",
+                      "hover:bg-manila-dark hover:-translate-y-0.5 hover:shadow-hard-sm transition-all",
+                      "min-h-[38px] min-w-[38px] h-[38px] w-[38px]"
                     )}
                     disabled={isUpdating || isAnyNavigating}
                   >
@@ -725,53 +745,90 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
             </div>
           </div>
 
-          {/* Row 2: Case identifiers + Status badges + Deadline */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {/* Row 2: Badges */}
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {caseData.caseNumber && (
-              <span className="font-mono text-xs sm:text-sm text-muted-foreground border border-border px-2 py-0.5">
+              <span className="font-mono text-[0.72rem] font-bold uppercase tracking-wide border-[3px] border-border px-3 py-1 leading-none">
                 {caseData.caseNumber}
-              </span>
-            )}
-            {caseData.beneficiaryIdentifier && (
-              <span className="text-xs sm:text-sm text-muted-foreground">
-                Worker: <span className="font-medium text-foreground">{caseData.beneficiaryIdentifier}</span>
               </span>
             )}
             <CaseStageBadge stage={caseData.caseStatus} bordered />
             <ProgressStatusBadge status={caseData.progressStatus as ProgressStatus} />
             {isProfessionalOccupation && (
-              <span className="inline-flex items-center border border-border bg-muted px-2.5 py-0.5 text-xs font-medium">
+              <span className="inline-flex items-center border-2 border-border px-2 py-0.5 text-[0.65rem] font-mono font-bold uppercase tracking-wide gap-1">
                 Professional
               </span>
             )}
-            {nextDeadline && (
-              <span
-                className={cn(
-                  "text-xs sm:text-sm ml-auto",
-                  nextDeadline.daysUntil <= 7
-                    ? "text-red-600 font-semibold"
-                    : nextDeadline.daysUntil <= 30
-                      ? "text-orange-600 font-medium"
-                      : "text-muted-foreground"
-                )}
-              >
-                {nextDeadline.label}:{" "}
-                {nextDeadline.daysUntil < 0
-                  ? `${Math.abs(nextDeadline.daysUntil)}d overdue`
-                  : nextDeadline.daysUntil === 0
-                    ? "Today"
-                    : `${nextDeadline.daysUntil}d`}
-              </span>
-            )}
           </div>
-
-          {/* Row 3: Stage Progress Indicator */}
-          {!isClosed && (
-            <div className="pt-3 border-t border-border/50">
-              <StageProgressIndicator currentStage={currentStage} />
-            </div>
-          )}
         </div>
+
+        {/* Stage Bar — flat segments matching mockup */}
+        {!isClosed && (
+          <div
+            className="flex border-t-[3px] border-border"
+            role="progressbar"
+            aria-valuenow={currentStage + 1}
+            aria-valuemin={1}
+            aria-valuemax={4}
+            aria-label="PERM case progress"
+          >
+            {(["pwd", "recruitment", "eta9089", "i140"] as const).map((stage) => {
+              const stageIdx = { pwd: 0, recruitment: 1, eta9089: 2, i140: 3 }[stage];
+              const isDone = stageIdx < currentStage;
+              const isActive = stageIdx === currentStage;
+              const labels: Record<string, string> = { pwd: "PWD", recruitment: "Recruitment", eta9089: "ETA 9089", i140: "I-140" };
+              const colors: Record<string, string> = {
+                pwd: "var(--stage-pwd)",
+                recruitment: "var(--stage-recruitment)",
+                eta9089: "var(--stage-eta9089)",
+                i140: "var(--stage-i140)",
+              };
+              return (
+                <div
+                  key={stage}
+                  className={cn(
+                    "flex-1 py-2.5 px-2 text-center font-mono text-[0.7rem] font-bold uppercase tracking-wide flex items-center justify-center gap-1.5",
+                    "border-r-[3px] border-border last:border-r-0",
+                    isDone && "bg-card text-foreground",
+                    isActive && "text-white",
+                    !isDone && !isActive && "bg-muted text-muted-foreground"
+                  )}
+                  style={isActive ? { background: colors[stage] } : undefined}
+                  data-s={stage}
+                >
+                  <span
+                    className={cn(
+                      "w-[9px] h-[9px] rounded-full border-2 shrink-0",
+                      isDone && "bg-[var(--primary)] border-[var(--primary)]",
+                      isActive && "bg-white border-white",
+                      !isDone && !isActive && "border-current"
+                    )}
+                  />
+                  {labels[stage]}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Deadline indicator */}
+        {nextDeadline && (
+          <div className={cn(
+            "px-3 sm:px-8 py-1.5 text-right font-mono text-xs border-t border-border/30",
+            nextDeadline.daysUntil <= 7
+              ? "text-red-600 font-semibold"
+              : nextDeadline.daysUntil <= 30
+                ? "text-orange-600 font-medium"
+                : "text-muted-foreground"
+          )}>
+            {nextDeadline.label}:{" "}
+            {nextDeadline.daysUntil < 0
+              ? `${Math.abs(nextDeadline.daysUntil)}d overdue`
+              : nextDeadline.daysUntil === 0
+                ? "Today"
+                : `${nextDeadline.daysUntil}d`}
+          </div>
+        )}
       </motion.div>
 
       {/* ================================================================ */}
@@ -850,22 +907,6 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
             <NotesTab notes={caseData.notes || []} />
           </TabPanel>
         </CaseDetailTabs>
-      </motion.div>
-
-      {/* Edit Case */}
-      <motion.div variants={itemVariants} className="pt-4 flex justify-center">
-        <Button
-          onClick={handleEdit}
-          disabled={isAnyNavigating}
-          size="lg"
-        >
-          {isEditNavigating ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Pencil className="h-4 w-4" />
-          )}
-          Edit Case
-        </Button>
       </motion.div>
 
       {/* Footer Metadata */}

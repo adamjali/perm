@@ -20,7 +20,6 @@
  * 12. Tab switching renders correct tab panel
  */
 
-import * as React from "react";
 import { Suspense } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, waitFor, act, within } from "@testing-library/react";
@@ -141,7 +140,7 @@ vi.mock("@/components/cases/detail/OverviewTab", () => ({
 }));
 
 vi.mock("@/components/cases/detail/RecruitmentTab", () => ({
-  RecruitmentTab: ({ caseData }: any) => (
+  RecruitmentTab: (_props: any) => (
     <div data-testid="recruitment-tab">
       <div data-testid="recruitment-section">Recruitment Section</div>
       <div data-testid="recruitment-results-section">Recruitment Results</div>
@@ -150,7 +149,7 @@ vi.mock("@/components/cases/detail/RecruitmentTab", () => ({
 }));
 
 vi.mock("@/components/cases/detail/ETA9089Tab", () => ({
-  ETA9089Tab: ({ caseData }: any) => (
+  ETA9089Tab: (_props: any) => (
     <div data-testid="eta9089-tab">
       <div data-testid="eta9089-section">ETA 9089 Section</div>
     </div>
@@ -158,7 +157,7 @@ vi.mock("@/components/cases/detail/ETA9089Tab", () => ({
 }));
 
 vi.mock("@/components/cases/detail/I140Tab", () => ({
-  I140Tab: ({ caseData }: any) => (
+  I140Tab: (_props: any) => (
     <div data-testid="i140-tab">
       <div data-testid="i140-section">I-140 Section</div>
     </div>
