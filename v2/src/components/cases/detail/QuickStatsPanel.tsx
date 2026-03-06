@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { TrendingUp } from "lucide-react";
 import { parseISO, differenceInDays } from "date-fns";
 import { extractMilestones } from "@/lib/timeline/milestones";
+import { calculateNextDeadline } from "./next-up-section.utils";
 import type { CaseDetailData } from "./case-detail-types";
 
 interface QuickStatsPanelProps {
@@ -95,16 +96,10 @@ export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
     (m) => m.date && m.date <= todayStr && !m.isCalculated
   ).length;
 
-  // Next deadline — most relevant upcoming deadline
-  let nextDeadlineDays = 0;
-  let nextDeadlineLabel = "no deadline";
-  if (caseData.eta9089ExpirationDate && caseData.eta9089CertificationDate && !caseData.i140FilingDate) {
-    nextDeadlineDays = Math.max(0, differenceInDays(parseISO(caseData.eta9089ExpirationDate), now));
-    nextDeadlineLabel = "I-140 filing";
-  } else if (caseData.pwdExpirationDate && !caseData.eta9089FilingDate) {
-    nextDeadlineDays = pwdExpiryDays;
-    nextDeadlineLabel = "PWD expires";
-  }
+  // Next deadline — use canonical extractActiveDeadlines (same as NextUp section)
+  const nextDeadline = calculateNextDeadline(caseData);
+  const nextDeadlineDays = nextDeadline ? Math.max(0, nextDeadline.daysUntil) : 0;
+  const nextDeadlineLabel = nextDeadline ? nextDeadline.label : "no deadline";
 
   return (
     <div className="detail-card">
