@@ -581,7 +581,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   </span>
                 )}
               </div>
-              <p className="font-heading text-[0.85rem] text-muted-foreground font-medium mt-0.5 truncate" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? ` — ${caseData.beneficiaryIdentifier}` : ""}`}>
+              <p className="font-heading text-[0.85rem] text-muted-foreground font-medium mt-0.5" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? ` — ${caseData.beneficiaryIdentifier}` : ""}`}>
                 {caseData.positionTitle}
                 {caseData.beneficiaryIdentifier && (
                   <span className="font-mono text-[0.72rem] opacity-60"> — {caseData.beneficiaryIdentifier}</span>
@@ -718,7 +718,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           {/* Row 2: Badges */}
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {caseData.caseNumber && (
-              <span className="font-mono text-[0.72rem] font-bold uppercase tracking-wide border-[3px] border-border px-3 py-1 leading-none">
+              <span className="font-mono text-[0.72rem] font-bold uppercase tracking-wide border-[3px] border-border px-3 py-1 leading-none truncate max-w-[200px]" title={caseData.caseNumber}>
                 {caseData.caseNumber}
               </span>
             )}

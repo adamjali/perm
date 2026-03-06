@@ -241,7 +241,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     const daysUntil = calculateDaysUntil(activeRfi.responseDueDate);
     return {
       action: "Respond to RFI",
-      description: `RFI response due ${daysUntil < 0 ? "was" : "in"} ${Math.abs(daysUntil)} days`,
+      description: `RFI response due ${daysUntil < 0 ? `${Math.abs(daysUntil)} days ago` : `in ${Math.abs(daysUntil)} days`}`,
       icon: createElement(AlertTriangle, { className: "h-5 w-5" }),
       urgency: getUrgencyLevel(daysUntil),
     };
@@ -252,7 +252,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     const daysUntil = calculateDaysUntil(activeRfe.responseDueDate);
     return {
       action: "Respond to RFE",
-      description: `RFE response due ${daysUntil < 0 ? "was" : "in"} ${Math.abs(daysUntil)} days`,
+      description: `RFE response due ${daysUntil < 0 ? `${Math.abs(daysUntil)} days ago` : `in ${Math.abs(daysUntil)} days`}`,
       icon: createElement(AlertTriangle, { className: "h-5 w-5" }),
       urgency: getUrgencyLevel(daysUntil),
     };

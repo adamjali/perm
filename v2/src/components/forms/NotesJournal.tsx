@@ -239,6 +239,7 @@ export function NotesJournal({
   const [showNewNoteOptions, setShowNewNoteOptions] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [filterBy, setFilterBy] = useState<FilterOption>("all");
+  const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
   // Filter toggle available for future UI expansion
   const [_showFilters, _setShowFilters] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -565,14 +566,16 @@ export function NotesJournal({
                         </span>
                       </div>
 
-                      {/* Note content */}
+                      {/* Note content — click to expand/collapse */}
                       <p
                         className={cn(
-                          "text-sm whitespace-pre-wrap break-words line-clamp-4",
+                          "text-sm whitespace-pre-wrap break-words cursor-pointer",
+                          expandedNoteId !== note.id && "line-clamp-4",
                           note.status === "done" &&
                             "line-through text-muted-foreground"
                         )}
-                        title={note.content}
+                        title={expandedNoteId === note.id ? "Click to collapse" : note.content}
+                        onClick={() => setExpandedNoteId(expandedNoteId === note.id ? null : note.id)}
                       >
                         {note.content}
                       </p>
