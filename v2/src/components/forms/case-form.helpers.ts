@@ -113,6 +113,10 @@ export function initializeFormData(
     i140Category: base.i140Category,
     i140ServiceCenter: base.i140ServiceCenter,
     i140PremiumProcessing: base.i140PremiumProcessing,
+    // Job description
+    jobDescription: base.jobDescription,
+    jobDescriptionPositionTitle: base.jobDescriptionPositionTitle,
+    jobDescriptionTemplateId: base.jobDescriptionTemplateId,
   };
 }
 
