@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock } from "lucide-react";
 import { getMethodLabel } from "@/lib/recruitment";
+import { isBusinessDay, getFederalHolidays } from "@/lib/perm";
 import type { CaseDetailData } from "./case-detail-types";
 
 const itemVariants = {
@@ -25,7 +26,7 @@ function fmtShort(d?: string | null) {
   try { return format(parseISO(d), "MMM d"); } catch { return d; }
 }
 
-// NOF mini-calendar matching mockup: 2-month view with posted business days highlighted
+// NOF mini-calendar using central business day logic from @/lib/perm
 function NOFMiniCalendar({ start, end }: { start: string; end: string }) {
   const startD = parseISO(start);
   const endD = parseISO(end);
@@ -38,15 +39,42 @@ function NOFMiniCalendar({ start, end }: { start: string; end: string }) {
     cur.setMonth(cur.getMonth() + 1);
   }
   const HDRS = ["M","T","W","T","F","S","S"];
-  const isWeekend = (d: Date) => d.getDay() === 0 || d.getDay() === 6;
-  const isPosted = (d: Date) => {
-    if (d < startD || d > endD) return false;
-    return !isWeekend(d);
-  };
-  const inRange = (d: Date) => d >= startD && d <= endD;
+
+  // Build holiday lookup for all months in range
+  const holidaysByYear = new Map<number, Map<string, string>>();
+  for (const m of months) {
+    const yr = m.getFullYear();
+    if (!holidaysByYear.has(yr)) {
+      const hols = getFederalHolidays(yr);
+      holidaysByYear.set(yr, new Map(hols.map(h => [h.date, h.name])));
+    }
+  }
+
+  function getDayInfo(d: Date): { cls: string; title?: string } {
+    const dateStr = format(d, "yyyy-MM-dd");
+    const dayOfWeek = d.getDay();
+    const isWknd = dayOfWeek === 0 || dayOfWeek === 6;
+    const inRange = d >= startD && d <= endD;
+    const bizDay = isBusinessDay(dateStr);
+    const holName = holidaysByYear.get(d.getFullYear())?.get(dateStr);
+
+    if (inRange && bizDay) {
+      return { cls: "nof-day posted" };
+    }
+    if (isWknd) {
+      return { cls: "nof-day weekend", title: dayOfWeek === 0 ? "Sunday" : "Saturday" };
+    }
+    if (holName) {
+      return { cls: inRange ? "nof-day weekend" : "nof-day outside", title: holName };
+    }
+    if (!inRange) {
+      return { cls: "nof-day outside" };
+    }
+    return { cls: "nof-day" };
+  }
 
   return (
-    <div className="nof-2month">
+    <div className="nof-months">
       {months.map((m) => {
         const yr = m.getFullYear();
         const mo = m.getMonth();
@@ -61,11 +89,8 @@ function NOFMiniCalendar({ start, end }: { start: string; end: string }) {
               {Array.from({ length: firstDow }, (_, i) => <div key={`e${i}`} className="nof-day empty">&nbsp;</div>)}
               {Array.from({ length: daysInMonth }, (_, i) => {
                 const day = new Date(yr, mo, i + 1);
-                let cls = "nof-day";
-                if (isPosted(day)) cls += " posted";
-                else if (isWeekend(day)) cls += " weekend";
-                if (!isPosted(day) && !isWeekend(day) && !inRange(day)) cls += " outside";
-                return <div key={i + 1} className={cls}>{i + 1}</div>;
+                const info = getDayInfo(day);
+                return <div key={i + 1} className={info.cls} title={info.title}>{i + 1}</div>;
               })}
             </div>
           </div>
@@ -276,8 +301,8 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
             </div>
             <div className="detail-card-body">
               {hasNOF ? (
-                <div>
-                  <div className="recruit-posting-info" style={{ marginBottom: 10 }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div className="recruit-posting-info" style={{ marginBottom: 10, textAlign: "center" }}>
                     10 consecutive business days &middot; {fmtShort(caseData.noticeOfFilingStartDate)} &ndash; {fmt(caseData.noticeOfFilingEndDate)}
                   </div>
                   {caseData.noticeOfFilingStartDate && caseData.noticeOfFilingEndDate && (
@@ -304,26 +329,34 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
             </div>
             <div className="detail-card-body" style={{ padding: 0 }}>
               {methods.length > 0 ? (
-                methods.map((method, i) => (
-                  <div key={i} className="recruit-row">
-                    <div className={`recruit-icon ${method.date ? "done" : "pending"}`}>
-                      {method.date ? (
-                        <Check className="h-3.5 w-3.5" />
-                      ) : (
-                        <Clock className="h-3.5 w-3.5" />
+                methods.map((method, i) => {
+                  const hasDate = !!(method.date || method.startDate);
+                  const dateDisplay = method.startDate && method.endDate
+                    ? `${fmtShort(method.startDate)} \u2013 ${fmtShort(method.endDate)}`
+                    : method.date
+                      ? fmt(method.date)
+                      : null;
+                  return (
+                    <div key={i} className="recruit-row">
+                      <div className={`recruit-icon ${hasDate ? "done" : "pending"}`}>
+                        {hasDate ? (
+                          <Check className="h-3.5 w-3.5" />
+                        ) : (
+                          <Clock className="h-3.5 w-3.5" />
+                        )}
+                      </div>
+                      <div className="recruit-info">
+                        <div className="recruit-title">{getMethodLabel(method.method)}</div>
+                        {method.description && (
+                          <div className="recruit-detail">{method.description}</div>
+                        )}
+                      </div>
+                      {dateDisplay && (
+                        <span className="recruit-date-text">{dateDisplay}</span>
                       )}
                     </div>
-                    <div className="recruit-info">
-                      <div className="recruit-title">{getMethodLabel(method.method)}</div>
-                      {method.description && (
-                        <div className="recruit-detail">{method.description}</div>
-                      )}
-                    </div>
-                    {method.date && (
-                      <span className="recruit-date-text">{fmt(method.date)}</span>
-                    )}
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="detail-empty-state">
                   <div className="detail-empty-state-title">No methods</div>

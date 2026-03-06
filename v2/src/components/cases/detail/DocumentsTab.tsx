@@ -79,7 +79,7 @@ export function DocumentsTab({ documents }: DocumentsTabProps) {
     >
       <motion.div variants={itemVariants}>
         <div className="detail-card no-hover" style={{ overflow: "hidden" }}>
-          <div className="detail-card-head ch-accent">
+          <div className="detail-card-head ch-dark">
             <span className="flex items-center gap-1.5">
               <FolderOpen className="h-3.5 w-3.5" />
               Documents

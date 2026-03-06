@@ -469,13 +469,35 @@ export function InlineCaseTimeline({
                           className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-sm"
                           style={{ backgroundColor: rangeBar.color }}
                         />
-                        {/* Label inside bar — truncated, hidden if too narrow */}
-                        {width > 8 && (
+                        {/* Label — inside if bar is wide enough, outside with line if too narrow */}
+                        {width > 8 ? (
                           <span
                             className="absolute inset-0 flex items-center pl-2 pr-1 text-[10px] font-semibold pointer-events-none overflow-hidden text-ellipsis whitespace-nowrap"
                             style={{ color: rangeBar.color }}
                           >
                             {rangeBar.label}
+                          </span>
+                        ) : (
+                          <span
+                            className="absolute flex items-center text-[10px] font-semibold pointer-events-none whitespace-nowrap"
+                            style={{
+                              left: "100%",
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              color: rangeBar.color,
+                            }}
+                          >
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: 8,
+                                height: 2,
+                                background: rangeBar.color,
+                                opacity: 0.5,
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span style={{ marginLeft: 2 }}>{rangeBar.label}</span>
                           </span>
                         )}
                         {/* Hover tooltip */}

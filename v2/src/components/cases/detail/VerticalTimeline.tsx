@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { Check, Clock, Circle } from "lucide-react";
+import { parseISO, format } from "date-fns";
 import { extractMilestones } from "@/lib/timeline/milestones";
 import type { CaseDetailData } from "./case-detail-types";
 
@@ -10,6 +11,7 @@ const ALL_STAGES: { field: string; label: string }[] = [
   { field: "pwdFilingDate", label: "PWD Filed" },
   { field: "pwdDeterminationDate", label: "PWD Determined" },
   { field: "jobOrderStartDate", label: "Job Order Started" },
+  { field: "sundayAds", label: "Sunday Ads" },
   { field: "noticeOfFilingStartDate", label: "NOF Posted" },
   { field: "recruitmentEndDate", label: "Recruitment Completed" },
   { field: "eta9089FilingDate", label: "ETA 9089 Filed" },
@@ -36,14 +38,31 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
     const milestoneByField = new Map(milestones.map((m) => [m.field, m]));
 
     // Also check direct caseData fields for dates not in milestones
+    const caseRecord = caseData as Record<string, unknown>;
     const directFields: Record<string, string | undefined | null> = {
-      jobOrderStartDate: (caseData as Record<string, unknown>).jobOrderStartDate as string | undefined,
-      noticeOfFilingStartDate: (caseData as Record<string, unknown>).noticeOfFilingStartDate as string | undefined,
+      jobOrderStartDate: caseRecord.jobOrderStartDate as string | undefined,
+      noticeOfFilingStartDate: caseRecord.noticeOfFilingStartDate as string | undefined,
+      recruitmentEndDate: caseRecord.recruitmentEndDate as string | undefined,
     };
     for (const [field, date] of Object.entries(directFields)) {
       if (date && !milestoneByField.has(field)) {
         milestoneByField.set(field, { field, label: "", date, stage: "recruitment" as const, color: "#9333ea", isCalculated: false });
       }
+    }
+
+    // Combine sunday ads into a single entry
+    const ad1 = caseData.sundayAdFirstDate;
+    const ad2 = caseData.sundayAdSecondDate;
+    if (ad1 || ad2) {
+      const date = ad2 || ad1 || "";
+      milestoneByField.set("sundayAds", {
+        field: "sundayAds",
+        label: "Sunday Ads",
+        date,
+        stage: "recruitment" as const,
+        color: "#9333ea",
+        isCalculated: false,
+      });
     }
 
     // Build combined list: use milestone data if exists, else show as pending
@@ -88,13 +107,22 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
         ) : (
           steps.map((step, i) => {
             const isLast = i === steps.length - 1;
-            const dateStr = step.status === "pending"
-              ? "Pending"
-              : new Date(step.date).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                });
+            let dateStr = "Pending";
+            if (step.status !== "pending" && step.date) {
+              try {
+                if (step.field === "sundayAds" && caseData.sundayAdFirstDate) {
+                  const d1 = format(parseISO(caseData.sundayAdFirstDate), "MMM d");
+                  const d2 = caseData.sundayAdSecondDate
+                    ? format(parseISO(caseData.sundayAdSecondDate), "MMM d, yyyy")
+                    : null;
+                  dateStr = d2 ? `${d1} & ${d2}` : format(parseISO(caseData.sundayAdFirstDate), "MMM d, yyyy");
+                } else {
+                  dateStr = format(parseISO(step.date), "MMM d, yyyy");
+                }
+              } catch {
+                dateStr = "Pending";
+              }
+            }
 
             return (
               <div key={`${step.field}-${i}`} className="vtl-step">

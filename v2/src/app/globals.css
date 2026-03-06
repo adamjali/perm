@@ -996,8 +996,8 @@
 .dark .next-up .overflow-hidden { border-color: #000000; }
 
 /* NOF mini-calendar */
-.nof-2month { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media (max-width: 500px) { .nof-2month { grid-template-columns: 1fr; } }
+.nof-months { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: flex-start; width: 100%; }
+.nof-months > div { flex: 0 0 auto; width: 210px; }
 .nof-month-label { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-align: center; padding: 6px 0 4px; color: var(--foreground); }
 .nof-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; border: 2px solid var(--border); font-family: var(--font-mono); font-size: 0.82rem; text-align: center; }
 .nof-calendar .nof-hdr { padding: 8px 4px; font-weight: 700; background: var(--muted); border-bottom: 2px solid var(--border); color: var(--muted-foreground); font-size: 0.68rem; }

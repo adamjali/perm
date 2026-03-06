@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { TrendingUp } from "lucide-react";
+import { parseISO, differenceInDays } from "date-fns";
 import { extractMilestones } from "@/lib/timeline/milestones";
 import type { CaseDetailData } from "./case-detail-types";
 
@@ -76,40 +77,29 @@ function CountUpStat({ target, color, label, sub }: { target: number; color?: st
 }
 
 export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
-  const todayStr = new Date().toISOString().split("T")[0] as string;
+  const now = new Date();
 
-  // PWD Expiry Days
+  // PWD Expiry Days — use parseISO to avoid timezone shift
   let pwdExpiryDays = 0;
   if (caseData.pwdExpirationDate) {
-    pwdExpiryDays = Math.max(
-      0,
-      Math.floor(
-        (new Date(caseData.pwdExpirationDate).getTime() - new Date(todayStr).getTime()) /
-          (1000 * 60 * 60 * 24)
-      )
-    );
+    pwdExpiryDays = Math.max(0, differenceInDays(parseISO(caseData.pwdExpirationDate), now));
   }
 
   // Case Age
-  const caseAge = Math.floor(
-    (new Date().getTime() - new Date(caseData.createdAt).getTime()) /
-      (1000 * 60 * 60 * 24)
-  );
+  const caseAge = Math.max(0, differenceInDays(now, new Date(caseData.createdAt)));
 
   // Milestones completed vs total
   const allMilestones = extractMilestones(caseData);
-  const today = new Date().toISOString().split("T")[0] as string;
+  const todayStr = now.toISOString().split("T")[0] as string;
   const completedMilestones = allMilestones.filter(
-    (m) => m.date && m.date <= today && !m.isCalculated
+    (m) => m.date && m.date <= todayStr && !m.isCalculated
   ).length;
 
-  // Next deadline days (most relevant upcoming deadline)
+  // Next deadline — most relevant upcoming deadline
   let nextDeadlineDays = 0;
   let nextDeadlineLabel = "no deadline";
   if (caseData.eta9089ExpirationDate && caseData.eta9089CertificationDate && !caseData.i140FilingDate) {
-    nextDeadlineDays = Math.max(0, Math.floor(
-      (new Date(caseData.eta9089ExpirationDate).getTime() - new Date(todayStr).getTime()) / (1000 * 60 * 60 * 24)
-    ));
+    nextDeadlineDays = Math.max(0, differenceInDays(parseISO(caseData.eta9089ExpirationDate), now));
     nextDeadlineLabel = "I-140 filing";
   } else if (caseData.pwdExpirationDate && !caseData.eta9089FilingDate) {
     nextDeadlineDays = pwdExpiryDays;

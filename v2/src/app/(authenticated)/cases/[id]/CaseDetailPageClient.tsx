@@ -541,7 +541,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
         <div className="p-3 sm:px-8 sm:py-3.5 space-y-2.5">
           {/* Breadcrumb nav */}
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-2 mb-2.5">
             <Button
               variant="outline"
               size="icon"
@@ -566,7 +566,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           <div className="flex items-center justify-between gap-3 sm:gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <h1 className="font-heading text-xl sm:text-2xl font-bold leading-tight truncate tracking-tight">
+                <h1 className="font-heading text-[1.35rem] sm:text-2xl font-bold leading-[1.15] truncate tracking-tight">
                   {caseData.employerName}
                 </h1>
                 {isSample && (
@@ -575,7 +575,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   </span>
                 )}
               </div>
-              <p className="font-heading text-sm text-muted-foreground font-medium flex items-center gap-2">
+              <p className="font-heading text-[0.85rem] text-muted-foreground font-medium flex items-center gap-2 mt-0.5">
                 {caseData.positionTitle}
                 {caseData.beneficiaryIdentifier && (
                   <span className="font-mono text-[0.72rem] opacity-60">&mdash; {caseData.beneficiaryIdentifier}</span>
@@ -729,7 +729,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         {/* Stage Bar — flat segments matching mockup */}
         {!isClosed && (
           <div
-            className="flex border-t-[3px] border-border"
+            className="flex border-t-[3px] border-border mt-3.5"
             role="progressbar"
             aria-valuenow={currentStage + 1}
             aria-valuemin={1}
@@ -840,7 +840,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           size="sm"
           onClick={() => setDeleteDialogOpen(true)}
           disabled={isDeleting}
-          className="border-[3px] border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive font-mono text-xs font-bold uppercase tracking-wide transition-all gap-1.5"
+          className="border-[3px] border-[#DC2626] text-[#DC2626] bg-white hover:bg-[#DC2626] hover:text-white font-mono text-xs font-bold uppercase tracking-wide transition-all gap-1.5 dark:bg-white dark:text-[#DC2626] dark:border-[#DC2626] dark:hover:bg-[#DC2626] dark:hover:text-white"
         >
           {isDeleting ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />

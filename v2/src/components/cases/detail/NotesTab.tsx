@@ -115,9 +115,10 @@ export function NotesTab({ notes }: NotesTabProps) {
               style={{
                 fontFamily: "var(--font-mono)",
                 fontSize: "0.6rem",
-                background: "var(--card)",
-                border: "2px solid var(--border)",
+                background: "#FFFFFF",
+                border: "2px solid #000000",
                 padding: "1px 8px",
+                color: "#000000",
               }}
             >
               {notes.length}
