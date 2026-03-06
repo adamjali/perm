@@ -786,6 +786,9 @@
 .req-item { display: flex; gap: 8px; font-size: 0.88rem; font-weight: 600; }
 .req-bullet { color: var(--primary); }
 
+/* Gantt wrapper */
+.gantt-wrap { border: 3px solid var(--border); background: var(--card); box-shadow: var(--shadow-hard-sm); overflow: hidden; }
+
 /* Status bar */
 .detail-status-bar {
   padding: 14px 20px;

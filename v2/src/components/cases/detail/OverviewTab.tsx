@@ -224,41 +224,34 @@ export function OverviewTab({
         </div>
       )}
 
-      {/* Case Timeline (Gantt) — Full Width */}
-      <motion.div
-        variants={itemVariants}
-        className="border-2 border-border bg-card p-3 sm:p-4 shadow-hard-sm hover:shadow-hard hover:-translate-y-0.5 transition-all duration-150 overflow-visible"
-      >
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <h2 className="font-heading font-semibold text-base sm:text-lg">
-            Case Timeline
-          </h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onToggleTimeline}
-            disabled={isUpdating}
-            className="gap-2 min-h-[36px] sm:min-h-[40px]"
-          >
-            {isOnTimeline ? (
-              <>
-                <CalendarMinus className="h-4 w-4" />
-                <span className="hidden sm:inline">Remove from Timeline</span>
-              </>
-            ) : (
-              <>
-                <CalendarPlus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add to Timeline</span>
-              </>
-            )}
-          </Button>
-        </div>
-        <div className="relative overflow-visible">
-          <div
-            className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none z-10 sm:hidden"
-            aria-hidden="true"
-          />
-          <div className="overflow-x-auto overscroll-x-none overflow-y-visible -mx-3 px-3 sm:mx-0 sm:px-0 scroll-smooth touch-pan-x">
+      {/* Case Timeline (Gantt) */}
+      <motion.div variants={itemVariants}>
+        <div className="gantt-wrap">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 16px", borderBottom: "3px solid var(--border)", background: "var(--muted)" }}>
+            <span className="flex items-center gap-1.5" style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Case Timeline
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onToggleTimeline}
+              disabled={isUpdating}
+              className="gap-2"
+            >
+              {isOnTimeline ? (
+                <>
+                  <CalendarMinus className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Remove</span>
+                </>
+              ) : (
+                <>
+                  <CalendarPlus className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Add to Timeline</span>
+                </>
+              )}
+            </Button>
+          </div>
+          <div style={{ overflowX: "auto" }}>
             <InlineCaseTimeline
               caseData={caseData}
               className="min-w-[500px] sm:min-w-0"
