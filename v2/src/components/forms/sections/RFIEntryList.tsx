@@ -173,7 +173,7 @@ export function RFIEntryList({
           variant="outline"
           size="sm"
           onClick={handleAdd}
-          disabled={hasActiveEntry}
+          disabled={hasActiveEntry || entries.length >= 50}
           className="gap-1.5"
         >
           <Plus className="h-4 w-4" />

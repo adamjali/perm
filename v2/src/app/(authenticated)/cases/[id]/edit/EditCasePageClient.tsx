@@ -179,22 +179,23 @@ function Breadcrumb({ caseData }: { caseData: Doc<"cases"> }) {
   const router = useRouter();
 
   return (
-    <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+    <nav className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
       <button
         onClick={() => router.push("/cases")}
-        className="hover:text-foreground transition-colors"
+        className="hover:text-foreground transition-colors shrink-0"
       >
         Cases
       </button>
-      <ChevronRight className="size-4" />
+      <ChevronRight className="size-4 shrink-0" />
       <button
         onClick={() => router.push(`/cases/${caseData._id}`)}
-        className="hover:text-foreground transition-colors"
+        className="hover:text-foreground transition-colors truncate"
+        title={`${caseData.employerName} - ${caseData.positionTitle}`}
       >
         {caseData.employerName} - {caseData.positionTitle}
       </button>
-      <ChevronRight className="size-4" />
-      <span className="text-foreground font-medium">Edit</span>
+      <ChevronRight className="size-4 shrink-0" />
+      <span className="text-foreground font-medium shrink-0">Edit</span>
     </nav>
   );
 }
@@ -415,11 +416,15 @@ export function EditCasePageClient() {
       <div className="relative animate-fade-in">
         {/* Corner accent decoration */}
         <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary border-2 border-foreground shadow-hard-sm" />
-        <div className="pl-6">
-          <h1 className="font-heading text-3xl font-bold tracking-tight">
-            Edit Case: {caseData.employerName} - {caseData.positionTitle}
+        <div className="pl-6 min-w-0">
+          <h1 className="font-heading text-3xl font-bold tracking-tight truncate" title={`Edit Case: ${caseData.employerName} - ${caseData.positionTitle}`}>
+            Edit Case: {caseData.employerName}
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground mt-1 truncate" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? ` — ${caseData.beneficiaryIdentifier}` : ""}`}>
+            {caseData.positionTitle}
+            {caseData.beneficiaryIdentifier && <> — {caseData.beneficiaryIdentifier}</>}
+          </p>
+          <p className="text-muted-foreground text-sm mt-1">
             Update case details below. All changes will be saved to your account.
           </p>
         </div>

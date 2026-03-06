@@ -272,7 +272,7 @@ export function NotesJournal({
    */
   const handleAddNote = useCallback(() => {
     const content = newNoteContent.trim();
-    if (!content) return;
+    if (!content || notes.length >= 200) return;
 
     const newNote: NoteEntry = {
       id: generateNoteId(),
@@ -367,7 +367,7 @@ export function NotesJournal({
             variant="default"
             size="sm"
             onClick={handleAddNote}
-            disabled={!newNoteContent.trim()}
+            disabled={!newNoteContent.trim() || notes.length >= 200}
             className="gap-1.5"
           >
             <Plus className="h-4 w-4" />

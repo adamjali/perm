@@ -273,13 +273,13 @@ export function CalendarMobileList({
                   <div className="flex-1 min-w-0">
                     {/* Deadline type */}
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-heading text-sm font-bold truncate">
+                      <span className="font-heading text-sm font-bold truncate" title={event.title}>
                         {event.title}
                       </span>
                     </div>
 
                     {/* Case name */}
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="text-sm text-muted-foreground truncate" title={`${employerName ?? "Unknown Case"}${caseData?.positionTitle ? ` - ${caseData.positionTitle}` : ""}`}>
                       {employerName ?? "Unknown Case"}
                       {caseData?.positionTitle && (
                         <span className="hidden sm:inline">

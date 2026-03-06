@@ -85,11 +85,11 @@ function TooltipContent({ event }: { event: CalendarEventType }) {
         className="case-tooltip-header"
         style={{ backgroundColor: stageColor }}
       >
-        <div className="case-tooltip-employer">
+        <div className="case-tooltip-employer" title={event.employerName || undefined}>
           {event.employerName || "Unknown Employer"}
         </div>
         {event.positionTitle && (
-          <div className="case-tooltip-position">{event.positionTitle}</div>
+          <div className="case-tooltip-position" title={event.positionTitle}>{event.positionTitle}</div>
         )}
       </div>
 
