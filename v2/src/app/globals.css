@@ -757,6 +757,15 @@
 .fc-val.mono { font-family: var(--font-mono); }
 .fc-val.dim { color: var(--muted-foreground); }
 
+/* Quick Stats grid */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.stat { padding: 16px 14px; text-align: center; border-right: 3px solid var(--border); border-bottom: 3px solid var(--border); }
+.stat:nth-child(2n) { border-right: none; }
+.stat:nth-last-child(-n+2) { border-bottom: none; }
+.stat-val { font-family: var(--font-mono); font-size: 1.4rem; font-weight: 700; line-height: 1; color: var(--primary); }
+.stat-label { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); margin-top: 6px; }
+.stat-sub { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted-foreground); }
+
 /* Status bar */
 .detail-status-bar {
   padding: 14px 20px;
