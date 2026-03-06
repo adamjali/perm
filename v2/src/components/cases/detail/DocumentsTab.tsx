@@ -100,7 +100,7 @@ export function DocumentsTab({ documents }: DocumentsTabProps) {
                       >
                         <div className="doc-icon">{typeLabel}</div>
                         <div className="doc-info">
-                          <div className="doc-name">{doc.name}</div>
+                          <div className="doc-name" title={doc.name}>{doc.name}</div>
                           <div className="doc-meta">
                             {typeLabel} &middot; {formatFileSize(doc.size)} &middot; {fmtDate(doc.uploadedAt)}
                           </div>

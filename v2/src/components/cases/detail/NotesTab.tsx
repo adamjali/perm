@@ -149,7 +149,7 @@ export function NotesTab({ notes }: NotesTabProps) {
                             </button>
                           </div>
                         </div>
-                        <div className="note-body">{note.content}</div>
+                        <div className="note-body" title={note.content}>{note.content}</div>
                         {note.dueDate && <div className="note-due">Due: {note.dueDate}</div>}
                       </div>
                     );

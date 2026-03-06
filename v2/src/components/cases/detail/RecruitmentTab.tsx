@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { format, parseISO, differenceInDays, addDays } from "date-fns";
 import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock } from "lucide-react";
 import { getMethodLabel } from "@/lib/recruitment";
-import { isBusinessDay, getFederalHolidays } from "@/lib/perm";
+import { isBusinessDay, getFederalHolidays, getFirstRecruitmentDate, getLastRecruitmentDate, FILING_WINDOW_WAIT_DAYS } from "@/lib/perm";
 import type { CaseDetailData } from "./case-detail-types";
 
 const itemVariants = {
@@ -68,7 +68,7 @@ function NOFMiniCalendar({ start, end }: { start: string; end: string }) {
       return { cls: inRange ? "nof-day weekend" : "nof-day outside", title: holName };
     }
     if (!inRange) {
-      return { cls: "nof-day outside" };
+      return { cls: "nof-day outside", title: "Outside posting period" };
     }
     return { cls: "nof-day" };
   }
@@ -105,7 +105,7 @@ interface RecruitmentTabProps {
 }
 
 export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
-  // Recruitment window calculation
+  // Recruitment window: PWD validity period (determination → expiration)
   const windowStart = caseData.pwdDeterminationDate;
   const windowEnd = caseData.pwdExpirationDate;
   let windowDays = 0;
@@ -124,15 +124,10 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
   const hasSundayAds = !!caseData.sundayAdFirstDate;
   const hasNOF = !!caseData.noticeOfFilingStartDate;
   const methods = caseData.additionalRecruitmentMethods || [];
-  // completedMethods not used — badge shows methods.length instead
 
-  // Derive recruitment period from actual dates if not explicitly set
-  const recruitStartDate = caseData.additionalRecruitmentStartDate
-    || caseData.recruitmentStartDate
-    || [caseData.jobOrderStartDate, caseData.sundayAdFirstDate, caseData.noticeOfFilingStartDate].filter(Boolean).sort()[0];
-  const recruitEndDate = caseData.additionalRecruitmentEndDate
-    || caseData.recruitmentEndDate
-    || [caseData.jobOrderEndDate, caseData.sundayAdSecondDate, caseData.noticeOfFilingEndDate, ...methods.map(m => m.date).filter(Boolean)].filter(Boolean).sort().reverse()[0];
+  // Use canonical recruitment date functions from @/lib/perm
+  const recruitStartDate = getFirstRecruitmentDate(caseData);
+  const recruitEndDate = getLastRecruitmentDate(caseData, caseData.isProfessionalOccupation ?? false);
 
   return (
     <motion.div
@@ -261,7 +256,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                     <div>
                       <div className="recruit-ad-date">{fmt(caseData.sundayAdFirstDate)}</div>
                       {caseData.sundayAdNewspaper && (
-                        <div className="recruit-ad-pub">{caseData.sundayAdNewspaper}</div>
+                        <div className="recruit-ad-pub" title={caseData.sundayAdNewspaper}>{caseData.sundayAdNewspaper}</div>
                       )}
                     </div>
                   </div>
@@ -271,7 +266,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                       <div>
                         <div className="recruit-ad-date">{fmt(caseData.sundayAdSecondDate)}</div>
                         {caseData.sundayAdNewspaper && (
-                          <div className="recruit-ad-pub">{caseData.sundayAdNewspaper}</div>
+                          <div className="recruit-ad-pub" title={caseData.sundayAdNewspaper}>{caseData.sundayAdNewspaper}</div>
                         )}
                       </div>
                     </div>
@@ -346,23 +341,23 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                         )}
                       </div>
                       <div className="recruit-info">
-                        <div className="recruit-title">{getMethodLabel(method.method)}</div>
+                        <div className="recruit-title" title={getMethodLabel(method.method)}>{getMethodLabel(method.method)}</div>
                         {method.description && (
-                          <div className="recruit-detail">{method.description}</div>
+                          <div className="recruit-detail" title={method.description}>{method.description}</div>
                         )}
                         {method.subEntries && method.subEntries.length > 0 && (
                           <div className="recruit-sub-entries">
                             {method.subEntries.map((sub, j) => (
                               <div key={j} className="recruit-sub-entry">
                                 {sub.date && <span className="recruit-sub-date">{fmt(sub.date)}</span>}
-                                {sub.description && <span className="recruit-sub-desc">{sub.description}</span>}
+                                {sub.description && <span className="recruit-sub-desc" title={sub.description}>{sub.description}</span>}
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
                       {dateDisplay && (
-                        <span className="recruit-date-text">{dateDisplay}</span>
+                        <span className="recruit-date">{dateDisplay}</span>
                       )}
                     </div>
                   );
@@ -406,7 +401,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               <div className="fc-label">Quiet Period Ends</div>
               <div className="fc-val mono">
                 {recruitEndDate
-                  ? (() => { try { return fmt(format(addDays(parseISO(recruitEndDate), 30), "yyyy-MM-dd")); } catch { return "\u2014"; } })()
+                  ? (() => { try { return fmt(format(addDays(parseISO(recruitEndDate), FILING_WINDOW_WAIT_DAYS), "yyyy-MM-dd")); } catch { return "\u2014"; } })()
                   : "\u2014"}
               </div>
             </div>

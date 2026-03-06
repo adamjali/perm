@@ -148,13 +148,13 @@ export function I140Tab({ caseData }: I140TabProps) {
             </div>
             <div className="field-cell">
               <div className="fc-label">Receipt Number</div>
-              <div className={`fc-val mono ${!caseData.i140ReceiptNumber ? "dim" : ""}`}>
+              <div className={`fc-val mono ${!caseData.i140ReceiptNumber ? "dim" : ""}`} title={caseData.i140ReceiptNumber || undefined}>
                 {caseData.i140ReceiptNumber || "\u2014"}
               </div>
             </div>
             <div className="field-cell">
               <div className="fc-label">Service Center</div>
-              <div className={`fc-val mono ${!caseData.i140ServiceCenter ? "dim" : ""}`}>
+              <div className={`fc-val mono ${!caseData.i140ServiceCenter ? "dim" : ""}`} title={caseData.i140ServiceCenter || undefined}>
                 {caseData.i140ServiceCenter || "\u2014"}
               </div>
             </div>

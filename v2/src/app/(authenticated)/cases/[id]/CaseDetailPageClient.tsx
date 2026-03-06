@@ -58,7 +58,7 @@ import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useDerivedDates } from "@/hooks/useDerivedDates";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
 import { useIsMobile } from "@/lib/animations";
-import { type ProgressStatus } from "@/lib/perm";
+import { type ProgressStatus, isRecruitmentComplete } from "@/lib/perm";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 
 // ============================================================================
@@ -347,6 +347,12 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
   // Get derived dates with fallback calculation (fixes filing window showing "-")
   const derivedDates = useDerivedDates(caseData);
+
+  // Gate filing window: only show when recruitment is actually complete (or ETA already filed)
+  const recruitDone = isRecruitmentComplete(caseData);
+  const etaFiled = !!caseData.eta9089FilingDate;
+  const gatedFilingWindowOpens = (recruitDone || etaFiled) ? derivedDates.filingWindowOpens : undefined;
+  const gatedFilingWindowCloses = (recruitDone || etaFiled) ? derivedDates.filingWindowCloses : undefined;
 
   // Update page context for chat AI awareness
   const { setPageData } = usePageContextUpdater();
@@ -814,8 +820,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           <TabPanel id="eta9089" activeTab={activeTab}>
             <ETA9089Tab
               caseData={caseData}
-              filingWindowOpens={derivedDates.filingWindowOpens}
-              filingWindowCloses={derivedDates.filingWindowCloses}
+              filingWindowOpens={gatedFilingWindowOpens}
+              filingWindowCloses={gatedFilingWindowCloses}
             />
           </TabPanel>
 

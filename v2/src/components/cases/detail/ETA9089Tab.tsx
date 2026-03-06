@@ -134,7 +134,7 @@ export function ETA9089Tab({
             </div>
             <div className="field-cell">
               <div className="fc-label">Case Number</div>
-              <div className={`fc-val mono ${!caseData.eta9089CaseNumber ? "dim" : ""}`}>{caseData.eta9089CaseNumber || "\u2014"}</div>
+              <div className={`fc-val mono ${!caseData.eta9089CaseNumber ? "dim" : ""}`} title={caseData.eta9089CaseNumber || undefined}>{caseData.eta9089CaseNumber || "\u2014"}</div>
             </div>
             <div className="field-cell">
               <div className="fc-label">Audit Date</div>

@@ -242,7 +242,7 @@ export function OverviewTab({
                 <div className="field-grid" style={{ padding: 0 }}>
                   <div className="field-cell">
                     <div className="fc-label">PWD Case #</div>
-                    <div className={`fc-val mono ${!caseData.pwdCaseNumber ? "dim" : ""}`}>
+                    <div className={`fc-val mono ${!caseData.pwdCaseNumber ? "dim" : ""}`} title={caseData.pwdCaseNumber || undefined}>
                       {caseData.pwdCaseNumber || "\u2014"}
                     </div>
                   </div>
