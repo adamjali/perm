@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "motion/react";
-import { FolderOpen, Upload, Download, Trash2 } from "lucide-react";
+import { FolderOpen, Upload, Download, Trash2, FileText, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Phase2UploadButton } from "./phase2-placeholders";
 
 interface DocumentEntry {
@@ -34,6 +35,14 @@ function getFileTypeLabel(mimeType: string): string {
   return "FILE";
 }
 
+function fmtDate(ts: number): string {
+  return new Date(ts).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
   visible: {
@@ -44,6 +53,23 @@ const itemVariants = {
 };
 
 export function DocumentsTab({ documents }: DocumentsTabProps) {
+  const [selectedIdx, setSelectedIdx] = useState(-1);
+  const isOpen = selectedIdx >= 0 && selectedIdx < documents.length;
+  const selectedDoc = isOpen ? documents[selectedIdx] : null;
+
+  function selectDoc(idx: number) {
+    setSelectedIdx(idx);
+  }
+
+  function navDoc(dir: number) {
+    const next = selectedIdx + dir;
+    if (next >= 0 && next < documents.length) setSelectedIdx(next);
+  }
+
+  function closePreview() {
+    setSelectedIdx(-1);
+  }
+
   return (
     <motion.div
       initial="hidden"
@@ -60,27 +86,30 @@ export function DocumentsTab({ documents }: DocumentsTabProps) {
             </span>
             <Phase2UploadButton />
           </div>
-          <div className="split-wrap">
+          <div className={`split-wrap${isOpen ? " preview-open" : ""}`}>
             <div className="split-list">
               {documents.length > 0 ? (
                 <div className="scroll-list">
-                  {documents.map((doc) => {
+                  {documents.map((doc, i) => {
                     const typeLabel = getFileTypeLabel(doc.mimeType);
                     return (
-                      <div key={doc.id} className="doc-row">
+                      <div
+                        key={doc.id}
+                        className={`doc-row${i === selectedIdx ? " selected" : ""}`}
+                        onClick={() => selectDoc(i)}
+                      >
                         <div className="doc-icon">{typeLabel}</div>
                         <div className="doc-info">
                           <div className="doc-name">{doc.name}</div>
                           <div className="doc-meta">
-                            {typeLabel} &middot; {formatFileSize(doc.size)} &middot;{" "}
-                            {new Date(doc.uploadedAt).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
+                            {typeLabel} &middot; {formatFileSize(doc.size)} &middot; {fmtDate(doc.uploadedAt)}
                           </div>
                         </div>
-                        <div className="flex-row doc-actions" style={{ gap: 4, flexShrink: 0 }}>
+                        <div
+                          className="flex-row doc-actions"
+                          style={{ gap: 4, flexShrink: 0 }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button className="icon-btn" title="Download" disabled>
                             <Download className="h-3.5 w-3.5" />
                           </button>
@@ -118,7 +147,79 @@ export function DocumentsTab({ documents }: DocumentsTabProps) {
                 </button>
               </div>
             </div>
-            <div className="split-preview" />
+            <div className="split-preview">
+              {selectedDoc && (() => {
+                const typeLabel = getFileTypeLabel(selectedDoc.mimeType);
+                return (
+                  <div className="split-preview-inner">
+                    {/* Nav */}
+                    <div className="preview-nav">
+                      <div className="preview-nav-btns">
+                        <button
+                          className="icon-btn"
+                          onClick={() => navDoc(-1)}
+                          disabled={selectedIdx <= 0}
+                          title="Previous"
+                        >
+                          <ChevronLeft className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          className="icon-btn"
+                          onClick={() => navDoc(1)}
+                          disabled={selectedIdx >= documents.length - 1}
+                          title="Next"
+                        >
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <button className="icon-btn" onClick={closePreview} title="Close">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    {/* File type placeholder */}
+                    <div
+                      style={{
+                        border: "3px solid var(--border)",
+                        background: "var(--muted)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: 160,
+                        marginBottom: 20,
+                      }}
+                    >
+                      <div style={{ textAlign: "center", color: "var(--muted-foreground)" }}>
+                        <FileText className="h-12 w-12 mx-auto" style={{ opacity: 0.3 }} />
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", marginTop: 8 }}>
+                          {typeLabel} &middot; {formatFileSize(selectedDoc.size)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <div className="preview-title">{selectedDoc.name}</div>
+
+                    {/* Meta */}
+                    <div className="preview-meta">
+                      <span>Uploaded: {fmtDate(selectedDoc.uploadedAt)}</span>
+                      <span>{typeLabel}</span>
+                      <span>{formatFileSize(selectedDoc.size)}</span>
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ display: "flex", gap: 8, marginTop: 24 }}>
+                      <button className="icon-btn" style={{ width: "auto", padding: "4px 12px", gap: 6, display: "flex", alignItems: "center" }} disabled>
+                        <Download className="h-3.5 w-3.5" /> Download
+                      </button>
+                      <button className="icon-btn" style={{ width: "auto", padding: "4px 12px", gap: 6, display: "flex", alignItems: "center", color: "var(--destructive)" }} disabled>
+                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         </div>
       </motion.div>
