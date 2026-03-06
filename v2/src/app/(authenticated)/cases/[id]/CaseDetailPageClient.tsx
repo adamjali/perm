@@ -570,7 +570,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
           {/* Row 1: Title + Actions */}
           <div className="flex items-center justify-between gap-3 sm:gap-4">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 overflow-hidden">
               <div className="flex items-center gap-2">
                 <h1 className="font-heading text-[1.35rem] sm:text-2xl font-bold leading-[1.15] truncate tracking-tight" title={caseData.employerName}>
                   {caseData.employerName}
@@ -581,10 +581,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   </span>
                 )}
               </div>
-              <p className="font-heading text-[0.85rem] text-muted-foreground font-medium flex items-center gap-2 mt-0.5 truncate" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? ` — ${caseData.beneficiaryIdentifier}` : ""}`}>
+              <p className="font-heading text-[0.85rem] text-muted-foreground font-medium mt-0.5 truncate" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? ` — ${caseData.beneficiaryIdentifier}` : ""}`}>
                 {caseData.positionTitle}
                 {caseData.beneficiaryIdentifier && (
-                  <span className="font-mono text-[0.72rem] opacity-60 shrink-0 max-w-[200px] truncate" title={caseData.beneficiaryIdentifier}>&mdash; {caseData.beneficiaryIdentifier}</span>
+                  <span className="font-mono text-[0.72rem] opacity-60"> — {caseData.beneficiaryIdentifier}</span>
                 )}
               </p>
             </div>

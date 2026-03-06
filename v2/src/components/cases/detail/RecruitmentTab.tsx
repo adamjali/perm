@@ -253,7 +253,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                 <div>
                   <div className="recruit-ad-entry">
                     <div className="recruit-ad-num">1</div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="recruit-ad-date">{fmt(caseData.sundayAdFirstDate)}</div>
                       {caseData.sundayAdNewspaper && (
                         <div className="recruit-ad-pub" title={caseData.sundayAdNewspaper}>{caseData.sundayAdNewspaper}</div>
@@ -263,7 +263,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                   {caseData.sundayAdSecondDate && (
                     <div className="recruit-ad-entry">
                       <div className="recruit-ad-num">2</div>
-                      <div>
+                      <div className="min-w-0">
                         <div className="recruit-ad-date">{fmt(caseData.sundayAdSecondDate)}</div>
                         {caseData.sundayAdNewspaper && (
                           <div className="recruit-ad-pub" title={caseData.sundayAdNewspaper}>{caseData.sundayAdNewspaper}</div>

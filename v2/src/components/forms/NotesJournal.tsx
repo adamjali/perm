@@ -568,10 +568,11 @@ export function NotesJournal({
                       {/* Note content */}
                       <p
                         className={cn(
-                          "text-sm whitespace-pre-wrap break-words",
+                          "text-sm whitespace-pre-wrap break-words line-clamp-4",
                           note.status === "done" &&
                             "line-through text-muted-foreground"
                         )}
+                        title={note.content}
                       >
                         {note.content}
                       </p>
