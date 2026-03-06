@@ -782,6 +782,10 @@
 .vtl-title.pending { color: var(--muted-foreground); }
 .vtl-date { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted-foreground); margin-top: 2px; }
 
+/* Requirements list */
+.req-item { display: flex; gap: 8px; font-size: 0.88rem; font-weight: 600; }
+.req-bullet { color: var(--primary); }
+
 /* Status bar */
 .detail-status-bar {
   padding: 14px 20px;

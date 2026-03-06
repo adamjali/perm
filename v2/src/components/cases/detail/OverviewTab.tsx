@@ -2,10 +2,9 @@
 
 import { motion } from "motion/react";
 import { format, parseISO } from "date-fns";
-import { Flag, CalendarMinus, CalendarPlus } from "lucide-react";
+import { Flag, Briefcase, CalendarMinus, CalendarPlus } from "lucide-react";
 import { NextUpSection } from "./NextUpSection";
 import { InlineCaseTimeline } from "./InlineCaseTimeline";
-import { JobDescriptionDetailView } from "@/components/job-description";
 import { QuickStatsPanel } from "./QuickStatsPanel";
 import { VerticalTimeline } from "./VerticalTimeline";
 import { Button } from "@/components/ui/button";
@@ -35,29 +34,6 @@ interface OverviewTabProps {
   isOnTimeline: boolean;
   isUpdating: boolean;
   onToggleTimeline: () => void;
-  jobDescHandlers: {
-    templates: Array<{
-      _id: string;
-      name: string;
-      description: string;
-      createdAt: number;
-      updatedAt: number;
-      usageCount: number;
-    }>;
-    onClear: () => Promise<void>;
-    onUpdate: (positionTitle: string, description: string, templateId?: string) => Promise<void>;
-    onLoadTemplate: (template: {
-      _id: string;
-      name: string;
-      description: string;
-      createdAt: number;
-      updatedAt: number;
-      usageCount: number;
-    }) => Promise<void>;
-    onDeleteTemplate: (id: string) => Promise<{ success: boolean; clearedReferences: number }>;
-    onUpdateTemplate: (id: string, name: string, desc: string) => Promise<void>;
-    onSaveAsNewTemplate: (name: string, description: string) => Promise<unknown>;
-  };
 }
 
 export function OverviewTab({
@@ -67,7 +43,6 @@ export function OverviewTab({
   isOnTimeline,
   isUpdating,
   onToggleTimeline,
-  jobDescHandlers,
 }: OverviewTabProps) {
   return (
     <motion.div
@@ -188,22 +163,50 @@ export function OverviewTab({
           {/* Job Description */}
           {(caseData.jobDescription || caseData.jobDescriptionPositionTitle) && (
             <motion.div variants={itemVariants}>
-              <JobDescriptionDetailView
-                positionTitle={caseData.jobDescriptionPositionTitle}
-                description={caseData.jobDescription}
-                onClear={jobDescHandlers.onClear}
-                onUpdate={async (positionTitle, description, templateId) => {
-                  await jobDescHandlers.onUpdate(positionTitle, description, templateId);
-                }}
-                templates={jobDescHandlers.templates}
-                onLoadTemplate={async (template) => {
-                  await jobDescHandlers.onLoadTemplate(template);
-                }}
-                onDeleteTemplate={jobDescHandlers.onDeleteTemplate}
-                onUpdateTemplate={jobDescHandlers.onUpdateTemplate}
-                onSaveAsNewTemplate={jobDescHandlers.onSaveAsNewTemplate}
-                defaultOpen={true}
-              />
+              <div className="detail-card">
+                <div className="detail-card-head ch-yellow">
+                  <span className="flex items-center gap-1.5">
+                    <Briefcase className="h-3.5 w-3.5" />
+                    Job Description
+                  </span>
+                </div>
+                <div className="field-grid" style={{ padding: 0 }}>
+                  <div className="field-cell">
+                    <div className="fc-label">Position</div>
+                    <div className={`fc-val ${!caseData.jobDescriptionPositionTitle ? "dim" : ""}`}>
+                      {caseData.jobDescriptionPositionTitle || "\u2014"}
+                    </div>
+                  </div>
+                  <div className="field-cell">
+                    <div className="fc-label">SOC Code</div>
+                    <div className={`fc-val mono ${!caseData.socCode ? "dim" : ""}`}>
+                      {caseData.socCode || "\u2014"}
+                    </div>
+                  </div>
+                  <div className="field-cell">
+                    <div className="fc-label">Wage Offered</div>
+                    <div className={`fc-val ${caseData.pwdWageAmount === undefined ? "dim" : ""}`}>
+                      {caseData.pwdWageAmount !== undefined
+                        ? `${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(caseData.pwdWageAmount))} / yr`
+                        : "\u2014"}
+                    </div>
+                  </div>
+                </div>
+                {caseData.jobDescription && (
+                  <div className="detail-card-body" style={{ borderTop: "3px solid var(--border)" }}>
+                    <div style={{ border: "3px solid var(--border)", background: "var(--card)", padding: 16 }}>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted-foreground)", marginBottom: 8 }}>Requirements</div>
+                      <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6, padding: 0, margin: 0 }}>
+                        {caseData.jobDescription.split("\n").filter(Boolean).map((line, i) => (
+                          <li key={i} className="req-item">
+                            <span className="req-bullet">&gt;</span> {line.replace(/^[-•*]\s*/, "")}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </div>
