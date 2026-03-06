@@ -2,13 +2,13 @@
 /**
  * Case Detail Page Tests
  *
- * Tests for the case detail page component with sections,
+ * Tests for the case detail page component with tabbed manila folder layout,
  * quick actions, and timeline visualization.
  *
  * Requirements:
  * 1. Renders loading state initially (skeleton)
  * 2. Renders case details when data loads
- * 3. Shows all section headers (Basic Info, PWD, Recruitment, ETA 9089, I-140, RFI/RFE)
+ * 3. Shows tab bar with 6 tabs (Overview, Recruitment, ETA 9089, I-140, Documents, Notes)
  * 4. Quick actions dropdown opens on click
  * 5. Edit navigates to edit page
  * 6. Delete shows confirmation dialog
@@ -17,7 +17,7 @@
  * 9. Reopen changes status appropriately
  * 10. Back button navigates to /cases
  * 11. Shows not found state when case is null
- * 12. Timeline toggle button works
+ * 12. Tab switching renders correct tab panel
  */
 
 import * as React from "react";
@@ -50,6 +50,7 @@ vi.mock("next/navigation", () => ({
 
 // Mock Convex hooks
 const mockCaseData = vi.fn();
+const mockUserProfile = vi.fn();
 const mockTimelinePrefs = vi.fn();
 const mockRemove = vi.fn();
 const mockUpdate = vi.fn();
@@ -58,6 +59,7 @@ const mockToggleFavorite = vi.fn();
 const mockToggleCalendarSync = vi.fn();
 const mockAddToTimeline = vi.fn();
 const mockRemoveFromTimeline = vi.fn();
+const mockClearJobDescription = vi.fn();
 
 // Counter to track query calls
 let queryCallIndex = 0;
@@ -67,19 +69,24 @@ let mutationPositionInRender = 0;
 
 vi.mock("convex/react", () => ({
   useQuery: () => {
-    // First call is case data, second call is timeline preferences
-    // Both are called on each render, so we need to track parity
+    // Queries are called in this order per render:
+    // 1. case data (CaseDetailPageClient)
+    // 2. user profile (CaseDetail)
+    // 3. timeline preferences (CaseDetail)
     const idx = queryCallIndex++;
-    if (idx % 2 === 0) {
+    const position = idx % 3;
+    if (position === 0) {
       // Case data query - reset mutation position for new render
       mutationPositionInRender = 0;
-      const result = mockCaseData();
-      return result;
+      return mockCaseData();
     }
-    // Timeline preferences query - always return valid value
+    if (position === 1) {
+      // User profile query
+      return mockUserProfile();
+    }
+    // Timeline preferences query
     const result = mockTimelinePrefs();
-    // Ensure we always return a valid value, not undefined
-    return result ?? { selectedCaseIds: null };
+    return result || { selectedCaseIds: null };
   },
   useMutation: () => {
     // Return mutations in order they are called in component:
@@ -90,8 +97,9 @@ vi.mock("convex/react", () => ({
     // 5. toggleCalendarSyncMutation (api.cases.toggleCalendarSync)
     // 6. addToTimelineMutation
     // 7. removeFromTimelineMutation
+    // 8. clearJobDescriptionMutation
     const position = mutationPositionInRender++;
-    const cacheKey = position % 7;
+    const cacheKey = position % 8;
 
     switch (cacheKey) {
       case 0: return mockRemove;
@@ -101,53 +109,71 @@ vi.mock("convex/react", () => ({
       case 4: return mockToggleCalendarSync;
       case 5: return mockAddToTimeline;
       case 6: return mockRemoveFromTimeline;
+      case 7: return mockClearJobDescription;
       default: return vi.fn();
     }
   },
 }));
 
-// Mock the detail section components to simplify testing
-vi.mock("@/components/cases/detail/InlineCaseTimeline", () => ({
-  InlineCaseTimeline: ({ caseData }: any) => (
-    <div data-testid="inline-timeline">Timeline for {caseData?.employerName}</div>
+// Mock job description templates hook (has its own useQuery/useMutation calls)
+vi.mock("@/hooks/useJobDescriptionTemplates", () => ({
+  useJobDescriptionTemplates: () => ({
+    templates: [],
+    loadTemplate: vi.fn(),
+    hardDeleteTemplate: vi.fn(),
+    updateTemplate: vi.fn(),
+    saveAsNewTemplate: vi.fn(),
+  }),
+}));
+
+// Mock tab content components to simplify testing
+vi.mock("@/components/cases/detail/OverviewTab", () => ({
+  OverviewTab: ({ caseData, isOnTimeline, onToggleTimeline }: any) => (
+    <div data-testid="overview-tab">
+      <div data-testid="inline-timeline">Timeline for {caseData?.employerName}</div>
+      <div data-testid="pwd-section">PWD Section</div>
+      <div data-testid="next-up-section">Next Up</div>
+      <button onClick={onToggleTimeline}>
+        {isOnTimeline ? "Remove from Timeline" : "Add to Timeline"}
+      </button>
+    </div>
   ),
 }));
 
-vi.mock("@/components/cases/detail/NextUpSection", () => ({
-  NextUpSection: ({ caseData }: any) => (
-    <div data-testid="next-up-section">Next Up</div>
+vi.mock("@/components/cases/detail/RecruitmentTab", () => ({
+  RecruitmentTab: ({ caseData }: any) => (
+    <div data-testid="recruitment-tab">
+      <div data-testid="recruitment-section">Recruitment Section</div>
+      <div data-testid="recruitment-results-section">Recruitment Results</div>
+    </div>
   ),
 }));
 
-vi.mock("@/components/cases/detail/PWDSection", () => ({
-  PWDSection: ({ data }: any) => <div data-testid="pwd-section">PWD Section</div>,
-}));
-
-vi.mock("@/components/cases/detail/RecruitmentSection", () => ({
-  RecruitmentSection: ({ data }: any) => (
-    <div data-testid="recruitment-section">Recruitment Section</div>
+vi.mock("@/components/cases/detail/ETA9089Tab", () => ({
+  ETA9089Tab: ({ caseData }: any) => (
+    <div data-testid="eta9089-tab">
+      <div data-testid="eta9089-section">ETA 9089 Section</div>
+    </div>
   ),
 }));
 
-vi.mock("@/components/cases/detail/ETA9089Section", () => ({
-  ETA9089Section: ({ data }: any) => (
-    <div data-testid="eta9089-section">ETA 9089 Section</div>
+vi.mock("@/components/cases/detail/I140Tab", () => ({
+  I140Tab: ({ caseData }: any) => (
+    <div data-testid="i140-tab">
+      <div data-testid="i140-section">I-140 Section</div>
+    </div>
   ),
 }));
 
-vi.mock("@/components/cases/detail/I140Section", () => ({
-  I140Section: ({ data }: any) => <div data-testid="i140-section">I-140 Section</div>,
-}));
-
-vi.mock("@/components/cases/detail/RFIRFESection", () => ({
-  RFIRFESection: ({ rfiEntries, rfeEntries }: any) => (
-    <div data-testid="rfirfe-section">RFI/RFE Section</div>
+vi.mock("@/components/cases/detail/DocumentsTab", () => ({
+  DocumentsTab: ({ documents }: any) => (
+    <div data-testid="documents-tab">Documents Tab ({documents?.length || 0} docs)</div>
   ),
 }));
 
-vi.mock("@/components/cases/detail/RecruitmentResultsSection", () => ({
-  RecruitmentResultsSection: ({ data }: any) => (
-    <div data-testid="recruitment-results-section">Recruitment Results</div>
+vi.mock("@/components/cases/detail/NotesTab", () => ({
+  NotesTab: ({ notes }: any) => (
+    <div data-testid="notes-tab">Notes Tab ({notes?.length || 0} notes)</div>
   ),
 }));
 
@@ -162,6 +188,20 @@ vi.mock("@/components/status/progress-status-badge", () => ({
   ProgressStatusBadge: ({ status }: any) => (
     <span data-testid="progress-status-badge">{status}</span>
   ),
+}));
+
+// Mock StageProgressIndicator and getStageIndex
+vi.mock("@/components/cases/detail/next-up-section.components", () => ({
+  StageProgressIndicator: ({ currentStage }: any) => (
+    <div data-testid="stage-progress">Stage {currentStage}</div>
+  ),
+}));
+
+vi.mock("@/components/cases/detail/next-up-section.utils", () => ({
+  getStageIndex: (status: string) => {
+    const stages: Record<string, number> = { pwd: 0, recruitment: 1, eta9089: 2, i140: 3 };
+    return stages[status] || 0;
+  },
 }));
 
 // ============================================================================
@@ -191,6 +231,8 @@ function createMockCaseData(overrides?: Partial<any>): any {
     updatedAt: Date.now(),
     rfiEntries: [],
     rfeEntries: [],
+    documents: [],
+    notes: [],
     ...overrides,
   };
 }
@@ -219,20 +261,28 @@ async function renderPageAndWait(caseId: string) {
   return rendered!;
 }
 
+function resetMocks() {
+  vi.clearAllMocks();
+  queryCallIndex = 0;
+  mutationPositionInRender = 0;
+  mockRemove.mockReset();
+  mockUpdate.mockReset();
+  mockReopenCase.mockReset();
+  mockToggleFavorite.mockReset();
+  mockToggleCalendarSync.mockReset();
+  mockAddToTimeline.mockReset();
+  mockRemoveFromTimeline.mockReset();
+  mockClearJobDescription.mockReset();
+  mockUserProfile.mockReturnValue(null);
+  mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
+}
+
 // ============================================================================
 // LOADING STATE TESTS
 // ============================================================================
 
 describe("CaseDetailPage - Loading State", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    queryCallIndex = 0;
-    mutationPositionInRender = 0;
-    mockRemove.mockReset();
-    mockUpdate.mockReset();
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
-  });
+  beforeEach(resetMocks);
 
   it("renders skeleton when data is loading (useQuery returns undefined)", async () => {
     // useQuery returns undefined while loading
@@ -262,15 +312,7 @@ describe("CaseDetailPage - Loading State", () => {
 // ============================================================================
 
 describe("CaseDetailPage - Not Found State", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    queryCallIndex = 0;
-    mutationPositionInRender = 0;
-    mockRemove.mockReset();
-    mockUpdate.mockReset();
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
-  });
+  beforeEach(resetMocks);
 
   it("shows not found state when case is null", async () => {
     mockCaseData.mockReturnValue(null);
@@ -316,14 +358,7 @@ describe("CaseDetailPage - Not Found State", () => {
 // ============================================================================
 
 describe("CaseDetailPage - Case Details Rendering", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    queryCallIndex = 0;
-    mutationPositionInRender = 0;
-    mockRemove.mockReset();
-    mockUpdate.mockReset();
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
-  });
+  beforeEach(resetMocks);
 
   it("renders case employer name in header", async () => {
     const mockCase = createMockCaseData({ employerName: "Tech Innovations" });
@@ -370,25 +405,103 @@ describe("CaseDetailPage - Case Details Rendering", () => {
     expect(screen.getByText("Professional")).toBeInTheDocument();
   });
 
-  it("renders inline timeline component", async () => {
-    const mockCase = createMockCaseData({ employerName: "Timeline Test Corp" });
-    mockCaseData.mockReturnValue(mockCase);
-
-    await renderPageAndWait("test-id");
-
-    expect(screen.getByTestId("inline-timeline")).toBeInTheDocument();
-  });
-
-  it("renders all detail sections", async () => {
+  it("renders overview tab by default with all sections", async () => {
     mockCaseData.mockReturnValue(createMockCaseData());
 
     await renderPageAndWait("test-id");
 
+    expect(screen.getByTestId("overview-tab")).toBeInTheDocument();
+    expect(screen.getByTestId("inline-timeline")).toBeInTheDocument();
     expect(screen.getByTestId("pwd-section")).toBeInTheDocument();
-    expect(screen.getByTestId("recruitment-section")).toBeInTheDocument();
-    expect(screen.getByTestId("eta9089-section")).toBeInTheDocument();
-    expect(screen.getByTestId("i140-section")).toBeInTheDocument();
-    expect(screen.getByTestId("rfirfe-section")).toBeInTheDocument();
+  });
+});
+
+// ============================================================================
+// TAB NAVIGATION TESTS
+// ============================================================================
+
+describe("CaseDetailPage - Tab Navigation", () => {
+  beforeEach(resetMocks);
+
+  it("shows tab bar with 6 tabs", async () => {
+    mockCaseData.mockReturnValue(createMockCaseData());
+
+    await renderPageAndWait("test-id");
+
+    const tablist = screen.getByRole("tablist");
+    expect(tablist).toBeInTheDocument();
+
+    const tabs = within(tablist).getAllByRole("tab");
+    expect(tabs).toHaveLength(6);
+  });
+
+  it("overview tab is active by default", async () => {
+    mockCaseData.mockReturnValue(createMockCaseData());
+
+    await renderPageAndWait("test-id");
+
+    const overviewTab = screen.getByRole("tab", { name: /overview/i });
+    expect(overviewTab).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("switches to recruitment tab on click", async () => {
+    mockCaseData.mockReturnValue(createMockCaseData());
+
+    const { user } = await renderPageAndWait("test-id");
+
+    const recruitmentTab = screen.getByRole("tab", { name: /recruitment/i });
+    await user.click(recruitmentTab);
+
+    expect(screen.getByTestId("recruitment-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("overview-tab")).not.toBeInTheDocument();
+  });
+
+  it("switches to ETA 9089 tab on click", async () => {
+    mockCaseData.mockReturnValue(createMockCaseData());
+
+    const { user } = await renderPageAndWait("test-id");
+
+    const eta9089Tab = screen.getByRole("tab", { name: /eta 9089/i });
+    await user.click(eta9089Tab);
+
+    expect(screen.getByTestId("eta9089-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("overview-tab")).not.toBeInTheDocument();
+  });
+
+  it("switches to I-140 tab on click", async () => {
+    mockCaseData.mockReturnValue(createMockCaseData());
+
+    const { user } = await renderPageAndWait("test-id");
+
+    const i140Tab = screen.getByRole("tab", { name: /i-140/i });
+    await user.click(i140Tab);
+
+    expect(screen.getByTestId("i140-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("overview-tab")).not.toBeInTheDocument();
+  });
+
+  it("switches to documents tab on click", async () => {
+    mockCaseData.mockReturnValue(createMockCaseData());
+
+    const { user } = await renderPageAndWait("test-id");
+
+    const documentsTab = screen.getByRole("tab", { name: /documents/i });
+    await user.click(documentsTab);
+
+    expect(screen.getByTestId("documents-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("overview-tab")).not.toBeInTheDocument();
+  });
+
+  it("switches to notes tab on click", async () => {
+    mockCaseData.mockReturnValue(createMockCaseData());
+
+    const { user } = await renderPageAndWait("test-id");
+
+    const notesTab = screen.getByRole("tab", { name: /notes/i });
+    await user.click(notesTab);
+
+    expect(screen.getByTestId("notes-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("overview-tab")).not.toBeInTheDocument();
   });
 });
 
@@ -397,22 +510,7 @@ describe("CaseDetailPage - Case Details Rendering", () => {
 // ============================================================================
 
 describe("CaseDetailPage - Section Headers", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    queryCallIndex = 0;
-    mutationPositionInRender = 0;
-    mockRemove.mockReset();
-    mockUpdate.mockReset();
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
-  });
-
-  it("shows Case Timeline section header", async () => {
-    mockCaseData.mockReturnValue(createMockCaseData());
-
-    await renderPageAndWait("test-id");
-
-    expect(screen.getByText("Case Timeline")).toBeInTheDocument();
-  });
+  beforeEach(resetMocks);
 
   it("renders created date in footer", async () => {
     const mockCase = createMockCaseData({
@@ -442,14 +540,7 @@ describe("CaseDetailPage - Section Headers", () => {
 // ============================================================================
 
 describe("CaseDetailPage - Quick Actions Dropdown", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    queryCallIndex = 0;
-    mutationPositionInRender = 0;
-    mockRemove.mockReset();
-    mockUpdate.mockReset();
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
-  });
+  beforeEach(resetMocks);
 
   it("shows actions button", async () => {
     mockCaseData.mockReturnValue(createMockCaseData());
@@ -535,14 +626,7 @@ describe("CaseDetailPage - Quick Actions Dropdown", () => {
 // ============================================================================
 
 describe("CaseDetailPage - Navigation", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    queryCallIndex = 0;
-    mutationPositionInRender = 0;
-    mockRemove.mockReset();
-    mockUpdate.mockReset();
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
-  });
+  beforeEach(resetMocks);
 
   it("back button navigates to /cases", async () => {
     mockCaseData.mockReturnValue(createMockCaseData());
@@ -577,12 +661,8 @@ describe("CaseDetailPage - Navigation", () => {
 
 describe("CaseDetailPage - Delete Confirmation", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    queryCallIndex = 0;
-    mutationPositionInRender = 0;
-    mockRemove.mockReset().mockResolvedValue(undefined);
-    mockUpdate.mockReset();
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
+    resetMocks();
+    mockRemove.mockResolvedValue(undefined);
   });
 
   it("shows delete confirmation dialog when Delete is clicked", async () => {
@@ -682,13 +762,9 @@ describe("CaseDetailPage - Delete Confirmation", () => {
 
 describe("CaseDetailPage - Archive and Reopen", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    queryCallIndex = 0;
-    mutationPositionInRender = 0;
-    mockRemove.mockReset();
-    mockUpdate.mockReset().mockResolvedValue(undefined);
-    mockReopenCase.mockReset().mockResolvedValue({ success: true, newCaseStatus: "pwd", newProgressStatus: "working" });
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
+    resetMocks();
+    mockUpdate.mockResolvedValue(undefined);
+    mockReopenCase.mockResolvedValue({ success: true, newCaseStatus: "pwd", newProgressStatus: "working" });
   });
 
   it("calls update mutation with closed status on Archive", async () => {
@@ -824,29 +900,22 @@ describe("CaseDetailPage - Archive and Reopen", () => {
 
 describe("CaseDetailPage - Timeline Toggle", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    queryCallIndex = 0;
-    mutationPositionInRender = 0;
-    mockRemove.mockReset();
-    mockUpdate.mockReset();
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
-    mockAddToTimeline.mockReset().mockResolvedValue(undefined);
-    mockRemoveFromTimeline.mockReset().mockResolvedValue(undefined);
+    resetMocks();
+    mockAddToTimeline.mockResolvedValue(undefined);
+    mockRemoveFromTimeline.mockResolvedValue(undefined);
   });
 
-  it("shows timeline toggle button in Case Timeline section", async () => {
+  it("shows timeline toggle option in dropdown menu", async () => {
     mockCaseData.mockReturnValue(createMockCaseData());
 
-    await renderPageAndWait("test-id");
+    const { user } = await renderPageAndWait("test-id");
 
-    // Look for the timeline toggle button (not in dropdown)
-    const buttons = screen.getAllByRole("button");
-    const timelineButton = buttons.find(
-      (btn) =>
-        btn.textContent?.includes("Remove from Timeline") ||
-        btn.textContent?.includes("Add to Timeline")
-    );
-    expect(timelineButton).toBeInTheDocument();
+    // Timeline toggle is in dropdown
+    const actionsButton = screen.getByRole("button", { name: /actions/i });
+    await user.click(actionsButton);
+
+    const timelineOption = await screen.findByRole("menuitem", { name: /timeline/i });
+    expect(timelineOption).toBeInTheDocument();
   });
 });
 
@@ -855,14 +924,7 @@ describe("CaseDetailPage - Timeline Toggle", () => {
 // ============================================================================
 
 describe("CaseDetailPage - Deadline Display", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    queryCallIndex = 0;
-    mutationPositionInRender = 0;
-    mockRemove.mockReset();
-    mockUpdate.mockReset();
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
-  });
+  beforeEach(resetMocks);
 
   it("shows PWD expiration deadline", async () => {
     const futureDate = new Date();
@@ -877,7 +939,7 @@ describe("CaseDetailPage - Deadline Display", () => {
 
     await renderPageAndWait("test-id");
 
-    // Multiple sections may show PWD expiration, check that at least one exists
+    // PWD deadline shows in the hero header status bar
     const pwdElements = screen.getAllByText(/PWD Expires/i);
     expect(pwdElements.length).toBeGreaterThan(0);
   });
@@ -936,7 +998,7 @@ describe("CaseDetailPage - Deadline Display", () => {
 
     await renderPageAndWait("test-id");
 
-    // Multiple sections may show RFI deadline, check that at least one exists
+    // RFI deadline shows in the hero header status bar
     const rfiElements = screen.getAllByText(/RFI Response Due/i);
     expect(rfiElements.length).toBeGreaterThan(0);
   });
@@ -947,14 +1009,7 @@ describe("CaseDetailPage - Deadline Display", () => {
 // ============================================================================
 
 describe("CaseDetailPage - Accessibility", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    queryCallIndex = 0;
-    mutationPositionInRender = 0;
-    mockRemove.mockReset();
-    mockUpdate.mockReset();
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
-  });
+  beforeEach(resetMocks);
 
   it("back button has accessible name", async () => {
     mockCaseData.mockReturnValue(createMockCaseData());
@@ -972,6 +1027,29 @@ describe("CaseDetailPage - Accessibility", () => {
 
     const actionsButton = screen.getByRole("button", { name: /actions/i });
     expect(actionsButton).toBeInTheDocument();
+  });
+
+  it("tab bar has proper ARIA attributes", async () => {
+    mockCaseData.mockReturnValue(createMockCaseData());
+
+    await renderPageAndWait("test-id");
+
+    const tablist = screen.getByRole("tablist");
+    expect(tablist).toHaveAttribute("aria-label", "Case detail sections");
+
+    const tabs = within(tablist).getAllByRole("tab");
+    const activeTab = tabs.find(tab => tab.getAttribute("aria-selected") === "true");
+    expect(activeTab).toBeDefined();
+  });
+
+  it("tab panels have proper ARIA attributes", async () => {
+    mockCaseData.mockReturnValue(createMockCaseData());
+
+    await renderPageAndWait("test-id");
+
+    const tabpanel = screen.getByRole("tabpanel");
+    expect(tabpanel).toHaveAttribute("id", "tabpanel-overview");
+    expect(tabpanel).toHaveAttribute("aria-labelledby", "tab-overview");
   });
 
   it("delete confirmation dialog has accessible structure", async () => {
@@ -997,18 +1075,7 @@ describe("CaseDetailPage - Accessibility", () => {
 // ============================================================================
 
 describe("CaseDetailPage - Error Handling", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    queryCallIndex = 0;
-    mutationPositionInRender = 0;
-    mockRemove.mockReset();
-    mockUpdate.mockReset();
-    mockToggleFavorite.mockReset();
-    mockToggleCalendarSync.mockReset();
-    mockAddToTimeline.mockReset();
-    mockRemoveFromTimeline.mockReset();
-    mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
-  });
+  beforeEach(resetMocks);
 
   it("handles delete mutation error gracefully", async () => {
     mockRemove.mockRejectedValue(new Error("Delete failed"));
