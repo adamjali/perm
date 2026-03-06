@@ -911,7 +911,7 @@
 .doc-row:first-child { border-top: none; }
 .doc-icon { width: 40px; height: 40px; border: 3px solid var(--border); background: var(--muted); display: grid; place-items: center; flex-shrink: 0; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; }
 .doc-info { flex: 1; min-width: 0; }
-.doc-name { font-family: var(--font-heading); font-weight: 700; font-size: 0.875rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.doc-name { font-family: var(--font-heading); font-weight: 700; font-size: 0.875rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--foreground); }
 .doc-meta { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted-foreground); margin-top: 2px; }
 .draft-tag { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 0 6px; background: var(--yellow, #FFD700); border: 2px solid var(--border); line-height: 1.4; }
 .doc-row.selected, .note.selected { background: var(--manila); }

@@ -174,13 +174,19 @@ export function OverviewTab({
                   </motion.div>
                 )}
               </div>
-              {nextDeadline && (
-                <div className="next-up-stat">
-                  <div className="big">{nextDeadline.daysUntil}</div>
-                  <div className="label">{nextDeadline.label}</div>
-                  <div className="date">{fmtDate(nextDeadline.date)}</div>
-                </div>
-              )}
+              {nextDeadline && (() => {
+                const urgencyColor =
+                  nextDeadline.daysUntil <= 14 ? "var(--destructive)"
+                  : nextDeadline.daysUntil <= 30 ? "var(--stage-eta9089)"
+                  : "var(--primary)";
+                return (
+                  <div className="next-up-stat">
+                    <div className="big" style={{ color: urgencyColor }}>{nextDeadline.daysUntil}</div>
+                    <div className="label">{nextDeadline.label}</div>
+                    <div className="date">{fmtDate(nextDeadline.date)}</div>
+                  </div>
+                );
+              })()}
             </div>
             <AnimatePresence initial={false}>
               {isNextUpExpanded && canExpand && (

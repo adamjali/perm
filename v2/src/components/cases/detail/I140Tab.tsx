@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, differenceInDays } from "date-fns";
 import { Shield, AlertTriangle, Clock } from "lucide-react";
 import type { CaseDetailData } from "./case-detail-types";
 
@@ -19,6 +19,11 @@ function fmt(d?: string | null) {
   try { return format(parseISO(d), "MMM d, yyyy"); } catch { return d; }
 }
 
+function fmtShort(d?: string | null) {
+  if (!d) return "\u2014";
+  try { return format(parseISO(d), "MMM d"); } catch { return d; }
+}
+
 interface I140TabProps {
   caseData: CaseDetailData;
 }
@@ -31,6 +36,41 @@ export function I140Tab({ caseData }: I140TabProps) {
   const isDenied = !!caseData.i140DenialDate;
   const statusLabel = isApproved ? "Approved" : isDenied ? "Denied" : isFiled ? "Filed" : "Pending";
 
+  // I-140 filing window: from ETA 9089 certification to expiration
+  let windowDays = 0;
+  let windowLabel = "";
+  let windowPct = 0;
+  let windowChip = "Not Available";
+  let windowChipStyle: React.CSSProperties = { background: "var(--muted)", color: "var(--muted-foreground)" };
+  const hasWindow = !!caseData.eta9089CertificationDate && !!caseData.eta9089ExpirationDate;
+
+  if (hasWindow) {
+    const certDate = parseISO(caseData.eta9089CertificationDate!);
+    const expDate = parseISO(caseData.eta9089ExpirationDate!);
+    const now = new Date();
+    const total = differenceInDays(expDate, certDate);
+
+    if (isFiled || isApproved) {
+      windowDays = 0;
+      windowLabel = "I-140 filed";
+      windowPct = 100;
+      windowChip = "Filed";
+      windowChipStyle = { background: "rgba(46,204,64,0.1)", color: "var(--primary)" };
+    } else if (now <= expDate) {
+      windowDays = differenceInDays(expDate, now);
+      windowLabel = "to file I-140";
+      windowPct = total > 0 ? ((differenceInDays(now, certDate) / total) * 100) : 0;
+      windowChip = "Active";
+      windowChipStyle = { background: "rgba(46,204,64,0.1)", color: "var(--primary)" };
+    } else {
+      windowDays = differenceInDays(now, expDate);
+      windowLabel = "past expiration";
+      windowPct = 100;
+      windowChip = "Expired";
+      windowChipStyle = { background: "var(--destructive)", color: "#fff" };
+    }
+  }
+
   return (
     <motion.div
       initial="hidden"
@@ -38,6 +78,35 @@ export function I140Tab({ caseData }: I140TabProps) {
       variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
       className="space-y-6"
     >
+      {/* I-140 Filing Window Card */}
+      {hasWindow && (
+        <motion.div variants={itemVariants}>
+          <div className="win-card">
+            <div className="win-accent" style={{ background: "var(--stage-i140)" }} />
+            <div className="win-inner">
+              <div className="win-header">
+                <span className="win-title">I-140 Filing Window</span>
+                <span className="win-chip" style={windowChipStyle}>{windowChip}</span>
+              </div>
+              <div className="win-hero">
+                <div>
+                  <span className="win-hero-num" style={{ color: "var(--stage-i140)" }}>{windowDays}</span>
+                  <span className="win-hero-unit">days</span>
+                </div>
+                <div className="win-hero-label">{windowLabel}</div>
+              </div>
+              <div className="win-progress">
+                <span className="win-date">{fmtShort(caseData.eta9089CertificationDate)}</span>
+                <div className="win-bar">
+                  <div className="win-bar-fill" style={{ width: `${windowPct}%`, background: "var(--stage-i140)" }} />
+                </div>
+                <span className="win-date">{fmtShort(caseData.eta9089ExpirationDate)}</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* I-140 Petition Card */}
       <motion.div variants={itemVariants}>
         <div className="detail-card">
@@ -128,7 +197,9 @@ export function I140Tab({ caseData }: I140TabProps) {
               <span>
                 {isFiled
                   ? "I-140 filed \u2014 awaiting USCIS decision."
-                  : "Awaiting PERM certification before I-140 can be filed with USCIS."}
+                  : caseData.eta9089CertificationDate
+                    ? "PERM certified \u2014 ready to file I-140 with USCIS."
+                    : "Awaiting PERM certification before I-140 can be filed with USCIS."}
               </span>
             </div>
           )}

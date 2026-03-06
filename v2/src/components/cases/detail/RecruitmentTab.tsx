@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock } from "lucide-react";
+import { getMethodLabel } from "@/lib/recruitment";
 import type { CaseDetailData } from "./case-detail-types";
 
 const itemVariants = {
@@ -252,7 +253,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem" }}>{method.method}</div>
+                      <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem" }}>{getMethodLabel(method.method)}</div>
                       {method.date && (
                         <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--muted-foreground)" }}>{fmt(method.date)}</div>
                       )}

@@ -514,7 +514,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       {/* ================================================================ */}
       <motion.div
         variants={headerVariants}
-        className="bg-card border-b-[3px] border-border relative z-[2] overflow-hidden"
+        className="bg-card border-b-[3px] border-border relative z-[2] overflow-hidden -mx-4 sm:-mx-8"
       >
         {/* Stage accent strip */}
         <div className="h-1" style={{ backgroundColor: stageColor }} />
@@ -523,11 +523,11 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           {/* Breadcrumb nav */}
           <nav className="flex items-center gap-2">
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               onClick={() => navigateTo("/cases")}
               className={cn(
-                "shrink-0 h-9 w-9",
+                "shrink-0 h-9 w-9 border-[3px] border-border bg-card hover:bg-manila-dark hover:-translate-y-[1px] hover:shadow-hard-sm transition-all",
                 isNavigating && "opacity-70 pointer-events-none"
               )}
               disabled={isAnyNavigating}
@@ -663,7 +663,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     <span className="sr-only">Actions</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 will-change-transform" onCloseAutoFocus={(e) => e.preventDefault()}>
+                <DropdownMenuContent align="end" className="w-48 will-change-transform border-[3px] border-border shadow-hard-sm" onCloseAutoFocus={(e) => e.preventDefault()}>
                   {isClosed ? (
                     <DropdownMenuItem onClick={handleReopen} disabled={isUpdating} className="min-h-[44px]">
                       <RotateCcw className="h-4 w-4" />
