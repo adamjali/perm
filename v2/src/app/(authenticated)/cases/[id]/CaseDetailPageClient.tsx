@@ -835,7 +835,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           </TabPanel>
 
           <TabPanel id="recruitment" activeTab={activeTab}>
-            <RecruitmentTab caseData={caseData} stageColor={stageColor} />
+            <RecruitmentTab caseData={caseData} />
           </TabPanel>
 
           <TabPanel id="eta9089" activeTab={activeTab}>

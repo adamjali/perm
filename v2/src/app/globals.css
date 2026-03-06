@@ -838,11 +838,15 @@
 .recruit-range-date { font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
 .recruit-range-fill { flex: 1; height: 8px; border: 2px solid var(--border); margin: 0 10px; position: relative; }
 .recruit-range-meta { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.recruit-range-duration { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted-foreground); }
 
 /* Numbered ad entries */
 .recruit-ad-entry { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 2px solid var(--manila-dark, rgba(0,0,0,0.08)); }
 .recruit-ad-entry:last-child { border-bottom: none; }
 .recruit-ad-num { width: 28px; height: 28px; border: 2px solid var(--border); background: var(--stage-recruitment); color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; flex-shrink: 0; }
+.recruit-ad-date { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; }
+.recruit-ad-pub { font-size: 0.82rem; color: var(--muted-foreground); }
+.recruit-posting-info { font-size: 0.88rem; color: var(--muted-foreground); margin-top: 4px; }
 
 /* Recruitment step row */
 .recruit-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-top: 2px solid var(--border); transition: background 0.12s; }

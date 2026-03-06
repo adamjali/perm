@@ -3,7 +3,6 @@
 import { motion } from "motion/react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock } from "lucide-react";
-import { isRecruitmentComplete } from "@/lib/perm";
 import type { CaseDetailData } from "./case-detail-types";
 
 const itemVariants = {
@@ -27,12 +26,9 @@ function fmtShort(d?: string | null) {
 
 interface RecruitmentTabProps {
   caseData: CaseDetailData;
-  stageColor: string;
 }
 
 export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
-  const isComplete = isRecruitmentComplete(caseData);
-
   // Recruitment window calculation
   const windowStart = caseData.pwdDeterminationDate;
   const windowEnd = caseData.pwdExpirationDate;
@@ -130,12 +126,22 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                   </div>
                   <div className="recruit-range-meta">
                     {caseData.jobOrderStartDate && caseData.jobOrderEndDate && (
-                      <span className="font-mono text-[0.68rem] text-muted-foreground">
+                      <span className="recruit-range-duration">
                         {differenceInDays(parseISO(caseData.jobOrderEndDate), parseISO(caseData.jobOrderStartDate))} days
                       </span>
                     )}
                     {caseData.jobOrderState && (
-                      <span className="font-mono text-[0.58rem] font-bold uppercase px-2 py-0.5 border-2 border-border bg-muted">
+                      <span
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "0.58rem",
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          padding: "2px 8px",
+                          border: "2px solid var(--border)",
+                          background: "var(--muted)",
+                        }}
+                      >
                         {caseData.jobOrderState}
                       </span>
                     )}
@@ -165,13 +171,13 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
             </div>
             <div className="detail-card-body">
               {hasSundayAds ? (
-                <div className="space-y-0">
+                <div>
                   <div className="recruit-ad-entry">
                     <div className="recruit-ad-num">1</div>
                     <div>
-                      <div className="font-mono text-[0.82rem] font-bold">{fmt(caseData.sundayAdFirstDate)}</div>
+                      <div className="recruit-ad-date">{fmt(caseData.sundayAdFirstDate)}</div>
                       {caseData.sundayAdNewspaper && (
-                        <div className="text-[0.82rem] text-muted-foreground">{caseData.sundayAdNewspaper}</div>
+                        <div className="recruit-ad-pub">{caseData.sundayAdNewspaper}</div>
                       )}
                     </div>
                   </div>
@@ -179,9 +185,9 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                     <div className="recruit-ad-entry">
                       <div className="recruit-ad-num">2</div>
                       <div>
-                        <div className="font-mono text-[0.82rem] font-bold">{fmt(caseData.sundayAdSecondDate)}</div>
+                        <div className="recruit-ad-date">{fmt(caseData.sundayAdSecondDate)}</div>
                         {caseData.sundayAdNewspaper && (
-                          <div className="text-[0.82rem] text-muted-foreground">{caseData.sundayAdNewspaper}</div>
+                          <div className="recruit-ad-pub">{caseData.sundayAdNewspaper}</div>
                         )}
                       </div>
                     </div>
@@ -212,7 +218,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
             <div className="detail-card-body">
               {hasNOF ? (
                 <div>
-                  <div className="text-[0.88rem] text-muted-foreground mb-2">
+                  <div className="recruit-posting-info" style={{ marginBottom: 10 }}>
                     10 consecutive business days &middot; {fmt(caseData.noticeOfFilingStartDate)} &ndash; {fmt(caseData.noticeOfFilingEndDate)}
                   </div>
                 </div>
@@ -245,10 +251,10 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                         <Clock className="h-3.5 w-3.5" />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-heading font-bold text-sm">{method.method}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem" }}>{method.method}</div>
                       {method.date && (
-                        <div className="font-mono text-[0.72rem] text-muted-foreground">{fmt(method.date)}</div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--muted-foreground)" }}>{fmt(method.date)}</div>
                       )}
                     </div>
                   </div>
@@ -289,21 +295,25 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               </div>
             </div>
             <div className="field-cell">
-              <div className="fc-label">Status</div>
-              <div className="fc-val">
-                <span
-                  className="font-mono text-[0.65rem] font-bold uppercase px-2 py-0.5 border-2 border-border"
-                  style={isComplete ? { background: "var(--primary)", color: "var(--primary-foreground)" } : { background: "var(--muted)" }}
-                >
-                  {isComplete ? "Complete" : "In Progress"}
-                </span>
+              <div className="fc-label">Quiet Period Ends</div>
+              <div className="fc-val mono">
+                {caseData.additionalRecruitmentEndDate
+                  ? fmt(
+                      format(
+                        new Date(
+                          parseISO(caseData.additionalRecruitmentEndDate).getTime() + 30 * 24 * 60 * 60 * 1000
+                        ),
+                        "yyyy-MM-dd"
+                      )
+                    )
+                  : "\u2014"}
               </div>
             </div>
           </div>
           {(caseData.recruitmentNotes || caseData.recruitmentSummaryCustom) && (
             <div style={{ padding: "16px 20px" }}>
-              <div className="font-mono text-[0.625rem] uppercase text-muted-foreground mb-1.5">Result</div>
-              <div className="text-[0.88rem] leading-relaxed">
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", color: "var(--muted-foreground)", marginBottom: 6 }}>Result</div>
+              <div style={{ fontSize: "0.88rem", lineHeight: 1.55 }}>
                 {caseData.recruitmentSummaryCustom || caseData.recruitmentNotes}
               </div>
             </div>
