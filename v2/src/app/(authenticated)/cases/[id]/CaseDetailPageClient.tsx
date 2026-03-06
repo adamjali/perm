@@ -705,6 +705,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           <TabPanel id="overview" activeTab={activeTab}>
             <OverviewTab
               caseData={caseData}
+              caseId={caseId}
               isMobile={isMobile}
               isOnTimeline={isOnTimeline}
               isUpdating={isUpdating}

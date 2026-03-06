@@ -1,13 +1,17 @@
 "use client";
 
-import { motion } from "motion/react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { format, parseISO } from "date-fns";
-import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText } from "lucide-react";
+import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText, ChevronDown } from "lucide-react";
+import type { Id } from "@/../convex/_generated/dataModel";
 import { calculateNextAction, calculateNextDeadline } from "./next-up-section.utils";
+import { QuickEditFields, isEditableAction } from "./quick-edit";
 import { InlineCaseTimeline } from "./InlineCaseTimeline";
 import { QuickStatsPanel } from "./QuickStatsPanel";
 import { VerticalTimeline } from "./VerticalTimeline";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { CaseDetailData } from "./case-detail-types";
 
 function fmtDate(d?: string | null) {
@@ -26,6 +30,7 @@ const itemVariants = {
 
 interface OverviewTabProps {
   caseData: CaseDetailData;
+  caseId: Id<"cases">;
   isMobile: boolean;
   isOnTimeline: boolean;
   isUpdating: boolean;
@@ -34,11 +39,13 @@ interface OverviewTabProps {
 
 export function OverviewTab({
   caseData,
+  caseId,
   isMobile,
   isOnTimeline,
   isUpdating,
   onToggleTimeline,
 }: OverviewTabProps) {
+  const [isNextUpExpanded, setIsNextUpExpanded] = useState(false);
   return (
     <motion.div
       initial="hidden"
@@ -46,23 +53,36 @@ export function OverviewTab({
       variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
       className="space-y-6"
     >
-      {/* Next Up */}
+      {/* Next Up — expandable with quick-edit */}
       {caseData.caseStatus !== "closed" && (() => {
         const nextAction = calculateNextAction(caseData);
         const nextDeadline = calculateNextDeadline(caseData);
         if (!nextAction) return null;
+        const canExpand = isEditableAction(nextAction.action);
         return (
           <motion.div variants={itemVariants}>
-            <div className="next-up">
-              <div className="next-up-main">
+            <div className={cn("next-up", isNextUpExpanded && "shadow-hard")}>
+              <div
+                className={cn("next-up-main", canExpand && "cursor-pointer")}
+                onClick={canExpand ? () => setIsNextUpExpanded(v => !v) : undefined}
+              >
                 <div className="next-up-icon">
                   <FileText className="h-5 w-5" />
                 </div>
-                <div>
+                <div style={{ flex: 1 }}>
                   <div className="next-up-label">Next Up</div>
                   <h3>{nextAction.action}</h3>
                   <p>{nextAction.description}</p>
                 </div>
+                {canExpand && (
+                  <motion.div
+                    animate={{ rotate: isNextUpExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="shrink-0"
+                  >
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  </motion.div>
+                )}
               </div>
               {nextDeadline && (
                 <div className="next-up-stat">
@@ -72,6 +92,27 @@ export function OverviewTab({
                 </div>
               )}
             </div>
+            <AnimatePresence initial={false}>
+              {isNextUpExpanded && canExpand && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="overflow-hidden border-[3px] border-t-0 border-border bg-card"
+                >
+                  <div className="p-4">
+                    <QuickEditFields
+                      actionName={nextAction.action}
+                      caseId={caseId}
+                      caseData={caseData}
+                      onComplete={() => setIsNextUpExpanded(false)}
+                      onNavigateToForm={() => {}}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         );
       })()}
