@@ -58,6 +58,7 @@ import { useDerivedDates } from "@/hooks/useDerivedDates";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
 import { useIsMobile } from "@/lib/animations";
 import { type ProgressStatus } from "@/lib/perm";
+import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 
 // ============================================================================
 // ANIMATION VARIANTS
@@ -275,6 +276,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   const toggleCalendarSyncMutation = useMutation(api.cases.toggleCalendarSync);
   const addToTimelineMutation = useMutation(api.timeline.addCaseToTimeline);
   const removeFromTimelineMutation = useMutation(api.timeline.removeCaseFromTimeline);
+  const clearJobDescriptionMutation = useMutation(api.cases.clearJobDescription);
   // Toggle loading states
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [isTogglingCalendarSync, setIsTogglingCalendarSync] = useState(false);
@@ -421,6 +423,30 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
     } finally {
       setIsTogglingCalendarSync(false);
     }
+  };
+
+  // Job description templates
+  const {
+    templates: jobDescTemplates,
+    loadTemplate: loadJobDescTemplate,
+    hardDeleteTemplate: hardDeleteJobDescTemplate,
+    updateTemplate: updateJobDescTemplate,
+    saveAsNewTemplate: saveAsNewJobDescTemplate,
+  } = useJobDescriptionTemplates();
+
+  const handleJobDescSave = async (positionTitle: string, description: string, templateId?: string) => {
+    await updateMutation({
+      id: caseId,
+      jobDescriptionPositionTitle: positionTitle,
+      jobDescription: description,
+      ...(templateId ? { jobDescriptionTemplateId: templateId as Id<"jobDescriptionTemplates"> } : {}),
+    });
+    toast.success("Job description updated");
+  };
+
+  const handleJobDescClear = async () => {
+    await clearJobDescriptionMutation({ id: caseId });
+    toast.success("Job description cleared");
   };
 
   // Active tab state for manila folder tabs
@@ -710,6 +736,15 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               isOnTimeline={isOnTimeline}
               isUpdating={isUpdating}
               onToggleTimeline={handleToggleTimeline}
+              jobDescProps={{
+                templates: jobDescTemplates as unknown as import("@/components/job-description/JobDescriptionField").JobDescriptionTemplate[],
+                onSave: handleJobDescSave,
+                onClear: handleJobDescClear,
+                onLoadTemplate: (t) => loadJobDescTemplate(t as unknown as typeof jobDescTemplates[0]),
+                onDeleteTemplate: (id) => hardDeleteJobDescTemplate(id as Id<"jobDescriptionTemplates">),
+                onUpdateTemplate: (id, name, desc) => updateJobDescTemplate(id as Id<"jobDescriptionTemplates">, name, desc),
+                onSaveAsNewTemplate: saveAsNewJobDescTemplate,
+              }}
             />
           </TabPanel>
 

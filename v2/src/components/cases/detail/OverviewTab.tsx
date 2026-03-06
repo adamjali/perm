@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { format, parseISO } from "date-fns";
-import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText, ChevronDown } from "lucide-react";
+import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText, ChevronDown, Pencil, Copy, Check, Trash2, Loader2 } from "lucide-react";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { calculateNextAction, calculateNextDeadline } from "./next-up-section.utils";
 import { QuickEditFields, isEditableAction } from "./quick-edit";
 import { InlineCaseTimeline } from "./InlineCaseTimeline";
 import { QuickStatsPanel } from "./QuickStatsPanel";
 import { VerticalTimeline } from "./VerticalTimeline";
+import { TemplateSelector } from "@/components/job-description/TemplateSelector";
+import type { JobDescriptionTemplate } from "@/components/job-description/JobDescriptionField";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "@/lib/toast";
 import type { CaseDetailData } from "./case-detail-types";
 
 function fmtDate(d?: string | null) {
@@ -28,6 +31,16 @@ const itemVariants = {
   },
 };
 
+export interface JobDescEditProps {
+  templates: JobDescriptionTemplate[];
+  onSave: (positionTitle: string, description: string, templateId?: string) => Promise<void>;
+  onClear: () => Promise<void>;
+  onLoadTemplate: (template: JobDescriptionTemplate) => void;
+  onDeleteTemplate: (id: string) => Promise<{ success: boolean; clearedReferences: number }>;
+  onUpdateTemplate: (id: string, name: string, description: string) => Promise<void>;
+  onSaveAsNewTemplate: (name: string, description: string) => Promise<unknown>;
+}
+
 interface OverviewTabProps {
   caseData: CaseDetailData;
   caseId: Id<"cases">;
@@ -35,6 +48,7 @@ interface OverviewTabProps {
   isOnTimeline: boolean;
   isUpdating: boolean;
   onToggleTimeline: () => void;
+  jobDescProps?: JobDescEditProps;
 }
 
 export function OverviewTab({
@@ -44,8 +58,84 @@ export function OverviewTab({
   isOnTimeline,
   isUpdating,
   onToggleTimeline,
+  jobDescProps,
 }: OverviewTabProps) {
   const [isNextUpExpanded, setIsNextUpExpanded] = useState(false);
+
+  // Job description edit state
+  const [isEditingJobDesc, setIsEditingJobDesc] = useState(false);
+  const [editPositionTitle, setEditPositionTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>();
+  const [isSavingJobDesc, setIsSavingJobDesc] = useState(false);
+  const [isClearingJobDesc, setIsClearingJobDesc] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const startEditJobDesc = useCallback(() => {
+    setEditPositionTitle(caseData.jobDescriptionPositionTitle || "");
+    setEditDescription(caseData.jobDescription || "");
+    setSelectedTemplateId(undefined);
+    setIsEditingJobDesc(true);
+  }, [caseData.jobDescriptionPositionTitle, caseData.jobDescription]);
+
+  const cancelEditJobDesc = useCallback(() => {
+    setIsEditingJobDesc(false);
+    setEditPositionTitle("");
+    setEditDescription("");
+    setSelectedTemplateId(undefined);
+  }, []);
+
+  const saveJobDesc = useCallback(async () => {
+    if (!jobDescProps || !editDescription.trim()) return;
+    setIsSavingJobDesc(true);
+    try {
+      await jobDescProps.onSave(editPositionTitle.trim(), editDescription.trim(), selectedTemplateId);
+      setIsEditingJobDesc(false);
+    } catch {
+      toast.error("Failed to update job description");
+    } finally {
+      setIsSavingJobDesc(false);
+    }
+  }, [jobDescProps, editPositionTitle, editDescription, selectedTemplateId]);
+
+  const clearJobDesc = useCallback(async () => {
+    if (!jobDescProps) return;
+    setIsClearingJobDesc(true);
+    try {
+      await jobDescProps.onClear();
+      setIsEditingJobDesc(false);
+    } catch {
+      toast.error("Failed to clear job description");
+    } finally {
+      setIsClearingJobDesc(false);
+    }
+  }, [jobDescProps]);
+
+  const handleLoadTemplate = useCallback((template: JobDescriptionTemplate) => {
+    setEditPositionTitle(template.name);
+    setEditDescription(template.description);
+    setSelectedTemplateId(template._id);
+    if (jobDescProps) {
+      jobDescProps.onLoadTemplate(template);
+    }
+  }, [jobDescProps]);
+
+  const handleCopyJobDesc = useCallback(async () => {
+    const text = isEditingJobDesc ? editDescription : caseData.jobDescription;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setIsCopied(true);
+      toast.success("Copied to clipboard");
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  }, [isEditingJobDesc, editDescription, caseData.jobDescription]);
+
+  const hasJobDesc = !!(caseData.jobDescription || caseData.jobDescriptionPositionTitle);
+  const showJobDescCard = hasJobDesc || !!jobDescProps;
+
   return (
     <motion.div
       initial="hidden"
@@ -196,7 +286,7 @@ export function OverviewTab({
           </div>
 
           {/* Job Description */}
-          {(caseData.jobDescription || caseData.jobDescriptionPositionTitle) && (
+          {showJobDescCard && (
             <motion.div variants={itemVariants}>
               <div className="detail-card">
                 <div className="detail-card-head ch-yellow">
@@ -204,42 +294,172 @@ export function OverviewTab({
                     <Briefcase className="h-3.5 w-3.5" />
                     Job Description
                   </span>
+                  <div className="flex items-center gap-1">
+                    {(caseData.jobDescription || isEditingJobDesc) && (
+                      <button
+                        type="button"
+                        onClick={handleCopyJobDesc}
+                        className="icon-btn"
+                        title="Copy to clipboard"
+                      >
+                        {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                    )}
+                    {jobDescProps && !isEditingJobDesc && (
+                      <button
+                        type="button"
+                        onClick={startEditJobDesc}
+                        className="icon-btn"
+                        title="Edit job description"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="field-grid" style={{ padding: 0 }}>
-                  <div className="field-cell">
-                    <div className="fc-label">Position</div>
-                    <div className={`fc-val ${!caseData.jobDescriptionPositionTitle ? "dim" : ""}`}>
-                      {caseData.jobDescriptionPositionTitle || "\u2014"}
+
+                {isEditingJobDesc && jobDescProps ? (
+                  /* Edit mode */
+                  <div className="detail-card-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {/* Template selector */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <TemplateSelector
+                        templates={jobDescProps.templates}
+                        selectedTemplateId={selectedTemplateId}
+                        onSelect={handleLoadTemplate}
+                        onDelete={jobDescProps.onDeleteTemplate}
+                        onUpdate={jobDescProps.onUpdateTemplate}
+                      />
+                    </div>
+
+                    {/* Position title */}
+                    <div>
+                      <label
+                        htmlFor="jd-edit-title"
+                        className="block font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-1"
+                      >
+                        Position Title
+                      </label>
+                      <input
+                        id="jd-edit-title"
+                        type="text"
+                        value={editPositionTitle}
+                        onChange={(e) => setEditPositionTitle(e.target.value)}
+                        placeholder="e.g., Software Engineer"
+                        className="w-full border-[3px] border-border bg-card px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary"
+                      />
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label
+                        htmlFor="jd-edit-desc"
+                        className="block font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-1"
+                      >
+                        Description
+                      </label>
+                      <textarea
+                        id="jd-edit-desc"
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        placeholder="Enter job requirements..."
+                        rows={8}
+                        className="w-full border-[3px] border-border bg-card px-3 py-2 text-sm resize-y focus:outline-none focus:border-primary"
+                      />
+                      <div className="text-right font-mono text-[10px] text-muted-foreground mt-1">
+                        {editDescription.length.toLocaleString()} chars
+                      </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t-[3px] border-dashed border-border">
+                      <div>
+                        {hasJobDesc && (
+                          <button
+                            type="button"
+                            onClick={clearJobDesc}
+                            disabled={isClearingJobDesc}
+                            className="flex items-center gap-1 px-2 py-1.5 text-[11px] font-mono font-bold uppercase tracking-wider text-destructive hover:bg-destructive/10 transition-colors"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            {isClearingJobDesc ? "Clearing..." : "Clear"}
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={cancelEditJobDesc}
+                          disabled={isSavingJobDesc}
+                          className="px-3 py-1.5 border-[3px] border-border text-[11px] font-mono font-bold uppercase tracking-wider hover:bg-muted transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={saveJobDesc}
+                          disabled={isSavingJobDesc || !editDescription.trim()}
+                          className="px-3 py-1.5 border-[3px] border-border bg-primary text-primary-foreground text-[11px] font-mono font-bold uppercase tracking-wider hover:opacity-90 transition-opacity disabled:opacity-50"
+                        >
+                          {isSavingJobDesc ? (
+                            <span className="flex items-center gap-1">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Saving...
+                            </span>
+                          ) : "Save"}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="field-cell">
-                    <div className="fc-label">SOC Code</div>
-                    <div className={`fc-val mono ${!caseData.socCode ? "dim" : ""}`}>
-                      {caseData.socCode || "\u2014"}
+                ) : (
+                  /* Read-only mode */
+                  <>
+                    <div className="field-grid" style={{ padding: 0 }}>
+                      <div className="field-cell">
+                        <div className="fc-label">Position</div>
+                        <div className={`fc-val ${!caseData.jobDescriptionPositionTitle ? "dim" : ""}`}>
+                          {caseData.jobDescriptionPositionTitle || "\u2014"}
+                        </div>
+                      </div>
+                      <div className="field-cell">
+                        <div className="fc-label">SOC Code</div>
+                        <div className={`fc-val mono ${!caseData.socCode ? "dim" : ""}`}>
+                          {caseData.socCode || "\u2014"}
+                        </div>
+                      </div>
+                      <div className="field-cell">
+                        <div className="fc-label">Wage Offered</div>
+                        <div className={`fc-val ${caseData.pwdWageAmount === undefined ? "dim" : ""}`}>
+                          {caseData.pwdWageAmount !== undefined
+                            ? `${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(caseData.pwdWageAmount))} / yr`
+                            : "\u2014"}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="field-cell">
-                    <div className="fc-label">Wage Offered</div>
-                    <div className={`fc-val ${caseData.pwdWageAmount === undefined ? "dim" : ""}`}>
-                      {caseData.pwdWageAmount !== undefined
-                        ? `${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(caseData.pwdWageAmount))} / yr`
-                        : "\u2014"}
-                    </div>
-                  </div>
-                </div>
-                {caseData.jobDescription && (
-                  <div className="detail-card-body" style={{ borderTop: "3px solid var(--border)" }}>
-                    <div style={{ border: "3px solid var(--border)", background: "var(--card)", padding: 16 }}>
-                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted-foreground)", marginBottom: 8 }}>Requirements</div>
-                      <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6, padding: 0, margin: 0 }}>
-                        {caseData.jobDescription.split("\n").filter(Boolean).map((line, i) => (
-                          <li key={i} className="req-item">
-                            <span className="req-bullet">&gt;</span> {line.replace(/^[-•*]\s*/, "")}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
+                    {caseData.jobDescription ? (
+                      <div className="detail-card-body" style={{ borderTop: "3px solid var(--border)" }}>
+                        <div style={{ border: "3px solid var(--border)", background: "var(--card)", padding: 16 }}>
+                          <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted-foreground)", marginBottom: 8 }}>Requirements</div>
+                          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6, padding: 0, margin: 0 }}>
+                            {caseData.jobDescription.split("\n").filter(Boolean).map((line, i) => (
+                              <li key={i} className="req-item">
+                                <span className="req-bullet">&gt;</span> {line.replace(/^[-•*]\s*/, "")}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="detail-card-body">
+                        <div className="detail-empty-state">
+                          <div className="detail-empty-state-title">No job description</div>
+                          <div className="detail-empty-state-desc">
+                            {jobDescProps ? "Click the edit button to add one." : "Add one via the edit form."}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </motion.div>

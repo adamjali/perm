@@ -9,7 +9,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Pencil, Trash2, Star } from "lucide-react";
+import { Pencil, Trash2, Bookmark } from "lucide-react";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
 import { getUrgencyFromDeadline, getUrgencyDotClass } from "@/lib/status";
 import type { DemoCase } from "@/lib/demo";
@@ -150,9 +150,9 @@ export function DemoCaseCard({ case: caseData, onEdit, onDelete }: DemoCaseCardP
           )}
         </div>
 
-        {/* Favorite star */}
+        {/* Favorite bookmark */}
         {isFavorite && (
-          <Star className="h-3.5 w-3.5 fill-primary text-primary" />
+          <Bookmark className="h-3.5 w-3.5 fill-primary text-primary" />
         )}
       </div>
 
