@@ -15,7 +15,6 @@
 
 import { useEffect } from "react";
 import { Upload, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 // PHASE_2_REPLACE: Replace with real document upload component using Convex file storage
 export function Phase2UploadButton() {
@@ -28,16 +27,14 @@ export function Phase2UploadButton() {
   }, []);
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
+    <button
       disabled
-      className="gap-2 opacity-60 cursor-not-allowed"
+      className="flex items-center gap-2 px-3 py-1.5 text-[0.7rem] font-mono font-bold uppercase tracking-wider border-[3px] border-black bg-white text-black cursor-not-allowed opacity-70 shadow-[2px_2px_0_#000]"
       title="Document upload coming soon"
     >
       <Upload className="h-3.5 w-3.5" />
       Upload
-    </Button>
+    </button>
   );
 }
 
@@ -52,15 +49,13 @@ export function Phase2NoteInput() {
   }, []);
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
+    <button
       disabled
-      className="gap-2 opacity-60 cursor-not-allowed"
+      className="flex items-center gap-2 px-3 py-1.5 text-[0.7rem] font-mono font-bold uppercase tracking-wider border-[3px] border-black bg-white text-black cursor-not-allowed opacity-70 shadow-[2px_2px_0_#000]"
       title="Add notes from the Edit Case page"
     >
       <Plus className="h-3.5 w-3.5" />
       Add Note
-    </Button>
+    </button>
   );
 }

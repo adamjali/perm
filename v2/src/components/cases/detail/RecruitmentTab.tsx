@@ -227,13 +227,8 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
             <div className="detail-card-body">
               {hasNOF ? (
                 <div>
-                  <div className="recruit-range-bar">
-                    <span className="recruit-range-date">{fmtShort(caseData.noticeOfFilingStartDate)}</span>
-                    <div className="recruit-range-fill" style={{ background: "var(--stage-recruitment)" }} />
-                    <span className="recruit-range-date">{fmtShort(caseData.noticeOfFilingEndDate)}</span>
-                  </div>
-                  <div className="recruit-posting-info" style={{ marginTop: 8 }}>
-                    10 consecutive business days
+                  <div className="recruit-posting-info" style={{ marginBottom: 10 }}>
+                    10 consecutive business days &middot; {fmtShort(caseData.noticeOfFilingStartDate)} &ndash; {fmt(caseData.noticeOfFilingEndDate)}
                   </div>
                 </div>
               ) : (
@@ -265,15 +260,15 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                         <Clock className="h-3.5 w-3.5" />
                       )}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem" }}>{getMethodLabel(method.method)}</div>
-                      {method.date && (
-                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--muted-foreground)" }}>{fmt(method.date)}</div>
-                      )}
+                    <div className="recruit-info">
+                      <div className="recruit-title">{getMethodLabel(method.method)}</div>
                       {method.description && (
-                        <div style={{ fontSize: "0.8rem", color: "var(--muted-foreground)", marginTop: 2 }}>{method.description}</div>
+                        <div className="recruit-detail">{method.description}</div>
                       )}
                     </div>
+                    {method.date && (
+                      <span className="recruit-date-text">{fmt(method.date)}</span>
+                    )}
                   </div>
                 ))
               ) : (

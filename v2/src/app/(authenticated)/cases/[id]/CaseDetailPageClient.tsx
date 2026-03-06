@@ -139,7 +139,7 @@ function CaseDetailSkeleton() {
   return (
     <div className="space-y-6">
       {/* Hero Header Skeleton */}
-      <div className="bg-card border-b-[3px] border-border overflow-hidden -mx-4 sm:-mx-8 -mt-6">
+      <div className="bg-card border-b-[3px] border-border overflow-hidden -mt-6" style={{ width: "100vw", marginLeft: "calc(-50vw + 50%)" }}>
         <div className="h-1 bg-muted" />
         <div className="p-3 sm:px-8 sm:py-3.5 space-y-2.5">
           {/* Breadcrumb */}
@@ -533,7 +533,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       {/* ================================================================ */}
       <motion.div
         variants={headerVariants}
-        className="bg-card border-b-[3px] border-border relative z-[2] overflow-hidden -mx-4 sm:-mx-8 -mt-6"
+        className="bg-card border-b-[3px] border-border relative z-[2] overflow-hidden -mt-6"
+        style={{ width: "100vw", marginLeft: "calc(-50vw + 50%)" }}
       >
         {/* Stage accent strip */}
         <div className="h-1" style={{ backgroundColor: stageColor }} />

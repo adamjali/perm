@@ -706,10 +706,10 @@
 .detail-card-head.ch-eta { background: var(--stage-eta9089); color: #fff; }
 .detail-card-head.ch-i140 { background: var(--stage-i140); color: #fff; }
 .detail-card-head.ch-pwd { background: var(--stage-pwd); color: #fff; }
-.detail-card-head.ch-yellow { background: var(--color-yellow, #EAB308); color: var(--foreground); }
-.detail-card-head.ch-accent { background: var(--primary); color: var(--primary-foreground); }
-.detail-card-head.ch-dark { background: var(--foreground); color: var(--background); }
-.detail-card-head.ch-muted { background: var(--muted); color: var(--foreground); }
+.detail-card-head.ch-yellow { background: var(--color-yellow, #EAB308); color: #000000; }
+.detail-card-head.ch-accent { background: var(--primary); color: #000000; }
+.detail-card-head.ch-dark { background: #000000; color: #FFFFFF; }
+.detail-card-head.ch-muted { background: var(--muted); color: var(--foreground); border-bottom-color: #000000; }
 
 .detail-card-head .head-badge {
   font-family: var(--font-mono);
@@ -949,6 +949,58 @@
 .note-input { flex: 1; font-family: var(--font-heading); font-size: 0.88rem; padding: 10px 14px; border: 3px solid var(--border); background: var(--background); color: var(--foreground); outline: none; }
 .note-input:focus { box-shadow: var(--shadow-hard-sm); }
 .note-input::placeholder { color: var(--muted-foreground); }
+
+/* ================================================================
+   DARK MODE — Case Detail neobrutalist overrides
+   Borders stay black, headers keep explicit colors
+   ================================================================ */
+.dark .detail-card,
+.dark .folder-body,
+.dark .folder-tab,
+.dark .win-card,
+.dark .gantt-wrap,
+.dark .next-up,
+.dark .detail-card-head,
+.dark .vtl-icon,
+.dark .doc-icon,
+.dark .recruit-ad-num,
+.dark .recruit-icon,
+.dark .win-chip,
+.dark .icon-btn,
+.dark .note-input {
+  border-color: #000000;
+}
+.dark .detail-card-head { border-bottom-color: #000000; }
+.dark .folder-tab { border-color: #000000; }
+.dark .folder-tab[aria-selected="true"] { border-bottom-color: var(--manila); }
+.dark .folder-tab[aria-selected="true"]:first-child::after { background: #000000; }
+.dark .field-cell { border-color: rgba(0,0,0,0.25); }
+.dark .doc-row { border-top-color: rgba(0,0,0,0.4); }
+.dark .note { border-top-color: rgba(0,0,0,0.4); }
+.dark .recruit-row { border-top-color: rgba(0,0,0,0.4); }
+.dark .note-input-area { border-top-color: #000000; }
+.dark .split-wrap.preview-open .split-preview { border-left-color: #000000; }
+.dark .recruit-range-fill { border-color: #000000; }
+.dark .stat { border-color: #000000; }
+
+/* NOF mini-calendar */
+.nof-2month { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 500px) { .nof-2month { grid-template-columns: 1fr; } }
+.nof-month-label { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-align: center; padding: 6px 0 4px; color: var(--foreground); }
+.nof-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; border: 2px solid var(--border); font-family: var(--font-mono); font-size: 0.82rem; text-align: center; }
+.nof-calendar .nof-hdr { padding: 8px 4px; font-weight: 700; background: var(--muted); border-bottom: 2px solid var(--border); color: var(--muted-foreground); font-size: 0.68rem; }
+.nof-calendar .nof-day { padding: 10px 4px; border-right: 1px solid var(--manila-dark); border-bottom: 1px solid var(--manila-dark); }
+.nof-calendar .nof-day:nth-child(7n+8) { border-right: none; }
+.nof-calendar .nof-day.empty { color: transparent; }
+.nof-calendar .nof-day.outside { background: var(--muted); color: var(--muted-foreground); }
+.nof-calendar .nof-day.posted { background: var(--stage-recruitment); color: #fff; font-weight: 700; }
+.nof-calendar .nof-day.weekend { background: transparent; color: var(--muted-foreground); opacity: 0.3; font-style: italic; }
+
+/* Recruitment method row — mockup matching */
+.recruit-info { flex: 1; min-width: 0; }
+.recruit-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.875rem; }
+.recruit-detail { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted-foreground); }
+.recruit-date-text { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; color: var(--muted-foreground); }
 
 @layer base {
   * {

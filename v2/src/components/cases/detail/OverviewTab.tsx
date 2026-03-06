@@ -370,6 +370,7 @@ export function OverviewTab({
                         onChange={(e) => setEditDescription(e.target.value)}
                         placeholder="Enter job requirements..."
                         rows={8}
+                        maxLength={10000}
                         className="w-full border-[3px] border-border bg-card px-3 py-2 text-sm resize-y focus:outline-none focus:border-primary"
                       />
                       <div className="text-right font-mono text-[10px] text-muted-foreground mt-1">
@@ -446,10 +447,10 @@ export function OverviewTab({
                       <div className="detail-card-body" style={{ borderTop: "3px solid var(--border)" }}>
                         <div style={{ border: "3px solid var(--border)", background: "var(--card)", padding: 16 }}>
                           <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted-foreground)", marginBottom: 8 }}>Requirements</div>
-                          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6, padding: 0, margin: 0 }}>
-                            {caseData.jobDescription.split("\n").filter(Boolean).map((line, i) => (
+                          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6, padding: 0, margin: 0, maxHeight: 300, overflow: "hidden" }}>
+                            {caseData.jobDescription.split("\n").filter(Boolean).slice(0, 20).map((line, i) => (
                               <li key={i} className="req-item">
-                                <span className="req-bullet">&gt;</span> {line.replace(/^[-•*]\s*/, "")}
+                                <span className="req-bullet">&gt;</span> {line.replace(/^[-•*]\s*/, "").slice(0, 500)}
                               </li>
                             ))}
                           </ul>
