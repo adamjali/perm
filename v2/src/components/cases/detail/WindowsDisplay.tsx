@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { parseISO, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { CaseWithDates } from "@/lib/timeline";
 import {
@@ -121,12 +122,11 @@ function formatShortDate(isoDate: string): string {
 }
 
 function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  try {
+    return format(parseISO(dateStr), "MMM d, yyyy");
+  } catch {
+    return dateStr;
+  }
 }
 
 function getWindowProgress(startDate: string, endDate: string): number {
