@@ -680,6 +680,11 @@
   background: var(--card);
   box-shadow: var(--shadow-hard-sm);
   overflow: hidden;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.detail-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-hard);
 }
 
 /* Card header variants */

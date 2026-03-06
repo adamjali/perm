@@ -162,13 +162,15 @@ const sentryOptions = {
   },
 };
 
-// Only wrap with Sentry if DSN is configured
+// Only wrap with Sentry in production builds (saves ~2s+ startup in dev)
 const hasSentryDsn =
   process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
+const isProduction = process.env.NODE_ENV === "production";
 
 // Apply bundle analyzer as the outermost wrapper
-const finalConfig = hasSentryDsn
-  ? withSentryConfig(configWithSerwist, sentryOptions)
-  : configWithSerwist;
+const finalConfig =
+  hasSentryDsn && isProduction
+    ? withSentryConfig(configWithSerwist, sentryOptions)
+    : configWithSerwist;
 
 export default withBundleAnalyzer(finalConfig);

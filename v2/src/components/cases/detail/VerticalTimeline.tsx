@@ -11,7 +11,7 @@ interface VerticalTimelineProps {
 
 export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
   const milestones = useMemo(
-    () => extractMilestones(caseData).slice(0, 12),
+    () => extractMilestones(caseData),
     [caseData]
   );
 
