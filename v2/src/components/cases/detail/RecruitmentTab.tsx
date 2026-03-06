@@ -25,6 +25,56 @@ function fmtShort(d?: string | null) {
   try { return format(parseISO(d), "MMM d"); } catch { return d; }
 }
 
+// NOF mini-calendar matching mockup: 2-month view with posted business days highlighted
+function NOFMiniCalendar({ start, end }: { start: string; end: string }) {
+  const startD = parseISO(start);
+  const endD = parseISO(end);
+  const startMonth = new Date(startD.getFullYear(), startD.getMonth(), 1);
+  const endMonth = new Date(endD.getFullYear(), endD.getMonth(), 1);
+  const months: Date[] = [];
+  const cur = new Date(startMonth);
+  while (cur <= endMonth) {
+    months.push(new Date(cur));
+    cur.setMonth(cur.getMonth() + 1);
+  }
+  const HDRS = ["M","T","W","T","F","S","S"];
+  const isWeekend = (d: Date) => d.getDay() === 0 || d.getDay() === 6;
+  const isPosted = (d: Date) => {
+    if (d < startD || d > endD) return false;
+    return !isWeekend(d);
+  };
+  const inRange = (d: Date) => d >= startD && d <= endD;
+
+  return (
+    <div className="nof-2month">
+      {months.map((m) => {
+        const yr = m.getFullYear();
+        const mo = m.getMonth();
+        const daysInMonth = new Date(yr, mo + 1, 0).getDate();
+        const firstDow = (new Date(yr, mo, 1).getDay() + 6) % 7; // Monday=0
+        const label = format(m, "MMM yyyy");
+        return (
+          <div key={label}>
+            <div className="nof-month-label">{label}</div>
+            <div className="nof-calendar">
+              {HDRS.map((h, i) => <div key={i} className="nof-hdr">{h}</div>)}
+              {Array.from({ length: firstDow }, (_, i) => <div key={`e${i}`} className="nof-day empty">&nbsp;</div>)}
+              {Array.from({ length: daysInMonth }, (_, i) => {
+                const day = new Date(yr, mo, i + 1);
+                let cls = "nof-day";
+                if (isPosted(day)) cls += " posted";
+                else if (isWeekend(day)) cls += " weekend";
+                if (!isPosted(day) && !isWeekend(day) && !inRange(day)) cls += " outside";
+                return <div key={i + 1} className={cls}>{i + 1}</div>;
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 interface RecruitmentTabProps {
   caseData: CaseDetailData;
 }
@@ -49,7 +99,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
   const hasSundayAds = !!caseData.sundayAdFirstDate;
   const hasNOF = !!caseData.noticeOfFilingStartDate;
   const methods = caseData.additionalRecruitmentMethods || [];
-  const completedMethods = methods.filter((m) => !!m.date).length;
+  // completedMethods not used — badge shows methods.length instead
 
   // Derive recruitment period from actual dates if not explicitly set
   const recruitStartDate = caseData.additionalRecruitmentStartDate
@@ -230,6 +280,9 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                   <div className="recruit-posting-info" style={{ marginBottom: 10 }}>
                     10 consecutive business days &middot; {fmtShort(caseData.noticeOfFilingStartDate)} &ndash; {fmt(caseData.noticeOfFilingEndDate)}
                   </div>
+                  {caseData.noticeOfFilingStartDate && caseData.noticeOfFilingEndDate && (
+                    <NOFMiniCalendar start={caseData.noticeOfFilingStartDate} end={caseData.noticeOfFilingEndDate} />
+                  )}
                 </div>
               ) : (
                 <div className="detail-empty-state">
@@ -247,7 +300,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                 <Users className="h-3.5 w-3.5" />
                 Additional Methods
               </span>
-              <span className="head-badge">{completedMethods} / {caseData.isProfessionalOccupation ? Math.max(3, methods.length) : methods.length}</span>
+              <span className="head-badge">{methods.length} / {caseData.isProfessionalOccupation ? Math.max(3, methods.length) : methods.length}</span>
             </div>
             <div className="detail-card-body" style={{ padding: 0 }}>
               {methods.length > 0 ? (

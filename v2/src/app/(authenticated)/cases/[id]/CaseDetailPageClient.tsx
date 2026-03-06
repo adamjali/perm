@@ -533,7 +533,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       {/* ================================================================ */}
       <motion.div
         variants={headerVariants}
-        className="bg-card border-b-[3px] border-border relative z-[2] overflow-hidden -mt-6"
+        className="bg-card border-b-[3px] border-black relative z-[2] overflow-hidden -mt-6"
         style={{ width: "100vw", marginLeft: "calc(-50vw + 50%)" }}
       >
         {/* Stage accent strip */}
@@ -654,7 +654,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 onClick={handleEdit}
                 disabled={isAnyNavigating}
                 className={cn(
-                  "shrink-0 border-[3px] border-border bg-[var(--primary)] text-[var(--primary-fg)] font-heading font-bold text-xs",
+                  "shrink-0 border-[3px] border-black bg-[var(--primary)] text-black font-heading font-bold text-xs",
                   "shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all",
                   "min-h-[38px] gap-1.5"
                 )}

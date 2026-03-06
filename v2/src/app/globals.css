@@ -982,6 +982,18 @@
 .dark .split-wrap.preview-open .split-preview { border-left-color: #000000; }
 .dark .recruit-range-fill { border-color: #000000; }
 .dark .stat { border-color: #000000; }
+/* Keep folder tab text black in dark mode */
+.dark .folder-tab { color: #000000; }
+.dark .folder-tab[aria-selected="true"] { color: #000000; }
+/* icon-btn stays same look in dark mode */
+.dark .icon-btn { background: #FAFAFA; color: #000000; border-color: #000000; }
+.dark .icon-btn:hover { background: #E8E8E8; }
+/* doc-name always black */
+.dark .doc-name { color: #000000; }
+/* Notes counter badge stays same */
+.dark .detail-card-head .head-badge { color: inherit; }
+/* Quick-edit dropdown black borders in dark mode */
+.dark .next-up .overflow-hidden { border-color: #000000; }
 
 /* NOF mini-calendar */
 .nof-2month { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

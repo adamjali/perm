@@ -447,12 +447,18 @@ export function OverviewTab({
                       <div className="detail-card-body" style={{ borderTop: "3px solid var(--border)" }}>
                         <div style={{ border: "3px solid var(--border)", background: "var(--card)", padding: 16 }}>
                           <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted-foreground)", marginBottom: 8 }}>Requirements</div>
-                          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6, padding: 0, margin: 0, maxHeight: 300, overflow: "hidden" }}>
-                            {caseData.jobDescription.split("\n").filter(Boolean).slice(0, 20).map((line, i) => (
-                              <li key={i} className="req-item">
-                                <span className="req-bullet">&gt;</span> {line.replace(/^[-•*]\s*/, "").slice(0, 500)}
-                              </li>
-                            ))}
+                          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6, padding: 0, margin: 0, maxHeight: 300, overflow: "hidden", position: "relative" }}>
+                            {caseData.jobDescription.split("\n").filter(Boolean).slice(0, 20).map((line, i) => {
+                              const text = line.replace(/^[-•*]\s*/, "");
+                              return (
+                                <li key={i} className="req-item">
+                                  <span className="req-bullet">&gt;</span> {text.length > 500 ? text.slice(0, 500) + "..." : text}
+                                </li>
+                              );
+                            })}
+                            {caseData.jobDescription.split("\n").filter(Boolean).length > 20 && (
+                              <li className="req-item" style={{ color: "var(--muted-foreground)", fontStyle: "italic" }}>...and more</li>
+                            )}
                           </ul>
                         </div>
                       </div>
