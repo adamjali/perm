@@ -741,6 +741,7 @@
   padding: 14px 20px;
   border-bottom: 2px solid var(--manila-dark, rgba(0,0,0,0.08));
   border-right: 2px solid var(--manila-dark, rgba(0,0,0,0.08));
+  min-width: 0;
 }
 @media (min-width: 640px) {
   .field-cell:nth-child(3n) { border-right: none; }
@@ -784,7 +785,7 @@
 .vtl-line.current { background: var(--border); }
 .vtl-line.pending { background: var(--border); opacity: 0.3; }
 .vtl-content { padding: 4px 0 20px; }
-.vtl-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.875rem; }
+.vtl-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.875rem; word-break: break-word; }
 .vtl-title.pending { color: var(--muted-foreground); }
 .vtl-date { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted-foreground); margin-top: 2px; }
 
@@ -854,7 +855,7 @@
 .recruit-ad-num { width: 28px; height: 28px; border: 2px solid var(--border); background: var(--stage-recruitment); color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; flex-shrink: 0; }
 .recruit-ad-date { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; }
 .recruit-ad-pub { font-size: 0.82rem; color: var(--muted-foreground); }
-.recruit-posting-info { font-size: 0.88rem; color: var(--muted-foreground); margin-top: 4px; }
+.recruit-posting-info { font-size: 0.88rem; color: var(--muted-foreground); margin-top: 4px; word-break: break-word; }
 
 /* Recruitment step row */
 .recruit-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-top: 2px solid var(--border); transition: background 0.12s; }
@@ -911,7 +912,7 @@
 .doc-row:first-child { border-top: none; }
 .doc-icon { width: 40px; height: 40px; border: 3px solid var(--border); background: var(--muted); display: grid; place-items: center; flex-shrink: 0; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; }
 .doc-info { flex: 1; min-width: 0; }
-.doc-name { font-family: var(--font-heading); font-weight: 700; font-size: 0.875rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--foreground); }
+.doc-name { font-family: var(--font-heading); font-weight: 700; font-size: 0.875rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--foreground); overflow-wrap: break-word; word-break: break-word; }
 .doc-meta { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted-foreground); margin-top: 2px; }
 .draft-tag { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 0 6px; background: var(--yellow, #FFD700); border: 2px solid var(--border); line-height: 1.4; }
 .doc-row.selected, .note.selected { background: var(--manila); }
@@ -926,7 +927,7 @@
 .preview-nav-btns { display: flex; gap: 4px; }
 .preview-title { font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
 .preview-meta { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted-foreground); margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; }
-.preview-body { font-size: 0.9rem; line-height: 1.65; }
+.preview-body { font-size: 0.9rem; line-height: 1.65; overflow-wrap: break-word; word-break: break-word; }
 
 /* Note styles */
 .note { padding: 16px 20px; border-top: 2px solid var(--border); cursor: pointer; transition: background 0.15s; }
@@ -938,7 +939,7 @@
 .note-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
 .note-badges { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
 .note-when { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted-foreground); white-space: nowrap; }
-.note-body { font-size: 0.88rem; line-height: 1.55; }
+.note-body { font-size: 0.88rem; line-height: 1.55; overflow-wrap: break-word; word-break: break-word; }
 .note-due { font-family: var(--font-mono); font-size: 0.72rem; color: var(--stage-eta9089); margin-top: 4px; }
 .note-actions { display: flex; align-items: center; gap: 4px; }
 .b-priority-high { background: var(--destructive); color: #fff; border-color: var(--destructive); font-size: 0.65rem; padding: 3px 8px; }
@@ -1010,7 +1011,7 @@
 
 /* Recruitment method row — mockup matching */
 .recruit-info { flex: 1; min-width: 0; }
-.recruit-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.875rem; }
+.recruit-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.875rem; word-break: break-word; }
 .recruit-detail { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted-foreground); word-break: break-word; }
 .recruit-date-text { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; color: var(--muted-foreground); }
 .recruit-sub-entries { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }

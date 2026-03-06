@@ -566,7 +566,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           <div className="flex items-center justify-between gap-3 sm:gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <h1 className="font-heading text-[1.35rem] sm:text-2xl font-bold leading-[1.15] truncate tracking-tight">
+                <h1 className="font-heading text-[1.35rem] sm:text-2xl font-bold leading-[1.15] truncate tracking-tight" title={caseData.employerName}>
                   {caseData.employerName}
                 </h1>
                 {isSample && (
@@ -575,10 +575,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   </span>
                 )}
               </div>
-              <p className="font-heading text-[0.85rem] text-muted-foreground font-medium flex items-center gap-2 mt-0.5">
+              <p className="font-heading text-[0.85rem] text-muted-foreground font-medium flex items-center gap-2 mt-0.5 truncate" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? ` — ${caseData.beneficiaryIdentifier}` : ""}`}>
                 {caseData.positionTitle}
                 {caseData.beneficiaryIdentifier && (
-                  <span className="font-mono text-[0.72rem] opacity-60">&mdash; {caseData.beneficiaryIdentifier}</span>
+                  <span className="font-mono text-[0.72rem] opacity-60 shrink-0">&mdash; {caseData.beneficiaryIdentifier}</span>
                 )}
               </p>
             </div>
