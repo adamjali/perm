@@ -188,6 +188,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
               onChange={handleInputChange}
               aria-invalid={!!errors?.employerName}
               placeholder="Enter employer's full legal name"
+              maxLength={500}
             />
           </FormField>
 
@@ -205,6 +206,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
               onChange={handleInputChange}
               aria-invalid={!!errors?.beneficiaryIdentifier}
               placeholder="Initials or unique ID (optional)"
+              maxLength={500}
             />
           </FormField>
 
@@ -240,6 +242,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
               onChange={handleInputChange}
               aria-invalid={!!errors?.positionTitle}
               placeholder="Enter job position title"
+              maxLength={500}
             />
           </FormField>
         </div>
