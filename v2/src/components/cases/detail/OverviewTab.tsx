@@ -230,7 +230,7 @@ export function OverviewTab({
               size="sm"
               onClick={onToggleTimeline}
               disabled={isUpdating}
-              className="gap-2"
+              className="gap-1.5 border-[3px] border-border font-mono text-[0.68rem] font-bold uppercase tracking-wide shadow-[2px_2px_0_var(--border)] hover:-translate-y-[1px] hover:shadow-[3px_3px_0_var(--border)] transition-all"
             >
               {isOnTimeline ? (
                 <>
@@ -245,10 +245,10 @@ export function OverviewTab({
               )}
             </Button>
           </div>
-          <div style={{ overflowX: "auto" }}>
+          <div style={{ overflowX: "auto", padding: "0" }}>
             <InlineCaseTimeline
               caseData={caseData}
-              className="min-w-[500px] sm:min-w-0"
+              className="min-w-[600px] sm:min-w-0"
             />
           </div>
         </div>

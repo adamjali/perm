@@ -284,7 +284,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
           <div className="field-grid" style={{ padding: 0, borderBottom: "3px solid var(--border)" }}>
             <div className="field-cell">
               <div className="fc-label">Applicants</div>
-              <div className="fc-val">{caseData.recruitmentApplicantsCount ?? "\u2014"}</div>
+              <div className="fc-val">{caseData.recruitmentApplicantsCount || "\u2014"}</div>
             </div>
             <div className="field-cell">
               <div className="fc-label">Recruitment Period</div>

@@ -1,22 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { TrendingUp } from "lucide-react";
+import { extractMilestones } from "@/lib/timeline/milestones";
 import type { CaseDetailData } from "./case-detail-types";
 
 interface QuickStatsPanelProps {
   caseData: CaseDetailData;
 }
 
-function useCountUp(target: number, duration = 400): number {
+function useCountUp(target: number, duration = 600): { value: number; ref: (el: HTMLElement | null) => void } {
   const [value, setValue] = useState(0);
   const frameRef = useRef<number>(0);
+  const hasAnimated = useRef(false);
+  const elementRef = useRef<HTMLElement | null>(null);
 
-  useEffect(() => {
+  const startAnimation = useCallback(() => {
+    if (hasAnimated.current) return;
+    hasAnimated.current = true;
     const startTime = performance.now();
     const animate = (now: number) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
+      // Ease-out quad
       const eased = 1 - (1 - progress) * (1 - progress);
       setValue(Math.round(eased * target));
       if (progress < 1) {
@@ -24,17 +30,45 @@ function useCountUp(target: number, duration = 400): number {
       }
     };
     frameRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frameRef.current);
   }, [target, duration]);
 
-  return value;
+  useEffect(() => {
+    return () => cancelAnimationFrame(frameRef.current);
+  }, []);
+
+  // Reset when target changes (e.g. tab switch)
+  useEffect(() => {
+    hasAnimated.current = false;
+    setValue(0);
+    cancelAnimationFrame(frameRef.current);
+  }, [target]);
+
+  const setRef = useCallback((el: HTMLElement | null) => {
+    elementRef.current = el;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          startAnimation();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, [startAnimation]);
+
+  return { value, ref: setRef };
 }
 
 function CountUpStat({ target, color, label, sub }: { target: number; color?: string; label: string; sub: string }) {
-  const animated = useCountUp(target);
+  const { value, ref } = useCountUp(target);
   return (
-    <div className="stat">
-      <div className="stat-val" style={color ? { color } : undefined}>{animated}</div>
+    <div className="stat" ref={ref}>
+      <div className="stat-val" style={color ? { color } : undefined}>{value}</div>
       <div className="stat-label">{label}</div>
       <div className="stat-sub">{sub}</div>
     </div>
@@ -62,19 +96,25 @@ export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
       (1000 * 60 * 60 * 24)
   );
 
-  // Steps completed (count recruitment milestones)
-  let stepsCompleted = 0;
-  const totalSteps = 10;
-  if (caseData.pwdFilingDate) stepsCompleted++;
-  if (caseData.pwdDeterminationDate) stepsCompleted++;
-  if (caseData.jobOrderStartDate) stepsCompleted++;
-  if (caseData.jobOrderEndDate) stepsCompleted++;
-  if (caseData.sundayAdFirstDate) stepsCompleted++;
-  if (caseData.sundayAdSecondDate) stepsCompleted++;
-  if (caseData.noticeOfFilingStartDate) stepsCompleted++;
-  if (caseData.noticeOfFilingEndDate) stepsCompleted++;
-  if (caseData.eta9089FilingDate) stepsCompleted++;
-  if (caseData.eta9089CertificationDate) stepsCompleted++;
+  // Milestones completed vs total
+  const allMilestones = extractMilestones(caseData);
+  const today = new Date().toISOString().split("T")[0] as string;
+  const completedMilestones = allMilestones.filter(
+    (m) => m.date && m.date <= today && !m.isCalculated
+  ).length;
+
+  // Next deadline days (most relevant upcoming deadline)
+  let nextDeadlineDays = 0;
+  let nextDeadlineLabel = "no deadline";
+  if (caseData.eta9089ExpirationDate && caseData.eta9089CertificationDate && !caseData.i140FilingDate) {
+    nextDeadlineDays = Math.max(0, Math.floor(
+      (new Date(caseData.eta9089ExpirationDate).getTime() - new Date(todayStr).getTime()) / (1000 * 60 * 60 * 24)
+    ));
+    nextDeadlineLabel = "I-140 filing";
+  } else if (caseData.pwdExpirationDate && !caseData.eta9089FilingDate) {
+    nextDeadlineDays = pwdExpiryDays;
+    nextDeadlineLabel = "PWD expires";
+  }
 
   return (
     <div className="detail-card">
@@ -87,8 +127,8 @@ export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
       <div className="stats-grid">
         <CountUpStat target={pwdExpiryDays} color="var(--stage-eta9089)" label="PWD Expiry" sub="days left" />
         <CountUpStat target={caseAge} label="Case Age" sub="days" />
-        <CountUpStat target={stepsCompleted} color="var(--stage-recruitment)" label="Steps Done" sub={`of ${totalSteps}`} />
-        <CountUpStat target={pwdExpiryDays} color="var(--stage-pwd)" label="Days to File" sub="filing window" />
+        <CountUpStat target={completedMilestones} color="var(--stage-recruitment)" label="Milestones" sub={`of ${allMilestones.length} done`} />
+        <CountUpStat target={nextDeadlineDays} color="var(--stage-pwd)" label="Next Deadline" sub={nextDeadlineLabel} />
       </div>
     </div>
   );

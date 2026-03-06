@@ -13,12 +13,10 @@ import {
   Trash2,
   Archive,
   RotateCcw,
-  CalendarPlus,
-  CalendarMinus,
   CalendarCheck,
   CalendarX,
   AlertTriangle,
-  Star,
+  Bookmark,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -309,78 +307,6 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
     });
   }, [caseId, caseData, setPageData]);
 
-  // Calculate next deadline for status bar
-  const nextDeadline = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0] as string;
-    const deadlines: Array<{ label: string; date: string; daysUntil: number }> = [];
-
-    // PWD Expiration
-    if (caseData.pwdExpirationDate && !caseData.eta9089FilingDate) {
-      const daysUntil = Math.floor(
-        (new Date(caseData.pwdExpirationDate).getTime() - new Date(today).getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
-      deadlines.push({
-        label: "PWD Expires",
-        date: caseData.pwdExpirationDate,
-        daysUntil,
-      });
-    }
-
-    // ETA 9089 Expiration / I-140 Filing Deadline
-    if (
-      caseData.eta9089ExpirationDate &&
-      caseData.eta9089CertificationDate &&
-      !caseData.i140FilingDate
-    ) {
-      const daysUntil = Math.floor(
-        (new Date(caseData.eta9089ExpirationDate).getTime() - new Date(today).getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
-      deadlines.push({
-        label: "I-140 Filing Deadline",
-        date: caseData.eta9089ExpirationDate,
-        daysUntil,
-      });
-    }
-
-    // Active RFI
-    const activeRfi = (caseData.rfiEntries ?? []).find(
-      (e) => e.receivedDate && !e.responseSubmittedDate
-    );
-    if (activeRfi?.responseDueDate) {
-      const daysUntil = Math.floor(
-        (new Date(activeRfi.responseDueDate).getTime() - new Date(today).getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
-      deadlines.push({
-        label: "RFI Response Due",
-        date: activeRfi.responseDueDate,
-        daysUntil,
-      });
-    }
-
-    // Active RFE
-    const activeRfe = (caseData.rfeEntries ?? []).find(
-      (e) => e.receivedDate && !e.responseSubmittedDate
-    );
-    if (activeRfe?.responseDueDate) {
-      const daysUntil = Math.floor(
-        (new Date(activeRfe.responseDueDate).getTime() - new Date(today).getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
-      deadlines.push({
-        label: "RFE Response Due",
-        date: activeRfe.responseDueDate,
-        daysUntil,
-      });
-    }
-
-    // Return earliest deadline
-    if (deadlines.length === 0) return null;
-    return deadlines.sort((a, b) => a.daysUntil - b.daysUntil)[0];
-  }, [caseData]);
-
   // Handlers
   const editPath = `/cases/${caseId}/edit`;
   const isEditNavigating = isNavigating && targetPath === editPath;
@@ -585,23 +511,23 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 onClick={handleToggleFavorite}
                 disabled={isTogglingFavorite}
                 className={cn(
-                  "shrink-0 border-2 transition-all cursor-pointer",
+                  "shrink-0 border-[3px] transition-all cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.isFavorite
-                    ? "border-yellow-500 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30"
-                    : "border-border bg-muted hover:bg-manila-dark hover:-translate-y-0.5 hover:shadow-hard-sm"
+                    ? "border-border bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30"
+                    : "border-border bg-card hover:bg-manila-dark hover:-translate-y-[1px] hover:shadow-hard-sm"
                 )}
-                aria-label={caseData.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                aria-label={caseData.isFavorite ? "Remove bookmark" : "Bookmark case"}
                 aria-pressed={caseData.isFavorite}
               >
                 {isTogglingFavorite ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-yellow-600" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Star
+                  <Bookmark
                     className={cn(
                       "h-5 w-5",
                       caseData.isFavorite
-                        ? "fill-yellow-500 text-yellow-500"
+                        ? "fill-primary text-primary"
                         : "text-muted-foreground"
                     )}
                   />
@@ -614,13 +540,13 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 onClick={handleToggleCalendarSync}
                 disabled={isTogglingCalendarSync}
                 className={cn(
-                  "shrink-0 border-2 transition-all cursor-pointer",
+                  "shrink-0 border-[3px] transition-all cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.calendarSyncEnabled && isGoogleConnected
-                    ? "border-[#228B22] bg-[#228B22]/10 hover:bg-[#228B22]/20 dark:bg-[#228B22]/20 dark:hover:bg-[#228B22]/30"
+                    ? "border-border bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30"
                     : caseData.calendarSyncEnabled && !isGoogleConnected
                       ? "border-amber-500 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
-                      : "border-border bg-muted hover:bg-manila-dark hover:-translate-y-0.5 hover:shadow-hard-sm"
+                      : "border-border bg-card hover:bg-manila-dark hover:-translate-y-[1px] hover:shadow-hard-sm"
                 )}
                 title={
                   caseData.calendarSyncEnabled && isGoogleConnected
@@ -648,8 +574,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 onClick={handleEdit}
                 disabled={isAnyNavigating}
                 className={cn(
-                  "shrink-0 border-2 border-border bg-[var(--primary)] text-[var(--primary-fg)] font-heading font-bold text-xs",
-                  "shadow-hard-sm hover:-translate-y-0.5 hover:shadow-hard transition-all",
+                  "shrink-0 border-[3px] border-border bg-[var(--primary)] text-[var(--primary-fg)] font-heading font-bold text-xs",
+                  "shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all",
                   "min-h-[38px] gap-1.5"
                 )}
               >
@@ -667,8 +593,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     variant="outline"
                     size="icon"
                     className={cn(
-                      "shrink-0 border-2 border-border bg-muted",
-                      "hover:bg-manila-dark hover:-translate-y-0.5 hover:shadow-hard-sm transition-all",
+                      "shrink-0 border-[3px] border-border bg-card",
+                      "hover:bg-manila-dark hover:-translate-y-[1px] hover:shadow-hard-sm transition-all",
                       "min-h-[38px] min-w-[38px] h-[38px] w-[38px]"
                     )}
                     disabled={isUpdating || isAnyNavigating}
@@ -678,36 +604,6 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 will-change-transform" onCloseAutoFocus={(e) => e.preventDefault()}>
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      handleEdit();
-                    }}
-                    disabled={isAnyNavigating}
-                    className="min-h-[44px]"
-                  >
-                    {isEditNavigating ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Pencil className="h-4 w-4" />
-                    )}
-                    Edit Case
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleToggleTimeline} disabled={isUpdating} className="min-h-[44px]">
-                    {isOnTimeline ? (
-                      <>
-                        <CalendarMinus className="h-4 w-4" />
-                        Remove from Timeline
-                      </>
-                    ) : (
-                      <>
-                        <CalendarPlus className="h-4 w-4" />
-                        Add to Timeline
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   {isClosed ? (
                     <DropdownMenuItem onClick={handleReopen} disabled={isUpdating} className="min-h-[44px]">
                       <RotateCcw className="h-4 w-4" />
@@ -799,24 +695,6 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           </div>
         )}
 
-        {/* Deadline indicator */}
-        {nextDeadline && (
-          <div className={cn(
-            "px-3 sm:px-8 py-1.5 text-right font-mono text-xs border-t border-border/30",
-            nextDeadline.daysUntil <= 7
-              ? "text-red-600 font-semibold"
-              : nextDeadline.daysUntil <= 30
-                ? "text-orange-600 font-medium"
-                : "text-muted-foreground"
-          )}>
-            {nextDeadline.label}:{" "}
-            {nextDeadline.daysUntil < 0
-              ? `${Math.abs(nextDeadline.daysUntil)}d overdue`
-              : nextDeadline.daysUntil === 0
-                ? "Today"
-                : `${nextDeadline.daysUntil}d`}
-          </div>
-        )}
       </motion.div>
 
       {/* ================================================================ */}
@@ -860,27 +738,42 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         </CaseDetailTabs>
       </motion.div>
 
-      {/* Footer Metadata */}
-      <motion.div
-        variants={itemVariants}
-        className="text-xs text-muted-foreground border-t border-border pt-4 flex flex-wrap gap-4 font-mono"
-      >
-        <span>
-          Created:{" "}
-          {new Date(caseData.createdAt).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </span>
-        <span>
-          Updated:{" "}
-          {new Date(caseData.updatedAt).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </span>
+      {/* Footer Metadata + Delete */}
+      <motion.div variants={itemVariants} className="space-y-4">
+        <div className="text-xs text-muted-foreground border-t border-border pt-4 flex flex-wrap items-center justify-between gap-4 font-mono">
+          <div className="flex flex-wrap gap-4">
+            <span>
+              Created:{" "}
+              {new Date(caseData.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+            <span>
+              Updated:{" "}
+              {new Date(caseData.updatedAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setDeleteDialogOpen(true)}
+            disabled={isDeleting}
+            className="border-[3px] border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive font-mono text-xs font-bold uppercase tracking-wide transition-all gap-1.5"
+          >
+            {isDeleting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
+            Delete Case
+          </Button>
+        </div>
       </motion.div>
     </motion.div>
   );

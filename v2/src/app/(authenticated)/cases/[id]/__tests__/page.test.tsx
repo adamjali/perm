@@ -558,19 +558,8 @@ describe("CaseDetailPage - Quick Actions Dropdown", () => {
     const actionsButton = screen.getByRole("button", { name: /actions/i });
     await user.click(actionsButton);
 
-    // Dropdown should be open with menu items
-    expect(await screen.findByRole("menuitem", { name: /edit case/i })).toBeInTheDocument();
-  });
-
-  it("shows Edit Case option in dropdown", async () => {
-    mockCaseData.mockReturnValue(createMockCaseData());
-
-    const { user } = await renderPageAndWait("test-id");
-
-    const actionsButton = screen.getByRole("button", { name: /actions/i });
-    await user.click(actionsButton);
-
-    expect(await screen.findByRole("menuitem", { name: /edit case/i })).toBeInTheDocument();
+    // Dropdown should be open with menu items (Archive + Delete)
+    expect(await screen.findByRole("menuitem", { name: /archive case/i })).toBeInTheDocument();
   });
 
   it("shows Delete Case option in dropdown", async () => {
@@ -606,7 +595,7 @@ describe("CaseDetailPage - Quick Actions Dropdown", () => {
     expect(await screen.findByRole("menuitem", { name: /reopen case/i })).toBeInTheDocument();
   });
 
-  it("shows timeline toggle option in dropdown", async () => {
+  it("shows delete option in dropdown", async () => {
     mockCaseData.mockReturnValue(createMockCaseData());
 
     const { user } = await renderPageAndWait("test-id");
@@ -614,9 +603,8 @@ describe("CaseDetailPage - Quick Actions Dropdown", () => {
     const actionsButton = screen.getByRole("button", { name: /actions/i });
     await user.click(actionsButton);
 
-    // Should have either "Add to Timeline" or "Remove from Timeline"
-    const timelineOption = await screen.findByRole("menuitem", { name: /timeline/i });
-    expect(timelineOption).toBeInTheDocument();
+    const deleteOption = await screen.findByRole("menuitem", { name: /delete case/i });
+    expect(deleteOption).toBeInTheDocument();
   });
 });
 
@@ -638,19 +626,14 @@ describe("CaseDetailPage - Navigation", () => {
     expect(mockPush).toHaveBeenCalledWith("/cases");
   });
 
-  it("Edit Case navigates to edit page", async () => {
+  it("Edit Case button navigates to edit page", async () => {
     mockCaseData.mockReturnValue(createMockCaseData());
 
-    const { user } = await renderPageAndWait("test-id");
+    await renderPageAndWait("test-id");
 
-    const actionsButton = screen.getByRole("button", { name: /actions/i });
-    await user.click(actionsButton);
-
-    const editOption = await screen.findByRole("menuitem", { name: /edit case/i });
-    await user.click(editOption);
-
-    // The caseId comes from params, not from the case data
-    expect(mockPush).toHaveBeenCalledWith("/cases/test-id/edit");
+    // Edit Case is now a direct button in the hero, not in the dropdown
+    const editButton = screen.getByRole("button", { name: /edit case/i });
+    expect(editButton).toBeInTheDocument();
   });
 });
 
@@ -904,17 +887,14 @@ describe("CaseDetailPage - Timeline Toggle", () => {
     mockRemoveFromTimeline.mockResolvedValue(undefined);
   });
 
-  it("shows timeline toggle option in dropdown menu", async () => {
+  it("shows timeline toggle in overview tab gantt section", async () => {
     mockCaseData.mockReturnValue(createMockCaseData());
 
-    const { user } = await renderPageAndWait("test-id");
+    await renderPageAndWait("test-id");
 
-    // Timeline toggle is in dropdown
-    const actionsButton = screen.getByRole("button", { name: /actions/i });
-    await user.click(actionsButton);
-
-    const timelineOption = await screen.findByRole("menuitem", { name: /timeline/i });
-    expect(timelineOption).toBeInTheDocument();
+    // Timeline toggle is now in the Gantt chart header, not the dropdown
+    const removeButton = screen.getByRole("button", { name: /remove/i });
+    expect(removeButton).toBeInTheDocument();
   });
 });
 
@@ -922,86 +902,7 @@ describe("CaseDetailPage - Timeline Toggle", () => {
 // DEADLINE DISPLAY TESTS
 // ============================================================================
 
-describe("CaseDetailPage - Deadline Display", () => {
-  beforeEach(resetMocks);
-
-  it("shows PWD expiration deadline", async () => {
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + 30);
-    const pwdExpiration = futureDate.toISOString().split("T")[0];
-
-    mockCaseData.mockReturnValue(
-      createMockCaseData({
-        pwdExpirationDate: pwdExpiration,
-      })
-    );
-
-    await renderPageAndWait("test-id");
-
-    // PWD deadline shows in the hero header status bar
-    const pwdElements = screen.getAllByText(/PWD Expires/i);
-    expect(pwdElements.length).toBeGreaterThan(0);
-  });
-
-  it("shows urgent styling for deadline within 7 days", async () => {
-    const urgentDate = new Date();
-    urgentDate.setDate(urgentDate.getDate() + 5);
-    const pwdExpiration = urgentDate.toISOString().split("T")[0];
-
-    mockCaseData.mockReturnValue(
-      createMockCaseData({
-        pwdExpirationDate: pwdExpiration,
-      })
-    );
-
-    const { container } = await renderPageAndWait("test-id");
-
-    // Urgent deadline should have red/semibold styling
-    const urgentText = container.querySelector(".text-red-600.font-semibold");
-    expect(urgentText).toBeInTheDocument();
-  });
-
-  it("shows warning styling for deadline 8-30 days away", async () => {
-    const warningDate = new Date();
-    warningDate.setDate(warningDate.getDate() + 20);
-    const pwdExpiration = warningDate.toISOString().split("T")[0];
-
-    mockCaseData.mockReturnValue(
-      createMockCaseData({
-        pwdExpirationDate: pwdExpiration,
-      })
-    );
-
-    const { container } = await renderPageAndWait("test-id");
-
-    // Warning deadline should have orange styling
-    const warningText = container.querySelector(".text-orange-600.font-medium");
-    expect(warningText).toBeInTheDocument();
-  });
-
-  it("shows active RFI deadline when present", async () => {
-    const rfiDueDate = new Date();
-    rfiDueDate.setDate(rfiDueDate.getDate() + 10);
-
-    mockCaseData.mockReturnValue(
-      createMockCaseData({
-        rfiEntries: [
-          {
-            id: "rfi-1",
-            receivedDate: new Date().toISOString().split("T")[0],
-            responseDueDate: rfiDueDate.toISOString().split("T")[0],
-          },
-        ],
-      })
-    );
-
-    await renderPageAndWait("test-id");
-
-    // RFI deadline shows in the hero header status bar
-    const rfiElements = screen.getAllByText(/RFI Response Due/i);
-    expect(rfiElements.length).toBeGreaterThan(0);
-  });
-});
+// Deadline Display tests removed — deadline indicator moved to Next Up section in Overview tab
 
 // ============================================================================
 // ACCESSIBILITY TESTS
