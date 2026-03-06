@@ -826,7 +826,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         <CaseDetailTabs activeTab={activeTab} onTabChange={setActiveTab}>
           <TabPanel id="overview" activeTab={activeTab}>
             <OverviewTab
-              caseId={caseId}
+
               caseData={caseData}
               stageColor={stageColor}
               isMobile={isMobile}

@@ -2,14 +2,12 @@
 
 import { motion } from "motion/react";
 import { format, parseISO } from "date-fns";
-import { Flag, Briefcase, CalendarMinus, CalendarPlus } from "lucide-react";
-import { NextUpSection } from "./NextUpSection";
+import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText } from "lucide-react";
+import { calculateNextAction, calculateNextDeadline } from "./next-up-section.utils";
 import { InlineCaseTimeline } from "./InlineCaseTimeline";
 import { QuickStatsPanel } from "./QuickStatsPanel";
 import { VerticalTimeline } from "./VerticalTimeline";
 import { Button } from "@/components/ui/button";
-import { type ProgressStatus } from "@/lib/perm";
-import type { Id } from "@/../convex/_generated/dataModel";
 import type { CaseDetailData } from "./case-detail-types";
 
 function fmtDate(d?: string | null) {
@@ -27,7 +25,6 @@ const itemVariants = {
 };
 
 interface OverviewTabProps {
-  caseId: Id<"cases">;
   caseData: CaseDetailData;
   stageColor: string;
   isMobile: boolean;
@@ -37,7 +34,6 @@ interface OverviewTabProps {
 }
 
 export function OverviewTab({
-  caseId,
   caseData,
   isMobile,
   isOnTimeline,
@@ -51,36 +47,35 @@ export function OverviewTab({
       variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
       className="space-y-6"
     >
-      {/* Next Up Section */}
-      <motion.div variants={itemVariants}>
-        <NextUpSection
-          caseId={caseId}
-          showStageProgress={false}
-          caseData={{
-            caseStatus: caseData.caseStatus,
-            progressStatus: caseData.progressStatus as ProgressStatus,
-            pwdFilingDate: caseData.pwdFilingDate,
-            pwdDeterminationDate: caseData.pwdDeterminationDate,
-            pwdExpirationDate: caseData.pwdExpirationDate,
-            jobOrderStartDate: caseData.jobOrderStartDate,
-            jobOrderEndDate: caseData.jobOrderEndDate,
-            sundayAdFirstDate: caseData.sundayAdFirstDate,
-            sundayAdSecondDate: caseData.sundayAdSecondDate,
-            noticeOfFilingStartDate: caseData.noticeOfFilingStartDate,
-            noticeOfFilingEndDate: caseData.noticeOfFilingEndDate,
-            eta9089FilingDate: caseData.eta9089FilingDate,
-            eta9089CertificationDate: caseData.eta9089CertificationDate,
-            eta9089ExpirationDate: caseData.eta9089ExpirationDate,
-            i140FilingDate: caseData.i140FilingDate,
-            i140ApprovalDate: caseData.i140ApprovalDate,
-            i140DenialDate: caseData.i140DenialDate,
-            rfiEntries: caseData.rfiEntries,
-            rfeEntries: caseData.rfeEntries,
-            isProfessionalOccupation: caseData.isProfessionalOccupation,
-            additionalRecruitmentMethods: caseData.additionalRecruitmentMethods,
-          }}
-        />
-      </motion.div>
+      {/* Next Up */}
+      {caseData.caseStatus !== "closed" && (() => {
+        const nextAction = calculateNextAction(caseData);
+        const nextDeadline = calculateNextDeadline(caseData);
+        if (!nextAction) return null;
+        return (
+          <motion.div variants={itemVariants}>
+            <div className="next-up">
+              <div className="next-up-main">
+                <div className="next-up-icon">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="next-up-label">Next Up</div>
+                  <h3>{nextAction.action}</h3>
+                  <p>{nextAction.description}</p>
+                </div>
+              </div>
+              {nextDeadline && (
+                <div className="next-up-stat">
+                  <div className="big">{nextDeadline.daysUntil}</div>
+                  <div className="label">{nextDeadline.label}</div>
+                  <div className="date">{fmtDate(nextDeadline.date)}</div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        );
+      })()}
 
       {/* 2-Column Layout: Timeline Sidebar + Main (matching mockup) */}
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
