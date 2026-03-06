@@ -178,29 +178,48 @@ function CaseDetailSkeleton() {
       </div>
 
       {/* Tab Bar Skeleton */}
-      <div className="flex gap-1">
+      <div className="folder-tab-bar">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Skeleton key={i} variant="block" className="w-28 h-10" />
+          <div key={i} className="folder-tab" style={{ pointerEvents: "none" }}>
+            <Skeleton variant="line" className="w-4 h-4" />
+            <Skeleton variant="line" className="w-16 h-3.5 hidden sm:block" />
+          </div>
         ))}
       </div>
 
-      {/* Content Skeleton — matches overview layout */}
-      <div className="border-[3px] border-border bg-card p-6 space-y-6">
-        {/* Next Up */}
-        <Skeleton variant="block" className="h-20" />
-        {/* 2-col layout */}
-        <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-          <Skeleton variant="block" className="h-64" />
-          <div className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-[1.8fr_1fr]">
-              <Skeleton variant="block" className="h-48" />
-              <Skeleton variant="block" className="h-48" />
+      {/* Content Skeleton — manila folder body */}
+      <div className="folder-body">
+        <div className="folder-content space-y-6">
+          {/* Next Up */}
+          <Skeleton variant="block" className="h-20" />
+          {/* 2-col layout */}
+          <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+            {/* Timeline sidebar */}
+            <div className="space-y-4">
+              <Skeleton variant="block" className="h-8" />
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton variant="block" className="w-8 h-8 shrink-0" />
+                  <div className="flex-1">
+                    <Skeleton variant="line" className="w-24 h-3.5 mb-1" />
+                    <Skeleton variant="line" className="w-20 h-3" />
+                  </div>
+                </div>
+              ))}
             </div>
-            <Skeleton variant="block" className="h-40" />
+            <div className="space-y-6">
+              {/* PWD + Quick Stats */}
+              <div className="grid gap-6 md:grid-cols-[1.8fr_1fr]">
+                <Skeleton variant="block" className="h-48" />
+                <Skeleton variant="block" className="h-48" />
+              </div>
+              {/* Job Desc */}
+              <Skeleton variant="block" className="h-40" />
+            </div>
           </div>
+          {/* Gantt */}
+          <Skeleton variant="block" className="h-32" />
         </div>
-        {/* Gantt */}
-        <Skeleton variant="block" className="h-32" />
       </div>
     </div>
   );

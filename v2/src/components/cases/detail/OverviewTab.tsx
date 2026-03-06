@@ -423,7 +423,7 @@ export function OverviewTab({
                     <div className="field-grid" style={{ padding: 0 }}>
                       <div className="field-cell">
                         <div className="fc-label">Position</div>
-                        <div className={`fc-val ${!caseData.jobDescriptionPositionTitle ? "dim" : ""}`}>
+                        <div className={`fc-val ${!caseData.jobDescriptionPositionTitle ? "dim" : ""}`} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {caseData.jobDescriptionPositionTitle || "\u2014"}
                         </div>
                       </div>
