@@ -20,7 +20,7 @@ interface I140TabProps {
 }
 
 export function I140Tab({ caseData, stageColor }: I140TabProps) {
-  const rfeEntries = caseData.rfeEntries ?? [];
+  const rfeEntries = caseData.rfeEntries || [];
 
   return (
     <motion.div

@@ -28,7 +28,7 @@ export function ETA9089Tab({
   filingWindowOpens,
   filingWindowCloses,
 }: ETA9089TabProps) {
-  const rfiEntries = caseData.rfiEntries ?? [];
+  const rfiEntries = caseData.rfiEntries || [];
 
   return (
     <motion.div

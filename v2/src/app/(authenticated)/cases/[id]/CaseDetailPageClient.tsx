@@ -843,11 +843,11 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           </TabPanel>
 
           <TabPanel id="documents" activeTab={activeTab}>
-            <DocumentsTab documents={caseData.documents ?? []} />
+            <DocumentsTab documents={caseData.documents || []} />
           </TabPanel>
 
           <TabPanel id="notes" activeTab={activeTab}>
-            <NotesTab notes={caseData.notes ?? []} />
+            <NotesTab notes={caseData.notes || []} />
           </TabPanel>
         </CaseDetailTabs>
       </motion.div>
