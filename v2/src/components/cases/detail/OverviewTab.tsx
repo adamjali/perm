@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { PWDSection } from "./PWDSection";
-import { WindowsDisplay } from "./WindowsDisplay";
 import { NextUpSection } from "./NextUpSection";
 import { InlineCaseTimeline } from "./InlineCaseTimeline";
 import { JobDescriptionDetailView } from "@/components/job-description";
@@ -104,45 +103,43 @@ export function OverviewTab({
         />
       </motion.div>
 
-      {/* 2-Column Layout: Sidebar + Main */}
+      {/* 2-Column Layout: Timeline Sidebar + Main (matching mockup) */}
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-        {/* Sidebar: QuickStats + Vertical Timeline */}
-        <div className="space-y-6">
-          <motion.div variants={itemVariants}>
-            <QuickStatsPanel caseData={caseData} />
-          </motion.div>
-          {!isMobile && (
+        {/* Sidebar: Vertical Timeline */}
+        {!isMobile && (
+          <div className="space-y-6">
             <motion.div variants={itemVariants}>
               <VerticalTimeline caseData={caseData} />
             </motion.div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Main column */}
         <div className="space-y-6">
-          {/* Windows Display */}
-          <motion.div variants={itemVariants}>
-            <WindowsDisplay caseData={caseData} />
-          </motion.div>
+          {/* PWD + Quick Stats side by side (mockup: 1.8fr 1fr) */}
+          <div className="grid gap-6 md:grid-cols-[1.8fr_1fr]">
+            <motion.div variants={itemVariants}>
+              <PWDSection
+                data={{
+                  pwdFilingDate: caseData.pwdFilingDate,
+                  pwdDeterminationDate: caseData.pwdDeterminationDate,
+                  pwdExpirationDate: caseData.pwdExpirationDate,
+                  pwdCaseNumber: caseData.pwdCaseNumber,
+                  pwdWageAmount:
+                    caseData.pwdWageAmount !== undefined
+                      ? Number(caseData.pwdWageAmount)
+                      : undefined,
+                  pwdWageLevel: caseData.pwdWageLevel,
+                }}
+                defaultOpen={true}
+                accentColor={caseData.caseStatus === "pwd" ? stageColor : undefined}
+              />
+            </motion.div>
 
-          {/* PWD Section */}
-          <motion.div variants={itemVariants}>
-            <PWDSection
-              data={{
-                pwdFilingDate: caseData.pwdFilingDate,
-                pwdDeterminationDate: caseData.pwdDeterminationDate,
-                pwdExpirationDate: caseData.pwdExpirationDate,
-                pwdCaseNumber: caseData.pwdCaseNumber,
-                pwdWageAmount:
-                  caseData.pwdWageAmount !== undefined
-                    ? Number(caseData.pwdWageAmount)
-                    : undefined,
-                pwdWageLevel: caseData.pwdWageLevel,
-              }}
-              defaultOpen={true}
-              accentColor={caseData.caseStatus === "pwd" ? stageColor : undefined}
-            />
-          </motion.div>
+            <motion.div variants={itemVariants}>
+              <QuickStatsPanel caseData={caseData} />
+            </motion.div>
+          </div>
 
           {/* Job Description */}
           {(caseData.jobDescription || caseData.jobDescriptionPositionTitle) && (
@@ -167,6 +164,18 @@ export function OverviewTab({
           )}
         </div>
       </div>
+
+      {/* Mobile-only: Timeline + QuickStats below main content */}
+      {isMobile && (
+        <div className="space-y-6">
+          <motion.div variants={itemVariants}>
+            <QuickStatsPanel caseData={caseData} />
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <VerticalTimeline caseData={caseData} />
+          </motion.div>
+        </div>
+      )}
 
       {/* Case Timeline (Gantt) — Full Width */}
       <motion.div
