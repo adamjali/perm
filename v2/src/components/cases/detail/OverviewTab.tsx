@@ -26,7 +26,6 @@ const itemVariants = {
 
 interface OverviewTabProps {
   caseData: CaseDetailData;
-  stageColor: string;
   isMobile: boolean;
   isOnTimeline: boolean;
   isUpdating: boolean;

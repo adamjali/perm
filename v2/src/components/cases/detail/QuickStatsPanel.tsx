@@ -64,7 +64,7 @@ export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
 
   // Steps completed (count recruitment milestones)
   let stepsCompleted = 0;
-  let totalSteps = 10;
+  const totalSteps = 10;
   if (caseData.pwdFilingDate) stepsCompleted++;
   if (caseData.pwdDeterminationDate) stepsCompleted++;
   if (caseData.jobOrderStartDate) stepsCompleted++;
@@ -75,19 +75,6 @@ export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
   if (caseData.noticeOfFilingEndDate) stepsCompleted++;
   if (caseData.eta9089FilingDate) stepsCompleted++;
   if (caseData.eta9089CertificationDate) stepsCompleted++;
-  totalSteps = 10;
-
-  // Filing window days
-  let filingWindowDays = 0;
-  if (caseData.pwdExpirationDate) {
-    filingWindowDays = Math.max(
-      0,
-      Math.floor(
-        (new Date(caseData.pwdExpirationDate).getTime() - new Date(todayStr).getTime()) /
-          (1000 * 60 * 60 * 24)
-      )
-    );
-  }
 
   return (
     <div className="detail-card">
@@ -101,7 +88,7 @@ export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
         <CountUpStat target={pwdExpiryDays} color="var(--stage-eta9089)" label="PWD Expiry" sub="days left" />
         <CountUpStat target={caseAge} label="Case Age" sub="days" />
         <CountUpStat target={stepsCompleted} color="var(--stage-recruitment)" label="Steps Done" sub={`of ${totalSteps}`} />
-        <CountUpStat target={filingWindowDays} color="var(--stage-pwd)" label="Days to File" sub="filing window" />
+        <CountUpStat target={pwdExpiryDays} color="var(--stage-pwd)" label="Days to File" sub="filing window" />
       </div>
     </div>
   );

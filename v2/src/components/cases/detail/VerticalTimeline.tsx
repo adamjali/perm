@@ -49,15 +49,13 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
         ) : (
           steps.map((step, i) => {
             const isLast = i === steps.length - 1;
-            const dateStr = step.status === "pending" && step.isCalculated
+            const dateStr = step.status === "pending"
               ? "Pending"
-              : step.status === "pending"
-                ? "Pending"
-                : new Date(step.date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  });
+              : new Date(step.date).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                });
 
             return (
               <div key={`${step.field}-${i}`} className="vtl-step">
