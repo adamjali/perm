@@ -21,7 +21,6 @@ function fmt(d?: string | null) {
 
 interface I140TabProps {
   caseData: CaseDetailData;
-  stageColor: string;
 }
 
 export function I140Tab({ caseData }: I140TabProps) {

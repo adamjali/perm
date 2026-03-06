@@ -841,14 +841,13 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           <TabPanel id="eta9089" activeTab={activeTab}>
             <ETA9089Tab
               caseData={caseData}
-              stageColor={stageColor}
               filingWindowOpens={derivedDates.filingWindowOpens}
               filingWindowCloses={derivedDates.filingWindowCloses}
             />
           </TabPanel>
 
           <TabPanel id="i140" activeTab={activeTab}>
-            <I140Tab caseData={caseData} stageColor={stageColor} />
+            <I140Tab caseData={caseData} />
           </TabPanel>
 
           <TabPanel id="documents" activeTab={activeTab}>

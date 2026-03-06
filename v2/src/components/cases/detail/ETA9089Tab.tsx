@@ -26,7 +26,6 @@ function fmtShort(d?: string | null) {
 
 interface ETA9089TabProps {
   caseData: CaseDetailData;
-  stageColor: string;
   filingWindowOpens?: string;
   filingWindowCloses?: string;
 }
@@ -150,7 +149,7 @@ export function ETA9089Tab({
             </div>
             <div className="field-cell">
               <div className="fc-label">Filing Window</div>
-              <div className="fc-val mono text-[0.8rem]">
+              <div className="fc-val mono" style={{ fontSize: "0.8rem" }}>
                 {filingWindowOpens && filingWindowCloses
                   ? `${fmtShort(filingWindowOpens)} \u2013 ${fmtShort(filingWindowCloses)}`
                   : "\u2014"}
@@ -181,7 +180,7 @@ export function ETA9089Tab({
               <AlertTriangle className="h-3.5 w-3.5" />
               RFI (Request for Information)
             </span>
-            <span className="font-mono text-[0.6rem] font-bold uppercase px-2 py-0.5 border-2 border-border bg-muted text-muted-foreground">
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", fontWeight: 700, textTransform: "uppercase", padding: "1px 8px", border: "2px solid var(--border)", background: "var(--muted)", color: "var(--muted-foreground)" }}>
               DOL Audit
             </span>
           </div>
