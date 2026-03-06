@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "motion/react";
-import { MessageCircle, Send, Clock, CheckCircle2, Trash2 } from "lucide-react";
+import { MessageCircle, Send, Trash2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
   NOTE_CATEGORY_LABELS,
   type NoteEntry,
@@ -12,19 +13,69 @@ interface NotesTabProps {
   notes: NoteEntry[];
 }
 
-const PRIORITY_STYLES: Record<string, string> = {
-  high: "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700",
-  medium: "bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700",
-  low: "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700",
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring" as const, stiffness: 300, damping: 24 },
+  },
 };
 
-const STATUS_ICONS = {
-  pending: Clock,
-  done: CheckCircle2,
-  deleted: Trash2,
-} as const;
+function fmtDate(d: string | number): string {
+  return new Date(d).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function PriorityBadge({ priority }: { priority: string }) {
+  const cls = `b-priority-${priority}`;
+  return (
+    <span
+      className={cls}
+      style={{
+        fontFamily: "var(--font-mono)",
+        fontWeight: 700,
+        textTransform: "uppercase",
+        letterSpacing: "0.04em",
+        border: "3px solid",
+        display: "inline-flex",
+        alignItems: "center",
+        lineHeight: 1,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {priority}
+    </span>
+  );
+}
+
+function CategoryBadge({ category }: { category: string }) {
+  return (
+    <span
+      className="b-category"
+      style={{
+        fontFamily: "var(--font-mono)",
+        fontWeight: 700,
+        textTransform: "uppercase",
+        letterSpacing: "0.04em",
+        border: "3px solid var(--border)",
+        display: "inline-flex",
+        alignItems: "center",
+        lineHeight: 1,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {NOTE_CATEGORY_LABELS[category as NoteCategory] || category}
+    </span>
+  );
+}
 
 export function NotesTab({ notes }: NotesTabProps) {
+  const [selectedIdx, setSelectedIdx] = useState(-1);
+
   // Sort notes: pending first, then done, then deleted; within each group, newest first
   const statusOrder = { pending: 0, done: 1, deleted: 2 } as const;
   const sortedNotes = [...notes].sort((a, b) => {
@@ -34,6 +85,18 @@ export function NotesTab({ notes }: NotesTabProps) {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
+  const isOpen = selectedIdx >= 0 && selectedIdx < sortedNotes.length;
+  const selectedNote = isOpen ? sortedNotes[selectedIdx] : null;
+
+  function navNote(dir: number) {
+    const next = selectedIdx + dir;
+    if (next >= 0 && next < sortedNotes.length) setSelectedIdx(next);
+  }
+
+  function closePreview() {
+    setSelectedIdx(-1);
+  }
+
   return (
     <motion.div
       initial="hidden"
@@ -41,77 +104,52 @@ export function NotesTab({ notes }: NotesTabProps) {
       variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
       className="space-y-6"
     >
-      <motion.div
-        variants={{
-          hidden: { opacity: 0, y: 12 },
-          visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
-        }}
-      >
+      <motion.div variants={itemVariants}>
         <div className="detail-card" style={{ overflow: "hidden" }}>
-          <div className="detail-card-head ch-yellow" style={{ gap: "8px" }}>
+          <div className="detail-card-head ch-yellow" style={{ gap: 8 }}>
             <span className="flex items-center gap-1.5">
               <MessageCircle className="h-3.5 w-3.5" />
               Case Notes
             </span>
             <span
-              className="font-mono text-[0.6rem] px-2 py-0.5"
               style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.6rem",
                 background: "var(--card)",
                 border: "2px solid var(--border)",
+                padding: "1px 8px",
               }}
             >
               {notes.length}
             </span>
           </div>
-          <div className="split-wrap">
+          <div className={`split-wrap${isOpen ? " preview-open" : ""}`}>
             <div className="split-list">
-              {notes.length > 0 ? (
+              {sortedNotes.length > 0 ? (
                 <div className="scroll-list">
-                  {sortedNotes.map((note) => {
-                    const StatusIcon = STATUS_ICONS[note.status] || Clock;
-                    const priorityStyle = note.priority
-                      ? PRIORITY_STYLES[note.priority] || ""
-                      : "";
-
+                  {sortedNotes.map((note, i) => {
+                    const isDone = note.status === "done";
+                    const isSelected = i === selectedIdx;
                     return (
-                      <div key={note.id} className="note-entry">
-                        <div className="flex items-start gap-2 mb-1">
-                          <StatusIcon className="h-3.5 w-3.5 shrink-0 mt-0.5 text-muted-foreground" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                              <span className="font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground">
-                                {note.status}
-                              </span>
-                              {note.priority && (
-                                <span
-                                  className={`inline-flex items-center px-1.5 py-0 text-[0.58rem] font-bold uppercase tracking-wider border ${priorityStyle}`}
-                                >
-                                  {note.priority}
-                                </span>
-                              )}
-                              {note.category && (
-                                <span className="inline-flex items-center px-1.5 py-0 text-[0.58rem] font-mono uppercase tracking-wider border border-border bg-muted text-muted-foreground">
-                                  {NOTE_CATEGORY_LABELS[note.category as NoteCategory] ||
-                                    note.category}
-                                </span>
-                              )}
-                              <span className="ml-auto text-[0.65rem] text-muted-foreground font-mono">
-                                {new Date(note.createdAt).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                })}
-                              </span>
-                            </div>
-                            <p className="text-[0.82rem] leading-relaxed whitespace-pre-wrap">
-                              {note.content}
-                            </p>
-                            {note.dueDate && (
-                              <p className="text-[0.68rem] text-muted-foreground font-mono mt-1">
-                                Due: {note.dueDate}
-                              </p>
-                            )}
+                      <div
+                        key={note.id}
+                        className={`note${isDone ? " note-done" : ""}${isSelected ? " selected" : ""}`}
+                        onClick={() => setSelectedIdx(i)}
+                      >
+                        <div className="note-top">
+                          <div className="note-badges">
+                            {note.priority && <PriorityBadge priority={note.priority} />}
+                            {note.category && <CategoryBadge category={note.category} />}
+                          </div>
+                          <div className="note-actions" onClick={(e) => e.stopPropagation()}>
+                            <span className="note-when">{fmtDate(note.createdAt)}</span>
+                            <button className="icon-btn" title="Delete note" disabled style={{ color: "var(--destructive)", padding: 4 }}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                         </div>
+                        <div className="note-body">{note.content}</div>
+                        {note.dueDate && <div className="note-due">Due: {note.dueDate}</div>}
                       </div>
                     );
                   })}
@@ -124,7 +162,67 @@ export function NotesTab({ notes }: NotesTabProps) {
                 </div>
               )}
             </div>
-            <div className="split-preview" />
+            <div className="split-preview">
+              {selectedNote && (
+                <div className="split-preview-inner">
+                  {/* Nav */}
+                  <div className="preview-nav">
+                    <div className="preview-nav-btns">
+                      <button className="icon-btn" onClick={() => navNote(-1)} disabled={selectedIdx <= 0} title="Previous">
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                      </button>
+                      <button className="icon-btn" onClick={() => navNote(1)} disabled={selectedIdx >= sortedNotes.length - 1} title="Next">
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <button className="icon-btn" onClick={closePreview} title="Close">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Meta badges */}
+                  <div className="preview-meta">
+                    {selectedNote.priority && <PriorityBadge priority={selectedNote.priority} />}
+                    {selectedNote.category && <CategoryBadge category={selectedNote.category} />}
+                    <span>
+                      {selectedNote.status === "done" ? (
+                        <span style={{ color: "var(--primary)", fontWeight: 700 }}>Complete</span>
+                      ) : (
+                        <span style={{ color: "var(--stage-eta9089)", fontWeight: 700 }}>Pending</span>
+                      )}
+                    </span>
+                  </div>
+
+                  {/* Created date */}
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: "var(--muted-foreground)", marginBottom: 16 }}>
+                    Created: {fmtDate(selectedNote.createdAt)}
+                  </div>
+
+                  {/* Body */}
+                  <div className="preview-body" style={{ fontSize: "1rem", lineHeight: 1.7 }}>
+                    {selectedNote.content}
+                  </div>
+
+                  {/* Due date box */}
+                  {selectedNote.dueDate && (
+                    <div style={{ marginTop: 16, padding: "12px 16px", border: "3px solid var(--border)", background: "var(--muted)" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", textTransform: "uppercase", color: "var(--muted-foreground)" }}>Due Date</span>
+                      <div style={{ fontWeight: 700, marginTop: 4 }}>{selectedNote.dueDate}</div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div style={{ display: "flex", gap: 8, marginTop: 24 }}>
+                    <button className="icon-btn" style={{ width: "auto", padding: "4px 12px", gap: 6, display: "flex", alignItems: "center" }} disabled>
+                      Edit
+                    </button>
+                    <button className="icon-btn" style={{ width: "auto", padding: "4px 12px", gap: 6, display: "flex", alignItems: "center", color: "var(--destructive)" }} disabled>
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           {/* Note input area (Phase 2 — disabled) */}
           <div className="note-input-area">
@@ -137,7 +235,7 @@ export function NotesTab({ notes }: NotesTabProps) {
             />
             <button
               className="flex items-center justify-center border-2 border-border bg-primary text-primary-foreground"
-              style={{ width: "44px", height: "44px", cursor: "default", opacity: 0.5 }}
+              style={{ width: 44, height: 44, cursor: "default", opacity: 0.5 }}
               disabled
               aria-label="Send"
             >

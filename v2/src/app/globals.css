@@ -917,10 +917,22 @@
 .preview-body { font-size: 0.9rem; line-height: 1.65; }
 
 /* Note styles */
-.note-entry { padding: 16px 20px; border-top: 2px solid var(--border); cursor: pointer; transition: background 0.15s; }
-.note-entry:hover { background: rgba(0,0,0,0.05); }
-.dark .note-entry:hover { background: rgba(255,255,255,0.08); }
-.note-entry:first-child { border-top: none; }
+.note { padding: 16px 20px; border-top: 2px solid var(--border); cursor: pointer; transition: background 0.15s; }
+.note:hover { background: rgba(0,0,0,0.08); }
+.dark .note:hover { background: rgba(255,255,255,0.08); }
+.note:first-child { border-top: none; }
+.note.note-done { opacity: 0.55; }
+.note.note-done .note-body { text-decoration: line-through; }
+.note-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.note-badges { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.note-when { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted-foreground); white-space: nowrap; }
+.note-body { font-size: 0.88rem; line-height: 1.55; }
+.note-due { font-family: var(--font-mono); font-size: 0.72rem; color: var(--stage-eta9089); margin-top: 4px; }
+.note-actions { display: flex; align-items: center; gap: 4px; }
+.b-priority-high { background: var(--destructive); color: #fff; border-color: var(--destructive); font-size: 0.65rem; padding: 3px 8px; }
+.b-priority-medium { background: var(--yellow, #FFD700); color: var(--foreground); border-color: var(--yellow, #FFD700); font-size: 0.65rem; padding: 3px 8px; }
+.b-priority-low { background: var(--muted); color: var(--foreground); border-color: var(--muted); font-size: 0.65rem; padding: 3px 8px; }
+.b-category { background: var(--card); color: var(--foreground); font-size: 0.65rem; padding: 3px 8px; }
 .note-input-area { display: flex; gap: 8px; padding: 14px 20px; border-top: 3px solid var(--border); }
 .note-input { flex: 1; font-family: var(--font-heading); font-size: 0.88rem; padding: 10px 14px; border: 3px solid var(--border); background: var(--background); color: var(--foreground); outline: none; }
 .note-input:focus { box-shadow: var(--shadow-hard-sm); }
