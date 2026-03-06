@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { format, parseISO, differenceInDays, addDays } from "date-fns";
 import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock } from "lucide-react";
 import { getMethodLabel } from "@/lib/recruitment";
 import { isBusinessDay, getFederalHolidays } from "@/lib/perm";
@@ -396,14 +396,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               <div className="fc-label">Quiet Period Ends</div>
               <div className="fc-val mono">
                 {recruitEndDate
-                  ? fmt(
-                      format(
-                        new Date(
-                          parseISO(recruitEndDate).getTime() + 30 * 24 * 60 * 60 * 1000
-                        ),
-                        "yyyy-MM-dd"
-                      )
-                    )
+                  ? (() => { try { return fmt(format(addDays(parseISO(recruitEndDate), 30), "yyyy-MM-dd")); } catch { return "\u2014"; } })()
                   : "\u2014"}
               </div>
             </div>
