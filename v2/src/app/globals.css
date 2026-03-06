@@ -766,6 +766,22 @@
 .stat-label { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); margin-top: 6px; }
 .stat-sub { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted-foreground); }
 
+/* Vertical Timeline */
+.vtl-step { display: flex; gap: 16px; }
+.vtl-icon-col { display: flex; flex-direction: column; align-items: center; }
+.vtl-icon { width: 32px; height: 32px; border: 3px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.vtl-icon.done { background: var(--primary); color: var(--primary-foreground); }
+.vtl-icon.current { background: var(--primary); color: var(--primary-foreground); }
+.vtl-icon.pending { background: var(--muted); color: var(--muted-foreground); }
+.vtl-line { width: 3px; flex: 1; min-height: 16px; }
+.vtl-line.done { background: var(--primary); }
+.vtl-line.current { background: var(--border); }
+.vtl-line.pending { background: var(--border); opacity: 0.3; }
+.vtl-content { padding: 4px 0 20px; }
+.vtl-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.875rem; }
+.vtl-title.pending { color: var(--muted-foreground); }
+.vtl-date { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted-foreground); margin-top: 2px; }
+
 /* Status bar */
 .detail-status-bar {
   padding: 14px 20px;
