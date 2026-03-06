@@ -27,7 +27,7 @@ interface CaseStageBadgeProps {
 export function CaseStageBadge({ stage, bordered = false, className }: CaseStageBadgeProps) {
   const config = stageConfig[stage] ?? FALLBACK_CONFIG
   const borderClass = bordered
-    ? "border-[1.5px] border-black dark:border-white/20 shadow-[2px_2px_0_#000] dark:shadow-[2px_2px_0_rgba(255,255,255,0.2)]"
+    ? "border-2 border-black dark:border-white/20"
     : "border-transparent"
 
   return (

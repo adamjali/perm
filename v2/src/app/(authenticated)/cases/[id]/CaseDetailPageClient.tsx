@@ -137,36 +137,69 @@ interface CaseDetailPageProps {
 function CaseDetailSkeleton() {
   return (
     <div className="space-y-6">
-      {/* Header Skeleton */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Skeleton variant="block" className="w-10 h-10" />
-          <div>
-            <Skeleton variant="line" className="w-64 h-7 mb-2" />
-            <Skeleton variant="line" className="w-40 h-5" />
+      {/* Hero Header Skeleton */}
+      <div className="bg-card border-b-[3px] border-border overflow-hidden">
+        <div className="h-1 bg-muted" />
+        <div className="p-3 sm:px-8 sm:py-3.5 space-y-2.5">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2">
+            <Skeleton variant="block" className="w-9 h-9" />
+            <Skeleton variant="line" className="w-24 h-4" />
+          </div>
+          {/* Title + Actions */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <Skeleton variant="line" className="w-64 h-7 mb-1.5" />
+              <Skeleton variant="line" className="w-40 h-5" />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Skeleton variant="block" className="w-[38px] h-[38px]" />
+              <Skeleton variant="block" className="w-[38px] h-[38px]" />
+              <Skeleton variant="block" className="w-24 h-[38px]" />
+              <Skeleton variant="block" className="w-[38px] h-[38px]" />
+            </div>
+          </div>
+          {/* Badges */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Skeleton variant="line" className="w-24 h-6" />
+            <Skeleton variant="line" className="w-20 h-6" />
+            <Skeleton variant="line" className="w-28 h-6" />
           </div>
         </div>
-        <Skeleton variant="block" className="w-10 h-10" />
+        {/* Stage Bar */}
+        <div className="flex border-t-[3px] border-border">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex-1 py-2.5 px-2 border-r-[3px] border-border last:border-r-0">
+              <Skeleton variant="line" className="w-full h-4 mx-auto max-w-[80px]" />
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Status Bar Skeleton */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Skeleton variant="line" className="w-20 h-6" />
-        <Skeleton variant="line" className="w-28 h-6" />
-        <Skeleton variant="line" className="w-48 h-5" />
+      {/* Tab Bar Skeleton */}
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Skeleton key={i} variant="block" className="w-28 h-10" />
+        ))}
       </div>
 
-      {/* Timeline Skeleton */}
-      <Skeleton variant="block" className="h-32" />
-
-      {/* Sections Grid Skeleton */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Skeleton variant="block" className="h-48" />
-        <Skeleton variant="block" className="h-40" />
-        <Skeleton variant="block" className="h-56" />
-        <Skeleton variant="block" className="h-48" />
-        <Skeleton variant="block" className="h-40" />
-        <Skeleton variant="block" className="h-48" />
+      {/* Content Skeleton — matches overview layout */}
+      <div className="border-[3px] border-border bg-card p-6 space-y-6">
+        {/* Next Up */}
+        <Skeleton variant="block" className="h-20" />
+        {/* 2-col layout */}
+        <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+          <Skeleton variant="block" className="h-64" />
+          <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-[1.8fr_1fr]">
+              <Skeleton variant="block" className="h-48" />
+              <Skeleton variant="block" className="h-48" />
+            </div>
+            <Skeleton variant="block" className="h-40" />
+          </div>
+        </div>
+        {/* Gantt */}
+        <Skeleton variant="block" className="h-32" />
       </div>
     </div>
   );
