@@ -1,8 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { StickyNote, Clock, CheckCircle2, Trash2 } from "lucide-react";
-import { Phase2NoteInput } from "./phase2-placeholders";
+import { MessageCircle, Send, Clock, CheckCircle2, Trash2 } from "lucide-react";
 import {
   NOTE_CATEGORY_LABELS,
   type NoteEntry,
@@ -26,23 +25,6 @@ const STATUS_ICONS = {
 } as const;
 
 export function NotesTab({ notes }: NotesTabProps) {
-  if (notes.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 space-y-4">
-        <div className="w-16 h-16 border-2 border-border bg-muted flex items-center justify-center">
-          <StickyNote className="h-8 w-8 text-muted-foreground" />
-        </div>
-        <div className="text-center space-y-1">
-          <p className="font-heading font-semibold text-lg">No Notes</p>
-          <p className="text-sm text-muted-foreground">
-            Case notes will appear here. Add notes from the Edit Case page.
-          </p>
-        </div>
-        <Phase2NoteInput />
-      </div>
-    );
-  }
-
   // Sort notes: pending first, then done, then deleted; within each group, newest first
   const statusOrder = { pending: 0, done: 1, deleted: 2 } as const;
   const sortedNotes = [...notes].sort((a, b) => {
@@ -56,73 +38,114 @@ export function NotesTab({ notes }: NotesTabProps) {
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
-      className="space-y-3"
+      variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+      className="space-y-6"
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-heading font-semibold text-base">
-          {notes.length} Note{notes.length !== 1 ? "s" : ""}
-        </h3>
-        <Phase2NoteInput />
-      </div>
+      <motion.div
+        variants={{
+          hidden: { opacity: 0, y: 12 },
+          visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
+        }}
+      >
+        <div className="detail-card" style={{ overflow: "hidden" }}>
+          <div className="detail-card-head ch-yellow" style={{ gap: "8px" }}>
+            <span className="flex items-center gap-1.5">
+              <MessageCircle className="h-3.5 w-3.5" />
+              Case Notes
+            </span>
+            <span
+              className="font-mono text-[0.6rem] px-2 py-0.5"
+              style={{
+                background: "var(--card)",
+                border: "2px solid var(--border)",
+              }}
+            >
+              {notes.length}
+            </span>
+          </div>
+          <div className="split-wrap">
+            <div className="split-list">
+              {notes.length > 0 ? (
+                <div className="scroll-list">
+                  {sortedNotes.map((note) => {
+                    const StatusIcon = STATUS_ICONS[note.status] || Clock;
+                    const priorityStyle = note.priority
+                      ? PRIORITY_STYLES[note.priority] || ""
+                      : "";
 
-      {sortedNotes.map((note) => {
-        const StatusIcon = STATUS_ICONS[note.status] || Clock;
-        const priorityStyle = note.priority
-          ? PRIORITY_STYLES[note.priority] || ""
-          : "";
-
-        return (
-          <motion.div
-            key={note.id}
-            variants={{
-              hidden: { opacity: 0, y: 8 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            className="border-2 border-border bg-card shadow-hard-sm p-4 space-y-2"
-          >
-            {/* Header: status + priority + category + date */}
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                {note.status}
-              </span>
-              {note.priority && (
-                <span
-                  className={`inline-flex items-center px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wider border ${priorityStyle}`}
-                >
-                  {note.priority}
-                </span>
+                    return (
+                      <div key={note.id} className="note-entry">
+                        <div className="flex items-start gap-2 mb-1">
+                          <StatusIcon className="h-3.5 w-3.5 shrink-0 mt-0.5 text-muted-foreground" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                              <span className="font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground">
+                                {note.status}
+                              </span>
+                              {note.priority && (
+                                <span
+                                  className={`inline-flex items-center px-1.5 py-0 text-[0.58rem] font-bold uppercase tracking-wider border ${priorityStyle}`}
+                                >
+                                  {note.priority}
+                                </span>
+                              )}
+                              {note.category && (
+                                <span className="inline-flex items-center px-1.5 py-0 text-[0.58rem] font-mono uppercase tracking-wider border border-border bg-muted text-muted-foreground">
+                                  {NOTE_CATEGORY_LABELS[note.category as NoteCategory] ||
+                                    note.category}
+                                </span>
+                              )}
+                              <span className="ml-auto text-[0.65rem] text-muted-foreground font-mono">
+                                {new Date(note.createdAt).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </span>
+                            </div>
+                            <p className="text-[0.82rem] leading-relaxed whitespace-pre-wrap">
+                              {note.content}
+                            </p>
+                            {note.dueDate && (
+                              <p className="text-[0.68rem] text-muted-foreground font-mono mt-1">
+                                Due: {note.dueDate}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="detail-empty-state" style={{ padding: "32px 20px" }}>
+                  <MessageCircle className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
+                  <div className="detail-empty-state-title">No notes</div>
+                  <div className="detail-empty-state-desc">Case notes will appear here. Add notes from the Edit Case page.</div>
+                </div>
               )}
-              {note.category && (
-                <span className="inline-flex items-center px-2 py-0.5 text-[0.625rem] font-mono uppercase tracking-wider border border-border bg-muted text-muted-foreground">
-                  {NOTE_CATEGORY_LABELS[note.category as NoteCategory] ||
-                    note.category}
-                </span>
-              )}
-              <span className="ml-auto text-xs text-muted-foreground font-mono">
-                {new Date(note.createdAt).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </span>
             </div>
-
-            {/* Content */}
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">
-              {note.content}
-            </p>
-
-            {/* Due date */}
-            {note.dueDate && (
-              <p className="text-xs text-muted-foreground font-mono">
-                Due: {note.dueDate}
-              </p>
-            )}
-          </motion.div>
-        );
-      })}
+            <div className="split-preview" />
+          </div>
+          {/* Note input area (Phase 2 — disabled) */}
+          <div className="note-input-area">
+            <input
+              type="text"
+              className="note-input"
+              placeholder="Add a case note..."
+              disabled
+              style={{ opacity: 0.5, cursor: "default" }}
+            />
+            <button
+              className="flex items-center justify-center border-2 border-border bg-primary text-primary-foreground"
+              style={{ width: "44px", height: "44px", cursor: "default", opacity: 0.5 }}
+              disabled
+              aria-label="Send"
+            >
+              <Send className="h-4.5 w-4.5" />
+            </button>
+          </div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

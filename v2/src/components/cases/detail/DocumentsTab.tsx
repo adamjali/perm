@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { FileText, Download, FolderOpen } from "lucide-react";
+import { FolderOpen, Upload, FileText } from "lucide-react";
 import { Phase2UploadButton } from "./phase2-placeholders";
 
 interface DocumentEntry {
@@ -23,74 +23,88 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function DocumentsTab({ documents }: DocumentsTabProps) {
-  if (documents.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 space-y-4">
-        <div className="w-16 h-16 border-2 border-border bg-muted flex items-center justify-center">
-          <FolderOpen className="h-8 w-8 text-muted-foreground" />
-        </div>
-        <div className="text-center space-y-1">
-          <p className="font-heading font-semibold text-lg">No Documents</p>
-          <p className="text-sm text-muted-foreground">
-            Documents for this case will appear here.
-          </p>
-        </div>
-        <Phase2UploadButton />
-      </div>
-    );
-  }
+function getFileIcon(_mimeType: string) {
+  return FileText;
+}
 
+export function DocumentsTab({ documents }: DocumentsTabProps) {
   return (
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
-      className="space-y-3"
+      variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+      className="space-y-6"
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-heading font-semibold text-base">
-          {documents.length} Document{documents.length !== 1 ? "s" : ""}
-        </h3>
-        <Phase2UploadButton />
-      </div>
-
-      {documents.map((doc) => (
-        <motion.div
-          key={doc.id}
-          variants={{
-            hidden: { opacity: 0, y: 8 },
-            visible: { opacity: 1, y: 0 },
-          }}
-          className="flex items-center gap-3 p-3 border-2 border-border bg-card shadow-hard-sm hover:shadow-hard hover:-translate-y-0.5 transition-all duration-150"
-        >
-          <div className="w-10 h-10 border-2 border-border bg-muted flex items-center justify-center shrink-0">
-            <FileText className="h-5 w-5 text-muted-foreground" />
+      <motion.div
+        variants={{
+          hidden: { opacity: 0, y: 12 },
+          visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
+        }}
+      >
+        <div className="detail-card" style={{ overflow: "hidden" }}>
+          <div className="detail-card-head ch-accent">
+            <span className="flex items-center gap-1.5">
+              <FolderOpen className="h-3.5 w-3.5" />
+              Documents
+            </span>
+            <Phase2UploadButton />
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-heading font-medium text-sm truncate">
-              {doc.name}
-            </p>
-            <p className="text-xs text-muted-foreground font-mono">
-              {formatFileSize(doc.size)} &middot;{" "}
-              {new Date(doc.uploadedAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
+          <div className="split-wrap">
+            <div className="split-list">
+              {documents.length > 0 ? (
+                <div className="scroll-list">
+                  {documents.map((doc) => {
+                    const Icon = getFileIcon(doc.mimeType);
+                    return (
+                      <div key={doc.id} className="doc-row">
+                        <div className="doc-icon">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="doc-info">
+                          <div className="font-heading font-bold text-sm truncate">{doc.name}</div>
+                          <div className="font-mono text-[0.68rem] text-muted-foreground">
+                            {formatFileSize(doc.size)} &middot;{" "}
+                            {new Date(doc.uploadedAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="detail-empty-state" style={{ padding: "32px 20px" }}>
+                  <FolderOpen className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
+                  <div className="detail-empty-state-title">No documents</div>
+                  <div className="detail-empty-state-desc">Documents for this case will appear here.</div>
+                </div>
+              )}
+              {/* Drag & drop area */}
+              <div style={{ padding: "16px" }}>
+                <button
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 font-heading font-bold text-sm text-muted-foreground"
+                  style={{
+                    border: "3px dashed var(--border)",
+                    borderColor: "var(--muted-foreground)",
+                    background: "transparent",
+                    boxShadow: "none",
+                    cursor: "default",
+                    opacity: 0.6,
+                  }}
+                  disabled
+                >
+                  <Upload className="h-4 w-4" />
+                  Drag files here or click to upload
+                </button>
+              </div>
+            </div>
+            <div className="split-preview" />
           </div>
-          <a
-            href={doc.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 w-9 h-9 border-2 border-border bg-muted flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
-            aria-label={`Download ${doc.name}`}
-          >
-            <Download className="h-4 w-4" />
-          </a>
-        </motion.div>
-      ))}
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
