@@ -611,7 +611,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                 id="recruitmentApplicantsCount"
                 name="recruitmentApplicantsCount"
                 type="number"
-                value={values.recruitmentApplicantsCount ?? ''}
+                value={values.recruitmentApplicantsCount || ''}
                 onChange={handleInputChange}
                 aria-invalid={!!errors?.recruitmentApplicantsCount}
                 placeholder="0"

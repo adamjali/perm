@@ -573,7 +573,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   "shrink-0 border-[3px] transition-all cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.isFavorite
-                    ? "border-border bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30"
+                    ? "border-amber-400 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:border-amber-500 dark:hover:bg-amber-900/30"
                     : "border-border bg-card hover:bg-manila-dark hover:-translate-y-[1px] hover:shadow-hard-sm"
                 )}
                 aria-label={caseData.isFavorite ? "Remove bookmark" : "Bookmark case"}
@@ -586,7 +586,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     className={cn(
                       "h-5 w-5",
                       caseData.isFavorite
-                        ? "fill-primary text-primary"
+                        ? "fill-amber-400 text-amber-500"
                         : "text-muted-foreground"
                     )}
                   />
@@ -602,7 +602,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   "shrink-0 border-[3px] transition-all cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.calendarSyncEnabled && isGoogleConnected
-                    ? "border-border bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30"
+                    ? "border-emerald-400 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-500 dark:hover:bg-emerald-900/30"
                     : caseData.calendarSyncEnabled && !isGoogleConnected
                       ? "border-amber-500 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
                       : "border-border bg-card hover:bg-manila-dark hover:-translate-y-[1px] hover:shadow-hard-sm"
@@ -618,9 +618,9 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 aria-pressed={caseData.calendarSyncEnabled}
               >
                 {isTogglingCalendarSync ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-[#228B22]" />
+                  <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
                 ) : caseData.calendarSyncEnabled && isGoogleConnected ? (
-                  <CalendarCheck className="h-5 w-5 fill-[#228B22] text-[#228B22]" />
+                  <CalendarCheck className="h-5 w-5 text-emerald-600" />
                 ) : caseData.calendarSyncEnabled && !isGoogleConnected ? (
                   <AlertTriangle className="h-5 w-5 text-amber-600" />
                 ) : (
@@ -807,41 +807,43 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         </CaseDetailTabs>
       </motion.div>
 
-      {/* Footer Metadata + Delete */}
-      <motion.div variants={itemVariants} className="space-y-4">
-        <div className="text-xs text-muted-foreground border-t border-border pt-4 flex flex-wrap items-center justify-between gap-4 font-mono">
-          <div className="flex flex-wrap gap-4">
-            <span>
-              Created:{" "}
-              {new Date(caseData.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </span>
-            <span>
-              Updated:{" "}
-              {new Date(caseData.updatedAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </span>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setDeleteDialogOpen(true)}
-            disabled={isDeleting}
-            className="border-[3px] border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive font-mono text-xs font-bold uppercase tracking-wide transition-all gap-1.5"
-          >
-            {isDeleting ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Trash2 className="h-3.5 w-3.5" />
-            )}
-            Delete Case
-          </Button>
+      {/* Delete Case — centered above footer */}
+      <motion.div variants={itemVariants} className="flex justify-center">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setDeleteDialogOpen(true)}
+          disabled={isDeleting}
+          className="border-[3px] border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive font-mono text-xs font-bold uppercase tracking-wide transition-all gap-1.5"
+        >
+          {isDeleting ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Trash2 className="h-3.5 w-3.5" />
+          )}
+          Delete Case
+        </Button>
+      </motion.div>
+
+      {/* Footer Metadata */}
+      <motion.div variants={itemVariants}>
+        <div className="text-xs text-muted-foreground border-t border-border pt-4 flex flex-wrap items-center justify-center gap-4 font-mono">
+          <span>
+            Created:{" "}
+            {new Date(caseData.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+          <span>
+            Updated:{" "}
+            {new Date(caseData.updatedAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
         </div>
       </motion.div>
     </motion.div>

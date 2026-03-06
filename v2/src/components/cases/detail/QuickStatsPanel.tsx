@@ -9,7 +9,7 @@ interface QuickStatsPanelProps {
   caseData: CaseDetailData;
 }
 
-function useCountUp(target: number, duration = 600): { value: number; ref: (el: HTMLElement | null) => void } {
+function useCountUp(target: number, duration = 1200): { value: number; ref: (el: HTMLElement | null) => void } {
   const [value, setValue] = useState(0);
   const frameRef = useRef<number>(0);
   const hasAnimated = useRef(false);
