@@ -360,9 +360,9 @@ export function InlineCaseTimeline({
                 key={`${month.year}-${month.month}`}
                 className={cn(
                   "flex-1 flex items-center justify-center text-xs font-medium",
-                  "border-r border-border/50 last:border-r-0",
+                  "border-r border-border/20 last:border-r-0",
                   month.isCurrentMonth
-                    ? "bg-primary/10 text-primary font-bold"
+                    ? "bg-foreground/8 text-foreground font-bold"
                     : "text-muted-foreground"
                 )}
               >
@@ -469,13 +469,15 @@ export function InlineCaseTimeline({
                           className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-sm"
                           style={{ backgroundColor: rangeBar.color }}
                         />
-                        {/* Label inside bar — truncated to fit */}
-                        <span
-                          className="absolute inset-0 flex items-center pl-2 pr-1 text-[10px] font-semibold truncate pointer-events-none"
-                          style={{ color: rangeBar.color }}
-                        >
-                          {rangeBar.label}
-                        </span>
+                        {/* Label inside bar — truncated, hidden if too narrow */}
+                        {width > 8 && (
+                          <span
+                            className="absolute inset-0 flex items-center pl-2 pr-1 text-[10px] font-semibold pointer-events-none overflow-hidden text-ellipsis whitespace-nowrap"
+                            style={{ color: rangeBar.color }}
+                          >
+                            {rangeBar.label}
+                          </span>
+                        )}
                         {/* Hover tooltip */}
                         <div
                           className={cn(

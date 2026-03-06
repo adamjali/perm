@@ -139,7 +139,7 @@ function CaseDetailSkeleton() {
   return (
     <div className="space-y-6">
       {/* Hero Header Skeleton */}
-      <div className="bg-card border-b-[3px] border-border overflow-hidden">
+      <div className="bg-card border-b-[3px] border-border overflow-hidden -mx-4 sm:-mx-8 -mt-6">
         <div className="h-1 bg-muted" />
         <div className="p-3 sm:px-8 sm:py-3.5 space-y-2.5">
           {/* Breadcrumb */}
@@ -514,7 +514,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       {/* ================================================================ */}
       <motion.div
         variants={headerVariants}
-        className="bg-card border-b-[3px] border-border relative z-[2] overflow-hidden -mx-4 sm:-mx-8"
+        className="bg-card border-b-[3px] border-border relative z-[2] overflow-hidden -mx-4 sm:-mx-8 -mt-6"
       >
         {/* Stage accent strip */}
         <div className="h-1" style={{ backgroundColor: stageColor }} />
@@ -663,23 +663,23 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     <span className="sr-only">Actions</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 will-change-transform border-[3px] border-border shadow-hard-sm" onCloseAutoFocus={(e) => e.preventDefault()}>
+                <DropdownMenuContent align="end" className="w-52 will-change-transform border-[3px] border-border shadow-hard-sm rounded-none p-1" onCloseAutoFocus={(e) => e.preventDefault()}>
                   {isClosed ? (
-                    <DropdownMenuItem onClick={handleReopen} disabled={isUpdating} className="min-h-[44px]">
+                    <DropdownMenuItem onClick={handleReopen} disabled={isUpdating} className="min-h-[44px] font-heading font-bold text-sm rounded-none">
                       <RotateCcw className="h-4 w-4" />
                       Reopen Case
                     </DropdownMenuItem>
                   ) : (
-                    <DropdownMenuItem onClick={handleArchive} disabled={isUpdating} className="min-h-[44px]">
+                    <DropdownMenuItem onClick={handleArchive} disabled={isUpdating} className="min-h-[44px] font-heading font-bold text-sm rounded-none">
                       <Archive className="h-4 w-4" />
                       Archive Case
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-border h-[2px]" />
                   <DropdownMenuItem
                     variant="destructive"
                     onClick={() => setDeleteDialogOpen(true)}
-                    className="min-h-[44px]"
+                    className="min-h-[44px] font-heading font-bold text-sm rounded-none"
                   >
                     <Trash2 className="h-4 w-4" />
                     Delete Case

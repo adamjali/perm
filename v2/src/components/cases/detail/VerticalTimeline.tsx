@@ -9,7 +9,8 @@ import type { CaseDetailData } from "./case-detail-types";
 const ALL_STAGES: { field: string; label: string }[] = [
   { field: "pwdFilingDate", label: "PWD Filed" },
   { field: "pwdDeterminationDate", label: "PWD Determined" },
-  { field: "recruitmentStartDate", label: "Recruitment Started" },
+  { field: "jobOrderStartDate", label: "Job Order Started" },
+  { field: "noticeOfFilingStartDate", label: "NOF Posted" },
   { field: "recruitmentEndDate", label: "Recruitment Completed" },
   { field: "eta9089FilingDate", label: "ETA 9089 Filed" },
   { field: "eta9089CertificationDate", label: "ETA 9089 Certified" },
@@ -33,6 +34,17 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
   const steps = useMemo(() => {
     // Create a set of fields that have milestones
     const milestoneByField = new Map(milestones.map((m) => [m.field, m]));
+
+    // Also check direct caseData fields for dates not in milestones
+    const directFields: Record<string, string | undefined | null> = {
+      jobOrderStartDate: (caseData as Record<string, unknown>).jobOrderStartDate as string | undefined,
+      noticeOfFilingStartDate: (caseData as Record<string, unknown>).noticeOfFilingStartDate as string | undefined,
+    };
+    for (const [field, date] of Object.entries(directFields)) {
+      if (date && !milestoneByField.has(field)) {
+        milestoneByField.set(field, { field, label: "", date, stage: "recruitment" as const, color: "#9333ea", isCalculated: false });
+      }
+    }
 
     // Build combined list: use milestone data if exists, else show as pending
     const combined: { field: string; label: string; date: string; status: "done" | "current" | "pending"; isCalculated?: boolean }[] = [];

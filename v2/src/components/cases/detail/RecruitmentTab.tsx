@@ -51,6 +51,14 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
   const methods = caseData.additionalRecruitmentMethods || [];
   const completedMethods = methods.filter((m) => !!m.date).length;
 
+  // Derive recruitment period from actual dates if not explicitly set
+  const recruitStartDate = caseData.additionalRecruitmentStartDate
+    || caseData.recruitmentStartDate
+    || [caseData.jobOrderStartDate, caseData.sundayAdFirstDate, caseData.noticeOfFilingStartDate].filter(Boolean).sort()[0];
+  const recruitEndDate = caseData.additionalRecruitmentEndDate
+    || caseData.recruitmentEndDate
+    || [caseData.jobOrderEndDate, caseData.sundayAdSecondDate, caseData.noticeOfFilingEndDate, ...methods.map(m => m.date).filter(Boolean)].filter(Boolean).sort().reverse()[0];
+
   return (
     <motion.div
       initial="hidden"
@@ -219,8 +227,13 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
             <div className="detail-card-body">
               {hasNOF ? (
                 <div>
-                  <div className="recruit-posting-info" style={{ marginBottom: 10 }}>
-                    10 consecutive business days &middot; {fmt(caseData.noticeOfFilingStartDate)} &ndash; {fmt(caseData.noticeOfFilingEndDate)}
+                  <div className="recruit-range-bar">
+                    <span className="recruit-range-date">{fmtShort(caseData.noticeOfFilingStartDate)}</span>
+                    <div className="recruit-range-fill" style={{ background: "var(--stage-recruitment)" }} />
+                    <span className="recruit-range-date">{fmtShort(caseData.noticeOfFilingEndDate)}</span>
+                  </div>
+                  <div className="recruit-posting-info" style={{ marginTop: 8 }}>
+                    10 consecutive business days
                   </div>
                 </div>
               ) : (
@@ -239,7 +252,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                 <Users className="h-3.5 w-3.5" />
                 Additional Methods
               </span>
-              <span className="head-badge">{completedMethods} / {methods.length || (caseData.isProfessionalOccupation ? 3 : 0)}</span>
+              <span className="head-badge">{completedMethods} / {caseData.isProfessionalOccupation ? Math.max(3, methods.length) : methods.length}</span>
             </div>
             <div className="detail-card-body" style={{ padding: 0 }}>
               {methods.length > 0 ? (
@@ -256,6 +269,9 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                       <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem" }}>{getMethodLabel(method.method)}</div>
                       {method.date && (
                         <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--muted-foreground)" }}>{fmt(method.date)}</div>
+                      )}
+                      {method.description && (
+                        <div style={{ fontSize: "0.8rem", color: "var(--muted-foreground)", marginTop: 2 }}>{method.description}</div>
                       )}
                     </div>
                   </div>
@@ -290,19 +306,19 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
             <div className="field-cell">
               <div className="fc-label">Recruitment Period</div>
               <div className="fc-val mono">
-                {caseData.additionalRecruitmentStartDate && caseData.additionalRecruitmentEndDate
-                  ? `${fmtShort(caseData.additionalRecruitmentStartDate)} \u2013 ${fmtShort(caseData.additionalRecruitmentEndDate)}`
+                {recruitStartDate && recruitEndDate
+                  ? `${fmtShort(recruitStartDate)} \u2013 ${fmtShort(recruitEndDate)}`
                   : "\u2014"}
               </div>
             </div>
             <div className="field-cell">
               <div className="fc-label">Quiet Period Ends</div>
               <div className="fc-val mono">
-                {caseData.additionalRecruitmentEndDate
+                {recruitEndDate
                   ? fmt(
                       format(
                         new Date(
-                          parseISO(caseData.additionalRecruitmentEndDate).getTime() + 30 * 24 * 60 * 60 * 1000
+                          parseISO(recruitEndDate).getTime() + 30 * 24 * 60 * 60 * 1000
                         ),
                         "yyyy-MM-dd"
                       )
