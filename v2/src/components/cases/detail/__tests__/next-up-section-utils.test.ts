@@ -50,6 +50,22 @@ const baseCaseData: NextUpCaseData = {
   progressStatus: "on_track",
 };
 
+// Prerequisite dates for reaching specific stages in date-driven logic
+const pwdDone = {
+  pwdFilingDate: "2025-01-01",
+  pwdDeterminationDate: "2025-02-01",
+};
+
+const recruitmentDone = {
+  ...pwdDone,
+  jobOrderStartDate: "2025-02-15",
+  jobOrderEndDate: "2025-03-17",
+  noticeOfFilingStartDate: "2025-02-20",
+  noticeOfFilingEndDate: "2025-03-06",
+  sundayAdFirstDate: "2025-02-23",
+  sundayAdSecondDate: "2025-03-02",
+};
+
 describe("calculateNextAction", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -93,7 +109,9 @@ describe("calculateNextAction", () => {
   it("prioritizes active RFI over stage actions", () => {
     const result = calculateNextAction({
       ...baseCaseData,
+      ...recruitmentDone,
       caseStatus: "eta9089",
+      eta9089FilingDate: "2025-04-01",
       rfiEntries: [
         {
           receivedDate: "2025-05-01",
@@ -107,11 +125,14 @@ describe("calculateNextAction", () => {
   it("prioritizes active RFE over stage actions", () => {
     const result = calculateNextAction({
       ...baseCaseData,
+      ...recruitmentDone,
       caseStatus: "i140",
-      i140FilingDate: "2025-03-01",
+      eta9089FilingDate: "2025-04-01",
+      eta9089CertificationDate: "2025-05-01",
+      i140FilingDate: "2025-05-15",
       rfeEntries: [
         {
-          receivedDate: "2025-05-01",
+          receivedDate: "2025-05-20",
           responseDueDate: "2025-07-01",
         },
       ],
@@ -122,13 +143,14 @@ describe("calculateNextAction", () => {
   it("skips answered RFI entries", () => {
     const result = calculateNextAction({
       ...baseCaseData,
+      ...recruitmentDone,
       caseStatus: "eta9089",
-      eta9089FilingDate: "2025-01-01",
+      eta9089FilingDate: "2025-04-01",
       rfiEntries: [
         {
-          receivedDate: "2025-02-01",
-          responseDueDate: "2025-04-01",
-          responseSubmittedDate: "2025-03-15",
+          receivedDate: "2025-05-01",
+          responseDueDate: "2025-07-01",
+          responseSubmittedDate: "2025-05-15",
         },
       ],
     });
@@ -136,10 +158,22 @@ describe("calculateNextAction", () => {
   });
 
   // Recruitment stage
-  it("returns 'Post Job Order' first in recruitment", () => {
+  it("returns 'Start Recruitment' when PWD done but no recruitment dates", () => {
     const result = calculateNextAction({
       ...baseCaseData,
+      ...pwdDone,
       caseStatus: "recruitment",
+    });
+    expect(result!.action).toBe("Start Recruitment");
+  });
+
+  it("returns 'Post Job Order' when other recruitment exists but no job order", () => {
+    const result = calculateNextAction({
+      ...baseCaseData,
+      ...pwdDone,
+      caseStatus: "recruitment",
+      noticeOfFilingStartDate: "2025-02-20",
+      noticeOfFilingEndDate: "2025-03-06",
     });
     expect(result!.action).toBe("Post Job Order");
   });
@@ -147,9 +181,10 @@ describe("calculateNextAction", () => {
   it("returns 'Post Notice of Filing' after job order", () => {
     const result = calculateNextAction({
       ...baseCaseData,
+      ...pwdDone,
       caseStatus: "recruitment",
-      jobOrderStartDate: "2025-01-01",
-      jobOrderEndDate: "2025-02-01",
+      jobOrderStartDate: "2025-02-15",
+      jobOrderEndDate: "2025-03-17",
     });
     expect(result!.action).toBe("Post Notice of Filing");
   });
@@ -158,6 +193,7 @@ describe("calculateNextAction", () => {
   it("returns 'File ETA 9089' when in eta9089 stage", () => {
     const result = calculateNextAction({
       ...baseCaseData,
+      ...recruitmentDone,
       caseStatus: "eta9089",
     });
     expect(result!.action).toBe("File ETA 9089");
@@ -167,7 +203,10 @@ describe("calculateNextAction", () => {
   it("returns 'File I-140' when in i140 stage", () => {
     const result = calculateNextAction({
       ...baseCaseData,
+      ...recruitmentDone,
       caseStatus: "i140",
+      eta9089FilingDate: "2025-04-01",
+      eta9089CertificationDate: "2025-05-01",
     });
     expect(result!.action).toBe("File I-140");
   });
@@ -175,9 +214,12 @@ describe("calculateNextAction", () => {
   it("returns 'Case Complete' when I-140 approved", () => {
     const result = calculateNextAction({
       ...baseCaseData,
+      ...recruitmentDone,
       caseStatus: "i140",
-      i140FilingDate: "2025-03-01",
-      i140ApprovalDate: "2025-05-15",
+      eta9089FilingDate: "2025-04-01",
+      eta9089CertificationDate: "2025-05-01",
+      i140FilingDate: "2025-05-15",
+      i140ApprovalDate: "2025-05-30",
     });
     expect(result!.action).toBe("Case Complete");
   });
@@ -185,8 +227,11 @@ describe("calculateNextAction", () => {
   it("returns 'Wait for I-140 Decision' when filed but no decision", () => {
     const result = calculateNextAction({
       ...baseCaseData,
+      ...recruitmentDone,
       caseStatus: "i140",
-      i140FilingDate: "2025-03-01",
+      eta9089FilingDate: "2025-04-01",
+      eta9089CertificationDate: "2025-05-01",
+      i140FilingDate: "2025-05-15",
     });
     expect(result!.action).toBe("Wait for I-140 Decision");
   });
@@ -194,11 +239,13 @@ describe("calculateNextAction", () => {
   it("returns null for I-140 denied (case falls through to null)", () => {
     const result = calculateNextAction({
       ...baseCaseData,
+      ...recruitmentDone,
       caseStatus: "i140",
-      i140FilingDate: "2025-03-01",
-      i140DenialDate: "2025-05-15",
+      eta9089FilingDate: "2025-04-01",
+      eta9089CertificationDate: "2025-05-01",
+      i140FilingDate: "2025-05-15",
+      i140DenialDate: "2025-05-30",
     });
-    // Denial: i140FilingDate set + i140DenialDate set → no approval → if-block at line 435 skipped → falls through → null
     expect(result).toBeNull();
   });
 
@@ -206,11 +253,12 @@ describe("calculateNextAction", () => {
   it("returns 'Place Sunday Ads' after notice of filing", () => {
     const result = calculateNextAction({
       ...baseCaseData,
+      ...pwdDone,
       caseStatus: "recruitment",
-      jobOrderStartDate: "2025-01-01",
-      jobOrderEndDate: "2025-02-01",
-      noticeOfFilingStartDate: "2025-01-15",
-      noticeOfFilingEndDate: "2025-01-29",
+      jobOrderStartDate: "2025-02-15",
+      jobOrderEndDate: "2025-03-17",
+      noticeOfFilingStartDate: "2025-02-20",
+      noticeOfFilingEndDate: "2025-03-06",
     });
     expect(result!.action).toBe("Place Sunday Ads");
   });
@@ -218,13 +266,8 @@ describe("calculateNextAction", () => {
   it("returns 'Complete Additional Recruitment' for professional occupations", () => {
     const result = calculateNextAction({
       ...baseCaseData,
+      ...recruitmentDone,
       caseStatus: "recruitment",
-      jobOrderStartDate: "2025-01-01",
-      jobOrderEndDate: "2025-02-01",
-      noticeOfFilingStartDate: "2025-01-15",
-      noticeOfFilingEndDate: "2025-01-29",
-      sundayAdFirstDate: "2025-01-19",
-      sundayAdSecondDate: "2025-01-26",
       isProfessionalOccupation: true,
       additionalRecruitmentMethods: [],
     });

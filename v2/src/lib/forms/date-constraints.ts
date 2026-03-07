@@ -21,7 +21,6 @@ import {
   getLastRecruitmentDate,
   getMethodLatestDate,
   isRecruitmentComplete,
-  calculateRecruitmentDeadlines,
   // Import centralized constants
   RECRUITMENT_WINDOW_DAYS,
   PWD_RECRUITMENT_BUFFER_DAYS,
@@ -33,6 +32,7 @@ import {
   SECOND_SUNDAY_AD_PWD_BUFFER_DAYS,
   FILING_WINDOW_WAIT_DAYS,
   FILING_WINDOW_CLOSE_DAYS,
+  subtractBusinessDays,
 } from "../perm";
 
 // Re-export for consumers that import from here
@@ -112,7 +112,7 @@ export function getRecruitmentFieldDeadline(
   // - 2nd Sunday Ad: 150 days from first recruitment OR 30 days before PWD exp (must be Sunday)
 
   // Deadline configuration using centralized constants from convex/lib/perm/constants.ts
-  // NOTE: noticeOfFilingStartDate is NOT in this config — it uses dynamic subtractBusinessDays via calculateRecruitmentDeadlines
+  // NOTE: noticeOfFilingStartDate is NOT in this config — it uses subtractBusinessDays dynamically via getNofStartDeadline
   const deadlineConfig: Record<string, { daysFromRecruitment: number; daysBeforePwd: number; isSunday: boolean }> = {
     jobOrderStartDate: { daysFromRecruitment: JOB_ORDER_START_DEADLINE_DAYS, daysBeforePwd: JOB_ORDER_START_PWD_BUFFER_DAYS, isSunday: false },
     sundayAdFirstDate: { daysFromRecruitment: FIRST_SUNDAY_AD_DEADLINE_DAYS, daysBeforePwd: FIRST_SUNDAY_AD_PWD_BUFFER_DAYS, isSunday: true },
@@ -241,30 +241,68 @@ export function getPWDDateConstraints(values: Partial<CaseFormData>) {
 }
 
 /**
- * Compute Notice of Filing START deadline using central calculator.
- * Uses subtractBusinessDays(recruitmentWindowCloses, 10) for accuracy
- * instead of the deprecated flat 136-day approximation.
+ * Compute Notice of Filing START deadline.
+ *
+ * NOF must be posted 10 business days before the recruitment window closes.
+ * The recruitment window closes at min(first+150, pwd-30).
+ *
+ * Computes each constraint INDEPENDENTLY so a deadline is returned even when
+ * only one input is available (matches getRecruitmentFieldDeadline pattern).
  */
 function getNofStartDeadline(
   firstRecruitmentDate: string | undefined,
   pwdExpiration: string | undefined
 ): { maxDate: string | undefined; limitingFactor: 'recruitment' | 'pwd' | undefined; hint: string } {
-  if (!firstRecruitmentDate || !pwdExpiration) {
-    return { maxDate: undefined, limitingFactor: undefined, hint: '' };
-  }
+  let maxFromRecruitment: string | undefined;
+  let maxFromPwd: string | undefined;
 
   try {
-    const computed = calculateRecruitmentDeadlines(firstRecruitmentDate, pwdExpiration);
-    const maxDate = computed.notice_of_filing_start_deadline;
-    return {
-      maxDate,
-      limitingFactor: 'recruitment',
-      hint: `By ${formatDateForDisplay(maxDate)} — must be posted 10 business days before recruitment deadline`,
-    };
+    // Recruitment-based: first + 150 days is the window close, then subtract 10 business days
+    if (firstRecruitmentDate) {
+      const windowClose = format(addDays(new Date(firstRecruitmentDate + "T00:00:00"), RECRUITMENT_WINDOW_DAYS), "yyyy-MM-dd");
+      maxFromRecruitment = subtractBusinessDays(windowClose, 10);
+    }
+
+    // PWD-based: pwd - 30 days is the window close, then subtract 10 business days
+    if (pwdExpiration) {
+      const windowClose = format(subDays(new Date(pwdExpiration + "T00:00:00"), PWD_RECRUITMENT_BUFFER_DAYS), "yyyy-MM-dd");
+      maxFromPwd = subtractBusinessDays(windowClose, 10);
+    }
   } catch (error) {
     console.warn("[getNofStartDeadline] Failed to compute deadline:", error);
     return { maxDate: undefined, limitingFactor: undefined, hint: '' };
   }
+
+  // Pick the earlier constraint (same pattern as getRecruitmentFieldDeadline)
+  let maxDate: string | undefined;
+  let limitingFactor: 'recruitment' | 'pwd' | undefined;
+
+  if (maxFromRecruitment && maxFromPwd) {
+    if (maxFromRecruitment <= maxFromPwd) {
+      maxDate = maxFromRecruitment;
+      limitingFactor = 'recruitment';
+    } else {
+      maxDate = maxFromPwd;
+      limitingFactor = 'pwd';
+    }
+  } else if (maxFromRecruitment) {
+    maxDate = maxFromRecruitment;
+    limitingFactor = 'recruitment';
+  } else if (maxFromPwd) {
+    maxDate = maxFromPwd;
+    limitingFactor = 'pwd';
+  }
+
+  let hint = '';
+  if (maxDate) {
+    if (limitingFactor === 'recruitment') {
+      hint = `By ${formatDateForDisplay(maxDate)} — must be posted 10 business days before recruitment deadline`;
+    } else {
+      hint = `By ${formatDateForDisplay(maxDate)} — must be posted 10 business days before PWD-limited deadline`;
+    }
+  }
+
+  return { maxDate, limitingFactor, hint };
 }
 
 /**

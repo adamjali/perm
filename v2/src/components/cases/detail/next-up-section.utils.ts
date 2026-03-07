@@ -261,18 +261,19 @@ export function getUrgencyColors(urgency: UrgencyLevel): UrgencyColors {
 }
 
 /**
- * Calculate the next required action based on case data
+ * Calculate the next required action based on case data.
+ *
+ * Date-driven: walks PERM steps sequentially by checking which dates exist,
+ * NOT by gating on caseStatus. This handles broken/out-of-sync states
+ * gracefully (e.g. status reverted to "pwd" but recruitment dates exist).
  */
 export function calculateNextAction(caseData: NextUpCaseData): NextAction | null {
-  const { caseStatus } = caseData;
-
   // Case is closed - no next action
-  if (caseStatus === "closed") {
+  if (caseData.caseStatus === "closed") {
     return null;
   }
 
   // Check for active RFI/RFE first (highest priority)
-  // Uses DRY helper functions
   const activeRfi = findActiveEntry(caseData.rfiEntries);
   if (activeRfi) {
     const daysUntil = calculateDaysUntil(activeRfi.responseDueDate);
@@ -295,25 +296,34 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     };
   }
 
-  // PWD Stage
-  if (caseStatus === "pwd") {
-    if (!caseData.pwdFilingDate) {
-      return {
-        action: "File PWD",
-        description: "Submit Prevailing Wage Determination request to DOL",
-        icon: createElement(FileText, { className: "h-5 w-5" }),
-        urgency: "normal",
-      };
-    }
-    if (!caseData.pwdDeterminationDate) {
-      return {
-        action: "Wait for PWD",
-        description: "Awaiting DOL determination (typically 4-6 months)",
-        icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
-        urgency: "normal",
-      };
-    }
-    // PWD determined, ready to move to recruitment
+  // --- Walk PERM steps by dates (not by caseStatus) ---
+
+  // 1. PWD
+  if (!caseData.pwdFilingDate) {
+    return {
+      action: "File PWD",
+      description: "Submit Prevailing Wage Determination request to DOL",
+      icon: createElement(FileText, { className: "h-5 w-5" }),
+      urgency: "normal",
+    };
+  }
+  if (!caseData.pwdDeterminationDate) {
+    return {
+      action: "Wait for PWD",
+      description: "Awaiting DOL determination (typically 4-6 months)",
+      icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
+      urgency: "normal",
+    };
+  }
+
+  // 2. Recruitment steps — check each independently
+  const hasJobOrder = caseData.jobOrderStartDate && caseData.jobOrderEndDate;
+  const hasNoticeOfFiling = caseData.noticeOfFilingStartDate && caseData.noticeOfFilingEndDate;
+  const hasSundayAds = caseData.sundayAdFirstDate && caseData.sundayAdSecondDate;
+  const hasAnyRecruitment = caseData.jobOrderStartDate || caseData.sundayAdFirstDate || caseData.noticeOfFilingStartDate;
+
+  // "Start Recruitment" only if NO recruitment has begun at all
+  if (!hasAnyRecruitment) {
     return {
       action: "Start Recruitment",
       description: "Begin recruitment activities for labor certification",
@@ -322,150 +332,111 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     };
   }
 
-  // Recruitment Stage
-  // Order: Job Order → Notice of Filing → Sunday Ads → Additional Recruitment → 30-day wait
-  if (caseStatus === "recruitment") {
-    // Check required recruitment steps
-    const hasJobOrder =
-      caseData.jobOrderStartDate && caseData.jobOrderEndDate;
-    const hasNoticeOfFiling =
-      caseData.noticeOfFilingStartDate && caseData.noticeOfFilingEndDate;
-    const hasSundayAds =
-      caseData.sundayAdFirstDate && caseData.sundayAdSecondDate;
+  if (!hasJobOrder) {
+    return {
+      action: "Post Job Order",
+      description: "Submit job posting to State Workforce Agency (30+ days)",
+      icon: createElement(Briefcase, { className: "h-5 w-5" }),
+      urgency: "normal",
+    };
+  }
 
-    // 1. Job Order (first)
-    if (!hasJobOrder) {
+  if (!hasNoticeOfFiling) {
+    return {
+      action: "Post Notice of Filing",
+      description: "Post internal notice for 10 consecutive business days",
+      icon: createElement(FileText, { className: "h-5 w-5" }),
+      urgency: "normal",
+    };
+  }
+
+  if (!hasSundayAds) {
+    return {
+      action: "Place Sunday Ads",
+      description: "Publish two newspaper ads on consecutive Sundays",
+      icon: createElement(FileText, { className: "h-5 w-5" }),
+      urgency: "normal",
+    };
+  }
+
+  // Additional Recruitment for Professional Occupations
+  if (caseData.isProfessionalOccupation) {
+    const methods = caseData.additionalRecruitmentMethods || [];
+    const professionalComplete = isProfessionalRecruitmentComplete({
+      isProfessionalOccupation: caseData.isProfessionalOccupation,
+      additionalRecruitmentMethods: methods,
+    });
+
+    if (!professionalComplete) {
+      const completedCount = methods.filter((m) => m.method && m.date).length;
       return {
-        action: "Post Job Order",
-        description: "Submit job posting to State Workforce Agency (30+ days)",
-        icon: createElement(Briefcase, { className: "h-5 w-5" }),
+        action: "Complete Additional Recruitment",
+        description: `${completedCount}/3 professional recruitment methods completed`,
+        icon: createElement(GraduationCap, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
+  }
 
-    // 2. Notice of Filing (second)
-    if (!hasNoticeOfFiling) {
+  // Filing window check (30-day quiet period)
+  const filingWindow = calculateFilingWindowFromCase(buildFilingWindowInput(caseData));
+  if (filingWindow) {
+    const daysUntilOpens = calculateDaysUntil(filingWindow.opens);
+    if (daysUntilOpens > 0) {
       return {
-        action: "Post Notice of Filing",
-        description: "Post internal notice for 10 consecutive business days",
-        icon: createElement(FileText, { className: "h-5 w-5" }),
+        action: "Wait for Filing Window",
+        description: `ETA 9089 filing window opens in ${daysUntilOpens} days`,
+        icon: createElement(Clock, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
+  }
 
-    // 3. Sunday Ads (third)
-    if (!hasSundayAds) {
-      return {
-        action: "Place Sunday Ads",
-        description: "Publish two newspaper ads on consecutive Sundays",
-        icon: createElement(FileText, { className: "h-5 w-5" }),
-        urgency: "normal",
-      };
-    }
-
-    // 4. Additional Recruitment for Professional Occupations (fourth)
-    // Use canonical isProfessionalRecruitmentComplete() check
-    if (caseData.isProfessionalOccupation) {
-      const methods = caseData.additionalRecruitmentMethods || [];
-      const professionalComplete = isProfessionalRecruitmentComplete({
-        isProfessionalOccupation: caseData.isProfessionalOccupation,
-        additionalRecruitmentMethods: methods,
-      });
-
-      if (!professionalComplete) {
-        const completedCount = methods
-          .filter((m) => m.method && m.date).length;
-        return {
-          action: "Complete Additional Recruitment",
-          description: `${completedCount}/3 professional recruitment methods completed`,
-          icon: createElement(GraduationCap, { className: "h-5 w-5" }),
-          urgency: "normal",
-        };
-      }
-    }
-
-    // 5. Check if 30-day waiting period has passed (use central filing window calculation)
-    const filingWindow = calculateFilingWindowFromCase(buildFilingWindowInput(caseData));
-
-    if (filingWindow) {
-      const daysUntilOpens = calculateDaysUntil(filingWindow.opens);
-      if (daysUntilOpens > 0) {
-        return {
-          action: "Wait for Filing Window",
-          description: `ETA 9089 filing window opens in ${daysUntilOpens} days`,
-          icon: createElement(Clock, { className: "h-5 w-5" }),
-          urgency: "normal",
-        };
-      }
-    }
-
+  // 3. ETA 9089
+  if (!caseData.eta9089FilingDate) {
     return {
       action: "File ETA 9089",
-      description: "Filing window is open - submit labor certification",
+      description: "Filing window is open — submit labor certification",
       icon: createElement(FileCheck, { className: "h-5 w-5" }),
       urgency: "soon",
     };
   }
+  if (!caseData.eta9089CertificationDate) {
+    return {
+      action: "Wait for Certification",
+      description: "Awaiting DOL certification decision",
+      icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
+      urgency: "normal",
+    };
+  }
 
-  // ETA 9089 Stage
-  if (caseStatus === "eta9089") {
-    if (!caseData.eta9089FilingDate) {
-      return {
-        action: "File ETA 9089",
-        description: "Submit labor certification application",
-        icon: createElement(FileCheck, { className: "h-5 w-5" }),
-        urgency: "normal",
-      };
-    }
-    if (!caseData.eta9089CertificationDate) {
-      return {
-        action: "Wait for Certification",
-        description: "Awaiting DOL certification decision",
-        icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
-        urgency: "normal",
-      };
-    }
-    // Certified, ready for I-140
-    // Use helper for consistent UTC date calculation
+  // 4. I-140
+  if (!caseData.i140FilingDate) {
     const daysUntilExpiration = caseData.eta9089ExpirationDate
       ? calculateDaysUntil(caseData.eta9089ExpirationDate)
-      : 180; // Default if no expiration set
-
+      : 180;
     return {
       action: "File I-140",
       description: "Submit immigrant petition to USCIS",
       icon: createElement(Award, { className: "h-5 w-5" }),
-      // Pass raw days - getUrgencyLevel handles thresholds consistently
       urgency: getUrgencyLevel(daysUntilExpiration),
     };
   }
-
-  // I-140 Stage
-  if (caseStatus === "i140") {
-    if (!caseData.i140FilingDate) {
-      return {
-        action: "File I-140",
-        description: "Submit immigrant petition to USCIS",
-        icon: createElement(Award, { className: "h-5 w-5" }),
-        urgency: "normal",
-      };
-    }
-    if (!caseData.i140ApprovalDate && !caseData.i140DenialDate) {
-      return {
-        action: "Wait for I-140 Decision",
-        description: "Awaiting USCIS adjudication",
-        icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
-        urgency: "normal",
-      };
-    }
-    if (caseData.i140ApprovalDate) {
-      return {
-        action: "Case Complete",
-        description: "I-140 approved - PERM process complete!",
-        icon: createElement(CheckCircle2, { className: "h-5 w-5" }),
-        urgency: "normal",
-      };
-    }
+  if (!caseData.i140ApprovalDate && !caseData.i140DenialDate) {
+    return {
+      action: "Wait for I-140 Decision",
+      description: "Awaiting USCIS adjudication",
+      icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
+      urgency: "normal",
+    };
+  }
+  if (caseData.i140ApprovalDate) {
+    return {
+      action: "Case Complete",
+      description: "I-140 approved — PERM process complete!",
+      icon: createElement(CheckCircle2, { className: "h-5 w-5" }),
+      urgency: "normal",
+    };
   }
 
   return null;
