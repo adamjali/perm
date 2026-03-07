@@ -91,8 +91,8 @@ vi.mock("posthog-js", () => ({
 // ============================================================================
 
 /**
- * Mock motion/react (framer-motion) for tests.
- * Framer-motion uses browser APIs that don't exist in JSDOM.
+ * Mock motion/react for tests.
+ * Motion uses browser APIs that don't exist in JSDOM.
  * We provide a simple mock that renders the children without animations.
  */
 vi.mock("motion/react", () => {

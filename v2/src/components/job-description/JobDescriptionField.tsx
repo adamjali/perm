@@ -34,11 +34,12 @@ import { toast } from "@/lib/toast";
 
 export interface JobDescriptionTemplate {
   _id: string;
-  name: string; // Position title used as template name
+  name: string;
   description: string;
   createdAt: number;
   updatedAt: number;
   usageCount: number;
+  lastUsedAt?: number;
 }
 
 export interface JobDescriptionFieldProps {

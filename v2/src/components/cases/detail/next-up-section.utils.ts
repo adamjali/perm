@@ -1,8 +1,8 @@
 /**
  * NextUpSection Utility Functions
  *
- * Pure calculation functions for determining next actions and deadlines.
- * Pure calculation functions for better maintainability and testing.
+ * Pure calculation functions for determining next actions and deadlines,
+ * extracted for better maintainability and testing.
  */
 
 import { createElement, type ReactNode } from "react";
@@ -157,7 +157,8 @@ function findActiveEntry(
 // ============================================================================
 
 /**
- * Get the current stage index (0-4) based on case status
+ * Get the current stage index based on case status.
+ * pwd=0, recruitment=1, eta9089=2, i140=3, closed=4
  */
 export function getStageIndex(status: CaseStatus): number {
   switch (status) {

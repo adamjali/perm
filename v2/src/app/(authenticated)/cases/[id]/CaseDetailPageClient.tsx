@@ -805,7 +805,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               const stageIdx = { pwd: 0, recruitment: 1, eta9089: 2, i140: 3 }[stage];
               const isDone = stageIdx < currentStage;
               const isActive = stageIdx === currentStage;
-              const labels: Record<string, string> = { pwd: "PWD", recruitment: "Recruitment", eta9089: "ETA 9089", i140: "I-140" };
+              const labels = { pwd: "PWD", recruitment: "Recruitment", eta9089: "ETA 9089", i140: "I-140" } as const;
               return (
                 <div
                   key={stage}
@@ -855,10 +855,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               isUpdating={isUpdating}
               onToggleTimeline={handleToggleTimeline}
               jobDescProps={{
-                templates: jobDescTemplates as unknown as import("@/components/job-description/JobDescriptionField").JobDescriptionTemplate[],
+                templates: jobDescTemplates as import("@/components/job-description/JobDescriptionField").JobDescriptionTemplate[],
                 onSave: handleJobDescSave,
                 onClear: handleJobDescClear,
-                onLoadTemplate: (t) => loadJobDescTemplate(t as unknown as typeof jobDescTemplates[0]),
+                onLoadTemplate: (t) => loadJobDescTemplate({ ...t, _id: t._id as Id<"jobDescriptionTemplates"> }),
                 onDeleteTemplate: (id) => hardDeleteJobDescTemplate(id as Id<"jobDescriptionTemplates">),
                 onUpdateTemplate: (id, name, desc) => updateJobDescTemplate(id as Id<"jobDescriptionTemplates">, name, desc),
                 onSaveAsNewTemplate: saveAsNewJobDescTemplate,
