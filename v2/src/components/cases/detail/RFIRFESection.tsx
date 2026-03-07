@@ -110,11 +110,11 @@ function EntryCard({ type, entry, compact }: EntryCardProps) {
           : "border-border";
 
   const bgColor = urgency.level === "completed"
-    ? "bg-emerald-50/50 dark:bg-emerald-950/20"
+    ? "bg-emerald-50/50 dark:bg-emerald-950"
     : urgency.level === "overdue" || urgency.level === "urgent"
-      ? "bg-red-50/50 dark:bg-red-950/20"
+      ? "bg-red-50/50 dark:bg-red-950"
       : urgency.level === "soon"
-        ? "bg-orange-50/50 dark:bg-orange-950/20"
+        ? "bg-orange-50/50 dark:bg-orange-950"
         : "bg-background";
 
   return (
@@ -133,7 +133,7 @@ function EntryCard({ type, entry, compact }: EntryCardProps) {
         {urgency.level === "completed" ? (
           <Badge
             variant="secondary"
-            className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-500 text-xs gap-1"
+            className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300 border-emerald-500 text-xs gap-1"
           >
             <CheckCircle2 className="h-3 w-3" />
             Submitted
@@ -153,7 +153,7 @@ function EntryCard({ type, entry, compact }: EntryCardProps) {
         ) : isActive && urgency.level === "soon" ? (
           <Badge
             variant="secondary"
-            className="bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300 border-orange-500 text-xs gap-1"
+            className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300 border-orange-500 text-xs gap-1"
           >
             <Clock className="h-3 w-3" />
             {urgency.daysRemaining}d remaining

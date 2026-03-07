@@ -13,19 +13,19 @@ const progressConfig: Record<ProgressStatus, { className: string; label: string 
     label: "Waiting for Intake",
   },
   filed: {
-    className: "bg-[#0066FF] text-white border-black dark:bg-[#0066FF]/80",
+    className: "bg-[#0066FF] text-white border-black dark:bg-[#0052CC]",
     label: "Filed",
   },
   approved: {
-    className: "bg-[#228B22] text-white border-black dark:bg-[#228B22]/80",
+    className: "bg-[#228B22] text-white border-black dark:bg-[#1B6F1B]",
     label: "Approved",
   },
   under_review: {
-    className: "bg-[#D97706] text-white border-black dark:bg-[#D97706]/80",
+    className: "bg-[#D97706] text-white border-black dark:bg-[#B86600]",
     label: "Under Review",
   },
   rfi_rfe: {
-    className: "bg-[#DC2626] text-white border-black dark:bg-[#DC2626]/80",
+    className: "bg-[#DC2626] text-white border-black dark:bg-[#B91C1C]",
     label: "RFI/RFE",
   },
 }

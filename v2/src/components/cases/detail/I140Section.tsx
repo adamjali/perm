@@ -273,7 +273,7 @@ function StatusBanner({
         : null;
 
     return (
-      <div className="flex items-center gap-3 border-2 border-emerald-400 bg-emerald-50 p-3 dark:bg-emerald-950/40 dark:border-emerald-600">
+      <div className="flex items-center gap-3 border-2 border-emerald-400 bg-emerald-50 p-3 dark:bg-emerald-950 dark:border-emerald-600">
         <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
         <div className="min-w-0 flex-1">
           <span className="font-heading font-bold text-emerald-800 dark:text-emerald-300">
@@ -291,7 +291,7 @@ function StatusBanner({
 
   if (isDenied) {
     return (
-      <div className="flex items-center gap-3 border-2 border-red-400 bg-red-50 p-3 dark:bg-red-950/40 dark:border-red-600">
+      <div className="flex items-center gap-3 border-2 border-red-400 bg-red-50 p-3 dark:bg-red-950 dark:border-red-600">
         <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" />
         <div className="min-w-0 flex-1">
           <span className="font-heading font-bold text-red-800 dark:text-red-300">
@@ -370,10 +370,10 @@ export function I140Section({
               className={cn(
                 "border-2 p-3 text-sm",
                 deadlineStatus.status === "urgent"
-                  ? "border-red-500 bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300"
+                  ? "border-red-500 bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-300"
                   : deadlineStatus.status === "soon"
-                    ? "border-orange-500 bg-orange-50 text-orange-800 dark:bg-orange-950/30 dark:text-orange-300"
-                    : "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                    ? "border-orange-500 bg-orange-50 text-orange-800 dark:bg-orange-950 dark:text-orange-300"
+                    : "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
               )}
             >
               <p>

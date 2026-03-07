@@ -46,19 +46,19 @@ interface StatusStyle {
 const RECRUITMENT_STYLES: Record<RecruitmentWindowStatus, StatusStyle> = {
   COMPLETED: {
     accent: "var(--stage-recruitment)",
-    chipBg: "bg-purple-100 dark:bg-purple-900/40",
+    chipBg: "bg-purple-100 dark:bg-purple-900",
     chipText: "text-purple-700 dark:text-purple-300",
     label: "Complete",
   },
   ACTIVE: {
     accent: "var(--stage-recruitment)",
-    chipBg: "bg-emerald-100 dark:bg-emerald-900/40",
+    chipBg: "bg-emerald-100 dark:bg-emerald-900",
     chipText: "text-emerald-700 dark:text-emerald-300",
     label: "Active",
   },
   EXPIRED: {
     accent: "var(--destructive)",
-    chipBg: "bg-red-100 dark:bg-red-900/40",
+    chipBg: "bg-red-100 dark:bg-red-900",
     chipText: "text-red-700 dark:text-red-300",
     label: "Expired",
   },
@@ -73,31 +73,31 @@ const RECRUITMENT_STYLES: Record<RecruitmentWindowStatus, StatusStyle> = {
 const FILING_STYLES: Record<FilingWindowStatus, StatusStyle> = {
   OPEN: {
     accent: "var(--stage-eta9089)",
-    chipBg: "bg-emerald-100 dark:bg-emerald-900/40",
+    chipBg: "bg-emerald-100 dark:bg-emerald-900",
     chipText: "text-emerald-700 dark:text-emerald-300",
     label: "Open",
   },
   OPENING_SOON: {
     accent: "var(--stage-eta9089)",
-    chipBg: "bg-amber-100 dark:bg-amber-900/40",
+    chipBg: "bg-amber-100 dark:bg-amber-900",
     chipText: "text-amber-700 dark:text-amber-300",
     label: "Opening Soon",
   },
   CLOSING_SOON: {
     accent: "var(--stage-eta9089)",
-    chipBg: "bg-orange-100 dark:bg-orange-900/40",
+    chipBg: "bg-orange-100 dark:bg-orange-900",
     chipText: "text-orange-700 dark:text-orange-300",
     label: "Closing Soon",
   },
   CLOSED: {
     accent: "var(--destructive)",
-    chipBg: "bg-red-100 dark:bg-red-900/40",
+    chipBg: "bg-red-100 dark:bg-red-900",
     chipText: "text-red-700 dark:text-red-300",
     label: "Closed",
   },
   FILED: {
     accent: "var(--stage-eta9089)",
-    chipBg: "bg-blue-100 dark:bg-blue-900/40",
+    chipBg: "bg-blue-100 dark:bg-blue-900",
     chipText: "text-blue-700 dark:text-blue-300",
     label: "Filed",
   },

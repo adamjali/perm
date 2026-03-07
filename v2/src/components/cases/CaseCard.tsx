@@ -204,7 +204,7 @@ export const CaseCard = memo(function CaseCard({
           !isClosed && "border-border",
           shouldExpand && !isClosed && "shadow-hard-lg"
         )}
-        style={{ backgroundColor: isClosed ? "#E8E8E8" : "var(--manila)" }}
+        style={{ backgroundColor: isClosed ? "var(--muted)" : "var(--manila)" }}
       >
         {/* Paper texture overlay */}
         <div
@@ -244,8 +244,8 @@ export const CaseCard = memo(function CaseCard({
               <div
                 className={cn(
                   "flex items-center gap-2 px-2 py-1",
-                  urgency === "urgent" && "bg-red-100 dark:bg-red-900/30 border-2 border-red-600",
-                  urgency === "soon" && "bg-orange-50 dark:bg-orange-900/20"
+                  urgency === "urgent" && "bg-red-100 dark:bg-red-900 border-2 border-red-600",
+                  urgency === "soon" && "bg-orange-50 dark:bg-orange-900"
                 )}
               >
                 <div className={cn("w-2.5 h-2.5 shrink-0", urgencyDotColor)} />
@@ -400,7 +400,7 @@ function ActiveCaseButtons({
         variant="default"
         size="sm"
         disabled={isViewLoading}
-        className="flex-1 text-xs font-bold border-black shadow-[4px_4px_0px_#000] hover:shadow-[6px_6px_0px_#000] disabled:opacity-70 disabled:shadow-none"
+        className="flex-1 text-xs font-bold border-black shadow-hard hover:shadow-hard-lg disabled:opacity-70 disabled:shadow-none"
         onClick={onViewClick}
         aria-label="View"
       >

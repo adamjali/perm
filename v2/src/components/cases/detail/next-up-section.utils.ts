@@ -201,21 +201,21 @@ export function getUrgencyColors(urgency: UrgencyLevel): UrgencyColors {
       };
     case "urgent":
       return {
-        bg: "bg-red-50 dark:bg-red-950/50",
+        bg: "bg-red-50 dark:bg-red-950",
         text: "text-red-600 dark:text-red-400",
         border: "border-red-400",
         ring: "ring-red-400/50",
       };
     case "soon":
       return {
-        bg: "bg-orange-50 dark:bg-orange-950/50",
+        bg: "bg-orange-50 dark:bg-orange-950",
         text: "text-orange-600 dark:text-orange-400",
         border: "border-orange-400",
         ring: "ring-orange-400/50",
       };
     default:
       return {
-        bg: "bg-green-50 dark:bg-green-950/50",
+        bg: "bg-green-50 dark:bg-green-950",
         text: "text-green-600 dark:text-green-400",
         border: "border-green-500",
         ring: "ring-green-500/50",

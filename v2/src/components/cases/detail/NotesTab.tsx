@@ -161,10 +161,10 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
               style={{
                 fontFamily: "var(--font-mono)",
                 fontSize: "0.6rem",
-                background: "#FFFFFF",
-                border: "2px solid #000000",
+                background: "var(--card)",
+                border: "2px solid var(--foreground)",
                 padding: "1px 8px",
-                color: "#000000",
+                color: "var(--foreground)",
               }}
             >
               {notes.length}
@@ -270,7 +270,6 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                           lineHeight: 1.7,
                           padding: "8px 12px",
                           border: "3px solid var(--primary)",
-                          borderRadius: 4,
                           background: "var(--background)",
                           color: "var(--foreground)",
                           resize: "vertical",

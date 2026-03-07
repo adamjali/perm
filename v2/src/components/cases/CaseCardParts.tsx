@@ -176,7 +176,7 @@ export function CaseBadges({
       {isProfessionalOccupation && (
         <Badge
           variant="outline"
-          className="text-[0.625rem] px-2 py-0.5 bg-gray-200 text-black border-2 border-black font-bold"
+          className="text-[0.625rem] px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-black dark:text-white border-2 border-black font-bold"
         >
           PRO
         </Badge>

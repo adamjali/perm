@@ -44,7 +44,7 @@ const STATUS_CONFIG: Record<
 > = {
   waiting: {
     icon: Clock,
-    bgClass: "bg-yellow-50 dark:bg-yellow-900/20",
+    bgClass: "bg-yellow-50 dark:bg-yellow-900",
     borderClass: "border-yellow-500",
     textClass: "text-yellow-900 dark:text-yellow-100",
     iconClass: "text-yellow-600 dark:text-yellow-400",
@@ -52,7 +52,7 @@ const STATUS_CONFIG: Record<
   },
   ready: {
     icon: CheckCircle2,
-    bgClass: "bg-green-50 dark:bg-green-900/20",
+    bgClass: "bg-green-50 dark:bg-green-900",
     borderClass: "border-green-500",
     textClass: "text-green-900 dark:text-green-100",
     iconClass: "text-green-600 dark:text-green-400",
@@ -68,7 +68,7 @@ const STATUS_CONFIG: Record<
   },
   expired: {
     icon: XCircle,
-    bgClass: "bg-red-50 dark:bg-red-900/20",
+    bgClass: "bg-red-50 dark:bg-red-900",
     borderClass: "border-red-500",
     textClass: "text-red-900 dark:text-red-100",
     iconClass: "text-red-600 dark:text-red-400",

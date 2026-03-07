@@ -178,7 +178,7 @@ export function RecruitmentResultsText({
               Recruitment Results
             </h4>
             {isCustom && !isEditing && (
-              <span className="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-600/20">
+              <span className="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-900 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-600/20">
                 Custom
               </span>
             )}

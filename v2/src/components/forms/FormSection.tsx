@@ -72,7 +72,7 @@ export function FormSection({
   return (
     <div
       className={cn(
-        "rounded-lg border-2 border-border bg-card shadow-hard-sm",
+        "border-2 border-border bg-card shadow-hard-sm",
         "transition-all duration-150 hover:shadow-hard hover:-translate-y-0.5",
         status === "has-errors" && "border-destructive",
         status === "complete" && "border-emerald-500/50",
@@ -85,8 +85,7 @@ export function FormSection({
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "flex w-full items-center justify-between p-4 text-left",
-          "hover:bg-muted/50 transition-colors rounded-t-lg",
-          !isOpen && "rounded-b-lg"
+          "hover:bg-muted/50 transition-colors",
         )}
         aria-expanded={isOpen}
       >

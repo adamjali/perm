@@ -183,12 +183,12 @@ export function ETA9089Section({
               className={cn(
                 "border-2 p-3 text-sm",
                 windowStatus.status === "open" && windowStatus.daysRemaining !== undefined && windowStatus.daysRemaining <= 30
-                  ? "border-orange-500 bg-orange-50 text-orange-800 dark:bg-orange-950/30 dark:text-orange-300"
+                  ? "border-orange-500 bg-orange-50 text-orange-800 dark:bg-orange-950 dark:text-orange-300"
                   : windowStatus.status === "open"
-                    ? "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
                     : windowStatus.status === "not-open"
-                      ? "border-blue-500 bg-blue-50 text-blue-800 dark:bg-blue-950/30 dark:text-blue-300"
-                      : "border-red-500 bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300"
+                      ? "border-blue-500 bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                      : "border-red-500 bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-300"
               )}
             >
               {windowStatus.status === "open" && (
@@ -245,11 +245,11 @@ export function ETA9089Section({
                   Filing Window
                 </span>
                 {windowStatus.status === "filed" ? (
-                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 border-2 border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 border-2 border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
                     Filed
                   </span>
                 ) : windowStatus.status === "closed" ? (
-                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 border-2 border-red-500 bg-red-50 text-red-700 dark:bg-red-900/50 dark:text-red-300">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 border-2 border-red-500 bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300">
                     Closed
                   </span>
                 ) : windowStatus.status === "open" ? (
