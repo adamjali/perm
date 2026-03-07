@@ -279,7 +279,7 @@ export const CaseCard = memo(function CaseCard({
 
         {/* Action Buttons Row */}
         <div
-          className="flex items-center gap-2 mt-4 pt-4 border-t border-black/40 dark:border-white/40 relative z-10 -mx-6 -mb-6 px-6 pb-4"
+          className="flex items-center gap-2 mt-4 pt-4 border-t border-black/40 relative z-10 -mx-6 -mb-6 px-6 pb-4"
           style={{ backgroundColor: "var(--manila-dark)" }}
           onClick={(e) => e.stopPropagation()}
           onMouseEnter={ui.handleButtonAreaEnter}

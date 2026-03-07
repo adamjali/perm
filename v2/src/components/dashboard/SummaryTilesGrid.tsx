@@ -65,8 +65,7 @@ function SummaryTilesGridContent({
         <NavigableCard
           href="/cases"
           loadingIndicator="spinner"
-          className="group relative bg-primary text-primary-foreground border-2 border-black dark:border-white/20
-                     shadow-hard-sm hover:shadow-hard hover:-translate-x-0.5 hover:-translate-y-0.5
+          className="group relative bg-primary text-primary-foreground border-2 border-black                     shadow-hard-sm hover:shadow-hard hover:-translate-x-0.5 hover:-translate-y-0.5
                      active:translate-x-0 active:translate-y-0 active:shadow-none
                      transition-all duration-150 px-4 py-2 overflow-hidden"
         >

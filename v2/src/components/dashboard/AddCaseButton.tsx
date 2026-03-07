@@ -40,7 +40,7 @@ export default function AddCaseButton() {
         // Colors
         "bg-primary text-primary-foreground",
         // Neobrutalist border + shadow
-        "border-4 border-black dark:border-white/20 shadow-hard",
+        "border-4 border-black shadow-hard",
         // No border radius (sharp corners)
         "rounded-none",
         // Cursor pointer for clickable state

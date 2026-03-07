@@ -95,7 +95,7 @@ GSD (Get Shit Done) is the project management system used for all structured dev
 
 ### Current Config
 
-Mode: `interactive` | Profile: `quality` | All gates enabled (research, plan_check, verifier)
+Mode: `interactive` | Profile: `quality` | Gates: research, plan_check, verifier, nyquist_validation ON | context_monitor OFF | auto_advance OFF | Branching: none
 
 > **Full reference:** `/gsd:help` | **Deep dive:** `~/.claude/explanations/20260223_gsd_deep_dive/`
 

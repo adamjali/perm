@@ -444,7 +444,7 @@ export function OverviewTab({
                           type="button"
                           onClick={saveJobDesc}
                           disabled={isSavingJobDesc || !editDescription.trim()}
-                          className="px-3 py-1.5 border-[3px] border-black dark:border-white/50 bg-primary text-primary-foreground text-[11px] font-mono font-bold uppercase tracking-wider shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all disabled:opacity-50"
+                          className="px-3 py-1.5 border-[3px] border-black bg-primary text-primary-foreground text-[11px] font-mono font-bold uppercase tracking-wider shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all disabled:opacity-50"
                         >
                           {isSavingJobDesc ? (
                             <span className="flex items-center gap-1">

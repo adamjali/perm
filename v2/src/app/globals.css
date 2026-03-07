@@ -89,8 +89,8 @@
   --accent-foreground: #000000;
   --destructive: #FF4747;
   --destructive-foreground: #FAFAFA;
-  --border: #FAFAFA;
-  --input: #FAFAFA;
+  --border: #333333;
+  --input: #333333;
   --ring: #2ECC40;
 
   /* Manila Folder Colors - Dark Mode (darker tones) */
@@ -98,10 +98,10 @@
   --manila-dark: #A8916A;
   --manila-shadow: #8A7552;
 
-  /* Dark mode shadows - subtle for visibility */
-  --shadow-hard-sm: 2px 2px 0px rgba(255,255,255,0.3);
-  --shadow-hard: 4px 4px 0px rgba(255,255,255,0.3);
-  --shadow-hard-lg: 8px 8px 0px rgba(255,255,255,0.3);
+  /* Dark mode shadows - subtle but visible */
+  --shadow-hard-sm: 2px 2px 0px rgba(255,255,255,0.12);
+  --shadow-hard: 4px 4px 0px rgba(255,255,255,0.12);
+  --shadow-hard-lg: 8px 8px 0px rgba(255,255,255,0.12);
 }
 
 @theme inline {
@@ -1013,6 +1013,10 @@
 .nof-calendar .nof-day.outside { background: var(--muted); color: var(--muted-foreground); }
 .nof-calendar .nof-day.posted { background: var(--stage-recruitment); color: #fff; font-weight: 700; }
 .nof-calendar .nof-day.weekend { background: transparent; color: var(--muted-foreground); opacity: 0.3; font-style: italic; }
+/* NOF calendar dark mode */
+.dark .nof-calendar { border-color: #000000; }
+.dark .nof-calendar .nof-hdr { border-bottom-color: #000000; }
+.dark .nof-calendar .nof-day { border-color: rgba(0,0,0,0.25); }
 
 /* Recruitment method row — mockup matching */
 .recruit-info { flex: 1; min-width: 0; }

@@ -216,7 +216,7 @@ export function HeroSection() {
             >
               {/* Browser chrome bar (staggers slightly ahead) */}
               <motion.div
-                className="flex items-center gap-2 border-4 border-b-0 border-black bg-foreground px-4 py-2.5 dark:border-white/20"
+                className="flex items-center gap-2 border-4 border-b-0 border-black bg-foreground px-4 py-2.5"
                 style={
                   reducedMotion
                     ? undefined
@@ -239,7 +239,7 @@ export function HeroSection() {
 
               {/* Screenshot */}
               <Lightbox src="/images/hero-showcase.png" alt="PERM Tracker dashboard showing case timeline, deadline tracking, and status updates">
-                <div className="border-4 border-black shadow-hard-lg dark:border-white/20">
+                <div className="border-4 border-black shadow-hard-lg">
                   <Image
                     src="/images/hero-showcase.png"
                     alt="PERM Tracker dashboard showing case timeline, deadline tracking, and status updates"

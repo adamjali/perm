@@ -50,7 +50,7 @@ export default function NotificationTabs({
   return (
     <div
       className={cn(
-        "flex flex-wrap gap-2 border-b-2 border-black dark:border-white/50 pb-4",
+        "flex flex-wrap gap-2 border-b-2 border-black pb-4",
         className
       )}
       role="tablist"

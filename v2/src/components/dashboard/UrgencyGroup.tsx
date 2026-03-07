@@ -60,7 +60,7 @@ export default function UrgencyGroup({
       className={`
         p-4 min-h-[120px]
         ${style.gradient} ${style.darkGradient}
-        ${!isLast ? "border-r-2 border-black dark:border-white/20" : ""}
+        ${!isLast ? "border-r-2 border-black" : ""}
         md:border-b-0
         border-b-2 md:border-b-0 last:border-b-0
       `}

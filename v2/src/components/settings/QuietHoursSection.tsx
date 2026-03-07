@@ -229,7 +229,7 @@ export default function QuietHoursSection({
 
   return (
     <div
-      className="bg-card border-2 border-black dark:border-white/20 p-6"
+      className="bg-card border-2 border-black p-6"
       style={{ boxShadow: "4px 4px 0px #000" }}
     >
       {/* Header */}

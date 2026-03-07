@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 function NotificationItemSkeleton({ index }: { index: number }) {
   return (
     <div
-      className="flex items-start gap-4 p-4 border-b-2 border-black/10 dark:border-white/10 last:border-b-0"
+      className="flex items-start gap-4 p-4 border-b-2 border-black/10 last:border-b-0"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       {/* Priority color bar */}
@@ -58,7 +58,7 @@ export default function NotificationsLoading() {
       </div>
 
       {/* Tabs Skeleton */}
-      <div className="flex flex-wrap gap-2 border-b-2 border-black dark:border-white/50 pb-4 mb-6">
+      <div className="flex flex-wrap gap-2 border-b-2 border-black pb-4 mb-6">
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} variant="block" className="w-24 h-10" />
         ))}
@@ -69,7 +69,7 @@ export default function NotificationsLoading() {
         {/* Group 1 */}
         <div>
           <Skeleton variant="line" className="h-4 w-16 mb-3" />
-          <div className="border-2 border-black dark:border-white/50 shadow-hard">
+          <div className="border-2 border-black shadow-hard">
             {Array.from({ length: 3 }).map((_, i) => (
               <NotificationItemSkeleton key={i} index={i} />
             ))}
@@ -79,7 +79,7 @@ export default function NotificationsLoading() {
         {/* Group 2 */}
         <div>
           <Skeleton variant="line" className="h-4 w-20 mb-3" />
-          <div className="border-2 border-black dark:border-white/50 shadow-hard">
+          <div className="border-2 border-black shadow-hard">
             {Array.from({ length: 2 }).map((_, i) => (
               <NotificationItemSkeleton key={i} index={i + 3} />
             ))}

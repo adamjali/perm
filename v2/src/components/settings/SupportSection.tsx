@@ -209,7 +209,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
     <div className="space-y-6">
       {/* Help & Support Card */}
       <div
-        className="bg-card border-2 border-black dark:border-white/20 p-6"
+        className="bg-card border-2 border-black p-6"
         style={{ boxShadow: "4px 4px 0px #000" }}
       >
         {/* Header */}
@@ -230,7 +230,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             href={`mailto:${SUPPORT_EMAIL}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center gap-3 p-4 border-2 border-black dark:border-white/20 bg-card hover:bg-accent transition-colors group"
+            className="flex flex-col items-center gap-3 p-4 border-2 border-black bg-card hover:bg-accent transition-colors group"
             style={{ boxShadow: "2px 2px 0px #000" }}
           >
             <div className="p-3 bg-primary/10 border-2 border-primary/20 group-hover:bg-primary/20 transition-colors">
@@ -250,7 +250,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             href={GITHUB_BUG_REPORT_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center gap-3 p-4 border-2 border-black dark:border-white/20 bg-card hover:bg-accent transition-colors group"
+            className="flex flex-col items-center gap-3 p-4 border-2 border-black bg-card hover:bg-accent transition-colors group"
             style={{ boxShadow: "2px 2px 0px #000" }}
           >
             <div className="p-3 bg-destructive/10 border-2 border-destructive/20 group-hover:bg-destructive/20 transition-colors">
@@ -272,7 +272,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             href={GITHUB_FEATURE_REQUEST_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center gap-3 p-4 border-2 border-black dark:border-white/20 bg-card hover:bg-accent transition-colors group"
+            className="flex flex-col items-center gap-3 p-4 border-2 border-black bg-card hover:bg-accent transition-colors group"
             style={{ boxShadow: "2px 2px 0px #000" }}
           >
             <div className="p-3 bg-yellow-500/10 border-2 border-yellow-500/20 group-hover:bg-yellow-500/20 transition-colors">
@@ -301,7 +301,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               }
             }}
             disabled={isRestarting}
-            className="flex flex-col items-center gap-3 p-4 border-2 border-black dark:border-white/20 bg-card hover:bg-accent transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex flex-col items-center gap-3 p-4 border-2 border-black bg-card hover:bg-accent transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ boxShadow: "2px 2px 0px #000" }}
           >
             <div className="p-3 bg-lime-500/10 border-2 border-lime-500/20 group-hover:bg-lime-500/20 transition-colors">
@@ -325,7 +325,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
 
       {/* Data Export Card */}
       <div
-        className="bg-card border-2 border-black dark:border-white/20 p-6"
+        className="bg-card border-2 border-black p-6"
         style={{ boxShadow: "4px 4px 0px #000" }}
       >
         <div className="flex items-center gap-2 mb-2">

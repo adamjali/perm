@@ -33,7 +33,7 @@ export function OnboardingChecklist() {
   return (
     <div
       data-tour="onboarding-checklist"
-      className="relative overflow-hidden border-4 border-black dark:border-white/20 bg-card shadow-hard"
+      className="relative overflow-hidden border-4 border-black bg-card shadow-hard"
     >
       {/* Top accent stripe */}
       <div className="h-1.5 bg-primary" />

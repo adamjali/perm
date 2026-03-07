@@ -5,7 +5,13 @@
   "workflow": {
     "research": true,
     "plan_check": true,
-    "verifier": true
+    "verifier": true,
+    "auto_advance": false,
+    "nyquist_validation": true,
+    "context_monitor": false
+  },
+  "git": {
+    "branching_strategy": "none"
   },
   "gates": {
     "confirm_project": true,

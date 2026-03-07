@@ -177,7 +177,7 @@ export default function ProfileSection({
 
   return (
     <div
-      className="bg-card border-2 border-black dark:border-white/20 p-6"
+      className="bg-card border-2 border-black p-6"
       style={{ boxShadow: "4px 4px 0px #000" }}
     >
       {/* Header */}
@@ -191,7 +191,7 @@ export default function ProfileSection({
       {/* Profile Photo / Initials / Default Icon */}
       <div className="flex items-center gap-4 mb-6">
         <div
-          className="w-20 h-20 flex items-center justify-center border-2 border-black dark:border-white/30 bg-primary/10 text-primary overflow-hidden"
+          className="w-20 h-20 flex items-center justify-center border-2 border-black bg-primary/10 text-primary overflow-hidden"
           style={{ boxShadow: "4px 4px 0px #000" }}
         >
           {profile.profilePhotoUrl ? (

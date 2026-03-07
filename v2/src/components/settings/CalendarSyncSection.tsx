@@ -510,7 +510,7 @@ export default function CalendarSyncSection({
     <div className="space-y-6">
       {/* Calendar Sync Section */}
       <div
-        className="bg-card border-2 border-black dark:border-white/20 p-6"
+        className="bg-card border-2 border-black p-6"
         style={{ boxShadow: "4px 4px 0px #000" }}
       >
         {/* Header */}
@@ -673,7 +673,7 @@ export default function CalendarSyncSection({
                     return (
                       <>
                         {/* Progress bar - neobrutalist with hard edges */}
-                        <div className="relative h-3 bg-muted border-2 border-black dark:border-white/30 overflow-hidden">
+                        <div className="relative h-3 bg-muted border-2 border-black overflow-hidden">
                           {/* Background pulse */}
                           <motion.div
                             className="absolute inset-0 bg-primary/20 dark:bg-primary/30"
@@ -783,7 +783,7 @@ export default function CalendarSyncSection({
                     return (
                       <>
                         {/* Progress bar - neobrutalist with hard edges */}
-                        <div className="relative h-3 bg-muted border-2 border-black dark:border-white/30 overflow-hidden">
+                        <div className="relative h-3 bg-muted border-2 border-black overflow-hidden">
                           {/* Background pulse */}
                           <motion.div
                             className="absolute inset-0 bg-amber-500/20 dark:bg-amber-500/30"

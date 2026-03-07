@@ -54,7 +54,7 @@ export default function DeadlineEnforcementToggle() {
   // Show loading state while profile loads
   if (profile === undefined) {
     return (
-      <div className="bg-card border-2 border-black dark:border-white/20 p-6 animate-pulse" style={{ boxShadow: "4px 4px 0px #000" }}>
+      <div className="bg-card border-2 border-black p-6 animate-pulse" style={{ boxShadow: "4px 4px 0px #000" }}>
         <div className="h-6 bg-muted rounded w-1/3 mb-4" />
         <div className="h-4 bg-muted rounded w-2/3" />
       </div>
@@ -63,7 +63,7 @@ export default function DeadlineEnforcementToggle() {
 
   return (
     <div
-      className="bg-card border-2 border-black dark:border-white/20 p-6"
+      className="bg-card border-2 border-black p-6"
       style={{ boxShadow: "4px 4px 0px #000" }}
     >
       {/* Header */}

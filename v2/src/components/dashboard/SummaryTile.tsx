@@ -82,7 +82,7 @@ function CornerDecoration({
     // Design4 stage-tag style: small badge with hard shadow, positioned top-right
     return (
       <div
-        className="absolute top-2 right-2 px-2 py-0.5 text-[10px] font-extrabold uppercase text-white border-[1.5px] border-black dark:border-white/20"
+        className="absolute top-2 right-2 px-2 py-0.5 text-[10px] font-extrabold uppercase text-white border-[1.5px] border-black"
         style={{
           backgroundColor: color,
           boxShadow: "2px 2px 0px #000",
@@ -117,7 +117,7 @@ export default function SummaryTile({
       <NavigableCard
         href={href}
         loadingIndicator="overlay"
-        className="group relative bg-card border-3 border-black dark:border-white/20 shadow-hard hover:shadow-hard-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 p-5 overflow-hidden"
+        className="group relative bg-card border-3 border-black shadow-hard hover:shadow-hard-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 p-5 overflow-hidden"
       >
         {/* Corner decoration */}
         <CornerDecoration variant={cornerVariant} color={color} status={status} />

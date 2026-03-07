@@ -171,7 +171,7 @@ interface SectionCardProps {
 
 function SectionCard({ icon: Icon, title, description, headerRight, children }: SectionCardProps): React.ReactElement {
   return (
-    <div className="bg-card border-2 border-black dark:border-white/20 p-6" style={{ boxShadow: "4px 4px 0px #000" }}>
+    <div className="bg-card border-2 border-black p-6" style={{ boxShadow: "4px 4px 0px #000" }}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Icon className="w-5 h-5 text-foreground" />
