@@ -78,7 +78,6 @@ export function ChatMessage({
         clearInterval(intervalRef.current);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStreaming, content]);
 
   const displayedContent = content.slice(0, displayedLength);

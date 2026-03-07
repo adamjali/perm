@@ -109,9 +109,10 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       const email = args.profile.email;
       if (email) {
         // Use the "email" index (schema.ts line 62) for O(1) lookup instead of full table scan.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        /* eslint-disable @typescript-eslint/no-explicit-any -- Convex FilterApi can't resolve "email" index */
         const existingUser = await (ctx.db.query("users") as any)
           .withIndex("email", (q: any) => q.eq("email", email))
+        /* eslint-enable @typescript-eslint/no-explicit-any */
           .first();
 
         if (existingUser) {

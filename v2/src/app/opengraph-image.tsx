@@ -33,6 +33,7 @@ export default async function Image() {
       >
         {/* Illustration - left/center */}
         <img
+          alt=""
           src={dataUrl}
           width={1200}
           height={630}

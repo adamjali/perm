@@ -98,7 +98,7 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
     }
 
     return combined;
-  }, [milestones, today]);
+  }, [milestones, today, caseData]);
 
   return (
     <div className="detail-card">

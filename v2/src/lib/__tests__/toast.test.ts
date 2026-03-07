@@ -8,7 +8,7 @@
  * - Promise toasts still return the promise even when suppressed
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { toast as sonnerToast } from "sonner";
 import { toast, updateToastAuthState, getToastAuthState } from "../toast";
 

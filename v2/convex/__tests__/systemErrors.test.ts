@@ -24,7 +24,6 @@ process.env.ADMIN_EMAIL = TEST_ADMIN_EMAIL;
 
 // FilterApi generic can't resolve api.systemErrors at the type level.
 // The reference is verified correct — see convex/systemErrors.ts (query).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const systemErrorsApi = (api as any).systemErrors;
 
 describe("systemErrors", () => {

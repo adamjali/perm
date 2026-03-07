@@ -70,7 +70,7 @@ describe("validateDocumentFile", () => {
     });
 
     it("rejects files without extension", async () => {
-      const file = createMockFile("noextension", 1024, "application/pdf");
+      createMockFile("noextension", 1024, "application/pdf");
       // File has no extension dot
       const noExtFile = new File(["test"], "noextension", { type: "application/pdf" });
       const result = await validateDocumentFile(noExtFile);

@@ -7,12 +7,10 @@ import {
   DEADLINE_TIMEZONE_RULES,
   ENFORCEMENT_TIMEZONE_RULES,
   DOL_TIMEZONE,
-  DEFAULT_USER_TIMEZONE,
   getEffectiveTimezone,
   getTodayInTimezone,
   getTodayForDeadline,
   getTimezoneDisplayLabel,
-  type TimezoneRule,
 } from "./timezones";
 import type { DeadlineType } from "./types";
 

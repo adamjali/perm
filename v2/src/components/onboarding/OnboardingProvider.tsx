@@ -102,7 +102,10 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const showTour = tourActive;
 
   // Checklist state
-  const completedChecklistItems = onboardingState?.onboardingChecklist ?? [];
+  const completedChecklistItems = useMemo(
+    () => onboardingState?.onboardingChecklist ?? [],
+    [onboardingState?.onboardingChecklist]
+  );
   const isChecklistDismissed =
     (shouldSkipOnboarding && onboardingState?.onboardingCompletedAt === null) ||
     (onboardingState?.onboardingChecklistDismissed ?? false);

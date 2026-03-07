@@ -76,16 +76,18 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
   const shortcutKey = isMac ? "Cmd" : "Ctrl";
 
   // Filter out deleted notes, then sort: pending first, then done; within each group, newest first
-  const statusOrder = { pending: 0, done: 1, deleted: 2 } as const;
-  const visibleNotes = useMemo(() => [...notes]
-    .filter((n) => n.status !== "deleted")
-    .filter((n) => filterCategory === "all" || n.category === filterCategory)
-    .sort((a, b) => {
-      const aOrder = statusOrder[a.status] ?? 2;
-      const bOrder = statusOrder[b.status] ?? 2;
-      if (aOrder !== bOrder) return aOrder - bOrder;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    }), [notes, filterCategory]);
+  const visibleNotes = useMemo(() => {
+    const statusOrder = { pending: 0, done: 1, deleted: 2 } as const;
+    return [...notes]
+      .filter((n) => n.status !== "deleted")
+      .filter((n) => filterCategory === "all" || n.category === filterCategory)
+      .sort((a, b) => {
+        const aOrder = statusOrder[a.status] ?? 2;
+        const bOrder = statusOrder[b.status] ?? 2;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+  }, [notes, filterCategory]);
 
   const totalPages = Math.ceil(visibleNotes.length / ITEMS_PER_PAGE);
   const pagedNotes = visibleNotes.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);

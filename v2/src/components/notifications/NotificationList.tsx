@@ -39,7 +39,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { toast } from "@/lib/toast";
 import type { NotificationTabType } from "./NotificationTabs";
 
 // Types

@@ -257,7 +257,9 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
   // Uses refs for streamingMessages check to avoid re-running on every streaming chunk.
   const prevActionModeRef = useRef<string | undefined>(options.actionMode);
   const streamingMessagesRef = useRef(streamingMessages);
-  streamingMessagesRef.current = streamingMessages;
+  useEffect(() => {
+    streamingMessagesRef.current = streamingMessages;
+  });
   useEffect(() => {
     const currentMode = options.actionMode;
     const prevMode = prevActionModeRef.current;
