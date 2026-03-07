@@ -55,13 +55,13 @@ export function I140Tab({ caseData }: I140TabProps) {
       windowLabel = "I-140 filed";
       windowPct = 100;
       windowChip = "Filed";
-      windowChipStyle = { background: "rgba(46,204,64,0.1)", color: "var(--primary)" };
+      windowChipStyle = { background: "var(--primary)", color: "#000" };
     } else if (now <= expDate) {
       windowDays = differenceInDays(expDate, now);
       windowLabel = "to file I-140";
       windowPct = total > 0 ? ((differenceInDays(now, certDate) / total) * 100) : 0;
       windowChip = "Active";
-      windowChipStyle = { background: "rgba(46,204,64,0.1)", color: "var(--primary)" };
+      windowChipStyle = { background: "var(--primary)", color: "#000" };
     } else {
       windowDays = differenceInDays(now, expDate);
       windowLabel = "past expiration";

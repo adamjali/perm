@@ -61,13 +61,13 @@ export function ETA9089Tab({
       windowLabel = "until window opens";
       windowPct = 0;
       windowChip = "Upcoming";
-      windowChipStyle = { background: "rgba(217,119,6,0.1)", color: "var(--stage-eta9089)" };
+      windowChipStyle = { background: "var(--stage-eta9089)", color: "#000" };
     } else if (now <= closesDate) {
       windowDays = differenceInDays(closesDate, now);
       windowLabel = "remaining in window";
       windowPct = total > 0 ? ((differenceInDays(now, opensDate) / total) * 100) : 0;
       windowChip = "Active";
-      windowChipStyle = { background: "rgba(46,204,64,0.1)", color: "var(--primary)" };
+      windowChipStyle = { background: "var(--primary)", color: "#000" };
     } else {
       windowDays = differenceInDays(now, closesDate);
       windowLabel = "past expiration";

@@ -71,72 +71,77 @@ export function NextUpSection({ caseData, caseId, className, showStageProgress =
   }
 
   return (
-    <motion.section
-      variants={containerVariants}
-      initial={false}
-      animate="visible"
-      className={cn(
-        "border-2 border-border bg-card p-4 sm:p-6 shadow-hard",
-        className
-      )}
-      aria-labelledby="next-up-heading"
-    >
-      {/* Header */}
-      <motion.div variants={itemVariants} className="flex items-center gap-2 mb-5">
-        <div className="flex items-center justify-center w-8 h-8 bg-primary/20 text-primary">
-          <Zap className="h-5 w-5" />
-        </div>
-        <h2
-          id="next-up-heading"
-          className="font-heading text-lg sm:text-xl font-bold"
-        >
-          What&apos;s Next
-        </h2>
-      </motion.div>
+    <div className={cn("next-up-caution shadow-hard", className)}>
+      {/* Caution tape — top */}
+      <div className="hazard-strip-yellow" aria-hidden="true" />
 
-      {/* Stage Progress (can be hidden when rendered elsewhere) */}
-      {showStageProgress && (
-        <div className="mb-6">
-          <StageProgressIndicator currentStage={currentStage} />
-        </div>
-      )}
-
-      {/* Content Grid */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        {/* Next Action */}
-        <AnimatePresence mode="wait">
-          {nextAction && (
-            <div className="sm:col-span-1">
-              <NextActionCard
-                action={nextAction}
-                caseId={caseId}
-                caseData={caseData}
-              />
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* Deadline Countdown */}
-        <AnimatePresence mode="wait">
-          {nextDeadline && (
-            <div className="sm:col-span-1">
-              <DeadlineCountdown deadline={nextDeadline} />
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* Empty state when no deadline */}
-        {!nextDeadline && nextAction && (
-          <motion.div
-            variants={itemVariants}
-            className="sm:col-span-1 p-4 border-2 border-dashed border-border bg-muted/30 flex items-center justify-center"
+      <motion.section
+        variants={containerVariants}
+        initial={false}
+        animate="visible"
+        className="bg-card p-4 sm:p-6"
+        aria-labelledby="next-up-heading"
+      >
+        {/* Header */}
+        <motion.div variants={itemVariants} className="flex items-center gap-2 mb-5">
+          <div className="flex items-center justify-center w-8 h-8 bg-primary/20 text-primary">
+            <Zap className="h-5 w-5" />
+          </div>
+          <h2
+            id="next-up-heading"
+            className="font-heading text-lg sm:text-xl font-bold"
           >
-            <span className="text-sm text-muted-foreground">
-              No upcoming deadlines
-            </span>
-          </motion.div>
+            What&apos;s Next
+          </h2>
+        </motion.div>
+
+        {/* Stage Progress (can be hidden when rendered elsewhere) */}
+        {showStageProgress && (
+          <div className="mb-6">
+            <StageProgressIndicator currentStage={currentStage} />
+          </div>
         )}
-      </div>
-    </motion.section>
+
+        {/* Content Grid */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Next Action */}
+          <AnimatePresence mode="wait">
+            {nextAction && (
+              <div className="sm:col-span-1">
+                <NextActionCard
+                  action={nextAction}
+                  caseId={caseId}
+                  caseData={caseData}
+                />
+              </div>
+            )}
+          </AnimatePresence>
+
+          {/* Deadline Countdown */}
+          <AnimatePresence mode="wait">
+            {nextDeadline && (
+              <div className="sm:col-span-1">
+                <DeadlineCountdown deadline={nextDeadline} />
+              </div>
+            )}
+          </AnimatePresence>
+
+          {/* Empty state when no deadline */}
+          {!nextDeadline && nextAction && (
+            <motion.div
+              variants={itemVariants}
+              className="sm:col-span-1 p-4 border-2 border-dashed border-border bg-muted/30 flex items-center justify-center"
+            >
+              <span className="text-sm text-muted-foreground">
+                No upcoming deadlines
+              </span>
+            </motion.div>
+          )}
+        </div>
+      </motion.section>
+
+      {/* Caution tape — bottom */}
+      <div className="hazard-strip-yellow" aria-hidden="true" />
+    </div>
   );
 }

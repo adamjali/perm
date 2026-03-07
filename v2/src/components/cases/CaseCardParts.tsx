@@ -357,7 +357,7 @@ export function ExpandedContent({
           <div className="font-mono font-bold text-[0.625rem] uppercase text-black border-b border-black/30 pb-0.5 mb-1">
             Notes
           </div>
-          <div className="text-xs line-clamp-2 text-black" title={notes}>{notes}</div>
+          <div className="text-xs line-clamp-2 text-black" style={{ overflowWrap: "break-word", wordBreak: "break-word" }} title={notes}>{notes}</div>
         </div>
       )}
     </div>

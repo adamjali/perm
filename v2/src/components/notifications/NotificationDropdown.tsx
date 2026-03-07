@@ -197,7 +197,7 @@ function NotificationItem({
         </p>
 
         {/* Message - 2 line truncate */}
-        <p className="text-xs text-muted-foreground line-clamp-2" title={notification.message}>
+        <p className="text-xs text-muted-foreground line-clamp-2" style={{ overflowWrap: "break-word", wordBreak: "break-word" }} title={notification.message}>
           {notification.message}
         </p>
 

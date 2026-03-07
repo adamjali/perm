@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { format, parseISO } from "date-fns";
-import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText, ChevronDown, Pencil, Copy, Check, Trash2, Loader2 } from "lucide-react";
+import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText, ChevronDown, Pencil, Copy, Check, Trash2, Loader2, FilePlus } from "lucide-react";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { calculateNextAction, calculateNextDeadline } from "./next-up-section.utils";
 import { QuickEditFields, isEditableAction } from "./quick-edit";
@@ -68,6 +68,7 @@ export function OverviewTab({
   const [editDescription, setEditDescription] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>();
   const [isSavingJobDesc, setIsSavingJobDesc] = useState(false);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [isClearingJobDesc, setIsClearingJobDesc] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -120,6 +121,19 @@ export function OverviewTab({
     }
   }, [jobDescProps]);
 
+  const handleSaveAsTemplate = useCallback(async () => {
+    if (!jobDescProps || !editPositionTitle.trim() || !editDescription.trim()) return;
+    setIsSavingTemplate(true);
+    try {
+      await jobDescProps.onSaveAsNewTemplate(editPositionTitle.trim(), editDescription.trim());
+      toast.success("Saved as new template");
+    } catch {
+      toast.error("Failed to save template");
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  }, [jobDescProps, editPositionTitle, editDescription]);
+
   const handleCopyJobDesc = useCallback(async () => {
     const text = isEditingJobDesc ? editDescription : caseData.jobDescription;
     if (!text) return;
@@ -151,64 +165,74 @@ export function OverviewTab({
         const canExpand = isEditableAction(nextAction.action);
         return (
           <motion.div variants={itemVariants}>
-            <div className={cn("next-up", isNextUpExpanded && "shadow-hard")}>
-              <div
-                className={cn("next-up-main", canExpand && "cursor-pointer")}
-                onClick={canExpand ? () => setIsNextUpExpanded(v => !v) : undefined}
-              >
-                <div className="next-up-icon">
-                  <FileText className="h-5 w-5" />
+            <div className="next-up-caution">
+              {/* Caution tape — top */}
+              <div className="hazard-strip-yellow" aria-hidden="true" />
+
+              <div className="next-up">
+                <div
+                  className={cn("next-up-main", canExpand && "cursor-pointer")}
+                  onClick={canExpand ? () => setIsNextUpExpanded(v => !v) : undefined}
+                >
+                  <div className="next-up-icon">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div className="next-up-label">Next Up</div>
+                    <h3>{nextAction.action}</h3>
+                    <p>{nextAction.description}</p>
+                  </div>
+                  {canExpand && (
+                    <motion.div
+                      animate={{ rotate: isNextUpExpanded ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="shrink-0"
+                    >
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    </motion.div>
+                  )}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div className="next-up-label">Next Up</div>
-                  <h3>{nextAction.action}</h3>
-                  <p>{nextAction.description}</p>
-                </div>
-                {canExpand && (
+                {nextDeadline && (() => {
+                  const urgencyColor =
+                    nextDeadline.daysUntil <= 14 ? "var(--destructive)"
+                    : nextDeadline.daysUntil <= 30 ? "var(--stage-eta9089)"
+                    : "var(--primary)";
+                  return (
+                    <div className="next-up-stat">
+                      <div className="big" style={{ color: urgencyColor }}>{nextDeadline.daysUntil}</div>
+                      <div className="label">{nextDeadline.label}</div>
+                      <div className="date">{fmtDate(nextDeadline.date)}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Expanded quick-edit */}
+              <AnimatePresence initial={false}>
+                {isNextUpExpanded && canExpand && (
                   <motion.div
-                    animate={{ rotate: isNextUpExpanded ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="shrink-0"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                    className="overflow-hidden border-t-[3px] border-black bg-card"
                   >
-                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    <div className="p-4">
+                      <QuickEditFields
+                        actionName={nextAction.action}
+                        caseId={caseId}
+                        caseData={caseData}
+                        onComplete={() => setIsNextUpExpanded(false)}
+                        onNavigateToForm={() => {}}
+                      />
+                    </div>
                   </motion.div>
                 )}
-              </div>
-              {nextDeadline && (() => {
-                const urgencyColor =
-                  nextDeadline.daysUntil <= 14 ? "var(--destructive)"
-                  : nextDeadline.daysUntil <= 30 ? "var(--stage-eta9089)"
-                  : "var(--primary)";
-                return (
-                  <div className="next-up-stat">
-                    <div className="big" style={{ color: urgencyColor }}>{nextDeadline.daysUntil}</div>
-                    <div className="label">{nextDeadline.label}</div>
-                    <div className="date">{fmtDate(nextDeadline.date)}</div>
-                  </div>
-                );
-              })()}
+              </AnimatePresence>
+
+              {/* Caution tape — bottom */}
+              <div className="hazard-strip-yellow" aria-hidden="true" />
             </div>
-            <AnimatePresence initial={false}>
-              {isNextUpExpanded && canExpand && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="overflow-hidden border-[3px] border-t-0 border-border bg-card"
-                >
-                  <div className="p-4">
-                    <QuickEditFields
-                      actionName={nextAction.action}
-                      caseId={caseId}
-                      caseData={caseData}
-                      onComplete={() => setIsNextUpExpanded(false)}
-                      onNavigateToForm={() => {}}
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </motion.div>
         );
       })()}
@@ -381,25 +405,38 @@ export function OverviewTab({
 
                     {/* Action buttons */}
                     <div className="flex items-center justify-between gap-2 pt-1 border-t-[3px] border-dashed border-border">
-                      <div>
+                      <div className="flex items-center gap-2">
                         {hasJobDesc && (
                           <button
                             type="button"
                             onClick={clearJobDesc}
                             disabled={isClearingJobDesc}
-                            className="flex items-center gap-1 px-2 py-1.5 text-[11px] font-mono font-bold uppercase tracking-wider text-destructive hover:bg-destructive/10 transition-colors"
+                            className="flex items-center gap-1 px-3 py-1.5 border-[3px] border-border text-[11px] font-mono font-bold uppercase tracking-wider text-destructive hover:bg-destructive hover:text-white hover:border-destructive hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50"
                           >
                             <Trash2 className="h-3 w-3" />
                             {isClearingJobDesc ? "Clearing..." : "Clear"}
                           </button>
                         )}
+                        <button
+                          type="button"
+                          onClick={handleSaveAsTemplate}
+                          disabled={isSavingTemplate || !editPositionTitle.trim() || !editDescription.trim()}
+                          className="flex items-center gap-1 px-3 py-1.5 border-[3px] border-border text-[11px] font-mono font-bold uppercase tracking-wider hover:bg-[var(--primary)] hover:text-black hover:border-black dark:hover:border-white/50 hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50"
+                        >
+                          {isSavingTemplate ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <FilePlus className="h-3 w-3" />
+                          )}
+                          {isSavingTemplate ? "Saving..." : "Save Template"}
+                        </button>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={cancelEditJobDesc}
                           disabled={isSavingJobDesc}
-                          className="px-3 py-1.5 border-[3px] border-border text-[11px] font-mono font-bold uppercase tracking-wider hover:bg-muted transition-colors"
+                          className="px-3 py-1.5 border-[3px] border-border text-[11px] font-mono font-bold uppercase tracking-wider hover:bg-muted hover:-translate-y-[1px] hover:shadow-hard-sm transition-all"
                         >
                           Cancel
                         </button>
@@ -407,7 +444,7 @@ export function OverviewTab({
                           type="button"
                           onClick={saveJobDesc}
                           disabled={isSavingJobDesc || !editDescription.trim()}
-                          className="px-3 py-1.5 border-[3px] border-border bg-primary text-primary-foreground text-[11px] font-mono font-bold uppercase tracking-wider hover:opacity-90 transition-opacity disabled:opacity-50"
+                          className="px-3 py-1.5 border-[3px] border-black dark:border-white/50 bg-primary text-primary-foreground text-[11px] font-mono font-bold uppercase tracking-wider shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all disabled:opacity-50"
                         >
                           {isSavingJobDesc ? (
                             <span className="flex items-center gap-1">

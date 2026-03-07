@@ -148,7 +148,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                   className="win-chip"
                   style={
                     windowLabel.includes("remaining")
-                      ? { background: "rgba(46,204,64,0.1)", color: "var(--primary)" }
+                      ? { background: "var(--primary)", color: "#000" }
                       : { background: "var(--destructive)", color: "#fff" }
                   }
                 >

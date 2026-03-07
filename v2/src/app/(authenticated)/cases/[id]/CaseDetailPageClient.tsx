@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect, useMemo } from "react";
+import { use, useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { motion } from "motion/react";
@@ -168,9 +168,9 @@ function CaseDetailSkeleton() {
           </div>
         </div>
         {/* Stage Bar */}
-        <div className="flex border-t-[3px] border-border">
+        <div className="flex border-t-[3px] border-black">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex-1 py-2.5 px-2 border-r-[3px] border-border last:border-r-0">
+            <div key={i} className="flex-1 py-2.5 px-2 border-r-[3px] border-black last:border-r-0">
               <Skeleton variant="line" className="w-full h-4 mx-auto max-w-[80px]" />
             </div>
           ))}
@@ -376,6 +376,14 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
     navigateTo(editPath);
   };
 
+  const handleUpdateNotes = useCallback(async (updatedNotes: import("@/lib/forms/case-form-schema").NoteEntry[]) => {
+    try {
+      await updateMutation({ id: caseId, notes: updatedNotes });
+    } catch {
+      // Silently fail — Convex will revert optimistic update
+    }
+  }, [updateMutation, caseId]);
+
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
@@ -553,7 +561,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               size="icon"
               onClick={() => navigateTo("/cases")}
               className={cn(
-                "shrink-0 h-9 w-9 border-[3px] border-border bg-card hover:bg-manila-dark hover:-translate-y-[1px] hover:shadow-hard-sm transition-all",
+                "shrink-0 h-9 w-9 border-[3px] border-border bg-card hover:bg-[var(--primary)] hover:text-black hover:border-black dark:hover:border-white/50 hover:-translate-y-[1px] hover:shadow-hard-sm transition-all",
                 isNavigating && "opacity-70 pointer-events-none"
               )}
               disabled={isAnyNavigating}
@@ -680,7 +688,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     size="icon"
                     className={cn(
                       "shrink-0 border-[3px] border-border bg-card",
-                      "hover:bg-manila-dark hover:-translate-y-[1px] hover:shadow-hard-sm transition-all",
+                      "hover:bg-[var(--primary)] hover:text-black hover:border-black dark:hover:border-white/50 hover:-translate-y-[1px] hover:shadow-hard-sm transition-all",
                       "min-h-[38px] min-w-[38px] h-[38px] w-[38px]"
                     )}
                     disabled={isUpdating || isAnyNavigating}
@@ -735,7 +743,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         {/* Stage Bar — flat segments matching mockup */}
         {!isClosed && (
           <div
-            className="flex border-t-[3px] border-border mt-3.5"
+            className="flex border-t-[3px] border-black mt-3.5"
             role="progressbar"
             aria-valuenow={currentStage + 1}
             aria-valuemin={1}
@@ -758,7 +766,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   key={stage}
                   className={cn(
                     "flex-1 py-2.5 px-2 text-center font-mono text-[0.7rem] font-bold uppercase tracking-wide flex items-center justify-center gap-1.5",
-                    "border-r-[3px] border-border last:border-r-0",
+                    "border-r-[3px] border-black last:border-r-0",
                     isDone && "bg-card text-foreground",
                     isActive && "text-white",
                     !isDone && !isActive && "bg-muted text-muted-foreground"
@@ -834,7 +842,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           </TabPanel>
 
           <TabPanel id="notes" activeTab={activeTab}>
-            <NotesTab notes={caseData.notes || []} />
+            <NotesTab notes={caseData.notes || []} onUpdateNotes={handleUpdateNotes} />
           </TabPanel>
         </CaseDetailTabs>
       </motion.div>

@@ -239,10 +239,12 @@ export function NotesJournal({
   const [showNewNoteOptions, setShowNewNoteOptions] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [filterBy, setFilterBy] = useState<FilterOption>("all");
-  const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
   // Filter toggle available for future UI expansion
   const [_showFilters, _setShowFilters] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Detect OS for keyboard shortcut display
   const isMac = typeof window !== 'undefined' && navigator.platform.toLowerCase().includes('mac');
@@ -337,6 +339,57 @@ export function NotesJournal({
       }
     },
     [handleAddNote]
+  );
+
+  /**
+   * Start editing a note inline
+   */
+  const handleStartEdit = useCallback((note: NoteEntry) => {
+    setEditingNoteId(note.id);
+    setEditingContent(note.content);
+    // Focus the textarea after render
+    setTimeout(() => editTextareaRef.current?.focus(), 0);
+  }, []);
+
+  /**
+   * Save edited note content
+   */
+  const handleSaveEdit = useCallback(() => {
+    if (!editingNoteId) return;
+    const trimmed = editingContent.trim();
+    if (!trimmed) return; // Don't save empty notes
+    onChange(
+      notes.map((note) =>
+        note.id === editingNoteId ? { ...note, content: trimmed } : note
+      )
+    );
+    setEditingNoteId(null);
+    setEditingContent("");
+  }, [editingNoteId, editingContent, notes, onChange]);
+
+  /**
+   * Cancel editing
+   */
+  const handleCancelEdit = useCallback(() => {
+    setEditingNoteId(null);
+    setEditingContent("");
+  }, []);
+
+  /**
+   * Handle keyboard shortcuts in edit textarea
+   */
+  const handleEditKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+        event.preventDefault();
+        handleSaveEdit();
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        handleCancelEdit();
+      }
+    },
+    [handleSaveEdit, handleCancelEdit]
   );
 
   return (
@@ -500,16 +553,16 @@ export function NotesJournal({
       {/* ========== NOTES LIST ========== */}
       {processedNotes.length > 0 && (
         <div className="space-y-3">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {processedNotes.map((note) => {
               const timestamp = formatTimestamp(note.createdAt);
               const priorityConfig = PRIORITY_CONFIG[note.priority || "medium"];
               const categoryConfig = CATEGORY_CONFIG[note.category || "other"];
+              const isEditing = editingNoteId === note.id;
 
               return (
                 <motion.div
                   key={note.id}
-                  layout
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20 }}
@@ -521,7 +574,6 @@ export function NotesJournal({
                     note.status === "done"
                       ? "bg-muted/50 opacity-60 border-muted"
                       : "bg-background border-border hover:border-muted-foreground/50",
-                    // High priority static highlight (no animation)
                     note.priority === "high" &&
                       note.status !== "done" &&
                       "ring-2 ring-red-400/50"
@@ -566,19 +618,57 @@ export function NotesJournal({
                         </span>
                       </div>
 
-                      {/* Note content — click to expand/collapse */}
-                      <p
-                        className={cn(
-                          "text-sm whitespace-pre-wrap break-words cursor-pointer",
-                          expandedNoteId !== note.id && "line-clamp-4",
-                          note.status === "done" &&
-                            "line-through text-muted-foreground"
-                        )}
-                        title={expandedNoteId === note.id ? "Click to collapse" : note.content}
-                        onClick={() => setExpandedNoteId(expandedNoteId === note.id ? null : note.id)}
-                      >
-                        {note.content}
-                      </p>
+                      {/* Note content — click to edit */}
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            ref={editTextareaRef}
+                            value={editingContent}
+                            onChange={(e) => setEditingContent(e.target.value)}
+                            onKeyDown={handleEditKeyDown}
+                            maxLength={5000}
+                            rows={4}
+                            className="text-sm border-2 border-primary/50"
+                          />
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="default"
+                              size="sm"
+                              onClick={handleSaveEdit}
+                              disabled={!editingContent.trim()}
+                              className="h-7 text-xs"
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleCancelEdit}
+                              className="h-7 text-xs"
+                            >
+                              Cancel
+                            </Button>
+                            <span className="text-[10px] text-muted-foreground">
+                              {shortcutKey}+Enter to save · Esc to cancel
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <p
+                          className={cn(
+                            "text-sm whitespace-pre-wrap break-words cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 transition-colors",
+                            "line-clamp-4",
+                            note.status === "done" &&
+                              "line-through text-muted-foreground"
+                          )}
+                          title="Click to edit"
+                          onClick={() => handleStartEdit(note)}
+                        >
+                          {note.content}
+                        </p>
+                      )}
 
                       {/* Timestamp row */}
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -595,7 +685,7 @@ export function NotesJournal({
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDelete(note.id)}
-                      className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                      className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
                       aria-label="Delete note"
                     >
                       <Trash2 className="h-4 w-4" />

@@ -255,7 +255,7 @@ function NotificationListItem({
           </span>
         </div>
 
-        <p className="text-sm text-muted-foreground line-clamp-2" title={notification.message}>
+        <p className="text-sm text-muted-foreground line-clamp-2" style={{ overflowWrap: "break-word", wordBreak: "break-word" }} title={notification.message}>
           {notification.message}
         </p>
 
