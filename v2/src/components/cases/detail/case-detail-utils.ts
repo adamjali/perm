@@ -83,6 +83,7 @@ export function computeWindowStatus(
 
   const start = parseISO(startDate);
   const end = parseISO(endDate);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
   const now = new Date();
   const total = differenceInDays(end, start);
 

@@ -72,7 +72,7 @@ function DocumentPreview({ doc, onFullscreen }: { doc: DocumentEntry; onFullscre
         <iframe
           src={doc.url}
           title={doc.name}
-          sandbox="allow-same-origin"
+          sandbox="allow-same-origin allow-scripts"
           style={{
             width: "100%",
             height: 300,
@@ -246,7 +246,7 @@ function FullscreenViewer({
       </div>
       <div className="doc-fullscreen-body" onClick={(e) => e.stopPropagation()}>
         {doc.mimeType === "application/pdf" ? (
-          <iframe src={doc.url} title={doc.name} sandbox="allow-same-origin" style={{ width: "100%", height: "100%", border: "none", background: "#fff" }} />
+          <iframe src={doc.url} title={doc.name} sandbox="allow-same-origin allow-scripts" style={{ width: "100%", height: "100%", border: "none", background: "#fff" }} />
         ) : doc.mimeType.startsWith("image/") ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={doc.url} alt={doc.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
