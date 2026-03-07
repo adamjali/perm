@@ -1015,6 +1015,17 @@
 .nof-calendar .nof-day.outside { background: var(--muted); color: var(--muted-foreground); }
 .nof-calendar .nof-day.posted { background: var(--stage-recruitment); color: #fff; font-weight: 700; }
 .nof-calendar .nof-day.weekend { background: transparent; color: var(--muted-foreground); opacity: 0.3; font-style: italic; }
+/* NOF calendar tooltips */
+.nof-calendar .nof-day[data-tooltip] { position: relative; cursor: default; }
+.nof-calendar .nof-day[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  padding: 4px 10px; font-size: 0.62rem; font-style: normal; font-weight: 700;
+  white-space: nowrap; opacity: 0; pointer-events: none;
+  background: #000; color: #fff; border: 2px solid #000;
+  z-index: 50; transition: opacity 0.12s ease-out;
+}
+.nof-calendar .nof-day[data-tooltip]:hover::after { opacity: 1; }
 /* NOF calendar dark mode */
 .dark .nof-calendar { border-color: #000000; }
 .dark .nof-calendar .nof-hdr { border-bottom-color: #000000; }

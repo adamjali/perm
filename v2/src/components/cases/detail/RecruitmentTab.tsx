@@ -50,26 +50,40 @@ function NOFMiniCalendar({ start, end }: { start: string; end: string }) {
     }
   }
 
-  function getDayInfo(d: Date): { cls: string; title?: string } {
+  function getDayInfo(d: Date): { cls: string; tooltip?: string } {
     const dateStr = format(d, "yyyy-MM-dd");
     const dayOfWeek = d.getDay();
     const isWknd = dayOfWeek === 0 || dayOfWeek === 6;
     const inRange = d >= startD && d <= endD;
     const bizDay = isBusinessDay(dateStr);
     const holName = holidaysByYear.get(d.getFullYear())?.get(dateStr);
+    const dayName = dayOfWeek === 0 ? "Sunday" : dayOfWeek === 6 ? "Saturday" : "";
 
+    // Business day within posting range — posted
     if (inRange && bizDay) {
-      return { cls: "nof-day posted" };
+      return { cls: "nof-day posted", tooltip: `Posted · ${format(d, "MMM d")}` };
     }
+
+    // Weekend (may also be a holiday — combine both reasons)
     if (isWknd) {
-      return { cls: "nof-day weekend", title: dayOfWeek === 0 ? "Sunday" : "Saturday" };
+      const reasons = [dayName];
+      if (holName) reasons.push(holName);
+      return { cls: "nof-day weekend", tooltip: reasons.join(" · ") };
     }
+
+    // Weekday holiday (in or out of range — not a business day)
     if (holName) {
-      return { cls: inRange ? "nof-day weekend" : "nof-day outside", title: holName };
+      return {
+        cls: inRange ? "nof-day weekend" : "nof-day outside",
+        tooltip: `${holName} (Holiday)`,
+      };
     }
+
+    // Outside posting period
     if (!inRange) {
-      return { cls: "nof-day outside", title: "Outside posting period" };
+      return { cls: "nof-day outside", tooltip: "Outside posting period" };
     }
+
     return { cls: "nof-day" };
   }
 
@@ -90,7 +104,15 @@ function NOFMiniCalendar({ start, end }: { start: string; end: string }) {
               {Array.from({ length: daysInMonth }, (_, i) => {
                 const day = new Date(yr, mo, i + 1);
                 const info = getDayInfo(day);
-                return <div key={i + 1} className={info.cls} title={info.title}>{i + 1}</div>;
+                return (
+                  <div
+                    key={i + 1}
+                    className={info.cls}
+                    {...(info.tooltip ? { "data-tooltip": info.tooltip } : {})}
+                  >
+                    {i + 1}
+                  </div>
+                );
               })}
             </div>
           </div>
