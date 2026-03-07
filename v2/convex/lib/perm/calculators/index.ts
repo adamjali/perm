@@ -14,6 +14,8 @@ export {
 } from './eta9089';
 export {
   calculateRecruitmentDeadlines,
+  calculateStepDeadline,
+  STEP_DEADLINE_CONFIGS,
   lastSundayOnOrBefore,
   calculateNoticeOfFilingEnd,
   calculateJobOrderEnd,

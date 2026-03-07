@@ -137,6 +137,8 @@ export {
   type ETA9089Window,
   // Recruitment
   calculateRecruitmentDeadlines,
+  calculateStepDeadline,
+  STEP_DEADLINE_CONFIGS,
   lastSundayOnOrBefore,
   calculateNoticeOfFilingEnd,
   calculateJobOrderEnd,

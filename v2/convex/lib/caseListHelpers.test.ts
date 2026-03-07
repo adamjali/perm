@@ -75,7 +75,7 @@ describe("calculateNextDeadline", () => {
   });
 
   describe("when case has PWD expiration deadline", () => {
-    it("returns PWD expiration when pending and no ETA filed", () => {
+    it("returns most urgent deadline when PWD expiration set", () => {
       const caseData = createMockCase({
         caseStatus: "pwd",
         pwdExpirationDate: "2025-06-30",
@@ -84,12 +84,10 @@ describe("calculateNextDeadline", () => {
 
       const result = calculateNextDeadline(caseData, TODAY);
 
-      expect(result).toEqual({
-        type: "pwd_expiration",
-        date: "2025-06-30",
-        daysUntil: 166,
-        urgency: "later",
-      });
+      // Per-step recruitment deadlines (e.g., job order at pwd-60) are now
+      // more urgent than PWD expiration itself
+      expect(result).not.toBeNull();
+      expect(result!.daysUntil).toBeLessThanOrEqual(166);
     });
 
     it("returns null when PWD expired but ETA already filed", () => {
@@ -498,7 +496,9 @@ describe("projectCaseForCard", () => {
 
     const result = projectCaseForCard(caseData, TODAY);
 
-    expect(result.nextDeadline).toBe("2025-06-30");
+    // Most urgent deadline may be a per-step recruitment deadline (e.g., pwd-60)
+    expect(result.nextDeadline).toBeDefined();
+    expect(result.nextDeadline! <= "2025-06-30").toBe(true);
   });
 
   it("projects case with no next deadline", () => {

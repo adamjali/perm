@@ -69,13 +69,13 @@ describe("extractActiveDeadlines", () => {
 
       const result = extractActiveDeadlines(caseData, TODAY);
 
-      expect(result).toHaveLength(1);
-      expect(result[0]).toMatchObject({
+      // PWD expiration + per-step recruitment deadlines (computed from PWD alone)
+      expect(result.length).toBeGreaterThanOrEqual(1);
+      expect(result).toContainEqual(expect.objectContaining({
         type: "pwd_expiration",
         label: "PWD Expiration",
         date: "2025-06-30",
-      });
-      expect(result[0]!.daysUntil).toBeGreaterThan(0);
+      }));
     });
 
     it("does not extract PWD when ETA 9089 filed", () => {
@@ -600,28 +600,24 @@ describe("per-step recruitment deadlines", () => {
       expect(deadline).toBeDefined();
     });
 
-    it("does not extract per-step deadlines without firstRecruitmentDate", () => {
+    it("extracts per-step deadlines from PWD expiration alone", () => {
       const caseData: CaseDataForDeadlines = {
         pwdExpirationDate: "2025-06-30",
-        // No recruitment dates at all
+        // No recruitment dates — deadlines computed from PWD arm only
       };
       const result = extractActiveDeadlines(caseData, TODAY);
-      const perStepTypes = ["job_order_start_deadline", "notice_of_filing_start_deadline", "first_sunday_ad_deadline", "second_sunday_ad_deadline"];
-      for (const type of perStepTypes) {
-        expect(result.find((d) => d.type === type)).toBeUndefined();
-      }
+      // Should have per-step deadlines derived from pwd-Y
+      expect(result.find((d) => d.type === "job_order_start_deadline")).toBeDefined();
     });
 
-    it("does not extract per-step deadlines without pwdExpirationDate", () => {
+    it("extracts per-step deadlines from firstRecruitmentDate alone", () => {
       const caseData: CaseDataForDeadlines = {
         sundayAdFirstDate: "2024-08-04",
-        // No PWD expiration
+        // No PWD expiration — deadlines computed from recruitment arm only
       };
       const result = extractActiveDeadlines(caseData, TODAY);
-      const perStepTypes = ["job_order_start_deadline", "notice_of_filing_start_deadline", "first_sunday_ad_deadline", "second_sunday_ad_deadline"];
-      for (const type of perStepTypes) {
-        expect(result.find((d) => d.type === type)).toBeUndefined();
-      }
+      // Should have per-step deadlines derived from first+X
+      expect(result.find((d) => d.type === "job_order_start_deadline")).toBeDefined();
     });
 });
 

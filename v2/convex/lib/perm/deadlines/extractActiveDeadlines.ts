@@ -27,8 +27,9 @@ import {
   getTodayForDeadline,
   DEFAULT_USER_TIMEZONE,
 } from "./timezones";
-import { calculateRecruitmentDeadlines } from "../calculators/recruitment";
-import { getFirstRecruitmentDate } from "../dates";
+import { getFirstRecruitmentDate, subtractBusinessDays } from "../dates";
+import { calculateStepDeadline, STEP_DEADLINE_CONFIGS } from "../calculators/recruitment";
+import { NOTICE_MIN_BUSINESS_DAYS } from "../constants";
 
 const log = loggers.deadline;
 
@@ -143,8 +144,9 @@ function extractSingleDeadline(
 /**
  * Extract per-step recruitment deadlines (job order, notice, Sunday ads).
  *
- * These are computed from firstRecruitmentDate + pwdExpirationDate using
- * the central calculateRecruitmentDeadlines function.
+ * Uses calculateStepDeadline (central source of truth) which computes
+ * each constraint arm independently — deadlines are returned even when
+ * only firstRecruitmentDate or pwdExpirationDate is available.
  */
 function extractPerStepDeadlines(
   caseData: CaseDataForDeadlines,
@@ -152,37 +154,35 @@ function extractPerStepDeadlines(
 ): ExtractedDeadline[] {
   const deadlines: ExtractedDeadline[] = [];
 
-  // Need both first recruitment date and PWD expiration to compute deadlines
   const firstRecruit = getFirstRecruitmentDate(caseData);
-  if (!firstRecruit || !caseData.pwdExpirationDate) return deadlines;
+  const pwdExp = caseData.pwdExpirationDate;
+  if (!firstRecruit && !pwdExp) return deadlines;
 
-  // Compute all per-step deadline dates from central calculator
-  let computed;
-  try {
-    computed = calculateRecruitmentDeadlines(firstRecruit, caseData.pwdExpirationDate);
-  } catch (error) {
-    log.error('Failed to compute recruitment deadlines', {
-      firstRecruit,
-      pwdExpiration: caseData.pwdExpirationDate,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return deadlines;
-  }
+  // Map central config keys to deadline types
+  const keyToType: Record<string, DeadlineType> = {
+    job_order_start_deadline: "job_order_start_deadline",
+    notice_of_filing_deadline: "notice_of_filing_start_deadline", // NOF uses start deadline
+    first_sunday_ad_deadline: "first_sunday_ad_deadline",
+    second_sunday_ad_deadline: "second_sunday_ad_deadline",
+  };
 
-  // Map of deadline type → computed date
-  const perStepMap: Array<{ type: DeadlineType; date: string }> = [
-    { type: "job_order_start_deadline", date: computed.job_order_start_deadline },
-    { type: "notice_of_filing_start_deadline", date: computed.notice_of_filing_start_deadline },
-    { type: "first_sunday_ad_deadline", date: computed.first_sunday_ad_deadline },
-    { type: "second_sunday_ad_deadline", date: computed.second_sunday_ad_deadline },
-  ];
+  for (const config of STEP_DEADLINE_CONFIGS) {
+    const type = keyToType[config.key];
+    if (!type) continue;
 
-  for (const { type, date } of perStepMap) {
     const status = isDeadlineActive(type, caseData);
     if (!status.isActive) continue;
 
-    const today = resolveToday(type);
     try {
+      let date = calculateStepDeadline(firstRecruit, pwdExp, config);
+      if (!date) continue;
+
+      // NOF start = subtract 10 business days from the notice deadline
+      if (type === "notice_of_filing_start_deadline") {
+        date = subtractBusinessDays(date, NOTICE_MIN_BUSINESS_DAYS);
+      }
+
+      const today = resolveToday(type);
       deadlines.push({
         type,
         label: DEADLINE_LABELS[type],
@@ -193,7 +193,6 @@ function extractPerStepDeadlines(
     } catch (error) {
       log.error('Failed to extract per-step deadline', {
         type,
-        date,
         error: error instanceof Error ? error.message : String(error),
       });
     }

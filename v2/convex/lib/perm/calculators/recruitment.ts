@@ -60,7 +60,53 @@ export function calculateJobOrderEnd(startDate: string): string {
 }
 
 /**
+ * Per-step deadline configuration.
+ * Each step has two constraint arms: first+daysFromRecruitment and pwd-daysBeforePwd.
+ * Used by calculateStepDeadline (single source of truth for the min() logic).
+ */
+export const STEP_DEADLINE_CONFIGS = [
+  { key: "job_order_start_deadline" as const, daysFromRecruitment: JOB_ORDER_START_DEADLINE_DAYS, daysBeforePwd: JOB_ORDER_START_PWD_BUFFER_DAYS, isSunday: false },
+  { key: "notice_of_filing_deadline" as const, daysFromRecruitment: RECRUITMENT_WINDOW_DAYS, daysBeforePwd: PWD_RECRUITMENT_BUFFER_DAYS, isSunday: false },
+  { key: "first_sunday_ad_deadline" as const, daysFromRecruitment: FIRST_SUNDAY_AD_DEADLINE_DAYS, daysBeforePwd: FIRST_SUNDAY_AD_PWD_BUFFER_DAYS, isSunday: true },
+  { key: "second_sunday_ad_deadline" as const, daysFromRecruitment: RECRUITMENT_WINDOW_DAYS, daysBeforePwd: PWD_RECRUITMENT_BUFFER_DAYS, isSunday: true },
+] as const;
+
+/**
+ * Calculate a single recruitment step's deadline from optional inputs.
+ *
+ * Computes each constraint arm independently, returns the earlier.
+ * This is the SINGLE SOURCE OF TRUTH for the min(first+X, pwd-Y) logic.
+ *
+ * @param firstRecruitmentDate - ISO date string (optional)
+ * @param pwdExpirationDate - ISO date string (optional)
+ * @param config - Step config with days constants and Sunday flag
+ * @returns Computed deadline date, or undefined if neither input exists
+ */
+export function calculateStepDeadline(
+  firstRecruitmentDate: string | undefined,
+  pwdExpirationDate: string | undefined,
+  config: { daysFromRecruitment: number; daysBeforePwd: number; isSunday: boolean }
+): string | undefined {
+  let fromRecruitment: string | undefined;
+  let fromPwd: string | undefined;
+
+  if (firstRecruitmentDate) {
+    const raw = format(addDays(parseISO(firstRecruitmentDate), config.daysFromRecruitment), "yyyy-MM-dd");
+    fromRecruitment = config.isSunday ? lastSundayOnOrBefore(raw) : raw;
+  }
+  if (pwdExpirationDate) {
+    const raw = format(subDays(parseISO(pwdExpirationDate), config.daysBeforePwd), "yyyy-MM-dd");
+    fromPwd = config.isSunday ? lastSundayOnOrBefore(raw) : raw;
+  }
+
+  if (fromRecruitment && fromPwd) return fromRecruitment <= fromPwd ? fromRecruitment : fromPwd;
+  return fromRecruitment || fromPwd;
+}
+
+/**
  * Calculate all recruitment deadlines based on first recruitment date and PWD expiration.
+ *
+ * Requires both inputs. For partial inputs, use calculateStepDeadline directly.
  *
  * Formulas (from V2_DEADLINE_FLOWS.md):
  * - notice_of_filing_deadline: min(first+150, pwd-30)
@@ -77,31 +123,14 @@ export function calculateRecruitmentDeadlines(
   firstRecruitmentDate: string,
   pwdExpirationDate: string
 ): RecruitmentDeadlines {
-  const firstDate = parseISO(firstRecruitmentDate);
-  const pwdDate = parseISO(pwdExpirationDate);
+  // Use calculateStepDeadline for each step (DRY — same source of truth)
+  const notice_of_filing_deadline = calculateStepDeadline(firstRecruitmentDate, pwdExpirationDate,
+    { daysFromRecruitment: RECRUITMENT_WINDOW_DAYS, daysBeforePwd: PWD_RECRUITMENT_BUFFER_DAYS, isSunday: false })!;
+  const job_order_start_deadline = calculateStepDeadline(firstRecruitmentDate, pwdExpirationDate,
+    { daysFromRecruitment: JOB_ORDER_START_DEADLINE_DAYS, daysBeforePwd: JOB_ORDER_START_PWD_BUFFER_DAYS, isSunday: false })!;
+  const first_sunday_ad_deadline = calculateStepDeadline(firstRecruitmentDate, pwdExpirationDate,
+    { daysFromRecruitment: FIRST_SUNDAY_AD_DEADLINE_DAYS, daysBeforePwd: FIRST_SUNDAY_AD_PWD_BUFFER_DAYS, isSunday: true })!;
 
-  // Calculate constraint dates
-  const noticeDeadline = min([
-    addDays(firstDate, RECRUITMENT_WINDOW_DAYS),
-    subDays(pwdDate, PWD_RECRUITMENT_BUFFER_DAYS),
-  ]);
-
-  const jobOrderDeadline = min([
-    addDays(firstDate, JOB_ORDER_START_DEADLINE_DAYS),
-    subDays(pwdDate, JOB_ORDER_START_PWD_BUFFER_DAYS),
-  ]);
-
-  const firstSundayConstraint = min([
-    addDays(firstDate, FIRST_SUNDAY_AD_DEADLINE_DAYS),
-    subDays(pwdDate, FIRST_SUNDAY_AD_PWD_BUFFER_DAYS),
-  ]);
-
-  // Format dates
-  const notice_of_filing_deadline = format(noticeDeadline, 'yyyy-MM-dd');
-  const job_order_start_deadline = format(jobOrderDeadline, 'yyyy-MM-dd');
-
-  // NOF start deadline: subtract 10 business days (accounting for weekends + federal holidays)
-  // This replaces the old flat 136-day approximation (NOTICE_OF_FILING_START_DEADLINE_DAYS)
   const notice_of_filing_start_deadline = subtractBusinessDays(
     notice_of_filing_deadline,
     NOTICE_MIN_BUSINESS_DAYS
@@ -112,9 +141,7 @@ export function calculateRecruitmentDeadlines(
     notice_of_filing_start_deadline,
     job_order_start_deadline,
     second_sunday_ad_deadline: lastSundayOnOrBefore(notice_of_filing_deadline),
-    first_sunday_ad_deadline: lastSundayOnOrBefore(
-      format(firstSundayConstraint, 'yyyy-MM-dd')
-    ),
+    first_sunday_ad_deadline,
     recruitment_window_closes: notice_of_filing_deadline,
   };
 }
