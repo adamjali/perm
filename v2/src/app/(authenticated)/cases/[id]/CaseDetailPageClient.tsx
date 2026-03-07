@@ -612,7 +612,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               size="icon"
               onClick={() => navigateTo("/cases")}
               className={cn(
-                "shrink-0 h-9 w-9 border-[3px] border-border bg-card hover:bg-[var(--primary)] hover:text-black hover:border-black hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none transition-all",
+                "shrink-0 h-9 w-9 border-[3px] border-border bg-card hover:!bg-[var(--primary)] hover:text-black hover:border-black hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none transition-all",
                 isNavigating && "opacity-70 pointer-events-none"
               )}
               disabled={isAnyNavigating}
@@ -739,7 +739,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     size="icon"
                     className={cn(
                       "shrink-0 border-[3px] border-border bg-card",
-                      "hover:bg-[var(--primary)] hover:text-black hover:border-black hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none transition-all",
+                      "hover:!bg-[var(--primary)] hover:text-black hover:border-black hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none transition-all",
                       "min-h-[38px] min-w-[38px] h-[38px] w-[38px]"
                     )}
                     disabled={isUpdating || isAnyNavigating}
