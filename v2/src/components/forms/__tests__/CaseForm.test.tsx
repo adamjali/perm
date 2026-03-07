@@ -58,8 +58,8 @@ vi.mock('motion/react', () => ({
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
-// Mock framer-motion (used by RFIEntryList and RFEEntryList)
-vi.mock('framer-motion', () => ({
+// Mock motion/react (used by RFIEntryList and RFEEntryList)
+vi.mock('motion/react', () => ({
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
     button: ({ children, ...props }: any) => <button {...props}>{children}</button>,

@@ -2,7 +2,7 @@
  * Shared animation variants for content components.
  *
  * Reused across ArticleLayout, ContentHero, ContentCTA, ScreenshotFigure,
- * and other content components to avoid duplicating the same Framer Motion
+ * and other content components to avoid duplicating the same Motion
  * variant objects in every file.
  */
 

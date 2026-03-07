@@ -31,6 +31,7 @@ import {
 } from "./next-up-section.utils";
 import { QuickEditFields, isEditableAction, isWaitingAction, isComplexAction } from "./quick-edit";
 import { formatISODate } from "@/lib/utils/date";
+import { STAGE_ACCENT_COLORS } from "./case-detail-utils";
 
 // ============================================================================
 // STAGE CONFIGURATION
@@ -87,13 +88,8 @@ export const stageVariants = {
 // SUBCOMPONENTS
 // ============================================================================
 
-/** Stage accent colors matching CSS variables */
-const STAGE_ACCENT: Record<string, string> = {
-  pwd: "var(--stage-pwd)",
-  recruitment: "var(--stage-recruitment)",
-  eta9089: "var(--stage-eta9089)",
-  i140: "var(--stage-i140)",
-};
+// Stage accent colors imported from shared utils
+// (includes all stages: pwd, recruitment, eta9089, i140, closed)
 
 interface StageProgressIndicatorProps {
   currentStage: number;
@@ -117,7 +113,7 @@ export function StageProgressIndicator({ currentStage }: StageProgressIndicatorP
       {STAGES.map((stage, index) => {
         const isCompleted = index < currentStage;
         const isCurrent = index === currentStage;
-        const accent = STAGE_ACCENT[stage.id] ?? "var(--border)";
+        const accent = STAGE_ACCENT_COLORS[stage.id] ?? "var(--border)";
         const Icon = stage.icon;
 
         return (

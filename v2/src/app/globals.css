@@ -1650,9 +1650,9 @@ body[data-scroll-locked] {
  * 3. Essential state changes (fade-in, slide-up) become instant
  * 4. Smooth scroll is disabled in favor of instant jumps
  *
- * FRAMER MOTION INTEGRATION:
- * - Framer Motion's useReducedMotion() hook handles JS animations
- * - This CSS handles CSS-based animations that Framer Motion doesn't control
+ * MOTION INTEGRATION:
+ * - Motion's useReducedMotion() hook handles JS animations
+ * - This CSS handles CSS-based animations that Motion doesn't control
  * - Together they provide complete reduced motion support
  *
  * WHAT'S NOT AFFECTED:

@@ -79,7 +79,7 @@ const URGENCY_CLASSES: Record<UrgencyLevelWithCompletion, string> = {
  * - Urgency styling based on days remaining
  * - Remove button with confirmation
  * - All optional text fields (title, description, notes)
- * - Framer Motion slide-in/fade-out animations (handled by parent)
+ * - Motion slide-in/fade-out animations (handled by parent)
  * - **Uses useWatch for efficient field-level subscriptions (no jitter)**
  *
  * RFE Rules (from perm_flow.md):

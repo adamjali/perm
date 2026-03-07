@@ -4,7 +4,7 @@
  * ReadingProgress
  *
  * Article reading progress bar.
- * Uses Framer Motion useScroll + useSpring for smooth scroll tracking.
+ * Uses Motion useScroll + useSpring for smooth scroll tracking.
  */
 
 import { motion, useScroll, useSpring } from "motion/react";

@@ -6,7 +6,7 @@ import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock } from "lucid
 import { getMethodLabel } from "@/lib/recruitment";
 import { isBusinessDay, getFederalHolidays, getFirstRecruitmentDate, getLastRecruitmentDate, FILING_WINDOW_WAIT_DAYS } from "@/lib/perm";
 import type { CaseDetailData } from "./case-detail-types";
-import { itemVariants, fmtISODate, fmtISOShort } from "./case-detail-utils";
+import { itemVariants, fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
 
 // NOF mini-calendar using central business day logic from @/lib/perm
 function NOFMiniCalendar({ start, end }: { start: string; end: string }) {
@@ -112,17 +112,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
   // PWD validity period (determination -> expiration)
   const windowStart = caseData.pwdDeterminationDate;
   const windowEnd = caseData.pwdExpirationDate;
-  let windowDays = 0;
-  let windowLabel = "";
-  let windowPct = 0;
-  if (windowStart && windowEnd) {
-    const total = differenceInDays(parseISO(windowEnd), parseISO(windowStart));
-    const elapsed = differenceInDays(new Date(), parseISO(windowStart));
-    const remaining = differenceInDays(parseISO(windowEnd), new Date());
-    windowDays = remaining > 0 ? remaining : Math.abs(remaining);
-    windowLabel = remaining > 0 ? "remaining in window" : "past expiration";
-    windowPct = total > 0 ? Math.min(100, Math.max(0, (elapsed / total) * 100)) : 0;
-  }
+  const ws = computeWindowStatus(windowStart, windowEnd);
 
   const hasJobOrder = !!caseData.jobOrderStartDate;
   const hasSundayAds = !!caseData.sundayAdFirstDate;
@@ -141,39 +131,30 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
       className="space-y-6"
     >
       {/* Recruitment Window Card */}
-      {windowStart && windowEnd && (
+      {ws && (
         <motion.div variants={itemVariants}>
           <div className="win-card">
             <div className="win-accent" style={{ background: "var(--stage-recruitment)" }} />
             <div className="win-inner">
               <div className="win-header">
                 <span className="win-title">Recruitment Window</span>
-                <span
-                  className="win-chip"
-                  style={
-                    windowLabel.includes("remaining")
-                      ? { background: "var(--primary)", color: "#000" }
-                      : { background: "var(--destructive)", color: "#fff" }
-                  }
-                >
-                  {windowLabel.includes("remaining") ? "Active" : "Expired"}
-                </span>
+                <span className="win-chip" style={ws.chipStyle}>{ws.chip}</span>
               </div>
               <div className="win-hero">
                 <div>
                   <span className="win-hero-num" style={{ color: "var(--stage-recruitment)" }}>
-                    {windowDays}
+                    {ws.days}
                   </span>
                   <span className="win-hero-unit">days</span>
                 </div>
-                <div className="win-hero-label">{windowLabel}</div>
+                <div className="win-hero-label">{ws.label}</div>
               </div>
               <div className="win-progress">
                 <span className="win-date">{fmtISOShort(windowStart)}</span>
                 <div className="win-bar">
                   <div
                     className="win-bar-fill"
-                    style={{ width: `${windowPct}%`, background: "var(--stage-recruitment)" }}
+                    style={{ width: `${ws.pct}%`, background: "var(--stage-recruitment)" }}
                   />
                 </div>
                 <span className="win-date">{fmtISOShort(windowEnd)}</span>

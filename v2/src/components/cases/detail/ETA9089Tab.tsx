@@ -1,11 +1,10 @@
 "use client";
 
 import { motion } from "motion/react";
-import { differenceInDays, parseISO } from "date-fns";
 import { FileText, AlertTriangle, Clock } from "lucide-react";
 import { isRecruitmentComplete } from "@/lib/perm";
 import type { CaseDetailData } from "./case-detail-types";
-import { itemVariants, fmtISODate, fmtISOShort } from "./case-detail-utils";
+import { itemVariants, fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
 
 interface ETA9089TabProps {
   caseData: CaseDetailData;
@@ -26,38 +25,9 @@ export function ETA9089Tab({
   const showFilingWindow = (recruitDone || isFiled) && !!filingWindowOpens && !!filingWindowCloses;
 
   // Filing window calc
-  let windowDays = 0;
-  let windowLabel = "";
-  let windowPct = 0;
-  let windowChip = "Not Available";
-  let windowChipStyle: React.CSSProperties = { background: "var(--muted)", color: "var(--muted-foreground)" };
-
-  if (showFilingWindow && filingWindowOpens && filingWindowCloses) {
-    const total = differenceInDays(parseISO(filingWindowCloses), parseISO(filingWindowOpens));
-    const now = new Date();
-    const opensDate = parseISO(filingWindowOpens);
-    const closesDate = parseISO(filingWindowCloses);
-
-    if (now < opensDate) {
-      windowDays = differenceInDays(opensDate, now);
-      windowLabel = "until window opens";
-      windowPct = 0;
-      windowChip = "Upcoming";
-      windowChipStyle = { background: "var(--stage-eta9089)", color: "#000" };
-    } else if (now <= closesDate) {
-      windowDays = differenceInDays(closesDate, now);
-      windowLabel = "remaining in window";
-      windowPct = total > 0 ? ((differenceInDays(now, opensDate) / total) * 100) : 0;
-      windowChip = "Active";
-      windowChipStyle = { background: "var(--primary)", color: "#000" };
-    } else {
-      windowDays = differenceInDays(now, closesDate);
-      windowLabel = "past expiration";
-      windowPct = 100;
-      windowChip = "Expired";
-      windowChipStyle = { background: "var(--destructive)", color: "#fff" };
-    }
-  }
+  const ws = showFilingWindow
+    ? computeWindowStatus(filingWindowOpens, filingWindowCloses)
+    : null;
 
   const isCertified = !!caseData.eta9089CertificationDate;
 
@@ -69,26 +39,26 @@ export function ETA9089Tab({
       className="space-y-6"
     >
       {/* Filing Window Card — only shown when recruitment is complete or ETA already filed */}
-      {showFilingWindow && (
+      {ws && (
         <motion.div variants={itemVariants}>
           <div className="win-card">
             <div className="win-accent" style={{ background: "var(--stage-eta9089)" }} />
             <div className="win-inner">
               <div className="win-header">
                 <span className="win-title">ETA 9089 Filing Window</span>
-                <span className="win-chip" style={windowChipStyle}>{windowChip}</span>
+                <span className="win-chip" style={ws.chipStyle}>{ws.chip}</span>
               </div>
               <div className="win-hero">
                 <div>
-                  <span className="win-hero-num" style={{ color: "var(--stage-eta9089)" }}>{windowDays}</span>
+                  <span className="win-hero-num" style={{ color: "var(--stage-eta9089)" }}>{ws.days}</span>
                   <span className="win-hero-unit">days</span>
                 </div>
-                <div className="win-hero-label">{windowLabel}</div>
+                <div className="win-hero-label">{ws.label}</div>
               </div>
               <div className="win-progress">
                 <span className="win-date">{fmtISOShort(filingWindowOpens)}</span>
                 <div className="win-bar">
-                  <div className="win-bar-fill" style={{ width: `${windowPct}%`, background: "var(--stage-eta9089)" }} />
+                  <div className="win-bar-fill" style={{ width: `${ws.pct}%`, background: "var(--stage-eta9089)" }} />
                 </div>
                 <span className="win-date">{fmtISOShort(filingWindowCloses)}</span>
               </div>

@@ -35,7 +35,7 @@ Recruitment form section with Professional Occupation toggle.
 - Recruitment deadline indicator
 - Professional Occupation toggle with 3 additional methods requirement
 - Duplicate method prevention across dropdowns
-- Framer Motion reveal animation for professional section
+- Motion reveal animation for professional section
 
 **Professional Occupation (20 CFR 656.17(e)):**
 - Checkbox toggles additional requirements

@@ -2,6 +2,7 @@ import { mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { getCurrentUserId, verifyOwnership } from "./lib/auth";
+import { recordError } from "./lib/errorRecording";
 import {
   ALLOWED_DOCUMENT_EXTENSIONS,
   ALLOWED_DOCUMENT_CONTENT_TYPES,
@@ -59,8 +60,9 @@ export const generateUploadUrl = mutation({
 });
 
 /**
- * Save document metadata after successful upload.
- * Retrieves the serving URL from the storage ID and adds the document to the case.
+ * Step 2 of 2: Save document metadata after successful upload.
+ * Re-validates content type and size server-side, truncates the file name,
+ * retrieves the serving URL from the storage ID, and adds the document to the case.
  */
 export const saveDocument = mutation({
   args: {
@@ -141,8 +143,9 @@ export const removeDocument = mutation({
       try {
         await ctx.storage.delete(doc.storageId as Id<"_storage">);
       } catch (error) {
-        console.warn(`[removeDocument] Storage delete failed for ${doc.storageId}:`,
-          error instanceof Error ? error.message : "unknown");
+        await recordError(ctx, "mutation", "documents.removeDocument", error, {
+          resourceId: doc.storageId,
+        });
       }
     }
 

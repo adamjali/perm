@@ -2,7 +2,7 @@
  * NextUpSection Utility Functions
  *
  * Pure calculation functions for determining next actions and deadlines.
- * Extracted from NextUpSection.tsx for better maintainability and testing.
+ * Pure calculation functions for better maintainability and testing.
  */
 
 import { createElement, type ReactNode } from "react";
@@ -157,7 +157,7 @@ function findActiveEntry(
 // ============================================================================
 
 /**
- * Get the current stage index (0-3) based on case status
+ * Get the current stage index (0-4) based on case status
  */
 export function getStageIndex(status: CaseStatus): number {
   switch (status) {
@@ -227,7 +227,7 @@ export function getUrgencyColors(urgency: UrgencyLevel): UrgencyColors {
  * Calculate the next required action based on case data
  */
 export function calculateNextAction(caseData: NextUpCaseData): NextAction | null {
-  const { caseStatus, progressStatus: _progressStatus } = caseData;
+  const { caseStatus } = caseData;
 
   // Case is closed - no next action
   if (caseStatus === "closed") {

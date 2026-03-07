@@ -4,7 +4,7 @@
  * ArticleHeader
  *
  * Animated article header with breadcrumb, metadata, tags, and featured image.
- * Framer Motion staggered entrance animation.
+ * Motion staggered entrance animation.
  */
 
 import Image from "next/image";

@@ -43,7 +43,7 @@ export interface FormSectionProps {
  * FormSection component - collapsible section wrapper for form organization.
  *
  * Features:
- * - Collapsible with smooth animation (Framer Motion)
+ * - Collapsible with smooth animation (Motion)
  * - Status indicator (complete/incomplete/has-errors)
  * - Section title with optional icon
  * - Neobrutalist styling

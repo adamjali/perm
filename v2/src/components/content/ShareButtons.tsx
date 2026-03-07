@@ -5,7 +5,7 @@
  *
  * Social share buttons for articles.
  * X (Twitter), LinkedIn, copy link.
- * Framer Motion hover + copy feedback animation.
+ * Motion hover + copy feedback animation.
  */
 
 import * as React from "react";

@@ -195,13 +195,21 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const completeChecklistItem = useCallback(
     async (itemId: ChecklistItemId) => {
-      await completeItem({ itemId });
+      try {
+        await completeItem({ itemId });
+      } catch (error) {
+        handleOperationError(error, { userMessage: "Failed to complete checklist item." });
+      }
     },
     [completeItem]
   );
 
   const dismissChecklist = useCallback(async () => {
-    await dismissMutation({});
+    try {
+      await dismissMutation({});
+    } catch (error) {
+      handleOperationError(error, { userMessage: "Failed to dismiss checklist." });
+    }
   }, [dismissMutation]);
 
   const restartTour = useCallback(async () => {

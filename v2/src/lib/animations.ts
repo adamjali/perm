@@ -1,7 +1,7 @@
 /**
  * Animation Utilities
  *
- * Reusable animation variants and utilities for Framer Motion.
+ * Reusable animation variants and utilities for Motion (motion/react).
  * Following existing patterns from TimelineMilestoneMarker and CollapsibleSection.
  *
  * DESIGN RATIONALE:

@@ -58,10 +58,9 @@ function matchesMagicBytes(
   );
 }
 
-export interface ValidationResult {
-  valid: boolean;
-  error?: string;
-}
+export type ValidationResult =
+  | { valid: true }
+  | { valid: false; error: string };
 
 /**
  * Validate a file before upload.
@@ -88,8 +87,14 @@ export async function validateDocumentFile(
     };
   }
 
-  // 3. MIME type check
-  if (file.type && !ALLOWED_DOCUMENT_CONTENT_TYPES.has(file.type)) {
+  // 3. MIME type check (reject empty — would become application/octet-stream on server)
+  if (!file.type) {
+    return {
+      valid: false,
+      error: "File type could not be determined. Please ensure the file has the correct extension.",
+    };
+  }
+  if (!ALLOWED_DOCUMENT_CONTENT_TYPES.has(file.type)) {
     return {
       valid: false,
       error: `Content type ${file.type} is not allowed.`,

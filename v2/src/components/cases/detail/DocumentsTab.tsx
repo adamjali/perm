@@ -22,17 +22,9 @@ import {
   type DocumentCategory,
 } from "@/lib/documents";
 import { itemVariants, fmtTimestamp } from "./case-detail-utils";
+import type { CaseDetailData } from "./case-detail-types";
 
-interface DocumentEntry {
-  id: string;
-  name: string;
-  url: string;
-  storageId?: string;
-  mimeType: string;
-  size: number;
-  uploadedAt: number;
-  category?: DocumentCategory;
-}
+type DocumentEntry = NonNullable<CaseDetailData["documents"]>[number];
 
 interface DocumentsTabProps {
   documents: DocumentEntry[];
@@ -80,6 +72,7 @@ function DocumentPreview({ doc, onFullscreen }: { doc: DocumentEntry; onFullscre
         <iframe
           src={doc.url}
           title={doc.name}
+          sandbox="allow-same-origin"
           style={{
             width: "100%",
             height: 300,
@@ -253,7 +246,7 @@ function FullscreenViewer({
       </div>
       <div className="doc-fullscreen-body" onClick={(e) => e.stopPropagation()}>
         {doc.mimeType === "application/pdf" ? (
-          <iframe src={doc.url} title={doc.name} style={{ width: "100%", height: "100%", border: "none", background: "#fff" }} />
+          <iframe src={doc.url} title={doc.name} sandbox="allow-same-origin" style={{ width: "100%", height: "100%", border: "none", background: "#fff" }} />
         ) : doc.mimeType.startsWith("image/") ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={doc.url} alt={doc.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
@@ -341,8 +334,9 @@ export function DocumentsTab({
     setIsUploading(true);
     try {
       await onUpload(pendingFile, pendingCategory);
-    } catch {
-      // Error handled by onUpload (handleUploadDocument)
+    } catch (error) {
+      // Defensive: onUpload should handle its own errors, but log if something leaks
+      console.error("[DocumentsTab] Upload error leaked:", error);
     } finally {
       setIsUploading(false);
       setPendingFile(null);
@@ -631,7 +625,6 @@ export function DocumentsTab({
                       border: isDragOver
                         ? "3px dashed var(--primary)"
                         : "3px dashed var(--muted-foreground)",
-                      borderColor: isDragOver ? "var(--primary)" : undefined,
                       background: isDragOver
                         ? "var(--primary-light, rgba(46,204,64,0.08))"
                         : "transparent",

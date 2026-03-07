@@ -5,7 +5,7 @@
  *
  * Article card for content listings.
  * Neobrutalist design: hard shadow, 0 radius, bold typography.
- * Framer Motion whileHover lift + image zoom.
+ * Motion whileHover lift + image zoom.
  */
 
 import Image from "next/image";

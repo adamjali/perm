@@ -39,12 +39,11 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
     const milestoneByField = new Map(milestones.map((m) => [m.field, m]));
 
     // Also check direct caseData fields for dates not in milestones
-    const caseRecord = caseData as Record<string, unknown>;
-    const directFields: Record<string, string | undefined | null> = {
-      jobOrderStartDate: caseRecord.jobOrderStartDate as string | undefined,
-      noticeOfFilingStartDate: caseRecord.noticeOfFilingStartDate as string | undefined,
-    };
-    for (const [field, date] of Object.entries(directFields)) {
+    const directFields: [string, string | undefined][] = [
+      ["jobOrderStartDate", caseData.jobOrderStartDate],
+      ["noticeOfFilingStartDate", caseData.noticeOfFilingStartDate],
+    ];
+    for (const [field, date] of directFields) {
       if (date && !milestoneByField.has(field)) {
         milestoneByField.set(field, { field, label: "", date, stage: "recruitment" as const, color: "#9333ea", isCalculated: false });
       }
@@ -54,8 +53,8 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
     const recruitComplete = isRecruitmentComplete(caseData);
     if (recruitComplete) {
       // Use recruitmentEndDate or derive from latest recruitment date
-      const endDate = (caseRecord.recruitmentEndDate as string | undefined)
-        || [caseRecord.jobOrderEndDate, caseRecord.sundayAdSecondDate, caseRecord.noticeOfFilingEndDate].filter(Boolean).sort().reverse()[0] as string | undefined;
+      const endDate = caseData.recruitmentEndDate
+        || [caseData.jobOrderEndDate, caseData.sundayAdSecondDate, caseData.noticeOfFilingEndDate].filter(Boolean).sort().reverse()[0];
       if (endDate && !milestoneByField.has("recruitmentEndDate")) {
         milestoneByField.set("recruitmentEndDate", { field: "recruitmentEndDate", label: "", date: endDate, stage: "recruitment" as const, color: "#9333ea", isCalculated: false });
       }

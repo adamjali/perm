@@ -108,10 +108,11 @@ describe("validateDocumentFile", () => {
       expect(result.error).toContain("not allowed");
     });
 
-    it("allows empty MIME type (falls through to magic bytes)", async () => {
+    it("rejects empty MIME type", async () => {
       const file = createMockFile("test.pdf", 1024, "");
       const result = await validateDocumentFile(file);
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("could not be determined");
     });
   });
 

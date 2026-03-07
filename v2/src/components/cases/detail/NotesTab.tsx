@@ -22,13 +22,13 @@ const ITEMS_PER_PAGE = 10;
 
 import { itemVariants, fmtTimestamp } from "./case-detail-utils";
 
-const PRIORITY_LABELS: Record<string, string> = {
+const PRIORITY_LABELS: Record<NotePriority, string> = {
   high: "High",
   medium: "Medium",
   low: "Low",
 };
 
-function PriorityBadge({ priority }: { priority: string }) {
+function PriorityBadge({ priority }: { priority: NotePriority }) {
   const cls = `b-priority-${priority}`;
   return (
     <span
@@ -50,7 +50,7 @@ function PriorityBadge({ priority }: { priority: string }) {
   );
 }
 
-function CategoryBadge({ category }: { category: string }) {
+function CategoryBadge({ category }: { category: NoteCategory }) {
   return (
     <span
       className="b-category"
@@ -66,7 +66,7 @@ function CategoryBadge({ category }: { category: string }) {
         whiteSpace: "nowrap",
       }}
     >
-      {NOTE_CATEGORY_LABELS[category as NoteCategory] || category}
+      {NOTE_CATEGORY_LABELS[category] || category}
     </span>
   );
 }
@@ -214,9 +214,6 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
     },
     [handleAddNote]
   );
-
-  // Filter out deleted notes for display count
-  const activeCount = notes.filter((n) => n.status !== "deleted").length;
 
   return (
     <motion.div

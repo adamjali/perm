@@ -5,7 +5,7 @@
  *
  * Filterable tag pills for content listing pages.
  * Click to filter, click again to clear.
- * Framer Motion layout animation on active state change.
+ * Motion layout animation on active state change.
  */
 
 import { motion } from "motion/react";

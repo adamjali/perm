@@ -1,7 +1,7 @@
 /**
  * Animated SVG Illustration Library
  *
- * Framer Motion-powered animated versions of the neobrutalist SVG illustrations.
+ * Motion-powered animated versions of the neobrutalist SVG illustrations.
  * All animations respect prefers-reduced-motion via useReducedMotion.
  *
  * Usage:

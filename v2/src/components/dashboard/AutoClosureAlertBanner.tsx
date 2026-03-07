@@ -25,6 +25,7 @@ import { AlertTriangle, ChevronDown, ChevronUp, X, ExternalLink } from "lucide-r
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { captureError } from "@/lib/sentry";
+import { toast } from "@/lib/toast";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 
 /**
@@ -88,6 +89,7 @@ export default function AutoClosureAlertBanner() {
     } catch (error) {
       console.error("Failed to dismiss alert:", error);
       captureError(error, { operation: "dismissAutoClosureAlert" });
+      toast.error("Failed to dismiss alert");
     }
   };
 
@@ -97,6 +99,7 @@ export default function AutoClosureAlertBanner() {
     } catch (error) {
       console.error("Failed to dismiss all alerts:", error);
       captureError(error, { operation: "dismissAllAutoClosureAlerts" });
+      toast.error("Failed to dismiss alerts");
     }
   };
 

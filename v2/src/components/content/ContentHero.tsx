@@ -5,7 +5,7 @@
  *
  * Hero banner for content section landing pages.
  * Neobrutalist: bold type, hard edges, decorative accents.
- * Framer Motion staggered entrance + GSAP parallax grid.
+ * Motion staggered entrance + GSAP parallax grid.
  */
 
 import * as React from "react";

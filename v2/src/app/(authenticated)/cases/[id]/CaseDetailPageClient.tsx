@@ -60,9 +60,10 @@ import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useDerivedDates } from "@/hooks/useDerivedDates";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
 import { useIsMobile } from "@/lib/animations";
-import { type ProgressStatus, isRecruitmentComplete } from "@/lib/perm";
+import { isRecruitmentComplete } from "@/lib/perm";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 import type { CaseDetailData } from "@/components/cases/detail/case-detail-types";
+import { itemVariants, STAGE_ACCENT_COLORS } from "@/components/cases/detail/case-detail-utils";
 
 // ============================================================================
 // ANIMATION VARIANTS
@@ -82,21 +83,6 @@ const containerVariants = {
   },
 } as const;
 
-/**
- * Item animation variants for individual sections
- */
-const itemVariants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring" as const,
-      stiffness: 300,
-      damping: 24,
-    },
-  },
-};
 
 /**
  * Header animation variants - slide in from left
@@ -112,18 +98,6 @@ const headerVariants = {
       damping: 28,
     },
   },
-};
-
-// ============================================================================
-// STAGE COLORS
-// ============================================================================
-
-const STAGE_ACCENT_COLORS: Record<string, string> = {
-  pwd: "var(--stage-pwd)",
-  recruitment: "var(--stage-recruitment)",
-  eta9089: "var(--stage-eta9089)",
-  i140: "var(--stage-i140)",
-  closed: "var(--stage-closed)",
 };
 
 // ============================================================================
@@ -396,7 +370,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
     // Client-side validation
     const validation = await validateDocumentFile(file);
     if (!validation.valid) {
-      toast.error(validation.error || "Invalid file");
+      toast.error(validation.error);
       return;
     }
 
@@ -571,18 +545,26 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   } = useJobDescriptionTemplates();
 
   const handleJobDescSave = async (positionTitle: string, description: string, templateId?: string) => {
-    await updateMutation({
-      id: caseId,
-      jobDescriptionPositionTitle: positionTitle,
-      jobDescription: description,
-      ...(templateId ? { jobDescriptionTemplateId: templateId as Id<"jobDescriptionTemplates"> } : {}),
-    });
-    toast.success("Job description updated");
+    try {
+      await updateMutation({
+        id: caseId,
+        jobDescriptionPositionTitle: positionTitle,
+        jobDescription: description,
+        ...(templateId ? { jobDescriptionTemplateId: templateId as Id<"jobDescriptionTemplates"> } : {}),
+      });
+      toast.success("Job description updated");
+    } catch (error) {
+      handleOperationError(error, { userMessage: "Failed to update job description." });
+    }
   };
 
   const handleJobDescClear = async () => {
-    await clearJobDescriptionMutation({ id: caseId });
-    toast.success("Job description cleared");
+    try {
+      await clearJobDescriptionMutation({ id: caseId });
+      toast.success("Job description cleared");
+    } catch (error) {
+      handleOperationError(error, { userMessage: "Failed to clear job description." });
+    }
   };
 
   // Active tab state for manila folder tabs
@@ -800,7 +782,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               </span>
             )}
             <CaseStageBadge stage={caseData.caseStatus} bordered />
-            <ProgressStatusBadge status={caseData.progressStatus as ProgressStatus} />
+            <ProgressStatusBadge status={caseData.progressStatus} />
             {isProfessionalOccupation && (
               <span className="inline-flex items-center border-2 border-border px-2 py-0.5 text-[0.65rem] font-mono font-bold uppercase tracking-wide gap-1">
                 Professional

@@ -39,6 +39,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { toast } from "@/lib/toast";
 import type { NotificationTabType } from "./NotificationTabs";
 
 // Types
@@ -457,6 +458,7 @@ export default function NotificationList({
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
       captureError(error, { operation: "markNotificationRead" });
+      toast.error("Failed to mark as read");
     }
   };
 
@@ -466,6 +468,7 @@ export default function NotificationList({
     } catch (error) {
       console.error("Failed to delete notification:", error);
       captureError(error, { operation: "deleteNotification" });
+      toast.error("Failed to delete notification");
     }
   };
 

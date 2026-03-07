@@ -116,7 +116,8 @@ export function OverviewTab({
     try {
       await jobDescProps.onSaveAsNewTemplate(editPositionTitle.trim(), editDescription.trim());
       toast.success("Saved as new template");
-    } catch {
+    } catch (error) {
+      captureError(error, { operation: "saveAsNewTemplate" });
       toast.error("Failed to save template");
     } finally {
       setIsSavingTemplate(false);
@@ -131,7 +132,8 @@ export function OverviewTab({
       setIsCopied(true);
       toast.success("Copied to clipboard");
       setTimeout(() => setIsCopied(false), 2000);
-    } catch {
+    } catch (error) {
+      captureError(error, { operation: "copyJobDescription" });
       toast.error("Failed to copy");
     }
   }, [isEditingJobDesc, editDescription, caseData.jobDescription]);

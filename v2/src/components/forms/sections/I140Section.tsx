@@ -143,7 +143,7 @@ function buildI140FilingWindowData(
  * - 2-column responsive grid layout
  * - I-140 status color indicator (#059669 teal/green)
  * - Full validation error and warning display
- * - Expandable RFE subsection with Framer Motion animations
+ * - Expandable RFE subsection with Motion animations
  *
  * Filing deadline rules (from perm_flow.md):
  * - Must file within 180 days of ETA 9089 certification

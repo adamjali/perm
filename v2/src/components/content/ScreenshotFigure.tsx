@@ -5,7 +5,7 @@
  *
  * Neobrutalist-styled screenshot display for MDX articles.
  * Shows app screenshots with optional step badges and captions.
- * Framer Motion whileInView fade-up entrance animation.
+ * Motion whileInView fade-up entrance animation.
  */
 
 import Image from "next/image";
