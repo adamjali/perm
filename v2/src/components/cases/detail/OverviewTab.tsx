@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import type { CaseDetailData } from "./case-detail-types";
-import { itemVariants, fmtISODate, fmtCurrency } from "./case-detail-utils";
+import { itemVariants, tabContainerVariants, fmtISODate, fmtCurrency } from "./case-detail-utils";
 
 export interface JobDescEditProps {
   templates: JobDescriptionTemplate[];
@@ -145,7 +145,7 @@ export function OverviewTab({
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+      variants={tabContainerVariants}
       className="space-y-6"
     >
       {/* Next Up — expandable with quick-edit */}

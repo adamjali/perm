@@ -6,7 +6,8 @@ import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock } from "lucid
 import { getMethodLabel } from "@/lib/recruitment";
 import { isBusinessDay, getFederalHolidays, getFirstRecruitmentDate, getLastRecruitmentDate, FILING_WINDOW_WAIT_DAYS } from "@/lib/perm";
 import type { CaseDetailData } from "./case-detail-types";
-import { itemVariants, fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
+import { itemVariants, tabContainerVariants, fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
+import { WindowCard } from "./WindowCard";
 
 // NOF mini-calendar using central business day logic from @/lib/perm
 function NOFMiniCalendar({ start, end }: { start: string; end: string }) {
@@ -127,41 +128,18 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+      variants={tabContainerVariants}
       className="space-y-6"
     >
       {/* Recruitment Window Card */}
       {ws && (
-        <motion.div variants={itemVariants}>
-          <div className="win-card">
-            <div className="win-accent" style={{ background: "var(--stage-recruitment)" }} />
-            <div className="win-inner">
-              <div className="win-header">
-                <span className="win-title">Recruitment Window</span>
-                <span className="win-chip" style={ws.chipStyle}>{ws.chip}</span>
-              </div>
-              <div className="win-hero">
-                <div>
-                  <span className="win-hero-num" style={{ color: "var(--stage-recruitment)" }}>
-                    {ws.days}
-                  </span>
-                  <span className="win-hero-unit">days</span>
-                </div>
-                <div className="win-hero-label">{ws.label}</div>
-              </div>
-              <div className="win-progress">
-                <span className="win-date">{fmtISOShort(windowStart)}</span>
-                <div className="win-bar">
-                  <div
-                    className="win-bar-fill"
-                    style={{ width: `${ws.pct}%`, background: "var(--stage-recruitment)" }}
-                  />
-                </div>
-                <span className="win-date">{fmtISOShort(windowEnd)}</span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        <WindowCard
+          ws={ws}
+          title="Recruitment Window"
+          stageColor="var(--stage-recruitment)"
+          startDate={windowStart}
+          endDate={windowEnd}
+        />
       )}
 
       {/* Recruitment Steps — 2x2 grid */}

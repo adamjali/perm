@@ -1,9 +1,11 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Shield, AlertTriangle, Clock } from "lucide-react";
+import { Shield, Clock } from "lucide-react";
 import type { CaseDetailData } from "./case-detail-types";
-import { itemVariants, fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
+import { itemVariants, tabContainerVariants, fmtISODate, computeWindowStatus } from "./case-detail-utils";
+import { WindowCard } from "./WindowCard";
+import { ResponseEntryGrid } from "./ResponseEntryGrid";
 
 interface I140TabProps {
   caseData: CaseDetailData;
@@ -28,36 +30,18 @@ export function I140Tab({ caseData }: I140TabProps) {
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+      variants={tabContainerVariants}
       className="space-y-6"
     >
       {/* I-140 Filing Window Card */}
       {ws && (
-        <motion.div variants={itemVariants}>
-          <div className="win-card">
-            <div className="win-accent" style={{ background: "var(--stage-i140)" }} />
-            <div className="win-inner">
-              <div className="win-header">
-                <span className="win-title">I-140 Filing Window</span>
-                <span className="win-chip" style={ws.chipStyle}>{ws.chip}</span>
-              </div>
-              <div className="win-hero">
-                <div>
-                  <span className="win-hero-num" style={{ color: "var(--stage-i140)" }}>{ws.days}</span>
-                  <span className="win-hero-unit">days</span>
-                </div>
-                <div className="win-hero-label">{ws.label}</div>
-              </div>
-              <div className="win-progress">
-                <span className="win-date">{fmtISOShort(caseData.eta9089CertificationDate)}</span>
-                <div className="win-bar">
-                  <div className="win-bar-fill" style={{ width: `${ws.pct}%`, background: "var(--stage-i140)" }} />
-                </div>
-                <span className="win-date">{fmtISOShort(caseData.eta9089ExpirationDate)}</span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        <WindowCard
+          ws={ws}
+          title="I-140 Filing Window"
+          stageColor="var(--stage-i140)"
+          startDate={caseData.eta9089CertificationDate}
+          endDate={caseData.eta9089ExpirationDate}
+        />
       )}
 
       {/* I-140 Petition Card */}
@@ -160,50 +144,13 @@ export function I140Tab({ caseData }: I140TabProps) {
       </motion.div>
 
       {/* RFE Section */}
-      <motion.div variants={itemVariants}>
-        <div className="detail-card">
-          <div className="detail-card-head ch-muted">
-            <span className="flex items-center gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              RFE (Request for Evidence)
-            </span>
-            <span className="font-mono text-[0.6rem] font-bold uppercase px-2 py-0.5 border-2 border-border bg-muted text-muted-foreground">
-              USCIS
-            </span>
-          </div>
-          {rfeEntries.length > 0 ? (
-            <div className="detail-card-body space-y-4">
-              {rfeEntries.map((entry, i) => (
-                <div key={i} className="border-2 border-border p-3">
-                  <div className="font-mono text-xs font-bold mb-1">RFE #{i + 1}</div>
-                  <div className="field-grid" style={{ padding: 0 }}>
-                    <div className="field-cell">
-                      <div className="fc-label">Received</div>
-                      <div className="fc-val mono">{fmtISODate(entry.receivedDate)}</div>
-                    </div>
-                    <div className="field-cell">
-                      <div className="fc-label">Due</div>
-                      <div className="fc-val mono">{fmtISODate(entry.responseDueDate)}</div>
-                    </div>
-                    <div className="field-cell">
-                      <div className="fc-label">Submitted</div>
-                      <div className={`fc-val mono ${!entry.responseSubmittedDate ? "dim" : ""}`}>{fmtISODate(entry.responseSubmittedDate)}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="detail-card-body">
-              <div className="detail-empty-state">
-                <Shield className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
-                <div className="detail-empty-state-title">No RFE entries</div>
-                <div className="detail-empty-state-desc">Entries will appear here if USCIS issues a request during I-140 review.</div>
-              </div>
-            </div>
-          )}
-        </div>
-      </motion.div>
+      <ResponseEntryGrid
+        type="RFE"
+        subtitle="USCIS"
+        entries={rfeEntries}
+        emptyIcon={<Shield className="h-8 w-8" />}
+        emptyDescription="Entries will appear here if USCIS issues a request during I-140 review."
+      />
     </motion.div>
   );
 }

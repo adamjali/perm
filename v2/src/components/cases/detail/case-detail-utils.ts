@@ -11,6 +11,11 @@ export const itemVariants = {
   },
 };
 
+/** Container variant with staggered children — shared by all 6 tab components. */
+export const tabContainerVariants = {
+  visible: { transition: { staggerChildren: 0.06 } },
+};
+
 /** ISO date string -> "MMM d, yyyy" */
 export function fmtISODate(d?: string | null): string {
   if (!d) return "\u2014";

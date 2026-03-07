@@ -21,7 +21,7 @@ import {
   DOCUMENT_CATEGORY_LABELS,
   type DocumentCategory,
 } from "@/lib/documents";
-import { itemVariants, fmtTimestamp } from "./case-detail-utils";
+import { itemVariants, tabContainerVariants, fmtTimestamp } from "./case-detail-utils";
 import type { CaseDetailData } from "./case-detail-types";
 
 type DocumentEntry = NonNullable<CaseDetailData["documents"]>[number];
@@ -393,7 +393,7 @@ export function DocumentsTab({
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+      variants={tabContainerVariants}
       className="space-y-6"
     >
       <motion.div variants={itemVariants}>

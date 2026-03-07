@@ -1,10 +1,12 @@
 "use client";
 
 import { motion } from "motion/react";
-import { FileText, AlertTriangle, Clock } from "lucide-react";
+import { FileText, Clock } from "lucide-react";
 import { isRecruitmentComplete } from "@/lib/perm";
 import type { CaseDetailData } from "./case-detail-types";
-import { itemVariants, fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
+import { itemVariants, tabContainerVariants, fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
+import { WindowCard } from "./WindowCard";
+import { ResponseEntryGrid } from "./ResponseEntryGrid";
 
 interface ETA9089TabProps {
   caseData: CaseDetailData;
@@ -35,36 +37,18 @@ export function ETA9089Tab({
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+      variants={tabContainerVariants}
       className="space-y-6"
     >
       {/* Filing Window Card — only shown when recruitment is complete or ETA already filed */}
       {ws && (
-        <motion.div variants={itemVariants}>
-          <div className="win-card">
-            <div className="win-accent" style={{ background: "var(--stage-eta9089)" }} />
-            <div className="win-inner">
-              <div className="win-header">
-                <span className="win-title">ETA 9089 Filing Window</span>
-                <span className="win-chip" style={ws.chipStyle}>{ws.chip}</span>
-              </div>
-              <div className="win-hero">
-                <div>
-                  <span className="win-hero-num" style={{ color: "var(--stage-eta9089)" }}>{ws.days}</span>
-                  <span className="win-hero-unit">days</span>
-                </div>
-                <div className="win-hero-label">{ws.label}</div>
-              </div>
-              <div className="win-progress">
-                <span className="win-date">{fmtISOShort(filingWindowOpens)}</span>
-                <div className="win-bar">
-                  <div className="win-bar-fill" style={{ width: `${ws.pct}%`, background: "var(--stage-eta9089)" }} />
-                </div>
-                <span className="win-date">{fmtISOShort(filingWindowCloses)}</span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        <WindowCard
+          ws={ws}
+          title="ETA 9089 Filing Window"
+          stageColor="var(--stage-eta9089)"
+          startDate={filingWindowOpens}
+          endDate={filingWindowCloses}
+        />
       )}
 
       {/* ETA Form 9089 Card */}
@@ -130,50 +114,13 @@ export function ETA9089Tab({
       </motion.div>
 
       {/* RFI Section */}
-      <motion.div variants={itemVariants}>
-        <div className="detail-card">
-          <div className="detail-card-head ch-muted">
-            <span className="flex items-center gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              RFI (Request for Information)
-            </span>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", fontWeight: 700, textTransform: "uppercase", padding: "1px 8px", border: "2px solid var(--border)", background: "var(--muted)", color: "var(--muted-foreground)" }}>
-              DOL Audit
-            </span>
-          </div>
-          {rfiEntries.length > 0 ? (
-            <div className="detail-card-body space-y-4">
-              {rfiEntries.map((entry, i) => (
-                <div key={i} className="border-2 border-border p-3">
-                  <div className="font-mono text-xs font-bold mb-1">RFI #{i + 1}</div>
-                  <div className="field-grid" style={{ padding: 0 }}>
-                    <div className="field-cell">
-                      <div className="fc-label">Received</div>
-                      <div className="fc-val mono">{fmtISODate(entry.receivedDate)}</div>
-                    </div>
-                    <div className="field-cell">
-                      <div className="fc-label">Due</div>
-                      <div className="fc-val mono">{fmtISODate(entry.responseDueDate)}</div>
-                    </div>
-                    <div className="field-cell">
-                      <div className="fc-label">Submitted</div>
-                      <div className={`fc-val mono ${!entry.responseSubmittedDate ? "dim" : ""}`}>{fmtISODate(entry.responseSubmittedDate)}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="detail-card-body">
-              <div className="detail-empty-state">
-                <FileText className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
-                <div className="detail-empty-state-title">No RFI entries</div>
-                <div className="detail-empty-state-desc">Entries will appear here if DOL issues a request during audit.</div>
-              </div>
-            </div>
-          )}
-        </div>
-      </motion.div>
+      <ResponseEntryGrid
+        type="RFI"
+        subtitle="DOL Audit"
+        entries={rfiEntries}
+        emptyIcon={<FileText className="h-8 w-8" />}
+        emptyDescription="Entries will appear here if DOL issues a request during audit."
+      />
     </motion.div>
   );
 }

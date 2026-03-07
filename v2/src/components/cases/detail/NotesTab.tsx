@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, type CSSProperties } from "react";
 import { motion } from "motion/react";
 import { MessageCircle, Send, Trash2, ChevronLeft, ChevronRight, X, Pencil, Flag, Tag, CalendarDays, CheckCircle } from "lucide-react";
 import {
@@ -20,7 +20,7 @@ interface NotesTabProps {
 
 const ITEMS_PER_PAGE = 10;
 
-import { itemVariants, fmtTimestamp } from "./case-detail-utils";
+import { itemVariants, tabContainerVariants, fmtTimestamp } from "./case-detail-utils";
 
 const PRIORITY_LABELS: Record<NotePriority, string> = {
   high: "High",
@@ -28,23 +28,21 @@ const PRIORITY_LABELS: Record<NotePriority, string> = {
   low: "Low",
 };
 
+const BADGE_BASE_STYLE: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: "0.04em",
+  border: "3px solid",
+  display: "inline-flex",
+  alignItems: "center",
+  lineHeight: 1,
+  whiteSpace: "nowrap",
+};
+
 function PriorityBadge({ priority }: { priority: NotePriority }) {
-  const cls = `b-priority-${priority}`;
   return (
-    <span
-      className={cls}
-      style={{
-        fontFamily: "var(--font-mono)",
-        fontWeight: 700,
-        textTransform: "uppercase",
-        letterSpacing: "0.04em",
-        border: "3px solid",
-        display: "inline-flex",
-        alignItems: "center",
-        lineHeight: 1,
-        whiteSpace: "nowrap",
-      }}
-    >
+    <span className={`b-priority-${priority}`} style={BADGE_BASE_STYLE}>
       {priority}
     </span>
   );
@@ -52,20 +50,7 @@ function PriorityBadge({ priority }: { priority: NotePriority }) {
 
 function CategoryBadge({ category }: { category: NoteCategory }) {
   return (
-    <span
-      className="b-category"
-      style={{
-        fontFamily: "var(--font-mono)",
-        fontWeight: 700,
-        textTransform: "uppercase",
-        letterSpacing: "0.04em",
-        border: "3px solid #000",
-        display: "inline-flex",
-        alignItems: "center",
-        lineHeight: 1,
-        whiteSpace: "nowrap",
-      }}
-    >
+    <span className="b-category" style={BADGE_BASE_STYLE}>
       {NOTE_CATEGORY_LABELS[category] || category}
     </span>
   );
@@ -219,7 +204,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+      variants={tabContainerVariants}
       className="space-y-6"
     >
       <motion.div variants={itemVariants}>

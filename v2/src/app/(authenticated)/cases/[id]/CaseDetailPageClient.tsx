@@ -806,12 +806,6 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               const isDone = stageIdx < currentStage;
               const isActive = stageIdx === currentStage;
               const labels: Record<string, string> = { pwd: "PWD", recruitment: "Recruitment", eta9089: "ETA 9089", i140: "I-140" };
-              const colors: Record<string, string> = {
-                pwd: "var(--stage-pwd)",
-                recruitment: "var(--stage-recruitment)",
-                eta9089: "var(--stage-eta9089)",
-                i140: "var(--stage-i140)",
-              };
               return (
                 <div
                   key={stage}
@@ -822,7 +816,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     isActive && "text-white",
                     !isDone && !isActive && "bg-muted text-muted-foreground"
                   )}
-                  style={isActive ? { background: colors[stage] } : undefined}
+                  style={isActive ? { background: STAGE_ACCENT_COLORS[stage] } : undefined}
                   data-s={stage}
                 >
                   {isDone ? (
