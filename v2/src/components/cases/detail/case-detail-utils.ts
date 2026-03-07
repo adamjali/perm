@@ -1,5 +1,12 @@
+/**
+ * Case Detail Shared Utilities
+ *
+ * Formatters, animation variants, and window status calculation
+ * shared by all case detail tab components and the NextUp section.
+ */
 import { format, parseISO, differenceInDays } from "date-fns";
 import type React from "react";
+import type { CaseStatus } from "@/lib/perm";
 
 /** Animation variant used by all 6 tab components. */
 export const itemVariants = {
@@ -39,7 +46,7 @@ export function fmtCurrency(amount: number | string): string {
 }
 
 /** Stage accent colors matching CSS variables. */
-export const STAGE_ACCENT_COLORS: Record<string, string> = {
+export const STAGE_ACCENT_COLORS: Record<CaseStatus, string> = {
   pwd: "var(--stage-pwd)",
   recruitment: "var(--stage-recruitment)",
   eta9089: "var(--stage-eta9089)",
@@ -56,7 +63,7 @@ export interface WindowStatus {
   days: number;
   label: string;
   pct: number;
-  chip: string;
+  chip: "Filed" | "Upcoming" | "Active" | "Expired";
   chipStyle: React.CSSProperties;
 }
 
