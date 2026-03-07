@@ -163,12 +163,12 @@ export default function Header(): React.ReactElement {
     : AUTHENTICATED_NAV_LINKS;
 
   return (
-    <header className="sticky top-0 z-50 border-b-3 border-black bg-black dark:border-white dark:bg-black">
+    <header className="sticky top-0 z-50 border-b-3 border-black bg-black dark:border-white dark:bg-black overflow-x-hidden">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-8">
         {/* Logo */}
         <Link
           href="/dashboard"
-          className="group flex items-center gap-2 px-2 py-1 text-2xl font-bold font-heading transition-all duration-150 hover:bg-primary hover:shadow-hard"
+          className="group flex items-center gap-1.5 sm:gap-2 px-1.5 sm:px-2 py-1 text-xl sm:text-2xl font-bold font-heading transition-all duration-150 hover:bg-primary hover:shadow-hard shrink-0"
         >
           <FileText
             className="size-6 text-primary transition-colors group-hover:text-black"
@@ -181,9 +181,9 @@ export default function Header(): React.ReactElement {
         </Link>
 
         {/* Navigation */}
-        <nav className="flex items-center gap-4 sm:gap-8">
-          {/* Desktop Navigation - hidden on mobile */}
-          <div className="hidden md:flex items-center gap-1">
+        <nav className="flex items-center gap-2 sm:gap-4 lg:gap-8">
+          {/* Desktop Navigation - hidden below lg (1024px) */}
+          <div className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               const tourId = link.href === "/cases" ? "nav-cases" : link.href === "/calendar" ? "nav-calendar" : undefined;
@@ -211,19 +211,19 @@ export default function Header(): React.ReactElement {
             <NotificationDropdown />
           </NotificationBell>
 
-          {/* User dropdown - hidden on mobile, shown in mobile menu */}
-          <div className="hidden md:block">
+          {/* User dropdown - hidden below lg, shown in mobile menu */}
+          <div className="hidden lg:block">
             {user && <UserMenu userName={displayName} />}
           </div>
 
           {/* Theme toggle - always visible */}
           <ThemeToggle />
 
-          {/* Mobile Menu Button - visible on mobile only */}
+          {/* Mobile Menu Button - visible below lg */}
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="flex md:hidden h-11 w-11 items-center justify-center border-2 border-white/20 text-white transition-colors hover:bg-white/10"
+            className="flex lg:hidden h-11 w-11 items-center justify-center border-2 border-white/20 text-white transition-colors hover:bg-white/10"
             aria-label="Toggle menu"
             aria-expanded={isMobileMenuOpen}
           >
@@ -234,7 +234,7 @@ export default function Header(): React.ReactElement {
 
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
-        <div className="absolute left-0 right-0 top-full border-b-4 border-white/20 bg-black px-4 py-4 md:hidden z-50">
+        <div className="absolute left-0 right-0 top-full border-b-4 border-white/20 bg-black px-4 py-4 lg:hidden z-50">
           <nav className="flex flex-col gap-1">
             {/* Navigation Links */}
             {navLinks.map((link) => {
