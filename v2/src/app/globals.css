@@ -903,6 +903,7 @@
 .doc-meta { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted-foreground); margin-top: 2px; }
 .draft-tag { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 0 6px; background: var(--yellow, #FFD700); border: 2px solid var(--border); line-height: 1.4; }
 .doc-row.selected, .note.selected { background: var(--manila); }
+.doc-row.selected:hover, .note.selected:hover { background: var(--manila-dark); }
 .doc-row.selected .doc-meta { color: #444444; }
 .note.selected .note-when { color: #444444; }
 .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 2px solid var(--border); background: var(--card); cursor: pointer; transition: all 0.15s; }
@@ -1047,15 +1048,16 @@
 .dark .icon-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
 /* doc-name uses foreground in dark mode */
 .dark .doc-name { color: var(--foreground); }
-/* selected row in dark mode: all text black/dark on manila bg */
+/* selected row in dark mode: keep manila bg on hover, all text black/dark */
+.dark .doc-row.selected:hover, .dark .note.selected:hover { background: var(--manila-dark); }
 .dark .doc-row.selected .doc-name { color: #000000; }
 .dark .doc-row.selected .doc-meta { color: #444444; }
 .dark .doc-row.selected .icon-btn { color: #000000; }
 .dark .note.selected .note-when { color: #444444; }
 .dark .note.selected .note-body { color: #000000; }
 .dark .note.selected .note-due { color: #8B6914; }
-/* Delete button matches other icon-btns in dark mode */
-.dark .icon-btn-danger { background: #FAFAFA; }
+/* Delete button matches other icon-btns in dark mode (explicit all props) */
+.dark .icon-btn.icon-btn-danger { background: #FAFAFA; border-color: #000000; }
 /* Notes counter badge stays same */
 .dark .detail-card-head .head-badge { color: inherit; }
 /* Quick-edit dropdown black borders in dark mode */
