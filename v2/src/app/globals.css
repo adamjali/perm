@@ -1148,6 +1148,22 @@ html {
   color-scheme: light dark;
 }
 
+/* Full-bleed: break out of container to viewport edges.
+   Mobile uses negative margins matching main px-4/sm:px-8 to avoid
+   100vw horizontal overflow issues (100vw includes scrollbar width). */
+.full-bleed {
+  margin-left: -1rem;
+  margin-right: -1rem;
+  width: auto;
+}
+@media (min-width: 640px) {
+  .full-bleed { margin-left: -2rem; margin-right: -2rem; }
+}
+@media (min-width: 1432px) {
+  /* When viewport exceeds max-w-[1400px] + 2×padding, switch to 100vw */
+  .full-bleed { width: 100vw; margin-left: calc(-50vw + 50%); margin-right: 0; }
+}
+
 /* File input button press animation */
 input[type="file"]::file-selector-button:active {
   transform: scale(0.95);

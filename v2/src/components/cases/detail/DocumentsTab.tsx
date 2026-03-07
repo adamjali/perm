@@ -72,7 +72,6 @@ function DocumentPreview({ doc, onFullscreen }: { doc: DocumentEntry; onFullscre
         <iframe
           src={doc.url}
           title={doc.name}
-          sandbox="allow-same-origin allow-scripts"
           style={{
             width: "100%",
             height: 300,
@@ -246,7 +245,7 @@ function FullscreenViewer({
       </div>
       <div className="doc-fullscreen-body" onClick={(e) => e.stopPropagation()}>
         {doc.mimeType === "application/pdf" ? (
-          <iframe src={doc.url} title={doc.name} sandbox="allow-same-origin allow-scripts" style={{ width: "100%", height: "100%", border: "none", background: "#fff" }} />
+          <iframe src={doc.url} title={doc.name} style={{ width: "100%", height: "100%", border: "none", background: "#fff" }} />
         ) : doc.mimeType.startsWith("image/") ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={doc.url} alt={doc.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
@@ -470,69 +469,69 @@ export function DocumentsTab({
             </div>
           </div>
 
+          {/* Pending upload bar — outside split-wrap so it stays visible on mobile when preview is open */}
+          {pendingFile && (
+            <div className="pending-upload-bar">
+              <FileText className="h-4 w-4" style={{ flexShrink: 0 }} />
+              <div className="pending-upload-name">{pendingFile.name}</div>
+              <select
+                value={pendingCategory}
+                onChange={(e) => setPendingCategory(e.target.value as DocumentCategory)}
+                style={{
+                  height: 26,
+                  padding: "0 6px",
+                  border: "2px solid var(--foreground)",
+                  background: "var(--card)",
+                  color: "var(--foreground)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.6rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                }}
+                disabled={isUploading}
+              >
+                {DOCUMENT_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {DOCUMENT_CATEGORY_LABELS[c]}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="icon-btn"
+                style={{
+                  width: "auto",
+                  padding: "3px 10px",
+                  fontWeight: 700,
+                  fontSize: "0.65rem",
+                  fontFamily: "var(--font-mono)",
+                  background: "var(--primary)",
+                  color: "var(--primary-foreground)",
+                  textTransform: "uppercase",
+                }}
+                onClick={handleConfirmUpload}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  "Upload"
+                )}
+              </button>
+              {!isUploading && (
+                <button
+                  className="icon-btn"
+                  style={{ width: 26, height: 26, padding: 0 }}
+                  onClick={handleCancelUpload}
+                  title="Cancel"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          )}
+
           <div className={`split-wrap${isOpen ? " preview-open" : ""}`}>
             <div className="split-list">
-              {/* Pending upload bar */}
-              {pendingFile && (
-                <div className="pending-upload-bar">
-                  <FileText className="h-4 w-4" style={{ flexShrink: 0 }} />
-                  <div className="pending-upload-name">{pendingFile.name}</div>
-                  <select
-                    value={pendingCategory}
-                    onChange={(e) => setPendingCategory(e.target.value as DocumentCategory)}
-                    style={{
-                      height: 26,
-                      padding: "0 6px",
-                      border: "2px solid var(--foreground)",
-                      background: "var(--card)",
-                      color: "var(--foreground)",
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "0.6rem",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                    }}
-                    disabled={isUploading}
-                  >
-                    {DOCUMENT_CATEGORIES.map((c) => (
-                      <option key={c} value={c}>
-                        {DOCUMENT_CATEGORY_LABELS[c]}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    className="icon-btn"
-                    style={{
-                      width: "auto",
-                      padding: "3px 10px",
-                      fontWeight: 700,
-                      fontSize: "0.65rem",
-                      fontFamily: "var(--font-mono)",
-                      background: "var(--primary)",
-                      color: "var(--primary-foreground)",
-                      textTransform: "uppercase",
-                    }}
-                    onClick={handleConfirmUpload}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      "Upload"
-                    )}
-                  </button>
-                  {!isUploading && (
-                    <button
-                      className="icon-btn"
-                      style={{ width: 26, height: 26, padding: 0 }}
-                      onClick={handleCancelUpload}
-                      title="Cancel"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-              )}
-
               {pagedDocs.length > 0 ? (
                 <div className="scroll-list">
                   {pagedDocs.map((doc) => {
