@@ -66,7 +66,7 @@ export interface JobDescriptionDetailViewProps {
  *
  * Read-only display of job description on case detail page.
  * Features:
- * - Collapsible section matching CaseDetailSection style
+ * - Collapsible section matching detail-card style
  * - Copy to clipboard button
  * - Character count
  * - Empty state when no description
