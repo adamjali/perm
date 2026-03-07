@@ -61,8 +61,8 @@ export const generateUploadUrl = mutation({
 
 /**
  * Step 2 of 2: Save document metadata after successful upload.
- * Re-validates content type and size server-side, truncates the file name,
- * retrieves the serving URL from the storage ID, and adds the document to the case.
+ * Re-validates extension, content type, size, and document count server-side.
+ * Truncates the file name, retrieves the serving URL, and adds the document to the case.
  */
 export const saveDocument = mutation({
   args: {
@@ -86,6 +86,22 @@ export const saveDocument = mutation({
     const caseDoc = await ctx.db.get(args.caseId);
     await verifyOwnership(ctx, caseDoc, "case");
     if (!caseDoc) throw new ConvexError("Case not found");
+
+    // Re-validate extension (defense-in-depth — client may skip step 1)
+    const ext = args.fileName.split(".").pop()?.toLowerCase();
+    if (!ext || !ALLOWED_DOCUMENT_EXTENSIONS.has(ext)) {
+      throw new ConvexError(`File type .${ext || "unknown"} is not allowed`);
+    }
+
+    // Re-validate content type
+    if (!ALLOWED_DOCUMENT_CONTENT_TYPES.has(args.contentType)) {
+      throw new ConvexError(`Content type ${args.contentType} is not allowed`);
+    }
+
+    // Re-validate size
+    if (args.fileSize > MAX_DOCUMENT_SIZE_BYTES) {
+      throw new ConvexError("File exceeds 20 MB limit");
+    }
 
     const url = await ctx.storage.getUrl(
       args.storageId as Id<"_storage">
