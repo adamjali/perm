@@ -24,8 +24,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { AlertTriangle, ChevronDown, ChevronUp, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { captureError } from "@/lib/sentry";
-import { toast } from "@/lib/toast";
+import { handleOperationError } from "@/lib/errors";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 
 /**
@@ -87,9 +86,10 @@ export default function AutoClosureAlertBanner() {
     try {
       await dismissOne({ notificationId });
     } catch (error) {
-      console.error("Failed to dismiss alert:", error);
-      captureError(error, { operation: "dismissAutoClosureAlert" });
-      toast.error("Failed to dismiss alert");
+      handleOperationError(error, {
+        userMessage: "Failed to dismiss alert",
+        context: { operation: "dismissAutoClosureAlert" },
+      });
     }
   };
 
@@ -97,9 +97,10 @@ export default function AutoClosureAlertBanner() {
     try {
       await dismissAll({});
     } catch (error) {
-      console.error("Failed to dismiss all alerts:", error);
-      captureError(error, { operation: "dismissAllAutoClosureAlerts" });
-      toast.error("Failed to dismiss alerts");
+      handleOperationError(error, {
+        userMessage: "Failed to dismiss alerts",
+        context: { operation: "dismissAllAutoClosureAlerts" },
+      });
     }
   };
 
