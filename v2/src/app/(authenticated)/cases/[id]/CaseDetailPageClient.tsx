@@ -612,7 +612,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               size="icon"
               onClick={() => navigateTo("/cases")}
               className={cn(
-                "shrink-0 h-9 w-9 border-[3px] border-border bg-card hover:bg-[var(--primary)] hover:text-black hover:border-black dark:hover:border-white/50 hover:-translate-y-[1px] hover:shadow-hard-sm transition-all",
+                "shrink-0 h-9 w-9 border-[3px] border-border bg-card hover:bg-[var(--primary)] hover:text-black hover:border-black hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none transition-all",
                 isNavigating && "opacity-70 pointer-events-none"
               )}
               disabled={isAnyNavigating}
@@ -659,8 +659,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   "shrink-0 border-[3px] transition-all cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.isFavorite
-                    ? "border-amber-400 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:border-amber-500 dark:hover:bg-amber-900/30"
-                    : "border-border bg-card hover:bg-manila-dark hover:-translate-y-[1px] hover:shadow-hard-sm"
+                    ? "border-amber-400 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 dark:bg-amber-900/20 dark:border-amber-500 dark:hover:bg-amber-900/30 dark:active:bg-amber-900/40"
+                    : "border-border bg-card hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none"
                 )}
                 aria-label={caseData.isFavorite ? "Remove bookmark" : "Bookmark case"}
                 aria-pressed={caseData.isFavorite}
@@ -673,7 +673,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                       "h-5 w-5",
                       caseData.isFavorite
                         ? "fill-amber-400 text-amber-500"
-                        : "text-muted-foreground"
+                        : "text-amber-400"
                     )}
                   />
                 )}
@@ -688,10 +688,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   "shrink-0 border-[3px] transition-all cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.calendarSyncEnabled && isGoogleConnected
-                    ? "border-emerald-400 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-500 dark:hover:bg-emerald-900/30"
+                    ? "border-emerald-400 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-500 dark:hover:bg-emerald-900/30 dark:active:bg-emerald-900/40"
                     : caseData.calendarSyncEnabled && !isGoogleConnected
-                      ? "border-amber-500 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
-                      : "border-border bg-card hover:bg-manila-dark hover:-translate-y-[1px] hover:shadow-hard-sm"
+                      ? "border-amber-500 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 dark:active:bg-amber-900/40"
+                      : "border-border bg-card hover:bg-red-50 dark:hover:bg-red-900/20 hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none"
                 )}
                 title={
                   caseData.calendarSyncEnabled && isGoogleConnected
@@ -710,7 +710,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 ) : caseData.calendarSyncEnabled && !isGoogleConnected ? (
                   <AlertTriangle className="h-5 w-5 text-amber-600" />
                 ) : (
-                  <CalendarX className="h-5 w-5 text-muted-foreground" />
+                  <CalendarX className="h-5 w-5 text-red-400" />
                 )}
               </Button>
 
@@ -720,7 +720,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 disabled={isAnyNavigating}
                 className={cn(
                   "shrink-0 border-[3px] border-black bg-[var(--primary)] text-black font-heading font-bold text-xs",
-                  "shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all",
+                  "shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard hover:bg-[#35D848] active:translate-y-0 active:shadow-hard-sm transition-all",
                   "min-h-[38px] gap-1.5"
                 )}
               >
@@ -739,7 +739,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     size="icon"
                     className={cn(
                       "shrink-0 border-[3px] border-border bg-card",
-                      "hover:bg-[var(--primary)] hover:text-black hover:border-black dark:hover:border-white/50 hover:-translate-y-[1px] hover:shadow-hard-sm transition-all",
+                      "hover:bg-[var(--primary)] hover:text-black hover:border-black hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none transition-all",
                       "min-h-[38px] min-w-[38px] h-[38px] w-[38px]"
                     )}
                     disabled={isUpdating || isAnyNavigating}
