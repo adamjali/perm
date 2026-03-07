@@ -167,4 +167,13 @@ describe("computeWindowStatus", () => {
     expect(result!.chip).toBe("Expired");
     expect(result!.pct).toBe(100);
   });
+
+  it("handles zero-length window on current day (expired by noon)", () => {
+    // parseISO creates midnight local; by noon the zero-length window is past
+    vi.setSystemTime(new Date("2025-03-15T12:00:00"));
+    const result = computeWindowStatus("2025-03-15", "2025-03-15");
+    expect(result).not.toBeNull();
+    expect(result!.chip).toBe("Expired");
+    expect(result!.pct).toBe(100);
+  });
 });

@@ -181,6 +181,55 @@ describe("calculateNextAction", () => {
     });
     expect(result!.action).toBe("Case Complete");
   });
+
+  it("returns 'Wait for I-140 Decision' when filed but no decision", () => {
+    const result = calculateNextAction({
+      ...baseCaseData,
+      caseStatus: "i140",
+      i140FilingDate: "2025-03-01",
+    });
+    expect(result!.action).toBe("Wait for I-140 Decision");
+  });
+
+  it("returns null for I-140 denied (case falls through to null)", () => {
+    const result = calculateNextAction({
+      ...baseCaseData,
+      caseStatus: "i140",
+      i140FilingDate: "2025-03-01",
+      i140DenialDate: "2025-05-15",
+    });
+    // Denial path: no approval, no denial check → falls to end → null
+    expect(result).toBeNull();
+  });
+
+  // Recruitment sub-stages
+  it("returns 'Place Sunday Ads' after notice of filing", () => {
+    const result = calculateNextAction({
+      ...baseCaseData,
+      caseStatus: "recruitment",
+      jobOrderStartDate: "2025-01-01",
+      jobOrderEndDate: "2025-02-01",
+      noticeOfFilingStartDate: "2025-01-15",
+      noticeOfFilingEndDate: "2025-01-29",
+    });
+    expect(result!.action).toBe("Place Sunday Ads");
+  });
+
+  it("returns 'Complete Additional Recruitment' for professional occupations", () => {
+    const result = calculateNextAction({
+      ...baseCaseData,
+      caseStatus: "recruitment",
+      jobOrderStartDate: "2025-01-01",
+      jobOrderEndDate: "2025-02-01",
+      noticeOfFilingStartDate: "2025-01-15",
+      noticeOfFilingEndDate: "2025-01-29",
+      sundayAdFirstDate: "2025-01-19",
+      sundayAdSecondDate: "2025-01-26",
+      isProfessionalOccupation: true,
+      additionalRecruitmentMethods: [],
+    });
+    expect(result!.action).toBe("Complete Additional Recruitment");
+  });
 });
 
 // ============================================================================
@@ -226,5 +275,17 @@ describe("calculateNextDeadline", () => {
     });
     expect(result).not.toBeNull();
     expect(result!.label).toContain("RFI");
+  });
+
+  it("filters out past deadlines (negative daysUntil)", () => {
+    // Set time far enough that PWD is already expired
+    vi.setSystemTime(new Date("2026-06-01T00:00:00Z"));
+    const result = calculateNextDeadline({
+      ...baseCaseData,
+      caseStatus: "recruitment",
+      pwdExpirationDate: "2025-01-01", // Already expired
+    });
+    // PWD expiration is in the past — should be filtered out
+    expect(result).toBeNull();
   });
 });
