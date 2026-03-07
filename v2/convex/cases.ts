@@ -1402,6 +1402,26 @@ export const remove = mutation({
       await recordError(ctx, "mutation", "cases.deleteCase.cleanupCitations", cleanupError, { userId, resourceId: args.id.toString() });
     }
 
+    // 8. Clear duplicateOf references on cases pointing to this deleted case
+    try {
+      const duplicates = await ctx.db
+        .query("cases")
+        .withIndex("by_user_and_duplicate", (q) =>
+          q.eq("userId", userId).eq("duplicateOf", args.id)
+        )
+        .collect();
+
+      for (const dup of duplicates) {
+        await ctx.db.patch(dup._id, {
+          duplicateOf: undefined,
+          markedAsDuplicateAt: undefined,
+        });
+      }
+    } catch (cleanupError) {
+      log.error('Failed to cleanup duplicateOf references', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+      await recordError(ctx, "mutation", "cases.deleteCase.cleanupDuplicateOf", cleanupError, { userId, resourceId: args.id.toString() });
+    }
+
     // ===== HARD DELETE THE CASE =====
     await ctx.db.delete(args.id);
 
@@ -1614,6 +1634,28 @@ export const bulkRemove = mutation({
       } catch (cleanupError) {
         log.error('Failed to cleanup conversationMessages citations in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
         await recordError(ctx, "mutation", "cases.bulkRemove.cleanupCitations", cleanupError, { userId });
+      }
+
+      // 8. Clear duplicateOf references on cases pointing to any deleted case
+      try {
+        for (const deletedId of deletedCaseIds) {
+          const duplicates = await ctx.db
+            .query("cases")
+            .withIndex("by_user_and_duplicate", (q) =>
+              q.eq("userId", userId).eq("duplicateOf", deletedId)
+            )
+            .collect();
+
+          for (const dup of duplicates) {
+            await ctx.db.patch(dup._id, {
+              duplicateOf: undefined,
+              markedAsDuplicateAt: undefined,
+            });
+          }
+        }
+      } catch (cleanupError) {
+        log.error('Failed to cleanup duplicateOf references in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
+        await recordError(ctx, "mutation", "cases.bulkRemove.cleanupDuplicateOf", cleanupError, { userId });
       }
     }
 
