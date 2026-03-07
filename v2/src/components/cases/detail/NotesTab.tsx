@@ -62,7 +62,7 @@ function CategoryBadge({ category }: { category: string }) {
         fontWeight: 700,
         textTransform: "uppercase",
         letterSpacing: "0.04em",
-        border: "3px solid var(--border)",
+        border: "3px solid #000",
         display: "inline-flex",
         alignItems: "center",
         lineHeight: 1,
