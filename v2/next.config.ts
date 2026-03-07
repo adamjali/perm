@@ -71,7 +71,8 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     return [
-      // Fix GSC 404s: old .html URLs → clean routes
+      // Fix GSC 404s: stray URLs → clean routes
+      { source: "/%24", destination: "/", permanent: true },
       { source: "/demo.html", destination: "/demo", permanent: true },
       { source: "/register.html", destination: "/signup", permanent: true },
       { source: "/terms.html", destination: "/terms", permanent: true },
@@ -110,7 +111,7 @@ const nextConfig: NextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live wss://vercel.live https://*.sentry.io https://browser.sentry-cdn.com https://*.senja.io https://senja.io https://fonts.googleapis.com https://fonts.gstatic.com https://us.i.posthog.com https://us-assets.i.posthog.com",
               "media-src 'self' blob: data:",
-              "frame-src 'self' https://app.supademo.com",
+              "frame-src 'self' https://app.supademo.com https://*.convex.cloud",
               "worker-src 'self' blob:",
               "frame-ancestors 'none'",
               "base-uri 'self'",

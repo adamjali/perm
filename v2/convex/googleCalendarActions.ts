@@ -449,10 +449,10 @@ export const deleteCalendarEvent = internalAction({
             return { deleted: true };
           }
 
-          // 404 Not Found = event already deleted (stale event ID)
+          // 404 Not Found or 410 Gone = event already deleted (stale event ID)
           // Treat as success, don't throw - this is expected when syncing
-          if (response.status === 404) {
-            log.debug('Stale event ID, already deleted from Google Calendar', { eventId });
+          if (response.status === 404 || response.status === 410) {
+            log.debug('Stale event ID, already deleted from Google Calendar', { eventId, status: response.status });
             return { deleted: true, stale: true };
           }
 
