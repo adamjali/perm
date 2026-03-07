@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import {
   caseFormSchema,
   validateCaseForm,
+  validateStatusSelection,
   isISODateString,
   isSunday,
   type CaseFormData,
@@ -743,5 +744,41 @@ describe('cross-field validation', () => {
         expect(error?.message).toContain('on or before');
       }
     });
+  });
+});
+
+// ============================================================================
+// validateStatusSelection Tests
+// ============================================================================
+
+describe('validateStatusSelection', () => {
+  it.each([
+    ['pwd', 'working', {}, true],
+    ['pwd', 'filed', {}, false, 'PWD "Filed" selected but no PWD filing date'],
+    ['pwd', 'filed', { pwdFilingDate: '2024-01-15' }, true],
+    ['pwd', 'approved', {}, false, 'PWD "Approved" selected but no PWD determination date'],
+    ['pwd', 'approved', { pwdDeterminationDate: '2024-02-15' }, true],
+    ['recruitment', 'working', {}, false, 'Recruitment stage selected but no PWD determination date'],
+    ['recruitment', 'working', { pwdDeterminationDate: '2024-02-15' }, true],
+    ['eta9089', 'filed', {}, false, 'ETA 9089 "Filed" selected but no filing date'],
+    ['eta9089', 'filed', { eta9089FilingDate: '2024-03-01' }, true],
+    ['eta9089', 'approved', {}, false, 'ETA 9089 "Approved" selected but no certification date'],
+    ['eta9089', 'approved', { eta9089CertificationDate: '2024-04-01' }, true],
+    ['i140', 'working', {}, false, 'I-140 stage selected but no ETA 9089 certification date'],
+    ['i140', 'working', { eta9089CertificationDate: '2024-04-01' }, true],
+    ['i140', 'filed', { eta9089CertificationDate: '2024-04-01' }, false, 'I-140 "Filed" selected but no I-140 filing date'],
+    ['i140', 'filed', { eta9089CertificationDate: '2024-04-01', i140FilingDate: '2024-05-01' }, true],
+    ['i140', 'approved', { eta9089CertificationDate: '2024-04-01' }, false, 'I-140 "Approved" selected but no I-140 approval date'],
+    ['i140', 'approved', { eta9089CertificationDate: '2024-04-01', i140ApprovalDate: '2024-06-01' }, true],
+  ] as const)('(%s, %s) → valid=%s', (caseStatus, progressStatus, values, expectedValid, expectedWarning?) => {
+    const result = validateStatusSelection(
+      caseStatus as CaseFormData['caseStatus'],
+      progressStatus as CaseFormData['progressStatus'],
+      values as Partial<CaseFormData>,
+    );
+    expect(result.valid).toBe(expectedValid);
+    if (!expectedValid && expectedWarning) {
+      expect(result.warning).toContain(expectedWarning);
+    }
   });
 });

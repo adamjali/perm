@@ -198,7 +198,7 @@ describe("calculateNextAction", () => {
       i140FilingDate: "2025-03-01",
       i140DenialDate: "2025-05-15",
     });
-    // Denial path: no approval, no denial check → falls to end → null
+    // Denial: i140FilingDate set + i140DenialDate set → no approval → if-block at line 435 skipped → falls through → null
     expect(result).toBeNull();
   });
 
