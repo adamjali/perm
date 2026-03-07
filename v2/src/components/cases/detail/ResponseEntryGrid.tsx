@@ -26,6 +26,12 @@ interface ResponseEntryGridProps {
  * Shared RFI/RFE entry grid used by ETA9089Tab and I140Tab.
  * The two sections are structurally identical, differing only in labels and icons.
  */
+const alertTriangleIcon = (
+  <svg className="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>
+  </svg>
+);
+
 export function ResponseEntryGrid({
   type,
   subtitle,
@@ -40,11 +46,7 @@ export function ResponseEntryGrid({
       <div className="detail-card">
         <div className="detail-card-head ch-muted">
           <span className="flex items-center gap-1.5">
-            {type === "RFI" ? (
-              <svg className="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-            ) : (
-              <svg className="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-            )}
+            {alertTriangleIcon}
             {fullLabel}
           </span>
           <span className="font-mono text-[0.6rem] font-bold uppercase px-2 py-0.5 border-2 border-border bg-muted text-muted-foreground">

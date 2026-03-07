@@ -61,7 +61,7 @@ export const containerVariants = {
   },
 };
 
-export const itemVariants = {
+const nextUpItemVariants = {
   hidden: { opacity: 0, y: 6 },
   visible: {
     opacity: 1,
@@ -102,7 +102,7 @@ interface StageProgressIndicatorProps {
 export function StageProgressIndicator({ currentStage }: StageProgressIndicatorProps) {
   return (
     <motion.div
-      variants={itemVariants}
+      variants={nextUpItemVariants}
       className="flex items-center justify-between gap-1 sm:gap-2"
       role="progressbar"
       aria-valuenow={currentStage}
@@ -273,7 +273,7 @@ export function NextActionCard({
 
   return (
     <motion.div
-      variants={itemVariants}
+      variants={nextUpItemVariants}
       layout
       transition={{ layout: { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] } }}
       className={cn(
@@ -387,7 +387,7 @@ export function DeadlineCountdown({ deadline }: DeadlineCountdownProps) {
 
   return (
     <motion.div
-      variants={itemVariants}
+      variants={nextUpItemVariants}
       className={cn(
         "p-4 border-2",
         urgencyColors.border,
