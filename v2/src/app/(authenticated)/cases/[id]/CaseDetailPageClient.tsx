@@ -659,8 +659,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   "shrink-0 border-[3px] transition-all cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.isFavorite
-                    ? "border-amber-400 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 dark:bg-amber-900/20 dark:border-amber-500 dark:hover:bg-amber-900/30 dark:active:bg-amber-900/40"
-                    : "border-border bg-card hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none"
+                    ? "border-amber-400 bg-amber-50 hover:bg-amber-200 active:bg-amber-300 dark:bg-amber-900/20 dark:border-amber-500 dark:hover:bg-amber-800/40 dark:active:bg-amber-800/50"
+                    : "border-border bg-card hover:bg-amber-200 hover:border-amber-400 dark:hover:bg-amber-800/40 hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none"
                 )}
                 aria-label={caseData.isFavorite ? "Remove bookmark" : "Bookmark case"}
                 aria-pressed={caseData.isFavorite}
@@ -688,10 +688,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   "shrink-0 border-[3px] transition-all cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.calendarSyncEnabled && isGoogleConnected
-                    ? "border-emerald-400 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-500 dark:hover:bg-emerald-900/30 dark:active:bg-emerald-900/40"
+                    ? "border-emerald-400 bg-emerald-50 hover:bg-emerald-200 active:bg-emerald-300 dark:bg-emerald-900/20 dark:border-emerald-500 dark:hover:bg-emerald-800/40 dark:active:bg-emerald-800/50"
                     : caseData.calendarSyncEnabled && !isGoogleConnected
-                      ? "border-amber-500 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 dark:active:bg-amber-900/40"
-                      : "border-border bg-card hover:bg-red-50 dark:hover:bg-red-900/20 hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none"
+                      ? "border-amber-500 bg-amber-50 hover:bg-amber-200 active:bg-amber-300 dark:bg-amber-900/20 dark:hover:bg-amber-800/40 dark:active:bg-amber-800/50"
+                      : "border-border bg-card hover:bg-red-200 hover:border-red-400 dark:hover:bg-red-800/40 hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none"
                 )}
                 title={
                   caseData.calendarSyncEnabled && isGoogleConnected
@@ -720,7 +720,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 disabled={isAnyNavigating}
                 className={cn(
                   "shrink-0 border-[3px] border-black bg-[var(--primary)] text-black font-heading font-bold text-xs",
-                  "shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard hover:bg-[#35D848] active:translate-y-0 active:shadow-hard-sm transition-all",
+                  "shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard hover:bg-[#4AE860] active:translate-y-0 active:shadow-hard-sm transition-all",
                   "min-h-[38px] gap-1.5"
                 )}
               >
