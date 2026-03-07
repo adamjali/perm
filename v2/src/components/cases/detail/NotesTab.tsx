@@ -15,7 +15,7 @@ import {
 
 interface NotesTabProps {
   notes: NoteEntry[];
-  onUpdateNotes?: (notes: NoteEntry[]) => void;
+  onUpdateNotes?: (notes: NoteEntry[]) => void | Promise<void>;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -134,14 +134,18 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
     setTimeout(() => editTextareaRef.current?.focus(), 0);
   }, [selectedNote, onUpdateNotes]);
 
-  const saveEdit = useCallback(() => {
+  const saveEdit = useCallback(async () => {
     if (!selectedNote || !onUpdateNotes) return;
     const trimmed = editingContent.trim();
     if (!trimmed) return;
-    onUpdateNotes(
-      notes.map((n) => n.id === selectedNote.id ? { ...n, content: trimmed } : n)
-    );
-    setIsEditing(false);
+    try {
+      await onUpdateNotes(
+        notes.map((n) => n.id === selectedNote.id ? { ...n, content: trimmed } : n)
+      );
+      setIsEditing(false);
+    } catch {
+      // Parent handler (handleUpdateNotes) already calls handleOperationError
+    }
   }, [selectedNote, editingContent, notes, onUpdateNotes]);
 
   const cancelEdit = useCallback(() => {
@@ -149,26 +153,34 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
     setEditingContent("");
   }, []);
 
-  const deleteNote = useCallback((noteId: string) => {
+  const deleteNote = useCallback(async (noteId: string) => {
     if (!onUpdateNotes) return;
-    onUpdateNotes(
-      notes.map((n) => n.id === noteId ? { ...n, status: "deleted" as const } : n)
-    );
-    if (selectedId === noteId) {
-      setSelectedId(null);
-      setIsEditing(false);
+    try {
+      await onUpdateNotes(
+        notes.map((n) => n.id === noteId ? { ...n, status: "deleted" as const } : n)
+      );
+      if (selectedId === noteId) {
+        setSelectedId(null);
+        setIsEditing(false);
+      }
+    } catch {
+      // Parent handler already calls handleOperationError
     }
   }, [notes, onUpdateNotes, selectedId]);
 
-  const toggleDone = useCallback((noteId: string) => {
+  const toggleDone = useCallback(async (noteId: string) => {
     if (!onUpdateNotes) return;
-    onUpdateNotes(
-      notes.map((n) => n.id === noteId ? { ...n, status: n.status === "done" ? "pending" as const : "done" as const } : n)
-    );
+    try {
+      await onUpdateNotes(
+        notes.map((n) => n.id === noteId ? { ...n, status: n.status === "done" ? "pending" as const : "done" as const } : n)
+      );
+    } catch {
+      // Parent handler already calls handleOperationError
+    }
   }, [notes, onUpdateNotes]);
 
   // Add new note
-  const handleAddNote = useCallback(() => {
+  const handleAddNote = useCallback(async () => {
     if (!onUpdateNotes) return;
     const content = newContent.trim();
     if (!content || notes.length >= 200) return;
@@ -183,11 +195,15 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
       ...(newDueDate ? { dueDate: newDueDate } : {}),
     };
 
-    onUpdateNotes([...notes, newNote]);
-    setNewContent("");
-    setNewDueDate("");
-    setShowOptions(false);
-    newTextareaRef.current?.focus();
+    try {
+      await onUpdateNotes([...notes, newNote]);
+      setNewContent("");
+      setNewDueDate("");
+      setShowOptions(false);
+      newTextareaRef.current?.focus();
+    } catch {
+      // Parent handler already calls handleOperationError
+    }
   }, [onUpdateNotes, newContent, newPriority, newCategory, newDueDate, notes]);
 
   const handleNewNoteKeyDown = useCallback(

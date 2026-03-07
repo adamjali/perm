@@ -14,7 +14,7 @@ import type { JobDescriptionTemplate } from "@/components/job-description/JobDes
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
-import { captureError } from "@/lib/sentry";
+import { handleOperationError } from "@/lib/errors";
 import type { CaseDetailData } from "./case-detail-types";
 import { itemVariants, tabContainerVariants, fmtISODate, fmtCurrency } from "./case-detail-utils";
 
@@ -80,8 +80,7 @@ export function OverviewTab({
       await jobDescProps.onSave(editPositionTitle.trim(), editDescription.trim(), selectedTemplateId);
       setIsEditingJobDesc(false);
     } catch (error) {
-      captureError(error, { operation: "saveJobDescription" });
-      toast.error("Failed to update job description");
+      handleOperationError(error, { userMessage: "Failed to update job description." });
     } finally {
       setIsSavingJobDesc(false);
     }
@@ -94,8 +93,7 @@ export function OverviewTab({
       await jobDescProps.onClear();
       setIsEditingJobDesc(false);
     } catch (error) {
-      captureError(error, { operation: "clearJobDescription" });
-      toast.error("Failed to clear job description");
+      handleOperationError(error, { userMessage: "Failed to clear job description." });
     } finally {
       setIsClearingJobDesc(false);
     }
@@ -117,8 +115,7 @@ export function OverviewTab({
       await jobDescProps.onSaveAsNewTemplate(editPositionTitle.trim(), editDescription.trim());
       toast.success("Saved as new template");
     } catch (error) {
-      captureError(error, { operation: "saveAsNewTemplate" });
-      toast.error("Failed to save template");
+      handleOperationError(error, { userMessage: "Failed to save template." });
     } finally {
       setIsSavingTemplate(false);
     }
@@ -133,8 +130,7 @@ export function OverviewTab({
       toast.success("Copied to clipboard");
       setTimeout(() => setIsCopied(false), 2000);
     } catch (error) {
-      captureError(error, { operation: "copyJobDescription" });
-      toast.error("Failed to copy");
+      handleOperationError(error, { userMessage: "Failed to copy." });
     }
   }, [isEditingJobDesc, editDescription, caseData.jobDescription]);
 

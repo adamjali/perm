@@ -112,9 +112,11 @@ export async function validateDocumentFile(
         error: "File content does not match its declared type.",
       };
     }
-  } catch (error) {
-    console.warn("[validateDocumentFile] Magic bytes unreadable:",
-      error instanceof Error ? error.message : "unknown");
+  } catch {
+    return {
+      valid: false,
+      error: "Unable to verify file integrity. Please try again.",
+    };
   }
 
   return { valid: true };

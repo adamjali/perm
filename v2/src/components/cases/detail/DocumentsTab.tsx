@@ -334,9 +334,8 @@ export function DocumentsTab({
     setIsUploading(true);
     try {
       await onUpload(pendingFile, pendingCategory);
-    } catch (error) {
-      // Defensive: onUpload should handle its own errors, but log if something leaks
-      console.error("[DocumentsTab] Upload error leaked:", error);
+    } catch {
+      // Defensive: onUpload should handle its own errors via handleOperationError
     } finally {
       setIsUploading(false);
       setPendingFile(null);
@@ -380,10 +379,12 @@ export function DocumentsTab({
     if (!onDelete || !confirmDeleteId) return;
     try {
       await onDelete(confirmDeleteId);
-    } finally {
       setConfirmDeleteId(null);
       if (selectedId === confirmDeleteId) setSelectedId(null);
       if (fullscreenId === confirmDeleteId) setFullscreenId(null);
+    } catch {
+      // Parent handler (handleDeleteDocument) already calls handleOperationError
+      setConfirmDeleteId(null);
     }
   }, [onDelete, confirmDeleteId, selectedId, fullscreenId]);
 
