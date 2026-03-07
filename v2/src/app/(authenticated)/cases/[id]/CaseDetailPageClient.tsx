@@ -54,6 +54,8 @@ import { NotesTab } from "@/components/cases/detail/NotesTab";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
+import { validateDocumentFile } from "@/lib/documents/validation";
+import type { DocumentCategory } from "@/lib/documents";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useDerivedDates } from "@/hooks/useDerivedDates";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
@@ -383,6 +385,70 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       // Silently fail — Convex will revert optimistic update
     }
   }, [updateMutation, caseId]);
+
+  // Document mutations
+  const generateUploadUrlMutation = useMutation(api.documents.generateUploadUrl);
+  const saveDocumentMutation = useMutation(api.documents.saveDocument);
+  const removeDocumentMutation = useMutation(api.documents.removeDocument);
+
+  const handleUploadDocument = useCallback(async (file: File, category?: DocumentCategory) => {
+    // Client-side validation
+    const validation = await validateDocumentFile(file);
+    if (!validation.valid) {
+      toast.error(validation.error || "Invalid file");
+      return;
+    }
+
+    try {
+      // 1. Get upload URL (server validates too)
+      const uploadUrl = await generateUploadUrlMutation({
+        caseId,
+        fileName: file.name,
+        contentType: file.type || "application/octet-stream",
+        fileSize: file.size,
+      });
+
+      // 2. Upload file directly to Convex storage
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const { storageId } = await response.json();
+
+      // 3. Save document metadata
+      await saveDocumentMutation({
+        caseId,
+        storageId,
+        fileName: file.name,
+        contentType: file.type || "application/octet-stream",
+        fileSize: file.size,
+        category,
+      });
+
+      toast.success("Document uploaded");
+    } catch (error) {
+      handleOperationError(error, {
+        userMessage: "Failed to upload document. Please try again.",
+      });
+    }
+  }, [generateUploadUrlMutation, saveDocumentMutation, caseId]);
+
+  const handleDeleteDocument = useCallback(async (documentId: string) => {
+    try {
+      await removeDocumentMutation({ caseId, documentId });
+      toast.success("Document deleted");
+    } catch (error) {
+      handleOperationError(error, {
+        userMessage: "Failed to delete document. Please try again.",
+      });
+    }
+  }, [removeDocumentMutation, caseId]);
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -838,7 +904,11 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           </TabPanel>
 
           <TabPanel id="documents" activeTab={activeTab}>
-            <DocumentsTab documents={caseData.documents || []} />
+            <DocumentsTab
+              documents={caseData.documents || []}
+              onUpload={handleUploadDocument}
+              onDelete={handleDeleteDocument}
+            />
           </TabPanel>
 
           <TabPanel id="notes" activeTab={activeTab}>

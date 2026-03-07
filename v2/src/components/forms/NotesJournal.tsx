@@ -26,6 +26,7 @@ import {
   NOTE_PRIORITIES,
   NOTE_CATEGORIES,
   NOTE_CATEGORY_LABELS,
+  generateNoteId,
 } from "@/lib/forms/case-form-schema";
 
 // ============================================================================
@@ -120,12 +121,7 @@ const CATEGORY_CONFIG: Record<
 // HELPERS
 // ============================================================================
 
-/**
- * Generate a unique ID for a new note
- */
-function generateNoteId(): string {
-  return `note-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
+// generateNoteId imported from @/lib/forms/case-form-schema
 
 /**
  * Format timestamp for display - full date + relative badge

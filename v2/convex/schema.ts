@@ -489,10 +489,20 @@ export default defineSchema({
       v.object({
         id: v.string(),
         name: v.string(),
-        url: v.string(), // Convex file storage URL
+        url: v.string(), // Convex file storage serving URL
+        storageId: v.optional(v.string()), // Convex _storage ID for deletion
         mimeType: v.string(),
         size: v.number(), // File size in bytes
         uploadedAt: v.number(),
+        category: v.optional(
+          v.union(
+            v.literal("pwd"),
+            v.literal("recruitment"),
+            v.literal("eta9089"),
+            v.literal("i140"),
+            v.literal("general")
+          )
+        ),
       })
     ),
 

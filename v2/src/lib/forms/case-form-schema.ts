@@ -151,6 +151,13 @@ const rfeEntrySchema = z.object({
 });
 
 export type NoteEntry = z.infer<typeof noteSchema>;
+
+/**
+ * Generate a unique ID for a new note
+ */
+export function generateNoteId(): string {
+  return `note-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
 export type RFIEntry = z.infer<typeof rfiEntrySchema>;
 export type RFEEntry = z.infer<typeof rfeEntrySchema>;
 

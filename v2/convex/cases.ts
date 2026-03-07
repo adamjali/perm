@@ -279,9 +279,19 @@ export const create = mutation({
           id: v.string(),
           name: v.string(),
           url: v.string(),
+          storageId: v.optional(v.string()),
           mimeType: v.string(),
           size: v.number(),
           uploadedAt: v.number(),
+          category: v.optional(
+            v.union(
+              v.literal("pwd"),
+              v.literal("recruitment"),
+              v.literal("eta9089"),
+              v.literal("i140"),
+              v.literal("general")
+            )
+          ),
         })
       )
     ),
@@ -706,6 +716,17 @@ const STATUS_ONLY_FIELDS = new Set([
   "progressStatusOverride",
 ]);
 
+/** Metadata fields that don't affect PERM date/deadline validation. */
+const METADATA_FIELDS = new Set([
+  "notes",
+  "documents",
+  "isFavorite",
+  "isPinned",
+  "tags",
+  "calendarSyncEnabled",
+  "showOnTimeline",
+]);
+
 /**
  * Update an existing case
  * Verifies ownership before allowing updates
@@ -768,9 +789,19 @@ export const update = mutation({
           id: v.string(),
           name: v.string(),
           url: v.string(),
+          storageId: v.optional(v.string()),
           mimeType: v.string(),
           size: v.number(),
           uploadedAt: v.number(),
+          category: v.optional(
+            v.union(
+              v.literal("pwd"),
+              v.literal("recruitment"),
+              v.literal("eta9089"),
+              v.literal("i140"),
+              v.literal("general")
+            )
+          ),
         })
       )
     ),
@@ -969,7 +1000,8 @@ export const update = mutation({
     // Every other status-change path (bulkUpdateStatus, reopenCase, deadlineEnforcement)
     // already skips validation — this brings cases:update in line.
     const updateKeys = Object.keys(rawUpdates);
-    const isStatusOnlyUpdate = updateKeys.length > 0 && updateKeys.every((k) => STATUS_ONLY_FIELDS.has(k));
+    const isMetadataOnlyUpdate = updateKeys.length > 0 &&
+      updateKeys.every((k) => STATUS_ONLY_FIELDS.has(k) || METADATA_FIELDS.has(k));
 
     // Merge case data (always needed for auto-status calculation)
     const fullCaseData = {
@@ -1003,7 +1035,7 @@ export const update = mutation({
       caseStatus: args.caseStatus ?? caseDoc!.caseStatus,
       progressStatus: args.progressStatus ?? caseDoc!.progressStatus,
     };
-    if (!isStatusOnlyUpdate) {
+    if (!isMetadataOnlyUpdate) {
       const validationInput = mapToValidatorFormat(fullCaseData);
       const validationResult = validateCase(validationInput);
       if (!validationResult.valid) {

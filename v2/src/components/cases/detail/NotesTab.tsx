@@ -1,18 +1,24 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "motion/react";
-import { MessageCircle, Send, Trash2, ChevronLeft, ChevronRight, X, Pencil } from "lucide-react";
+import { MessageCircle, Send, Trash2, ChevronLeft, ChevronRight, X, Pencil, Flag, Tag, CalendarDays, CheckCircle } from "lucide-react";
 import {
   NOTE_CATEGORY_LABELS,
+  NOTE_PRIORITIES,
+  NOTE_CATEGORIES,
+  generateNoteId,
   type NoteEntry,
   type NoteCategory,
+  type NotePriority,
 } from "@/lib/forms/case-form-schema";
 
 interface NotesTabProps {
   notes: NoteEntry[];
   onUpdateNotes?: (notes: NoteEntry[]) => void;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -21,6 +27,12 @@ const itemVariants = {
     y: 0,
     transition: { type: "spring" as const, stiffness: 300, damping: 24 },
   },
+};
+
+const PRIORITY_LABELS: Record<string, string> = {
+  high: "High",
+  medium: "Medium",
+  low: "Low",
 };
 
 function fmtDate(d: string | number): string {
@@ -75,33 +87,71 @@ function CategoryBadge({ category }: { category: string }) {
 }
 
 export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
-  const [selectedIdx, setSelectedIdx] = useState(-1);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [page, setPage] = useState(0);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Sort notes: pending first, then done, then deleted; within each group, newest first
-  const statusOrder = { pending: 0, done: 1, deleted: 2 } as const;
-  const sortedNotes = [...notes].sort((a, b) => {
-    const aOrder = statusOrder[a.status] ?? 2;
-    const bOrder = statusOrder[b.status] ?? 2;
-    if (aOrder !== bOrder) return aOrder - bOrder;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  // New note input state
+  const [newContent, setNewContent] = useState("");
+  const [newPriority, setNewPriority] = useState<NotePriority>("medium");
+  const [newCategory, setNewCategory] = useState<NoteCategory>("other");
+  const [newDueDate, setNewDueDate] = useState("");
+  const [showOptions, setShowOptions] = useState(false);
+  const newTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const isOpen = selectedIdx >= 0 && selectedIdx < sortedNotes.length;
-  const selectedNote = isOpen ? sortedNotes[selectedIdx] : null;
+  const isMac = typeof navigator !== "undefined" && navigator.platform?.toLowerCase().includes("mac");
+  const shortcutKey = isMac ? "Cmd" : "Ctrl";
+
+  // Filter out deleted notes, then sort: pending first, then done; within each group, newest first
+  const statusOrder = { pending: 0, done: 1, deleted: 2 } as const;
+  const visibleNotes = [...notes]
+    .filter((n) => n.status !== "deleted")
+    .sort((a, b) => {
+      const aOrder = statusOrder[a.status] ?? 2;
+      const bOrder = statusOrder[b.status] ?? 2;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+  const totalPages = Math.ceil(visibleNotes.length / ITEMS_PER_PAGE);
+  const pagedNotes = visibleNotes.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
+
+  const selectedNote = selectedId ? visibleNotes.find((n) => n.id === selectedId) || null : null;
+  const isOpen = selectedNote !== null;
+
+  // Auto-advance page when selected note is on a different page
+  useEffect(() => {
+    if (selectedId) {
+      const idx = visibleNotes.findIndex((n) => n.id === selectedId);
+      if (idx >= 0) {
+        const notePage = Math.floor(idx / ITEMS_PER_PAGE);
+        if (notePage !== page) setPage(notePage);
+      }
+    }
+  }, [selectedId, visibleNotes, page]);
+
+  // Reset page if it's out of bounds after delete
+  useEffect(() => {
+    if (page > 0 && page >= totalPages) {
+      setPage(Math.max(0, totalPages - 1));
+    }
+  }, [page, totalPages]);
 
   function navNote(dir: number) {
-    const next = selectedIdx + dir;
-    if (next >= 0 && next < sortedNotes.length) {
-      setSelectedIdx(next);
+    const idx = visibleNotes.findIndex((n) => n.id === selectedId);
+    if (idx < 0) return;
+    const next = idx + dir;
+    const target = visibleNotes[next];
+    if (next >= 0 && target) {
+      setSelectedId(target.id);
       setIsEditing(false);
     }
   }
 
   function closePreview() {
-    setSelectedIdx(-1);
+    setSelectedId(null);
     setIsEditing(false);
   }
 
@@ -132,9 +182,11 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
     onUpdateNotes(
       notes.map((n) => n.id === noteId ? { ...n, status: "deleted" as const } : n)
     );
-    setSelectedIdx(-1);
-    setIsEditing(false);
-  }, [notes, onUpdateNotes]);
+    if (selectedId === noteId) {
+      setSelectedId(null);
+      setIsEditing(false);
+    }
+  }, [notes, onUpdateNotes, selectedId]);
 
   const toggleDone = useCallback((noteId: string) => {
     if (!onUpdateNotes) return;
@@ -142,6 +194,42 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
       notes.map((n) => n.id === noteId ? { ...n, status: n.status === "done" ? "pending" as const : "done" as const } : n)
     );
   }, [notes, onUpdateNotes]);
+
+  // Add new note
+  const handleAddNote = useCallback(() => {
+    if (!onUpdateNotes) return;
+    const content = newContent.trim();
+    if (!content || notes.length >= 200) return;
+
+    const newNote: NoteEntry = {
+      id: generateNoteId(),
+      content,
+      createdAt: Date.now(),
+      status: "pending",
+      priority: newPriority,
+      category: newCategory,
+      ...(newDueDate ? { dueDate: newDueDate } : {}),
+    };
+
+    onUpdateNotes([...notes, newNote]);
+    setNewContent("");
+    setNewDueDate("");
+    setShowOptions(false);
+    newTextareaRef.current?.focus();
+  }, [onUpdateNotes, newContent, newPriority, newCategory, newDueDate, notes]);
+
+  const handleNewNoteKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        handleAddNote();
+      }
+    },
+    [handleAddNote]
+  );
+
+  // Filter out deleted notes for display count
+  const activeCount = notes.filter((n) => n.status !== "deleted").length;
 
   return (
     <motion.div
@@ -167,21 +255,21 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                 color: "var(--foreground)",
               }}
             >
-              {notes.length}
+              {activeCount}
             </span>
           </div>
           <div className={`split-wrap${isOpen ? " preview-open" : ""}`}>
             <div className="split-list">
-              {sortedNotes.length > 0 ? (
+              {pagedNotes.length > 0 ? (
                 <div className="scroll-list">
-                  {sortedNotes.map((note, i) => {
+                  {pagedNotes.map((note) => {
                     const isDone = note.status === "done";
-                    const isSelected = i === selectedIdx;
+                    const isSelected = note.id === selectedId;
                     return (
                       <div
                         key={note.id}
                         className={`note${isDone ? " note-done" : ""}${isSelected ? " selected" : ""}`}
-                        onClick={() => setSelectedIdx(i)}
+                        onClick={() => { setSelectedId(note.id); setIsEditing(false); }}
                       >
                         <div className="note-top">
                           <div className="note-badges">
@@ -207,11 +295,24 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                     );
                   })}
                 </div>
-              ) : (
+              ) : visibleNotes.length === 0 ? (
                 <div className="detail-empty-state" style={{ padding: "32px 20px" }}>
                   <MessageCircle className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
                   <div className="detail-empty-state-title">No notes</div>
-                  <div className="detail-empty-state-desc">Case notes will appear here. Add notes from the Edit Case page.</div>
+                  <div className="detail-empty-state-desc">Add a note below to get started.</div>
+                </div>
+              ) : null}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="pagination-bar">
+                  <button onClick={() => setPage((p) => p - 1)} disabled={page === 0}>
+                    <ChevronLeft className="h-3 w-3" />
+                  </button>
+                  <span>{page + 1} / {totalPages}</span>
+                  <button onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages - 1}>
+                    <ChevronRight className="h-3 w-3" />
+                  </button>
                 </div>
               )}
             </div>
@@ -221,10 +322,10 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                   {/* Nav */}
                   <div className="preview-nav">
                     <div className="preview-nav-btns">
-                      <button className="icon-btn" onClick={() => navNote(-1)} disabled={selectedIdx <= 0} title="Previous">
+                      <button className="icon-btn" onClick={() => navNote(-1)} disabled={visibleNotes.findIndex((n) => n.id === selectedId) <= 0} title="Previous">
                         <ChevronLeft className="h-3.5 w-3.5" />
                       </button>
-                      <button className="icon-btn" onClick={() => navNote(1)} disabled={selectedIdx >= sortedNotes.length - 1} title="Next">
+                      <button className="icon-btn" onClick={() => navNote(1)} disabled={visibleNotes.findIndex((n) => n.id === selectedId) >= visibleNotes.length - 1} title="Next">
                         <ChevronRight className="h-3.5 w-3.5" />
                       </button>
                     </div>
@@ -289,7 +390,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                           Cancel
                         </button>
                         <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.55rem", color: "var(--muted-foreground)" }}>
-                          {typeof navigator !== "undefined" && navigator.platform?.toLowerCase().includes("mac") ? "Cmd" : "Ctrl"}+Enter to save · Esc to cancel
+                          {shortcutKey}+Enter to save · Esc to cancel
                         </span>
                       </div>
                     </div>
@@ -313,7 +414,16 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                   )}
 
                   {/* Actions */}
-                  <div style={{ display: "flex", gap: 8, marginTop: 24 }}>
+                  <div style={{ display: "flex", gap: 8, marginTop: 24, flexWrap: "wrap" }}>
+                    <button
+                      className="icon-btn"
+                      style={{ width: "auto", padding: "4px 12px", gap: 6, display: "flex", alignItems: "center" }}
+                      disabled={!onUpdateNotes}
+                      onClick={() => toggleDone(selectedNote.id)}
+                    >
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      {selectedNote.status === "done" ? "Mark Pending" : "Mark Done"}
+                    </button>
                     <button
                       className="icon-btn"
                       style={{ width: "auto", padding: "4px 12px", gap: 6, display: "flex", alignItems: "center" }}
@@ -335,24 +445,164 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
               )}
             </div>
           </div>
-          {/* Note input area (Phase 2 — disabled) */}
-          <div className="note-input-area">
-            <input
-              type="text"
-              className="note-input"
-              placeholder="Add a case note..."
-              disabled
-              style={{ opacity: 0.5, cursor: "default" }}
-            />
-            <button
-              className="flex items-center justify-center border-2 border-border bg-primary text-primary-foreground"
-              style={{ width: 44, height: 44, cursor: "default", opacity: 0.5 }}
-              disabled
-              aria-label="Send"
-            >
-              <Send className="h-4.5 w-4.5" />
-            </button>
-          </div>
+
+          {/* Note input area */}
+          {onUpdateNotes ? (
+            <div className="note-input-area">
+              <div className="note-input-combo">
+                <textarea
+                  ref={newTextareaRef}
+                  className="note-input"
+                  placeholder={`Add a case note... (${shortcutKey}+Enter)`}
+                  value={newContent}
+                  onChange={(e) => {
+                    setNewContent(e.target.value);
+                    if (e.target.value && !showOptions) setShowOptions(true);
+                  }}
+                  onKeyDown={handleNewNoteKeyDown}
+                  maxLength={5000}
+                  rows={2}
+                  style={{
+                    resize: "none",
+                    minHeight: 44,
+                    fontFamily: "inherit",
+                    fontSize: "0.85rem",
+                  }}
+                />
+                <button
+                  className="note-send-btn"
+                  disabled={!newContent.trim() || notes.length >= 200}
+                  onClick={handleAddNote}
+                  aria-label="Add note"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Priority, Category, Due Date selectors */}
+              {showOptions && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    padding: "8px 12px",
+                    borderTop: "2px solid var(--border)",
+                    background: "var(--muted)",
+                    alignItems: "center",
+                  }}
+                >
+                  {/* Priority */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <Flag className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
+                    <select
+                      value={newPriority}
+                      onChange={(e) => setNewPriority(e.target.value as NotePriority)}
+                      style={{
+                        height: 26,
+                        padding: "0 6px",
+                        border: "2px solid var(--border)",
+                        background: "var(--background)",
+                        color: "var(--foreground)",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.65rem",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {NOTE_PRIORITIES.map((p) => (
+                        <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Category */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <Tag className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
+                    <select
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value as NoteCategory)}
+                      style={{
+                        height: 26,
+                        padding: "0 6px",
+                        border: "2px solid var(--border)",
+                        background: "var(--background)",
+                        color: "var(--foreground)",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.65rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {NOTE_CATEGORIES.map((c) => (
+                        <option key={c} value={c}>{NOTE_CATEGORY_LABELS[c]}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Due Date */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <CalendarDays className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
+                    <input
+                      type="date"
+                      value={newDueDate}
+                      onChange={(e) => setNewDueDate(e.target.value)}
+                      style={{
+                        height: 26,
+                        padding: "0 6px",
+                        border: "2px solid var(--border)",
+                        background: "var(--background)",
+                        color: "var(--foreground)",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.65rem",
+                        fontWeight: 700,
+                      }}
+                    />
+                    {newDueDate && (
+                      <button
+                        onClick={() => setNewDueDate("")}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: "var(--muted-foreground)",
+                          padding: 2,
+                          display: "flex",
+                        }}
+                        title="Clear due date"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+
+                  {notes.length >= 190 && (
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.55rem", color: "var(--muted-foreground)" }}>
+                      {200 - notes.length} notes remaining
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="note-input-area">
+              <div className="note-input-combo">
+                <input
+                  type="text"
+                  className="note-input"
+                  placeholder="Add a case note..."
+                  disabled
+                  style={{ opacity: 0.5, cursor: "default" }}
+                />
+                <button
+                  className="note-send-btn"
+                  disabled
+                  aria-label="Send"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </motion.div>
     </motion.div>

@@ -950,10 +950,63 @@
 .b-category { background: #F5F5F5; color: #000; border-color: #000; font-size: 0.65rem; padding: 3px 8px; }
 .dark .b-priority-low { background: #404040; color: #fff; }
 .dark .b-category { background: #333333; color: #fff; }
-.note-input-area { display: flex; gap: 8px; padding: 14px 20px; border-top: 3px solid var(--border); }
+.note-input-area { display: flex; flex-direction: column; border-top: 3px solid var(--border); }
 .note-input { flex: 1; font-family: var(--font-heading); font-size: 0.88rem; padding: 10px 14px; border: 3px solid var(--border); background: var(--background); color: var(--foreground); outline: none; }
 .note-input:focus { box-shadow: var(--shadow-hard-sm); }
 .note-input::placeholder { color: var(--muted-foreground); }
+/* Note input combo (seamless textarea + send button) */
+.note-input-combo { display: flex; padding: 14px 20px; }
+.note-input-combo .note-input { border-right-width: 0; }
+.note-input-combo .note-input:focus { box-shadow: none; border-color: var(--primary); }
+.note-input-combo .note-send-btn {
+  width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;
+  border: 3px solid var(--border); border-left-width: 0; flex-shrink: 0;
+  background: var(--primary); color: var(--primary-foreground);
+  cursor: pointer; transition: all 0.15s;
+}
+.note-input-combo .note-send-btn:hover:not(:disabled) { filter: brightness(1.15); box-shadow: var(--shadow-hard-sm); }
+.note-input-combo .note-send-btn:disabled { opacity: 0.4; cursor: default; }
+.note-input-combo:focus-within .note-input { border-color: var(--primary); }
+.note-input-combo:focus-within .note-send-btn { border-color: var(--primary); }
+/* Pagination bar */
+.pagination-bar {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 8px 16px; border-top: 2px solid var(--border);
+  font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700; color: var(--muted-foreground);
+}
+.pagination-bar button {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border: 2px solid var(--border);
+  background: var(--card); cursor: pointer; transition: background 0.15s;
+}
+.pagination-bar button:hover:not(:disabled) { background: var(--muted); }
+.pagination-bar button:disabled { opacity: 0.3; cursor: default; }
+/* Fullscreen document viewer */
+.doc-fullscreen-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.9);
+  display: flex; flex-direction: column;
+}
+.doc-fullscreen-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 20px;
+  background: var(--card); border-bottom: 3px solid var(--foreground);
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.doc-fullscreen-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+.doc-fullscreen-body { flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; min-height: 0; }
+.doc-fullscreen-body iframe { width: 100%; height: 100%; border: none; background: #fff; }
+.doc-fullscreen-body img { max-width: 100%; max-height: 100%; object-fit: contain; }
+/* Pending upload bar */
+.pending-upload-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 16px;
+  border-bottom: 2px solid var(--border); background: var(--muted);
+}
+.pending-upload-name {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700;
+}
 
 /* ================================================================
    DARK MODE — Case Detail neobrutalist overrides
@@ -985,6 +1038,13 @@
 .dark .note { border-top-color: rgba(0,0,0,0.4); }
 .dark .recruit-row { border-top-color: rgba(0,0,0,0.4); }
 .dark .note-input-area { border-top-color: #000000; }
+.dark .note-input-combo .note-send-btn { border-color: #000000; }
+.dark .note-input-combo:focus-within .note-send-btn { border-color: var(--primary); }
+.dark .note-input-combo:focus-within .note-input { border-color: var(--primary); }
+.dark .pagination-bar { border-top-color: rgba(0,0,0,0.4); }
+.dark .pagination-bar button { border-color: #000000; background: #FAFAFA; color: #000000; }
+.dark .doc-fullscreen-header { border-bottom-color: #000000; }
+.dark .pending-upload-bar { border-bottom-color: rgba(0,0,0,0.4); }
 .dark .split-wrap.preview-open .split-preview { border-left-color: #000000; }
 .dark .recruit-range-fill { border-color: #000000; }
 .dark .stat { border-color: #000000; }
