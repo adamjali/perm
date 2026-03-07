@@ -9,6 +9,7 @@ import { handleOperationError } from "@/lib/errors";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { formatCaseStatus } from "./case-card.utils";
+import type { CaseStatus } from "@/lib/perm";
 
 interface UseCardMutationsParams {
   caseId: Id<"cases">;
@@ -70,7 +71,7 @@ export function useCardMutations({
     setReopening(true);
     try {
       const result = await reopenCaseMutation({ id: caseId });
-      const statusLabel = formatCaseStatus(result.newCaseStatus);
+      const statusLabel = formatCaseStatus(result.newCaseStatus as CaseStatus);
       const progressLabel = result.newProgressStatus.replace(/_/g, " ");
       toast.success(`Case reopened as ${statusLabel} - ${progressLabel}`);
     } catch (error) {

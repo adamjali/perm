@@ -5,10 +5,6 @@
  * timeline visualizations, and interactive notes/documents.
  */
 
-// Base wrapper component
-export { CaseDetailSection, DetailField } from "./CaseDetailSection";
-export type { CaseDetailSectionProps, DetailFieldProps } from "./CaseDetailSection";
-
 // Timeline components
 export { InlineCaseTimeline } from "./InlineCaseTimeline";
 export type { InlineCaseTimelineProps } from "./InlineCaseTimeline";

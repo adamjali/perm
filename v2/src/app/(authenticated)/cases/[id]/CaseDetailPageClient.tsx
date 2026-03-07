@@ -379,14 +379,14 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       const uploadUrl = await generateUploadUrlMutation({
         caseId,
         fileName: file.name,
-        contentType: file.type || "application/octet-stream",
+        contentType: file.type,
         fileSize: file.size,
       });
 
       // 2. Upload file directly to Convex storage
       const response = await fetch(uploadUrl, {
         method: "POST",
-        headers: { "Content-Type": file.type || "application/octet-stream" },
+        headers: { "Content-Type": file.type },
         body: file,
       });
 
@@ -403,7 +403,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         caseId,
         storageId,
         fileName: file.name,
-        contentType: file.type || "application/octet-stream",
+        contentType: file.type,
         fileSize: file.size,
         category,
       });

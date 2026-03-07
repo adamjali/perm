@@ -60,22 +60,34 @@ export interface NextUpCaseData {
   i140DenialDate?: string | null;
   // RFI/RFE
   rfiEntries?: Array<{
+    id?: string;
     receivedDate: string;
     responseDueDate: string;
     responseSubmittedDate?: string;
+    createdAt?: number;
   }> | null;
   rfeEntries?: Array<{
+    id?: string;
     receivedDate: string;
     responseDueDate: string;
     responseSubmittedDate?: string;
+    createdAt?: number;
   }> | null;
   // Professional occupation
   isProfessionalOccupation?: boolean;
   additionalRecruitmentMethods?: AdditionalRecruitmentMethod[] | null;
 }
 
+/** All known action names returned by calculateNextAction. */
+export type NextActionName =
+  | "File PWD" | "Wait for PWD" | "Start Recruitment"
+  | "Post Job Order" | "Post Notice of Filing" | "Place Sunday Ads"
+  | "Complete Additional Recruitment" | "Wait for Filing Window" | "File ETA 9089"
+  | "Wait for Certification" | "File I-140" | "Wait for I-140 Decision"
+  | "Case Complete" | "Respond to RFI" | "Respond to RFE";
+
 export interface NextAction {
-  action: string;
+  action: NextActionName;
   description: string;
   icon: ReactNode;
   urgency: "normal" | "soon" | "urgent" | "overdue";
@@ -104,6 +116,21 @@ export interface UrgencyColors {
 /** Milliseconds per day for date calculations */
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
+/** Build the 9-field input for calculateFilingWindowFromCase from NextUpCaseData. */
+function buildFilingWindowInput(caseData: NextUpCaseData) {
+  return {
+    sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
+    sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
+    jobOrderStartDate: caseData.jobOrderStartDate || undefined,
+    jobOrderEndDate: caseData.jobOrderEndDate || undefined,
+    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
+    noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
+    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
+    pwdExpirationDate: caseData.pwdExpirationDate || undefined,
+    isProfessionalOccupation: !!caseData.isProfessionalOccupation,
+  };
+}
+
 // ============================================================================
 // DATE UTILITIES (UTC-safe to avoid DST issues)
 // ============================================================================
@@ -127,6 +154,15 @@ function calculateDaysUntil(dateStr: string): number {
   const targetDate = new Date(dateStr);
   targetDate.setUTCHours(0, 0, 0, 0);
   return Math.floor((targetDate.getTime() - today.getTime()) / MS_PER_DAY);
+}
+
+/**
+ * Format days-until as human-readable text, handling the "0 days" edge case.
+ */
+function formatDaysText(daysUntil: number): string {
+  if (daysUntil === 0) return "today";
+  if (daysUntil < 0) return `${Math.abs(daysUntil)} days ago`;
+  return `in ${daysUntil} days`;
 }
 
 // ============================================================================
@@ -242,7 +278,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     const daysUntil = calculateDaysUntil(activeRfi.responseDueDate);
     return {
       action: "Respond to RFI",
-      description: `RFI response due ${daysUntil < 0 ? `${Math.abs(daysUntil)} days ago` : `in ${Math.abs(daysUntil)} days`}`,
+      description: `RFI response due ${formatDaysText(daysUntil)}`,
       icon: createElement(AlertTriangle, { className: "h-5 w-5" }),
       urgency: getUrgencyLevel(daysUntil),
     };
@@ -253,7 +289,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     const daysUntil = calculateDaysUntil(activeRfe.responseDueDate);
     return {
       action: "Respond to RFE",
-      description: `RFE response due ${daysUntil < 0 ? `${Math.abs(daysUntil)} days ago` : `in ${Math.abs(daysUntil)} days`}`,
+      description: `RFE response due ${formatDaysText(daysUntil)}`,
       icon: createElement(AlertTriangle, { className: "h-5 w-5" }),
       urgency: getUrgencyLevel(daysUntil),
     };
@@ -349,17 +385,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     }
 
     // 5. Check if 30-day waiting period has passed (use central filing window calculation)
-    const filingWindow = calculateFilingWindowFromCase({
-      sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
-      sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
-      jobOrderStartDate: caseData.jobOrderStartDate || undefined,
-      jobOrderEndDate: caseData.jobOrderEndDate || undefined,
-      noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
-      noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
-      additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
-      pwdExpirationDate: caseData.pwdExpirationDate || undefined,
-      isProfessionalOccupation: !!caseData.isProfessionalOccupation,
-    });
+    const filingWindow = calculateFilingWindowFromCase(buildFilingWindowInput(caseData));
 
     if (filingWindow) {
       const daysUntilOpens = calculateDaysUntil(filingWindow.opens);
@@ -463,17 +489,7 @@ export function calculateNextDeadline(caseData: NextUpCaseData): Deadline | null
     ? calculateRecruitmentWindowCloses(firstRecruit, caseData.pwdExpirationDate || undefined)
     : undefined;
 
-  const filingWindow = calculateFilingWindowFromCase({
-    sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
-    sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
-    jobOrderStartDate: caseData.jobOrderStartDate || undefined,
-    jobOrderEndDate: caseData.jobOrderEndDate || undefined,
-    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
-    noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
-    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
-    pwdExpirationDate: caseData.pwdExpirationDate || undefined,
-    isProfessionalOccupation: !!caseData.isProfessionalOccupation,
-  });
+  const filingWindow = calculateFilingWindowFromCase(buildFilingWindowInput(caseData));
 
   // Build CaseDataForDeadlines with pre-computed derived fields
   const centralData: CaseDataForDeadlines = {
@@ -492,7 +508,8 @@ export function calculateNextDeadline(caseData: NextUpCaseData): Deadline | null
     noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
     isProfessionalOccupation: caseData.isProfessionalOccupation || undefined,
     additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
-    // Runtime data has full RfiEntry/RfeEntry shape; inline type is narrower
+    // NextUpCaseData entries have optional id/createdAt; extractActiveDeadlines
+    // only reads id for optional entryId output, so this narrowing is safe.
     rfiEntries: (caseData.rfiEntries || undefined) as CaseDataForDeadlines["rfiEntries"],
     rfeEntries: (caseData.rfeEntries || undefined) as CaseDataForDeadlines["rfeEntries"],
     // Derived fields (extractActiveDeadlines reads these directly)

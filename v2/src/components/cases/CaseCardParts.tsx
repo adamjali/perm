@@ -8,13 +8,14 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { formatCompactDate, getStageColorVar } from "./case-card.utils";
 import type { CaseCardData } from "../../../convex/lib/caseListTypes";
+import type { CaseStatus } from "@/lib/perm";
 
 // ============================================================================
 // FOLDER TAB
 // ============================================================================
 
 interface FolderTabProps {
-  caseStatus: string;
+  caseStatus: CaseStatus;
   isClosed: boolean;
 }
 

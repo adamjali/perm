@@ -4,6 +4,7 @@
  */
 
 import { getDaysUntilDeadline } from "@/lib/status/urgency";
+import type { CaseStatus } from "@/lib/perm";
 
 /**
  * Format closure reason for display.
@@ -76,7 +77,7 @@ export function formatCompactDate(dateStr: string): string {
 /**
  * Get stage color bar CSS variable.
  */
-export function getStageColorVar(stage: string): string {
+export function getStageColorVar(stage: CaseStatus): string {
   const varMap: Record<string, string> = {
     pwd: "var(--stage-pwd)",
     recruitment: "var(--stage-recruitment)",
@@ -90,7 +91,7 @@ export function getStageColorVar(stage: string): string {
 /**
  * Format case status for display (e.g., "eta9089" -> "ETA 9089", "i140" -> "I-140")
  */
-export function formatCaseStatus(status: string): string {
+export function formatCaseStatus(status: CaseStatus): string {
   if (status === "eta9089") return "ETA 9089";
   if (status === "i140") return "I-140";
   if (status === "pwd") return "PWD";
