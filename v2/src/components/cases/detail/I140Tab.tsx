@@ -1,28 +1,10 @@
 "use client";
 
 import { motion } from "motion/react";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { parseISO, differenceInDays } from "date-fns";
 import { Shield, AlertTriangle, Clock } from "lucide-react";
 import type { CaseDetailData } from "./case-detail-types";
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 300, damping: 24 },
-  },
-};
-
-function fmt(d?: string | null) {
-  if (!d) return "\u2014";
-  try { return format(parseISO(d), "MMM d, yyyy"); } catch { return d; }
-}
-
-function fmtShort(d?: string | null) {
-  if (!d) return "\u2014";
-  try { return format(parseISO(d), "MMM d"); } catch { return d; }
-}
+import { itemVariants, fmtISODate, fmtISOShort } from "./case-detail-utils";
 
 interface I140TabProps {
   caseData: CaseDetailData;
@@ -96,11 +78,11 @@ export function I140Tab({ caseData }: I140TabProps) {
                 <div className="win-hero-label">{windowLabel}</div>
               </div>
               <div className="win-progress">
-                <span className="win-date">{fmtShort(caseData.eta9089CertificationDate)}</span>
+                <span className="win-date">{fmtISOShort(caseData.eta9089CertificationDate)}</span>
                 <div className="win-bar">
                   <div className="win-bar-fill" style={{ width: `${windowPct}%`, background: "var(--stage-i140)" }} />
                 </div>
-                <span className="win-date">{fmtShort(caseData.eta9089ExpirationDate)}</span>
+                <span className="win-date">{fmtISOShort(caseData.eta9089ExpirationDate)}</span>
               </div>
             </div>
           </div>
@@ -129,7 +111,7 @@ export function I140Tab({ caseData }: I140TabProps) {
             </div>
             <div className="field-cell">
               <div className="fc-label">Filing Date</div>
-              <div className={`fc-val mono ${!isFiled ? "dim" : ""}`}>{fmt(caseData.i140FilingDate)}</div>
+              <div className={`fc-val mono ${!isFiled ? "dim" : ""}`}>{fmtISODate(caseData.i140FilingDate)}</div>
             </div>
             <div className="field-cell">
               <div className="fc-label">Premium Processing</div>
@@ -144,7 +126,7 @@ export function I140Tab({ caseData }: I140TabProps) {
           <div className="field-grid" style={{ padding: 0, borderTop: "2px solid var(--manila-dark)" }}>
             <div className="field-cell">
               <div className="fc-label">Receipt Date</div>
-              <div className={`fc-val mono ${!caseData.i140ReceiptDate ? "dim" : ""}`}>{fmt(caseData.i140ReceiptDate)}</div>
+              <div className={`fc-val mono ${!caseData.i140ReceiptDate ? "dim" : ""}`}>{fmtISODate(caseData.i140ReceiptDate)}</div>
             </div>
             <div className="field-cell">
               <div className="fc-label">Receipt Number</div>
@@ -165,11 +147,11 @@ export function I140Tab({ caseData }: I140TabProps) {
           <div className="field-grid" style={{ padding: 0, borderTop: "2px solid var(--manila-dark)" }}>
             <div className="field-cell">
               <div className="fc-label">Approval Date</div>
-              <div className={`fc-val mono ${!isApproved ? "dim" : ""}`}>{fmt(caseData.i140ApprovalDate)}</div>
+              <div className={`fc-val mono ${!isApproved ? "dim" : ""}`}>{fmtISODate(caseData.i140ApprovalDate)}</div>
             </div>
             <div className="field-cell">
               <div className="fc-label">Denial Date</div>
-              <div className={`fc-val mono ${!isDenied ? "dim" : ""}`}>{fmt(caseData.i140DenialDate)}</div>
+              <div className={`fc-val mono ${!isDenied ? "dim" : ""}`}>{fmtISODate(caseData.i140DenialDate)}</div>
             </div>
             <div className="field-cell">
               <div className="fc-label">Status</div>
@@ -226,15 +208,15 @@ export function I140Tab({ caseData }: I140TabProps) {
                   <div className="field-grid" style={{ padding: 0 }}>
                     <div className="field-cell">
                       <div className="fc-label">Received</div>
-                      <div className="fc-val mono">{fmt(entry.receivedDate)}</div>
+                      <div className="fc-val mono">{fmtISODate(entry.receivedDate)}</div>
                     </div>
                     <div className="field-cell">
                       <div className="fc-label">Due</div>
-                      <div className="fc-val mono">{fmt(entry.responseDueDate)}</div>
+                      <div className="fc-val mono">{fmtISODate(entry.responseDueDate)}</div>
                     </div>
                     <div className="field-cell">
                       <div className="fc-label">Submitted</div>
-                      <div className={`fc-val mono ${!entry.responseSubmittedDate ? "dim" : ""}`}>{fmt(entry.responseSubmittedDate)}</div>
+                      <div className={`fc-val mono ${!entry.responseSubmittedDate ? "dim" : ""}`}>{fmtISODate(entry.responseSubmittedDate)}</div>
                     </div>
                   </div>
                 </div>

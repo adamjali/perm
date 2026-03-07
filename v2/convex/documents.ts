@@ -11,8 +11,9 @@ import {
 } from "./lib/documents";
 
 /**
- * Generate a short-lived upload URL for direct browser-to-storage upload.
+ * Step 1 of 2: Generate a short-lived upload URL for direct browser-to-storage upload.
  * Validates file metadata (extension, content type, size) before returning URL.
+ * Client uploads to the returned URL, then calls saveDocument (step 2) with the storageId.
  */
 export const generateUploadUrl = mutation({
   args: {
@@ -25,6 +26,7 @@ export const generateUploadUrl = mutation({
     await getCurrentUserId(ctx);
     const caseDoc = await ctx.db.get(args.caseId);
     await verifyOwnership(ctx, caseDoc, "case");
+    if (!caseDoc) throw new ConvexError("Case not found");
 
     // Validate extension
     const ext = args.fileName.split(".").pop()?.toLowerCase();
@@ -45,7 +47,7 @@ export const generateUploadUrl = mutation({
     }
 
     // Check document count
-    const existingDocs = caseDoc!.documents || [];
+    const existingDocs = caseDoc.documents || [];
     if (existingDocs.length >= MAX_DOCUMENTS_PER_CASE) {
       throw new ConvexError(
         `Maximum ${MAX_DOCUMENTS_PER_CASE} documents per case`
@@ -81,12 +83,18 @@ export const saveDocument = mutation({
     await getCurrentUserId(ctx);
     const caseDoc = await ctx.db.get(args.caseId);
     await verifyOwnership(ctx, caseDoc, "case");
+    if (!caseDoc) throw new ConvexError("Case not found");
 
     const url = await ctx.storage.getUrl(
       args.storageId as Id<"_storage">
     );
     if (!url) {
       throw new ConvexError("Failed to get storage URL");
+    }
+
+    const existing = caseDoc.documents || [];
+    if (existing.length >= MAX_DOCUMENTS_PER_CASE) {
+      throw new ConvexError(`Maximum ${MAX_DOCUMENTS_PER_CASE} documents per case`);
     }
 
     const docEntry = {
@@ -100,7 +108,6 @@ export const saveDocument = mutation({
       category: args.category,
     };
 
-    const existing = caseDoc!.documents || [];
     await ctx.db.patch(args.caseId, {
       documents: [...existing, docEntry],
     });
@@ -121,8 +128,9 @@ export const removeDocument = mutation({
     await getCurrentUserId(ctx);
     const caseDoc = await ctx.db.get(args.caseId);
     await verifyOwnership(ctx, caseDoc, "case");
+    if (!caseDoc) throw new ConvexError("Case not found");
 
-    const docs = caseDoc!.documents || [];
+    const docs = caseDoc.documents || [];
     const doc = docs.find((d) => d.id === args.documentId);
     if (!doc) {
       throw new ConvexError("Document not found");
@@ -132,8 +140,9 @@ export const removeDocument = mutation({
     if (doc.storageId) {
       try {
         await ctx.storage.delete(doc.storageId as Id<"_storage">);
-      } catch {
-        // Storage file may already be deleted — continue with metadata removal
+      } catch (error) {
+        console.warn(`[removeDocument] Storage delete failed for ${doc.storageId}:`,
+          error instanceof Error ? error.message : "unknown");
       }
     }
 

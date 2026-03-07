@@ -260,7 +260,7 @@ function getRangeBarsForRow(
  * Displays a horizontal timeline visualization of case milestones and date ranges.
  *
  * Features:
- * - 6-month window centered on today (3 months before + 3 months after)
+ * - Auto-fit window that spans the full date range of the case
  * - Month headers with current month highlighted
  * - Case milestones as colored dots
  * - Job order period as semi-transparent range bar

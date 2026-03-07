@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, type RefCallback } from "react";
 import { TrendingUp } from "lucide-react";
 import { parseISO, differenceInDays } from "date-fns";
 import { extractMilestones } from "@/lib/timeline/milestones";
@@ -11,11 +11,12 @@ interface QuickStatsPanelProps {
   caseData: CaseDetailData;
 }
 
-function useCountUp(target: number, duration = 1200): { value: number; ref: (el: HTMLElement | null) => void } {
+function useCountUp(target: number, duration = 1200): { value: number; ref: RefCallback<HTMLElement> } {
   const [value, setValue] = useState(0);
   const frameRef = useRef<number>(0);
   const hasAnimated = useRef(false);
   const elementRef = useRef<HTMLElement | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const startAnimation = useCallback(() => {
     if (hasAnimated.current) return;
@@ -46,6 +47,7 @@ function useCountUp(target: number, duration = 1200): { value: number; ref: (el:
   }, [target]);
 
   const setRef = useCallback((el: HTMLElement | null) => {
+    if (observerRef.current) { observerRef.current.disconnect(); observerRef.current = null; }
     elementRef.current = el;
     if (!el) return;
 
@@ -59,8 +61,7 @@ function useCountUp(target: number, duration = 1200): { value: number; ref: (el:
       { threshold: 0.5 }
     );
     observer.observe(el);
-
-    return () => observer.disconnect();
+    observerRef.current = observer;
   }, [startAnimation]);
 
   return { value, ref: setRef };

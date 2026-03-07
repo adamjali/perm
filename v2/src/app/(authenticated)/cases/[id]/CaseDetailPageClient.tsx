@@ -62,6 +62,7 @@ import { usePageContextUpdater } from "@/lib/ai/page-context";
 import { useIsMobile } from "@/lib/animations";
 import { type ProgressStatus, isRecruitmentComplete } from "@/lib/perm";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
+import type { CaseDetailData } from "@/components/cases/detail/case-detail-types";
 
 // ============================================================================
 // ANIMATION VARIANTS
@@ -306,7 +307,7 @@ function DeleteConfirmDialog({
 
 interface CaseDetailProps {
   caseId: Id<"cases">;
-  caseData: NonNullable<ReturnType<typeof useQuery<typeof api.cases.get>>>;
+  caseData: CaseDetailData;
 }
 
 function CaseDetail({ caseId, caseData }: CaseDetailProps) {
@@ -381,8 +382,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   const handleUpdateNotes = useCallback(async (updatedNotes: import("@/lib/forms/case-form-schema").NoteEntry[]) => {
     try {
       await updateMutation({ id: caseId, notes: updatedNotes });
-    } catch {
-      // Silently fail — Convex will revert optimistic update
+    } catch (error) {
+      handleOperationError(error, { userMessage: "Failed to save note changes. Please try again." });
     }
   }, [updateMutation, caseId]);
 
@@ -419,7 +420,9 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         throw new Error("Upload failed");
       }
 
-      const { storageId } = await response.json();
+      const json = (await response.json()) as { storageId?: string };
+      if (!json.storageId) throw new Error("Missing storageId in upload response");
+      const storageId = json.storageId;
 
       // 3. Save document metadata
       await saveDocumentMutation({

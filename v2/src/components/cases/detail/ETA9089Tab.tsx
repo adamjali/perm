@@ -1,29 +1,11 @@
 "use client";
 
 import { motion } from "motion/react";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { differenceInDays, parseISO } from "date-fns";
 import { FileText, AlertTriangle, Clock } from "lucide-react";
 import { isRecruitmentComplete } from "@/lib/perm";
 import type { CaseDetailData } from "./case-detail-types";
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 300, damping: 24 },
-  },
-};
-
-function fmt(d?: string | null) {
-  if (!d) return "\u2014";
-  try { return format(parseISO(d), "MMM d, yyyy"); } catch { return d; }
-}
-
-function fmtShort(d?: string | null) {
-  if (!d) return "\u2014";
-  try { return format(parseISO(d), "MMM d"); } catch { return d; }
-}
+import { itemVariants, fmtISODate, fmtISOShort } from "./case-detail-utils";
 
 interface ETA9089TabProps {
   caseData: CaseDetailData;
@@ -104,11 +86,11 @@ export function ETA9089Tab({
                 <div className="win-hero-label">{windowLabel}</div>
               </div>
               <div className="win-progress">
-                <span className="win-date">{fmtShort(filingWindowOpens)}</span>
+                <span className="win-date">{fmtISOShort(filingWindowOpens)}</span>
                 <div className="win-bar">
                   <div className="win-bar-fill" style={{ width: `${windowPct}%`, background: "var(--stage-eta9089)" }} />
                 </div>
-                <span className="win-date">{fmtShort(filingWindowCloses)}</span>
+                <span className="win-date">{fmtISOShort(filingWindowCloses)}</span>
               </div>
             </div>
           </div>
@@ -130,7 +112,7 @@ export function ETA9089Tab({
           <div className="field-grid" style={{ padding: 0 }}>
             <div className="field-cell">
               <div className="fc-label">Filing Date</div>
-              <div className={`fc-val mono ${!isFiled ? "dim" : ""}`}>{fmt(caseData.eta9089FilingDate)}</div>
+              <div className={`fc-val mono ${!isFiled ? "dim" : ""}`}>{fmtISODate(caseData.eta9089FilingDate)}</div>
             </div>
             <div className="field-cell">
               <div className="fc-label">Case Number</div>
@@ -138,17 +120,17 @@ export function ETA9089Tab({
             </div>
             <div className="field-cell">
               <div className="fc-label">Audit Date</div>
-              <div className={`fc-val mono ${!caseData.eta9089AuditDate ? "dim" : ""}`}>{fmt(caseData.eta9089AuditDate)}</div>
+              <div className={`fc-val mono ${!caseData.eta9089AuditDate ? "dim" : ""}`}>{fmtISODate(caseData.eta9089AuditDate)}</div>
             </div>
             <div className="field-cell">
               <div className="fc-label">Certification Date</div>
-              <div className={`fc-val mono ${!isCertified ? "dim" : ""}`}>{fmt(caseData.eta9089CertificationDate)}</div>
+              <div className={`fc-val mono ${!isCertified ? "dim" : ""}`}>{fmtISODate(caseData.eta9089CertificationDate)}</div>
             </div>
             <div className="field-cell">
               <div className="fc-label">Expiration Date</div>
               <div className={`fc-val mono ${!caseData.eta9089ExpirationDate ? "dim" : ""}`}>
                 {caseData.eta9089ExpirationDate ? (
-                  <span style={{ color: "var(--stage-eta9089)" }}>{fmt(caseData.eta9089ExpirationDate)}</span>
+                  <span style={{ color: "var(--stage-eta9089)" }}>{fmtISODate(caseData.eta9089ExpirationDate)}</span>
                 ) : "\u2014"}
               </div>
             </div>
@@ -156,7 +138,7 @@ export function ETA9089Tab({
               <div className="fc-label">Filing Window</div>
               <div className="fc-val mono" style={{ fontSize: "0.8rem" }}>
                 {filingWindowOpens && filingWindowCloses
-                  ? `${fmtShort(filingWindowOpens)} \u2013 ${fmtShort(filingWindowCloses)}`
+                  ? `${fmtISOShort(filingWindowOpens)} \u2013 ${fmtISOShort(filingWindowCloses)}`
                   : "\u2014"}
               </div>
             </div>
@@ -169,7 +151,7 @@ export function ETA9089Tab({
                   ? "ETA 9089 filed \u2014 awaiting DOL decision."
                   : "Awaiting filing \u2014 recruitment must be completed first."}
                 {filingWindowOpens && !isFiled && (
-                  <> Filing window opens <strong className="text-foreground">{fmt(filingWindowOpens)}</strong>.</>
+                  <> Filing window opens <strong className="text-foreground">{fmtISODate(filingWindowOpens)}</strong>.</>
                 )}
               </span>
             </div>
@@ -197,15 +179,15 @@ export function ETA9089Tab({
                   <div className="field-grid" style={{ padding: 0 }}>
                     <div className="field-cell">
                       <div className="fc-label">Received</div>
-                      <div className="fc-val mono">{fmt(entry.receivedDate)}</div>
+                      <div className="fc-val mono">{fmtISODate(entry.receivedDate)}</div>
                     </div>
                     <div className="field-cell">
                       <div className="fc-label">Due</div>
-                      <div className="fc-val mono">{fmt(entry.responseDueDate)}</div>
+                      <div className="fc-val mono">{fmtISODate(entry.responseDueDate)}</div>
                     </div>
                     <div className="field-cell">
                       <div className="fc-label">Submitted</div>
-                      <div className={`fc-val mono ${!entry.responseSubmittedDate ? "dim" : ""}`}>{fmt(entry.responseSubmittedDate)}</div>
+                      <div className={`fc-val mono ${!entry.responseSubmittedDate ? "dim" : ""}`}>{fmtISODate(entry.responseSubmittedDate)}</div>
                     </div>
                   </div>
                 </div>

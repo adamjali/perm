@@ -20,28 +20,13 @@ interface NotesTabProps {
 
 const ITEMS_PER_PAGE = 10;
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 300, damping: 24 },
-  },
-};
+import { itemVariants, fmtTimestamp } from "./case-detail-utils";
 
 const PRIORITY_LABELS: Record<string, string> = {
   high: "High",
   medium: "Medium",
   low: "Low",
 };
-
-function fmtDate(d: string | number): string {
-  return new Date(d).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 function PriorityBadge({ priority }: { priority: string }) {
   const cls = `b-priority-${priority}`;
@@ -99,6 +84,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
   const [newCategory, setNewCategory] = useState<NoteCategory>("other");
   const [newDueDate, setNewDueDate] = useState("");
   const [showOptions, setShowOptions] = useState(false);
+  const [filterCategory, setFilterCategory] = useState<NoteCategory | "all">("all");
   const newTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isMac = typeof navigator !== "undefined" && navigator.platform?.toLowerCase().includes("mac");
@@ -108,6 +94,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
   const statusOrder = { pending: 0, done: 1, deleted: 2 } as const;
   const visibleNotes = [...notes]
     .filter((n) => n.status !== "deleted")
+    .filter((n) => filterCategory === "all" || n.category === filterCategory)
     .sort((a, b) => {
       const aOrder = statusOrder[a.status] ?? 2;
       const bOrder = statusOrder[b.status] ?? 2;
@@ -245,18 +232,41 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
               <MessageCircle className="h-3.5 w-3.5" />
               Case Notes
             </span>
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "0.6rem",
-                background: "var(--card)",
-                border: "2px solid var(--foreground)",
-                padding: "1px 8px",
-                color: "var(--foreground)",
-              }}
-            >
-              {activeCount}
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <select
+                value={filterCategory}
+                onChange={(e) => { setFilterCategory(e.target.value as NoteCategory | "all"); setPage(0); }}
+                style={{
+                  height: 24,
+                  padding: "0 6px",
+                  border: "2px solid var(--foreground)",
+                  background: "var(--card)",
+                  color: "var(--foreground)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.6rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                }}
+              >
+                <option value="all">All</option>
+                {NOTE_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{NOTE_CATEGORY_LABELS[c]}</option>
+                ))}
+              </select>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.6rem",
+                  background: "var(--card)",
+                  border: "2px solid var(--foreground)",
+                  padding: "1px 8px",
+                  color: "var(--foreground)",
+                }}
+              >
+                {visibleNotes.length}
+              </span>
+            </div>
           </div>
           <div className={`split-wrap${isOpen ? " preview-open" : ""}`}>
             <div className="split-list">
@@ -277,7 +287,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                             {note.category && <CategoryBadge category={note.category} />}
                           </div>
                           <div className="note-actions" onClick={(e) => e.stopPropagation()}>
-                            <span className="note-when">{fmtDate(note.createdAt)}</span>
+                            <span className="note-when">{fmtTimestamp(note.createdAt)}</span>
                             <button
                               className="icon-btn icon-btn-danger"
                               title="Delete note"
@@ -348,8 +358,8 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                   </div>
 
                   {/* Created date */}
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: "var(--muted-foreground)", marginBottom: 16 }}>
-                    Created: {fmtDate(selectedNote.createdAt)}
+                  <div className="preview-date" style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", marginBottom: 16 }}>
+                    Created: {fmtTimestamp(selectedNote.createdAt)}
                   </div>
 
                   {/* Body */}
@@ -408,7 +418,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                   {/* Due date box */}
                   {selectedNote.dueDate && (
                     <div style={{ marginTop: 16, padding: "12px 16px", border: "3px solid var(--border)", background: "var(--muted)" }}>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", textTransform: "uppercase", color: "var(--muted-foreground)" }}>Due Date</span>
+                      <span className="preview-date" style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", textTransform: "uppercase" }}>Due Date</span>
                       <div style={{ fontWeight: 700, marginTop: 4 }}>{selectedNote.dueDate}</div>
                     </div>
                   )}

@@ -11,10 +11,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
 export type TabId =
   | "overview"
   | "recruitment"
@@ -37,10 +33,6 @@ const TABS: TabConfig[] = [
   { id: "documents", label: "Documents", icon: FolderOpen },
   { id: "notes", label: "Notes", icon: StickyNote },
 ];
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 interface CaseDetailTabsProps {
   activeTab: TabId;

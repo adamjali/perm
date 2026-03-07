@@ -114,6 +114,27 @@ describe("validateDocumentFile", () => {
       expect(result.valid).toBe(true);
     });
   });
+
+  describe("magic byte validation", () => {
+    it("rejects file with correct ext+MIME but wrong magic bytes", async () => {
+      // JPEG magic bytes in a file declared as PDF
+      const jpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, ...new Array(96).fill(0)]);
+      const blob = new Blob([jpegBytes], { type: "application/pdf" });
+      const file = new File([blob], "fake.pdf", { type: "application/pdf" });
+      const result = await validateDocumentFile(file);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("does not match");
+    });
+
+    it("rejects PNG magic bytes declared as JPEG", async () => {
+      const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, ...new Array(96).fill(0)]);
+      const blob = new Blob([pngBytes], { type: "image/jpeg" });
+      const file = new File([blob], "fake.jpg", { type: "image/jpeg" });
+      const result = await validateDocumentFile(file);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("does not match");
+    });
+  });
 });
 
 describe("document constants", () => {

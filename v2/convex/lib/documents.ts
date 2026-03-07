@@ -4,7 +4,7 @@
  * Canonical source — frontend re-exports from src/lib/documents/.
  */
 
-/** Allowed file extensions for document upload (OWASP whitelist). */
+/** Allowed file extensions for document upload (whitelist approach per OWASP file upload guidance). */
 export const ALLOWED_DOCUMENT_EXTENSIONS = new Set([
   "pdf",
   "doc",

@@ -270,20 +270,6 @@
     }
   }
 
-  /* Continuous spin animation */
-  @keyframes spin-continuous {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .spin-continuous {
-    animation: spin-continuous 1s linear infinite;
-  }
-
   /* Snappy card hover - design3 style
    * 0.15s max for hover responses (Linear.app style)
    * Ease-out-quad curve for natural deceleration
@@ -925,10 +911,11 @@
 
 /* Split preview */
 .split-preview-inner { padding: 24px; }
-.preview-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 20px; }
+.preview-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 20px; position: sticky; top: 0; z-index: 2; background: var(--card); padding: 16px 24px; margin: -24px -24px 20px; border-bottom: 2px solid var(--border); }
 .preview-nav-btns { display: flex; gap: 4px; }
 .preview-title { font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .preview-meta { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted-foreground); margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; }
+.preview-date { color: var(--muted-foreground); }
 .preview-body { font-size: 0.9rem; line-height: 1.65; overflow-wrap: break-word; word-break: break-word; }
 
 /* Note styles */
@@ -1054,8 +1041,16 @@
 /* icon-btn stays same look in dark mode */
 .dark .icon-btn { background: #FAFAFA; color: #000000; border-color: #000000; }
 .dark .icon-btn:hover:not(:disabled) { background: #333333; color: #FFFFFF; border-color: #000000; }
-/* doc-name always black */
-.dark .doc-name { color: #000000; }
+/* doc-name uses foreground in dark mode */
+.dark .doc-name { color: var(--foreground); }
+/* selected row in dark mode: meta text + action links legible on manila bg */
+.dark .doc-row.selected .doc-meta { color: #666666; }
+.dark .doc-row.selected .icon-btn { color: #000000; }
+.dark .note.selected .note-when { color: #666666; }
+.dark .note.selected .note-body { color: #000000; }
+.dark .note.selected .note-due { color: #8B6914; }
+/* Delete button background: gray in dark mode so it's not white */
+.dark .icon-btn-danger { background: #D0D0D0; }
 /* Notes counter badge stays same */
 .dark .detail-card-head .head-badge { color: inherit; }
 /* Quick-edit dropdown black borders in dark mode */
@@ -1688,7 +1683,6 @@ body[data-scroll-locked] {
   .bounce-slow,
   .bounce-subtle,
   .bounce-spin,
-  .spin-continuous,
   .animate-blink {
     animation: none !important;
   }

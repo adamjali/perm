@@ -238,7 +238,7 @@ export interface NextActionCardProps {
  * - Inline form fields with auto-save on blur
  * - Waiting actions show info only (no expand)
  * - Complex actions link to full edit form
- * - Smooth animations with Framer Motion
+ * - Smooth animations with Motion
  */
 export function NextActionCard({
   action,

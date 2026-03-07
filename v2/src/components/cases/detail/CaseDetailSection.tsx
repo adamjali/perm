@@ -32,7 +32,7 @@ export interface CaseDetailSectionProps {
  * Uses neobrutalist styling with hard shadows.
  *
  * Features:
- * - Collapsible with smooth Framer Motion animation
+ * - Collapsible with smooth Motion animation
  * - Section title with optional icon
  * - Neobrutalist card styling (border-2, shadow-hard-sm)
  * - Hover effects for interactivity

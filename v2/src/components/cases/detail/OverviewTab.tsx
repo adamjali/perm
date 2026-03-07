@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { format, parseISO } from "date-fns";
 import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText, ChevronDown, Pencil, Copy, Check, Trash2, Loader2, FilePlus } from "lucide-react";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { calculateNextAction, calculateNextDeadline } from "./next-up-section.utils";
@@ -15,21 +14,9 @@ import type { JobDescriptionTemplate } from "@/components/job-description/JobDes
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
+import { captureError } from "@/lib/sentry";
 import type { CaseDetailData } from "./case-detail-types";
-
-function fmtDate(d?: string | null) {
-  if (!d) return "\u2014";
-  try { return format(parseISO(d), "MMM d, yyyy"); } catch { return d; }
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 300, damping: 24 },
-  },
-};
+import { itemVariants, fmtISODate, fmtCurrency } from "./case-detail-utils";
 
 export interface JobDescEditProps {
   templates: JobDescriptionTemplate[];
@@ -92,7 +79,8 @@ export function OverviewTab({
     try {
       await jobDescProps.onSave(editPositionTitle.trim(), editDescription.trim(), selectedTemplateId);
       setIsEditingJobDesc(false);
-    } catch {
+    } catch (error) {
+      captureError(error, { operation: "saveJobDescription" });
       toast.error("Failed to update job description");
     } finally {
       setIsSavingJobDesc(false);
@@ -105,7 +93,8 @@ export function OverviewTab({
     try {
       await jobDescProps.onClear();
       setIsEditingJobDesc(false);
-    } catch {
+    } catch (error) {
+      captureError(error, { operation: "clearJobDescription" });
       toast.error("Failed to clear job description");
     } finally {
       setIsClearingJobDesc(false);
@@ -201,7 +190,7 @@ export function OverviewTab({
                     <div className="next-up-stat">
                       <div className="big" style={{ color: urgencyColor }}>{nextDeadline.daysUntil}</div>
                       <div className="label">{nextDeadline.label}</div>
-                      <div className="date">{fmtDate(nextDeadline.date)}</div>
+                      <div className="date">{fmtISODate(nextDeadline.date)}</div>
                     </div>
                   );
                 })()}
@@ -273,13 +262,13 @@ export function OverviewTab({
                   <div className="field-cell">
                     <div className="fc-label">Filed</div>
                     <div className={`fc-val mono ${!caseData.pwdFilingDate ? "dim" : ""}`}>
-                      {fmtDate(caseData.pwdFilingDate)}
+                      {fmtISODate(caseData.pwdFilingDate)}
                     </div>
                   </div>
                   <div className="field-cell">
                     <div className="fc-label">Determined</div>
                     <div className={`fc-val mono ${!caseData.pwdDeterminationDate ? "dim" : ""}`}>
-                      {fmtDate(caseData.pwdDeterminationDate)}
+                      {fmtISODate(caseData.pwdDeterminationDate)}
                     </div>
                   </div>
                   <div className="field-cell">
@@ -292,7 +281,7 @@ export function OverviewTab({
                     <div className="fc-label">PWD Amount</div>
                     <div className={`fc-val ${caseData.pwdWageAmount === undefined ? "dim" : ""}`}>
                       {caseData.pwdWageAmount !== undefined
-                        ? `${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(caseData.pwdWageAmount))} / yr`
+                        ? `${fmtCurrency(caseData.pwdWageAmount)} / yr`
                         : "\u2014"}
                     </div>
                   </div>
@@ -301,7 +290,7 @@ export function OverviewTab({
                     <div className={`fc-val mono ${!caseData.pwdExpirationDate ? "dim" : ""}`}>
                       {caseData.pwdExpirationDate ? (
                         <span style={{ color: "var(--stage-eta9089)" }}>
-                          {fmtDate(caseData.pwdExpirationDate)}
+                          {fmtISODate(caseData.pwdExpirationDate)}
                         </span>
                       ) : "\u2014"}
                     </div>
@@ -476,7 +465,7 @@ export function OverviewTab({
                         <div className="fc-label">Wage Offered</div>
                         <div className={`fc-val ${caseData.pwdWageAmount === undefined ? "dim" : ""}`}>
                           {caseData.pwdWageAmount !== undefined
-                            ? `${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(caseData.pwdWageAmount))} / yr`
+                            ? `${fmtCurrency(caseData.pwdWageAmount)} / yr`
                             : "\u2014"}
                         </div>
                       </div>

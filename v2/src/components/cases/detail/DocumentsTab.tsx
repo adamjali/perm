@@ -21,6 +21,7 @@ import {
   DOCUMENT_CATEGORY_LABELS,
   type DocumentCategory,
 } from "@/lib/documents";
+import { itemVariants, fmtTimestamp } from "./case-detail-utils";
 
 interface DocumentEntry {
   id: string;
@@ -30,7 +31,7 @@ interface DocumentEntry {
   mimeType: string;
   size: number;
   uploadedAt: number;
-  category?: string;
+  category?: DocumentCategory;
 }
 
 interface DocumentsTabProps {
@@ -66,24 +67,7 @@ function getFileIcon(mimeType: string) {
   return <FileText className="h-5 w-5" />;
 }
 
-function fmtDate(ts: number): string {
-  return new Date(ts).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 const ACCEPT_STRING = ".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.tiff,.tif";
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 300, damping: 24 },
-  },
-};
 
 function canPreview(mimeType: string): boolean {
   return mimeType === "application/pdf" || mimeType.startsWith("image/");
@@ -249,7 +233,7 @@ function FullscreenViewer({
             target="_blank"
             rel="noopener noreferrer"
             className="icon-btn"
-            style={{ width: "auto", padding: "4px 10px", gap: 6, display: "flex", alignItems: "center", textDecoration: "none", color: "inherit" }}
+            style={{ width: "auto", padding: "4px 10px", gap: 6, display: "flex", alignItems: "center", textDecoration: "none" }}
           >
             <Download className="h-3.5 w-3.5" /> Download
           </a>
@@ -297,14 +281,19 @@ export function DocumentsTab({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [fullscreenId, setFullscreenId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
+  const [filterCategory, setFilterCategory] = useState<DocumentCategory | "all">("all");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const filteredDocs = filterCategory === "all"
+    ? documents
+    : documents.filter((d) => d.category === filterCategory);
 
   const selectedDoc = selectedId ? documents.find((d) => d.id === selectedId) || null : null;
   const fullscreenDoc = fullscreenId ? documents.find((d) => d.id === fullscreenId) || null : null;
   const isOpen = selectedDoc !== null;
 
-  const totalPages = Math.ceil(documents.length / ITEMS_PER_PAGE);
-  const pagedDocs = documents.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredDocs.length / ITEMS_PER_PAGE);
+  const pagedDocs = filteredDocs.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
 
   // Auto-advance page when selected doc is on a different page
   useEffect(() => {
@@ -352,6 +341,8 @@ export function DocumentsTab({
     setIsUploading(true);
     try {
       await onUpload(pendingFile, pendingCategory);
+    } catch {
+      // Error handled by onUpload (handleUploadDocument)
     } finally {
       setIsUploading(false);
       setPendingFile(null);
@@ -393,10 +384,13 @@ export function DocumentsTab({
 
   const handleConfirmDelete = useCallback(async () => {
     if (!onDelete || !confirmDeleteId) return;
-    await onDelete(confirmDeleteId);
-    setConfirmDeleteId(null);
-    if (selectedId === confirmDeleteId) setSelectedId(null);
-    if (fullscreenId === confirmDeleteId) setFullscreenId(null);
+    try {
+      await onDelete(confirmDeleteId);
+    } finally {
+      setConfirmDeleteId(null);
+      if (selectedId === confirmDeleteId) setSelectedId(null);
+      if (fullscreenId === confirmDeleteId) setFullscreenId(null);
+    }
   }, [onDelete, confirmDeleteId, selectedId, fullscreenId]);
 
   const fullscreenIdx = fullscreenDoc ? documents.findIndex((d) => d.id === fullscreenDoc.id) : -1;
@@ -416,6 +410,27 @@ export function DocumentsTab({
               Documents
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <select
+                value={filterCategory}
+                onChange={(e) => { setFilterCategory(e.target.value as DocumentCategory | "all"); setPage(0); }}
+                style={{
+                  height: 24,
+                  padding: "0 6px",
+                  border: "2px solid var(--foreground)",
+                  background: "var(--card)",
+                  color: "var(--foreground)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.6rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                }}
+              >
+                <option value="all">All</option>
+                {DOCUMENT_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{DOCUMENT_CATEGORY_LABELS[c]}</option>
+                ))}
+              </select>
               <span
                 style={{
                   fontFamily: "var(--font-mono)",
@@ -426,7 +441,7 @@ export function DocumentsTab({
                   color: "var(--foreground)",
                 }}
               >
-                {documents.length}
+                {filteredDocs.length}
               </span>
 
               {/* Upload button */}
@@ -528,7 +543,7 @@ export function DocumentsTab({
                   {pagedDocs.map((doc) => {
                     const typeLabel = getFileTypeLabel(doc.mimeType);
                     const catLabel = doc.category
-                      ? DOCUMENT_CATEGORY_LABELS[doc.category as DocumentCategory]
+                      ? DOCUMENT_CATEGORY_LABELS[doc.category]
                       : null;
                     return (
                       <div
@@ -545,7 +560,7 @@ export function DocumentsTab({
                             {typeLabel}
                             {catLabel && <> &middot; {catLabel}</>}
                             {" "}&middot; {formatFileSize(doc.size)} &middot;{" "}
-                            {fmtDate(doc.uploadedAt)}
+                            {fmtTimestamp(doc.uploadedAt)}
                           </div>
                         </div>
                         <div
@@ -689,7 +704,7 @@ export function DocumentsTab({
 
                   {/* Meta */}
                   <div className="preview-meta">
-                    <span>Uploaded: {fmtDate(selectedDoc.uploadedAt)}</span>
+                    <span>Uploaded: {fmtTimestamp(selectedDoc.uploadedAt)}</span>
                     <span>{getFileTypeLabel(selectedDoc.mimeType)}</span>
                     <span>{formatFileSize(selectedDoc.size)}</span>
                     {selectedDoc.category && (
@@ -741,7 +756,6 @@ export function DocumentsTab({
                         display: "flex",
                         alignItems: "center",
                         textDecoration: "none",
-                        color: "inherit",
                       }}
                     >
                       <Download className="h-3.5 w-3.5" /> Download

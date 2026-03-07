@@ -6,25 +6,7 @@ import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock } from "lucid
 import { getMethodLabel } from "@/lib/recruitment";
 import { isBusinessDay, getFederalHolidays, getFirstRecruitmentDate, getLastRecruitmentDate, FILING_WINDOW_WAIT_DAYS } from "@/lib/perm";
 import type { CaseDetailData } from "./case-detail-types";
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 300, damping: 24 },
-  },
-};
-
-function fmt(d?: string | null) {
-  if (!d) return "\u2014";
-  try { return format(parseISO(d), "MMM d, yyyy"); } catch { return d; }
-}
-
-function fmtShort(d?: string | null) {
-  if (!d) return "\u2014";
-  try { return format(parseISO(d), "MMM d"); } catch { return d; }
-}
+import { itemVariants, fmtISODate, fmtISOShort } from "./case-detail-utils";
 
 // NOF mini-calendar using central business day logic from @/lib/perm
 function NOFMiniCalendar({ start, end }: { start: string; end: string }) {
@@ -127,7 +109,7 @@ interface RecruitmentTabProps {
 }
 
 export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
-  // Recruitment window: PWD validity period (determination → expiration)
+  // PWD validity period (determination -> expiration)
   const windowStart = caseData.pwdDeterminationDate;
   const windowEnd = caseData.pwdExpirationDate;
   let windowDays = 0;
@@ -187,14 +169,14 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                 <div className="win-hero-label">{windowLabel}</div>
               </div>
               <div className="win-progress">
-                <span className="win-date">{fmtShort(windowStart)}</span>
+                <span className="win-date">{fmtISOShort(windowStart)}</span>
                 <div className="win-bar">
                   <div
                     className="win-bar-fill"
                     style={{ width: `${windowPct}%`, background: "var(--stage-recruitment)" }}
                   />
                 </div>
-                <span className="win-date">{fmtShort(windowEnd)}</span>
+                <span className="win-date">{fmtISOShort(windowEnd)}</span>
               </div>
             </div>
           </div>
@@ -221,9 +203,9 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               {hasJobOrder ? (
                 <>
                   <div className="recruit-range-bar">
-                    <span className="recruit-range-date">{fmtShort(caseData.jobOrderStartDate)}</span>
+                    <span className="recruit-range-date">{fmtISOShort(caseData.jobOrderStartDate)}</span>
                     <div className="recruit-range-fill" style={{ background: "var(--stage-recruitment)" }} />
-                    <span className="recruit-range-date">{fmt(caseData.jobOrderEndDate)}</span>
+                    <span className="recruit-range-date">{fmtISODate(caseData.jobOrderEndDate)}</span>
                   </div>
                   <div className="recruit-range-meta">
                     {caseData.jobOrderStartDate && caseData.jobOrderEndDate && (
@@ -276,7 +258,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                   <div className="recruit-ad-entry">
                     <div className="recruit-ad-num">1</div>
                     <div className="min-w-0">
-                      <div className="recruit-ad-date">{fmt(caseData.sundayAdFirstDate)}</div>
+                      <div className="recruit-ad-date">{fmtISODate(caseData.sundayAdFirstDate)}</div>
                       {caseData.sundayAdNewspaper && (
                         <div className="recruit-ad-pub" title={caseData.sundayAdNewspaper}>{caseData.sundayAdNewspaper}</div>
                       )}
@@ -286,7 +268,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                     <div className="recruit-ad-entry">
                       <div className="recruit-ad-num">2</div>
                       <div className="min-w-0">
-                        <div className="recruit-ad-date">{fmt(caseData.sundayAdSecondDate)}</div>
+                        <div className="recruit-ad-date">{fmtISODate(caseData.sundayAdSecondDate)}</div>
                         {caseData.sundayAdNewspaper && (
                           <div className="recruit-ad-pub" title={caseData.sundayAdNewspaper}>{caseData.sundayAdNewspaper}</div>
                         )}
@@ -320,7 +302,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               {hasNOF ? (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                   <div className="recruit-posting-info" style={{ marginBottom: 10, textAlign: "center" }}>
-                    10 consecutive business days &middot; {fmtShort(caseData.noticeOfFilingStartDate)} &ndash; {fmt(caseData.noticeOfFilingEndDate)}
+                    10 consecutive business days &middot; {fmtISOShort(caseData.noticeOfFilingStartDate)} &ndash; {fmtISODate(caseData.noticeOfFilingEndDate)}
                   </div>
                   {caseData.noticeOfFilingStartDate && caseData.noticeOfFilingEndDate && (
                     <NOFMiniCalendar start={caseData.noticeOfFilingStartDate} end={caseData.noticeOfFilingEndDate} />
@@ -349,9 +331,9 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                 methods.map((method, i) => {
                   const hasDate = !!(method.date || method.startDate || (method.subEntries && method.subEntries.length > 0));
                   const dateDisplay = method.startDate && method.endDate
-                    ? `${fmtShort(method.startDate)} \u2013 ${fmtShort(method.endDate)}`
+                    ? `${fmtISOShort(method.startDate)} \u2013 ${fmtISOShort(method.endDate)}`
                     : method.date
-                      ? fmt(method.date)
+                      ? fmtISODate(method.date)
                       : null;
                   return (
                     <div key={i} className="recruit-row">
@@ -371,7 +353,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                           <div className="recruit-sub-entries">
                             {method.subEntries.map((sub, j) => (
                               <div key={j} className="recruit-sub-entry">
-                                {sub.date && <span className="recruit-sub-date">{fmt(sub.date)}</span>}
+                                {sub.date && <span className="recruit-sub-date">{fmtISODate(sub.date)}</span>}
                                 {sub.description && <span className="recruit-sub-desc" title={sub.description}>{sub.description}</span>}
                               </div>
                             ))}
@@ -415,7 +397,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               <div className="fc-label">Recruitment Period</div>
               <div className="fc-val mono">
                 {recruitStartDate && recruitEndDate
-                  ? `${fmtShort(recruitStartDate)} \u2013 ${fmtShort(recruitEndDate)}`
+                  ? `${fmtISOShort(recruitStartDate)} \u2013 ${fmtISOShort(recruitEndDate)}`
                   : "\u2014"}
               </div>
             </div>
@@ -423,7 +405,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               <div className="fc-label">Quiet Period Ends</div>
               <div className="fc-val mono">
                 {recruitEndDate
-                  ? (() => { try { return fmt(format(addDays(parseISO(recruitEndDate), FILING_WINDOW_WAIT_DAYS), "yyyy-MM-dd")); } catch { return "\u2014"; } })()
+                  ? (() => { try { return fmtISODate(format(addDays(parseISO(recruitEndDate), FILING_WINDOW_WAIT_DAYS), "yyyy-MM-dd")); } catch { return "\u2014"; } })()
                   : "\u2014"}
               </div>
             </div>
