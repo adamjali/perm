@@ -25,7 +25,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TemplateSelector } from "./TemplateSelector";
-import { TemplateUpdateConfirmDialog } from "./TemplateUpdateConfirmDialog";
 import { toast } from "@/lib/toast";
 
 // ============================================================================
@@ -139,7 +138,6 @@ export function JobDescriptionField({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [isCopied, setIsCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
 
   // Track whether JD position title auto-follows the inherited position title.
   // Starts true when empty or matching inherited. Stops when user manually edits.
@@ -224,19 +222,30 @@ export function JobDescriptionField({
     [onLoadTemplate]
   );
 
-  // Handle save button click - either create new or show update confirmation
+  // Handle save button click - either update existing or create new
   const handleSaveClick = useCallback(async () => {
     if (!canSaveTemplate || isSaving) return;
 
-    if (isExistingTemplateName) {
-      // Show confirmation dialog for updating existing template
-      setShowUpdateConfirm(true);
+    if (isExistingTemplateName && matchingTemplate) {
+      // Update existing template directly (server also handles upsert as fallback)
+      setIsSaving(true);
+      try {
+        await onUpdateTemplate(matchingTemplate._id, positionTitle.trim(), description);
+        setOriginalContent({ positionTitle: positionTitle.trim(), description });
+        toast.success(`Template "${positionTitle.trim()}" updated`);
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to update template"
+        );
+      } finally {
+        setIsSaving(false);
+      }
     } else {
-      // Create new template directly
+      // Create new template (server upserts if name somehow matches)
       setIsSaving(true);
       try {
         await onSaveAsNewTemplate(positionTitle.trim(), description);
-        toast.success(`Template "${positionTitle.trim()}" created`);
+        toast.success(`Template "${positionTitle.trim()}" saved`);
       } catch (error) {
         toast.error(
           error instanceof Error ? error.message : "Failed to save template"
@@ -245,46 +254,8 @@ export function JobDescriptionField({
         setIsSaving(false);
       }
     }
-  }, [canSaveTemplate, isSaving, isExistingTemplateName, positionTitle, description, onSaveAsNewTemplate]);
+  }, [canSaveTemplate, isSaving, isExistingTemplateName, matchingTemplate, positionTitle, description, onSaveAsNewTemplate, onUpdateTemplate]);
 
-  // Handle confirming overwrite of existing template
-  const handleConfirmOverwrite = useCallback(async () => {
-    if (!matchingTemplate) return;
-    setIsSaving(true);
-    try {
-      await onUpdateTemplate(matchingTemplate._id, positionTitle.trim(), description);
-      setOriginalContent({ positionTitle: positionTitle.trim(), description });
-      toast.success(`Template "${positionTitle.trim()}" updated`);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update template"
-      );
-      throw error; // Re-throw so dialog stays open
-    } finally {
-      setIsSaving(false);
-    }
-  }, [matchingTemplate, positionTitle, description, onUpdateTemplate]);
-
-  // Handle saving as new with a different name
-  const handleSaveAsNewWithName = useCallback(
-    async (newName: string) => {
-      setIsSaving(true);
-      try {
-        await onSaveAsNewTemplate(newName, description);
-        // Update position title to match new template name
-        onPositionTitleChange(newName);
-        toast.success(`Template "${newName}" created`);
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to save template"
-        );
-        throw error; // Re-throw so dialog stays open
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    [description, onSaveAsNewTemplate, onPositionTitleChange]
-  );
 
   // ============================================================================
   // RENDER
@@ -558,15 +529,6 @@ export function JobDescriptionField({
         )}
       </AnimatePresence>
 
-      {/* Update confirmation dialog */}
-      <TemplateUpdateConfirmDialog
-        open={showUpdateConfirm}
-        onOpenChange={setShowUpdateConfirm}
-        templateName={positionTitle.trim()}
-        onConfirmOverwrite={handleConfirmOverwrite}
-        onSaveAsNew={handleSaveAsNewWithName}
-        existingTemplateNames={templates.map((t) => t.name)}
-      />
     </div>
   );
 }
