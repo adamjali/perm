@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText, ChevronDown, Pencil, Copy, Check, Trash2, Loader2, FilePlus } from "lucide-react";
+import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText, ChevronDown, Pencil, Copy, Check, Trash2, Loader2, FilePlus, Save } from "lucide-react";
+import { ConvexError } from "convex/values";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { calculateNextAction, calculateNextDeadline } from "./next-up-section.utils";
 import { QuickEditFields, isEditableAction } from "./quick-edit";
@@ -12,6 +13,14 @@ import { VerticalTimeline } from "./VerticalTimeline";
 import { TemplateSelector } from "@/components/job-description/TemplateSelector";
 import type { JobDescriptionTemplate } from "@/components/job-description/JobDescriptionField";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
@@ -108,18 +117,72 @@ export function OverviewTab({
     }
   }, [jobDescProps]);
 
+  // Check if position title matches an existing template (case-insensitive)
+  const matchingTemplate = useMemo(
+    () => jobDescProps?.templates.find(
+      (t) => t.name.toLowerCase() === editPositionTitle.trim().toLowerCase()
+    ),
+    [jobDescProps?.templates, editPositionTitle]
+  );
+  const isExistingTemplateName = !!matchingTemplate;
+
+  const [pendingTemplateUpdate, setPendingTemplateUpdate] = useState<{ name: string; description: string } | null>(null);
+
   const handleSaveAsTemplate = useCallback(async () => {
     if (!jobDescProps || !editPositionTitle.trim() || !editDescription.trim()) return;
     setIsSavingTemplate(true);
     try {
-      await jobDescProps.onSaveAsNewTemplate(editPositionTitle.trim(), editDescription.trim());
-      toast.success("Saved as new template");
+      if (isExistingTemplateName && matchingTemplate) {
+        // Name matches a known template — update directly
+        await jobDescProps.onUpdateTemplate(matchingTemplate._id, editPositionTitle.trim(), editDescription.trim());
+        toast.success(`Template "${editPositionTitle.trim()}" updated`);
+      } else {
+        // Create new
+        await jobDescProps.onSaveAsNewTemplate(editPositionTitle.trim(), editDescription.trim());
+        toast.success(`Template "${editPositionTitle.trim()}" saved`);
+      }
     } catch (error) {
-      handleOperationError(error, { userMessage: "Failed to save template." });
+      // Check for server-side duplicate detection
+      const msg = error instanceof ConvexError
+        ? (typeof error.data === "string" ? error.data : "")
+        : (error instanceof Error ? error.message : "");
+      if (msg.startsWith("TEMPLATE_EXISTS:")) {
+        setPendingTemplateUpdate({ name: editPositionTitle.trim(), description: editDescription.trim() });
+      } else {
+        handleOperationError(error, { userMessage: "Failed to save template." });
+      }
     } finally {
       setIsSavingTemplate(false);
     }
-  }, [jobDescProps, editPositionTitle, editDescription]);
+  }, [jobDescProps, editPositionTitle, editDescription, isExistingTemplateName, matchingTemplate]);
+
+  const handleConfirmTemplateUpdate = useCallback(async () => {
+    if (!pendingTemplateUpdate || !jobDescProps) return;
+    const match = jobDescProps.templates.find(
+      (t) => t.name.toLowerCase() === pendingTemplateUpdate.name.toLowerCase()
+    );
+    if (!match) {
+      // Template may have been deleted — retry create
+      setPendingTemplateUpdate(null);
+      try {
+        await jobDescProps.onSaveAsNewTemplate(pendingTemplateUpdate.name, pendingTemplateUpdate.description);
+        toast.success(`Template "${pendingTemplateUpdate.name}" saved`);
+      } catch (error) {
+        handleOperationError(error, { userMessage: "Failed to save template." });
+      }
+      return;
+    }
+    setIsSavingTemplate(true);
+    try {
+      await jobDescProps.onUpdateTemplate(match._id, pendingTemplateUpdate.name, pendingTemplateUpdate.description);
+      toast.success(`Template "${pendingTemplateUpdate.name}" updated`);
+    } catch (error) {
+      handleOperationError(error, { userMessage: "Failed to update template." });
+    } finally {
+      setIsSavingTemplate(false);
+      setPendingTemplateUpdate(null);
+    }
+  }, [pendingTemplateUpdate, jobDescProps]);
 
   const handleCopyJobDesc = useCallback(async () => {
     const text = isEditingJobDesc ? editDescription : caseData.jobDescription;
@@ -408,14 +471,23 @@ export function OverviewTab({
                           type="button"
                           onClick={handleSaveAsTemplate}
                           disabled={isSavingTemplate || !editPositionTitle.trim() || !editDescription.trim()}
-                          className="flex items-center gap-1 px-3 py-1.5 border-[3px] border-border text-[11px] font-mono font-bold uppercase tracking-wider hover:bg-[var(--primary)] hover:text-black hover:border-black dark:hover:border-white/50 hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50"
+                          className={cn(
+                            "flex items-center gap-1 px-3 py-1.5 border-[3px] text-[11px] font-mono font-bold uppercase tracking-wider hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50",
+                            isExistingTemplateName
+                              ? "border-blue-500 hover:bg-blue-500 hover:text-white"
+                              : "border-border hover:bg-[var(--primary)] hover:text-black hover:border-black dark:hover:border-white/50"
+                          )}
                         >
                           {isSavingTemplate ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : isExistingTemplateName ? (
+                            <Save className="h-3 w-3" />
                           ) : (
                             <FilePlus className="h-3 w-3" />
                           )}
-                          {isSavingTemplate ? "Saving..." : "Save Template"}
+                          {isSavingTemplate
+                            ? (isExistingTemplateName ? "Updating..." : "Saving...")
+                            : (isExistingTemplateName ? "Update Template" : "Save Template")}
                         </button>
                       </div>
                       <div className="flex items-center gap-2">
@@ -552,6 +624,26 @@ export function OverviewTab({
           </div>
         </div>
       </motion.div>
+
+      {/* Confirmation dialog when server finds existing template */}
+      <Dialog open={!!pendingTemplateUpdate} onOpenChange={(open) => { if (!open) setPendingTemplateUpdate(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Template already exists</DialogTitle>
+            <DialogDescription>
+              A template named &ldquo;{pendingTemplateUpdate?.name}&rdquo; already exists. Would you like to update it with the current content?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPendingTemplateUpdate(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmTemplateUpdate} disabled={isSavingTemplate}>
+              {isSavingTemplate ? "Updating..." : "Update Template"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
