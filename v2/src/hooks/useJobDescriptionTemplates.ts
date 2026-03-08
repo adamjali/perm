@@ -105,8 +105,12 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
         setLoadedTemplateId(id);
         return id;
       } catch (error) {
-        console.error("[useJobDescriptionTemplates] Failed to create template:", error);
-        captureError(error, { operation: 'createTemplate' });
+        // TEMPLATE_EXISTS is an expected flow, not a real error — don't log to Sentry
+        const msg = error instanceof Error ? error.message : "";
+        if (!msg.startsWith("TEMPLATE_EXISTS:")) {
+          console.error("[useJobDescriptionTemplates] Failed to create template:", error);
+          captureError(error, { operation: 'createTemplate' });
+        }
         throw error; // Re-throw for caller to handle
       }
     },

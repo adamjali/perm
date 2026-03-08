@@ -164,7 +164,7 @@ export const create = mutation({
       throw new Error("Job description is required");
     }
 
-    // Upsert: if a template with the same name exists, update it instead of failing
+    // Check for duplicate name (case-insensitive)
     const nameLower = name.toLowerCase();
     const existingTemplates = await ctx.db
       .query("jobDescriptionTemplates")
@@ -172,28 +172,17 @@ export const create = mutation({
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .collect();
 
-    const existing = existingTemplates.find(
+    const duplicate = existingTemplates.find(
       (t) => t.name.toLowerCase() === nameLower
     );
-
-    const now = Date.now();
-
-    if (existing) {
-      // Update existing template
-      const oldDoc = { ...existing };
-      await ctx.db.patch(existing._id, {
-        name,
-        description,
-        updatedAt: now,
-      });
-      const newDoc = await ctx.db.get(existing._id);
-      if (newDoc) {
-        await logUpdate(ctx, "jobDescriptionTemplates", existing._id, oldDoc, newDoc);
-      }
-      return existing._id;
+    if (duplicate) {
+      throw new Error(
+        `TEMPLATE_EXISTS:${duplicate._id}`
+      );
     }
 
     // Create new template
+    const now = Date.now();
     const templateId = await ctx.db.insert("jobDescriptionTemplates", {
       userId: userId,
       name,

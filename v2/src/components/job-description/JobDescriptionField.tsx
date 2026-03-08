@@ -24,6 +24,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { TemplateSelector } from "./TemplateSelector";
 import { toast } from "@/lib/toast";
 
@@ -138,6 +146,7 @@ export function JobDescriptionField({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [isCopied, setIsCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingUpdate, setPendingUpdate] = useState<{ name: string; description: string } | null>(null);
 
   // Track whether JD position title auto-follows the inherited position title.
   // Starts true when empty or matching inherited. Stops when user manually edits.
@@ -227,7 +236,7 @@ export function JobDescriptionField({
     if (!canSaveTemplate || isSaving) return;
 
     if (isExistingTemplateName && matchingTemplate) {
-      // Update existing template directly (server also handles upsert as fallback)
+      // Name matches a known template — update directly
       setIsSaving(true);
       try {
         await onUpdateTemplate(matchingTemplate._id, positionTitle.trim(), description);
@@ -241,20 +250,55 @@ export function JobDescriptionField({
         setIsSaving(false);
       }
     } else {
-      // Create new template (server upserts if name somehow matches)
+      // Attempt to create new template
       setIsSaving(true);
       try {
         await onSaveAsNewTemplate(positionTitle.trim(), description);
         toast.success(`Template "${positionTitle.trim()}" saved`);
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to save template"
-        );
+        const msg = error instanceof Error ? error.message : "";
+        if (msg.startsWith("TEMPLATE_EXISTS:")) {
+          // Server found a duplicate the client didn't know about — ask to update
+          setPendingUpdate({ name: positionTitle.trim(), description });
+        } else {
+          toast.error(msg || "Failed to save template");
+        }
       } finally {
         setIsSaving(false);
       }
     }
   }, [canSaveTemplate, isSaving, isExistingTemplateName, matchingTemplate, positionTitle, description, onSaveAsNewTemplate, onUpdateTemplate]);
+
+  // Handle confirming update after server reports duplicate
+  const handleConfirmPendingUpdate = useCallback(async () => {
+    if (!pendingUpdate) return;
+    // Re-check templates for the matching ID
+    const match = templates.find(
+      (t) => t.name.toLowerCase() === pendingUpdate.name.toLowerCase()
+    );
+    if (!match) {
+      // Template may have been deleted in the meantime — retry create
+      setPendingUpdate(null);
+      try {
+        await onSaveAsNewTemplate(pendingUpdate.name, pendingUpdate.description);
+        toast.success(`Template "${pendingUpdate.name}" saved`);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to save template");
+      }
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await onUpdateTemplate(match._id, pendingUpdate.name, pendingUpdate.description);
+      setOriginalContent({ positionTitle: pendingUpdate.name, description: pendingUpdate.description });
+      toast.success(`Template "${pendingUpdate.name}" updated`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update template");
+    } finally {
+      setIsSaving(false);
+      setPendingUpdate(null);
+    }
+  }, [pendingUpdate, templates, onUpdateTemplate, onSaveAsNewTemplate]);
 
 
   // ============================================================================
@@ -529,6 +573,25 @@ export function JobDescriptionField({
         )}
       </AnimatePresence>
 
+      {/* Confirmation dialog when server finds existing template */}
+      <Dialog open={!!pendingUpdate} onOpenChange={(open) => { if (!open) setPendingUpdate(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Template already exists</DialogTitle>
+            <DialogDescription>
+              A template named &ldquo;{pendingUpdate?.name}&rdquo; already exists. Would you like to update it with the current content?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPendingUpdate(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmPendingUpdate} disabled={isSaving}>
+              {isSaving ? "Updating..." : "Update Template"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
