@@ -14,7 +14,7 @@
  * @see /docs/API.md for API documentation
  */
 
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { getCurrentUserId, getCurrentUserIdOrNull, verifyOwnership } from "./lib/auth";
 import { logCreate, logUpdate, logDelete } from "./lib/audit";
@@ -176,7 +176,7 @@ export const create = mutation({
       (t) => t.name.toLowerCase() === nameLower
     );
     if (duplicate) {
-      throw new Error(
+      throw new ConvexError(
         `TEMPLATE_EXISTS:${duplicate._id}`
       );
     }

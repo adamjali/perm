@@ -32,8 +32,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ConvexError } from "convex/values";
 import { TemplateSelector } from "./TemplateSelector";
 import { toast } from "@/lib/toast";
+
+/** Extract error message from ConvexError or plain Error */
+function getErrorMessage(error: unknown): string {
+  if (error instanceof ConvexError) {
+    const data = error.data;
+    return typeof data === "string" ? data : "Unknown error";
+  }
+  return error instanceof Error ? error.message : "Unknown error";
+}
 
 // ============================================================================
 // TYPES
@@ -243,9 +253,7 @@ export function JobDescriptionField({
         setOriginalContent({ positionTitle: positionTitle.trim(), description });
         toast.success(`Template "${positionTitle.trim()}" updated`);
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to update template"
-        );
+        toast.error(getErrorMessage(error));
       } finally {
         setIsSaving(false);
       }
@@ -256,7 +264,7 @@ export function JobDescriptionField({
         await onSaveAsNewTemplate(positionTitle.trim(), description);
         toast.success(`Template "${positionTitle.trim()}" saved`);
       } catch (error) {
-        const msg = error instanceof Error ? error.message : "";
+        const msg = getErrorMessage(error);
         if (msg.startsWith("TEMPLATE_EXISTS:")) {
           // Server found a duplicate the client didn't know about — ask to update
           setPendingUpdate({ name: positionTitle.trim(), description });

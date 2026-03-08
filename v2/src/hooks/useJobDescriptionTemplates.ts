@@ -20,6 +20,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { captureError } from "@/lib/sentry";
 import { useQuery, useMutation } from "convex/react";
+import { ConvexError } from "convex/values";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 
@@ -106,7 +107,9 @@ export function useJobDescriptionTemplates(): UseJobDescriptionTemplatesReturn {
         return id;
       } catch (error) {
         // TEMPLATE_EXISTS is an expected flow, not a real error — don't log to Sentry
-        const msg = error instanceof Error ? error.message : "";
+        const msg = error instanceof ConvexError
+          ? (typeof error.data === "string" ? error.data : "")
+          : (error instanceof Error ? error.message : "");
         if (!msg.startsWith("TEMPLATE_EXISTS:")) {
           console.error("[useJobDescriptionTemplates] Failed to create template:", error);
           captureError(error, { operation: 'createTemplate' });
