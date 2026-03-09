@@ -226,7 +226,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
       className="space-y-6"
     >
       <motion.div variants={itemVariants}>
-        <div className="detail-card no-hover" style={{ overflow: "hidden" }}>
+        <div className="detail-card" style={{ overflow: "hidden" }}>
           <div className="detail-card-head ch-yellow" style={{ gap: 8 }}>
             <span className="flex items-center gap-1.5">
               <MessageCircle className="h-3.5 w-3.5" />

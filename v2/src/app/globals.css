@@ -666,11 +666,6 @@
   background: var(--card);
   box-shadow: var(--shadow-hard-sm);
   overflow: hidden;
-  transition: transform 0.1s, box-shadow 0.1s;
-}
-.detail-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--shadow-hard);
 }
 
 /* Card header variants */
@@ -796,7 +791,6 @@
 /* Gantt wrapper */
 .gantt-wrap { border: 3px solid var(--border); background: var(--card); box-shadow: var(--shadow-hard-sm); overflow: hidden; }
 .gantt-wrap .min-w-\[600px\] { padding: 8px 12px 16px; }
-.detail-card.no-hover:hover { transform: none; box-shadow: var(--shadow-hard-sm); }
 
 /* Status bar */
 .detail-status-bar {

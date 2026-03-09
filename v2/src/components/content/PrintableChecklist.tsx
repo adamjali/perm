@@ -1,11 +1,38 @@
 "use client";
 
-import { useRef, useCallback } from "react";
-import { Printer } from "lucide-react";
+import { useRef, useCallback, useEffect, useState } from "react";
+import { Printer, CheckCheck, RotateCcw } from "lucide-react";
 
 /**
- * Wraps checklist content in MDX articles with a print button.
- * Prints ONLY the checklist in a new window with subtle PERM Tracker branding.
+ * Generate a localStorage key from the checklist title.
+ * Slugifies the title for a stable, URL-safe key.
+ */
+function storageKey(title: string): string {
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return `perm-checklist-${slug}`;
+}
+
+/**
+ * Read current checkbox state from DOM and persist to localStorage.
+ */
+function persistState(container: HTMLDivElement, key: string): boolean[] {
+  const all = container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
+  const state = Array.from(all).map((c) => c.checked);
+  try {
+    localStorage.setItem(key, JSON.stringify(state));
+  } catch {
+    // Storage full — ignore
+  }
+  return state;
+}
+
+/**
+ * Wraps checklist content in MDX articles with interactive checkboxes and a print button.
+ * - Checkboxes are clickable on screen (MDX renders them disabled by default)
+ * - Check All / Clear buttons for bulk operations
+ * - Progress counter shows checked/total
+ * - State persists in localStorage keyed by checklist title
+ * - Print reflects current checked state
  */
 export default function PrintableChecklist({
   title = "PERM Checklist",
@@ -15,12 +42,91 @@ export default function PrintableChecklist({
   children: React.ReactNode;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const key = storageKey(title);
+  const [checkedCount, setCheckedCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+
+  /** Recount checked checkboxes from DOM */
+  const recount = useCallback(() => {
+    const container = contentRef.current;
+    if (!container) return;
+    const all = container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
+    setTotalCount(all.length);
+    setCheckedCount(Array.from(all).filter((c) => c.checked).length);
+  }, []);
+
+  // On mount: enable checkboxes and restore saved state
+  useEffect(() => {
+    const container = contentRef.current;
+    if (!container) return;
+
+    const checkboxes = container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
+    if (checkboxes.length === 0) return;
+
+    // Restore saved state
+    let saved: boolean[] = [];
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) saved = JSON.parse(raw);
+    } catch {
+      // Corrupted data — ignore
+    }
+
+    checkboxes.forEach((cb, i) => {
+      // Enable the checkbox (MDX disables them by default)
+      cb.disabled = false;
+      cb.style.cursor = "pointer";
+
+      // Restore checked state if saved
+      if (saved[i] !== undefined) {
+        cb.checked = saved[i];
+      }
+
+      // Save on change + recount
+      cb.addEventListener("change", () => {
+        persistState(container, key);
+        recount();
+      });
+    });
+
+    recount();
+  }, [key, recount]);
+
+  const handleCheckAll = useCallback(() => {
+    const container = contentRef.current;
+    if (!container) return;
+    container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((cb) => {
+      cb.checked = true;
+    });
+    persistState(container, key);
+    recount();
+  }, [key, recount]);
+
+  const handleClear = useCallback(() => {
+    const container = contentRef.current;
+    if (!container) return;
+    container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((cb) => {
+      cb.checked = false;
+    });
+    persistState(container, key);
+    recount();
+  }, [key, recount]);
 
   const handlePrint = useCallback(() => {
-    if (!contentRef.current) return;
+    const container = contentRef.current;
+    if (!container) return;
 
     const printWindow = window.open("", "_blank", "width=800,height=600");
     if (!printWindow) return;
+
+    // Sync .checked property to HTML attribute so cloneNode captures it
+    container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((cb) => {
+      if (cb.checked) {
+        cb.setAttribute("checked", "checked");
+      } else {
+        cb.removeAttribute("checked");
+      }
+    });
 
     const dateStr = new Date().toLocaleDateString("en-US", {
       year: "numeric",
@@ -69,7 +175,7 @@ export default function PrintableChecklist({
     // Content — deep clone from our own rendered React children (trusted)
     const content = doc.createElement("div");
     content.className = "content";
-    const clonedNodes = contentRef.current.cloneNode(true) as HTMLElement;
+    const clonedNodes = container.cloneNode(true) as HTMLElement;
     while (clonedNodes.firstChild) {
       content.appendChild(doc.adoptNode(clonedNodes.firstChild));
     }
@@ -90,18 +196,52 @@ export default function PrintableChecklist({
     printWindow.print();
   }, [title]);
 
+  const allChecked = totalCount > 0 && checkedCount === totalCount;
+  const noneChecked = checkedCount === 0;
+
+  const btnBase = "inline-flex items-center gap-1.5 border-[3px] border-black dark:border-white px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-wider shadow-hard-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-hard active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-40 disabled:pointer-events-none";
+
   return (
     <section className="relative my-8">
-      <div className="mb-4 flex items-center justify-end">
+      {/* Toolbar */}
+      <div className="mb-4 flex items-center gap-2 flex-wrap">
+        {/* Progress counter */}
+        {totalCount > 0 && (
+          <span className="font-mono text-xs font-bold tracking-wider text-muted-foreground mr-auto">
+            {checkedCount}/{totalCount} done
+          </span>
+        )}
+
+        <button
+          type="button"
+          onClick={handleCheckAll}
+          disabled={allChecked}
+          className={`${btnBase} bg-[var(--primary)] text-black`}
+        >
+          <CheckCheck className="h-3.5 w-3.5" />
+          Check All
+        </button>
+
+        <button
+          type="button"
+          onClick={handleClear}
+          disabled={noneChecked}
+          className={`${btnBase} bg-card text-foreground`}
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          Clear
+        </button>
+
         <button
           type="button"
           onClick={handlePrint}
-          className="inline-flex items-center gap-1.5 border-2 border-border bg-card px-3 py-1.5 font-mono text-xs font-medium shadow-hard-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-hard active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+          className={`${btnBase} bg-card text-foreground`}
         >
           <Printer className="h-3.5 w-3.5" />
-          Print Checklist
+          Print
         </button>
       </div>
+
       <div ref={contentRef}>{children}</div>
     </section>
   );
