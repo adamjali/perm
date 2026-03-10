@@ -12,7 +12,8 @@
  * - I-140: Enabled when ETA 9089 certification date is filled
  */
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { format, parseISO } from "date-fns";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import { captureError } from "@/lib/sentry";
 import {
@@ -32,6 +33,8 @@ export interface SectionState {
   disabledReason?: string;
   overrideWarning?: string;
   statusInfo?: string;
+  isComplete: boolean;
+  summary?: string;
 }
 
 export interface WindowStatus {
@@ -81,7 +84,9 @@ function createSectionState(
   isManualOverride: boolean,
   disabledReason?: string,
   overrideWarning?: string,
-  statusInfo?: string
+  statusInfo?: string,
+  isComplete: boolean = false,
+  summary?: string,
 ): SectionState {
   return {
     isOpen,
@@ -90,6 +95,8 @@ function createSectionState(
     disabledReason,
     overrideWarning,
     statusInfo,
+    isComplete,
+    summary,
   };
 }
 
@@ -119,6 +126,106 @@ function getETA9089WindowStatus(values: Partial<CaseFormData>): WindowStatus {
   }
 }
 
+// ============================================================================
+// Completion Detection
+// ============================================================================
+
+function isPWDComplete(values: Partial<CaseFormData>): boolean {
+  return !!(values.pwdDeterminationDate && values.pwdExpirationDate);
+}
+
+function isETA9089Complete(values: Partial<CaseFormData>): boolean {
+  return !!values.eta9089CertificationDate;
+}
+
+function isI140Complete(values: Partial<CaseFormData>): boolean {
+  return !!(values.i140ApprovalDate || values.i140DenialDate);
+}
+
+// ============================================================================
+// Section Summaries
+// ============================================================================
+
+function fmtDate(iso: string | undefined | null): string {
+  if (!iso) return "";
+  try {
+    return format(parseISO(iso), "MMM d");
+  } catch {
+    return "";
+  }
+}
+
+function getPWDSummary(values: Partial<CaseFormData>): string | undefined {
+  const det = fmtDate(values.pwdDeterminationDate);
+  const exp = fmtDate(values.pwdExpirationDate);
+  if (!det || !exp) return undefined;
+
+  const parts = [`Determined ${det}`, `Expires ${exp}`];
+  if (values.pwdWageAmount) {
+    const wage = `$${Number(values.pwdWageAmount).toLocaleString()}`;
+    const level = values.pwdWageLevel ? ` ${values.pwdWageLevel.replace("Level ", "L")}` : "";
+    parts.push(`${wage}${level}`);
+  }
+  return parts.join(" · ");
+}
+
+function getRecruitmentSummary(values: Partial<CaseFormData>): string | undefined {
+  const parts: string[] = [];
+
+  // Job order
+  const joStart = fmtDate(values.jobOrderStartDate);
+  const joEnd = fmtDate(values.jobOrderEndDate);
+  if (joStart && joEnd) parts.push(`Job Order ${joStart}–${joEnd}`);
+
+  // Sunday ads count
+  const adCount = [values.sundayAdFirstDate, values.sundayAdSecondDate].filter(Boolean).length;
+  if (adCount > 0) parts.push(`${adCount} Ad${adCount > 1 ? "s" : ""}`);
+
+  // Notice of filing
+  const nofStart = fmtDate(values.noticeOfFilingStartDate);
+  if (nofStart) parts.push(`NOF ${nofStart}`);
+
+  // Professional methods
+  if (values.isProfessionalOccupation && values.additionalRecruitmentMethods) {
+    const methodCount = values.additionalRecruitmentMethods.filter(
+      (m) => m.method && (m.date || m.startDate || (m.subEntries && m.subEntries.length > 0))
+    ).length;
+    if (methodCount > 0) parts.push(`${methodCount} method${methodCount > 1 ? "s" : ""}`);
+  }
+
+  return parts.length > 0 ? parts.join(" · ") : undefined;
+}
+
+function getETA9089Summary(values: Partial<CaseFormData>): string | undefined {
+  const parts: string[] = [];
+
+  const filed = fmtDate(values.eta9089FilingDate);
+  if (filed) parts.push(`Filed ${filed}`);
+
+  const cert = fmtDate(values.eta9089CertificationDate);
+  if (cert) parts.push(`Certified ${cert}`);
+
+  if (values.eta9089CaseNumber) parts.push(`Case ${values.eta9089CaseNumber}`);
+
+  return parts.length > 0 ? parts.join(" · ") : undefined;
+}
+
+function getI140Summary(values: Partial<CaseFormData>): string | undefined {
+  const parts: string[] = [];
+
+  const filed = fmtDate(values.i140FilingDate);
+  if (filed) parts.push(`Filed ${filed}`);
+
+  const approved = fmtDate(values.i140ApprovalDate);
+  const denied = fmtDate(values.i140DenialDate);
+  if (approved) parts.push(`Approved ${approved}`);
+  else if (denied) parts.push(`Denied ${denied}`);
+
+  if (values.i140ReceiptNumber) parts.push(values.i140ReceiptNumber);
+
+  return parts.length > 0 ? parts.join(" · ") : undefined;
+}
+
 /**
  * Hook to manage section states
  */
@@ -145,11 +252,13 @@ export function useSectionState(values: Partial<CaseFormData>) {
     const eta9089Window = getETA9089WindowStatus(values);
 
     // PWD Section - Always enabled
-    const pwdState = createSectionState(expanded.pwd, true, false);
+    const pwdComplete = isPWDComplete(values);
+    const pwdState = createSectionState(expanded.pwd, true, false, undefined, undefined, undefined, pwdComplete, getPWDSummary(values));
 
     // Recruitment Section - Needs PWD determination date
     const recruitmentEnabled = !!values.pwdDeterminationDate;
     const recruitmentOverride = overrides.recruitment && !recruitmentEnabled;
+    const recruitmentComplete = isBasicRecruitmentComplete(values) && isProfessionalRecruitmentComplete(values);
     const recruitmentState = createSectionState(
       expanded.recruitment || (recruitmentEnabled && !expanded.pwd),
       recruitmentEnabled,
@@ -157,7 +266,10 @@ export function useSectionState(values: Partial<CaseFormData>) {
       !recruitmentEnabled ? 'Enter PWD determination date first' : undefined,
       recruitmentOverride
         ? 'Warning: Entering recruitment dates before PWD determination may cause validation issues'
-        : undefined
+        : undefined,
+      undefined,
+      recruitmentComplete,
+      getRecruitmentSummary(values),
     );
 
     // Professional Section - Enabled when recruitment is enabled
@@ -170,7 +282,6 @@ export function useSectionState(values: Partial<CaseFormData>) {
     );
 
     // ETA 9089 Section - Needs complete recruitment + 30-day window open
-    const recruitmentComplete = isBasicRecruitmentComplete(values) && isProfessionalRecruitmentComplete(values);
     const eta9089Enabled = recruitmentComplete && eta9089Window.isOpen;
     const eta9089Override = overrides.eta9089 && !eta9089Enabled;
 
@@ -186,6 +297,7 @@ export function useSectionState(values: Partial<CaseFormData>) {
       eta9089DisabledReason = 'Filing window has closed';
     }
 
+    const eta9089Complete = isETA9089Complete(values);
     const eta9089State = createSectionState(
       expanded.eta9089,
       eta9089Enabled,
@@ -194,12 +306,15 @@ export function useSectionState(values: Partial<CaseFormData>) {
       eta9089Override
         ? 'Warning: Filing ETA 9089 outside the proper window may cause issues'
         : undefined,
-      eta9089StatusInfo
+      eta9089StatusInfo,
+      eta9089Complete,
+      getETA9089Summary(values),
     );
 
     // I-140 Section - Needs ETA 9089 certification date
     const i140Enabled = !!values.eta9089CertificationDate;
     const i140Override = overrides.i140 && !i140Enabled;
+    const i140Complete = isI140Complete(values);
     const i140State = createSectionState(
       expanded.i140,
       i140Enabled,
@@ -207,11 +322,14 @@ export function useSectionState(values: Partial<CaseFormData>) {
       !i140Enabled ? 'Enter ETA 9089 certification date first' : undefined,
       i140Override
         ? 'Warning: I-140 cannot be filed before ETA 9089 certification'
-        : undefined
+        : undefined,
+      undefined,
+      i140Complete,
+      getI140Summary(values),
     );
 
-    // Notes Section - Always enabled
-    const notesState = createSectionState(expanded.notes, true, false);
+    // Notes Section - Always enabled, never "completes"
+    const notesState = createSectionState(expanded.notes, true, false, undefined, undefined, undefined, false);
 
     return {
       pwd: pwdState,
