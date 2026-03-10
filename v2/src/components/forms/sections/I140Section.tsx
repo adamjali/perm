@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-
+import { FormSection } from "@/components/forms/FormSection";
 import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
 import { FilingWindowIndicator, type FilingWindowData } from "@/components/forms/FilingWindowIndicator";
@@ -244,7 +244,7 @@ export function I140Section(props: I140SectionProps) {
   const isApproved = !!values.i140ApprovalDate;
 
   return (
-    <>
+    <FormSection title="I-140 Immigrant Petition" defaultOpen>
       <div className="space-y-4">
         {/* ========== COMPLETION BADGE ========== */}
         {isApproved && (
@@ -494,6 +494,6 @@ export function I140Section(props: I140SectionProps) {
           />
         </div>
       </div>
-    </>
+    </FormSection>
   );
 }

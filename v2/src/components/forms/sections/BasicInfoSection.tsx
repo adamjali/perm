@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-
+import { FormSection } from "@/components/forms/FormSection";
 import { FormField } from "@/components/forms/FormField";
 import { SelectInput } from "@/components/forms/SelectInput";
 import { Input } from "@/components/ui/input";
@@ -168,7 +168,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
   const statusColor = statusOption ? statusOption.color : '#6B7280';
 
   return (
-    <div className="rounded-lg border-2 border-border bg-background shadow-hard p-4">
+    <FormSection title="Basic Information" defaultOpen>
       <div className="space-y-4">
         {/* ========== PRIMARY FIELDS ========== */}
         <div className="grid gap-4 md:grid-cols-2">
@@ -361,6 +361,6 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
           )}
         </div>
       </div>
-    </div>
+    </FormSection>
   );
 }

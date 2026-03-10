@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { GraduationCap, Briefcase } from "lucide-react";
-
+import { FormSection } from "@/components/forms/FormSection";
 import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
 import { SelectInput } from "@/components/forms/SelectInput";
@@ -202,7 +202,7 @@ export function ProfessionalSection({
   const showWarning = isProfessionalOccupation && filledMethodCount < 3;
 
   return (
-    <>
+    <FormSection title="Professional Occupation" defaultOpen>
       <div className="space-y-4">
         {/* Professional Checkbox */}
         <div
@@ -394,6 +394,6 @@ export function ProfessionalSection({
           </div>
         </div>
       </div>
-    </>
+    </FormSection>
   );
 }
