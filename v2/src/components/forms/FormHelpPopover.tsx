@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { HelpCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -29,7 +29,7 @@ export function FormHelpPanel() {
           // Position: right edge when closed, left edge of panel when open
           "top-20",
           isOpen
-            ? "right-80 sm:right-96 border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/80"
+            ? "right-80 sm:right-96 border-red-300 bg-red-50 text-red-700 hover:bg-destructive hover:text-destructive-foreground hover:border-destructive dark:border-red-800 dark:bg-red-950/50 dark:text-red-400 dark:hover:bg-destructive dark:hover:text-destructive-foreground"
             : "right-0 border-border bg-background text-foreground hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] hover:border-[var(--primary)] shadow-hard",
         )}
         aria-label={isOpen ? "Close help panel" : "Open help panel"}
@@ -61,16 +61,8 @@ export function FormHelpPanel() {
         aria-label="Form help reference"
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-border bg-background px-5 py-4">
+        <div className="sticky top-0 z-10 border-b-2 border-border bg-background px-5 py-4">
           <h2 className="font-heading font-bold text-base uppercase tracking-wider">Form Reference</h2>
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            aria-label="Close help panel"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
         {/* Content */}

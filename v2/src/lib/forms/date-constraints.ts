@@ -540,8 +540,9 @@ export function getETA9089DateConstraints(values: Partial<CaseFormData>) {
   const { max: filingMax, pwdTrumps } = getEarlierDate(filingWindowClose, pwdExpirationDate);
   const effectiveMax = capToToday(filingMax, todayStr);
 
-  // Build filing window hint
-  const filingHint = buildFilingWindowHint(filingWindowOpen, filingMax, pwdTrumps, recruitmentEnd, firstRecruitmentDate);
+  // Build filing window hint — only show window dates when recruitment is complete
+  const recruitmentDone = isRecruitmentComplete(values);
+  const filingHint = buildFilingWindowHint(filingWindowOpen, filingMax, pwdTrumps, recruitmentEnd, firstRecruitmentDate, recruitmentDone);
 
   // Min for certification: after audit if exists, otherwise after filing
   const certMinRef = eta9089AuditDate || eta9089FilingDate;
@@ -586,8 +587,13 @@ function buildFilingWindowHint(
   windowMax: string | undefined,
   pwdTrumps: boolean,
   recruitmentEnd: string | undefined,
-  firstRecruitmentDate: string | undefined
+  firstRecruitmentDate: string | undefined,
+  recruitmentComplete: boolean
 ): string {
+  // Only show filing window dates when all recruitment is complete
+  if (!recruitmentComplete) {
+    return "Complete all recruitment activities first.";
+  }
   if (windowOpen && windowMax) {
     const pwdNote = pwdTrumps ? " (limited by PWD expiration)" : "";
     return `Filing window: ${formatDateForDisplay(windowOpen)} to ${formatDateForDisplay(windowMax)}${pwdNote}`;

@@ -273,17 +273,17 @@ describe("getETA9089DateConstraints", () => {
       const constraints = getETA9089DateConstraints({});
 
       expect(constraints.eta9089FilingDate.min).toBeUndefined();
-      expect(constraints.eta9089FilingDate.hint).toContain("Complete recruitment dates first");
+      expect(constraints.eta9089FilingDate.hint).toContain("Complete all recruitment activities first");
     });
 
     it("handles partial recruitment data", () => {
       const constraints = getETA9089DateConstraints({
         sundayAdFirstDate: "2024-02-15",
-        // Missing end dates
+        // Missing end dates — recruitment not complete
       });
 
       expect(constraints.eta9089FilingDate.min).toBeUndefined();
-      expect(constraints.eta9089FilingDate.hint).toContain("Complete recruitment end dates");
+      expect(constraints.eta9089FilingDate.hint).toContain("Complete all recruitment activities first");
     });
 
     it("audit date must be after filing date (strictly, not same day)", () => {

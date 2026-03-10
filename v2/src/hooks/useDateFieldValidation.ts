@@ -6,9 +6,11 @@
  */
 
 import { useCallback, useMemo, useState } from "react";
+import { differenceInCalendarDays } from "date-fns";
 import { getAllDateConstraints, type DateConstraint } from "@/lib/forms/date-constraints";
 import { isSunday, isISODateString } from "@/lib/forms/case-form-schema";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
+import { JOB_ORDER_MIN_DAYS } from "@/lib/perm";
 
 export interface FieldValidation {
   error?: string;
@@ -103,17 +105,18 @@ function validateDateField(
   // Cross-field validation
   if (field === "sundayAdSecondDate" && formValues.sundayAdFirstDate) {
     const first = new Date(formValues.sundayAdFirstDate + "T00:00:00");
-    const daysDiff = Math.floor((date.getTime() - first.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysDiff < 7) {
+    const calendarDays = differenceInCalendarDays(date, first);
+    if (calendarDays < 7) {
       return { error: "Second Sunday ad must be at least 1 week after the first." };
     }
   }
 
   if (field === "jobOrderEndDate" && formValues.jobOrderStartDate) {
     const start = new Date(formValues.jobOrderStartDate + "T00:00:00");
-    const daysDiff = Math.floor((date.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysDiff < 30) {
-      return { error: `Job order must be at least 30 days. Current duration: ${daysDiff} days.` };
+    // Inclusive counting (posting date = day 1), DST-safe via differenceInCalendarDays
+    const inclusiveDays = differenceInCalendarDays(date, start) + 1;
+    if (inclusiveDays < JOB_ORDER_MIN_DAYS) {
+      return { error: `Job order must be at least ${JOB_ORDER_MIN_DAYS} days. Current duration: ${inclusiveDays} days.` };
     }
   }
 
