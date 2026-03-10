@@ -315,9 +315,9 @@ export function useSectionState(values: Partial<CaseFormData>) {
 
   const prevValues = useRef<Partial<CaseFormData>>({});
   const prevEta9089Enabled = useRef(false);
-  const completionAcknowledged = useRef<Record<string, boolean>>({
-    pwd: false, recruitment: false, eta9089: false, i140: false,
-  });
+  // Track which sections have been acknowledged as complete (to prevent re-collapse)
+  // Initialized to `null` — set to actual state after first render to skip initial mount
+  const prevCompletionState = useRef<Record<string, boolean> | null>(null);
 
   useEffect(() => {
     const prev = prevValues.current;
@@ -369,45 +369,34 @@ export function useSectionState(values: Partial<CaseFormData>) {
   }, [sectionStates.recruitment.isComplete, setExpanded]);
 
   // ============================================================================
-  // Auto-collapse on completion (fires once per completion transition)
+  // Auto-collapse on completion (transition detection: incomplete → complete)
   // ============================================================================
 
-  // Track pending collapse timers by section to avoid clearing them on unrelated re-renders
-  const collapseTimers = useRef<Partial<Record<string, ReturnType<typeof setTimeout>>>>({});
   useEffect(() => {
     const sections = ['pwd', 'recruitment', 'eta9089', 'i140'] as const;
+    const currentState: Record<string, boolean> = {};
+    for (const s of sections) currentState[s] = sectionStates[s].isComplete;
+
+    // Skip initial mount — record state without collapsing anything
+    if (prevCompletionState.current === null) {
+      prevCompletionState.current = currentState;
+      return;
+    }
+
+    const prev = prevCompletionState.current;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
     for (const section of sections) {
-      const state = sectionStates[section];
-      if (state.isComplete && !completionAcknowledged.current[section] && expanded[section]) {
-        // First time complete + currently open → schedule auto-collapse (if not already pending)
-        if (!collapseTimers.current[section]) {
-          collapseTimers.current[section] = setTimeout(() => {
-            setExpanded(section, false);
-            completionAcknowledged.current[section] = true;
-            delete collapseTimers.current[section];
-          }, 600);
-        }
-      }
-      if (!state.isComplete) {
-        // Reset when section becomes incomplete again
-        completionAcknowledged.current[section] = false;
-        // Cancel any pending collapse for this section
-        if (collapseTimers.current[section]) {
-          clearTimeout(collapseTimers.current[section]);
-          delete collapseTimers.current[section];
-        }
+      // Detect transition: was NOT complete → IS complete, and section is open
+      if (!prev[section] && currentState[section] && expanded[section]) {
+        timers.push(setTimeout(() => setExpanded(section, false), 600));
       }
     }
-  }, [sectionStates, expanded, setExpanded]);
 
-  // Cleanup all timers on unmount
-  useEffect(() => {
-    return () => {
-      for (const t of Object.values(collapseTimers.current)) {
-        if (t) clearTimeout(t);
-      }
-    };
-  }, []);
+    prevCompletionState.current = currentState;
+
+    return () => { for (const t of timers) clearTimeout(t); };
+  }, [sectionStates, expanded, setExpanded]);
 
   const eta9089WindowStatus = useMemo(() => getETA9089WindowStatus(values), [values]);
 
