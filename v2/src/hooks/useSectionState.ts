@@ -341,6 +341,87 @@ export function useSectionState(values: Partial<CaseFormData>) {
     };
   }, [values, expanded, overrides]);
 
+  // ============================================================================
+  // Auto-open/collapse on prerequisite changes
+  // ============================================================================
+
+  const prevValues = useRef<Partial<CaseFormData>>({});
+  const prevEta9089Enabled = useRef(false);
+  const completionAcknowledged = useRef<Record<string, boolean>>({
+    pwd: false, recruitment: false, eta9089: false, i140: false,
+  });
+
+  useEffect(() => {
+    const prev = prevValues.current;
+
+    // PWD determination filled → auto-open Recruitment
+    if (!prev.pwdDeterminationDate && values.pwdDeterminationDate) {
+      setExpanded('recruitment', true);
+    }
+
+    // PWD determination cleared → collapse downstream
+    if (prev.pwdDeterminationDate && !values.pwdDeterminationDate) {
+      setExpanded('recruitment', false);
+      setExpanded('eta9089', false);
+      setExpanded('i140', false);
+    }
+
+    // ETA 9089 certification filled → auto-open I-140
+    if (!prev.eta9089CertificationDate && values.eta9089CertificationDate) {
+      setExpanded('i140', true);
+    }
+
+    // ETA 9089 certification cleared → collapse I-140
+    if (prev.eta9089CertificationDate && !values.eta9089CertificationDate) {
+      setExpanded('i140', false);
+    }
+
+    prevValues.current = { ...values };
+  }, [values, setExpanded]);
+
+  // ETA 9089 enabled transition → auto-open
+  useEffect(() => {
+    const currentEnabled = sectionStates.eta9089.isEnabled;
+    if (!prevEta9089Enabled.current && currentEnabled) {
+      setExpanded('eta9089', true);
+    }
+    prevEta9089Enabled.current = currentEnabled;
+  }, [sectionStates.eta9089.isEnabled, setExpanded]);
+
+  // Recruitment completeness cleared → collapse downstream
+  const prevRecruitmentComplete = useRef(false);
+  useEffect(() => {
+    const currentComplete = sectionStates.recruitment.isComplete;
+    if (prevRecruitmentComplete.current && !currentComplete) {
+      // Recruitment went from complete → incomplete
+      setExpanded('eta9089', false);
+      setExpanded('i140', false);
+    }
+    prevRecruitmentComplete.current = currentComplete;
+  }, [sectionStates.recruitment.isComplete, setExpanded]);
+
+  // ============================================================================
+  // Auto-collapse on completion (fires once per completion transition)
+  // ============================================================================
+
+  useEffect(() => {
+    const sections = ['pwd', 'recruitment', 'eta9089', 'i140'] as const;
+    for (const section of sections) {
+      const state = sectionStates[section];
+      if (state.isComplete && !completionAcknowledged.current[section] && expanded[section]) {
+        // First time complete + currently open → auto-collapse after brief delay
+        const timer = setTimeout(() => setExpanded(section, false), 400);
+        completionAcknowledged.current[section] = true;
+        // Cleanup in case the component unmounts during the delay
+        return () => clearTimeout(timer);
+      }
+      if (!state.isComplete) {
+        // Reset when section becomes incomplete again
+        completionAcknowledged.current[section] = false;
+      }
+    }
+  }, [sectionStates, expanded, setExpanded]);
+
   const enableOverride = useCallback((section: SectionName) => {
     setOverride(section, true);
     setExpanded(section, true);
