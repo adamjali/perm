@@ -268,8 +268,10 @@ export function useSectionState(values: Partial<CaseFormData>) {
       eta9089DisabledReason = 'Complete all recruitment activities first';
     } else if (!eta9089Window.isOpen && eta9089Window.daysUntilOpen && eta9089Window.daysUntilOpen > 0) {
       eta9089DisabledReason = `30-day waiting period: ${eta9089Window.daysUntilOpen} days remaining`;
-      eta9089StatusInfo = `Filing window opens on ${eta9089Window.opensOn}`;
-    } else if (eta9089Window.daysRemaining && eta9089Window.daysRemaining <= 0) {
+      eta9089StatusInfo = `Opens ${fmtDate(eta9089Window.opensOn)} · ${eta9089Window.daysUntilOpen}d remaining`;
+    } else if (eta9089Window.isOpen && eta9089Window.daysRemaining && eta9089Window.daysRemaining > 0) {
+      eta9089StatusInfo = `Window closes in ${eta9089Window.daysRemaining}d`;
+    } else if (eta9089Window.daysRemaining !== undefined && eta9089Window.daysRemaining <= 0) {
       eta9089DisabledReason = 'Filing window has closed';
     }
 
@@ -370,31 +372,42 @@ export function useSectionState(values: Partial<CaseFormData>) {
   // Auto-collapse on completion (fires once per completion transition)
   // ============================================================================
 
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  // Track pending collapse timers by section to avoid clearing them on unrelated re-renders
+  const collapseTimers = useRef<Partial<Record<string, ReturnType<typeof setTimeout>>>>({});
   useEffect(() => {
-    // Clear any pending timers from previous render
-    for (const t of timersRef.current) clearTimeout(t);
-    timersRef.current = [];
-
     const sections = ['pwd', 'recruitment', 'eta9089', 'i140'] as const;
     for (const section of sections) {
       const state = sectionStates[section];
       if (state.isComplete && !completionAcknowledged.current[section] && expanded[section]) {
-        // First time complete + currently open → auto-collapse after brief delay
-        const timer = setTimeout(() => setExpanded(section, false), 400);
-        timersRef.current.push(timer);
-        completionAcknowledged.current[section] = true;
+        // First time complete + currently open → schedule auto-collapse (if not already pending)
+        if (!collapseTimers.current[section]) {
+          collapseTimers.current[section] = setTimeout(() => {
+            setExpanded(section, false);
+            completionAcknowledged.current[section] = true;
+            delete collapseTimers.current[section];
+          }, 600);
+        }
       }
       if (!state.isComplete) {
         // Reset when section becomes incomplete again
         completionAcknowledged.current[section] = false;
+        // Cancel any pending collapse for this section
+        if (collapseTimers.current[section]) {
+          clearTimeout(collapseTimers.current[section]);
+          delete collapseTimers.current[section];
+        }
       }
     }
-
-    return () => {
-      for (const t of timersRef.current) clearTimeout(t);
-    };
   }, [sectionStates, expanded, setExpanded]);
+
+  // Cleanup all timers on unmount
+  useEffect(() => {
+    return () => {
+      for (const t of Object.values(collapseTimers.current)) {
+        if (t) clearTimeout(t);
+      }
+    };
+  }, []);
 
   const eta9089WindowStatus = useMemo(() => getETA9089WindowStatus(values), [values]);
 

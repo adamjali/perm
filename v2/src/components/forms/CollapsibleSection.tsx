@@ -114,9 +114,9 @@ export function CollapsibleSection({
 
         {/* Right side: Status indicators, completion, and chevron */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Status info */}
-          {statusInfo && isEnabled && (
-            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+          {/* Status info — shown even when disabled (e.g., waiting period countdown) */}
+          {statusInfo && (
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded hidden sm:inline">
               {statusInfo}
             </span>
           )}

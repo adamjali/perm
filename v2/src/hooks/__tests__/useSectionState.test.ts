@@ -353,7 +353,7 @@ describe('useSectionState', () => {
         expect(result.current.sectionStates.eta9089.disabledReason).toMatch(
           /30-day waiting period: \d+ days remaining/
         );
-        expect(result.current.sectionStates.eta9089.statusInfo).toMatch(/Filing window opens on/);
+        expect(result.current.sectionStates.eta9089.statusInfo).toMatch(/Opens .+ · \d+d remaining/);
       });
 
       it('is enabled when recruitment is complete AND window is open', () => {
