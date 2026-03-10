@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FormSection } from "@/components/forms/FormSection";
+
 import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
 import { FilingWindowIndicator, type FilingWindowData } from "@/components/forms/FilingWindowIndicator";
@@ -252,7 +252,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
   );
 
   return (
-    <FormSection title="ETA 9089" defaultOpen>
+    <>
       <div className="space-y-4">
         {/* ========== FILING WINDOW INDICATOR ========== */}
         <FilingWindowIndicator
@@ -391,6 +391,6 @@ export function ETA9089Section(props: ETA9089SectionProps) {
           />
         </div>
       </div>
-    </FormSection>
+    </>
   );
 }

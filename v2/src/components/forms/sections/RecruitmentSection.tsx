@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FormSection } from "@/components/forms/FormSection";
+
 import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
 import { SelectInput } from "@/components/forms/SelectInput";
@@ -352,7 +352,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
   };
 
   return (
-    <FormSection title="Recruitment" defaultOpen>
+    <>
       <div className="space-y-6">
         {/* ========== RECRUITMENT DEADLINE INDICATOR ========== */}
         <RecruitmentDeadlineIndicator
@@ -900,6 +900,6 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
           </AnimatePresence>
         </div>
       </div>
-    </FormSection>
+    </>
   );
 }
