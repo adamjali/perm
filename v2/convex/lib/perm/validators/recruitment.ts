@@ -1,4 +1,4 @@
-import { parseISO, isBefore, isAfter, getDay, differenceInDays, isValid, addDays } from 'date-fns';
+import { parseISO, isBefore, isAfter, getDay, differenceInCalendarDays, isValid, addDays } from 'date-fns';
 import type { ValidationResult, ValidationIssue, CaseData } from '../types';
 import { createValidationResult } from '../types';
 import { countBusinessDays } from '../dates/businessDays';
@@ -166,8 +166,8 @@ export function validateRecruitment(
 
     // Skip if dates are invalid (already caught above)
     if (isValid(start) && isValid(end)) {
-      // Inclusive count: posting date is day 1, so add 1 to differenceInDays
-      const inclusiveDays = differenceInDays(end, start) + 1;
+      // Use differenceInCalendarDays (DST-safe) + 1 for inclusive counting
+      const inclusiveDays = differenceInCalendarDays(end, start) + 1;
 
       if (inclusiveDays < JOB_ORDER_MIN_DAYS) {
         errors.push({

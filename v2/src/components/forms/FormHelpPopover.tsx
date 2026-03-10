@@ -1,42 +1,57 @@
 "use client";
 
 import { useState } from "react";
-import { HelpCircle, X } from "lucide-react";
+import { HelpCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
  * Fixed-position help panel for the case form.
  * Opens as a side panel that stays visible while scrolling/editing the form.
  * Has its own scroll so users can reference it while filling in fields.
+ *
+ * Toggle tab sits at the right edge. When closed: green hover. When open: red (like delete).
+ * Arrow icon points right (toward panel) when closed, left (back) when open.
  */
 export function FormHelpPanel() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* Toggle button — always visible */}
+      {/* Toggle tab — fixed to right edge, connected to panel when open */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed right-4 top-1/3 z-40 flex items-center gap-2",
-          "rounded-l-lg border-2 border-border border-r-0 px-3 py-2.5",
-          "bg-background shadow-hard text-sm font-mono font-bold",
-          "hover:bg-muted transition-colors",
-          "writing-mode-vertical",
-          isOpen && "right-[21rem] sm:right-[25rem]",
+          "fixed z-40 flex items-center gap-1.5",
+          "rounded-l-lg border-2 border-r-0 px-2.5 py-3",
+          "text-sm font-mono font-bold",
+          "transition-all duration-200",
+          // Position: right edge when closed, left edge of panel when open
+          "top-20",
+          isOpen
+            ? "right-80 sm:right-96 border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/80"
+            : "right-0 border-border bg-background text-foreground hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] hover:border-[var(--primary)] shadow-hard",
         )}
         aria-label={isOpen ? "Close help panel" : "Open help panel"}
         aria-expanded={isOpen}
       >
-        <HelpCircle className="h-4 w-4 shrink-0" />
-        <span className="hidden sm:inline">{isOpen ? "Close" : "Help"}</span>
+        {isOpen ? (
+          <>
+            <ChevronRight className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Close</span>
+          </>
+        ) : (
+          <>
+            <HelpCircle className="h-4 w-4 shrink-0" />
+            <ChevronLeft className="h-4 w-4 shrink-0" />
+          </>
+        )}
       </button>
 
-      {/* Side panel */}
+      {/* Side panel — below header */}
       <div
         className={cn(
-          "fixed right-0 top-0 z-30 h-full w-80 sm:w-96",
+          "fixed right-0 top-16 z-30 h-[calc(100vh-4rem)] w-80 sm:w-96",
           "border-l-2 border-border bg-background shadow-hard-lg",
           "transition-transform duration-200 ease-out",
           "overflow-y-auto overscroll-contain",

@@ -158,11 +158,11 @@ export function CollapsibleSection({
               overflow: { delay: 0.15 },
             }}
           >
-            {/* Soft prerequisite note when opened without prerequisites */}
+            {/* Prerequisite warning when opened without prerequisites */}
             {!isEnabled && (
-              <div className="mx-4 mb-3 flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded border border-border">
-                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                <span>{disabledReason || "Complete earlier sections first for accurate validation."}</span>
+              <div className="mx-4 mb-3 flex items-center gap-2 text-sm px-3 py-2.5 rounded-md border-2 border-amber-500/50 bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-500/30">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+                <span className="font-medium">{disabledReason || "Complete earlier sections first for accurate validation."}</span>
               </div>
             )}
             <div className="px-4 pb-4 pt-1">
