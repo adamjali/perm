@@ -69,25 +69,28 @@ describe('calculateNoticeOfFilingEnd', () => {
 });
 
 describe('calculateJobOrderEnd', () => {
-  it('should add 30 calendar days', () => {
+  it('should give 30 calendar days inclusive (posting date = day 1)', () => {
+    // Jan 15 = day 1, Feb 13 = day 30 → addDays(start, 29)
     const result = calculateJobOrderEnd('2024-01-15');
-    expect(result).toBe('2024-02-14');
+    expect(result).toBe('2024-02-13');
   });
 
   it('should handle month transitions', () => {
+    // Mar 15 = day 1, Apr 13 = day 30
     const result = calculateJobOrderEnd('2024-03-15');
-    expect(result).toBe('2024-04-14');
+    expect(result).toBe('2024-04-13');
   });
 
   it('should handle year transitions', () => {
+    // Dec 15 = day 1, Jan 13 = day 30
     const result = calculateJobOrderEnd('2024-12-15');
-    expect(result).toBe('2025-01-14');
+    expect(result).toBe('2025-01-13');
   });
 
   it('should handle leap years', () => {
-    // Jan 15 + 30 days crosses Feb 29
+    // Jan 31 = day 1, Feb 29 (leap) = day 30
     const result = calculateJobOrderEnd('2024-01-31');
-    expect(result).toBe('2024-03-01');
+    expect(result).toBe('2024-02-29');
   });
 });
 

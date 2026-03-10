@@ -72,12 +72,12 @@ Assessment: v2.0.0 shipped, ready for next milestone planning.
 
 ## Session Continuity
 
-Last activity: 2026-03-10 - Completed feature 018: Case Form UX Simplification + Tutorial Revamp
+Last activity: 2026-03-10 - Deployed feature 018 to production
 Last session: 2026-03-10
-Stopped at: Feature 018 complete — form UX, override removal, progress indicator, help popover, tutorial rewrite
+Stopped at: Feature 018 deployed — Convex + Vercel production
 Resume file: None
-Next action: Deploy to production
+Next action: None — ready for next task
 
 ---
 
-*Updated: 2026-02-14 after feature 010 completion*
+*Updated: 2026-03-10 after feature 018 deployment*

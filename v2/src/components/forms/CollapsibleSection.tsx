@@ -60,7 +60,7 @@ export function CollapsibleSection({
   return (
     <div
       className={cn(
-        "rounded-lg border-2 border-border transition-all duration-150",
+        "rounded-lg border-2 border-border bg-background transition-all duration-150",
         !isEnabled && "opacity-70",
         isEnabled && "shadow-hard hover:shadow-hard-hover",
         className

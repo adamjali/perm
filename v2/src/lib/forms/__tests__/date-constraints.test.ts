@@ -398,13 +398,14 @@ describe("getRecruitmentDateConstraints", () => {
     expect(constraints.sundayAdSecondDate.min).toBe(expectedMin);
   });
 
-  it("job order end date must be at least 30 days after start", () => {
+  it("job order end date must be at least 30 calendar days inclusive (start + 29)", () => {
     const startDate = "2024-02-01";
     const constraints = getRecruitmentDateConstraints({
       jobOrderStartDate: startDate,
     });
 
-    const expectedMinEnd = formatDate(addDays(new Date(startDate + "T00:00:00"), 30));
+    // Inclusive counting: posting date = day 1, so 30 days = addDays(start, 29)
+    const expectedMinEnd = formatDate(addDays(new Date(startDate + "T00:00:00"), 29));
     expect(constraints.jobOrderEndDate.min).toBe(expectedMinEnd);
   });
 });

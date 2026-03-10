@@ -26,6 +26,7 @@ import {
   FILING_WINDOW_WAIT_DAYS,
   FILING_WINDOW_CLOSE_DAYS,
   NOTICE_MIN_BUSINESS_DAYS,
+  JOB_ORDER_MIN_DAYS,
   subtractBusinessDays,
 } from "../perm";
 
@@ -316,10 +317,11 @@ export function getRecruitmentDateConstraints(values: Partial<CaseFormData>) {
         : "Job order posting start. Enter PWD determination first.",
     },
     jobOrderEndDate: {
-      min: jobOrderStartDate ? addDaysToDateStr(jobOrderStartDate, 30) : undefined,
+      // Inclusive counting: posting date = day 1, so add (MIN_DAYS - 1) for 30 calendar days
+      min: jobOrderStartDate ? addDaysToDateStr(jobOrderStartDate, JOB_ORDER_MIN_DAYS - 1) : undefined,
       hint: jobOrderStartDate
-        ? `Minimum 30 days required. Earliest: ${formatDateForDisplay(addDaysToDateStr(jobOrderStartDate, 30))}`
-        : "Auto-calculated +30 days from start. Enter start date first.",
+        ? `Minimum ${JOB_ORDER_MIN_DAYS} calendar days required. Earliest: ${formatDateForDisplay(addDaysToDateStr(jobOrderStartDate, JOB_ORDER_MIN_DAYS - 1))}`
+        : `Auto-calculated +${JOB_ORDER_MIN_DAYS} days from start. Enter start date first.`,
     },
     noticeOfFilingStartDate: {
       min: minAfterPwd,

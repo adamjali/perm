@@ -159,21 +159,22 @@ export function validateRecruitment(
     }
   }
 
-  // V-REC-05: Job order must be at least 30 days
+  // V-REC-05: Job order must be at least 30 calendar days (inclusive — posting date = day 1)
   if (job_order_start_date && job_order_end_date) {
     const start = parseISO(job_order_start_date);
     const end = parseISO(job_order_end_date);
 
     // Skip if dates are invalid (already caught above)
     if (isValid(start) && isValid(end)) {
-      const days = differenceInDays(end, start);
+      // Inclusive count: posting date is day 1, so add 1 to differenceInDays
+      const inclusiveDays = differenceInDays(end, start) + 1;
 
-      if (days < JOB_ORDER_MIN_DAYS) {
+      if (inclusiveDays < JOB_ORDER_MIN_DAYS) {
         errors.push({
           ruleId: 'V-REC-05',
           severity: 'error',
           field: 'job_order_end_date',
-          message: `Job order must be at least ${JOB_ORDER_MIN_DAYS} calendar days. Current duration: ${days} days (20 CFR § 656.17(d))`,
+          message: `Job order must be at least ${JOB_ORDER_MIN_DAYS} calendar days. Current duration: ${inclusiveDays} days (20 CFR § 656.17(d))`,
           regulation: '20 CFR § 656.17(d)',
         });
       }

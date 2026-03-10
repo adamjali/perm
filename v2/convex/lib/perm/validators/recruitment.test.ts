@@ -264,13 +264,13 @@ describe('Recruitment Validators', () => {
     });
   });
 
-  describe('V-REC-05: Job order must be at least 30 days', () => {
-    it('should pass when job order is exactly 30 days', () => {
+  describe('V-REC-05: Job order must be at least 30 calendar days (inclusive)', () => {
+    it('should pass when job order is exactly 30 inclusive days (start + 29)', () => {
       const result = validateRecruitment({
         sunday_ad_first_date: '2024-01-14',
         sunday_ad_second_date: '2024-01-21',
         job_order_start_date: '2024-01-15',
-        job_order_end_date: '2024-02-14', // 30 days from start
+        job_order_end_date: '2024-02-13', // day 1=Jan 15, day 30=Feb 13
         notice_of_filing_start_date: '2024-01-15',
         notice_of_filing_end_date: '2024-01-29',
       });
@@ -284,7 +284,7 @@ describe('Recruitment Validators', () => {
         sunday_ad_first_date: '2024-01-14',
         sunday_ad_second_date: '2024-01-21',
         job_order_start_date: '2024-01-15',
-        job_order_end_date: '2024-03-15', // 60 days
+        job_order_end_date: '2024-03-15', // 61 inclusive days
         notice_of_filing_start_date: '2024-01-15',
         notice_of_filing_end_date: '2024-01-29',
       });
@@ -293,12 +293,12 @@ describe('Recruitment Validators', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should fail when job order is less than 30 days', () => {
+    it('should fail when job order is less than 30 inclusive days', () => {
       const result = validateRecruitment({
         sunday_ad_first_date: '2024-01-14',
         sunday_ad_second_date: '2024-01-21',
         job_order_start_date: '2024-01-15',
-        job_order_end_date: '2024-02-10', // 26 days
+        job_order_end_date: '2024-02-12', // 29 inclusive days (1 short)
         notice_of_filing_start_date: '2024-01-15',
         notice_of_filing_end_date: '2024-01-29',
       });

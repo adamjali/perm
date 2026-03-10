@@ -87,7 +87,7 @@ import { JobDescriptionField } from "@/components/job-description";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 import { cn } from "@/lib/utils";
 import { handleOperationError } from "@/lib/errors";
-import { FormHelpPopover } from "./FormHelpPopover";
+import { FormHelpPanel } from "./FormHelpPopover";
 
 // Re-export helpers for consumers
 export { DEFAULT_FORM_DATA, initializeFormData, errorsToFieldMap } from "./case-form.helpers";
@@ -576,8 +576,8 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
 
         {/* Progress + Instruction */}
         <div className="space-y-2 animate-fade-in">
-          <div className="flex items-center gap-3 text-sm font-mono">
-            <span className="text-muted-foreground">
+          <div className="flex items-center gap-3 font-mono">
+            <span className="text-base font-bold text-foreground">
               {(['pwd', 'recruitment', 'eta9089', 'i140'] as const).filter((s) => sectionStates[s].isComplete).length} of 4 sections complete
             </span>
             <div className="flex gap-1">
@@ -585,55 +585,46 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
                 <div
                   key={s}
                   className={cn(
-                    "h-2 w-8 border border-border rounded-sm transition-colors",
+                    "h-2.5 w-10 border-2 border-border rounded-sm transition-colors",
                     sectionStates[s].isComplete ? "bg-[var(--primary)]" : "bg-muted"
                   )}
                 />
               ))}
             </div>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground font-medium">
             Track your PERM case dates below. Fill in what you have — save anytime and come back later.
-            <FormHelpPopover />
           </p>
         </div>
 
+        {/* Help panel (fixed position, right side) */}
+        <FormHelpPanel />
+
         {/* Basic Info Section - uses context, no props needed */}
-        <div className="animate-slide-up" style={{ animationDelay: "50ms" }}>
-          <BasicInfoSection />
-        </div>
+        <BasicInfoSection />
 
-        {/* PWD Section - uses context, no props needed */}
-        <div className="animate-slide-up" style={{ animationDelay: "100ms" }}>
-          <CollapsibleSection name="pwd" title="PWD (Prevailing Wage Determination)" state={sectionStates.pwd} onToggle={() => toggleSection("pwd")} icon={<FileText className="size-5" />} description="Prevailing wage filing and determination dates">
-            <PWDSection />
-          </CollapsibleSection>
-        </div>
+        {/* PWD Section */}
+        <CollapsibleSection name="pwd" title="PWD (Prevailing Wage Determination)" state={sectionStates.pwd} onToggle={() => toggleSection("pwd")} icon={<FileText className="size-5" />} description="Prevailing wage filing and determination dates">
+          <PWDSection />
+        </CollapsibleSection>
 
-        {/* Recruitment Section - uses context, no props needed */}
-        <div className="animate-slide-up" style={{ animationDelay: "150ms" }}>
-          <CollapsibleSection name="recruitment" title="Recruitment" state={sectionStates.recruitment} onToggle={() => toggleSection("recruitment")} icon={<ClipboardList className="size-5" />} description="Sunday ads, job order, and notice of filing">
-            <RecruitmentSection />
-          </CollapsibleSection>
-        </div>
+        {/* Recruitment Section */}
+        <CollapsibleSection name="recruitment" title="Recruitment" state={sectionStates.recruitment} onToggle={() => toggleSection("recruitment")} icon={<ClipboardList className="size-5" />} description="Sunday ads, job order, and notice of filing">
+          <RecruitmentSection />
+        </CollapsibleSection>
 
-        {/* ETA 9089 Section - uses context, no props needed */}
-        <div className="animate-slide-up" style={{ animationDelay: "200ms" }}>
-          <CollapsibleSection name="eta9089" title="ETA 9089 (PERM Application)" state={sectionStates.eta9089} onToggle={() => toggleSection("eta9089")} icon={<FileCheck className="size-5" />} description="PERM application filing, audit, and certification">
-            <ETA9089Section />
-          </CollapsibleSection>
-        </div>
+        {/* ETA 9089 Section */}
+        <CollapsibleSection name="eta9089" title="ETA 9089 (PERM Application)" state={sectionStates.eta9089} onToggle={() => toggleSection("eta9089")} icon={<FileCheck className="size-5" />} description="PERM application filing, audit, and certification">
+          <ETA9089Section />
+        </CollapsibleSection>
 
-        {/* I-140 Section - uses context, no props needed */}
-        <div className="animate-slide-up" style={{ animationDelay: "250ms" }}>
-          <CollapsibleSection name="i140" title="I-140 (Immigrant Petition)" state={sectionStates.i140} onToggle={() => toggleSection("i140")} icon={<Building2 className="size-5" />} description="I-140 petition filing, receipt, and approval">
-            <I140Section />
-          </CollapsibleSection>
-        </div>
+        {/* I-140 Section */}
+        <CollapsibleSection name="i140" title="I-140 (Immigrant Petition)" state={sectionStates.i140} onToggle={() => toggleSection("i140")} icon={<Building2 className="size-5" />} description="I-140 petition filing, receipt, and approval">
+          <I140Section />
+        </CollapsibleSection>
 
         {/* Job Description Section */}
-        <div className="animate-slide-up" style={{ animationDelay: "275ms" }}>
-          <JobDescriptionField
+        <JobDescriptionField
             inheritedPositionTitle={formData.positionTitle || ""}
             positionTitle={formData.jobDescriptionPositionTitle || ""}
             description={formData.jobDescription || ""}
@@ -655,20 +646,17 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
             onDeleteTemplate={(id) => hardDeleteJobDescTemplate(id as Id<"jobDescriptionTemplates">)}
             isLoading={isTemplatesLoading}
           />
-        </div>
 
         {/* Notes Section */}
-        <div className="animate-slide-up" style={{ animationDelay: "300ms" }}>
-          <CollapsibleSection name="notes" title="Notes & Settings" state={sectionStates.notes} onToggle={() => toggleSection("notes")} icon={<StickyNote className="size-5" />} description="Case notes, journal entries, and preferences">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label>Notes</Label>
-                <NotesJournal notes={formData.notes} onChange={handleNotesChange} />
-              </div>
-              <SettingsToggles formData={formData} onChange={handleChange} />
+        <CollapsibleSection name="notes" title="Notes & Settings" state={sectionStates.notes} onToggle={() => toggleSection("notes")} icon={<StickyNote className="size-5" />} description="Case notes, journal entries, and preferences">
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <NotesJournal notes={formData.notes} onChange={handleNotesChange} />
             </div>
-          </CollapsibleSection>
-        </div>
+            <SettingsToggles formData={formData} onChange={handleChange} />
+          </div>
+        </CollapsibleSection>
 
         {/* Sticky Footer */}
         <StickyFooter mode={mode} caseId={caseId} isDirty={isDirty} isSubmitting={isSubmitting || rhfIsSubmitting} isDeleting={isDeleting} isCancelNavigating={isCancelNavigating} onCancel={() => requestNavigation(handleCancelWithLoading)} onDeleteClick={() => setDeleteDialogOpen(true)} />

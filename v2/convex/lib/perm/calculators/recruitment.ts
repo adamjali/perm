@@ -46,17 +46,21 @@ export function calculateNoticeOfFilingEnd(startDate: string): string {
 }
 
 /**
- * Calculate Job Order end date (start + 30 calendar days).
+ * Calculate Job Order minimum end date (start + 29 days = 30 calendar days inclusive).
+ *
+ * Per 20 CFR § 656.17(d), the posting date counts as day 1.
+ * So 30 calendar days = addDays(start, 29).
  *
  * @param startDate - ISO date string (YYYY-MM-DD) when Job Order was posted
- * @returns ISO date string 30 calendar days after start
+ * @returns ISO date string for the 30th calendar day (inclusive)
  *
  * @example
- * calculateJobOrderEnd('2024-01-15') // '2024-02-14'
+ * calculateJobOrderEnd('2024-01-15') // '2024-02-13' (day 1=Jan 15, day 30=Feb 13)
  */
 export function calculateJobOrderEnd(startDate: string): string {
   const date = parseISO(startDate);
-  return format(addDays(date, JOB_ORDER_MIN_DAYS), 'yyyy-MM-dd');
+  // Subtract 1 because the posting date itself counts as day 1
+  return format(addDays(date, JOB_ORDER_MIN_DAYS - 1), 'yyyy-MM-dd');
 }
 
 /**

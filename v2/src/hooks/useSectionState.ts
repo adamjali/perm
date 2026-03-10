@@ -244,7 +244,7 @@ export function useSectionState(values: Partial<CaseFormData>) {
     const recruitmentEnabled = !!values.pwdDeterminationDate;
     const recruitmentComplete = isBasicRecruitmentComplete(values) && isProfessionalRecruitmentComplete(values);
     const recruitmentState = createSectionState({
-      isOpen: expanded.recruitment || (recruitmentEnabled && !expanded.pwd),
+      isOpen: expanded.recruitment,
       isEnabled: recruitmentEnabled,
       disabledReason: !recruitmentEnabled ? 'Enter PWD determination date first' : undefined,
       isComplete: recruitmentComplete,
@@ -370,22 +370,30 @@ export function useSectionState(values: Partial<CaseFormData>) {
   // Auto-collapse on completion (fires once per completion transition)
   // ============================================================================
 
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => {
+    // Clear any pending timers from previous render
+    for (const t of timersRef.current) clearTimeout(t);
+    timersRef.current = [];
+
     const sections = ['pwd', 'recruitment', 'eta9089', 'i140'] as const;
     for (const section of sections) {
       const state = sectionStates[section];
       if (state.isComplete && !completionAcknowledged.current[section] && expanded[section]) {
         // First time complete + currently open → auto-collapse after brief delay
         const timer = setTimeout(() => setExpanded(section, false), 400);
+        timersRef.current.push(timer);
         completionAcknowledged.current[section] = true;
-        // Cleanup in case the component unmounts during the delay
-        return () => clearTimeout(timer);
       }
       if (!state.isComplete) {
         // Reset when section becomes incomplete again
         completionAcknowledged.current[section] = false;
       }
     }
+
+    return () => {
+      for (const t of timersRef.current) clearTimeout(t);
+    };
   }, [sectionStates, expanded, setExpanded]);
 
   const eta9089WindowStatus = useMemo(() => getETA9089WindowStatus(values), [values]);
