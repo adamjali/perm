@@ -1,28 +1,35 @@
 ---
 title: "Getting Started with PERM Tracker"
-description: "A step-by-step tutorial for setting up your PERM Tracker account and creating your first case. Learn how to track deadlines, manage recruitment, and stay on top of your PERM caseload."
+description: "The complete guide to tracking PERM cases — from creating your first case to mastering deadlines, recruitment, notifications, and the AI assistant."
 date: "2026-01-18"
-updated: "2026-02-21"
+updated: "2026-03-10"
 author: "PERM Tracker Team"
 image: "/images/features/calendar-planning.jpg"
 imageAlt: "Calendar view showing PERM case deadlines and planning"
-tags: ["tutorial", "getting-started", "onboarding", "perm-tracker"]
+tags: ["tutorial", "getting-started", "onboarding", "perm-tracker", "case-management", "deadlines"]
 category: "getting-started"
+seoTitle: "Getting Started with PERM Tracker — Complete Guide to Case Management"
+seoDescription: "Learn how to create cases, track deadlines, manage recruitment, handle RFIs and RFEs, configure notifications, and use the AI assistant in PERM Tracker."
 published: true
 featured: true
 ---
 
-**What you'll learn:** How to create your PERM Tracker account, set up your first case, enter key dates for automatic deadline calculation, track recruitment activities, configure email and push notifications, and use the calendar and timeline views — all in under 5 minutes.
+**What you'll learn:** Everything you need to use PERM Tracker effectively — creating cases, tracking deadlines, managing recruitment, handling RFIs and RFEs, configuring notifications, using the calendar, and getting answers from the AI assistant.
 
-## Welcome to PERM Tracker
+## Welcome — Who This Is For
 
-PERM Tracker is a free case management tool built specifically for immigration attorneys handling [PERM labor certification](https://flag.dol.gov/programs/perm) cases. This tutorial will walk you through everything you need to start tracking your cases effectively.
+PERM Tracker is a free case management tool for anyone involved in the [PERM labor certification](https://flag.dol.gov/programs/perm) process:
 
-<Callout type="stat" stat="< 5 min" title="Setup Time">
-  Most attorneys are fully set up and tracking their first case in under 5 minutes. No credit card, no trial period — PERM Tracker is free forever.
+- **Immigration attorneys** managing a caseload of PERM cases
+- **Paralegals** tracking deadlines and recruitment activities
+- **HR professionals** sponsoring employees for green cards
+- **Employers** keeping tabs on their own cases
+
+No credit card. No trial period. Free forever.
+
+<Callout type="tip" title="New to PERM?">
+  If you're unfamiliar with the PERM process, start with our [overview of PERM labor certification](/blog/what-is-perm-labor-certification) or the [Ultimate PERM Guide](/guides/ultimate-perm-guide-2026) first.
 </Callout>
-
-New to PERM? Start with our [overview of PERM labor certification](/blog/what-is-perm-labor-certification) first.
 
 ### Watch the Product Demo
 
@@ -30,132 +37,328 @@ See PERM Tracker in action — this interactive demo walks through the dashboard
 
 <VideoPlayer videoId="ProductDemo" />
 
-## Step 1: Create Your Account
+## The PERM Process in 60 Seconds
 
-Head to [permtracker.app/signup](/signup) and create your account using Google Sign-In or email. The process takes less than 30 seconds.
+Every PERM case follows four stages. PERM Tracker tracks them all:
 
-Once signed in, you'll land on your **Dashboard** — the central hub for all your PERM cases.
+1. **PWD** — File a prevailing wage determination request with the DOL. Receive the determination, which sets the wage and has an expiration date.
+2. **Recruitment** — Conduct required recruitment activities: job order, Sunday ads, notice of filing, and (for professional occupations) three additional methods.
+3. **ETA 9089** — File the PERM application after a 30-day quiet period. Wait for certification (or audit/denial).
+4. **I-140** — File the immigrant petition within 180 days of certification.
+
+Each stage has specific deadlines, and missing one can mean starting over. That's what PERM Tracker is for.
+
+## Your Dashboard — Command Center
+
+Once signed in, you land on the **Dashboard**. It shows everything at a glance:
+
+- **Deadline Hub** — Four urgency columns: overdue (red), this week, this month, and later. Cases move between columns automatically based on their next deadline.
+- **Summary Tiles** — Case counts by stage (PWD, Recruitment, ETA 9089, I-140, Complete, Closed) with interactive progress rings.
+- **Upcoming Deadlines** — A list of the next deadlines across all your cases.
+- **Recent Activity** — Your latest actions (case created, dates updated, status changes).
 
 <ScreenshotFigure
   src="/images/screenshots/dashboard.png"
   alt="PERM Tracker Dashboard showing the Deadline Hub with color-coded urgency columns"
   caption="Your Dashboard — the Deadline Hub shows overdue, upcoming, and future deadlines at a glance."
-  step={1}
 />
 
-## Step 2: Create Your First Case
+## Cases — Your Caseload at a Glance
 
-Click the **"New Case"** button on your Dashboard or Cases page. You'll need to provide:
+The **Cases** page lists all your cases with two view options:
 
-- **Beneficiary name** — The foreign worker's name
-- **Company name** — The sponsoring employer
-- **Case stage** — Where the case currently stands (PWD, Recruitment, ETA 9089, I-140)
+- **Card view** — Each case gets a card showing employer, beneficiary, current stage, progress status, next deadline, and an urgency indicator dot.
+- **List view** — Compact table format for large caseloads.
 
-That's all you need to get started. You can add more details as the case progresses.
+### What You Can Do
+
+- **Search and filter** — Find cases by employer, beneficiary, stage, or status.
+- **Sort** — By deadline, name, stage, or date created.
+- **Expand cards** — Hover or pin a card to see more details without leaving the page.
+- **Bulk actions** — Select multiple cases to archive, delete, reopen, or export.
+- **Favorites** — Star cases for quick access.
 
 <VideoFigure
   src="/images/screenshots/cases-walkthrough.mp4"
-  alt="Cases page with filtering, search, and case details"
-  caption="Step 2 — The Cases page with filtering, search, and case details."
-  step={2}
+  alt="Cases page with filtering, search, and expanded case details"
+  caption="The Cases page — filter, search, and see details at a glance."
 />
 
 <ScreenshotFigure
-  src="/images/screenshots/case-summary.png"
-  alt="Case Summary showing case counts by stage — PWD, Recruitment, ETA 9089, I-140, Complete, and Closed with progress rings"
-  caption="Case Summary — see your entire caseload broken down by stage at a glance."
+  src="/images/screenshots/cases.png"
+  alt="Cases page showing case cards with stage badges and deadline indicators"
+  caption="Case cards show stage, progress, next deadline, and urgency at a glance."
 />
 
-## Step 3: Enter Key Dates
+## Creating & Editing a Case — How the Form Works
 
-The real power of PERM Tracker comes from its deadline calculation engine. As you enter dates, the system automatically calculates:
+Click **"New Case"** from the Dashboard or Cases page. The form has two parts:
 
-- **PWD expiration** — When the prevailing wage determination expires
-- **Recruitment windows** — When recruitment activities must be completed
-- **Filing deadlines** — When the ETA 9089 must be filed
-- **I-140 deadline** — The 180-day window after certification
+### Basic Info (Always Visible)
 
-Simply enter dates as they become available, and PERM Tracker handles the math.
+- **Beneficiary name** — The foreign worker
+- **Company name** — The sponsoring employer
+- **Position title** — The job being sponsored
+- **Case status and progress** — Auto-calculated from your dates (or set manually)
+
+### Progressive Sections
+
+Below Basic Info, four collapsible sections unlock as you progress:
+
+1. **PWD** — Enter filing and determination dates. The expiration date auto-calculates.
+2. **Recruitment** — Enter job order dates, Sunday ad dates, notice of filing dates, and (for professional occupations) additional recruitment methods.
+3. **ETA 9089** — Opens after recruitment is complete and the 30-day quiet period passes. Enter filing, audit, and certification dates.
+4. **I-140** — Opens after ETA 9089 certification. Enter filing, receipt, and approval/denial dates.
+
+<Callout type="info" title="Save Anytime">
+  You don't have to fill everything at once. Enter what you have, save, and come back later. The form remembers where you left off.
+</Callout>
+
+### How Sections Work
+
+- **Checkmark** — When a section is complete, it collapses and shows a green checkmark with a summary line (e.g., "Determined Jun 15 · Expires Dec 31 · $95,000 LII").
+- **Auto-open** — When you complete a prerequisite (like entering the PWD determination date), the next section opens automatically.
+- **Always accessible** — You can open any section at any time, even if prerequisites aren't met. A note reminds you what's needed.
+- **Auto-calculation** — PWD expiration, filing windows, and some deadlines calculate automatically. These fields show an "auto" badge.
+
+### Validation
+
+- **Red asterisks (*)** mark required fields.
+- **Orange warnings** are advisory — they flag potential issues but don't prevent saving.
+- **Date constraints** prevent impossible dates (e.g., certification before filing).
 
 <VideoFigure
   src="/images/screenshots/create-case.mp4"
-  alt="Full app walkthrough with deadline tracking in action"
-  caption="Step 3 — See the full app walkthrough with deadline tracking in action."
-  step={3}
+  alt="Creating a case with progressive sections and auto-calculation"
+  caption="Create a case — sections unlock progressively, and deadlines calculate automatically."
 />
 
-<Callout type="tip" title="Cascade Updates">
-When you change a key date like the PWD determination date, all dependent deadlines — expiration, filing windows, I-140 deadline — recalculate automatically. No manual math required.
+## Case Detail View — Everything About a Case
+
+Click any case to see its full detail view with tabs:
+
+### Overview Tab
+- **Next Up** — The most important upcoming action for this case.
+- **PWD Timeline** — Visual representation of the PWD determination through expiration.
+- **Job Description** — The position details.
+- **Inline Timeline** — A chronological view of all dates and milestones.
+
+### Recruitment Tab
+- **Job Order** — Start/end dates and duration.
+- **Sunday Ads** — First and second ad dates.
+- **Notice of Filing** — Posting period dates.
+- **Additional Methods** — For professional occupations, the 3+ additional recruitment methods with their types, dates, and descriptions.
+
+### ETA 9089 Tab
+- **Filing details** — Filing date, case number.
+- **Audit status** — If the case was audited.
+- **Certification** — Certification date and expiration.
+- **RFI entries** — Any Requests for Information from the DOL (see below).
+
+### I-140 Tab
+- **Filing** — Filing date and receipt number.
+- **Outcome** — Approval or denial date.
+- **RFE entries** — Any Requests for Evidence from USCIS (see below).
+
+### Documents, Notes & Actions
+- **Documents** — Upload, preview, and categorize case documents.
+- **Notes** — Journal entries for internal notes.
+- **Actions** — Edit, archive, bookmark, or sync to Google Calendar.
+
+<ScreenshotFigure
+  src="/images/screenshots/case-summary.png"
+  alt="Case detail view showing overview tab with timeline and next actions"
+  caption="Case detail view — see everything about a case in one place."
+/>
+
+## RFI & RFE — When the Government Asks for More
+
+Two types of government requests can happen during a PERM case:
+
+### RFI (Request for Information) — from DOL
+
+An RFI comes during ETA 9089 review. The DOL asks for additional documentation.
+
+- **Strict 30-day deadline** — Auto-calculated from the received date.
+- Track received date, due date, and submitted date.
+- Shows urgency badge on case cards when approaching deadline.
+
+<Callout type="warning" title="RFI Deadline">
+  The 30-day RFI deadline is strict. Missing it means the case is denied. PERM Tracker auto-calculates this deadline the moment you enter the received date.
 </Callout>
 
-## Step 4: Track Recruitment Activities
+### RFE (Request for Evidence) — from USCIS
 
-For cases in the Recruitment stage, PERM Tracker provides a built-in checklist of required recruitment activities:
+An RFE comes during I-140 review. USCIS asks for additional evidence.
 
-- SWA job order (30 days)
-- Two Sunday newspaper ads
-- Internal job posting (30 days)
-- Three additional recruitment steps
+- **Flexible deadline** — You enter the due date (typically ~87 days from receipt).
+- Track received date, due date, and submitted date.
+- Shows urgency badge on case cards.
 
-Check off each activity as it's completed. The system validates that all requirements are met before you can proceed.
+### Key Difference
 
-<VideoFigure
-  src="/images/screenshots/cases-walkthrough.mp4"
-  alt="Track recruitment progress, status badges, and upcoming deadlines on each case card"
-  caption="Step 4 — Track recruitment progress, status badges, and upcoming deadlines on each case card."
-  step={4}
-/>
+| | RFI | RFE |
+|---|---|---|
+| **Stage** | ETA 9089 | I-140 |
+| **From** | DOL | USCIS |
+| **Deadline** | 30 days (auto-calculated) | ~87 days (user-entered) |
+| **Consequence** | Case denied | Case denied |
 
-## Step 5: Set Up Notifications
+## Professional Occupations & Additional Recruitment
 
-Never miss a deadline again. PERM Tracker offers multiple notification channels:
+For positions requiring a Bachelor's degree or higher, PERM regulations (20 CFR 656.17(e)) require **3 additional recruitment methods** beyond the standard requirements.
 
-- **Email alerts** — Sent days before deadlines
-- **Push notifications** — Real-time browser notifications
-- **Dashboard warnings** — Visual urgency indicators on your case cards
+### When to Check "Professional Occupation"
 
-Configure your notification preferences in **Settings** to choose which alerts you receive and how far in advance.
+Check the **"Professional Occupation"** toggle in the Recruitment section when the position requires a Bachelor's degree or higher in a specific field.
 
-<VideoFigure
-  src="/images/screenshots/settings-walkthrough.mp4"
-  alt="Configure notification preferences, theme, and account settings"
-  caption="Step 5 — Configure notification preferences, theme, and account settings."
-  step={5}
-/>
+### The 11 Available Methods
 
-## Step 6: Use the Calendar & Timeline
+Choose from: campus placement, professional organizations, trade publications, job fairs, employer website, employee referral program, local/ethnic newspapers, radio/TV ads, career conferences, private employment firms, or other.
 
-Two powerful views help you manage your caseload:
+### Method Date Types
 
-- **Calendar** — See all deadlines across all cases in a familiar calendar format
-- **Timeline** — A Gantt-chart style view showing case progression and overlapping deadlines
+Different methods track dates differently:
+- **Single-date methods** (job fair, career conference) — One date field.
+- **Date-range methods** (employer website, employee referral) — Start and end dates.
+- **Sub-entry methods** (radio/TV ads, local newspapers) — Multiple individual entries with dates and descriptions.
 
-These views make it easy to spot conflicts and plan your workload.
+### Common Mistakes
+
+- **Only 2 methods** — You need 3. PERM Tracker won't show recruitment as complete until 3 valid methods have dates.
+- **Missing dates** — A method without dates doesn't count.
+- **Dates outside the recruitment window** — Methods must occur during the recruitment period.
+
+<Callout type="important" title="3 Methods Required">
+  Professional occupations require exactly 3 (or more) additional recruitment methods, each with valid dates. Two is not enough.
+</Callout>
+
+## Calendar & Timeline
+
+### Calendar View
+
+A monthly calendar grid shows all deadlines across all cases:
+
+- **Color-coded** by stage (PWD, Recruitment, ETA 9089, I-140).
+- **Hover** for deadline details (case name, deadline type, date).
+- **Click** to navigate to the case.
+
+### Google Calendar Sync
+
+Connect your Google account in **Settings** to sync deadlines:
+
+1. Go to **Settings > Calendar**.
+2. Click **Connect Google Calendar**.
+3. Enable sync per-case using the toggle in the case edit form (Notes & Settings section).
+
+Deadlines appear as events in your Google Calendar with links back to PERM Tracker.
+
+### Timeline View
+
+A Gantt-chart style view showing case progression across time:
+
+- See how cases overlap and identify scheduling conflicts.
+- Visual representation of recruitment windows, filing deadlines, and more.
 
 <ScreenshotFigure
   src="/images/screenshots/calendar.png"
   alt="Calendar view showing PERM deadlines across multiple cases with color-coded event markers"
-  caption="Calendar view — all deadlines across all cases, color-coded by type (PWD, Recruitment, ETA 9089, I-140)."
-  step={6}
+  caption="Calendar view — all deadlines across all cases, color-coded by stage."
 />
 
-## What's Next?
+## Notifications & Alerts
 
-Now that you're set up, explore these features and guides:
+PERM Tracker sends reminders through three channels:
 
-- **[Tracking deadlines](/tutorials/tracking-perm-deadlines)** — Learn how the automated deadline engine works and how to set up notifications
-- **[Recruitment tracking](/tutorials/recruitment-tracking)** — Set up recruitment activity checklists for cases in the recruitment stage
-- **Cascade updates** — When you change a key date, dependent deadlines update automatically
-- **Validation warnings** — The system flags potential issues before they become problems
-- **AI assistant** — Ask questions about PERM regulations directly in the app
+### Email Notifications
+Receive deadline reminders by email. Configure:
+- Which stages to receive alerts for.
+- How many days before a deadline to be notified (e.g., 7 days, 3 days, 1 day).
+
+### Push Notifications
+Real-time browser notifications. Enable in Settings and allow browser permissions when prompted.
+
+### Dashboard Indicators
+Urgency dots on case cards and the Deadline Hub automatically highlight approaching and overdue deadlines.
+
+### Configuration
+
+Go to **Settings > Notifications** to configure:
+- Per-stage toggles (PWD, Recruitment, ETA 9089, I-140).
+- Days before deadline for each alert level.
+- Quiet hours (suppress notifications during off-hours).
+
+### Auto-Closure Alerts
+Cases with expired deadlines (e.g., PWD expiration passed, filing window closed) are automatically flagged. You'll receive a notification when this happens.
+
+<VideoFigure
+  src="/images/screenshots/settings-walkthrough.mp4"
+  alt="Configure notification preferences, theme, and account settings"
+  caption="Settings — configure notifications, theme, calendar sync, and account preferences."
+/>
+
+## AI Assistant — Your PERM Expert
+
+PERM Tracker includes an AI assistant that can help with questions, case lookups, and actions.
+
+### What It Can Do
+
+- **Answer PERM questions** — Regulations, timelines, requirements, best practices.
+- **Look up cases** — "What's the status of the Smith case?" or "Which cases have deadlines this week?"
+- **Check deadlines** — "When does the filing window close for case X?"
+- **Take actions** — Update case fields, change statuses, and more (with your confirmation).
+- **Search the web** — Look up current DOL processing times, regulation changes, and more.
+
+### Three Modes
+
+Configure the AI behavior in **Settings > AI Assistant**:
+- **Off** — Disable the AI assistant entirely.
+- **Confirm** — The AI proposes actions but waits for your approval before executing.
+- **Auto** — The AI executes actions automatically (use with caution).
+
+### Tips for Using the AI
+
+- Ask natural language questions: "What are the recruitment requirements for professional occupations?"
+- Reference cases by employer or beneficiary name.
+- Ask "What should I do next?" for guidance on any case.
 
 <VideoFigure
   src="/images/screenshots/chat-walkthrough.mp4"
   alt="AI chat assistant answering PERM regulation questions in real time"
-  caption="The AI assistant — ask questions about PERM regulations, deadlines, and case strategy directly in the app."
+  caption="The AI assistant — ask questions about PERM regulations, deadlines, and case strategy."
 />
 
-For a comprehensive understanding of the PERM process itself, read our [Ultimate PERM Guide](/guides/ultimate-perm-guide-2026) or the [complete filing guide](/guides/complete-perm-filing-guide).
+## Tips, Tricks & Common Pitfalls
+
+### Best Practices
+
+- **Enter dates as you get them** — Don't wait to fill everything out. Save often.
+- **PWD determination is the foundation** — Everything else depends on it. Enter it first.
+- **Recruitment dates must come after PWD determination** — The system enforces this.
+- **The 30-day quiet period is automatic** — PERM Tracker calculates when the ETA 9089 filing window opens.
+- **Use the AI assistant for quick answers** — Faster than searching through regulations.
+
+### Common Pitfalls
+
+- **Professional occupations need 3 additional methods** — Not 2, not 1. Three valid methods with dates.
+- **RFI has a strict 30-day deadline** — Enter the received date immediately so the deadline calculates.
+- **Filing window can be limited by PWD expiration** — The window closes at either 180 days from first recruitment or PWD expiration, whichever comes first.
+- **Don't forget the Notice of Filing** — It's a 10-business-day posting requirement that's easy to overlook.
+
+### Getting Help
+
+- **AI Assistant** — Ask questions directly in the app.
+- **Content Hub** — Browse [tutorials](/tutorials), [guides](/guides), and [blog posts](/blog).
+- **Contact** — Reach out via [contact page](/contact) for support.
+
+## What's Next?
+
+Dive deeper with these resources:
+
+- [Tracking PERM Deadlines](/tutorials/tracking-perm-deadlines) — How the automated deadline engine works
+- [Recruitment Tracking](/tutorials/recruitment-tracking) — Complete guide to recruitment activity management
+- [Complete PERM Filing Guide](/guides/complete-perm-filing-guide) — Step-by-step filing instructions
+- [Ultimate PERM Guide 2026](/guides/ultimate-perm-guide-2026) — Comprehensive PERM reference
 
 <ProductCTA
   title="Ready to Get Started?"
