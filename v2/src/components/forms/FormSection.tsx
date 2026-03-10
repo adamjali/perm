@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type SectionStatus = "complete" | "incomplete" | "has-errors" | undefined;
@@ -19,7 +18,7 @@ export interface FormSectionProps {
   icon?: React.ReactNode;
 
   /**
-   * Whether section is initially expanded
+   * Whether section is initially expanded (kept for backward compat, ignored)
    */
   defaultOpen?: boolean;
 
@@ -40,24 +39,22 @@ export interface FormSectionProps {
 }
 
 /**
- * FormSection component - collapsible section wrapper for form organization.
+ * FormSection component - static section wrapper for form organization.
  *
  * Features:
- * - Collapsible with smooth animation (Motion)
- * - Status indicator (complete/incomplete/has-errors)
  * - Section title with optional icon
+ * - Status indicator (complete/incomplete/has-errors)
  * - Neobrutalist styling
+ *
+ * Note: No longer collapsible — outer CollapsibleSection handles collapse.
  */
 export function FormSection({
   title,
   icon,
-  defaultOpen = true,
   status,
   className,
   children,
 }: FormSectionProps) {
-  const [isOpen, setIsOpen] = React.useState(defaultOpen);
-
   const statusIcon = React.useMemo(() => {
     switch (status) {
       case "complete":
@@ -73,49 +70,20 @@ export function FormSection({
     <div
       className={cn(
         "border-2 border-border bg-card shadow-hard-sm",
-        "transition-all duration-150 hover:shadow-hard hover:-translate-y-0.5",
         status === "has-errors" && "border-destructive",
         status === "complete" && "border-emerald-500/50",
         className
       )}
     >
-      {/* Header - clickable to toggle */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "flex w-full items-center justify-between p-4 text-left",
-          "hover:bg-muted/50 transition-colors",
-        )}
-        aria-expanded={isOpen}
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
-          <h3 className="font-heading font-semibold text-lg break-words min-w-0">{title}</h3>
-          {statusIcon && <span className="shrink-0">{statusIcon}</span>}
-        </div>
-        <span className="shrink-0 text-muted-foreground transition-transform duration-200">
-          {isOpen ? (
-            <ChevronDown className="h-5 w-5" />
-          ) : (
-            <ChevronRight className="h-5 w-5" />
-          )}
-        </span>
-      </button>
+      {/* Header */}
+      <div className="flex items-center gap-3 min-w-0 p-4 pb-0">
+        {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
+        <h3 className="font-heading font-semibold text-lg break-words min-w-0">{title}</h3>
+        {statusIcon && <span className="shrink-0">{statusIcon}</span>}
+      </div>
 
-      {/* Content - animated collapse */}
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0, overflow: "hidden" }}
-            animate={{ height: "auto", opacity: 1, overflow: "visible" }}
-            exit={{ height: 0, opacity: 0, overflow: "hidden" }}
-            transition={{ duration: 0.2, ease: "easeInOut", overflow: { delay: 0.2 } }}
-          >
-            <div className="p-4 pt-0 space-y-4">{children}</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Content */}
+      <div className="p-4 space-y-4">{children}</div>
     </div>
   );
 }
