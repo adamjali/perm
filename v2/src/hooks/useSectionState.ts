@@ -372,12 +372,21 @@ export function useSectionState(values: Partial<CaseFormData>) {
   // Auto-collapse on completion (transition detection: incomplete → complete)
   // ============================================================================
 
-  // Timers stored in ref so they survive effect re-runs (effect cleanup would cancel them)
+  // Compute completion booleans OUTSIDE useMemo to get stable dependency keys.
+  // sectionStates depends on watch() values (new reference every render), but
+  // completion booleans are stable primitives that only change on real data changes.
+  const pwdDone = isPWDComplete(values);
+  const recruitDone = isBasicRecruitmentComplete(values) && isProfessionalRecruitmentComplete(values);
+  const eta9089Done = isETA9089Complete(values);
+  const i140Done = isI140Complete(values);
+  // Stable string key — effect only re-runs when actual completion state changes
+  const completionKey = `${pwdDone},${recruitDone},${eta9089Done},${i140Done}`;
+
   const collapseTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   useEffect(() => {
-    const sections = ['pwd', 'recruitment', 'eta9089', 'i140'] as const;
-    const currentState: Record<string, boolean> = {};
-    for (const s of sections) currentState[s] = sectionStates[s].isComplete;
+    const currentState: Record<string, boolean> = {
+      pwd: pwdDone, recruitment: recruitDone, eta9089: eta9089Done, i140: i140Done,
+    };
 
     // Skip initial mount — record state without collapsing anything
     if (prevCompletionState.current === null) {
@@ -387,7 +396,7 @@ export function useSectionState(values: Partial<CaseFormData>) {
 
     const prev = prevCompletionState.current;
 
-    for (const section of sections) {
+    for (const section of ['pwd', 'recruitment', 'eta9089', 'i140'] as const) {
       // Detect transition: was NOT complete → IS complete, and section is open
       if (!prev[section] && currentState[section] && expanded[section] && !collapseTimers.current[section]) {
         collapseTimers.current[section] = setTimeout(() => {
@@ -403,8 +412,8 @@ export function useSectionState(values: Partial<CaseFormData>) {
     }
 
     prevCompletionState.current = currentState;
-    // NO cleanup — timers must survive effect re-runs
-  }, [sectionStates, expanded, setExpanded]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- completionKey is a stable string derivative
+  }, [completionKey, expanded, setExpanded]);
 
   // Cleanup on unmount only
   useEffect(() => {
