@@ -29,9 +29,7 @@ export type SectionName = 'pwd' | 'recruitment' | 'professional' | 'eta9089' | '
 export interface SectionState {
   isOpen: boolean;
   isEnabled: boolean;
-  isManualOverride: boolean;
   disabledReason?: string;
-  overrideWarning?: string;
   statusInfo?: string;
   isComplete: boolean;
   summary?: string;
@@ -78,25 +76,21 @@ function useToggleMap<K extends string>(
 /**
  * Creates a section state object
  */
-function createSectionState(
-  isOpen: boolean,
-  isEnabled: boolean,
-  isManualOverride: boolean,
-  disabledReason?: string,
-  overrideWarning?: string,
-  statusInfo?: string,
-  isComplete: boolean = false,
-  summary?: string,
-): SectionState {
+function createSectionState(opts: {
+  isOpen: boolean;
+  isEnabled: boolean;
+  disabledReason?: string;
+  statusInfo?: string;
+  isComplete?: boolean;
+  summary?: string;
+}): SectionState {
   return {
-    isOpen,
-    isEnabled,
-    isManualOverride,
-    disabledReason,
-    overrideWarning,
-    statusInfo,
-    isComplete,
-    summary,
+    isOpen: opts.isOpen,
+    isEnabled: opts.isEnabled,
+    disabledReason: opts.disabledReason,
+    statusInfo: opts.statusInfo,
+    isComplete: opts.isComplete || false,
+    summary: opts.summary,
   };
 }
 
@@ -230,15 +224,6 @@ function getI140Summary(values: Partial<CaseFormData>): string | undefined {
  * Hook to manage section states
  */
 export function useSectionState(values: Partial<CaseFormData>) {
-  const [overrides, setOverride, _toggleOverride] = useToggleMap<SectionName>({
-    pwd: false,
-    recruitment: false,
-    professional: false,
-    eta9089: false,
-    i140: false,
-    notes: false,
-  });
-
   const [expanded, setExpanded, toggleExpanded] = useToggleMap<SectionName>({
     pwd: true,
     recruitment: false,
@@ -253,37 +238,28 @@ export function useSectionState(values: Partial<CaseFormData>) {
 
     // PWD Section - Always enabled
     const pwdComplete = isPWDComplete(values);
-    const pwdState = createSectionState(expanded.pwd, true, false, undefined, undefined, undefined, pwdComplete, getPWDSummary(values));
+    const pwdState = createSectionState({ isOpen: expanded.pwd, isEnabled: true, isComplete: pwdComplete, summary: getPWDSummary(values) });
 
     // Recruitment Section - Needs PWD determination date
     const recruitmentEnabled = !!values.pwdDeterminationDate;
-    const recruitmentOverride = overrides.recruitment && !recruitmentEnabled;
     const recruitmentComplete = isBasicRecruitmentComplete(values) && isProfessionalRecruitmentComplete(values);
-    const recruitmentState = createSectionState(
-      expanded.recruitment || (recruitmentEnabled && !expanded.pwd),
-      recruitmentEnabled,
-      recruitmentOverride,
-      !recruitmentEnabled ? 'Enter PWD determination date first' : undefined,
-      recruitmentOverride
-        ? 'Warning: Entering recruitment dates before PWD determination may cause validation issues'
-        : undefined,
-      undefined,
-      recruitmentComplete,
-      getRecruitmentSummary(values),
-    );
+    const recruitmentState = createSectionState({
+      isOpen: expanded.recruitment || (recruitmentEnabled && !expanded.pwd),
+      isEnabled: recruitmentEnabled,
+      disabledReason: !recruitmentEnabled ? 'Enter PWD determination date first' : undefined,
+      isComplete: recruitmentComplete,
+      summary: getRecruitmentSummary(values),
+    });
 
     // Professional Section - Enabled when recruitment is enabled
-    const professionalOverride = overrides.professional && !recruitmentEnabled;
-    const professionalState = createSectionState(
-      expanded.professional,
-      recruitmentEnabled,
-      professionalOverride,
-      !recruitmentEnabled ? 'Complete PWD section first' : undefined
-    );
+    const professionalState = createSectionState({
+      isOpen: expanded.professional,
+      isEnabled: recruitmentEnabled,
+      disabledReason: !recruitmentEnabled ? 'Complete PWD section first' : undefined,
+    });
 
     // ETA 9089 Section - Needs complete recruitment + 30-day window open
     const eta9089Enabled = recruitmentComplete && eta9089Window.isOpen;
-    const eta9089Override = overrides.eta9089 && !eta9089Enabled;
 
     let eta9089DisabledReason: string | undefined;
     let eta9089StatusInfo: string | undefined;
@@ -298,38 +274,28 @@ export function useSectionState(values: Partial<CaseFormData>) {
     }
 
     const eta9089Complete = isETA9089Complete(values);
-    const eta9089State = createSectionState(
-      expanded.eta9089,
-      eta9089Enabled,
-      eta9089Override,
-      eta9089DisabledReason,
-      eta9089Override
-        ? 'Warning: Filing ETA 9089 outside the proper window may cause issues'
-        : undefined,
-      eta9089StatusInfo,
-      eta9089Complete,
-      getETA9089Summary(values),
-    );
+    const eta9089State = createSectionState({
+      isOpen: expanded.eta9089,
+      isEnabled: eta9089Enabled,
+      disabledReason: eta9089DisabledReason,
+      statusInfo: eta9089StatusInfo,
+      isComplete: eta9089Complete,
+      summary: getETA9089Summary(values),
+    });
 
     // I-140 Section - Needs ETA 9089 certification date
     const i140Enabled = !!values.eta9089CertificationDate;
-    const i140Override = overrides.i140 && !i140Enabled;
     const i140Complete = isI140Complete(values);
-    const i140State = createSectionState(
-      expanded.i140,
-      i140Enabled,
-      i140Override,
-      !i140Enabled ? 'Enter ETA 9089 certification date first' : undefined,
-      i140Override
-        ? 'Warning: I-140 cannot be filed before ETA 9089 certification'
-        : undefined,
-      undefined,
-      i140Complete,
-      getI140Summary(values),
-    );
+    const i140State = createSectionState({
+      isOpen: expanded.i140,
+      isEnabled: i140Enabled,
+      disabledReason: !i140Enabled ? 'Enter ETA 9089 certification date first' : undefined,
+      isComplete: i140Complete,
+      summary: getI140Summary(values),
+    });
 
     // Notes Section - Always enabled, never "completes"
-    const notesState = createSectionState(expanded.notes, true, false, undefined, undefined, undefined, false);
+    const notesState = createSectionState({ isOpen: expanded.notes, isEnabled: true });
 
     return {
       pwd: pwdState,
@@ -339,7 +305,7 @@ export function useSectionState(values: Partial<CaseFormData>) {
       i140: i140State,
       notes: notesState,
     };
-  }, [values, expanded, overrides]);
+  }, [values, expanded]);
 
   // ============================================================================
   // Auto-open/collapse on prerequisite changes
@@ -422,30 +388,13 @@ export function useSectionState(values: Partial<CaseFormData>) {
     }
   }, [sectionStates, expanded, setExpanded]);
 
-  const enableOverride = useCallback((section: SectionName) => {
-    setOverride(section, true);
-    setExpanded(section, true);
-  }, [setOverride, setExpanded]);
-
-  const disableOverride = useCallback((section: SectionName) => {
-    setOverride(section, false);
-  }, [setOverride]);
-
-  const isSectionInteractable = useCallback((section: SectionName): boolean => {
-    const state = sectionStates[section];
-    return state.isEnabled || state.isManualOverride;
-  }, [sectionStates]);
-
   const eta9089WindowStatus = useMemo(() => getETA9089WindowStatus(values), [values]);
 
   return {
     sectionStates,
     toggleSection: toggleExpanded,
-    enableOverride,
-    disableOverride,
     openSection: useCallback((s: SectionName) => setExpanded(s, true), [setExpanded]),
     closeSection: useCallback((s: SectionName) => setExpanded(s, false), [setExpanded]),
-    isSectionInteractable,
     eta9089WindowStatus,
     isRecruitmentComplete: isBasicRecruitmentComplete(values),
     isProfessionalComplete: isProfessionalRecruitmentComplete(values),

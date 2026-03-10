@@ -6,6 +6,8 @@
  * - ETA 9089 filing window calculations (30-day waiting period, 180-day limit)
  * - Section dependency logic (PWD -> Recruitment -> ETA 9089 -> I-140)
  * - Professional occupation recruitment completeness checks
+ * - Section completion detection and summary generation
+ * - Auto-open/collapse on prerequisite changes
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -70,7 +72,7 @@ function createCompleteBasicRecruitment(
 /**
  * Create form data with complete professional recruitment (3 additional methods)
  */
-function _createCompleteProfessionalRecruitment(
+function createCompleteProfessionalRecruitment(
   overrides: Partial<CaseFormData> = {}
 ): Partial<CaseFormData> {
   return createCompleteBasicRecruitment({
@@ -147,8 +149,6 @@ describe('useSectionState', () => {
         const values = createCompleteBasicRecruitment({
           additionalRecruitmentEndDate: '2024-03-01', // Later than jobOrderEndDate
           isProfessionalOccupation: false, // Additional dates should be ignored
-          // Window opens: jobOrderEndDate 2024-02-14 + 30 days = 2024-03-15... but sorts to latest
-          // With job order end 2024-02-14 being latest base date: 2024-02-14 + 30 = 2024-03-16
         });
 
         const { result } = renderHook(() => useSectionState(values));
@@ -161,8 +161,6 @@ describe('useSectionState', () => {
     describe('window closes at 180 days OR PWD expiration (whichever first)', () => {
       it('calculates closesOn as 180 days after first recruitment date', () => {
         const values = createCompleteBasicRecruitment({
-          // First recruitment: sundayAdFirstDate = 2024-01-14
-          // Window closes: 2024-01-14 + 180 days = 2024-07-12
           pwdExpirationDate: '2024-12-31', // Far in future, not limiting
         });
 
@@ -174,9 +172,6 @@ describe('useSectionState', () => {
 
       it('uses PWD expiration if earlier than 180 days from first recruitment', () => {
         const values = createCompleteBasicRecruitment({
-          // First recruitment: 2024-01-14
-          // 180 days from first: 2024-07-12
-          // PWD expiration: 2024-06-30 (earlier)
           pwdExpirationDate: '2024-06-30',
         });
 
@@ -200,38 +195,28 @@ describe('useSectionState', () => {
 
     describe('daysUntilOpen calculation', () => {
       it('returns days remaining until window opens', () => {
-        // Current date: 2024-03-15
-        // Job order ends: 2024-02-14
-        // Window opens: 2024-03-15 (today - should be open)
         const values = createCompleteBasicRecruitment({
           jobOrderEndDate: '2024-02-13', // Opens on 2024-03-14 (before today)
         });
 
         const { result } = renderHook(() => useSectionState(values));
 
-        // Window already open, daysUntilOpen should be 0
         expect(result.current.eta9089WindowStatus.daysUntilOpen).toBe(0);
         expect(result.current.eta9089WindowStatus.isOpen).toBe(true);
       });
 
       it('returns positive days when window has not yet opened', () => {
-        // Current date: 2024-03-15
-        // Job order ends: 2024-02-16
-        // Window opens: 2024-03-17 (2 days away, using Math.ceil)
         const values = createCompleteBasicRecruitment({
           jobOrderEndDate: '2024-02-16', // Opens on 2024-03-17
         });
 
         const { result } = renderHook(() => useSectionState(values));
 
-        // Should be > 0 and window not open
         expect(result.current.eta9089WindowStatus.daysUntilOpen).toBeGreaterThan(0);
         expect(result.current.eta9089WindowStatus.isOpen).toBe(false);
       });
 
       it('returns 0 when window is already open', () => {
-        // Current date: 2024-03-15
-        // Window opens: 2024-03-01 (already open)
         const values = createCompleteBasicRecruitment({
           jobOrderEndDate: '2024-01-30', // Opens on 2024-02-29
         });
@@ -243,16 +228,12 @@ describe('useSectionState', () => {
       });
 
       it('calculates days until open when window is in future', () => {
-        // Current date: 2024-03-15
-        // Job order ends: 2024-03-10
-        // Window opens: 2024-04-09
         const values = createCompleteBasicRecruitment({
           jobOrderEndDate: '2024-03-10',
         });
 
         const { result } = renderHook(() => useSectionState(values));
 
-        // Should be positive (exact value may vary by +/-1 due to timezone)
         expect(result.current.eta9089WindowStatus.daysUntilOpen).toBeGreaterThanOrEqual(24);
         expect(result.current.eta9089WindowStatus.daysUntilOpen).toBeLessThanOrEqual(26);
       });
@@ -260,9 +241,6 @@ describe('useSectionState', () => {
 
     describe('daysRemaining calculation', () => {
       it('returns days remaining until window closes', () => {
-        // Current date: 2024-03-15
-        // Window closes: 2024-06-30 (PWD expiration)
-        // Days remaining calculation uses Math.ceil, so may vary by 1
         const values = createCompleteBasicRecruitment({
           jobOrderEndDate: '2024-01-30', // Window already open
           pwdExpirationDate: '2024-06-30',
@@ -270,14 +248,11 @@ describe('useSectionState', () => {
 
         const { result } = renderHook(() => useSectionState(values));
 
-        // Should be approximately 107-108 days (varies by timezone)
         expect(result.current.eta9089WindowStatus.daysRemaining).toBeGreaterThanOrEqual(106);
         expect(result.current.eta9089WindowStatus.daysRemaining).toBeLessThanOrEqual(108);
       });
 
       it('returns 0 when window has already closed', () => {
-        // Current date: 2024-03-15
-        // PWD expiration (window close): 2024-03-01 (already passed)
         const values = createCompleteBasicRecruitment({
           pwdExpirationDate: '2024-03-01',
         });
@@ -357,7 +332,6 @@ describe('useSectionState', () => {
       it('is disabled when recruitment is incomplete', () => {
         const values = createFormData({
           pwdDeterminationDate: '2024-01-15',
-          // Missing recruitment dates
         });
 
         const { result } = renderHook(() => useSectionState(values));
@@ -369,9 +343,6 @@ describe('useSectionState', () => {
       });
 
       it('is disabled during 30-day waiting period even with complete recruitment', () => {
-        // Current date: 2024-03-15
-        // Job order ends: 2024-03-10
-        // Window opens: 2024-04-09 (25 days away)
         const values = createCompleteBasicRecruitment({
           jobOrderEndDate: '2024-03-10',
         });
@@ -386,12 +357,9 @@ describe('useSectionState', () => {
       });
 
       it('is enabled when recruitment is complete AND window is open', () => {
-        // Current date: 2024-03-15
-        // Job order ends: 2024-01-30
-        // Window opens: 2024-02-29 (already open)
         const values = createCompleteBasicRecruitment({
           jobOrderEndDate: '2024-01-30',
-          pwdExpirationDate: '2024-12-31', // Far future, not limiting
+          pwdExpirationDate: '2024-12-31',
         });
 
         const { result } = renderHook(() => useSectionState(values));
@@ -400,37 +368,7 @@ describe('useSectionState', () => {
         expect(result.current.sectionStates.eta9089.disabledReason).toBeUndefined();
       });
 
-      it('is disabled when filing window has closed (daysRemaining > 0 case)', () => {
-        // Current date: 2024-03-15
-        // First recruitment: 2024-01-14
-        // 180-day limit: 2024-07-12
-        // PWD expiration: 2024-03-10 (before today, window closed)
-        // Window would have opened on 2024-01-31 (30 days after 2024-01-01)
-        const values = createCompleteBasicRecruitment({
-          sundayAdFirstDate: '2024-01-07', // First recruitment is Jan 7
-          sundayAdSecondDate: '2024-01-14',
-          jobOrderStartDate: '2024-01-01',
-          jobOrderEndDate: '2024-01-01', // Window opens Feb 1
-          noticeOfFilingStartDate: '2024-01-01',
-          noticeOfFilingEndDate: '2024-01-15',
-          pwdExpirationDate: '2024-03-10', // Closed 5 days ago
-        });
-
-        const { result } = renderHook(() => useSectionState(values));
-
-        // Window is not open (isAfter(today, closesDate) is true)
-        expect(result.current.eta9089WindowStatus.isOpen).toBe(false);
-        expect(result.current.sectionStates.eta9089.isEnabled).toBe(false);
-        // Note: daysRemaining will be 0 when window has closed
-        expect(result.current.eta9089WindowStatus.daysRemaining).toBe(0);
-      });
-
-      it('shows disabledReason when window closed and daysRemaining check passes', () => {
-        // The hook checks: eta9089Window.daysRemaining && eta9089Window.daysRemaining <= 0
-        // This is falsy when daysRemaining is 0 (0 is falsy), so "Filing window has closed"
-        // message only shows when daysRemaining is negative (which doesn't happen with current logic).
-        // This test documents current behavior: when window is closed, isEnabled is false
-        // but disabledReason may not be set if daysRemaining is exactly 0.
+      it('is disabled when filing window has closed', () => {
         const values = createCompleteBasicRecruitment({
           sundayAdFirstDate: '2024-01-07',
           sundayAdSecondDate: '2024-01-14',
@@ -443,9 +381,9 @@ describe('useSectionState', () => {
 
         const { result } = renderHook(() => useSectionState(values));
 
-        // Window is not open
         expect(result.current.eta9089WindowStatus.isOpen).toBe(false);
         expect(result.current.sectionStates.eta9089.isEnabled).toBe(false);
+        expect(result.current.eta9089WindowStatus.daysRemaining).toBe(0);
       });
     });
 
@@ -483,6 +421,190 @@ describe('useSectionState', () => {
 
         expect(result.current.sectionStates.notes.isEnabled).toBe(true);
       });
+    });
+  });
+
+  // ============================================================================
+  // Completion Detection Tests
+  // ============================================================================
+
+  describe('Completion Detection', () => {
+    describe('PWD section', () => {
+      it('is complete when both determination + expiration dates filled', () => {
+        const values = createFormData({
+          pwdDeterminationDate: '2024-01-15',
+          pwdExpirationDate: '2024-06-30',
+        });
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.pwd.isComplete).toBe(true);
+      });
+
+      it('is incomplete when missing determination date', () => {
+        const values = createFormData({
+          pwdExpirationDate: '2024-06-30',
+        });
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.pwd.isComplete).toBe(false);
+      });
+
+      it('is incomplete when missing expiration date', () => {
+        const values = createFormData({
+          pwdDeterminationDate: '2024-01-15',
+        });
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.pwd.isComplete).toBe(false);
+      });
+    });
+
+    describe('Recruitment section', () => {
+      it('is complete when basic recruitment is complete (non-professional)', () => {
+        const values = createCompleteBasicRecruitment();
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.recruitment.isComplete).toBe(true);
+      });
+
+      it('is incomplete when missing any basic field', () => {
+        const values = createFormData({
+          sundayAdFirstDate: '2024-01-14',
+          sundayAdSecondDate: '2024-01-21',
+          jobOrderStartDate: '2024-01-15',
+          // Missing jobOrderEndDate, noticeOfFiling
+        });
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.recruitment.isComplete).toBe(false);
+      });
+
+      it('is complete when professional with 3+ methods', () => {
+        const values = createCompleteProfessionalRecruitment();
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.recruitment.isComplete).toBe(true);
+      });
+
+      it('is incomplete with only 2 professional methods', () => {
+        const values = createCompleteBasicRecruitment({
+          isProfessionalOccupation: true,
+          additionalRecruitmentMethods: [
+            { method: 'Campus Recruiting', date: '2024-01-20', description: '' },
+            { method: 'Job Fair', date: '2024-01-25', description: '' },
+          ],
+        });
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.recruitment.isComplete).toBe(false);
+      });
+    });
+
+    describe('ETA 9089 section', () => {
+      it('is complete when certification date is filled', () => {
+        const values = createFormData({
+          eta9089CertificationDate: '2024-04-15',
+        });
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.eta9089.isComplete).toBe(true);
+      });
+
+      it('is incomplete without certification date', () => {
+        const values = createFormData({
+          eta9089FilingDate: '2024-03-01',
+        });
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.eta9089.isComplete).toBe(false);
+      });
+    });
+
+    describe('I-140 section', () => {
+      it('is complete when approval date is filled', () => {
+        const values = createFormData({
+          i140ApprovalDate: '2024-07-01',
+        });
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.i140.isComplete).toBe(true);
+      });
+
+      it('is complete when denial date is filled', () => {
+        const values = createFormData({
+          i140DenialDate: '2024-07-01',
+        });
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.i140.isComplete).toBe(true);
+      });
+
+      it('is incomplete without approval or denial date', () => {
+        const values = createFormData({
+          i140FilingDate: '2024-05-01',
+        });
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.i140.isComplete).toBe(false);
+      });
+    });
+
+    describe('Notes section', () => {
+      it('is never complete', () => {
+        const values = createFormData();
+        const { result } = renderHook(() => useSectionState(values));
+        expect(result.current.sectionStates.notes.isComplete).toBe(false);
+      });
+    });
+  });
+
+  // ============================================================================
+  // Summary Generation Tests
+  // ============================================================================
+
+  describe('Summary Generation', () => {
+    it('PWD summary includes wage amount and level', () => {
+      const values = createFormData({
+        pwdDeterminationDate: '2024-01-15',
+        pwdExpirationDate: '2024-06-30',
+        pwdWageAmount: 95000,
+        pwdWageLevel: 'Level II',
+      });
+      const { result } = renderHook(() => useSectionState(values));
+      expect(result.current.sectionStates.pwd.summary).toContain('Determined Jan 15');
+      expect(result.current.sectionStates.pwd.summary).toContain('Expires Jun 30');
+      expect(result.current.sectionStates.pwd.summary).toContain('$95,000');
+      expect(result.current.sectionStates.pwd.summary).toContain('LII');
+    });
+
+    it('PWD summary without wage info', () => {
+      const values = createFormData({
+        pwdDeterminationDate: '2024-01-15',
+        pwdExpirationDate: '2024-06-30',
+      });
+      const { result } = renderHook(() => useSectionState(values));
+      expect(result.current.sectionStates.pwd.summary).toBe('Determined Jan 15 · Expires Jun 30');
+    });
+
+    it('PWD summary undefined when incomplete', () => {
+      const values = createFormData({ pwdDeterminationDate: '2024-01-15' });
+      const { result } = renderHook(() => useSectionState(values));
+      expect(result.current.sectionStates.pwd.summary).toBeUndefined();
+    });
+
+    it('Recruitment summary shows method count for professional cases', () => {
+      const values = createCompleteProfessionalRecruitment();
+      const { result } = renderHook(() => useSectionState(values));
+      const summary = result.current.sectionStates.recruitment.summary!;
+      expect(summary).toContain('3 methods');
+    });
+
+    it('ETA 9089 summary includes case number', () => {
+      const values = createFormData({
+        eta9089FilingDate: '2024-03-01',
+        eta9089CertificationDate: '2024-06-01',
+        eta9089CaseNumber: 'A-123',
+      });
+      const { result } = renderHook(() => useSectionState(values));
+      const summary = result.current.sectionStates.eta9089.summary!;
+      expect(summary).toContain('Filed Mar 1');
+      expect(summary).toContain('Certified Jun 1');
+      expect(summary).toContain('Case A-123');
+    });
+
+    it('Empty summary when section has no data', () => {
+      const values = createFormData();
+      const { result } = renderHook(() => useSectionState(values));
+      expect(result.current.sectionStates.eta9089.summary).toBeUndefined();
+      expect(result.current.sectionStates.i140.summary).toBeUndefined();
     });
   });
 
@@ -629,7 +751,7 @@ describe('useSectionState', () => {
           isProfessionalOccupation: true,
           additionalRecruitmentMethods: [
             { method: 'Campus Recruiting', date: '2024-01-20', description: '' },
-            { method: '', date: '2024-01-25', description: '' }, // Empty method
+            { method: '', date: '2024-01-25', description: '' },
             { method: 'Professional Organization', date: '2024-02-01', description: '' },
           ],
         });
@@ -644,7 +766,7 @@ describe('useSectionState', () => {
           isProfessionalOccupation: true,
           additionalRecruitmentMethods: [
             { method: 'Campus Recruiting', date: '2024-01-20', description: '' },
-            { method: 'Job Fair', date: '', description: '' }, // Empty date
+            { method: 'Job Fair', date: '', description: '' },
             { method: 'Professional Organization', date: '2024-02-01', description: '' },
           ],
         });
@@ -689,7 +811,7 @@ describe('useSectionState', () => {
         const values = createFormData({
           isProfessionalOccupation: true,
           additionalRecruitmentMethods: [
-            { method: 'Campus Recruiting', date: '2024-01-20' }, // No description
+            { method: 'Campus Recruiting', date: '2024-01-20' },
             { method: 'Job Fair', date: '2024-01-25' },
             { method: 'Professional Organization', date: '2024-02-01' },
           ],
@@ -737,7 +859,7 @@ describe('useSectionState', () => {
           additionalRecruitmentMethods: [
             { method: 'Campus Recruiting', date: '2024-01-20', description: '' },
             { method: 'Job Fair', date: '2024-01-25', description: '' },
-            { method: 'radio_ad', date: '', description: '', subEntries: [] }, // Empty array
+            { method: 'radio_ad', date: '', description: '', subEntries: [] },
           ],
         });
 
@@ -773,7 +895,6 @@ describe('useSectionState', () => {
         const values = createFormData();
         const { result } = renderHook(() => useSectionState(values));
 
-        // Initially PWD is open
         expect(result.current.sectionStates.pwd.isOpen).toBe(true);
 
         act(() => {
@@ -795,7 +916,6 @@ describe('useSectionState', () => {
         const values = createFormData();
         const { result } = renderHook(() => useSectionState(values));
 
-        // Initially recruitment is closed
         expect(result.current.sectionStates.recruitment.isOpen).toBe(false);
 
         act(() => {
@@ -811,7 +931,6 @@ describe('useSectionState', () => {
         const values = createFormData();
         const { result } = renderHook(() => useSectionState(values));
 
-        // PWD starts open
         expect(result.current.sectionStates.pwd.isOpen).toBe(true);
 
         act(() => {
@@ -821,190 +940,69 @@ describe('useSectionState', () => {
         expect(result.current.sectionStates.pwd.isOpen).toBe(false);
       });
     });
-
-    describe('isSectionInteractable', () => {
-      it('returns true for enabled sections', () => {
-        const values = createFormData({
-          pwdDeterminationDate: '2024-01-15',
-        });
-
-        const { result } = renderHook(() => useSectionState(values));
-
-        expect(result.current.isSectionInteractable('recruitment')).toBe(true);
-      });
-
-      it('returns false for disabled sections without override', () => {
-        const values = createFormData({
-          pwdDeterminationDate: undefined,
-        });
-
-        const { result } = renderHook(() => useSectionState(values));
-
-        expect(result.current.isSectionInteractable('recruitment')).toBe(false);
-      });
-
-      it('returns true for disabled sections with manual override', () => {
-        const values = createFormData({
-          pwdDeterminationDate: undefined,
-        });
-
-        const { result } = renderHook(() => useSectionState(values));
-
-        act(() => {
-          result.current.enableOverride('recruitment');
-        });
-
-        expect(result.current.isSectionInteractable('recruitment')).toBe(true);
-      });
-    });
   });
 
   // ============================================================================
-  // Manual Override Tests
+  // Auto-open/collapse Tests
   // ============================================================================
 
-  describe('Manual Override Behavior', () => {
-    describe('enableOverride', () => {
-      it('sets isManualOverride to true for disabled section', () => {
-        const values = createFormData({
-          pwdDeterminationDate: undefined,
-        });
-
-        const { result } = renderHook(() => useSectionState(values));
-
-        expect(result.current.sectionStates.recruitment.isManualOverride).toBe(false);
-
-        act(() => {
-          result.current.enableOverride('recruitment');
-        });
-
-        expect(result.current.sectionStates.recruitment.isManualOverride).toBe(true);
+  describe('Auto-open/collapse', () => {
+    it('filling pwdDeterminationDate opens recruitment section', () => {
+      const values = createFormData();
+      const { result, rerender } = renderHook(({ v }) => useSectionState(v), {
+        initialProps: { v: values },
       });
 
-      it('also expands the overridden section', () => {
-        const values = createFormData();
+      expect(result.current.sectionStates.recruitment.isOpen).toBe(false);
 
-        const { result } = renderHook(() => useSectionState(values));
+      const updated = createFormData({ pwdDeterminationDate: '2024-01-15' });
+      rerender({ v: updated });
 
-        expect(result.current.sectionStates.recruitment.isOpen).toBe(false);
-
-        act(() => {
-          result.current.enableOverride('recruitment');
-        });
-
-        expect(result.current.sectionStates.recruitment.isOpen).toBe(true);
-      });
-
-      it('sets override warning for recruitment section', () => {
-        const values = createFormData({
-          pwdDeterminationDate: undefined,
-        });
-
-        const { result } = renderHook(() => useSectionState(values));
-
-        act(() => {
-          result.current.enableOverride('recruitment');
-        });
-
-        expect(result.current.sectionStates.recruitment.overrideWarning).toContain('Warning');
-      });
-
-      it('sets override warning for ETA 9089 section', () => {
-        const values = createFormData();
-
-        const { result } = renderHook(() => useSectionState(values));
-
-        act(() => {
-          result.current.enableOverride('eta9089');
-        });
-
-        expect(result.current.sectionStates.eta9089.overrideWarning).toContain('Warning');
-      });
-
-      it('sets override warning for I-140 section', () => {
-        const values = createFormData({
-          eta9089CertificationDate: undefined,
-        });
-
-        const { result } = renderHook(() => useSectionState(values));
-
-        act(() => {
-          result.current.enableOverride('i140');
-        });
-
-        expect(result.current.sectionStates.i140.overrideWarning).toContain('Warning');
-      });
+      expect(result.current.sectionStates.recruitment.isOpen).toBe(true);
     });
 
-    describe('disableOverride', () => {
-      it('removes manual override', () => {
-        const values = createFormData();
-
-        const { result } = renderHook(() => useSectionState(values));
-
-        act(() => {
-          result.current.enableOverride('recruitment');
-        });
-
-        expect(result.current.sectionStates.recruitment.isManualOverride).toBe(true);
-
-        act(() => {
-          result.current.disableOverride('recruitment');
-        });
-
-        expect(result.current.sectionStates.recruitment.isManualOverride).toBe(false);
+    it('clearing pwdDeterminationDate collapses recruitment + eta9089 + i140', () => {
+      const values = createFormData({ pwdDeterminationDate: '2024-01-15' });
+      const { result, rerender } = renderHook(({ v }) => useSectionState(v), {
+        initialProps: { v: values },
       });
 
-      it('removes override warning after disable', () => {
-        const values = createFormData({
-          pwdDeterminationDate: undefined,
-        });
-
-        const { result } = renderHook(() => useSectionState(values));
-
-        act(() => {
-          result.current.enableOverride('recruitment');
-        });
-
-        expect(result.current.sectionStates.recruitment.overrideWarning).toBeDefined();
-
-        act(() => {
-          result.current.disableOverride('recruitment');
-        });
-
-        expect(result.current.sectionStates.recruitment.overrideWarning).toBeUndefined();
+      // Open downstream sections
+      act(() => {
+        result.current.openSection('eta9089');
+        result.current.openSection('i140');
       });
+
+      const cleared = createFormData({ pwdDeterminationDate: undefined });
+      rerender({ v: cleared });
+
+      expect(result.current.sectionStates.recruitment.isOpen).toBe(false);
+      expect(result.current.sectionStates.eta9089.isOpen).toBe(false);
+      expect(result.current.sectionStates.i140.isOpen).toBe(false);
     });
 
-    describe('override state with enabled section', () => {
-      it('isManualOverride is false when section becomes enabled', () => {
-        // Start with disabled recruitment
-        const values = createFormData({
-          pwdDeterminationDate: undefined,
-        });
-
-        const { result, rerender } = renderHook(({ v }) => useSectionState(v), {
-          initialProps: { v: values },
-        });
-
-        act(() => {
-          result.current.enableOverride('recruitment');
-        });
-
-        expect(result.current.sectionStates.recruitment.isManualOverride).toBe(true);
-
-        // Now enable the section by providing PWD determination date
-        const enabledValues = createFormData({
-          pwdDeterminationDate: '2024-01-15',
-        });
-
-        rerender({ v: enabledValues });
-
-        // When section is enabled, isManualOverride should reflect override state
-        // but the section is now enabled so override warning should be cleared
-        expect(result.current.sectionStates.recruitment.isEnabled).toBe(true);
-        expect(result.current.sectionStates.recruitment.overrideWarning).toBeUndefined();
+    it('filling eta9089CertificationDate opens i140 section', () => {
+      const values = createFormData();
+      const { result, rerender } = renderHook(({ v }) => useSectionState(v), {
+        initialProps: { v: values },
       });
+
+      const updated = createFormData({ eta9089CertificationDate: '2024-04-15' });
+      rerender({ v: updated });
+
+      expect(result.current.sectionStates.i140.isOpen).toBe(true);
+    });
+
+    it('clearing eta9089CertificationDate collapses i140', () => {
+      const values = createFormData({ eta9089CertificationDate: '2024-04-15' });
+      const { result, rerender } = renderHook(({ v }) => useSectionState(v), {
+        initialProps: { v: values },
+      });
+
+      const cleared = createFormData({ eta9089CertificationDate: undefined });
+      rerender({ v: cleared });
+
+      expect(result.current.sectionStates.i140.isOpen).toBe(false);
     });
   });
 
@@ -1036,16 +1034,12 @@ describe('useSectionState', () => {
     });
 
     it('handles PWD expiration on same day as 180-day limit', () => {
-      // First recruitment: 2024-01-14
-      // 180 days from first: 2024-07-12
-      // PWD expiration: 2024-07-12 (same day)
       const values = createCompleteBasicRecruitment({
         pwdExpirationDate: '2024-07-12',
       });
 
       const { result } = renderHook(() => useSectionState(values));
 
-      // When equal, PWD expiration should be used (it's not strictly less than 180-day)
       expect(result.current.eta9089WindowStatus.closesOn).toBe('2024-07-12');
       expect(result.current.eta9089WindowStatus.isPwdLimited).toBe(false);
     });
@@ -1054,11 +1048,9 @@ describe('useSectionState', () => {
       const values = createFormData({
         pwdDeterminationDate: '2024-01-01',
         pwdExpirationDate: '2024-12-31',
-        // Three potential first dates
-        sundayAdFirstDate: '2024-01-21', // Sunday
+        sundayAdFirstDate: '2024-01-21',
         jobOrderStartDate: '2024-01-10', // Earliest
         noticeOfFilingStartDate: '2024-01-15',
-        // Complete the rest
         sundayAdSecondDate: '2024-01-28',
         jobOrderEndDate: '2024-02-15',
         noticeOfFilingEndDate: '2024-01-29',
@@ -1080,13 +1072,12 @@ describe('useSectionState', () => {
         jobOrderEndDate: '2024-02-15',
         noticeOfFilingStartDate: '2024-01-15',
         noticeOfFilingEndDate: '2024-01-29',
-        additionalRecruitmentEndDate: '2024-03-01', // Latest - only included for professional
-        isProfessionalOccupation: true, // Required to include additional recruitment dates
+        additionalRecruitmentEndDate: '2024-03-01',
+        isProfessionalOccupation: true,
       });
 
       const { result } = renderHook(() => useSectionState(values));
 
-      // Window opens 30 days from latest (2024-03-01 + 30 = 2024-03-31) for professional
       expect(result.current.eta9089WindowStatus.opensOn).toBe('2024-03-31');
     });
   });

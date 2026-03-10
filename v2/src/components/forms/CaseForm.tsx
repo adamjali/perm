@@ -277,7 +277,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
   // SECTION STATE
   // ============================================================================
 
-  const { sectionStates, toggleSection, enableOverride, openSection } = useSectionState(formData);
+  const { sectionStates, toggleSection, openSection } = useSectionState(formData);
 
   // ============================================================================
   // JOB DESCRIPTION TEMPLATES
@@ -527,12 +527,9 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
       };
 
       if (section && sectionStates[section] && !sectionStates[section].isOpen) {
-        const state = sectionStates[section];
-        if (state.isEnabled || state.isManualOverride) {
-          openSection(section);
-          setTimeout(doScroll, 150);
-          return;
-        }
+        openSection(section);
+        setTimeout(doScroll, 150);
+        return;
       }
       doScroll();
     },
@@ -582,28 +579,28 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
 
         {/* PWD Section - uses context, no props needed */}
         <div className="animate-slide-up" style={{ animationDelay: "100ms" }}>
-          <CollapsibleSection name="pwd" title="PWD (Prevailing Wage Determination)" state={sectionStates.pwd} onToggle={() => toggleSection("pwd")} onOverride={() => enableOverride("pwd")} icon={<FileText className="size-5" />} description="Prevailing wage filing and determination dates">
+          <CollapsibleSection name="pwd" title="PWD (Prevailing Wage Determination)" state={sectionStates.pwd} onToggle={() => toggleSection("pwd")} icon={<FileText className="size-5" />} description="Prevailing wage filing and determination dates">
             <PWDSection />
           </CollapsibleSection>
         </div>
 
         {/* Recruitment Section - uses context, no props needed */}
         <div className="animate-slide-up" style={{ animationDelay: "150ms" }}>
-          <CollapsibleSection name="recruitment" title="Recruitment" state={sectionStates.recruitment} onToggle={() => toggleSection("recruitment")} onOverride={() => enableOverride("recruitment")} icon={<ClipboardList className="size-5" />} description="Sunday ads, job order, and notice of filing">
+          <CollapsibleSection name="recruitment" title="Recruitment" state={sectionStates.recruitment} onToggle={() => toggleSection("recruitment")} icon={<ClipboardList className="size-5" />} description="Sunday ads, job order, and notice of filing">
             <RecruitmentSection />
           </CollapsibleSection>
         </div>
 
         {/* ETA 9089 Section - uses context, no props needed */}
         <div className="animate-slide-up" style={{ animationDelay: "200ms" }}>
-          <CollapsibleSection name="eta9089" title="ETA 9089 (PERM Application)" state={sectionStates.eta9089} onToggle={() => toggleSection("eta9089")} onOverride={() => enableOverride("eta9089")} icon={<FileCheck className="size-5" />} description="PERM application filing, audit, and certification">
+          <CollapsibleSection name="eta9089" title="ETA 9089 (PERM Application)" state={sectionStates.eta9089} onToggle={() => toggleSection("eta9089")} icon={<FileCheck className="size-5" />} description="PERM application filing, audit, and certification">
             <ETA9089Section />
           </CollapsibleSection>
         </div>
 
         {/* I-140 Section - uses context, no props needed */}
         <div className="animate-slide-up" style={{ animationDelay: "250ms" }}>
-          <CollapsibleSection name="i140" title="I-140 (Immigrant Petition)" state={sectionStates.i140} onToggle={() => toggleSection("i140")} onOverride={() => enableOverride("i140")} icon={<Building2 className="size-5" />} description="I-140 petition filing, receipt, and approval">
+          <CollapsibleSection name="i140" title="I-140 (Immigrant Petition)" state={sectionStates.i140} onToggle={() => toggleSection("i140")} icon={<Building2 className="size-5" />} description="I-140 petition filing, receipt, and approval">
             <I140Section />
           </CollapsibleSection>
         </div>
@@ -636,7 +633,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
 
         {/* Notes Section */}
         <div className="animate-slide-up" style={{ animationDelay: "300ms" }}>
-          <CollapsibleSection name="notes" title="Notes & Settings" state={sectionStates.notes} onToggle={() => toggleSection("notes")} onOverride={() => enableOverride("notes")} icon={<StickyNote className="size-5" />} description="Case notes, journal entries, and preferences">
+          <CollapsibleSection name="notes" title="Notes & Settings" state={sectionStates.notes} onToggle={() => toggleSection("notes")} icon={<StickyNote className="size-5" />} description="Case notes, journal entries, and preferences">
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label>Notes</Label>

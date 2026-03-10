@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Lock, AlertTriangle, Unlock } from "lucide-react";
+import { ChevronDown, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import type { SectionState, SectionName } from "@/hooks/useSectionState";
 
 // ============================================================================
@@ -20,8 +19,6 @@ export interface CollapsibleSectionProps {
   state: SectionState;
   /** Callback when section is toggled open/closed */
   onToggle: () => void;
-  /** Callback when user wants to override disabled state */
-  onOverride: () => void;
   /** Optional icon to display next to title */
   icon?: React.ReactNode;
   /** Optional description shown below title */
@@ -39,69 +36,51 @@ export interface CollapsibleSectionProps {
 /**
  * CollapsibleSection Component
  *
- * A collapsible form section with dependency management.
+ * A collapsible form section with dependency indicators.
  *
  * Features:
+ * - Always openable (even when prerequisites aren't met)
  * - Animated expand/collapse
- * - Visual disabled state (greyed out)
- * - Lock icon with tooltip for disabled sections
- * - Manual override button with inline warning
+ * - Completion checkmark + summary when collapsed
+ * - Soft prerequisite note when opened without prerequisites
  * - Neobrutalist design (hard shadows, snappy animations)
- *
- * Per perm_flow.md:
- * - Sections grey out until dependencies are met
- * - Users can manually override with a warning
  */
 export function CollapsibleSection({
   name,
   title,
   state,
   onToggle,
-  onOverride,
   icon,
   description,
   children,
   className,
 }: CollapsibleSectionProps) {
-  const { isOpen, isEnabled, isManualOverride, disabledReason, overrideWarning, statusInfo } = state;
-
-  // Can interact if enabled OR manually overridden
-  const canInteract = isEnabled || isManualOverride;
-
-  // Handle header click
-  const handleHeaderClick = () => {
-    if (canInteract) {
-      onToggle();
-    }
-  };
+  const { isOpen, isEnabled, disabledReason, statusInfo, isComplete, summary } = state;
 
   return (
     <div
       className={cn(
         "rounded-lg border-2 border-border transition-all duration-150",
-        // Disabled visual state
-        !canInteract && "opacity-50 bg-muted/30",
-        // Enabled state with shadow
-        canInteract && "shadow-hard hover:shadow-hard-hover",
+        !isEnabled && "opacity-70",
+        isEnabled && "shadow-hard hover:shadow-hard-hover",
         className
       )}
     >
-      {/* Header - using div with role="button" to avoid nested button issues when override button is shown */}
+      {/* Header — always clickable */}
       <div
         role="button"
-        tabIndex={canInteract || !isEnabled ? 0 : -1}
-        onClick={handleHeaderClick}
+        tabIndex={0}
+        onClick={onToggle}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            handleHeaderClick();
+            onToggle();
           }
         }}
         className={cn(
           "flex w-full items-center justify-between p-4",
           "text-left transition-colors duration-150 rounded-t-lg",
-          canInteract && "hover:bg-muted/50 cursor-pointer",
-          !canInteract && !isEnabled && "cursor-default"
+          "hover:bg-muted/50 cursor-pointer",
         )}
         aria-expanded={isOpen}
         aria-controls={`section-${name}-content`}
@@ -110,8 +89,8 @@ export function CollapsibleSection({
           {/* Icon */}
           {icon && (
             <span className={cn(
-              "shrink-0 text-muted-foreground",
-              canInteract && "text-foreground"
+              "shrink-0",
+              isEnabled ? "text-foreground" : "text-muted-foreground"
             )}>
               {icon}
             </span>
@@ -121,7 +100,7 @@ export function CollapsibleSection({
           <div className="min-w-0">
             <h3 className={cn(
               "font-heading font-semibold text-lg break-words",
-              !canInteract && "text-muted-foreground"
+              !isEnabled && "text-muted-foreground"
             )}>
               {title}
             </h3>
@@ -133,35 +112,24 @@ export function CollapsibleSection({
           </div>
         </div>
 
-        {/* Right side: Status indicators and chevron */}
+        {/* Right side: Status indicators, completion, and chevron */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Status info */}
-          {statusInfo && canInteract && (
+          {statusInfo && isEnabled && (
             <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
               {statusInfo}
             </span>
           )}
 
-          {/* Lock icon and override button for disabled sections */}
-          {!isEnabled && !isManualOverride && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Lock className="h-4 w-4" />
-                <span className="text-xs hidden sm:inline">{disabledReason}</span>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOverride();
-                }}
-                className="text-xs h-7 px-2 gap-1"
-              >
-                <Unlock className="h-3 w-3" />
-                <span className="hidden sm:inline">Override</span>
-              </Button>
+          {/* Completion indicator */}
+          {isComplete && (
+            <div className="flex items-center gap-1.5 text-[var(--primary)]">
+              <CheckCircle2 className="h-4 w-4" />
+              {!isOpen && summary && (
+                <span className="text-xs text-muted-foreground max-w-[300px] truncate hidden sm:inline">
+                  {summary}
+                </span>
+              )}
             </div>
           )}
 
@@ -169,35 +137,15 @@ export function CollapsibleSection({
           <span className="text-muted-foreground transition-transform duration-200">
             <ChevronDown className={cn(
               "h-5 w-5",
-              isOpen && canInteract && "rotate-180"
+              isOpen && "rotate-180"
             )} />
           </span>
         </div>
       </div>
 
-      {/* Warning banner (shown when manually overridden) */}
-      <AnimatePresence>
-        {isManualOverride && overrideWarning && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="overflow-hidden"
-          >
-            <div className="mx-4 mb-2 flex items-start gap-2 rounded-md border-2 border-yellow-500/50 bg-yellow-50 dark:bg-yellow-900/20 p-3">
-              <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                {overrideWarning}
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Content */}
       <AnimatePresence initial={false}>
-        {isOpen && canInteract && (
+        {isOpen && (
           <motion.div
             id={`section-${name}-content`}
             initial={{ height: 0, opacity: 0, overflow: "hidden" }}
@@ -210,6 +158,13 @@ export function CollapsibleSection({
               overflow: { delay: 0.15 },
             }}
           >
+            {/* Soft prerequisite note when opened without prerequisites */}
+            {!isEnabled && (
+              <div className="mx-4 mb-3 flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded border border-border">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                <span>{disabledReason || "Complete earlier sections first for accurate validation."}</span>
+              </div>
+            )}
             <div className="px-4 pb-4 pt-1">
               {children}
             </div>
