@@ -58,6 +58,7 @@ From Phase 29 (Advanced Automation):
 | 010 | Deadline Notification System Fixes | 2026-02-14 | 193b679..9799e49 | [010-deadline-notification-system-fixes](./features/010-deadline-notification-system-fixes/) |
 | 016 | PR Review Round 3 — Fix All Issues | 2026-03-07 | b25494f..e3d665d | [016-pr-review-round-3-fix-all](../v2/.planning/features/016-pr-review-round-3-fix-all/) |
 | 017 | PR Review Round 4 — Fix All Remaining | 2026-03-07 | 3079449..16bbadf | [017-pr-review-round-4-fix-all](../v2/.planning/features/017-pr-review-round-4-fix-all/) |
+| 018 | Case Form UX Simplification + Tutorial Revamp | 2026-03-10 | 86832e3..985e79f | [018-case-form-ux-tutorial-revamp](../v2/.planning/features/018-case-form-ux-tutorial-revamp/) |
 
 ### Blockers/Concerns
 
@@ -71,9 +72,9 @@ Assessment: v2.0.0 shipped, ready for next milestone planning.
 
 ## Session Continuity
 
-Last activity: 2026-03-07 - Completed feature 017: PR Review Round 4 — Fix All Remaining Issues
-Last session: 2026-03-07
-Stopped at: Feature 017 complete — error handling, type safety, DRY, design consistency, dead code, tests
+Last activity: 2026-03-10 - Completed feature 018: Case Form UX Simplification + Tutorial Revamp
+Last session: 2026-03-10
+Stopped at: Feature 018 complete — form UX, override removal, progress indicator, help popover, tutorial rewrite
 Resume file: None
 Next action: Deploy to production
 
