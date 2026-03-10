@@ -372,6 +372,8 @@ export function useSectionState(values: Partial<CaseFormData>) {
   // Auto-collapse on completion (transition detection: incomplete → complete)
   // ============================================================================
 
+  // Timers stored in ref so they survive effect re-runs (effect cleanup would cancel them)
+  const collapseTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   useEffect(() => {
     const sections = ['pwd', 'recruitment', 'eta9089', 'i140'] as const;
     const currentState: Record<string, boolean> = {};
@@ -384,19 +386,32 @@ export function useSectionState(values: Partial<CaseFormData>) {
     }
 
     const prev = prevCompletionState.current;
-    const timers: ReturnType<typeof setTimeout>[] = [];
 
     for (const section of sections) {
       // Detect transition: was NOT complete → IS complete, and section is open
-      if (!prev[section] && currentState[section] && expanded[section]) {
-        timers.push(setTimeout(() => setExpanded(section, false), 600));
+      if (!prev[section] && currentState[section] && expanded[section] && !collapseTimers.current[section]) {
+        collapseTimers.current[section] = setTimeout(() => {
+          setExpanded(section, false);
+          delete collapseTimers.current[section];
+        }, 600);
+      }
+      // If section went back to incomplete, cancel any pending timer
+      if (prev[section] && !currentState[section] && collapseTimers.current[section]) {
+        clearTimeout(collapseTimers.current[section]);
+        delete collapseTimers.current[section];
       }
     }
 
     prevCompletionState.current = currentState;
-
-    return () => { for (const t of timers) clearTimeout(t); };
+    // NO cleanup — timers must survive effect re-runs
   }, [sectionStates, expanded, setExpanded]);
+
+  // Cleanup on unmount only
+  useEffect(() => {
+    return () => {
+      for (const t of Object.values(collapseTimers.current)) clearTimeout(t);
+    };
+  }, []);
 
   const eta9089WindowStatus = useMemo(() => getETA9089WindowStatus(values), [values]);
 
