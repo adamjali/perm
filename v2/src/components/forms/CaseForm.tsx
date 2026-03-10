@@ -85,7 +85,9 @@ import { getAllDateConstraints } from "@/lib/forms/date-constraints";
 import { initializeFormData, mapFieldToInputName } from "./case-form.helpers";
 import { JobDescriptionField } from "@/components/job-description";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
+import { cn } from "@/lib/utils";
 import { handleOperationError } from "@/lib/errors";
+import { FormHelpPopover } from "./FormHelpPopover";
 
 // Re-export helpers for consumers
 export { DEFAULT_FORM_DATA, initializeFormData, errorsToFieldMap } from "./case-form.helpers";
@@ -571,6 +573,30 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
         {warningCount > 0 && !showErrorSummary && (
           <WarningSummary warnings={warnings} warningCount={warningCount} />
         )}
+
+        {/* Progress + Instruction */}
+        <div className="space-y-2 animate-fade-in">
+          <div className="flex items-center gap-3 text-sm font-mono">
+            <span className="text-muted-foreground">
+              {(['pwd', 'recruitment', 'eta9089', 'i140'] as const).filter((s) => sectionStates[s].isComplete).length} of 4 sections complete
+            </span>
+            <div className="flex gap-1">
+              {(['pwd', 'recruitment', 'eta9089', 'i140'] as const).map((s) => (
+                <div
+                  key={s}
+                  className={cn(
+                    "h-2 w-8 border border-border rounded-sm transition-colors",
+                    sectionStates[s].isComplete ? "bg-[var(--primary)]" : "bg-muted"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Track your PERM case dates below. Fill in what you have — save anytime and come back later.
+            <FormHelpPopover />
+          </p>
+        </div>
 
         {/* Basic Info Section - uses context, no props needed */}
         <div className="animate-slide-up" style={{ animationDelay: "50ms" }}>
