@@ -13,7 +13,7 @@
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { RefreshCcw, Home } from "lucide-react";
-import { isAuthError, isStaleDeploymentError } from "./auth-error";
+import { isAuthError, isStaleDeploymentError, isLikelySessionTimeout } from "./auth-error";
 import { ErrorDisplay } from "./ErrorDisplay";
 
 export interface RouteErrorProps {
@@ -29,7 +29,7 @@ export function RouteError({
   title = "Something went wrong",
   homeHref = "/dashboard",
 }: RouteErrorProps) {
-  const isExpiredSession = isAuthError(error.message);
+  const isExpiredSession = isAuthError(error.message) || isLikelySessionTimeout();
   const isStaleDeployment = isStaleDeploymentError(error);
 
   useEffect(() => {
