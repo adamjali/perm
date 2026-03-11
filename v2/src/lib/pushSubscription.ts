@@ -179,7 +179,7 @@ export async function subscribeToPush(): Promise<string> {
     throw new Error("Push notifications not supported in this browser");
   }
 
-  // Register service worker if not already registered
+  // Register push service worker
   const registration = await navigator.serviceWorker.register("/sw-push.js");
   await navigator.serviceWorker.ready;
 

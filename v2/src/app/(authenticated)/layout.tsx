@@ -21,7 +21,6 @@ import Footer from "@/components/layout/Footer";
 import SignOutOverlay from "@/components/layout/SignOutOverlay";
 import InactivityTimeoutProvider from "@/components/layout/InactivityTimeoutProvider";
 import { ChatWidgetConnected } from "@/components/chat/ChatWidgetConnected";
-import { ServiceWorkerRegistration } from "@/components/pwa";
 import { PendingTermsHandler } from "@/components/auth/PendingTermsHandler";
 import { LoginTracker } from "@/components/auth/LoginTracker";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
@@ -46,8 +45,6 @@ export default function AuthenticatedLayout({
       {/* Set Sentry user context for error tracking */}
       <SentryUserContext />
 
-      {/* Register service worker for PWA functionality */}
-      <ServiceWorkerRegistration />
 
       {/* Handle pending terms acceptance from Google OAuth redirect */}
       <PendingTermsHandler />
