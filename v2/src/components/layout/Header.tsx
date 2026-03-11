@@ -163,7 +163,7 @@ export default function Header(): React.ReactElement {
     : AUTHENTICATED_NAV_LINKS;
 
   return (
-    <header className="sticky top-0 z-50 border-b-3 border-black bg-black dark:border-white dark:bg-black overflow-x-hidden">
+    <header className="sticky top-0 z-50 border-b-3 border-black bg-black dark:border-white dark:bg-black">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-8">
         {/* Logo */}
         <Link
