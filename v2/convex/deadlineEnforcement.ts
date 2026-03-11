@@ -199,6 +199,17 @@ export const checkAndEnforceDeadlines = mutation({
           await recordError(ctx, "mutation", "deadlineEnforcement.checkAndEnforce.emailSchedule", emailError, { userId, resourceId: caseDoc._id });
         }
 
+        // Schedule push notification (critical — always send if push enabled)
+        if (profile.pushNotificationsEnabled) {
+          await ctx.scheduler.runAfter(0, internal.pushNotifications.sendPushNotification, {
+            userId,
+            title,
+            body: message,
+            url: `/cases/${caseDoc._id}`,
+            tag: `auto-closure-${caseDoc._id}`,
+          });
+        }
+
         closedCases.push({
           caseId: caseDoc._id,
           employerName: caseDoc.employerName,
