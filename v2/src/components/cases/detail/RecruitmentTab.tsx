@@ -2,9 +2,9 @@
 
 import { motion } from "motion/react";
 import { format, parseISO, differenceInDays, addDays } from "date-fns";
-import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock } from "lucide-react";
+import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock, Info } from "lucide-react";
 import { getMethodLabel } from "@/lib/recruitment";
-import { isBusinessDay, getFederalHolidays, getFirstRecruitmentDate, getLastRecruitmentDate, FILING_WINDOW_WAIT_DAYS } from "@/lib/perm";
+import { isBusinessDay, getFederalHolidays, getFirstRecruitmentDate, getLastRecruitmentDate, isBasicRecruitmentComplete, isProfessionalRecruitmentComplete, FILING_WINDOW_WAIT_DAYS } from "@/lib/perm";
 import type { CaseDetailData } from "./case-detail-types";
 import { itemVariants, tabContainerVariants, fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
 import { WindowCard } from "./WindowCard";
@@ -123,6 +123,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
   // Use canonical recruitment date functions from @/lib/perm
   const recruitStartDate = getFirstRecruitmentDate(caseData);
   const recruitEndDate = getLastRecruitmentDate(caseData, caseData.isProfessionalOccupation ?? false);
+  const recruitmentComplete = isBasicRecruitmentComplete(caseData) && (!caseData.isProfessionalOccupation || isProfessionalRecruitmentComplete(caseData));
 
   return (
     <motion.div
@@ -353,7 +354,19 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               <div className="fc-val">{caseData.recruitmentApplicantsCount || "\u2014"}</div>
             </div>
             <div className="field-cell">
-              <div className="fc-label">Recruitment Period</div>
+              <div className="fc-label flex items-center gap-1">
+                Recruitment Period{!recruitmentComplete && recruitStartDate && " (Projected)"}
+                {!recruitmentComplete && recruitStartDate && (
+                  <span title="Based on current dates. Complete all recruitment activities for final dates." className="shrink-0 cursor-help">
+                    <Info className="h-3 w-3 text-amber-500" />
+                  </span>
+                )}
+                {recruitmentComplete && (
+                  <span title="Recruitment complete — dates are final." className="shrink-0 cursor-help">
+                    <Info className="h-3 w-3 text-emerald-500" />
+                  </span>
+                )}
+              </div>
               <div className="fc-val mono">
                 {recruitStartDate && recruitEndDate
                   ? `${fmtISOShort(recruitStartDate)} \u2013 ${fmtISOShort(recruitEndDate)}`
@@ -361,7 +374,19 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               </div>
             </div>
             <div className="field-cell">
-              <div className="fc-label">Quiet Period Ends</div>
+              <div className="fc-label flex items-center gap-1">
+                Quiet Period Ends{!recruitmentComplete && recruitEndDate && " (Projected)"}
+                {!recruitmentComplete && recruitEndDate && (
+                  <span title="Based on current dates. Complete all recruitment activities for final dates." className="shrink-0 cursor-help">
+                    <Info className="h-3 w-3 text-amber-500" />
+                  </span>
+                )}
+                {recruitmentComplete && recruitEndDate && (
+                  <span title="Recruitment complete — dates are final." className="shrink-0 cursor-help">
+                    <Info className="h-3 w-3 text-emerald-500" />
+                  </span>
+                )}
+              </div>
               <div className="fc-val mono">
                 {recruitEndDate
                   ? (() => { try { return fmtISODate(format(addDays(parseISO(recruitEndDate), FILING_WINDOW_WAIT_DAYS), "yyyy-MM-dd")); } catch { return "\u2014"; } })()
