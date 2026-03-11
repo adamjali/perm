@@ -88,6 +88,67 @@ const serwist = new Serwist({
 
 serwist.addEventListeners();
 
+// ---------------------------------------------------------------------------
+// Push Notification Handlers
+// Merged here so a single SW handles both caching and push (one SW per scope).
+// Previously in public/sw-push.js (separate SW), which caused scope conflicts.
+// ---------------------------------------------------------------------------
+
+self.addEventListener("push", (event: PushEvent) => {
+  if (!event.data) return;
+
+  let data: { title: string; body: string; tag?: string; url?: string };
+  try {
+    data = event.data.json();
+  } catch (error) {
+    console.error("[SW] Failed to parse push data:", error);
+    return;
+  }
+
+  // actions + vibrate are valid SW notification options but missing from some TS typings
+  const options = {
+    body: data.body,
+    icon: "/icon-192.png",
+    badge: "/badge-72.png",
+    tag: data.tag || "perm-tracker",
+    data: { url: data.url || "/dashboard" },
+    vibrate: [100, 50, 100],
+    actions: [
+      { action: "view", title: "View Case" },
+      { action: "dismiss", title: "Dismiss" },
+    ],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+self.addEventListener("notificationclick", (event: NotificationEvent) => {
+  event.notification.close();
+
+  if (event.action === "dismiss") return;
+
+  const url: string = event.notification.data?.url || "/dashboard";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window" }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(url) && "focus" in client) {
+          return (client as WindowClient).focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(url);
+      }
+    })
+  );
+});
+
+self.addEventListener("notificationclose", (event: NotificationEvent) => {
+  console.log("[SW] Notification closed:", event.notification.tag);
+});
+
 // Clean up stale caches from previous SW versions.
 // Old SW cached cross-origin images (Gravatar, ImageKit, ui-avatars) which
 // caused CSP violations. Delete any cached entries for non-same-origin URLs.

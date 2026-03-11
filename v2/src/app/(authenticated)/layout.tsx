@@ -29,6 +29,7 @@ import { OnboardingTourWrapper } from "@/components/onboarding/OnboardingTourWra
 import { PageTransition } from "@/components/ui/page-transition";
 import { SentryUserContext } from "@/components/layout/SentryUserContext";
 import { SentryClientInit } from "@/components/layout/SentryClientInit";
+import { ServiceWorkerRegistration } from "@/components/pwa";
 import { ConvexProviders } from "@/app/providers";
 
 export default function AuthenticatedLayout({
@@ -45,6 +46,8 @@ export default function AuthenticatedLayout({
       {/* Set Sentry user context for error tracking */}
       <SentryUserContext />
 
+      {/* Register unified service worker (caching + push) */}
+      <ServiceWorkerRegistration />
 
       {/* Handle pending terms acceptance from Google OAuth redirect */}
       <PendingTermsHandler />

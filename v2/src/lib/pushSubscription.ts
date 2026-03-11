@@ -179,8 +179,10 @@ export async function subscribeToPush(): Promise<string> {
     throw new Error("Push notifications not supported in this browser");
   }
 
-  // Register push service worker
-  const registration = await navigator.serviceWorker.register("/sw-push.js");
+  // Use the main service worker (sw.js) which handles both caching and push.
+  // Previously used a separate sw-push.js, but only one SW can be active per
+  // scope — having two caused push events to be delivered to the wrong SW.
+  const registration = await navigator.serviceWorker.register("/sw.js");
   await navigator.serviceWorker.ready;
 
   // Request permission from user
@@ -269,13 +271,16 @@ export async function unregisterPushServiceWorker(): Promise<boolean> {
 
   try {
     const registrations = await navigator.serviceWorker.getRegistrations();
+    let unregistered = false;
     for (const registration of registrations) {
-      if (registration.active?.scriptURL.includes("sw-push.js")) {
+      const scriptURL = registration.active?.scriptURL || "";
+      // Clean up legacy sw-push.js registrations (replaced by unified sw.js)
+      if (scriptURL.includes("sw-push.js")) {
         await registration.unregister();
-        return true;
+        unregistered = true;
       }
     }
-    return false;
+    return unregistered;
   } catch (error) {
     captureError(error);
     return false;
