@@ -233,7 +233,7 @@ export function SignupPageClient() {
             <span className="font-semibold text-foreground">{email}</span>
           </p>
 
-          <form method="POST" onSubmit={handleVerificationSubmit} className="space-y-5">
+          <form onSubmit={handleVerificationSubmit} className="space-y-5">
             <input type="hidden" name="email" value={email} />
             <input type="hidden" name="flow" value="email-verification" />
 
@@ -282,7 +282,7 @@ export function SignupPageClient() {
         <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">Sign Up</h1>
       </CardHeader>
       <CardContent className="space-y-6">
-        <form method="POST" onSubmit={handleCredentialsSubmit} className="space-y-5">
+        <form onSubmit={handleCredentialsSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-xs uppercase mono font-bold tracking-widest">
               Name <span className="text-muted-foreground font-normal lowercase text-[10px]">(optional)</span>

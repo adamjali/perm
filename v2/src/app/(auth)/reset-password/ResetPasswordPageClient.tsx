@@ -176,7 +176,7 @@ export function ResetPasswordPageClient() {
             choose a new password.
           </p>
 
-          <form method="POST" onSubmit={handleResetSubmit} className="space-y-5">
+          <form onSubmit={handleResetSubmit} className="space-y-5">
             <input type="hidden" name="email" value={email} />
             <input type="hidden" name="flow" value="reset-verification" />
 
@@ -263,7 +263,7 @@ export function ResetPasswordPageClient() {
           password.
         </p>
 
-        <form method="POST" onSubmit={handleEmailSubmit} className="space-y-5">
+        <form onSubmit={handleEmailSubmit} className="space-y-5">
           <input type="hidden" name="flow" value="reset" />
 
           <div className="space-y-2">

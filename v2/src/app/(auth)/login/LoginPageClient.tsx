@@ -209,7 +209,7 @@ export function LoginPageClient() {
             <span className="font-semibold text-foreground">{email}</span>
           </p>
 
-          <form method="POST" onSubmit={handleVerificationSubmit} className="space-y-5">
+          <form onSubmit={handleVerificationSubmit} className="space-y-5">
             <input type="hidden" name="email" value={email} />
             <input type="hidden" name="flow" value="email-verification" />
 
@@ -270,7 +270,7 @@ export function LoginPageClient() {
             Your session expired. Please sign in again.
           </div>
         )}
-        <form method="POST" onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="email" className="text-xs uppercase mono font-bold tracking-widest">
               Email
