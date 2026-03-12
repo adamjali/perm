@@ -214,9 +214,9 @@ describe('useFormCalculations', () => {
   // ============================================================================
 
   describe('Job Order End Calculation', () => {
-    it('suggests job order end (+30 days)', () => {
+    it('suggests job order end (30 inclusive days)', () => {
       const formData = createFormData({
-        jobOrderStartDate: '2024-01-15', // + 30 days = Feb 14
+        jobOrderStartDate: '2024-01-15', // day 1=Jan 15, day 30=Feb 13
       });
 
       const { result } = renderHook(() =>
@@ -229,7 +229,7 @@ describe('useFormCalculations', () => {
 
       expect(setFormData).toHaveBeenCalledWith(
         expect.objectContaining({
-          jobOrderEndDate: '2024-02-14',
+          jobOrderEndDate: '2024-02-13',
         })
       );
     });

@@ -156,7 +156,7 @@ describe('applyCascade', () => {
   });
 
   describe('V-CASCADE-05: Job Order start → end', () => {
-    it('should calculate Job Order end when start is set (+30 calendar days)', () => {
+    it('should calculate Job Order end when start is set (30 inclusive days)', () => {
       const currentState = createTestCase();
       const result = applyCascade(currentState, {
         field: 'job_order_start_date',
@@ -164,13 +164,13 @@ describe('applyCascade', () => {
       });
 
       expect(result.job_order_start_date).toBe('2024-01-15');
-      expect(result.job_order_end_date).toBe('2024-02-14'); // +30 calendar days
+      expect(result.job_order_end_date).toBe('2024-02-13'); // day 1=Jan 15, day 30=Feb 13
     });
 
     it('should extend Job Order end when start moves forward', () => {
       const currentState = createTestCase({
         job_order_start_date: '2024-01-15',
-        job_order_end_date: '2024-02-14',
+        job_order_end_date: '2024-02-13',
       });
 
       const result = applyCascade(currentState, {
@@ -179,13 +179,13 @@ describe('applyCascade', () => {
       });
 
       expect(result.job_order_start_date).toBe('2024-01-20');
-      expect(result.job_order_end_date).toBe('2024-02-19'); // New end (extended)
+      expect(result.job_order_end_date).toBe('2024-02-18'); // day 1=Jan 20, day 30=Feb 18
     });
 
     it('should recalculate Job Order end when start moves backward', () => {
       const currentState = createTestCase({
         job_order_start_date: '2024-01-20',
-        job_order_end_date: '2024-02-19',
+        job_order_end_date: '2024-02-18',
       });
 
       const result = applyCascade(currentState, {
@@ -194,13 +194,13 @@ describe('applyCascade', () => {
       });
 
       expect(result.job_order_start_date).toBe('2024-01-15');
-      expect(result.job_order_end_date).toBe('2024-02-14'); // Recalculated: Jan 15 + 30 days
+      expect(result.job_order_end_date).toBe('2024-02-13'); // day 1=Jan 15, day 30=Feb 13
     });
 
     it('should clear Job Order end when start is cleared', () => {
       const currentState = createTestCase({
         job_order_start_date: '2024-01-15',
-        job_order_end_date: '2024-02-14',
+        job_order_end_date: '2024-02-13',
       });
 
       const result = applyCascade(currentState, {
@@ -310,7 +310,7 @@ describe('applyCascade', () => {
         { field: 'sunday_ad_first_date', value: '2024-02-11' },
         { field: 'sunday_ad_second_date', value: '2024-02-18' },
         { field: 'notice_of_filing_end_date', value: '2024-01-29' }, // Derived field
-        { field: 'job_order_end_date', value: '2024-02-14' }, // Derived field
+        { field: 'job_order_end_date', value: '2024-02-13' }, // Derived field
         { field: 'is_professional_occupation', value: true },
         { field: 'eta9089_filing_date', value: '2024-07-15' },
         { field: 'eta9089_expiration_date', value: '2024-09-11' }, // Derived field
@@ -382,7 +382,7 @@ describe('applyCascadeMultiple', () => {
     expect(result.notice_of_filing_start_date).toBe('2024-01-15');
     expect(result.notice_of_filing_end_date).toBe('2024-01-29');
     expect(result.job_order_start_date).toBe('2024-01-15');
-    expect(result.job_order_end_date).toBe('2024-02-14');
+    expect(result.job_order_end_date).toBe('2024-02-13');
   });
 
   it('should handle empty changes array', () => {
@@ -430,6 +430,6 @@ describe('applyCascadeMultiple', () => {
     expect(result.notice_of_filing_start_date).toBe('2024-01-15');
     expect(result.notice_of_filing_end_date).toBe('2024-01-29');
     expect(result.job_order_start_date).toBe('2024-01-20');
-    expect(result.job_order_end_date).toBe('2024-02-19');
+    expect(result.job_order_end_date).toBe('2024-02-18');
   });
 });

@@ -358,15 +358,15 @@ describe('useDateFieldValidation', () => {
 
       let validation;
       act(() => {
-        // 15 days - invalid (min is start + 30 days = Jan 31)
+        // 16 inclusive days - invalid (min is start + 29 calendar days = Jan 30)
         validation = result.current.validateField('jobOrderEndDate', '2025-01-16');
       });
 
-      // Min constraint is enforced first (start + 30 days)
+      // Min constraint is enforced first (start + 29 calendar days for 30 inclusive days)
       expect(validation?.error).toContain('Date must be on or after');
     });
 
-    it('rejects job order end date exactly 29 days after start (min constraint)', () => {
+    it('rejects job order end date exactly 29 inclusive days after start (min constraint)', () => {
       const formData = createFormData({
         jobOrderStartDate: '2025-01-01',
       });
@@ -374,11 +374,11 @@ describe('useDateFieldValidation', () => {
 
       let validation;
       act(() => {
-        // 29 days - still invalid (min is start + 30 days = Jan 31)
-        validation = result.current.validateField('jobOrderEndDate', '2025-01-30');
+        // Jan 1 (day 1) to Jan 29 (day 29) = 29 inclusive days, below 30-day minimum
+        validation = result.current.validateField('jobOrderEndDate', '2025-01-29');
       });
 
-      // Min constraint is enforced (start + 30 days)
+      // Min constraint is enforced (start + 29 calendar days = Jan 30 minimum)
       expect(validation?.error).toContain('Date must be on or after');
     });
 
@@ -1178,7 +1178,7 @@ describe('useDateFieldValidation', () => {
       const hint = result.current.getHint('jobOrderEndDate');
 
       expect(hint).toBeDefined();
-      expect(hint?.toLowerCase()).toContain('30 days');
+      expect(hint?.toLowerCase()).toContain('30 calendar days');
     });
   });
 
