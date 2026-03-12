@@ -107,12 +107,11 @@ export function LoginPageClient() {
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
-      } else if (/server error/i.test(message)) {
-        toast.error("Something went wrong. Please try again or contact support.");
       } else {
-        // Auth errors (InvalidAccountId, InvalidSecret) surface as vague messages.
-        // Show unified message + Google suggestion without leaking account existence.
-        if (!/invalid/i.test(message)) {
+        // Convex Auth wraps InvalidSecret/InvalidAccountId as "[Request ID: xxx] Server Error"
+        // so we can't distinguish auth errors from real server errors by message alone.
+        // On the login form, default to "invalid credentials" — better UX for the common case.
+        if (!/invalid/i.test(message) && !/server error/i.test(message)) {
           console.warn("[Login] Unhandled error type:", message);
         }
         toast.error(

@@ -62,6 +62,13 @@ export function SentryClientInit() {
           // Network/deploy: stale chunk hashes, timeouts
           "ChunkLoadError",
           /Loading chunk.*failed/,
+          // SW registration abort during page navigation (Serwist fire-and-forget)
+          "Rejected",
+          /Failed to register a ServiceWorker/,
+          // React hydration mismatch from browser extensions injecting DOM
+          /Minified React error #418/,
+          /Minified React error #423/,
+          /Minified React error #425/,
         ],
         tracesSampler: (samplingContext) => {
           if (samplingContext.name?.includes("/api/health")) return 0;

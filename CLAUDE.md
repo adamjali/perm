@@ -51,53 +51,13 @@ Deep-dive documentation in `.planning/codebase/` (3,856 lines, last updated 2026
 | [TESTING.md](.planning/codebase/TESTING.md) | 800 | All 151 test files listed, Vitest config (3 projects), test utilities inventory, mocking patterns, coverage setup, flaky tests, factory patterns | Writing tests, debugging test failures, understanding test infrastructure |
 | [CONCERNS.md](.planning/codebase/CONCERNS.md) | 423 | Risk matrix, tech debt (SWC bug, disabled React Compiler), dead code audit, security concerns, performance bottlenecks, dependency vulnerabilities, prioritized recommendations | Before refactoring, sprint planning, addressing tech debt |
 
-### How To Use
-
-```bash
-# Read a specific document
-cat .planning/codebase/ARCHITECTURE.md
-
-# Search across all codebase docs
-grep -r "FallbackModel" .planning/codebase/
-
-# Refresh the map after major changes
-/gsd:map-codebase
-```
-
 ---
 
 ## GSD Workflow
 
-GSD (Get Shit Done) is the project management system used for all structured development. It's a meta-prompting framework that spawns fresh subagents for research, planning, and execution — solving context rot across long-running projects.
-
-**Install:** Fork at `~/gsd-adam` (upstream: `gsd-build/get-shit-done`, 29+ commits ahead). Install with `npx ~/gsd-adam`.
-
-### Project History
-
-| Milestone | Phases | Plans | Status |
-|-----------|--------|-------|--------|
-| v1.0 Core MVP | 10 | 21 | Shipped |
-| v2.0 Complete Migration | 22 | 95 | Shipped 2026-01-15 |
-| Post-v2.0 features | Per-feature | Per-feature | Ongoing (feature 010+) |
-
-### Key Commands
-
-| Command | When to Use |
-|---------|-------------|
-| `/gsd:feature` | New feature with full GSD guarantees (explore, architect, atomic commits) |
-| `/gsd:quick` | Small task with GSD guarantees but skip optional agents |
-| `/gsd:map-codebase` | Refresh `.planning/codebase/` docs after major changes |
-| `/gsd:progress` | Check project state, show context, route to next action |
-| `/gsd:resume-work` | Resume from previous session with full context restoration |
-| `/gsd:new-milestone` | Start a new milestone cycle |
-| `/gsd:debug` | Systematic debugging with persistent state |
-| `/gsd:help` | Full command reference |
-
-### Current Config
-
-Mode: `interactive` | Profile: `quality` | Gates: research, plan_check, verifier, nyquist_validation ON | context_monitor OFF | auto_advance OFF | Branching: none
-
-> **Full reference:** `/gsd:help` | **Deep dive:** `~/.claude/explanations/20260223_gsd_deep_dive/`
+Uses GSD (`~/gsd-adam`). Config: quality profile, all gates ON, auto_advance OFF, branching none.
+v1.0 (10 phases) + v2.0 (22 phases) shipped. Post-v2 features ongoing.
+Key: `/gsd:feature`, `/gsd:quick`, `/gsd:map-codebase`, `/gsd:help`
 
 ---
 

@@ -1,13 +1,10 @@
 /**
- * Service Worker Registration Component
+ * Service Worker Lifecycle Component
  *
- * Registers the unified service worker (sw.js) for PWA functionality.
- * Handles caching of static assets (images, fonts) AND push notifications.
+ * SW registration is handled by Serwist's auto-injected sw-entry.js
+ * (via @serwist/next webpack plugin on every page load).
  *
- * Previously push was handled by a separate sw-push.js, but only one SW
- * can be active per scope — the unified approach avoids scope conflicts.
- *
- * Also performs:
+ * This component handles:
  * - One-time migration from legacy sw-push.js
  * - Push subscription repair if browser subscription is missing but user has push enabled
  *
@@ -20,7 +17,6 @@
 import { useEffect, useRef } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { captureError } from "@/lib/sentry";
 import { urlBase64ToUint8Array } from "@/lib/pushSubscription";
 
 export function ServiceWorkerRegistration(): null {
@@ -34,30 +30,8 @@ export function ServiceWorkerRegistration(): null {
       return;
     }
 
-    // Register unified service worker (caching + push)
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((registration) => {
-        console.log("[SW] Unified service worker registered:", registration.scope);
-
-        registration.addEventListener("updatefound", () => {
-          const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.addEventListener("statechange", () => {
-              if (
-                newWorker.state === "installed" &&
-                navigator.serviceWorker.controller
-              ) {
-                console.log("[SW] New version available");
-              }
-            });
-          }
-        });
-      })
-      .catch((error) => {
-        console.error("[SW] Registration failed:", error);
-        captureError(error);
-      });
+    // SW registration is handled by Serwist's auto-injected sw-entry.js
+    // (via @serwist/next webpack plugin). No manual register() needed.
 
     // Migrate legacy sw-push.js -> unified sw.js (one-time)
     if (!migrationAttempted.current) {

@@ -179,11 +179,10 @@ export async function subscribeToPush(): Promise<string> {
     throw new Error("Push notifications not supported in this browser");
   }
 
-  // Use the main service worker (sw.js) which handles both caching and push.
-  // Previously used a separate sw-push.js, but only one SW can be active per
-  // scope — having two caused push events to be delivered to the wrong SW.
-  const registration = await navigator.serviceWorker.register("/sw.js");
-  await navigator.serviceWorker.ready;
+  // Wait for the active SW (registered by Serwist's auto-injected sw-entry.js).
+  // Previously we called register("/sw.js") here, but that races with Serwist's
+  // own registration and can cause AbortError on navigation.
+  const registration = await navigator.serviceWorker.ready;
 
   // Request permission from user
   const permission = await Notification.requestPermission();
