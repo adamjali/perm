@@ -29,6 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function EditCasePage() {
   return (
+    // Suspense required: EditCasePageClient uses useSearchParams() for deep-link field/section
     <Suspense>
       <EditCasePageClient />
     </Suspense>

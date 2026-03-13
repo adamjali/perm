@@ -67,6 +67,24 @@ export interface ActionConfig {
 // ACTION CONFIGURATION MAP
 // ============================================================================
 
+/** Shared field config for job order actions (Start Recruitment & Post Job Order) */
+const JOB_ORDER_FIELDS: QuickEditFieldConfig[] = [
+  {
+    name: "jobOrderStartDate",
+    label: "Job Order Start",
+    type: "date",
+    triggersCalculation: true,
+    placeholder: "Select start date",
+  },
+  {
+    name: "jobOrderEndDate",
+    label: "Job Order End",
+    type: "date",
+    autoCalculated: true,
+    placeholder: "Auto-calculated (30 calendar days)",
+  },
+];
+
 /**
  * Configuration for each action type returned by calculateNextAction().
  * Keys match the `action` string from NextAction.
@@ -107,43 +125,13 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
 
   "Start Recruitment": {
     type: "editable",
-    fields: [
-      {
-        name: "jobOrderStartDate",
-        label: "Job Order Start",
-        type: "date",
-        triggersCalculation: true,
-        placeholder: "Select start date",
-      },
-      {
-        name: "jobOrderEndDate",
-        label: "Job Order End",
-        type: "date",
-        autoCalculated: true,
-        placeholder: "Auto-calculated (+30 days)",
-      },
-    ],
+    fields: JOB_ORDER_FIELDS,
   },
 
   // ========== Recruitment Stage ==========
   "Post Job Order": {
     type: "editable",
-    fields: [
-      {
-        name: "jobOrderStartDate",
-        label: "Job Order Start",
-        type: "date",
-        triggersCalculation: true,
-        placeholder: "Select start date",
-      },
-      {
-        name: "jobOrderEndDate",
-        label: "Job Order End",
-        type: "date",
-        autoCalculated: true,
-        placeholder: "Auto-calculated (+30 days)",
-      },
-    ],
+    fields: JOB_ORDER_FIELDS,
   },
 
   "Post Notice of Filing": {

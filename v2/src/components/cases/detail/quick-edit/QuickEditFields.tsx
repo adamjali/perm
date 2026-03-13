@@ -89,7 +89,7 @@ function convertToCaseFormData(caseData: NextUpCaseData): CaseFormData {
   // SWC drops var declarations for overflow temp variables when a function has 20+
   // nullish coalescing (??) / optional chaining (?.) operations. Using || and
   // explicit ternaries avoids generating temp vars entirely.
-  // See: https://github.com/swc-project/swc/issues/760
+  // See swc-minifier-bug.md for details.
   const rfiEntries = caseData.rfiEntries
     ? caseData.rfiEntries.map(e => ({
         id: crypto.randomUUID(),
@@ -129,7 +129,6 @@ function convertToCaseFormData(caseData: NextUpCaseData): CaseFormData {
     positionTitle: "",
     caseStatus: caseData.caseStatus,
     progressStatus: caseData.progressStatus,
-    // Use || undefined instead of ?? undefined to avoid SWC temp vars
     pwdFilingDate: caseData.pwdFilingDate || undefined,
     pwdDeterminationDate: caseData.pwdDeterminationDate || undefined,
     pwdExpirationDate: caseData.pwdExpirationDate || undefined,
@@ -241,6 +240,9 @@ export function QuickEditFields({
     convertToCaseFormData(caseData)
   );
 
+  // Memoize original snapshot for change detection and submit diff
+  const originalFormData = useMemo(() => convertToCaseFormData(caseData), [caseData]);
+
   // Use the same hook as CaseForm for auto-calculations
   const {
     triggerCalculation,
@@ -277,13 +279,12 @@ export function QuickEditFields({
   // Check if any values have changed from original
   const hasChanges = useMemo(() => {
     if (!config?.fields) return false;
-    const originalFormData = convertToCaseFormData(caseData);
     return config.fields.some(f => {
       const original = originalFormData[f.name as keyof CaseFormData];
       const current = formData[f.name as keyof CaseFormData];
       return current !== original;
     });
-  }, [config, formData, caseData]);
+  }, [config, formData, originalFormData]);
 
   /**
    * Validate a single date value. Returns error message or null.
@@ -299,8 +300,9 @@ export function QuickEditFields({
 
   /**
    * Handle field value change.
-   * Updates form data immediately (for responsive UI) but only triggers
-   * calculations for valid, reasonable dates — avoids crashes on partial
+   * Updates form data immediately (for responsive UI). Triggers calculations
+   * for valid dates AND for clears (to cascade-clear dependent fields).
+   * Skips calculations only for invalid input — avoids crashes on partial
    * year typing like "0002".
    */
   const handleFieldChange = useCallback((fieldName: string, value: string) => {
@@ -361,7 +363,6 @@ export function QuickEditFields({
     try {
       // Build update payload — include changed values AND cleared values
       const updateData: Record<string, unknown> = {};
-      const originalFormData = convertToCaseFormData(caseData);
 
       for (const field of config.fields) {
         const value = formData[field.name as keyof CaseFormData];

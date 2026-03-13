@@ -132,7 +132,10 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
                 } else {
                   dateStr = format(parseISO(step.date), "MMM d, yyyy");
                 }
-              } catch {
+              } catch (e) {
+                if (process.env.NODE_ENV === "development") {
+                  console.warn(`[VerticalTimeline] Failed to parse date for "${step.field}":`, step.date, e);
+                }
                 dateStr = "Pending";
               }
             }

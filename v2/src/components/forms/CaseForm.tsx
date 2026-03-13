@@ -125,9 +125,11 @@ export interface CaseFormProps {
   initialData?: CaseFormInitialData;
   onSuccess: (formDataOrCaseId: CaseFormData | Id<"cases">) => void | Promise<void>;
   onCancel: () => void;
-  initialField?: string;
-  initialSection?: string;
+  initialField?: keyof CaseFormData;
+  initialSection?: SectionName;
 }
+
+const VALID_SECTIONS: ReadonlySet<string> = new Set<SectionName>(["pwd", "recruitment", "professional", "eta9089", "i140", "notes"]);
 
 // ============================================================================
 // COMPONENT
@@ -523,10 +525,12 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
       const section = getFieldSection(fieldName);
 
       const doScroll = () => {
-        const element = document.querySelector(`[name="${inputName}"]`);
+        const element = document.querySelector(`[name="${CSS.escape(inputName)}"]`);
         if (element) {
           element.scrollIntoView({ behavior: "smooth", block: "center" });
           if (element instanceof HTMLElement) setTimeout(() => element.focus(), 300);
+        } else if (process.env.NODE_ENV === "development") {
+          console.warn(`[CaseForm] scrollToField: element [name="${inputName}"] not found`);
         }
       };
 
@@ -547,14 +551,13 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
     if (initialField) {
       hasScrolledRef.current = true;
       setTimeout(() => scrollToField(initialField), 400);
-    } else if (initialSection) {
+    } else if (initialSection && VALID_SECTIONS.has(initialSection)) {
       hasScrolledRef.current = true;
-      const section = initialSection as SectionName;
-      if (sectionStates[section] && !sectionStates[section].isOpen) {
-        openSection(section);
+      if (sectionStates[initialSection] && !sectionStates[initialSection].isOpen) {
+        openSection(initialSection);
       }
       setTimeout(() => {
-        const el = document.querySelector(`[data-section="${initialSection}"]`);
+        const el = document.querySelector(`[data-section="${CSS.escape(initialSection)}"]`);
         el?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 400);
     }

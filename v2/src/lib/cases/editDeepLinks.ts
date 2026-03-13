@@ -3,7 +3,9 @@
  * Single source of truth for click-to-edit navigation.
  */
 
-/** Maps timeline step field names to the edit form field to target */
+import type { SectionName } from "@/hooks/useSectionState";
+
+/** Maps timeline step field names to the edit form field to target (null = calculated, not editable) */
 const TIMELINE_FIELD_MAP: Record<string, string | null> = {
   pwdFilingDate: "pwdFilingDate",
   pwdDeterminationDate: "pwdDeterminationDate",
@@ -29,7 +31,7 @@ export function buildEditUrl(caseId: string, field: string): string {
 
 export function buildEditSectionUrl(
   caseId: string,
-  section: string
+  section: SectionName
 ): string {
   return `/cases/${caseId}/edit?section=${section}`;
 }

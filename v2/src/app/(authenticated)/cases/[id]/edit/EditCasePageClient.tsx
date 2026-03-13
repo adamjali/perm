@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
+import type { SectionName } from "@/hooks/useSectionState";
 import { prepareUpdatePayload } from "@/lib/forms/prepareUpdatePayload";
 import { ConvexError } from "convex/values";
 
@@ -210,8 +211,8 @@ export function EditCasePageClient() {
   const searchParams = useSearchParams();
   const convex = useConvex();
   const caseId = params.id as string;
-  const initialField = searchParams.get("field") || undefined;
-  const initialSection = searchParams.get("section") || undefined;
+  const initialField = (searchParams.get("field") || undefined) as keyof CaseFormData | undefined;
+  const initialSection = (searchParams.get("section") || undefined) as SectionName | undefined;
 
   // ============================================================================
   // STATE

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "motion/react";
 import { format, parseISO, differenceInDays, addDays } from "date-fns";
 import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock, Info } from "lucide-react";
@@ -108,6 +109,23 @@ function NOFMiniCalendar({ start, end }: { start: string; end: string }) {
   );
 }
 
+function StatusTooltip({ color, message }: { color: "amber" | "emerald"; message: string }) {
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="shrink-0 cursor-help">
+            <Info className={`h-3 w-3 ${color === "amber" ? "text-amber-500" : "text-emerald-500"}`} />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[240px] text-xs">
+          {message}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 interface RecruitmentTabProps {
   caseData: CaseDetailData;
 }
@@ -127,6 +145,15 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
   const recruitStartDate = getFirstRecruitmentDate(caseData);
   const recruitEndDate = getLastRecruitmentDate(caseData, caseData.isProfessionalOccupation ?? false);
   const recruitmentComplete = isBasicRecruitmentComplete(caseData) && (!caseData.isProfessionalOccupation || isProfessionalRecruitmentComplete(caseData));
+
+  const quietPeriodEndDate = useMemo(() => {
+    if (!recruitEndDate) return null;
+    try {
+      return format(addDays(parseISO(recruitEndDate), FILING_WINDOW_WAIT_DAYS), "yyyy-MM-dd");
+    } catch {
+      return null;
+    }
+  }, [recruitEndDate]);
 
   return (
     <motion.div
@@ -368,32 +395,10 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               <div className="fc-label flex items-center gap-1">
                 Recruitment Period{!recruitmentComplete && recruitStartDate && " (Projected)"}
                 {!recruitmentComplete && recruitStartDate && (
-                  <TooltipProvider delayDuration={200}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="shrink-0 cursor-help">
-                          <Info className="h-3 w-3 text-amber-500" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[240px] text-xs">
-                        Based on current dates. Complete all recruitment activities for final dates.
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <StatusTooltip color="amber" message="Based on current dates. Complete all recruitment activities for final dates." />
                 )}
                 {recruitmentComplete && (
-                  <TooltipProvider delayDuration={200}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="shrink-0 cursor-help">
-                          <Info className="h-3 w-3 text-emerald-500" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[240px] text-xs">
-                        Recruitment complete — dates are final.
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <StatusTooltip color="emerald" message="Recruitment complete — dates are final." />
                 )}
               </div>
               <div className="fc-val mono">
@@ -406,38 +411,14 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               <div className="fc-label flex items-center gap-1">
                 Quiet Period Ends{!recruitmentComplete && recruitEndDate && " (Projected)"}
                 {!recruitmentComplete && recruitEndDate && (
-                  <TooltipProvider delayDuration={200}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="shrink-0 cursor-help">
-                          <Info className="h-3 w-3 text-amber-500" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[240px] text-xs">
-                        Based on current dates. Complete all recruitment activities for final dates.
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <StatusTooltip color="amber" message="Based on current dates. Complete all recruitment activities for final dates." />
                 )}
                 {recruitmentComplete && recruitEndDate && (
-                  <TooltipProvider delayDuration={200}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="shrink-0 cursor-help">
-                          <Info className="h-3 w-3 text-emerald-500" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[240px] text-xs">
-                        Recruitment complete — dates are final.
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <StatusTooltip color="emerald" message="Recruitment complete — dates are final." />
                 )}
               </div>
               <div className="fc-val mono">
-                {recruitEndDate
-                  ? (() => { try { return fmtISODate(format(addDays(parseISO(recruitEndDate), FILING_WINDOW_WAIT_DAYS), "yyyy-MM-dd")); } catch { return "\u2014"; } })()
-                  : "\u2014"}
+                {quietPeriodEndDate ? fmtISODate(quietPeriodEndDate) : "\u2014"}
               </div>
             </div>
           </div>
