@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText, ChevronDown, Pencil, Copy, Check, Trash2, Loader2, FilePlus, Save } from "lucide-react";
+import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText, ChevronDown, ArrowRight, Pencil, Copy, Check, Trash2, Loader2, FilePlus, Save } from "lucide-react";
 import { ConvexError } from "convex/values";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { calculateNextAction, calculateNextDeadline } from "./next-up-section.utils";
-import { QuickEditFields, isEditableAction } from "./quick-edit";
+import { QuickEditFields, isEditableAction, isComplexAction } from "./quick-edit";
 import { InlineCaseTimeline } from "./InlineCaseTimeline";
 import { QuickStatsPanel } from "./QuickStatsPanel";
 import { VerticalTimeline } from "./VerticalTimeline";
@@ -25,7 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
-import { buildEditUrl } from "@/lib/cases/editDeepLinks";
+import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
 import { itemVariants, tabContainerVariants, fmtISODate, fmtCurrency } from "./case-detail-utils";
 
@@ -58,6 +59,7 @@ export function OverviewTab({
   onToggleTimeline,
   jobDescProps,
 }: OverviewTabProps) {
+  const router = useRouter();
   const [isNextUpExpanded, setIsNextUpExpanded] = useState(false);
 
   // Job description edit state
@@ -215,6 +217,9 @@ export function OverviewTab({
         const nextDeadline = calculateNextDeadline(caseData);
         if (!nextAction) return null;
         const canExpand = isEditableAction(nextAction.action);
+        const navigateUrl = isComplexAction(nextAction.action)
+          ? buildEditSectionUrl(caseId, "recruitment")
+          : null;
         return (
           <motion.div variants={itemVariants}>
             <div className="next-up-caution">
@@ -223,8 +228,12 @@ export function OverviewTab({
 
               <div className="next-up">
                 <div
-                  className={cn("next-up-main", canExpand && "cursor-pointer")}
-                  onClick={canExpand ? () => setIsNextUpExpanded(v => !v) : undefined}
+                  className={cn("next-up-main", (canExpand || navigateUrl) && "cursor-pointer")}
+                  onClick={
+                    navigateUrl ? () => router.push(navigateUrl)
+                    : canExpand ? () => setIsNextUpExpanded(v => !v)
+                    : undefined
+                  }
                 >
                   <div className="next-up-icon">
                     <FileText className="h-5 w-5" />
@@ -242,6 +251,9 @@ export function OverviewTab({
                     >
                       <ChevronDown className="h-5 w-5 text-muted-foreground" />
                     </motion.div>
+                  )}
+                  {navigateUrl && !canExpand && (
+                    <ArrowRight className="h-5 w-5 text-muted-foreground shrink-0" />
                   )}
                 </div>
                 {nextDeadline && (() => {
