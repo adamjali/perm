@@ -60,7 +60,7 @@ export default function AuthenticatedLayout({
         {/* Blocking onboarding wizard modal (shown for new users) */}
         <OnboardingWizard />
 
-      <div className="relative flex min-h-screen flex-col bg-background overflow-x-hidden">
+      <div className="relative flex min-h-screen flex-col bg-background">
         {/* Skip link for keyboard users */}
         <a
           href="#main-content"
