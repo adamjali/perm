@@ -125,13 +125,15 @@ export interface CaseFormProps {
   initialData?: CaseFormInitialData;
   onSuccess: (formDataOrCaseId: CaseFormData | Id<"cases">) => void | Promise<void>;
   onCancel: () => void;
+  initialField?: string;
+  initialSection?: string;
 }
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
-export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: CaseFormProps) {
+export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initialField, initialSection }: CaseFormProps) {
   const router = useRouter();
   const { isSigningOut } = useAuthContext();
   const initialDataRef = useRef<string | null>(null);
@@ -538,6 +540,27 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel }: Cas
     [getFieldSection, sectionStates, openSection]
   );
 
+  // Deep-link scroll: navigate to a specific field/section on mount (from case detail click)
+  const hasScrolledRef = useRef(false);
+  useEffect(() => {
+    if (hasScrolledRef.current) return;
+    if (initialField) {
+      hasScrolledRef.current = true;
+      setTimeout(() => scrollToField(initialField), 400);
+    } else if (initialSection) {
+      hasScrolledRef.current = true;
+      const section = initialSection as SectionName;
+      if (sectionStates[section] && !sectionStates[section].isOpen) {
+        openSection(section);
+      }
+      setTimeout(() => {
+        const el = document.querySelector(`[data-section="${initialSection}"]`);
+        el?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 400);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ============================================================================
   // RENDER
   // ============================================================================
@@ -749,7 +772,7 @@ function SettingsToggle({ id, label, description, checked, onChange }: { id: str
 
 function StickyFooter({ mode, caseId, isDirty, isSubmitting, isDeleting, isCancelNavigating, onCancel, onDeleteClick }: { mode: "add" | "edit"; caseId?: Id<"cases">; isDirty: boolean; isSubmitting: boolean; isDeleting: boolean; isCancelNavigating: boolean; onCancel: () => void; onDeleteClick: () => void }) {
   return (
-    <div className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-border rounded-t-lg p-4 z-10 animate-slide-up shadow-hard" style={{ animationDelay: "350ms" }}>
+    <div className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-border rounded-t-lg p-4 z-10 animate-slide-up shadow-hard-sm sm:shadow-hard" style={{ animationDelay: "350ms" }}>
       {/* Mobile: stacked layout, Desktop: horizontal */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4 max-w-5xl mx-auto">
         <div className="flex items-center gap-3 md:gap-4 order-2 md:order-1">

@@ -3,8 +3,10 @@
 import { motion } from "motion/react";
 import { format, parseISO, differenceInDays, addDays } from "date-fns";
 import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock, Info } from "lucide-react";
+import Link from "next/link";
 import { getMethodLabel } from "@/lib/recruitment";
 import { isBusinessDay, getFederalHolidays, getFirstRecruitmentDate, getLastRecruitmentDate, isBasicRecruitmentComplete, isProfessionalRecruitmentComplete, FILING_WINDOW_WAIT_DAYS } from "@/lib/perm";
+import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import type { CaseDetailData } from "./case-detail-types";
 import { itemVariants, tabContainerVariants, fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
@@ -148,148 +150,155 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
       <motion.div variants={itemVariants}>
         <div className="recruit-grid">
           {/* Job Order */}
-          <div className="detail-card">
-            <div className="detail-card-head ch-rec">
-              <span className="flex items-center gap-1.5">
-                <Flag className="h-3.5 w-3.5" />
-                Job Order (SWA)
-              </span>
-              {hasJobOrder && (
-                <span className="head-badge">
-                  <Check className="h-2.5 w-2.5" /> Done
+          <Link href={buildEditUrl(caseData._id, "jobOrderStartDate")} className="detail-card-link" title="Edit in case form">
+            <div className="detail-card">
+              <div className="detail-card-head ch-rec">
+                <span className="flex items-center gap-1.5">
+                  <Flag className="h-3.5 w-3.5" />
+                  Job Order (SWA)
                 </span>
-              )}
-            </div>
-            <div className="detail-card-body">
-              {hasJobOrder ? (
-                <>
-                  <div className="recruit-range-bar">
-                    <span className="recruit-range-date">{fmtISOShort(caseData.jobOrderStartDate)}</span>
-                    <div className="recruit-range-fill" style={{ background: "var(--stage-recruitment)" }} />
-                    <span className="recruit-range-date">{fmtISODate(caseData.jobOrderEndDate)}</span>
-                  </div>
-                  <div className="recruit-range-meta">
-                    {caseData.jobOrderStartDate && caseData.jobOrderEndDate && (
-                      <span className="recruit-range-duration">
-                        {differenceInDays(parseISO(caseData.jobOrderEndDate), parseISO(caseData.jobOrderStartDate))} days
-                      </span>
-                    )}
-                    {caseData.jobOrderState && (
-                      <span
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "0.58rem",
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          padding: "2px 8px",
-                          border: "2px solid var(--border)",
-                          background: "var(--muted)",
-                        }}
-                      >
-                        {caseData.jobOrderState}
-                      </span>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="detail-empty-state">
-                  <div className="detail-empty-state-title">Not started</div>
-                  <div className="detail-empty-state-desc">Job order dates will appear here.</div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Sunday Ads */}
-          <div className="detail-card">
-            <div className="detail-card-head ch-rec">
-              <span className="flex items-center gap-1.5">
-                <Newspaper className="h-3.5 w-3.5" />
-                Sunday Ads
-              </span>
-              {hasSundayAds && caseData.sundayAdSecondDate && (
-                <span className="head-badge">
-                  <Check className="h-2.5 w-2.5" /> Done
-                </span>
-              )}
-            </div>
-            <div className="detail-card-body">
-              {hasSundayAds ? (
-                <div>
-                  <div className="recruit-ad-entry">
-                    <div className="recruit-ad-num">1</div>
-                    <div className="min-w-0">
-                      <div className="recruit-ad-date">{fmtISODate(caseData.sundayAdFirstDate)}</div>
-                      {caseData.sundayAdNewspaper && (
-                        <div className="recruit-ad-pub" title={caseData.sundayAdNewspaper}>{caseData.sundayAdNewspaper}</div>
+                {hasJobOrder && (
+                  <span className="head-badge">
+                    <Check className="h-2.5 w-2.5" /> Done
+                  </span>
+                )}
+              </div>
+              <div className="detail-card-body">
+                {hasJobOrder ? (
+                  <>
+                    <div className="recruit-range-bar">
+                      <span className="recruit-range-date">{fmtISOShort(caseData.jobOrderStartDate)}</span>
+                      <div className="recruit-range-fill" style={{ background: "var(--stage-recruitment)" }} />
+                      <span className="recruit-range-date">{fmtISODate(caseData.jobOrderEndDate)}</span>
+                    </div>
+                    <div className="recruit-range-meta">
+                      {caseData.jobOrderStartDate && caseData.jobOrderEndDate && (
+                        <span className="recruit-range-duration">
+                          {differenceInDays(parseISO(caseData.jobOrderEndDate), parseISO(caseData.jobOrderStartDate))} days
+                        </span>
+                      )}
+                      {caseData.jobOrderState && (
+                        <span
+                          style={{
+                            fontFamily: "var(--font-mono)",
+                            fontSize: "0.58rem",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            padding: "2px 8px",
+                            border: "2px solid var(--border)",
+                            background: "var(--muted)",
+                          }}
+                        >
+                          {caseData.jobOrderState}
+                        </span>
                       )}
                     </div>
+                  </>
+                ) : (
+                  <div className="detail-empty-state">
+                    <div className="detail-empty-state-title">Not started</div>
+                    <div className="detail-empty-state-desc">Job order dates will appear here.</div>
                   </div>
-                  {caseData.sundayAdSecondDate && (
+                )}
+              </div>
+            </div>
+          </Link>
+
+          {/* Sunday Ads */}
+          <Link href={buildEditUrl(caseData._id, "sundayAdFirstDate")} className="detail-card-link" title="Edit in case form">
+            <div className="detail-card">
+              <div className="detail-card-head ch-rec">
+                <span className="flex items-center gap-1.5">
+                  <Newspaper className="h-3.5 w-3.5" />
+                  Sunday Ads
+                </span>
+                {hasSundayAds && caseData.sundayAdSecondDate && (
+                  <span className="head-badge">
+                    <Check className="h-2.5 w-2.5" /> Done
+                  </span>
+                )}
+              </div>
+              <div className="detail-card-body">
+                {hasSundayAds ? (
+                  <div>
                     <div className="recruit-ad-entry">
-                      <div className="recruit-ad-num">2</div>
+                      <div className="recruit-ad-num">1</div>
                       <div className="min-w-0">
-                        <div className="recruit-ad-date">{fmtISODate(caseData.sundayAdSecondDate)}</div>
+                        <div className="recruit-ad-date">{fmtISODate(caseData.sundayAdFirstDate)}</div>
                         {caseData.sundayAdNewspaper && (
                           <div className="recruit-ad-pub" title={caseData.sundayAdNewspaper}>{caseData.sundayAdNewspaper}</div>
                         )}
                       </div>
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="detail-empty-state">
-                  <div className="detail-empty-state-title">Not started</div>
-                  <div className="detail-empty-state-desc">Sunday ad dates will appear here.</div>
-                </div>
-              )}
+                    {caseData.sundayAdSecondDate && (
+                      <div className="recruit-ad-entry">
+                        <div className="recruit-ad-num">2</div>
+                        <div className="min-w-0">
+                          <div className="recruit-ad-date">{fmtISODate(caseData.sundayAdSecondDate)}</div>
+                          {caseData.sundayAdNewspaper && (
+                            <div className="recruit-ad-pub" title={caseData.sundayAdNewspaper}>{caseData.sundayAdNewspaper}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="detail-empty-state">
+                    <div className="detail-empty-state-title">Not started</div>
+                    <div className="detail-empty-state-desc">Sunday ad dates will appear here.</div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </Link>
 
           {/* Notice of Filing */}
-          <div className="detail-card">
-            <div className="detail-card-head ch-rec">
-              <span className="flex items-center gap-1.5">
-                <FileText className="h-3.5 w-3.5" />
-                Notice of Filing
-              </span>
-              {hasNOF && caseData.noticeOfFilingEndDate && (
-                <span className="head-badge">
-                  <Check className="h-2.5 w-2.5" /> Done
+          <Link href={buildEditUrl(caseData._id, "noticeOfFilingStartDate")} className="detail-card-link" title="Edit in case form">
+            <div className="detail-card">
+              <div className="detail-card-head ch-rec">
+                <span className="flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5" />
+                  Notice of Filing
                 </span>
-              )}
-            </div>
-            <div className="detail-card-body">
-              {hasNOF ? (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div className="recruit-posting-info" style={{ marginBottom: 10, textAlign: "center" }}>
-                    10 consecutive business days &middot; {fmtISOShort(caseData.noticeOfFilingStartDate)} &ndash; {fmtISODate(caseData.noticeOfFilingEndDate)}
+                {hasNOF && caseData.noticeOfFilingEndDate && (
+                  <span className="head-badge">
+                    <Check className="h-2.5 w-2.5" /> Done
+                  </span>
+                )}
+              </div>
+              <div className="detail-card-body">
+                {hasNOF ? (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <div className="recruit-posting-info" style={{ marginBottom: 10, textAlign: "center" }}>
+                      10 consecutive business days &middot; {fmtISOShort(caseData.noticeOfFilingStartDate)} &ndash; {fmtISODate(caseData.noticeOfFilingEndDate)}
+                    </div>
+                    {caseData.noticeOfFilingStartDate && caseData.noticeOfFilingEndDate && (
+                      <NOFMiniCalendar start={caseData.noticeOfFilingStartDate} end={caseData.noticeOfFilingEndDate} />
+                    )}
                   </div>
-                  {caseData.noticeOfFilingStartDate && caseData.noticeOfFilingEndDate && (
-                    <NOFMiniCalendar start={caseData.noticeOfFilingStartDate} end={caseData.noticeOfFilingEndDate} />
-                  )}
-                </div>
-              ) : (
-                <div className="detail-empty-state">
-                  <div className="detail-empty-state-title">Not started</div>
-                  <div className="detail-empty-state-desc">Notice of Filing dates will appear here.</div>
-                </div>
-              )}
+                ) : (
+                  <div className="detail-empty-state">
+                    <div className="detail-empty-state-title">Not started</div>
+                    <div className="detail-empty-state-desc">Notice of Filing dates will appear here.</div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </Link>
 
           {/* Additional Methods */}
-          <div className="detail-card">
-            <div className="detail-card-head ch-rec">
-              <span className="flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
-                Additional Methods
-              </span>
-              <span className="head-badge">{methods.length} / {caseData.isProfessionalOccupation ? Math.max(3, methods.length) : methods.length}</span>
-            </div>
-            <div className="detail-card-body" style={{ padding: 0 }}>
-              {methods.length > 0 ? (
-                methods.map((method, i) => {
+          <Link href={buildEditSectionUrl(caseData._id, "recruitment")} className="detail-card-link" title="Edit in case form">
+            <div className="detail-card">
+              <div className="detail-card-head ch-rec">
+                <span className="flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5" />
+                  Additional Methods
+                </span>
+                <span className="head-badge">{methods.length} / {caseData.isProfessionalOccupation ? Math.max(3, methods.length) : methods.length}</span>
+              </div>
+              <div className="detail-card-body" style={{ padding: 0 }}>
+                {methods.length > 0 ? (
+                  methods.map((method, i) => {
                   const hasDate = !!(method.date || method.startDate || (method.subEntries && method.subEntries.length > 0));
                   const dateDisplay = method.startDate && method.endDate
                     ? `${fmtISOShort(method.startDate)} \u2013 ${fmtISOShort(method.endDate)}`
@@ -337,6 +346,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               )}
             </div>
           </div>
+          </Link>
         </div>
       </motion.div>
 

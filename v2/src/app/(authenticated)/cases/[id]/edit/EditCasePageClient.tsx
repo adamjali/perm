@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { toast } from "@/lib/toast";
@@ -207,8 +207,11 @@ function Breadcrumb({ caseData }: { caseData: Doc<"cases"> }) {
 export function EditCasePageClient() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const convex = useConvex();
   const caseId = params.id as string;
+  const initialField = searchParams.get("field") || undefined;
+  const initialSection = searchParams.get("section") || undefined;
 
   // ============================================================================
   // STATE
@@ -437,6 +440,8 @@ export function EditCasePageClient() {
         initialData={formData}
         onSuccess={handleFormSuccess}
         onCancel={handleCancel}
+        initialField={initialField}
+        initialSection={initialSection}
       />
 
       {/* Duplicate Warning Dialog */}

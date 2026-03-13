@@ -24,6 +24,8 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
+import Link from "next/link";
+import { buildEditUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
 import { itemVariants, tabContainerVariants, fmtISODate, fmtCurrency } from "./case-detail-utils";
 
@@ -303,61 +305,63 @@ export function OverviewTab({
           {/* PWD + Quick Stats side by side (mockup: 1.8fr 1fr) */}
           <div className="grid gap-6 md:grid-cols-[1.8fr_1fr]">
             <motion.div variants={itemVariants}>
-              <div className="detail-card">
-                <div className="detail-card-head ch-pwd">
-                  <span className="flex items-center gap-1.5">
-                    <Flag className="h-3.5 w-3.5" />
-                    Prevailing Wage
-                  </span>
-                  {caseData.pwdDeterminationDate && (
-                    <span className="head-badge">Complete</span>
-                  )}
+              <Link href={buildEditUrl(caseData._id, "pwdFilingDate")} className="detail-card-link" title="Edit in case form">
+                <div className="detail-card">
+                  <div className="detail-card-head ch-pwd">
+                    <span className="flex items-center gap-1.5">
+                      <Flag className="h-3.5 w-3.5" />
+                      Prevailing Wage
+                    </span>
+                    {caseData.pwdDeterminationDate && (
+                      <span className="head-badge">Complete</span>
+                    )}
+                  </div>
+                  <div className="field-grid" style={{ padding: 0 }}>
+                    <div className="field-cell">
+                      <div className="fc-label">PWD Case #</div>
+                      <div className={`fc-val fc-val-text mono ${!caseData.pwdCaseNumber ? "dim" : ""}`} title={caseData.pwdCaseNumber || undefined}>
+                        {caseData.pwdCaseNumber || "\u2014"}
+                      </div>
+                    </div>
+                    <div className="field-cell">
+                      <div className="fc-label">Filed</div>
+                      <div className={`fc-val mono ${!caseData.pwdFilingDate ? "dim" : ""}`}>
+                        {fmtISODate(caseData.pwdFilingDate)}
+                      </div>
+                    </div>
+                    <div className="field-cell">
+                      <div className="fc-label">Determined</div>
+                      <div className={`fc-val mono ${!caseData.pwdDeterminationDate ? "dim" : ""}`}>
+                        {fmtISODate(caseData.pwdDeterminationDate)}
+                      </div>
+                    </div>
+                    <div className="field-cell">
+                      <div className="fc-label">Wage Level</div>
+                      <div className={`fc-val ${!caseData.pwdWageLevel ? "dim" : ""}`}>
+                        {caseData.pwdWageLevel || "\u2014"}
+                      </div>
+                    </div>
+                    <div className="field-cell">
+                      <div className="fc-label">PWD Amount</div>
+                      <div className={`fc-val ${caseData.pwdWageAmount === undefined ? "dim" : ""}`}>
+                        {caseData.pwdWageAmount !== undefined
+                          ? `${fmtCurrency(caseData.pwdWageAmount)} / yr`
+                          : "\u2014"}
+                      </div>
+                    </div>
+                    <div className="field-cell">
+                      <div className="fc-label">Expires</div>
+                      <div className={`fc-val mono ${!caseData.pwdExpirationDate ? "dim" : ""}`}>
+                        {caseData.pwdExpirationDate ? (
+                          <span style={{ color: "var(--stage-eta9089)" }}>
+                            {fmtISODate(caseData.pwdExpirationDate)}
+                          </span>
+                        ) : "\u2014"}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="field-grid" style={{ padding: 0 }}>
-                  <div className="field-cell">
-                    <div className="fc-label">PWD Case #</div>
-                    <div className={`fc-val fc-val-text mono ${!caseData.pwdCaseNumber ? "dim" : ""}`} title={caseData.pwdCaseNumber || undefined}>
-                      {caseData.pwdCaseNumber || "\u2014"}
-                    </div>
-                  </div>
-                  <div className="field-cell">
-                    <div className="fc-label">Filed</div>
-                    <div className={`fc-val mono ${!caseData.pwdFilingDate ? "dim" : ""}`}>
-                      {fmtISODate(caseData.pwdFilingDate)}
-                    </div>
-                  </div>
-                  <div className="field-cell">
-                    <div className="fc-label">Determined</div>
-                    <div className={`fc-val mono ${!caseData.pwdDeterminationDate ? "dim" : ""}`}>
-                      {fmtISODate(caseData.pwdDeterminationDate)}
-                    </div>
-                  </div>
-                  <div className="field-cell">
-                    <div className="fc-label">Wage Level</div>
-                    <div className={`fc-val ${!caseData.pwdWageLevel ? "dim" : ""}`}>
-                      {caseData.pwdWageLevel || "\u2014"}
-                    </div>
-                  </div>
-                  <div className="field-cell">
-                    <div className="fc-label">PWD Amount</div>
-                    <div className={`fc-val ${caseData.pwdWageAmount === undefined ? "dim" : ""}`}>
-                      {caseData.pwdWageAmount !== undefined
-                        ? `${fmtCurrency(caseData.pwdWageAmount)} / yr`
-                        : "\u2014"}
-                    </div>
-                  </div>
-                  <div className="field-cell">
-                    <div className="fc-label">Expires</div>
-                    <div className={`fc-val mono ${!caseData.pwdExpirationDate ? "dim" : ""}`}>
-                      {caseData.pwdExpirationDate ? (
-                        <span style={{ color: "var(--stage-eta9089)" }}>
-                          {fmtISODate(caseData.pwdExpirationDate)}
-                        </span>
-                      ) : "\u2014"}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              </Link>
             </motion.div>
 
             <motion.div variants={itemVariants}>

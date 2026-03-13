@@ -16,6 +16,7 @@
  * Created: 2025-12-25
  */
 
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { EditCasePageClient } from "./EditCasePageClient";
 
@@ -27,5 +28,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function EditCasePage() {
-  return <EditCasePageClient />;
+  return (
+    <Suspense>
+      <EditCasePageClient />
+    </Suspense>
+  );
 }

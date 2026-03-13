@@ -1,8 +1,10 @@
 "use client";
 
 import { motion } from "motion/react";
+import Link from "next/link";
 import { FileText, Clock } from "lucide-react";
 import { isRecruitmentComplete } from "@/lib/perm";
+import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
 import { itemVariants, tabContainerVariants, fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
 import { WindowCard } from "./WindowCard";
@@ -53,6 +55,7 @@ export function ETA9089Tab({
 
       {/* ETA Form 9089 Card */}
       <motion.div variants={itemVariants}>
+        <Link href={buildEditUrl(caseData._id, "eta9089FilingDate")} className="detail-card-link" title="Edit in case form">
         <div className="detail-card">
           <div className="detail-card-head ch-eta">
             <span className="flex items-center gap-1.5">
@@ -111,9 +114,11 @@ export function ETA9089Tab({
             </div>
           )}
         </div>
+        </Link>
       </motion.div>
 
       {/* RFI Section */}
+      <Link href={buildEditSectionUrl(caseData._id, "eta9089")} className="detail-card-link" title="Edit in case form">
       <ResponseEntryGrid
         type="RFI"
         subtitle="DOL Audit"
@@ -121,6 +126,7 @@ export function ETA9089Tab({
         emptyIcon={<FileText className="h-8 w-8" />}
         emptyDescription="Entries will appear here if DOL issues a request during audit."
       />
+      </Link>
     </motion.div>
   );
 }

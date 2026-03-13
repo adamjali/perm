@@ -1,7 +1,9 @@
 "use client";
 
 import { motion } from "motion/react";
+import Link from "next/link";
 import { Shield, Clock } from "lucide-react";
+import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
 import { itemVariants, tabContainerVariants, fmtISODate, computeWindowStatus } from "./case-detail-utils";
 import { WindowCard } from "./WindowCard";
@@ -46,6 +48,7 @@ export function I140Tab({ caseData }: I140TabProps) {
 
       {/* I-140 Petition Card */}
       <motion.div variants={itemVariants}>
+        <Link href={buildEditUrl(caseData._id, "i140FilingDate")} className="detail-card-link" title="Edit in case form">
         <div className="detail-card">
           <div className="detail-card-head ch-i140">
             <span className="flex items-center gap-1.5">
@@ -141,9 +144,11 @@ export function I140Tab({ caseData }: I140TabProps) {
             </div>
           )}
         </div>
+        </Link>
       </motion.div>
 
       {/* RFE Section */}
+      <Link href={buildEditSectionUrl(caseData._id, "i140")} className="detail-card-link" title="Edit in case form">
       <ResponseEntryGrid
         type="RFE"
         subtitle="USCIS"
@@ -151,6 +156,7 @@ export function I140Tab({ caseData }: I140TabProps) {
         emptyIcon={<Shield className="h-8 w-8" />}
         emptyDescription="Entries will appear here if USCIS issues a request during I-140 review."
       />
+      </Link>
     </motion.div>
   );
 }

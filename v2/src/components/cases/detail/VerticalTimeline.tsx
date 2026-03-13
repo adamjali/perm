@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { Check, Clock, Circle } from "lucide-react";
 import { parseISO, format } from "date-fns";
 import { extractMilestones } from "@/lib/timeline/milestones";
 import { isRecruitmentComplete } from "@/lib/perm";
+import { getEditFieldForTimelineStep, buildEditUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
 
 // All key PERM stages to always show
@@ -117,6 +119,7 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
         ) : (
           steps.map((step, i) => {
             const isLast = i === steps.length - 1;
+            const editField = getEditFieldForTimelineStep(step.field);
             let dateStr = "Pending";
             if (step.status !== "pending" && step.date) {
               try {
@@ -134,8 +137,8 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
               }
             }
 
-            return (
-              <div key={`${step.field}-${i}`} className="vtl-step">
+            const stepContent = (
+              <div className="vtl-step">
                 <div className="vtl-icon-col">
                   <div className={`vtl-icon ${step.status}`}>
                     {step.status === "done" ? (
@@ -154,6 +157,16 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
                   </div>
                   <div className="vtl-date">{dateStr}</div>
                 </div>
+              </div>
+            );
+
+            return editField ? (
+              <Link key={`${step.field}-${i}`} href={buildEditUrl(caseData._id, editField)} className="vtl-step-link" title="Edit in case form">
+                {stepContent}
+              </Link>
+            ) : (
+              <div key={`${step.field}-${i}`}>
+                {stepContent}
               </div>
             );
           })

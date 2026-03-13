@@ -59,6 +59,7 @@ export function CollapsibleSection({
 
   return (
     <div
+      data-section={name}
       className={cn(
         "rounded-lg border-2 border-border bg-background",
         !isEnabled && "opacity-70",

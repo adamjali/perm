@@ -17,12 +17,13 @@ export function FormHelpPanel() {
 
   return (
     <>
-      {/* Toggle tab — fixed to right edge, connected to panel when open */}
+      {/* Toggle tab — fixed to right edge, hidden on mobile (panel is 320px on 375px screen) */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed z-40 flex items-center gap-1.5",
+          "hidden md:flex",
+          "fixed z-40 items-center gap-1.5",
           "rounded-l-lg border-2 border-r-0 px-2.5 py-3",
           "text-sm font-mono font-bold",
           "transition-all duration-200",
@@ -48,9 +49,10 @@ export function FormHelpPanel() {
         )}
       </button>
 
-      {/* Side panel — below header */}
+      {/* Side panel — below header, hidden on mobile */}
       <div
         className={cn(
+          "hidden md:block",
           "fixed right-0 top-16 z-30 h-[calc(100vh-4rem)] w-80 sm:w-96",
           "border-l-2 border-border bg-background shadow-hard-lg",
           "transition-transform duration-200 ease-out",
