@@ -369,6 +369,34 @@ await recordError(ctx, "mutation", "cases.update", error, { resourceId: caseId }
 
 ---
 
+## PostHog Analytics
+
+Client-side analytics via `posthog-js`, proxied through `/ingest/*` to avoid ad-blockers.
+
+| File | Purpose |
+|------|---------|
+| `instrumentation-client.ts` | PostHog init (runs on page load, `before_send` filters noise) |
+| `src/lib/analytics.ts` | Safe wrapper: `capture`, `identify`, `reset`, `optOut`, `optIn`, `hasOptedOut` |
+| `src/lib/posthog-server.ts` | Server-side client (`getPostHogClient()` returns `PostHog \| null`) |
+| `src/components/auth/LoginTracker.tsx` | Identifies user on login, handles opt-out for excluded users |
+
+**Always import from `@/lib/analytics`**, never raw `posthog-js`.
+
+### Internal User Opt-Out (Quota Preservation)
+
+Built-in but **currently dormant** (env var not set). To activate:
+
+```bash
+# Comma-separated. @domain for domain match, plain for exact email match.
+npx convex env set POSTHOG_EXCLUDED_EMAILS "user@example.com,@yourdomain.com" --prod
+```
+
+- `convex/users.ts:isPostHogExcluded` — checks current user's email against the env var
+- `LoginTracker` calls `posthog.opt_out_capturing()` for matched users — persists in localStorage, zero quota
+- To disable: `npx convex env remove POSTHOG_EXCLUDED_EMAILS --prod`
+
+---
+
 ## Resend Email
 
 Three ways to interact with Resend — choose based on the task:

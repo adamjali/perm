@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useOnboarding } from "./OnboardingProvider";
@@ -75,6 +76,7 @@ export function OnboardingWizard() {
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogTitle className="sr-only">Onboarding Setup</DialogTitle>
+        <DialogDescription className="sr-only">Setup wizard for new users</DialogDescription>
 
         {/* Skip button — shown on all steps except completion */}
         {!isCompletionStep && (

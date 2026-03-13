@@ -101,19 +101,19 @@ export function LoginPageClient() {
 
       const message = error instanceof Error ? error.message : String(error);
       console.error("[Login Error]", error);
-      captureError(error, { operation: "signIn" });
+
+      // Only report unexpected errors to Sentry — not invalid credentials.
+      // Convex Auth wraps InvalidSecret/InvalidAccountId as "[Request ID: xxx] Server Error"
+      // which is normal login failure, not a real server error.
+      if (isRateLimitError(message) || isNetworkError(message)) {
+        captureError(error, { operation: "signIn" });
+      }
 
       if (isRateLimitError(message)) {
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
       } else {
-        // Convex Auth wraps InvalidSecret/InvalidAccountId as "[Request ID: xxx] Server Error"
-        // so we can't distinguish auth errors from real server errors by message alone.
-        // On the login form, default to "invalid credentials" — better UX for the common case.
-        if (!/invalid/i.test(message) && !/server error/i.test(message)) {
-          console.warn("[Login] Unhandled error type:", message);
-        }
         toast.error(
           "Invalid email or password. If you signed up with Google, use the Google button below."
         );

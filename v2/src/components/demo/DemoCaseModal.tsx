@@ -7,6 +7,7 @@ import { toast } from "@/lib/toast";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -662,6 +663,9 @@ export function DemoCaseModal({
           <DialogTitle className="font-heading">
             {isEditMode ? "Edit Case" : "Add New Case"}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {isEditMode ? "Edit an existing demo case" : "Add a new demo case"}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
