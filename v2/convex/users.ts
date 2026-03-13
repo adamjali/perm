@@ -47,6 +47,31 @@ export const isAdmin = query({
 });
 
 /**
+ * Check if the current user should be excluded from PostHog analytics.
+ * Exclusion list stored in POSTHOG_EXCLUDED_EMAILS env var (comma-separated).
+ * Entries starting with "@" match email domains; others are exact matches.
+ */
+export const isPostHogExcluded = query({
+  args: {},
+  handler: async (ctx): Promise<boolean> => {
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (!userId) return false;
+
+    const excludedCsv = process.env.POSTHOG_EXCLUDED_EMAILS;
+    if (!excludedCsv) return false;
+
+    const user = await ctx.db.get(userId);
+    const email = user?.email?.toLowerCase();
+    if (!email) return false;
+
+    const entries = excludedCsv.split(",").map((e) => e.trim().toLowerCase());
+    return entries.some((entry) =>
+      entry.startsWith("@") ? email.endsWith(entry) : email === entry
+    );
+  },
+});
+
+/**
  * Get the current user's profile
  * Returns null if not authenticated or if profile doesn't exist
  */

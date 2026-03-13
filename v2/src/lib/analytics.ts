@@ -55,4 +55,38 @@ function reset(): void {
   }
 }
 
-export const analytics = { capture, identify, reset };
+/**
+ * Opt out of all PostHog capturing. Persists across sessions via localStorage.
+ * Once called, all capture/identify/etc. calls become silent no-ops in the SDK.
+ */
+function optOut(): void {
+  try {
+    posthog.opt_out_capturing();
+  } catch {
+    // PostHog not initialized — safe to ignore
+  }
+}
+
+/**
+ * Re-enable PostHog capturing (reverses a previous optOut).
+ */
+function optIn(): void {
+  try {
+    posthog.opt_in_capturing();
+  } catch {
+    // PostHog not initialized — safe to ignore
+  }
+}
+
+/**
+ * Check if capturing is currently opted out.
+ */
+function hasOptedOut(): boolean {
+  try {
+    return posthog.has_opted_out_capturing();
+  } catch {
+    return false;
+  }
+}
+
+export const analytics = { capture, identify, reset, optOut, optIn, hasOptedOut };

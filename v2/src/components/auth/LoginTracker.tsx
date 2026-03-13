@@ -12,6 +12,9 @@
  *
  * Also identifies the user in PostHog and fires a `user_logged_in` event
  * (debounced to match the login recording).
+ *
+ * Users listed in POSTHOG_EXCLUDED_EMAILS env var are opted out of all
+ * PostHog capturing to preserve quota.
  */
 
 "use client";
@@ -36,8 +39,27 @@ export function LoginTracker() {
     isAuthenticated ? undefined : "skip"
   );
 
+  // Check if user should be excluded from PostHog
+  const isExcluded = useQuery(
+    api.users.isPostHogExcluded,
+    isAuthenticated ? undefined : "skip"
+  );
+
+  // Handle PostHog opt-out for excluded users
+  useEffect(() => {
+    if (isExcluded === undefined) return; // Still loading
+    if (isExcluded) {
+      analytics.optOut();
+    } else if (analytics.hasOptedOut()) {
+      // User was previously excluded but no longer — re-enable
+      analytics.optIn();
+    }
+  }, [isExcluded]);
+
   useEffect(() => {
     if (!isAuthenticated || !profile || hasFired.current) return;
+    // Skip all analytics for excluded users
+    if (isExcluded) return;
 
     // Always identify (idempotent) so subsequent events are attributed correctly
     analytics.identify(profile._id, { name: profile.fullName });
@@ -58,7 +80,7 @@ export function LoginTracker() {
       localStorage.removeItem(LAST_LOGIN_KEY);
       hasFired.current = false;
     });
-  }, [isAuthenticated, profile, recordMyLogin]);
+  }, [isAuthenticated, profile, recordMyLogin, isExcluded]);
 
   return null;
 }
