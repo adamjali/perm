@@ -115,6 +115,13 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
         triggersCalculation: true,
         placeholder: "Select start date",
       },
+      {
+        name: "jobOrderEndDate",
+        label: "Job Order End",
+        type: "date",
+        autoCalculated: true,
+        placeholder: "Auto-calculated (+30 days)",
+      },
     ],
   },
 

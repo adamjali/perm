@@ -315,10 +315,10 @@ export function QuickEditFields({
       return rest;
     });
 
-    // Only trigger calculations for valid dates — prevents crashes from partial input
-    if (!error && value) {
+    // Trigger calculations for valid dates AND for clears (cascade-clear dependents)
+    if (!error) {
       try {
-        triggerCalculation(fieldName as keyof CaseFormData, value);
+        triggerCalculation(fieldName as keyof CaseFormData, value || undefined);
       } catch (e) {
         handleOperationError(e, {
           userMessage: "Calculation error — use the full form.",
@@ -359,13 +359,16 @@ export function QuickEditFields({
     setSubmitError(null);
 
     try {
-      // Build update payload from formData for configured fields
+      // Build update payload — include changed values AND cleared values
       const updateData: Record<string, unknown> = {};
+      const originalFormData = convertToCaseFormData(caseData);
 
       for (const field of config.fields) {
         const value = formData[field.name as keyof CaseFormData];
-        if (value !== undefined && value !== null && value !== "") {
-          updateData[field.name] = value;
+        const original = originalFormData[field.name as keyof CaseFormData];
+        if (value !== original) {
+          // Send non-empty values as-is, send null for cleared fields
+          updateData[field.name] = (value === "" || value === undefined) ? null : value;
         }
       }
 
