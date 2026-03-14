@@ -1,9 +1,3 @@
-/**
- * Demo Storage Tests
- *
- * Tests for localStorage-based demo case CRUD operations.
- */
-
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   getDemoCases,

@@ -1,14 +1,3 @@
-/**
- * Case Import Tests
- * Comprehensive tests for parseCaseImportFile utility function.
- *
- * Tests multi-format import support:
- * - V2 (current Convex format with wrapper)
- * - V1 (FastAPI snake_case format)
- * - perm-tracker-new (Firebase camelCase format)
- * - Legacy Firebase object format
- */
-
 import { describe, it, expect } from "vitest";
 import { parseCaseImportFile, BENEFICIARY_PLACEHOLDER } from "../caseImport";
 

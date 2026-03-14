@@ -1,8 +1,3 @@
-/**
- * Case List Helpers Tests
- * Test suite for case list helper functions.
- */
-
 import { describe, it, expect } from "vitest";
 import type { CaseStatus, ProgressStatus } from "./dashboardTypes";
 import type { CaseCardData } from "./caseListTypes";

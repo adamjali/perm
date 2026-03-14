@@ -1,10 +1,3 @@
-/**
- * RouteError Component Tests
- *
- * Tests the error boundary UI component used in Next.js App Router error.tsx files.
- * Verifies Sentry integration, button callbacks, and dev/prod message differences.
- */
-
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as Sentry from "@sentry/nextjs";

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateProfessionalMethods } from '../recruitment';
+import { validateProfessionalMethods } from './recruitment';
 
 describe('validateProfessionalMethods (V-PROF rules)', () => {
   const baseInput = {

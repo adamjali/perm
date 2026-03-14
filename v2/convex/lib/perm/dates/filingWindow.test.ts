@@ -1,9 +1,3 @@
-/**
- * Tests for filingWindow.ts
- *
- * Single source of truth for ETA 9089 filing window calculations.
- */
-
 import { describe, it, expect } from "vitest";
 import {
   calculateFilingWindow,
@@ -11,6 +5,7 @@ import {
   formatFilingWindow,
   getFirstRecruitmentDate,
   getLastRecruitmentDate,
+  getMethodLatestDate,
   calculateFilingWindowFromCase,
   getFilingWindowStatusFromCase,
   calculateRecruitmentWindowCloses,
@@ -620,6 +615,132 @@ describe("filing-window", () => {
         pwdExpirationDate: "2024-12-31",
       });
       expect(result).toBeNull();
+    });
+  });
+
+  // ============================================================================
+  // getMethodLatestDate (merged from __tests__/filingWindow.test.ts)
+  // ============================================================================
+
+  describe("getMethodLatestDate", () => {
+    describe("single-date methods", () => {
+      it("returns the date field", () => {
+        expect(getMethodLatestDate({ date: "2024-06-15" })).toBe("2024-06-15");
+      });
+
+      it("returns undefined for empty date", () => {
+        expect(getMethodLatestDate({ date: "" })).toBeUndefined();
+      });
+
+      it("returns undefined for missing date", () => {
+        expect(getMethodLatestDate({})).toBeUndefined();
+      });
+    });
+
+    describe("date-range methods", () => {
+      it("returns endDate when both dates present", () => {
+        expect(getMethodLatestDate({ startDate: "2024-03-01", endDate: "2024-06-15" })).toBe("2024-06-15");
+      });
+
+      it("falls back to startDate when no endDate", () => {
+        expect(getMethodLatestDate({ startDate: "2024-03-01" })).toBe("2024-03-01");
+      });
+
+      it("uses endDate even if date field is later", () => {
+        const result = getMethodLatestDate({ date: "2024-09-01", startDate: "2024-03-01", endDate: "2024-06-15" });
+        expect(result).toBe("2024-09-01");
+      });
+    });
+
+    describe("sub-entries methods", () => {
+      it("returns max of all sub-entry dates", () => {
+        expect(getMethodLatestDate({
+          subEntries: [{ date: "2024-03-01" }, { date: "2024-05-15" }, { date: "2024-04-10" }],
+        })).toBe("2024-05-15");
+      });
+
+      it("ignores sub-entries with empty dates", () => {
+        expect(getMethodLatestDate({
+          subEntries: [{ date: "" }, { date: "2024-04-10" }],
+        })).toBe("2024-04-10");
+      });
+
+      it("returns undefined when all sub-entries have empty dates", () => {
+        expect(getMethodLatestDate({ subEntries: [{ date: "" }, { date: "" }] })).toBeUndefined();
+      });
+
+      it("combines sub-entry dates with single date", () => {
+        expect(getMethodLatestDate({
+          date: "2024-06-01",
+          subEntries: [{ date: "2024-03-01" }, { date: "2024-05-15" }],
+        })).toBe("2024-06-01");
+      });
+    });
+
+    describe("mixed fields", () => {
+      it("returns max across all date sources", () => {
+        expect(getMethodLatestDate({
+          date: "2024-02-01", startDate: "2024-01-15", endDate: "2024-07-20",
+          subEntries: [{ date: "2024-05-01" }],
+        })).toBe("2024-07-20");
+      });
+    });
+  });
+
+  // ============================================================================
+  // getLastRecruitmentDate — special method exclusion (merged from __tests__)
+  // ============================================================================
+
+  describe("getLastRecruitmentDate — special method exclusion", () => {
+    const baseData = {
+      sundayAdSecondDate: "2024-04-07",
+      jobOrderEndDate: "2024-04-15",
+      noticeOfFilingEndDate: "2024-04-01",
+    };
+
+    it("handles tie — any tied method can be excluded", () => {
+      const data = {
+        ...baseData,
+        additionalRecruitmentMethods: [
+          { date: "2024-06-01" }, { date: "2024-06-01" }, { date: "2024-05-01" },
+        ],
+      };
+      expect(getLastRecruitmentDate(data, true)).toBe("2024-06-01");
+    });
+
+    it("skips methods with no dates", () => {
+      const data = {
+        ...baseData,
+        additionalRecruitmentMethods: [{ date: "" }, { date: "2024-06-01" }],
+      };
+      expect(getLastRecruitmentDate(data, true)).toBe("2024-04-15");
+    });
+
+    it("handles date-range method as latest", () => {
+      const data = {
+        ...baseData,
+        additionalRecruitmentMethods: [
+          { date: "2024-05-01" },
+          { startDate: "2024-04-01", endDate: "2024-07-01" },
+        ],
+      };
+      expect(getLastRecruitmentDate(data, true)).toBe("2024-05-01");
+    });
+
+    it("handles sub-entries method as latest", () => {
+      const data = {
+        ...baseData,
+        additionalRecruitmentMethods: [
+          { date: "2024-05-01" },
+          { subEntries: [{ date: "2024-06-01" }, { date: "2024-07-15" }] },
+        ],
+      };
+      expect(getLastRecruitmentDate(data, true)).toBe("2024-05-01");
+    });
+
+    it("0 additional methods — just basic dates", () => {
+      const data = { ...baseData, additionalRecruitmentMethods: [] };
+      expect(getLastRecruitmentDate(data, true)).toBe("2024-04-15");
     });
   });
 

@@ -4,7 +4,7 @@ import {
   isBasicRecruitmentComplete,
   isProfessionalRecruitmentComplete,
   type RecruitmentCheckInput,
-} from '../isRecruitmentComplete';
+} from './isRecruitmentComplete';
 
 const basicComplete: RecruitmentCheckInput = {
   jobOrderStartDate: '2024-01-15',

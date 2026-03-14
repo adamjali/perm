@@ -1,22 +1,3 @@
-/**
- * TimeoutWarningModal Component Tests
- *
- * Tests:
- * - Renders nothing when not visible
- * - Renders modal when visible
- * - Shows countdown timer
- * - Calls onExtend when "Stay Logged In" clicked
- * - Calls onLogout when "Log Out Now" clicked
- * - ESC key calls onExtend
- * - Uses correct z-index
- * - Accessibility (ARIA roles, keyboard support)
- *
- * Phase: 20 (Dashboard + UI Polish)
- * Created: 2025-12-24
- *
- * @vitest-environment jsdom
- */
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";

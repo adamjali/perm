@@ -183,7 +183,6 @@ describe('FormField', () => {
                        container.querySelector('[class*="auto"]');
       expect(indicator).toBeInTheDocument();
     });
-
   });
 
   // ============================================================================

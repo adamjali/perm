@@ -1,22 +1,3 @@
-/**
- * InactivityTimeoutProvider Component Tests
- *
- * Tests:
- * - Renders children
- * - Passes props correctly to hook and modal
- * - Handles sign-out on timeout callback
- * - Handles sign-out on manual logout button
- * - Shows toast on sign-out error
- *
- * Note: Timer behavior is tested in useInactivityTimeout.test.ts
- *       This test focuses on component integration with mocked hook.
- *
- * Phase: 20 (Dashboard + UI Polish)
- * Created: 2025-12-24
- *
- * @vitest-environment jsdom
- */
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, waitFor, act, render } from "@testing-library/react";
 import { ThemeProvider } from "next-themes";

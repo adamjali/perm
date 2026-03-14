@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapToValidatorFormat } from '../fieldMapper';
+import { mapToValidatorFormat } from './fieldMapper';
 
 describe('mapToValidatorFormat', () => {
   it('maps camelCase PWD fields to snake_case', () => {

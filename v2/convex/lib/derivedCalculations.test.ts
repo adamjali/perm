@@ -1,9 +1,3 @@
-/**
- * Tests for Derived Date Calculations
- *
- * Tests the single source of truth for derived date calculations per 20 CFR 656.17.
- */
-
 import { describe, it, expect } from "vitest";
 import {
   calculateRecruitmentStartDate,

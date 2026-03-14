@@ -1,8 +1,3 @@
-/**
- * Case List Types Tests
- * Test type guards, factory functions, and runtime validation for case list types.
- */
-
 import { describe, it, expect } from "vitest";
 import type { Id } from "../_generated/dataModel";
 import {

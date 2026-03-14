@@ -1,9 +1,3 @@
-/**
- * Tests for calendar event mapper utility.
- *
- * TDD tests for converting case data to calendar events.
- */
-
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { caseToCalendarEvents, calculateUrgency } from "./event-mapper";
 import type { CalendarCaseData } from "./types";

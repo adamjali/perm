@@ -1,8 +1,3 @@
-/**
- * ImportModal Component Tests
- * Tests for case import modal with file upload and preview.
- */
-
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";

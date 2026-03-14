@@ -1,11 +1,3 @@
-/**
- * Add Case Page Tests
- *
- * Phase: 22 (Case Forms)
- * Task: 22-04 (Add Case Page)
- * Created: 2025-12-25
- */
-
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useRouter } from "next/navigation";

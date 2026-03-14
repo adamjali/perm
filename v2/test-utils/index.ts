@@ -1,15 +1,4 @@
-/**
- * Test Utilities - Centralized Exports
- *
- * This barrel export provides a single import point for all test utilities.
- *
- * @example
- * ```ts
- * import { renderWithProviders, createTestCase, createMockDashboardSummary } from '@/test-utils';
- * ```
- */
-
-// Render utilities and provider helpers
+// Render utilities
 export {
   AllProviders,
   renderWithProviders,
@@ -18,22 +7,23 @@ export {
   mockUseQuery,
   mockUseMutation,
   waitForAsync,
-  renderLoadingState,
-  suppressConsoleError,
 } from "./render-utils";
 
-// Convex function testing utilities
+// Convex function testing
 export {
   createTestContext,
   createAuthenticatedContext,
-  fixtures as convexFixtures,
+  setupSchedulerTests,
+  finishScheduledFunctions,
+  withScheduler,
+  advanceTime,
   type AuthenticatedContext,
 } from "./convex";
 
-// Convex API mock for component tests
+// Convex API mock
 export { api as mockApi } from "./convex-api-mock";
 
-// UI fixtures for dashboard and component testing
+// UI fixtures
 export {
   type MockUser,
   type NavLink,
@@ -47,7 +37,7 @@ export {
   dashboardScenarios,
 } from "./ui-fixtures";
 
-// Dashboard case fixtures with full test data
+// Dashboard case fixtures
 export {
   formatISO,
   today,
@@ -65,7 +55,7 @@ export {
   fixtures as dashboardFixtures,
 } from "./dashboard-fixtures";
 
-// Deadline panel fixtures
+// Deadline fixtures
 export {
   createMockDeadlineItem,
   createOverdueDeadline,
@@ -79,7 +69,7 @@ export {
   deadlineScenarios,
 } from "./deadline-fixtures";
 
-// Activity feed fixtures
+// Activity fixtures
 export {
   now,
   minutesAgo,
@@ -99,7 +89,7 @@ export {
   upcomingDeadlineScenarios,
 } from "./activity-fixtures";
 
-// Timer utilities for fake timer management
+// Timer utilities
 export {
   useFakeTimers,
   useAutoAdvancingTimers,

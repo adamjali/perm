@@ -12,8 +12,6 @@
  * - RfeAlert: Request for Evidence alerts
  * - AutoClosure: Automatic case closure notifications
  *
- * Phase: 24 (Notifications + Email)
- * Created: 2025-12-31
  */
 
 import { describe, it, expect } from "vitest";

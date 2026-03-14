@@ -9,8 +9,8 @@ import {
   mergeResults,
   composeValidators,
   result,
-} from '../validation';
-import { createValidationResult } from '../../types';
+} from './validation';
+import { createValidationResult } from '../types';
 import { parseISO } from 'date-fns';
 
 describe('getTodayISO', () => {

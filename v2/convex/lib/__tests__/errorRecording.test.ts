@@ -1,19 +1,3 @@
-/**
- * Tests for Error Recording Helper
- *
- * Verifies:
- * - Error message extraction from Error instances and non-Error values
- * - Stack trace extraction
- * - Optional fields (userId, resourceId, extra) passed correctly
- * - Self-healing: recording failures don't propagate
- *
- * Note: vi.mock for _generated/api is unreliable with isolate:false + threads pool.
- * We assert on mock.calls[N][2] (the args object) directly instead of using
- * toHaveBeenCalledWith on the function reference (2nd argument), because the
- * real FunctionReference object leaks in from other test files and can't be
- * serialized by vitest's pretty-format.
- */
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock the internal API before importing the module.

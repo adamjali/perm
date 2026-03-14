@@ -1,15 +1,3 @@
-/**
- * Dashboard Helper Functions Unit Tests
- * TDD - Tests written BEFORE implementation
- *
- * Tests cover:
- * - calculateUrgency(daysUntil)
- * - sortByUrgency(items)
- * - extractDeadlines(caseData, todayISO)
- * - groupDeadlinesByUrgency(deadlines)
- * - Subtext builders (PWD, Recruitment, ETA 9089, I-140)
- */
-
 import { describe, it, expect } from "vitest";
 import { fixtures, daysFromNow, daysAgo, today } from "../../test-utils/dashboard-fixtures";
 import type { Id } from "../_generated/dataModel";

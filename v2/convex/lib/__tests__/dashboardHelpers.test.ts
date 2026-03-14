@@ -1,9 +1,3 @@
-/**
- * Dashboard Helper Functions Tests
- *
- * Tests for deadline extraction, urgency calculation, and grouping logic.
- */
-
 import { describe, it, expect } from "vitest";
 import {
   extractDeadlines,

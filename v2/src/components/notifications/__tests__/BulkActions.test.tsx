@@ -11,8 +11,6 @@
  * - Success toast appears after actions
  * - Loading states display correctly
  *
- * Phase: 24 (Notifications)
- * Created: 2025-12-31
  */
 
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";

@@ -1,14 +1,3 @@
-/**
- * System Errors Tests
- *
- * Verifies:
- * - Error recording inserts into systemErrors table
- * - Admin email rate limiting (max 5 per hour)
- * - Admin-only access for listing errors
- * - Error resolution
- * - Filtering by resolved status
- */
-
 import { describe, it, expect } from "vitest";
 import {
   createTestContext,

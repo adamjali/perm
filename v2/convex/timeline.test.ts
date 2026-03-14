@@ -1,14 +1,3 @@
-/**
- * Tests for Timeline Convex Functions
- *
- * Tests cover:
- * - getPreferences: defaults for new users, returns saved preferences
- * - updatePreferences: saves timeRange, saves selectedCaseIds
- * - addCaseToTimeline: adds case to empty list, converts undefined to array
- * - removeCaseFromTimeline: removes case from list
- * - getCasesForTimeline: returns all active cases, filters to selected, excludes deleted
- */
-
 import { describe, it, expect } from "vitest";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions } from "../test-utils/convex";
 import { api } from "./_generated/api";

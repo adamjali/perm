@@ -1,10 +1,3 @@
-/**
- * Job Description Templates Tests
- *
- * Tests for CRUD operations on job description templates.
- * Templates are user-scoped and identified by position title (name).
- */
-
 import { describe, it, expect } from 'vitest';
 import { createTestContext, createAuthenticatedContext } from './convex';
 import { api } from '../convex/_generated/api';

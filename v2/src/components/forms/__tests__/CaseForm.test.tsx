@@ -1,18 +1,3 @@
-/**
- * CaseForm Component Tests
- *
- * Test coverage:
- * - Renders all sections
- * - Validation errors display in sections
- * - Submit button disabled when submitting
- * - Loading state during submission
- * - onSuccess callback fires on save
- * - onCancel callback fires on cancel
- * - Form initializes with initialData in edit mode
- * - Form uses defaults in add mode
- * - RFI/RFE add/remove handlers work correctly
- */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '../../../../test-utils/render-utils';
@@ -47,7 +32,6 @@ vi.mock('@/lib/forms/case-form-schema', async (importOriginal) => {
     validateCaseForm: (data: unknown) => mockValidateCaseForm(data),
   };
 });
-
 
 // ============================================================================
 // FIXTURES

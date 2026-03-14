@@ -1,9 +1,3 @@
-/**
- * Tests for tool-confirmation-types utilities
- *
- * Tests type guards and parsing utilities for tool confirmation flow.
- */
-
 import { describe, it, expect } from 'vitest';
 import {
   isPermissionRequest,

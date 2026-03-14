@@ -5,7 +5,7 @@ import {
   validateISODate,
   formatUTC,
   lastSundayOnOrBefore,
-} from '../dateUtils';
+} from './dateUtils';
 
 describe('isValidISODate', () => {
   it.each([

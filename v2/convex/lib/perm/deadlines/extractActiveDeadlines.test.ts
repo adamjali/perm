@@ -1,7 +1,3 @@
-/**
- * Tests for deadline extraction.
- */
-
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   extractActiveDeadlines,

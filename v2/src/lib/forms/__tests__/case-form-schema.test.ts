@@ -1,9 +1,3 @@
-/**
- * Case Form Schema Tests
- *
- * TDD tests for Zod form validation schemas.
- * Tests written FIRST before implementation.
- */
 import { describe, it, expect } from 'vitest';
 import {
   caseFormSchema,

@@ -1,12 +1,3 @@
-/**
- * Tests for Calendar Convex Functions
- *
- * Tests cover:
- * - getCalendarEvents: returns cases with deadline fields, filters closed cases
- * - getCalendarPreferences: returns empty arrays by default, returns saved preferences
- * - updateCalendarPreferences: saves hiddenCases, saves hiddenDeadlineTypes
- */
-
 import { describe, it, expect } from "vitest";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions } from "../test-utils/convex";
 import { api } from "./_generated/api";

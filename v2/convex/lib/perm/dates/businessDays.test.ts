@@ -1,12 +1,5 @@
-/**
- * Tests for business day utilities.
- *
- * Tests subtractBusinessDays — mirror of addBusinessDays but walks backward.
- * Also tests addBusinessDays for symmetry.
- */
-
 import { describe, it, expect } from 'vitest';
-import { addBusinessDays, subtractBusinessDays, countBusinessDays } from '../businessDays';
+import { addBusinessDays, subtractBusinessDays, countBusinessDays } from './businessDays';
 
 describe('subtractBusinessDays', () => {
   describe('basic subtraction (no holidays)', () => {

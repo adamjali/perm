@@ -1,9 +1,3 @@
-/**
- * Google OAuth Utilities Tests
- *
- * Tests for OAuth state encoding/decoding and client configuration.
- */
-
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   encodeState,

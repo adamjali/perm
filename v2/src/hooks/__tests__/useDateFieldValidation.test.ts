@@ -1,14 +1,3 @@
-/**
- * useDateFieldValidation Hook Tests
- *
- * Comprehensive tests for the date field validation hook that handles:
- * - Sunday validation for sunday ad dates
- * - Second Sunday ad must be 7+ days after first
- * - Job order duration must be 30+ days
- * - Field dependency chains (PWD determination before recruitment, etc.)
- * - Min/max constraint enforcement
- */
-
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useDateFieldValidation } from '../useDateFieldValidation';

@@ -10,8 +10,6 @@
  * - EmailButton: CTA button with urgency variants
  * - EmailHeader: Section header with urgency color bars
  *
- * Phase: 24 (Notifications + Email)
- * Created: 2025-12-31
  */
 
 import { describe, it, expect } from "vitest";

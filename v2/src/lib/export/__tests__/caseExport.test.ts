@@ -1,8 +1,3 @@
-/**
- * Tests for Case Export Utilities
- * Test FIRST approach - define expected behavior before implementation.
- */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   exportCasesCSV,

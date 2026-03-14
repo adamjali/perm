@@ -1,7 +1,3 @@
-/**
- * Tests for stripIncompleteRecruitmentEntries, getFieldLabel, and
- * validateCaseForm recruitment method required-date validation.
- */
 import { describe, it, expect } from 'vitest';
 import {
   stripIncompleteRecruitmentEntries,

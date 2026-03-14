@@ -1,7 +1,3 @@
-/**
- * Tests for deadline timezone rules and helpers.
- */
-
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   DEADLINE_TIMEZONE_RULES,

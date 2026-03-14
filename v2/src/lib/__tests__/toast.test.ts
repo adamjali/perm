@@ -1,13 +1,3 @@
-/**
- * Tests for Auth-Aware Toast Wrapper
- *
- * Verifies:
- * - Toasts show when isSigningOut is false (normal operation)
- * - Toasts are suppressed when isSigningOut is true
- * - Dismiss always works regardless of state
- * - Promise toasts still return the promise even when suppressed
- */
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { toast as sonnerToast } from "sonner";
 import { toast, updateToastAuthState, getToastAuthState } from "../toast";

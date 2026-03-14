@@ -1,10 +1,3 @@
-/**
- * Admin Helper Tests
- *
- * Tests for admin authorization helpers, shared utilities,
- * and extracted admin functions.
- */
-
 import { describe, it, expect } from "vitest";
 import { buildDefaultProfile, TERMS_VERSION } from "../userDefaults";
 import { formatDateForNotification } from "../formatDate";

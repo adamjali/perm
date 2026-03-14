@@ -1,16 +1,3 @@
-/**
- * Tests for Recruitment Status Calculator
- *
- * Tests cover:
- * - calculateRecruitmentStatus: main function for determining filing window status
- * - Status types: incomplete, waiting, ready, expired
- * - Mandatory steps validation: NOF, Job Order, Sunday Ads
- * - Professional occupation methods (3 additional required)
- * - Filing window calculation (opens 30 days after last, closes 180 days after first)
- * - PWD expiration truncating the filing window
- * - formatFilingWindowRange: helper for display formatting
- */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { format, addDays, parseISO } from "date-fns";
 import {

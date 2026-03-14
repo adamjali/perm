@@ -1,8 +1,3 @@
-/**
- * UpcomingDeadlineItem Component Tests
- *
- * Tests countdown formatting, content display, and urgency-level test IDs.
- */
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import UpcomingDeadlineItem from "../UpcomingDeadlineItem";

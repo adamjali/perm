@@ -1,10 +1,3 @@
-/**
- * case-form.helpers Tests
- *
- * Tests for form helper functions including field mapping,
- * error extraction, and server validation parsing.
- */
-
 import { describe, it, expect } from "vitest";
 import {
   DEFAULT_FORM_DATA,

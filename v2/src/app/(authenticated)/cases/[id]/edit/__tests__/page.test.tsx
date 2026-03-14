@@ -1,14 +1,3 @@
-/**
- * Edit Case Page Tests
- *
- * Test suite for the Edit Case page component.
- * Validates data fetching, loading states, form pre-population, and navigation.
- *
- * Phase: 22 (Case Forms)
- * Task: 22-05 (Edit Case Page)
- * Created: 2025-12-25
- */
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { useParams, useRouter } from 'next/navigation';

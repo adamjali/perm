@@ -1,10 +1,3 @@
-/**
- * useJobDescriptionTemplates Hook Tests
- *
- * Tests for the job description templates hook.
- * Focuses on state management and utility functions.
- */
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useJobDescriptionTemplates } from '../useJobDescriptionTemplates';

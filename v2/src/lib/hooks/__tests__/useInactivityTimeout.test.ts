@@ -1,20 +1,3 @@
-/**
- * useInactivityTimeout Hook Tests
- *
- * Tests:
- * - Timer initialization and cleanup
- * - Warning callback triggers at correct time
- * - Timeout callback triggers at correct time
- * - Activity resets timer
- * - extendSession resets timer when warning is visible
- * - formatTimeRemaining utility
- *
- * Phase: 20 (Dashboard + UI Polish)
- * Created: 2025-12-24
- *
- * @vitest-environment jsdom
- */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useInactivityTimeout, formatTimeRemaining } from "../useInactivityTimeout";

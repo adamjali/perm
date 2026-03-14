@@ -11,8 +11,6 @@
  * - Count badges display correct numbers
  * - Proper accessibility attributes (role="tablist", aria-selected)
  *
- * Phase: 24 (Notifications)
- * Created: 2025-12-31
  */
 
 import { describe, it, expect, vi } from "vitest";

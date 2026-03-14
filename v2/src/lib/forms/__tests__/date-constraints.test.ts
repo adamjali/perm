@@ -1,12 +1,3 @@
-/**
- * Tests for Date Constraints
- *
- * Issue 6: Verify ETA filing window logic
- * Rules per perm_flow.md:
- * - Opens: 30 days after LAST recruitment step
- * - Closes: 180 days after FIRST recruitment step (or PWD expiration, whichever first)
- */
-
 import { describe, it, expect } from "vitest";
 import { format, addDays, subDays } from "date-fns";
 import {

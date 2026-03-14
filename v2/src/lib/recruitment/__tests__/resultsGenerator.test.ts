@@ -1,15 +1,3 @@
-/**
- * Tests for Recruitment Results Text Generator
- *
- * Covers:
- * - generateRecruitmentResultsText: DOL-compliant recruitment summary
- * - Single-date methods (local_newspaper)
- * - Date-range methods (job_website_ad, employer_website)
- * - Multi/sub-entry methods (radio_ad, tv_ad)
- * - Empty entry filtering via methodHasDateData
- * - Applicant count formatting
- * - getMethodLabel helper
- */
 import { describe, it, expect } from 'vitest';
 import {
   generateRecruitmentResultsText,

@@ -1,19 +1,3 @@
-/**
- * AuthContext Tests
- *
- * Tests:
- * - Provider renders children
- * - Initial state is idle
- * - State transitions: beginSignOut, completeSignOut, cancelSignOut
- * - isSigningOut derived correctly from state
- * - Hook throws when used outside provider
- *
- * Phase: 20 (Dashboard + UI Polish)
- * Created: 2025-12-24
- *
- * @vitest-environment jsdom
- */
-
 import { describe, it, expect } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import { renderHook } from "@testing-library/react";

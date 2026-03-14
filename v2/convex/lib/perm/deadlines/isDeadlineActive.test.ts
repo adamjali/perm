@@ -1,10 +1,3 @@
-/**
- * Tests for deadline supersession logic.
- *
- * Per perm_flow.md line 41:
- * "A deadline becomes inactive/met once the filed has a value"
- */
-
 import { describe, it, expect } from "vitest";
 import {
   isDeadlineActive,

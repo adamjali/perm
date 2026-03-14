@@ -1,15 +1,3 @@
-/**
- * useSectionState Hook Tests
- *
- * Tests section visibility and dependency states for the PERM case form.
- * Covers:
- * - ETA 9089 filing window calculations (30-day waiting period, 180-day limit)
- * - Section dependency logic (PWD -> Recruitment -> ETA 9089 -> I-140)
- * - Professional occupation recruitment completeness checks
- * - Section completion detection and summary generation
- * - Auto-open/collapse on prerequisite changes
- */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useSectionState } from '../useSectionState';

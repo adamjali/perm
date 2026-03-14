@@ -1,13 +1,3 @@
-/**
- * Tests for Timeline Milestone Utilities
- *
- * Tests cover:
- * - extractMilestones: static milestones, calculated milestones, RFI/RFE deadlines
- * - extractRangeBars: job order period extraction
- * - calculateReadyToFileDate: 30 days after last recruitment
- * - calculateRecruitmentExpiresDate: 180 days from first recruitment
- */
-
 import { describe, it, expect } from "vitest";
 import { format, addDays, parseISO } from "date-fns";
 import {
