@@ -525,7 +525,7 @@ describe('JobDescriptionField', () => {
       expect(onSaveAsNewTemplate).toHaveBeenCalledWith('New Template Name', 'Template description');
     });
 
-    it('shows confirmation dialog when saving with existing template name', async () => {
+    it('calls onUpdateTemplate directly when name matches existing template', async () => {
       const existingTemplate = createMockTemplate({ name: 'Existing Template' });
       render(
         <JobDescriptionField
@@ -540,9 +540,12 @@ describe('JobDescriptionField', () => {
       const updateButton = screen.getByRole('button', { name: /update template/i });
       await userEvent.click(updateButton);
 
-      // Should show the confirmation dialog
       await waitFor(() => {
-        expect(screen.getByText(/template already exists/i)).toBeInTheDocument();
+        expect(defaultProps.onUpdateTemplate).toHaveBeenCalledWith(
+          existingTemplate._id,
+          'Existing Template',
+          'New description'
+        );
       });
     });
   });
