@@ -175,10 +175,12 @@ export function FormField({
         </p>
       )}
 
-      {/* Input wrapper with animation */}
+      {/* Input wrapper — clip-path expands visible area by 5px so
+           neobrutalist hard shadows (4px offset on hover) aren't clipped,
+           while still containing the shake animation */}
       <div
         className={cn(
-          "transition-all duration-200",
+          "transition-all duration-200 [clip-path:inset(-5px)]",
           error && "animate-shake"
         )}
       >
