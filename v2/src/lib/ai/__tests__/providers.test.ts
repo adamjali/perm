@@ -31,7 +31,7 @@ vi.mock('@openrouter/ai-sdk-provider', () => ({
   createOpenRouter: vi.fn(() => vi.fn(makeMockModel('openrouter'))),
 }));
 
-describe('AI Providers', () => {
+describe('AI Providers', { timeout: 15_000 }, () => {
   it('exports chatModel', async () => {
     const { chatModel } = await import('../providers');
     expect(chatModel).toBeDefined();

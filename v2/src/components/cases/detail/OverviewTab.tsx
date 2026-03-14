@@ -376,9 +376,11 @@ export function OverviewTab({
               </Link>
             </motion.div>
 
-            <motion.div variants={itemVariants}>
-              <QuickStatsPanel caseData={caseData} />
-            </motion.div>
+            {!isMobile && (
+              <motion.div variants={itemVariants}>
+                <QuickStatsPanel caseData={caseData} />
+              </motion.div>
+            )}
           </div>
 
           {/* Job Description */}
