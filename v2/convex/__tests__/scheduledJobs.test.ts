@@ -2,7 +2,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import { daysFromNow, daysAgo } from "../../test-utils/dashboard-fixtures";
+import { getTodayInTimezone } from "../lib/perm/deadlines/timezones";
+import { addDays, formatISO } from "../../test-utils/dashboard-fixtures";
+
+/**
+ * Timezone-aware date helpers — use ET as reference to match how
+ * getCasesNeedingReminders computes daysUntilDeadline for DOL deadlines.
+ * Without this, tests break when UTC date != ET date (after 7pm ET).
+ */
+function todayET(): Date { return new Date(getTodayInTimezone("America/New_York") + "T00:00:00Z"); }
+function daysFromNow(days: number): string { return formatISO(addDays(todayET(), days)); }
+function daysAgo(days: number): string { return formatISO(addDays(todayET(), -days)); }
 
 // TEST UTILITIES
 

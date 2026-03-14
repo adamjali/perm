@@ -460,7 +460,7 @@ describe('jobDescriptionTemplates', () => {
           name: 'software engineer', // Same name, different case
           description: 'Second template',
         })
-      ).rejects.toThrow(/already exists/i);
+      ).rejects.toThrow(/TEMPLATE_EXISTS|already exists/i);
     });
   });
 
@@ -526,7 +526,7 @@ describe('jobDescriptionTemplates', () => {
           name: 'Template A', // Trying to rename to existing name
           description: 'Description B',
         })
-      ).rejects.toThrow(/already exists/i);
+      ).rejects.toThrow(/TEMPLATE_EXISTS|already exists/i);
     });
 
     it('allows keeping the same name when updating', async () => {
