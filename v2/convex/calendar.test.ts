@@ -3,6 +3,33 @@ import { createTestContext, createAuthenticatedContext, setupSchedulerTests, fin
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function insertProfile(user: any, overrides: Record<string, unknown> = {}) {
+  await user.run(async (ctx: any) => {
+    const userId = (await ctx.auth.getUserIdentity())?.subject;
+    await ctx.db.insert("userProfiles", {
+      userId: userId as Id<"users">,
+      userType: "individual",
+      emailNotificationsEnabled: true, smsNotificationsEnabled: false,
+      pushNotificationsEnabled: false, urgentDeadlineDays: 7,
+      reminderDaysBefore: [1, 3, 7],
+      emailDeadlineReminders: true, emailStatusUpdates: true,
+      emailRfeAlerts: true, emailWeeklyDigest: false,
+      quietHoursEnabled: false, timezone: "America/New_York",
+      calendarSyncEnabled: true, calendarSyncPwd: true,
+      calendarSyncEta9089: true, calendarSyncI140: true,
+      calendarSyncRfe: true, calendarSyncRfi: true,
+      calendarSyncRecruitment: true, calendarSyncFilingWindow: true,
+      googleCalendarConnected: false, gmailConnected: false,
+      casesSortBy: "updatedAt", casesSortOrder: "desc", casesPerPage: 20,
+      dismissedDeadlines: [], darkModeEnabled: false,
+      autoDeadlineEnforcementEnabled: false,
+      createdAt: Date.now(), updatedAt: Date.now(),
+      ...overrides,
+    });
+  });
+}
+
 describe("Calendar Events", () => {
   // Enable fake timers for scheduled function handling
   setupSchedulerTests();
@@ -223,44 +250,9 @@ describe("Calendar Preferences", () => {
       });
       await finishScheduledFunctions(t);
 
-      // Create user profile with calendar preferences
-      await user.run(async (ctx) => {
-        const userId = (await ctx.auth.getUserIdentity())?.subject;
-        await ctx.db.insert("userProfiles", {
-          userId: userId as Id<"users">,
-          userType: "individual",
-          emailNotificationsEnabled: true,
-          smsNotificationsEnabled: false,
-          pushNotificationsEnabled: false,
-          urgentDeadlineDays: 7,
-          reminderDaysBefore: [1, 3, 7],
-          emailDeadlineReminders: true,
-          emailStatusUpdates: true,
-          emailRfeAlerts: true,
-          emailWeeklyDigest: false,
-          quietHoursEnabled: false,
-          timezone: "America/New_York",
-          calendarSyncEnabled: true,
-          calendarSyncPwd: true,
-          calendarSyncEta9089: true,
-          calendarSyncI140: true,
-          calendarSyncRfe: true,
-          calendarSyncRfi: true,
-          calendarSyncRecruitment: true,
-          calendarSyncFilingWindow: true,
-          googleCalendarConnected: false,
-          gmailConnected: false,
-          casesSortBy: "updatedAt",
-          casesSortOrder: "desc",
-          casesPerPage: 20,
-          dismissedDeadlines: [],
-          darkModeEnabled: false,
-          autoDeadlineEnforcementEnabled: false,
-          calendarHiddenCases: [caseId],
-          calendarHiddenDeadlineTypes: ["pwd_expiration", "rfi_due"],
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
+      await insertProfile(user, {
+        calendarHiddenCases: [caseId],
+        calendarHiddenDeadlineTypes: ["pwd_expiration", "rfi_due"],
       });
 
       const preferences = await user.query(api.calendar.getCalendarPreferences, {});
@@ -298,43 +290,7 @@ describe("Calendar Preferences", () => {
       });
       await finishScheduledFunctions(t);
 
-      // Create user profile
-      await user.run(async (ctx) => {
-        const userId = (await ctx.auth.getUserIdentity())?.subject;
-        await ctx.db.insert("userProfiles", {
-          userId: userId as Id<"users">,
-          userType: "individual",
-          emailNotificationsEnabled: true,
-          smsNotificationsEnabled: false,
-          pushNotificationsEnabled: false,
-          urgentDeadlineDays: 7,
-          reminderDaysBefore: [1, 3, 7],
-          emailDeadlineReminders: true,
-          emailStatusUpdates: true,
-          emailRfeAlerts: true,
-          emailWeeklyDigest: false,
-          quietHoursEnabled: false,
-          timezone: "America/New_York",
-          calendarSyncEnabled: true,
-          calendarSyncPwd: true,
-          calendarSyncEta9089: true,
-          calendarSyncI140: true,
-          calendarSyncRfe: true,
-          calendarSyncRfi: true,
-          calendarSyncRecruitment: true,
-          calendarSyncFilingWindow: true,
-          googleCalendarConnected: false,
-          gmailConnected: false,
-          casesSortBy: "updatedAt",
-          casesSortOrder: "desc",
-          casesPerPage: 20,
-          dismissedDeadlines: [],
-          darkModeEnabled: false,
-          autoDeadlineEnforcementEnabled: false,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
-      });
+      await insertProfile(user);
 
       await user.mutation(api.calendar.updateCalendarPreferences, {
         hiddenCases: [caseId],
@@ -350,43 +306,7 @@ describe("Calendar Preferences", () => {
       const t = createTestContext();
       const user = await createAuthenticatedContext(t, "User 1");
 
-      // Create user profile
-      await user.run(async (ctx) => {
-        const userId = (await ctx.auth.getUserIdentity())?.subject;
-        await ctx.db.insert("userProfiles", {
-          userId: userId as Id<"users">,
-          userType: "individual",
-          emailNotificationsEnabled: true,
-          smsNotificationsEnabled: false,
-          pushNotificationsEnabled: false,
-          urgentDeadlineDays: 7,
-          reminderDaysBefore: [1, 3, 7],
-          emailDeadlineReminders: true,
-          emailStatusUpdates: true,
-          emailRfeAlerts: true,
-          emailWeeklyDigest: false,
-          quietHoursEnabled: false,
-          timezone: "America/New_York",
-          calendarSyncEnabled: true,
-          calendarSyncPwd: true,
-          calendarSyncEta9089: true,
-          calendarSyncI140: true,
-          calendarSyncRfe: true,
-          calendarSyncRfi: true,
-          calendarSyncRecruitment: true,
-          calendarSyncFilingWindow: true,
-          googleCalendarConnected: false,
-          gmailConnected: false,
-          casesSortBy: "updatedAt",
-          casesSortOrder: "desc",
-          casesPerPage: 20,
-          dismissedDeadlines: [],
-          darkModeEnabled: false,
-          autoDeadlineEnforcementEnabled: false,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
-      });
+      await insertProfile(user);
 
       await user.mutation(api.calendar.updateCalendarPreferences, {
         hiddenDeadlineTypes: ["pwd_expiration", "rfi_due", "rfe_due"],
@@ -410,43 +330,7 @@ describe("Calendar Preferences", () => {
       });
       await finishScheduledFunctions(t);
 
-      // Create user profile
-      await user.run(async (ctx) => {
-        const userId = (await ctx.auth.getUserIdentity())?.subject;
-        await ctx.db.insert("userProfiles", {
-          userId: userId as Id<"users">,
-          userType: "individual",
-          emailNotificationsEnabled: true,
-          smsNotificationsEnabled: false,
-          pushNotificationsEnabled: false,
-          urgentDeadlineDays: 7,
-          reminderDaysBefore: [1, 3, 7],
-          emailDeadlineReminders: true,
-          emailStatusUpdates: true,
-          emailRfeAlerts: true,
-          emailWeeklyDigest: false,
-          quietHoursEnabled: false,
-          timezone: "America/New_York",
-          calendarSyncEnabled: true,
-          calendarSyncPwd: true,
-          calendarSyncEta9089: true,
-          calendarSyncI140: true,
-          calendarSyncRfe: true,
-          calendarSyncRfi: true,
-          calendarSyncRecruitment: true,
-          calendarSyncFilingWindow: true,
-          googleCalendarConnected: false,
-          gmailConnected: false,
-          casesSortBy: "updatedAt",
-          casesSortOrder: "desc",
-          casesPerPage: 20,
-          dismissedDeadlines: [],
-          darkModeEnabled: false,
-          autoDeadlineEnforcementEnabled: false,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
-      });
+      await insertProfile(user);
 
       await user.mutation(api.calendar.updateCalendarPreferences, {
         hiddenCases: [caseId],
@@ -472,44 +356,9 @@ describe("Calendar Preferences", () => {
       });
       await finishScheduledFunctions(t);
 
-      // Create user profile with initial values
-      await user.run(async (ctx) => {
-        const userId = (await ctx.auth.getUserIdentity())?.subject;
-        await ctx.db.insert("userProfiles", {
-          userId: userId as Id<"users">,
-          userType: "individual",
-          emailNotificationsEnabled: true,
-          smsNotificationsEnabled: false,
-          pushNotificationsEnabled: false,
-          urgentDeadlineDays: 7,
-          reminderDaysBefore: [1, 3, 7],
-          emailDeadlineReminders: true,
-          emailStatusUpdates: true,
-          emailRfeAlerts: true,
-          emailWeeklyDigest: false,
-          quietHoursEnabled: false,
-          timezone: "America/New_York",
-          calendarSyncEnabled: true,
-          calendarSyncPwd: true,
-          calendarSyncEta9089: true,
-          calendarSyncI140: true,
-          calendarSyncRfe: true,
-          calendarSyncRfi: true,
-          calendarSyncRecruitment: true,
-          calendarSyncFilingWindow: true,
-          googleCalendarConnected: false,
-          gmailConnected: false,
-          casesSortBy: "updatedAt",
-          casesSortOrder: "desc",
-          casesPerPage: 20,
-          dismissedDeadlines: [],
-          darkModeEnabled: false,
-          autoDeadlineEnforcementEnabled: false,
-          calendarHiddenCases: [caseId],
-          calendarHiddenDeadlineTypes: ["pwd_expiration"],
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
+      await insertProfile(user, {
+        calendarHiddenCases: [caseId],
+        calendarHiddenDeadlineTypes: ["pwd_expiration"],
       });
 
       // Only update hiddenDeadlineTypes
@@ -538,44 +387,9 @@ describe("Calendar Preferences", () => {
       });
       await finishScheduledFunctions(t);
 
-      // Create user profile with values
-      await user.run(async (ctx) => {
-        const userId = (await ctx.auth.getUserIdentity())?.subject;
-        await ctx.db.insert("userProfiles", {
-          userId: userId as Id<"users">,
-          userType: "individual",
-          emailNotificationsEnabled: true,
-          smsNotificationsEnabled: false,
-          pushNotificationsEnabled: false,
-          urgentDeadlineDays: 7,
-          reminderDaysBefore: [1, 3, 7],
-          emailDeadlineReminders: true,
-          emailStatusUpdates: true,
-          emailRfeAlerts: true,
-          emailWeeklyDigest: false,
-          quietHoursEnabled: false,
-          timezone: "America/New_York",
-          calendarSyncEnabled: true,
-          calendarSyncPwd: true,
-          calendarSyncEta9089: true,
-          calendarSyncI140: true,
-          calendarSyncRfe: true,
-          calendarSyncRfi: true,
-          calendarSyncRecruitment: true,
-          calendarSyncFilingWindow: true,
-          googleCalendarConnected: false,
-          gmailConnected: false,
-          casesSortBy: "updatedAt",
-          casesSortOrder: "desc",
-          casesPerPage: 20,
-          dismissedDeadlines: [],
-          darkModeEnabled: false,
-          autoDeadlineEnforcementEnabled: false,
-          calendarHiddenCases: [caseId],
-          calendarHiddenDeadlineTypes: ["pwd_expiration"],
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
+      await insertProfile(user, {
+        calendarHiddenCases: [caseId],
+        calendarHiddenDeadlineTypes: ["pwd_expiration"],
       });
 
       // Clear both arrays
