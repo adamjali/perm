@@ -7,9 +7,7 @@ import { CaseFormProvider } from '../../CaseFormContext';
 import type { CaseFormData } from '@/lib/forms/case-form-schema';
 import { addDays } from 'date-fns';
 
-// ============================================================================
 // Test Utilities
-// ============================================================================
 
 /**
  * Format date to ISO string (YYYY-MM-DD)
@@ -56,9 +54,7 @@ const TestWrapper = ({
   </CaseFormProvider>
 );
 
-// ============================================================================
 // Tests
-// ============================================================================
 
 describe('ETA9089Section', () => {
   const mockOnChange = vi.fn();

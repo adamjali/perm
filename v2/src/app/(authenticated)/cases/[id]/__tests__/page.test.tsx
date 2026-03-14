@@ -25,9 +25,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, waitFor, act, within } from "@testing-library/react";
 import { renderWithProviders } from "../../../../../../test-utils/render-utils";
 
-// ============================================================================
 // MOCK SETUP
-// ============================================================================
 
 // Mock router
 const mockPush = vi.fn();
@@ -203,15 +201,11 @@ vi.mock("@/components/cases/detail/next-up-section.utils", () => ({
   },
 }));
 
-// ============================================================================
 // IMPORT AFTER MOCKS
-// ============================================================================
 
 import CaseDetailPage from "../page";
 
-// ============================================================================
 // TEST FIXTURES
-// ============================================================================
 
 /**
  * Factory for creating mock case data.
@@ -276,9 +270,7 @@ function resetMocks() {
   mockTimelinePrefs.mockReturnValue({ selectedCaseIds: null });
 }
 
-// ============================================================================
 // LOADING STATE TESTS
-// ============================================================================
 
 describe("CaseDetailPage - Loading State", () => {
   beforeEach(resetMocks);
@@ -306,9 +298,7 @@ describe("CaseDetailPage - Loading State", () => {
   });
 });
 
-// ============================================================================
 // NOT FOUND STATE TESTS
-// ============================================================================
 
 describe("CaseDetailPage - Not Found State", () => {
   beforeEach(resetMocks);
@@ -352,9 +342,7 @@ describe("CaseDetailPage - Not Found State", () => {
   });
 });
 
-// ============================================================================
 // CASE DETAILS RENDERING TESTS
-// ============================================================================
 
 describe("CaseDetailPage - Case Details Rendering", () => {
   beforeEach(resetMocks);
@@ -415,9 +403,7 @@ describe("CaseDetailPage - Case Details Rendering", () => {
   });
 });
 
-// ============================================================================
 // TAB NAVIGATION TESTS
-// ============================================================================
 
 describe("CaseDetailPage - Tab Navigation", () => {
   beforeEach(resetMocks);
@@ -504,9 +490,7 @@ describe("CaseDetailPage - Tab Navigation", () => {
   });
 });
 
-// ============================================================================
 // SECTION HEADER TESTS
-// ============================================================================
 
 describe("CaseDetailPage - Section Headers", () => {
   beforeEach(resetMocks);
@@ -534,9 +518,7 @@ describe("CaseDetailPage - Section Headers", () => {
   });
 });
 
-// ============================================================================
 // QUICK ACTIONS DROPDOWN TESTS
-// ============================================================================
 
 describe("CaseDetailPage - Quick Actions Dropdown", () => {
   beforeEach(resetMocks);
@@ -608,9 +590,7 @@ describe("CaseDetailPage - Quick Actions Dropdown", () => {
   });
 });
 
-// ============================================================================
 // NAVIGATION TESTS
-// ============================================================================
 
 describe("CaseDetailPage - Navigation", () => {
   beforeEach(resetMocks);
@@ -637,9 +617,7 @@ describe("CaseDetailPage - Navigation", () => {
   });
 });
 
-// ============================================================================
 // DELETE CONFIRMATION TESTS
-// ============================================================================
 
 describe("CaseDetailPage - Delete Confirmation", () => {
   beforeEach(() => {
@@ -738,9 +716,7 @@ describe("CaseDetailPage - Delete Confirmation", () => {
   });
 });
 
-// ============================================================================
 // ARCHIVE/REOPEN TESTS
-// ============================================================================
 
 describe("CaseDetailPage - Archive and Reopen", () => {
   beforeEach(() => {
@@ -876,9 +852,7 @@ describe("CaseDetailPage - Archive and Reopen", () => {
   });
 });
 
-// ============================================================================
 // TIMELINE TOGGLE TESTS
-// ============================================================================
 
 describe("CaseDetailPage - Timeline Toggle", () => {
   beforeEach(() => {
@@ -898,15 +872,11 @@ describe("CaseDetailPage - Timeline Toggle", () => {
   });
 });
 
-// ============================================================================
 // DEADLINE DISPLAY TESTS
-// ============================================================================
 
 // Deadline Display tests removed — deadline indicator moved to Next Up section in Overview tab
 
-// ============================================================================
 // ACCESSIBILITY TESTS
-// ============================================================================
 
 describe("CaseDetailPage - Accessibility", () => {
   beforeEach(resetMocks);
@@ -970,9 +940,7 @@ describe("CaseDetailPage - Accessibility", () => {
   });
 });
 
-// ============================================================================
 // ERROR HANDLING TESTS
-// ============================================================================
 
 describe("CaseDetailPage - Error Handling", () => {
   beforeEach(resetMocks);

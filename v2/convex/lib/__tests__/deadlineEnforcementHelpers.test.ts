@@ -1,22 +1,3 @@
-/**
- * Deadline Enforcement Helper Functions Tests
- *
- * Tests for automatic deadline enforcement logic per perm_flow.md lines 74-78.
- *
- * Test scenarios:
- * 1. PWD expired before ETA 9089 filed → close
- * 2. Recruitment window missed, PWD >60 days → can restart
- * 3. Recruitment window missed, PWD ≤60 days → close
- * 4. Filing window missed, PWD >60 days → can restart
- * 5. Filing window missed, PWD ≤60 days → close
- * 6. ETA 9089 expired with time to restart → can restart
- * 7. ETA 9089 expired without time → close
- * 8. No violations → healthy case
- * 9. Already closed case → skip
- *
- * @see /perm_flow.md - Source of truth for business rules
- */
-
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   checkDeadlineViolations,
@@ -29,9 +10,7 @@ import {
   type DeadlineViolation,
 } from "../deadlineEnforcementHelpers";
 
-// ============================================================================
 // TEST FIXTURES
-// ============================================================================
 
 const TODAY_ISO = "2025-01-15";
 
@@ -53,9 +32,7 @@ function daysFromToday(days: number): string {
   return date.toISOString().split("T")[0]!;
 }
 
-// ============================================================================
 // canRestartProcess Tests
-// ============================================================================
 
 describe("canRestartProcess", () => {
   it("returns true when PWD has more than 60 days remaining", () => {
@@ -99,9 +76,7 @@ describe("canRestartProcess", () => {
   });
 });
 
-// ============================================================================
 // checkDeadlineViolations Tests - PWD Expiration
-// ============================================================================
 
 describe("checkDeadlineViolations - PWD Expiration", () => {
   it("returns pwd_expired when PWD expired and ETA 9089 not filed", () => {
@@ -142,9 +117,7 @@ describe("checkDeadlineViolations - PWD Expiration", () => {
   });
 });
 
-// ============================================================================
 // checkDeadlineViolations Tests - Recruitment Window
-// ============================================================================
 
 describe("checkDeadlineViolations - Recruitment Window", () => {
   it("returns recruitment_window_missed with restart when PWD >60 days", () => {
@@ -195,9 +168,7 @@ describe("checkDeadlineViolations - Recruitment Window", () => {
   });
 });
 
-// ============================================================================
 // checkDeadlineViolations Tests - Filing Window
-// ============================================================================
 
 describe("checkDeadlineViolations - Filing Window", () => {
   it("returns filing_window_missed with restart when PWD >60 days", () => {
@@ -245,9 +216,7 @@ describe("checkDeadlineViolations - Filing Window", () => {
   });
 });
 
-// ============================================================================
 // checkDeadlineViolations Tests - ETA 9089 Expiration
-// ============================================================================
 
 describe("checkDeadlineViolations - ETA 9089 Expiration", () => {
   it("returns eta9089_expired with restart_eta9089 when can restart and filing window open", () => {
@@ -334,9 +303,7 @@ describe("checkDeadlineViolations - ETA 9089 Expiration", () => {
   });
 });
 
-// ============================================================================
 // checkDeadlineViolations Tests - Edge Cases
-// ============================================================================
 
 describe("checkDeadlineViolations - Edge Cases", () => {
   it("skips already closed cases", () => {
@@ -381,9 +348,7 @@ describe("checkDeadlineViolations - Edge Cases", () => {
   });
 });
 
-// ============================================================================
 // Timezone-Aware Enforcement Tests
-// ============================================================================
 
 describe("checkDeadlineViolations - Timezone Awareness", () => {
   afterEach(() => {
@@ -441,9 +406,7 @@ describe("checkDeadlineViolations - Timezone Awareness", () => {
   });
 });
 
-// ============================================================================
 // Priority Order Tests
-// ============================================================================
 
 describe("checkDeadlineViolations - Priority Order", () => {
   it("returns PWD violation over recruitment window violation", () => {
@@ -478,9 +441,7 @@ describe("checkDeadlineViolations - Priority Order", () => {
   });
 });
 
-// ============================================================================
 // Message Generation Tests
-// ============================================================================
 
 describe("generateClosureMessage", () => {
   it("generates close message for PWD expired", () => {
@@ -571,9 +532,7 @@ describe("generateClosureTitle", () => {
   });
 });
 
-// ============================================================================
 // getTodayISO Tests
-// ============================================================================
 
 describe("getTodayISO", () => {
   it("returns date in YYYY-MM-DD format", () => {
@@ -582,9 +541,7 @@ describe("getTodayISO", () => {
   });
 });
 
-// ============================================================================
 // Constants Tests
-// ============================================================================
 
 describe("Constants", () => {
   it("MIN_DAYS_FOR_RESTART is 60", () => {

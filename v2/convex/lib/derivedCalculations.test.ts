@@ -28,9 +28,7 @@ import {
   PWD_RECRUITMENT_BUFFER_DAYS as PWD_BUFFER_CONSTANTS,
 } from "./perm/constants";
 
-// ============================================================================
 // calculateRecruitmentStartDate
-// ============================================================================
 
 describe("calculateRecruitmentStartDate", () => {
   it("should return null when no dates are provided", () => {
@@ -104,9 +102,7 @@ describe("calculateRecruitmentStartDate", () => {
   });
 });
 
-// ============================================================================
 // calculateRecruitmentEndDate
-// ============================================================================
 
 describe("calculateRecruitmentEndDate", () => {
   it("should return null when no dates are provided", () => {
@@ -402,9 +398,7 @@ describe("calculateRecruitmentEndDate", () => {
   });
 });
 
-// ============================================================================
 // calculateFilingWindowOpens
-// ============================================================================
 
 describe("calculateFilingWindowOpens", () => {
   it("should return null when recruitmentEndDate is null", () => {
@@ -438,9 +432,7 @@ describe("calculateFilingWindowOpens", () => {
   });
 });
 
-// ============================================================================
 // calculateFilingWindowCloses
-// ============================================================================
 
 describe("calculateFilingWindowCloses", () => {
   it("should return null when recruitmentStartDate is null", () => {
@@ -491,9 +483,7 @@ describe("calculateFilingWindowCloses", () => {
   });
 });
 
-// ============================================================================
 // calculateRecruitmentWindowCloses
-// ============================================================================
 
 describe("calculateRecruitmentWindowCloses", () => {
   it("should return null when recruitmentStartDate is null", () => {
@@ -546,9 +536,7 @@ describe("calculateRecruitmentWindowCloses", () => {
   });
 });
 
-// ============================================================================
 // calculateDerivedDates (Integration)
-// ============================================================================
 
 describe("calculateDerivedDates", () => {
   it("should return all null when no dates provided", () => {
@@ -716,9 +704,7 @@ describe("calculateDerivedDates", () => {
   });
 });
 
-// ============================================================================
 // Edge Cases and Regression Tests
-// ============================================================================
 
 describe("Edge Cases", () => {
   it("should handle empty additionalRecruitmentMethods array", () => {
@@ -798,9 +784,7 @@ describe("Edge Cases", () => {
   });
 });
 
-// ============================================================================
 // SYNC TESTS: Verify derivedCalculations.ts stays in sync with filingWindow.ts
-// ============================================================================
 
 describe("Sync Tests: derivedCalculations vs filingWindow", () => {
   /**

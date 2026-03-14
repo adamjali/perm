@@ -19,9 +19,7 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import QuietHoursSection from "../QuietHoursSection";
 
-// ============================================================================
 // MOCKS
-// ============================================================================
 
 // Mock Convex hooks
 const mockUpdateProfile = vi.fn();
@@ -47,9 +45,7 @@ vi.mock("../SettingsUnsavedChangesContext", () => ({
   useSettingsSectionDirtyState: vi.fn(),
 }));
 
-// ============================================================================
 // TEST DATA
-// ============================================================================
 
 const defaultProfile = {
   quietHoursEnabled: false,
@@ -74,9 +70,7 @@ const pacificProfile = {
 
 const mockOnNavigateToProfile = vi.fn();
 
-// ============================================================================
 // SETUP
-// ============================================================================
 
 describe("QuietHoursSection", () => {
   beforeEach(() => {

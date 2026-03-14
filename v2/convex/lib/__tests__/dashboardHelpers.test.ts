@@ -8,9 +8,7 @@ import {
 import type { CaseDataForDeadlines } from "../dashboardTypes";
 import type { Id } from "../../_generated/dataModel";
 
-// ============================================================================
 // TEST FIXTURES
-// ============================================================================
 
 const TODAY_ISO = "2025-01-15";
 
@@ -26,9 +24,7 @@ function createMinimalCase(
   };
 }
 
-// ============================================================================
 // calculateUrgency Tests
-// ============================================================================
 
 describe("calculateUrgency", () => {
   it("returns overdue for negative days", () => {
@@ -55,9 +51,7 @@ describe("calculateUrgency", () => {
   });
 });
 
-// ============================================================================
 // createDeadlineItem Tests
-// ============================================================================
 
 describe("createDeadlineItem", () => {
   it("computes urgency from daysUntil automatically", () => {
@@ -96,9 +90,7 @@ describe("createDeadlineItem", () => {
   });
 });
 
-// ============================================================================
 // sortByUrgency Tests
-// ============================================================================
 
 describe("sortByUrgency", () => {
   it("sorts by daysUntil ascending (most urgent first)", () => {
@@ -128,9 +120,7 @@ describe("sortByUrgency", () => {
   });
 });
 
-// ============================================================================
 // extractDeadlines Tests
-// ============================================================================
 
 describe("extractDeadlines", () => {
   // ------------------------------------------

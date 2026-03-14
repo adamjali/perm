@@ -18,9 +18,7 @@ import { TimelineGrid } from "../TimelineGrid";
 import type { TimelineCaseData } from "../TimelineGrid";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
-// ============================================================================
 // TEST FIXTURES
-// ============================================================================
 
 /**
  * Factory for creating test TimelineCaseData with sensible defaults.
@@ -53,9 +51,7 @@ function createMockCases(count: number): TimelineCaseData[] {
   );
 }
 
-// ============================================================================
 // EMPTY STATE TESTS
-// ============================================================================
 
 describe("TimelineGrid - Empty State", () => {
   it("renders empty state message when cases array is empty", () => {
@@ -84,9 +80,7 @@ describe("TimelineGrid - Empty State", () => {
   });
 });
 
-// ============================================================================
 // GRID STRUCTURE TESTS
-// ============================================================================
 
 describe("TimelineGrid - Grid Structure", () => {
   it("renders grid with correct number of rows", () => {
@@ -136,9 +130,7 @@ describe("TimelineGrid - Grid Structure", () => {
   });
 });
 
-// ============================================================================
 // MONTH HEADER TESTS
-// ============================================================================
 
 describe("TimelineGrid - Month Headers", () => {
   it("renders month headers for 6-month time range", () => {
@@ -201,9 +193,7 @@ describe("TimelineGrid - Month Headers", () => {
   });
 });
 
-// ============================================================================
 // CASE ROW TESTS
-// ============================================================================
 
 describe("TimelineGrid - Case Rows", () => {
   it("displays employer name in each row", () => {
@@ -267,9 +257,7 @@ describe("TimelineGrid - Case Rows", () => {
   });
 });
 
-// ============================================================================
 // MILESTONE POSITIONING TESTS
-// ============================================================================
 
 describe("TimelineGrid - Milestone Positioning", () => {
   it("renders milestones for cases with date data", () => {
@@ -330,9 +318,7 @@ describe("TimelineGrid - Milestone Positioning", () => {
   });
 });
 
-// ============================================================================
 // STYLING TESTS
-// ============================================================================
 
 describe("TimelineGrid - Neobrutalist Styling", () => {
   it("has 2px border on main container", () => {
@@ -386,9 +372,7 @@ describe("TimelineGrid - Neobrutalist Styling", () => {
   });
 });
 
-// ============================================================================
 // RESPONSIVE TESTS
-// ============================================================================
 
 describe("TimelineGrid - Responsive Layout", () => {
   it("has responsive sidebar widths", () => {
@@ -405,9 +389,7 @@ describe("TimelineGrid - Responsive Layout", () => {
   });
 });
 
-// ============================================================================
 // TIME RANGE TESTS
-// ============================================================================
 
 describe("TimelineGrid - Time Range Handling", () => {
   it("centers timeline around current date", () => {
@@ -442,9 +424,7 @@ describe("TimelineGrid - Time Range Handling", () => {
   });
 });
 
-// ============================================================================
 // EDGE CASES
-// ============================================================================
 
 describe("TimelineGrid - Edge Cases", () => {
   it("handles single case correctly", () => {

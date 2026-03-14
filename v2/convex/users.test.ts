@@ -1,13 +1,3 @@
-/**
- * @fileoverview Tests for Convex user functions
- * @see v2/convex/users.ts
- *
- * Tests cover:
- * - User profile CRUD operations
- * - Push subscription management
- * - Account deletion (requestAccountDeletion, cancelAccountDeletion)
- */
-
 import { describe, it, expect } from "vitest";
 import {
   createTestContext,
@@ -17,9 +7,7 @@ import {
 } from "../test-utils/convex";
 import { api, internal } from "./_generated/api";
 
-// ============================================================================
 // USER PROFILE TESTS
-// ============================================================================
 
 describe("User Profile", () => {
   setupSchedulerTests();
@@ -146,9 +134,7 @@ describe("User Profile", () => {
   });
 });
 
-// ============================================================================
 // PUSH SUBSCRIPTION TESTS
-// ============================================================================
 
 describe("Push Subscriptions", () => {
   setupSchedulerTests();
@@ -245,9 +231,7 @@ describe("Push Subscriptions", () => {
   });
 });
 
-// ============================================================================
 // ACCOUNT DELETION TESTS
-// ============================================================================
 
 describe("Account Deletion", () => {
   setupSchedulerTests();
@@ -563,9 +547,7 @@ describe("Account Deletion", () => {
   });
 });
 
-// ============================================================================
 // CURRENT USER QUERIES
-// ============================================================================
 
 describe("Current User Queries", () => {
   setupSchedulerTests();

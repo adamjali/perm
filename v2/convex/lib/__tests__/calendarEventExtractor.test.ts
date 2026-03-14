@@ -1,12 +1,3 @@
-/**
- * Calendar Event Extractor Test Suite
- *
- * Comprehensive tests for extracting calendar events from case data.
- *
- * @see ../calendarEventExtractor.ts - Source implementation
- * @see ../calendarTypes.ts - Type definitions
- */
-
 import { describe, it, expect } from "vitest";
 import {
   extractCalendarEvents,
@@ -20,9 +11,7 @@ import type {
 } from "../calendarTypes";
 import { Id } from "../../_generated/dataModel";
 
-// ============================================================================
 // TEST FIXTURES
-// ============================================================================
 
 const TODAY_ISO = "2025-01-15";
 
@@ -78,9 +67,7 @@ const createAllPreferencesDisabled = (): UserCalendarPreferences => ({
   calendarSyncFilingWindow: false,
 });
 
-// ============================================================================
 // extractCalendarEvents Tests - Basic Functionality
-// ============================================================================
 
 describe("extractCalendarEvents", () => {
   describe("PWD Expiration Events", () => {
@@ -671,9 +658,7 @@ describe("extractCalendarEvents", () => {
   });
 });
 
-// ============================================================================
 // getDefaultCalendarPreferences Tests
-// ============================================================================
 
 describe("getDefaultCalendarPreferences", () => {
   it("returns all preferences enabled", () => {

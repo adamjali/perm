@@ -17,9 +17,7 @@ import { renderWithProviders } from "../../../../../test-utils/render-utils";
 import TimelinePage from "../page";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
-// ============================================================================
 // MOCKS
-// ============================================================================
 
 // Track mock router behavior
 const mockRouterPush = vi.fn();
@@ -48,9 +46,7 @@ import { useQuery, useMutation } from "convex/react";
 // Default mock mutation function
 const mockUpdatePreferences = vi.fn().mockResolvedValue(undefined);
 
-// ============================================================================
 // TEST FIXTURES
-// ============================================================================
 
 /**
  * Create mock timeline case data.
@@ -109,9 +105,7 @@ function setupMocks(options: {
   vi.mocked(useMutation).mockReturnValue(mockUpdatePreferences);
 }
 
-// ============================================================================
 // SETUP AND TEARDOWN
-// ============================================================================
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -123,9 +117,7 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
-// ============================================================================
 // LOADING STATE TESTS
-// ============================================================================
 
 describe("TimelinePage - Loading State", () => {
   it("renders loading skeleton when preferences are undefined", () => {
@@ -158,9 +150,7 @@ describe("TimelinePage - Loading State", () => {
   });
 });
 
-// ============================================================================
 // AUTHENTICATION REDIRECT TESTS
-// ============================================================================
 
 describe("TimelinePage - Authentication", () => {
   it("redirects to login when preferences is null", () => {
@@ -180,9 +170,7 @@ describe("TimelinePage - Authentication", () => {
   });
 });
 
-// ============================================================================
 // EMPTY STATE TESTS
-// ============================================================================
 
 describe("TimelinePage - Empty State", () => {
   beforeEach(() => {
@@ -245,9 +233,7 @@ describe("TimelinePage - Empty State", () => {
   });
 });
 
-// ============================================================================
 // TIMELINE WITH CASES TESTS
-// ============================================================================
 
 describe("TimelinePage - Timeline with Cases", () => {
   const testCases = [
@@ -305,9 +291,7 @@ describe("TimelinePage - Timeline with Cases", () => {
   });
 });
 
-// ============================================================================
 // TIME RANGE DROPDOWN TESTS
-// ============================================================================
 
 describe("TimelinePage - Time Range Dropdown", () => {
   beforeEach(() => {
@@ -385,9 +369,7 @@ describe("TimelinePage - Time Range Dropdown", () => {
   });
 });
 
-// ============================================================================
 // SELECT CASES BUTTON TESTS
-// ============================================================================
 
 describe("TimelinePage - Select Cases Button", () => {
   it("renders Select Cases button", () => {
@@ -450,9 +432,7 @@ describe("TimelinePage - Select Cases Button", () => {
   });
 });
 
-// ============================================================================
 // LAYOUT TESTS
-// ============================================================================
 
 describe("TimelinePage - Layout", () => {
   beforeEach(() => {
@@ -493,9 +473,7 @@ describe("TimelinePage - Layout", () => {
   });
 });
 
-// ============================================================================
 // TIME RANGE STATE TESTS
-// ============================================================================
 
 describe("TimelinePage - Time Range State", () => {
   it("uses 6 months as default when preferences timeRange is undefined", () => {
@@ -518,9 +496,7 @@ describe("TimelinePage - Time Range State", () => {
   });
 });
 
-// ============================================================================
 // EDGE CASES
-// ============================================================================
 
 describe("TimelinePage - Edge Cases", () => {
   it("handles large number of cases", () => {

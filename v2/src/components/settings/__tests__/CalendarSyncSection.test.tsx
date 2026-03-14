@@ -20,9 +20,7 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import CalendarSyncSection from "../CalendarSyncSection";
 
-// ============================================================================
 // MOCKS
-// ============================================================================
 
 // Mock Convex hooks
 const mockUpdateProfile = vi.fn();
@@ -72,9 +70,7 @@ vi.mock("@/lib/toast", () => ({
 // Mock fetch for disconnect API
 const mockFetch = vi.fn();
 
-// ============================================================================
 // TEST DATA
-// ============================================================================
 
 const defaultProfile = {
   calendarSyncEnabled: false,
@@ -107,9 +103,7 @@ const enabledNotConnectedProfile = {
   googleCalendarConnected: false,
 };
 
-// ============================================================================
 // SETUP
-// ============================================================================
 
 describe("CalendarSyncSection", () => {
   // Store original fetch

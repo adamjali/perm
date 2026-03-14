@@ -1,16 +1,3 @@
-/**
- * @fileoverview Tests for Convex onboarding functions
- * @see v2/convex/onboarding.ts
- *
- * Tests cover:
- * - Onboarding state query (authenticated/unauthenticated/no profile)
- * - Onboarding step progression and completedAt logic
- * - Role selection saving
- * - Checklist item completion (append, dedup, dismissed guard)
- * - Checklist dismissal
- * - Onboarding reset
- */
-
 import { describe, it, expect } from "vitest";
 import {
   createTestContext,
@@ -18,9 +5,7 @@ import {
 } from "../test-utils/convex";
 import { api } from "./_generated/api";
 
-// ============================================================================
 // HELPERS
-// ============================================================================
 
 /** Insert a full userProfile for the authenticated user with all required schema fields. */
 async function insertProfile(
@@ -66,9 +51,7 @@ async function insertProfile(
   });
 }
 
-// ============================================================================
 // getOnboardingState
-// ============================================================================
 
 describe("getOnboardingState", () => {
   it("returns null for unauthenticated user", async () => {
@@ -128,9 +111,7 @@ describe("getOnboardingState", () => {
   });
 });
 
-// ============================================================================
 // updateOnboardingStep
-// ============================================================================
 
 describe("updateOnboardingStep", () => {
   it("throws for unauthenticated user", async () => {
@@ -228,9 +209,7 @@ describe("updateOnboardingStep", () => {
   });
 });
 
-// ============================================================================
 // saveOnboardingRole
-// ============================================================================
 
 describe("saveOnboardingRole", () => {
   it("throws for unauthenticated user", async () => {
@@ -274,9 +253,7 @@ describe("saveOnboardingRole", () => {
   });
 });
 
-// ============================================================================
 // completeChecklistItem
-// ============================================================================
 
 describe("completeChecklistItem", () => {
   it("throws for unauthenticated user", async () => {
@@ -365,9 +342,7 @@ describe("completeChecklistItem", () => {
   });
 });
 
-// ============================================================================
 // dismissChecklist
-// ============================================================================
 
 describe("dismissChecklist", () => {
   it("throws for unauthenticated user", async () => {
@@ -414,9 +389,7 @@ describe("dismissChecklist", () => {
   });
 });
 
-// ============================================================================
 // resetOnboarding
-// ============================================================================
 
 describe("resetOnboarding", () => {
   it("throws for unauthenticated user", async () => {

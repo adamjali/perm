@@ -18,9 +18,7 @@ import { TimelineMilestoneMarker } from "../TimelineMilestoneMarker";
 import type { TimelineMilestoneMarkerProps } from "../TimelineMilestoneMarker";
 import type { Milestone } from "@/lib/timeline/types";
 
-// ============================================================================
 // TEST FIXTURES
-// ============================================================================
 
 /**
  * Factory for creating test Milestone data.
@@ -48,9 +46,7 @@ function getDefaultProps(): TimelineMilestoneMarkerProps {
   };
 }
 
-// ============================================================================
 // RENDERING TESTS
-// ============================================================================
 
 describe("TimelineMilestoneMarker - Rendering", () => {
   it("renders milestone marker", () => {
@@ -81,9 +77,7 @@ describe("TimelineMilestoneMarker - Rendering", () => {
   });
 });
 
-// ============================================================================
 // POSITION TESTS
-// ============================================================================
 
 describe("TimelineMilestoneMarker - Position", () => {
   it("positions at 0% for position=0", () => {
@@ -141,9 +135,7 @@ describe("TimelineMilestoneMarker - Position", () => {
   });
 });
 
-// ============================================================================
 // COLOR TESTS
-// ============================================================================
 
 describe("TimelineMilestoneMarker - Stage Colors", () => {
   it("applies PWD stage color (#0066FF)", () => {
@@ -222,9 +214,7 @@ describe("TimelineMilestoneMarker - Stage Colors", () => {
   });
 });
 
-// ============================================================================
 // TOOLTIP TESTS
-// ============================================================================
 
 describe("TimelineMilestoneMarker - Tooltip", () => {
   it("shows tooltip with milestone label on hover", async () => {
@@ -316,9 +306,7 @@ describe("TimelineMilestoneMarker - Tooltip", () => {
   });
 });
 
-// ============================================================================
 // CLICK NAVIGATION TESTS
-// ============================================================================
 
 describe("TimelineMilestoneMarker - Click Navigation", () => {
   it("calls onNavigate with caseId when clicked", async () => {
@@ -402,9 +390,7 @@ describe("TimelineMilestoneMarker - Click Navigation", () => {
   });
 });
 
-// ============================================================================
 // HOVER EFFECTS TESTS
-// ============================================================================
 
 describe("TimelineMilestoneMarker - Hover Effects", () => {
   it("renders dot with rounded-full class for animations", () => {
@@ -454,9 +440,7 @@ describe("TimelineMilestoneMarker - Hover Effects", () => {
   });
 });
 
-// ============================================================================
 // STYLING TESTS
-// ============================================================================
 
 describe("TimelineMilestoneMarker - Neobrutalist Styling", () => {
   it("has 16px (w-4 h-4) dot size", () => {
@@ -505,9 +489,7 @@ describe("TimelineMilestoneMarker - Neobrutalist Styling", () => {
   });
 });
 
-// ============================================================================
 // CALCULATED MILESTONE TESTS
-// ============================================================================
 
 describe("TimelineMilestoneMarker - Calculated Milestones", () => {
   it("has dashed border for calculated milestones", () => {
@@ -535,9 +517,7 @@ describe("TimelineMilestoneMarker - Calculated Milestones", () => {
   });
 });
 
-// ============================================================================
 // ACCESSIBILITY TESTS
-// ============================================================================
 
 describe("TimelineMilestoneMarker - Accessibility", () => {
   it("has accessible aria-label with milestone info", () => {
@@ -594,9 +574,7 @@ describe("TimelineMilestoneMarker - Accessibility", () => {
   });
 });
 
-// ============================================================================
 // EDGE CASES
-// ============================================================================
 
 describe("TimelineMilestoneMarker - Edge Cases", () => {
   it("handles very long milestone labels", async () => {

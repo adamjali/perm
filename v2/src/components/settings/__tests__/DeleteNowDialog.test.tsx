@@ -4,9 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import DeleteNowDialog from "../DeleteNowDialog";
 
-// ============================================================================
 // MOCKS
-// ============================================================================
 
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -41,9 +39,7 @@ vi.mock("@/lib/toast", () => ({
   updateToastAuthState: vi.fn(),
 }));
 
-// ============================================================================
 // TESTS
-// ============================================================================
 
 describe("DeleteNowDialog", () => {
   const defaultProps = {

@@ -20,9 +20,7 @@ import { renderWithProviders } from "../../../../test-utils/render-utils";
 import { CaseSelectionModal } from "../CaseSelectionModal";
 import type { CaseForSelection } from "../CaseSelectionItem";
 
-// ============================================================================
 // TEST FIXTURES
-// ============================================================================
 
 /**
  * Mock case data for testing.
@@ -81,9 +79,7 @@ function createDefaultProps(
   };
 }
 
-// ============================================================================
 // RENDER TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Render", () => {
   it("renders when isOpen is true", () => {
@@ -147,9 +143,7 @@ describe("CaseSelectionModal - Render", () => {
   });
 });
 
-// ============================================================================
 // CASE COUNT DISPLAY TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Case Count Display", () => {
   it("displays correct case count 'Showing X of Y cases'", () => {
@@ -184,9 +178,7 @@ describe("CaseSelectionModal - Case Count Display", () => {
   });
 });
 
-// ============================================================================
 // CASE LIST TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Case List", () => {
   it("displays all cases", () => {
@@ -247,9 +239,7 @@ describe("CaseSelectionModal - Case List", () => {
   });
 });
 
-// ============================================================================
 // CHECKBOX TOGGLE TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Checkbox Toggle", () => {
   it("clicking case item toggles selection", async () => {
@@ -294,9 +284,7 @@ describe("CaseSelectionModal - Checkbox Toggle", () => {
   });
 });
 
-// ============================================================================
 // SELECT ALL BUTTON TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Select All Button", () => {
   it("selects all visible cases when clicked", async () => {
@@ -340,9 +328,7 @@ describe("CaseSelectionModal - Select All Button", () => {
   });
 });
 
-// ============================================================================
 // DESELECT ALL BUTTON TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Deselect All Button", () => {
   it("deselects all visible cases when clicked", async () => {
@@ -390,9 +376,7 @@ describe("CaseSelectionModal - Deselect All Button", () => {
   });
 });
 
-// ============================================================================
 // ACTIVE ONLY BUTTON TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Active Only Button", () => {
   it("selects only non-closed cases", async () => {
@@ -412,9 +396,7 @@ describe("CaseSelectionModal - Active Only Button", () => {
   });
 });
 
-// ============================================================================
 // SAVE CHANGES BUTTON TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Save Changes", () => {
   it("calls onSelectionChange with selected IDs", async () => {
@@ -471,9 +453,7 @@ describe("CaseSelectionModal - Save Changes", () => {
   });
 });
 
-// ============================================================================
 // CANCEL BUTTON TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Cancel", () => {
   it("calls onClose when Cancel is clicked", async () => {
@@ -532,9 +512,7 @@ describe("CaseSelectionModal - Cancel", () => {
   });
 });
 
-// ============================================================================
 // EMPTY STATE TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Empty State", () => {
   it("shows empty message when no cases match search", async () => {
@@ -582,9 +560,7 @@ describe("CaseSelectionModal - Empty State", () => {
   });
 });
 
-// ============================================================================
 // SEARCH FUNCTIONALITY TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Search Functionality", () => {
   it("filters cases by employer name", async () => {
@@ -642,9 +618,7 @@ describe("CaseSelectionModal - Search Functionality", () => {
   });
 });
 
-// ============================================================================
 // SORT FUNCTIONALITY TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Sort Functionality", () => {
   it("sorts by name alphabetically by default", () => {
@@ -681,9 +655,7 @@ describe("CaseSelectionModal - Sort Functionality", () => {
   });
 });
 
-// ============================================================================
 // FILTER FUNCTIONALITY TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Filter Functionality", () => {
   it("filters to active cases when Active is selected", async () => {
@@ -727,9 +699,7 @@ describe("CaseSelectionModal - Filter Functionality", () => {
   });
 });
 
-// ============================================================================
 // KEYBOARD ACCESSIBILITY TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Keyboard Accessibility", () => {
   it("case items are focusable", () => {
@@ -769,9 +739,7 @@ describe("CaseSelectionModal - Keyboard Accessibility", () => {
   });
 });
 
-// ============================================================================
 // DIALOG BEHAVIOR TESTS
-// ============================================================================
 
 describe("CaseSelectionModal - Dialog Behavior", () => {
   it("syncs local selection when modal opens", () => {

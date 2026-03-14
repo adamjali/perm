@@ -1,25 +1,10 @@
-/**
- * Scheduled Jobs Tests
- *
- * Comprehensive tests for the scheduled notification jobs:
- * - getCasesNeedingReminders: Query cases with upcoming deadlines
- * - getOldReadNotifications: Query old read notifications for cleanup
- * - cleanupOldNotifications: Delete old read notifications
- * - checkDeadlineReminders: Main daily job for deadline reminders
- *
- * @see /convex/scheduledJobs.ts - Scheduled job implementations
- * @see /convex/crons.ts - Cron scheduling configuration
- */
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { daysFromNow, daysAgo } from "../../test-utils/dashboard-fixtures";
 
-// ============================================================================
 // TEST UTILITIES
-// ============================================================================
 
 /**
  * Create a test user with profile.
@@ -151,9 +136,7 @@ async function createTestCaseWithDeadlines(
   return caseId;
 }
 
-// ============================================================================
 // getCasesNeedingReminders TESTS
-// ============================================================================
 
 describe("Scheduled Jobs", () => {
   // Set up fake timers for scheduler tests

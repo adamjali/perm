@@ -22,16 +22,12 @@ import { renderWithProviders } from "../../../../../test-utils/render-utils";
 import { InlineCaseTimeline } from "../InlineCaseTimeline";
 import type { CaseWithDates } from "@/lib/timeline";
 
-// ============================================================================
 // MOCK SETUP
-// ============================================================================
 
 // We do NOT mock the timeline utilities since they are pure functions
 // and we want to test the full integration
 
-// ============================================================================
 // TEST FIXTURES
-// ============================================================================
 
 /**
  * Factory for creating mock case data with dates.
@@ -67,9 +63,7 @@ function getRelativeMonthDate(monthsFromToday: number): string {
   return date.toISOString().split("T")[0] as string;
 }
 
-// ============================================================================
 // EMPTY CASE TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - Empty Case", () => {
   it("returns null when case has no dates", () => {
@@ -121,9 +115,7 @@ describe("InlineCaseTimeline - Empty Case", () => {
   });
 });
 
-// ============================================================================
 // MILESTONE RENDERING TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - Milestone Rendering", () => {
   it("renders milestones for populated date fields", { timeout: 10000 }, () => {
@@ -183,9 +175,7 @@ describe("InlineCaseTimeline - Milestone Rendering", () => {
   });
 });
 
-// ============================================================================
 // MILESTONE POSITIONING TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - Milestone Positioning", () => {
   it("positions milestones within the 6-month window", () => {
@@ -228,9 +218,7 @@ describe("InlineCaseTimeline - Milestone Positioning", () => {
   });
 });
 
-// ============================================================================
 // RANGE BAR TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - Range Bars", () => {
   it("renders job order range bar when both dates exist", () => {
@@ -294,9 +282,7 @@ describe("InlineCaseTimeline - Range Bars", () => {
   });
 });
 
-// ============================================================================
 // TOOLTIP TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - Tooltips", () => {
   it("shows tooltip with label and date on milestone hover", async () => {
@@ -336,9 +322,7 @@ describe("InlineCaseTimeline - Tooltips", () => {
   });
 });
 
-// ============================================================================
 // STAGE COLOR TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - Stage Colors", () => {
   it("displays PWD milestones in blue (#0066FF)", () => {
@@ -402,9 +386,7 @@ describe("InlineCaseTimeline - Stage Colors", () => {
   });
 });
 
-// ============================================================================
 // LEGEND TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - Legend", () => {
   it("renders legend with stage colors", () => {
@@ -448,9 +430,7 @@ describe("InlineCaseTimeline - Legend", () => {
   });
 });
 
-// ============================================================================
 // WINDOW FILTERING TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - Window Filtering", () => {
   it("auto-fits window to include distant past milestones", () => {
@@ -507,9 +487,7 @@ describe("InlineCaseTimeline - Window Filtering", () => {
   });
 });
 
-// ============================================================================
 // MONTH HEADERS TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - Month Headers", () => {
   it("renders month headers for 6 months", () => {
@@ -545,9 +523,7 @@ describe("InlineCaseTimeline - Month Headers", () => {
   });
 });
 
-// ============================================================================
 // CALCULATED MILESTONES TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - Calculated Milestones", () => {
   // Complete recruitment data required for isRecruitmentComplete() to return true,
@@ -604,9 +580,7 @@ describe("InlineCaseTimeline - Calculated Milestones", () => {
   });
 });
 
-// ============================================================================
 // RFI/RFE DEADLINE TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - RFI/RFE Deadlines", () => {
   it("shows active RFI deadline milestone", () => {
@@ -676,9 +650,7 @@ describe("InlineCaseTimeline - RFI/RFE Deadlines", () => {
   });
 });
 
-// ============================================================================
 // ACCESSIBILITY TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - Accessibility", () => {
   it("milestones have accessible aria-labels", () => {
@@ -729,9 +701,7 @@ describe("InlineCaseTimeline - Accessibility", () => {
   });
 });
 
-// ============================================================================
 // RESPONSIVE/STYLING TESTS
-// ============================================================================
 
 describe("InlineCaseTimeline - Styling", () => {
   it("has full width container", () => {

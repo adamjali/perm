@@ -162,9 +162,7 @@ describe("Cases Security", () => {
   });
 });
 
-// ============================================================================
 // Bulk Operations Tests (4.3)
-// ============================================================================
 
 describe("Bulk Operations", () => {
   // Enable fake timers for scheduled function handling
@@ -1069,9 +1067,7 @@ describe("Cases List Filtered", () => {
   });
 });
 
-// ============================================================================
 // Calendar Sync Integration Tests (ISS-022)
-// ============================================================================
 
 describe("Calendar Sync Integration", () => {
   setupSchedulerTests();

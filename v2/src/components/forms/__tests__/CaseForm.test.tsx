@@ -4,9 +4,7 @@ import { renderWithProviders } from '../../../../test-utils/render-utils';
 import { CaseForm } from '../CaseForm';
 import type { CaseFormData } from '@/lib/forms/case-form-schema';
 
-// ============================================================================
 // MOCKS
-// ============================================================================
 
 const mockUseMutation = vi.fn();
 
@@ -33,9 +31,7 @@ vi.mock('@/lib/forms/case-form-schema', async (importOriginal) => {
   };
 });
 
-// ============================================================================
 // FIXTURES
-// ============================================================================
 
 const mockInitialData: Partial<CaseFormData> = {
   employerName: 'Test Corp',
@@ -47,9 +43,7 @@ const mockInitialData: Partial<CaseFormData> = {
   pwdDeterminationDate: '2024-02-01',
 };
 
-// ============================================================================
 // TESTS
-// ============================================================================
 
 describe('CaseForm', () => {
   beforeEach(() => {

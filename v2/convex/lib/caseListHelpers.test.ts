@@ -9,9 +9,7 @@ import {
   filterBySearch,
 } from "./caseListHelpers";
 
-// ============================================================================
 // TEST FIXTURES
-// ============================================================================
 
 const createMockCase = (overrides: Partial<any> = {}): any => ({
   _id: "case123" as Id<"cases">,
@@ -28,9 +26,7 @@ const createMockCase = (overrides: Partial<any> = {}): any => ({
   ...overrides,
 });
 
-// ============================================================================
 // calculateNextDeadline TESTS
-// ============================================================================
 
 describe("calculateNextDeadline", () => {
   const TODAY = "2025-01-15";
@@ -424,9 +420,7 @@ describe("calculateNextDeadline", () => {
   });
 });
 
-// ============================================================================
 // projectCaseForCard TESTS
-// ============================================================================
 
 describe("projectCaseForCard", () => {
   const TODAY = "2025-01-15";
@@ -507,9 +501,7 @@ describe("projectCaseForCard", () => {
   });
 });
 
-// ============================================================================
 // sortCases TESTS
-// ============================================================================
 
 describe("sortCases", () => {
   const createCardData = (overrides: Partial<any> = {}): CaseCardData => {
@@ -782,9 +774,7 @@ describe("sortCases", () => {
   });
 });
 
-// ============================================================================
 // filterBySearch TESTS
-// ============================================================================
 
 describe("filterBySearch", () => {
   const cases = [

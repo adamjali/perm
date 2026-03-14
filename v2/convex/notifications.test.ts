@@ -1,15 +1,3 @@
-/**
- * Notification Tests
- *
- * Comprehensive tests for the notification system including:
- * - Query tests (getUnreadCount, getRecentNotifications, getNotifications, etc.)
- * - Mutation tests (markAsRead, markAllAsRead, deleteNotification, etc.)
- * - Helper function tests (generateNotificationTitle, calculatePriority, shouldSendEmail, etc.)
- *
- * @see /convex/notifications.ts - Main notification queries and mutations
- * @see /convex/lib/notificationHelpers.ts - Pure helper functions
- */
-
 import { describe, it, expect } from "vitest";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions } from "../test-utils/convex";
 import { api, internal } from "./_generated/api";
@@ -24,9 +12,7 @@ import {
   type UserNotificationPrefs,
 } from "./lib/notificationHelpers";
 
-// ============================================================================
 // QUERY TESTS
-// ============================================================================
 
 describe("Notifications", () => {
   // Enable fake timers for scheduled function handling

@@ -1,12 +1,3 @@
-/**
- * Calendar Helpers Test Suite
- *
- * Comprehensive tests for calendar event formatting and utility functions.
- *
- * @see ../calendarHelpers.ts - Source implementation
- * @see ../calendarTypes.ts - Type definitions
- */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   isValidISODate,
@@ -25,9 +16,7 @@ import {
 import type { CalendarEventInput, CalendarEventType } from "../calendarTypes";
 import { Id } from "../../_generated/dataModel";
 
-// ============================================================================
 // TEST FIXTURES
-// ============================================================================
 
 const createEventInput = (
   overrides: Partial<CalendarEventInput> = {}
@@ -40,9 +29,7 @@ const createEventInput = (
   ...overrides,
 });
 
-// ============================================================================
 // isValidISODate Tests
-// ============================================================================
 
 describe("isValidISODate", () => {
   it("validates YYYY-MM-DD format", () => {
@@ -100,9 +87,7 @@ describe("isValidISODate", () => {
   });
 });
 
-// ============================================================================
 // isFutureDate Tests
-// ============================================================================
 
 describe("isFutureDate", () => {
   const TODAY = "2025-01-15";
@@ -158,9 +143,7 @@ describe("isFutureDate", () => {
   });
 });
 
-// ============================================================================
 // toGoogleCalendarDate Tests
-// ============================================================================
 
 describe("toGoogleCalendarDate", () => {
   it("returns date object for valid date", () => {
@@ -186,9 +169,7 @@ describe("toGoogleCalendarDate", () => {
   });
 });
 
-// ============================================================================
 // formatEventTitle Tests
-// ============================================================================
 
 describe("formatEventTitle", () => {
   it("formats title with type and employer", () => {
@@ -251,9 +232,7 @@ describe("formatEventTitle", () => {
   });
 });
 
-// ============================================================================
 // formatEventDescription Tests
-// ============================================================================
 
 describe("formatEventDescription", () => {
   it("includes all case details", () => {
@@ -339,9 +318,7 @@ describe("formatEventDescription", () => {
   });
 });
 
-// ============================================================================
 // formatCalendarEvent Tests
-// ============================================================================
 
 describe("formatCalendarEvent", () => {
   it("returns complete event result", () => {
@@ -380,9 +357,7 @@ describe("formatCalendarEvent", () => {
   });
 });
 
-// ============================================================================
 // getEventTypeLabel Tests
-// ============================================================================
 
 describe("getEventTypeLabel", () => {
   const expectedLabels: Record<CalendarEventType, string> = {
@@ -408,9 +383,7 @@ describe("getEventTypeLabel", () => {
   }
 });
 
-// ============================================================================
 // isRfiRfeEventType Tests
-// ============================================================================
 
 describe("isRfiRfeEventType", () => {
   it("returns true for rfi_due", () => {
@@ -446,9 +419,7 @@ describe("isRfiRfeEventType", () => {
   });
 });
 
-// ============================================================================
 // isCalendarEventType Tests
-// ============================================================================
 
 describe("isCalendarEventType", () => {
   it("returns true for all valid event types", () => {
@@ -465,9 +436,7 @@ describe("isCalendarEventType", () => {
   });
 });
 
-// ============================================================================
 // isRetryableError Tests
-// ============================================================================
 
 describe("isRetryableError", () => {
   it("returns true for 429 status", () => {
@@ -564,9 +533,7 @@ describe("isRetryableError", () => {
   });
 });
 
-// ============================================================================
 // withExponentialBackoff Tests
-// ============================================================================
 
 describe("withExponentialBackoff", () => {
   beforeEach(() => {
@@ -682,9 +649,7 @@ describe("withExponentialBackoff", () => {
   });
 });
 
-// ============================================================================
 // ALL_CALENDAR_EVENT_TYPES Tests
-// ============================================================================
 
 describe("ALL_CALENDAR_EVENT_TYPES", () => {
   it("contains all 13 event types", () => {

@@ -4,9 +4,7 @@ import { I140Section } from "../I140Section";
 import { CaseFormProvider } from "../../CaseFormContext";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
 
-// ============================================================================
 // FIXTURES
-// ============================================================================
 
 const mockOnChange = vi.fn();
 const mockOnDateChange = vi.fn();
@@ -75,9 +73,7 @@ const createMockValues = (overrides?: Partial<CaseFormData>): Partial<CaseFormDa
   ...overrides,
 });
 
-// ============================================================================
 // TESTS: Filing Deadline Calculation
-// ============================================================================
 
 describe("I140Section - Filing Deadline", () => {
   it("should calculate filing deadline as ETA 9089 certification + 180 days", () => {
@@ -186,9 +182,7 @@ describe("I140Section - Filing Deadline", () => {
   });
 });
 
-// ============================================================================
 // TESTS: Validation
-// ============================================================================
 
 describe("I140Section - Validation", () => {
   it("should display error when filing date is after deadline", () => {
@@ -269,9 +263,7 @@ describe("I140Section - Validation", () => {
   });
 });
 
-// ============================================================================
 // TESTS: Category Dropdown
-// ============================================================================
 
 describe("I140Section - Category Dropdown", () => {
   it("should have all EB category options", () => {
@@ -302,9 +294,7 @@ describe("I140Section - Category Dropdown", () => {
   });
 });
 
-// ============================================================================
 // TESTS: Premium Processing Checkbox
-// ============================================================================
 
 describe("I140Section - Premium Processing", () => {
   it("should render premium processing checkbox", () => {
@@ -336,9 +326,7 @@ describe("I140Section - Premium Processing", () => {
   });
 });
 
-// ============================================================================
 // TESTS: Completion Badge
-// ============================================================================
 
 describe("I140Section - Completion Badge", () => {
   it("should show completion badge when approval date is set", () => {
@@ -374,9 +362,7 @@ describe("I140Section - Completion Badge", () => {
   });
 });
 
-// ============================================================================
 // TESTS: Form Fields
-// ============================================================================
 
 describe("I140Section - Form Fields", () => {
   it("should render all required form fields", () => {

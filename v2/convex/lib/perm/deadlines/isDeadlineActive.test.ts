@@ -370,9 +370,7 @@ describe("isDeadlineActive", () => {
   });
 });
 
-// ==========================================================================
 // Helper Functions
-// ==========================================================================
 
 describe("getActiveRfiEntry", () => {
   it("returns first active RFI entry", () => {
@@ -449,9 +447,7 @@ describe("getActiveRfeEntry", () => {
   });
 });
 
-// ==========================================================================
 // Per-Step Recruitment Deadlines
-// ==========================================================================
 
 describe("per-step recruitment deadline supersession", () => {
   describe("job_order_start_deadline", () => {

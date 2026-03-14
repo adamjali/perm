@@ -18,9 +18,7 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import NotificationPreferencesSection from "../NotificationPreferencesSection";
 
-// ============================================================================
 // MOCKS
-// ============================================================================
 
 // Mock Convex hooks
 const mockUpdateProfile = vi.fn();
@@ -83,9 +81,7 @@ vi.mock("@/lib/toast", () => ({
   updateToastAuthState: vi.fn(),
 }));
 
-// ============================================================================
 // TEST DATA
-// ============================================================================
 
 const defaultProfile = {
   emailNotificationsEnabled: true,
@@ -115,9 +111,7 @@ const pushEnabledProfile = {
 
 const TEST_EMAIL = "test@example.com";
 
-// ============================================================================
 // SETUP
-// ============================================================================
 
 describe("NotificationPreferencesSection", () => {
   beforeEach(() => {

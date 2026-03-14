@@ -10,9 +10,7 @@ import {
 } from "./timezones";
 import type { DeadlineType } from "./types";
 
-// ============================================================================
 // CONSTANTS
-// ============================================================================
 
 describe("DEADLINE_TIMEZONE_RULES", () => {
   it("has a rule for every deadline type", () => {
@@ -64,9 +62,7 @@ describe("DOL_TIMEZONE", () => {
   });
 });
 
-// ============================================================================
 // HELPER FUNCTIONS
-// ============================================================================
 
 describe("getEffectiveTimezone", () => {
   it("returns DOL timezone for 'dol' rule", () => {
@@ -201,9 +197,7 @@ describe("getTimezoneDisplayLabel", () => {
   });
 });
 
-// ============================================================================
 // INTEGRATION: timezone rules + extractActiveDeadlines
-// ============================================================================
 
 describe("timezone rule integration", () => {
   it("filing_window_closes and rfi_due are the only DOL deadlines", () => {

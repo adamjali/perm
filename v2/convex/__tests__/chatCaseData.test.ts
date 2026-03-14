@@ -1,14 +1,3 @@
-/**
- * Chat Case Data Query Tests
- *
- * Comprehensive tests for the chatbot case query functions:
- * - queryCases: Flexible case filtering with field projection
- * - getCaseById: Single case lookup with ownership verification
- * - getCaseSummary: Aggregate statistics for case overview
- *
- * @see /convex/chatCaseData.ts - Implementation
- */
-
 import { describe, it, expect } from "vitest";
 import {
   createTestContext,
@@ -58,9 +47,7 @@ function getCases(result: QueryResultWithCases | QueryResultCountOnly): Array<Re
   return result.cases;
 }
 
-// ============================================================================
 // TEST DATA FACTORIES
-// ============================================================================
 
 /**
  * Factory to create test case data with defaults
@@ -159,9 +146,7 @@ function getDaysFromNow(days: number): string {
   return date.toISOString().split("T")[0]!;
 }
 
-// ============================================================================
 // QUERRYCASES TESTS
-// ============================================================================
 
 describe("queryCases", () => {
   setupSchedulerTests();
@@ -690,9 +675,7 @@ describe("queryCases", () => {
   });
 });
 
-// ============================================================================
 // GETCASEBYID TESTS
-// ============================================================================
 
 describe("getCaseById", () => {
   setupSchedulerTests();
@@ -831,9 +814,7 @@ describe("getCaseById", () => {
   });
 });
 
-// ============================================================================
 // GETCASESUMMARY TESTS
-// ============================================================================
 
 describe("getCaseSummary", () => {
   setupSchedulerTests();

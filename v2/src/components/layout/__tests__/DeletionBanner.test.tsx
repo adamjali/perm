@@ -4,9 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import DeletionBanner from "../DeletionBanner";
 
-// ============================================================================
 // MOCKS
-// ============================================================================
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard",
@@ -25,9 +23,7 @@ const mockSetItem = vi.fn((key: string, value: string) => {
   mockSessionStorage[key] = value;
 });
 
-// ============================================================================
 // HELPERS
-// ============================================================================
 
 const futureDate = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days from now
 
@@ -39,9 +35,7 @@ const noDeleteProfile = {
   deletedAt: undefined,
 };
 
-// ============================================================================
 // TESTS
-// ============================================================================
 
 describe("DeletionBanner", () => {
   beforeEach(() => {

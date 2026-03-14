@@ -20,9 +20,7 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import ProfileSection from "../ProfileSection";
 
-// ============================================================================
 // MOCKS
-// ============================================================================
 
 // Mock Convex hooks
 const mockUpdateProfile = vi.fn();
@@ -51,9 +49,7 @@ vi.mock("../SettingsUnsavedChangesContext", () => ({
 // Mock Intl for timezone detection
 const originalIntl = globalThis.Intl;
 
-// ============================================================================
 // TEST DATA
-// ============================================================================
 
 const defaultProfile = {
   fullName: "John Doe",
@@ -75,9 +71,7 @@ const emptyProfile = {
 
 const defaultEmail = "john.doe@example.com";
 
-// ============================================================================
 // SETUP
-// ============================================================================
 
 describe("ProfileSection", () => {
   beforeEach(() => {

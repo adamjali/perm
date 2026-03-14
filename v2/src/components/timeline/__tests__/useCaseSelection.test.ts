@@ -25,9 +25,7 @@ import { renderHook, act } from "@testing-library/react";
 import useCaseSelection from "../useCaseSelection";
 import type { CaseForSelection } from "../CaseSelectionItem";
 
-// ============================================================================
 // TEST FIXTURES
-// ============================================================================
 
 /**
  * Mock case data for testing.
@@ -87,9 +85,7 @@ function createMockCase(
   };
 }
 
-// ============================================================================
 // SEARCH FUNCTIONALITY TESTS
-// ============================================================================
 
 describe("useCaseSelection - Search", () => {
   it("filters cases by employer name", () => {
@@ -232,9 +228,7 @@ describe("useCaseSelection - Search", () => {
   });
 });
 
-// ============================================================================
 // SORT FUNCTIONALITY TESTS
-// ============================================================================
 
 describe("useCaseSelection - Sort", () => {
   it("sorts by name alphabetically (default)", () => {
@@ -317,9 +311,7 @@ describe("useCaseSelection - Sort", () => {
   });
 });
 
-// ============================================================================
 // FILTER FUNCTIONALITY TESTS
-// ============================================================================
 
 describe("useCaseSelection - Filter", () => {
   it("shows all cases when filter is 'all'", () => {
@@ -453,9 +445,7 @@ describe("useCaseSelection - Filter", () => {
   });
 });
 
-// ============================================================================
 // SELECTION FUNCTIONALITY TESTS
-// ============================================================================
 
 describe("useCaseSelection - toggleCase", () => {
   it("adds case to selection when not selected", () => {
@@ -711,9 +701,7 @@ describe("useCaseSelection - selectActiveOnly", () => {
   });
 });
 
-// ============================================================================
 // DIRTY STATE TESTS
-// ============================================================================
 
 describe("useCaseSelection - hasChanges", () => {
   it("returns false when selection matches initial", () => {
@@ -805,9 +793,7 @@ describe("useCaseSelection - hasChanges", () => {
   });
 });
 
-// ============================================================================
 // UTILITY FUNCTION TESTS
-// ============================================================================
 
 describe("useCaseSelection - getSelectedArray", () => {
   it("returns selected IDs as array", () => {
@@ -837,9 +823,7 @@ describe("useCaseSelection - getSelectedArray", () => {
   });
 });
 
-// ============================================================================
 // INITIALIZATION TESTS
-// ============================================================================
 
 describe("useCaseSelection - Initialization", () => {
   it("initializes selectedIds from initialSelectedIds", () => {
@@ -889,9 +873,7 @@ describe("useCaseSelection - Initialization", () => {
   });
 });
 
-// ============================================================================
 // EDGE CASES
-// ============================================================================
 
 describe("useCaseSelection - Edge Cases", () => {
   it("handles empty cases array", () => {

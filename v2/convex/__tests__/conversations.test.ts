@@ -1,17 +1,3 @@
-/**
- * Conversations CRUD Tests
- *
- * Comprehensive tests for the conversation management module:
- * - create: Create new conversations with optional title and metadata
- * - get: Retrieve a single conversation by ID with ownership verification
- * - list: List user's conversations
- * - updateTitle: Update conversation title with ownership verification
- * - deleteConversation: Permanently delete conversation and all messages
- *
- * @see /convex/conversations.ts - Conversation implementations
- * @see /convex/conversationMessages.ts - Message implementations
- */
-
 import { describe, it, expect } from "vitest";
 import {
   createTestContext,
@@ -21,9 +7,7 @@ import {
 } from "../../test-utils/convex";
 import { api } from "../_generated/api";
 
-// ============================================================================
 // CONVERSATIONS TESTS
-// ============================================================================
 
 describe("conversations", () => {
   // Set up fake timers for scheduler tests (needed for time-based ordering)

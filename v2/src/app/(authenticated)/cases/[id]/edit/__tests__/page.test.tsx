@@ -5,9 +5,7 @@ import { useQuery } from 'convex/react';
 import EditCasePage from '../page';
 import type { Doc } from '../../../../../../../convex/_generated/dataModel';
 
-// ============================================================================
 // MOCKS
-// ============================================================================
 
 vi.mock('next/navigation', () => ({
   useParams: vi.fn(),
@@ -51,9 +49,7 @@ vi.mock('@/components/forms/CaseForm', () => ({
   }),
 }));
 
-// ============================================================================
 // TEST DATA
-// ============================================================================
 
 const mockCaseData: Partial<Doc<'cases'>> = {
   _id: 'test-case-id' as any,
@@ -77,9 +73,7 @@ const mockCaseData: Partial<Doc<'cases'>> = {
   updatedAt: 1234567890,
 };
 
-// ============================================================================
 // TESTS
-// ============================================================================
 
 describe('EditCasePage', () => {
   const mockPush = vi.fn();

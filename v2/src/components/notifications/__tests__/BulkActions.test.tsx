@@ -39,9 +39,7 @@ vi.mock("@/lib/toast", () => ({
 import { useQuery, useMutation } from "convex/react";
 import { toast } from "@/lib/toast";
 
-// ============================================================================
 // SETUP
-// ============================================================================
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -57,9 +55,7 @@ beforeEach(() => {
   (useMutation as Mock).mockReturnValue(vi.fn().mockResolvedValue({ count: 0 }));
 });
 
-// ============================================================================
 // RENDERING TESTS
-// ============================================================================
 
 describe("BulkActions - Rendering", () => {
   it("renders Mark All Read button", () => {
@@ -100,9 +96,7 @@ describe("BulkActions - Rendering", () => {
   });
 });
 
-// ============================================================================
 // DISABLED STATE TESTS
-// ============================================================================
 
 describe("BulkActions - Disabled States", () => {
   it("disables Mark All Read button when unread count is 0", () => {
@@ -158,9 +152,7 @@ describe("BulkActions - Disabled States", () => {
   });
 });
 
-// ============================================================================
 // COUNT BADGE TESTS
-// ============================================================================
 
 describe("BulkActions - Count Badges", () => {
   it("shows unread count badge on Mark All Read button", () => {
@@ -212,9 +204,7 @@ describe("BulkActions - Count Badges", () => {
   });
 });
 
-// ============================================================================
 // MARK ALL READ TESTS
-// ============================================================================
 
 describe("BulkActions - Mark All Read", () => {
   it("calls markAllAsRead mutation when button clicked", async () => {
@@ -316,9 +306,7 @@ describe("BulkActions - Mark All Read", () => {
   });
 });
 
-// ============================================================================
 // DELETE ALL READ TESTS
-// ============================================================================
 
 describe("BulkActions - Delete All Read", () => {
   it("opens confirmation dialog when delete button clicked", async () => {
@@ -492,9 +480,7 @@ describe("BulkActions - Delete All Read", () => {
   });
 });
 
-// ============================================================================
 // LOADING STATE TESTS
-// ============================================================================
 
 describe("BulkActions - Loading States", () => {
   it("shows loading state on Mark All Read button during mutation", async () => {
@@ -558,9 +544,7 @@ describe("BulkActions - Loading States", () => {
   });
 });
 
-// ============================================================================
 // STYLING TESTS
-// ============================================================================
 
 describe("BulkActions - Styling", () => {
   it("buttons have uppercase font-heading styling", () => {
@@ -613,9 +597,7 @@ describe("BulkActions - Styling", () => {
   });
 });
 
-// ============================================================================
 // ACCESSIBILITY TESTS
-// ============================================================================
 
 describe("BulkActions - Accessibility", () => {
   it("buttons have descriptive accessible names", () => {
@@ -664,9 +646,7 @@ describe("BulkActions - Accessibility", () => {
   });
 });
 
-// ============================================================================
 // EDGE CASES
-// ============================================================================
 
 describe("BulkActions - Edge Cases", () => {
   it("handles undefined stats gracefully", () => {

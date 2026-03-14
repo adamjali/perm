@@ -12,9 +12,7 @@ import {
   createCaseCardData,
 } from "./caseListTypes";
 
-// ============================================================================
 // TYPE GUARD TESTS
-// ============================================================================
 
 describe("Type Guards", () => {
   describe("isCaseListSortField", () => {
@@ -55,9 +53,7 @@ describe("Type Guards", () => {
   });
 });
 
-// ============================================================================
 // FACTORY FUNCTION TESTS
-// ============================================================================
 
 describe("Factory Functions", () => {
   describe("createCaseListPagination", () => {
@@ -167,9 +163,7 @@ describe("Factory Functions", () => {
   });
 });
 
-// ============================================================================
 // CONST ARRAY TESTS
-// ============================================================================
 
 describe("Const Arrays", () => {
   it("CASE_LIST_SORT_FIELDS contains all expected values", () => {
@@ -191,9 +185,7 @@ describe("Const Arrays", () => {
   });
 });
 
-// ============================================================================
 // TYPE STRUCTURE TESTS (compile-time validation)
-// ============================================================================
 
 describe("Type Structures", () => {
   it("CaseListFilters has correct structure", () => {

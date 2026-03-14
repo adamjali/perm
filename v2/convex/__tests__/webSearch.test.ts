@@ -1,29 +1,8 @@
-/**
- * Web Search Action Tests
- *
- * Tests for the web search functionality with multi-provider fallback.
- * All tests use mocks to avoid actual API calls.
- *
- * Tests cover:
- * - searchWeb returns correct result structure
- * - Rate limit checking and enforcement
- * - Fallback from Tavily to Brave when Tavily is at limit
- * - Graceful degradation when all providers are at limit
- *
- * NOTE: These tests mock fetch() and internal Convex functions to avoid
- * actual API calls. The action is tested through the convex-test framework.
- *
- * @see /convex/webSearch.ts - Web search action implementation
- * @see /convex/apiUsage.ts - Rate limit tracking
- */
-
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createTestContext, createAuthenticatedContext } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
 
-// ============================================================================
 // MOCK SETUP
-// ============================================================================
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -32,9 +11,7 @@ global.fetch = mockFetch;
 // Mock environment variables
 const originalEnv = process.env;
 
-// ============================================================================
 // HELPER FUNCTIONS
-// ============================================================================
 
 /**
  * Create a mock Tavily API response
@@ -84,9 +61,7 @@ function createErrorResponse(status: number, message: string) {
   };
 }
 
-// ============================================================================
 // WEB SEARCH TESTS
-// ============================================================================
 
 describe("webSearch", () => {
   beforeEach(() => {

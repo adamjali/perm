@@ -5,9 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { RFIEntry } from "../RFIEntry";
 import type { CaseFormData, RFIEntry as RFIEntryType } from "@/lib/forms/case-form-schema";
 
-// ============================================================================
 // TEST WRAPPER
-// ============================================================================
 
 /**
  * Wrapper component that provides FormProvider context for RFIEntry tests
@@ -25,9 +23,7 @@ function TestWrapper({
   return <FormProvider {...methods}>{children}</FormProvider>;
 }
 
-// ============================================================================
 // HELPERS
-// ============================================================================
 
 /**
  * Helper to create a test RFI entry
@@ -78,9 +74,7 @@ function renderRFIEntry({
   };
 }
 
-// ============================================================================
 // TESTS
-// ============================================================================
 
 describe("RFIEntry", () => {
   beforeEach(() => {

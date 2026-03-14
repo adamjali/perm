@@ -4,15 +4,11 @@ import { formatDateForNotification } from "../formatDate";
 import { FROM_EMAIL } from "../email";
 import type { Id } from "../../_generated/dataModel";
 
-// ============================================================================
 // FIXTURES
-// ============================================================================
 
 const MOCK_USER_ID = "test-user-123" as Id<"users">;
 
-// ============================================================================
 // buildDefaultProfile
-// ============================================================================
 
 describe("buildDefaultProfile", () => {
   it("creates profile with correct userId", () => {
@@ -124,9 +120,7 @@ describe("buildDefaultProfile", () => {
   });
 });
 
-// ============================================================================
 // formatDateForNotification
-// ============================================================================
 
 describe("formatDateForNotification", () => {
   // Use a fixed UTC timestamp: 2025-06-15T12:00:00Z
@@ -161,9 +155,7 @@ describe("formatDateForNotification", () => {
   });
 });
 
-// ============================================================================
 // FROM_EMAIL constant
-// ============================================================================
 
 describe("FROM_EMAIL", () => {
   it("contains PERM Tracker branding", () => {
@@ -179,9 +171,7 @@ describe("FROM_EMAIL", () => {
   });
 });
 
-// ============================================================================
 // ADMIN_EMAIL constant
-// ============================================================================
 
 describe("ADMIN_EMAIL", () => {
   it("is read from process.env.ADMIN_EMAIL", () => {
@@ -192,9 +182,7 @@ describe("ADMIN_EMAIL", () => {
   });
 });
 
-// ============================================================================
 // extractUserIdFromAction
-// ============================================================================
 
 describe("extractUserIdFromAction", () => {
   it("extracts user ID from subject with single segment", async () => {

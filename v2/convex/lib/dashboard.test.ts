@@ -12,9 +12,7 @@ import {
   buildI140Subtext,
 } from "./dashboardHelpers";
 
-// ============================================================================
 // calculateUrgency(daysUntil)
-// ============================================================================
 
 describe("calculateUrgency", () => {
   it("returns 'overdue' for negative days", () => {
@@ -41,9 +39,7 @@ describe("calculateUrgency", () => {
   });
 });
 
-// ============================================================================
 // sortByUrgency(items)
-// ============================================================================
 
 describe("sortByUrgency", () => {
   it("sorts by daysUntil ascending (most urgent first)", () => {
@@ -89,9 +85,7 @@ describe("sortByUrgency", () => {
   });
 });
 
-// ============================================================================
 // extractDeadlines(caseData, todayISO)
-// ============================================================================
 
 describe("extractDeadlines", () => {
   // Note: userId is declared for potential future use in fixture data
@@ -305,9 +299,7 @@ describe("extractDeadlines", () => {
   });
 });
 
-// ============================================================================
 // groupDeadlinesByUrgency(deadlines)
-// ============================================================================
 
 describe("groupDeadlinesByUrgency", () => {
   it("groups deadlines into 4 buckets (overdue, thisWeek, thisMonth, later)", () => {
@@ -456,9 +448,7 @@ describe("groupDeadlinesByUrgency", () => {
   });
 });
 
-// ============================================================================
 // buildPwdSubtext(breakdown)
-// ============================================================================
 
 describe("buildPwdSubtext", () => {
   it("formats 'X working' for working count", () => {
@@ -492,9 +482,7 @@ describe("buildPwdSubtext", () => {
   });
 });
 
-// ============================================================================
 // buildRecruitmentSubtext(breakdown)
-// ============================================================================
 
 describe("buildRecruitmentSubtext", () => {
   it("formats 'X ready' for ready count", () => {
@@ -528,9 +516,7 @@ describe("buildRecruitmentSubtext", () => {
   });
 });
 
-// ============================================================================
 // buildEta9089Subtext(breakdown)
-// ============================================================================
 
 describe("buildEta9089Subtext", () => {
   it("formats 'X prep' for prep count", () => {
@@ -576,9 +562,7 @@ describe("buildEta9089Subtext", () => {
   });
 });
 
-// ============================================================================
 // buildI140Subtext(breakdown)
-// ============================================================================
 
 describe("buildI140Subtext", () => {
   it("formats 'X prep' for prep count", () => {

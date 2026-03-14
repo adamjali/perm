@@ -1,31 +1,10 @@
-/**
- * Knowledge Search Tests
- *
- * Tests for the PERM knowledge search functionality:
- * - searchKnowledge: Semantic search over knowledge base
- * - getIngestionStatus: Check available sections count
- *
- * Note: Testing RAG search is challenging since it requires actual embeddings.
- * These tests focus on:
- * - Function signatures and type correctness
- * - Empty/short query handling
- * - Response structure validation
- * - Static data (section counts)
- *
- * @see /convex/knowledge.ts - Knowledge search implementations
- * @see /convex/lib/rag/permKnowledge.ts - PERM knowledge sections data
- * @see /convex/lib/rag/appGuideKnowledge.ts - App guide sections data
- */
-
 import { describe, it, expect } from "vitest";
 import { createTestContext, createAuthenticatedContext } from "../../test-utils/convex";
 import { api } from "../_generated/api";
 import { PERM_KNOWLEDGE_SECTIONS } from "../lib/rag/permKnowledge";
 import { APP_GUIDE_SECTIONS } from "../lib/rag/appGuideKnowledge";
 
-// ============================================================================
 // KNOWLEDGE TESTS
-// ============================================================================
 
 describe("knowledge", () => {
   // ============================================================================

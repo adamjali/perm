@@ -2,9 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, waitFor, act, render } from "@testing-library/react";
 import { ThemeProvider } from "next-themes";
 
-// ============================================================================
 // MOCKS (must be before imports that use them)
-// ============================================================================
 
 // Mock useRouter (component uses window.location.href for redirect, not router.push)
 vi.mock("next/navigation", () => ({
@@ -73,9 +71,7 @@ vi.mock("@/lib/hooks/useInactivityTimeout", async (importOriginal) => {
 // Import after mocks
 import InactivityTimeoutProvider from "../InactivityTimeoutProvider";
 
-// ============================================================================
 // HELPERS
-// ============================================================================
 
 function renderWithTheme(ui: React.ReactElement) {
   return render(
@@ -85,9 +81,7 @@ function renderWithTheme(ui: React.ReactElement) {
   );
 }
 
-// ============================================================================
 // TESTS
-// ============================================================================
 
 describe("InactivityTimeoutProvider", () => {
   // Component uses window.location.href = "/login" for hard redirect

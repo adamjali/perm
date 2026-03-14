@@ -1,26 +1,9 @@
-/**
- * API Usage Tracking Tests
- *
- * Tests for the API usage tracking module that enforces daily rate limits
- * for external search providers (Tavily, Brave).
- *
- * Tests cover:
- * - trackUsage: Creates new records and increments existing ones
- * - getUsageInternal: Internal query for rate limit checks
- * - getUsage: Public query for UI display
- * - getDailyLimits: Returns configured limits for all providers
- *
- * @see /convex/apiUsage.ts - API usage tracking implementations
- */
-
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
 import { DAILY_LIMITS } from "../apiUsage";
 
-// ============================================================================
 // API USAGE TESTS
-// ============================================================================
 
 describe("apiUsage", () => {
   // Use fake timers to control date

@@ -1,17 +1,3 @@
-/**
- * Conversation Messages CRUD Tests
- *
- * Comprehensive tests for the conversation messages module:
- * - createUserMessage: Create user messages with role='user'
- * - createAssistantMessage: Create assistant messages with metadata and auto-title
- * - list: List messages in chronological order with user isolation
- * - count: Count messages in a conversation
- * - getMostRecent: Get most recently updated non-archived conversation
- *
- * @see /convex/conversationMessages.ts - Message implementations
- * @see /convex/conversations.ts - Parent conversation implementations
- */
-
 import { describe, it, expect } from "vitest";
 import {
   createTestContext,
@@ -21,9 +7,7 @@ import {
 } from "../../test-utils/convex";
 import { api } from "../_generated/api";
 
-// ============================================================================
 // CONVERSATION MESSAGES TESTS
-// ============================================================================
 
 describe("conversationMessages", () => {
   // Set up fake timers for scheduler tests (needed for time-based ordering)

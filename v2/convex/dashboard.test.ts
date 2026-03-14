@@ -1,24 +1,9 @@
-/**
- * Integration Tests for Dashboard Queries
- *
- * Tests the 4 main dashboard queries:
- * 1. dashboard.getDeadlines - Groups deadlines by urgency
- * 2. dashboard.getSummary - Case counts by status
- * 3. dashboard.getRecentActivity - Last 5 updated cases
- * 4. dashboard.getUpcomingDeadlines - Deadlines within N days
- *
- * IMPORTANT: These tests use convex-test with real database operations.
- * Each test gets isolated database state via createTestContext().
- */
-
 import { expect, test, describe } from "vitest";
 import { api } from "./_generated/api";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions, advanceTime } from "../test-utils/convex";
 import { fixtures, daysFromNow, daysAgo } from "../test-utils/dashboard-fixtures";
 
-// ============================================================================
 // dashboard.getDeadlines Tests (10 tests)
-// ============================================================================
 
 describe("dashboard.getDeadlines", () => {
   // Set up fake timers for scheduler tests
@@ -265,9 +250,7 @@ describe("dashboard.getDeadlines", () => {
   });
 });
 
-// ============================================================================
 // dashboard.getSummary Tests (7 tests)
-// ============================================================================
 
 describe("dashboard.getSummary", () => {
   // Set up fake timers for scheduler tests
@@ -479,9 +462,7 @@ describe("dashboard.getSummary", () => {
   });
 });
 
-// ============================================================================
 // dashboard.getRecentActivity Tests (5 tests)
-// ============================================================================
 
 describe("dashboard.getRecentActivity", () => {
   // Set up fake timers for scheduler tests
@@ -628,9 +609,7 @@ describe("dashboard.getRecentActivity", () => {
   });
 });
 
-// ============================================================================
 // dashboard.getUpcomingDeadlines Tests (5 tests)
-// ============================================================================
 
 describe("dashboard.getUpcomingDeadlines", () => {
   // Set up fake timers for scheduler tests

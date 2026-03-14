@@ -4,9 +4,7 @@ import { renderWithProviders } from "../../../../test-utils/render-utils";
 import TimeoutWarningModal from "../TimeoutWarningModal";
 import { Z_INDEX } from "@/lib/constants/zIndex";
 
-// ============================================================================
 // TESTS
-// ============================================================================
 
 describe("TimeoutWarningModal", () => {
   const defaultProps = {
