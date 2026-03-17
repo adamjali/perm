@@ -197,8 +197,10 @@ describe('getFieldLabel', () => {
 // ============================================================================
 
 describe('validateCaseForm required dates', () => {
+  // Recruitment method validation only runs when isProfessionalOccupation is true
   it('requires date for single-date methods', () => {
     const data = createMinimalFormData({
+      isProfessionalOccupation: true,
       additionalRecruitmentMethods: [
         { method: 'local_newspaper', date: '', description: '' },
       ],
@@ -211,6 +213,7 @@ describe('validateCaseForm required dates', () => {
 
   it('requires startDate for date-range methods', () => {
     const data = createMinimalFormData({
+      isProfessionalOccupation: true,
       additionalRecruitmentMethods: [
         { method: 'job_website_ad', date: '', description: '' },
       ],
@@ -223,6 +226,7 @@ describe('validateCaseForm required dates', () => {
 
   it('requires at least one broadcast date for sub-entry methods', () => {
     const data = createMinimalFormData({
+      isProfessionalOccupation: true,
       additionalRecruitmentMethods: [
         { method: 'radio_ad', date: '', description: '', subEntries: [{ date: '', description: '' }] },
       ],
@@ -236,6 +240,7 @@ describe('validateCaseForm required dates', () => {
 
   it('passes when single-date method has a date', () => {
     const data = createMinimalFormData({
+      isProfessionalOccupation: true,
       additionalRecruitmentMethods: [
         { method: 'local_newspaper', date: '2024-06-01', description: 'Times' },
       ],
@@ -247,6 +252,7 @@ describe('validateCaseForm required dates', () => {
 
   it('passes when date-range method has startDate', () => {
     const data = createMinimalFormData({
+      isProfessionalOccupation: true,
       additionalRecruitmentMethods: [
         { method: 'job_website_ad', date: '', startDate: '2024-06-01', description: '' },
       ],
@@ -258,6 +264,7 @@ describe('validateCaseForm required dates', () => {
 
   it('passes when sub-entry method has at least one date', () => {
     const data = createMinimalFormData({
+      isProfessionalOccupation: true,
       additionalRecruitmentMethods: [
         {
           method: 'radio_ad', date: '', description: '',
@@ -274,6 +281,7 @@ describe('validateCaseForm required dates', () => {
 
   it('allows empty sub-entry date strings without Zod error', () => {
     const data = createMinimalFormData({
+      isProfessionalOccupation: true,
       additionalRecruitmentMethods: [
         {
           method: 'tv_ad', date: '', description: '',

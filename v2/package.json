@@ -97,7 +97,6 @@
     "remark-gfm": "^4.0.1",
     "remotion": "4.0.435",
     "resend": "^6.9.3",
-    "shiki": "^3.22.0",
     "sonner": "^2.0.7",
     "svix": "^1.88.0",
     "tailwind-merge": "^3.5.0",
@@ -158,7 +157,8 @@
       "minimatch": ">=10.2.3",
       "rollup": ">=4.59.0",
       "serialize-javascript": ">=7.0.3",
-      "bn.js": ">=5.2.3"
+      "bn.js": ">=5.2.3",
+      "flatted": ">=3.4.0"
     },
     "onlyBuiltDependencies": [
       "@swc/core",
