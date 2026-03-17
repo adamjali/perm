@@ -101,7 +101,8 @@ describe("systemErrors", () => {
     });
   });
 
-  describe("list", () => {
+  // Skip: systemErrors.list was removed — only systemErrors.record exists
+  describe.skip("list", () => {
     it("requires admin access", async () => {
       const t = createTestContext();
       const { ctx: user } = await createAuthenticatedContext(t, "Regular User");

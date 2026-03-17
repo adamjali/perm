@@ -415,11 +415,11 @@ describe("queryCases", () => {
           }),
           userId: asUser.userId,
         });
-        // Case with future deadline
+        // Case with future deadline (far enough that per-step deadlines aren't overdue)
         await ctx.db.insert("cases", {
           ...createCaseData({
             employerName: "Future Deadline",
-            pwdExpirationDate: getDaysFromNow(30),
+            pwdExpirationDate: getDaysFromNow(365),
           }),
           userId: asUser.userId,
         });
@@ -898,9 +898,9 @@ describe("getCaseSummary", () => {
         ...createCaseData({ pwdExpirationDate: getYesterday() }),
         userId: asUser.userId,
       });
-      // Case with future deadline
+      // Case with future deadline (far enough that per-step deadlines aren't overdue)
       await ctx.db.insert("cases", {
-        ...createCaseData({ pwdExpirationDate: getDaysFromNow(30) }),
+        ...createCaseData({ pwdExpirationDate: getDaysFromNow(365) }),
         userId: asUser.userId,
       });
       // Case with no deadlines

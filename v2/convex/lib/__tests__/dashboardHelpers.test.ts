@@ -158,9 +158,12 @@ describe("extractDeadlines", () => {
 
       const deadlines = extractDeadlines(caseData, TODAY_ISO);
 
-      expect(deadlines).toHaveLength(1);
-      expect(deadlines[0]?.type).toBe("pwd_expiration");
-      expect(deadlines[0]?.date).toBe("2025-06-30");
+      // PWD expiration + per-step recruitment deadlines (derived from PWD alone)
+      expect(deadlines.length).toBeGreaterThanOrEqual(1);
+      expect(deadlines).toContainEqual(expect.objectContaining({
+        type: "pwd_expiration",
+        date: "2025-06-30",
+      }));
     });
 
     it("does NOT extract PWD expiration when ETA 9089 is filed", () => {

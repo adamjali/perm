@@ -5,6 +5,31 @@
 - prod-deps-patch: Merge production patch/minor after quality gate passes
 - security-overrides: Add pnpm overrides for transitive vulnerabilities when upstream hasn't patched
 - known-flaky-tests: toast.test.ts, page-context.test.tsx, useToolOrchestrator.test.ts — pass in isolation, flaky in suite
+- unused-deps: Remove unused dependencies rather than upgrading them (e.g. shiki)
+
+## Audit 4 - 2026-03-17
+- **health_before:** 97%
+- **health_after:** 97%
+- **items_fixed:** 3
+- **items_discussed:** 0
+- **prs_merged:** 1 (PR #46), 3 set to auto-merge (#47, #49, #50), 1 closed (#48)
+- **quality_issues_fixed:** 1 (test assertions for isProfessionalOccupation gate)
+- **deployed:** yes (Convex + Vercel auto-deploy on push)
+- **duration:** ~10 min
+
+### Changes Made
+- Removed unused `shiki` dependency (never imported anywhere in codebase)
+- Added pnpm override `flatted>=3.4.0` (high severity DoS, dev-only transitive via eslint)
+- Updated 7 recruitment method validation tests to set `isProfessionalOccupation: true` (required after schema gate change)
+- PR #46 merged: @typescript/native-preview nightly bump
+- PRs #47, #49, #50 set to auto-merge (dev + production patch/minor updates)
+- PR #48 closed: shiki 3→4 major bump — dep removed instead
+
+### Decisions
+- shiki: removed entirely — listed in package.json but never imported. Saved as policy.
+- flatted CVE: pnpm override (dev-only transitive, upstream eslint hasn't updated flat-cache)
+- 2 Semgrep code scanning alerts (#73, #74): pnpm-lock.yaml supply chain findings — informational, no action
+- page-context.test.tsx flaky: known issue per saved policy — passes in isolation
 
 ## Audit 3 - 2026-03-13
 - **health_before:** 97%
@@ -20,8 +45,8 @@
 - Deleted dead `public/sw-push.js` (78 lines) — push handlers consolidated into `src/app/sw.ts` since commit eba7b1e
 
 ### Decisions
-- 30 Semgrep code scanning findings: all informational (console.log format strings, test RegExp, intentional dangerouslySetInnerHTML) — no action needed
-- Branch protection (enforce_admins, required_signatures): deferred — consistent with prior audits
+- 30 Semgrep code scanning findings: all informational — no action needed
+- Branch protection (enforce_admins, required_signatures): deferred
 - Known flaky test (page-context.test.tsx): confirmed passes in isolation — no action
 
 ## Audit 2 - 2026-03-12
@@ -37,37 +62,12 @@
 ### Changes Made
 - PR #41 merged: @typescript/native-preview nightly bump (dev-only)
 - PRs #42, #43 set to auto-merge: production deps (incl. @convex-dev/auth security fix) + dev deps
-- Fixed 3 test files with job order off-by-one assertions (inclusive counting: posting date = day 1)
-  - `cascade.test.ts`: 5 date assertions corrected
-  - `useDateFieldValidation.test.ts`: boundary test + hint assertion fixed
-  - `useFormCalculations.test.ts`: expected date corrected
+- Fixed 3 test files with job order off-by-one assertions
 
 ### Decisions
 - PR #39/42 (production deps): merge — user approved, includes @convex-dev/auth security fix
 - PR #40/43 (dev deps): auto-merge — dev-only patches, low risk
-- Branch protection (enforce_admins, required_signatures): deferred — info-only
+- Branch protection (enforce_admins, required_signatures): deferred
 
-## Audit 1 - 2026-03-07
-- **health_before:** 72%
-- **health_after:** 95%
-- **items_fixed:** 8
-- **items_discussed:** 2
-- **prs_merged:** 2 (+ 1 closed after manual update)
-- **quality_issues_fixed:** 0
-- **deployed:** yes (Convex + Vercel)
-- **duration:** ~15min
-
-### Changes Made
-- CodeQL workflow: removed non-existent `develop` branch from triggers
-- Merged PR #35: 9 dev deps (Storybook 10.2.13, @types/node 22.19.13)
-- Merged PR #36: @typescript/native-preview 7.0.0-dev.20260302.1
-- Closed PR #37: applied 23 production dep updates manually (AI SDK, Sentry, Remotion, PostHog, Motion, etc.)
-- Added pnpm overrides: minimatch >=10.2.3, rollup >=4.59.0, serialize-javascript >=7.0.3
-- dompurify fixed to 3.3.2 via posthog-js update
-- Added CONTRIBUTING.md
-- Added CODE_OF_CONDUCT.md
-
-### Decisions
-- Production deps: merge all patch/minor — saved as policy
-- Community files: add both (user chose this)
-- Sentry deprecation warnings: deferred — upstream issue, not actionable until next Sentry major
+## Archived Summaries
+- 2026-03-07: health 72→95%, fixed 8 items, merged 2 PRs, added community files

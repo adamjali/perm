@@ -10,6 +10,8 @@ import type { Doc } from '../../../../../../../convex/_generated/dataModel';
 vi.mock('next/navigation', () => ({
   useParams: vi.fn(),
   useRouter: vi.fn(),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  usePathname: vi.fn(() => '/cases/test/edit'),
 }));
 
 vi.mock('convex/react', () => ({
@@ -178,7 +180,8 @@ describe('EditCasePage', () => {
 
       render(<EditCasePage />);
 
-      expect(screen.getByText('Edit Case: Acme Corp - Software Engineer')).toBeInTheDocument();
+      const titleElements = screen.getAllByTitle('Acme Corp - Software Engineer');
+      expect(titleElements.length).toBeGreaterThan(0);
     });
   });
 

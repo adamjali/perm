@@ -287,10 +287,12 @@ describe("calculateNextDeadline", () => {
   });
 
   it("returns PWD expiration deadline when available", () => {
+    // Recruitment done, ETA 9089 NOT yet filed → PWD expiration is relevant
     const result = calculateNextDeadline({
       ...baseCaseData,
+      ...recruitmentDone,
       caseStatus: "recruitment",
-      pwdExpirationDate: "2025-12-01",
+      pwdExpirationDate: "2025-08-01",
     });
     expect(result).not.toBeNull();
     expect(result!.label).toContain("PWD");
