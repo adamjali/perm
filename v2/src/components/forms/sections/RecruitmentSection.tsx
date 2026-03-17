@@ -236,9 +236,14 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
 
   const handleCheckboxChange = (checked: boolean) => {
     onChange('isProfessionalOccupation', checked);
-    // Initialize with one empty method when checkbox is checked
-    if (checked && (!values.additionalRecruitmentMethods || values.additionalRecruitmentMethods.length === 0)) {
-      updateRecruitmentMethods([{ method: '', date: '', description: '' }]);
+    if (checked) {
+      // Initialize with one empty method when checkbox is checked
+      if (!values.additionalRecruitmentMethods || values.additionalRecruitmentMethods.length === 0) {
+        updateRecruitmentMethods([{ method: '', date: '', description: '' }]);
+      }
+    } else {
+      // Clear methods when unchecked so orphaned data doesn't block save
+      updateRecruitmentMethods([]);
     }
   };
 

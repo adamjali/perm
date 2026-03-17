@@ -254,8 +254,8 @@ export const caseFormSchema = z
   })
   .superRefine((data, ctx) => {
     validateSundayAdSequence(data, ctx);
-    validateRecruitmentMethodRequiredDates(data, ctx);
     if (data.isProfessionalOccupation) {
+      validateRecruitmentMethodRequiredDates(data, ctx);
       validateProfessionalRecruitment(data, ctx);
     }
   });
