@@ -10,7 +10,6 @@
  * - src/lib/calendar/types.ts
  * - src/components/cases/detail/RFIRFESection.tsx
  * - src/components/forms/sections/RecruitmentSection.tsx
- * - src/components/forms/sections/ProfessionalSection.tsx
  */
 
 // ============================================================================

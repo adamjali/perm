@@ -6,6 +6,24 @@
 - security-overrides: Add pnpm overrides for transitive vulnerabilities when upstream hasn't patched
 - known-flaky-tests: toast.test.ts, page-context.test.tsx, useToolOrchestrator.test.ts — pass in isolation, flaky in suite
 
+## Audit 3 - 2026-03-13
+- **health_before:** 97%
+- **health_after:** 97%
+- **items_fixed:** 1
+- **items_discussed:** 0
+- **prs_merged:** 0
+- **quality_issues_fixed:** 0
+- **deployed:** yes (Convex + Vercel auto-deploy on push)
+- **duration:** ~5 min
+
+### Changes Made
+- Deleted dead `public/sw-push.js` (78 lines) — push handlers consolidated into `src/app/sw.ts` since commit eba7b1e
+
+### Decisions
+- 30 Semgrep code scanning findings: all informational (console.log format strings, test RegExp, intentional dangerouslySetInnerHTML) — no action needed
+- Branch protection (enforce_admins, required_signatures): deferred — consistent with prior audits
+- Known flaky test (page-context.test.tsx): confirmed passes in isolation — no action
+
 ## Audit 2 - 2026-03-12
 - **health_before:** 90%
 - **health_after:** 97%

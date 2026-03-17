@@ -17,5 +17,19 @@
     "branching_strategy": "none"
   },
   "parallelization": true,
-  "brave_search": false
+  "brave_search": false,
+  "_skills_mtime": 1773305540398.4507,
+  "_skills_list": [
+    "cold-outreach-perm",
+    "create-agent-skills",
+    "create-hooks",
+    "create-mcp-servers",
+    "create-meta-prompts",
+    "create-slash-commands",
+    "create-subagents",
+    "debug-like-expert",
+    "expertise",
+    "explain",
+    "jina-image-search"
+  ]
 }
