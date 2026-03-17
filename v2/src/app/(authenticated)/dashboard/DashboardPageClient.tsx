@@ -86,14 +86,19 @@ export function DashboardPageClient() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
-      <div>
-        <h1 className="font-heading text-2xl font-bold">
-          Welcome back, {firstName}
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Overview of your PERM cases
-        </p>
+      {/* Welcome Header + Primary CTA */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl font-bold">
+            Welcome back, {firstName}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Overview of your PERM cases
+          </p>
+        </div>
+        <div className="shrink-0">
+          <AddCaseButton />
+        </div>
       </div>
 
       {/* Auto-closure Alert Banner - Shows when cases have been auto-closed */}

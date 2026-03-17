@@ -32,6 +32,7 @@ export default function AddCaseButton() {
     <button
       onClick={handleClick}
       disabled={isNavigating}
+      aria-label="Add new case"
       className={cn(
         // Base styling
         "inline-flex items-center justify-center gap-2 px-6 py-3",
@@ -60,7 +61,9 @@ export default function AddCaseButton() {
       ) : (
         <Plus className="size-5" />
       )}
-      {isNavigating ? "Loading..." : "Add New Case"}
+      <span className="hidden sm:inline">
+        {isNavigating ? "Loading..." : "Add New Case"}
+      </span>
     </button>
   );
 }
