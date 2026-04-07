@@ -935,6 +935,17 @@
 .icon-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
 .icon-btn:disabled { opacity: 0.4; cursor: default; }
 .icon-btn-danger:hover:not(:disabled) { background: var(--destructive) !important; color: #FFFFFF !important; border-color: var(--destructive) !important; }
+/* icon-btn inside dark-background headers: ghost style so icons remain visible */
+.detail-card-head.ch-rec .icon-btn,
+.detail-card-head.ch-eta .icon-btn,
+.detail-card-head.ch-i140 .icon-btn,
+.detail-card-head.ch-pwd .icon-btn,
+.detail-card-head.ch-dark .icon-btn { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.35); color: #FFFFFF; }
+.detail-card-head.ch-rec .icon-btn:hover:not(:disabled),
+.detail-card-head.ch-eta .icon-btn:hover:not(:disabled),
+.detail-card-head.ch-i140 .icon-btn:hover:not(:disabled),
+.detail-card-head.ch-pwd .icon-btn:hover:not(:disabled),
+.detail-card-head.ch-dark .icon-btn:hover:not(:disabled) { background: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.6); color: #FFFFFF; box-shadow: 2px 2px 0 0 rgba(0,0,0,0.25); }
 .flex-row { display: flex; align-items: center; gap: 8px; }
 
 /* Split preview */
@@ -1070,6 +1081,17 @@
 .dark .icon-btn { background: #FAFAFA; color: #000000; border-color: #000000; }
 .dark .icon-btn:hover:not(:disabled) { background: #333333; color: #FFFFFF; border-color: #000000; }
 .dark .icon-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+/* dark-background headers keep ghost icon-btn in dark mode too */
+.dark .detail-card-head.ch-rec .icon-btn,
+.dark .detail-card-head.ch-eta .icon-btn,
+.dark .detail-card-head.ch-i140 .icon-btn,
+.dark .detail-card-head.ch-pwd .icon-btn,
+.dark .detail-card-head.ch-dark .icon-btn { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.35); color: #FFFFFF; }
+.dark .detail-card-head.ch-rec .icon-btn:hover:not(:disabled),
+.dark .detail-card-head.ch-eta .icon-btn:hover:not(:disabled),
+.dark .detail-card-head.ch-i140 .icon-btn:hover:not(:disabled),
+.dark .detail-card-head.ch-pwd .icon-btn:hover:not(:disabled),
+.dark .detail-card-head.ch-dark .icon-btn:hover:not(:disabled) { background: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.6); color: #FFFFFF; box-shadow: 2px 2px 0 0 rgba(0,0,0,0.25); }
 /* doc-name uses foreground in dark mode */
 .dark .doc-name { color: var(--foreground); }
 /* selected row in dark mode: keep manila bg on hover, all text black/dark */
