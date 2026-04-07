@@ -12,6 +12,8 @@ import { QuickEditFields, isEditableAction, isComplexAction } from "./quick-edit
 import { InlineCaseTimeline } from "./InlineCaseTimeline";
 import { QuickStatsPanel } from "./QuickStatsPanel";
 import { VerticalTimeline } from "./VerticalTimeline";
+import { RecruitmentResultsCard } from "./RecruitmentResultsCard";
+import { isRecruitmentComplete } from "@/lib/perm";
 import { TemplateSelector } from "@/components/job-description/TemplateSelector";
 import type { JobDescriptionTemplate } from "@/components/job-description/JobDescriptionField";
 import { Button } from "@/components/ui/button";
@@ -47,6 +49,7 @@ interface OverviewTabProps {
   isOnTimeline: boolean;
   isUpdating: boolean;
   onToggleTimeline: () => void;
+  onSaveRecruitmentText?: (text: string | null) => Promise<void>;
   jobDescProps?: JobDescEditProps;
 }
 
@@ -57,6 +60,7 @@ export function OverviewTab({
   isOnTimeline,
   isUpdating,
   onToggleTimeline,
+  onSaveRecruitmentText,
   jobDescProps,
 }: OverviewTabProps) {
   const router = useRouter();
@@ -590,6 +594,16 @@ export function OverviewTab({
                   </>
                 )}
               </div>
+            </motion.div>
+          )}
+
+          {/* Recruitment Results — only after all recruitment is complete */}
+          {onSaveRecruitmentText && isRecruitmentComplete(caseData) && (
+            <motion.div variants={itemVariants}>
+              <RecruitmentResultsCard
+                caseData={caseData}
+                onSaveCustomText={onSaveRecruitmentText}
+              />
             </motion.div>
           )}
         </div>

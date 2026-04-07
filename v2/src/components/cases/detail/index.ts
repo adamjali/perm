@@ -27,4 +27,5 @@ export { NotesTab } from "./NotesTab";
 export { QuickStatsPanel } from "./QuickStatsPanel";
 export { VerticalTimeline } from "./VerticalTimeline";
 export { WindowCard } from "./WindowCard";
+export { RecruitmentResultsCard } from "./RecruitmentResultsCard";
 export type { CaseDetailData } from "./case-detail-types";

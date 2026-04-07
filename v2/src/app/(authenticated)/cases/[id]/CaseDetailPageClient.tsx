@@ -361,6 +361,15 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
     }
   }, [updateMutation, caseId]);
 
+  const handleSaveRecruitmentText = useCallback(async (text: string | null) => {
+    try {
+      await updateMutation({ id: caseId, recruitmentSummaryCustom: text });
+      toast.success(text ? "Recruitment summary saved" : "Reverted to auto-generated text");
+    } catch (error) {
+      handleOperationError(error, { userMessage: "Failed to save recruitment summary." });
+    }
+  }, [updateMutation, caseId]);
+
   // Document mutations
   const generateUploadUrlMutation = useMutation(api.documents.generateUploadUrl);
   const saveDocumentMutation = useMutation(api.documents.saveDocument);
@@ -853,6 +862,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               isOnTimeline={isOnTimeline}
               isUpdating={isUpdating}
               onToggleTimeline={handleToggleTimeline}
+              onSaveRecruitmentText={handleSaveRecruitmentText}
               jobDescProps={{
                 templates: jobDescTemplates as import("@/components/job-description/JobDescriptionField").JobDescriptionTemplate[],
                 onSave: handleJobDescSave,
