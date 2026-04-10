@@ -18,10 +18,9 @@
   },
   "parallelization": true,
   "brave_search": false,
-  "_skills_mtime": 1773305540398.4507,
+  "_skills_mtime": 1773943762055.8975,
   "_skills_list": [
     "cold-outreach-perm",
-    "create-agent-skills",
     "create-hooks",
     "create-mcp-servers",
     "create-meta-prompts",
