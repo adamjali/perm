@@ -57,14 +57,19 @@ export function SentryClientInit() {
           "UnrecognizedActionError",
           // Browser extension parsing JSON-LD structured data (not app code)
           /@context.*toLowerCase/,
-          // Browser extension mutating DOM → React reconciler insertBefore fails
+          // Browser extension mutating DOM → React reconciler insertBefore/removeChild fails
           /insertBefore.*not a child/,
+          /removeChild.*not a child/,
           // Network/deploy: stale chunk hashes, timeouts
           "ChunkLoadError",
           /Loading chunk.*failed/,
           // SW registration abort during page navigation (Serwist fire-and-forget)
           "Rejected",
           /Failed to register a ServiceWorker/,
+          /Operation has been aborted/,
+          // PostHog session recorder internal bugs (not our code)
+          /bufferBelongsToIframe/,
+          /Called on script loaded before session recording is available/,
           // React hydration mismatch from browser extensions injecting DOM
           /Minified React error #418/,
           /Minified React error #423/,
