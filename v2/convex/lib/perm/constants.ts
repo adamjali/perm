@@ -100,7 +100,6 @@ export const RFE_WARNING_DAYS = 7;
 
 // ============================================================================
 // RECRUITMENT DEADLINE BUFFER CONSTANTS
-// Per V2_DEADLINE_FLOWS.md formulas
 // ============================================================================
 
 /**

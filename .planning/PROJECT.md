@@ -31,8 +31,6 @@ A simple, intuitive web app for immigration attorneys to track PERM labor certif
 - PostgreSQL with Row-Level Security (Supabase)
 - HTML/CSS/JS + Tailwind CSS + Alpine.js (Vercel)
 
-> **Reference:** See `V2_ORIGINAL_VISION.md` for complete user requirements
-
 > **Note:** All frontend/UI work must use the frontend-design skill (its a plug-in) - reference `.planning/FRONTEND_DESIGN_SKILL.md` for design requirements.
 
 ## Context
@@ -106,7 +104,6 @@ Complete platform rebuild to Next.js + Convex + React:
 - Production-grade AI chatbot
 
 **Phases:** 11-32 (22 phases across 7 stages)
-**Context:** See `.planning/V2_MIGRATION_BRIEF.md`
 
 **Status:** ✅ SHIPPED 2026-01-15
 

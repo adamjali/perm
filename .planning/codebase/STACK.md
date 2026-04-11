@@ -43,7 +43,7 @@
   - React Compiler: DISABLED (causes ReferenceError with both Turbopack and Webpack)
   - `concatenateModules: false` on client bundles (prevents motion-dom export mangling)
 - React 19.2.4 — UI library (with react-dom 19.2.4)
-- Convex 1.32.0 — Serverless backend (real-time database, functions, scheduling)
+- Convex 1.35.1 — Serverless backend (real-time database, functions, scheduling)
   - Config: `v2/convex.json`
   - Schema: `v2/convex/schema.ts`
   - Auth: `v2/convex/auth.ts`

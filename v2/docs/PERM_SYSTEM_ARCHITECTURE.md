@@ -688,10 +688,7 @@ Create `/help/deadlines` page with:
 | File | What to Update |
 |------|----------------|
 | `perm_flow.md` | Add "effective deadline" concept, clarify formulas |
-| `V2_BUSINESS_RULES.md` | Add centralization pattern, schema additions |
-| `V2_DEADLINE_SYSTEM.md` | Fix formulas, add active/inactive rules |
-| `V2_DEADLINE_FLOWS.md` | Add user-facing explanations |
-| `ARCHITECTURE.md` | Add "single canonical function" pattern |
+| `.planning/codebase/ARCHITECTURE.md` | Add "single canonical function" pattern |
 
 ### Preventing Future Confusion
 
@@ -731,7 +728,6 @@ Every calculation function in lib/perm must have:
 
 Every new deadline type must be documented in:
 - This file (Part 2 table)
-- `V2_DEADLINE_SYSTEM.md`
 - User-facing help page
 - Storybook story
 

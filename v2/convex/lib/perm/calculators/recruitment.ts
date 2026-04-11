@@ -112,7 +112,7 @@ export function calculateStepDeadline(
  *
  * Requires both inputs. For partial inputs, use calculateStepDeadline directly.
  *
- * Formulas (from V2_DEADLINE_FLOWS.md):
+ * Formulas:
  * - notice_of_filing_deadline: min(first+150, pwd-30)
  * - job_order_start_deadline: min(first+120, pwd-60)
  * - second_sunday_ad_deadline: lastSunday(notice_of_filing_deadline)

@@ -20,17 +20,6 @@
 
 ---
 
-## Development Standards
-
-This project targets **latest stable versions** of all dependencies and **modern industry best practices**. When working on this codebase:
-
-- **Surface updates proactively** — whenever deploy/install output, changelogs, or warnings indicate an available update (package, CLI, SDK, runtime), a deprecation, a CVE, or a new official integration, raise it immediately with version delta and a one-line summary. Do not silently skip these signals.
-- **Prefer modern alternatives** — if there is a more current, first-party, or industry-standard way to accomplish what the code is doing, mention it and ask before adopting.
-- **Version decisions are documented** in [`.planning/VERSION-DECISIONS.md`](.planning/VERSION-DECISIONS.md) whenever a dependency is intentionally held back.
-- **Fix > workaround** — upgrade the dependency, patch the root cause, or adopt the official solution before reaching for a shim.
-
----
-
 ## Documentation
 
 | Topic | File |
