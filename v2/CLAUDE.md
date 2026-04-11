@@ -1,7 +1,20 @@
 # CLAUDE.md - PERM Tracker v2
 
-> **Stack:** Next.js 16.1 + Convex 1.32 + React 19 + TypeScript (strict mode)
-> **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-02-21
+> **Stack:** Next.js 16.1 + Convex 1.35 + React 19 + TypeScript (strict mode)
+> **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-04-11
+
+## Development Standards
+
+This project tracks **latest stable versions** and **modern industry best practices**. Contributors (human and AI) should:
+
+- **Proactively surface updates** — when any tool, SDK, runtime, or package has a newer stable release, a deprecation warning, a CVE, or a new first-party alternative, raise it with version delta and a one-line "what's new". Never silently skip these signals from deploy/install output.
+- **Prefer modern alternatives** — if there is a more current industry-standard way to do something, mention it and ask before adopting.
+- **Upgrade over workaround** — fix root causes and upgrade dependencies rather than adding shims.
+- **Document held-back versions** in `.planning/VERSION-DECISIONS.md` whenever a non-latest version is intentional.
+
+See the [Convex AI guidelines](convex/_generated/ai/guidelines.md) for Convex-specific rules (installed via `npx convex ai-files install`).
+
+---
 
 ## Quick Start
 
