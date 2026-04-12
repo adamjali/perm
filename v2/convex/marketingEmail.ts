@@ -19,26 +19,39 @@ export const getMarketingSubscriptionStatus = action({
   args: {},
   handler: async (ctx): Promise<boolean | null> => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || !identity.email) return null;
+    if (!identity || !identity.email) {
+      console.log("[MarketingEmail] No identity or email found");
+      return null;
+    }
 
     const apiKey = process.env.AUTH_RESEND_KEY;
-    if (!apiKey) return null;
+    if (!apiKey) {
+      console.log("[MarketingEmail] AUTH_RESEND_KEY not set");
+      return null;
+    }
+
+    // Look up user in Convex to get their actual email (identity email may differ)
+    const email = identity.email;
+    console.log("[MarketingEmail] Checking subscription for:", email);
 
     try {
       const res = await fetch(
-        `https://api.resend.com/contacts/${encodeURIComponent(identity.email)}`,
+        `https://api.resend.com/contacts/${encodeURIComponent(email)}`,
         {
           method: "GET",
           headers: { Authorization: `Bearer ${apiKey}` },
         }
       );
 
+      console.log("[MarketingEmail] Resend API response:", res.status);
+
       if (res.status === 404) return null;
       if (!res.ok) return null;
 
       const data = await res.json();
       return data.unsubscribed === false;
-    } catch {
+    } catch (err) {
+      console.error("[MarketingEmail] Error:", err);
       return null;
     }
   },

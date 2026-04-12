@@ -241,8 +241,8 @@ export default function NotificationPreferencesSection({
   useEffect(() => {
     getMarketingStatus()
       .then((status) => { setMarketingSubscribed(status); setMarketingLoading(false); })
-      .catch(() => { setMarketingLoading(false); });
-  }, [getMarketingStatus]);
+      .catch((err) => { console.error("[MarketingToggle] Failed to fetch status:", err); setMarketingLoading(false); });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMarketingToggle = useCallback(async (value: boolean) => {
     setMarketingSubscribed(value);
