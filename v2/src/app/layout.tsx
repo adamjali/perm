@@ -67,10 +67,10 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  // Icons configuration - Next.js will automatically serve icon.tsx as favicon
+  // Icons configuration — static icon.png in src/app/ served at /icon.png
   icons: {
     icon: [
-      { url: "/icon", type: "image/png", sizes: "32x32" },
+      { url: "/icon.png", type: "image/png", sizes: "32x32" },
       { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
       { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
     ],

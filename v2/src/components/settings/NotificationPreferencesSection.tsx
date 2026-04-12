@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { analytics } from "@/lib/analytics";
-import { useMutation, useAction, useConvexAuth } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -239,15 +239,16 @@ export default function NotificationPreferencesSection({
   const updateMarketingSub = useAction(api.marketingEmail.updateMarketingSubscription);
 
   useEffect(() => {
-    getMarketingStatus()
+    if (!userEmail) { setMarketingLoading(false); return; }
+    getMarketingStatus({ email: userEmail })
       .then((status) => { setMarketingSubscribed(status); setMarketingLoading(false); })
       .catch((err) => { console.error("[MarketingToggle] Failed to fetch status:", err); setMarketingLoading(false); });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMarketingToggle = useCallback(async (value: boolean) => {
     setMarketingSubscribed(value);
     try {
-      await updateMarketingSub({ subscribed: value });
+      await updateMarketingSub({ email: userEmail, subscribed: value });
       toast.success(value ? "Subscribed to product updates" : "Unsubscribed from product updates");
     } catch (error) {
       setMarketingSubscribed(!value);

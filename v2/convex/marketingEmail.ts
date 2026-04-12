@@ -5,76 +5,63 @@
  *
  * Convex actions to check/update a user's marketing email subscription
  * status via the Resend Contacts API. Used by the Settings page toggle.
+ *
+ * Email is passed from the frontend (already known from the user profile)
+ * rather than relying on ctx.auth.getUserIdentity().email which may be
+ * empty for some Convex Auth providers.
  */
 
 import { action } from "./_generated/server";
 import { v } from "convex/values";
 
 /**
- * Get the current user's marketing email subscription status from Resend.
- * Returns true if subscribed (not unsubscribed), false if unsubscribed.
- * Returns null if the contact doesn't exist in Resend.
+ * Get a user's marketing email subscription status from Resend.
  */
 export const getMarketingSubscriptionStatus = action({
-  args: {},
-  handler: async (ctx): Promise<boolean | null> => {
+  args: { email: v.string() },
+  handler: async (ctx, args): Promise<boolean | null> => {
+    // Verify caller is authenticated
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || !identity.email) {
-      console.log("[MarketingEmail] No identity or email found");
-      return null;
-    }
+    if (!identity) return null;
 
     const apiKey = process.env.AUTH_RESEND_KEY;
-    if (!apiKey) {
-      console.log("[MarketingEmail] AUTH_RESEND_KEY not set");
-      return null;
-    }
-
-    // Look up user in Convex to get their actual email (identity email may differ)
-    const email = identity.email;
-    console.log("[MarketingEmail] Checking subscription for:", email);
+    if (!apiKey) return null;
 
     try {
       const res = await fetch(
-        `https://api.resend.com/contacts/${encodeURIComponent(email)}`,
+        `https://api.resend.com/contacts/${encodeURIComponent(args.email)}`,
         {
           method: "GET",
           headers: { Authorization: `Bearer ${apiKey}` },
         }
       );
 
-      console.log("[MarketingEmail] Resend API response:", res.status);
-
       if (res.status === 404) return null;
       if (!res.ok) return null;
 
       const data = await res.json();
       return data.unsubscribed === false;
-    } catch (err) {
-      console.error("[MarketingEmail] Error:", err);
+    } catch {
       return null;
     }
   },
 });
 
 /**
- * Update the current user's marketing email subscription status in Resend.
+ * Update a user's marketing email subscription status in Resend.
  */
 export const updateMarketingSubscription = action({
-  args: { subscribed: v.boolean() },
+  args: { email: v.string(), subscribed: v.boolean() },
   handler: async (ctx, args): Promise<boolean> => {
+    // Verify caller is authenticated
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || !identity.email) {
-      throw new Error("No email found for current user");
-    }
+    if (!identity) throw new Error("Not authenticated");
 
     const apiKey = process.env.AUTH_RESEND_KEY;
-    if (!apiKey) {
-      throw new Error("AUTH_RESEND_KEY not configured");
-    }
+    if (!apiKey) throw new Error("AUTH_RESEND_KEY not configured");
 
     const res = await fetch(
-      `https://api.resend.com/contacts/${encodeURIComponent(identity.email)}`,
+      `https://api.resend.com/contacts/${encodeURIComponent(args.email)}`,
       {
         method: "PATCH",
         headers: {
