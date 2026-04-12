@@ -41,10 +41,10 @@ export function UpdateEmail({
           Hey {firstName === "there" ? firstName : firstName},
         </Text>
         <Text className="em-text-body" style={styles.bodyText}>
-          Adam here, founder of PERM Tracker. I wanted to say thank you for
-          being an early user &mdash; it genuinely means a lot. Every case you
-          track helps me understand what attorneys actually need, and that shapes
-          everything I build.
+          Sabrina here, from the PERM Tracker team. I wanted to say thank you
+          for being an early user &mdash; it genuinely means a lot. Every case
+          you track helps us understand what attorneys actually need, and that
+          shapes everything we build.
         </Text>
       </Section>
 
@@ -99,7 +99,7 @@ export function UpdateEmail({
         </Text>
         <Text className="em-text-body" style={styles.bodyText}>
           If PERM Tracker has saved you time or made deadline tracking easier,
-          I&apos;d love to hear about it. What&apos;s one thing that&apos;s been
+          we&apos;d love to hear about it. What&apos;s one thing that&apos;s been
           most useful for your practice?
         </Text>
       </Section>
@@ -122,13 +122,13 @@ export function UpdateEmail({
       <Section style={styles.signoff}>
         <Text className="em-text-body" style={styles.signoffNote}>
           Thanks again for being part of this. If you ever need anything, just
-          reply to this email &mdash; I read every message.
+          reply to this email &mdash; we read every message.
         </Text>
         <Text className="em-text" style={styles.signoffName}>
-          Adam
+          Sabrina S.
         </Text>
         <Text className="em-text-secondary" style={styles.signoffRole}>
-          Founder, PERM Tracker
+          PERM Tracker Team
         </Text>
       </Section>
 
@@ -139,7 +139,7 @@ export function UpdateEmail({
       <Section style={styles.complianceFooter}>
         <Text className="em-text-muted" style={styles.complianceText}>
           PERM Tracker &middot; Washington, DC 20001
-          &middot; support@permtracker.app
+          &middot; sabrina@permtracker.app
         </Text>
         <Text className="em-text-muted" style={styles.complianceText}>
           <Link href={unsubscribeUrl} style={styles.unsubLink}>
