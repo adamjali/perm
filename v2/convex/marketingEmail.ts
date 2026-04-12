@@ -44,6 +44,24 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Extract and normalize first name from a full name string.
+ * - Takes first word (split on space)
+ * - Capitalizes first letter, lowercases rest (title case)
+ * - Handles empty, whitespace-only, unicode names
+ * - Returns empty string if no usable name
+ */
+function extractFirstName(fullName: string | undefined | null): string {
+  if (!fullName) return "";
+  const first = fullName.trim().split(/\s+/)[0] || "";
+  if (!first) return "";
+  // Don't title-case non-Latin scripts (CJK, Arabic, etc.)
+  if (/^[a-zA-Z]/.test(first)) {
+    return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+  }
+  return first; // Return as-is for non-Latin names
+}
+
 // ============================================================================
 // SETTINGS TOGGLE (called from frontend)
 // ============================================================================
@@ -184,7 +202,7 @@ export const syncContacts = internalAction({
     for (const user of allUsers) {
       if (!user.email) continue;
       const emailLower = user.email.toLowerCase();
-      const firstName = user.name.split(" ")[0] || "";
+      const firstName = extractFirstName(user.name);
 
       // Skip deleted users — remove from Resend if present
       if (user.deletedAt) {
