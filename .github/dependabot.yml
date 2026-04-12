@@ -27,14 +27,12 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      # Keep @types/node on v22 (matches Vercel Node 22 runtime)
+      # Keep @types/node on v24 (matches Vercel Node 24 runtime via engines.node)
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
-      # Keep next pinned (exact version in package.json, upgrade deliberately)
+      # Ignore next major bumps only — allow minor+patch auto-update.
+      # Major bumps (17.x+) require manual review due to RSC/caching behavior changes.
       - dependency-name: "next"
-        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
-      # Keep jsdom on v27 (no need for major bump, test-only)
-      - dependency-name: "jsdom"
         update-types: ["version-update:semver-major"]
 
   # GitHub Actions dependencies

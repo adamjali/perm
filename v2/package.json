@@ -80,7 +80,7 @@
     "lucia": "^3.2.2",
     "lucide-react": "^1.8.0",
     "motion": "^12.38.0",
-    "next": "16.2.3",
+    "next": "^16.2.3",
     "next-mdx-remote": "^6.0.0",
     "next-themes": "^0.4.6",
     "posthog-js": "^1.367.0",
@@ -120,7 +120,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/node": "^22.19.15",
+    "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/web-push": "^3.6.4",
@@ -152,17 +152,17 @@
       "parse5": "^7.1.2",
       "lodash": "^4.18.1",
       "lodash-es": "^4.18.1",
-      "esbuild": "^0.25.0",
+      "esbuild": "^0.28.0",
       "webpack": "^5.104.1",
       "minimatch": ">=10.2.3",
       "rollup": ">=4.59.0",
-      "serialize-javascript": ">=7.0.3",
+      "serialize-javascript": ">=7.0.5",
       "bn.js": ">=5.2.3",
-      "flatted": ">=3.4.0",
-      "brace-expansion": ">=4.0.1",
-      "picomatch": ">=4.0.2",
-      "dompurify": ">=3.2.4",
-      "yaml": ">=2.6.1"
+      "flatted": ">=3.4.2",
+      "brace-expansion": ">=5.0.5",
+      "picomatch": ">=4.0.4",
+      "dompurify": ">=3.3.2",
+      "yaml": ">=2.8.3"
     },
     "onlyBuiltDependencies": [
       "@swc/core",
@@ -172,6 +172,9 @@
     ]
   },
   "packageManager": "pnpm@10.27.0+sha512.72d699da16b1179c14ba9e64dc71c9a40988cbdc65c264cb0e489db7de917f20dcf4d64d8723625f2969ba52d4b7e2a1170682d9ac2a5dcaeaab732b7e16f04a",
+  "engines": {
+    "node": "24.x"
+  },
   "browserslist": [
     "last 2 Chrome versions",
     "last 2 Firefox versions",
