@@ -201,22 +201,22 @@ export const syncContacts = internalAction({
       const existing = resendByEmail.get(emailLower);
 
       if (!existing) {
-        // Create new contact
+        // Create new contact (Resend REST API uses snake_case)
         await resendFetch("/contacts", apiKey, {
           method: "POST",
           body: {
             email: user.email,
-            firstName: firstName || undefined,
-            segmentIds: [SEGMENT_ID],
+            first_name: firstName || undefined,
+            segment_ids: [SEGMENT_ID],
           },
         });
         created++;
         await sleep(RATE_LIMIT_DELAY_MS);
       } else if (firstName && (existing.first_name || "") !== firstName) {
-        // Update name if changed
+        // Update name if changed (Resend REST API uses snake_case)
         await resendFetch(`/contacts/${existing.id}`, apiKey, {
           method: "PATCH",
-          body: { firstName },
+          body: { first_name: firstName },
         });
         updated++;
         await sleep(RATE_LIMIT_DELAY_MS);
