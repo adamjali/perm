@@ -37,11 +37,18 @@ function UserMenu({ userName }: UserMenuProps) {
   const { signOut } = useAuthActions();
   const { isSigningOut, beginSignOut, cancelSignOut } = useAuthContext();
   const { isNavigating: isNavigatingToSettings, navigateTo } = useNavigationLoading();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const isOnSettingsPage = pathname === "/settings";
 
-  function handleSettingsClick(): void {
+  // Close dropdown when navigation completes (pathname changes)
+  useEffect(() => {
+    setDropdownOpen(false);
+  }, [pathname]);
+
+  function handleSettingsClick(e: Event): void {
     if (isOnSettingsPage) return;
+    e.preventDefault(); // Prevent Radix from closing the dropdown
     navigateTo("/settings");
   }
 
@@ -68,7 +75,7 @@ function UserMenu({ userName }: UserMenuProps) {
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger
         className="group flex cursor-pointer items-center gap-2 rounded-none border-2 border-transparent bg-transparent px-3 py-2 text-sm font-medium text-white transition-all hover:border-white/50 hover:bg-white/10 focus:outline-none"
       >

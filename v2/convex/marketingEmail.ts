@@ -1,3 +1,5 @@
+"use node";
+
 /**
  * Marketing Email Subscription Management
  *
