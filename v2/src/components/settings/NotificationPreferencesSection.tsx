@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { analytics } from "@/lib/analytics";
-import { useMutation, useAction } from "convex/react";
+import { useMutation, useAction, useConvexAuth } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Mail, Bell, BellRing, AlertTriangle, Check, Send, Smartphone, Clock,
   Minus, Plus, ChevronDown, FileText, Briefcase, Calendar, FileCheck,
-  HelpCircle, AlertCircle, Newspaper, LucideIcon,
+  HelpCircle, AlertCircle, Newspaper, Megaphone, Loader2, LucideIcon,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
@@ -231,6 +231,30 @@ export default function NotificationPreferencesSection({
   const [deadlineRemindersExpanded, setDeadlineRemindersExpanded] = useState(false);
   const [statusUpdates, setStatusUpdates] = useState(profile.emailStatusUpdates ?? false);
   const [weeklyDigest, setWeeklyDigest] = useState(profile.emailWeeklyDigest ?? true);
+
+  // Marketing email subscription (Resend Audiences)
+  const [marketingSubscribed, setMarketingSubscribed] = useState<boolean | null>(null);
+  const [marketingLoading, setMarketingLoading] = useState(true);
+  const getMarketingStatus = useAction(api.marketingEmail.getMarketingSubscriptionStatus);
+  const updateMarketingSub = useAction(api.marketingEmail.updateMarketingSubscription);
+
+  useEffect(() => {
+    getMarketingStatus()
+      .then((status) => { setMarketingSubscribed(status); setMarketingLoading(false); })
+      .catch(() => { setMarketingLoading(false); });
+  }, [getMarketingStatus]);
+
+  const handleMarketingToggle = useCallback(async (value: boolean) => {
+    setMarketingSubscribed(value);
+    try {
+      await updateMarketingSub({ subscribed: value });
+      toast.success(value ? "Subscribed to product updates" : "Unsubscribed from product updates");
+    } catch (error) {
+      setMarketingSubscribed(!value);
+      captureError(error, { operation: "updateMarketingSubscription" });
+      toast.error("Failed to update subscription. Please try again.");
+    }
+  }, [updateMarketingSub]);
 
   // Deadline type states (consolidated into object)
   const [deadlineTypes, setDeadlineTypes] = useState<Record<DeadlineTypeKey, boolean>>({
@@ -577,6 +601,32 @@ export default function NotificationPreferencesSection({
               icon={<Newspaper className="w-4 h-4" />}
               indented
             />
+          </div>
+        </div>
+
+        {/* Marketing / Product Updates */}
+        <div className="mt-6 pt-6 border-t border-border">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5 flex-1">
+              <Label htmlFor="marketing-updates" className="text-sm font-medium flex items-center gap-2">
+                <Megaphone className="w-4 h-4 text-primary" />
+                Product Updates &amp; Announcements
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Occasional emails about new features and improvements
+              </p>
+            </div>
+            {marketingLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            ) : marketingSubscribed === null ? (
+              <span className="text-xs text-muted-foreground">Not available</span>
+            ) : (
+              <Switch
+                id="marketing-updates"
+                checked={marketingSubscribed}
+                onCheckedChange={handleMarketingToggle}
+              />
+            )}
           </div>
         </div>
 

@@ -100,6 +100,7 @@ import type * as lib_sentry from "../lib/sentry.js";
 import type * as lib_userDefaults from "../lib/userDefaults.js";
 import type * as lib_userProfileHelpers from "../lib/userProfileHelpers.js";
 import type * as lib_validation from "../lib/validation.js";
+import type * as marketingEmail from "../marketingEmail.js";
 import type * as notificationActions from "../notificationActions.js";
 import type * as notifications from "../notifications.js";
 import type * as onboarding from "../onboarding.js";
@@ -216,6 +217,7 @@ declare const fullApi: ApiFromModules<{
   "lib/userDefaults": typeof lib_userDefaults;
   "lib/userProfileHelpers": typeof lib_userProfileHelpers;
   "lib/validation": typeof lib_validation;
+  marketingEmail: typeof marketingEmail;
   notificationActions: typeof notificationActions;
   notifications: typeof notifications;
   onboarding: typeof onboarding;
