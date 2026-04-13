@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
-import { api, internal } from "../_generated/api";
+import { internal } from "../_generated/api";
 import { DAILY_LIMITS } from "../apiUsage";
 
 // API USAGE TESTS
@@ -33,7 +33,7 @@ describe("apiUsage", () => {
       expect(count).toBe(1);
 
       // Verify via public query
-      const usage = await t.query(api.apiUsage.getUsage, {
+      const usage = await t.query(internal.apiUsage.getUsage, {
         provider: "tavily",
       });
       expect(usage).toBe(1);
@@ -61,7 +61,7 @@ describe("apiUsage", () => {
       expect(count3).toBe(3);
 
       // Verify final count
-      const usage = await t.query(api.apiUsage.getUsage, {
+      const usage = await t.query(internal.apiUsage.getUsage, {
         provider: "tavily",
       });
       expect(usage).toBe(3);
@@ -78,10 +78,10 @@ describe("apiUsage", () => {
       await t.mutation(internal.apiUsage.trackUsage, { provider: "brave" });
 
       // Verify independent counts
-      const tavilyUsage = await t.query(api.apiUsage.getUsage, {
+      const tavilyUsage = await t.query(internal.apiUsage.getUsage, {
         provider: "tavily",
       });
-      const braveUsage = await t.query(api.apiUsage.getUsage, {
+      const braveUsage = await t.query(internal.apiUsage.getUsage, {
         provider: "brave",
       });
 
@@ -96,7 +96,7 @@ describe("apiUsage", () => {
       await t.mutation(internal.apiUsage.trackUsage, { provider: "tavily" });
       await t.mutation(internal.apiUsage.trackUsage, { provider: "tavily" });
 
-      const day1Usage = await t.query(api.apiUsage.getUsage, {
+      const day1Usage = await t.query(internal.apiUsage.getUsage, {
         provider: "tavily",
       });
       expect(day1Usage).toBe(2);
@@ -108,7 +108,7 @@ describe("apiUsage", () => {
       await t.mutation(internal.apiUsage.trackUsage, { provider: "tavily" });
 
       // New day should have fresh count
-      const day2Usage = await t.query(api.apiUsage.getUsage, {
+      const day2Usage = await t.query(internal.apiUsage.getUsage, {
         provider: "tavily",
       });
       expect(day2Usage).toBe(1);
@@ -171,7 +171,7 @@ describe("apiUsage", () => {
     it("returns 0 for new provider with no usage", async () => {
       const t = createTestContext();
 
-      const usage = await t.query(api.apiUsage.getUsage, {
+      const usage = await t.query(internal.apiUsage.getUsage, {
         provider: "tavily",
       });
 
@@ -185,7 +185,7 @@ describe("apiUsage", () => {
       await t.mutation(internal.apiUsage.trackUsage, { provider: "tavily" });
       await t.mutation(internal.apiUsage.trackUsage, { provider: "tavily" });
 
-      const usage = await t.query(api.apiUsage.getUsage, {
+      const usage = await t.query(internal.apiUsage.getUsage, {
         provider: "tavily",
       });
 
@@ -202,10 +202,10 @@ describe("apiUsage", () => {
       await t.mutation(internal.apiUsage.trackUsage, { provider: "brave" });
 
       // Each provider should return its own count
-      const tavilyUsage = await t.query(api.apiUsage.getUsage, {
+      const tavilyUsage = await t.query(internal.apiUsage.getUsage, {
         provider: "tavily",
       });
-      const braveUsage = await t.query(api.apiUsage.getUsage, {
+      const braveUsage = await t.query(internal.apiUsage.getUsage, {
         provider: "brave",
       });
 
@@ -222,7 +222,7 @@ describe("apiUsage", () => {
     it("returns configured limits for all providers", async () => {
       const t = createTestContext();
 
-      const limits = await t.query(api.apiUsage.getDailyLimits, {});
+      const limits = await t.query(internal.apiUsage.getDailyLimits, {});
 
       expect(limits).toHaveProperty("tavily");
       expect(limits).toHaveProperty("brave");
@@ -231,7 +231,7 @@ describe("apiUsage", () => {
     it("returns correct limit values", async () => {
       const t = createTestContext();
 
-      const limits = await t.query(api.apiUsage.getDailyLimits, {});
+      const limits = await t.query(internal.apiUsage.getDailyLimits, {});
 
       // Verify limits match the constant
       expect(limits.tavily).toBe(DAILY_LIMITS.tavily);
@@ -245,8 +245,8 @@ describe("apiUsage", () => {
     it("returns a copy (not the original object)", async () => {
       const t = createTestContext();
 
-      const limits1 = await t.query(api.apiUsage.getDailyLimits, {});
-      const limits2 = await t.query(api.apiUsage.getDailyLimits, {});
+      const limits1 = await t.query(internal.apiUsage.getDailyLimits, {});
+      const limits2 = await t.query(internal.apiUsage.getDailyLimits, {});
 
       // Should be equal but not the same object
       expect(limits1).toEqual(limits2);
@@ -269,8 +269,8 @@ describe("apiUsage", () => {
         await t.mutation(internal.apiUsage.trackUsage, { provider: "tavily" });
       }
 
-      const usage = await t.query(api.apiUsage.getUsage, { provider: "tavily" });
-      const limits = await t.query(api.apiUsage.getDailyLimits, {});
+      const usage = await t.query(internal.apiUsage.getUsage, { provider: "tavily" });
+      const limits = await t.query(internal.apiUsage.getDailyLimits, {});
 
       // Usage should equal limit
       expect(usage).toBe(limits.tavily);
@@ -287,7 +287,7 @@ describe("apiUsage", () => {
       const usage = await t.query(internal.apiUsage.getUsageInternal, {
         provider: "brave",
       });
-      const limits = await t.query(api.apiUsage.getDailyLimits, {});
+      const limits = await t.query(internal.apiUsage.getDailyLimits, {});
 
       // Should be well under the limit
       expect(usage < limits.brave).toBe(true);

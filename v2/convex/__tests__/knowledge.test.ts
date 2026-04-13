@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createTestContext, createAuthenticatedContext } from "../../test-utils/convex";
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { PERM_KNOWLEDGE_SECTIONS } from "../lib/rag/permKnowledge";
 import { APP_GUIDE_SECTIONS } from "../lib/rag/appGuideKnowledge";
 
@@ -15,7 +15,7 @@ describe("knowledge", () => {
     it("returns correct total sections count from static data", async () => {
       const t = createTestContext();
 
-      const status = await t.query(api.knowledge.getIngestionStatus, {});
+      const status = await t.query(internal.knowledge.getIngestionStatus, {});
 
       expect(status).toHaveProperty("sectionsAvailable");
       expect(status.sectionsAvailable).toBe(
@@ -27,7 +27,7 @@ describe("knowledge", () => {
     it("returns 48 total sections (18 PERM + 30 app guide)", async () => {
       const t = createTestContext();
 
-      const status = await t.query(api.knowledge.getIngestionStatus, {});
+      const status = await t.query(internal.knowledge.getIngestionStatus, {});
 
       // This validates the exact count matches our knowledge base
       expect(status.sectionsAvailable).toBe(48);
@@ -38,7 +38,7 @@ describe("knowledge", () => {
     it("returns breakdown of PERM and app guide sections", async () => {
       const t = createTestContext();
 
-      const status = await t.query(api.knowledge.getIngestionStatus, {});
+      const status = await t.query(internal.knowledge.getIngestionStatus, {});
 
       expect(status).toHaveProperty("permSections");
       expect(status).toHaveProperty("appGuideSections");

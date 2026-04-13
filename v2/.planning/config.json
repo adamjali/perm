@@ -18,7 +18,7 @@
   },
   "parallelization": true,
   "brave_search": false,
-  "_skills_mtime": 1775599757061.9868,
+  "_skills_mtime": 1776023774294.715,
   "_skills_list": [
     "cold-outreach-perm",
     "create-hooks",
@@ -107,6 +107,7 @@
     "gsd-validate-phase",
     "gsd-verify-work",
     "gsd-workstreams",
-    "jina-image-search"
+    "jina-image-search",
+    "perm-email"
   ]
 }

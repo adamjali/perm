@@ -8,7 +8,7 @@
  * @module knowledge
  */
 
-import { action, internalAction, query } from "./_generated/server";
+import { action, internalAction, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { rag } from "./lib/rag";
 import { internal } from "./_generated/api";
@@ -145,7 +145,7 @@ export const triggerIngestion = internalAction({
  *
  * @returns Object with section counts (total, PERM, and app guide)
  */
-export const getIngestionStatus = query({
+export const getIngestionStatus = internalQuery({
   args: {},
   handler: async () => {
     return {

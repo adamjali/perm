@@ -265,7 +265,7 @@ describe("webSearch", () => {
       const user = await createAuthenticatedContext(t);
 
       // Verify initial count
-      const initialUsage = await t.query(api.apiUsage.getUsage, {
+      const initialUsage = await t.query(internal.apiUsage.getUsage, {
         provider: "tavily",
       });
       expect(initialUsage).toBe(0);
@@ -277,7 +277,7 @@ describe("webSearch", () => {
       });
 
       // Verify usage was incremented
-      const finalUsage = await t.query(api.apiUsage.getUsage, {
+      const finalUsage = await t.query(internal.apiUsage.getUsage, {
         provider: "tavily",
       });
       expect(finalUsage).toBe(1);
@@ -293,7 +293,7 @@ describe("webSearch", () => {
       }
 
       // Verify initial Brave count
-      const initialUsage = await t.query(api.apiUsage.getUsage, {
+      const initialUsage = await t.query(internal.apiUsage.getUsage, {
         provider: "brave",
       });
       expect(initialUsage).toBe(0);
@@ -305,7 +305,7 @@ describe("webSearch", () => {
       });
 
       // Verify Brave usage was incremented
-      const finalUsage = await t.query(api.apiUsage.getUsage, {
+      const finalUsage = await t.query(internal.apiUsage.getUsage, {
         provider: "brave",
       });
       expect(finalUsage).toBe(1);
@@ -545,7 +545,7 @@ describe("webSearch", () => {
       expect(result.source).toBe("tavily");
 
       // Usage should now be at 30
-      const usage = await t.query(api.apiUsage.getUsage, { provider: "tavily" });
+      const usage = await t.query(internal.apiUsage.getUsage, { provider: "tavily" });
       expect(usage).toBe(30);
     });
 

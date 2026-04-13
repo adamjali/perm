@@ -15,7 +15,7 @@
  * @module apiUsage
  */
 
-import { query, internalMutation, internalQuery } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
 /**
@@ -129,7 +129,7 @@ export const getUsageInternal = internalQuery({
  * @param provider - The API provider name ("tavily" | "brave")
  * @returns Today's usage count for the provider
  */
-export const getUsage = query({
+export const getUsage = internalQuery({
   args: {
     provider: v.string(),
   },
@@ -155,7 +155,7 @@ export const getUsage = query({
  *
  * @returns Object mapping provider names to their daily limits
  */
-export const getDailyLimits = query({
+export const getDailyLimits = internalQuery({
   args: {},
   handler: async (): Promise<Record<string, number>> => {
     return { ...DAILY_LIMITS };
