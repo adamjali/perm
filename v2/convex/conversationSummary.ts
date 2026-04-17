@@ -23,16 +23,37 @@ import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 // =============================================================================
 
 /**
- * Number of messages that triggers summarization.
- * When message count exceeds this, summarization is triggered.
+ * Approximate character-to-token ratio used for token estimation.
+ * Matches the pattern used in `src/lib/ai/compaction.ts` for consistency.
+ */
+const CHARS_PER_TOKEN = 3.5;
+
+/**
+ * Token-based summarization trigger.
+ * When the total estimated tokens of un-summarized messages exceeds this,
+ * a new summarization cycle should run.
+ */
+export const SUMMARY_TRIGGER_TOKEN_COUNT = 8000;
+
+/**
+ * Legacy message-count trigger (kept for backward compatibility in logs/metrics).
+ * The token-based trigger above takes precedence. This is a safety floor.
  */
 export const SUMMARY_TRIGGER_MESSAGE_COUNT = 12;
 
 /**
  * Number of recent messages to keep verbatim (not summarized).
  * These are the most recent messages that provide immediate context.
+ * Increased from 4 → 10: AI SDK research (LangChain, LlamaIndex, Anthropic cookbook)
+ * converges on 10–20 as the right verbatim-keep window for preserving immediate context.
  */
-export const RECENT_MESSAGES_TO_KEEP = 4;
+export const RECENT_MESSAGES_TO_KEEP = 10;
+
+/**
+ * How long a summarization lock remains honored. After this, a stale lock
+ * is ignored (we assume the prior attempt crashed).
+ */
+export const SUMMARIZATION_LOCK_TTL_MS = 60_000;
 
 /**
  * System prompt for the summarization LLM.
@@ -78,16 +99,20 @@ export const needsSummarization = query({
     if (userId === null) return false;
 
     const conversation = await ctx.db.get(args.conversationId);
-    if (!conversation) {
+    if (!conversation) return false;
+    if (conversation.userId !== userId) return false;
+
+    // Race protection: if a summarization is in progress (and fresh), skip.
+    // Stale locks (>60s) are treated as abandoned and allowed to be claimed.
+    const summarizingAt = conversation.summary?.summarizingAt;
+    if (
+      summarizingAt &&
+      Date.now() - summarizingAt < SUMMARIZATION_LOCK_TTL_MS
+    ) {
       return false;
     }
 
-    // Verify ownership
-    if (conversation.userId !== userId) {
-      return false;
-    }
-
-    // Get total message count
+    // Get all messages for this conversation
     const messages = await ctx.db
       .query("conversationMessages")
       .withIndex("by_conversation_id", (q) =>
@@ -95,30 +120,32 @@ export const needsSummarization = query({
       )
       .collect();
 
-    const messageCount = messages.length;
-
-    // If we haven't hit the threshold, no summarization needed
-    if (messageCount <= SUMMARY_TRIGGER_MESSAGE_COUNT) {
+    // Fast reject: too few messages to bother summarizing.
+    // Avoids summarization cycles on short conversations regardless of content size.
+    if (messages.length <= SUMMARY_TRIGGER_MESSAGE_COUNT) {
       return false;
     }
 
-    // If no summary exists yet, we need one
-    if (!conversation.summary) {
-      return true;
+    // Token-based trigger: estimate tokens in the un-summarized tail.
+    // Use messages AFTER the last summary point (if any).
+    const lastSummarizedCount = conversation.summary?.messageCountAtSummary ?? 0;
+    const sortedMessages = messages.sort((a, b) => a.createdAt - b.createdAt);
+    const unsummarizedTail = sortedMessages.slice(lastSummarizedCount);
+
+    let estimatedTokens = 0;
+    for (const m of unsummarizedTail) {
+      estimatedTokens += Math.ceil((m.content?.length ?? 0) / CHARS_PER_TOKEN);
+      // Tool calls/results also consume tokens
+      if (m.toolCalls) {
+        for (const tc of m.toolCalls) {
+          estimatedTokens += Math.ceil(
+            ((tc.arguments?.length ?? 0) + (tc.result?.length ?? 0)) / CHARS_PER_TOKEN
+          );
+        }
+      }
     }
 
-    // Prevent double-summarization from concurrent requests.
-    // If summary was updated in the last 30 seconds, skip.
-    if (conversation.summary.lastSummarizedAt &&
-        Date.now() - conversation.summary.lastSummarizedAt < 30000) {
-      return false;
-    }
-
-    // Check if enough new messages have accumulated since last summary
-    const messagesSinceSummary =
-      messageCount - conversation.summary.messageCountAtSummary;
-
-    return messagesSinceSummary >= SUMMARY_TRIGGER_MESSAGE_COUNT;
+    return estimatedTokens >= SUMMARY_TRIGGER_TOKEN_COUNT;
   },
 });
 
@@ -139,26 +166,28 @@ export const getContextMessages = query({
     args
   ): Promise<{
     summary: string | null;
+    facts: string | null;
     recentMessages: Array<{
       role: "user" | "assistant" | "system";
       content: string;
     }>;
     totalMessageCount: number;
+    messageCountAtSummary: number;
   }> => {
+    const empty = {
+      summary: null,
+      facts: null,
+      recentMessages: [],
+      totalMessageCount: 0,
+      messageCountAtSummary: 0,
+    };
     const userId = await getCurrentUserIdOrNull(ctx);
-    if (userId === null) return { summary: null, recentMessages: [], totalMessageCount: 0 };
+    if (userId === null) return empty;
 
     const conversation = await ctx.db.get(args.conversationId);
-    if (!conversation) {
-      return { summary: null, recentMessages: [], totalMessageCount: 0 };
-    }
+    if (!conversation) return empty;
+    if (conversation.userId !== userId) return empty;
 
-    // Verify ownership
-    if (conversation.userId !== userId) {
-      return { summary: null, recentMessages: [], totalMessageCount: 0 };
-    }
-
-    // Get all messages sorted by creation time
     const messages = await ctx.db
       .query("conversationMessages")
       .withIndex("by_conversation_id", (q) =>
@@ -181,8 +210,10 @@ export const getContextMessages = query({
 
     return {
       summary: conversation.summary?.content ?? null,
+      facts: conversation.summary?.facts ?? null,
       recentMessages,
       totalMessageCount,
+      messageCountAtSummary: conversation.summary?.messageCountAtSummary ?? 0,
     };
   },
 });
@@ -213,20 +244,21 @@ export const getMessagesToSummarize = query({
       }>;
     }>;
     existingSummary: string | null;
+    existingFacts: string | null;
     totalMessageCount: number;
   }> => {
+    const empty = {
+      messages: [],
+      existingSummary: null,
+      existingFacts: null,
+      totalMessageCount: 0,
+    };
     const userId = await getCurrentUserIdOrNull(ctx);
-    if (userId === null) return { messages: [], existingSummary: null, totalMessageCount: 0 };
+    if (userId === null) return empty;
 
     const conversation = await ctx.db.get(args.conversationId);
-    if (!conversation) {
-      return { messages: [], existingSummary: null, totalMessageCount: 0 };
-    }
-
-    // Verify ownership
-    if (conversation.userId !== userId) {
-      return { messages: [], existingSummary: null, totalMessageCount: 0 };
-    }
+    if (!conversation) return empty;
+    if (conversation.userId !== userId) return empty;
 
     // Get all messages sorted by creation time
     const allMessages = await ctx.db
@@ -252,6 +284,7 @@ export const getMessagesToSummarize = query({
       return {
         messages: [],
         existingSummary: conversation.summary?.content ?? null,
+        existingFacts: conversation.summary?.facts ?? null,
         totalMessageCount,
       };
     }
@@ -269,6 +302,7 @@ export const getMessagesToSummarize = query({
     return {
       messages: messagesToSummarize,
       existingSummary: conversation.summary?.content ?? null,
+      existingFacts: conversation.summary?.facts ?? null,
       totalMessageCount,
     };
   },
@@ -288,6 +322,7 @@ export const saveSummary = mutation({
   args: {
     conversationId: v.id("conversations"),
     content: v.string(),
+    facts: v.optional(v.string()),
     tokenCount: v.number(),
     messageCountAtSummary: v.number(),
   },
@@ -299,7 +334,6 @@ export const saveSummary = mutation({
       throw new Error("Conversation not found");
     }
 
-    // Verify ownership
     if (conversation.userId !== userId) {
       throw new Error("Access denied: you do not own this conversation");
     }
@@ -307,9 +341,91 @@ export const saveSummary = mutation({
     await ctx.db.patch(args.conversationId, {
       summary: {
         content: args.content,
+        ...(args.facts !== undefined && { facts: args.facts }),
         tokenCount: args.tokenCount,
         messageCountAtSummary: args.messageCountAtSummary,
         lastSummarizedAt: Date.now(),
+        // Clear any in-progress lock on successful save.
+        // summarizingAt deliberately omitted to clear via patch semantics.
+      },
+    });
+  },
+});
+
+/**
+ * Atomically claim a summarization lock on a conversation.
+ *
+ * Returns true if the lock was acquired (caller should proceed to summarize).
+ * Returns false if another process already holds a fresh lock.
+ *
+ * The lock stores a timestamp. Stale locks (>60s) are considered abandoned
+ * and can be claimed — this protects against crashed processes.
+ *
+ * On success, the caller MUST call `finishSummarizing` (or `saveSummary`,
+ * which clears the lock) to release the lock.
+ */
+export const beginSummarizing = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args): Promise<boolean> => {
+    const userId = await getCurrentUserId(ctx);
+
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation) return false;
+    if (conversation.userId !== userId) return false;
+
+    const currentLock = conversation.summary?.summarizingAt;
+    const now = Date.now();
+    const isLocked =
+      currentLock !== undefined &&
+      now - currentLock < SUMMARIZATION_LOCK_TTL_MS;
+
+    if (isLocked) return false;
+
+    // Acquire the lock by preserving existing summary fields and setting summarizingAt.
+    const prevSummary = conversation.summary;
+    await ctx.db.patch(args.conversationId, {
+      summary: {
+        content: prevSummary?.content ?? "",
+        ...(prevSummary?.facts !== undefined && { facts: prevSummary.facts }),
+        tokenCount: prevSummary?.tokenCount ?? 0,
+        messageCountAtSummary: prevSummary?.messageCountAtSummary ?? 0,
+        lastSummarizedAt: prevSummary?.lastSummarizedAt ?? 0,
+        summarizingAt: now,
+      },
+    });
+    return true;
+  },
+});
+
+/**
+ * Release the summarization lock without updating the summary content.
+ * Called when summarization fails or is aborted — ensures the lock doesn't
+ * linger until the 60s TTL expires.
+ */
+export const finishSummarizing = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args): Promise<void> => {
+    const userId = await getCurrentUserId(ctx);
+
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation) return;
+    if (conversation.userId !== userId) return;
+
+    const prevSummary = conversation.summary;
+    if (!prevSummary) return;
+
+    await ctx.db.patch(args.conversationId, {
+      summary: {
+        content: prevSummary.content,
+        ...(prevSummary.facts !== undefined && { facts: prevSummary.facts }),
+        tokenCount: prevSummary.tokenCount,
+        messageCountAtSummary: prevSummary.messageCountAtSummary,
+        lastSummarizedAt: prevSummary.lastSummarizedAt,
+        // summarizingAt omitted — cleared via patch
       },
     });
   },

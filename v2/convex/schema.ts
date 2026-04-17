@@ -621,10 +621,12 @@ export default defineSchema({
     // Conversation summary for context compression
     summary: v.optional(
       v.object({
-        content: v.string(), // Compressed history text
+        content: v.string(), // Compressed history text (prose, bounded at ~1000 tokens)
+        facts: v.optional(v.string()), // JSON string of structured entities (cases, people, dates, preferences, openActions) — merged losslessly across compactions
         tokenCount: v.number(), // Approximate tokens in summary
         messageCountAtSummary: v.number(), // Messages when summarized
         lastSummarizedAt: v.number(), // Timestamp of summarization
+        summarizingAt: v.optional(v.number()), // Race lock: timestamp when summarization started, cleared on finish. Stale entries (>60s) are treated as unlocked.
       })
     ),
     createdAt: v.number(),

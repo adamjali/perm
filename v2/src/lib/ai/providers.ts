@@ -1,23 +1,25 @@
 /**
  * AI Provider Configuration
  *
- * Multi-provider setup with automatic fallback. Tries each model in order;
- * if one fails (rate limit, quota, auth, 404, any error), moves to the next.
+ * 5-model free fallback chain with automatic failover. Tries each in order;
+ * if one fails (503, rate limit, quota, auth, 404, any error), moves to the next.
  *
- * Provider Chain (Feb 2026):
+ * Chain (April 2026):
  *
- * Tier 1 (Primary - Google Gemini):
- *   - Gemini 2.5 Flash (20 RPD free tier) - PRIMARY
+ *   Tier 1 — Google Gemini (primary, 1M context):
+ *     1. Gemini 2.5 Flash (20 RPD free tier per model)
+ *     2. Gemini 2.0 Flash (independent free-tier quota bucket)
  *
- * Tier 2 (High-quota fallbacks):
- *   - Groq Llama 3.3 70B Versatile (30 RPM, 14400 RPD free)
- *   - Mistral Small (generous free tier, reliable)
+ *   Tier 2 — High-quota mid-size fallbacks (100k+ context):
+ *     3. Groq Llama 3.3 70B Versatile (30 RPM, 10k TPM free tier)
+ *     4. Mistral Small (generous free tier, wrapped with tool-call-ID sanitizer)
  *
- * Tier 3 (Free / Emergency):
- *   - Llama 3.3 70B (OpenRouter free, often rate-limited)
- *   - Llama 3.1 8B (Cerebras, emergency ultra-fast)
+ *   Tier 3 — Free large-context emergency fallback:
+ *     5. GLM 4.5 Air via OpenRouter (131k context, verified reliable multi-turn tool calling)
  *
- * Total: 5 models across 5 providers.
+ * Cerebras llama3.1-8b is intentionally NOT in this chain — its 6k context budget
+ * cannot fit our tool definitions + system prompt. It IS exported for use by
+ * `summarize.ts` for fast background entity extraction.
  *
  * All providers use NATIVE AI SDK packages (@ai-sdk/google, @ai-sdk/groq,
  * @ai-sdk/mistral, @ai-sdk/cerebras, @openrouter/ai-sdk-provider).
@@ -25,14 +27,21 @@
  * tool call parsing. Using createOpenAI() as a generic wrapper causes
  * "Expected 'function' type." errors on streaming tool calls (vercel/ai#5350).
  *
- * REMOVED (Feb 2026):
- *   - createOpenAI() for Groq/Mistral/Cerebras — caused "Expected 'function'
- *     type." on streaming tool calls + defaulted to /responses API (404/400)
- *   - Mistral tool call ID middleware — native @ai-sdk/mistral handles IDs
- *   - devstral-2512:free — OpenRouter free period ended (returns 404)
- *   - cerebras llama-3.3-70b — deprecated on Cerebras Feb 16 2026
- *   - gemini-3-flash-preview — requires thought_signature for tool calls,
- *     broken with @ai-sdk/google v3 (issues #11413, #12351)
+ * WHY THE MISTRAL ID SANITIZER IS NEEDED (re-added April 2026):
+ *   Mistral's API rejects tool_call_id values longer than 9 alphanumeric chars
+ *   with HTTP 400 ("Tool call id was X but must be a-z, A-Z, 0-9, length 9").
+ *   The native @ai-sdk/mistral only sanitizes IDs it GENERATES. When earlier
+ *   turns produced longer IDs (Gemini, Groq, etc.) and we fall to Mistral,
+ *   those historical IDs are passed through unchanged and rejected. The
+ *   `wrapMistralModel` middleware rewrites incoming IDs on both assistant
+ *   tool-call parts AND tool-result parts before the request goes out.
+ *   Production evidence: Sentry issue 7411490896 (release 49ece79).
+ *
+ * REMOVED:
+ *   - meta-llama/llama-3.3-70b-instruct:free — chronically 429'd on OpenRouter free
+ *   - Cerebras llama3.1-8b from chat chain — 6k budget < tool+system overhead
+ *   - gemini-3-flash-preview — requires thought_signature for tool calls (broken)
+ *   - createOpenAI() for Groq/Mistral/Cerebras — see "Expected 'function' type." above
  */
 
 import { google } from '@ai-sdk/google';
@@ -40,6 +49,7 @@ import { createGroq } from '@ai-sdk/groq';
 import { createMistral } from '@ai-sdk/mistral';
 import { createCerebras } from '@ai-sdk/cerebras';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { wrapLanguageModel } from 'ai';
 import type {
   LanguageModelV3,
   LanguageModelV3CallOptions,
@@ -68,13 +78,91 @@ export const mistral = createMistral({
   apiKey: getApiKey('MISTRAL_API_KEY'),
 });
 
-const cerebras = createCerebras({
+/** Cerebras client — used by summarize.ts for fast entity extraction. NOT in chat chain. */
+export const cerebras = createCerebras({
   apiKey: getApiKey('CEREBRAS_API_KEY'),
 });
 
 const openrouter = createOpenRouter({
   apiKey: getApiKey('OPENROUTER_API_KEY'),
 });
+
+// =============================================================================
+// Mistral Tool Call ID Sanitizer Middleware
+// =============================================================================
+
+/**
+ * Mistral requires tool_call_id to be exactly 9 alphanumeric characters.
+ * Transforms any ID to exactly that shape deterministically so repeated calls
+ * with the same input yield the same output — critical for matching tool-call
+ * parts with their tool-result parts in the same conversation.
+ */
+function toMistralToolCallId(id: string): string {
+  const alphanumeric = id.replace(/[^a-zA-Z0-9]/g, '');
+
+  if (alphanumeric.length >= 9) {
+    return alphanumeric.slice(-9);
+  }
+
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let padded = alphanumeric;
+  let i = 0;
+  while (padded.length < 9) {
+    padded += chars[(id.charCodeAt(i % id.length) + i) % chars.length];
+    i++;
+  }
+  return padded.slice(0, 9);
+}
+
+/**
+ * Wrap a Mistral-based model with middleware that rewrites every tool_call_id
+ * in the outgoing prompt. Handles BOTH:
+ *   - assistant messages with tool-call parts (the call being made)
+ *   - tool messages with tool-result parts (references to prior calls)
+ *
+ * Without this, historical IDs from other providers in the same conversation
+ * (16-char Gemini IDs, etc.) cause Mistral to 400.
+ */
+function wrapMistralModel<T extends LanguageModelV3>(model: T): T {
+  return wrapLanguageModel({
+    model,
+    middleware: {
+      specificationVersion: 'v3' as const,
+      transformParams: async ({ params }) => {
+        const transformedPrompt = params.prompt.map((msg) => {
+          if (msg.role === 'assistant' && Array.isArray(msg.content)) {
+            return {
+              ...msg,
+              content: msg.content.map((part) => {
+                if (part.type === 'tool-call') {
+                  return { ...part, toolCallId: toMistralToolCallId(part.toolCallId) };
+                }
+                return part;
+              }),
+            };
+          }
+          if (msg.role === 'tool' && Array.isArray(msg.content)) {
+            return {
+              ...msg,
+              content: msg.content.map((part) => {
+                if (part.type === 'tool-result') {
+                  return { ...part, toolCallId: toMistralToolCallId(part.toolCallId) };
+                }
+                return part;
+              }),
+            };
+          }
+          return msg;
+        });
+
+        return { ...params, prompt: transformedPrompt };
+      },
+    },
+  }) as T;
+}
+
+// Export for unit testing
+export { toMistralToolCallId, wrapMistralModel };
 
 // =============================================================================
 // Model Configuration
@@ -97,29 +185,29 @@ function estimateInputTokens(options: LanguageModelV3CallOptions): number {
     const serialized = JSON.stringify(options);
     return Math.ceil(serialized.length / 3.5);
   } catch {
-    return 0; // Can't estimate — don't skip
+    return 0;
   }
 }
 
 /**
- * All models in fallback order. Each request tries from index 0.
+ * Fallback chain (5 models). Each request tries from index 0.
  * No shared state between requests — every request gets a fresh attempt.
  *
- * maxInputTokens: set below the provider's TPM/context limit with buffer.
- * - Groq free tier: 12k TPM total → cap at 10k to leave room for output
- * - Cerebras: 8192 context window → cap at 6k to leave room for output
+ * maxInputTokens reflects the realistic usable budget including tools:
+ *   - Groq free tier: 12k TPM total → cap at 10k
+ *   - Others: 100k+ context, no cap needed for typical requests
  */
 const MODEL_CONFIGS: ModelConfig[] = [
-  // Tier 1: Primary (Google Gemini — best quality, 20 RPD free, 1M context)
+  // Tier 1: Google Gemini — 1M context, best quality, 20 RPD per model free tier
   { model: google('gemini-2.5-flash'), name: 'Gemini 2.5 Flash' },
+  { model: google('gemini-2.0-flash'), name: 'Gemini 2.0 Flash' },
 
-  // Tier 2: High-quota fallbacks (catch Gemini overflow)
+  // Tier 2: High-quota mid-size fallbacks
   { model: groq('llama-3.3-70b-versatile'), name: 'Llama 3.3 70B (Groq)', maxInputTokens: 10000 },
-  { model: mistral('mistral-small-latest'), name: 'Mistral Small' },
+  { model: wrapMistralModel(mistral('mistral-small-latest')), name: 'Mistral Small' },
 
-  // Tier 3: Free / Emergency (OpenRouter free models are often 429'd)
-  { model: openrouter('meta-llama/llama-3.3-70b-instruct:free'), name: 'Llama 3.3 70B (OpenRouter)' },
-  { model: cerebras('llama3.1-8b'), name: 'Llama 3.1 8B (Cerebras)', maxInputTokens: 6000 },
+  // Tier 3: Free large-context emergency
+  { model: openrouter('z-ai/glm-4.5-air:free'), name: 'GLM 4.5 Air (OpenRouter)' },
 ];
 
 // =============================================================================
@@ -144,18 +232,15 @@ function formatError(error: unknown): string {
 /**
  * Simple sequential fallback model. Tries each model in order for every request.
  *
- * Unlike ai-fallback, this has:
  * - No shared state between requests (use forRequest() for per-request isolation)
  * - No complex stream wrapping or mid-stream recovery
  * - Clear, sequential logging of every model attempt
  * - ALL errors are retried (no shouldRetryThisError issues)
+ * - Models with declared maxInputTokens are skipped if payload exceeds budget
  *
- * Trade-off: no mid-stream recovery. The try/catch wraps doStream() which
- * resolves when the stream connects. Errors during stream consumption (after
- * doStream resolves) are outside the fallback loop entirely. Acceptable because:
- * - Most errors (rate limit, quota, auth, 404) happen at connection time
- * - Mid-stream failures are rare
- * - Simplicity prevents the bugs that caused the fallback to silently fail
+ * Trade-off: no mid-stream recovery. Errors during stream consumption (after
+ * doStream resolves) are outside the fallback loop. Acceptable because most
+ * errors (rate limit, quota, auth, 404) happen at connection time.
  */
 export class FallbackModel implements LanguageModelV3 {
   readonly specificationVersion = 'v3' as const;
@@ -204,7 +289,6 @@ export class FallbackModel implements LanguageModelV3 {
     for (let i = 0; i < this.configs.length; i++) {
       const config = this.configs[i]!;
 
-      // Skip models with insufficient context/TPM limits
       if (config.maxInputTokens && estimatedTokens && estimatedTokens > config.maxInputTokens) {
         const msg = `Input too large (~${estimatedTokens} tokens, limit ${config.maxInputTokens})`;
         errors.push({ name: config.name, error: msg });
@@ -233,7 +317,6 @@ export class FallbackModel implements LanguageModelV3 {
       }
     }
 
-    // All models failed — throw with comprehensive info and report to Sentry
     const summary = errors.map((e, i) => `  ${i + 1}. ${e.name}: ${e.error}`).join('\n');
     console.error(`[Fallback] ALL ${this.configs.length} models failed (${mode}):\n${summary}`);
     captureError(
@@ -261,21 +344,21 @@ export class FallbackModel implements LanguageModelV3 {
 
 /**
  * Chat model with automatic fallback across 5 models / 5 providers.
- * Every request starts from model #1 (Gemini). If it fails, tries #2, #3, etc.
+ * Every request starts from model #1 (Gemini 2.5 Flash).
  */
 export const chatModel = new FallbackModel(MODEL_CONFIGS);
 
 export const PRIMARY_MODEL_NAME = MODEL_CONFIGS[0]!.name;
 
 export const SUPPORTED_MODELS = [
-  // Tier 1: Primary (Google Gemini)
+  // Tier 1: Google Gemini
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', tier: 1, toolCalling: '~90%' },
+  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'Google', tier: 1, toolCalling: '~85%' },
 
   // Tier 2: High-quota fallbacks
   { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', provider: 'Groq', tier: 2, toolCalling: '77.3%' },
   { id: 'mistral-small-latest', name: 'Mistral Small', provider: 'Mistral', tier: 2, toolCalling: '~70%' },
 
-  // Tier 3: Free / Emergency
-  { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', provider: 'OpenRouter', tier: 3, toolCalling: '77.3%' },
-  { id: 'llama3.1-8b', name: 'Llama 3.1 8B', provider: 'Cerebras', tier: 3, toolCalling: '~50%' },
+  // Tier 3: Free large-context emergency
+  { id: 'z-ai/glm-4.5-air:free', name: 'GLM 4.5 Air', provider: 'OpenRouter', tier: 3, toolCalling: '~80%' },
 ] as const;

@@ -20,7 +20,6 @@ import {
   UIMessage,
   convertToModelMessages,
   stepCountIs,
-  type ModelMessage,
 } from 'ai';
 import { isAuthenticatedNextjs, convexAuthNextjsToken } from '@convex-dev/auth/nextjs/server';
 import { fetchQuery } from 'convex/nextjs';
@@ -31,6 +30,7 @@ import {
   checkNeedsSummarization,
 } from '@/lib/ai/summarize';
 import { chatModel, PRIMARY_MODEL_NAME } from '@/lib/ai/providers';
+import { compactToFit, parseFacts } from '@/lib/ai/compaction';
 import { getSystemPrompt } from '@/lib/ai/system-prompt';
 import type { ActionMode } from '@/lib/ai/tool-permissions';
 import { createCacheStats } from '@/lib/ai/cache';
@@ -151,40 +151,39 @@ export async function POST(req: Request) {
           { token }
         );
 
-        if (contextData.summary) {
-          console.log(`[Chat API] [${sessionId}] Using summarized context (${contextData.totalMessageCount} total messages)`);
+        if (contextData.summary || contextData.facts) {
+          console.log(`[Chat API] [${sessionId}] Compacting context (${contextData.totalMessageCount} total messages)`);
 
-          // Truncate summary and messages to control context size.
-          // Without this, tool results in recent messages can bloat context to 18k+ tokens,
-          // exceeding Groq TPM (12k) and Cerebras context (8k) limits.
-          const MAX_SUMMARY_LENGTH = 800;
-          const MAX_MESSAGE_LENGTH = 500;
+          // Convert raw message history to ModelMessage[] (full fidelity — no hard truncation).
+          // Let the compaction module walk L0→L4 to fit the target budget.
+          const fullMessages = await convertToModelMessages(messages);
 
-          const truncatedSummary = contextData.summary.length > MAX_SUMMARY_LENGTH
-            ? contextData.summary.slice(0, MAX_SUMMARY_LENGTH) + '...'
-            : contextData.summary;
+          // Target budget: ~10k tokens — fits Groq (the tightest model in the chain that
+          // doesn't get skipped). Gemini (1M) and Mistral/GLM (~100k) handle this easily
+          // with plenty of headroom. This targets the smallest non-skipped model so no
+          // model in the chain gets skipped for size.
+          const TARGET_TOKENS = 10_000;
 
-          const optimizedMessages: ModelMessage[] = [
+          const compaction = compactToFit(
             {
-              role: "user" as const,
-              content: `[Previous conversation context: ${truncatedSummary}]`,
+              messages: fullMessages,
+              summary: {
+                content: contextData.summary ?? "",
+                facts: parseFacts(contextData.facts ?? undefined),
+              },
             },
-            {
-              role: "assistant" as const,
-              content: "I understand the context. How can I help?",
-            },
-            ...contextData.recentMessages
-              // Filter empty messages — Mistral 400s on assistant messages with no content
-              .filter((m) => m.content && m.content.trim().length > 0)
-              .map((m) => ({
-                role: m.role as "user" | "assistant" | "system",
-                content: m.content.length > MAX_MESSAGE_LENGTH
-                  ? m.content.slice(0, MAX_MESSAGE_LENGTH) + '...'
-                  : m.content,
-              })),
-          ];
+            TARGET_TOKENS,
+          );
 
-          convertedMessages = optimizedMessages;
+          if (compaction) {
+            console.log(`[Chat API] [${sessionId}] Compaction L${compaction.level}: ${compaction.estimatedTokens} tokens`);
+            convertedMessages = compaction.messages;
+          } else {
+            // Emergency: even L4 didn't fit. Fall back to L4 payload anyway —
+            // FallbackModel will skip models that can't handle it and try the next.
+            console.warn(`[Chat API] [${sessionId}] No compaction level fits ${TARGET_TOKENS} tokens; using L4 anyway`);
+            convertedMessages = fullMessages.slice(-4);
+          }
         } else {
           console.log(`[Chat API] [${sessionId}] No summary available, using full history`);
           convertedMessages = await convertToModelMessages(messages);

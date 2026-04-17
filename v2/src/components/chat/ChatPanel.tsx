@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import { Fragment, useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, MessageSquare, History, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { TypingIndicator } from './TypingIndicator';
 import { ActionModeToggle, type ActionMode } from './ActionModeToggle';
+import { ChatCompactionDivider } from './ChatCompactionDivider';
 import { springConfig } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 import { usePrevious } from '@/hooks/usePrevious';
@@ -66,6 +67,16 @@ interface ChatPanelProps {
   onApproveConfirmation?: (toolCallId: string) => Promise<void>;
   /** Deny a pending confirmation */
   onDenyConfirmation?: (toolCallId: string) => void;
+  /**
+   * Summary metadata for the compaction divider. When present and
+   * `messageCountAtSummary > 0`, a ChatCompactionDivider renders inline in the
+   * message list at that index (between the archived prefix and the verbatim tail).
+   */
+  summaryMetadata?: {
+    messageCountAtSummary: number;
+    summary: string;
+    facts?: string | null;
+  };
 }
 
 export function ChatPanel({
@@ -85,6 +96,7 @@ export function ChatPanel({
   getConfirmation,
   onApproveConfirmation,
   onDenyConfirmation,
+  summaryMetadata,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -246,27 +258,44 @@ export function ChatPanel({
               // New messages (not seen before, not initial mount) appear instantly
               const skipAnimation = !wasSeenBefore && !isInitialMount;
 
+              // Compaction seam: render divider between archived prefix (< messageCountAtSummary)
+              // and verbatim tail (>= messageCountAtSummary). Must render at the first index
+              // in the verbatim tail to appear ABOVE that message.
+              const showDividerBefore =
+                summaryMetadata !== undefined &&
+                summaryMetadata.messageCountAtSummary > 0 &&
+                summaryMetadata.messageCountAtSummary < messages.length &&
+                index === summaryMetadata.messageCountAtSummary;
+
               return (
-                <motion.div
-                  key={message.id}
-                  initial={skipAnimation ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    ...springConfig,
-                    delay: animationDelay,
-                  }}
-                >
-                  <ChatMessage
-                    role={message.role}
-                    content={message.content}
-                    timestamp={message.timestamp}
-                    isStreaming={message.isStreaming}
-                    toolCalls={message.toolCalls}
-                    getConfirmation={getConfirmation}
-                    onApproveConfirmation={onApproveConfirmation}
-                    onDenyConfirmation={onDenyConfirmation}
-                  />
-                </motion.div>
+                <Fragment key={message.id}>
+                  {showDividerBefore && (
+                    <ChatCompactionDivider
+                      messageCount={summaryMetadata!.messageCountAtSummary}
+                      summary={summaryMetadata!.summary}
+                      facts={summaryMetadata!.facts}
+                    />
+                  )}
+                  <motion.div
+                    initial={skipAnimation ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      ...springConfig,
+                      delay: animationDelay,
+                    }}
+                  >
+                    <ChatMessage
+                      role={message.role}
+                      content={message.content}
+                      timestamp={message.timestamp}
+                      isStreaming={message.isStreaming}
+                      toolCalls={message.toolCalls}
+                      getConfirmation={getConfirmation}
+                      onApproveConfirmation={onApproveConfirmation}
+                      onDenyConfirmation={onDenyConfirmation}
+                    />
+                  </motion.div>
+                </Fragment>
               );
             })}
 

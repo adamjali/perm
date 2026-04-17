@@ -70,6 +70,7 @@ export function ChatWidgetConnected() {
 
   const {
     conversationId,
+    conversation,
     messages,
     input,
     status,
@@ -209,6 +210,15 @@ export function ChatWidgetConnected() {
         getConfirmation={getConfirmation}
         onApproveConfirmation={approveConfirmation}
         onDenyConfirmation={denyConfirmation}
+        summaryMetadata={
+          conversation?.summary && conversation.summary.messageCountAtSummary > 0
+            ? {
+                messageCountAtSummary: conversation.summary.messageCountAtSummary,
+                summary: conversation.summary.content,
+                facts: conversation.summary.facts ?? null,
+              }
+            : undefined
+        }
       />
 
       <ChatHistory

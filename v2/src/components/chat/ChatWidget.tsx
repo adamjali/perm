@@ -38,6 +38,12 @@ interface ChatWidgetProps {
   onApproveConfirmation?: (toolCallId: string) => Promise<void>;
   /** Deny a pending confirmation */
   onDenyConfirmation?: (toolCallId: string) => void;
+  /** Summary metadata for the compaction divider (passed through to ChatPanel) */
+  summaryMetadata?: {
+    messageCountAtSummary: number;
+    summary: string;
+    facts?: string | null;
+  };
 }
 
 export function ChatWidget({
@@ -56,6 +62,7 @@ export function ChatWidget({
   getConfirmation,
   onApproveConfirmation,
   onDenyConfirmation,
+  summaryMetadata,
 }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -117,6 +124,7 @@ export function ChatWidget({
             getConfirmation={getConfirmation}
             onApproveConfirmation={onApproveConfirmation}
             onDenyConfirmation={onDenyConfirmation}
+            summaryMetadata={summaryMetadata}
           />
         )}
       </AnimatePresence>
