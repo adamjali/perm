@@ -9,6 +9,7 @@
  */
 import { Resend } from "resend";
 import { createLogger } from "./logging";
+import { isEmailBlocked } from "./emailBlocklist";
 
 const log = createLogger("Email");
 
@@ -59,6 +60,24 @@ export async function sendEmailWithRetry(
   params: SendEmailParams,
   maxRetries = 3
 ): Promise<EmailSendResult> {
+  // Fail-safe: any blocklisted recipient (to/cc/bcc) aborts the send entirely.
+  // Returns an EmailBlocked error so existing callers log it naturally.
+  const recipients = [
+    ...toRecipientArray(params.to),
+    ...toRecipientArray(params.cc),
+    ...toRecipientArray(params.bcc),
+  ];
+  const blocked = recipients.filter(isEmailBlocked);
+  if (blocked.length > 0) {
+    log.warn(`Skipping send: blocklisted recipient(s) ${blocked.join(", ")}`);
+    return {
+      error: {
+        message: `Blocklisted recipient(s): ${blocked.join(", ")}`,
+        name: "EmailBlocked",
+      },
+    };
+  }
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     let result;
     try {
@@ -94,6 +113,15 @@ export async function sendEmailWithRetry(
 
   // Unreachable, but satisfies TypeScript
   return { error: { message: "Max retries exceeded", name: "RetryError" } };
+}
+
+/**
+ * Normalize Resend recipient field (string | string[] | undefined) to string[].
+ * Used for blocklist checks across to/cc/bcc.
+ */
+function toRecipientArray(field: string | string[] | undefined): string[] {
+  if (!field) return [];
+  return Array.isArray(field) ? field : [field];
 }
 
 /** Exponential backoff with jitter. Logs the retry reason. */

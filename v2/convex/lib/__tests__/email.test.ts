@@ -169,4 +169,69 @@ describe("sendEmailWithRetry", () => {
     expect(result.error).toBeDefined();
     expect(resend.emails.send).toHaveBeenCalledTimes(1);
   });
+
+  describe("blocklist enforcement", () => {
+    it("skips blocklisted recipient and returns EmailBlocked error", async () => {
+      const resend = createMockResend(async () => ({
+        data: { id: "should-not-be-reached" },
+        error: null,
+      }));
+
+      const result = await sendEmailWithRetry(resend, {
+        ...baseParams,
+        to: "blocked@gmail.com",
+      });
+
+      expect(result.error?.name).toBe("EmailBlocked");
+      expect(result.error?.message).toContain("blocked@gmail.com");
+      expect(resend.emails.send).not.toHaveBeenCalled();
+    });
+
+    it("blocks when ANY recipient in an array is blocklisted (fail-safe)", async () => {
+      const resend = createMockResend(async () => ({
+        data: { id: "should-not-be-reached" },
+        error: null,
+      }));
+
+      const result = await sendEmailWithRetry(resend, {
+        ...baseParams,
+        to: ["someone@example.com", "blocked@gmail.com"],
+      });
+
+      expect(result.error?.name).toBe("EmailBlocked");
+      expect(resend.emails.send).not.toHaveBeenCalled();
+    });
+
+    it("blocks when a blocklisted email is in cc", async () => {
+      const resend = createMockResend(async () => ({
+        data: { id: "should-not-be-reached" },
+        error: null,
+      }));
+
+      const result = await sendEmailWithRetry(resend, {
+        ...baseParams,
+        to: "someone@example.com",
+        cc: "blocked@gmail.com",
+      });
+
+      expect(result.error?.name).toBe("EmailBlocked");
+      expect(resend.emails.send).not.toHaveBeenCalled();
+    });
+
+    it("blocks when a blocklisted email is in bcc (case-insensitive)", async () => {
+      const resend = createMockResend(async () => ({
+        data: { id: "should-not-be-reached" },
+        error: null,
+      }));
+
+      const result = await sendEmailWithRetry(resend, {
+        ...baseParams,
+        to: "someone@example.com",
+        bcc: "blocked@GMAIL.COM",
+      });
+
+      expect(result.error?.name).toBe("EmailBlocked");
+      expect(resend.emails.send).not.toHaveBeenCalled();
+    });
+  });
 });

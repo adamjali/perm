@@ -2,6 +2,7 @@ import { Email } from "@convex-dev/auth/providers/Email";
 import { Resend as ResendAPI } from "resend";
 import { render } from "@react-email/render";
 import { generateSecureOTP } from "./lib/crypto";
+import { isEmailBlocked } from "./lib/emailBlocklist";
 import { VerificationCode } from "../src/emails/VerificationCode";
 
 export const ResendOTP = Email({
@@ -11,6 +12,13 @@ export const ResendOTP = Email({
     return generateSecureOTP();
   },
   async sendVerificationRequest({ identifier: email, token }) {
+    // Blocklist guard — these emails must never receive anything from us.
+    // Silently skip so auth flow completes (matches the existing error-swallowing pattern).
+    if (isEmailBlocked(email)) {
+      console.warn(`[ResendOTP] Skipping: blocklisted recipient ${email}`);
+      return;
+    }
+
     const resend = new ResendAPI(process.env.AUTH_RESEND_KEY!);
 
     const html = await render(VerificationCode({ code: token }));

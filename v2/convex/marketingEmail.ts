@@ -14,6 +14,7 @@
 import { action, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { isEmailBlocked } from "./lib/emailBlocklist";
 
 // Resend rate limit: 2 req/s free, 10 req/s paid. Stay safe at 2/s.
 const RATE_LIMIT_DELAY_MS = 600;
@@ -204,8 +205,8 @@ export const syncContacts = internalAction({
       const emailLower = user.email.toLowerCase();
       const firstName = extractFirstName(user.name);
 
-      // Skip deleted users — remove from Resend if present
-      if (user.deletedAt) {
+      // Skip deleted users AND blocklisted emails — remove from Resend if present
+      if (user.deletedAt || isEmailBlocked(emailLower)) {
         const existing = resendByEmail.get(emailLower);
         if (existing) {
           await resendFetch(`/contacts/${existing.id}`, apiKey, { method: "DELETE" });
@@ -308,6 +309,12 @@ export const backfillMarketingEvents = internalAction({
 
     for (const c of contacts) {
       if (!c.email || !c.id) continue;
+
+      // Skip blocklisted emails — never audit them
+      if (isEmailBlocked(c.email)) {
+        skipped++;
+        continue;
+      }
 
       const result = await ctx.runMutation(
         internal.marketingWebhook.recordContactEvent,

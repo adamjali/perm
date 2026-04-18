@@ -2,6 +2,7 @@ import { Email } from "@convex-dev/auth/providers/Email";
 import { Resend as ResendAPI } from "resend";
 import { render } from "@react-email/render";
 import { generateSecureOTP } from "./lib/crypto";
+import { isEmailBlocked } from "./lib/emailBlocklist";
 import { PasswordResetCode } from "../src/emails/PasswordResetCode";
 
 export const ResendPasswordReset = Email({
@@ -11,6 +12,12 @@ export const ResendPasswordReset = Email({
     return generateSecureOTP();
   },
   async sendVerificationRequest({ identifier: email, token }) {
+    // Blocklist guard — same as ResendOTP.
+    if (isEmailBlocked(email)) {
+      console.warn(`[ResendPasswordReset] Skipping: blocklisted recipient ${email}`);
+      return;
+    }
+
     const resend = new ResendAPI(process.env.AUTH_RESEND_KEY!);
 
     const html = await render(PasswordResetCode({ code: token }));
