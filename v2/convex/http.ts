@@ -56,7 +56,52 @@ http.route({
 
       const body = JSON.parse(rawBody);
 
-      // Resend sends email.received events
+      // Resend contact lifecycle events (subscribe, unsubscribe, delete).
+      // Recorded in the marketingEvents table for audit + analytics.
+      // Resend remains the source of truth — this is a read-only mirror.
+      if (
+        typeof body.type === "string" &&
+        body.type.startsWith("contact.")
+      ) {
+        try {
+          await ctx.runMutation(internal.marketingWebhook.recordContactEvent, {
+            svixId,
+            email: String(body.data?.email ?? ""),
+            contactId: String(body.data?.id ?? ""),
+            audienceId: body.data?.audience_id
+              ? String(body.data.audience_id)
+              : undefined,
+            eventType: body.type,
+            unsubscribed: Boolean(body.data?.unsubscribed),
+            occurredAt: body.created_at
+              ? new Date(body.created_at).getTime()
+              : Date.now(),
+            firstName: body.data?.first_name
+              ? String(body.data.first_name)
+              : undefined,
+            lastName: body.data?.last_name
+              ? String(body.data.last_name)
+              : undefined,
+            rawPayload: rawBody,
+          });
+        } catch (error) {
+          // Don't fail the webhook on internal mutation errors —
+          // Resend retrying won't help, and we've logged it via recordError.
+          console.error("Failed to record contact event:", error);
+          await recordError(
+            ctx,
+            "webhook",
+            "http.resendInbound.recordContact",
+            error,
+          );
+        }
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      // Resend inbound email events — delegated to supportEmail processor below
       if (body.type !== "email.received") {
         return new Response(JSON.stringify({ ignored: true }), {
           status: 200,

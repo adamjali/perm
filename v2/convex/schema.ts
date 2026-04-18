@@ -931,4 +931,26 @@ export default defineSchema({
     .index("by_resolved", ["resolved", "createdAt"])
     .index("by_source", ["source", "createdAt"])
     .index("by_created_at", ["createdAt"]),
+
+  /**
+   * Append-only audit log of Resend contact webhook events (subscribe, unsubscribe, delete).
+   * Resend remains the source of truth for current subscription status — this table mirrors
+   * the event stream for analytics and churn visibility. Deduped by svix message ID.
+   */
+  marketingEvents: defineTable({
+    svixId: v.string(), // Idempotency key from svix-id header
+    email: v.string(),
+    contactId: v.string(), // Resend contact UUID
+    audienceId: v.optional(v.string()),
+    eventType: v.string(), // "contact.created" | "contact.updated" | "contact.deleted"
+    unsubscribed: v.boolean(),
+    occurredAt: v.number(), // Resend's top-level created_at (epoch ms)
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    rawPayload: v.string(), // Full event JSON for debugging
+  })
+    .index("by_svix_id", ["svixId"])
+    .index("by_email_and_time", ["email", "occurredAt"])
+    .index("by_occurred", ["occurredAt"])
+    .index("by_event_type_and_time", ["eventType", "occurredAt"]),
 });
