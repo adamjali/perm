@@ -258,3 +258,80 @@ export const syncContacts = internalAction({
   },
 });
 
+// ============================================================================
+// BACKFILL (one-off: snapshot current Resend state into marketingEvents)
+// ============================================================================
+
+/**
+ * Backfill marketingEvents with a synthetic `contact.backfill` event for
+ * every existing Resend contact. Used to capture subscription state that
+ * predates the webhook being enabled (e.g., Umar's April 15 unsubscribe).
+ *
+ * Idempotent: svixId = `backfill_<contactId>` is stable per contact, so
+ * re-running is a pure no-op (all skipped via the existing by_svix_id dedup
+ * index in recordContactEvent).
+ *
+ * Live webhook events continue to fire normally for future changes — this
+ * only fills the gap for historical state.
+ *
+ * Run: npx convex run marketingEmail:backfillMarketingEvents '{}' --prod
+ */
+export const backfillMarketingEvents = internalAction({
+  args: {},
+  handler: async (ctx): Promise<string> => {
+    const apiKey = getApiKey();
+
+    // Paginate all contacts (same pattern as syncContacts)
+    const contacts: ResendContact[] = [];
+    let after: string | undefined;
+    let hasMore = true;
+    while (hasMore) {
+      const url = `/contacts?limit=100${after ? `&after=${after}` : ""}`;
+      const res = await resendFetch(url, apiKey);
+      if (!res.ok) {
+        throw new Error(`Failed to list contacts: ${res.status}`);
+      }
+      const data = await res.json();
+      const page: ResendContact[] = data.data || [];
+      contacts.push(...page);
+      if (page.length < 100) {
+        hasMore = false;
+      } else {
+        after = page[page.length - 1]!.id;
+      }
+      await sleep(RATE_LIMIT_DELAY_MS);
+    }
+
+    const occurredAt = Date.now();
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const c of contacts) {
+      if (!c.email || !c.id) continue;
+
+      const result = await ctx.runMutation(
+        internal.marketingWebhook.recordContactEvent,
+        {
+          svixId: `backfill_${c.id}`,
+          email: c.email,
+          contactId: c.id,
+          eventType: "contact.backfill",
+          unsubscribed: Boolean(c.unsubscribed),
+          occurredAt,
+          firstName: c.first_name ?? undefined,
+          rawPayload: JSON.stringify(c),
+        },
+      );
+
+      if (result.inserted) {
+        inserted++;
+      } else {
+        skipped++;
+      }
+    }
+
+    const summary = `Backfill complete: ${inserted} inserted, ${skipped} already present, ${contacts.length} contacts total`;
+    console.log("[MarketingBackfill]", summary);
+    return summary;
+  },
+});
