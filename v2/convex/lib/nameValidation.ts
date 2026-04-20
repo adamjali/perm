@@ -22,8 +22,17 @@
  * @module convex/lib/nameValidation
  */
 
+// Catches URL-shaped tokens:
+//   - explicit schemes (http/https)
+//   - "www." leading labels
+//   - hardcoded shortener domains (bit.ly, t.co, tinyurl, etc.)
+//   - bare domains with common TLDs — NO trailing slash required. The earlier
+//     version required `/\w` after the TLD and omitted many TLDs (.app, .dev,
+//     .ai, .xyz, etc.) which let values like "permtracker.app" pass.
+//   - trailing word boundary avoids matching legit names like "St. John" (the
+//     period is followed by a space) or "Mr.Smith" (Smith not in TLD list).
 const URL_PATTERN =
-  /https?:\/\/|www\.|\bbit\.ly\b|\btinyurl\b|\bt\.co\/|\bgoo\.gl\b|\btiny\.cc\b|\bshorturl\b|\bowl\.ly\b|\b[a-z0-9-]+\.(com|net|org|io|co|ly|me|tk|ml|ga|cf|xyz|info)\/\w/i;
+  /https?:\/\/|www\.|\bbit\.ly\b|\btinyurl\b|\bt\.co\b|\bgoo\.gl\b|\btiny\.cc\b|\bshorturl\b|\bowl\.ly\b|\b[a-z0-9][a-z0-9-]{0,62}\.(com|net|org|io|co|ly|me|tk|ml|ga|cf|xyz|info|app|dev|ai|site|online|tech|store|shop|click|link|cc|pro|us|uk|de|fr|jp|cn|ru|br|mx|tv|fm|ca|es|it|nl|au|in|sh|ws|biz|mobi|name|run|page|blog|live|sale|top)\b/i;
 
 // Match any emoji. Covers: misc symbols & pictographs, transport, emoticons,
 // supplemental symbols, CJK symbols, dingbats, flags, skin tones, etc.

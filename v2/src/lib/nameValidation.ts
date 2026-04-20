@@ -9,7 +9,7 @@
  */
 
 const URL_PATTERN =
-  /https?:\/\/|www\.|\bbit\.ly\b|\btinyurl\b|\bt\.co\/|\bgoo\.gl\b|\btiny\.cc\b|\bshorturl\b|\bowl\.ly\b|\b[a-z0-9-]+\.(com|net|org|io|co|ly|me|tk|ml|ga|cf|xyz|info)\/\w/i;
+  /https?:\/\/|www\.|\bbit\.ly\b|\btinyurl\b|\bt\.co\b|\bgoo\.gl\b|\btiny\.cc\b|\bshorturl\b|\bowl\.ly\b|\b[a-z0-9][a-z0-9-]{0,62}\.(com|net|org|io|co|ly|me|tk|ml|ga|cf|xyz|info|app|dev|ai|site|online|tech|store|shop|click|link|cc|pro|us|uk|de|fr|jp|cn|ru|br|mx|tv|fm|ca|es|it|nl|au|in|sh|ws|biz|mobi|name|run|page|blog|live|sale|top)\b/i;
 
 const EMOJI_PATTERN =
   /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{1F300}-\u{1F9FF}\u{2700}-\u{27BF}]|[\u{1F1E6}-\u{1F1FF}]{2}/u;
