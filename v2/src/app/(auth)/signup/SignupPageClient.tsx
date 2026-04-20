@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useMutation } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { captureError } from "@/lib/sentry";
 import { handleStaleDeployment } from "@/components/error/auth-error";
 import { api } from "../../../../convex/_generated/api";
 import { checkUserName } from "@/lib/nameValidation";
+import { SignupTurnstile } from "@/components/auth/SignupTurnstile";
 
 type SignupStep = "credentials" | "verification";
 
@@ -24,10 +25,13 @@ export function SignupPageClient() {
   const router = useRouter();
   const recordMyLogin = useMutation(api.users.recordMyLogin);
   const checkRateLimit = useMutation(api.authRateLimit.checkAuthRateLimit);
+  const verifyTurnstile = useAction(api.turnstile.verifyTurnstileToken);
   const [step, setStep] = useState<SignupStep>("credentials");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileError, setTurnstileError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -92,8 +96,35 @@ export function SignupPageClient() {
         return;
       }
 
-      // Remove confirmPassword from formData before sending
+      // Cloudflare Turnstile verification — must pass before we call signIn.
+      // Blocks automated signup scripts at the entry point. @convex-dev/auth's
+      // profile() callback is sync so verification can't live there; this
+      // pre-flight is the defense-in-depth layer on top of name validation
+      // and deferred post-signup emails.
+      if (!turnstileToken) {
+        toast.error("Please complete the anti-bot check before continuing.");
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const verifyResult = await verifyTurnstile({ token: turnstileToken });
+        if (!verifyResult.success) {
+          setTurnstileToken(null); // force widget to re-challenge
+          toast.error(verifyResult.error || "Anti-bot verification failed. Please try again.");
+          setIsLoading(false);
+          return;
+        }
+      } catch (verifyError) {
+        captureError(verifyError, { operation: "verifyTurnstile" });
+        setTurnstileToken(null);
+        toast.error("Couldn't verify the anti-bot check. Please refresh and try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Remove confirmPassword + turnstileToken from formData before sending
       formData.delete("confirmPassword");
+      formData.delete("turnstileToken");
 
       const result = await signIn("password", formData);
 
@@ -117,7 +148,15 @@ export function SignupPageClient() {
 
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
-      if (lower.includes("already exists") || lower.includes("duplicate")) {
+      if (
+        lower.includes("anti-bot verification") ||
+        lower.includes("missing anti-bot") ||
+        lower.includes("turnstile")
+      ) {
+        // Token expired or verification failed — clear token so widget re-challenges
+        setTurnstileToken(null);
+        toast.error(message);
+      } else if (lower.includes("already exists") || lower.includes("duplicate")) {
         toast.error("Could not create account. If you already have an account, try signing in instead.");
       } else if (
         lower.includes("names can't contain") ||
@@ -398,13 +437,38 @@ export function SignupPageClient() {
           </div>
 
           <input type="hidden" name="flow" value="signUp" />
+          {turnstileToken && (
+            <input type="hidden" name="turnstileToken" value={turnstileToken} />
+          )}
+
+          <div className="space-y-2">
+            <SignupTurnstile
+              disabled={isLoading}
+              onVerify={(token) => {
+                setTurnstileToken(token);
+                setTurnstileError(false);
+              }}
+              onError={() => {
+                setTurnstileToken(null);
+                setTurnstileError(true);
+              }}
+              onExpire={() => {
+                setTurnstileToken(null);
+              }}
+            />
+            {turnstileError && (
+              <p role="alert" className="text-xs mono font-bold uppercase tracking-wider text-destructive text-center">
+                Verification check failed. Refresh the page and try again.
+              </p>
+            )}
+          </div>
 
           <Button
             type="submit"
             className="w-full"
             loading={isLoading}
             loadingText="CREATING..."
-            disabled={isGoogleLoading}
+            disabled={isGoogleLoading || !turnstileToken}
           >
             CREATE ACCOUNT
           </Button>

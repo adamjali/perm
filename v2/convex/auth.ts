@@ -56,6 +56,16 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         // Throws on violation → Convex Auth surfaces the error to the client
         // WITHOUT creating a user record or firing any emails.
         // See convex/lib/nameValidation.ts for the full rule set.
+        //
+        // Turnstile verification happens client-side via a pre-flight Convex
+        // action (see convex/turnstile.ts:verifyTurnstileToken). It is NOT
+        // enforced here because @convex-dev/auth's profile() is strictly sync —
+        // async fetch to Cloudflare's siteverify can't run here. Defense in
+        // depth is provided by:
+        //   1. This name validation (blocks the spam name pattern)
+        //   2. Deferred welcome/admin emails until OTP verification
+        //      (bots never verify → never send emails)
+        //   3. Client-side Turnstile that blocks script kiddies
         const validatedName = validateUserName(params.name as string | undefined);
         return {
           email: params.email as string,
