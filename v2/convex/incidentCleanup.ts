@@ -16,6 +16,29 @@ import {
   internalAction,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { purgeAllUserData } from "./lib/deletion";
+
+// Attacker-signature matcher. Used to identify rows created during the
+// 2026-04-19/20 signup-abuse attack. 100% of attacker rows have a URL in
+// the `name` field; other signatures are defense-in-depth.
+function isAttackerName(name: string | undefined | null): boolean {
+  if (!name || typeof name !== "string") return false;
+  if (/https?:\/\/|bit\.ly|tinyurl|t\.co\/|goo\.gl|shorturl|\.ly\//i.test(name)) return true;
+  if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{2728}]/u.test(name)) return true;
+  if (/acele|tıkla|bekli|hemen|TL seni|hediye|kazan|kampanya/i.test(name)) return true;
+  if (/[\u{0400}-\u{04FF}]/u.test(name)) return true;
+  if (name.length > 80) return true;
+  return false;
+}
+
+// Attack-window bounds (UTC). Used for time-windowed cleanup of tables
+// without userId linkage (systemErrors).
+// END extended to 06:00 UTC to cover the post-01:13 cascade tail: the
+// welcomeEmail queue kept firing 429-failures until systemErrors.record fix
+// landed at 04:48 UTC and we cancelled the storm at 05:00 UTC. Any errors
+// after 06:00 UTC are post-response and represent legit operational state.
+const ATTACK_START_MS = Date.parse("2026-04-19T22:38:00Z");
+const ATTACK_END_MS   = Date.parse("2026-04-20T06:00:00Z");
 
 // Hard-coded allow-list: only these function names can be cancelled.
 // welcomeEmail is included because failing welcomeEmail retries (from attack-
@@ -198,6 +221,243 @@ export const drainStormJobs = internalAction({
       sampleCancelledIds,
       countByFunction,
       stoppedReason,
+    };
+  },
+});
+
+// ============================================================================
+// ATTACKER USER PURGE — cascade-deletes via purgeAllUserData
+// ============================================================================
+
+/**
+ * Paginate through users table and return ONLY those whose name matches the
+ * attacker signature. Cursor-based so the calling action can resume safely.
+ */
+export const listAttackerUserIds = internalQuery({
+  args: {
+    cursor: v.optional(v.union(v.string(), v.null())),
+    limit: v.number(),
+  },
+  handler: async (ctx, { cursor, limit }) => {
+    const cap = Math.min(Math.max(limit, 1), 500);
+    const page = await ctx.db
+      .query("users")
+      .paginate({ cursor: cursor ?? null, numItems: cap });
+
+    const attackerIds: string[] = [];
+    let legitScanned = 0;
+    for (const u of page.page) {
+      if (isAttackerName(u.name)) {
+        attackerIds.push(u._id);
+      } else {
+        legitScanned++;
+      }
+    }
+    return {
+      attackerIds,
+      scanned: page.page.length,
+      legitSkipped: legitScanned,
+      continueCursor: page.continueCursor,
+      isDone: page.isDone,
+    };
+  },
+});
+
+/**
+ * Re-validate + purge a batch of user IDs. Re-checks isAttackerName on each
+ * fetched user so a bad caller cannot delete a legitimate account by ID.
+ */
+export const purgeAttackerUsersBatch = internalMutation({
+  args: { userIds: v.array(v.id("users")) },
+  handler: async (ctx, { userIds }) => {
+    let deleted = 0;
+    let skipped = 0;
+    const skippedReasons: string[] = [];
+    const agg = {
+      cases: 0,
+      notifications: 0,
+      conversations: 0,
+      auditLogs: 0,
+      userProfiles: 0,
+      authAccounts: 0,
+      authSessions: 0,
+      authRefreshTokens: 0,
+      authVerificationCodes: 0,
+    };
+
+    for (const userId of userIds) {
+      const user = await ctx.db.get(userId);
+      if (!user) {
+        skipped++;
+        if (skippedReasons.length < 10) skippedReasons.push(`${userId}: missing`);
+        continue;
+      }
+      if (!isAttackerName(user.name)) {
+        skipped++;
+        if (skippedReasons.length < 10) {
+          skippedReasons.push(`${userId}: name-clean (${JSON.stringify(user.name)})`);
+        }
+        continue;
+      }
+
+      const r = await purgeAllUserData(ctx, userId);
+      deleted++;
+      agg.cases += r.cases;
+      agg.notifications += r.notifications;
+      agg.conversations += r.conversations;
+      agg.auditLogs += r.auditLogs;
+      if (r.profileDeleted) agg.userProfiles++;
+      agg.authAccounts += r.authAccounts;
+      agg.authSessions += r.authSessions;
+      agg.authRefreshTokens += r.authRefreshTokens;
+      agg.authVerificationCodes += r.authVerificationCodes;
+    }
+
+    return { deleted, skipped, skippedReasons, aggregate: agg };
+  },
+});
+
+/**
+ * Delete systemErrors rows whose createdAt falls in the attack window.
+ * Uses the by_created_at index to stay under the 4096 read limit.
+ */
+export const purgeAttackWindowSystemErrorsBatch = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db
+      .query("systemErrors")
+      .withIndex("by_created_at", (q) =>
+        q.gte("createdAt", ATTACK_START_MS).lte("createdAt", ATTACK_END_MS),
+      )
+      .take(1000);
+
+    let deleted = 0;
+    for (const r of rows) {
+      await ctx.db.delete(r._id);
+      deleted++;
+    }
+    return { deleted, hadMore: rows.length === 1000 };
+  },
+});
+
+/**
+ * Drive the full incident cleanup:
+ *   1. Purge attacker users (cascade delete via purgeAllUserData)
+ *   2. Purge attack-window systemErrors
+ * Returns aggregate counts.
+ */
+export const runFullCleanup = internalAction({
+  args: {
+    userBatchSize: v.optional(v.number()),
+    maxUserBatches: v.optional(v.number()),
+    maxSystemErrorBatches: v.optional(v.number()),
+  },
+  handler: async (
+    ctx,
+    {
+      userBatchSize = 150,
+      maxUserBatches = 300,
+      maxSystemErrorBatches = 50,
+    },
+  ): Promise<{
+    userPhase: {
+      batches: number;
+      totalDeleted: number;
+      totalSkipped: number;
+      aggregate: Record<string, number>;
+      stoppedReason: string;
+      lastSkippedReasons: string[];
+    };
+    systemErrorsPhase: {
+      batches: number;
+      totalDeleted: number;
+      stoppedReason: string;
+    };
+  }> => {
+    // Phase 1: attacker users + cascade
+    let cursor: string | null = null;
+    let batches = 0;
+    let totalDeleted = 0;
+    let totalSkipped = 0;
+    const aggregate: Record<string, number> = {};
+    let lastSkippedReasons: string[] = [];
+    let stoppedReasonUsers = "done";
+
+    while (batches < maxUserBatches) {
+      batches++;
+      const listResult: {
+        attackerIds: string[];
+        continueCursor: string;
+        isDone: boolean;
+      } = await ctx.runQuery(internal.incidentCleanup.listAttackerUserIds, {
+        cursor,
+        limit: userBatchSize,
+      });
+
+      if (listResult.attackerIds.length > 0) {
+        const purgeResult: {
+          deleted: number;
+          skipped: number;
+          skippedReasons: string[];
+          aggregate: Record<string, number>;
+        } = await ctx.runMutation(
+          internal.incidentCleanup.purgeAttackerUsersBatch,
+          { userIds: listResult.attackerIds as Array<never> },
+        );
+        totalDeleted += purgeResult.deleted;
+        totalSkipped += purgeResult.skipped;
+        if (purgeResult.skippedReasons.length > 0) {
+          lastSkippedReasons = purgeResult.skippedReasons;
+        }
+        for (const [k, v] of Object.entries(purgeResult.aggregate)) {
+          aggregate[k] = (aggregate[k] ?? 0) + (v as number);
+        }
+      }
+
+      if (listResult.isDone) {
+        stoppedReasonUsers = "end of users table";
+        break;
+      }
+      cursor = listResult.continueCursor;
+    }
+    if (batches >= maxUserBatches) {
+      stoppedReasonUsers = `hit maxUserBatches=${maxUserBatches}`;
+    }
+
+    // Phase 2: attack-window systemErrors (no userId linkage)
+    let seBatches = 0;
+    let seTotalDeleted = 0;
+    let stoppedReasonSe = "done";
+    while (seBatches < maxSystemErrorBatches) {
+      seBatches++;
+      const r: { deleted: number; hadMore: boolean } = await ctx.runMutation(
+        internal.incidentCleanup.purgeAttackWindowSystemErrorsBatch,
+        {},
+      );
+      seTotalDeleted += r.deleted;
+      if (!r.hadMore) {
+        stoppedReasonSe = "window drained";
+        break;
+      }
+    }
+    if (seBatches >= maxSystemErrorBatches) {
+      stoppedReasonSe = `hit maxSystemErrorBatches=${maxSystemErrorBatches}`;
+    }
+
+    return {
+      userPhase: {
+        batches,
+        totalDeleted,
+        totalSkipped,
+        aggregate,
+        stoppedReason: stoppedReasonUsers,
+        lastSkippedReasons,
+      },
+      systemErrorsPhase: {
+        batches: seBatches,
+        totalDeleted: seTotalDeleted,
+        stoppedReason: stoppedReasonSe,
+      },
     };
   },
 });

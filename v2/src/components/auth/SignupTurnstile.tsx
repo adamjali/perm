@@ -23,7 +23,10 @@
 import { Turnstile } from "@marsidev/react-turnstile";
 import { useEffect, useState } from "react";
 
-const LIVE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+// .trim() guards against stray whitespace (e.g., trailing newline from Vercel
+// env UI copy-paste) that Cloudflare rejects with "Invalid input for parameter
+// sitekey" and renders the widget in an infinite mount/error loop.
+const LIVE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
 // Cloudflare's "always passes" test site-key — use in local dev when live key is missing
 const TEST_SITE_KEY = "1x00000000000000000000AA";
 
