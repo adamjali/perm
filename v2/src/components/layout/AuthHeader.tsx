@@ -126,8 +126,9 @@ export default function AuthHeader() {
 
   return (
     <header
+      style={{ top: "var(--security-banner-h, 0px)" }}
       className={cn(
-        "fixed inset-x-0 top-0 z-50 border-b-3 border-white/20 bg-black transition-[padding] duration-200",
+        "fixed inset-x-0 z-50 border-b-3 border-white/20 bg-black transition-[padding,top] duration-200",
         isScrolled ? "py-1.5" : "py-3"
       )}
     >

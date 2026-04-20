@@ -51,10 +51,13 @@ export default function PublicLayout({
       <AuthHeader />
       <HashScrollHandler />
 
-      {/* Main content - grows to fill space, pt-16 for fixed header (~64px) */}
+      {/* Main content - grows to fill space, pt accounts for fixed header (~64px)
+          plus security banner if visible (--security-banner-h published by
+          SecurityIncidentBanner when mounted, cleared to 0 when dismissed). */}
       <main
         id="main-content"
-        className="relative flex-1 pt-16"
+        style={{ paddingTop: "calc(4rem + var(--security-banner-h, 0px))" }}
+        className="relative flex-1 transition-[padding] duration-200"
         tabIndex={-1}
       >
         <PageTransition>{children}</PageTransition>

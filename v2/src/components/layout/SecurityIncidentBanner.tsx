@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Security Incident Banner — thin dismissible bar on public pages.
+ * Security Incident Banner — thin dismissible bar fixed to top of public pages.
  *
  * Purpose: surface the April 19-20, 2026 signup-abuse incident to any visitor
  * who lands on the site (especially people Googling "permtracker.app phishing"
@@ -12,25 +12,32 @@
  *   - Shown on public pages only (imported by (public)/layout.tsx)
  *   - Auto-hides after April 27, 2026 UTC (exactly 1 week after deploy)
  *   - Also dismissible via close button (persisted in localStorage)
+ *   - FIXED at top-0 (stays visible on scroll) above the header
+ *   - Pushes header + main content down via --security-banner-h CSS variable
+ *     on <html>. When dismissed, the variable goes back to 0 and the header
+ *     returns to its default top-0 position.
  *   - Neo-brutalist aesthetic: 2px border, mono label, amber accent,
  *     matches existing design system
  *   - Never shown in the authenticated app
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { X, AlertTriangle } from "lucide-react";
 
 const EXPIRES_AT_UTC = new Date("2026-04-27T00:00:00Z").getTime();
 const LS_KEY = "security-incident-2026-04-19-dismissed";
+const CSS_VAR = "--security-banner-h";
+
+// SSR-safe layout effect
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export function SecurityIncidentBanner() {
   const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // Hide after expiry date regardless of dismissal state
     if (Date.now() > EXPIRES_AT_UTC) return;
-    // Hide if user already dismissed
     try {
       if (localStorage.getItem(LS_KEY) === "1") return;
     } catch {
@@ -38,6 +45,29 @@ export function SecurityIncidentBanner() {
     }
     setVisible(true);
   }, []);
+
+  // Measure banner height and publish as CSS var on <html>.
+  // Updates on resize so mobile wrap + desktop single-line both work.
+  useIsoLayoutEffect(() => {
+    if (!visible || !ref.current) return;
+    const el = ref.current;
+    const root = document.documentElement;
+
+    const apply = () => {
+      root.style.setProperty(CSS_VAR, `${el.offsetHeight}px`);
+    };
+    apply();
+
+    const observer = new ResizeObserver(apply);
+    observer.observe(el);
+    window.addEventListener("resize", apply);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", apply);
+      root.style.setProperty(CSS_VAR, "0px");
+    };
+  }, [visible]);
 
   if (!visible) return null;
 
@@ -47,14 +77,17 @@ export function SecurityIncidentBanner() {
     } catch {
       /* no-op */
     }
+    // The useIsoLayoutEffect cleanup will reset --security-banner-h to 0px,
+    // which snaps the header and main content back to their default positions.
     setVisible(false);
   };
 
   return (
     <div
+      ref={ref}
       role="region"
       aria-label="Security notice"
-      className="relative z-[55] border-b-2 border-amber-600 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-500"
+      className="fixed inset-x-0 top-0 z-[60] border-b-2 border-amber-600 bg-amber-50 dark:bg-amber-950/50 dark:border-amber-500"
     >
       <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-2 sm:px-8">
         <AlertTriangle
