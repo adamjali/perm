@@ -14,6 +14,7 @@
 
 import AuthHeader from "@/components/layout/AuthHeader";
 import Footer from "@/components/layout/Footer";
+import { SecurityIncidentBanner } from "@/components/layout/SecurityIncidentBanner";
 import { ScrollProgress } from "@/components/home";
 import { PageTransition } from "@/components/ui/page-transition";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
@@ -42,6 +43,9 @@ export default function PublicLayout({
         className="bg-dots pointer-events-none fixed inset-0 opacity-30"
         aria-hidden="true"
       />
+
+      {/* Security incident banner — dismissible, auto-hides after 2026-04-27 */}
+      <SecurityIncidentBanner />
 
       {/* Header */}
       <AuthHeader />

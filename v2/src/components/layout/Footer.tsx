@@ -200,6 +200,13 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                   Terms of Service
                 </NavLink>
                 <NavLink
+                  href="/security"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
+                  spinnerClassName="text-primary"
+                >
+                  Security
+                </NavLink>
+                <NavLink
                   href="/contact"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
@@ -248,6 +255,13 @@ export default function Footer({ variant = "compact" }: FooterProps) {
             spinnerClassName="text-primary"
           >
             Terms
+          </NavLink>
+          <NavLink
+            href="/security"
+            className="hover-underline text-white transition-colors hover:text-primary"
+            spinnerClassName="text-primary"
+          >
+            Security
           </NavLink>
           <NavLink
             href="/contact"
