@@ -75,6 +75,9 @@ export function validateConfirmPassword(
       ? { state: "invalid", message: "Confirm your password", reason: "EMPTY" }
       : { state: "pristine" };
   }
+  // Not a timing-sensitive comparison — both strings are the user's own input
+  // in the same form; no secret is being protected against an external caller.
+  // eslint-disable-next-line security/detect-possible-timing-attacks
   if (value !== password) {
     return { state: "invalid", message: "Passwords don't match", reason: "MISMATCH" };
   }

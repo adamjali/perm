@@ -25,6 +25,14 @@ const eslintConfig = defineConfig([
     // Serwist-generated service worker (minified third-party code)
     "public/sw.js",
   ]),
+  // eslint-plugin-react v7.37.5's detectReactVersion() calls the old
+  // contextOrFilename.getFilename() API that ESLint v10 removed, crashing
+  // every run. Specifying the version explicitly bypasses that detection.
+  {
+    settings: {
+      react: { version: "19.2" },
+    },
+  },
   // Custom rule overrides
   {
     rules: {

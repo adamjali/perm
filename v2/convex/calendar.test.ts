@@ -3,7 +3,7 @@ import { createTestContext, createAuthenticatedContext, setupSchedulerTests, fin
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 async function insertProfile(user: any, overrides: Record<string, unknown> = {}) {
   await user.run(async (ctx: any) => {
     const userId = (await ctx.auth.getUserIdentity())?.subject;

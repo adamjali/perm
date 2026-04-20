@@ -2,7 +2,7 @@
 
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useAction, useMutation } from "convex/react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,8 +57,9 @@ export function SignupPageClient() {
   const [confirmTouched, setConfirmTouched] = useState(false);
 
   // Track which fields have already had an "invalid" event reported, so
-  // every keystroke doesn't spam PostHog.
-  const [reportedInvalid, setReportedInvalid] = useState<Set<string>>(new Set());
+  // every keystroke doesn't spam PostHog. A ref (not state) — we don't
+  // need to re-render when it changes.
+  const reportedInvalidRef = useRef<Set<string>>(new Set());
 
   // Turnstile state
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -99,13 +100,9 @@ export function SignupPageClient() {
   const reportIfNewInvalid = useCallback(
     (field: string, reason: string | undefined) => {
       if (!reason) return;
-      setReportedInvalid((prev) => {
-        if (prev.has(field)) return prev;
-        trackSignupFieldInvalid(field, reason);
-        const next = new Set(prev);
-        next.add(field);
-        return next;
-      });
+      if (reportedInvalidRef.current.has(field)) return;
+      reportedInvalidRef.current.add(field);
+      trackSignupFieldInvalid(field, reason);
     },
     [],
   );

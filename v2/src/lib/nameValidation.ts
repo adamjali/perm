@@ -14,7 +14,7 @@ const URL_PATTERN =
 const EMOJI_PATTERN =
   /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{1F300}-\u{1F9FF}\u{2700}-\u{27BF}]|[\u{1F1E6}-\u{1F1FF}]{2}/u;
 
-// eslint-disable-next-line no-control-regex
+ 
 const CONTROL_CHAR_PATTERN = /[\u0000-\u001F\u007F-\u009F]/;
 
 const REPEATED_SUBSTRING_PATTERN = /(\S{10,})\s*\1/;
