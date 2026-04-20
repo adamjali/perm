@@ -31,7 +31,7 @@ export default function TermsPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: March 4, 2026
+          Effective Date: February 17, 2026 | Last Updated: April 20, 2026
         </p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
@@ -423,8 +423,12 @@ export default function TermsPage() {
               (permtracker.app/ingest) rather than directly to a third-party
               domain. Session replay captures anonymized user interactions to
               help us diagnose and fix issues — no sensitive case data is
-              included in session recordings. By using the Service, you consent
-              to this data collection as described in our{" "}
+              included in session recordings. We also use Cloudflare Turnstile
+              on our authentication forms (sign-up, sign-in, password reset)
+              to prevent automated abuse; Turnstile processes limited
+              device and interaction signals but does not read the contents
+              of form fields. By using the Service, you consent to this data
+              collection as described in our{" "}
               <a href="/privacy" className="text-primary hover:underline">
                 Privacy Policy
               </a>

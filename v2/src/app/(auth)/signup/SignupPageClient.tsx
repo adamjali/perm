@@ -2,21 +2,33 @@
 
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useAction, useMutation } from "convex/react";
-import { useState, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { NavLink } from "@/components/ui/nav-link";
-import { analytics } from "@/lib/analytics";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleStaleDeployment } from "@/components/error/auth-error";
 import { api } from "../../../../convex/_generated/api";
-import { checkUserName } from "@/lib/nameValidation";
-import { SignupTurnstile } from "@/components/auth/SignupTurnstile";
+import { AuthField } from "@/components/auth/AuthField";
+import { AuthTurnstile } from "@/components/auth/AuthTurnstile";
+import {
+  validateEmailValue,
+  validateNameValue,
+  validatePasswordValue,
+  validateConfirmPassword,
+} from "@/lib/auth/signup-validation";
+import {
+  trackTurnstileFail,
+  trackSignupFieldInvalid,
+  trackSubmitBlocked,
+  trackSignupSucceeded,
+  captureTurnstileServiceError,
+  authBreadcrumb,
+} from "@/lib/auth/auth-telemetry";
 
 type SignupStep = "credentials" | "verification";
 
@@ -26,114 +38,181 @@ export function SignupPageClient() {
   const recordMyLogin = useMutation(api.users.recordMyLogin);
   const checkRateLimit = useMutation(api.authRateLimit.checkAuthRateLimit);
   const verifyTurnstile = useAction(api.turnstile.verifyTurnstileToken);
+
   const [step, setStep] = useState<SignupStep>("credentials");
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [turnstileError, setTurnstileError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const validateName = useCallback((value: string) => {
-    const result = checkUserName(value);
-    setNameError(result.valid ? null : result.message || "Invalid name");
-    return result.valid;
-  }, []);
+  // Field values
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const enforceRateLimit = useCallback(async (emailValue: string, action: "signup" | "otp_verify") => {
-    try {
-      const result = await checkRateLimit({ email: emailValue, action });
-      if (!result.allowed) {
-        toast.error(result.message || "Too many attempts. Please wait and try again.");
-        analytics.capture("signup_rate_limited", { action });
-        return false;
-      }
-      return true;
-    } catch (error) {
-      // Fail open for availability, but log for observability
-      captureError(error, { operation: "enforceRateLimit" });
-      return true;
+  // "Touched" flags — a field only shows invalid state after first blur or
+  // an attempted submit, so users aren't yelled at while typing.
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [nameTouched, setNameTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [confirmTouched, setConfirmTouched] = useState(false);
+
+  // Track which fields have already had an "invalid" event reported, so
+  // every keystroke doesn't spam PostHog.
+  const [reportedInvalid, setReportedInvalid] = useState<Set<string>>(new Set());
+
+  // Turnstile state
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileError, setTurnstileError] = useState(false);
+
+  // Verification step only needs the email
+  const [verificationEmail, setVerificationEmail] = useState("");
+
+  // Derived validation state
+  const emailValidation = validateEmailValue(email, emailTouched);
+  const nameValidation = validateNameValue(name, nameTouched);
+  const passwordValidation = validatePasswordValue(password, passwordTouched);
+  const confirmValidation = validateConfirmPassword(confirmPassword, password, confirmTouched);
+
+  const firstMissing = useMemo<
+    null | "email" | "name" | "password" | "confirm" | "turnstile"
+  >(() => {
+    if (emailValidation.state !== "valid") return "email";
+    if (nameValidation.state === "invalid") return "name";
+    if (passwordValidation.state !== "valid") return "password";
+    if (confirmValidation.state !== "valid") return "confirm";
+    if (!turnstileToken) return "turnstile";
+    return null;
+  }, [emailValidation.state, nameValidation.state, passwordValidation.state, confirmValidation.state, turnstileToken]);
+
+  const submitLabel = useMemo(() => {
+    if (isLoading) return "CREATING...";
+    switch (firstMissing) {
+      case "email": return "ENTER YOUR EMAIL";
+      case "name": return "FIX NAME";
+      case "password": return "ENTER A PASSWORD";
+      case "confirm": return "CONFIRM YOUR PASSWORD";
+      case "turnstile": return "COMPLETE SECURITY CHECK";
+      default: return "CREATE ACCOUNT";
     }
-  }, [checkRateLimit]);
+  }, [isLoading, firstMissing]);
 
-  const handleCredentialsSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
+  const reportIfNewInvalid = useCallback(
+    (field: string, reason: string | undefined) => {
+      if (!reason) return;
+      setReportedInvalid((prev) => {
+        if (prev.has(field)) return prev;
+        trackSignupFieldInvalid(field, reason);
+        const next = new Set(prev);
+        next.add(field);
+        return next;
+      });
+    },
+    [],
+  );
+
+  const handleBlur = useCallback(
+    (field: "email" | "name" | "password" | "confirm") => {
+      if (field === "email") {
+        setEmailTouched(true);
+        const v = validateEmailValue(email, true);
+        if (v.state === "invalid") reportIfNewInvalid("email", v.reason);
+      } else if (field === "name") {
+        setNameTouched(true);
+        const v = validateNameValue(name, true);
+        if (v.state === "invalid") reportIfNewInvalid("name", v.reason);
+      } else if (field === "password") {
+        setPasswordTouched(true);
+        const v = validatePasswordValue(password, true);
+        if (v.state === "invalid") reportIfNewInvalid("password", v.reason);
+      } else {
+        setConfirmTouched(true);
+        const v = validateConfirmPassword(confirmPassword, password, true);
+        if (v.state === "invalid") reportIfNewInvalid("confirm_password", v.reason);
+      }
+    },
+    [email, name, password, confirmPassword, reportIfNewInvalid],
+  );
+
+  const enforceRateLimit = useCallback(
+    async (emailValue: string, action: "signup" | "otp_verify") => {
+      try {
+        const result = await checkRateLimit({ email: emailValue, action });
+        if (!result.allowed) {
+          toast.error(result.message || "Too many attempts. Please wait and try again.");
+          return false;
+        }
+        return true;
+      } catch (error) {
+        // Fail open for availability, but log for observability
+        captureError(error, { operation: "enforceRateLimit" });
+        return true;
+      }
+    },
+    [checkRateLimit],
+  );
+
+  const handleCredentialsSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    authBreadcrumb("signup_submit_attempt");
+
+    // If somehow submitted while blocked (keyboard Enter past disabled button),
+    // promote everything to touched and report which gate failed.
+    if (firstMissing) {
+      setEmailTouched(true);
+      setNameTouched(true);
+      setPasswordTouched(true);
+      setConfirmTouched(true);
+      trackSubmitBlocked("signup", firstMissing);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const formData = new FormData(e.currentTarget);
-      const password = formData.get("password") as string;
-      const confirmPassword = formData.get("confirmPassword") as string;
-      const nameValue = (formData.get("name") as string | null) ?? "";
-
-      // Validate name — server will reject too, but this gives immediate feedback
-      if (!validateName(nameValue)) {
-        setIsLoading(false);
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        toast.error("Passwords do not match");
-        setIsLoading(false);
-        return;
-      }
-
-      if (password.length < 8) {
-        toast.error("Password must be at least 8 characters");
-        setIsLoading(false);
-        return;
-      }
-
-      const emailValue = formData.get("email") as string;
-      setEmail(emailValue);
-
       // Pre-flight rate limit check
-      if (!await enforceRateLimit(emailValue, "signup")) {
+      if (!(await enforceRateLimit(email, "signup"))) {
         setIsLoading(false);
         return;
       }
 
-      // Cloudflare Turnstile verification — must pass before we call signIn.
-      // Blocks automated signup scripts at the entry point. @convex-dev/auth's
-      // profile() callback is sync so verification can't live there; this
-      // pre-flight is the defense-in-depth layer on top of name validation
-      // and deferred post-signup emails.
-      if (!turnstileToken) {
-        toast.error("Please complete the anti-bot check before continuing.");
-        setIsLoading(false);
-        return;
-      }
+      // Pre-flight Turnstile verification — must pass before signIn.
+      // We already know turnstileToken is non-null here (firstMissing guarded it).
       try {
-        const verifyResult = await verifyTurnstile({ token: turnstileToken });
+        const verifyResult = await verifyTurnstile({ token: turnstileToken! });
         if (!verifyResult.success) {
-          setTurnstileToken(null); // force widget to re-challenge
-          toast.error(verifyResult.error || "Anti-bot verification failed. Please try again.");
+          trackTurnstileFail("signup", "siteverify_rejected");
+          setTurnstileToken(null);
+          toast.error(verifyResult.error || "Security check failed. Please try again.");
           setIsLoading(false);
           return;
         }
       } catch (verifyError) {
-        captureError(verifyError, { operation: "verifyTurnstile" });
+        captureTurnstileServiceError(verifyError, "signup");
+        trackTurnstileFail("signup", "service_error");
         setTurnstileToken(null);
-        toast.error("Couldn't verify the anti-bot check. Please refresh and try again.");
+        toast.error("Couldn't verify the security check. Please refresh and try again.");
         setIsLoading(false);
         return;
       }
 
-      // Remove confirmPassword + turnstileToken from formData before sending
-      formData.delete("confirmPassword");
-      formData.delete("turnstileToken");
+      authBreadcrumb("signup_turnstile_verified");
 
+      // Build FormData — Convex Auth expects these exact field names.
+      const formData = new FormData();
+      formData.set("email", email);
+      if (name.trim()) formData.set("name", name.trim());
+      formData.set("password", password);
+      formData.set("flow", "signUp");
+
+      setVerificationEmail(email);
       const result = await signIn("password", formData);
+      authBreadcrumb("signup_signin_completed");
 
       if (result.signingIn) {
-        // Account already verified (e.g., re-signup with existing verified account)
         toast.success("Welcome to PERM Tracker!");
         localStorage.setItem("perm_last_login_at", String(Date.now()));
-        recordMyLogin().catch((e) => console.warn("[recordMyLogin] failed:", e));
-        analytics.capture("user_signed_up", { method: "email_password" });
+        recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
+        trackSignupSucceeded("email_password");
         router.push("/dashboard");
       } else {
         // OTP sent — move to verification step
@@ -143,67 +222,50 @@ export function SignupPageClient() {
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
-      console.error("[Signup Error]", error);
-      captureError(error, { operation: "signUp" });
-
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
-      if (
-        lower.includes("anti-bot verification") ||
-        lower.includes("missing anti-bot") ||
-        lower.includes("turnstile")
-      ) {
-        // Token expired or verification failed — clear token so widget re-challenges
-        setTurnstileToken(null);
+
+      // Server-level validation rejections — surface at the right field
+      if (lower.includes("names can't contain") || lower.includes("invalid characters") || lower.includes("repeated content") || (lower.includes("names must be") && lower.includes("characters"))) {
+        setNameTouched(true);
         toast.error(message);
-      } else if (lower.includes("already exists") || lower.includes("duplicate")) {
-        toast.error("Could not create account. If you already have an account, try signing in instead.");
-      } else if (
-        lower.includes("names can't contain") ||
-        lower.includes("invalid characters") ||
-        lower.includes("repeated content") ||
-        (lower.includes("names must be") && lower.includes("characters"))
-      ) {
-        // Server-side name validation error — mirror to inline state for UX
-        setNameError(message);
-        toast.error(message);
-      } else if (lower.includes("invalid email") || lower.includes("email format")) {
-        toast.error("Please enter a valid email address.");
-      } else if (lower.includes("invalid password")) {
-        toast.error("Password does not meet requirements. Must be at least 8 characters.");
-      } else if (
-        lower.includes("toomanyfailedattempts") ||
-        lower.includes("rate limit") ||
-        lower.includes("too many")
-      ) {
-        toast.error("Too many attempts. Please wait a moment and try again.");
-      } else if (
-        lower.includes("network") ||
-        lower.includes("offline") ||
-        lower.includes("failed to fetch") ||
-        lower.includes("load failed")
-      ) {
-        toast.error("Network error. Please check your connection and try again.");
-      } else {
-        console.warn("[Signup] Unhandled error type:", message);
-        toast.error("Failed to create account. Please try again or contact support.");
+        return;
       }
+      if (lower.includes("invalid email") || lower.includes("email format")) {
+        setEmailTouched(true);
+        toast.error("Please enter a valid email address.");
+        return;
+      }
+      if (lower.includes("already exists") || lower.includes("duplicate")) {
+        toast.error("An account with this email already exists. Try signing in instead.");
+        return;
+      }
+      if (lower.includes("toomanyfailedattempts") || lower.includes("rate limit") || lower.includes("too many")) {
+        toast.error("Too many attempts. Please wait a moment and try again.");
+        return;
+      }
+      if (lower.includes("network") || lower.includes("offline") || lower.includes("failed to fetch") || lower.includes("load failed")) {
+        toast.error("Network error. Please check your connection and try again.");
+        return;
+      }
+
+      // Genuinely unexpected — Sentry capture + user toast
+      captureError(error, { operation: "signUp" });
+      console.warn("[Signup] Unhandled error type:", message);
+      toast.error("Failed to create account. Please try again or contact support.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerificationSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
+  const handleVerificationSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       const formData = new FormData(e.currentTarget);
 
-      // Pre-flight rate limit check for OTP verification
-      if (!await enforceRateLimit(email, "otp_verify")) {
+      if (!(await enforceRateLimit(verificationEmail, "otp_verify"))) {
         setIsLoading(false);
         return;
       }
@@ -212,39 +274,25 @@ export function SignupPageClient() {
 
       toast.success("Account verified! Welcome to PERM Tracker.");
       localStorage.setItem("perm_last_login_at", String(Date.now()));
-      recordMyLogin().catch((e) => console.warn("[recordMyLogin] failed:", e));
-      analytics.capture("user_signed_up", { method: "email_password_verified" });
+      recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
+      trackSignupSucceeded("email_password");
       router.push("/dashboard");
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
-      console.error("[Verification Error]", error);
-      captureError(error, { operation: "signUpVerification" });
-
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
+
       if (lower.includes("expired")) {
         toast.error("Verification code expired. Go back and resubmit to get a new code.");
-      } else if (
-        lower.includes("invalid") ||
-        lower.includes("incorrect") ||
-        lower.includes("could not verify")
-      ) {
+      } else if (lower.includes("invalid") || lower.includes("incorrect") || lower.includes("could not verify")) {
         toast.error("Invalid verification code. Please check and try again.");
-      } else if (
-        lower.includes("toomanyfailedattempts") ||
-        lower.includes("rate limit") ||
-        lower.includes("too many")
-      ) {
+      } else if (lower.includes("toomanyfailedattempts") || lower.includes("rate limit") || lower.includes("too many")) {
         toast.error("Too many attempts. Please wait a moment and try again.");
-      } else if (
-        lower.includes("network") ||
-        lower.includes("offline") ||
-        lower.includes("failed to fetch") ||
-        lower.includes("load failed")
-      ) {
+      } else if (lower.includes("network") || lower.includes("offline") || lower.includes("failed to fetch") || lower.includes("load failed")) {
         toast.error("Network error. Please check your connection and try again.");
       } else {
+        captureError(error, { operation: "signUpVerification" });
         console.warn("[Verification] Unhandled error type:", message);
         toast.error("Verification failed. Please try again or contact support.");
       }
@@ -255,27 +303,19 @@ export function SignupPageClient() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
+    authBreadcrumb("signup_google_initiated");
     try {
-      analytics.capture("signup_google_initiated");
       await signIn("google", { redirectTo: "/dashboard" });
     } catch (error) {
       if (handleStaleDeployment(error)) return;
-
-      console.error("[Google Sign Up Error]", error);
-      captureError(error, { operation: "googleSignUp" });
-
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
       if (lower.includes("popup") || lower.includes("closed")) {
         toast.error("Sign up was cancelled. Please try again.");
-      } else if (
-        lower.includes("network") ||
-        lower.includes("offline") ||
-        lower.includes("failed to fetch") ||
-        lower.includes("load failed")
-      ) {
+      } else if (lower.includes("network") || lower.includes("offline") || lower.includes("failed to fetch") || lower.includes("load failed")) {
         toast.error("Network error. Please check your connection and try again.");
       } else {
+        captureError(error, { operation: "googleSignUp" });
         console.warn("[Google Sign Up] Unhandled error type:", message);
         toast.error("Failed to sign up with Google. Please try again or contact support.");
       }
@@ -294,11 +334,11 @@ export function SignupPageClient() {
         <CardContent className="space-y-6">
           <p className="text-sm text-muted-foreground">
             We&apos;ve sent a 12-character verification code to{" "}
-            <span className="font-semibold text-foreground">{email}</span>
+            <span className="font-semibold text-foreground">{verificationEmail}</span>
           </p>
 
           <form onSubmit={handleVerificationSubmit} className="space-y-5">
-            <input type="hidden" name="email" value={email} />
+            <input type="hidden" name="email" value={verificationEmail} />
             <input type="hidden" name="flow" value="email-verification" />
 
             <div className="space-y-2">
@@ -343,121 +383,109 @@ export function SignupPageClient() {
   return (
     <Card>
       <CardHeader>
-        <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">Sign Up</h1>
+        <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">
+          Sign Up
+        </h1>
       </CardHeader>
       <CardContent className="space-y-6">
-        <form onSubmit={handleCredentialsSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-xs uppercase mono font-bold tracking-widest">
-              Name <span className="text-muted-foreground font-normal lowercase text-[10px]">(optional)</span>
-            </Label>
-            <Input
-              id="name"
-              name="name"
-              type="text"
-              autoComplete="name"
-              placeholder="John Doe"
-              disabled={isLoading}
-              maxLength={80}
-              aria-invalid={nameError !== null}
-              aria-describedby={nameError ? "name-error" : "name-hint"}
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (nameError) validateName(e.target.value);
-              }}
-              onBlur={(e) => validateName(e.target.value)}
-            />
-            {nameError ? (
-              <div
-                id="name-error"
-                role="alert"
-                className="mt-2 border-2 border-destructive/70 bg-destructive/5 px-3 py-2.5 shadow-[2px_2px_0_var(--destructive)]"
-              >
-                <p className="text-xs mono font-bold uppercase tracking-wider text-destructive">
-                  {nameError}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                  Use letters, numbers, and basic punctuation only. This keeps PERM Tracker free of spam signups that use our emails to distribute phishing.
-                </p>
-              </div>
-            ) : (
-              <p id="name-hint" className="text-xs text-muted-foreground">
-                Letters, numbers, and punctuation only. No web links or emojis.
-              </p>
-            )}
-          </div>
+        <form onSubmit={handleCredentialsSubmit} className="space-y-5" noValidate>
+          <AuthField
+            id="email"
+            label="Email"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={setEmail}
+            onBlur={() => handleBlur("email")}
+            state={emailValidation.state}
+            error={emailValidation.message}
+            disabled={isLoading}
+            required
+          />
+
+          <AuthField
+            id="name"
+            label="Name (optional)"
+            type="text"
+            autoComplete="name"
+            placeholder="John Doe"
+            value={name}
+            onChange={setName}
+            onBlur={() => handleBlur("name")}
+            state={nameValidation.state}
+            error={nameValidation.message}
+            helperText="Letters, numbers, and punctuation only. No web links or emojis."
+            disabled={isLoading}
+            maxLength={80}
+          />
+
+          <AuthField
+            id="password"
+            label="Password"
+            component="password"
+            autoComplete="new-password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(v) => {
+              setPassword(v);
+              // Cascade: confirm field's validity depends on password.
+              // If confirm was already touched, re-validate after password edit.
+              if (confirmTouched) {
+                const cv = validateConfirmPassword(confirmPassword, v, true);
+                if (cv.state === "invalid") reportIfNewInvalid("confirm_password", cv.reason);
+              }
+            }}
+            onBlur={() => handleBlur("password")}
+            state={passwordValidation.state}
+            error={passwordValidation.message}
+            helperText="At least 8 characters"
+            helperMet={password.length >= 8}
+            disabled={isLoading}
+            required
+          />
+
+          <AuthField
+            id="confirmPassword"
+            label="Confirm Password"
+            component="password"
+            autoComplete="new-password"
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+            onBlur={() => handleBlur("confirm")}
+            state={confirmValidation.state}
+            error={confirmValidation.message}
+            disabled={isLoading}
+            required
+          />
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-xs uppercase mono font-bold tracking-widest">
-              Email
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              required
+            <AuthTurnstile
               disabled={isLoading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-xs uppercase mono font-bold tracking-widest">
-              Password
-            </Label>
-            <PasswordInput
-              id="password"
-              name="password"
-              autoComplete="new-password"
-              placeholder="••••••••"
-              minLength={8}
-              required
-              disabled={isLoading}
-            />
-            <p className="text-xs text-muted-foreground">
-              Must be at least 8 characters
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-xs uppercase mono font-bold tracking-widest">
-              Confirm Password
-            </Label>
-            <PasswordInput
-              id="confirmPassword"
-              name="confirmPassword"
-              autoComplete="new-password"
-              placeholder="••••••••"
-              minLength={8}
-              required
-              disabled={isLoading}
-            />
-          </div>
-
-          <input type="hidden" name="flow" value="signUp" />
-          {turnstileToken && (
-            <input type="hidden" name="turnstileToken" value={turnstileToken} />
-          )}
-
-          <div className="space-y-2">
-            <SignupTurnstile
-              disabled={isLoading}
+              action="signup"
+              appearance="always"
               onVerify={(token) => {
                 setTurnstileToken(token);
                 setTurnstileError(false);
+                authBreadcrumb("signup_turnstile_token_received");
               }}
               onError={() => {
                 setTurnstileToken(null);
                 setTurnstileError(true);
+                trackTurnstileFail("signup", "service_error");
               }}
               onExpire={() => {
                 setTurnstileToken(null);
+                trackTurnstileFail("signup", "expired");
               }}
             />
             {turnstileError && (
-              <p role="alert" className="text-xs mono font-bold uppercase tracking-wider text-destructive text-center">
+              <p
+                role="alert"
+                className="text-xs mono font-bold uppercase tracking-wider text-destructive text-center"
+              >
                 Verification check failed. Refresh the page and try again.
               </p>
             )}
@@ -468,9 +496,9 @@ export function SignupPageClient() {
             className="w-full"
             loading={isLoading}
             loadingText="CREATING..."
-            disabled={isGoogleLoading || !turnstileToken}
+            disabled={isGoogleLoading || firstMissing !== null}
           >
-            CREATE ACCOUNT
+            {submitLabel}
           </Button>
         </form>
 

@@ -21,6 +21,8 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         "disabled:shadow-none disabled:hover:shadow-none disabled:hover:translate-y-0 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
         // Invalid state
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+        // Valid state — opt-in via data-valid="true"
+        "data-[valid=true]:border-emerald-600 data-[valid=true]:ring-emerald-500/20 dark:data-[valid=true]:ring-emerald-500/40",
         className
       )}
       {...props}

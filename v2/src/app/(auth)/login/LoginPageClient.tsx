@@ -1,20 +1,30 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useState, useEffect, useCallback } from "react";
+import { useAction, useMutation } from "convex/react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { NavLink } from "@/components/ui/nav-link";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleStaleDeployment } from "@/components/error/auth-error";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
+import { AuthField } from "@/components/auth/AuthField";
+import { AuthTurnstile } from "@/components/auth/AuthTurnstile";
+import { validateEmailValue } from "@/lib/auth/signup-validation";
+import {
+  trackTurnstileFail,
+  trackLoginSucceeded,
+  trackLoginFailed,
+  captureTurnstileServiceError,
+  authBreadcrumb,
+} from "@/lib/auth/auth-telemetry";
 
 type LoginStep = "login" | "verification";
 
@@ -31,91 +41,150 @@ export function LoginPageClient() {
   const recordMyLogin = useMutation(api.users.recordMyLogin);
   const checkRateLimit = useMutation(api.authRateLimit.checkAuthRateLimit);
   const clearRateLimitMut = useMutation(api.authRateLimit.clearAuthRateLimit);
+  const verifyTurnstile = useAction(api.turnstile.verifyTurnstileToken);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { completeSignOut } = useAuthContext();
   const [step, setStep] = useState<LoginStep>("login");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showExpiredBanner, setShowExpiredBanner] = useState(false);
 
-  const enforceRateLimit = useCallback(async (emailValue: string, action: "login" | "otp_verify") => {
-    try {
-      const result = await checkRateLimit({ email: emailValue, action });
-      if (!result.allowed) {
-        toast.error(result.message || "Too many attempts. Please wait and try again.");
-        return false;
-      }
-      return true;
-    } catch (error) {
-      // Fail open for availability, but log for observability
-      captureError(error, { operation: "enforceRateLimit" });
-      return true;
-    }
-  }, [checkRateLimit]);
+  // Interaction-only Turnstile: widget is invisible for low-risk users and
+  // emits a token silently. A challenge appears only if Cloudflare's ML
+  // flags the attempt. Token may be null briefly at mount.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
-  // Reset signing out state when arriving at login page (after sign-out completes)
+  const emailValidation = validateEmailValue(email, emailTouched);
+  const emailInvalid = emailValidation.state === "invalid";
+  const canSubmit = emailValidation.state === "valid" && password.length > 0 && !isLoading && !isGoogleLoading;
+
+  const submitLabel = useMemo(() => {
+    if (isLoading) return "SIGNING IN...";
+    if (emailValidation.state !== "valid") return "ENTER YOUR EMAIL";
+    if (!password) return "ENTER YOUR PASSWORD";
+    return "SIGN IN";
+  }, [isLoading, emailValidation.state, password]);
+
+  const enforceRateLimit = useCallback(
+    async (emailValue: string, action: "login" | "otp_verify") => {
+      try {
+        const result = await checkRateLimit({ email: emailValue, action });
+        if (!result.allowed) {
+          toast.error(result.message || "Too many attempts. Please wait and try again.");
+          return false;
+        }
+        return true;
+      } catch (error) {
+        // Fail open for availability, but log for observability
+        captureError(error, { operation: "enforceRateLimit" });
+        return true;
+      }
+    },
+    [checkRateLimit],
+  );
+
+  // Reset signing-out state when arriving at login (after sign-out completes)
   useEffect(() => {
     completeSignOut();
   }, [completeSignOut]);
 
-  // Show session expired banner when redirected from auth error
+  // Show session-expired banner when redirected from auth error
   useEffect(() => {
     if (searchParams.get("expired") === "1") {
       setShowExpiredBanner(true);
-      // Clean the URL without triggering a navigation
       window.history.replaceState({}, "", "/login");
     }
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    authBreadcrumb("login_submit_attempt");
+
+    if (!canSubmit) {
+      setEmailTouched(true);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const formData = new FormData(e.currentTarget);
-      const emailValue = formData.get("email") as string;
-
       // Pre-flight rate limit check
-      if (!await enforceRateLimit(emailValue, "login")) {
+      if (!(await enforceRateLimit(email, "login"))) {
         setIsLoading(false);
         return;
       }
 
+      // Interaction-only Turnstile: if Cloudflare decided no challenge was
+      // needed, token may be missing — that's a legitimate low-risk user,
+      // proceed without pre-flight verification. If a token IS present, we
+      // verify it server-side (catches bot-mimic + replay attempts).
+      if (turnstileToken) {
+        try {
+          const verifyResult = await verifyTurnstile({ token: turnstileToken });
+          if (!verifyResult.success) {
+            trackTurnstileFail("login", "siteverify_rejected");
+            setTurnstileToken(null);
+            toast.error(verifyResult.error || "Security check failed. Please try again.");
+            setIsLoading(false);
+            return;
+          }
+          authBreadcrumb("login_turnstile_verified");
+        } catch (verifyError) {
+          captureTurnstileServiceError(verifyError, "login");
+          trackTurnstileFail("login", "service_error");
+          // Fail open — login shouldn't be blocked by a Cloudflare outage.
+          console.warn("[Login] Turnstile verify threw; proceeding without check");
+        }
+      }
+
+      const formData = new FormData();
+      formData.set("email", email);
+      formData.set("password", password);
+      formData.set("flow", "signIn");
+
       const result = await signIn("password", formData);
+      authBreadcrumb("login_signin_completed");
 
       if (result.signingIn) {
-        clearRateLimitMut({ email: emailValue, action: "login" }).catch((e) => console.warn("[clearRateLimit] failed:", e));
+        clearRateLimitMut({ email, action: "login" }).catch((err) =>
+          console.warn("[clearRateLimit] failed:", err),
+        );
         localStorage.setItem("perm_last_login_at", String(Date.now()));
-        recordMyLogin().catch((e) => console.warn("[recordMyLogin] failed:", e));
+        recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
+        trackLoginSucceeded("email_password");
         router.push("/dashboard");
       } else {
         // Email not verified — provider re-sent a verification code
-        setEmail(formData.get("email") as string);
         setStep("verification");
+        trackLoginFailed("unverified_email");
         toast.info("Your email isn't verified yet. We've sent a new verification code.");
       }
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
       const message = error instanceof Error ? error.message : String(error);
-      console.error("[Login Error]", error);
 
-      // Only report unexpected errors to Sentry — not invalid credentials.
-      // Convex Auth wraps InvalidSecret/InvalidAccountId as "[Request ID: xxx] Server Error"
-      // which is normal login failure, not a real server error.
+      // Only report unexpected errors to Sentry — invalid-credentials is
+      // wrapped by Convex Auth as "[Request ID: xxx] Server Error" which
+      // is normal login failure, not a real server bug.
       if (isRateLimitError(message) || isNetworkError(message)) {
         captureError(error, { operation: "signIn" });
       }
 
       if (isRateLimitError(message)) {
+        trackLoginFailed("rate_limited");
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (isNetworkError(message)) {
+        trackLoginFailed("network");
         toast.error("Network error. Please check your connection and try again.");
       } else {
+        trackLoginFailed("invalid_credentials");
         toast.error(
-          "Invalid email or password. If you signed up with Google, use the Google button below."
+          "Invalid email or password. If you signed up with Google, use the Google button below.",
         );
       }
     } finally {
@@ -123,17 +192,14 @@ export function LoginPageClient() {
     }
   };
 
-  const handleVerificationSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
+  const handleVerificationSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       const formData = new FormData(e.currentTarget);
 
-      // Pre-flight rate limit check for OTP verification
-      if (!await enforceRateLimit(email, "otp_verify")) {
+      if (!(await enforceRateLimit(email, "otp_verify"))) {
         setIsLoading(false);
         return;
       }
@@ -142,19 +208,17 @@ export function LoginPageClient() {
 
       toast.success("Email verified! Signing you in.");
       localStorage.setItem("perm_last_login_at", String(Date.now()));
-      recordMyLogin().catch((e) => console.warn("[recordMyLogin] failed:", e));
+      recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
+      trackLoginSucceeded("email_password");
       router.push("/dashboard");
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
       const message = error instanceof Error ? error.message : String(error);
-      console.error("[Login Verification Error]", error);
       captureError(error, { operation: "signInVerification" });
 
       if (/expired/i.test(message)) {
-        toast.error(
-          "Verification code expired. Go back and sign in again to get a new code."
-        );
+        toast.error("Verification code expired. Go back and sign in again to get a new code.");
       } else if (/invalid|incorrect|could not verify/i.test(message)) {
         toast.error("Invalid verification code. Please check and try again.");
       } else if (isRateLimitError(message)) {
@@ -172,13 +236,13 @@ export function LoginPageClient() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
+    authBreadcrumb("login_google_initiated");
     try {
       await signIn("google", { redirectTo: "/dashboard" });
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
       const message = error instanceof Error ? error.message : String(error);
-      console.error("[Google Sign In Error]", error);
       captureError(error, { operation: "googleSignIn" });
 
       if (/popup|closed/i.test(message)) {
@@ -197,9 +261,9 @@ export function LoginPageClient() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-3xl font-heading uppercase tracking-tight">
+          <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">
             Verify Email
-          </CardTitle>
+          </h1>
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-sm text-muted-foreground">
@@ -257,7 +321,9 @@ export function LoginPageClient() {
   return (
     <Card>
       <CardHeader>
-        <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">Sign In</h1>
+        <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">
+          Sign In
+        </h1>
       </CardHeader>
       <CardContent className="space-y-6">
         {showExpiredBanner && (
@@ -269,21 +335,22 @@ export function LoginPageClient() {
             Your session expired. Please sign in again.
           </div>
         )}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-xs uppercase mono font-bold tracking-widest">
-              Email
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              required
-              disabled={isLoading}
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          <AuthField
+            id="email"
+            label="Email"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={setEmail}
+            onBlur={() => setEmailTouched(true)}
+            state={emailValidation.state}
+            error={emailValidation.message}
+            disabled={isLoading}
+            required
+          />
 
           <div className="space-y-2">
             <Label htmlFor="password" className="text-xs uppercase mono font-bold tracking-widest">
@@ -296,10 +363,11 @@ export function LoginPageClient() {
               placeholder="••••••••"
               required
               disabled={isLoading}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              aria-invalid={emailInvalid && password.length === 0}
             />
           </div>
-
-          <input type="hidden" name="flow" value="signIn" />
 
           <div className="flex items-center justify-end">
             <NavLink
@@ -311,14 +379,35 @@ export function LoginPageClient() {
             </NavLink>
           </div>
 
+          {/* Interaction-only: widget self-hides when not needed. Takes zero
+              visual space for real users; appears inline above the button if
+              Cloudflare needs a challenge. */}
+          <AuthTurnstile
+            disabled={isLoading}
+            action="login"
+            appearance="interaction-only"
+            onVerify={(token) => {
+              setTurnstileToken(token);
+              authBreadcrumb("login_turnstile_token_received");
+            }}
+            onError={() => {
+              setTurnstileToken(null);
+              trackTurnstileFail("login", "service_error");
+            }}
+            onExpire={() => {
+              setTurnstileToken(null);
+              trackTurnstileFail("login", "expired");
+            }}
+          />
+
           <Button
             type="submit"
             className="w-full"
             loading={isLoading}
             loadingText="SIGNING IN..."
-            disabled={isGoogleLoading}
+            disabled={!canSubmit}
           >
-            SIGN IN
+            {submitLabel}
           </Button>
         </form>
 

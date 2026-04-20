@@ -31,7 +31,7 @@ export default function PrivacyPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Privacy Policy</h1>
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: March 4, 2026
+          Effective Date: February 17, 2026 | Last Updated: April 20, 2026
         </p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
@@ -466,7 +466,95 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              9. Push Notifications
+              9. Bot &amp; Fraud Prevention
+            </h2>
+            <p className="text-foreground/80 leading-relaxed">
+              To protect our sign-up, sign-in, and password-reset forms from
+              automated abuse, we use Cloudflare Turnstile, operated by
+              Cloudflare, Inc.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Signals Collected by Turnstile
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              Per Cloudflare&apos;s Turnstile Privacy Addendum, the following
+              signals are processed when a Turnstile challenge is rendered:
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+              <li>Client IP address</li>
+              <li>TLS fingerprint</li>
+              <li>HTTP User-Agent header</li>
+              <li>Your interactions with our forms (mouse movement, click timing)</li>
+              <li>The PERM Tracker sitekey and origin URL</li>
+            </ul>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              Turnstile does <strong>not</strong> use third-party tracking
+              cookies and does <strong>not</strong> read the contents of form
+              fields you type (email, password, or name).
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Cloudflare&apos;s Role
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              Cloudflare acts as our data processor when providing Turnstile
+              to us, and as an independent data controller when using
+              aggregated signals to improve its own bot-detection capabilities.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              When Turnstile Appears
+            </h3>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>
+                <strong>Sign-up:</strong> widget is always visible
+              </li>
+              <li>
+                <strong>Password reset:</strong> widget is always visible
+              </li>
+              <li>
+                <strong>Sign-in:</strong> widget is invisible for most
+                visitors; an interactive challenge only appears if Cloudflare&apos;s
+                risk analysis flags the attempt as suspicious
+              </li>
+            </ul>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Legal Basis
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              We process this data on the basis of our legitimate interest
+              in preventing fraud, spam, and abuse of our service (GDPR
+              Art. 6(1)(f); CCPA service-provider disclosure).
+            </p>
+
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              For more detail, see{" "}
+              <a
+                href="https://www.cloudflare.com/turnstile-privacy-policy/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Cloudflare&apos;s Turnstile Privacy Addendum
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://www.cloudflare.com/privacypolicy/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Cloudflare&apos;s Privacy Policy
+              </a>
+              .
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+              10. Push Notifications
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               When you enable push notifications, your browser generates a unique
@@ -517,7 +605,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              10. Google Calendar Integration
+              11. Google Calendar Integration
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               You may optionally connect your Google Calendar to sync PERM
@@ -553,7 +641,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              11. Cookies &amp; Local Storage
+              12. Cookies &amp; Local Storage
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We use the following storage technologies:
@@ -589,7 +677,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              12. Third-Party Services
+              13. Third-Party Services
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We use the following third-party services to operate PERM Tracker:
@@ -628,9 +716,13 @@ export default function PrivacyPage() {
                 web search capabilities (see Section 6)
               </li>
               <li>
+                <strong>Cloudflare, Inc.:</strong> Bot and fraud prevention
+                via Turnstile on authentication forms (see Section 9)
+              </li>
+              <li>
                 <strong>Browser Push Services:</strong> Google FCM, Mozilla Push
                 Service, and Apple APNs for push notification delivery (see
-                Section 9)
+                Section 10)
               </li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
@@ -651,7 +743,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              13. Data Retention &amp; Deletion
+              14. Data Retention &amp; Deletion
             </h2>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>Your data is retained for as long as your account is active</li>
@@ -704,7 +796,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              14. Your Rights
+              15. Your Rights
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               Depending on your location, you may have the following rights
@@ -748,7 +840,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              15. International Data Transfers
+              16. International Data Transfers
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               Your data is primarily stored and processed in the United States.
@@ -766,7 +858,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              16. Children&apos;s Privacy
+              17. Children&apos;s Privacy
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               PERM Tracker is not intended for use by individuals under the age of
@@ -778,7 +870,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              17. Changes to This Policy
+              18. Changes to This Policy
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               We may update this Privacy Policy from time to time. We will notify
@@ -797,7 +889,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              18. Contact Us
+              19. Contact Us
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               If you have any questions about this Privacy Policy or our data
