@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 import withSerwistInit from "@serwist/next";
 import bundleAnalyzer from "@next/bundle-analyzer";
+import { withBotId } from "botid/next/config";
 
 // Create bundle analyzer wrapper
 const withBundleAnalyzer = bundleAnalyzer({
@@ -124,7 +125,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-const configWithSerwist = withSerwist(nextConfig);
+// BotID wraps the Next config to install client-side bot-signal collection
+// + server proxy rewrites. checkBotId() server-side reads the token from
+// protected routes (see src/instrumentation-client.ts for the protect list).
+const configWithSerwist = withBotId(withSerwist(nextConfig));
 
 // Sentry configuration options
 const sentryOptions = {

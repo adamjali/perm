@@ -22,7 +22,7 @@ import {
   stepCountIs,
 } from 'ai';
 import { isAuthenticatedNextjs, convexAuthNextjsToken } from '@convex-dev/auth/nextjs/server';
-import { fetchQuery } from 'convex/nextjs';
+import { fetchMutation, fetchQuery } from 'convex/nextjs';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import {
@@ -36,6 +36,7 @@ import type { ActionMode } from '@/lib/ai/tool-permissions';
 import { createCacheStats } from '@/lib/ai/cache';
 import { captureError } from '@/lib/sentry';
 import { getPostHogClient } from '@/lib/posthog-server';
+import { checkBotId } from 'botid/server';
 import { createTools, truncateForLog } from './create-tools';
 
 // Allow up to 60 seconds for streaming responses (extra time for fallbacks + tool calls)
@@ -79,6 +80,46 @@ export async function POST(req: Request) {
   console.log(`[Chat API] [${sessionId}] === New chat request ===`);
 
   try {
+    // BotID check — reject non-browser callers before any Convex hit or LLM
+    // call. Client-side botid instrumentation (see src/instrumentation-client.ts)
+    // attaches a signed token to /api/chat requests; direct-API attackers have
+    // no token and fail here. Costs nothing on Basic tier.
+    const botVerdict = await checkBotId();
+    if (botVerdict.isBot) {
+      console.log(`[Chat API] [${sessionId}] Bot blocked`);
+      return new Response(
+        JSON.stringify({ error: "Access denied" }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Per-IP rate limit — caps one source from burning through AI quotas
+    // regardless of which authenticated user is calling. Runs AFTER BotID
+    // so we don't burn rate-limit budget on verified bots.
+    const clientIp =
+      req.headers.get("x-forwarded-for") ??
+      req.headers.get("x-real-ip") ??
+      "unknown";
+    try {
+      const ipCheck = await fetchMutation(api.authRateLimit.checkIpRateLimit, {
+        ip: clientIp,
+        action: "ip_chat",
+      });
+      if (!ipCheck.allowed) {
+        console.log(`[Chat API] [${sessionId}] IP rate limit hit`);
+        return new Response(
+          JSON.stringify({
+            error: ipCheck.message || "Too many requests. Please slow down.",
+          }),
+          { status: 429, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    } catch (ipError) {
+      // Fail open on rate-limit service error — better availability than
+      // blocking legitimate users for an infrastructure glitch.
+      console.warn(`[Chat API] [${sessionId}] IP rate-limit check failed, allowing:`, ipError);
+    }
+
     // Verify authentication (chatbot is authenticated-only)
     const isAuthenticated = await isAuthenticatedNextjs();
     if (!isAuthenticated) {

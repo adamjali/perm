@@ -425,9 +425,11 @@ export default function TermsPage() {
               help us diagnose and fix issues — no sensitive case data is
               included in session recordings. We also use Cloudflare Turnstile
               on our authentication forms (sign-up, sign-in, password reset)
-              to prevent automated abuse; Turnstile processes limited
-              device and interaction signals but does not read the contents
-              of form fields. By using the Service, you consent to this data
+              and Vercel BotID on our AI chat and authentication endpoints
+              to prevent automated abuse; both process limited device and
+              interaction signals but do not read the contents of form
+              fields or message bodies. We additionally enforce per-IP and
+              per-email rate limits on these endpoints. By using the Service, you consent to this data
               collection as described in our{" "}
               <a href="/privacy" className="text-primary hover:underline">
                 Privacy Policy

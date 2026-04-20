@@ -550,6 +550,57 @@ export default function PrivacyPage() {
               </a>
               .
             </p>
+
+            <h3 className="font-heading text-lg font-bold mt-8 mb-3">
+              Vercel BotID (Invisible Bot Detection)
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              In addition to Turnstile, we use Vercel BotID on our AI chat
+              and authentication API endpoints. BotID passively observes
+              browser-level signals to distinguish humans from automated
+              scripts, without requiring any user interaction or showing
+              any widget.
+            </p>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              BotID may process the following client signals:
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-2">
+              <li>TLS handshake fingerprint (JA4 digest)</li>
+              <li>Browser characteristics (rendering capabilities, engine internals)</li>
+              <li>JavaScript execution timing patterns</li>
+              <li>Pointer and interaction characteristics</li>
+            </ul>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              BotID does <strong>not</strong> read the contents of the
+              requests it protects (your chat messages, credentials, or form
+              fields), does <strong>not</strong> use tracking cookies, and
+              is invisible to legitimate users. Vercel Inc. operates the
+              service; its verification data is processed in the United
+              States. See{" "}
+              <a
+                href="https://vercel.com/legal/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Vercel&apos;s Privacy Policy
+              </a>
+              .
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-8 mb-3">
+              Rate Limiting
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              We enforce per-IP and per-email rate limits on sign-up,
+              sign-in, password-reset, OTP verification, and AI chat
+              endpoints to prevent abuse. When a limit is reached, requests
+              from the offending IP or email return an HTTP 429 response
+              for the duration of the rate-limit window. We retain only the
+              minimum counter state needed (request count + timestamp) for
+              this purpose; this data is automatically purged when the
+              window closes.
+            </p>
           </section>
 
           <section>
@@ -718,6 +769,11 @@ export default function PrivacyPage() {
               <li>
                 <strong>Cloudflare, Inc.:</strong> Bot and fraud prevention
                 via Turnstile on authentication forms (see Section 9)
+              </li>
+              <li>
+                <strong>Vercel Inc.:</strong> Frontend hosting + BotID
+                invisible bot detection on AI chat and auth endpoints (see
+                Section 9)
               </li>
               <li>
                 <strong>Browser Push Services:</strong> Google FCM, Mozilla Push
