@@ -110,3 +110,11 @@ secrets/
 *.pem
 *.crt
 .vercel
+
+# Incident reports (local-only, never commit — contain attacker PII + operational data)
+incident-report-*/
+
+# Temp email drafts (if any land in repo root)
+*-email.html
+*-email.md
+

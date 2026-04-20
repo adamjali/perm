@@ -38,13 +38,16 @@ export const record = internalMutation({
     });
 
     // Send admin notification for unresolved errors
-    // Rate-limit: only notify if fewer than 5 unresolved errors in last hour
+    // Rate-limit: only notify if fewer than 5 unresolved errors in last hour.
+    // Uses compound-index range on (resolved, createdAt) and .take(6) so the
+    // read set is at most 6 docs — prevents OCC storms under high error rates.
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
     const recentErrors = await ctx.db
       .query("systemErrors")
-      .withIndex("by_resolved", (q) => q.eq("resolved", false))
-      .filter((q) => q.gte(q.field("createdAt"), oneHourAgo))
-      .collect();
+      .withIndex("by_resolved", (q) =>
+        q.eq("resolved", false).gte("createdAt", oneHourAgo),
+      )
+      .take(6);
 
     if (recentErrors.length <= 5) {
       await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
