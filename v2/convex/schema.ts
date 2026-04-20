@@ -222,6 +222,13 @@ export default defineSchema({
     // Server-side inactivity tracking (heartbeat writes this every 5 min)
     lastActiveAt: v.optional(v.number()),
 
+    // One-shot flag: welcome email + admin notification are fired on first
+    // successful authenticated login (NOT on signup). This prevents signup-spam
+    // from delivering emails via our verified sender reputation — unverified
+    // attackers never reach this point. Set to true once the post-signup emails
+    // have been sent successfully. See convex/users.ts:recordMyLogin.
+    postSignupEmailsSent: v.optional(v.boolean()),
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),

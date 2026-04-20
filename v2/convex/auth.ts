@@ -7,6 +7,7 @@ import { ResendPasswordReset } from "./ResendPasswordReset";
 import { DataModel } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { recordError } from "./lib/errorRecording";
+import { validateUserName } from "./lib/nameValidation";
 
 /**
  * Post-auth hook: ensure user profile exists and record login.
@@ -51,9 +52,14 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       verify: ResendOTP,
       reset: ResendPasswordReset,
       profile(params) {
+        // Server-side name validation — rejects URLs, emojis, excessive length, etc.
+        // Throws on violation → Convex Auth surfaces the error to the client
+        // WITHOUT creating a user record or firing any emails.
+        // See convex/lib/nameValidation.ts for the full rule set.
+        const validatedName = validateUserName(params.name as string | undefined);
         return {
           email: params.email as string,
-          name: params.name as string | undefined,
+          name: validatedName || undefined,
         };
       },
       validatePasswordRequirements(password: string | undefined) {

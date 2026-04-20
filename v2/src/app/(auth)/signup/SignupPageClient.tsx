@@ -15,6 +15,7 @@ import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleStaleDeployment } from "@/components/error/auth-error";
 import { api } from "../../../../convex/_generated/api";
+import { checkUserName } from "@/lib/nameValidation";
 
 type SignupStep = "credentials" | "verification";
 
@@ -25,8 +26,16 @@ export function SignupPageClient() {
   const checkRateLimit = useMutation(api.authRateLimit.checkAuthRateLimit);
   const [step, setStep] = useState<SignupStep>("credentials");
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const validateName = useCallback((value: string) => {
+    const result = checkUserName(value);
+    setNameError(result.valid ? null : result.message || "Invalid name");
+    return result.valid;
+  }, []);
 
   const enforceRateLimit = useCallback(async (emailValue: string, action: "signup" | "otp_verify") => {
     try {
@@ -54,6 +63,13 @@ export function SignupPageClient() {
       const formData = new FormData(e.currentTarget);
       const password = formData.get("password") as string;
       const confirmPassword = formData.get("confirmPassword") as string;
+      const nameValue = (formData.get("name") as string | null) ?? "";
+
+      // Validate name — server will reject too, but this gives immediate feedback
+      if (!validateName(nameValue)) {
+        setIsLoading(false);
+        return;
+      }
 
       if (password !== confirmPassword) {
         toast.error("Passwords do not match");
@@ -103,6 +119,15 @@ export function SignupPageClient() {
       const lower = message.toLowerCase();
       if (lower.includes("already exists") || lower.includes("duplicate")) {
         toast.error("Could not create account. If you already have an account, try signing in instead.");
+      } else if (
+        lower.includes("names can't contain") ||
+        lower.includes("invalid characters") ||
+        lower.includes("repeated content") ||
+        (lower.includes("names must be") && lower.includes("characters"))
+      ) {
+        // Server-side name validation error — mirror to inline state for UX
+        setNameError(message);
+        toast.error(message);
       } else if (lower.includes("invalid email") || lower.includes("email format")) {
         toast.error("Please enter a valid email address.");
       } else if (lower.includes("invalid password")) {
@@ -294,7 +319,34 @@ export function SignupPageClient() {
               autoComplete="name"
               placeholder="John Doe"
               disabled={isLoading}
+              maxLength={80}
+              aria-invalid={nameError !== null}
+              aria-describedby={nameError ? "name-error" : "name-hint"}
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (nameError) validateName(e.target.value);
+              }}
+              onBlur={(e) => validateName(e.target.value)}
             />
+            {nameError ? (
+              <div
+                id="name-error"
+                role="alert"
+                className="mt-2 border-2 border-destructive/70 bg-destructive/5 px-3 py-2.5 shadow-[2px_2px_0_var(--destructive)]"
+              >
+                <p className="text-xs mono font-bold uppercase tracking-wider text-destructive">
+                  {nameError}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                  Use letters, numbers, and basic punctuation only. This keeps PERM Tracker free of spam signups that use our emails to distribute phishing.
+                </p>
+              </div>
+            ) : (
+              <p id="name-hint" className="text-xs text-muted-foreground">
+                Letters, numbers, and punctuation only. No web links or emojis.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

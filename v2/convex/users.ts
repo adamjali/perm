@@ -202,44 +202,10 @@ export const ensureUserProfileInternal = internalMutation({
     // Audit: profile creation (explicit userId since internalMutation has no auth context)
     await logCreate(ctx, "userProfiles", profileId, defaultProfile as Record<string, unknown>, undefined, args.userId);
 
-    // Welcome email for new signup
-    if (user?.email) {
-      try {
-        const displayName = user.name || user.email.split("@")[0] || "there";
-        await ctx.scheduler.runAfter(0, internal.welcomeEmail.sendWelcomeEmail, {
-          to: user.email,
-          userName: displayName,
-        });
-      } catch (welcomeError) {
-        log.error("Failed to schedule welcome email", {
-          error: welcomeError instanceof Error ? welcomeError.message : String(welcomeError),
-        });
-        await recordError(ctx, "mutation", "users.ensureUserProfileInternal.welcome", welcomeError, { userId: args.userId });
-      }
-    }
-
-    // Admin notification: new user signup
-    try {
-      const adminPrefs = await ctx.runQuery(internal.admin.getAdminNotificationPrefs, {});
-      if (adminPrefs.adminNotifyNewUser) {
-        const signupTime = new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-        await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
-          subject: "New User Signup",
-          body: `A new user has signed up for PERM Tracker.\n\nEmail: ${user?.email ?? "unknown"}\nName: ${user?.name ?? "Not provided"}\nTime: ${signupTime}`,
-        });
-      }
-    } catch (adminNotifError) {
-      log.error("Failed to send admin signup notification", {
-        error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
-      });
-      await recordError(ctx, "mutation", "users.ensureUserProfileInternal.adminNotif", adminNotifError, { userId: args.userId });
-    }
+    // NOTE: Welcome email + admin notification are intentionally NOT sent here.
+    // They fire from recordMyLogin on the first successful authenticated login,
+    // which requires OTP verification — defeats signup-spam attacks that never
+    // verify. See postSignupEmailsSent flag on userProfiles schema.
 
     return profileId;
   },
@@ -272,6 +238,57 @@ export const recordMyLogin = mutation({
       lastLoginAt: Date.now(),
       lastActiveAt: Date.now(),
     });
+
+    // First successful authenticated login = email is verified.
+    // Fire the welcome email + admin notification ONCE per account here.
+    // This defeats signup-spam: unverified attackers never reach this mutation.
+    if (!profile.postSignupEmailsSent) {
+      // Mark immediately (idempotency — concurrent logins won't double-send)
+      await ctx.db.patch(profile._id, { postSignupEmailsSent: true });
+
+      const user = await ctx.db.get(userId);
+
+      // Welcome email
+      if (user?.email) {
+        try {
+          const displayName = user.name || user.email.split("@")[0] || "there";
+          await ctx.scheduler.runAfter(0, internal.welcomeEmail.sendWelcomeEmail, {
+            to: user.email,
+            userName: displayName,
+          });
+        } catch (welcomeError) {
+          log.error("Failed to schedule welcome email on first login", {
+            error: welcomeError instanceof Error ? welcomeError.message : String(welcomeError),
+          });
+          await recordError(ctx, "mutation", "users.recordMyLogin.welcome", welcomeError, { userId });
+        }
+      }
+
+      // Admin notification (only for verified users — blocks signup-spam from reaching admin inbox)
+      try {
+        const adminPrefs = await ctx.runQuery(internal.admin.getAdminNotificationPrefs, {});
+        if (adminPrefs.adminNotifyNewUser) {
+          const signupTime = new Date().toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          const { sanitizeNameForEmail } = await import("./lib/nameValidation");
+          const safeName = user?.name ? sanitizeNameForEmail(user.name) : "Not provided";
+          await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
+            subject: "New User Signup",
+            body: `A new user has verified and signed up for PERM Tracker.\n\nEmail: ${user?.email ?? "unknown"}\nName: ${safeName}\nTime: ${signupTime}`,
+          });
+        }
+      } catch (adminNotifError) {
+        log.error("Failed to send admin signup notification on first login", {
+          error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
+        });
+        await recordError(ctx, "mutation", "users.recordMyLogin.adminNotif", adminNotifError, { userId });
+      }
+    }
   },
 });
 
