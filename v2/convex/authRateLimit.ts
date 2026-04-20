@@ -28,15 +28,16 @@ const ACTION_CONFIG: Record<string, RateLimitConfig> = {
 // Per-IP rate limits — complement (not replace) per-email limits. Per-email
 // catches one attacker brute-forcing one account; per-IP catches one source
 // firing at many unique emails (the signup-flood scenario).
-// Conservative defaults: tuned for normal human behavior from shared NAT/VPN
-// while still blocking script-flood patterns.
+//
+// Caps sized for corporate NAT (50–100 seat offices sharing one public IP)
+// while still stopping script floods:
+//   ip_auth  = 500/hr/IP covers a 100-person office all logging in at 9 AM
+//              with retries + password resets, still caps bots at 12k/day
+//   ip_chat  = 120/min/IP = 2 msg/sec which is already hyperactive; small
+//              teams sharing a NAT will still fit comfortably
 const IP_ACTION_CONFIG: Record<string, RateLimitConfig> = {
-  ip_signup: { limit: 10, windowMs: 60 * 60 * 1000 },         // 10/hr
-  ip_login: { limit: 20, windowMs: 60 * 1000 },               // 20/min
-  ip_password_reset: { limit: 10, windowMs: 60 * 60 * 1000 }, // 10/hr
-  ip_otp_verify: { limit: 10, windowMs: 60 * 60 * 1000 },     // 10/hr
-  ip_chat: { limit: 30, windowMs: 60 * 1000 },                // 30/min
-  ip_turnstile_verify: { limit: 20, windowMs: 60 * 1000 },    // 20/min
+  ip_auth: { limit: 500, windowMs: 60 * 60 * 1000 }, // all /api/auth POSTs (signup/login/reset/otp)
+  ip_chat: { limit: 120, windowMs: 60 * 1000 },       // /api/chat POSTs
 };
 
 /**
@@ -87,12 +88,8 @@ export const checkIpRateLimit = mutation({
   args: {
     ip: v.string(),
     action: v.union(
-      v.literal("ip_signup"),
-      v.literal("ip_login"),
-      v.literal("ip_password_reset"),
-      v.literal("ip_otp_verify"),
+      v.literal("ip_auth"),
       v.literal("ip_chat"),
-      v.literal("ip_turnstile_verify"),
     ),
   },
   handler: async (ctx, args) => {

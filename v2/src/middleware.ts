@@ -33,51 +33,42 @@ const isProtectedRoute = createRouteMatcher([
 // Auth routes (should redirect to dashboard if already logged in)
 const isAuthRoute = createRouteMatcher(["/login", "/signup"]);
 
-// @convex-dev/auth mounts its sign-in/sign-up/reset handlers under /api/auth.
-// These are publicly reachable — a bot can hit them directly without ever
-// loading our signup page. We enforce a per-IP rate limit here (in addition
-// to the per-email rate limit that runs inside Convex Auth itself).
-const isConvexAuthApiRoute = createRouteMatcher(["/api/auth", "/api/auth/(.*)"]);
-
-// Map the auth path fragment to a rate-limit action bucket.
-function rateLimitActionForAuthPath(pathname: string): "ip_signup" | "ip_login" | "ip_password_reset" | "ip_otp_verify" | null {
-  // @convex-dev/auth uses a single /api/auth endpoint and distinguishes flow
-  // via the `flow` form field (signUp|signIn|reset|reset-verification|email-verification).
-  // At middleware level we can't easily parse the body without consuming it,
-  // so we treat all /api/auth POSTs under one bucket: ip_signup (the harshest).
-  // This favors safety over UX for legitimate rapid retries.
-  if (pathname === "/api/auth" || pathname.startsWith("/api/auth/")) {
-    return "ip_signup";
-  }
-  return null;
-}
+// @convex-dev/auth mounts its handlers at the single /api/auth path (confirmed
+// by reading the package source — shouldProxyAuthAction matches only exact path
+// with/without trailing slash). All flows (signUp, signIn, reset, OTP verify,
+// signOut) go through this one endpoint, distinguished by body.action + body.flow.
+// Token refresh happens INSIDE this middleware (no additional POST), so the rate
+// limit here does NOT throttle normal page navigation.
+const isConvexAuthApiRoute = createRouteMatcher(["/api/auth", "/api/auth/"]);
 
 export default convexAuthNextjsMiddleware(
   async (request, { convexAuth }) => {
-    // Per-IP rate-limit gate on Convex Auth API routes (defense-in-depth
+    // Per-IP rate-limit gate on Convex Auth API route (defense-in-depth
     // alongside the per-email limit inside Convex). Only POSTs matter —
     // the sign-in/up flow is POST-only.
     if (request.method === "POST" && isConvexAuthApiRoute(request)) {
-      const action = rateLimitActionForAuthPath(request.nextUrl.pathname);
-      if (action) {
-        const ip =
-          request.headers.get("x-forwarded-for") ??
-          request.headers.get("x-real-ip") ??
-          "unknown";
-        try {
-          const check = await fetchMutation(api.authRateLimit.checkIpRateLimit, {
-            ip,
-            action,
-          });
-          if (!check.allowed) {
-            return NextResponse.json(
-              { error: check.message || "Too many requests from your IP. Please wait and try again." },
-              { status: 429 },
-            );
-          }
-        } catch {
-          // Fail open — availability over strictness on infrastructure glitches.
+      const ip =
+        request.headers.get("x-forwarded-for") ??
+        request.headers.get("x-real-ip") ??
+        "unknown";
+      try {
+        const check = await fetchMutation(api.authRateLimit.checkIpRateLimit, {
+          ip,
+          action: "ip_auth",
+        });
+        if (!check.allowed) {
+          const retryMin = Math.ceil((check.retryAfterMs ?? 0) / 60000);
+          return NextResponse.json(
+            {
+              error:
+                check.message ||
+                `Too many requests from your IP. Please try again in ${retryMin} minute${retryMin === 1 ? "" : "s"}.`,
+            },
+            { status: 429, headers: { "Retry-After": String(Math.ceil((check.retryAfterMs ?? 0) / 1000)) } },
+          );
         }
+      } catch {
+        // Fail open — availability over strictness on infrastructure glitches.
       }
     }
 

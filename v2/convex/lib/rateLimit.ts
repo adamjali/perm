@@ -40,12 +40,12 @@ export interface RateLimitResult {
  * Predefined rate limit configurations
  */
 export const RATE_LIMITS = {
-  /** OTP verification: 5 attempts per 15 minutes */
-  OTP_VERIFY: { limit: 5, windowMs: 15 * 60 * 1000 },
-  /** Password reset request: 3 per hour */
-  PASSWORD_RESET: { limit: 3, windowMs: 60 * 60 * 1000 },
-  /** Login attempts: 10 per 15 minutes */
-  LOGIN: { limit: 10, windowMs: 15 * 60 * 1000 },
+  /** OTP verification: 10 attempts per 15 minutes (legit users can mistype OTP a few times) */
+  OTP_VERIFY: { limit: 10, windowMs: 15 * 60 * 1000 },
+  /** Password reset request: 5 per hour (allows re-request if email missed) */
+  PASSWORD_RESET: { limit: 5, windowMs: 60 * 60 * 1000 },
+  /** Login attempts: 20 per 15 minutes (legit users forgetting password get reasonable retries) */
+  LOGIN: { limit: 20, windowMs: 15 * 60 * 1000 },
   /** Email send: 5 per 10 minutes (prevent spam) */
   EMAIL_SEND: { limit: 5, windowMs: 10 * 60 * 1000 },
 } as const;
