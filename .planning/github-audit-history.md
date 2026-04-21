@@ -8,10 +8,31 @@
 - **next/og dynamic icon route**: avoid — exceeds 1 MB Edge Function limit. Use static `src/app/icon.png` instead
 - **pnpm update --latest**: do NOT run blindly — bumps TypeScript/Vite/etc to majors. Prefer `pnpm update` (respects caret) + manual major review
 
-## Current Audit
-- **started:** 2026-04-21
-- **status:** IN_PROGRESS
-- **checkpoint:** Phase 1 — Audit
+## Audit 2 — 2026-04-21
+- **health_before:** 2 Dependabot alerts (1 critical protobufjs RCE, 1 medium dompurify) + 4 code-scanning alerts + 5 open Dependabot PRs + 3 Sentry build deprecations + Next.js middleware→proxy deprecation
+- **health_after:** Clean — CVEs patched, build emits zero warnings, all 5 PRs resolved, production deployed
+- **items_fixed:** 7 (bulk deps, sentry config migration, sentry.client.config.ts deletion, middleware→proxy rename, @types/node policy update, docs/SECURITY.md reference)
+- **items_discussed:** 2 (merge strategy, middleware→proxy rename)
+- **prs_merged:** 0 (all 5 PRs closed as superseded by commit 2db97e0)
+- **quality_issues_fixed:** 3 Sentry deprecations + 1 Next.js deprecation
+- **deployed:** yes (commit 2db97e0, Convex giant-dragon-464 deployed, Vercel production Ready 4m)
+- **duration:** ~50 min
+
+### Changes Made
+- **Security**: protobufjs 7.5.4→7.5.5 (CVE-2026-41242 critical, RCE via type field injection); dompurify 3.3.3→3.4.1 (FORBID_TAGS bypass + prototype pollution fixes)
+- **Production deps (patch/minor)**: @ai-sdk/google 3.0.62→64, @ai-sdk/react 3.0.160→170, @auth/core 0.41.1→2, @openrouter/ai-sdk-provider 2.5.1→2.8.0, @react-email/render 2.0.6→7, @remotion/* 4.0.448→450, @sentry/nextjs 10.48→10.49, ai 6.0.158→168, gsap 3.14.2→3.15.0, next 16.2.3→16.2.4, posthog-js 1.367→1.369.5, posthog-node 5.29.2→4, react-hook-form 7.72.1→7.73.1, resend 6.10→6.12.2, svix 1.90→1.91.1
+- **Dev deps (patch)**: @axe-core/react 4.11.1→2, @chromatic-com/storybook 5.1.1→2, @next/bundle-analyzer 16.2.3→4, @tailwindcss/postcss 4.2.2→4, axe-core 4.11.2→3, convex-test 0.0.47→49, eslint 10.2.0→1, eslint-config-next 16.2.3→4, happy-dom 20.8.9→20.9.0, tailwindcss 4.2.2→4, typescript 6.0.2→3, vite 8.0.8→9, vitest 4.1.4→5, @vitest/* 4.1.4→5
+- **Sentry deprecation fix**: `disableLogger: true` → `webpack.treeshake.removeDebugLogging: true`; `automaticVercelMonitors: true` → `webpack.automaticVercelMonitors: true` (next.config.ts)
+- **Sentry file cleanup**: deleted empty `sentry.client.config.ts` (client Sentry is lazy-loaded via `SentryClientInit` component; empty file was triggering rename-to-instrumentation-client.ts deprecation)
+- **Next.js 16 migration**: renamed `src/middleware.ts` → `src/proxy.ts` (middleware file convention deprecated — API-compatible, Convex Auth middleware unchanged, build tag now shows "ƒ Proxy (Middleware)")
+- **Docs**: updated `docs/SECURITY.md` middleware → proxy reference
+- **Policy fix**: @types/node policy v22 → v24 (stale; package.json uses `engines.node: 24.x` and `@types/node: ^24.12.2`)
+
+### Decisions
+- **Merge strategy**: Bulk `pnpm update` + close PRs as superseded (same as Audit 1) — user chose "your rec, want all". Avoids rebase-chain across 5 PRs, atomic verification, matches caret ranges Dependabot would have produced.
+- **middleware → proxy rename**: Discussed — user chose "Rename and verify". Zero-warning build confirms API compatibility; Convex Auth `convexAuthNextjsMiddleware` works unchanged in proxy.ts.
+- **sentry.client.config.ts deletion**: Safer than renaming content to instrumentation-client.ts (which contains PostHog init). Matches intentional lazy-load pattern already documented.
+- **pnpm overrides**: Kept existing overrides (lodash, brace-expansion, picomatch, dompurify, yaml) — they resolve transitive deps and remain active.
 
 ## Audit 1 — 2026-04-11
 - **health_before:** 27 vulnerabilities (10 high, 15 moderate, 2 low) + 9 stale Dependabot PRs + 1 critical CVE
