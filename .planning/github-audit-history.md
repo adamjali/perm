@@ -2,11 +2,16 @@
 
 ## Saved Policies
 <!-- Persistent rules applied automatically on future audits -->
-- **@types/node**: pin to v22 — matches Vercel Node 22 runtime
+- **@types/node**: pin to v24 — matches `engines.node: 24.x` (Vercel Node 24 runtime). Dependabot ignores major bumps.
 - **Dependabot security PRs for `next`**: auto-merge after local verification (config ignores non-security next bumps)
 - **lucide-react v1+ brand icons**: inline SVGs in place (Github, Twitter, Linkedin) — no external icon package
 - **next/og dynamic icon route**: avoid — exceeds 1 MB Edge Function limit. Use static `src/app/icon.png` instead
 - **pnpm update --latest**: do NOT run blindly — bumps TypeScript/Vite/etc to majors. Prefer `pnpm update` (respects caret) + manual major review
+
+## Current Audit
+- **started:** 2026-04-21
+- **status:** IN_PROGRESS
+- **checkpoint:** Phase 1 — Audit
 
 ## Audit 1 — 2026-04-11
 - **health_before:** 27 vulnerabilities (10 high, 15 moderate, 2 low) + 9 stale Dependabot PRs + 1 critical CVE

@@ -52,7 +52,7 @@ To rotate `OAUTH_ENCRYPTION_KEY`:
 
 Three layers:
 
-1. **Per-IP** (`convex/authRateLimit.ts:checkIpRateLimit` + `src/middleware.ts`)
+1. **Per-IP** (`convex/authRateLimit.ts:checkIpRateLimit` + `src/proxy.ts`)
    - `ip_auth`: 500/hr on `/api/auth` paths (sized for ~100-person NAT)
    - `ip_chat`: 120/min on `/api/chat`
 2. **Per-email** (`convex/authRateLimit.ts:checkAuthRateLimit`)

@@ -148,14 +148,8 @@ const sentryOptions = {
     },
   }),
 
-  // Automatically tree-shake Sentry logger in production
-  disableLogger: true,
-
   // Hide source maps from generated client bundles
   hideSourceMaps: true,
-
-  // Automatically instrument API routes and server components
-  automaticVercelMonitors: true,
 
   // Strip unused Sentry modules (~137KB savings)
   bundleSizeOptimizations: {
@@ -164,6 +158,13 @@ const sentryOptions = {
     excludeReplayIframe: true,
     excludeReplayShadowDom: true,
     excludeReplayWorker: true,
+  },
+
+  webpack: {
+    automaticVercelMonitors: true,
+    treeshake: {
+      removeDebugLogging: true,
+    },
   },
 };
 
