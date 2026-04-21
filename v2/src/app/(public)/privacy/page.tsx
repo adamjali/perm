@@ -592,14 +592,32 @@ export default function PrivacyPage() {
               Rate Limiting
             </h3>
             <p className="text-foreground/80 leading-relaxed">
-              We enforce per-IP and per-email rate limits on sign-up,
-              sign-in, password-reset, OTP verification, and AI chat
-              endpoints to prevent abuse. When a limit is reached, requests
-              from the offending IP or email return an HTTP 429 response
-              for the duration of the rate-limit window. We retain only the
-              minimum counter state needed (request count + timestamp) for
-              this purpose; this data is automatically purged when the
-              window closes.
+              We enforce multiple layers of rate limiting to prevent abuse:
+              per-IP limits at the network edge (covering all traffic to
+              sign-up, sign-in, password-reset, OTP verification, and AI
+              chat endpoints), per-email limits on authentication actions,
+              and per-user limits on hot backend mutations (case create,
+              conversation create, notification marks, knowledge search,
+              etc.). When a limit is reached, requests return an HTTP 429
+              response for the duration of the rate-limit window. We
+              retain only the minimum counter state needed (request count
+              + timestamp) and an internal abuse blocklist of IP addresses
+              that trip limits repeatedly (auto-expired after 24 hours).
+              Counter state is automatically purged when the window closes.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Automated Account Protection
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              If we detect an abnormal volume of failed sign-in attempts
+              against the same account (for example, 10 failures within 30
+              minutes — the signature of credential-stuffing), we
+              automatically place the account in a temporarily locked
+              state for up to 24 hours to protect the legitimate owner. We
+              notify our security team and record the event for audit.
+              Owners of accounts placed in this state can contact support
+              to appeal and have the lock lifted earlier.
             </p>
           </section>
 
