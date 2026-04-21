@@ -15,6 +15,8 @@ import { internal } from "./_generated/api";
 import { PERM_KNOWLEDGE_SECTIONS } from "./lib/rag/permKnowledge";
 import { APP_GUIDE_SECTIONS } from "./lib/rag/appGuideKnowledge";
 import { recordError } from "./lib/errorRecording";
+import { extractUserIdFromAction } from "./lib/auth";
+import { rateLimiter } from "./rateLimitConfig";
 
 /**
  * Source metadata returned with search results
@@ -55,6 +57,10 @@ export const searchKnowledge = action({
   handler: async (ctx, { query }): Promise<KnowledgeSearchResult> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
+
+    // Per-user rate limit (caps Tavily/Brave external-API spend)
+    const userId = extractUserIdFromAction(identity.subject);
+    await rateLimiter.limit(ctx, "knowledgeSearch", { key: userId, throws: true });
 
     // Return empty for empty/very short queries
     if (!query || query.trim().length < 2) {

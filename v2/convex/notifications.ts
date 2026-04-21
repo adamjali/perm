@@ -32,6 +32,7 @@ import type { Doc } from "./_generated/dataModel";
 import { getCurrentUserId, getCurrentUserIdOrNull, isEmailVerified } from "./lib/auth";
 import { logDelete } from "./lib/audit";
 import { createLogger } from "./lib/logging";
+import { rateLimiter } from "./rateLimitConfig";
 import type { QueryCtx } from "./_generated/server";
 
 const log = createLogger("Notifications");
@@ -420,6 +421,7 @@ export const markAllAsRead = mutation({
   args: {},
   handler: async (ctx): Promise<{ count: number; hasMore: boolean }> => {
     const userId = await getCurrentUserId(ctx);
+    await rateLimiter.limit(ctx, "notificationsMarkAllRead", { key: userId, throws: true });
     const now = Date.now();
     const BATCH_SIZE = 100;
 

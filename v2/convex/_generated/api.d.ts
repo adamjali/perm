@@ -111,6 +111,7 @@ import type * as notifications from "../notifications.js";
 import type * as onboarding from "../onboarding.js";
 import type * as pushNotifications from "../pushNotifications.js";
 import type * as pushSubscriptions from "../pushSubscriptions.js";
+import type * as rateLimitConfig from "../rateLimitConfig.js";
 import type * as scheduledJobs from "../scheduledJobs.js";
 import type * as sentryReportAction from "../sentryReportAction.js";
 import type * as supportEmail from "../supportEmail.js";
@@ -234,6 +235,7 @@ declare const fullApi: ApiFromModules<{
   onboarding: typeof onboarding;
   pushNotifications: typeof pushNotifications;
   pushSubscriptions: typeof pushSubscriptions;
+  rateLimitConfig: typeof rateLimitConfig;
   scheduledJobs: typeof scheduledJobs;
   sentryReportAction: typeof sentryReportAction;
   supportEmail: typeof supportEmail;
@@ -276,4 +278,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   rag: import("@convex-dev/rag/_generated/component.js").ComponentApi<"rag">;
+  rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
 };

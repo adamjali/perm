@@ -18,6 +18,7 @@ import { v, ConvexError } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { getCurrentUserId, getCurrentUserIdOrNull, verifyOwnership } from "./lib/auth";
 import { logCreate, logUpdate, logDelete } from "./lib/audit";
+import { rateLimiter } from "./rateLimitConfig";
 import { validateInputLengths, INPUT_LIMITS } from "./lib/validation";
 
 // ============================================================================
@@ -145,6 +146,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getCurrentUserId(ctx);
+    await rateLimiter.limit(ctx, "jobTemplateCreate", { key: userId, throws: true });
 
     // Input length validation (PI1 — Processing Integrity)
     validateInputLengths([

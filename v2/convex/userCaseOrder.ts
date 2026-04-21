@@ -12,6 +12,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { rateLimiter } from "./rateLimitConfig";
 
 /**
  * Save custom case order.
@@ -55,6 +56,8 @@ export const saveCaseOrder = mutation({
     if (!userId) {
       throw new Error("Unauthorized");
     }
+
+    await rateLimiter.limit(ctx, "userCaseOrderSave", { key: userId, throws: true });
 
     const now = Date.now();
 

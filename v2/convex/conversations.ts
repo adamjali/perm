@@ -12,6 +12,7 @@ import { v } from "convex/values";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import { logDelete } from "./lib/audit";
 import { validateStringLength, INPUT_LIMITS } from "./lib/validation";
+import { rateLimiter } from "./rateLimitConfig";
 
 /**
  * Create a new conversation
@@ -49,6 +50,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getCurrentUserId(ctx);
+    await rateLimiter.limit(ctx, "conversationCreate", { key: userId, throws: true });
     const now = Date.now();
 
     // Input validation

@@ -3,6 +3,7 @@ import { v, ConvexError } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull, verifyOwnership } from "./lib/auth";
+import { rateLimiter } from "./rateLimitConfig";
 import { logCreate, logUpdate, logDelete } from "./lib/audit";
 import { validateInputLengths, INPUT_LIMITS } from "./lib/validation";
 import { encryptToken, decryptToken, isEncryptedToken } from "./lib/crypto";
@@ -420,6 +421,9 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getCurrentUserId(ctx);
+
+    // Per-user rate limit (caps compromised-JWT abuse)
+    await rateLimiter.limit(ctx, "caseCreate", { key: userId, throws: true });
 
     // Input length validation (PI1 — Processing Integrity)
     validateInputLengths([
@@ -943,6 +947,9 @@ export const update = mutation({
 
     // Verify ownership (throws if not found or not owned by user)
     await verifyOwnership(ctx, caseDoc, "case");
+
+    // Per-user rate limit (caps compromised-JWT abuse)
+    await rateLimiter.limit(ctx, "caseUpdate", { key: caseDoc!.userId, throws: true });
 
     // Check not deleted
     if (caseDoc!.deletedAt !== undefined) {

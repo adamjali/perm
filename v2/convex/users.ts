@@ -8,6 +8,7 @@ import { validateInputLengths, INPUT_LIMITS } from "./lib/validation";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
 import { buildDefaultProfile } from "./lib/userDefaults";
+import { rateLimiter } from "./rateLimitConfig";
 import { formatDateForNotification } from "./lib/formatDate";
 
 const log = loggers.auth;
@@ -577,6 +578,7 @@ export const savePushSubscription = mutation({
   },
   handler: async (ctx, { subscription }) => {
     const userId = await getCurrentUserId(ctx);
+    await rateLimiter.limit(ctx, "pushSubscriptionSave", { key: userId, throws: true });
 
     // Get current profile
     const profile = await ctx.db
