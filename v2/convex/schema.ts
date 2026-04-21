@@ -241,6 +241,12 @@ export default defineSchema({
      * @see scheduledJobs.ts permanentlyDeleteAccount for the scheduled job handler
      */
     scheduledDeletionJobId: v.optional(v.id("_scheduled_functions")),
+
+    // Abuse suspension (admin-controlled). When `suspendedAt` is set, login
+    // is blocked until `suspendedUntil` passes or an admin unsuspends.
+    suspendedAt: v.optional(v.number()),
+    suspendedReason: v.optional(v.string()),
+    suspendedUntil: v.optional(v.number()),
   })
     .index("by_user_id", ["userId"])
     .index("by_firm_id", ["firmId"])
