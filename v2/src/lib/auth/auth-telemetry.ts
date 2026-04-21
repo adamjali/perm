@@ -66,6 +66,22 @@ export function trackPasswordResetCompleted(): void {
 }
 
 /**
+ * Track an abuse-related event (rate limit trip, account suspension, blocklist
+ * add, etc). PostHog only — NOT Sentry, to avoid alert fatigue from normal
+ * user errors. Use for product-abuse-pattern observability.
+ */
+export function trackAbuseEvent(
+  kind:
+    | "rate_limit_429"
+    | "account_suspended"
+    | "ip_blocked"
+    | "suspended_login_blocked",
+  props?: Record<string, string | number>,
+): void {
+  analytics.capture("abuse_event", { kind, ...props });
+}
+
+/**
  * Add a breadcrumb in the "auth" category so Sentry events that DO get
  * reported have context on the full auth journey.
  */

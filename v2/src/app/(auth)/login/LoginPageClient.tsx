@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useAction, useMutation } from "convex/react";
+import { useAction, useMutation, useConvex } from "convex/react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "../../../../convex/_generated/api";
@@ -22,6 +22,7 @@ import {
   trackTurnstileFail,
   trackLoginSucceeded,
   trackLoginFailed,
+  trackAbuseEvent,
   captureTurnstileServiceError,
   authBreadcrumb,
 } from "@/lib/auth/auth-telemetry";
@@ -38,6 +39,7 @@ function isRateLimitError(message: string): boolean {
 
 export function LoginPageClient() {
   const { signIn } = useAuthActions();
+  const convex = useConvex();
   const recordMyLogin = useMutation(api.users.recordMyLogin);
   const checkRateLimit = useMutation(api.authRateLimit.checkAuthRateLimit);
   const clearRateLimitMut = useMutation(api.authRateLimit.clearAuthRateLimit);
@@ -114,8 +116,33 @@ export function LoginPageClient() {
     try {
       // Pre-flight rate limit check
       if (!(await enforceRateLimit(email, "login"))) {
+        trackAbuseEvent("rate_limit_429", { surface: "login" });
         setIsLoading(false);
         return;
+      }
+
+      // Suspension gate — if this account was auto-suspended by abuse
+      // detection, block login with a friendly locked message instead of
+      // letting Convex Auth return a generic credential error.
+      try {
+        const suspension = await convex.query(
+          api.abuseDetection.checkEmailSuspension,
+          { email },
+        );
+        if (suspension.suspended) {
+          trackAbuseEvent("suspended_login_blocked", {
+            reason: suspension.reason ?? "unknown",
+          });
+          toast.error(
+            "This account is temporarily locked due to unusual activity. Contact support@permtracker.app to appeal.",
+          );
+          setIsLoading(false);
+          return;
+        }
+      } catch (suspensionError) {
+        // Fail open — availability trumps strict enforcement here; the
+        // per-email rate limit still protects from brute force.
+        console.warn("[Login] suspension check failed:", suspensionError);
       }
 
       // Interaction-only Turnstile: if Cloudflare decided no challenge was
@@ -177,6 +204,7 @@ export function LoginPageClient() {
 
       if (isRateLimitError(message)) {
         trackLoginFailed("rate_limited");
+        trackAbuseEvent("rate_limit_429", { surface: "login", source: "signIn" });
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (isNetworkError(message)) {
         trackLoginFailed("network");

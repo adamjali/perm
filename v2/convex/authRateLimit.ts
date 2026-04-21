@@ -67,6 +67,16 @@ export const checkAuthRateLimit = mutation({
       args.action,
       config
     );
+
+    // On rate-limit rejection for login/password_reset/otp_verify, record
+    // the failure and potentially auto-suspend the target account.
+    if (!result.allowed && args.action !== "signup") {
+      await ctx.runMutation(internal.abuseDetection.recordAuthFailure, {
+        email: args.email,
+        action: args.action,
+      });
+    }
+
     return {
       allowed: result.allowed,
       remaining: result.remaining,
