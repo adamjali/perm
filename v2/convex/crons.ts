@@ -162,4 +162,21 @@ crons.daily(
   internal.scheduledJobs.cleanupExpiredConversations
 );
 
+// ============================================================================
+// ABUSE BLOCKLIST CLEANUP
+// ============================================================================
+
+/**
+ * Hourly cleanup of expired abuse blocklist entries.
+ *
+ * Keeps the abuseBlocklist table bounded — most blocks are 24h auto-ban
+ * from IP rate-limit abuse. Cron runs at :40 past each hour to avoid
+ * collisions with other hourly tasks.
+ */
+crons.hourly(
+  "abuse-blocklist-cleanup",
+  { minuteUTC: 40 },
+  internal.abuseBlocklist.cleanupExpiredBlocks
+);
+
 export default crons;

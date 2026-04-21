@@ -17,6 +17,8 @@ import {
   type RateLimitConfig,
 } from "./lib/rateLimit";
 import { getCurrentUserIdOrNull } from "./lib/auth";
+import { internal } from "./_generated/api";
+import { normalizeIp } from "./abuseBlocklist";
 
 const ACTION_CONFIG: Record<string, RateLimitConfig> = {
   login: RATE_LIMITS.LOGIN,
@@ -97,20 +99,44 @@ export const checkIpRateLimit = mutation({
     if (!config) {
       throw new Error(`Unknown IP rate-limit action: ${args.action}`);
     }
-    // Normalize the IP (trim, lowercase, take first if comma-joined list from proxy chain)
-    const rawIp = args.ip.trim().toLowerCase();
-    const firstIp = rawIp.split(",")[0]?.trim() ?? rawIp;
+    const firstIp = normalizeIp(args.ip);
     if (!firstIp) {
       // Unknown IP — fail open with limited allowance to avoid locking out
       // users with misconfigured proxies.
       return { allowed: true, remaining: 1, retryAfterMs: 0 };
     }
+
+    // First, short-circuit if this IP is already in the abuse blocklist.
+    // Reject early with a long retryAfter so the caller backs off.
+    const blockRow = await ctx.db
+      .query("abuseBlocklist")
+      .withIndex("by_ip", (q) => q.eq("ip", firstIp))
+      .unique();
+    if (blockRow && blockRow.expiresAt > Date.now()) {
+      return {
+        allowed: false,
+        remaining: 0,
+        retryAfterMs: blockRow.expiresAt - Date.now(),
+        message: "This IP is temporarily blocked due to repeated abuse.",
+      };
+    }
+
     const result = await checkAndRecordRateLimit(
       ctx,
       firstIp,
       args.action,
       config,
     );
+
+    // If the rate limit just rejected this request, record a strike. After
+    // N strikes in a short window, the IP moves to the blocklist automatically.
+    if (!result.allowed) {
+      await ctx.runMutation(internal.abuseBlocklist.recordStrike, {
+        ip: firstIp,
+        reason: `${args.action}_limit_tripped`,
+      });
+    }
+
     return {
       allowed: result.allowed,
       remaining: result.remaining,

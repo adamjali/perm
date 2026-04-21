@@ -804,6 +804,20 @@ export default defineSchema({
     .index("by_key_and_timestamp", ["key", "timestamp"])
     .index("by_timestamp", ["timestamp"]), // For cleanup queries
 
+  // Abuse blocklist — IPs auto-banned after repeat rate-limit offenses.
+  // Middleware short-circuits on any entry whose expiresAt > now.
+  // Entries auto-expire; cleanup cron removes stale rows to bound table size.
+  abuseBlocklist: defineTable({
+    ip: v.string(),              // Normalized client IP (lowercased, first-hop only)
+    addedAt: v.number(),         // When the block was created
+    expiresAt: v.number(),       // Absolute timestamp when block auto-lifts
+    reason: v.string(),          // Why blocked (e.g., "ip_auth_limit_tripped_3x")
+    strikes: v.number(),         // Accumulated rate-limit strikes that led here
+    manualOverride: v.boolean(), // True when an admin set/cleared this manually
+  })
+    .index("by_ip", ["ip"])
+    .index("by_expiresAt", ["expiresAt"]), // For cleanup
+
   // API usage tracking for external search providers
   // Used to enforce daily rate limits for web search APIs
   apiUsage: defineTable({
