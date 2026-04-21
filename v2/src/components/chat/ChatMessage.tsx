@@ -128,7 +128,7 @@ export function ChatMessage({
       )}
 
       {/* Tool calls (assistant messages only) */}
-      {hasToolCalls && (
+      {hasToolCalls && getConfirmation && onApproveConfirmation && onDenyConfirmation && (
         <div className="max-w-[85%] w-full">
           <ToolCallList
             toolCalls={toolCalls}

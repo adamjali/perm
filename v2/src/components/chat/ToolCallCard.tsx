@@ -47,7 +47,6 @@ import {
   type ConfirmationStatus,
   type ToolConfirmationState,
 } from '@/lib/ai/tool-confirmation-types';
-import { useToolConfirmations } from '@/hooks/useToolConfirmations';
 import { InChatConfirmationCard } from './InChatConfirmationCard';
 
 interface ToolCallCardProps {
@@ -321,38 +320,30 @@ function ToolCallWithConfirmation({
 
 interface ToolCallListProps {
   toolCalls: ToolCall[];
-  /** Get confirmation state for a tool call ID - from orchestrator */
-  getConfirmation?: (toolCallId: string) => ToolConfirmationState | undefined;
-  /** Approve a pending confirmation - from orchestrator */
-  onApproveConfirmation?: (toolCallId: string) => Promise<void>;
-  /** Deny a pending confirmation - from orchestrator */
-  onDenyConfirmation?: (toolCallId: string) => void;
+  /** Get confirmation state for a tool call ID — orchestrator is single source of truth */
+  getConfirmation: (toolCallId: string) => ToolConfirmationState | undefined;
+  /** Approve a pending confirmation */
+  onApproveConfirmation: (toolCallId: string) => Promise<void>;
+  /** Deny a pending confirmation */
+  onDenyConfirmation: (toolCallId: string) => void;
 }
 
 /**
  * Container for multiple tool calls with stagger animation.
  * Automatically detects permission requests and renders InChatConfirmationCard.
  *
- * When confirmation handlers are passed from the orchestrator, uses those for
- * centralized state management. Falls back to local useToolConfirmations if
- * no handlers are provided (backwards compatibility).
+ * Confirmation state is always owned by `useToolOrchestrator` upstream and
+ * flows in via props. This component is a pure presentation layer — it never
+ * creates or mutates confirmation state, which prevents the duplicate-state
+ * double-render bug where a local fallback hook would race with the
+ * orchestrator's map.
  */
 export function ToolCallList({
   toolCalls,
-  getConfirmation: externalGetConfirmation,
+  getConfirmation,
   onApproveConfirmation,
   onDenyConfirmation,
 }: ToolCallListProps) {
-  // Fallback to local confirmation state if no external handlers provided
-  // This maintains backwards compatibility for standalone usage
-  const localConfirmations = useToolConfirmations();
-
-  // Use external handlers if provided, otherwise fall back to local
-  const getConfirmation = externalGetConfirmation ?? localConfirmations.getConfirmation;
-  const approve = onApproveConfirmation ?? localConfirmations.approve;
-  const deny = onDenyConfirmation ?? localConfirmations.deny;
-  const registerConfirmation = localConfirmations.registerConfirmation;
-
   if (!toolCalls || toolCalls.length === 0) return null;
 
   return (
@@ -379,13 +370,7 @@ export function ToolCallList({
           ? extractPermissionRequest(tc.result)
           : null;
 
-        // If it's a permission request, ensure it's registered (for local fallback)
-        if (permissionRequest && tc.result && !externalGetConfirmation) {
-          const toolCallId = permissionRequest.toolCallId || toolCallKey;
-          registerConfirmation(toolCallId, tc.result);
-        }
-
-        // Get confirmation state (if any)
+        // Get confirmation state (if any) from orchestrator
         const toolCallId = permissionRequest?.toolCallId || toolCallKey;
         const confirmation = getConfirmation(toolCallId);
 
@@ -412,8 +397,8 @@ export function ToolCallList({
               toolCall={tc}
               permissionRequest={permissionRequest}
               confirmationStatus={confirmationStatus}
-              onApprove={() => approve(toolCallId)}
-              onDeny={() => deny(toolCallId)}
+              onApprove={() => onApproveConfirmation(toolCallId)}
+              onDeny={() => onDenyConfirmation(toolCallId)}
               confirmationDuration={getConfirmationDuration(confirmation)}
               confirmationError={getConfirmationError(confirmation)}
             />
