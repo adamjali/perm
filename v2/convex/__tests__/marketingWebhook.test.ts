@@ -6,15 +6,17 @@ import { internal } from "../_generated/api";
  * Realistic payload shape pulled directly from Resend docs (April 2026):
  * https://resend.com/docs/webhooks/contacts/updated
  */
+type ContactEventType = "contact.created" | "contact.updated" | "contact.deleted";
+
 function makePayload(opts: {
-  type?: "contact.created" | "contact.updated" | "contact.deleted";
+  type?: ContactEventType;
   email?: string;
   unsubscribed?: boolean;
   firstName?: string | null;
   lastName?: string | null;
   audienceId?: string | null;
 } = {}): {
-  type: string;
+  type: ContactEventType;
   created_at: string;
   data: {
     id: string;
