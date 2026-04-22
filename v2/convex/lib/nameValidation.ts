@@ -31,6 +31,14 @@
 //     .ai, .xyz, etc.) which let values like "permtracker.app" pass.
 //   - trailing word boundary avoids matching legit names like "St. John" (the
 //     period is followed by a space) or "Mr.Smith" (Smith not in TLD list).
+//
+// TLD list combines: top common gTLDs (.com/.net/.org), the most-abused TLDs
+// from spam reports (.tk/.ml/.ga/.cf/.xyz/.click/.link), country TLDs that
+// short-link operators favor (.co/.ly/.me/.io/.cc/.tv/.fm), and the new gTLDs
+// the April 2026 attacker pivoted to (.app/.dev/.ai/.site/.online/.tech). When
+// editing this list, ALSO edit `src/lib/nameValidation.ts` — the two regexes
+// must stay in lockstep so client UX never under- or over-reports vs the
+// authoritative server check.
 const URL_PATTERN =
   /https?:\/\/|www\.|\bbit\.ly\b|\btinyurl\b|\bt\.co\b|\bgoo\.gl\b|\btiny\.cc\b|\bshorturl\b|\bowl\.ly\b|\b[a-z0-9][a-z0-9-]{0,62}\.(com|net|org|io|co|ly|me|tk|ml|ga|cf|xyz|info|app|dev|ai|site|online|tech|store|shop|click|link|cc|pro|us|uk|de|fr|jp|cn|ru|br|mx|tv|fm|ca|es|it|nl|au|in|sh|ws|biz|mobi|name|run|page|blog|live|sale|top)\b/i;
 

@@ -28,20 +28,14 @@
  * "Expected 'function' type." errors on streaming tool calls (vercel/ai#5350).
  *
  * WHY THE MISTRAL ID SANITIZER IS NEEDED (re-added April 2026):
- *   Mistral's API rejects tool_call_id values longer than 9 alphanumeric chars
- *   with HTTP 400 ("Tool call id was X but must be a-z, A-Z, 0-9, length 9").
- *   The native @ai-sdk/mistral only sanitizes IDs it GENERATES. When earlier
- *   turns produced longer IDs (Gemini, Groq, etc.) and we fall to Mistral,
- *   those historical IDs are passed through unchanged and rejected. The
- *   `wrapMistralModel` middleware rewrites incoming IDs on both assistant
- *   tool-call parts AND tool-result parts before the request goes out.
- *   Production evidence: Sentry issue 7411490896 (release 49ece79).
- *
- * REMOVED:
- *   - meta-llama/llama-3.3-70b-instruct:free — chronically 429'd on OpenRouter free
- *   - Cerebras llama3.1-8b from chat chain — 6k budget < tool+system overhead
- *   - gemini-3-flash-preview — requires thought_signature for tool calls (broken)
- *   - createOpenAI() for Groq/Mistral/Cerebras — see "Expected 'function' type." above
+ *   Mistral's API requires tool_call_id values to be exactly 9 alphanumeric
+ *   chars; anything else returns HTTP 400 ("Tool call id was X but must be
+ *   a-z, A-Z, 0-9, length 9"). The native @ai-sdk/mistral only sanitizes IDs
+ *   it GENERATES. When earlier turns produced longer IDs (Gemini, Groq, etc.)
+ *   and we fall to Mistral, those historical IDs are passed through unchanged
+ *   and rejected. The `wrapMistralModel` middleware rewrites incoming IDs on
+ *   both assistant tool-call parts AND tool-result parts before the request
+ *   goes out. Production evidence: Sentry issue 7411490896 (release 49ece79).
  */
 
 import { google } from '@ai-sdk/google';
@@ -79,7 +73,6 @@ export const mistral = createMistral({
   apiKey: getApiKey('MISTRAL_API_KEY'),
 });
 
-/** Cerebras client — used by summarize.ts for fast entity extraction. NOT in chat chain. */
 export const cerebras = createCerebras({
   apiKey: getApiKey('CEREBRAS_API_KEY'),
 });

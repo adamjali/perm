@@ -2,24 +2,12 @@
  * Abuse blocklist — IPs that have been auto-banned (or manually banned by an
  * admin) from hitting our public HTTP endpoints.
  *
- * Design:
- *   - Single `abuseBlocklist` table, keyed by normalized IP.
- *   - `isIpBlocked()` returns { blocked, expiresAt, reason } for middleware.
- *   - `recordRateLimitStrike()` is called every time `checkIpRateLimit` REJECTS.
- *     After N strikes in a short window, the IP is auto-blocked for 24h.
- *   - Admin mutations let you manually block, unblock, extend, or list entries.
- *   - Entries auto-expire (middleware filters out stale rows); the
- *     `cleanupExpiredBlocks` cron trims them out so the table stays small.
- *
- * This is a Convex-layer solution chosen over Vercel Edge Config because:
- *   - No Vercel API token plumbing
- *   - No dashboard-only setup required
- *   - Read path is already a Convex mutation (checkIpRateLimit) so there's
- *     no added round-trip cost
- *
- * Trade-off: each middleware call still consumes one Convex mutation. True
- * zero-quota reject would require Edge Config (deferred; revisit if cost
- * becomes material).
+ * - Single `abuseBlocklist` table, keyed by normalized IP.
+ * - `isIpBlocked()` returns { blocked, expiresAt, reason } for middleware.
+ * - `recordStrike()` runs every time `checkIpRateLimit` REJECTS. After
+ *   N strikes in a short window, the IP is auto-blocked for 24h.
+ * - Admin mutations let you manually block, unblock, extend, or list entries.
+ * - The `cleanupExpiredBlocks` cron scrubs stale rows so the table stays bounded.
  */
 
 import { v } from "convex/values";

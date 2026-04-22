@@ -43,8 +43,8 @@ const IP_ACTION_CONFIG: Record<string, RateLimitConfig> = {
 };
 
 /**
- * Check rate limit before auth action.
- * Call this BEFORE signIn() to enforce rate limiting.
+ * Pre-flight rate limit. Call BEFORE signIn() so the counter increments on
+ * the attempt itself, not on the response.
  */
 export const checkAuthRateLimit = mutation({
   args: {
@@ -153,10 +153,7 @@ export const checkIpRateLimit = mutation({
   },
 });
 
-/**
- * Clear rate limit after successful auth.
- * Call this after successful signIn to reset the counter.
- */
+/** Reset the per-email counter after a successful signIn. */
 export const clearAuthRateLimit = mutation({
   args: {
     email: v.string(),

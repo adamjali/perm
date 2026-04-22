@@ -6,9 +6,9 @@
  * Levels (escalate until it fits):
  *   L0: no change
  *   L1: pruneMessages — strip old reasoning + tool call bodies (SDK-native, lossless for live tool state)
- *   L2: [COMPACTED CONTEXT] envelope + last 10 messages verbatim, prose cap 1000 tokens
- *   L3: envelope + last 6 messages, prose cap 400 tokens
- *   L4: envelope + last 4 messages, prose cap 200 tokens
+ *   L2: [COMPACTED CONTEXT] envelope + last 10 messages (reasoning stripped via pruneMessages), prose cap 1000 tokens
+ *   L3: envelope + last 6 messages (reasoning stripped), prose cap 400 tokens
+ *   L4: envelope + last 4 messages (reasoning stripped), prose cap 200 tokens
  *
  * Entity facts (case IDs, dates, names, preferences) survive all levels unchanged —
  * they ride in the envelope as structured JSON that accumulates across compaction cycles.
