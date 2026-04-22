@@ -59,10 +59,16 @@ http.route({
       // Resend contact lifecycle events (subscribe, unsubscribe, delete).
       // Recorded in the marketingEvents table for audit + analytics.
       // Resend remains the source of truth — this is a read-only mirror.
-      if (
-        typeof body.type === "string" &&
-        body.type.startsWith("contact.")
-      ) {
+      const KNOWN_CONTACT_EVENTS = [
+        "contact.created",
+        "contact.updated",
+        "contact.deleted",
+      ] as const;
+      type ContactEventType = (typeof KNOWN_CONTACT_EVENTS)[number];
+      const isContactEventType = (s: unknown): s is ContactEventType =>
+        typeof s === "string" && (KNOWN_CONTACT_EVENTS as readonly string[]).includes(s);
+
+      if (isContactEventType(body.type)) {
         try {
           // Size caps on user-supplied fields. Svix verified the signature, but
           // a malformed Resend payload (or Resend bug) could still supply

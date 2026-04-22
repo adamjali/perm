@@ -9,6 +9,7 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { requireAdmin } from "./lib/admin";
 import { normalizeIp } from "./abuseBlocklist";
+import { getUserSuspension } from "./lib/suspension";
 
 /**
  * Aggregate summary numbers for the dashboard's top-of-page KPI cards.
@@ -21,7 +22,8 @@ export const getSecuritySummary = query({
     const now = Date.now();
     const dayAgo = now - 24 * 60 * 60 * 1000;
 
-    // Active blocklist entries (expiresAt > now)
+    // Active blocklist entries (expiresAt > now). Read up to 500 then filter
+    // — this dashboard is admin-only so consistency over throughput.
     const allBlocks = await ctx.db.query("abuseBlocklist").take(500);
     const activeBlocks = allBlocks.filter((b) => b.expiresAt > now);
 
@@ -39,11 +41,9 @@ export const getSecuritySummary = query({
       .withIndex("by_created_at", (q) => q.gte("createdAt", dayAgo))
       .take(500);
 
-    // Flagged users (profile.suspendedAt is present)
+    // Flagged users (currently-active suspension)
     const allProfiles = await ctx.db.query("userProfiles").take(500);
-    const flaggedCount = allProfiles.filter(
-      (p) => "suspendedAt" in p && (p as unknown as { suspendedAt?: number }).suspendedAt,
-    ).length;
+    const flaggedCount = allProfiles.filter((p) => getUserSuspension(p)).length;
 
     return {
       activeBlockedIps: activeBlocks.length,
@@ -83,38 +83,68 @@ export const listRecentEvents = query({
       .order("desc")
       .take(cap);
 
-    // Normalize into a common event shape
-    type Event = {
+    // Normalize into a discriminated event union — each variant declares the
+    // fields it actually carries instead of pretending all variants have all
+    // of `ip`/`actor`/`endpoint`. Consumers can `switch` on `kind` exhaustively.
+    type StrikeEvent = {
+      kind: "strike";
       id: string;
       at: number;
-      kind: "rate_limit" | "error" | "strike";
-      ip?: string;
-      actor?: string;
-      endpoint?: string;
-      reason?: string;
-      severity: "info" | "warning" | "error";
+      ip: string;
+      endpoint: string;
+      reason: string;
+      severity: "warning";
     };
+    type RateLimitEvent = {
+      kind: "rate_limit";
+      id: string;
+      at: number;
+      actor: string;
+      endpoint: string;
+      reason: string;
+      severity: "info";
+    };
+    type ErrorEvent = {
+      kind: "error";
+      id: string;
+      at: number;
+      endpoint: string;
+      reason: string;
+      severity: "error";
+    };
+    type Event = StrikeEvent | RateLimitEvent | ErrorEvent;
 
     const events: Event[] = [];
 
     for (const s of strikes) {
-      events.push({
-        id: `rl_${s._id}`,
-        at: s.timestamp,
-        kind: s.action === "ip_strike" ? "strike" : "rate_limit",
-        ip: s.action.startsWith("ip_") ? s.identifier : undefined,
-        actor: s.action.startsWith("ip_") ? undefined : s.identifier,
-        endpoint: s.action,
-        reason: s.key,
-        severity: s.action === "ip_strike" ? "warning" : "info",
-      });
+      if (s.action === "ip_strike") {
+        events.push({
+          kind: "strike",
+          id: `rl_${s._id}`,
+          at: s.timestamp,
+          ip: s.identifier,
+          endpoint: s.action,
+          reason: s.key,
+          severity: "warning",
+        });
+      } else {
+        events.push({
+          kind: "rate_limit",
+          id: `rl_${s._id}`,
+          at: s.timestamp,
+          actor: s.identifier,
+          endpoint: s.action,
+          reason: s.key,
+          severity: "info",
+        });
+      }
     }
 
     for (const e of errors) {
       events.push({
+        kind: "error",
         id: `se_${e._id}`,
         at: e.createdAt,
-        kind: "error",
         endpoint: e.operation,
         reason: e.message,
         severity: "error",
@@ -134,27 +164,24 @@ export const listFlaggedUsers = query({
   handler: async (ctx) => {
     await requireAdmin(ctx);
     const profiles = await ctx.db.query("userProfiles").take(500);
-    type P = (typeof profiles)[number] & {
-      suspendedAt?: number;
-      suspendedReason?: string;
-      suspendedUntil?: number;
-    };
-    const flagged = (profiles as P[]).filter((p) => p.suspendedAt);
+    const flagged = profiles
+      .map((p) => ({ profile: p, suspension: getUserSuspension(p) }))
+      .filter((x): x is { profile: typeof x.profile; suspension: NonNullable<typeof x.suspension> } => x.suspension !== null);
     // Hydrate with user email
     const enriched = await Promise.all(
-      flagged.map(async (p) => {
-        const user = await ctx.db.get(p.userId);
+      flagged.map(async ({ profile, suspension }) => {
+        const user = await ctx.db.get(profile.userId);
         return {
-          profileId: p._id,
-          userId: p.userId,
+          profileId: profile._id,
+          userId: profile.userId,
           email: user?.email ?? null,
-          suspendedAt: p.suspendedAt,
-          suspendedUntil: p.suspendedUntil,
-          suspendedReason: p.suspendedReason,
+          suspendedAt: suspension.at,
+          suspendedUntil: suspension.until,
+          suspendedReason: suspension.reason,
         };
       }),
     );
-    enriched.sort((a, b) => (b.suspendedAt ?? 0) - (a.suspendedAt ?? 0));
+    enriched.sort((a, b) => b.suspendedAt - a.suspendedAt);
     return enriched;
   },
 });

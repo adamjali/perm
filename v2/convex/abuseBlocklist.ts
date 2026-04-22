@@ -28,7 +28,10 @@ import {
   query,
   internalMutation,
   internalQuery,
+  type QueryCtx,
+  type MutationCtx,
 } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 import { requireAdmin } from "./lib/admin";
 
 const AUTO_BLOCK_STRIKES = 3;              // # rate-limit rejections within window
@@ -42,22 +45,34 @@ export function normalizeIp(raw: string): string {
 }
 
 /**
+ * Look up the blocklist row for a normalized IP — only returns it if the block
+ * is currently active (expiresAt > now). Returns null on no row, expired row,
+ * or unparseable IP. Use anywhere you need a "is this IP blocked right now"
+ * gate; for raw access (admin tooling, debugging), use `getBlockInternal`.
+ */
+export async function findActiveBlock(
+  ctx: QueryCtx | MutationCtx,
+  ip: string,
+): Promise<Doc<"abuseBlocklist"> | null> {
+  const normalized = normalizeIp(ip);
+  if (!normalized) return null;
+  const row = await ctx.db
+    .query("abuseBlocklist")
+    .withIndex("by_ip", (q) => q.eq("ip", normalized))
+    .unique();
+  if (!row || row.expiresAt <= Date.now()) return null;
+  return row;
+}
+
+/**
  * Check if an IP is currently blocked. Exposed as a public query so that
  * any path (middleware, admin UI, debugging) can read without mutating state.
  */
 export const isIpBlocked = query({
   args: { ip: v.string() },
   handler: async (ctx, { ip }) => {
-    const normalized = normalizeIp(ip);
-    if (!normalized) return { blocked: false as const };
-    const row = await ctx.db
-      .query("abuseBlocklist")
-      .withIndex("by_ip", (q) => q.eq("ip", normalized))
-      .unique();
+    const row = await findActiveBlock(ctx, ip);
     if (!row) return { blocked: false as const };
-    if (row.expiresAt <= Date.now()) {
-      return { blocked: false as const };
-    }
     return {
       blocked: true as const,
       expiresAt: row.expiresAt,

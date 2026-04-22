@@ -244,7 +244,7 @@ function EventsTab() {
                   </td>
                   <td className="max-w-[220px] truncate px-3 py-2 text-xs">{e.endpoint}</td>
                   <td className="max-w-[200px] truncate px-3 py-2 text-xs">
-                    {e.ip ?? e.actor ?? "—"}
+                    {e.kind === "strike" ? e.ip : e.kind === "rate_limit" ? e.actor : "—"}
                   </td>
                   <td className="max-w-[280px] truncate px-3 py-2 text-xs text-muted-foreground">
                     {e.reason}

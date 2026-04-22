@@ -19,6 +19,8 @@
 import { v } from "convex/values";
 import { internalMutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { getUserByEmail } from "./lib/auth";
+import { getUserSuspension } from "./lib/suspension";
 
 const FAIL_WINDOW_MS = 30 * 60 * 1000;   // 30-minute rolling window
 const FAIL_THRESHOLD = 10;                // failures in window before auto-suspend
@@ -64,12 +66,7 @@ export const recordAuthFailure = internalMutation({
     if (recent.length < FAIL_THRESHOLD) return { suspended: false };
 
     // Pattern matched. Find the user profile by email and auto-suspend.
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    const user = await (ctx.db.query("users") as any)
-      .withIndex("email", (q: { eq: (field: string, value: string) => unknown }) =>
-        q.eq("email", normalizedEmail),
-      )
-      .first();
+    const user = await getUserByEmail(ctx, normalizedEmail);
     if (!user) return { suspended: false };
 
     const profile = await ctx.db
@@ -113,33 +110,32 @@ export const recordAuthFailure = internalMutation({
  * Public query for the client to check whether an email is currently
  * suspended. Called from the login form BEFORE signIn so we can show a
  * friendly "account temporarily locked" message instead of just 429-ing.
+ *
+ * Account-existence trade-off: this query implicitly reveals whether an email
+ * has a profile (a suspended response is more verbose than a `false`). The
+ * leak is bounded: signup already returns "email already in use", and Convex
+ * applies its own per-deployment query rate limit. If oracle abuse is later
+ * observed, convert to a per-email rate-limited mutation that returns a
+ * neutral response after N probes per window.
  */
 export const checkEmailSuspension = query({
   args: { email: v.string() },
   handler: async (ctx, { email }) => {
     const normalizedEmail = email.toLowerCase().trim();
     if (!normalizedEmail) return { suspended: false as const };
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    const user = await (ctx.db.query("users") as any)
-      .withIndex("email", (q: { eq: (field: string, value: string) => unknown }) =>
-        q.eq("email", normalizedEmail),
-      )
-      .first();
+    const user = await getUserByEmail(ctx, normalizedEmail);
     if (!user) return { suspended: false as const };
     const profile = await ctx.db
       .query("userProfiles")
       .withIndex("by_user_id", (q) => q.eq("userId", user._id))
       .unique();
-    if (!profile || !profile.suspendedAt) return { suspended: false as const };
-    // Auto-lift if past suspendedUntil (cron will tidy, but check live)
-    if (profile.suspendedUntil && profile.suspendedUntil < Date.now()) {
-      return { suspended: false as const };
-    }
+    const suspension = getUserSuspension(profile);
+    if (!suspension) return { suspended: false as const };
     return {
       suspended: true as const,
-      suspendedAt: profile.suspendedAt,
-      suspendedUntil: profile.suspendedUntil ?? null,
-      reason: profile.suspendedReason ?? null,
+      suspendedAt: suspension.at,
+      suspendedUntil: suspension.until,
+      reason: suspension.reason,
     };
   },
 });

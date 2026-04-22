@@ -24,7 +24,12 @@ export const recordContactEvent = internalMutation({
     email: v.string(),
     contactId: v.string(),
     audienceId: v.optional(v.string()),
-    eventType: v.string(),
+    eventType: v.union(
+      v.literal("contact.created"),
+      v.literal("contact.updated"),
+      v.literal("contact.deleted"),
+      v.literal("contact.backfill"),
+    ),
     unsubscribed: v.boolean(),
     occurredAt: v.number(),
     firstName: v.optional(v.string()),

@@ -55,12 +55,16 @@ interface SummarizationMessage {
   }>;
 }
 
-/** Zod schema for structured entity extraction. */
+/**
+ * Zod schema for structured entity extraction. The extractor model may emit
+ * cases as either bare strings or objects; both shapes are accepted and
+ * normalized to `{id, status?}` so downstream consumers never need to branch.
+ */
 const FactsSchema = z.object({
   cases: z
     .array(
       z.union([
-        z.string(),
+        z.string().transform((id) => ({ id })),
         z.object({ id: z.string(), status: z.string().optional() }),
       ]),
     )

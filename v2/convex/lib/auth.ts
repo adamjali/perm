@@ -162,6 +162,25 @@ export async function verifyFirmAccess<T extends { userId: string }>(
 }
 
 /**
+ * Look up a user document by email, normalized lower-case + trimmed.
+ * Returns null if the email is empty or no user matches.
+ *
+ * Centralizes the `users.email` index lookup so callers don't need an
+ * `as any` cast to satisfy the strict @convex-dev/auth users table type.
+ */
+export async function getUserByEmail(
+  ctx: AuthContext,
+  email: string,
+): Promise<Doc<"users"> | null> {
+  const normalized = email.toLowerCase().trim();
+  if (!normalized) return null;
+  return await ctx.db
+    .query("users")
+    .withIndex("email", (q) => q.eq("email", normalized))
+    .first();
+}
+
+/**
  * Extract the primary user ID from an action's identity subject.
  *
  * In actions, `ctx.auth.getUserIdentity()` returns an identity whose

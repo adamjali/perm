@@ -15,6 +15,7 @@
  */
 
 import { pruneMessages, type ModelMessage } from 'ai';
+import { z } from 'zod/v4';
 
 // Token estimation: serialize and divide by ~3.5 chars/token (conservative).
 // Matches the pattern used in providers.ts for consistency.
@@ -35,12 +36,35 @@ export function estimateStringTokens(text: string): number {
 export type CompactionLevel = 0 | 1 | 2 | 3 | 4;
 
 export interface CompactionFacts {
-  cases?: Array<string | { id: string; status?: string }>;
+  cases?: Array<{ id: string; status?: string }>;
   people?: Array<{ name: string; role?: string }>;
   dates?: Record<string, string>;
   preferences?: string[];
   openActions?: string[];
 }
+
+/**
+ * Zod schema mirroring CompactionFacts. Used by `parseFacts` to validate
+ * untrusted JSON (extractor LLM output, persisted facts blobs from older
+ * shapes) before merging. Accepts the legacy `cases: string[]` form and
+ * normalizes each entry to the object shape so consumers don't need to branch.
+ */
+const CompactionFactsSchema = z.object({
+  cases: z
+    .array(
+      z.union([
+        z.string().transform((id) => ({ id })),
+        z.object({ id: z.string(), status: z.string().optional() }),
+      ]),
+    )
+    .optional(),
+  people: z
+    .array(z.object({ name: z.string(), role: z.string().optional() }))
+    .optional(),
+  dates: z.record(z.string(), z.string()).optional(),
+  preferences: z.array(z.string()).optional(),
+  openActions: z.array(z.string()).optional(),
+});
 
 export interface CompactionInput {
   messages: ModelMessage[];
@@ -87,7 +111,7 @@ function renderFacts(facts: CompactionFacts | undefined): string {
 
   if (facts.cases && facts.cases.length > 0) {
     const rendered = facts.cases
-      .map((c) => (typeof c === 'string' ? c : c.status ? `${c.id} (${c.status})` : c.id))
+      .map((c) => (c.status ? `${c.id} (${c.status})` : c.id))
       .join(', ');
     lines.push(`- Cases: ${rendered}`);
   }
@@ -240,7 +264,7 @@ export function mergeFacts(
   const cases = dedupeArray(
     existing.cases,
     incoming.cases,
-    (c) => (typeof c === 'string' ? c : c.id),
+    (c) => c.id,
   );
   if (cases) merged.cases = cases;
 
@@ -273,14 +297,18 @@ export function mergeFacts(
 }
 
 /**
- * Parse a facts JSON string safely. Returns undefined on parse failure.
+ * Parse a facts JSON string safely. Returns undefined on parse failure or if
+ * the payload doesn't match the expected shape. Legacy `cases: string[]` rows
+ * are normalized to `Array<{id}>` by the schema's transform.
  */
 export function parseFacts(json: string | undefined): CompactionFacts | undefined {
   if (!json) return undefined;
+  let raw: unknown;
   try {
-    const parsed = JSON.parse(json);
-    return typeof parsed === 'object' && parsed !== null ? (parsed as CompactionFacts) : undefined;
+    raw = JSON.parse(json);
   } catch {
     return undefined;
   }
+  const result = CompactionFactsSchema.safeParse(raw);
+  return result.success ? result.data : undefined;
 }

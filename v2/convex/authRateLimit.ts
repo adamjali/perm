@@ -18,7 +18,7 @@ import {
 } from "./lib/rateLimit";
 import { getCurrentUserIdOrNull } from "./lib/auth";
 import { internal } from "./_generated/api";
-import { normalizeIp } from "./abuseBlocklist";
+import { normalizeIp, findActiveBlock } from "./abuseBlocklist";
 
 const ACTION_CONFIG: Record<string, RateLimitConfig> = {
   login: RATE_LIMITS.LOGIN,
@@ -118,11 +118,8 @@ export const checkIpRateLimit = mutation({
 
     // First, short-circuit if this IP is already in the abuse blocklist.
     // Reject early with a long retryAfter so the caller backs off.
-    const blockRow = await ctx.db
-      .query("abuseBlocklist")
-      .withIndex("by_ip", (q) => q.eq("ip", firstIp))
-      .unique();
-    if (blockRow && blockRow.expiresAt > Date.now()) {
+    const blockRow = await findActiveBlock(ctx, firstIp);
+    if (blockRow) {
       return {
         allowed: false,
         remaining: 0,

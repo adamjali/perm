@@ -217,15 +217,14 @@ const MODEL_CONFIGS: ModelConfig[] = [
 /**
  * Format error for logging: extract message, status code, and type.
  */
+type ErrorLike = Error & { statusCode?: number | string; status?: number | string };
+
 function formatError(error: unknown): string {
   if (!(error instanceof Error)) return String(error);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const errAny = error as any;
-  const status = errAny?.statusCode || errAny?.status || '';
-  const name = errAny?.name || 'Error';
-  const msg = error.message?.slice(0, 300) || 'unknown';
-
+  const e = error as ErrorLike;
+  const status = e.statusCode ?? e.status ?? '';
+  const name = e.name || 'Error';
+  const msg = (e.message ?? 'unknown').slice(0, 300);
   return status ? `[${name} ${status}] ${msg}` : `[${name}] ${msg}`;
 }
 
@@ -246,13 +245,21 @@ export class FallbackModel implements LanguageModelV3 {
   readonly specificationVersion = 'v3' as const;
 
   /** Last model that succeeded (per-instance — use forRequest() for isolation). */
-  lastUsedModel = '';
-
+  private _lastUsedModel = '';
   /** Number of models tried in the last request (1 = primary succeeded). */
-  lastAttemptCount = 0;
+  private _lastAttemptCount = 0;
+
+  get lastUsedModel(): string {
+    return this._lastUsedModel;
+  }
+
+  get lastAttemptCount(): number {
+    return this._lastAttemptCount;
+  }
 
   get modelId(): string {
-    return this.configs[0]?.name || 'fallback';
+    // Constructor guarantees configs.length > 0, so [0] is always defined.
+    return this.configs[0]!.name;
   }
 
   get provider(): string {
@@ -306,8 +313,8 @@ export class FallbackModel implements LanguageModelV3 {
           : `${config.name} succeeded (${mode})`;
         console.log(`[Fallback] ${successMsg}`);
         addBreadcrumb({ category: 'ai.fallback', message: `${config.name} succeeded (${mode})`, data: { modelIndex: i } });
-        this.lastUsedModel = config.name;
-        this.lastAttemptCount = i + 1;
+        this._lastUsedModel = config.name;
+        this._lastAttemptCount = i + 1;
         return result;
       } catch (error) {
         const errorStr = formatError(error);
