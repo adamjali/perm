@@ -53,7 +53,7 @@ describe('compactAt — Level 0', () => {
     const messages = [msg('user', 'hello')];
     const result = compactAt(0, {
       messages,
-      summary: { content: 'prior context', facts: { cases: ['X-123'] } },
+      summary: { content: 'prior context', facts: { cases: [{ id: 'X-123' }] } },
     });
     expect(result).toEqual(messages);
   });
@@ -67,9 +67,8 @@ describe('compactAt — Level 1 (pruneMessages)', () => {
       msg('user', 'world'),
     ];
     const result = compactAt(1, { messages });
-    // pruneMessages default emptyMessages is 'remove'
-    expect(result.length).toBeLessThanOrEqual(messages.length);
-    // Non-empty user messages survive
+    // The empty assistant turn drops; the two user turns survive intact.
+    expect(result).toHaveLength(2);
     expect(result.some((m) => m.role === 'user' && m.content === 'hello')).toBe(true);
     expect(result.some((m) => m.role === 'user' && m.content === 'world')).toBe(true);
   });
@@ -91,7 +90,7 @@ describe('compactAt — Level 2 (envelope + last 10)', () => {
     );
     const result = compactAt(2, {
       messages,
-      summary: { content: 'a summary of earlier turns', facts: { cases: ['X-1'] } },
+      summary: { content: 'a summary of earlier turns', facts: { cases: [{ id: 'X-1' }] } },
     });
 
     expect(result.length).toBe(12); // 2 envelope + 10 tail
@@ -188,7 +187,7 @@ describe('compactAt — facts rendering', () => {
       summary: {
         content: 'sum',
         facts: {
-          cases: ['X-1', { id: 'Y-2', status: 'pending' }],
+          cases: [{ id: 'X-1' }, { id: 'Y-2', status: 'pending' }],
         },
       },
     });
@@ -255,7 +254,7 @@ describe('compactAt — facts rendering', () => {
       messages,
       summary: {
         content: 'sum',
-        facts: { cases: ['X-1'] }, // no people, dates, prefs
+        facts: { cases: [{ id: 'X-1' }] }, // no people, dates, prefs
       },
     });
     const env = result[0].content as string;
@@ -280,7 +279,7 @@ describe('compactToFit', () => {
     const result = compactToFit(
       {
         messages,
-        summary: { content: 'summary', facts: { cases: ['X-1'] } },
+        summary: { content: 'summary', facts: { cases: [{ id: 'X-1' }] } },
       },
       2000,
     );
@@ -325,28 +324,26 @@ describe('mergeFacts', () => {
   });
 
   it('returns incoming when existing is undefined', () => {
-    const incoming: CompactionFacts = { cases: ['X-1'] };
+    const incoming: CompactionFacts = { cases: [{ id: 'X-1' }] };
     expect(mergeFacts(undefined, incoming)).toEqual(incoming);
   });
 
   it('returns existing when incoming is undefined', () => {
-    const existing: CompactionFacts = { cases: ['Y-2'] };
+    const existing: CompactionFacts = { cases: [{ id: 'Y-2' }] };
     expect(mergeFacts(existing, undefined)).toEqual(existing);
   });
 
   it('dedupes cases by id', () => {
     const existing: CompactionFacts = {
-      cases: ['X-1', { id: 'Y-2', status: 'old' }],
+      cases: [{ id: 'X-1' }, { id: 'Y-2', status: 'old' }],
     };
     const incoming: CompactionFacts = {
-      cases: [{ id: 'Y-2', status: 'new' }, 'Z-3'],
+      cases: [{ id: 'Y-2', status: 'new' }, { id: 'Z-3' }],
     };
     const merged = mergeFacts(existing, incoming);
     expect(merged!.cases).toHaveLength(3);
     // Newer wins for Y-2
-    const y2 = merged!.cases!.find(
-      (c) => typeof c !== 'string' && c.id === 'Y-2',
-    );
+    const y2 = merged!.cases!.find((c) => c.id === 'Y-2');
     expect(y2).toEqual({ id: 'Y-2', status: 'new' });
   });
 
@@ -411,10 +408,16 @@ describe('parseFacts', () => {
     expect(parseFacts('42')).toBeUndefined();
   });
 
-  it('returns parsed object for valid facts JSON', () => {
+  it('returns parsed object for valid facts JSON, normalizing legacy string cases to objects', () => {
     const json = JSON.stringify({ cases: ['X-1'], dates: { pwd: '2024-06-15' } });
     const parsed = parseFacts(json);
-    expect(parsed).toEqual({ cases: ['X-1'], dates: { pwd: '2024-06-15' } });
+    // The schema's transform normalizes bare-string entries to {id} objects
+    // — back-compat for facts persisted before the shape was tightened.
+    expect(parsed).toEqual({ cases: [{ id: 'X-1' }], dates: { pwd: '2024-06-15' } });
+  });
+
+  it('returns undefined for invalid shape (e.g. cases as a number)', () => {
+    expect(parseFacts(JSON.stringify({ cases: 7 }))).toBeUndefined();
   });
 });
 

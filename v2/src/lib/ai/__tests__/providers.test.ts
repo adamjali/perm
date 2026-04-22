@@ -485,11 +485,11 @@ describe('System Prompt', () => {
 // Production evidence: Sentry issue 7411490896 (release 49ece79).
 
 describe('toMistralToolCallId', () => {
-  it('passes through an already-compliant 9-char alphanumeric ID unchanged in suffix', async () => {
+  it('passes through an already-compliant 9-char alphanumeric ID unchanged', async () => {
     const { toMistralToolCallId } = await import('../providers');
     const result = toMistralToolCallId('VvvODy9mT');
-    expect(result).toHaveLength(9);
-    expect(/^[a-zA-Z0-9]{9}$/.test(result)).toBe(true);
+    // 9-char input is its own last-9 suffix, so the value must round-trip identically.
+    expect(result).toBe('VvvODy9mT');
   });
 
   it('truncates longer alphanumeric IDs to last 9 chars', async () => {
