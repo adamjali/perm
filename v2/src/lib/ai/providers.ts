@@ -60,7 +60,14 @@ import { estimateTokensOf } from './compaction';
 function getApiKey(name: string): string {
   const value = process.env[name];
   if (!value) {
-    console.warn(`[AI Providers] Missing env var: ${name} — this provider will fail at runtime`);
+    // Surface to Sentry at module load so missing env vars are an actionable
+    // single issue at deploy time rather than a 401 storm during traffic.
+    const msg = `[AI Providers] Missing env var: ${name} — this provider will fail at runtime`;
+    console.warn(msg);
+    captureError(new Error(msg), {
+      operation: 'ai.providers.missingEnvVar',
+      tags: { envVar: name },
+    });
   }
   return value || '';
 }
@@ -286,7 +293,11 @@ export class FallbackModel implements LanguageModelV3 {
     for (let i = 0; i < this.configs.length; i++) {
       const config = this.configs[i]!;
 
-      if (config.maxInputTokens && estimatedTokens && estimatedTokens > config.maxInputTokens) {
+      if (
+        config.maxInputTokens !== undefined &&
+        estimatedTokens !== undefined &&
+        estimatedTokens > config.maxInputTokens
+      ) {
         const msg = `Input too large (~${estimatedTokens} tokens, limit ${config.maxInputTokens})`;
         errors.push({ name: config.name, error: msg });
         console.warn(`[Fallback] ${config.name} SKIPPED (${i + 1}/${this.configs.length}): ${msg}`);

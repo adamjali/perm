@@ -17,16 +17,29 @@
 
 import { initBotId } from "botid/client/core";
 
-initBotId({
-  protect: [
-    // AI chat — biggest AI-cost protection target. One abusive burst can
-    // burn through Gemini/OpenRouter/Mistral/Groq/Cerebras free-tier
-    // quotas in minutes.
-    { path: "/api/chat", method: "POST" },
+// Wrap initBotId — privacy-mode browsers (storage blocked) or strict CSP
+// environments can throw on initialization. Letting it bubble would break
+// the entire client module's side-effect import.
+try {
+  initBotId({
+    protect: [
+      // AI chat — biggest AI-cost protection target. One abusive burst can
+      // burn through Gemini/OpenRouter/Mistral/Groq/Cerebras free-tier
+      // quotas in minutes.
+      { path: "/api/chat", method: "POST" },
 
-    // Convex Auth sign-in/sign-up/reset routes. @convex-dev/auth/nextjs
-    // proxies these through /api/auth before hitting Convex, so BotID can
-    // see and block them here.
-    { path: "/api/auth/*", method: "POST" },
-  ],
-});
+      // Convex Auth sign-in/sign-up/reset routes. @convex-dev/auth/nextjs
+      // proxies these through /api/auth before hitting Convex, so BotID can
+      // see and block them here.
+      { path: "/api/auth/*", method: "POST" },
+    ],
+  });
+} catch (error) {
+  // Don't crash the client bundle if BotID init fails. The server-side
+  // checkBotId() call will treat the request as unverifiable (isBot=true)
+  // and reject it — which is the correct behavior on init failure anyway.
+  console.warn(
+    "[instrumentation-client] BotID init failed:",
+    error instanceof Error ? error.message : String(error),
+  );
+}

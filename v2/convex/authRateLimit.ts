@@ -111,9 +111,11 @@ export const checkIpRateLimit = mutation({
     }
     const firstIp = normalizeIp(args.ip);
     if (!firstIp) {
-      // Unknown IP — fail open with limited allowance to avoid locking out
-      // users with misconfigured proxies.
-      return { allowed: true, remaining: 1, retryAfterMs: 0 };
+      // Unknown IP — fail open so legitimate users with misconfigured proxies
+      // aren't locked out. Returns remaining: 0 so callers don't cache a
+      // bogus headroom signal — this isn't a real allowance, it's a "we
+      // can't enforce" pass-through.
+      return { allowed: true, remaining: 0, retryAfterMs: 0 };
     }
 
     // First, short-circuit if this IP is already in the abuse blocklist.
