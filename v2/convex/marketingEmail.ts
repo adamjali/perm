@@ -154,7 +154,7 @@ export const syncContacts = internalAction({
     while (!done) {
       const result: { page: Array<Record<string, unknown>>; isDone: boolean; continueCursor: string } =
         await ctx.runQuery(internal.marketingEmailHelpers.listAllUsers, {
-          cursor: cursor || undefined,
+          paginationOpts: { numItems: 500, cursor },
         });
       for (const user of result.page) {
         allUsers.push({

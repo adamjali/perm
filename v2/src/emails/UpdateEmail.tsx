@@ -14,19 +14,12 @@ import { ctaSectionStyle } from "./components/emailStyles";
 export interface UpdateEmailProps {
   /** Recipient's first name (from Resend contact, falls back to "there") */
   firstName?: string;
-  /** Base URL for the app */
-  baseUrl?: string;
   /** Unsubscribe URL (injected by Resend Broadcasts) */
   unsubscribeUrl?: string;
 }
 
-/**
- * Product update + review request email.
- * Used for one-off broadcasts to existing users.
- */
 export function UpdateEmail({
   firstName = "there",
-  baseUrl = "https://permtracker.app",
   unsubscribeUrl = "{{{RESEND_UNSUBSCRIBE_URL}}}",
 }: UpdateEmailProps) {
   return (
@@ -38,7 +31,7 @@ export function UpdateEmail({
       {/* Greeting */}
       <Section style={styles.greeting}>
         <Text className="em-text" style={styles.greetingText}>
-          Hey {firstName === "there" ? firstName : firstName},
+          Hey {firstName},
         </Text>
         <Text className="em-text-body" style={styles.bodyText}>
           Sabrina here, from the PERM Tracker team. I wanted to say thank you
@@ -195,7 +188,7 @@ const styles = {
     paddingLeft: "4px",
   },
   featureMarker: {
-    color: "#22c55e",
+    color: "#2ECC40",
     fontSize: "10px",
     margin: "0 0 4px 0",
   },
@@ -215,7 +208,7 @@ const styles = {
     marginBottom: "8px",
   },
   ctaButton: {
-    backgroundColor: "#22c55e",
+    backgroundColor: "#2ECC40",
     color: "#ffffff",
     padding: "14px 32px",
     fontSize: "15px",

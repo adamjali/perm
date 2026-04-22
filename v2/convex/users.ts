@@ -10,6 +10,7 @@ import { recordError } from "./lib/errorRecording";
 import { buildDefaultProfile } from "./lib/userDefaults";
 import { rateLimiter } from "./rateLimitConfig";
 import { formatDateForNotification } from "./lib/formatDate";
+import { sanitizeNameForEmail } from "./lib/nameValidation";
 
 const log = loggers.auth;
 
@@ -276,7 +277,6 @@ export const recordMyLogin = mutation({
             hour: "2-digit",
             minute: "2-digit",
           });
-          const { sanitizeNameForEmail } = await import("./lib/nameValidation");
           const safeName = user?.name ? sanitizeNameForEmail(user.name) : "Not provided";
           await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
             subject: "New User Signup",
