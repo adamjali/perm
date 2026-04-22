@@ -6,6 +6,7 @@ import {
 import { NextResponse } from "next/server";
 import { fetchMutation } from "convex/nextjs";
 import { api } from "../convex/_generated/api";
+import { addBreadcrumb } from "@/lib/sentry";
 
 // Protected routes (auth required) — unknown routes fall through to Next.js (404 naturally)
 const isProtectedRoute = createRouteMatcher([
@@ -47,6 +48,9 @@ export default convexAuthNextjsMiddleware(
     // alongside the per-email limit inside Convex). Only POSTs matter —
     // the sign-in/up flow is POST-only.
     if (request.method === "POST" && isConvexAuthApiRoute(request)) {
+      // x-forwarded-for is user-supplied in the general case. On Vercel it is
+      // set by the edge network and trustworthy; reverse-proxying outside
+      // Vercel would make per-IP limits spoofable.
       const ip =
         request.headers.get("x-forwarded-for") ??
         request.headers.get("x-real-ip") ??
@@ -57,18 +61,29 @@ export default convexAuthNextjsMiddleware(
           action: "ip_auth",
         });
         if (!check.allowed) {
-          const retryMin = Math.ceil((check.retryAfterMs ?? 0) / 60000);
+          const retryMs = check.retryAfterMs ?? 0;
+          const retryMin = Math.ceil(retryMs / 60000);
+          const retrySec = Math.ceil(retryMs / 1000);
           return NextResponse.json(
             {
               error:
                 check.message ||
                 `Too many requests from your IP. Please try again in ${retryMin} minute${retryMin === 1 ? "" : "s"}.`,
             },
-            { status: 429, headers: { "Retry-After": String(Math.ceil((check.retryAfterMs ?? 0) / 1000)) } },
+            { status: 429, headers: { "Retry-After": String(retrySec) } },
           );
         }
-      } catch {
+      } catch (error) {
         // Fail open — availability over strictness on infrastructure glitches.
+        // Emit a Sentry breadcrumb so sustained fail-open events show up in
+        // the auth error report instead of vanishing. Not captureError:
+        // would be too noisy during any Convex outage.
+        addBreadcrumb({
+          category: "middleware.rate_limit",
+          message: "ip_auth check failed — falling open",
+          level: "warning",
+          data: { error: error instanceof Error ? error.message : String(error) },
+        });
       }
     }
 

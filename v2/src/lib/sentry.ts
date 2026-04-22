@@ -42,7 +42,8 @@ export type BreadcrumbCategory =
   | "mutation"
   | "query"
   | "auth"
-  | "ai.fallback";
+  | "ai.fallback"
+  | "middleware.rate_limit";
 
 export interface BreadcrumbData {
   category: BreadcrumbCategory;

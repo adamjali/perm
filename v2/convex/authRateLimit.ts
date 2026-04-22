@@ -32,11 +32,11 @@ const ACTION_CONFIG: Record<string, RateLimitConfig> = {
 // firing at many unique emails (the signup-flood scenario).
 //
 // Caps sized for corporate NAT (50–100 seat offices sharing one public IP)
-// while still stopping script floods:
-//   ip_auth  = 500/hr/IP covers a 100-person office all logging in at 9 AM
-//              with retries + password resets, still caps bots at 12k/day
-//   ip_chat  = 120/min/IP = 2 msg/sec which is already hyperactive; small
-//              teams sharing a NAT will still fit comfortably
+// while still stopping script floods. Windows are rolling, not calendar-aligned:
+//   ip_auth  = 500 req / rolling 60 min / IP — sized for a 100-seat NAT's
+//              login burst (~5 req/user incl. retries + password resets);
+//              caps automated bots at 12k/day sustained
+//   ip_chat  = 120 req / rolling 60 sec / IP = 2 msg/sec, already hyperactive
 const IP_ACTION_CONFIG: Record<string, RateLimitConfig> = {
   ip_auth: { limit: 500, windowMs: 60 * 60 * 1000 }, // all /api/auth POSTs (signup/login/reset/otp)
   ip_chat: { limit: 120, windowMs: 60 * 1000 },       // /api/chat POSTs

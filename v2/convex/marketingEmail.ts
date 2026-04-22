@@ -69,6 +69,14 @@ function extractFirstName(fullName: string | undefined | null): string {
 
 /**
  * Get a user's marketing email subscription status from Resend.
+ *
+ * Returns null for:
+ *   - Unauthenticated callers
+ *   - 404 (contact not yet in Resend — expected for new users)
+ *   - Any upstream error (logged, but UI degrades to null rather than throwing)
+ *
+ * Non-404 errors are logged so a revoked API key doesn't silently appear as
+ * "not subscribed" forever.
  */
 export const getMarketingSubscriptionStatus = action({
   args: { email: v.string() },
@@ -82,10 +90,21 @@ export const getMarketingSubscriptionStatus = action({
         `/contacts/${encodeURIComponent(args.email)}`,
         apiKey
       );
-      if (!res.ok) return null;
+      if (res.status === 404) return null; // expected: new user, no contact yet
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.warn(
+          `[MarketingEmail] getMarketingSubscriptionStatus: Resend ${res.status} ${text.slice(0, 200)}`
+        );
+        return null;
+      }
       const data = await res.json();
       return data.unsubscribed === false;
-    } catch {
+    } catch (error) {
+      console.warn(
+        "[MarketingEmail] getMarketingSubscriptionStatus threw:",
+        error instanceof Error ? error.message : String(error)
+      );
       return null;
     }
   },
@@ -198,6 +217,33 @@ export const syncContacts = internalAction({
     let updated = 0;
     let removed = 0;
     let skipped = 0;
+    let failed = 0;
+
+    async function runWrite(
+      label: string,
+      email: string,
+      doRequest: () => Promise<Response>,
+    ): Promise<boolean> {
+      try {
+        const res = await doRequest();
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.warn(
+            `[MarketingEmail] ${label} failed for ${email}: ${res.status} ${text.slice(0, 200)}`,
+          );
+          failed++;
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.warn(
+          `[MarketingEmail] ${label} threw for ${email}:`,
+          error instanceof Error ? error.message : String(error),
+        );
+        failed++;
+        return false;
+      }
+    }
 
     // 4. Sync users → Resend
     for (const user of allUsers) {
@@ -209,8 +255,10 @@ export const syncContacts = internalAction({
       if (user.deletedAt || isEmailBlocked(emailLower)) {
         const existing = resendByEmail.get(emailLower);
         if (existing) {
-          await resendFetch(`/contacts/${existing.id}`, apiKey, { method: "DELETE" });
-          removed++;
+          const ok = await runWrite("DELETE (deleted/blocked)", emailLower, () =>
+            resendFetch(`/contacts/${existing.id}`, apiKey, { method: "DELETE" }),
+          );
+          if (ok) removed++;
           await sleep(RATE_LIMIT_DELAY_MS);
         }
         continue;
@@ -221,23 +269,27 @@ export const syncContacts = internalAction({
 
       if (!existing) {
         // Create new contact (Resend REST API uses snake_case)
-        await resendFetch("/contacts", apiKey, {
-          method: "POST",
-          body: {
-            email: user.email,
-            first_name: firstName || undefined,
-            segment_ids: [SEGMENT_ID],
-          },
-        });
-        created++;
+        const ok = await runWrite("POST (create)", emailLower, () =>
+          resendFetch("/contacts", apiKey, {
+            method: "POST",
+            body: {
+              email: user.email,
+              first_name: firstName || undefined,
+              segment_ids: [SEGMENT_ID],
+            },
+          }),
+        );
+        if (ok) created++;
         await sleep(RATE_LIMIT_DELAY_MS);
       } else if (firstName && (existing.first_name || "") !== firstName) {
         // Update name if changed (Resend REST API uses snake_case)
-        await resendFetch(`/contacts/${existing.id}`, apiKey, {
-          method: "PATCH",
-          body: { first_name: firstName },
-        });
-        updated++;
+        const ok = await runWrite("PATCH (rename)", emailLower, () =>
+          resendFetch(`/contacts/${existing.id}`, apiKey, {
+            method: "PATCH",
+            body: { first_name: firstName },
+          }),
+        );
+        if (ok) updated++;
         await sleep(RATE_LIMIT_DELAY_MS);
       } else {
         skipped++;
@@ -247,13 +299,15 @@ export const syncContacts = internalAction({
     // 5. Remove orphan Resend contacts (not in users table)
     for (const [email, contact] of resendByEmail) {
       if (!activeUserEmails.has(email)) {
-        await resendFetch(`/contacts/${contact.id}`, apiKey, { method: "DELETE" });
-        removed++;
+        const ok = await runWrite("DELETE (orphan)", email, () =>
+          resendFetch(`/contacts/${contact.id}`, apiKey, { method: "DELETE" }),
+        );
+        if (ok) removed++;
         await sleep(RATE_LIMIT_DELAY_MS);
       }
     }
 
-    const summary = `Sync complete: ${created} created, ${updated} updated, ${removed} removed, ${skipped} unchanged`;
+    const summary = `Sync complete: ${created} created, ${updated} updated, ${removed} removed, ${skipped} unchanged, ${failed} failed`;
     console.log("[MarketingEmail]", summary);
     return summary;
   },

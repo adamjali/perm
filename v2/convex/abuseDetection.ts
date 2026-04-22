@@ -3,8 +3,9 @@
  * when the pattern looks like account-takeover or automated credential stuffing.
  *
  * Pattern watched:
- *   5 failed auth attempts (login/password_reset) on the SAME email from
- *   3 OR MORE distinct IPs within a 30-minute window.
+ *   10 failed auth attempts (login / password_reset / otp_verify) on the SAME
+ *   email within a rolling 30-minute window. No per-IP distinctness check —
+ *   a single attacker behind one IP still trips this.
  *
  * When detected:
  *   - Sets userProfiles.suspendedAt / suspendedReason / suspendedUntil
