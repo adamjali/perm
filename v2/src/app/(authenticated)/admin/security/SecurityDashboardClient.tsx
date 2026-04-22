@@ -13,7 +13,7 @@
  * alert accents, 2px borders, hard shadows matching the rest of admin.
  */
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import {
   Shield,

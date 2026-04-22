@@ -17,9 +17,15 @@
 import { pruneMessages, type ModelMessage } from 'ai';
 import { z } from 'zod/v4';
 
-// Token estimation: serialize and divide by ~3.5 chars/token (conservative).
-// Matches the pattern used in providers.ts for consistency.
-const CHARS_PER_TOKEN = 3.5;
+/**
+ * Token estimation: serialize and divide by ~3.5 chars/token (conservative).
+ * Single source of truth — providers.ts and summarize.ts import from here.
+ *
+ * Note: this over-counts compared to actual tokenizer output (~30-50%) due to
+ * JSON quote/brace overhead; that bias is intentional — better to skip a
+ * model that almost-fits than to send an oversized payload that 400s.
+ */
+export const CHARS_PER_TOKEN = 3.5;
 
 export function estimateMessageTokens(messages: ModelMessage[]): number {
   try {
@@ -31,6 +37,18 @@ export function estimateMessageTokens(messages: ModelMessage[]): number {
 
 export function estimateStringTokens(text: string): number {
   return Math.ceil(text.length / CHARS_PER_TOKEN);
+}
+
+/**
+ * Estimate tokens for any value by JSON-serializing it. Used for bounding
+ * model input against `maxInputTokens` in providers.ts.
+ */
+export function estimateTokensOf(value: unknown): number {
+  try {
+    return Math.ceil(JSON.stringify(value).length / CHARS_PER_TOKEN);
+  } catch {
+    return 0;
+  }
 }
 
 export type CompactionLevel = 0 | 1 | 2 | 3 | 4;
@@ -104,37 +122,53 @@ function truncateProse(text: string, maxTokens: number): string {
 
 /**
  * Render a facts block as a markdown list. Renders nothing if no facts.
+ *
+ * Each fact category declares its label + how to render its values; a single
+ * loop applies the rule for any non-empty category.
  */
 function renderFacts(facts: CompactionFacts | undefined): string {
   if (!facts) return '';
-  const lines: string[] = [];
 
-  if (facts.cases && facts.cases.length > 0) {
-    const rendered = facts.cases
-      .map((c) => (c.status ? `${c.id} (${c.status})` : c.id))
-      .join(', ');
-    lines.push(`- Cases: ${rendered}`);
-  }
+  const sections: Array<{ label: string; render: () => string | null }> = [
+    {
+      label: 'Cases',
+      render: () =>
+        facts.cases?.length
+          ? facts.cases.map((c) => (c.status ? `${c.id} (${c.status})` : c.id)).join(', ')
+          : null,
+    },
+    {
+      label: 'People',
+      render: () =>
+        facts.people?.length
+          ? facts.people.map((p) => (p.role ? `${p.name} (${p.role})` : p.name)).join(', ')
+          : null,
+    },
+    {
+      label: 'Dates',
+      render: () => {
+        const entries = facts.dates ? Object.entries(facts.dates) : [];
+        return entries.length
+          ? entries.map(([k, v]) => `${k}=${v}`).join(', ')
+          : null;
+      },
+    },
+    {
+      label: 'Preferences',
+      render: () => (facts.preferences?.length ? facts.preferences.join('; ') : null),
+    },
+    {
+      label: 'Open actions',
+      render: () => (facts.openActions?.length ? facts.openActions.join('; ') : null),
+    },
+  ];
 
-  if (facts.people && facts.people.length > 0) {
-    const rendered = facts.people
-      .map((p) => (p.role ? `${p.name} (${p.role})` : p.name))
-      .join(', ');
-    lines.push(`- People: ${rendered}`);
-  }
-
-  if (facts.dates && Object.keys(facts.dates).length > 0) {
-    const rendered = Object.entries(facts.dates).map(([k, v]) => `${k}=${v}`).join(', ');
-    lines.push(`- Dates: ${rendered}`);
-  }
-
-  if (facts.preferences && facts.preferences.length > 0) {
-    lines.push(`- Preferences: ${facts.preferences.join('; ')}`);
-  }
-
-  if (facts.openActions && facts.openActions.length > 0) {
-    lines.push(`- Open actions: ${facts.openActions.join('; ')}`);
-  }
+  const lines = sections
+    .map(({ label, render }) => {
+      const value = render();
+      return value ? `- ${label}: ${value}` : null;
+    })
+    .filter((line): line is string => line !== null);
 
   return lines.length > 0 ? `\n## Key Facts (preserved exactly)\n${lines.join('\n')}\n` : '';
 }

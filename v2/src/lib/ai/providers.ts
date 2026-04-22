@@ -57,6 +57,7 @@ import type {
   LanguageModelV3StreamResult,
 } from '@ai-sdk/provider';
 import { captureError, addBreadcrumb } from '@/lib/sentry';
+import { estimateTokensOf } from './compaction';
 
 // =============================================================================
 // Provider Clients (all native SDKs — no createOpenAI() wrappers)
@@ -177,16 +178,12 @@ interface ModelConfig {
 
 /**
  * Estimate total input token count from call options.
- * Serializes the entire options object and uses ~3.5 chars per token (conservative).
- * This is a rough estimate — good enough for skipping models with tiny limits.
+ * Delegates to the shared estimator in compaction.ts; over-counts vs actual
+ * model tokens by ~30-50% due to JSON overhead — biased toward skipping
+ * marginal models rather than sending oversized payloads.
  */
 function estimateInputTokens(options: LanguageModelV3CallOptions): number {
-  try {
-    const serialized = JSON.stringify(options);
-    return Math.ceil(serialized.length / 3.5);
-  } catch {
-    return 0;
-  }
+  return estimateTokensOf(options);
 }
 
 /**

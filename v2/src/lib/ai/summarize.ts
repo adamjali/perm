@@ -23,7 +23,12 @@ import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { RECENT_MESSAGES_TO_KEEP } from "@/../convex/conversationSummary";
 import { captureError } from "@/lib/sentry";
-import { mergeFacts, parseFacts, type CompactionFacts } from "./compaction";
+import {
+  estimateStringTokens,
+  mergeFacts,
+  parseFacts,
+  type CompactionFacts,
+} from "./compaction";
 import { cerebras, groq, mistral } from "./providers";
 
 /** Cerebras is ideal for extraction: fast, cheap, structured-output capable. */
@@ -34,13 +39,6 @@ const prosePrimaryModel = mistral("mistral-small-latest");
 
 /** Fallback prose summarizer — Groq 70B. Used if Mistral fails. */
 const proseFallbackModel = groq("llama-3.3-70b-versatile");
-
-/** Consistent with compaction.ts — ~3.5 chars per token. */
-const CHARS_PER_TOKEN = 3.5;
-
-function estimateTokenCount(text: string): number {
-  return Math.ceil(text.length / CHARS_PER_TOKEN);
-}
 
 /**
  * Message type for summarization (matches Convex return shape).
@@ -314,7 +312,7 @@ export async function summarizeConversation(
         conversationId,
         content: proseText,
         facts: factsJson,
-        tokenCount: estimateTokenCount(proseText),
+        tokenCount: estimateStringTokens(proseText),
         messageCountAtSummary,
       },
       { token },
@@ -323,7 +321,7 @@ export async function summarizeConversation(
     const duration = Date.now() - startTime;
     const factsCount = mergedFacts ? Object.keys(mergedFacts).length : 0;
     console.log(
-      `[Summarization] Completed in ${duration}ms: prose ${estimateTokenCount(proseText)} tokens, facts ${factsCount} categories`,
+      `[Summarization] Completed in ${duration}ms: prose ${estimateStringTokens(proseText)} tokens, facts ${factsCount} categories`,
     );
   } catch (error) {
     console.error(`[Summarization] Error:`, error);

@@ -45,6 +45,34 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+interface ResendContact {
+  id: string;
+  email: string;
+  first_name: string | null;
+  unsubscribed: boolean;
+}
+
+/**
+ * Fetch every Resend contact across all pages, throttled to RATE_LIMIT_DELAY_MS.
+ * Throws on any non-2xx — callers can't safely operate on a partial mirror.
+ */
+async function listAllResendContacts(apiKey: string): Promise<ResendContact[]> {
+  const contacts: ResendContact[] = [];
+  let after: string | undefined;
+  while (true) {
+    const url = `/contacts?limit=100${after ? `&after=${after}` : ""}`;
+    const res = await resendFetch(url, apiKey);
+    if (!res.ok) throw new Error(`Failed to list contacts: ${res.status}`);
+    const data = await res.json();
+    const page: ResendContact[] = data.data || [];
+    contacts.push(...page);
+    if (page.length < 100) break;
+    after = page[page.length - 1]!.id;
+    await sleep(RATE_LIMIT_DELAY_MS);
+  }
+  return contacts;
+}
+
 /**
  * Extract and normalize first name from a full name string.
  * - Takes first word (split on space)
@@ -139,13 +167,6 @@ export const updateMarketingSubscription = action({
 // FULL SYNC (called via CLI or scheduled)
 // ============================================================================
 
-interface ResendContact {
-  id: string;
-  email: string;
-  first_name: string | null;
-  unsubscribed: boolean;
-}
-
 /**
  * Sync all Convex users ↔ Resend contacts.
  *
@@ -187,23 +208,7 @@ export const syncContacts = internalAction({
     }
 
     // 2. Load all contacts from Resend (paginated)
-    const resendContacts: ResendContact[] = [];
-    let after: string | undefined;
-    let hasMore = true;
-    while (hasMore) {
-      const url = `/contacts?limit=100${after ? `&after=${after}` : ""}`;
-      const res = await resendFetch(url, apiKey);
-      if (!res.ok) throw new Error(`Failed to list contacts: ${res.status}`);
-      const data = await res.json();
-      const contacts = data.data || [];
-      resendContacts.push(...contacts);
-      if (contacts.length < 100) {
-        hasMore = false;
-      } else {
-        after = contacts[contacts.length - 1].id;
-      }
-      await sleep(RATE_LIMIT_DELAY_MS);
-    }
+    const resendContacts = await listAllResendContacts(apiKey);
 
     // 3. Build lookup maps
     const resendByEmail = new Map<string, ResendContact>();
@@ -335,28 +340,7 @@ export const backfillMarketingEvents = internalAction({
   args: {},
   handler: async (ctx): Promise<string> => {
     const apiKey = getApiKey();
-
-    // Paginate all contacts (same pattern as syncContacts)
-    const contacts: ResendContact[] = [];
-    let after: string | undefined;
-    let hasMore = true;
-    while (hasMore) {
-      const url = `/contacts?limit=100${after ? `&after=${after}` : ""}`;
-      const res = await resendFetch(url, apiKey);
-      if (!res.ok) {
-        throw new Error(`Failed to list contacts: ${res.status}`);
-      }
-      const data = await res.json();
-      const page: ResendContact[] = data.data || [];
-      contacts.push(...page);
-      if (page.length < 100) {
-        hasMore = false;
-      } else {
-        after = page[page.length - 1]!.id;
-      }
-      await sleep(RATE_LIMIT_DELAY_MS);
-    }
-
+    const contacts = await listAllResendContacts(apiKey);
     const occurredAt = Date.now();
     let inserted = 0;
     let skipped = 0;
