@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.1 + Convex 1.35 + React 19 + TypeScript (strict)
-> **Status:** Production | **Last Updated:** 2026-04-11
+> **Status:** Production | **Last Updated:** 2026-05-24
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -125,6 +125,10 @@ await ctx.db.patch(id, { pwdFilingDate: format(new Date(), "yyyy-MM-dd") });
 import { toast } from "sonner"; // WRONG
 // DO:
 import { toast } from "@/lib/toast";
+
+// DON'T: Put client init (posthog.init, etc.) in a ROOT instrumentation-client.ts
+// With a src/ app dir, Next.js loads ONLY src/instrumentation-client.ts — root is ignored → silent outage
+// DO: keep posthog.init() + initBotId() together in src/instrumentation-client.ts  // see CONCERNS TD-06
 ```
 
 SWC minifier bug details: [CONCERNS.md TD-01](../.planning/codebase/CONCERNS.md).
@@ -149,7 +153,7 @@ Full conventions: [CONVENTIONS.md](../.planning/codebase/CONVENTIONS.md).
 ## Integrations (quick reference — details in INTEGRATIONS.md)
 
 - **Sentry** — lazy-loaded client (`SentryClientInit`). Frontend: `captureError` from `@/lib/sentry`. Backend: `recordError` from `convex/lib/errorRecording` (writes DB + admin email + Sentry in one call).
-- **PostHog** — always import `@/lib/analytics` (wrapper with try/catch), never raw `posthog-js`. Proxied via `/ingest/*`. Internal opt-out: `POSTHOG_EXCLUDED_EMAILS` Convex env var.
+- **PostHog** — always import `@/lib/analytics` (wrapper with try/catch), never raw `posthog-js`. Client init (`posthog.init`) lives in `src/instrumentation-client.ts` **alongside BotID** — Next.js loads only that ONE file (a root `instrumentation-client.ts` is silently ignored), so splitting them kills one. Proxied via `/ingest/*` (incl. `/ingest/array` for lazy bundles). Internal opt-out: `POSTHOG_EXCLUDED_EMAILS` Convex env var. See [CONCERNS.md TD-06](../.planning/codebase/CONCERNS.md).
 - **Resend Email** — transactional via Resend MCP tools (list/send/contacts), `curl` for threaded replies (needs `In-Reply-To` header which MCP doesn't expose), or `admin.sendAdminEmail` mutation for UI sends (auth-required, auto-renders `AdminEmail` React template). `FROM_EMAIL = notifications@permtracker.app`.
 - **AI Chat** — multi-provider fallback (Groq→Mistral→Gemini→OpenRouter→Cerebras) via custom `FallbackModel` in `src/lib/ai/providers.ts`. API route: `src/app/api/chat/route.ts`.
 
@@ -181,6 +185,7 @@ Content in `content/{blog,tutorials,guides,changelog,resources}/*.mdx`. Processe
 | `X is not defined` (prod build) | Check SWC minifier, `optimizePackageImports`, `concatenateModules`, React Compiler |
 | Auth callback not firing | `createOrUpdateUser` skips password sign-ins — use `LoginTracker` |
 | Toast during sign-out | Import `@/lib/toast`, not `sonner` |
+| PostHog/analytics silently not capturing | Client init must be in `src/instrumentation-client.ts` (the only one Next.js loads; a root one is ignored) — PostHog + BotID coexist there. [CONCERNS.md TD-06](../.planning/codebase/CONCERNS.md) |
 | Convex action can't call another action | `ctx.scheduler.runAfter(0, ...)` instead |
 | Sitemap dates stale | Update `lastModified` in `src/app/sitemap.ts` |
 
