@@ -1,0 +1,20 @@
+# Semgrep ignore — excludes non-source files from code-pattern rules.
+#
+# Lockfiles are generated artifacts, not source code. Scanning them with code
+# rules (e.g. unsafe-formatstring) produces false positives. Dependency CVEs in
+# lockfiles are already covered by GitHub Dependabot, so excluding them here
+# removes noise without losing real coverage.
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+**/pnpm-lock.yaml
+**/package-lock.json
+**/yarn.lock
+
+# Build output & deps (Semgrep ignores most of these by default; explicit for safety)
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
