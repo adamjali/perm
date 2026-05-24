@@ -7,6 +7,31 @@
 - **lucide-react v1+ brand icons**: inline SVGs in place (Github, Twitter, Linkedin) — no external icon package
 - **next/og dynamic icon route**: avoid — exceeds 1 MB Edge Function limit. Use static `src/app/icon.png` instead
 - **pnpm update --latest**: do NOT run blindly — bumps TypeScript/Vite/etc to majors. Prefer `pnpm update` (respects caret) + manual major review
+- **Transitive CVE fixes**: `pnpm update` (caret) first; for stubborn transitive vulns add `pnpm.overrides` (e.g. postcss, ws, brace-expansion) then re-`pnpm audit` to confirm clean
+- **Semgrep lockfile noise**: lockfiles excluded from Semgrep code rules via `.semgrepignore` (Dependabot covers lockfile CVEs) — do not re-enable code-scanning on lockfiles
+- **Dependabot grouped PRs**: close as superseded after a verified bulk `pnpm update` (established across audits 1–3)
+- **claude-review CI auth**: uses `CLAUDE_CODE_OAUTH_TOKEN` (Max-subscription OAuth via `claude setup-token`), not `ANTHROPIC_API_KEY`. Token expires — if the job fails auth, regenerate + re-set the secret. Workflow uses the official code-review plugin + `--model claude-opus-4-7` + `pull-requests: write` + `--comment` + bot-PR skip filter.
+
+## Audit 3 — 2026-05-24
+- **health_before:** 15 Dependabot alerts (6 high, 9 moderate — all transitive in `v2/pnpm-lock.yaml`) + ~26 Semgrep false-positive `unsafe-formatstring` alerts on the lockfile + 3 open Dependabot PRs + `claude-review` CI broken (missing OAuth secret + first-time workflow validation)
+- **health_after:** `pnpm audit` clean (0 vulns); Semgrep lockfile noise excluded; 3 Dependabot PRs closed superseded; `claude-review` fixed + verified live; deployed
+- **items_fixed:** 3 audit-scoped (bulk `pnpm update`, postcss/ws overrides, `.semgrepignore`) + related same-session CI/docs work (below)
+- **items_discussed:** 2 (dep strategy → "do ALL"; Semgrep lockfile exclusion → yes)
+- **prs_merged:** #92 docs (auto-merge armed); 3 Dependabot PRs (#90/#91/#77) closed as superseded. (Earlier same session: #88 PostHog outage fix, #89 claude-review — both merged.)
+- **quality_issues_fixed:** 0 (typecheck/tests/build clean; `page-context` parallel-flake confirmed passes 62/62 isolated)
+- **deployed:** yes (commit `bc29a16`; Vercel production rebuild; no Convex deploy — `convex/` unchanged)
+- **duration:** part of a larger session
+
+### Changes Made
+- **Security (deps)**: `pnpm update` — protobufjs 7.5.5→7.6.1, fast-uri + others; `pnpm.overrides` added postcss `>=8.5.10` (XSS via unescaped `</style>`), ws `>=8.20.1` (uninitialized memory disclosure). `pnpm audit` → no known vulnerabilities.
+- **Semgrep**: added `.semgrepignore` excluding `*-lock.yaml` / `package-lock.json` / `yarn.lock` + build dirs from code-pattern rules (removes 26 false-positive lockfile alerts).
+- **CI (related)**: fixed `claude-review` — set `CLAUDE_CODE_OAUTH_TOKEN`, adopted official code-review plugin at full quality (checkout@v6, `pull-requests: write`, `--comment`, `--model claude-opus-4-7`, `--append-system-prompt` for perf+tests), restored bot-PR skip filter. Verified live on PR #92.
+- **Docs (related)**: TD-06 (instrumentation-client outage) added to CONCERNS.md + CLAUDE.md (PR #92).
+
+### Decisions
+- **Dep strategy**: bulk `pnpm update` + overrides + close Dependabot PRs superseded — user "do ALL" (consistent with audits 1 & 2).
+- **Semgrep lockfile exclusion**: user approved — kills 26 false-positive formatstring alerts; Dependabot remains the dep-CVE source.
+- **No Convex deploy**: audit changes were frontend-dep + CI + docs only; `convex/` unchanged, so only the Vercel frontend rebuild was needed.
 
 ## Audit 2 — 2026-04-21
 - **health_before:** 2 Dependabot alerts (1 critical protobufjs RCE, 1 medium dompurify) + 4 code-scanning alerts + 5 open Dependabot PRs + 3 Sentry build deprecations + Next.js middleware→proxy deprecation
