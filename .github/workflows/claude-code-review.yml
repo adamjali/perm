@@ -12,6 +12,11 @@ on:
 
 jobs:
   claude-review:
+    # Skip bot-created PRs (Dependabot, etc.): they run under GitHub's isolated
+    # Dependabot secret store, so CLAUDE_CODE_OAUTH_TOKEN is unavailable and the
+    # review would fail; this also avoids spending Opus quota on routine bumps.
+    if: github.event.pull_request.user.type != 'Bot'
+
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
