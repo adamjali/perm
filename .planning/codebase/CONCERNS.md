@@ -80,6 +80,19 @@ quadrantChart
 - **Impact:** Repo clutter. Misleading planning artifacts. VERSION-DECISIONS.md is stale.
 - **Fix approach:** Remove empty feature directories. Update or remove VERSION-DECISIONS.md. Move `page_audits/` to a more appropriate location or delete.
 
+### TD-06: Dual instrumentation-client.ts Analytics Outage (RESOLVED 2026-05-24)
+
+- **Issue:** Next.js loads exactly ONE `instrumentation-client.ts`, and with a `src/` app dir it must be `src/instrumentation-client.ts` — a root-level `instrumentation-client.ts` is silently ignored. PostHog's `posthog.init()` lived at the repo root; when the BotID security feature added `src/instrumentation-client.ts` (commit `8f6da2a`), it shadowed the PostHog file, so `posthog.init()` never ran. Client analytics went fully dark for ~1 month (zero `$pageview`/`$identify`/`$exception` from ~2026-04-23). Server-side PostHog (`posthog-node` in `/api/chat`) and Sentry were unaffected.
+- **Files:**
+  - `v2/src/instrumentation-client.ts` — now hosts BOTH `posthog.init()` and `initBotId()`, each in its own try/catch
+  - `v2/instrumentation-client.ts` — DELETED (was the dead root file)
+  - `v2/next.config.ts` — added `/ingest/array/:path*` rewrite for newer posthog-js lazy bundles
+- **Impact:** A complete, invisible analytics outage (no error thrown — the file simply was not loaded). All Vercel env vars were present; the bug was purely file location.
+- **Detection (reuse for any "SDK silently stopped" case):**
+  - `curl https://permtracker.app/` then grep the `main-app-*.js` chunk for `posthog` vs `botid` — proves which client-instrumentation code actually shipped to prod.
+  - PostHog HogQL: `SELECT event, max(timestamp), count() FROM events WHERE timestamp > now() - INTERVAL 120 DAY GROUP BY event` — pinpoints when each event stopped (client vs server split).
+- **Rule:** PostHog, BotID, and any future client instrumentation MUST live together in the single `src/instrumentation-client.ts`; never create a root-level one. `NEXT_PUBLIC_*` vars are build-time inlined, so analytics/observability changes need a redeploy to take effect.
+
 ---
 
 ## Dead Code
