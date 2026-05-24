@@ -57,6 +57,13 @@ const nextConfig: NextConfig = {
         source: "/ingest/static/:path*",
         destination: "https://us-assets.i.posthog.com/static/:path*",
       },
+      // Lazy-loaded browser bundles (toolbar, surveys, session replay recorder,
+      // versioned array config) must also route to the assets host, otherwise
+      // they fall through to the catch-all and fail to load on newer posthog-js.
+      {
+        source: "/ingest/array/:path*",
+        destination: "https://us-assets.i.posthog.com/array/:path*",
+      },
       {
         source: "/ingest/:path*",
         destination: "https://us.i.posthog.com/:path*",
