@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions } from "../test-utils/convex";
+import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions, resetRateLimit } from "../test-utils/convex";
 import { api } from "./_generated/api";
 
 describe("Cases Security", () => {
@@ -590,8 +590,10 @@ describe("Cases List Filtered", () => {
       const t = createTestContext();
       const user = await createAuthenticatedContext(t, "User 1");
 
-      // Create 15 cases
+      // Create 15 cases (>caseCreate capacity → reset the bucket each iteration
+      // so production throttling doesn't block legitimate bulk seeding).
       for (let i = 1; i <= 15; i++) {
+        await resetRateLimit(t, "caseCreate", user.userId);
         await user.mutation(api.cases.create, {
           employerName: `Employer ${i}`,
           beneficiaryIdentifier: `Person ${i}`,
@@ -613,8 +615,10 @@ describe("Cases List Filtered", () => {
       const t = createTestContext();
       const user = await createAuthenticatedContext(t, "User 1");
 
-      // Create 15 cases
+      // Create 15 cases (>caseCreate capacity → reset the bucket each iteration
+      // so production throttling doesn't block legitimate bulk seeding).
       for (let i = 1; i <= 15; i++) {
+        await resetRateLimit(t, "caseCreate", user.userId);
         await user.mutation(api.cases.create, {
           employerName: `Employer ${i}`,
           beneficiaryIdentifier: `Person ${i}`,

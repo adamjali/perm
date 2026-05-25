@@ -1,9 +1,16 @@
 import { Email } from "@convex-dev/auth/providers/Email";
+import { ConvexError } from "convex/values";
 import { Resend as ResendAPI } from "resend";
 import { render } from "@react-email/render";
 import { generateSecureOTP } from "./lib/crypto";
 import { isEmailBlocked } from "./lib/emailBlocklist";
+import { recordError } from "./lib/errorRecording";
 import { PasswordResetCode } from "../src/emails/PasswordResetCode";
+
+// See ResendOTP.ts: @convex-dev/auth passes the Convex action ctx as a 2nd arg
+// at runtime under its own @ts-expect-error (the @auth/core EmailConfig type
+// only declares one param). We type the minimum ctx surface recordError needs.
+type SendCtx = { scheduler: { runAfter: (delay: number, fn: unknown, args: unknown) => Promise<unknown> } };
 
 export const ResendPasswordReset = Email({
   id: "resend-password-reset",
@@ -11,8 +18,11 @@ export const ResendPasswordReset = Email({
     // 12-char alphanumeric: 30^12 = 5.3 * 10^17 combinations (vs 10^8 for 8-digit)
     return generateSecureOTP();
   },
-  async sendVerificationRequest({ identifier: email, token }) {
-    // Blocklist guard — same as ResendOTP.
+  async sendVerificationRequest(
+    { identifier: email, token }: { identifier: string; token: string },
+    ctx?: SendCtx,
+  ) {
+    // Blocklist guard — silent-by-design, same as ResendOTP.
     if (isEmailBlocked(email)) {
       console.warn(`[ResendPasswordReset] Skipping: blocklisted recipient ${email}`);
       return;
@@ -29,10 +39,14 @@ export const ResendPasswordReset = Email({
       html,
     });
     if (error) {
-      // Log but don't throw — same rationale as ResendOTP.
-      // The auth flow should complete so the user sees the code entry form.
-      // They can retry to resend. Throwing here causes opaque "Server Error".
+      // Same rationale as ResendOTP: record to the error pipeline AND throw a
+      // ConvexError so the reset UI surfaces a real failure instead of silently
+      // advancing to the code-entry form for a code that never sent.
       console.error(`[ResendPasswordReset] Failed to send reset email to ${email}:`, error.message);
+      if (ctx) await recordError(ctx, "action", "ResendPasswordReset.send", error);
+      throw new ConvexError(
+        "We couldn't send your password reset code right now. Please try again in a moment.",
+      );
     }
   },
 });

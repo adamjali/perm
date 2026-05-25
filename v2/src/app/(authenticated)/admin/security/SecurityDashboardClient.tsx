@@ -15,6 +15,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import {
   Shield,
   AlertTriangle,
@@ -26,6 +27,7 @@ import {
   Check,
 } from "lucide-react";
 import { api } from "../../../../../convex/_generated/api";
+import type { Id } from "../../../../../convex/_generated/dataModel";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,8 +35,6 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
-
-type Id<T extends string> = string & { __tableName: T };
 
 type TabId = "events" | "blocked" | "flagged" | "settings";
 
@@ -128,11 +128,25 @@ export default function SecurityDashboardClient() {
 // SUMMARY CARDS (top — F-pattern, biggest number top-left)
 // ==========================================================================
 
-interface SummaryShape {
-  activeBlockedIps: number;
-  strikeHitsLast24h: number;
-  systemErrorsLast24h: number;
-  flaggedUsers: number;
+// Derived from the query's return type so the card shape can't drift from the
+// API (e.g. the backend's `generatedAt` field is included automatically).
+type SummaryShape = FunctionReturnType<typeof api.adminSecurity.getSecuritySummary>;
+
+type CardAccent = "destructive" | "amber";
+
+/**
+ * Accent classes for a summary card, gated on whether its value crosses an
+ * alert threshold. Lifted out of the JSX to keep the card-render path flat.
+ */
+function cardAccentClass(accent: CardAccent, value: number | undefined): string {
+  const alert =
+    accent === "destructive"
+      ? typeof value === "number" && value > 0
+      : typeof value === "number" && value > 10;
+  if (!alert) return "border-border";
+  return accent === "destructive"
+    ? "border-destructive bg-destructive/5"
+    : "border-amber-600 bg-amber-500/5";
 }
 
 function SummaryCards({ summary }: { summary?: SummaryShape }) {
@@ -149,17 +163,7 @@ function SummaryCards({ summary }: { summary?: SummaryShape }) {
         return (
           <Card
             key={c.label}
-            className={cn(
-              "border-2 shadow-hard",
-              c.accent === "destructive" &&
-                (typeof c.value === "number" && c.value > 0
-                  ? "border-destructive bg-destructive/5"
-                  : "border-border"),
-              c.accent === "amber" &&
-                (typeof c.value === "number" && c.value > 10
-                  ? "border-amber-600 bg-amber-500/5"
-                  : "border-border"),
-            )}
+            className={cn("border-2 shadow-hard", cardAccentClass(c.accent, c.value))}
           >
             <CardContent className="space-y-2 p-4">
               <div className="flex items-start justify-between">
@@ -182,6 +186,20 @@ function SummaryCards({ summary }: { summary?: SummaryShape }) {
 // ==========================================================================
 // EVENTS TAB
 // ==========================================================================
+
+type SecurityEvent = FunctionReturnType<typeof api.adminSecurity.listRecentEvents>[number];
+
+/** Actor column value, narrowed per discriminated event kind. */
+function actorFor(event: SecurityEvent): string {
+  switch (event.kind) {
+    case "strike":
+      return event.ip;
+    case "rate_limit":
+      return event.actor;
+    default:
+      return "—";
+  }
+}
 
 function EventsTab() {
   const events = useQuery(api.adminSecurity.listRecentEvents, { limit: 200 });
@@ -244,7 +262,7 @@ function EventsTab() {
                   </td>
                   <td className="max-w-[220px] truncate px-3 py-2 text-xs">{e.endpoint}</td>
                   <td className="max-w-[200px] truncate px-3 py-2 text-xs">
-                    {e.kind === "strike" ? e.ip : e.kind === "rate_limit" ? e.actor : "—"}
+                    {actorFor(e)}
                   </td>
                   <td className="max-w-[280px] truncate px-3 py-2 text-xs text-muted-foreground">
                     {e.reason}

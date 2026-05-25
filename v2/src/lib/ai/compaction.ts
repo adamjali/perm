@@ -19,7 +19,10 @@ import { z } from 'zod/v4';
 
 /**
  * Token estimation: serialize and divide by ~3.5 chars/token (conservative).
- * Single source of truth — providers.ts and summarize.ts import from here.
+ * Single source of truth for the chars/token ratio. `providers.ts` imports the
+ * `estimateTokensOf` estimator from here; `summarize.ts` imports
+ * `estimateStringTokens`, `mergeFacts`, `parseFacts`, the `CompactionFacts` type,
+ * and the shared `CompactionFactsSchema`.
  *
  * Note: this over-counts compared to actual tokenizer output (~30-50%) due to
  * JSON quote/brace overhead; that bias is intentional — better to skip a
@@ -66,8 +69,11 @@ export interface CompactionFacts {
  * untrusted JSON (extractor LLM output, persisted facts blobs from older
  * shapes) before merging. Accepts the legacy `cases: string[]` form and
  * normalizes each entry to the object shape so consumers don't need to branch.
+ *
+ * Exported as the SINGLE source of truth for the LLM-output facts contract —
+ * `summarize.ts` reuses it for structured extraction (no duplicate schema).
  */
-const CompactionFactsSchema = z.object({
+export const CompactionFactsSchema = z.object({
   cases: z
     .array(
       z.union([
@@ -239,9 +245,26 @@ export function compactAt(level: CompactionLevel, input: CompactionInput): Model
   });
 
   const envelope = buildEnvelope(summary, proseMaxTokens);
-  const tail = pruned.slice(-keep);
+  const tail = dropLeadingOrphanToolResults(pruned.slice(-keep));
 
   return [...envelope, ...tail];
+}
+
+/**
+ * Drop leading `tool` (tool-result) messages from a sliced tail.
+ *
+ * The tail slice can cut between an assistant tool-call and its matching
+ * tool-result, leaving the result first with no matching call. Strict providers
+ * (Mistral, OpenRouter) 400 on an orphaned `tool_call_id`, so we trim any
+ * leading tool messages until the first non-tool message (the first valid
+ * conversational anchor) leads the tail.
+ */
+function dropLeadingOrphanToolResults(messages: ModelMessage[]): ModelMessage[] {
+  let start = 0;
+  while (start < messages.length && messages[start]?.role === 'tool') {
+    start++;
+  }
+  return start === 0 ? messages : messages.slice(start);
 }
 
 /**

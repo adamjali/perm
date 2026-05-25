@@ -97,7 +97,16 @@ const openrouter = createOpenRouter({
  * Transforms any ID to exactly that shape deterministically so repeated calls
  * with the same input yield the same output — critical for matching tool-call
  * parts with their tool-result parts in the same conversation.
+ *
+ * For IDs shorter than 9 chars, padding is seeded from a hash of the WHOLE
+ * original id (not per-position char codes), so two distinct short ids almost
+ * never collide to the same 9-char output. Empty/all-special-char input is
+ * handled by seeding the hash from the literal id (which may be ""), guaranteeing
+ * the pad loop terminates with a valid 9-char alphanumeric value.
  */
+const TOOL_CALL_ID_CHARS =
+  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
 function toMistralToolCallId(id: string): string {
   const alphanumeric = id.replace(/[^a-zA-Z0-9]/g, '');
 
@@ -105,12 +114,19 @@ function toMistralToolCallId(id: string): string {
     return alphanumeric.slice(-9);
   }
 
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  // Deterministic 32-bit hash of the full original id (FNV-1a style). Distinct
+  // inputs yield distinct seeds, so padding rarely collides; "" hashes to the
+  // offset basis, giving a stable non-empty pad for empty input.
+  let hash = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    hash ^= id.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+
   let padded = alphanumeric;
-  let i = 0;
   while (padded.length < 9) {
-    padded += chars[(id.charCodeAt(i % id.length) + i) % chars.length];
-    i++;
+    hash = Math.imul(hash, 16777619) >>> 0;
+    padded += TOOL_CALL_ID_CHARS[hash % TOOL_CALL_ID_CHARS.length];
   }
   return padded.slice(0, 9);
 }
@@ -124,7 +140,7 @@ function toMistralToolCallId(id: string): string {
  * Without this, historical IDs from other providers in the same conversation
  * (16-char Gemini IDs, etc.) cause Mistral to 400.
  */
-function wrapMistralModel<T extends LanguageModelV3>(model: T): T {
+function wrapMistralModel(model: LanguageModelV3): LanguageModelV3 {
   return wrapLanguageModel({
     model,
     middleware: {
@@ -159,7 +175,7 @@ function wrapMistralModel<T extends LanguageModelV3>(model: T): T {
         return { ...params, prompt: transformedPrompt };
       },
     },
-  }) as T;
+  });
 }
 
 // Export for unit testing
@@ -344,6 +360,46 @@ export class FallbackModel implements LanguageModelV3 {
   async doStream(options: LanguageModelV3CallOptions): Promise<LanguageModelV3StreamResult> {
     return this.tryModels('stream', (model) => model.doStream(options), options);
   }
+}
+
+// =============================================================================
+// Mid-stream failure telemetry
+// =============================================================================
+
+/**
+ * Report an UNRECOVERABLE mid-stream failure — an error that surfaced AFTER a
+ * provider's `doStream()` resolved (provider dropped the connection, 5xx
+ * mid-generation, quota exhausted partway). These escape `FallbackModel`'s
+ * connection-time retry loop entirely: no failover to the remaining models
+ * happens, by design (mid-stream failover risks double-billing).
+ *
+ * This is a DISTINCT signal from `ai.fallback.allFailed` (all connection-time
+ * attempts failed) so the rate of the unrecoverable mid-stream gap is
+ * separately measurable in Sentry rather than blending into generic failures.
+ *
+ * @param error - The mid-stream error.
+ * @param context - Which model was streaming + how many attempts it took to start.
+ */
+export function reportMidStreamFailure(
+  error: unknown,
+  context: { modelUsed?: string; attempts?: number; sessionId?: string } = {},
+): void {
+  const err = error instanceof Error ? error : new Error(String(error));
+  addBreadcrumb({
+    category: 'ai.fallback',
+    message: 'mid-stream failure (no failover)',
+    level: 'error',
+    data: { modelUsed: context.modelUsed, attempts: context.attempts },
+  });
+  captureError(err, {
+    operation: 'ai.fallback.midStream',
+    tags: { unrecoverable: 'true' },
+    extra: {
+      modelUsed: context.modelUsed || 'unknown',
+      attempts: context.attempts ?? 0,
+      sessionId: context.sessionId,
+    },
+  });
 }
 
 // =============================================================================

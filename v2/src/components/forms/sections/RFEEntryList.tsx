@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useCallback, useRef } from "react";
+import { useMemo, useCallback } from "react";
 import { useWatch } from "react-hook-form";
 import { Plus, AlertCircle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -138,13 +138,6 @@ export function RFEEntryList({
   // Compute sort order (array of indices) - only recomputes when sortKey changes
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const sortedIndices = useMemo(() => computeSortOrder(entries), [sortKey]);
-
-  // Stable entry IDs for AnimatePresence keying
-  // Use a ref to track IDs without causing re-renders
-  const entryIdsRef = useRef<string[]>([]);
-  useMemo(() => {
-    entryIdsRef.current = entries.map((e) => e.id);
-  }, [entries]);
 
   /**
    * Add a new RFE entry

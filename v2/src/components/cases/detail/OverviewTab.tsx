@@ -231,35 +231,51 @@ export function OverviewTab({
               <div className="hazard-strip-yellow" aria-hidden="true" />
 
               <div className="next-up">
-                <div
-                  className={cn("next-up-main", (canExpand || navigateUrl) && "cursor-pointer")}
-                  onClick={
-                    navigateUrl ? () => router.push(navigateUrl)
-                    : canExpand ? () => setIsNextUpExpanded(v => !v)
-                    : undefined
+                {(() => {
+                  const isInteractive = !!navigateUrl || canExpand;
+                  const mainContent = (
+                    <>
+                      <div className="next-up-icon">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div className="next-up-label">Next Up</div>
+                        <h3>{nextAction.action}</h3>
+                        <p>{nextAction.description}</p>
+                      </div>
+                      {canExpand && (
+                        <motion.div
+                          animate={{ rotate: isNextUpExpanded ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="shrink-0"
+                          aria-hidden="true"
+                        >
+                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                        </motion.div>
+                      )}
+                      {navigateUrl && !canExpand && (
+                        <ArrowRight className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden="true" />
+                      )}
+                    </>
+                  );
+                  if (!isInteractive) {
+                    return <div className="next-up-main">{mainContent}</div>;
                   }
-                >
-                  <div className="next-up-icon">
-                    <FileText className="h-5 w-5" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div className="next-up-label">Next Up</div>
-                    <h3>{nextAction.action}</h3>
-                    <p>{nextAction.description}</p>
-                  </div>
-                  {canExpand && (
-                    <motion.div
-                      animate={{ rotate: isNextUpExpanded ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="shrink-0"
+                  return (
+                    <button
+                      type="button"
+                      className="next-up-main cursor-pointer w-full text-left bg-transparent border-0 m-0 font-[inherit] text-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                      onClick={
+                        navigateUrl
+                          ? () => router.push(navigateUrl)
+                          : () => setIsNextUpExpanded((v) => !v)
+                      }
+                      aria-expanded={canExpand ? isNextUpExpanded : undefined}
                     >
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                    </motion.div>
-                  )}
-                  {navigateUrl && !canExpand && (
-                    <ArrowRight className="h-5 w-5 text-muted-foreground shrink-0" />
-                  )}
-                </div>
+                      {mainContent}
+                    </button>
+                  );
+                })()}
                 {nextDeadline && (() => {
                   const urgencyColor =
                     nextDeadline.daysUntil <= 14 ? "var(--destructive)"

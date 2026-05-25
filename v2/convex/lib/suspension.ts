@@ -42,3 +42,49 @@ export function getUserSuspension(
 export function isUserSuspended(profile: Doc<"userProfiles"> | null | undefined): boolean {
   return getUserSuspension(profile) !== null;
 }
+
+/**
+ * The exact triplet shape to spread into `ctx.db.patch(profileId, ...)`.
+ * Mirrors the schema fields so reads (getUserSuspension) and writes share one
+ * definition and illegal states (e.g. `suspendedUntil` set without
+ * `suspendedAt`) are unrepresentable.
+ */
+export interface SuspensionPatch {
+  suspendedAt: number | undefined;
+  suspendedReason: string | undefined;
+  suspendedUntil: number | undefined;
+}
+
+/**
+ * Build the patch to APPLY a suspension. `suspendedAt` is always set together
+ * with the reason; `untilMs` is the auto-lift time (omit for a manual-unsuspend
+ * lock). Spread the result into `ctx.db.patch`.
+ *
+ * @example
+ *   await ctx.db.patch(profile._id, setSuspension({ reason, untilMs: now + DURATION }));
+ */
+export function setSuspension(opts: {
+  reason: string;
+  /** When the suspension auto-lifts (epoch ms). Omit for manual-only unsuspend. */
+  untilMs?: number;
+  /** When the suspension is applied (epoch ms). Defaults to now. */
+  atMs?: number;
+}): SuspensionPatch {
+  return {
+    suspendedAt: opts.atMs ?? Date.now(),
+    suspendedReason: opts.reason,
+    suspendedUntil: opts.untilMs,
+  };
+}
+
+/**
+ * Build the patch to CLEAR a suspension — unsets all three fields together so
+ * no orphaned partial state can survive. Spread into `ctx.db.patch`.
+ */
+export function clearSuspension(): SuspensionPatch {
+  return {
+    suspendedAt: undefined,
+    suspendedReason: undefined,
+    suspendedUntil: undefined,
+  };
+}

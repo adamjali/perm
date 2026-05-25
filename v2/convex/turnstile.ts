@@ -21,6 +21,7 @@
 
 import { action } from "./_generated/server";
 import { v } from "convex/values";
+import { recordError } from "./lib/errorRecording";
 
 const VERIFY_ENDPOINT = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
@@ -32,12 +33,20 @@ export const verifyTurnstileToken = action({
   args: {
     token: v.string(),
   },
-  handler: async (_ctx, args): Promise<{ success: boolean; error?: string }> => {
+  handler: async (ctx, args): Promise<{ success: boolean; error?: string }> => {
     const secret = process.env.TURNSTILE_SECRET_KEY;
     if (!secret) {
       // Fail open for local dev with no key; fail closed in production.
       if (process.env.NODE_ENV === "production") {
+        // A dropped key in prod hard-blocks ALL signups/resets — a total
+        // conversion killer. recordError so it pages instead of hiding in logs.
         console.error("[turnstile] TURNSTILE_SECRET_KEY missing in production");
+        await recordError(
+          ctx,
+          "action",
+          "turnstile.missingSecretKeyInProd",
+          new Error("TURNSTILE_SECRET_KEY missing in production — all signups/resets blocked"),
+        );
         return { success: false, error: "Anti-bot verification unavailable" };
       }
       console.warn("[turnstile] TURNSTILE_SECRET_KEY not set — using test key (dev only)");
@@ -60,7 +69,15 @@ export const verifyTurnstileToken = action({
       });
 
       if (!res.ok) {
+        // Sustained Cloudflare outage → every signup/reset blocked. Make it
+        // observable so the fail (hard-block) shows up in the error dashboard.
         console.warn("[turnstile] siteverify HTTP error", res.status);
+        await recordError(
+          ctx,
+          "action",
+          "turnstile.siteverifyHttpError",
+          new Error(`Turnstile siteverify HTTP ${res.status}`),
+        );
         return { success: false, error: "Verification service unavailable" };
       }
 
@@ -81,7 +98,9 @@ export const verifyTurnstileToken = action({
 
       return { success: true };
     } catch (error) {
+      // Network throw reaching Cloudflare — same blocking impact, make it visible.
       console.error("[turnstile] siteverify threw:", error);
+      await recordError(ctx, "action", "turnstile.siteverifyThrew", error);
       return { success: false, error: "Verification service unreachable" };
     }
   },

@@ -20,7 +20,10 @@ import {
   validateNameValue,
   validatePasswordValue,
   validateConfirmPassword,
+  fieldMessage,
 } from "@/lib/auth/signup-validation";
+import type { FieldValidation } from "@/lib/auth/signup-validation";
+import { isNetworkError, isRateLimitError, isInvalidCodeError, isExpiredError } from "@/lib/auth/auth-errors";
 import {
   trackTurnstileFail,
   trackSignupFieldInvalid,
@@ -107,27 +110,38 @@ export function SignupPageClient() {
     [],
   );
 
+  // Field config drives blur handling so each field's touched-setter +
+  // validator + telemetry key live in ONE place. The map key IS the reportKey,
+  // so the confirm field can't drift between "confirm" and "confirm_password"
+  // across blur / cascade / submit-blocked reporting.
+  const fieldConfig = useMemo<
+    Record<
+      "email" | "name" | "password" | "confirm",
+      { setTouched: (v: boolean) => void; validate: () => FieldValidation }
+    >
+  >(
+    () => ({
+      email: { setTouched: setEmailTouched, validate: () => validateEmailValue(email, true) },
+      name: { setTouched: setNameTouched, validate: () => validateNameValue(name, true) },
+      password: { setTouched: setPasswordTouched, validate: () => validatePasswordValue(password, true) },
+      confirm: {
+        setTouched: setConfirmTouched,
+        validate: () => validateConfirmPassword(confirmPassword, password, true),
+      },
+    }),
+    [email, name, password, confirmPassword],
+  );
+
   const handleBlur = useCallback(
     (field: "email" | "name" | "password" | "confirm") => {
-      if (field === "email") {
-        setEmailTouched(true);
-        const v = validateEmailValue(email, true);
-        if (v.state === "invalid") reportIfNewInvalid("email", v.reason);
-      } else if (field === "name") {
-        setNameTouched(true);
-        const v = validateNameValue(name, true);
-        if (v.state === "invalid") reportIfNewInvalid("name", v.reason);
-      } else if (field === "password") {
-        setPasswordTouched(true);
-        const v = validatePasswordValue(password, true);
-        if (v.state === "invalid") reportIfNewInvalid("password", v.reason);
-      } else {
-        setConfirmTouched(true);
-        const v = validateConfirmPassword(confirmPassword, password, true);
-        if (v.state === "invalid") reportIfNewInvalid("confirm_password", v.reason);
-      }
+      // `field` is a closed literal union, not user input — safe record access.
+      // eslint-disable-next-line security/detect-object-injection
+      const cfg = fieldConfig[field];
+      cfg.setTouched(true);
+      const v = cfg.validate();
+      if (v.state === "invalid") reportIfNewInvalid(field, v.reason);
     },
-    [email, name, password, confirmPassword, reportIfNewInvalid],
+    [fieldConfig, reportIfNewInvalid],
   );
 
   const enforceRateLimit = useCallback(
@@ -237,11 +251,11 @@ export function SignupPageClient() {
         toast.error("An account with this email already exists. Try signing in instead.");
         return;
       }
-      if (lower.includes("toomanyfailedattempts") || lower.includes("rate limit") || lower.includes("too many")) {
+      if (isRateLimitError(message)) {
         toast.error("Too many attempts. Please wait a moment and try again.");
         return;
       }
-      if (lower.includes("network") || lower.includes("offline") || lower.includes("failed to fetch") || lower.includes("load failed")) {
+      if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
         return;
       }
@@ -278,15 +292,14 @@ export function SignupPageClient() {
       if (handleStaleDeployment(error)) return;
 
       const message = error instanceof Error ? error.message : String(error);
-      const lower = message.toLowerCase();
 
-      if (lower.includes("expired")) {
+      if (isExpiredError(message)) {
         toast.error("Verification code expired. Go back and resubmit to get a new code.");
-      } else if (lower.includes("invalid") || lower.includes("incorrect") || lower.includes("could not verify")) {
+      } else if (isInvalidCodeError(message)) {
         toast.error("Invalid verification code. Please check and try again.");
-      } else if (lower.includes("toomanyfailedattempts") || lower.includes("rate limit") || lower.includes("too many")) {
+      } else if (isRateLimitError(message)) {
         toast.error("Too many attempts. Please wait a moment and try again.");
-      } else if (lower.includes("network") || lower.includes("offline") || lower.includes("failed to fetch") || lower.includes("load failed")) {
+      } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
       } else {
         captureError(error, { operation: "signUpVerification" });
@@ -309,7 +322,7 @@ export function SignupPageClient() {
       const lower = message.toLowerCase();
       if (lower.includes("popup") || lower.includes("closed")) {
         toast.error("Sign up was cancelled. Please try again.");
-      } else if (lower.includes("network") || lower.includes("offline") || lower.includes("failed to fetch") || lower.includes("load failed")) {
+      } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
       } else {
         captureError(error, { operation: "googleSignUp" });
@@ -397,7 +410,7 @@ export function SignupPageClient() {
             onChange={setEmail}
             onBlur={() => handleBlur("email")}
             state={emailValidation.state}
-            error={emailValidation.message}
+            error={fieldMessage(emailValidation)}
             disabled={isLoading}
             required
           />
@@ -412,7 +425,7 @@ export function SignupPageClient() {
             onChange={setName}
             onBlur={() => handleBlur("name")}
             state={nameValidation.state}
-            error={nameValidation.message}
+            error={fieldMessage(nameValidation)}
             helperText="Letters, numbers, and punctuation only. No web links or emojis."
             disabled={isLoading}
             maxLength={80}
@@ -431,12 +444,12 @@ export function SignupPageClient() {
               // If confirm was already touched, re-validate after password edit.
               if (confirmTouched) {
                 const cv = validateConfirmPassword(confirmPassword, v, true);
-                if (cv.state === "invalid") reportIfNewInvalid("confirm_password", cv.reason);
+                if (cv.state === "invalid") reportIfNewInvalid("confirm", cv.reason);
               }
             }}
             onBlur={() => handleBlur("password")}
             state={passwordValidation.state}
-            error={passwordValidation.message}
+            error={fieldMessage(passwordValidation)}
             helperText="At least 8 characters"
             helperMet={password.length >= 8}
             disabled={isLoading}
@@ -453,7 +466,7 @@ export function SignupPageClient() {
             onChange={setConfirmPassword}
             onBlur={() => handleBlur("confirm")}
             state={confirmValidation.state}
-            error={confirmValidation.message}
+            error={fieldMessage(confirmValidation)}
             disabled={isLoading}
             required
           />

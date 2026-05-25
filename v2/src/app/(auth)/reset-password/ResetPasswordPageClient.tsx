@@ -19,7 +19,9 @@ import {
   validateEmailValue,
   validatePasswordValue,
   validateConfirmPassword,
+  fieldMessage,
 } from "@/lib/auth/signup-validation";
+import { isNetworkError, isRateLimitError, isInvalidCodeError, isExpiredError } from "@/lib/auth/auth-errors";
 import {
   trackTurnstileFail,
   trackPasswordResetRequested,
@@ -158,12 +160,11 @@ export function ResetPasswordPageClient() {
       if (handleStaleDeployment(error)) return;
 
       const message = error instanceof Error ? error.message : String(error);
-      const lower = message.toLowerCase();
 
-      if (lower.includes("toomanyfailedattempts") || lower.includes("rate limit") || lower.includes("too many")) {
+      if (isRateLimitError(message)) {
         captureError(error, { operation: "resetPasswordRequest" });
         toast.error("Too many attempts. Please wait a moment and try again.");
-      } else if (lower.includes("network") || lower.includes("offline") || lower.includes("failed to fetch") || lower.includes("load failed")) {
+      } else if (isNetworkError(message)) {
         captureError(error, { operation: "resetPasswordRequest" });
         toast.error("Network error. Please check your connection and try again.");
       } else {
@@ -209,15 +210,15 @@ export function ResetPasswordPageClient() {
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
 
-      if (lower.includes("expired")) {
+      if (isExpiredError(message)) {
         toast.error("Reset code expired. Please request a new one.");
       } else if (lower.includes("invalid password")) {
         toast.error("Password does not meet requirements. Must be at least 8 characters.");
-      } else if (lower.includes("invalid") || lower.includes("incorrect") || lower.includes("could not verify")) {
+      } else if (isInvalidCodeError(message)) {
         toast.error("Invalid reset code. Please check and try again.");
-      } else if (lower.includes("toomanyfailedattempts") || lower.includes("rate limit") || lower.includes("too many")) {
+      } else if (isRateLimitError(message)) {
         toast.error("Too many attempts. Please wait a moment and try again.");
-      } else if (lower.includes("network") || lower.includes("offline") || lower.includes("failed to fetch") || lower.includes("load failed")) {
+      } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
       } else {
         captureError(error, { operation: "resetPassword" });
@@ -273,7 +274,7 @@ export function ResetPasswordPageClient() {
               onChange={setNewPassword}
               onBlur={() => setNewPasswordTouched(true)}
               state={newPasswordValidation.state}
-              error={newPasswordValidation.message}
+              error={fieldMessage(newPasswordValidation)}
               helperText="At least 8 characters"
               helperMet={newPassword.length >= 8}
               disabled={isLoading}
@@ -290,7 +291,7 @@ export function ResetPasswordPageClient() {
               onChange={setConfirmPassword}
               onBlur={() => setConfirmTouched(true)}
               state={confirmValidation.state}
-              error={confirmValidation.message}
+              error={fieldMessage(confirmValidation)}
               disabled={isLoading}
               required
             />
@@ -344,7 +345,7 @@ export function ResetPasswordPageClient() {
             onChange={setEmail}
             onBlur={() => setEmailTouched(true)}
             state={emailValidation.state}
-            error={emailValidation.message}
+            error={fieldMessage(emailValidation)}
             disabled={isLoading}
             required
           />

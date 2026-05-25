@@ -16,8 +16,11 @@
  * REJECTS: any emoji, any URL pattern, length > 80, control chars,
  *          repeated substrings ≥ 10 chars.
  *
- * Mirrored on the client in `src/lib/nameValidation.ts` for inline UX;
- * server-side validation is the authoritative check.
+ * This module is the SINGLE SOURCE for name-validation rules AND the forensic
+ * attacker-signature matcher (`isAttackerName`). The client re-exports
+ * `checkUserName` from here via `src/lib/nameValidation.ts` (no hand-mirrored
+ * copy), and incident tooling (`incidentCleanup.ts`) imports `isAttackerName`
+ * from here. Server-side validation is the authoritative check.
  *
  * @module convex/lib/nameValidation
  */
@@ -35,10 +38,9 @@
 // TLD list combines: top common gTLDs (.com/.net/.org), the most-abused TLDs
 // from spam reports (.tk/.ml/.ga/.cf/.xyz/.click/.link), country TLDs that
 // short-link operators favor (.co/.ly/.me/.io/.cc/.tv/.fm), and the new gTLDs
-// the April 2026 attacker pivoted to (.app/.dev/.ai/.site/.online/.tech). When
-// editing this list, ALSO edit `src/lib/nameValidation.ts` — the two regexes
-// must stay in lockstep so client UX never under- or over-reports vs the
-// authoritative server check.
+// the April 2026 attacker pivoted to (.app/.dev/.ai/.site/.online/.tech).
+// This regex is the single source — the client re-exports `checkUserName` from
+// this module, so editing it here updates client UX + server check together.
 const URL_PATTERN =
   /https?:\/\/|www\.|\bbit\.ly\b|\btinyurl\b|\bt\.co\b|\bgoo\.gl\b|\btiny\.cc\b|\bshorturl\b|\bowl\.ly\b|\b[a-z0-9][a-z0-9-]{0,62}\.(com|net|org|io|co|ly|me|tk|ml|ga|cf|xyz|info|app|dev|ai|site|online|tech|store|shop|click|link|cc|pro|us|uk|de|fr|jp|cn|ru|br|mx|tv|fm|ca|es|it|nl|au|in|sh|ws|biz|mobi|name|run|page|blog|live|sale|top)\b/i;
 
@@ -53,7 +55,7 @@ const CONTROL_CHAR_PATTERN = /[\u0000-\u001F\u007F-\u009F]/;
 // Same 10+-char substring repeated (e.g. "SPAM SPAM SPAM SPAM" or "USD USD USD USD ")
 const REPEATED_SUBSTRING_PATTERN = /(\S{10,})\s*\1/;
 
-const MAX_NAME_LENGTH = 80;
+export const MAX_NAME_LENGTH = 80;
 
 export type NameValidationFailure =
   | "EMPTY"
@@ -138,6 +140,38 @@ export function validateUserName(rawName: string | undefined | null): string {
   }
   return name;
 }
+
+/**
+ * Forensic attacker-signature matcher for the 2026-04 signup-abuse incident.
+ *
+ * SEPARATE from `checkUserName` on purpose: `checkUserName` is the *prevention*
+ * validator (strict, near-zero false positives on real names), whereas this is
+ * a *post-hoc cleanup* matcher used to identify rows already created during the
+ * attack so they can be purged. It is deliberately broader along some axes
+ * (Turkish scam keywords, Cyrillic script, length) and narrower along others
+ * (URL detection only covers explicit schemes + known shorteners, not bare
+ * domains) — the two matchers must NOT be merged, as they answer different
+ * questions. Centralized here so all name-attack logic lives in one module and
+ * incident tooling imports it rather than re-deriving the signature.
+ *
+ * Simple alternations + bounded character-class lookups — no catastrophic
+ * backtracking possible (no nested quantifiers on overlapping patterns).
+ *
+ * @example
+ * isAttackerName("Win $$$ http://bit.ly/x") // true
+ * isAttackerName("María José") // false
+ */
+/* eslint-disable security/detect-unsafe-regex */
+export function isAttackerName(name: string | undefined | null): boolean {
+  if (!name || typeof name !== "string") return false;
+  if (/https?:\/\/|bit\.ly|tinyurl|t\.co\/|goo\.gl|shorturl|\.ly\//i.test(name)) return true;
+  if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{2728}]/u.test(name)) return true;
+  if (/acele|tıkla|bekli|hemen|TL seni|hediye|kazan|kampanya/i.test(name)) return true;
+  if (/[\u{0400}-\u{04FF}]/u.test(name)) return true;
+  if (name.length > 80) return true;
+  return false;
+}
+/* eslint-enable security/detect-unsafe-regex */
 
 /**
  * Defensive sanitizer for rendering user-provided names in emails.

@@ -17,23 +17,9 @@ import {
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { purgeAllUserData } from "./lib/deletion";
-
-// Attacker-signature matcher. Used to identify rows created during the
-// 2026-04-19/20 signup-abuse attack. 100% of attacker rows have a URL in
-// the `name` field; other signatures are defense-in-depth.
-// Simple alternations + bounded character-class lookups — no catastrophic
-// backtracking possible (no nested quantifiers on overlapping patterns).
-/* eslint-disable security/detect-unsafe-regex */
-function isAttackerName(name: string | undefined | null): boolean {
-  if (!name || typeof name !== "string") return false;
-  if (/https?:\/\/|bit\.ly|tinyurl|t\.co\/|goo\.gl|shorturl|\.ly\//i.test(name)) return true;
-  if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{2728}]/u.test(name)) return true;
-  if (/acele|tıkla|bekli|hemen|TL seni|hediye|kazan|kampanya/i.test(name)) return true;
-  if (/[\u{0400}-\u{04FF}]/u.test(name)) return true;
-  if (name.length > 80) return true;
-  return false;
-}
-/* eslint-enable security/detect-unsafe-regex */
+// Attacker-signature matcher is single-sourced in lib/nameValidation (alongside
+// the prevention validator) so incident tooling never re-derives the signature.
+import { isAttackerName } from "./lib/nameValidation";
 
 // Attack-window bounds (UTC). Used for time-windowed cleanup of tables
 // without userId linkage (systemErrors).
@@ -415,7 +401,6 @@ export const runFullCleanup = internalAction({
         }
         // Aggregating server-returned counts — keys are a known closed set,
         // not user input, so bracket access is safe.
-        // eslint-disable-next-line security/detect-object-injection
         for (const [k, v] of Object.entries(purgeResult.aggregate)) {
           // eslint-disable-next-line security/detect-object-injection
           aggregate[k] = (aggregate[k] ?? 0) + (v as number);

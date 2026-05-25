@@ -26,6 +26,25 @@ const AUTO_BLOCK_STRIKES = 3;              // # rate-limit rejections within win
 const AUTO_BLOCK_WINDOW_MS = 15 * 60_000;  // 15-minute rolling window for strikes
 const AUTO_BLOCK_DURATION_MS = 24 * 60 * 60_000; // 24h auto-ban
 
+/**
+ * Shared result shape for the block-mutating operations (recordStrike,
+ * adminBlockIp, adminUnblockIp) so callers reason over one type instead of
+ * three ad-hoc inline objects.
+ *
+ * - `blocked` — true iff the IP is now blocked (set by recordStrike/adminBlockIp).
+ * - `unblocked` — true iff a block was removed (set by adminUnblockIp).
+ * - `ip` — the normalized IP the operation acted on (admin ops echo it back).
+ * - `strikes` — current strike count in the window (recordStrike only).
+ * - `expiresAt` — when the active block lifts, epoch ms (present only when blocked).
+ */
+export interface BlockOutcome {
+  blocked: boolean;
+  unblocked?: boolean;
+  ip?: string;
+  strikes?: number;
+  expiresAt?: number;
+}
+
 /** Normalize an IP so lookups are consistent across middleware/mutation paths. */
 export function normalizeIp(raw: string): string {
   const trimmed = raw.trim().toLowerCase();
@@ -77,7 +96,7 @@ export const isIpBlocked = query({
  */
 export const recordStrike = internalMutation({
   args: { ip: v.string(), reason: v.string() },
-  handler: async (ctx, { ip, reason }) => {
+  handler: async (ctx, { ip, reason }): Promise<BlockOutcome> => {
     const normalized = normalizeIp(ip);
     if (!normalized) return { blocked: false };
 
@@ -140,7 +159,7 @@ export const adminBlockIp = mutation({
     reason: v.string(),
     durationMs: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<BlockOutcome> => {
     await requireAdmin(ctx);
     const normalized = normalizeIp(args.ip);
     if (!normalized) throw new Error("Invalid IP");
@@ -173,7 +192,7 @@ export const adminBlockIp = mutation({
 /** Admin: remove an IP from the blocklist. */
 export const adminUnblockIp = mutation({
   args: { ip: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<BlockOutcome> => {
     await requireAdmin(ctx);
     const normalized = normalizeIp(args.ip);
     const row = await ctx.db
@@ -182,9 +201,9 @@ export const adminUnblockIp = mutation({
       .unique();
     if (row) {
       await ctx.db.delete(row._id);
-      return { unblocked: true, ip: normalized };
+      return { blocked: false, unblocked: true, ip: normalized };
     }
-    return { unblocked: false, ip: normalized };
+    return { blocked: false, unblocked: false, ip: normalized };
   },
 });
 
@@ -204,9 +223,12 @@ export const cleanupExpiredBlocks = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
+    // Use <= to match findActiveBlock's expiry boundary (a row is "active" iff
+    // expiresAt > now, so expiresAt <= now is expired and safe to delete). This
+    // keeps the "expired" definition identical across the read gate and cleanup.
     const expired = await ctx.db
       .query("abuseBlocklist")
-      .withIndex("by_expiresAt", (q) => q.lt("expiresAt", now))
+      .withIndex("by_expiresAt", (q) => q.lte("expiresAt", now))
       .take(500);
     let deleted = 0;
     for (const row of expired) {

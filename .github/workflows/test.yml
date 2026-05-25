@@ -1,0 +1,59 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Typecheck + Vitest
+    runs-on: ubuntu-latest
+    # All app code lives in v2/ — run every step from there.
+    defaults:
+      run:
+        working-directory: v2
+
+    env:
+      CI: "true"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          # action-setup is a `uses:` step, so the job's working-directory:v2
+          # default does NOT apply — it reads the repo-root package.json by
+          # default. Point it at v2/ where the `packageManager` pin lives.
+          package_json_file: v2/package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24.x
+          cache: pnpm
+          cache-dependency-path: v2/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run full test suite
+        # --retry=2 re-runs only individual tests that fail, a safety net against
+        # rare CI-environment hiccups. The suite is deterministic (per-file
+        # isolation for mock-stateful unit + convex tests, scheduler noise
+        # suppressed), so retries should not normally trigger.
+        run: pnpm test:run --retry=2

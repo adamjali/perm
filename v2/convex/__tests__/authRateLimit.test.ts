@@ -152,3 +152,113 @@ describe("checkAuthRateLimit — per-email", () => {
     expect(failRows.length).toBeGreaterThan(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// clearAuthRateLimit — ownership check (I2)
+//
+// A successful sign-in clears the per-email brute-force counter. The mutation
+// must clear ONLY the caller's OWN email — otherwise any authenticated user
+// could wipe a victim's counter and defeat the login rate limit.
+// ---------------------------------------------------------------------------
+
+describe("clearAuthRateLimit — ownership enforcement", () => {
+  /** Seed a user + identity-scoped ctx with a known email. */
+  async function seedUser(t: ReturnType<typeof createTestContext>, email: string) {
+    const userId = await t.run(async (ctx) =>
+      ctx.db.insert("users", { email }),
+    );
+    return t.withIdentity({ subject: userId as string });
+  }
+
+  /** Push the per-email login counter to a blocked state. */
+  async function exhaustLogin(
+    t: ReturnType<typeof createTestContext>,
+    email: string,
+  ) {
+    let lastAllowed = true;
+    for (let i = 0; i < 30 && lastAllowed; i++) {
+      const r = await t.mutation(api.authRateLimit.checkAuthRateLimit, {
+        email,
+        action: "login",
+      });
+      lastAllowed = r.allowed;
+    }
+  }
+
+  function loginRowCount(
+    t: ReturnType<typeof createTestContext>,
+    email: string,
+  ) {
+    return t.run((ctx) =>
+      ctx.db
+        .query("rateLimits")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("identifier"), email),
+            q.eq(q.field("action"), "login"),
+          ),
+        )
+        .collect(),
+    );
+  }
+
+  it("clears the caller's OWN email counter", async () => {
+    const t = createTestContext();
+    const owner = await seedUser(t, "owner@example.com");
+    await exhaustLogin(t, "owner@example.com");
+
+    expect((await loginRowCount(t, "owner@example.com")).length).toBeGreaterThan(0);
+
+    await owner.mutation(api.authRateLimit.clearAuthRateLimit, {
+      email: "owner@example.com",
+      action: "login",
+    });
+
+    expect(await loginRowCount(t, "owner@example.com")).toHaveLength(0);
+  });
+
+  it("clears regardless of email casing/whitespace (normalizes both sides)", async () => {
+    const t = createTestContext();
+    const owner = await seedUser(t, "owner@example.com");
+    await exhaustLogin(t, "owner@example.com");
+
+    await owner.mutation(api.authRateLimit.clearAuthRateLimit, {
+      email: "  Owner@Example.com  ",
+      action: "login",
+    });
+
+    expect(await loginRowCount(t, "owner@example.com")).toHaveLength(0);
+  });
+
+  it("REJECTS clearing a DIFFERENT email — victim's counter is untouched", async () => {
+    const t = createTestContext();
+    // Attacker is authenticated as attacker@evil.com.
+    const attacker = await seedUser(t, "attacker@evil.com");
+    // Victim has an exhausted login counter we must not be able to wipe.
+    await exhaustLogin(t, "victim@example.com");
+    const before = (await loginRowCount(t, "victim@example.com")).length;
+    expect(before).toBeGreaterThan(0);
+
+    await attacker.mutation(api.authRateLimit.clearAuthRateLimit, {
+      email: "victim@example.com",
+      action: "login",
+    });
+
+    // Victim's counter is intact — the ownership check rejected the clear.
+    expect((await loginRowCount(t, "victim@example.com")).length).toBe(before);
+  });
+
+  it("is a no-op for an unauthenticated caller", async () => {
+    const t = createTestContext();
+    await exhaustLogin(t, "victim@example.com");
+    const before = (await loginRowCount(t, "victim@example.com")).length;
+
+    // No identity attached → returns early, clears nothing.
+    await t.mutation(api.authRateLimit.clearAuthRateLimit, {
+      email: "victim@example.com",
+      action: "login",
+    });
+
+    expect((await loginRowCount(t, "victim@example.com")).length).toBe(before);
+  });
+});

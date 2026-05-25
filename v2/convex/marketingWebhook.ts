@@ -1,22 +1,70 @@
 /**
  * Resend Contact Webhook Event Recorder
  *
- * Records subscribe/unsubscribe/delete events from Resend into the
- * `marketingEvents` table. Append-only audit trail — Resend remains the
- * source of truth for current subscription status.
+ * Records contact lifecycle events into the `marketingEvents` table as an
+ * append-only audit trail. Resend remains the source of truth for current
+ * subscription status. Supported event types:
+ *   - contact.created / contact.updated / contact.deleted (live webhook)
+ *   - contact.backfill (synthetic — see marketingEmail.backfillMarketingEvents)
  *
- * Called only from `convex/http.ts` after svix signature verification.
+ * Two callers:
+ *   1. `convex/http.ts` — live webhook, after svix signature verification.
+ *      svixId is the real `svix-id` request header.
+ *   2. `convex/marketingEmail.ts` — one-off backfill of historical Resend
+ *      state. NOT svix-verified (it reads directly from the Resend API), and
+ *      uses a synthetic svixId of `backfill_<contactId>`.
  *
- * Idempotent: deduped on `svixId` (from the `svix-id` request header).
- * Resend retries on failure and delivers the same `svix-id`, so dedup
- * prevents duplicate rows.
+ * Idempotent: deduped on `svixId`. Resend retries on non-2xx and redelivers
+ * the same `svix-id`, so retry is safe (no duplicate rows). The backfill's
+ * `backfill_<contactId>` svixId is stable per contact, making reruns a no-op.
  *
  * @module convex/marketingWebhook
  */
 
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import type { Infer } from "convex/values";
 import type { Id } from "./_generated/dataModel";
+
+/**
+ * Single source of truth for the `marketingEvents.eventType` closed set.
+ *
+ * `LIVE_CONTACT_EVENT_TYPES` are the three event types Resend delivers over the
+ * webhook; `contact.backfill` is synthetic (added by
+ * `marketingEmail.backfillMarketingEvents`). The validator below is reused by
+ * `convex/schema.ts` (table validator) and this mutation's args, and the
+ * `http.ts` webhook narrows untrusted `body.type` against
+ * `LIVE_CONTACT_EVENT_TYPES` via `isLiveContactEventType` — all derived from
+ * this one declaration so the set can never drift across the three sites.
+ */
+export const LIVE_CONTACT_EVENT_TYPES = [
+  "contact.created",
+  "contact.updated",
+  "contact.deleted",
+] as const;
+
+export const contactEventTypeValidator = v.union(
+  ...LIVE_CONTACT_EVENT_TYPES.map((t) => v.literal(t)),
+  v.literal("contact.backfill"),
+);
+
+/** All event types accepted by the table (live deliveries + synthetic backfill). */
+export type ContactEventType = Infer<typeof contactEventTypeValidator>;
+
+/** Event types deliverable by the live Resend webhook (excludes synthetic backfill). */
+export type LiveContactEventType = (typeof LIVE_CONTACT_EVENT_TYPES)[number];
+
+/**
+ * Type guard narrowing untrusted webhook `body.type` to a live contact event.
+ * Backfill is excluded — it can only originate server-side, never from a
+ * delivered webhook.
+ */
+export function isLiveContactEventType(s: unknown): s is LiveContactEventType {
+  return (
+    typeof s === "string" &&
+    (LIVE_CONTACT_EVENT_TYPES as readonly string[]).includes(s)
+  );
+}
 
 export const recordContactEvent = internalMutation({
   args: {
@@ -24,12 +72,7 @@ export const recordContactEvent = internalMutation({
     email: v.string(),
     contactId: v.string(),
     audienceId: v.optional(v.string()),
-    eventType: v.union(
-      v.literal("contact.created"),
-      v.literal("contact.updated"),
-      v.literal("contact.deleted"),
-      v.literal("contact.backfill"),
-    ),
+    eventType: contactEventTypeValidator,
     unsubscribed: v.boolean(),
     occurredAt: v.number(),
     firstName: v.optional(v.string()),

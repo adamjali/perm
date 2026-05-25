@@ -421,6 +421,22 @@ describe('parseFacts', () => {
   });
 });
 
+describe('CompactionFactsSchema (single source of truth — I10)', () => {
+  it('is exported and normalizes legacy string cases to objects', async () => {
+    const { CompactionFactsSchema } = await import('../compaction');
+    const result = CompactionFactsSchema.safeParse({ cases: ['A-1', { id: 'B-2', status: 'pending' }] });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.cases).toEqual([{ id: 'A-1' }, { id: 'B-2', status: 'pending' }]);
+    }
+  });
+
+  it('rejects a malformed facts object', async () => {
+    const { CompactionFactsSchema } = await import('../compaction');
+    expect(CompactionFactsSchema.safeParse({ cases: 7 }).success).toBe(false);
+  });
+});
+
 describe('edge cases', () => {
   it('handles empty messages array at every level', () => {
     for (const level of [0, 1, 2, 3, 4] as const) {
@@ -448,5 +464,43 @@ describe('edge cases', () => {
     });
     // Empty summary → no envelope
     expect(result.length).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('compactAt — orphaned tool-result trimming (S14)', () => {
+  // A `tool` (tool-result) message left at the head of the sliced tail, with its
+  // matching assistant tool-call sliced away, makes strict providers 400. The
+  // tail must never start with a tool message.
+  const toolResultMsg = (id: string): ModelMessage =>
+    ({
+      role: 'tool',
+      content: [
+        { type: 'tool-result', toolCallId: id, toolName: 't', output: { type: 'text', value: 'ok' } },
+      ],
+    }) as unknown as ModelMessage;
+
+  it('drops a leading tool message orphaned by the tail slice', () => {
+    // 6 messages; keep=4 at L4 → naive slice would start at index 2.
+    // Put a tool-result at index 2 so it would lead the tail.
+    const messages: ModelMessage[] = [
+      msg('user', 'q1'),
+      msg('assistant', 'a1'),
+      toolResultMsg('orphan-call-id'),
+      msg('assistant', 'a2'),
+      msg('user', 'q3'),
+      msg('assistant', 'a3'),
+    ];
+    const result = compactAt(4, { messages });
+    // First message of the result tail must NOT be a tool message.
+    expect(result[0]?.role).not.toBe('tool');
+  });
+
+  it('leaves a tail untouched when it does not start with a tool message', () => {
+    const messages: ModelMessage[] = Array.from({ length: 8 }, (_, i) =>
+      msg('user', `m${i}`),
+    );
+    const result = compactAt(4, { messages });
+    expect(result.length).toBe(4);
+    expect(result[0]?.role).toBe('user');
   });
 });

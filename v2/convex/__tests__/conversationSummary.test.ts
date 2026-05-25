@@ -273,7 +273,10 @@ describe("conversationSummary", () => {
   });
 
   describe("getContextMessages", () => {
-    it("returns null summary, null facts, and empty messages for non-existent conversation", async () => {
+    // Contract (since I14): returns ONLY the summary/facts envelope + counts.
+    // No server-side "recent messages" window — the client message array is the
+    // source of truth for the verbatim tail (compacted in the chat route).
+    it("returns null summary + null facts + zero counts for non-existent conversation", async () => {
       const t = createTestContext();
       const asUser = await createAuthenticatedContext(t);
       const conversationId = await seedConversation(asUser, 0);
@@ -284,12 +287,13 @@ describe("conversationSummary", () => {
       );
       expect(ctx.summary).toBeNull();
       expect(ctx.facts).toBeNull();
-      expect(ctx.recentMessages).toHaveLength(0);
       expect(ctx.totalMessageCount).toBe(0);
       expect(ctx.messageCountAtSummary).toBe(0);
+      // recentMessages was removed from the contract — must not be present.
+      expect("recentMessages" in ctx).toBe(false);
     });
 
-    it(`keeps up to ${RECENT_MESSAGES_TO_KEEP} recent messages verbatim`, async () => {
+    it("reports totalMessageCount but exposes no recent-messages window", async () => {
       const t = createTestContext();
       const asUser = await createAuthenticatedContext(t);
       const conversationId = await seedConversation(asUser, 20);
@@ -298,43 +302,29 @@ describe("conversationSummary", () => {
         api.conversationSummary.getContextMessages,
         { conversationId },
       );
-      expect(ctx.recentMessages.length).toBeLessThanOrEqual(
-        RECENT_MESSAGES_TO_KEEP,
-      );
       expect(ctx.totalMessageCount).toBe(20);
+      expect("recentMessages" in ctx).toBe(false);
     });
 
-    it("filters empty-content messages from recent window", async () => {
+    it("returns the persisted summary + facts envelope to the owner", async () => {
       const t = createTestContext();
       const asUser = await createAuthenticatedContext(t);
-      const conversationId = await asUser.mutation(
-        api.conversations.create,
-        {},
-      );
-
-      // Mix of real and empty messages (empty = tool-call-only)
-      for (let i = 0; i < 5; i++) {
-        await asUser.mutation(api.conversationMessages.createUserMessage, {
-          conversationId,
-          content: `user ${i}`,
-        });
-        await asUser.mutation(
-          api.conversationMessages.createAssistantMessage,
-          {
-            conversationId,
-            content: i % 2 === 0 ? "" : `assistant ${i}`,
-          },
-        );
-      }
+      const conversationId = await seedConversation(asUser, 14);
+      await asUser.mutation(api.conversationSummary.saveSummary, {
+        conversationId,
+        content: "prior context",
+        facts: JSON.stringify({ cases: [{ id: "X-1" }] }),
+        tokenCount: 7,
+        messageCountAtSummary: 4,
+      });
 
       const ctx = await asUser.query(
         api.conversationSummary.getContextMessages,
         { conversationId },
       );
-      // All returned should have non-empty content
-      for (const m of ctx.recentMessages) {
-        expect(m.content.trim().length).toBeGreaterThan(0);
-      }
+      expect(ctx.summary).toBe("prior context");
+      expect(ctx.facts).toBe(JSON.stringify({ cases: [{ id: "X-1" }] }));
+      expect(ctx.messageCountAtSummary).toBe(4);
     });
 
     it("returns empty payload for non-owner", async () => {
@@ -354,7 +344,7 @@ describe("conversationSummary", () => {
         { conversationId },
       );
       expect(ctx.summary).toBeNull();
-      expect(ctx.recentMessages).toHaveLength(0);
+      expect(ctx.totalMessageCount).toBe(0);
     });
   });
 

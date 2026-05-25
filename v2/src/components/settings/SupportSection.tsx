@@ -106,9 +106,15 @@ export default function SupportSection({ profile }: SupportSectionProps) {
   const requestDeletion = useMutation(api.users.requestAccountDeletion);
   const cancelDeletion = useMutation(api.users.cancelAccountDeletion);
 
+  // Snapshot "now" once at mount via a lazy state initializer. Date.now() is
+  // impure and the React Compiler forbids calling it during render (incl. inside
+  // useMemo); reading it in the initializer keeps it out of the render path while
+  // preserving behavior (the scheduled-deletion check used a single now() read).
+  const [nowMs] = useState(() => Date.now());
+
   // Check if deletion is scheduled
   const isDeletionScheduled =
-    profile.deletedAt !== undefined && profile.deletedAt > Date.now();
+    profile.deletedAt !== undefined && profile.deletedAt > nowMs;
   const deletionDate = profile.deletedAt
     ? new Date(profile.deletedAt).toLocaleDateString("en-US", {
         year: "numeric",

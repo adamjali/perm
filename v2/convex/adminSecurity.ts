@@ -9,7 +9,7 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { requireAdmin } from "./lib/admin";
 import { normalizeIp } from "./abuseBlocklist";
-import { getUserSuspension } from "./lib/suspension";
+import { getUserSuspension, setSuspension, clearSuspension } from "./lib/suspension";
 
 /**
  * Aggregate summary numbers for the dashboard's top-of-page KPI cards.
@@ -196,11 +196,7 @@ export const adminUnsuspendUser = mutation({
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
     if (!profile) throw new Error("User profile not found");
-    await ctx.db.patch(profile._id, {
-      suspendedAt: undefined,
-      suspendedReason: undefined,
-      suspendedUntil: undefined,
-    });
+    await ctx.db.patch(profile._id, clearSuspension());
     return { ok: true };
   },
 });
@@ -220,11 +216,14 @@ export const adminSuspendUser = mutation({
       .unique();
     if (!profile) throw new Error("User profile not found");
     const now = Date.now();
-    await ctx.db.patch(profile._id, {
-      suspendedAt: now,
-      suspendedReason: reason,
-      suspendedUntil: durationMs ? now + durationMs : undefined,
-    });
+    await ctx.db.patch(
+      profile._id,
+      setSuspension({
+        atMs: now,
+        reason,
+        untilMs: durationMs ? now + durationMs : undefined,
+      }),
+    );
     return { ok: true };
   },
 });

@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { fetchMutation } from "convex/nextjs";
 import { api } from "../convex/_generated/api";
 import { addBreadcrumb } from "@/lib/sentry";
+import { getClientIp } from "@/lib/net/getClientIp";
 
 // Protected routes (auth required) — unknown routes fall through to Next.js (404 naturally)
 const isProtectedRoute = createRouteMatcher([
@@ -38,7 +39,7 @@ const isAuthRoute = createRouteMatcher(["/login", "/signup"]);
 // by reading the package source — shouldProxyAuthAction matches only exact path
 // with/without trailing slash). All flows (signUp, signIn, reset, OTP verify,
 // signOut) go through this one endpoint, distinguished by body.action + body.flow.
-// Token refresh happens INSIDE this middleware (no additional POST), so the rate
+// Token refresh happens INSIDE this proxy (no additional POST), so the rate
 // limit here does NOT throttle normal page navigation.
 const isConvexAuthApiRoute = createRouteMatcher(["/api/auth", "/api/auth/"]);
 
@@ -48,13 +49,12 @@ export default convexAuthNextjsMiddleware(
     // alongside the per-email limit inside Convex). Only POSTs matter —
     // the sign-in/up flow is POST-only.
     if (request.method === "POST" && isConvexAuthApiRoute(request)) {
-      // x-forwarded-for is user-supplied in the general case. On Vercel it is
-      // set by the edge network and trustworthy; reverse-proxying outside
-      // Vercel would make per-IP limits spoofable.
-      const ip =
-        request.headers.get("x-forwarded-for") ??
-        request.headers.get("x-real-ip") ??
-        "unknown";
+      // getClientIp() reads the Vercel-attested IP via @vercel/functions, not
+      // the spoofable leftmost x-forwarded-for hop. "unknown" only when no IP
+      // is resolvable (local dev); checkIpRateLimit treats that literal as a
+      // per-request fail-open so unknown-IP traffic never shares one real
+      // rate-limit bucket.
+      const ip = getClientIp(request) || "unknown";
       try {
         const check = await fetchMutation(api.authRateLimit.checkIpRateLimit, {
           ip,

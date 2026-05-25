@@ -21,6 +21,7 @@ import {
   convertToModelMessages,
   stepCountIs,
 } from 'ai';
+import { after } from 'next/server';
 import { isAuthenticatedNextjs, convexAuthNextjsToken } from '@convex-dev/auth/nextjs/server';
 import { fetchMutation, fetchQuery } from 'convex/nextjs';
 import { api } from '@/../convex/_generated/api';
@@ -29,8 +30,9 @@ import {
   summarizeConversation,
   checkNeedsSummarization,
 } from '@/lib/ai/summarize';
-import { chatModel, PRIMARY_MODEL_NAME } from '@/lib/ai/providers';
-import { compactToFit, parseFacts } from '@/lib/ai/compaction';
+import { chatModel, PRIMARY_MODEL_NAME, reportMidStreamFailure } from '@/lib/ai/providers';
+import { compactToFit, compactAt, parseFacts } from '@/lib/ai/compaction';
+import { getClientIp } from '@/lib/net/getClientIp';
 import { getSystemPrompt } from '@/lib/ai/system-prompt';
 import type { ActionMode } from '@/lib/ai/tool-permissions';
 import { createCacheStats } from '@/lib/ai/cache';
@@ -50,29 +52,25 @@ function generateSessionId(): string {
 }
 
 /**
- * Trigger async summarization check after successful response.
- * Runs in the background (fire-and-forget) and does NOT block the chat response.
+ * Run the post-response summarization check. Returns a promise so the caller
+ * can hand it to `after()`, which keeps the serverless invocation alive until
+ * it settles. Never rejects — all errors are captured internally.
  */
-function triggerSummarizationCheck(
+async function triggerSummarizationCheck(
   conversationId: Id<"conversations">,
   token: string,
   sessionId: string
-): void {
-  (async () => {
-    try {
-      const needsSummary = await checkNeedsSummarization(conversationId, token);
-      if (needsSummary) {
-        console.log(`[Chat API] [${sessionId}] Triggering async summarization`);
-        summarizeConversation(conversationId, token).catch((error) => {
-          console.error(`[Chat API] [${sessionId}] Summarization error:`, error);
-          captureError(error);
-        });
-      }
-    } catch (error) {
-      console.error(`[Chat API] [${sessionId}] Failed to check summarization need:`, error);
-      captureError(error);
+): Promise<void> {
+  try {
+    const needsSummary = await checkNeedsSummarization(conversationId, token);
+    if (needsSummary) {
+      console.log(`[Chat API] [${sessionId}] Triggering async summarization`);
+      await summarizeConversation(conversationId, token);
     }
-  })();
+  } catch (error) {
+    console.error(`[Chat API] [${sessionId}] Summarization check failed:`, error);
+    captureError(error);
+  }
 }
 
 export async function POST(req: Request) {
@@ -96,10 +94,9 @@ export async function POST(req: Request) {
     // Per-IP rate limit — caps one source from burning through AI quotas
     // regardless of which authenticated user is calling. Runs AFTER BotID
     // so we don't burn rate-limit budget on verified bots.
-    const clientIp =
-      req.headers.get("x-forwarded-for") ??
-      req.headers.get("x-real-ip") ??
-      "unknown";
+    // getClientIp() reads the Vercel-attested IP (not the spoofable leftmost
+    // x-forwarded-for hop). "unknown" only when no IP is resolvable (local dev).
+    const clientIp = getClientIp(req) || "unknown";
     try {
       const ipCheck = await fetchMutation(api.authRateLimit.checkIpRateLimit, {
         ip: clientIp,
@@ -116,8 +113,11 @@ export async function POST(req: Request) {
       }
     } catch (ipError) {
       // Fail open on rate-limit service error — better availability than
-      // blocking legitimate users for an infrastructure glitch.
+      // blocking legitimate users for an infrastructure glitch. captureError so
+      // a sustained limiter outage (silent loss of per-IP protection) is visible
+      // in Sentry, not just console.
       console.warn(`[Chat API] [${sessionId}] IP rate-limit check failed, allowing:`, ipError);
+      captureError(ipError, { operation: 'chat.ipRateLimit.failOpen', extra: { sessionId } });
     }
 
     // Verify authentication (chatbot is authenticated-only)
@@ -205,25 +205,31 @@ export async function POST(req: Request) {
           // model in the chain gets skipped for size.
           const TARGET_TOKENS = 10_000;
 
-          const compaction = compactToFit(
-            {
-              messages: fullMessages,
-              summary: {
-                content: contextData.summary ?? "",
-                facts: parseFacts(contextData.facts ?? undefined),
-              },
+          const compactionInput = {
+            messages: fullMessages,
+            summary: {
+              content: contextData.summary ?? "",
+              facts: parseFacts(contextData.facts ?? undefined),
             },
-            TARGET_TOKENS,
-          );
+          };
+
+          const compaction = compactToFit(compactionInput, TARGET_TOKENS);
 
           if (compaction) {
             console.log(`[Chat API] [${sessionId}] Compaction L${compaction.level}: ${compaction.estimatedTokens} tokens`);
             convertedMessages = compaction.messages;
           } else {
-            // Emergency: even L4 didn't fit. Fall back to L4 payload anyway —
-            // FallbackModel will skip models that can't handle it and try the next.
-            console.warn(`[Chat API] [${sessionId}] No compaction level fits ${TARGET_TOKENS} tokens; using L4 anyway`);
-            convertedMessages = fullMessages.slice(-4);
+            // Emergency: even L4 didn't fit — a single turn exceeds the target
+            // budget even after maximal compaction. Use the L4 result (which
+            // PRESERVES the summary/facts envelope, unlike a raw tail slice) and
+            // let FallbackModel skip models that can't handle the size.
+            // captureError because this is a real product signal, not just noise.
+            console.warn(`[Chat API] [${sessionId}] No compaction level fits ${TARGET_TOKENS} tokens; using L4 (envelope preserved)`);
+            captureError(
+              new Error(`Compaction L4 still exceeds ${TARGET_TOKENS} tokens`),
+              { operation: 'chat.compaction.noFit', extra: { sessionId, totalMessageCount: contextData.totalMessageCount } },
+            );
+            convertedMessages = compactAt(4, compactionInput);
           }
         } else {
           console.log(`[Chat API] [${sessionId}] No summary available, using full history`);
@@ -369,21 +375,35 @@ export async function POST(req: Request) {
         execute: async ({ writer }) => {
           // Merge the streamText result into this stream
           writer.merge(result.toUIMessageStream({
+            // AI SDK v6: the string returned here is emitted as a structured
+            // ERROR PART on the stream (not assistant text), so the client can
+            // render it as an error banner. The client MUST NOT persist a turn
+            // that finished with isError — see useChatWithPersistence onFinish.
             onError: (error) => {
               const msg = error instanceof Error ? error.message : String(error);
               console.error(`[Chat API] [${sessionId}] UIMessageStream onError:`, msg.slice(0, 300));
-              captureError(error, { operation: 'chat.uiMessageStream', extra: { sessionId } });
+              // Distinct mid-stream telemetry: this fires AFTER doStream resolved,
+              // i.e. outside FallbackModel's connection-time retry loop — the
+              // unrecoverable mid-stream gap, tracked separately from allFailed.
+              reportMidStreamFailure(error, {
+                modelUsed: requestModel.lastUsedModel,
+                attempts: requestModel.lastAttemptCount,
+                sessionId,
+              });
               return 'AI service temporarily unavailable. Please try again in a moment.';
             },
           }));
         },
         onFinish: () => {
-          // Trigger summarization AFTER stream completes (not at stream start).
-          // This ensures the assistant response is fully generated before checking.
-          // The client still needs to persist the message, so the summary may lag
-          // by 1 message pair — acceptable, as those messages are in the "recent" window.
+          // Schedule summarization AFTER the response is sent. `after()` keeps the
+          // serverless invocation alive until the work settles (bounded by
+          // maxDuration) — a bare fire-and-forget promise can be frozen/killed
+          // once the response flushes, so summaries would intermittently never run.
+          // Note: onFinish also fires on abort/error in v6; an extra summarization
+          // check after a failed turn is harmless (it self-gates on need).
           if (typedConversationId) {
-            triggerSummarizationCheck(typedConversationId, token, sessionId);
+            const convId = typedConversationId;
+            after(() => triggerSummarizationCheck(convId, token, sessionId));
           }
         },
       });

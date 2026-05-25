@@ -1,9 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { internal, api } from "../_generated/api";
 import { normalizeIp } from "../abuseBlocklist";
 
 const IP = "203.0.113.42";
+
+// requireAdmin() reads ADMIN_EMAIL from process.env at call time. Pin it here so
+// the admin-path test asserts the real authorization flow instead of silently
+// no-opping in environments where ADMIN_EMAIL is unset (e.g. CI).
+const TEST_ADMIN_EMAIL = "admin@abuse-test.com";
 
 // ---------------------------------------------------------------------------
 // normalizeIp — pure helper, no Convex
@@ -164,18 +169,25 @@ describe("isIpBlocked", () => {
 // ---------------------------------------------------------------------------
 
 describe("admin manual block flow", () => {
+  let prevAdminEmail: string | undefined;
+
+  beforeAll(() => {
+    prevAdminEmail = process.env.ADMIN_EMAIL;
+    process.env.ADMIN_EMAIL = TEST_ADMIN_EMAIL;
+  });
+
+  afterAll(() => {
+    if (prevAdminEmail === undefined) delete process.env.ADMIN_EMAIL;
+    else process.env.ADMIN_EMAIL = prevAdminEmail;
+  });
+
   it("admin block creates a row + admin unblock removes it", async () => {
     const t = createTestContext();
-    // Need an admin identity. Insert an admin user so requireAdmin passes.
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (!adminEmail) {
-      // Skip this test in environments without ADMIN_EMAIL configured.
-      return;
-    }
+    // Seed an admin user whose email matches ADMIN_EMAIL so requireAdmin passes.
     const adminUserId = await t.run(async (ctx) =>
-      ctx.db.insert("users", { email: adminEmail }),
+      ctx.db.insert("users", { email: TEST_ADMIN_EMAIL }),
     );
-    const auth = t.withIdentity({ subject: adminUserId, email: adminEmail });
+    const auth = t.withIdentity({ subject: adminUserId, email: TEST_ADMIN_EMAIL });
 
     await auth.mutation(api.abuseBlocklist.adminBlockIp, {
       ip: IP,
@@ -193,5 +205,24 @@ describe("admin manual block flow", () => {
       ctx.db.query("abuseBlocklist").collect(),
     );
     expect(blocksAfterUnblock).toHaveLength(0);
+  });
+
+  it("rejects a non-admin caller (requireAdmin gate)", async () => {
+    const t = createTestContext();
+    const userId = await t.run(async (ctx) =>
+      ctx.db.insert("users", { email: "not-admin@example.com" }),
+    );
+    const auth = t.withIdentity({ subject: userId, email: "not-admin@example.com" });
+
+    await expect(
+      auth.mutation(api.abuseBlocklist.adminBlockIp, {
+        ip: IP,
+        reason: "should_not_apply",
+        durationMs: 60 * 60_000,
+      }),
+    ).rejects.toThrow(/admin/i);
+
+    const blocks = await t.run((ctx) => ctx.db.query("abuseBlocklist").collect());
+    expect(blocks).toHaveLength(0);
   });
 });

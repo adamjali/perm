@@ -1051,12 +1051,17 @@ export const cleanupRateLimits = internalMutation({
   handler: async (ctx): Promise<{ deleted: number }> => {
     const maxAgeMs = 24 * 60 * 60 * 1000; // 24 hours
     const cutoff = Date.now() - maxAgeMs;
+    const BATCH_SIZE = 1000;
 
-    // Find old rate limit records
+    // Find old rate limit records via the by_timestamp index. The previous
+    // non-indexed `.filter()` scanned the whole table and was capped at 100/run,
+    // so it couldn't keep up with high-volume auth traffic. The index range
+    // (timestamp < cutoff) reads only the stale rows; a larger batch lets the
+    // hourly cron drain accumulated rows in one pass.
     const oldRecords = await ctx.db
       .query("rateLimits")
-      .filter((q) => q.lt(q.field("timestamp"), cutoff))
-      .take(100);
+      .withIndex("by_timestamp", (q) => q.lt("timestamp", cutoff))
+      .take(BATCH_SIZE);
 
     // Delete them
     for (const record of oldRecords) {

@@ -67,8 +67,14 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         //      (bots never verify → never send emails)
         //   3. Client-side Turnstile that blocks script kiddies
         const validatedName = validateUserName(params.name as string | undefined);
+        // Normalize email at the source: the Password provider uses the returned
+        // email as the account id, and createOrUpdateUser links accounts by an
+        // exact email-index match. Without normalization, "Adam@X.com" (password)
+        // and "adam@x.com" (Google) become two accounts, and mixed-case emails
+        // dodge the suspension lookup (which lowercases). Lowercase + trim here
+        // and in createOrUpdateUser so stored value, account id, and lookup agree.
         return {
-          email: params.email as string,
+          email: (params.email as string).trim().toLowerCase(),
           name: validatedName || undefined,
         };
       },
@@ -121,8 +127,10 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         return args.existingUserId;
       }
 
-      // Check if a user with this email already exists
-      const email = args.profile.email;
+      // Check if a user with this email already exists.
+      // Normalize before BOTH the lookup and the insert so Google (any casing)
+      // matches the normalized stored value and we never create a duplicate.
+      const email = args.profile.email?.trim().toLowerCase();
       if (email) {
         // Use the "email" index (schema.ts line 62) for O(1) lookup instead of full table scan.
         /* eslint-disable @typescript-eslint/no-explicit-any -- Convex FilterApi can't resolve "email" index */
@@ -151,11 +159,12 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         }
       }
 
-      // No existing user found, create a new one
+      // No existing user found, create a new one.
+      // Insert the normalized email so the stored value matches the lookup key.
       const newUserId = await ctx.db.insert("users", {
         name: args.profile.name,
         image: args.profile.image,
-        email: args.profile.email,
+        email,
       });
 
       await onAuthEvent(ctx, newUserId);

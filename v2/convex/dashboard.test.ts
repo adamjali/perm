@@ -1,6 +1,6 @@
 import { expect, test, describe } from "vitest";
 import { api } from "./_generated/api";
-import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions, advanceTime } from "../test-utils/convex";
+import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions, advanceTime, resetRateLimit } from "../test-utils/convex";
 import { fixtures, daysFromNow, daysAgo } from "../test-utils/dashboard-fixtures";
 
 // dashboard.getDeadlines Tests (10 tests)
@@ -358,6 +358,10 @@ describe("dashboard.getSummary", () => {
       progressStatus: "filed",
     });
 
+    // Reset the caseCreate bucket between status groups so this 12-case seed
+    // (>capacity 10) isn't throttled by the production per-user rate limit.
+    await resetRateLimit(t, "caseCreate", auth.userId);
+
     // Recruitment: 1 ready to start (working), 1 in progress (filed)
     await auth.mutation(api.cases.create, {
       ...fixtures.recruitment.recruitmentActive(),
@@ -367,6 +371,8 @@ describe("dashboard.getSummary", () => {
       ...fixtures.recruitment.recruitmentComplete(),
       progressStatus: "filed", // "in progress" = filed/approved/under_review
     });
+
+    await resetRateLimit(t, "caseCreate", auth.userId);
 
     // ETA 9089: 1 prep (working), 1 RFI, 2 filed
     await auth.mutation(api.cases.create, {

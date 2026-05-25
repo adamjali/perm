@@ -112,21 +112,26 @@ if (posthogKey) {
 // loading this file) never collect signals, so checkBotId() returns
 // isBot=true and the route returns 403 before any work is done.
 //
-// Protected routes here MUST match the paths that call checkBotId() on the
-// server — mismatches cause the server to reject all requests as unverifiable.
+// Every path listed here MUST have a matching server-side checkBotId() call,
+// otherwise the collected signals go unconsumed and the entry is dead config
+// that implies a protection that isn't enforced.
+//
+// NOTE: /api/auth is intentionally NOT protected by BotID. That route is owned
+// by @convex-dev/auth's proxy (src/proxy.ts) and has no route handler we can
+// add checkBotId() to. checkBotId() also relies on @vercel/request-context /
+// next/headers and throws on its response-header mutation path outside a real
+// route handler, so it can't run cleanly in the auth middleware. Auth is
+// instead guarded by Cloudflare Turnstile + per-IP + per-email rate limits +
+// server-side name validation (see docs/SECURITY.md). Listing "/api/auth/*"
+// here was a no-op (nothing consumed the signals), so it's removed.
 // ---------------------------------------------------------------------------
 try {
   initBotId({
     protect: [
       // AI chat — biggest AI-cost protection target. One abusive burst can
       // burn through Gemini/OpenRouter/Mistral/Groq/Cerebras free-tier
-      // quotas in minutes.
+      // quotas in minutes. Enforced by checkBotId() in src/app/api/chat/route.ts.
       { path: "/api/chat", method: "POST" },
-
-      // Convex Auth sign-in/sign-up/reset routes. @convex-dev/auth/nextjs
-      // proxies these through /api/auth before hitting Convex, so BotID can
-      // see and block them here.
-      { path: "/api/auth/*", method: "POST" },
     ],
   });
 } catch (error) {

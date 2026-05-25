@@ -534,13 +534,26 @@ describe('toMistralToolCallId', () => {
     expect(/^[a-zA-Z0-9]{9}$/.test(result)).toBe(true);
   });
 
-  it('handles empty string without throwing', async () => {
+  it('handles the empty string — terminates and returns a valid 9-char id', async () => {
     const { toMistralToolCallId } = await import('../providers');
-    // Pure pad path with no seed — should still produce 9 chars.
-    // (Implementation relies on id.charCodeAt which returns NaN for empty;
-    // the while loop would be infinite if this broke. Asserting it exits + returns valid.)
-    const result = toMistralToolCallId('a'); // use minimum non-empty to keep deterministic
+    // The hash seed makes the empty case terminate (no NaN loop) with a valid id.
+    const result = toMistralToolCallId('');
     expect(result).toHaveLength(9);
+    expect(/^[a-zA-Z0-9]{9}$/.test(result)).toBe(true);
+    // Deterministic for empty input too.
+    expect(toMistralToolCallId('')).toBe(result);
+  });
+
+  it('maps distinct SHORT ids to distinct outputs (collision-hardened pad)', async () => {
+    const { toMistralToolCallId } = await import('../providers');
+    // Pre-hardening these short ids could collide via per-position char codes.
+    const a = toMistralToolCallId('a');
+    const b = toMistralToolCallId('b');
+    const c = toMistralToolCallId('ab');
+    expect(new Set([a, b, c]).size).toBe(3);
+    for (const r of [a, b, c]) {
+      expect(/^[a-zA-Z0-9]{9}$/.test(r)).toBe(true);
+    }
   });
 });
 

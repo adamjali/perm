@@ -2,6 +2,17 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
+// Pin the test timezone BEFORE vitest spawns its worker threads — they snapshot
+// process.env at creation, so this must run at config module scope (the main
+// process) to take effect. `test.env.TZ` does NOT work here: the threads-pool
+// workers cache the zone before that per-test injection runs. Date-sensitive
+// PERM tests are calibrated to the dev TZ (America/New_York); a UTC CI runner
+// would otherwise read `new Date("YYYY-MM-DD")` (UTC midnight) as the previous
+// local day and shift day-deltas by one (e.g. filingWindow 20 vs 21). Forcing
+// it here makes the whole suite TZ-stable on every machine without touching any
+// business logic or assertions.
+process.env.TZ = "America/New_York";
+
 const sharedConfig = {
   resolve: {
     alias: {
@@ -11,6 +22,19 @@ const sharedConfig = {
     },
   },
 };
+
+// Unit-project test files that install per-file vi.mock factories for SHARED
+// modules (next/navigation, convex/react, sonner, @ai-sdk/react). These must run
+// with isolate:true so their mock state doesn't leak across files via the shared
+// module registry (the cause of historical CI-only flakiness under shuffle).
+// They run in the "unit-isolated" project; the "unit" project excludes them.
+const ISOLATED_UNIT_FILES = [
+  "src/lib/ai/__tests__/page-context.test.tsx",
+  "src/lib/__tests__/toast.test.ts",
+  "src/hooks/__tests__/useJobDescriptionTemplates.test.ts",
+  "src/hooks/__tests__/useChatWithPersistence.test.ts",
+  "src/hooks/__tests__/useToolOrchestrator.test.ts",
+];
 
 export default defineConfig({
   plugins: [react()],
@@ -67,10 +91,34 @@ export default defineConfig({
             "convex/lib/perm/**/*.test.ts",
             "convex/lib/*.test.ts",
           ],
+          // These files install per-file vi.mock factories for SHARED modules
+          // (next/navigation, convex/react, sonner, @ai-sdk/react) with mutable
+          // state. Under isolate:false the module registry is shared across files
+          // in the same worker, so their mocks leak into each other and flake
+          // (only under sequence.shuffle / CI). Vitest's own guidance: keep files
+          // that "depend on a fresh module instance for vi.mock factories"
+          // isolated. They run in the "unit-isolated" project below instead.
+          exclude: ISOLATED_UNIT_FILES,
           globals: true,
           setupFiles: "./vitest.setup.ts",
           testTimeout: 5000,
           isolate: false, // Share environment for speed
+        },
+      },
+      {
+        // Mock-stateful unit files that need a fresh module graph per file.
+        // Same happy-dom environment and setup as `unit`, but isolate:true so
+        // their per-file vi.mock factories don't leak across files. Small set,
+        // so the speed cost is negligible.
+        extends: true,
+        test: {
+          name: "unit-isolated",
+          environment: "happy-dom",
+          include: ISOLATED_UNIT_FILES,
+          globals: true,
+          setupFiles: "./vitest.setup.ts",
+          testTimeout: 5000,
+          isolate: true,
         },
       },
       {
@@ -112,6 +160,22 @@ export default defineConfig({
           globals: true,
           setupFiles: "./vitest.setup.convex.ts",
           testTimeout: 15000,
+          // Isolate per file: these tests stub globals (e.g. global.fetch) and
+          // run real convex-test DB contexts. Without isolation they inherit the
+          // root isolate:false and share the module/global registry across files
+          // in a worker, so one file's fetch stub captures another file's calls
+          // (flaky call-count assertions) and pending console logs from late
+          // scheduled functions race teardown (EnvironmentTeardownError).
+          isolate: true,
+          // convex-test runs scheduled functions AFTER the test transaction
+          // closes; those fire-and-forget jobs emit console logs asynchronously.
+          // Vitest's default console interception forwards logs to the main
+          // thread over RPC, and a log still in flight when the worker tears down
+          // throws "Closing rpc while onUserConsoleLog was pending"
+          // (EnvironmentTeardownError) which flips the exit code despite all
+          // tests passing. Routing console straight to the terminal (no RPC)
+          // removes that race without changing any test behavior.
+          disableConsoleIntercept: true,
           server: {
             deps: {
               inline: ["convex-test"],

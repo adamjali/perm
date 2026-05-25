@@ -7,13 +7,24 @@ import { convexTest } from "convex-test";
 import { vi, beforeEach, afterEach } from "vitest";
 import schema from "../convex/schema";
 import type { Id } from "../convex/_generated/dataModel";
+// Each component ships an official `register(t, name)` test helper that calls
+// t.registerComponent(name, componentSchema, componentModules). Without this the
+// harness throws `Component "rateLimiter" is not registered` for any mutation
+// that calls rateLimiter.limit() (conversations.create, cases.create, etc.).
+// `rag/test` also registers its nested workpool component internally.
+import rateLimiter from "@convex-dev/rate-limiter/test";
+import rag from "@convex-dev/rag/test";
 
-// @ts-expect-error - import.meta.glob is a Vite feature
+// import.meta.glob is a Vite feature (typed via vite/client in the test env)
 const modules = import.meta.glob("../convex/**/*.ts");
 
-/** Create a new test context with clean database state */
+/** Create a new test context with clean database state and registered components */
 export function createTestContext() {
-  return convexTest(schema, modules);
+  const t = convexTest(schema, modules);
+  // Register the same components the running app uses (convex/convex.config.ts).
+  rateLimiter.register(t);
+  rag.register(t);
+  return t;
 }
 
 export interface AuthenticatedContext {
@@ -77,4 +88,26 @@ export async function withScheduler<T>(
 /** Advance fake timer for distinct timestamps in tests */
 export function advanceTime(ms: number = 1000) {
   vi.advanceTimersByTime(ms);
+}
+
+/**
+ * Reset a per-user rate-limit bucket (from convex/rateLimitConfig.ts) so a test
+ * can bulk-create past the production capacity without tripping the limiter.
+ *
+ * The production caps (e.g. caseCreate capacity 10) are correct for real users
+ * but legitimate tests that seed >capacity rows in one shot would otherwise hit
+ * `RateLimited`. Call this between operations in such loops. The limiter's
+ * enforcement behavior itself is covered directly in
+ * convex/lib/__tests__/rateLimit.test.ts + convex/__tests__/authRateLimit.test.ts.
+ */
+export async function resetRateLimit(
+  t: ReturnType<typeof createTestContext>,
+  name: string,
+  key: string,
+) {
+  const { rateLimiter } = await import("../convex/rateLimitConfig");
+  await t.run(async (ctx) => {
+    // rateLimiter.reset needs a ctx with runMutation; t.run's ctx provides it.
+    await rateLimiter.reset(ctx as never, name as never, { key });
+  });
 }

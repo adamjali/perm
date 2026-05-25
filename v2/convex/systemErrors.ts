@@ -9,20 +9,17 @@
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
-
-const ERROR_SOURCE = v.union(
-  v.literal("mutation"),
-  v.literal("action"),
-  v.literal("cron"),
-  v.literal("webhook"),
-);
+// Single-sourced from lib/errorRecording (a dependency-light helper) so schema +
+// mutation + the ErrorSource TS type all share one closed-set definition without
+// importing a Convex function module into broad consumers.
+import { errorSourceValidator } from "./lib/errorRecording";
 
 /**
  * Record a system error (server-side only).
  */
 export const record = internalMutation({
   args: {
-    source: ERROR_SOURCE,
+    source: errorSourceValidator,
     operation: v.string(),
     message: v.string(),
     stack: v.optional(v.string()),

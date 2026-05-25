@@ -135,7 +135,17 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     // id intentionally omitted - changing it mid-request breaks status tracking
     // We manually clear messages instead when conversation changes
     transport: new DefaultChatTransport({ api: '/api/chat' }),
-    onFinish: async ({ message }) => {
+    onFinish: async ({ message, isAbort, isDisconnect, isError }) => {
+      // AI SDK v6 fires onFinish on abort/disconnect/error too. Persisting any
+      // of those would write a truncated/garbage assistant turn (or the server's
+      // sanitized error string emitted as an error part) as a clean message —
+      // corrupting history AND poisoning downstream compaction/summarization.
+      // Skip persistence unless the turn actually completed successfully.
+      if (isAbort || isDisconnect || isError) {
+        setOptimisticAssistantContent(null);
+        return;
+      }
+
       // Use ref to get current conversationId (prevents stale closure)
       const currentConversationId = conversationIdRef.current;
       if (!currentConversationId) return;

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   createTestContext,
   createAuthenticatedContext,
@@ -6,6 +6,24 @@ import {
 } from "../../test-utils/convex";
 import { api } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
+
+/**
+ * Freeze "today" to a fixed weekday so deadline math is deterministic.
+ *
+ * The query handlers compute `new Date()` and extractActiveDeadlines derives
+ * per-step recruitment deadlines (e.g. second_sunday_ad = lastSunday(pwd - 30)).
+ * When the suite happened to run on a Sunday, the pwd+30 "far" fixture's Sunday-ad
+ * deadline landed on today (daysUntil 0) and leaked into the 7-day window, making
+ * the deadlineWithinDays / upcomingDeadlineCount tests flaky. setupSchedulerTests()
+ * already enables fake timers; we pin the clock to a Wednesday (non-Sunday) so the
+ * date-relative fixtures and the handler agree on a stable, non-edge "today".
+ *
+ * Must run AFTER setupSchedulerTests()'s beforeEach (which calls useFakeTimers).
+ */
+const FIXED_TODAY = new Date("2025-06-11T12:00:00.000Z"); // Wednesday
+function setupDeterministicClock(): void {
+  beforeEach(() => vi.setSystemTime(FIXED_TODAY));
+}
 
 /**
  * Type guard to check if query result has cases array
@@ -21,19 +39,6 @@ type QueryResultCountOnly = { count: number };
 
 function hasCases(result: QueryResultWithCases | QueryResultCountOnly): result is QueryResultWithCases {
   return 'cases' in result && Array.isArray(result.cases);
-}
-
-/**
- * Get the count from a result (handles both formats)
- */
-function _getCount(result: QueryResultWithCases | QueryResultCountOnly): number {
-  if ('totalCount' in result && typeof result.totalCount === 'number') {
-    return result.totalCount;
-  }
-  if ('count' in result && typeof result.count === 'number') {
-    return result.count;
-  }
-  throw new Error('Result has no count field');
 }
 
 /**
@@ -150,6 +155,7 @@ function getDaysFromNow(days: number): string {
 
 describe("queryCases", () => {
   setupSchedulerTests();
+  setupDeterministicClock();
 
   // ============================================================================
   // AUTHENTICATION TESTS
@@ -679,6 +685,7 @@ describe("queryCases", () => {
 
 describe("getCaseById", () => {
   setupSchedulerTests();
+  setupDeterministicClock();
 
   it("returns case for owner", async () => {
     const t = createTestContext();
@@ -818,6 +825,7 @@ describe("getCaseById", () => {
 
 describe("getCaseSummary", () => {
   setupSchedulerTests();
+  setupDeterministicClock();
 
   it("returns correct counts by status", async () => {
     const t = createTestContext();

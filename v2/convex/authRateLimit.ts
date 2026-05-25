@@ -19,6 +19,7 @@ import {
 import { getCurrentUserIdOrNull } from "./lib/auth";
 import { internal } from "./_generated/api";
 import { normalizeIp, findActiveBlock } from "./abuseBlocklist";
+import { recordError } from "./lib/errorRecording";
 
 const ACTION_CONFIG: Record<string, RateLimitConfig> = {
   login: RATE_LIMITS.LOGIN,
@@ -69,12 +70,20 @@ export const checkAuthRateLimit = mutation({
     );
 
     // On rate-limit rejection for login/password_reset/otp_verify, record
-    // the failure and potentially auto-suspend the target account.
+    // the failure and potentially auto-suspend the target account. Try-wrapped:
+    // the rate-limit VERDICT (result.allowed) is the security-load-bearing value
+    // and must be returned even if this audit/suspend bookkeeping throws. Without
+    // the wrap, a throw here rolls back the whole mutation → caller's catch fails
+    // open → a bookkeeping bug silently inverts a REJECT into an ALLOW.
     if (!result.allowed && args.action !== "signup") {
-      await ctx.runMutation(internal.abuseDetection.recordAuthFailure, {
-        email: args.email,
-        action: args.action,
-      });
+      try {
+        await ctx.runMutation(internal.abuseDetection.recordAuthFailure, {
+          email: args.email,
+          action: args.action,
+        });
+      } catch (error) {
+        await recordError(ctx, "mutation", "authRateLimit.recordAuthFailure", error);
+      }
     }
 
     return {
@@ -110,11 +119,16 @@ export const checkIpRateLimit = mutation({
       throw new Error(`Unknown IP rate-limit action: ${args.action}`);
     }
     const firstIp = normalizeIp(args.ip);
-    if (!firstIp) {
-      // Unknown IP — fail open so legitimate users with misconfigured proxies
-      // aren't locked out. Returns remaining: 0 so callers don't cache a
-      // bogus headroom signal — this isn't a real allowance, it's a "we
-      // can't enforce" pass-through.
+    // Per-request fail-open when no trustworthy IP is present. Callers pass the
+    // literal "unknown" when getClientIp() can't resolve an IP (local dev /
+    // missing headers); normalizeIp("unknown") is truthy, so without this guard
+    // all such traffic would share ONE real `ip_auth:unknown` / `ip_chat:unknown`
+    // bucket — collectively lockable, and an attacker could dodge per-IP limits
+    // by forcing an empty header. Treat both the empty case and the "unknown"
+    // sentinel as a non-enforced pass-through. Returns remaining: 0 so callers
+    // don't cache a bogus headroom signal — this is "we can't enforce", not a
+    // real allowance.
+    if (!firstIp || firstIp === "unknown") {
       return { allowed: true, remaining: 0, retryAfterMs: 0 };
     }
 
@@ -139,11 +153,18 @@ export const checkIpRateLimit = mutation({
 
     // If the rate limit just rejected this request, record a strike. After
     // N strikes in a short window, the IP moves to the blocklist automatically.
+    // Try-wrapped for the same reason as recordAuthFailure above: a throw in the
+    // strike recorder must not roll back the rate-limit verdict (which would make
+    // the caller fail open and turn a REJECT into an ALLOW).
     if (!result.allowed) {
-      await ctx.runMutation(internal.abuseBlocklist.recordStrike, {
-        ip: firstIp,
-        reason: `${args.action}_limit_tripped`,
-      });
+      try {
+        await ctx.runMutation(internal.abuseBlocklist.recordStrike, {
+          ip: firstIp,
+          reason: `${args.action}_limit_tripped`,
+        });
+      } catch (error) {
+        await recordError(ctx, "mutation", "authRateLimit.recordStrike", error);
+      }
     }
 
     return {
@@ -167,9 +188,16 @@ export const clearAuthRateLimit = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // Only allow clearing for authenticated users
+    // Ownership check: an authenticated user may only clear THEIR OWN email's
+    // counter. Without this, any logged-in user could wipe a victim's per-email
+    // brute-force counter and defeat the login rate limit. Resolve the email
+    // from the users table (identity.email is empty for password-auth users).
     const userId = await getCurrentUserIdOrNull(ctx);
     if (!userId) return;
-    await clearRateLimit(ctx, args.email.toLowerCase(), args.action);
+    const user = await ctx.db.get(userId);
+    const ownEmail = user?.email?.toLowerCase().trim();
+    const requested = args.email.toLowerCase().trim();
+    if (!ownEmail || ownEmail !== requested) return;
+    await clearRateLimit(ctx, requested, args.action);
   },
 });

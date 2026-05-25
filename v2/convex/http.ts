@@ -3,6 +3,7 @@ import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { auth } from "./auth";
 import { recordError } from "./lib/errorRecording";
+import { isLiveContactEventType } from "./marketingWebhook";
 import { Webhook } from "svix";
 
 const http = httpRouter();
@@ -54,52 +55,61 @@ http.route({
         });
       }
 
-      const body = JSON.parse(rawBody);
+      // Signature is verified, but a malformed Resend payload could still fail
+      // to parse. Return 400 (not 200) so the bad delivery is visible on
+      // Resend's side rather than silently swallowed.
+      let body: { type?: unknown; created_at?: unknown; data?: Record<string, unknown> };
+      try {
+        body = JSON.parse(rawBody);
+      } catch (parseError) {
+        await recordError(ctx, "webhook", "http.resendInbound.parse", parseError);
+        return new Response(JSON.stringify({ error: "Malformed JSON payload" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
 
       // Resend contact lifecycle events (subscribe, unsubscribe, delete).
       // Recorded in the marketingEvents table for audit + analytics.
       // Resend remains the source of truth — this is a read-only mirror.
-      const KNOWN_CONTACT_EVENTS = [
-        "contact.created",
-        "contact.updated",
-        "contact.deleted",
-      ] as const;
-      type ContactEventType = (typeof KNOWN_CONTACT_EVENTS)[number];
-      const isContactEventType = (s: unknown): s is ContactEventType =>
-        typeof s === "string" && (KNOWN_CONTACT_EVENTS as readonly string[]).includes(s);
-
-      if (isContactEventType(body.type)) {
+      // The event-type set + guard are single-sourced in marketingWebhook.ts;
+      // `isLiveContactEventType` excludes the synthetic `contact.backfill` so it
+      // can never arrive from a live delivery.
+      if (isLiveContactEventType(body.type)) {
+        const data = body.data ?? {};
+        // marketingEvents.occurredAt is v.number() which rejects NaN, so an
+        // unparseable created_at would otherwise throw inside the mutation.
+        // Guard with Number.isFinite and fall back to now.
+        const parsedOccurredAt = Date.parse(String(body.created_at ?? data.created_at ?? ""));
+        const occurredAt = Number.isFinite(parsedOccurredAt) ? parsedOccurredAt : Date.now();
         try {
           // Size caps on user-supplied fields. Svix verified the signature, but
           // a malformed Resend payload (or Resend bug) could still supply
           // oversized strings. These caps bound storage growth + DB write cost.
           await ctx.runMutation(internal.marketingWebhook.recordContactEvent, {
             svixId,
-            email: String(body.data?.email ?? "").slice(0, 254), // RFC 5321 max
-            contactId: String(body.data?.id ?? "").slice(0, 200),
-            audienceId: body.data?.audience_id
-              ? String(body.data.audience_id).slice(0, 200)
+            email: String(data.email ?? "").slice(0, 254), // RFC 5321 max
+            contactId: String(data.id ?? "").slice(0, 200),
+            audienceId: data.audience_id
+              ? String(data.audience_id).slice(0, 200)
               : undefined,
             eventType: body.type,
-            unsubscribed: Boolean(body.data?.unsubscribed),
-            occurredAt: body.created_at
-              ? new Date(body.created_at).getTime()
-              : Date.now(),
-            firstName: body.data?.first_name
-              ? String(body.data.first_name).slice(0, 200)
+            unsubscribed: Boolean(data.unsubscribed),
+            occurredAt,
+            firstName: data.first_name
+              ? String(data.first_name).slice(0, 200)
               : undefined,
-            lastName: body.data?.last_name
-              ? String(body.data.last_name).slice(0, 200)
+            lastName: data.last_name
+              ? String(data.last_name).slice(0, 200)
               : undefined,
             rawPayload: rawBody.slice(0, 10_000),
           });
         } catch (error) {
-          // Don't fail the webhook on internal mutation errors —
-          // Resend retrying won't help, and we've logged it via recordError.
-          // Trade-off: on catastrophic double-failure (Convex write fails AND
-          // recordError fails) the event is lost. Resend won't retry because
-          // we return 200. For CAN-SPAM unsubscribe events this is a legal
-          // risk; mitigated by Resend being the source of truth.
+          // The internal write failed (transient DB / scheduler issue), not a
+          // bad payload. Return 5xx so svix/Resend redelivers with the same
+          // svix-id — the by_svix_id dedup in recordContactEvent makes retry
+          // safe (no duplicate rows). Swallowing this as 200 would permanently
+          // drop CAN-SPAM unsubscribe audit events when the DB is unhealthy.
           console.error("Failed to record contact event:", error);
           await recordError(
             ctx,
@@ -107,6 +117,10 @@ http.route({
             "http.resendInbound.recordContact",
             error,
           );
+          return new Response(JSON.stringify({ error: "Failed to persist event" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
         }
         return new Response(JSON.stringify({ success: true }), {
           status: 200,
@@ -122,8 +136,14 @@ http.route({
         });
       }
 
-      const data = body.data;
-      if (!data?.email_id) {
+      const data = (body.data ?? {}) as {
+        email_id?: string;
+        from?: string;
+        to?: string | string[];
+        subject?: string;
+        message_id?: string;
+      };
+      if (!data.email_id) {
         return new Response(JSON.stringify({ error: "Missing email_id" }), {
           status: 400,
           headers: { "Content-Type": "application/json" },
@@ -135,8 +155,8 @@ http.route({
       let fromName: string | undefined;
       const nameMatch = fromEmail.match(/^(.+?)\s*<(.+?)>$/);
       if (nameMatch) {
-        fromName = nameMatch[1].trim();
-        fromEmail = nameMatch[2].trim();
+        fromName = nameMatch[1]!.trim();
+        fromEmail = nameMatch[2]!.trim();
       }
 
       // Schedule async processing (fetch full content, store, notify)
@@ -144,7 +164,7 @@ http.route({
         resendEmailId: data.email_id,
         fromEmail,
         fromName,
-        toEmails: Array.isArray(data.to) ? data.to : [data.to],
+        toEmails: Array.isArray(data.to) ? data.to : [data.to ?? ""],
         subject: data.subject || "(No subject)",
         messageId: data.message_id || data.email_id,
       });
@@ -156,7 +176,10 @@ http.route({
     } catch (error) {
       console.error("Resend inbound webhook error:", error);
       await recordError(ctx, "webhook", "http.resendInbound.process", error);
-      // Return 200 to prevent Resend from retrying on our errors
+      // Catch-all for unexpected faults in the email.received path. Malformed
+      // payloads (400) and contact-write failures (500) are handled inline
+      // above; this returns 200 so Resend doesn't retry email.received
+      // processing (handled async by supportEmail, which records its own errors).
       return new Response(
         JSON.stringify({
           error: "Processing error",

@@ -22,14 +22,11 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-type Facts = {
-  cases?: Array<string | { id: string; status?: string }>;
-  people?: Array<{ name: string; role?: string }>;
-  dates?: Record<string, string>;
-  preferences?: string[];
-  openActions?: string[];
-};
+import {
+  CompactionFactsSchema,
+  parseFacts as parseFactsJson,
+  type CompactionFacts,
+} from '@/lib/ai/compaction';
 
 interface ChatCompactionDividerProps {
   /** How many earlier messages this divider archives. */
@@ -37,31 +34,30 @@ interface ChatCompactionDividerProps {
   /** Prose summary (bounded ~1000 tokens). May be empty if only facts were extracted. */
   summary: string;
   /** Structured facts (JSON string from Convex, or already-parsed object). */
-  facts?: string | Facts | null;
+  facts?: string | CompactionFacts | null;
   /** Optional additional class names. */
   className?: string;
 }
 
 /**
- * Parse facts JSON safely. Returns undefined on any error.
+ * Normalize the facts prop to the canonical shape. Routes BOTH the JSON-string
+ * form (Convex) and a pre-parsed object through the single canonical schema /
+ * parser in compaction.ts — no second facts contract lives here.
  */
-function parseFacts(raw: string | Facts | null | undefined): Facts | undefined {
+function parseFacts(
+  raw: string | CompactionFacts | null | undefined,
+): CompactionFacts | undefined {
   if (!raw) return undefined;
-  if (typeof raw === 'object') return raw;
-  try {
-    const parsed = JSON.parse(raw);
-    return typeof parsed === 'object' && parsed !== null ? parsed : undefined;
-  } catch {
-    return undefined;
-  }
+  if (typeof raw === 'string') return parseFactsJson(raw);
+  const result = CompactionFactsSchema.safeParse(raw);
+  return result.success ? result.data : undefined;
 }
 
-function formatCase(c: string | { id: string; status?: string }): string {
-  if (typeof c === 'string') return c;
+function formatCase(c: { id: string; status?: string }): string {
   return c.status ? `${c.id} (${c.status})` : c.id;
 }
 
-function hasAnyFacts(facts: Facts | undefined): boolean {
+function hasAnyFacts(facts: CompactionFacts | undefined): boolean {
   if (!facts) return false;
   return Boolean(
     (facts.cases && facts.cases.length > 0) ||

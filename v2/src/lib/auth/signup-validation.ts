@@ -11,15 +11,45 @@
  */
 
 import { checkUserName } from "@/lib/nameValidation";
+import type { NameValidationFailure } from "@/lib/nameValidation";
 
 export type FieldState = "pristine" | "valid" | "invalid";
 
-export interface FieldValidation {
-  state: FieldState;
-  /** Human-readable message shown inline when state === "invalid". */
-  message?: string;
-  /** Machine-readable code reported to analytics. Never contains user input. */
-  reason?: string;
+/**
+ * Machine-readable reason code reported to analytics. Never contains user
+ * input. Union of the field-level codes plus every `checkUserName` failure.
+ */
+export type FieldReason =
+  | "EMPTY"
+  | "INVALID_FORMAT"
+  | "TOO_SHORT"
+  | "MISMATCH"
+  | NameValidationFailure;
+
+/**
+ * Discriminated union on `state` — `message`/`reason` exist iff the field is
+ * `invalid`, so meaningless shapes (e.g. `{ state: "valid", reason }`) are
+ * unrepresentable at compile time.
+ */
+export type FieldValidation =
+  | { state: "pristine" }
+  | { state: "valid" }
+  | {
+      state: "invalid";
+      /** Human-readable message shown inline. */
+      message: string;
+      /** Machine-readable code reported to analytics. Never contains user input. */
+      reason: FieldReason;
+    };
+
+/**
+ * Inline error message for a field, or `undefined` when not invalid.
+ *
+ * Bridges the discriminated union to the `error?: string` prop on `AuthField`
+ * without forcing every call site to narrow on `state` first.
+ */
+export function fieldMessage(v: FieldValidation): string | undefined {
+  return v.state === "invalid" ? v.message : undefined;
 }
 
 // Permissive RFC-5322-compatible pattern. Good enough for UX feedback —
@@ -46,7 +76,13 @@ export function validateNameValue(value: string, touched: boolean): FieldValidat
   if (!trimmed) return { state: touched ? "valid" : "pristine" };
   const result = checkUserName(trimmed);
   if (!result.valid) {
-    return { state: "invalid", message: result.message, reason: result.reason };
+    return {
+      state: "invalid",
+      // `checkUserName` always sets both when `valid` is false; fall back
+      // defensively to keep the discriminated union's required fields honest.
+      message: result.message || "Your name contains invalid characters.",
+      reason: result.reason || "INVALID_FORMAT",
+    };
   }
   return { state: "valid" };
 }

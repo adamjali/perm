@@ -18,12 +18,12 @@
 
 import { generateObject, generateText } from "ai";
 import { fetchMutation, fetchQuery } from "convex/nextjs";
-import { z } from "zod/v4";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { RECENT_MESSAGES_TO_KEEP } from "@/../convex/conversationSummary";
 import { captureError } from "@/lib/sentry";
 import {
+  CompactionFactsSchema,
   estimateStringTokens,
   mergeFacts,
   parseFacts,
@@ -52,28 +52,6 @@ interface SummarizationMessage {
     result?: string;
   }>;
 }
-
-/**
- * Zod schema for structured entity extraction. The extractor model may emit
- * cases as either bare strings or objects; both shapes are accepted and
- * normalized to `{id, status?}` so downstream consumers never need to branch.
- */
-const FactsSchema = z.object({
-  cases: z
-    .array(
-      z.union([
-        z.string().transform((id) => ({ id })),
-        z.object({ id: z.string(), status: z.string().optional() }),
-      ]),
-    )
-    .optional(),
-  people: z
-    .array(z.object({ name: z.string(), role: z.string().optional() }))
-    .optional(),
-  dates: z.record(z.string(), z.string()).optional(),
-  preferences: z.array(z.string()).optional(),
-  openActions: z.array(z.string()).optional(),
-});
 
 const ENTITY_EXTRACTION_PROMPT = `Extract structured facts from this conversation snippet.
 
@@ -148,12 +126,12 @@ async function extractEntities(
     const text = formatMessagesForSummary(messages, null);
     const { object } = await generateObject({
       model: entityExtractionModel,
-      schema: FactsSchema,
+      schema: CompactionFactsSchema,
       system: ENTITY_EXTRACTION_PROMPT,
       prompt: text,
       maxOutputTokens: 800,
     });
-    return object as CompactionFacts;
+    return object;
   } catch (error) {
     console.warn(
       `[Summarization] Entity extraction failed (non-fatal):`,
@@ -254,6 +232,21 @@ export async function summarizeConversation(
     return;
   }
 
+  // Best-effort lock release shared by every early-exit / error branch below.
+  // A failed release is swallowed: the 60s TTL auto-clears a stale lock
+  // (SUMMARIZATION_LOCK_TTL_MS), so retrying isn't worth it.
+  const releaseLock = async (): Promise<void> => {
+    try {
+      await fetchMutation(
+        api.conversationSummary.finishSummarizing,
+        { conversationId },
+        { token },
+      );
+    } catch {
+      // Stale lock will auto-clear after 60s — not worth retrying.
+    }
+  };
+
   try {
     const { messages, existingSummary, existingFacts, totalMessageCount } =
       await fetchQuery(
@@ -264,11 +257,7 @@ export async function summarizeConversation(
 
     if (messages.length === 0) {
       console.log(`[Summarization] No messages to summarize — releasing lock`);
-      await fetchMutation(
-        api.conversationSummary.finishSummarizing,
-        { conversationId },
-        { token },
-      );
+      await releaseLock();
       return;
     }
 
@@ -291,11 +280,7 @@ export async function summarizeConversation(
       console.error(
         `[Summarization] All prose models failed — releasing lock without updating`,
       );
-      await fetchMutation(
-        api.conversationSummary.finishSummarizing,
-        { conversationId },
-        { token },
-      );
+      await releaseLock();
       return;
     }
 
@@ -330,15 +315,7 @@ export async function summarizeConversation(
       extra: { conversationId },
     });
     // Release the lock on any unexpected error.
-    try {
-      await fetchMutation(
-        api.conversationSummary.finishSummarizing,
-        { conversationId },
-        { token },
-      );
-    } catch {
-      // Stale lock will auto-clear after 60s — not worth retrying.
-    }
+    await releaseLock();
   }
 }
 

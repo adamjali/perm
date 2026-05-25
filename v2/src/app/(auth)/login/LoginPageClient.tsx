@@ -17,7 +17,13 @@ import { handleStaleDeployment } from "@/components/error/auth-error";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthTurnstile } from "@/components/auth/AuthTurnstile";
-import { validateEmailValue } from "@/lib/auth/signup-validation";
+import { validateEmailValue, fieldMessage } from "@/lib/auth/signup-validation";
+import {
+  isNetworkError,
+  isRateLimitError,
+  isInvalidCodeError,
+  isExpiredError,
+} from "@/lib/auth/auth-errors";
 import {
   trackTurnstileFail,
   trackLoginSucceeded,
@@ -28,14 +34,6 @@ import {
 } from "@/lib/auth/auth-telemetry";
 
 type LoginStep = "login" | "verification";
-
-function isNetworkError(message: string): boolean {
-  return /network|offline|failed to fetch|load failed/i.test(message);
-}
-
-function isRateLimitError(message: string): boolean {
-  return /toomanyfailedattempts|rate limit|too many/i.test(message);
-}
 
 export function LoginPageClient() {
   const { signIn } = useAuthActions();
@@ -245,9 +243,9 @@ export function LoginPageClient() {
       const message = error instanceof Error ? error.message : String(error);
       captureError(error, { operation: "signInVerification" });
 
-      if (/expired/i.test(message)) {
+      if (isExpiredError(message)) {
         toast.error("Verification code expired. Go back and sign in again to get a new code.");
-      } else if (/invalid|incorrect|could not verify/i.test(message)) {
+      } else if (isInvalidCodeError(message)) {
         toast.error("Invalid verification code. Please check and try again.");
       } else if (isRateLimitError(message)) {
         toast.error("Too many attempts. Please wait a moment and try again.");
@@ -375,7 +373,7 @@ export function LoginPageClient() {
             onChange={setEmail}
             onBlur={() => setEmailTouched(true)}
             state={emailValidation.state}
-            error={emailValidation.message}
+            error={fieldMessage(emailValidation)}
             disabled={isLoading}
             required
           />

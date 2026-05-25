@@ -1,6 +1,30 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { Webhook } from "svix";
 import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
+
+/**
+ * svix secret used to sign test webhook payloads. Must be base64 (svix
+ * accepts a raw base64 secret). The httpAction reads RESEND_WEBHOOK_SECRET.
+ */
+const TEST_WEBHOOK_SECRET = Buffer.from("perm-tracker-test-secret-1234").toString("base64");
+
+/** Sign a raw payload exactly the way Resend (svix) would. */
+function signWebhook(rawBody: string): {
+  "svix-id": string;
+  "svix-timestamp": string;
+  "svix-signature": string;
+} {
+  const wh = new Webhook(TEST_WEBHOOK_SECRET);
+  const svixId = `msg_${Math.random().toString(36).slice(2)}`;
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const signature = wh.sign(svixId, new Date(Number(timestamp) * 1000), rawBody);
+  return {
+    "svix-id": svixId,
+    "svix-timestamp": timestamp,
+    "svix-signature": signature,
+  };
+}
 
 /**
  * Realistic payload shape pulled directly from Resend docs (April 2026):
@@ -319,5 +343,130 @@ describe("marketingWebhook.recordContactEvent", () => {
       expect(ordered[0].occurredAt).toBe(baseTime);
       expect(ordered[2].unsubscribed).toBe(true);
     });
+  });
+});
+
+// ============================================================================
+// C4 — /resend-inbound HTTP webhook (signature, NaN guard, status codes)
+// ============================================================================
+
+describe("/resend-inbound contact webhook (http.ts)", () => {
+  beforeEach(() => {
+    process.env.RESEND_WEBHOOK_SECRET = TEST_WEBHOOK_SECRET;
+  });
+  afterEach(() => {
+    delete process.env.RESEND_WEBHOOK_SECRET;
+  });
+
+  it("returns 200 and persists a row for a valid signed contact event", async () => {
+    const t = createTestContext();
+    const rawBody = JSON.stringify(
+      makePayload({ type: "contact.updated", email: "valid@example.com", unsubscribed: true }),
+    );
+
+    const res = await t.fetch("/resend-inbound", {
+      method: "POST",
+      headers: { ...signWebhook(rawBody), "Content-Type": "application/json" },
+      body: rawBody,
+    });
+
+    expect(res.status).toBe(200);
+
+    const rows = await t.run(async (ctx) =>
+      ctx.db
+        .query("marketingEvents")
+        .withIndex("by_email_and_time", (q) => q.eq("email", "valid@example.com"))
+        .collect(),
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].unsubscribed).toBe(true);
+  });
+
+  it("handles an unparseable created_at without throwing (occurredAt falls back to a finite number)", async () => {
+    const t = createTestContext();
+    // created_at is garbage → new Date(...).getTime() would be NaN, which
+    // v.number() rejects. The Number.isFinite guard must coerce it to now.
+    const payload = makePayload({ email: "naninput@example.com" });
+    payload.created_at = "not-a-real-date";
+    payload.data.created_at = "not-a-real-date";
+    const rawBody = JSON.stringify(payload);
+
+    const res = await t.fetch("/resend-inbound", {
+      method: "POST",
+      headers: { ...signWebhook(rawBody), "Content-Type": "application/json" },
+      body: rawBody,
+    });
+
+    expect(res.status).toBe(200);
+
+    const rows = await t.run(async (ctx) =>
+      ctx.db
+        .query("marketingEvents")
+        .withIndex("by_email_and_time", (q) => q.eq("email", "naninput@example.com"))
+        .collect(),
+    );
+    expect(rows).toHaveLength(1);
+    expect(Number.isFinite(rows[0].occurredAt)).toBe(true);
+    expect(Number.isNaN(rows[0].occurredAt)).toBe(false);
+  });
+
+  it("rejects a malformed JSON payload with a non-2xx (never a silent 200) and persists nothing", async () => {
+    const t = createTestContext();
+    // svix.verify() parses the body internally and throws on malformed JSON,
+    // so http.ts rejects it at the signature step (401) before it can reach the
+    // inline JSON.parse 400 branch. Either way the contract holds: a malformed
+    // payload returns a non-2xx so Resend sees the failure — never a swallowed
+    // 200 — and nothing is written.
+    const rawBody = "{ this is not valid json";
+
+    const res = await t.fetch("/resend-inbound", {
+      method: "POST",
+      headers: { ...signWebhook(rawBody), "Content-Type": "application/json" },
+      body: rawBody,
+    });
+
+    expect(res.status).not.toBe(200);
+    expect(res.status).toBeGreaterThanOrEqual(400);
+
+    const rows = await t.run(async (ctx) =>
+      ctx.db.query("marketingEvents").collect(),
+    );
+    expect(rows).toHaveLength(0);
+  });
+
+  it("returns 401 for an invalid/forged signature and persists nothing", async () => {
+    const t = createTestContext();
+    const rawBody = JSON.stringify(makePayload({ email: "forged@example.com" }));
+
+    const res = await t.fetch("/resend-inbound", {
+      method: "POST",
+      headers: {
+        "svix-id": "msg_forged",
+        "svix-timestamp": Math.floor(Date.now() / 1000).toString(),
+        "svix-signature": "v1,deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef=",
+        "Content-Type": "application/json",
+      },
+      body: rawBody,
+    });
+
+    expect(res.status).toBe(401);
+
+    const rows = await t.run(async (ctx) =>
+      ctx.db.query("marketingEvents").collect(),
+    );
+    expect(rows).toHaveLength(0);
+  });
+
+  it("returns 401 when signature headers are missing", async () => {
+    const t = createTestContext();
+    const rawBody = JSON.stringify(makePayload());
+
+    const res = await t.fetch("/resend-inbound", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: rawBody,
+    });
+
+    expect(res.status).toBe(401);
   });
 });

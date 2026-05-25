@@ -9,7 +9,11 @@
  * - Messages 1 to N-RECENT_MESSAGES_TO_KEEP are summarized
  * - Most recent RECENT_MESSAGES_TO_KEEP messages are kept verbatim
  * - Summary is stored on the conversation record
- * - Context for LLM = summary + recent messages
+ * - Context for LLM = summary/facts envelope + the CLIENT-SUPPLIED message
+ *   history (compacted in the route, see src/app/api/chat/route.ts). The server
+ *   no longer returns a "recent messages" window: getContextMessages exposes
+ *   only the summary + facts envelope, and the client message array is the
+ *   source of truth for the verbatim tail.
  *
  * @module convex/conversationSummary
  */
@@ -54,28 +58,6 @@ export const RECENT_MESSAGES_TO_KEEP = 10;
  * is ignored (we assume the prior attempt crashed).
  */
 export const SUMMARIZATION_LOCK_TTL_MS = 60_000;
-
-/**
- * System prompt for the summarization LLM.
- * Instructs the model to create a concise, context-preserving summary.
- */
-export const SUMMARIZATION_PROMPT = `You are a conversation summarizer for a PERM immigration case tracking assistant.
-
-Summarize the following conversation history, preserving:
-1. Key questions the user asked and their answers
-2. Important case details mentioned (employer names, beneficiary names, dates, statuses)
-3. Any action items or decisions made
-4. Tool calls and their results (what data was queried/found)
-
-Format: Write a brief narrative summary (2-4 paragraphs) that captures the essential context.
-Focus on information that would be relevant for continuing the conversation.
-
-Do NOT include:
-- Pleasantries or greetings
-- Redundant information
-- Verbatim quotes unless critical
-
-Keep the summary under 500 words.`;
 
 // =============================================================================
 // PUBLIC QUERIES (with auth)
@@ -150,10 +132,14 @@ export const needsSummarization = query({
 });
 
 /**
- * Get optimized context for the LLM
+ * Get the LLM context envelope for a conversation: the prose summary + facts
+ * (if any) and message counts used to position the compaction divider.
  *
- * Returns the summary (if exists) plus the most recent messages.
- * This is what gets sent to the LLM instead of full message history.
+ * CONTRACT (changed): this NO LONGER returns a server-side "recent messages"
+ * window. The chat route compacts the CLIENT-SUPPLIED message history (the
+ * untrusted request body) and prepends this summary/facts envelope, so the
+ * client array — not the server — is the source of truth for the verbatim tail.
+ * Returning a recent window here would be dead, desynced compute.
  *
  * Verifies the user owns the conversation before returning data.
  */
@@ -167,17 +153,12 @@ export const getContextMessages = query({
   ): Promise<{
     summary: string | null;
     facts: string | null;
-    recentMessages: Array<{
-      role: "user" | "assistant" | "system";
-      content: string;
-    }>;
     totalMessageCount: number;
     messageCountAtSummary: number;
   }> => {
     const empty = {
       summary: null,
       facts: null,
-      recentMessages: [],
       totalMessageCount: 0,
       messageCountAtSummary: 0,
     };
@@ -195,24 +176,10 @@ export const getContextMessages = query({
       )
       .collect();
 
-    const sortedMessages = messages.sort((a, b) => a.createdAt - b.createdAt);
-    const totalMessageCount = sortedMessages.length;
-
-    // Get the most recent messages, filtering out empty ones
-    // (tool-call-only responses have content="" which breaks some providers like Mistral)
-    const recentMessages = sortedMessages
-      .slice(-RECENT_MESSAGES_TO_KEEP)
-      .filter((m) => m.content && m.content.trim().length > 0)
-      .map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
-
     return {
       summary: conversation.summary?.content ?? null,
       facts: conversation.summary?.facts ?? null,
-      recentMessages,
-      totalMessageCount,
+      totalMessageCount: messages.length,
       messageCountAtSummary: conversation.summary?.messageCountAtSummary ?? 0,
     };
   },

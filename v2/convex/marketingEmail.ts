@@ -12,9 +12,12 @@
  */
 
 import { action, internalAction } from "./_generated/server";
+import type { ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { isEmailBlocked } from "./lib/emailBlocklist";
+import { extractUserIdFromAction } from "./lib/auth";
+import { recordError } from "./lib/errorRecording";
 
 // Resend rate limit: 2 req/s free, 10 req/s paid. Stay safe at 2/s.
 const RATE_LIMIT_DELAY_MS = 600;
@@ -52,6 +55,16 @@ interface ResendContact {
   unsubscribed: boolean;
 }
 
+/** Resend `GET /contacts/:email` response (fields we consume). */
+interface ResendContactResponse {
+  unsubscribed?: boolean;
+}
+
+/** Resend `GET /contacts` (list) response (fields we consume). */
+interface ResendContactListResponse {
+  data?: ResendContact[];
+}
+
 /**
  * Fetch every Resend contact across all pages, throttled to RATE_LIMIT_DELAY_MS.
  * Throws on any non-2xx — callers can't safely operate on a partial mirror.
@@ -63,7 +76,7 @@ async function listAllResendContacts(apiKey: string): Promise<ResendContact[]> {
     const url = `/contacts?limit=100${after ? `&after=${after}` : ""}`;
     const res = await resendFetch(url, apiKey);
     if (!res.ok) throw new Error(`Failed to list contacts: ${res.status}`);
-    const data = await res.json();
+    const data: ResendContactListResponse = await res.json();
     const page: ResendContact[] = data.data || [];
     contacts.push(...page);
     if (page.length < 100) break;
@@ -71,6 +84,24 @@ async function listAllResendContacts(apiKey: string): Promise<ResendContact[]> {
     await sleep(RATE_LIMIT_DELAY_MS);
   }
   return contacts;
+}
+
+/**
+ * Resolve the authenticated caller's own email from their user record.
+ *
+ * The subscription actions accept an `email` arg for the frontend's
+ * convenience, but the server NEVER trusts it — operating on a client-supplied
+ * email would be an IDOR (any authed user could read/unsubscribe any contact).
+ * We derive the email from the caller's identity instead. Returns null if
+ * unauthenticated or the user has no resolvable email.
+ */
+async function resolveCallerEmail(ctx: ActionCtx): Promise<string | null> {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) return null;
+  const userId = extractUserIdFromAction(identity.subject);
+  return await ctx.runQuery(internal.marketingEmailHelpers.getUserEmailById, {
+    userId,
+  });
 }
 
 /**
@@ -96,60 +127,69 @@ function extractFirstName(fullName: string | undefined | null): string {
 // ============================================================================
 
 /**
- * Get a user's marketing email subscription status from Resend.
+ * Get the CALLER's own marketing email subscription status from Resend.
+ *
+ * The `email` arg exists only for frontend convenience and is IGNORED — the
+ * server resolves the authenticated caller's own email from their user record
+ * (preventing IDOR: a user must not be able to read another contact's status).
  *
  * Returns null for:
- *   - Unauthenticated callers
+ *   - Unauthenticated callers / callers with no resolvable email
  *   - 404 (contact not yet in Resend — expected for new users)
- *   - Any upstream error (logged, but UI degrades to null rather than throwing)
+ *   - Any upstream error (UI degrades to null rather than throwing)
  *
- * Non-404 errors are logged so a revoked API key doesn't silently appear as
- * "not subscribed" forever.
+ * Non-404 errors are recorded via recordError so a revoked AUTH_RESEND_KEY
+ * (which would make every user appear unsubscribed) surfaces to admins instead
+ * of vanishing into console-only logs.
  */
 export const getMarketingSubscriptionStatus = action({
   args: { email: v.string() },
-  handler: async (ctx, args): Promise<boolean | null> => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
+  handler: async (ctx, _args): Promise<boolean | null> => {
+    const email = await resolveCallerEmail(ctx);
+    if (!email) return null;
 
     try {
       const apiKey = getApiKey();
       const res = await resendFetch(
-        `/contacts/${encodeURIComponent(args.email)}`,
+        `/contacts/${encodeURIComponent(email)}`,
         apiKey
       );
       if (res.status === 404) return null; // expected: new user, no contact yet
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        console.warn(
-          `[MarketingEmail] getMarketingSubscriptionStatus: Resend ${res.status} ${text.slice(0, 200)}`
+        await recordError(
+          ctx,
+          "action",
+          "marketingEmail.getStatus",
+          new Error(`Resend ${res.status} ${text.slice(0, 200)}`),
         );
         return null;
       }
-      const data = await res.json();
+      const data: ResendContactResponse = await res.json();
       return data.unsubscribed === false;
     } catch (error) {
-      console.warn(
-        "[MarketingEmail] getMarketingSubscriptionStatus threw:",
-        error instanceof Error ? error.message : String(error)
-      );
+      await recordError(ctx, "action", "marketingEmail.getStatus", error);
       return null;
     }
   },
 });
 
 /**
- * Update a user's marketing email subscription status in Resend.
+ * Update the CALLER's own marketing email subscription status in Resend.
+ *
+ * The `email` arg exists only for frontend convenience and is IGNORED — the
+ * server resolves the authenticated caller's own email (preventing IDOR: a
+ * user must not be able to unsubscribe/resubscribe another contact).
  */
 export const updateMarketingSubscription = action({
   args: { email: v.string(), subscribed: v.boolean() },
   handler: async (ctx, args): Promise<boolean> => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const email = await resolveCallerEmail(ctx);
+    if (!email) throw new Error("Not authenticated");
 
     const apiKey = getApiKey();
     const res = await resendFetch(
-      `/contacts/${encodeURIComponent(args.email)}`,
+      `/contacts/${encodeURIComponent(email)}`,
       apiKey,
       { method: "PATCH", body: { unsubscribed: !args.subscribed } }
     );
