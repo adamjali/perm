@@ -47,6 +47,7 @@ const URL_PATTERN =
 // Match any emoji. Covers: misc symbols & pictographs, transport, emoticons,
 // supplemental symbols, CJK symbols, dingbats, flags, skin tones, etc.
 const EMOJI_PATTERN =
+  // eslint-disable-next-line security/detect-unsafe-regex -- linear pattern: only character-class alternations and a single bounded {2}, no nested/overlapping quantifiers, so no ReDoS
   /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{1F300}-\u{1F9FF}\u{2700}-\u{27BF}]|[\u{1F1E6}-\u{1F1FF}]{2}/u;
 
  

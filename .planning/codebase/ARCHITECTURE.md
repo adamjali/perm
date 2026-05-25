@@ -1,13 +1,14 @@
 # Architecture
 
 **Analysis Date:** 2026-02-21
+**Last Updated:** 2026-05-24 (version refresh)
 
 ## Pattern Overview
 
 **Overall:** Serverless full-stack application with a real-time backend (Convex) and a Next.js App Router frontend deployed on Vercel.
 
 **Key Characteristics:**
-- **Frontend/Backend split**: Next.js 16.1 (Vercel) + Convex 1.31 (serverless backend-as-a-service)
+- **Frontend/Backend split**: Next.js 16.2 (Vercel) + Convex 1.39 (serverless backend-as-a-service)
 - **Real-time data**: Convex provides live-updating queries via WebSocket subscriptions
 - **Centralized business logic**: All PERM business rules live in `v2/convex/lib/perm/` (single source of truth)
 - **Multi-provider AI chat**: Streaming AI chatbot with 5-model fallback chain and 25+ tools
@@ -19,7 +20,7 @@
 ```mermaid
 graph TB
     subgraph "Vercel (Frontend)"
-        NextJS["Next.js 16.1<br/>App Router"]
+        NextJS["Next.js 16.2<br/>App Router"]
         RSC["Server Components<br/>(public pages, layouts)"]
         CC["Client Components<br/>(interactive UI)"]
         API["API Routes<br/>/api/chat, /api/google, /api/health"]
@@ -592,4 +593,4 @@ graph LR
 
 ---
 
-*Architecture analysis: 2026-02-21*
+*Architecture analysis: 2026-02-21 · Version refresh: 2026-05-24*

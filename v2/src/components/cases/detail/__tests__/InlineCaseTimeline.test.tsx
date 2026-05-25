@@ -201,6 +201,7 @@ describe("InlineCaseTimeline - Milestone Positioning", () => {
     milestones.forEach((milestone) => {
       const parent = milestone.parentElement;
       if (parent) {
+        // eslint-disable-next-line security/detect-unsafe-regex -- safe-regex flags this heuristically, but the pattern is linear (no nested/overlapping quantifiers) and runs on a short style string in a test
         expect(parent.style.left).toMatch(/\d+(\.\d+)?%/);
       }
     });

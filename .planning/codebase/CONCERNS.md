@@ -1,6 +1,7 @@
 # Codebase Concerns
 
 **Analysis Date:** 2026-02-21
+**Last Updated:** 2026-05-24 (dependency-pass resolutions + version refresh)
 
 ## Risk Matrix
 
@@ -109,23 +110,19 @@ quadrantChart
 - **Impact:** ~535 lines of dead component code shipped in the codebase. `ContactSection` is particularly large.
 - **Fix approach:** Remove unused components. Clean up barrel file exports. The contact page at `v2/src/app/(public)/contact/page.tsx` does NOT use `ContactSection` -- it has its own inline implementation.
 
-### DC-02: Unused shadcn/ui Command Component
+### DC-02: shadcn/ui Command Component — INVALID, NOT dead code (corrected 2026-05-24)
 
-- **Issue:** `cmdk` package is installed and `v2/src/components/ui/command.tsx` exists, but no file imports from it.
+- **Status:** INVALID. `cmdk` IS used — `v2/src/components/ui/command.tsx` (shadcn Command) is imported by `v2/src/components/job-description/TemplateSelector.tsx`. Do NOT remove `cmdk` or `command.tsx`.
 - **Files:**
-  - `v2/src/components/ui/command.tsx` -- shadcn Command component
-  - `v2/package.json` -- `"cmdk": "^1.1.1"` dependency
-- **Impact:** Unused dependency and component adding to install size.
-- **Fix approach:** Remove `cmdk` from `package.json` and delete `v2/src/components/ui/command.tsx`.
+  - `v2/src/components/ui/command.tsx` -- shadcn Command component (in use)
+  - `v2/src/components/job-description/TemplateSelector.tsx` -- imports it
+  - `v2/package.json` -- `"cmdk": "^1.1.1"` (required)
+- **Fix approach:** None — original "unused" finding was wrong.
 
-### DC-03: Unused `@hookform/resolvers` Dependency
+### DC-03: Unused `@hookform/resolvers` Dependency — RESOLVED (2026-05-24)
 
-- **Issue:** The package `@hookform/resolvers` is in `package.json` but never imported. A custom `zod4-resolver.ts` was written to replace it due to Zod 4 compatibility issues.
-- **Files:**
-  - `v2/package.json` -- `"@hookform/resolvers": "^5.2.2"`
-  - `v2/src/lib/forms/zod4-resolver.ts` -- custom replacement
-- **Impact:** Unused ~50KB dependency.
-- **Fix approach:** Remove `@hookform/resolvers` from `package.json`.
+- **Issue:** The package `@hookform/resolvers` was in `package.json` but never imported. A custom `zod4-resolver.ts` was written to replace it due to Zod 4 compatibility issues.
+- **Resolution:** `@hookform/resolvers` removed from `package.json` in the 2026-05-24 dependency pass. The custom `v2/src/lib/forms/zod4-resolver.ts` remains the form validation resolver.
 
 ### DC-04: Archive Screenshots in Public Directory
 
@@ -250,21 +247,21 @@ quadrantChart
 
 ## Dependencies at Risk
 
-### DEP-01: `minimatch` ReDoS Vulnerability (CVE-2026-26996)
+### DEP-01: `minimatch` ReDoS Vulnerability (CVE-2026-26996) — MITIGATED (2026-05-24)
 
 - **Risk:** High severity ReDoS vulnerability in `minimatch` < 10.2.1. Affects eslint and Storybook transitive dependencies.
 - **Impact:** Only affects development tooling (not production runtime). An attacker would need to control glob patterns passed to eslint/Storybook.
-- **Migration plan:** Update eslint and Storybook to versions that use minimatch >= 10.2.1. Apply pnpm override if transitive dependency is slow to update: `"minimatch": ">=10.2.1"`.
+- **Resolution:** pnpm override `"minimatch": ">=10.2.3"` applied in `v2/package.json` (2026-05-24).
 
-### DEP-02: `bn.js` Infinite Loop Vulnerability
+### DEP-02: `bn.js` Infinite Loop Vulnerability — MITIGATED (2026-05-24)
 
 - **Risk:** Moderate severity infinite loop in `bn.js` < 5.2.3, via `web-push > asn1.js > bn.js`.
 - **Impact:** Affects the web push notification signing. Could be triggered by malformed push subscription data.
-- **Migration plan:** Add pnpm override: `"bn.js": ">=5.2.3"`. Or wait for `web-push` to update its `asn1.js` dependency.
+- **Resolution:** pnpm override `"bn.js": ">=5.2.3"` applied in `v2/package.json` (2026-05-24).
 
 ### DEP-03: `gsap` Potentially Unused
 
-- **Risk:** `gsap` (3.14.2) is in `dependencies` but is only dynamically imported via `useGSAP.ts` hook, which is used by 3 content components (`ChangelogTimeline`, `ContentHero`, `ContentCTA`). The library is ~50KB minified.
+- **Risk:** `gsap` (3.15.0) is in `dependencies` but is only dynamically imported via `useGSAP.ts` hook, which is used by 3 content components (`ChangelogTimeline`, `ContentHero`, `ContentCTA`). The library is ~50KB minified.
 - **Impact:** Adds to install size. Could be replaced with `motion/react` which is already installed.
 - **Migration plan:** Evaluate if the 3 GSAP usages (scroll stagger, parallax) can use motion/react's `useScroll` and `useTransform` instead. If so, remove gsap dependency.
 
@@ -409,7 +406,7 @@ quadrantChart
 ### Short-Term (Next 2 Sprints)
 
 5. **DC-01:** Remove unused home page components (`VideoShowcase`, `FeatureShowcase`, `ContactSection`)
-6. **DC-02:** Remove `cmdk` dependency and `command.tsx` component
+6. ~~**DC-02:** Remove `cmdk`~~ — INVALID: `cmdk`/`command.tsx` are used by `TemplateSelector.tsx`. No action.
 7. **DEP-04:** Replace `lucia` with `@oslojs/crypto` Scrypt (already installed)
 8. **TEST-01:** Add tests for `CasesPageClient.tsx`
 9. **MISS-02:** Add error boundary for public pages
@@ -433,4 +430,4 @@ quadrantChart
 
 ---
 
-*Concerns audit: 2026-02-21*
+*Concerns audit: 2026-02-21 · Dependency-pass update: 2026-05-24*

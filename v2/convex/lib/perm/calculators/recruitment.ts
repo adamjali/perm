@@ -1,4 +1,4 @@
-import { parseISO, format, addDays, min, subDays } from 'date-fns';
+import { parseISO, format, addDays, subDays } from 'date-fns';
 import { addBusinessDays, subtractBusinessDays, lastSundayOnOrBefore } from '../dates';
 import {
   JOB_ORDER_MIN_DAYS,

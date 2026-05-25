@@ -417,8 +417,13 @@ export function useSectionState(values: Partial<CaseFormData>) {
 
   // Cleanup on unmount only
   useEffect(() => {
+    // Capture the ref's current object now; the cleanup closes over this local
+    // instead of reading collapseTimers.current at unmount time (which the lint
+    // rule warns may have changed by then — here it cannot, but the local read
+    // is the canonical safe pattern).
+    const timers = collapseTimers.current;
     return () => {
-      for (const t of Object.values(collapseTimers.current)) clearTimeout(t);
+      for (const t of Object.values(timers)) clearTimeout(t);
     };
   }, []);
 

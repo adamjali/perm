@@ -135,7 +135,6 @@ export function SignupPageClient() {
   const handleBlur = useCallback(
     (field: "email" | "name" | "password" | "confirm") => {
       // `field` is a closed literal union, not user input — safe record access.
-      // eslint-disable-next-line security/detect-object-injection
       const cfg = fieldConfig[field];
       cfg.setTouched(true);
       const v = cfg.validate();

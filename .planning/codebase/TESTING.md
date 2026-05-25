@@ -1,12 +1,13 @@
 # Testing Patterns
 
 **Analysis Date:** 2026-02-21
+**Last Updated:** 2026-05-24 (version + count refresh)
 
 ## Test Framework
 
 **Runner:**
-- Vitest 4.0.18 (unit/component/integration)
-- Playwright 1.58.2 (E2E)
+- Vitest 4.1.7 (unit/component/integration)
+- Playwright 1.60.0 (E2E)
 - Config: `v2/vitest.config.ts`, `v2/playwright.config.ts`
 
 **Assertion Library:**
@@ -25,9 +26,9 @@
 **Run Commands:**
 ```bash
 pnpm test              # Watch mode (re-tests on save)
-pnpm test:run          # Full suite (~9 min, 3600+ tests)
-pnpm test:fast         # Unit + PERM tests (~40s, ~1300 tests)
-pnpm test:unit         # src/lib and src/hooks tests
+pnpm test:run          # Full suite (~9 min, 4313 tests passing, 1 skipped)
+pnpm test:fast         # Unit + PERM tests (~40s, ~1300 tests; runs unit + unit-isolated)
+pnpm test:unit         # src/lib and src/hooks tests (unit + unit-isolated)
 pnpm test:components   # Component tests only
 pnpm test:convex       # Convex integration tests only
 pnpm test:perm         # PERM calculators/validators only
@@ -257,20 +258,23 @@ v2/
 │       └── connection.spec.ts                # E2E: Convex connection verify
 ```
 
-**Total test files:** 92 frontend + 57 Convex + 1 test-utils + 1 E2E = **151 test files**
+**Total test files:** **166 test files** (4313 tests passing, 1 skipped)
 
 ## Vitest Project Structure
 
-Three-tier configuration in `v2/vitest.config.ts`:
+Four-tier configuration in `v2/vitest.config.ts`:
 
 | Project | Environment | Includes | Timeout | Isolation |
 |---------|-------------|----------|---------|-----------|
-| `unit` | `happy-dom` | `src/lib/**`, `src/hooks/**`, `convex/lib/perm/**`, `convex/lib/*.test.ts` | 5s | `false` (shared for speed) |
+| `unit` | `happy-dom` | `src/lib/**`, `src/hooks/**`, `convex/lib/perm/**`, `convex/lib/*.test.ts` (excludes the mock-stateful files below) | 5s | `false` (shared for speed) |
+| `unit-isolated` | `happy-dom` | Mock-stateful unit files that install per-file `vi.mock` factories for SHARED modules (`next/navigation`, `convex/react`, `sonner`, `@ai-sdk/react`) — split out so their mock state doesn't leak across files | 5s | `true` (fresh module graph per file) |
 | `components` | `happy-dom` | `src/components/**`, `src/app/**`, `src/emails/**`, `test-utils/**` | 10s | `true` (clean DOM state) |
-| `convex` | `edge-runtime` | `convex/*.test.ts`, `convex/__tests__/**`, `convex/lib/__tests__/**` | 15s | default |
+| `convex` | `edge-runtime` | `convex/*.test.ts`, `convex/__tests__/**`, `convex/lib/__tests__/**` | 15s | `true` (`disableConsoleIntercept` to avoid scheduled-function teardown race) |
 
 **Global settings:**
+- `process.env.TZ = "America/New_York"` pinned at config module scope (before threads-pool workers spawn — they snapshot env at creation; `test.env.TZ` is too late). Keeps date-sensitive PERM tests TZ-stable on UTC CI runners.
 - `pool: "threads"` (shared memory, faster than forks)
+- `isolate: false` by default (projects override as needed)
 - `bail: 1` locally, `bail: 5` in CI
 - `sequence.shuffle: true` in CI only (detect order dependencies)
 - `passWithNoTests: true`
@@ -744,15 +748,16 @@ async function createTestTemplate(
 ```mermaid
 graph TB
     subgraph "Test Commands"
-        Fast["pnpm test:fast<br/>(~40s, 1300 tests)"]
-        Full["pnpm test:run<br/>(~9min, 3600+ tests)"]
+        Fast["pnpm test:fast<br/>(~40s, ~1300 tests)"]
+        Full["pnpm test:run<br/>(~9min, 4313 passing)"]
         E2E["pnpm test:e2e<br/>(Playwright)"]
     end
 
     subgraph "Vitest Projects"
         Unit["unit<br/>happy-dom<br/>isolate: false"]
+        UnitIso["unit-isolated<br/>happy-dom<br/>isolate: true"]
         Components["components<br/>happy-dom<br/>isolate: true"]
-        Convex["convex<br/>edge-runtime"]
+        Convex["convex<br/>edge-runtime<br/>isolate: true"]
     end
 
     subgraph "Setup Files"
@@ -775,11 +780,12 @@ graph TB
         Playwright["@playwright/test<br/>Browser automation"]
     end
 
-    Fast --> Unit
-    Full --> Unit & Components & Convex
+    Fast --> Unit & UnitIso
+    Full --> Unit & UnitIso & Components & Convex
     E2E --> Playwright
 
     Unit --> SetupTS
+    UnitIso --> SetupTS
     Components --> SetupTS
     Convex --> SetupConvex
 
@@ -797,4 +803,4 @@ graph TB
 
 ---
 
-*Testing analysis: 2026-02-21*
+*Testing analysis: 2026-02-21 · Version + count refresh: 2026-05-24*

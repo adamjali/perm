@@ -255,7 +255,7 @@ export default function NotificationPreferencesSection({
       captureError(error, { operation: "updateMarketingSubscription" });
       toast.error("Failed to update subscription. Please try again.");
     }
-  }, [updateMarketingSub]);
+  }, [updateMarketingSub, userEmail]);
 
   // Deadline type states (consolidated into object)
   const [deadlineTypes, setDeadlineTypes] = useState<Record<DeadlineTypeKey, boolean>>({

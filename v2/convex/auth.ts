@@ -80,6 +80,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       },
       validatePasswordRequirements(password: string | undefined) {
         // Skip validation if password is undefined (happens during reset flow initial step)
+        // eslint-disable-next-line security/detect-possible-timing-attacks -- not a secret comparison: this is an existence check (=== undefined) for the reset-flow initial step, no constant-time guarantee needed
         if (password === undefined) return;
         if (password.length < 8) {
           throw new Error("Password must be at least 8 characters");

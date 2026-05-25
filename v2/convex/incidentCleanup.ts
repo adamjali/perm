@@ -402,7 +402,6 @@ export const runFullCleanup = internalAction({
         // Aggregating server-returned counts — keys are a known closed set,
         // not user input, so bracket access is safe.
         for (const [k, v] of Object.entries(purgeResult.aggregate)) {
-          // eslint-disable-next-line security/detect-object-injection
           aggregate[k] = (aggregate[k] ?? 0) + (v as number);
         }
       }

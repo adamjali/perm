@@ -17,21 +17,27 @@ const CONTENT_DIR = path.join(process.cwd(), "content");
 /** Get all slugs for a content type (for generateStaticParams) */
 export function getPostSlugs(type: ContentType): string[] {
   const dir = path.join(CONTENT_DIR, type);
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- path is CONTENT_DIR + the typed ContentType union, confined to the project's content/ dir (build-time, not user-controlled)
   if (!fs.existsSync(dir)) return [];
 
-  return fs
-    .readdirSync(dir)
-    .filter((file) => file.endsWith(".mdx"))
-    .map((file) => file.replace(/\.mdx$/, ""));
+  return (
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- same fixed content/ subdir derived from the typed ContentType union
+    fs
+      .readdirSync(dir)
+      .filter((file) => file.endsWith(".mdx"))
+      .map((file) => file.replace(/\.mdx$/, ""))
+  );
 }
 
 /** Read and parse a single MDX post by slug and type */
 export function getPostBySlug(type: ContentType, slug: string): Post | null {
   const filePath = path.join(CONTENT_DIR, type, `${slug}.mdx`);
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- path is confined to content/<ContentType>/<slug>.mdx; slug originates from generateStaticParams over the content/ dir, not arbitrary user input
   if (!fs.existsSync(filePath)) return null;
 
   let raw: string;
   try {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- same content/<ContentType>/<slug>.mdx path, build-time content read
     raw = fs.readFileSync(filePath, "utf-8");
   } catch (error) {
     console.error(`[content] Failed to read ${type}/${slug}.mdx:`, error);

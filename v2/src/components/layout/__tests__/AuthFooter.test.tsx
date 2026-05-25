@@ -15,6 +15,7 @@ describe("AuthFooter", () => {
     expect(contactLink).toHaveAttribute("href", "/contact");
 
     const currentYear = new Date().getFullYear();
+    // eslint-disable-next-line security/detect-non-literal-regexp -- interpolates the current year (a number) into a fixed string, not user input
     expect(screen.getByText(new RegExp(`© ${currentYear} PERM Tracker`, "i"))).toBeInTheDocument();
   });
 });

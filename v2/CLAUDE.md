@@ -1,6 +1,6 @@
 # CLAUDE.md — PERM Tracker v2
 
-> **Stack:** Next.js 16.1 + Convex 1.35 + React 19 + TypeScript (strict)
+> **Stack:** Next.js 16.2.6 + Convex 1.39 + React 19.2.6 + TypeScript (strict)
 > **Status:** Production | **Last Updated:** 2026-05-24
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.

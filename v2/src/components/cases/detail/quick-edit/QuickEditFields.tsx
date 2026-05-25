@@ -399,7 +399,7 @@ export function QuickEditFields({
       setSubmitStatus("error");
       setSubmitError(error instanceof Error ? error.message : "Save failed");
     }
-  }, [config, formData, canSubmit, updateCase, caseId, onComplete, suggestedCaseStatus, suggestedProgressStatus, validateDateValue]);
+  }, [config, formData, canSubmit, updateCase, caseId, onComplete, suggestedCaseStatus, suggestedProgressStatus, validateDateValue, originalFormData]);
 
   // Handle different action types
   if (!config) {

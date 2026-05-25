@@ -66,6 +66,7 @@ describe("RecentActivityCard", () => {
     ["3d ago", daysAgo(3)],
   ])("displays relative time %s", (expected, timestamp) => {
     renderWithProviders(<RecentActivityCard activity={createMockActivityItem({ timestamp })} />);
+    // eslint-disable-next-line security/detect-non-literal-regexp -- `expected` is a hardcoded literal ("5m ago" etc.) from the it.each table, not user input
     expect(screen.getByText(new RegExp(expected))).toBeInTheDocument();
   });
 

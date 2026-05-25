@@ -18,7 +18,7 @@
   },
   "parallelization": true,
   "brave_search": false,
-  "_skills_mtime": 1778704250056.7996,
+  "_skills_mtime": 1779653753363.5874,
   "_skills_list": [
     "cold-outreach-perm",
     "create-hooks",
@@ -30,6 +30,7 @@
     "disk-cleanup",
     "expertise",
     "explain",
+    "github-audit",
     "gsd-add-tests",
     "gsd-ai-integration-phase",
     "gsd-audit-fix",

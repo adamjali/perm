@@ -55,6 +55,17 @@ const eslintConfig = defineConfig([
       // Disable incompatible-library warnings from React Compiler - React Hook Form's
       // watch() is a known incompatibility but works correctly
       "react-hooks/incompatible-library": "off",
+      // Disable detect-object-injection ONLY (not the whole security plugin).
+      // This rule flags every computed member access (obj[key]) as a potential
+      // prototype-pollution / property-injection sink. It is near-universally
+      // recognized as too noisy and false-positive-prone: it cannot distinguish
+      // a safe lookup over a typed Record from an attacker-controlled key. In
+      // this codebase it produced 352 warnings, all on legitimate indexing.
+      // TypeScript strict mode with `noUncheckedIndexedAccess` already forces us
+      // to handle the `T | undefined` result of every index access, which guards
+      // the access patterns this rule worries about. All other security/* rules
+      // remain enabled.
+      "security/detect-object-injection": "off",
     },
   },
   // Less strict rules for test files

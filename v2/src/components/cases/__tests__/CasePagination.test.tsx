@@ -46,6 +46,7 @@ describe("CasePagination - Navigation Buttons", () => {
     ["Next", 4, false],
   ] as const)("%s button disabled=%s on page %i", (button, page, shouldBeDisabled) => {
     renderWithProviders(<CasePagination {...defaultProps} currentPage={page} />);
+    // eslint-disable-next-line security/detect-non-literal-regexp -- `button` is a hardcoded literal ("Previous"/"Next") from the it.each table, not user input
     const btn = screen.getByRole("button", { name: new RegExp(button, "i") });
     shouldBeDisabled ? expect(btn).toBeDisabled() : expect(btn).not.toBeDisabled();
   });
@@ -70,6 +71,7 @@ describe("CasePagination - Page Size Dropdown", () => {
 
     await user.click(screen.getByRole("button", { name: /per page/i }));
     for (const size of [6, 12, 24, 50]) {
+      // eslint-disable-next-line security/detect-non-literal-regexp -- interpolates a hardcoded numeric literal from [6,12,24,50], not user input
       expect(await screen.findByRole("menuitem", { name: new RegExp(`${size} per page`, "i") })).toBeInTheDocument();
     }
   });

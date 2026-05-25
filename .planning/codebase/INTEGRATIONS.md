@@ -1,13 +1,14 @@
 # External Integrations
 
 **Analysis Date:** 2026-02-21
+**Last Updated:** 2026-05-24 (SDK version refresh)
 
 ## APIs & External Services
 
 ### Convex (Backend-as-a-Service)
 
 - **Purpose:** Real-time database, serverless functions, file storage, scheduling
-- **SDK:** `convex` 1.32.0
+- **SDK:** `convex` 1.39.1
 - **Connection:** WebSocket (real-time) + HTTPS (queries/mutations)
 - **Auth:** JWT-based via `@convex-dev/auth`
 - **Env vars:**
@@ -29,11 +30,11 @@
 
 | Tier | Provider | Model | SDK | Env Var | Notes |
 |------|----------|-------|-----|---------|-------|
-| 1 (Primary) | Google Gemini | gemini-2.5-flash | `@ai-sdk/google` 3.0.29 | `GOOGLE_GENERATIVE_AI_API_KEY` | 20 RPD free, 1M context |
-| 2 | Groq | llama-3.3-70b-versatile | `@ai-sdk/groq` 3.0.24 | `GROQ_API_KEY` | 30 RPM, 14400 RPD free, 10k input limit |
-| 2 | Mistral | mistral-small-latest | `@ai-sdk/mistral` 3.0.20 | `MISTRAL_API_KEY` | Generous free tier |
-| 3 | OpenRouter | llama-3.3-70b-instruct:free | `@openrouter/ai-sdk-provider` 2.2.3 | `OPENROUTER_API_KEY` | Free, often rate-limited |
-| 3 (Emergency) | Cerebras | llama3.1-8b | `@ai-sdk/cerebras` 2.0.34 | `CEREBRAS_API_KEY` | 6k input limit, small model |
+| 1 (Primary) | Google Gemini | gemini-2.5-flash | `@ai-sdk/google` 3.0.79 | `GOOGLE_GENERATIVE_AI_API_KEY` | 20 RPD free, 1M context |
+| 2 | Groq | llama-3.3-70b-versatile | `@ai-sdk/groq` 3.0.39 | `GROQ_API_KEY` | 30 RPM, 14400 RPD free, 10k input limit |
+| 2 | Mistral | mistral-small-latest | `@ai-sdk/mistral` 3.0.37 | `MISTRAL_API_KEY` | Generous free tier |
+| 3 | OpenRouter | llama-3.3-70b-instruct:free | `@openrouter/ai-sdk-provider` 2.9.0 | `OPENROUTER_API_KEY` | Free, often rate-limited |
+| 3 (Emergency) | Cerebras | llama3.1-8b | `@ai-sdk/cerebras` 2.0.54 | `CEREBRAS_API_KEY` | 6k input limit, small model |
 
 **Summarization:** Uses Groq (not Gemini) for conversation summarization to avoid competing for same quota. Implemented in `v2/src/lib/ai/summarize.ts`.
 
@@ -58,7 +59,7 @@
 ### RAG (Knowledge Search)
 
 - **Purpose:** Retrieval Augmented Generation for PERM domain knowledge
-- **SDK:** `@convex-dev/rag` 0.7.1
+- **SDK:** `@convex-dev/rag` 0.7.5
 - **Config:** `v2/convex/convex.config.ts`, `v2/convex/lib/rag/index.ts`
 - **Usage:** Chatbot tool for searching PERM-specific knowledge base
 
@@ -66,7 +67,7 @@
 
 ### Convex Auth (Primary)
 
-- **SDK:** `@convex-dev/auth` 0.0.90 + `@auth/core` 0.41.1
+- **SDK:** `@convex-dev/auth` 0.0.92 + `@auth/core` 0.41.2
 - **Config:** `v2/convex/auth.ts`
 - **Providers:**
   1. **Google OAuth** — Via `@auth/core/providers/google`
@@ -95,7 +96,7 @@
 ### Google OAuth (Calendar Integration — SEPARATE from Auth)
 
 - **Purpose:** Google Calendar API access for deadline syncing
-- **SDK:** `google-auth-library` 10.5.0
+- **SDK:** `google-auth-library` 10.6.2
 - **Config:** `v2/src/lib/google/oauth.ts`
 - **Flow:**
   1. `GET /api/google/connect` — Redirects to Google consent screen (`v2/src/app/api/google/connect/route.ts`)
@@ -115,7 +116,7 @@
 ### Resend
 
 - **Purpose:** Transactional email (notifications, OTP, password reset, admin alerts, weekly digest)
-- **SDK:** `resend` 6.9.2
+- **SDK:** `resend` 6.12.3
 - **Config:** `v2/convex/lib/email.ts` — `getResend()`, `FROM_EMAIL`
 - **Env vars:**
   - `AUTH_RESEND_KEY` — API key (used in Convex backend)
@@ -163,7 +164,7 @@
 ### Sentry
 
 - **Purpose:** Error tracking, performance monitoring, session replay
-- **SDK:** `@sentry/nextjs` 10.39.0
+- **SDK:** `@sentry/nextjs` 10.53.1
 - **Env vars:**
   - `NEXT_PUBLIC_SENTRY_DSN` — Client-side DSN
   - `SENTRY_DSN` — Server-side DSN
@@ -190,8 +191,8 @@
 
 - **Purpose:** Web analytics and Core Web Vitals
 - **SDKs:**
-  - `@vercel/analytics` 1.6.1 — Page view tracking
-  - `@vercel/speed-insights` 1.3.1 — Core Web Vitals
+  - `@vercel/analytics` 2.0.1 — Page view tracking
+  - `@vercel/speed-insights` 2.0.0 — Core Web Vitals
 - **Integration:** `v2/src/app/layout.tsx` — `<Analytics />` + `<SpeedInsights />`
 
 ### System Error Tracking (Internal)
@@ -246,7 +247,7 @@
 **Resend Inbound Email Webhook:**
 - **Endpoint:** `POST /resend-inbound` (Convex HTTP action)
 - **File:** `v2/convex/http.ts`
-- **Verification:** Svix signature verification (`svix` 1.85.0)
+- **Verification:** Svix signature verification (`svix` 1.94.0)
 - **Env:** `RESEND_WEBHOOK_SECRET`
 - **Purpose:** Receives inbound support emails sent to `support@permtracker.app`
 - **Flow:** Verify signature → Parse sender → Schedule `processInboundEmail` action
@@ -456,4 +457,4 @@ Email → support@permtracker.app → Resend
 
 ---
 
-*Integration audit: 2026-02-21*
+*Integration audit: 2026-02-21 · Version refresh: 2026-05-24*

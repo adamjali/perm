@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-04-11
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-05-24
 
 ## Production URLs
 
@@ -9,14 +9,14 @@
 
 ## Tech Stack
 
-- **Frontend:** Next.js 16.1 + React 19 + TypeScript (Vercel)
-- **Backend:** Convex 1.35 (serverless functions)
+- **Frontend:** Next.js 16.2.6 + React 19.2.6 + TypeScript (Vercel)
+- **Backend:** Convex 1.39 (serverless functions)
 - **Database:** Convex (built-in, real-time)
 - **Authentication:** Convex Auth + Google OAuth
 - **Email:** Resend
 - **Push Notifications:** Web Push (VAPID)
 - **AI Chat:** Vercel AI SDK v6 + Multi-provider (Gemini, Groq, Mistral, OpenRouter, Cerebras)
-- **Testing:** Vitest 4 (3600+ tests) + Playwright (E2E)
+- **Testing:** Vitest 4 (4300+ tests) + Playwright (E2E)
 
 ---
 
