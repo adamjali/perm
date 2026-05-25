@@ -103,6 +103,7 @@ import type * as lib_rag_ingest from "../lib/rag/ingest.js";
 import type * as lib_rag_permKnowledge from "../lib/rag/permKnowledge.js";
 import type * as lib_rateLimit from "../lib/rateLimit.js";
 import type * as lib_sentry from "../lib/sentry.js";
+import type * as lib_suspension from "../lib/suspension.js";
 import type * as lib_userDefaults from "../lib/userDefaults.js";
 import type * as lib_userProfileHelpers from "../lib/userProfileHelpers.js";
 import type * as lib_validation from "../lib/validation.js";
@@ -230,6 +231,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rag/permKnowledge": typeof lib_rag_permKnowledge;
   "lib/rateLimit": typeof lib_rateLimit;
   "lib/sentry": typeof lib_sentry;
+  "lib/suspension": typeof lib_suspension;
   "lib/userDefaults": typeof lib_userDefaults;
   "lib/userProfileHelpers": typeof lib_userProfileHelpers;
   "lib/validation": typeof lib_validation;
