@@ -44,19 +44,26 @@ export function createContentDetailPage(type: ContentType) {
       title: post.meta.seoTitle ?? post.meta.title,
       description: post.meta.seoDescription ?? post.meta.description,
       alternates: { canonical: `/${type}/${slug}` },
-      openGraph: {
-        // Spread base for siteName / locale / images, then override `type`
-        // to "article" plus article-specific fields.
-        ...openGraphBase,
-        type: "article",
-        title: post.meta.title,
-        description: post.meta.description,
-        url: `/${type}/${slug}`,
-        publishedTime: post.meta.date,
-        modifiedTime: post.meta.updated ?? post.meta.date,
-        authors: [post.meta.author],
-        tags: post.meta.tags,
-      },
+      openGraph: (() => {
+        // CRITICAL: omit `images` here so Next.js can merge the per-slug
+        // file-based opengraph-image.tsx at this route segment. Next 16.2.6
+        // (node_modules/next/dist/lib/metadata/resolve-metadata.js:148) skips
+        // the file-based image merge whenever `source.openGraph.hasOwnProperty('images')`
+        // is true — and that's exactly what would happen if we spread
+        // `openGraphBase` (which carries a default image) verbatim.
+        const { images: _omitImagesForPerSlugOG, ...ogBaseNoImages } = openGraphBase;
+        return {
+          ...ogBaseNoImages,
+          type: "article",
+          title: post.meta.title,
+          description: post.meta.description,
+          url: `/${type}/${slug}`,
+          publishedTime: post.meta.date,
+          modifiedTime: post.meta.updated ?? post.meta.date,
+          authors: [post.meta.author],
+          tags: post.meta.tags,
+        };
+      })(),
       twitter: {
         card: "summary_large_image",
         title: post.meta.title,

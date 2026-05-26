@@ -192,9 +192,21 @@ export default function AuthHeader() {
                 {/* Learn dropdown — links are ALWAYS rendered in the DOM (not
                     behind a `{isLearnOpen &&}` conditional) so Googlebot sees
                     them in the initial SSR HTML, a documented sitelinks input.
-                    Visibility is controlled via CSS + `inert` + `aria-hidden`
-                    when closed, which removes them from focus order and the
-                    accessibility tree (matches the prior observable behavior).
+                    The `"use client"` directive at the top of this file does
+                    NOT prevent SSR — Next.js still renders client components
+                    to HTML on the initial server response, which is what
+                    Googlebot's first fetch sees before any JS runs.
+
+                    Visibility is controlled when closed via:
+                      - `inert` removes the subtree from focus order AND the
+                        accessibility tree in modern browsers (per the
+                        WHATWG inert spec).
+                      - `aria-hidden` is defense-in-depth for browsers that
+                        pre-date `inert` (Safari <15.5, Firefox <112, Chromium
+                        <102); modern browsers excise inert subtrees from the
+                        a11y tree automatically without needing this attribute.
+                      - `invisible pointer-events-none opacity-0` for visual.
+
                     DO NOT revert to conditional render — that breaks SEO. */}
                 <div ref={learnRef} className="relative">
                   <button
@@ -335,6 +347,12 @@ export default function AuthHeader() {
       </div>
 
       {/* Mobile Menu */}
+      {/* Mobile menu — conditional render is intentionally OK here, unlike the
+          desktop Learn dropdown above. Reason: the desktop nav already SSR-
+          renders all five CONTENT_NAV_LINKS visibly to Googlebot in the same
+          HTML response, so the SEO sitelinks contract is satisfied at the page
+          level. Mobile is purely a viewport-specific UX surface — no Googlebot-
+          facing implication of mounting it lazily. */}
       {isMobileMenuOpen && (
         <div className="absolute left-0 right-0 top-full border-b-3 border-white/20 bg-black px-4 py-4 sm:hidden">
           <nav className="flex flex-col gap-3">

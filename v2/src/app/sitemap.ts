@@ -1,17 +1,26 @@
 import type { MetadataRoute } from 'next'
 import { getAllPosts } from '@/lib/content'
+import { captureError } from '@/lib/sentry'
 
-// Next.js sitemap routes are statically cached at build time unless they
-// opt into ISR or use a request-time API. Daily revalidation keeps the
-// sitemap fresh between deploys without per-request regeneration cost.
+// Next.js sitemap routes are cached by default and only regenerated when
+// Next.js revalidates them (or a request-time API forces dynamic). Daily
+// revalidation keeps the sitemap fresh between deploys without per-request
+// regeneration cost — without it, the route would be frozen to build time.
 // https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap
 export const revalidate = 86400
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://permtracker.app'
 
-  // Use the most recent content date for listing pages (not build time)
+  // Use the most recent content date for listing pages (not build time).
   const allPosts = getAllPosts()
+  if (allPosts.length === 0) {
+    // Build-time content failure (missing content/ dir, all parse errors swallowed
+    // upstream, etc.) would silently fall back to today's date for every URL —
+    // teaching Google to ignore our lastmod values. Surface it to Sentry so an
+    // empty-posts deploy can be triaged instead of shipping a misleading sitemap.
+    captureError(new Error('Sitemap built with zero content posts — content/ may be missing or all MDX parses failed'))
+  }
   const latestPostDate = allPosts.length > 0
     ? allPosts.reduce((latest, post) => {
         const date = post.meta.updated ?? post.meta.date

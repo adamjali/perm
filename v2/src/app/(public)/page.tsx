@@ -32,8 +32,9 @@ import {
   FAQSection,
   CTASection,
 } from "@/components/home";
-import { getFAQPageSchema } from "@/lib/structuredData";
+import { getFAQPageSchema, getHomepageRatingPartialSchema } from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { JsonLdScript } from "@/components/seo/JsonLdScript";
 
 export const dynamic = "force-static";
 
@@ -99,16 +100,21 @@ const homepageFAQs = [
 ];
 
 export default function HomePage() {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
   const faqSchema = getFAQPageSchema(homepageFAQs);
+  // The aggregateRating ships ONLY here (homepage) — the Senja widget that
+  // renders the visible review UI is mounted in TestimonialsSection on this
+  // page. The partial below shares the root SoftwareApplication's @id so
+  // Google's @id-graph merge attaches the rating to that entity on this
+  // page only (not on /blog, /privacy, etc.).
+  const ratingPartial = getHomepageRatingPartialSchema(baseUrl);
 
   return (
     <>
-      {/* FAQPage structured data for rich results and AI search visibility.
-          Content is hardcoded server-side strings, not user input — safe for JSON-LD. */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
+      {/* FAQPage + homepage aggregateRating partial. Server-built schemas only. */}
+      <JsonLdScript schema={faqSchema} />
+      <JsonLdScript schema={ratingPartial} />
       <HeroSection />
       <TrustStrip />
       <StakesSection />

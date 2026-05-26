@@ -8,8 +8,18 @@ import type { PostMeta, ContentType, PostSummary } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
 
-/** Convert YYYY-MM-DD date string to ISO 8601 with timezone for schema.org */
+/**
+ * Convert a YYYY-MM-DD date string to ISO 8601 with explicit UTC offset for
+ * schema.org `datePublished` / `dateModified` fields.
+ *
+ * Runtime-guarded: throws if the input doesn't match the expected shape. Catches
+ * malformed MDX frontmatter dates at build time (where this is called) rather
+ * than emitting silently-broken JSON-LD that Google rejects unattributed.
+ */
 export function toISO8601(dateStr: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    throw new Error(`toISO8601: expected YYYY-MM-DD, got ${JSON.stringify(dateStr)}`);
+  }
   return `${dateStr}T00:00:00+00:00`;
 }
 
@@ -21,32 +31,32 @@ export function generateArticleSchema(
 ) {
   return {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "Article" as const,
     headline: meta.title,
     description: meta.description,
     image: meta.image ? `${BASE_URL}${meta.image}` : `${BASE_URL}/opengraph-image`,
     datePublished: toISO8601(meta.date),
     dateModified: toISO8601(meta.updated || meta.date),
     author: {
-      "@type": "Organization",
+      "@type": "Organization" as const,
       name: meta.author,
       url: BASE_URL,
     },
     publisher: {
-      "@type": "Organization",
+      "@type": "Organization" as const,
       name: "PERM Tracker",
       logo: {
-        "@type": "ImageObject",
+        "@type": "ImageObject" as const,
         url: `${BASE_URL}/icon-512.png`,
       },
     },
     mainEntityOfPage: {
-      "@type": "WebPage",
+      "@type": "WebPage" as const,
       "@id": `${BASE_URL}/${type}/${slug}`,
     },
     keywords: meta.tags.join(", "),
     speakable: {
-      "@type": "SpeakableSpecification",
+      "@type": "SpeakableSpecification" as const,
       cssSelector: [".article-description", ".article-content h2:first-of-type", ".article-content h2:first-of-type + p"],
     },
   };
@@ -60,13 +70,13 @@ export function generateHowToSchema(
 ) {
   return {
     "@context": "https://schema.org",
-    "@type": "HowTo",
+    "@type": "HowTo" as const,
     name: meta.title,
     description: meta.description,
     image: meta.image ? `${BASE_URL}${meta.image}` : undefined,
     totalTime: meta.readingTime,
     step: steps.map((s, i) => ({
-      "@type": "HowToStep",
+      "@type": "HowToStep" as const,
       position: i + 1,
       name: s.name,
       text: s.text,
@@ -80,9 +90,9 @@ export function generateBreadcrumbSchema(
 ) {
   return {
     "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
+    "@type": "BreadcrumbList" as const,
     itemListElement: items.map((item, i) => ({
-      "@type": "ListItem",
+      "@type": "ListItem" as const,
       position: i + 1,
       name: item.name,
       item: `${BASE_URL}${item.href}`,
@@ -98,17 +108,17 @@ export function generateVideoObjectSchema(
 ) {
   return {
     "@context": "https://schema.org",
-    "@type": "VideoObject",
+    "@type": "VideoObject" as const,
     name: alt,
     description: `${alt} — from ${meta.title}`,
     thumbnailUrl: meta.image ? `${BASE_URL}${meta.image}` : `${BASE_URL}/opengraph-image`,
     uploadDate: toISO8601(meta.date),
     contentUrl: `${BASE_URL}${src}`,
     publisher: {
-      "@type": "Organization",
+      "@type": "Organization" as const,
       name: "PERM Tracker",
       logo: {
-        "@type": "ImageObject",
+        "@type": "ImageObject" as const,
         url: `${BASE_URL}/icon-512.png`,
       },
     },
@@ -121,18 +131,24 @@ export function generateVideoObjectSchema(
  * Each item carries `datePublished` and `dateModified` so Google has a date
  * signal for the listing's items (matches the pattern in `generateArticleSchema`
  * — `dateModified` falls back to `datePublished` when `meta.updated` is absent).
+ *
+ * `urlFor` is an optional strategy for building each item's URL. Defaults to
+ * `${BASE_URL}/${post.type}/${post.slug}` (the standard detail-route shape).
+ * Pages without per-entry detail routes (like /changelog) supply a custom
+ * builder pointing at on-page anchors (`/changelog#${slug}`).
  */
 export function generateItemListSchema(
   posts: PostSummary[],
-  type: ContentType
+  type: ContentType,
+  urlFor: (post: PostSummary) => string = (p) => `${BASE_URL}/${p.type}/${p.slug}`,
 ) {
   return {
     "@context": "https://schema.org",
-    "@type": "ItemList",
+    "@type": "ItemList" as const,
     itemListElement: posts.map((post, i) => ({
-      "@type": "ListItem",
+      "@type": "ListItem" as const,
       position: i + 1,
-      url: `${BASE_URL}/${post.type}/${post.slug}`,
+      url: urlFor(post),
       name: post.meta.title,
       datePublished: toISO8601(post.meta.date),
       dateModified: toISO8601(post.meta.updated || post.meta.date),

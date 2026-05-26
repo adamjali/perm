@@ -123,4 +123,30 @@ describe("AuthHeader", () => {
 
     expect(learnButton).toHaveAttribute("aria-expanded", "false");
   });
+
+  // SSR sitelinks contract — guards against PR #99 (commit df55dbf) regression.
+  // The Learn dropdown must render its <a href> nodes in the initial SSR HTML
+  // even when collapsed, so Googlebot's first fetch sees them. The closed-state
+  // a11y contract is `inert` + `aria-hidden="true"` on the menu container.
+  // See AuthHeader.tsx ~lines 192-210: "DO NOT revert to conditional render".
+  it("Learn dropdown links are in the DOM even when closed (SSR sitelinks contract)", () => {
+    vi.mocked(usePathname).mockReturnValue("/");
+    renderWithProviders(<AuthHeader />);
+
+    // Even with aria-expanded=false on the trigger and inert/aria-hidden on the
+    // menu container, the <a href> nodes must be present in the document so
+    // Googlebot sees them in the initial SSR HTML.
+    for (const link of CONTENT_NAV_LINKS) {
+      expect(
+        screen.queryAllByRole("link", { name: link.label, hidden: true }),
+      ).not.toHaveLength(0);
+    }
+
+    // And the menu container should be hidden by aria-hidden + inert when closed.
+    const menus = screen.getAllByRole("menu", { hidden: true });
+    expect(menus.length).toBeGreaterThanOrEqual(1);
+    const closedMenu = menus.find((m) => m.getAttribute("aria-hidden") === "true");
+    expect(closedMenu).toBeDefined();
+    expect(closedMenu).toHaveAttribute("inert");
+  });
 });

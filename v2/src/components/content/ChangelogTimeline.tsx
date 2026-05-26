@@ -15,6 +15,17 @@ import { Calendar, Tag } from "lucide-react";
 import type { PostSummary } from "@/lib/content/types";
 import { useScrollStagger } from "@/lib/hooks/useGSAP";
 
+// Shared formatting for the entry's published/updated <time> elements. Module
+// scope so the Intl.DateTimeFormatOptions object isn't reallocated each render.
+const DATE_FMT: Intl.DateTimeFormatOptions = {
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC",
+};
+const fmtDate = (iso: string): string =>
+  new Date(iso).toLocaleDateString("en-US", DATE_FMT);
+
 interface ChangelogTimelineProps {
   posts: PostSummary[];
 }
@@ -88,28 +99,14 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
               <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <span className="flex items-center gap-2">
                   <Calendar className="h-3.5 w-3.5" />
-                  <time dateTime={post.meta.date}>
-                    {new Date(post.meta.date).toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                      timeZone: "UTC",
-                    })}
-                  </time>
+                  <time dateTime={post.meta.date}>{fmtDate(post.meta.date)}</time>
                 </span>
                 {post.meta.updated && post.meta.updated !== post.meta.date && (
                   <span className="flex items-center gap-1.5">
                     <span className="font-heading text-[10px] font-semibold uppercase tracking-wider text-primary">
                       Updated
                     </span>
-                    <time dateTime={post.meta.updated}>
-                      {new Date(post.meta.updated).toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                        timeZone: "UTC",
-                      })}
-                    </time>
+                    <time dateTime={post.meta.updated}>{fmtDate(post.meta.updated)}</time>
                   </span>
                 )}
               </div>

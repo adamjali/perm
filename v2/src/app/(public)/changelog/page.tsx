@@ -7,7 +7,7 @@
 
 import type { Metadata } from "next";
 import { getAllPosts } from "@/lib/content";
-import { generateBreadcrumbSchema, toISO8601 } from "@/lib/content/seo";
+import { generateBreadcrumbSchema, generateItemListSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
 import ChangelogTimeline from "@/components/content/ChangelogTimeline";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -35,23 +35,15 @@ export default function ChangelogPage() {
     { name: "Changelog", href: "/changelog" },
   ]);
 
-  // Inline ItemList — changelog has no per-entry detail routes (sitemap.ts
-  // filters them out), so items point to page-anchor URLs (resolved by the
-  // id={post.slug} on each ChangelogTimeline entry) rather than 404-ing
-  // /changelog/<slug> URLs.
-  const itemList = {
-    "@type": "ItemList",
-    name: "PERM Tracker Changelog",
-    numberOfItems: posts.length,
-    itemListElement: posts.map((post, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      url: `${baseUrl}/changelog#${post.slug}`,
-      name: post.meta.title,
-      datePublished: toISO8601(post.meta.date),
-      dateModified: toISO8601(post.meta.updated || post.meta.date),
-    })),
-  };
+  // Reuse the shared generator with a changelog-specific URL strategy:
+  // changelog has no per-entry detail routes (sitemap.ts filters them out),
+  // so items point to on-page anchors that resolve via id={post.slug} on
+  // each ChangelogTimeline entry — NOT 404-ing /changelog/<slug> URLs.
+  const { "@context": _2, ...itemList } = generateItemListSchema(
+    posts,
+    "changelog",
+    (post) => `${baseUrl}/changelog#${post.slug}`,
+  );
 
   const schemas = {
     "@context": "https://schema.org",

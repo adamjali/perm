@@ -17,17 +17,25 @@ import type { Metadata } from "next";
  * Usage:
  *   openGraph: { ...openGraphBase, title: "...", description: "...", url: "/x" }
  *
- * For content-detail pages overriding `type` to "article", spread first and
- * then override (the `satisfies` typing below preserves enough inference to let
- * a child object widen `type` without a cast).
+ * Why `satisfies` (not `as const`): the real wins are (a) type-check the
+ * literal against `Metadata['openGraph']` at definition time (catches typos
+ * like a misspelled `type` value), and (b) keep the object non-`readonly` so
+ * consumers can spread + override its fields cleanly. The article-type override
+ * in `createContentDetailPage.tsx` works fine either way — TypeScript widens
+ * `type` through the spread regardless.
  *
  * Image paths are relative to `metadataBase` (set in `src/app/layout.tsx`), so
  * `/opengraph-image` resolves to `https://permtracker.app/opengraph-image`.
+ *
+ * CRITICAL: content-detail pages (`createContentDetailPage.tsx`) destructure
+ * `images` off this base before spreading so Next.js can merge their per-slug
+ * `opengraph-image.tsx`. See the comment there for the
+ * `resolve-metadata.js:148` `hasOwnProperty('images')` check.
  */
 export const openGraphBase = {
   siteName: "PERM Tracker",
   locale: "en_US",
-  type: "website" as const,
+  type: "website",
   images: [
     {
       url: "/opengraph-image",

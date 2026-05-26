@@ -9,6 +9,7 @@ import {
   getSoftwareApplicationSchema,
   getOrganizationSchema,
   getWebSiteSchema,
+  SCHEMA_IDS,
 } from "@/lib/structuredData";
 
 const spaceGrotesk = Space_Grotesk({
@@ -137,9 +138,9 @@ export default async function RootLayout({
   const structuredData = {
     '@context': 'https://schema.org',
     '@graph': [
-      { ...software, '@id': `${baseUrl}/#software` },
-      { ...org, '@id': `${baseUrl}/#organization` },
-      { ...website, '@id': `${baseUrl}/#website` },
+      { ...software, '@id': SCHEMA_IDS.software(baseUrl) },
+      { ...org, '@id': SCHEMA_IDS.organization(baseUrl) },
+      { ...website, '@id': SCHEMA_IDS.website(baseUrl) },
     ],
   };
 
