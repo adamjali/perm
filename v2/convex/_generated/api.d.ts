@@ -110,6 +110,7 @@ import type * as lib_validation from "../lib/validation.js";
 import type * as marketingEmail from "../marketingEmail.js";
 import type * as marketingEmailHelpers from "../marketingEmailHelpers.js";
 import type * as marketingWebhook from "../marketingWebhook.js";
+import type * as migrations from "../migrations.js";
 import type * as notificationActions from "../notificationActions.js";
 import type * as notifications from "../notifications.js";
 import type * as onboarding from "../onboarding.js";
@@ -238,6 +239,7 @@ declare const fullApi: ApiFromModules<{
   marketingEmail: typeof marketingEmail;
   marketingEmailHelpers: typeof marketingEmailHelpers;
   marketingWebhook: typeof marketingWebhook;
+  migrations: typeof migrations;
   notificationActions: typeof notificationActions;
   notifications: typeof notifications;
   onboarding: typeof onboarding;

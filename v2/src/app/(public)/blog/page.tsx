@@ -9,6 +9,7 @@ import { getAllPosts, getAllTags } from "@/lib/content";
 import { generateItemListSchema, generateBreadcrumbSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
 import ContentListing from "@/components/content/ContentListing";
+import { openGraphBase } from "@/lib/openGraphBase";
 
 export const dynamic = "force-static";
 
@@ -18,11 +19,11 @@ export const metadata: Metadata = {
     "Insights on PERM labor certification, immigration practice tips, and industry trends for immigration attorneys.",
   alternates: { canonical: "/blog" },
   openGraph: {
+    ...openGraphBase,
     title: "Blog | PERM Tracker",
     description:
       "Insights on PERM labor certification, immigration practice tips, and industry trends.",
     url: "/blog",
-    type: "website",
   },
 };
 

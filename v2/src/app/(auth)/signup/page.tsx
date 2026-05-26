@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/signup",
   },
+  // See login/page.tsx for the noindex+follow rationale (Google: Disallow ≠ noindex).
+  robots: { index: false, follow: true },
 };
 
 export default function SignupPage() {

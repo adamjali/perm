@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getFAQPageSchema } from "@/lib/structuredData";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
+import { openGraphBase } from "@/lib/openGraphBase";
 import { FAQPageClient } from "./FAQPageClient";
 
 export const dynamic = "force-static";
@@ -19,11 +20,11 @@ export const metadata: Metadata = {
     "Answers to common questions about PERM labor certification, the PERM Tracker platform, deadlines, recruitment, and case management for immigration attorneys.",
   alternates: { canonical: "/faq" },
   openGraph: {
+    ...openGraphBase,
     title: "FAQ | PERM Tracker",
     description:
       "Everything immigration attorneys need to know about PERM Tracker and the PERM labor certification process.",
     url: "/faq",
-    type: "website",
   },
 };
 

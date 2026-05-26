@@ -62,6 +62,11 @@ export const metadata: Metadata = {
   authors: [{ name: "PERM Tracker" }],
   creator: "PERM Tracker",
   publisher: "PERM Tracker",
+  // Emits <meta name="application-name" content="PERM Tracker">. A supporting
+  // cross-signal for Google's Site Name SERP feature, alongside og:site_name +
+  // WebSite JSON-LD name + <title> brand. Not Google's primary signal but
+  // standard industry SEO defense-in-depth, zero-cost.
+  applicationName: "PERM Tracker",
   formatDetection: {
     email: false,
     address: false,

@@ -13,6 +13,7 @@ import { getPostBySlug, getPostSlugs, getRelatedPosts, extractHeadings, extractV
 import { mdxComponents } from "@/lib/content/mdx-components";
 import { ArticleLayout } from "@/components/content";
 import StructuredData from "@/components/content/StructuredData";
+import { openGraphBase } from "@/lib/openGraphBase";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import remarkGfm from "remark-gfm";
@@ -44,10 +45,13 @@ export function createContentDetailPage(type: ContentType) {
       description: post.meta.seoDescription ?? post.meta.description,
       alternates: { canonical: `/${type}/${slug}` },
       openGraph: {
+        // Spread base for siteName / locale / images, then override `type`
+        // to "article" plus article-specific fields.
+        ...openGraphBase,
+        type: "article",
         title: post.meta.title,
         description: post.meta.description,
         url: `/${type}/${slug}`,
-        type: "article",
         publishedTime: post.meta.date,
         modifiedTime: post.meta.updated ?? post.meta.date,
         authors: [post.meta.author],

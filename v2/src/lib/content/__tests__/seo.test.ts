@@ -3,8 +3,9 @@ import {
   generateArticleSchema,
   generateHowToSchema,
   generateBreadcrumbSchema,
+  generateItemListSchema,
 } from "../seo";
-import type { PostMeta, ContentType } from "../types";
+import type { PostMeta, ContentType, PostSummary } from "../types";
 
 const BASE_URL = "https://permtracker.app";
 
@@ -186,5 +187,71 @@ describe("generateBreadcrumbSchema", () => {
     expect(schema.itemListElement).toHaveLength(4);
     expect(schema.itemListElement[3].position).toBe(4);
     expect(schema.itemListElement[3].name).toBe("Step 1");
+  });
+});
+
+describe("generateItemListSchema", () => {
+  function createTestPost(overrides: Partial<PostMeta> & { slug?: string; type?: ContentType } = {}): PostSummary {
+    const { slug = "test-post", type = "blog", ...metaOverrides } = overrides;
+    return {
+      slug,
+      type,
+      meta: createTestMeta(metaOverrides),
+    };
+  }
+
+  it("returns correct @context, @type, and name", () => {
+    const schema = generateItemListSchema([createTestPost()], "blog");
+    expect(schema["@context"]).toBe("https://schema.org");
+    expect(schema["@type"]).toBe("ItemList");
+    expect(schema.name).toBe("PERM Tracker Blog");
+  });
+
+  it("capitalizes the listing name from the content type", () => {
+    expect(generateItemListSchema([], "tutorials").name).toBe("PERM Tracker Tutorials");
+    expect(generateItemListSchema([], "guides").name).toBe("PERM Tracker Guides");
+    expect(generateItemListSchema([], "resources").name).toBe("PERM Tracker Resources");
+  });
+
+  it("emits one ListItem per post with correct position + url + name", () => {
+    const posts = [
+      createTestPost({ slug: "first", title: "First Post" }),
+      createTestPost({ slug: "second", title: "Second Post" }),
+    ];
+    const schema = generateItemListSchema(posts, "blog");
+    expect(schema.numberOfItems).toBe(2);
+    expect(schema.itemListElement).toHaveLength(2);
+    expect(schema.itemListElement[0]).toMatchObject({
+      "@type": "ListItem",
+      position: 1,
+      url: `${BASE_URL}/blog/first`,
+      name: "First Post",
+    });
+    expect(schema.itemListElement[1]).toMatchObject({
+      "@type": "ListItem",
+      position: 2,
+      url: `${BASE_URL}/blog/second`,
+      name: "Second Post",
+    });
+  });
+
+  it("includes datePublished and dateModified per item in ISO 8601", () => {
+    const post = createTestPost({ date: "2026-01-15", updated: "2026-03-04" });
+    const schema = generateItemListSchema([post], "blog");
+    expect(schema.itemListElement[0].datePublished).toBe("2026-01-15T00:00:00+00:00");
+    expect(schema.itemListElement[0].dateModified).toBe("2026-03-04T00:00:00+00:00");
+  });
+
+  it("falls back dateModified to datePublished when meta.updated is absent", () => {
+    const post = createTestPost({ date: "2026-02-10" });
+    const schema = generateItemListSchema([post], "blog");
+    expect(schema.itemListElement[0].datePublished).toBe("2026-02-10T00:00:00+00:00");
+    expect(schema.itemListElement[0].dateModified).toBe("2026-02-10T00:00:00+00:00");
+  });
+
+  it("returns an empty list with numberOfItems=0 for an empty posts array", () => {
+    const schema = generateItemListSchema([], "blog");
+    expect(schema.itemListElement).toEqual([]);
+    expect(schema.numberOfItems).toBe(0);
   });
 });

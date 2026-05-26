@@ -7,6 +7,7 @@ import { getAllPosts, getAllTags } from "@/lib/content";
 import { generateItemListSchema, generateBreadcrumbSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
 import ContentListing from "@/components/content/ContentListing";
+import { openGraphBase } from "@/lib/openGraphBase";
 
 export const dynamic = "force-static";
 
@@ -16,10 +17,10 @@ export const metadata: Metadata = {
     "Step-by-step guides to get the most out of PERM Tracker. Learn how to track deadlines, manage recruitment, and streamline your practice.",
   alternates: { canonical: "/tutorials" },
   openGraph: {
+    ...openGraphBase,
     title: "Tutorials | PERM Tracker",
     description: "Step-by-step guides for PERM Tracker.",
     url: "/tutorials",
-    type: "website",
   },
 };
 

@@ -57,8 +57,9 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
       {posts.map((post) => (
         <div
           key={`${post.type}-${post.slug}`}
+          id={post.slug}
           data-timeline-entry
-          className="relative pl-10 sm:pl-16"
+          className="relative pl-10 sm:pl-16 scroll-mt-24"
         >
           {/* Dot on timeline */}
           <div
@@ -82,15 +83,35 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
             )}
 
             <div className="p-4 sm:p-5">
-              {/* Date */}
-              <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-                <Calendar className="h-3.5 w-3.5" />
-                {new Date(post.meta.date).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                  timeZone: "UTC",
-                })}
+              {/* Dates: published + (optional) updated. Semantic <time> elements
+                  give Google a clear date signal alongside the JSON-LD ItemList. */}
+              <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <time dateTime={post.meta.date}>
+                    {new Date(post.meta.date).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                      timeZone: "UTC",
+                    })}
+                  </time>
+                </span>
+                {post.meta.updated && post.meta.updated !== post.meta.date && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="font-heading text-[10px] font-semibold uppercase tracking-wider text-primary">
+                      Updated
+                    </span>
+                    <time dateTime={post.meta.updated}>
+                      {new Date(post.meta.updated).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                        timeZone: "UTC",
+                      })}
+                    </time>
+                  </span>
+                )}
               </div>
 
               {/* Title */}

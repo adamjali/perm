@@ -29,11 +29,10 @@ export function getSoftwareApplicationSchema(baseUrl: string) {
       'Free PERM case tracking software for immigration attorneys. Track deadlines, manage labor certification cases, and never miss a filing date.',
     url: baseUrl,
     screenshot: `${baseUrl}/opengraph-image`,
-    creator: {
-      '@type': 'Organization',
-      name: 'PERM Tracker',
-      url: baseUrl,
-    },
+    // Cross-reference the Organization @id (set in src/app/layout.tsx where
+    // schemas are combined into @graph) instead of inlining a duplicate. Lets
+    // Google understand this is the same entity as the Organization schema.
+    creator: { '@id': `${baseUrl}/#organization` },
     featureList: [
       'Automatic deadline calculation per DOL regulations',
       'Real-time PERM case validation',
@@ -42,13 +41,10 @@ export function getSoftwareApplicationSchema(baseUrl: string) {
       'Progress tracking timeline',
       'Calendar view with deadlines',
     ],
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '5',
-      reviewCount: '2',
-      bestRating: '5',
-      worstRating: '1',
-    },
+    // aggregateRating intentionally omitted: Google's rich-results policy
+    // requires the aggregate rating to be VISIBLY rendered on the same page
+    // alongside the structured data, AND the review pool must be a good-faith
+    // sample (typically ≥10 named reviews). Re-add once those are met.
   };
 }
 
@@ -68,7 +64,9 @@ export function getOrganizationSchema(baseUrl: string) {
       email: 'support@permtracker.app',
       contactType: 'customer support',
     },
-    sameAs: ['https://github.com'],
+    // Real brand attestation (verified HTTP 200). One real sameAs URL is
+    // strictly better than a bare placeholder for entity disambiguation.
+    sameAs: ['https://github.com/adamjali/perm'],
   };
 }
 
@@ -80,10 +78,17 @@ export function getWebSiteSchema(baseUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'PERM Tracker',
-    alternateName: ['PERMTracker', 'PERM Tracker App', 'permtracker', 'permtracker.app'],
+    // Single brand variant. Critically: do NOT include the URL form
+    // ('permtracker.app') — Google uses alternateName as a candidate set for
+    // the Site Name SERP feature, and listing the URL as a "name" is exactly
+    // what was causing Google to display the URL as the site name.
+    alternateName: ['PERMTracker'],
     url: baseUrl,
     description:
       'Free PERM case tracking software for immigration attorneys.',
+    // Cross-reference Organization @id (set in src/app/layout.tsx @graph) so
+    // Google understands WebSite is published by the Organization entity.
+    publisher: { '@id': `${baseUrl}/#organization` },
   };
 }
 

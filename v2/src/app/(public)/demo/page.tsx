@@ -19,6 +19,7 @@
 
 import type { Metadata } from "next";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
+import { openGraphBase } from "@/lib/openGraphBase";
 import { DemoPageClient } from "./DemoPageClient";
 
 export const dynamic = "force-static";
@@ -31,11 +32,11 @@ export const metadata: Metadata = {
     canonical: "/demo",
   },
   openGraph: {
+    ...openGraphBase,
     title: "Try PERM Tracker Demo",
     description:
       "Try PERM Tracker for free. Explore deadline tracking, case validation, and all features with sample data.",
     url: "/demo",
-    type: "website",
   },
 };
 

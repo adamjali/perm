@@ -7,6 +7,7 @@ import { getAllPosts, getAllTags } from "@/lib/content";
 import { generateItemListSchema, generateBreadcrumbSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
 import ContentListing from "@/components/content/ContentListing";
+import { openGraphBase } from "@/lib/openGraphBase";
 
 export const dynamic = "force-static";
 
@@ -16,10 +17,10 @@ export const metadata: Metadata = {
     "Tools, checklists, comparisons, and reference materials for PERM practitioners. Everything you need to manage labor certification cases.",
   alternates: { canonical: "/resources" },
   openGraph: {
+    ...openGraphBase,
     title: "Resources | PERM Tracker",
     description: "PERM tools, checklists, and reference materials.",
     url: "/resources",
-    type: "website",
   },
 };
 

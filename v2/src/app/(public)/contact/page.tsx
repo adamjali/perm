@@ -9,6 +9,7 @@
 import type { Metadata } from "next";
 import { Mail, MessageSquare } from "lucide-react";
 import Link from "next/link";
+import { openGraphBase } from "@/lib/openGraphBase";
 
 // Brand icon as inline SVG — lucide-react v1.x removed brand icons
 const GithubIcon = ({ className }: { className?: string }) => (
@@ -28,11 +29,11 @@ export const metadata: Metadata = {
     canonical: "/contact",
   },
   openGraph: {
+    ...openGraphBase,
     title: "Contact PERM Tracker",
     description:
       "Get in touch with PERM Tracker support for help with your immigration case management.",
     url: "/contact",
-    type: "website",
   },
 };
 

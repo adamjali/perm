@@ -189,33 +189,46 @@ export default function AuthHeader() {
                   Demo
                 </NavLink>
 
-                {/* Learn dropdown */}
+                {/* Learn dropdown — links are ALWAYS rendered in the DOM (not
+                    behind a `{isLearnOpen &&}` conditional) so Googlebot sees
+                    them in the initial SSR HTML, a documented sitelinks input.
+                    Visibility is controlled via CSS + `inert` + `aria-hidden`
+                    when closed, which removes them from focus order and the
+                    accessibility tree (matches the prior observable behavior).
+                    DO NOT revert to conditional render — that breaks SEO. */}
                 <div ref={learnRef} className="relative">
                   <button
                     type="button"
                     onClick={() => setIsLearnOpen(!isLearnOpen)}
                     className="flex items-center gap-1 px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
                     aria-expanded={isLearnOpen}
+                    aria-haspopup="menu"
                   >
                     Learn
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
                   </button>
-                  {isLearnOpen && (
-                    <div className="absolute left-0 top-full z-50 mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(46,204,64,0.3)]">
-                      {CONTENT_NAV_LINKS.map((link) => (
-                        <NavLink
-                          key={link.href}
-                          href={link.href}
-                          className="block px-4 py-2 font-heading text-sm font-semibold text-white transition-colors hover:bg-white/5 hover:text-primary"
-                          spinnerClassName="text-white"
-                          spinnerSize={14}
-                          onClick={() => setIsLearnOpen(false)}
-                        >
-                          {link.label}
-                        </NavLink>
-                      ))}
-                    </div>
-                  )}
+                  <div
+                    role="menu"
+                    aria-hidden={!isLearnOpen}
+                    inert={!isLearnOpen}
+                    className={cn(
+                      "absolute left-0 top-full z-50 mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(46,204,64,0.3)] transition-opacity duration-150",
+                      !isLearnOpen && "invisible pointer-events-none opacity-0"
+                    )}
+                  >
+                    {CONTENT_NAV_LINKS.map((link) => (
+                      <NavLink
+                        key={link.href}
+                        href={link.href}
+                        className="block px-4 py-2 font-heading text-sm font-semibold text-white transition-colors hover:bg-white/5 hover:text-primary"
+                        spinnerClassName="text-white"
+                        spinnerSize={14}
+                        onClick={() => setIsLearnOpen(false)}
+                      >
+                        {link.label}
+                      </NavLink>
+                    ))}
+                  </div>
                 </div>
               </>
             ) : (
@@ -232,7 +245,8 @@ export default function AuthHeader() {
                   </NavLink>
                 ))}
 
-                {/* Learn dropdown */}
+                {/* Learn dropdown — see homepage branch above for the SSR-render
+                    rationale and a11y contract. Same pattern, active-link styling. */}
                 <div ref={learnRef} className="relative">
                   <button
                     type="button"
@@ -242,29 +256,36 @@ export default function AuthHeader() {
                       CONTENT_NAV_LINKS.some(l => l.href === pathname) ? "text-primary" : "text-white hover:text-primary"
                     )}
                     aria-expanded={isLearnOpen}
+                    aria-haspopup="menu"
                   >
                     Learn
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
                   </button>
-                  {isLearnOpen && (
-                    <div className="absolute left-0 top-full z-50 mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(46,204,64,0.3)]">
-                      {CONTENT_NAV_LINKS.map((link) => (
-                        <NavLink
-                          key={link.href}
-                          href={link.href}
-                          className={cn(
-                            "block px-4 py-2 font-heading text-sm font-semibold transition-colors",
-                            pathname === link.href ? "bg-primary/10 text-primary" : "text-white hover:bg-white/5 hover:text-primary"
-                          )}
-                          spinnerClassName="text-white"
-                          spinnerSize={14}
-                          onClick={() => setIsLearnOpen(false)}
-                        >
-                          {link.label}
-                        </NavLink>
-                      ))}
-                    </div>
-                  )}
+                  <div
+                    role="menu"
+                    aria-hidden={!isLearnOpen}
+                    inert={!isLearnOpen}
+                    className={cn(
+                      "absolute left-0 top-full z-50 mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(46,204,64,0.3)] transition-opacity duration-150",
+                      !isLearnOpen && "invisible pointer-events-none opacity-0"
+                    )}
+                  >
+                    {CONTENT_NAV_LINKS.map((link) => (
+                      <NavLink
+                        key={link.href}
+                        href={link.href}
+                        className={cn(
+                          "block px-4 py-2 font-heading text-sm font-semibold transition-colors",
+                          pathname === link.href ? "bg-primary/10 text-primary" : "text-white hover:bg-white/5 hover:text-primary"
+                        )}
+                        spinnerClassName="text-white"
+                        spinnerSize={14}
+                        onClick={() => setIsLearnOpen(false)}
+                      >
+                        {link.label}
+                      </NavLink>
+                    ))}
+                  </div>
                 </div>
               </>
             )}

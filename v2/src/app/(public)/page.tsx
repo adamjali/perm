@@ -33,30 +33,29 @@ import {
   CTASection,
 } from "@/components/home";
 import { getFAQPageSchema } from "@/lib/structuredData";
+import { openGraphBase } from "@/lib/openGraphBase";
 
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "PERM Tracker - Deadline Management for Immigration Attorneys",
+  // `absolute` bypasses the root layout's `title.template: "%s | PERM Tracker"`
+  // (Next.js docs § Template). Without this, Next.js appends " | PERM Tracker"
+  // to a literal that already starts with the brand → "...| PERM Tracker | PERM
+  // Tracker" doubled. Using `absolute` is the documented escape hatch.
+  title: { absolute: "PERM Tracker - Deadline Management for Immigration Attorneys" },
   description:
     "PERM case tracking software for immigration attorneys. Auto-calculate 11 deadline types, get alerts before they hit, sync to Google Calendar.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
+    // Spread openGraphBase to preserve siteName / locale / type / images that
+    // Next.js's shallow merge would otherwise drop from the parent layout.
+    ...openGraphBase,
     title: "PERM Tracker - Never Lose a Case to a Missed Deadline",
     description:
       "Auto-calculate every PERM filing window, PWD expiration, and audit deadline. Email + push alerts before they hit.",
     url: "/",
-    type: "website",
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "PERM Tracker - Deadline Management for Immigration Attorneys",
-      },
-    ],
   },
 };
 

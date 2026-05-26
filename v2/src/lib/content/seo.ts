@@ -9,7 +9,7 @@ import type { PostMeta, ContentType, PostSummary } from "./types";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
 
 /** Convert YYYY-MM-DD date string to ISO 8601 with timezone for schema.org */
-function toISO8601(dateStr: string): string {
+export function toISO8601(dateStr: string): string {
   return `${dateStr}T00:00:00+00:00`;
 }
 
@@ -115,7 +115,13 @@ export function generateVideoObjectSchema(
   };
 }
 
-/** Generate ItemList schema for content listing pages */
+/**
+ * Generate ItemList schema for content listing pages.
+ *
+ * Each item carries `datePublished` and `dateModified` so Google has a date
+ * signal for the listing's items (matches the pattern in `generateArticleSchema`
+ * — `dateModified` falls back to `datePublished` when `meta.updated` is absent).
+ */
 export function generateItemListSchema(
   posts: PostSummary[],
   type: ContentType
@@ -128,6 +134,8 @@ export function generateItemListSchema(
       position: i + 1,
       url: `${BASE_URL}/${post.type}/${post.slug}`,
       name: post.meta.title,
+      datePublished: toISO8601(post.meta.date),
+      dateModified: toISO8601(post.meta.updated || post.meta.date),
     })),
     numberOfItems: posts.length,
     name: `PERM Tracker ${type.charAt(0).toUpperCase() + type.slice(1)}`,
