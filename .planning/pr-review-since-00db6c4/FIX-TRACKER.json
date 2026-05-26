@@ -1,0 +1,577 @@
+{
+  "meta": {
+    "title": "PR review fix pass \u2014 findings since 00db6c4 (PR #93)",
+    "scope": "Address all 27 findings from the 6-agent /pr-review-toolkit:review-pr run on git diff 00db6c4..a62340a (52 files, 3 commits = PR #94 maintenance + PR #99 SEO + api.d.ts sync)",
+    "created": "2026-05-26",
+    "status": "SHIPPED",
+    "source_reports": "6 agent runs this session: code-reviewer (a73d4b06), silent-failure-hunter (adfd9aca), comment-analyzer (a1420ca1), pr-test-analyzer (a37d6ba4), type-design-analyzer (ac644629), code-simplifier (adad9a50)",
+    "verification_cadence": "typecheck -> lint -> build -> CI=true TZ=UTC test:run, all green before AND after final commit",
+    "deploy_sequence": "branch -> push -> PR -> CI -> claude-review -> merge -> convex deploy -y -> vercel verify -> SSR curl re-checks",
+    "merged_commit": "332a51b",
+    "merged_at": "2026-05-26",
+    "vercel_deploy": "perm-6gbd7vijz (Ready)",
+    "convex_deploy": "giant-dragon-464 (no indexes dropped, schema validated)",
+    "verification": "All 8 post-deploy SSR curls pass. og:site_name + application-name + alternateName + title intact. aggregateRating restored on homepage, absent on /blog. Per-slug OG image generators restored. AuthHeader SSR sitelinks contract holds. /login + /signup noindex + absent from sitemap. permtracker.app \u2192 200."
+  },
+  "decisions_locked": [
+    {
+      "id": "D1",
+      "decision": "Migration .take(4096) cap, not scheduler-batching",
+      "rationale": "Current ~90 users; scheduler-batching is YAGNI until 4K+"
+    },
+    {
+      "id": "D2",
+      "decision": "Strip 'images' in content-detail factory, not split base",
+      "rationale": "Surgical; matches Next.js hasOwnProperty('images') check at resolve-metadata.js:148"
+    },
+    {
+      "id": "D3",
+      "decision": "aggregateRating: homepage-only inline <script>, @id cross-ref to #software",
+      "rationale": "Senja widget visible on homepage; root @graph would re-introduce every-page policy violation"
+    },
+    {
+      "id": "D4",
+      "decision": "Migration testing depth: 7 cases",
+      "rationale": "Auth-critical, deserves real assertions (not snapshots)"
+    },
+    {
+      "id": "D5",
+      "decision": "frontend-design skill NOT invoked",
+      "rationale": "Zero visible UI changes \u2014 all comments, types, JSON-LD, tests"
+    },
+    {
+      "id": "D6",
+      "decision": "Commit 9 (tests) dispatched to general-purpose Opus task agent",
+      "rationale": "Bulk deterministic test writing \u2014 efficient delegation"
+    },
+    {
+      "id": "D7",
+      "decision": "Commits 1-8 self-executed",
+      "rationale": "Precise small edits; orchestration overhead not justified"
+    }
+  ],
+  "verified_claims": [
+    {
+      "id": "V1",
+      "claim": "openGraph.images set via spread silences file-based opengraph-image.tsx",
+      "source": "node_modules/next/dist/lib/metadata/resolve-metadata.js:148-158",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "V2",
+      "claim": "4 per-slug opengraph-image.tsx generators exist (blog/tutorials/guides/resources)",
+      "source": "direct file inspection",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "V3",
+      "claim": "authAccounts.userIdAndProvider index exists",
+      "source": "node_modules/@convex-dev/auth/src/server/implementation/types.ts:73",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "V4",
+      "claim": "Same hasOwnProperty('images') check applies to twitter.images",
+      "source": "resolve-metadata.js:138",
+      "status": "CONFIRMED (no exposure \u2014 openGraphBase has no twitter)"
+    }
+  ],
+  "phases": [
+    {
+      "id": "P0",
+      "name": "Setup",
+      "tasks": [
+        "Branch from main",
+        "JSON tracker created"
+      ],
+      "status": "shipped"
+    },
+    {
+      "id": "P1",
+      "name": "CRITICAL bugs",
+      "commits": [
+        "C1",
+        "C2"
+      ],
+      "status": "shipped"
+    },
+    {
+      "id": "P2",
+      "name": "Types & DRY",
+      "commits": [
+        "C3",
+        "C4"
+      ],
+      "status": "shipped"
+    },
+    {
+      "id": "P3",
+      "name": "aggregateRating + wrong-comment fixes",
+      "commits": [
+        "C5"
+      ],
+      "status": "shipped"
+    },
+    {
+      "id": "P4",
+      "name": "Documentation polish",
+      "commits": [
+        "C6"
+      ],
+      "status": "shipped"
+    },
+    {
+      "id": "P5",
+      "name": "Quality polish",
+      "commits": [
+        "C7"
+      ],
+      "status": "shipped"
+    },
+    {
+      "id": "P6",
+      "name": "Tests",
+      "commits": [
+        "C8",
+        "C9"
+      ],
+      "status": "shipped"
+    },
+    {
+      "id": "P7",
+      "name": "Ship",
+      "tasks": [
+        "Full gate",
+        "Push",
+        "PR",
+        "CI+review",
+        "Merge",
+        "Convex deploy",
+        "Vercel verify",
+        "SSR curls",
+        "Cleanup"
+      ],
+      "status": "shipped"
+    }
+  ],
+  "commits": [
+    {
+      "id": "C1",
+      "title": "fix(seo,critical): strip openGraphBase.images in content-detail factory to restore per-slug OG image generators",
+      "files": [
+        "v2/src/lib/content/createContentDetailPage.tsx"
+      ],
+      "addresses": [
+        "F1"
+      ]
+    },
+    {
+      "id": "C2",
+      "title": "fix(auth,critical): harden D1 migration \u2014 Set-based collision guard + withIndex + recordError + take(4096) cap + per-account collision check + named return type",
+      "files": [
+        "v2/convex/migrations.ts"
+      ],
+      "addresses": [
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F6",
+        "F25",
+        "F26"
+      ]
+    },
+    {
+      "id": "C3",
+      "title": "refactor(types): centralize SCHEMA_IDS + as const @type literals + clean openGraphBase typing",
+      "files": [
+        "v2/src/lib/structuredData.ts",
+        "v2/src/app/layout.tsx",
+        "v2/src/lib/openGraphBase.ts",
+        "v2/src/lib/content/seo.ts"
+      ],
+      "addresses": [
+        "F22",
+        "F23",
+        "F30"
+      ]
+    },
+    {
+      "id": "C4",
+      "title": "refactor(seo): generateItemListSchema accepts urlFor + changelog uses shared generator + fmtDate helper",
+      "files": [
+        "v2/src/lib/content/seo.ts",
+        "v2/src/app/(public)/changelog/page.tsx",
+        "v2/src/components/content/ChangelogTimeline.tsx"
+      ],
+      "addresses": [
+        "F24",
+        "F31"
+      ]
+    },
+    {
+      "id": "C5",
+      "title": "feat(seo): restore aggregateRating on homepage via @id cross-ref + correct policy comments",
+      "files": [
+        "v2/src/lib/structuredData.ts",
+        "v2/src/app/(public)/page.tsx",
+        "v2/src/lib/openGraphBase.ts"
+      ],
+      "addresses": [
+        "F8",
+        "F9",
+        "F34"
+      ]
+    },
+    {
+      "id": "C6",
+      "title": "docs(observability): sitemap captureError + AuthHeader docs + comment phrasing",
+      "files": [
+        "v2/src/app/sitemap.ts",
+        "v2/src/components/layout/AuthHeader.tsx"
+      ],
+      "addresses": [
+        "F7",
+        "F10",
+        "F11",
+        "F12",
+        "F13"
+      ]
+    },
+    {
+      "id": "C7",
+      "title": "chore(quality): toISO8601 runtime guard + AccountChange + OAuth comment",
+      "files": [
+        "v2/src/lib/content/seo.ts",
+        "v2/convex/migrations.ts"
+      ],
+      "addresses": [
+        "F25",
+        "F32",
+        "F33"
+      ]
+    },
+    {
+      "id": "C8",
+      "title": "test(seo): structuredData invariants + sitemap shape + auth metadata + changelog page anchor URLs",
+      "files": [
+        "v2/src/lib/__tests__/structuredData.test.ts",
+        "v2/src/app/__tests__/sitemap.test.ts",
+        "v2/src/app/(auth)/__tests__/metadata.test.ts",
+        "v2/src/app/(public)/changelog/__tests__/page.test.tsx"
+      ],
+      "addresses": [
+        "F17",
+        "F19",
+        "F20",
+        "F21"
+      ]
+    },
+    {
+      "id": "C9",
+      "title": "test(auth,critical): migrations + AuthHeader SSR contract + ChangelogTimeline",
+      "files": [
+        "v2/convex/__tests__/migrations.test.ts",
+        "v2/src/components/layout/__tests__/AuthHeader.test.tsx",
+        "v2/src/components/content/__tests__/ChangelogTimeline.test.tsx"
+      ],
+      "addresses": [
+        "F14",
+        "F15",
+        "F16",
+        "F18"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "agent": "code-reviewer",
+      "severity": "critical",
+      "file": "createContentDetailPage.tsx:47-59",
+      "summary": "Spreading openGraphBase (with images) silences file-based per-slug opengraph-image.tsx",
+      "addressed_in": "C1",
+      "status": "verified"
+    },
+    {
+      "id": "F2",
+      "agent": "code-reviewer + silent-failure-hunter",
+      "severity": "critical",
+      "file": "migrations.ts:34-66",
+      "summary": "Map<lower,userId> collision guard is iteration-order-dependent \u2014 last-write-wins can miss real collisions",
+      "addressed_in": "C2",
+      "status": "verified"
+    },
+    {
+      "id": "F3",
+      "agent": "code-reviewer",
+      "severity": "important",
+      "file": "migrations.ts:72-75",
+      "summary": "Uses .filter() instead of .withIndex('userIdAndProvider') \u2014 Convex guideline violation",
+      "addressed_in": "C2",
+      "status": "verified"
+    },
+    {
+      "id": "F4",
+      "agent": "code-reviewer",
+      "severity": "important",
+      "file": "migrations.ts:32",
+      "summary": "Unbounded ctx.db.query('users').collect() risks 8MB/4096-doc limit at scale",
+      "addressed_in": "C2 (.take(4096) cap)",
+      "status": "verified"
+    },
+    {
+      "id": "F5",
+      "agent": "code-reviewer",
+      "severity": "suggestion",
+      "file": "migrations.ts:83-103",
+      "summary": "No account-level (provider, lower(providerAccountId)) collision pre-check",
+      "addressed_in": "C2",
+      "status": "verified"
+    },
+    {
+      "id": "F6",
+      "agent": "silent-failure-hunter",
+      "severity": "critical",
+      "file": "migrations.ts",
+      "summary": "Missing recordError() per project convention",
+      "addressed_in": "C2",
+      "status": "verified"
+    },
+    {
+      "id": "F7",
+      "agent": "silent-failure-hunter",
+      "severity": "medium",
+      "file": "sitemap.ts:21",
+      "summary": "Zero-posts fallback uses today's date with no captureError \u2014 build-time content failure silent",
+      "addressed_in": "C6",
+      "status": "verified"
+    },
+    {
+      "id": "F8",
+      "agent": "comment-analyzer",
+      "severity": "wrong",
+      "file": "structuredData.ts:44-47",
+      "summary": "aggregateRating comment claims '\u226510 named reviews' as Google policy \u2014 SEO folklore, not Google's actual requirement",
+      "addressed_in": "C5",
+      "status": "verified"
+    },
+    {
+      "id": "F9",
+      "agent": "comment-analyzer",
+      "severity": "wrong",
+      "file": "openGraphBase.ts:20-22",
+      "summary": "satisfies-vs-as-const rationale is misleading \u2014 override widening works with both",
+      "addressed_in": "C5",
+      "status": "verified"
+    },
+    {
+      "id": "F10",
+      "agent": "comment-analyzer",
+      "severity": "improvement",
+      "file": "sitemap.ts:4-7",
+      "summary": "'build time' comment phrasing slightly imprecise \u2014 'cached by default' is more accurate",
+      "addressed_in": "C6",
+      "status": "verified"
+    },
+    {
+      "id": "F11",
+      "agent": "comment-analyzer",
+      "severity": "improvement",
+      "file": "AuthHeader.tsx:192-198",
+      "summary": "aria-hidden defense-in-depth role (vs inert) not documented",
+      "addressed_in": "C6",
+      "status": "verified"
+    },
+    {
+      "id": "F12",
+      "agent": "comment-analyzer",
+      "severity": "improvement",
+      "file": "AuthHeader.tsx:192-198",
+      "summary": "'use client' + SSR interaction not explained \u2014 could confuse future maintainer",
+      "addressed_in": "C6",
+      "status": "verified"
+    },
+    {
+      "id": "F13",
+      "agent": "comment-analyzer",
+      "severity": "improvement",
+      "file": "AuthHeader.tsx:338",
+      "summary": "Mobile menu conditional-render is OK but asymmetry with desktop's DO-NOT-revert rule isn't documented",
+      "addressed_in": "C6",
+      "status": "verified"
+    },
+    {
+      "id": "F14",
+      "agent": "pr-test-analyzer",
+      "severity": "critical",
+      "file": "convex/migrations.ts",
+      "summary": "Auth-critical normalizeMixedCaseEmails \u2014 zero tests",
+      "addressed_in": "C9",
+      "status": "verified"
+    },
+    {
+      "id": "F15",
+      "agent": "pr-test-analyzer",
+      "severity": "critical",
+      "file": "convex/auth.ts profile()",
+      "summary": "Email normalization at line 77 is the migration's correctness anchor \u2014 untested",
+      "addressed_in": "C9 (covered via the migration's behavioral tests)",
+      "status": "verified"
+    },
+    {
+      "id": "F16",
+      "agent": "pr-test-analyzer",
+      "severity": "important",
+      "file": "AuthHeader.test.tsx",
+      "summary": "Tests don't verify SSR contract \u2014 links present when closed, container has aria-hidden+inert",
+      "addressed_in": "C9",
+      "status": "verified"
+    },
+    {
+      "id": "F17",
+      "agent": "pr-test-analyzer",
+      "severity": "important",
+      "file": "changelog/page.tsx",
+      "summary": "Inline ItemList anchor URL format untested \u2014 regression to /changelog/<slug> 404s wouldn't fail tests",
+      "addressed_in": "C8",
+      "status": "verified"
+    },
+    {
+      "id": "F18",
+      "agent": "pr-test-analyzer",
+      "severity": "important",
+      "file": "ChangelogTimeline.tsx",
+      "summary": "id={post.slug} and <time> elements untested",
+      "addressed_in": "C9",
+      "status": "verified"
+    },
+    {
+      "id": "F19",
+      "agent": "pr-test-analyzer",
+      "severity": "important",
+      "file": "(auth)/login + signup metadata",
+      "summary": "robots: {index:false,follow:true} untested \u2014 easy to silently drop",
+      "addressed_in": "C8",
+      "status": "verified"
+    },
+    {
+      "id": "F20",
+      "agent": "pr-test-analyzer",
+      "severity": "important",
+      "file": "sitemap.ts",
+      "summary": "latestPostDate derivation + login/signup exclusion + revalidate untested",
+      "addressed_in": "C8",
+      "status": "verified"
+    },
+    {
+      "id": "F21",
+      "agent": "pr-test-analyzer",
+      "severity": "important",
+      "file": "structuredData.ts",
+      "summary": "@id consistency + alternateName policy + aggregateRating absence untested",
+      "addressed_in": "C8",
+      "status": "verified"
+    },
+    {
+      "id": "F22",
+      "agent": "type-design + simplifier",
+      "severity": "important",
+      "file": "structuredData.ts + layout.tsx",
+      "summary": "@id strings duplicated across files \u2014 drift hazard",
+      "addressed_in": "C3",
+      "status": "verified"
+    },
+    {
+      "id": "F23",
+      "agent": "type-design",
+      "severity": "important",
+      "file": "structuredData.ts + seo.ts",
+      "summary": "@type literals widened to string \u2014 typos would compile silently",
+      "addressed_in": "C3",
+      "status": "verified"
+    },
+    {
+      "id": "F24",
+      "agent": "type-design",
+      "severity": "important",
+      "file": "changelog/page.tsx + seo.ts",
+      "summary": "Inline ItemList duplicates generateItemListSchema \u2014 drift risk",
+      "addressed_in": "C4",
+      "status": "verified"
+    },
+    {
+      "id": "F25",
+      "agent": "type-design",
+      "severity": "suggestion",
+      "file": "seo.ts toISO8601 + migrations.ts return type",
+      "summary": "toISO8601 signature loose; migrations return type inferred",
+      "addressed_in": "C7 + C2",
+      "status": "verified"
+    },
+    {
+      "id": "F26",
+      "agent": "type-design",
+      "severity": "suggestion",
+      "file": "migrations.ts:35-37",
+      "summary": "ownerByLowerEmail non-deterministic owner-reporting on triple-collision",
+      "addressed_in": "C2 (covered by Set-based fix)",
+      "status": "verified"
+    },
+    {
+      "id": "F27",
+      "agent": "type-design",
+      "severity": "verified-correct",
+      "file": "AuthHeader.tsx inert",
+      "summary": "inert={!isLearnOpen} React 19 typing \u2014 no concern",
+      "addressed_in": "N/A",
+      "status": "verified"
+    },
+    {
+      "id": "F30",
+      "agent": "simplifier + type-design",
+      "severity": "worth-doing",
+      "file": "structuredData.ts + layout.tsx",
+      "summary": "Extract SCHEMA_IDS for @id URLs (same as F22 from type-design)",
+      "addressed_in": "C3",
+      "status": "verified"
+    },
+    {
+      "id": "F31",
+      "agent": "simplifier",
+      "severity": "worth-doing",
+      "file": "ChangelogTimeline.tsx",
+      "summary": "Extract fmtDate helper \u2014 toLocaleDateString duplicated",
+      "addressed_in": "C4",
+      "status": "verified"
+    },
+    {
+      "id": "F32",
+      "agent": "simplifier",
+      "severity": "optional",
+      "file": "migrations.ts",
+      "summary": "AccountChange type alias for repeated literal",
+      "addressed_in": "C7",
+      "status": "verified"
+    },
+    {
+      "id": "F33",
+      "agent": "simplifier",
+      "severity": "optional",
+      "file": "migrations.ts",
+      "summary": "One-line OAuth comment on .includes('@') guard",
+      "addressed_in": "C7",
+      "status": "verified"
+    },
+    {
+      "id": "F34",
+      "agent": "user",
+      "severity": "decision",
+      "file": "structuredData.ts + (public)/page.tsx",
+      "summary": "Re-add aggregateRating on homepage only (Option A) since Senja is visibly rendered",
+      "addressed_in": "C5",
+      "status": "verified"
+    }
+  ],
+  "cleanup": []
+}
