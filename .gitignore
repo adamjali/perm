@@ -104,6 +104,11 @@ Thumbs.db
 # Harbor SEO
 .planning/harbor-seo-profile.md
 
+# Ephemeral PR-review fix-pass scaffolding (compaction-survival trackers + agent
+# reports). These are working artifacts, not durable docs — git history is the
+# permanent record. Keep them local-only so they never re-accumulate in the repo.
+.planning/pr-review-since-*/
+
 # Secrets
 secrets/
 *.key

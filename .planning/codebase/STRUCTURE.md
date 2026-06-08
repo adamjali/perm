@@ -21,7 +21,6 @@ perm-tracker/                      # Repository root
 ├── LICENSE                        # License file
 ├── README.md                      # Repository README
 ├── perm_flow.md                   # Canonical PERM workflow reference (domain spec)
-├── hero_image.png                 # Marketing hero image
 └── v2/                            # ** ALL APPLICATION CODE **
     ├── .storybook/                # Storybook configuration
     ├── .vercel/                   # Vercel project config (linked to "perm")
@@ -207,7 +206,6 @@ perm-tracker/                      # Repository root
 | `perm_flow.md` | Canonical PERM workflow reference -- all deadline rules and business logic source of truth |
 | `CLAUDE.md` | Root-level developer instructions and project overview |
 | `.gitignore` | Git ignore rules |
-| `hero_image.png` | Marketing hero image |
 | `README.md` | Repository README with architecture overview |
 | `LICENSE` | MIT license |
 
