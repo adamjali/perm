@@ -25,7 +25,7 @@
 
 ### 4. Health Check
 
-- `GET /api/health` — returns `{ status: "ok", timestamp, version, environment }`
+- `GET /api/health` — returns `{ status: "ok", timestamp }`
 - No authentication required (suitable for uptime monitoring tools like UptimeRobot, Pingdom)
 - `GET /api/sentry-check` — Sentry connectivity test (requires `x-sentry-check-secret` header)
 
@@ -81,4 +81,4 @@ This schedules:
 - User profiles are recreated on next login via `ensureUserProfileInternal`
 
 ### Key Rotation
-- See `docs/SECURITY.md` for `OAUTH_ENCRYPTION_KEY` rotation procedure
+- See `SECURITY_ARCHITECTURE.md` for `OAUTH_ENCRYPTION_KEY` rotation procedure

@@ -23,7 +23,7 @@
 |----------|---------|----------------|
 | A1.1 | Health monitoring | `GET /api/health` endpoint for uptime monitoring |
 | A1.1 | Error monitoring | Sentry (client+server), systemErrors table, admin email alerts |
-| A1.2 | Incident response | Documented in `docs/INCIDENT_RESPONSE.md` |
+| A1.2 | Incident response | Documented in `INCIDENT_RESPONSE.md` |
 | A1.2 | Automated recovery | Convex auto-scaling, Vercel edge deployment, scheduled job retries |
 
 ## Processing Integrity (PI1)
@@ -62,10 +62,10 @@
 
 | Document | Path |
 |----------|------|
-| Security Architecture | `docs/SECURITY.md` |
-| Data Retention | `docs/DATA_RETENTION.md` |
-| Incident Response | `docs/INCIDENT_RESPONSE.md` |
-| Access Control | `docs/ACCESS_CONTROL.md` |
+| Security Architecture | `SECURITY_ARCHITECTURE.md` |
+| Data Retention | `DATA_RETENTION.md` |
+| Incident Response | `INCIDENT_RESPONSE.md` |
+| Access Control | `ACCESS_CONTROL.md` |
 | Privacy Policy | `src/app/(public)/privacy/page.tsx` |
 | Terms of Service | `src/app/(public)/terms/page.tsx` |
 | Rate Limiting | `convex/lib/rateLimit.ts` |

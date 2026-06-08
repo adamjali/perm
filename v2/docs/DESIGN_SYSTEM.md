@@ -507,8 +507,6 @@ focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
 
 **Related Docs:**
 - [ANIMATION_STORYBOARD.md](ANIMATION_STORYBOARD.md) - Animation catalog and timing tokens
-- [CASE_CARD.md](CASE_CARD.md) - CaseCard component design specs
-- [DRAG_DROP_REORDERING.md](DRAG_DROP_REORDERING.md) - Drag-drop feature specs
 
 ---
 

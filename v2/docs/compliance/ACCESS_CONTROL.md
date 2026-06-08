@@ -66,7 +66,7 @@ export async function requireAdmin(ctx: QueryCtx | MutationCtx) {
   const userId = await getCurrentUserId(ctx);
   const user = await ctx.db.get(userId);
   const adminEmail = process.env.ADMIN_EMAIL; // No fallback — denies admin access if unset
-  if (user?.email !== adminEmail) throw new ConvexError("Forbidden: admin access required");
+  if (user?.email !== adminEmail) throw new ConvexError("Unauthorized: Admin access required");
   return userId;
 }
 ```
