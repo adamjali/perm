@@ -40,10 +40,10 @@ const RESET_TRANSITION = "transform 0.3s ease-out";
 // TYPES
 // ============================================================================
 
-interface TiltStyle {
-  transform: string;
-  transition: string;
-}
+// A narrow slice of React.CSSProperties (not a standalone interface) so the value
+// is directly assignable to a `style` prop. csstype's tightened CSSProperties in
+// React 19.2.x rejects a structurally-separate {transform, transition} interface.
+type TiltStyle = Pick<React.CSSProperties, "transform" | "transition">;
 
 interface UseTiltReturn<T extends HTMLElement = HTMLDivElement> {
   /** Ref to attach to the tilt target element */
