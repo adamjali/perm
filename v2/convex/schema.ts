@@ -193,7 +193,12 @@ export default defineSchema({
     )),
     adminSortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
 
-    // Admin notification preferences
+    // DEPRECATED (2026-06-08): admin self-notification emails ("New User Signup",
+    // "First Case Created", "New Case Created") were removed entirely for cost control.
+    // These optional fields are retained ONLY because one legacy admin profile still
+    // carries them; dropping them from the schema would fail deploy validation against
+    // that doc without a data migration. Nothing reads or writes them anymore. Safe to
+    // delete after clearing the values from that one profile.
     adminNotifyNewUser: v.optional(v.boolean()),
     adminNotifyFirstCase: v.optional(v.boolean()),
     adminNotifyAnyCase: v.optional(v.boolean()),

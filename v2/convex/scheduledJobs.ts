@@ -639,7 +639,9 @@ export const deleteNotification = internalMutation({
  * - Recent case updates (last 7 days)
  * - Unread notification count
  *
- * Always sends to opted-in users, even if empty (shows "No urgent deadlines!" message).
+ * Skips "All Clear" digests (no overdue/upcoming/later deadlines AND no recent case
+ * updates) — those add no value and needlessly burn Resend's daily send cap during the
+ * Monday digest burst. Only opted-in users with something to report are emailed.
  */
 export const sendWeeklyDigest = internalAction({
   args: {},
@@ -695,6 +697,15 @@ export const sendWeeklyDigest = internalAction({
           rawDeadlines,
           rawCaseUpdates,
         });
+
+        // Cost control: skip "All Clear" digests. `isEmpty` is the canonical
+        // no-content signal (no overdue/upcoming/later deadlines and no recent case
+        // updates) — the same flag the email template uses to render its empty state.
+        // Sending these only spends Resend's 100/day cap without giving the user anything.
+        if (digestContent.isEmpty) {
+          skipped++;
+          continue;
+        }
 
         step = "scheduling email";
         const delayMs = emailIndex * 1000;

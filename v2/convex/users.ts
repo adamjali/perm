@@ -10,7 +10,6 @@ import { recordError } from "./lib/errorRecording";
 import { buildDefaultProfile } from "./lib/userDefaults";
 import { rateLimiter } from "./rateLimitConfig";
 import { formatDateForNotification } from "./lib/formatDate";
-import { sanitizeNameForEmail } from "./lib/nameValidation";
 
 const log = loggers.auth;
 
@@ -143,31 +142,6 @@ export const ensureUserProfile = mutation({
       }
     }
 
-    // Admin notification: new user signup
-    // Also here (not just ensureUserProfileInternal) because PendingTermsHandler
-    // may create the profile before the auth callback does, racing the internal path
-    try {
-      const adminPrefs = await ctx.runQuery(internal.admin.getAdminNotificationPrefs, {});
-      if (adminPrefs.adminNotifyNewUser) {
-        const signupTime = new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-        await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
-          subject: "New User Signup",
-          body: `A new user has signed up for PERM Tracker.\n\nEmail: ${user?.email ?? "unknown"}\nName: ${user?.name ?? "Not provided"}\nTime: ${signupTime}`,
-        });
-      }
-    } catch (adminNotifError) {
-      log.error("Failed to send admin signup notification", {
-        error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
-      });
-      await recordError(ctx, "mutation", "users.ensureUserProfile.adminNotif", adminNotifError, { userId });
-    }
-
     return profileId;
   },
 });
@@ -264,30 +238,6 @@ export const recordMyLogin = mutation({
           });
           await recordError(ctx, "mutation", "users.recordMyLogin.welcome", welcomeError, { userId });
         }
-      }
-
-      // Admin notification (only for verified users — blocks signup-spam from reaching admin inbox)
-      try {
-        const adminPrefs = await ctx.runQuery(internal.admin.getAdminNotificationPrefs, {});
-        if (adminPrefs.adminNotifyNewUser) {
-          const signupTime = new Date().toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-          const safeName = user?.name ? sanitizeNameForEmail(user.name) : "Not provided";
-          await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
-            subject: "New User Signup",
-            body: `A new user has verified and signed up for PERM Tracker.\n\nEmail: ${user?.email ?? "unknown"}\nName: ${safeName}\nTime: ${signupTime}`,
-          });
-        }
-      } catch (adminNotifError) {
-        log.error("Failed to send admin signup notification on first login", {
-          error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
-        });
-        await recordError(ctx, "mutation", "users.recordMyLogin.adminNotif", adminNotifError, { userId });
       }
     }
   },
@@ -417,24 +367,6 @@ export const updateUserProfile = mutation({
         throw new Error("Failed to create user profile");
       }
 
-      // Admin notification: new user signup (safety net path)
-      try {
-        const adminPrefs = await ctx.runQuery(internal.admin.getAdminNotificationPrefs, {});
-        if (adminPrefs.adminNotifyNewUser) {
-          const signupTime = new Date().toLocaleDateString("en-US", {
-            year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
-          });
-          await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
-            subject: "New User Signup",
-            body: `A new user has signed up for PERM Tracker.\n\nEmail: ${user?.email ?? "unknown"}\nName: ${user?.name ?? "Not provided"}\nTime: ${signupTime}`,
-          });
-        }
-      } catch (adminNotifError) {
-        log.error("Failed to send admin signup notification", {
-          error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
-        });
-        await recordError(ctx, "mutation", "users.updateUserProfile.adminNotif", adminNotifError, { userId });
-      }
     }
 
     // Filter out undefined values from args and add updatedAt
@@ -516,25 +448,6 @@ export const acceptTermsOfService = mutation({
 
       // Audit: profile creation with terms acceptance
       await logCreate(ctx, "userProfiles", profileId, defaultProfile as Record<string, unknown>);
-
-      // Admin notification: new user signup (terms acceptance path)
-      try {
-        const adminPrefs = await ctx.runQuery(internal.admin.getAdminNotificationPrefs, {});
-        if (adminPrefs.adminNotifyNewUser) {
-          const signupTime = new Date().toLocaleDateString("en-US", {
-            year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
-          });
-          await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
-            subject: "New User Signup",
-            body: `A new user has signed up for PERM Tracker.\n\nEmail: ${user?.email ?? "unknown"}\nName: ${user?.name ?? "Not provided"}\nTime: ${signupTime}`,
-          });
-        }
-      } catch (adminNotifError) {
-        log.error("Failed to send admin signup notification", {
-          error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
-        });
-        await recordError(ctx, "mutation", "users.acceptTermsOfService.adminNotif", adminNotifError, { userId });
-      }
 
       return { success: true, profileId };
     }

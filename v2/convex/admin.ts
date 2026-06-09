@@ -527,48 +527,6 @@ export const getUserSummary = internalQuery({
 });
 
 // ============================================================================
-// ADMIN NOTIFICATION PREFERENCES
-// ============================================================================
-
-/**
- * Get admin notification preferences (internal query).
- *
- * Looks up the admin user by getAdminEmail() and returns notification prefs.
- * Must be internalQuery because it's called from non-admin user context
- * (e.g., during signup or case creation by any user).
- */
-export const getAdminNotificationPrefs = internalQuery({
-  args: {},
-  handler: async (ctx) => {
-    const adminUser = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", getAdminEmail()))
-      .first();
-
-    if (!adminUser) {
-      console.warn(`[admin] getAdminNotificationPrefs: admin user not found for email ${getAdminEmail()}`);
-      return { adminNotifyNewUser: false, adminNotifyFirstCase: false, adminNotifyAnyCase: false };
-    }
-
-    const adminProfile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", adminUser._id))
-      .first();
-
-    if (!adminProfile) {
-      console.warn(`[admin] getAdminNotificationPrefs: admin profile not found for user ${adminUser._id}`);
-      return { adminNotifyNewUser: false, adminNotifyFirstCase: false, adminNotifyAnyCase: false };
-    }
-
-    return {
-      adminNotifyNewUser: adminProfile.adminNotifyNewUser ?? false,
-      adminNotifyFirstCase: adminProfile.adminNotifyFirstCase ?? false,
-      adminNotifyAnyCase: adminProfile.adminNotifyAnyCase ?? false,
-    };
-  },
-});
-
-// ============================================================================
 // PUBLIC ADMIN QUERIES/MUTATIONS/ACTIONS
 // ============================================================================
 
@@ -606,35 +564,7 @@ export const getAdminDashboardData = query({
         sortBy: adminProfile.adminSortBy ?? "lastActivity",
         sortOrder: adminProfile.adminSortOrder ?? "desc",
       },
-      adminNotificationPreferences: {
-        adminNotifyNewUser: adminProfile.adminNotifyNewUser ?? false,
-        adminNotifyFirstCase: adminProfile.adminNotifyFirstCase ?? false,
-        adminNotifyAnyCase: adminProfile.adminNotifyAnyCase ?? false,
-      },
     };
-  },
-});
-
-/**
- * Save admin notification preferences to DB (admin only)
- */
-export const saveAdminNotificationPreferences = mutation({
-  args: {
-    adminNotifyNewUser: v.boolean(),
-    adminNotifyFirstCase: v.boolean(),
-    adminNotifyAnyCase: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    const profile = await getAdminProfile(ctx);
-
-    await ctx.db.patch(profile._id, {
-      adminNotifyNewUser: args.adminNotifyNewUser,
-      adminNotifyFirstCase: args.adminNotifyFirstCase,
-      adminNotifyAnyCase: args.adminNotifyAnyCase,
-      updatedAt: Date.now(),
-    });
-
-    return { success: true };
   },
 });
 

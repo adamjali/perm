@@ -665,50 +665,6 @@ export const create = mutation({
       }
     }
 
-    // Admin notification: case created (first case or any case)
-    try {
-      const adminPrefs = await ctx.runQuery(internal.admin.getAdminNotificationPrefs, {});
-      if (adminPrefs.adminNotifyFirstCase || adminPrefs.adminNotifyAnyCase) {
-        const user = await ctx.db.get(userId);
-        const userEmail = user?.email ?? "unknown";
-        const createdTime = new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-
-        let shouldSendFirstCase = false;
-        if (adminPrefs.adminNotifyFirstCase) {
-          // Count user's cases - if only 1 exists, it's their first
-          const userCases = await ctx.db
-            .query("cases")
-            .withIndex("by_user_id", (q) => q.eq("userId", userId))
-            .take(2);
-          shouldSendFirstCase = userCases.length === 1;
-        }
-
-        if (shouldSendFirstCase) {
-          await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
-            subject: "First Case Created",
-            body: `A user has created their first case on PERM Tracker.\n\nUser: ${userEmail}\nEmployer: ${args.employerName}\nPosition: ${args.positionTitle}\nBeneficiary: ${args.beneficiaryIdentifier || "Not specified"}\nTime: ${createdTime}`,
-          });
-        } else if (adminPrefs.adminNotifyAnyCase) {
-          await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
-            subject: "New Case Created",
-            body: `A new case has been created on PERM Tracker.\n\nUser: ${userEmail}\nEmployer: ${args.employerName}\nPosition: ${args.positionTitle}\nBeneficiary: ${args.beneficiaryIdentifier || "Not specified"}\nTime: ${createdTime}`,
-          });
-        }
-      }
-    } catch (adminNotifError) {
-      log.error("Failed to send admin case notification", {
-        resourceId: caseId,
-        error: adminNotifError instanceof Error ? adminNotifError.message : String(adminNotifError),
-      });
-      await recordError(ctx, "mutation", "cases.createCase.adminNotification", adminNotifError, { userId, resourceId: caseId.toString() });
-    }
-
     return caseId;
   },
 });

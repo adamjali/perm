@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
@@ -757,6 +757,61 @@ describe("Scheduled Jobs", () => {
       const userIds = users.map((u: { userId: string }) => u.userId);
       expect(userIds).toContain(enabledUserId);
       expect(userIds).not.toContain(disabledUserId);
+    });
+  });
+
+  // ============================================================================
+  // sendWeeklyDigest — A2 cost control: only email users with actionable content
+  // ============================================================================
+
+  describe("sendWeeklyDigest (cost control)", () => {
+    // Asserts the action's {sent, skipped} return value, which reflects the
+    // `digestContent.isEmpty` gate. We intentionally do NOT finish the scheduled
+    // sendWeeklyDigestEmail jobs — that would hit Resend (no mock in this suite).
+    it("emails users with upcoming deadlines but skips 'All Clear' digests", async () => {
+      const t = createTestContext();
+
+      // User WITH an upcoming PWD deadline (5 days out, ETA 9089 not filed) → has content
+      const { authT: withDeadlineAuth } = await createTestUserWithProfile(
+        t,
+        "Digest Has Deadline",
+        { emailNotificationsEnabled: true, emailWeeklyDigest: true }
+      );
+      await createTestCaseWithDeadlines(t, withDeadlineAuth, {
+        employerName: "Acme Corp",
+        beneficiaryIdentifier: "BEN-001",
+        pwdExpirationDate: daysFromNow(5),
+      });
+
+      // User with NO cases → empty digest ("All Clear") → must be skipped, not emailed
+      await createTestUserWithProfile(t, "Digest All Clear", {
+        emailNotificationsEnabled: true,
+        emailWeeklyDigest: true,
+      });
+
+      const result = await t.action(internal.scheduledJobs.sendWeeklyDigest, {});
+
+      expect(result.sent).toBe(1);
+      expect(result.skipped).toBe(1);
+    });
+
+    it("skips every digest when no opted-in user has actionable content", async () => {
+      const t = createTestContext();
+
+      // Two verified, opted-in users, neither with any cases/deadlines/updates
+      await createTestUserWithProfile(t, "Empty One", {
+        emailNotificationsEnabled: true,
+        emailWeeklyDigest: true,
+      });
+      await createTestUserWithProfile(t, "Empty Two", {
+        emailNotificationsEnabled: true,
+        emailWeeklyDigest: true,
+      });
+
+      const result = await t.action(internal.scheduledJobs.sendWeeklyDigest, {});
+
+      expect(result.sent).toBe(0);
+      expect(result.skipped).toBe(2);
     });
   });
 
