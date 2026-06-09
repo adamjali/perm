@@ -14,6 +14,7 @@ import type * as abuseBlocklist from "../abuseBlocklist.js";
 import type * as abuseDetection from "../abuseDetection.js";
 import type * as admin from "../admin.js";
 import type * as adminSecurity from "../adminSecurity.js";
+import type * as analytics from "../analytics.js";
 import type * as apiUsage from "../apiUsage.js";
 import type * as auth from "../auth.js";
 import type * as authRateLimit from "../authRateLimit.js";
@@ -143,6 +144,7 @@ declare const fullApi: ApiFromModules<{
   abuseDetection: typeof abuseDetection;
   admin: typeof admin;
   adminSecurity: typeof adminSecurity;
+  analytics: typeof analytics;
   apiUsage: typeof apiUsage;
   auth: typeof auth;
   authRateLimit: typeof authRateLimit;

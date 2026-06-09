@@ -8,7 +8,8 @@ import { validateInputLengths, INPUT_LIMITS } from "./lib/validation";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
 import { buildDefaultProfile } from "./lib/userDefaults";
-import { rateLimiter } from "./rateLimitConfig";
+import { rateLimiter, SIGNUP_BURST_PER_HOUR } from "./rateLimitConfig";
+import { isEmailPostHogExcluded } from "./lib/posthog";
 import { formatDateForNotification } from "./lib/formatDate";
 
 const log = loggers.auth;
@@ -58,17 +59,8 @@ export const isPostHogExcluded = query({
     const userId = await getCurrentUserIdOrNull(ctx);
     if (!userId) return false;
 
-    const excludedCsv = process.env.POSTHOG_EXCLUDED_EMAILS;
-    if (!excludedCsv) return false;
-
     const user = await ctx.db.get(userId);
-    const email = user?.email?.toLowerCase();
-    if (!email) return false;
-
-    const entries = excludedCsv.split(",").map((e) => e.trim().toLowerCase());
-    return entries.some((entry) =>
-      entry.startsWith("@") ? email.endsWith(entry) : email === entry
-    );
+    return isEmailPostHogExcluded(user?.email, process.env.POSTHOG_EXCLUDED_EMAILS);
   },
 });
 
@@ -216,8 +208,9 @@ export const recordMyLogin = mutation({
     });
 
     // First successful authenticated login = email is verified.
-    // Fire the welcome email + admin notification ONCE per account here.
-    // This defeats signup-spam: unverified attackers never reach this mutation.
+    // Fire the welcome email, signup-burst tripwire, and signup analytics event
+    // ONCE per account here. This defeats signup-spam: unverified attackers never
+    // reach this mutation, so only real, verified accounts are counted/emailed.
     if (!profile.postSignupEmailsSent) {
       // Mark immediately (idempotency — concurrent logins won't double-send)
       await ctx.db.patch(profile._id, { postSignupEmailsSent: true });
@@ -238,6 +231,41 @@ export const recordMyLogin = mutation({
           });
           await recordError(ctx, "mutation", "users.recordMyLogin.welcome", welcomeError, { userId });
         }
+      }
+
+      // Signup-burst tripwire — restores the abuse signal the removed per-signup
+      // admin emails used to provide, without the Resend volume. Counts verified
+      // completions GLOBALLY; the alarm email is itself capped at <=1/hour. Wrapped
+      // so a monitoring failure can never block the login.
+      try {
+        const burst = await rateLimiter.limit(ctx, "signupBurst");
+        if (!burst.ok) {
+          const canAlert = await rateLimiter.limit(ctx, "signupAlarmEmail");
+          if (canAlert.ok) {
+            await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
+              subject: "⚠️ Signup spike on PERM Tracker",
+              body: `More than ${SIGNUP_BURST_PER_HOUR} new accounts were verified within an hour — well above the ~1/day baseline, which may indicate signup abuse. Review /admin/security.\n\n(This alert is rate-limited to at most one per hour.)`,
+            });
+          }
+        }
+      } catch (burstError) {
+        await recordError(ctx, "mutation", "users.recordMyLogin.signupBurst", burstError, { userId });
+      }
+
+      // Server-side "signup completed" event → PostHog. Deliberately distinct from
+      // the client `user_signed_up` (which fires at form-submit, i.e. signup
+      // *initiated*, before OTP verification): this fires once at the first *verified*
+      // login, so it's the reliable "real completed signup" signal and gives an
+      // attempt→verified funnel. distinctId matches LoginTracker's identify id so it
+      // attaches to the same person. Best-effort; never blocks the login.
+      try {
+        await ctx.scheduler.runAfter(0, internal.analytics.captureServerEvent, {
+          event: "signup_verified",
+          distinctId: profile._id,
+          email: user?.email,
+        });
+      } catch (analyticsError) {
+        await recordError(ctx, "mutation", "users.recordMyLogin.analytics", analyticsError, { userId });
       }
     }
   },

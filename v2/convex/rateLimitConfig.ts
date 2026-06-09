@@ -22,8 +22,16 @@
  * the existing client-side error handlers already recognize + surface.
  */
 
-import { RateLimiter, MINUTE } from "@convex-dev/rate-limiter";
+import { RateLimiter, MINUTE, HOUR } from "@convex-dev/rate-limiter";
 import { components } from "./_generated/api";
+
+/**
+ * Verified new-account completions per hour that trip the signup-burst admin alarm.
+ * Baseline is ~1/day (peak ~2/day), so 20/hour is an unambiguous flood with
+ * near-zero false positives. Shared by the rate-limiter config below and the
+ * alarm email text in recordMyLogin so the two never drift.
+ */
+export const SIGNUP_BURST_PER_HOUR = 20;
 
 export const rateLimiter = new RateLimiter(components.rateLimiter, {
   // Writes on core case data (mutations)
@@ -47,4 +55,17 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
 
   // Push subscription management (low churn expected)
   pushSubscriptionSave: { kind: "token bucket", rate: 10, period: MINUTE, capacity: 3 },
+
+  // GLOBAL signup-burst tripwire (no per-user key) — counts verified new-account
+  // completions. Token bucket starts full (capacity 20) and refills ~1 token / 3min
+  // (20/hour), so it trips when signups arrive FASTER than they refill: a burst of
+  // ~20 within minutes, or ~40 sustained across an hour. Against the ~1/day baseline
+  // that's an unambiguous flood (the kind a distributed attack hides from per-IP
+  // limits) with near-zero false positives. See recordMyLogin; the alarm email is
+  // debounced by signupAlarmEmail below.
+  signupBurst: { kind: "token bucket", rate: SIGNUP_BURST_PER_HOUR, period: HOUR, capacity: SIGNUP_BURST_PER_HOUR },
+
+  // Debounce for the signup-burst ADMIN EMAIL — at most one alert per hour, so the
+  // tripwire can never re-spam Resend even during a sustained flood.
+  signupAlarmEmail: { kind: "fixed window", rate: 1, period: HOUR },
 });
