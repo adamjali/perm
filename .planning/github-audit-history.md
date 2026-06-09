@@ -11,6 +11,26 @@
 - **Semgrep lockfile noise**: lockfiles excluded from Semgrep code rules via `.semgrepignore` (Dependabot covers lockfile CVEs) — do not re-enable code-scanning on lockfiles
 - **Dependabot grouped PRs**: close as superseded after a verified bulk `pnpm update` (established across audits 1–3)
 - **claude-review CI auth**: uses `CLAUDE_CODE_OAUTH_TOKEN` (Max-subscription OAuth via `claude setup-token`), not `ANTHROPIC_API_KEY`. Token expires — if the job fails auth, regenerate + re-set the secret. Workflow uses the official code-review plugin + `--model claude-opus-4-7` + `pull-requests: write` + `--comment` + bot-PR skip filter.
+- **Style-object types**: define as `Pick<React.CSSProperties, …>` (not a standalone `{…}` interface) — csstype tightening in React minor bumps breaks structural assignment to a `style` prop (Audit 4: `TiltStyle` → `FeaturesGrid` TS2322 under React 19.2.7).
+
+## Audit 4 — 2026-06-09
+- **health_before:** 0 Dependabot alerts · 0 secret-scanning · CI green on `main` · branch protection healthy · community 100% (SECURITY.md present; community-profile API flag stale). 5 open Dependabot PRs — 2 grouped (#104 dev/18, #105 prod/34 incl. Convex 1.40) + #102 (tsgo), #95/#96 (Actions). #105 failing typecheck. ~26 code-scanning notes + 4 warnings (low/info). Health ≈ 95.
+- **health_after:** all deps current via caret bulk `pnpm update`; `pnpm audit` clean; full gate green (4381/4381 tests); Convex 1.40 deployed; grouped PRs closed superseded. Health 100.
+- **items_fixed:** 1 bulk dep update (34 prod + 18 dev) + 1 root-cause type fix (`useTilt` `TiltStyle` → `Pick<React.CSSProperties>`).
+- **items_discussed:** 1 (Phase 4 deploy plan + Convex deploy → "Approve + Convex deploy").
+- **prs_merged:** #108 (consolidated bulk update, squash). #104 + #105 closed as superseded. #95/#96/#102 left for Dependabot auto-merge.
+- **quality_issues_fixed:** 1 (FeaturesGrid `TiltStyle` TS2322 from React 19.2.x csstype tightening).
+- **deployed:** yes (commit `7b9b2a0`; Convex `giant-dragon-464` deployed — `convex` + `@convex-dev/auth` bumps affect backend; Vercel prod rebuild).
+- **duration:** part of a larger session (after email-cost-control + signup-monitoring work).
+
+### Changes Made
+- **Deps (bulk, caret)**: convex 1.39.1→1.40.0, @convex-dev/auth 0.0.92→0.0.93, next 16.2.6→16.2.7, ai →6.0.198, react 19.2.6→19.2.7, vitest →4.1.8, plus radix-ui / ai-sdk / remotion / sentry patch+minor. `pnpm audit` clean.
+- **Fix**: `src/lib/hooks/useTilt.ts` — `TiltStyle` interface → `Pick<React.CSSProperties, "transform" | "transition">` (React 19.2.x csstype tightening broke the `style` assignment in `FeaturesGrid`). No runtime change.
+
+### Decisions
+- **Dep strategy**: consolidated caret bulk `pnpm update` + closed grouped PRs #104/#105 superseded — consistent with the audits 1–3 policy. (Started from Dependabot #105's branch, rebased onto current `main`, then `pnpm update` to fold in the dev group.)
+- **Convex deploy despite no `convex/` source change**: `convex` + `@convex-dev/auth` version bumps affect backend-compiled code → deployed to apply 0.0.93.
+- **#95/#96/#102 (individual, not grouped)**: left for Dependabot auto-merge rather than superseded.
 
 ## Audit 3 — 2026-05-24
 - **health_before:** 15 Dependabot alerts (6 high, 9 moderate — all transitive in `v2/pnpm-lock.yaml`) + ~26 Semgrep false-positive `unsafe-formatstring` alerts on the lockfile + 3 open Dependabot PRs + `claude-review` CI broken (missing OAuth secret + first-time workflow validation)
@@ -59,26 +79,5 @@
 - **sentry.client.config.ts deletion**: Safer than renaming content to instrumentation-client.ts (which contains PostHog init). Matches intentional lazy-load pattern already documented.
 - **pnpm overrides**: Kept existing overrides (lodash, brace-expansion, picomatch, dompurify, yaml) — they resolve transitive deps and remain active.
 
-## Audit 1 — 2026-04-11
-- **health_before:** 27 vulnerabilities (10 high, 15 moderate, 2 low) + 9 stale Dependabot PRs + 1 critical CVE
-- **health_after:** Clean — all actionable updates applied, PRs resolved, production deployed
-- **items_fixed:** 13+ (bulk dependency updates)
-- **items_discussed:** 0 (autonomous per user's delete-happy policy)
-- **prs_merged:** 0 (all 9 PRs closed as superseded by manual bulk update)
-- **quality_issues_fixed:** 3 (lucide brand icons, next type cache, Edge Function size)
-- **deployed:** yes (commit 0eae6c6, Vercel production Ready)
-
-### Changes Made
-- **Security CVE**: next 16.1.5 → 16.2.3 (GHSA-q4gf-8mx6-v5v3, HIGH — DoS via RSC in App Router)
-- **Major bumps (verified safe)**: @vercel/analytics 1→2, @vercel/speed-insights 1→2 (license changes only)
-- **All production deps**: @ai-sdk/* (cerebras/google/groq/mistral/react), ai 6.0.116→6.0.158, @sentry/nextjs 10.43→10.48, react 19.2.4→19.2.5, @react-email/*, @remotion/*, posthog-js, posthog-node, react-hook-form, resend, svix, @openrouter/ai-sdk-provider
-- **Dev deps**: Playwright 1.58→1.59, Storybook 10.2→10.3, eslint 9→10, jsdom 26→29, vite 7→8, vitest 4.1→4.1.4, typescript 5.9→6.0, @vitejs/plugin-react 5→6
-- **lucide-react 0.577 → 1.8**: brand icons removed; inlined SVGs for Github/Twitter/Linkedin in Footer.tsx and contact/page.tsx
-- **pnpm overrides for transitive CVEs**: lodash→4.18.1, brace-expansion ≥4.0.1, picomatch ≥4.0.2, dompurify ≥3.2.4, yaml ≥2.6.1
-- **Rolled back**: @types/node 25.6.0 → 22.19.17 (user pins to Node 22 runtime)
-- **Dynamic icon route removed**: src/app/icon.tsx → src/app/icon.png (static, 2.8KB) — was bloating Edge Function to 1.13 MB
-
-### Decisions
-- **Dependabot PRs #54-66 (9 PRs)**: closed as superseded by manual bulk update in commit 18bcfb0 — conflict risk with earlier cleanup commit + easier to verify atomically
-- **TypeScript 6, Vite 8**: kept despite major bumps — typecheck + 1952 tests + prod build all passing
-- **Issue template**: not added — repo is solo-maintained, community profile still 100% without it
+## Archived Summaries
+- **Audit 1 — 2026-04-11**: 27 vulns (10H/15M/2L) + 1 critical CVE (next 16.1.5→16.2.3, RSC DoS) + 9 stale PRs → bulk dep update (13+), all PRs closed superseded, deployed (`0eae6c6`). One-offs: lucide brand-icon inlining, static `icon.png` (Edge size), @types/node→22 (later 24), TS 6 / Vite 8 majors kept.
