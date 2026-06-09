@@ -98,6 +98,7 @@ import type * as lib_perm_validators_recruitment from "../lib/perm/validators/re
 import type * as lib_perm_validators_rfe from "../lib/perm/validators/rfe.js";
 import type * as lib_perm_validators_rfi from "../lib/perm/validators/rfi.js";
 import type * as lib_perm_validators_validateCase from "../lib/perm/validators/validateCase.js";
+import type * as lib_posthog from "../lib/posthog.js";
 import type * as lib_rag_appGuideKnowledge from "../lib/rag/appGuideKnowledge.js";
 import type * as lib_rag_index from "../lib/rag/index.js";
 import type * as lib_rag_ingest from "../lib/rag/ingest.js";
@@ -228,6 +229,7 @@ declare const fullApi: ApiFromModules<{
   "lib/perm/validators/rfe": typeof lib_perm_validators_rfe;
   "lib/perm/validators/rfi": typeof lib_perm_validators_rfi;
   "lib/perm/validators/validateCase": typeof lib_perm_validators_validateCase;
+  "lib/posthog": typeof lib_posthog;
   "lib/rag/appGuideKnowledge": typeof lib_rag_appGuideKnowledge;
   "lib/rag/index": typeof lib_rag_index;
   "lib/rag/ingest": typeof lib_rag_ingest;
