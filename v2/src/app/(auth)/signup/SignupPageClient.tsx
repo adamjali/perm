@@ -578,7 +578,9 @@ export function SignupPageClient() {
         {/* Cloud storage disclaimer */}
         <p className="text-xs text-muted-foreground text-center leading-relaxed">
           PERM Tracker is a case management tool, not a legal service. Your data
-          is stored securely on cloud infrastructure with encryption.{" "}
+          is stored securely on cloud infrastructure with encryption. We use
+          analytics and session-recording tools to improve the product (you can
+          opt out with Global Privacy Control).{" "}
           <NavLink
             href="/terms#attorney-privilege"
             className="text-foreground/80 hover:text-primary hover:underline hover:underline-offset-2 transition-colors"

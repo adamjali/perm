@@ -5,7 +5,7 @@
  * Footer for public/authentication pages.
  *
  * Features:
- * - Privacy Policy, Terms of Service, Contact links
+ * - Privacy Policy, Terms of Service, Security, Contact links
  * - Copyright with current year
  * - Neobrutalist top border (border-t-4, border-black)
  * - Black background with white text
@@ -35,6 +35,13 @@ export default function AuthFooter() {
             spinnerClassName="text-primary"
           >
             Terms
+          </NavLink>
+          <NavLink
+            href="/security"
+            className="hover-underline text-white transition-colors hover:text-primary"
+            spinnerClassName="text-primary"
+          >
+            Security
           </NavLink>
           <NavLink
             href="/contact"

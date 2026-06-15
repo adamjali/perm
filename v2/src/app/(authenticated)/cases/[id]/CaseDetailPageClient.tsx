@@ -51,6 +51,7 @@ import { ETA9089Tab } from "@/components/cases/detail/ETA9089Tab";
 import { I140Tab } from "@/components/cases/detail/I140Tab";
 import { DocumentsTab } from "@/components/cases/detail/DocumentsTab";
 import { NotesTab } from "@/components/cases/detail/NotesTab";
+import { NotLegalAdviceNotice } from "@/components/legal/NotLegalAdviceNotice";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
@@ -921,6 +922,11 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           )}
           Delete Case
         </Button>
+      </motion.div>
+
+      {/* Calculated-dates disclaimer — single quiet footnote below all tabs */}
+      <motion.div variants={itemVariants}>
+        <NotLegalAdviceNotice variant="deadline" className="justify-center text-center" />
       </motion.div>
 
       {/* Footer Metadata */}

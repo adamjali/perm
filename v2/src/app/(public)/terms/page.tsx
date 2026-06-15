@@ -31,7 +31,7 @@ export default function TermsPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: April 20, 2026
+          Effective Date: February 17, 2026 | Last Updated: June 15, 2026
         </p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
@@ -85,6 +85,16 @@ export default function TermsPage() {
               To use the Service, you must create an account by providing accurate
               and complete information. You may register using email/password or
               Google OAuth.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Eligibility
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              You must be at least 18 years old and able to form a legally binding
+              contract to use the Service. By creating an account, you represent
+              that you meet these requirements and that the information you provide
+              is accurate.
             </p>
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
@@ -197,6 +207,19 @@ export default function TermsPage() {
               source code, unless laws prohibit these restrictions or you have our
               written permission.
             </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              No Government Affiliation
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              PERM Tracker is an independent, privately operated tool. We are not
+              affiliated with, endorsed by, sponsored by, or officially connected
+              to the U.S. Department of Labor (DOL), U.S. Citizenship and
+              Immigration Services (USCIS), or any other government agency. All
+              product names, logos, and trademarks referenced in the Service are
+              the property of their respective owners and are used for
+              identification purposes only.
+            </p>
           </section>
 
           <section>
@@ -232,7 +255,11 @@ export default function TermsPage() {
                 the Service should be construed as legal advice. The Service
                 calculates dates based on general PERM processing rules, but you
                 should always verify deadlines with official DOL and USCIS
-                resources and consult with qualified legal professionals.
+                resources and consult with qualified legal professionals. PERM
+                Tracker does not guarantee the accuracy, completeness, or
+                timeliness of any deadline, calculation, or date, and you are
+                solely responsible for independently verifying all dates and
+                legal requirements.
               </p>
             </div>
           </section>
@@ -417,20 +444,25 @@ export default function TermsPage() {
             </h3>
             <p className="text-foreground/80 leading-relaxed">
               We use PostHog for product analytics (event tracking, feature
-              usage), Sentry for error tracking with anonymized session replay,
-              and Vercel for performance monitoring (Speed Insights). Analytics
-              data from PostHog is routed through our domain
+              usage) and session replay, Sentry for error tracking with session
+              replay, and Vercel for performance monitoring (Speed Insights).
+              Analytics data from PostHog is routed through our domain
               (permtracker.app/ingest) rather than directly to a third-party
-              domain. Session replay captures anonymized user interactions to
-              help us diagnose and fix issues — no sensitive case data is
-              included in session recordings. We also use Cloudflare Turnstile
-              on our authentication forms (sign-up, sign-in, password reset)
-              and Vercel BotID on our AI chat and authentication endpoints
+              domain. Session replays record interactions (clicks, scrolls,
+              navigation, and on-screen content) to help us diagnose and fix
+              issues. Sentry replays mask all text and block media; PostHog
+              replays mask form inputs and passwords, but on-screen text — which
+              can include case information — is not masked by default. We never
+              use session replays for advertising and never sell them, and we
+              honor the Global Privacy Control (GPC) browser signal to opt your
+              session out of analytics and replay. We also use Cloudflare
+              Turnstile on our authentication forms (sign-up, sign-in, password
+              reset) and Vercel BotID on our AI chat and authentication endpoints
               to prevent automated abuse; both process limited device and
-              interaction signals but do not read the contents of form
-              fields or message bodies. We additionally enforce per-IP and
-              per-email rate limits on these endpoints. By using the Service, you consent to this data
-              collection as described in our{" "}
+              interaction signals but do not read the contents of form fields or
+              message bodies. We additionally enforce per-IP and per-email rate
+              limits on these endpoints. By using the Service, you consent to
+              this data collection as described in our{" "}
               <a href="/privacy" className="text-primary hover:underline">
                 Privacy Policy
               </a>
@@ -498,7 +530,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              13. Governing Law
+              13. Governing Law &amp; Dispute Resolution
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               These Terms shall be governed by and construed in accordance with
@@ -510,6 +542,28 @@ export default function TermsPage() {
               Any disputes arising from these Terms or the Service shall be
               resolved in the courts located in the District of Columbia, and you
               consent to the personal jurisdiction of such courts.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Class Action &amp; Jury Trial Waiver
+            </h3>
+            <p className="text-foreground/80 leading-relaxed font-bold">
+              TO THE FULLEST EXTENT PERMITTED BY LAW, YOU AND PERM TRACKER AGREE
+              THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN AN INDIVIDUAL
+              CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED
+              CLASS, COLLECTIVE, CONSOLIDATED, OR REPRESENTATIVE PROCEEDING.
+            </p>
+            <p className="text-foreground/80 leading-relaxed font-bold mt-4">
+              YOU AND PERM TRACKER EACH WAIVE ANY RIGHT TO A TRIAL BY JURY IN ANY
+              DISPUTE ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE.
+            </p>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              These provisions do not require arbitration — disputes remain
+              subject to the courts identified above. If the class action waiver
+              is held unenforceable as to a particular claim, that claim (and only
+              that claim) will proceed in those courts without the class action
+              waiver, while the jury trial waiver and all other provisions remain
+              in full force.
             </p>
           </section>
 
@@ -546,12 +600,20 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              16. Entire Agreement
+              16. Entire Agreement &amp; Assignment
             </h2>
             <p className="text-foreground/80 leading-relaxed">
               These Terms, together with our Privacy Policy, constitute the entire
               agreement between you and PERM Tracker regarding the Service and
               supersede any prior agreements.
+            </p>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              You may not assign or transfer these Terms, or any rights or
+              obligations under them, without our prior written consent. We may
+              assign these Terms, in whole or in part, to an affiliate or in
+              connection with a merger, acquisition, reorganization, or sale of
+              assets. These Terms bind and benefit the parties and their permitted
+              successors and assigns.
             </p>
           </section>
 

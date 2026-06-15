@@ -5,7 +5,7 @@
  * Features:
  * - PERM Tracker branding (neobrutalist-inspired)
  * - Max-width 600px container
- * - Footer with settings link
+ * - Footer with settings + Privacy/Terms links
  * - Responsive design
  * - Dark mode support via @media (prefers-color-scheme: dark)
  * - All inline styles (email client compatibility)
@@ -164,6 +164,14 @@ export function EmailLayout({
               )}
               <Link href="https://permtracker.app" className="em-link" style={styles.footerLink}>
                 Open PERM Tracker
+              </Link>
+              {" | "}
+              <Link href="https://permtracker.app/privacy" className="em-link" style={styles.footerLink}>
+                Privacy Policy
+              </Link>
+              {" | "}
+              <Link href="https://permtracker.app/terms" className="em-link" style={styles.footerLink}>
+                Terms of Service
               </Link>
             </Text>
             <Text className="em-text-muted" style={styles.copyright}>

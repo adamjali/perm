@@ -44,8 +44,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/resources`, lastModified: latestPostDate },
     { url: `${baseUrl}/faq`, lastModified: '2026-02-21' },
     { url: `${baseUrl}/contact`, lastModified: '2026-02-07' },
-    { url: `${baseUrl}/terms`, lastModified: '2026-03-04' },
-    { url: `${baseUrl}/privacy`, lastModified: '2026-03-04' },
+    { url: `${baseUrl}/terms`, lastModified: '2026-06-15' },
+    { url: `${baseUrl}/privacy`, lastModified: '2026-06-15' },
+    { url: `${baseUrl}/security`, lastModified: '2026-06-15' },
   ]
 
   // Dynamic content pages (blog, tutorials, guides, resources)

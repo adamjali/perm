@@ -9,6 +9,7 @@ import { ChatInput } from './ChatInput';
 import { TypingIndicator } from './TypingIndicator';
 import { ActionModeToggle, type ActionMode } from './ActionModeToggle';
 import { ChatCompactionDivider } from './ChatCompactionDivider';
+import { NotLegalAdviceNotice } from '@/components/legal/NotLegalAdviceNotice';
 import { springConfig } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 import { usePrevious } from '@/hooks/usePrevious';
@@ -329,6 +330,9 @@ export function ChatPanel({
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Not-legal-advice disclaimer — quiet footnote above the composer */}
+      <NotLegalAdviceNotice variant="chat" />
 
       {/* Input Area */}
       <ChatInput

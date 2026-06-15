@@ -31,7 +31,7 @@ export default function PrivacyPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Privacy Policy</h1>
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: April 20, 2026
+          Effective Date: February 17, 2026 | Last Updated: June 15, 2026
         </p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
@@ -247,7 +247,8 @@ export default function PrivacyPage() {
               <li>Your chat messages and questions</li>
               <li>
                 Case data referenced in conversations (employer names, position
-                titles, case status, dates, notes)
+                titles, beneficiary identifiers, wage information, case numbers,
+                status, dates, and notes)
               </li>
               <li>
                 System-generated context (your name, case counts, current page)
@@ -383,6 +384,52 @@ export default function PrivacyPage() {
                 PostHog&apos;s Privacy Policy
               </a>
               .
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Session Replay
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              In addition to event analytics, PostHog records session replays —
+              playbacks of page interactions (clicks, scrolls, navigation, and
+              on-screen content) — which we use to diagnose usability issues and
+              improve the product.
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+              <li>
+                <strong>Form inputs are masked</strong> — values you type into
+                fields, and all passwords, are redacted and not captured.
+              </li>
+              <li>
+                <strong>On-screen text is not masked by default</strong> — text
+                displayed on the pages you view, which can include case
+                information, may be captured in a replay. We never use these
+                replays for advertising and never sell them.
+              </li>
+              <li>
+                Replays are routed first-party through{" "}
+                <code>permtracker.app/ingest</code> rather than to a third-party
+                domain.
+              </li>
+              <li>
+                <strong>Global Privacy Control (GPC):</strong> if your browser
+                sends a GPC signal, we automatically disable PostHog analytics
+                and session replay for your session.
+              </li>
+            </ul>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              This is separate from the masked, error-diagnosis replays described
+              in Section 8. You can opt out of all analytics and replay by
+              enabling Global Privacy Control in your browser.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Surveys
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              We occasionally use PostHog Surveys to ask for in-app feedback.
+              Responses you choose to provide are processed by PostHog as our
+              data processor. Participation is always optional.
             </p>
           </section>
 
@@ -762,15 +809,17 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>Resend:</strong> Transactional email delivery
-                (notifications, OTP verification, password resets)
+                (notifications, OTP verification, password resets) and, if you
+                opt in, marketing and product-update emails (we sync your email
+                address and first name to Resend for this purpose)
               </li>
               <li>
                 <strong>Google:</strong> OAuth authentication and Calendar API
                 integration
               </li>
               <li>
-                <strong>PostHog:</strong> Product analytics and event tracking
-                (see Section 7)
+                <strong>PostHog:</strong> Product analytics, event tracking, and
+                session replay (see Section 7)
               </li>
               <li>
                 <strong>Sentry:</strong> Error tracking, performance monitoring,
@@ -813,6 +862,21 @@ export default function PrivacyPage() {
               </a>
               .
             </p>
+
+            <div className="rounded-lg border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
+              <p className="text-foreground/80 leading-relaxed font-medium">
+                <strong>
+                  We do not sell or share your personal information.
+                </strong>{" "}
+                We have never sold your data, and we do not share it for
+                cross-context behavioral advertising, as those terms are defined
+                under the California Consumer Privacy Act (CCPA). We disclose
+                personal information only to the service providers listed above,
+                who process it on our behalf under written agreements and are
+                prohibited from using it for their own purposes. We run no
+                third-party advertising trackers.
+              </p>
+            </div>
           </section>
 
           <section>
@@ -909,6 +973,81 @@ export default function PrivacyPage() {
                 support@permtracker.app
               </a>
               . We will respond within 30-45 days.
+            </p>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              California Residents (CCPA/CPRA)
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              If you are a California resident, you have the right to know what
+              personal information we collect and how we use it, to access and
+              delete it, to correct inaccurate information, to opt out of the
+              sale or sharing of personal information, and to limit the use of
+              sensitive personal information. We will not discriminate against
+              you for exercising these rights.
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+              <li>
+                <strong>
+                  We do not sell or share your personal information
+                </strong>{" "}
+                (including for cross-context behavioral advertising), so there is
+                nothing to opt out of — but we still honor opt-out signals.
+              </li>
+              <li>
+                <strong>Global Privacy Control (GPC):</strong> we detect and
+                honor the GPC browser signal; when it is present, we disable
+                analytics and session replay for your session.
+              </li>
+              <li>
+                <strong>Sensitive information:</strong> the case data you enter
+                may relate to immigration status. We use it only to provide the
+                service and never for advertising.
+              </li>
+              <li>
+                To exercise any California right, email{" "}
+                <a
+                  href="mailto:support@permtracker.app"
+                  className="text-primary hover:underline"
+                >
+                  support@permtracker.app
+                </a>{" "}
+                — no account changes are required, and you may use an authorized
+                agent.
+              </li>
+            </ul>
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              EEA, UK &amp; Switzerland (GDPR / UK GDPR)
+            </h3>
+            <p className="text-foreground/80 leading-relaxed">
+              If you are located in the European Economic Area, the United
+              Kingdom, or Switzerland, you have the rights of access,
+              rectification, erasure, restriction, portability, and objection,
+              and the right to withdraw consent at any time. Our legal bases for
+              processing are:
+            </p>
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+              <li>
+                <strong>Performance of a contract</strong> — to provide the
+                case-tracking service you sign up for.
+              </li>
+              <li>
+                <strong>Legitimate interests</strong> — to secure the service,
+                prevent abuse, and improve the product (including analytics).
+              </li>
+              <li>
+                <strong>Consent</strong> — for optional features such as
+                marketing emails, which you can withdraw at any time.
+              </li>
+            </ul>
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              You also have the right to lodge a complaint with your local data
+              protection authority (in the UK, the Information
+              Commissioner&apos;s Office). International transfers of your data to
+              the United States rely on Standard Contractual Clauses (see Section
+              16). We do not engage in solely-automated decision-making that
+              produces legal or similarly significant effects.
             </p>
           </section>
 

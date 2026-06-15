@@ -26,12 +26,26 @@ const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
 if (posthogKey) {
   try {
+    // Honor Global Privacy Control (GPC). When the browser advertises a GPC
+    // signal, opt this visitor out of ALL PostHog capture — analytics AND
+    // session replay — by default. Disclosed in the Privacy Policy (§7, §15).
+    const gpcEnabled =
+      typeof navigator !== "undefined" &&
+      (navigator as Navigator & { globalPrivacyControl?: boolean })
+        .globalPrivacyControl === true;
+
     posthog.init(posthogKey, {
       api_host: "/ingest",
       ui_host: "https://us.posthog.com",
       // Pin PostHog SDK defaults to this date to prevent behavior changes from SDK updates
       defaults: "2026-01-30",
       capture_exceptions: true,
+      // GPC visitors are opted out of all capture (incl. session replay).
+      opt_out_capturing_by_default: gpcEnabled,
+      // NOTE: session replay currently uses PostHog defaults — form inputs are
+      // masked, but on-screen TEXT is not. To mask all replay text (recommended
+      // if case data should never be captured), add:
+      //   session_recording: { maskAllInputs: true, maskTextSelector: "*" }
       debug: process.env.NODE_ENV === "development",
       before_send: (event) => {
         if (!event) return event;
