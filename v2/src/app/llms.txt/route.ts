@@ -30,9 +30,9 @@ export function GET() {
   const lines: string[] = [
     "# PERM Tracker",
     "",
-    "> PERM Tracker is a free case tracking platform for immigration attorneys managing PERM labor certification cases. It helps track deadlines, validate filings, and manage the full PERM lifecycle.",
+    "> PERM Tracker (permtracker.app) is a free web app that helps U.S. immigration attorneys and law firms track Department of Labor PERM (Program Electronic Review Management) labor-certification cases and never miss a deadline.",
     "",
-    "PERM Tracker provides real-time case management, automated deadline calculations, recruitment tracking, and AI-powered assistance for immigration law practitioners handling Department of Labor PERM (Program Electronic Review Management) cases.",
+    "It auto-calculates and validates the interdependent PERM deadlines (PWD expiration, the 30-180 day ETA-9089 filing window, recruitment timing, and I-140 deadlines) per 20 CFR 656.40, with Google Calendar sync, email and push reminders, duplicate detection, and an AI assistant that answers PERM questions. Free to use; sign up in under a minute.",
     "",
     "## Key Pages",
     "",
