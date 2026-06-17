@@ -16,21 +16,18 @@ export default function robots(): MetadataRoute.Robots {
 
   return {
     rules: [
-      // Default rule: allow public content, block authenticated routes
-      // AI search bots (ClaudeBot, OAI-SearchBot, PerplexityBot, ChatGPT-User,
-      // Amazonbot) inherit from this wildcard — no separate rules needed
+      // Allow ALL crawlers on public content; block only authenticated/app routes.
+      // AI crawlers are intentionally ALLOWED for discoverability (GEO) — we WANT this
+      // product surfaced in AI search/answers (ChatGPT, Claude, Perplexity, Gemini) and
+      // in training corpora that feed them. Public pages are marketing/educational content
+      // meant to be found; the actual app stays behind auth (authDisallow) + BotID.
+      // Covers search + training bots alike: GPTBot, ChatGPT-User, OAI-SearchBot,
+      // ClaudeBot, anthropic-ai, Google-Extended, PerplexityBot, CCBot, Amazonbot, etc.
       {
         userAgent: '*',
         allow: '/',
         disallow: authDisallow,
       },
-      // Block AI training crawlers (protect content from model training datasets)
-      { userAgent: 'GPTBot', disallow: '/' },
-      { userAgent: 'anthropic-ai', disallow: '/' },
-      { userAgent: 'Google-Extended', disallow: '/' },
-      { userAgent: 'CCBot', disallow: '/' },
-      // Block aggressive SEO crawlers (no value unless subscribed to their service)
-      { userAgent: 'AhrefsBot', disallow: '/' },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
   }
