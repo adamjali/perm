@@ -1,0 +1,35 @@
+name: IndexNow
+
+# Pings IndexNow (Bing, Yandex, Seznam, …) with every sitemap URL after each
+# successful PRODUCTION deploy, so search/AI engines recrawl fast. Bing's index
+# feeds ChatGPT Search and Perplexity, so this keeps AI-search (GEO) fresh with
+# zero manual effort. Manual run anytime: `node v2/scripts/indexnow.mjs`.
+
+on:
+  deployment_status
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexnow
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    # Only fire on a successful Vercel *production* deployment (skip previews,
+    # failures, and in-progress states). If this job never runs, check the exact
+    # `environment` label under the repo's Deployments tab and match it below.
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      (github.event.deployment_status.environment == 'Production' ||
+       github.event.deployment_status.environment == 'production')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+      - name: Submit sitemap URLs to IndexNow
+        working-directory: v2
+        run: node scripts/indexnow.mjs
