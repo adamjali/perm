@@ -71,6 +71,15 @@ export async function recordError(
   opts?: RecordErrorOpts,
 ): Promise<void> {
   const message = error instanceof Error ? error.message : String(error);
+
+  // Intentional, permanent email suppression (emailBlocklist) is not an error —
+  // don't record it or alert the admin. It otherwise sent an admin email for
+  // every blocklisted recipient (e.g. a weekly "Mona blocked" ping). The send
+  // path already logs the skip (convex/lib/email.ts).
+  if (message.includes("Blocklisted recipient(s):")) {
+    return;
+  }
+
   const stack = error instanceof Error ? error.stack : undefined;
 
   const optionalFields = {

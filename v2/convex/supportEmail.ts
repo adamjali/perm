@@ -60,6 +60,14 @@ export const storeSupportEmail = internalMutation({
   },
 });
 
+/** Mark a stored inbound email as forwarded to the human inbox. */
+export const markForwarded = internalMutation({
+  args: { id: v.id("supportEmails") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { status: "forwarded" });
+  },
+});
+
 // ============================================================================
 // INTERNAL ACTIONS
 // ============================================================================
@@ -111,10 +119,9 @@ export const processInboundEmail = internalAction({
     }
 
     const toEmail = args.toEmails[0] || "";
-    const isSupport = toEmail.toLowerCase().startsWith("support@");
 
-    // Store ALL emails in database
-    await ctx.runMutation(internal.supportEmail.storeSupportEmail, {
+    // Store ALL inbound emails.
+    const supportEmailId = await ctx.runMutation(internal.supportEmail.storeSupportEmail, {
       fromEmail: args.fromEmail,
       fromName: args.fromName,
       toEmail,
@@ -134,8 +141,9 @@ export const processInboundEmail = internalAction({
       subject: args.subject,
     });
 
-    // Non-support emails also get forwarded to catch-all
-    if (!isSupport) {
+    // Forward ALL inbound mail to the human inbox (support@, perm@, etc.).
+    // Loop-safe: never forward a message already addressed to the forward target.
+    if (toEmail.toLowerCase() !== CATCH_ALL_FORWARD_TO.toLowerCase()) {
       try {
         const { error } = await sendEmailWithRetry(resend, {
           from: FROM_EMAIL,
@@ -155,7 +163,8 @@ export const processInboundEmail = internalAction({
           });
           await recordError(ctx, "action", "supportEmail.processInbound.forwardApi", new Error(error.message), { resourceId: args.resendEmailId });
         } else {
-          log.info("Email also forwarded to catch-all", {
+          await ctx.runMutation(internal.supportEmail.markForwarded, { id: supportEmailId });
+          log.info("Email forwarded to catch-all", {
             from: args.fromEmail,
             originalTo: toEmail,
             forwardedTo: CATCH_ALL_FORWARD_TO,

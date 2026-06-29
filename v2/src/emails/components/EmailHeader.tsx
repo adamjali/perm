@@ -12,7 +12,6 @@
  */
 
 import { Section, Text } from "@react-email/components";
-import * as React from "react";
 
 export interface EmailHeaderProps {
   /** Header title text */
@@ -45,14 +44,22 @@ export function EmailHeader({
       {/* Urgency color bar */}
       <div className="em-banner" style={urgencyBarStyle} />
 
-      {/* Title row */}
-      <Section style={styles.titleRow}>
-        {icon && <Text style={styles.icon}>{icon}</Text>}
-        <div>
-          <Text className="em-text" style={styles.title}>{title}</Text>
-          {subtitle && <Text className="em-text-secondary" style={styles.subtitle}>{subtitle}</Text>}
-        </div>
-      </Section>
+      {/* Title row — table layout for reliable rendering across email clients (flex is unsupported in Outlook) */}
+      <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
+        <tbody>
+          <tr>
+            {icon && (
+              <td style={styles.iconCell}>
+                <Text style={styles.icon}>{icon}</Text>
+              </td>
+            )}
+            <td style={styles.titleCell}>
+              <Text className="em-text" style={styles.title}>{title}</Text>
+              {subtitle && <Text className="em-text-secondary" style={styles.subtitle}>{subtitle}</Text>}
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </Section>
   );
 }
@@ -79,13 +86,17 @@ const styles = {
     width: "100%",
     marginBottom: "16px",
   },
-  titleRow: {
-    display: "flex" as const,
-    alignItems: "flex-start" as const,
+  iconCell: {
+    verticalAlign: "top" as const,
+    width: "40px",
+    paddingTop: "2px",
+  },
+  titleCell: {
+    verticalAlign: "top" as const,
   },
   icon: {
     fontSize: "28px",
-    margin: "0 12px 0 0",
+    margin: "0",
     lineHeight: "1",
   },
   title: {

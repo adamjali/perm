@@ -44,7 +44,9 @@ const crons = cronJobs();
 crons.daily(
   "deadline-reminders",
   { hourUTC: 14, minuteUTC: 0 },
-  internal.scheduledJobs.checkDeadlineReminders
+  // Consolidated: ONE digest email per user (replaces the per-deadline blast).
+  // Per-(case, deadline) in-app notifications are unchanged.
+  internal.deadlineDigest.runDeadlineReminders
 );
 
 // ============================================================================
@@ -92,7 +94,10 @@ crons.hourly(
 // ============================================================================
 
 /**
- * Weekly digest email (Mondays at 9 AM EST / 14:00 UTC)
+ * Weekly digest email (Mondays at 15:00 UTC / ~11 AM ET)
+ *
+ * Staggered one hour AFTER the daily deadline-reminders job (14:00 UTC) so the
+ * two bulk sends never collide in the same minute on Mondays.
  *
  * Sends a summary email to users with weekly digest enabled, containing:
  * - All upcoming deadlines for the week
@@ -103,7 +108,7 @@ crons.hourly(
  */
 crons.weekly(
   "weekly-digest",
-  { dayOfWeek: "monday", hourUTC: 14, minuteUTC: 0 },
+  { dayOfWeek: "monday", hourUTC: 15, minuteUTC: 0 },
   internal.scheduledJobs.sendWeeklyDigest
 );
 

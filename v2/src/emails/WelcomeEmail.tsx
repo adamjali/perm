@@ -59,7 +59,7 @@ export function WelcomeEmail({
       <Section style={styles.featuresSection}>
         {/* Feature 1 */}
         <Section className="em-card" style={styles.featureCard}>
-          <table width="100%" cellPadding="0" cellSpacing="0">
+          <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
             <tbody>
               <tr>
                 <td style={styles.featureMarkerCell}>
@@ -80,7 +80,7 @@ export function WelcomeEmail({
 
         {/* Feature 2 */}
         <Section className="em-card" style={styles.featureCard}>
-          <table width="100%" cellPadding="0" cellSpacing="0">
+          <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
             <tbody>
               <tr>
                 <td style={styles.featureMarkerCell}>
@@ -101,7 +101,7 @@ export function WelcomeEmail({
 
         {/* Feature 3 */}
         <Section className="em-card" style={styles.featureCard}>
-          <table width="100%" cellPadding="0" cellSpacing="0">
+          <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
             <tbody>
               <tr>
                 <td style={styles.featureMarkerCell}>
@@ -278,7 +278,7 @@ const styles = {
     textTransform: "uppercase" as const,
     letterSpacing: "0.05em",
     border: "3px solid #000001",
-    boxShadow: "4px 4px 0 #000001",
+    boxShadow: "4px 4px 0 #22c55e",
   },
   divider: {
     borderTop: "2px solid #e4e4e7",
@@ -303,5 +303,11 @@ const styles = {
     margin: "0",
   },
 } as const;
+
+/** Preview props for React Email dev server. */
+WelcomeEmail.PreviewProps = {
+  userName: "Jordan",
+  baseUrl: "https://permtracker.app",
+} satisfies WelcomeEmailProps;
 
 export default WelcomeEmail;

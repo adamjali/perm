@@ -12,7 +12,6 @@
  */
 
 import { Text, Section } from "@react-email/components";
-import * as React from "react";
 import { EmailLayout, EmailButton, EmailHeader } from "./components";
 import { labelStyle, valueStyle, detailsSectionStyle, ctaSectionStyle } from "./components/emailStyles";
 
@@ -140,5 +139,16 @@ const styles = {
     margin: "0",
   },
 } as const;
+
+/** Preview props for React Email dev server. */
+AutoClosure.PreviewProps = {
+  beneficiaryName: "A. Rivera",
+  companyName: "Globex Corporation",
+  violationType: "PWD Expiration Missed",
+  reason: "The prevailing wage determination expired before the ETA-9089 was filed, so the case can no longer move forward on this PWD.",
+  closedAt: "June 27, 2026",
+  caseUrl: "https://permtracker.app/cases/abc123",
+  caseNumber: "PT-1042",
+} satisfies AutoClosureProps;
 
 export default AutoClosure;

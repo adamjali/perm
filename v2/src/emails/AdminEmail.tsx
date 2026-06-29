@@ -138,4 +138,13 @@ const styles = {
   },
 } as const;
 
+/** Preview props for React Email dev server. */
+AdminEmail.PreviewProps = {
+  recipientName: "Jordan Lee",
+  subject: "A quick update on your account",
+  body:
+    "Thanks for being an early PERM Tracker user. We wanted to let you know about a few improvements we shipped this week.\n\nDeadline reminders now arrive as a single daily digest instead of one email per case, and the weekly summary has a cleaner layout.\n\nIf you run into anything or have a feature request, just reply to this email. We read every message.",
+  appUrl: "https://permtracker.app",
+} satisfies AdminEmailProps;
+
 export default AdminEmail;

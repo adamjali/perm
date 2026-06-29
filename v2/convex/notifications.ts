@@ -29,7 +29,7 @@
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
-import { getCurrentUserId, getCurrentUserIdOrNull, isEmailVerified } from "./lib/auth";
+import { getCurrentUserId, getCurrentUserIdOrNull, isEmailVerified, getUserByEmail } from "./lib/auth";
 import { logDelete } from "./lib/audit";
 import { createLogger } from "./lib/logging";
 import { rateLimiter } from "./rateLimitConfig";
@@ -733,5 +733,48 @@ export const markEmailSent = internalMutation({
       emailSentAt: now,
       updatedAt: now,
     });
+  },
+});
+
+/**
+ * One-click unsubscribe from the WEEKLY digest only (deadline reminders stay on).
+ * Called by the /unsubscribe HTTP route after token verification.
+ *
+ * Independent of marketing/Broadcast unsubscribe — this only touches the weekly
+ * transactional digest. `emailWeeklyDigest` is the single source of truth, so the
+ * in-app settings toggle reflects this immediately. Idempotent.
+ */
+export const unsubscribeWeeklyByEmail = internalMutation({
+  args: { email: v.string() },
+  handler: async (ctx, args): Promise<{ ok: boolean }> => {
+    const user = await getUserByEmail(ctx, args.email);
+    if (!user || user.deletedAt) return { ok: false };
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", user._id))
+      .unique();
+    if (!profile) return { ok: false };
+    if (profile.emailWeeklyDigest !== false) {
+      await ctx.db.patch(profile._id, {
+        emailWeeklyDigest: false,
+        updatedAt: Date.now(),
+      });
+      log.info("Weekly digest unsubscribed via email link", { resourceId: profile._id });
+    }
+    return { ok: true };
+  },
+});
+
+/**
+ * True only if `email` is the caller's OWN verified email address. Used to gate
+ * the "send test email" action so an authed user can't send branded mail to
+ * arbitrary addresses.
+ */
+export const isOwnVerifiedEmail = internalQuery({
+  args: { userId: v.id("users"), email: v.string() },
+  handler: async (ctx, args): Promise<boolean> => {
+    const user = await getUserByEmail(ctx, args.email);
+    if (!user || user._id !== args.userId || user.deletedAt) return false;
+    return await isEmailVerified(ctx, args.userId);
   },
 });

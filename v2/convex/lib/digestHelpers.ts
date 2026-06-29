@@ -145,6 +145,11 @@ export function formatDeadlineType(deadlineType: string): string {
     "RFI Response Due": "RFI Response Due",
     rfe_due: "RFE Response Due",
     "RFE Response Due": "RFE Response Due",
+    recruitment_window_closes: "Recruitment Window Closes",
+    job_order_start_deadline: "Job Order Start",
+    notice_of_filing_start_deadline: "Notice of Filing",
+    first_sunday_ad_deadline: "First Sunday Ad",
+    second_sunday_ad_deadline: "Second Sunday Ad",
   };
   return typeMap[deadlineType] ?? deadlineType;
 }

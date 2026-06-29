@@ -12,7 +12,6 @@
  */
 
 import { Text, Section } from "@react-email/components";
-import * as React from "react";
 import { EmailLayout, EmailButton, EmailHeader } from "./components";
 import { labelStyle, valueStyle, detailsSectionStyle, ctaSectionStyle } from "./components/emailStyles";
 
@@ -70,17 +69,25 @@ export function StatusChange({
         <Text className="em-text" style={valueStyle}>{companyName}</Text>
       </Section>
 
-      {/* Status change indicator */}
+      {/* Status change indicator — table layout for reliable rendering (flex/gap is unsupported in Outlook) */}
       <Section className="em-status-box" style={styles.statusChange}>
-        <div style={styles.statusBox}>
-          <Text className="em-text-secondary" style={styles.statusLabel}>Previous</Text>
-          <Text className="em-status-prev" style={styles.statusValue}>{previousStatus}</Text>
-        </div>
-        <Text className="em-arrow" style={styles.arrow}>→</Text>
-        <div style={styles.statusBox}>
-          <Text className="em-text-secondary" style={styles.statusLabel}>Current</Text>
-          <Text className="em-status-new" style={styles.statusValueNew}>{newStatus}</Text>
-        </div>
+        <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
+          <tbody>
+            <tr>
+              <td style={styles.statusBox}>
+                <Text className="em-text-secondary" style={styles.statusLabel}>Previous</Text>
+                <Text className="em-status-prev" style={styles.statusValue}>{previousStatus}</Text>
+              </td>
+              <td style={styles.arrowCell}>
+                <Text className="em-arrow" style={styles.arrow}>→</Text>
+              </td>
+              <td style={styles.statusBox}>
+                <Text className="em-text-secondary" style={styles.statusLabel}>Current</Text>
+                <Text className="em-status-new" style={styles.statusValueNew}>{newStatus}</Text>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </Section>
 
       <Section style={styles.timestamp}>
@@ -96,10 +103,6 @@ export function StatusChange({
 
 const styles = {
   statusChange: {
-    display: "flex" as const,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-    gap: "16px",
     backgroundColor: "#f4f4f5",
     padding: "20px",
     border: "2px solid #e4e4e7",
@@ -107,6 +110,13 @@ const styles = {
   },
   statusBox: {
     textAlign: "center" as const,
+    verticalAlign: "middle" as const,
+    width: "44%",
+  },
+  arrowCell: {
+    textAlign: "center" as const,
+    verticalAlign: "middle" as const,
+    width: "12%",
   },
   statusLabel: {
     color: "#71717a",
@@ -124,6 +134,7 @@ const styles = {
     padding: "8px 16px",
     backgroundColor: "#fffffe",
     border: "2px solid #e4e4e7",
+    display: "inline-block" as const,
   },
   statusValueNew: {
     color: "#18181b",
@@ -133,6 +144,7 @@ const styles = {
     padding: "8px 16px",
     backgroundColor: "#dcfce7",
     border: "2px solid #22c55e",
+    display: "inline-block" as const,
   },
   arrow: {
     fontSize: "24px",
@@ -150,5 +162,17 @@ const styles = {
     margin: "0",
   },
 } as const;
+
+/** Preview props for React Email dev server. */
+StatusChange.PreviewProps = {
+  beneficiaryName: "A. Rivera",
+  companyName: "Globex Corporation",
+  previousStatus: "Recruitment",
+  newStatus: "ETA-9089 Filed",
+  changeType: "stage",
+  changedAt: "June 28, 2026",
+  caseUrl: "https://permtracker.app/cases/abc123",
+  caseNumber: "PT-1042",
+} satisfies StatusChangeProps;
 
 export default StatusChange;

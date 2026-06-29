@@ -196,4 +196,15 @@ const styles = {
   },
 } as const;
 
+/** Preview props for React Email dev server (urgent variant). */
+DeadlineReminder.PreviewProps = {
+  employerName: "Globex Corporation",
+  beneficiaryName: "A. Rivera",
+  deadlineType: "PWD Expiration",
+  deadlineDate: "July 4, 2026",
+  daysUntil: 5,
+  caseUrl: "https://permtracker.app/cases/abc123",
+  settingsUrl: "https://permtracker.app/settings",
+} satisfies DeadlineReminderProps;
+
 export default DeadlineReminder;

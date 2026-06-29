@@ -18,6 +18,18 @@ export function getAdminEmail(): string | undefined {
   return process.env.ADMIN_EMAIL;
 }
 
+/**
+ * Get the recipient for CRITICAL alerts (security/abuse + system errors).
+ *
+ * These go to a direct personal inbox (SECURITY_ALERT_EMAIL) so they arrive even
+ * if the permtracker.app domain mail or the ADMIN_EMAIL account is down/
+ * compromised. Falls back to ADMIN_EMAIL if the security address isn't set.
+ * Note: ADMIN_EMAIL stays the admin-identity gate — do not repurpose it.
+ */
+export function getSecurityAlertEmail(): string | undefined {
+  return process.env.SECURITY_ALERT_EMAIL ?? getAdminEmail();
+}
+
 /** @deprecated Use getAdminEmail() — kept for backwards compat in tests */
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 

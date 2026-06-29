@@ -38,7 +38,11 @@ import { RfiAlert } from "../src/emails/RfiAlert";
 import { RfeAlert } from "../src/emails/RfeAlert";
 import { AutoClosure } from "../src/emails/AutoClosure";
 import { WeeklyDigest } from "../src/emails/WeeklyDigest";
+import { DeadlineDigest } from "../src/emails/DeadlineDigest";
 import type { DigestContent } from "./lib/digestHelpers";
+import type { DeadlineDigestItem } from "./lib/reminderDigest";
+import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
+import { extractUserIdFromAction } from "./lib/auth";
 
 // App URL for generating links (falls back to production URL)
 function getAppUrl(): string {
@@ -548,6 +552,15 @@ export const sendWeeklyDigestEmail = internalAction({
     const appUrl = getAppUrl();
     const settingsUrl = `${appUrl}/settings`;
 
+    // One-click unsubscribe (weekly digest only). Omitted if the secret isn't set.
+    let unsubscribeUrl: string | undefined;
+    const unsubSecret = process.env.UNSUBSCRIBE_SECRET;
+    const siteUrl = process.env.CONVEX_SITE_URL;
+    if (unsubSecret && siteUrl) {
+      const token = await makeUnsubscribeToken(args.to, unsubSecret);
+      unsubscribeUrl = `${siteUrl}/unsubscribe?token=${encodeURIComponent(token)}`;
+    }
+
     // Cast to DigestContent type (validators ensure correct shape)
     const digestContent = args.digestContent as DigestContent;
 
@@ -557,6 +570,7 @@ export const sendWeeklyDigestEmail = internalAction({
         digestContent,
         baseUrl: appUrl,
         settingsUrl,
+        unsubscribeUrl,
       })
     );
 
@@ -579,6 +593,14 @@ export const sendWeeklyDigestEmail = internalAction({
       to: [args.to],
       subject,
       html,
+      ...(unsubscribeUrl
+        ? {
+            headers: {
+              "List-Unsubscribe": `<${unsubscribeUrl}>`,
+              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            },
+          }
+        : {}),
     });
 
     if (error) {
@@ -588,6 +610,81 @@ export const sendWeeklyDigestEmail = internalAction({
     }
 
     log.info('Weekly digest email sent', { to: args.to });
+  },
+});
+
+const deadlineDigestItemValidator = v.object({
+  caseId: v.id("cases"),
+  employerName: v.string(),
+  beneficiaryIdentifier: v.string(),
+  deadlineType: v.string(),
+  deadlineDate: v.string(),
+  daysUntil: v.number(),
+  urgency: v.union(
+    v.literal("overdue"),
+    v.literal("urgent"),
+    v.literal("upcoming"),
+    v.literal("later"),
+  ),
+});
+
+/**
+ * Send a consolidated daily deadline digest — ONE email per user listing every
+ * deadline that hit a reminder window today. This is the cap-fix replacement for
+ * the old one-email-per-deadline blast. Verified-gated like the weekly digest.
+ */
+export const sendDeadlineDigestEmail = internalAction({
+  args: {
+    to: v.string(),
+    userName: v.string(),
+    items: v.array(deadlineDigestItemValidator),
+  },
+  handler: async (ctx, args) => {
+    // Guard: only send to still-valid (non-deleted, verified) users.
+    const userActive = await ctx.runQuery(internal.notifications.isUserActiveByEmail, {
+      email: args.to,
+    });
+    if (!userActive) {
+      log.info('Skipping deadline digest email: user invalid (deleted/unverified)', { to: args.to });
+      return;
+    }
+
+    if (args.items.length === 0) return;
+
+    const appUrl = getAppUrl();
+    const items = args.items as DeadlineDigestItem[];
+    const html = await render(
+      DeadlineDigest({
+        userName: args.userName,
+        items,
+        baseUrl: appUrl,
+        settingsUrl: `${appUrl}/settings`,
+      })
+    );
+
+    const total = items.length;
+    const overdue = items.filter((i) => i.urgency === "overdue").length;
+    const plural = total !== 1 ? "s" : "";
+    const subject =
+      overdue > 0
+        ? `${total} PERM deadline${plural} need attention, ${overdue} overdue`
+        : `${total} PERM deadline${plural} need your attention`;
+
+    const resend = getResend();
+    const { error } = await sendEmailWithRetry(resend, {
+      from: FROM_EMAIL,
+      to: [args.to],
+      subject,
+      html,
+    });
+
+    if (error) {
+      log.error('Failed to send deadline digest email', { error: error.message, to: args.to });
+      await recordError(ctx, "action", "notificationActions.sendDeadlineDigestEmail", new Error(error.message), { extra: `to: ${args.to}` });
+      throw new Error(`Email failed: ${error.message}`);
+    }
+
+    log.info('Deadline digest email sent', { to: args.to, count: total });
   },
 });
 
@@ -610,6 +707,16 @@ export const sendTestEmail = action({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
+
+    // Gate: only send to the caller's OWN verified email (no arbitrary recipients).
+    const callerId = extractUserIdFromAction(identity.subject);
+    const allowed = await ctx.runQuery(internal.notifications.isOwnVerifiedEmail, {
+      userId: callerId,
+      email: args.email,
+    });
+    if (!allowed) {
+      throw new Error("Test email can only be sent to your own verified address.");
+    }
 
     const appUrl = getAppUrl();
     const settingsUrl = `${appUrl}/settings/notifications`;
@@ -658,12 +765,16 @@ export const sendAdminNotificationEmail = internalAction({
     recipientName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { getAdminEmail } = await import("./lib/admin");
+    const { getSecurityAlertEmail } = await import("./lib/admin");
     const { AdminEmail } = await import("../src/emails/AdminEmail");
 
-    const toEmail = args.to || getAdminEmail();
+    // Critical alerts (security/abuse, system errors, signup spikes) go to the
+    // direct security inbox (SECURITY_ALERT_EMAIL) so they arrive even if the
+    // permtracker.app domain or the ADMIN_EMAIL account is down. Falls back to
+    // ADMIN_EMAIL. An explicit args.to still overrides.
+    const toEmail = args.to || getSecurityAlertEmail();
     if (!toEmail) {
-      log.error("No recipient email for admin notification (ADMIN_EMAIL not configured)");
+      log.error("No recipient email for admin notification (SECURITY_ALERT_EMAIL/ADMIN_EMAIL not configured)");
       return;
     }
     const name = args.recipientName || "Admin";

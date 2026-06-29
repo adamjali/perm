@@ -81,7 +81,7 @@ export function PasswordResetCode({
           If you didn&apos;t request a password reset, please ignore this email.
           Your password will remain unchanged. If you&apos;re concerned about
           unauthorized access, contact{" "}
-          <Link href="mailto:support@permtracker.app" style={styles.supportLink}>
+          <Link href="mailto:support@permtracker.app" className="em-alert-yellow-text" style={styles.supportLink}>
             support@permtracker.app
           </Link>
           .
@@ -158,7 +158,7 @@ const styles = {
     textTransform: "uppercase" as const,
     letterSpacing: "0.05em",
     border: "3px solid #000001",
-    boxShadow: "4px 4px 0 #000001",
+    boxShadow: "4px 4px 0 #22c55e",
   },
   disclaimerBox: {
     backgroundColor: "#fef3c7",
@@ -177,5 +177,11 @@ const styles = {
     textDecoration: "underline",
   },
 } as const;
+
+/** Preview props for React Email dev server. */
+PasswordResetCode.PreviewProps = {
+  code: "729104",
+  baseUrl: "https://permtracker.app",
+} satisfies PasswordResetCodeProps;
 
 export default PasswordResetCode;

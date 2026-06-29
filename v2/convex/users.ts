@@ -118,22 +118,9 @@ export const ensureUserProfile = mutation({
       { fullName: user?.name, profilePhotoUrl: user?.image }
     ));
 
-    // Welcome email for new signup
-    if (user?.email) {
-      try {
-        const displayName = user.name || user.email.split("@")[0] || "there";
-        await ctx.scheduler.runAfter(0, internal.welcomeEmail.sendWelcomeEmail, {
-          to: user.email,
-          userName: displayName,
-        });
-      } catch (welcomeError) {
-        log.error("Failed to schedule welcome email", {
-          error: welcomeError instanceof Error ? welcomeError.message : String(welcomeError),
-        });
-        await recordError(ctx, "mutation", "users.ensureUserProfile.welcome", welcomeError, { userId });
-      }
-    }
-
+    // NOTE: no welcome email here. It is sent only from recordMyLogin, which is
+    // gated on first *verified* login (postSignupEmailsSent). This public mutation
+    // can run before verification is guaranteed and would also risk a double-send.
     return profileId;
   },
 });

@@ -14,7 +14,6 @@
  */
 
 import { Text, Section, Link } from "@react-email/components";
-import * as React from "react";
 import { EmailLayout, EmailButton, EmailHeader } from "./components";
 
 export interface AccountDeletionConfirmProps {
@@ -258,5 +257,14 @@ const styles = {
     textDecoration: "underline",
   },
 } as const;
+
+/** Preview props for React Email dev server (scheduled-deletion variant). */
+AccountDeletionConfirm.PreviewProps = {
+  userName: "Jordan Lee",
+  deletionDate: "July 29, 2026",
+  cancelUrl: "https://permtracker.app/settings",
+  supportUrl: "mailto:support@permtracker.app",
+  immediate: false,
+} satisfies AccountDeletionConfirmProps;
 
 export default AccountDeletionConfirm;

@@ -30,6 +30,8 @@ export interface WeeklyDigestProps {
   baseUrl?: string;
   /** URL to manage notification settings */
   settingsUrl?: string;
+  /** One-click unsubscribe URL for the weekly summary (omit to hide the link). */
+  unsubscribeUrl?: string;
 }
 
 /**
@@ -40,6 +42,7 @@ export function WeeklyDigest({
   digestContent,
   baseUrl = "https://permtracker.app",
   settingsUrl = "https://permtracker.app/settings",
+  unsubscribeUrl,
 }: WeeklyDigestProps) {
   const {
     userName,
@@ -204,6 +207,17 @@ export function WeeklyDigest({
           <Link href={`${baseUrl}/cases`} className="em-cta-button" style={styles.ctaButton}>
             View All Cases
           </Link>
+        </Section>
+      )}
+
+      {unsubscribeUrl && (
+        <Section style={{ textAlign: "center" as const, marginTop: "12px", paddingTop: "8px" }}>
+          <Text className="em-text-muted" style={{ color: "#a1a1aa", fontSize: "12px", lineHeight: "18px", margin: "0" }}>
+            You get this weekly summary because it&#39;s on in your settings.{" "}
+            <Link href={unsubscribeUrl} className="em-link" style={{ color: "#71717a", textDecoration: "underline" }}>
+              Unsubscribe from weekly summaries
+            </Link>
+          </Text>
         </Section>
       )}
     </EmailLayout>

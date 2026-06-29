@@ -5,6 +5,7 @@ import { auth } from "./auth";
 import { recordError } from "./lib/errorRecording";
 import { isLiveContactEventType } from "./marketingWebhook";
 import { Webhook } from "svix";
+import { verifyUnsubscribeToken } from "./lib/unsubscribeToken";
 
 const http = httpRouter();
 auth.addHttpRoutes(http);
@@ -122,6 +123,10 @@ http.route({
             headers: { "Content-Type": "application/json" },
           });
         }
+        // Note: a marketing (Broadcast) unsubscribe is intentionally NOT mirrored
+        // into emailWeeklyDigest. The weekly digest is a transactional service
+        // notification with its own one-click unsubscribe and stays independent of
+        // promotional marketing consent.
         return new Response(JSON.stringify({ success: true }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
@@ -191,6 +196,73 @@ http.route({
         }
       );
     }
+  }),
+});
+
+// ============================================================================
+// WEEKLY DIGEST — one-click unsubscribe (RFC 8058)
+// ============================================================================
+
+async function resolveUnsubscribeEmail(req: Request): Promise<string | null> {
+  const secret = process.env.UNSUBSCRIBE_SECRET;
+  if (!secret) return null;
+  const token = new URL(req.url).searchParams.get("token");
+  if (!token) return null;
+  return verifyUnsubscribeToken(token, secret);
+}
+
+function unsubscribePage(title: string, body: string, button?: { action: string }): Response {
+  const buttonHtml = button
+    ? `<form method="POST" action="${button.action}" style="margin:20px 0 0 0;">
+         <button type="submit" style="background:#18181b;color:#fffffe;border:3px solid #000001;box-shadow:4px 4px 0 #22c55e;font-size:14px;font-weight:700;padding:12px 28px;cursor:pointer;">Unsubscribe</button>
+       </form>`
+    : "";
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${title}</title></head>
+<body style="margin:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:48px 16px;">
+    <table role="presentation" width="440" cellpadding="0" cellspacing="0" style="max-width:440px;background:#fffffe;border:4px solid #000001;">
+      <tr><td style="background:#000001;padding:18px 24px;"><span style="color:#22c55e;font-weight:700;font-size:18px;">PERM</span><span style="color:#fffffe;font-weight:700;font-size:18px;"> Tracker</span></td></tr>
+      <tr><td style="padding:28px 24px;">
+        <div style="font-size:18px;font-weight:700;color:#18181b;margin:0 0 8px 0;">${title}</div>
+        <div style="font-size:14px;line-height:21px;color:#52525b;">${body}</div>
+        ${buttonHtml}
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+  return new Response(html, { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } });
+}
+
+// POST: one-click. Hit by Gmail/Apple's native Unsubscribe button (List-Unsubscribe-Post)
+// and by the confirmation form. Acts immediately.
+http.route({
+  path: "/unsubscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const email = await resolveUnsubscribeEmail(req);
+    if (!email) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
+    await ctx.runMutation(internal.notifications.unsubscribeWeeklyByEmail, { email });
+    return unsubscribePage(
+      "You're unsubscribed",
+      "You won't receive the weekly summary anymore. Your deadline reminders are unaffected, and you can turn the weekly summary back on anytime in your account settings."
+    );
+  }),
+});
+
+// GET: a human clicked the in-email link. Show a confirmation page with a POST
+// button — prefetch-safe (a bare GET, e.g. Apple Mail Privacy prefetch, never unsubscribes).
+http.route({
+  path: "/unsubscribe",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const email = await resolveUnsubscribeEmail(req);
+    if (!email) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
+    const token = new URL(req.url).searchParams.get("token") ?? "";
+    return unsubscribePage(
+      "Unsubscribe from the weekly summary?",
+      "This only stops the weekly PERM summary. Your deadline reminders keep coming, and you can turn the summary back on anytime in settings.",
+      { action: `/unsubscribe?token=${encodeURIComponent(token)}` }
+    );
   }),
 });
 

@@ -113,8 +113,13 @@ const styles = {
     textTransform: "uppercase" as const,
     letterSpacing: "0.05em",
     border: "3px solid #000001",
-    boxShadow: "4px 4px 0 #000001",
+    boxShadow: "4px 4px 0 #22c55e",
   },
 } as const;
+
+/** Preview props for React Email dev server. */
+TestEmail.PreviewProps = {
+  settingsUrl: "https://permtracker.app/settings/notifications",
+} satisfies TestEmailProps;
 
 export default TestEmail;

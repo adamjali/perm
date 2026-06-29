@@ -13,8 +13,8 @@
  */
 
 import { Text, Section } from "@react-email/components";
-import * as React from "react";
 import { EmailLayout, EmailButton, EmailHeader } from "./components";
+import { labelStyle, valueStyle, valueHighlightStyle } from "./components/emailStyles";
 
 export interface RfiAlertProps {
   /** Beneficiary name */
@@ -76,17 +76,17 @@ export function RfiAlert({
       )}
 
       <Section style={styles.details}>
-        <Text className="em-text-secondary" style={styles.label}>Foreign Worker</Text>
-        <Text className="em-text" style={styles.value}>{beneficiaryName}</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Foreign Worker</Text>
+        <Text className="em-text" style={valueStyle}>{beneficiaryName}</Text>
 
-        <Text className="em-text-secondary" style={styles.label}>Company</Text>
-        <Text className="em-text" style={styles.value}>{companyName}</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Company</Text>
+        <Text className="em-text" style={valueStyle}>{companyName}</Text>
 
-        <Text className="em-text-secondary" style={styles.label}>RFI Received</Text>
-        <Text className="em-text" style={styles.value}>{receivedDate}</Text>
+        <Text className="em-text-secondary" style={labelStyle}>RFI Received</Text>
+        <Text className="em-text" style={valueStyle}>{receivedDate}</Text>
 
-        <Text className="em-text-secondary" style={styles.label}>Response Due</Text>
-        <Text className="em-text" style={styles.valueHighlight}>{dueDate}</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Response Due</Text>
+        <Text className="em-text" style={valueHighlightStyle}>{dueDate}</Text>
 
         <Text className={isOverdue ? "em-days-overdue" : "em-days-warning"} style={isOverdue ? styles.overdue : styles.daysRemaining}>
           {daysRemaining > 0
@@ -130,26 +130,6 @@ const styles = {
   details: {
     marginBottom: "24px",
   },
-  label: {
-    color: "#71717a",
-    fontSize: "12px",
-    fontWeight: "600" as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
-    margin: "0 0 4px 0",
-  },
-  value: {
-    color: "#18181b",
-    fontSize: "16px",
-    fontWeight: "500" as const,
-    margin: "0 0 16px 0",
-  },
-  valueHighlight: {
-    color: "#18181b",
-    fontSize: "18px",
-    fontWeight: "700" as const,
-    margin: "0 0 8px 0",
-  },
   daysRemaining: {
     color: "#f97316",
     fontSize: "14px",
@@ -181,5 +161,17 @@ const styles = {
     lineHeight: "18px",
   },
 } as const;
+
+/** Preview props for React Email dev server (new-RFI variant). */
+RfiAlert.PreviewProps = {
+  beneficiaryName: "C. Okafor",
+  companyName: "Initech",
+  dueDate: "July 9, 2026",
+  daysRemaining: 10,
+  receivedDate: "June 9, 2026",
+  alertType: "new",
+  caseUrl: "https://permtracker.app/cases/abc123",
+  caseNumber: "PT-1043",
+} satisfies RfiAlertProps;
 
 export default RfiAlert;

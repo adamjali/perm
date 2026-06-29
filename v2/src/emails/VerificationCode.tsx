@@ -153,7 +153,7 @@ const styles = {
     textTransform: "uppercase" as const,
     letterSpacing: "0.05em",
     border: "3px solid #000001",
-    boxShadow: "4px 4px 0 #000001",
+    boxShadow: "4px 4px 0 #22c55e",
   },
   disclaimerBox: {
     backgroundColor: "#f4f4f5",
@@ -167,5 +167,11 @@ const styles = {
     margin: "0",
   },
 } as const;
+
+/** Preview props for React Email dev server. */
+VerificationCode.PreviewProps = {
+  code: "481605",
+  baseUrl: "https://permtracker.app",
+} satisfies VerificationCodeProps;
 
 export default VerificationCode;
