@@ -39,6 +39,7 @@ import { RfeAlert } from "../src/emails/RfeAlert";
 import { AutoClosure } from "../src/emails/AutoClosure";
 import { WeeklyDigest } from "../src/emails/WeeklyDigest";
 import { DeadlineDigest } from "../src/emails/DeadlineDigest";
+import { ReengagementNudge } from "../src/emails/ReengagementNudge";
 import type { DigestContent } from "./lib/digestHelpers";
 import type { DeadlineDigestItem } from "./lib/reminderDigest";
 import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
@@ -610,6 +611,61 @@ export const sendWeeklyDigestEmail = internalAction({
     }
 
     log.info('Weekly digest email sent', { to: args.to });
+  },
+});
+
+/**
+ * Send the "we've missed you" re-engagement nudge to an inactive user.
+ * Verified-gated. The email warns that the weekly summary will pause if they
+ * stay away (the reengagement cron does the actual suppression).
+ */
+export const sendReengagementNudge = internalAction({
+  args: { to: v.string(), userName: v.string() },
+  handler: async (ctx, args): Promise<void> => {
+    const isActive = await ctx.runQuery(internal.notifications.isUserActiveByEmail, {
+      email: args.to,
+    });
+    if (!isActive) {
+      log.info("Skipping reengagement nudge (unverified/inactive account)", { to: args.to });
+      return;
+    }
+
+    const appUrl = getAppUrl();
+    let unsubscribeUrl: string | undefined;
+    const unsubSecret = process.env.UNSUBSCRIBE_SECRET;
+    const siteUrl = process.env.CONVEX_SITE_URL;
+    if (unsubSecret && siteUrl) {
+      const token = await makeUnsubscribeToken(args.to, unsubSecret);
+      unsubscribeUrl = `${siteUrl}/unsubscribe?token=${encodeURIComponent(token)}`;
+    }
+
+    const html = await render(
+      ReengagementNudge({ userName: args.userName, baseUrl: appUrl, unsubscribeUrl })
+    );
+
+    const resend = getResend();
+    const { error } = await sendEmailWithRetry(resend, {
+      from: FROM_EMAIL,
+      to: [args.to],
+      subject: "We've missed you at PERM Tracker",
+      html,
+      ...(unsubscribeUrl
+        ? {
+            headers: {
+              "List-Unsubscribe": `<${unsubscribeUrl}>`,
+              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            },
+          }
+        : {}),
+    });
+
+    if (error) {
+      log.error("Failed to send reengagement nudge", { error: error.message, to: args.to });
+      await recordError(ctx, "action", "notificationActions.sendReengagementNudge", new Error(error.message), { extra: `to: ${args.to}` });
+      // Best-effort — don't throw; the cron still records the nudge as sent.
+    } else {
+      log.info("Reengagement nudge sent", { to: args.to });
+    }
   },
 });
 

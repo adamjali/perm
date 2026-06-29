@@ -123,6 +123,7 @@ import type * as onboarding from "../onboarding.js";
 import type * as pushNotifications from "../pushNotifications.js";
 import type * as pushSubscriptions from "../pushSubscriptions.js";
 import type * as rateLimitConfig from "../rateLimitConfig.js";
+import type * as reengagement from "../reengagement.js";
 import type * as scheduledJobs from "../scheduledJobs.js";
 import type * as sentryReportAction from "../sentryReportAction.js";
 import type * as supportEmail from "../supportEmail.js";
@@ -258,6 +259,7 @@ declare const fullApi: ApiFromModules<{
   pushNotifications: typeof pushNotifications;
   pushSubscriptions: typeof pushSubscriptions;
   rateLimitConfig: typeof rateLimitConfig;
+  reengagement: typeof reengagement;
   scheduledJobs: typeof scheduledJobs;
   sentryReportAction: typeof sentryReportAction;
   supportEmail: typeof supportEmail;

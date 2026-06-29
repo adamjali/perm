@@ -518,7 +518,6 @@ perm-tracker/                      # Repository root
 | `WelcomeEmail.tsx` | Welcome email for new users |
 | `AccountDeletionConfirm.tsx` | Account deletion confirmation |
 | `AdminEmail.tsx` | Admin notification email |
-| `RequestAlert.tsx` | General request alert |
 | `VerificationCode.tsx` | OTP verification email |
 | `PasswordResetCode.tsx` | Password reset email |
 | `TestEmail.tsx` | Test email template |

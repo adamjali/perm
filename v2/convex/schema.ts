@@ -241,6 +241,14 @@ export default defineSchema({
     // Server-side inactivity tracking (heartbeat writes this every 5 min)
     lastActiveAt: v.optional(v.number()),
 
+    // Re-engagement nudge state. reengagementNudgeSentAt: when the "you've been
+    // away" email was sent (one nudge per inactivity spell; cleared on next
+    // login). weeklyDigestSuppressedAt: when the weekly digest was auto-paused
+    // after the nudge went unanswered — distinguishes an auto-pause from a manual
+    // unsubscribe and drives the in-app reactivation banner.
+    reengagementNudgeSentAt: v.optional(v.number()),
+    weeklyDigestSuppressedAt: v.optional(v.number()),
+
     // One-shot flag: welcome email + admin notification are fired on first
     // successful authenticated login (NOT on signup). This prevents signup-spam
     // from delivering emails via our verified sender reputation — unverified

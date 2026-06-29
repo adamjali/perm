@@ -17,6 +17,7 @@
 
 import Header from "@/components/layout/Header";
 import DeletionBanner from "@/components/layout/DeletionBanner";
+import ReengagementBanner from "@/components/layout/ReengagementBanner";
 import Footer from "@/components/layout/Footer";
 import SignOutOverlay from "@/components/layout/SignOutOverlay";
 import InactivityTimeoutProvider from "@/components/layout/InactivityTimeoutProvider";
@@ -80,6 +81,9 @@ export default function AuthenticatedLayout({
 
         {/* Deletion warning banner (shown when account has scheduled deletion) */}
         <DeletionBanner />
+
+        {/* Weekly-summary paused banner (shown after inactivity auto-pause) */}
+        <ReengagementBanner />
 
         {/* Main content - grows to fill space */}
         <main

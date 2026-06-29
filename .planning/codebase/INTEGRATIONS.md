@@ -139,7 +139,6 @@
 | `AdminEmail` | `v2/src/emails/AdminEmail.tsx` | Admin notifications |
 | `AccountDeletionConfirm` | `v2/src/emails/AccountDeletionConfirm.tsx` | Deletion confirmation |
 | `TestEmail` | `v2/src/emails/TestEmail.tsx` | Test/verify config |
-| `RequestAlert` | `v2/src/emails/RequestAlert.tsx` | Support request alerts |
 
 **Email Actions:** `v2/convex/notificationActions.ts` — Renders templates with `@react-email/render` and sends via Resend.
 

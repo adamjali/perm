@@ -192,6 +192,12 @@ export const recordMyLogin = mutation({
       loginCount: (profile.loginCount ?? 0) + 1,
       lastLoginAt: Date.now(),
       lastActiveAt: Date.now(),
+      // Returning = active: reset the re-engagement nudge so the cycle can start
+      // fresh if they go quiet again. The weekly-digest auto-pause is NOT undone
+      // here — that stays until the user opts back in via the in-app banner.
+      ...(profile.reengagementNudgeSentAt !== undefined
+        ? { reengagementNudgeSentAt: undefined }
+        : {}),
     });
 
     // First successful authenticated login = email is verified.
@@ -404,6 +410,12 @@ export const updateUserProfile = mutation({
       updateData.googleRefreshToken = args.googleRefreshToken
         ? await encryptToken(args.googleRefreshToken)
         : undefined;
+    }
+
+    // If the user manually re-enables the weekly digest from settings, clear the
+    // inactivity auto-pause marker so the re-engagement banner doesn't linger.
+    if (args.emailWeeklyDigest === true) {
+      updateData.weeklyDigestSuppressedAt = undefined;
     }
 
     // Capture old doc for audit

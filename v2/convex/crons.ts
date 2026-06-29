@@ -186,4 +186,36 @@ crons.hourly(
   internal.abuseBlocklist.cleanupExpiredBlocks
 );
 
+// ============================================================================
+// ORPHANED PROFILE CLEANUP
+// ============================================================================
+
+/**
+ * Daily safety net for userProfiles whose userId points to a deleted user.
+ *
+ * The account-deletion cascade (purgeAllUserData) deletes the profile with the
+ * user, so this should normally find nothing — it's insurance against a partial
+ * deletion. Runs at 3:30 AM UTC, near the other low-traffic daily cleanups.
+ */
+crons.daily(
+  "orphaned-profile-cleanup",
+  { hourUTC: 3, minuteUTC: 30 },
+  internal.admin.cleanupOrphanedProfiles
+);
+
+// ============================================================================
+// RE-ENGAGEMENT NUDGE
+// ============================================================================
+
+/**
+ * Daily re-engagement pass: emails inactive users who still have the weekly
+ * digest on, and pauses the digest if the nudge goes unanswered. Runs at 16:00
+ * UTC (noon ET) — separate from the other bulk email jobs.
+ */
+crons.daily(
+  "reengagement-check",
+  { hourUTC: 16, minuteUTC: 0 },
+  internal.reengagement.runReengagementCheck
+);
+
 export default crons;
