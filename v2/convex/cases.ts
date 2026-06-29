@@ -1,4 +1,5 @@
 import { query, mutation, internalQuery } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
@@ -22,6 +23,29 @@ import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
 
 const log = loggers.cases;
+
+/**
+ * Clear the auto-closure trail for a case that is leaving "closed": dismiss the
+ * unread `auto_closure` alert notification(s) that drive the dashboard banner.
+ * Without this, a case whose dates were corrected (so its status recomputes out
+ * of closed) still shows the "auto-closed" alert. The case row's closureReason/
+ * closedAt are cleared by the caller's own patch.
+ */
+async function dismissAutoClosureAlerts(
+  ctx: MutationCtx,
+  caseId: Id<"cases">
+): Promise<void> {
+  const notifs = await ctx.db
+    .query("notifications")
+    .withIndex("by_case_id", (q) => q.eq("caseId", caseId))
+    .collect();
+  const now = Date.now();
+  for (const n of notifs) {
+    if (n.type === "auto_closure" && !n.isRead) {
+      await ctx.db.patch(n._id, { isRead: true, updatedAt: now });
+    }
+  }
+}
 
 /**
  * Encrypt FEIN for storage (returns undefined if input is undefined/null)
@@ -88,8 +112,9 @@ export const hasAnyCases = query({
     // First case was soft-deleted — check remaining cases
     const cases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .withIndex("by_user_and_deleted", (q) =>
+        q.eq("userId", userId).eq("deletedAt", undefined)
+      )
       .first();
 
     return cases !== null;
@@ -1047,9 +1072,18 @@ export const update = mutation({
           progressStatus: autoStatus.progressStatus,
         };
 
+    // If correcting dates takes the case out of "closed", clear the auto-closure
+    // trail (reason/date + the dashboard alert) so it doesn't look still-closed.
+    const resolvedCaseStatus = isOverridden
+      ? (args.caseStatus ?? caseDoc!.caseStatus)
+      : autoStatus.caseStatus;
+    const leavingClosed =
+      caseDoc!.caseStatus === "closed" && resolvedCaseStatus !== "closed";
+
     await ctx.db.patch(args.id, {
       ...updates,
       ...statusUpdates,
+      ...(leavingClosed ? { closureReason: undefined, closedAt: undefined } : {}),
       // Always recalculate derived dates on update
       recruitmentStartDate: derivedDates.recruitmentStartDate ?? undefined,
       recruitmentEndDate: derivedDates.recruitmentEndDate ?? undefined,
@@ -1058,6 +1092,10 @@ export const update = mutation({
       recruitmentWindowCloses: derivedDates.recruitmentWindowCloses ?? undefined,
       updatedAt: Date.now(),
     });
+
+    if (leavingClosed) {
+      await dismissAutoClosureAlerts(ctx, args.id);
+    }
 
     // Audit log: record the case update
     try {
@@ -2163,8 +2201,9 @@ export const checkDuplicates = query({
     // Fetch all existing cases for this user
     const existingCases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .withIndex("by_user_and_deleted", (q) =>
+        q.eq("userId", userId).eq("deletedAt", undefined)
+      )
       .collect();
 
     // Create a Map of existing employer+beneficiary combinations
@@ -2371,8 +2410,9 @@ export const importCases = mutation({
     // Fetch all existing cases for this user to check for duplicates
     const existingCases = await ctx.db
       .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .withIndex("by_user_and_deleted", (q) =>
+        q.eq("userId", userId).eq("deletedAt", undefined)
+      )
       .collect();
 
     // Create a Map of existing employer+beneficiary combinations with their case IDs
@@ -2976,8 +3016,12 @@ export const reopenCase = mutation({
     await ctx.db.patch(args.id, {
       caseStatus: newCaseStatus,
       progressStatus: newProgressStatus,
+      // Clear the closure trail now that the case is open again.
+      closureReason: undefined,
+      closedAt: undefined,
       updatedAt: Date.now(),
     });
+    await dismissAutoClosureAlerts(ctx, args.id);
 
     // Audit log: record the case reopen as an update
     try {

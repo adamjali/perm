@@ -560,6 +560,7 @@ export default defineSchema({
     deletedAt: v.optional(v.number()),
   })
     .index("by_user_id", ["userId"])
+    .index("by_user_and_deleted", ["userId", "deletedAt"])
     .index("by_user_and_duplicate", ["userId", "duplicateOf"])
     .index("by_user_and_status", ["userId", "caseStatus"])
     .index("by_user_and_favorite", ["userId", "isFavorite"])

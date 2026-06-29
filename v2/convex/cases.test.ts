@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions, resetRateLimit } from "../test-utils/convex";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 
 describe("Cases Security", () => {
   // Enable fake timers for scheduled function handling
@@ -1490,5 +1491,62 @@ describe("Calendar Sync Integration", () => {
       const result = await authT.query(api.cases.hasAnyCases, {});
       expect(result).toBe(true);
     });
+  });
+});
+
+describe("auto-closure cleanup when a case leaves closed", () => {
+  setupSchedulerTests();
+
+  it("reopenCase clears closureReason/closedAt and dismisses the auto_closure alert", async () => {
+    const t = createTestContext();
+    const authT = await createAuthenticatedContext(t, "Reopen Rita");
+    const caseId = await authT.mutation(api.cases.create, {
+      employerName: "Globex",
+      beneficiaryIdentifier: "B. One",
+      positionTitle: "Engineer",
+    });
+    await finishScheduledFunctions(t);
+
+    // Simulate an auto-closure: close the case + leave a closure trail + unread alert.
+    const userId = await authT.run(
+      async (ctx) => (await ctx.auth.getUserIdentity())!.subject as Id<"users">
+    );
+    await authT.run(async (ctx) => {
+      await ctx.db.patch(caseId, {
+        caseStatus: "closed",
+        closureReason: "eta9089_expired",
+        closedAt: Date.now(),
+      });
+      await ctx.db.insert("notifications", {
+        userId,
+        caseId,
+        type: "auto_closure",
+        title: "Case auto-closed",
+        message: "ETA-9089 expired",
+        priority: "urgent",
+        isRead: false,
+        emailSent: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+    await authT.mutation(api.cases.reopenCase, { id: caseId });
+    await finishScheduledFunctions(t);
+
+    const reopened = await authT.run(async (ctx) => ctx.db.get(caseId));
+    expect(reopened?.caseStatus).not.toBe("closed");
+    expect(reopened?.closureReason).toBeUndefined();
+    expect(reopened?.closedAt).toBeUndefined();
+
+    const autoClosure = await authT.run(async (ctx) => {
+      const notifs = await ctx.db
+        .query("notifications")
+        .withIndex("by_case_id", (q) => q.eq("caseId", caseId))
+        .collect();
+      return notifs.filter((n) => n.type === "auto_closure");
+    });
+    expect(autoClosure.length).toBeGreaterThan(0);
+    expect(autoClosure.every((n) => n.isRead)).toBe(true);
   });
 });
