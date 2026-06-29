@@ -203,6 +203,35 @@ export const updateMarketingSubscription = action({
   },
 });
 
+/**
+ * Remove a user's Resend marketing contact by email. Scheduled from the
+ * account-deletion cleanup so a deleted user doesn't linger in Resend until the
+ * next manual syncContacts run. Idempotent — a missing contact (404) is success.
+ */
+export const removeContactByEmail = internalAction({
+  args: { email: v.string() },
+  handler: async (ctx, args): Promise<void> => {
+    const apiKey = getApiKey();
+    const res = await resendFetch(
+      `/contacts/${encodeURIComponent(args.email)}`,
+      apiKey,
+      { method: "DELETE" }
+    );
+    // 404 = already gone; treat as success. Other failures are recorded, not
+    // thrown — the DB deletion already happened; this is best-effort cleanup.
+    if (!res.ok && res.status !== 404) {
+      const text = await res.text();
+      await recordError(
+        ctx,
+        "action",
+        "marketingEmail.removeContactByEmail",
+        new Error(`Resend DELETE /contacts failed: ${res.status} ${text}`),
+        { extra: `email: ${args.email}` }
+      );
+    }
+  },
+});
+
 // ============================================================================
 // FULL SYNC (called via CLI or scheduled)
 // ============================================================================

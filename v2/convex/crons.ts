@@ -128,7 +128,9 @@ crons.weekly(
 crons.hourly(
   "account-deletion-cleanup",
   { minuteUTC: 45 },
-  internal.scheduledJobs.processExpiredDeletions
+  // Routes through the cleanup wrapper so the cron path also deletes Google
+  // Calendar events + the Resend contact, not just the DB rows.
+  internal.accountDeletion.processExpiredDeletions
 );
 
 // ============================================================================

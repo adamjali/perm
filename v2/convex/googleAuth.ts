@@ -197,6 +197,11 @@ export const updateGoogleAccessToken = mutation({
 export const getGoogleTokens = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    // NOTE: deliberately does NOT filter on profile.deletedAt. The account-
+    // deletion cleanup (accountDeletion.cleanupAndPurge) soft-deletes the profile
+    // and then reads the Google token here to delete the user's calendar events
+    // BEFORE the purge. Adding a `deletedAt === undefined` filter would silently
+    // break that calendar cleanup. Gate on googleCalendarConnected instead.
     const profile = await ctx.db
       .query("userProfiles")
       .withIndex("by_user_id", (q) => q.eq("userId", args.userId))

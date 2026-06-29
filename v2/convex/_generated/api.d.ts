@@ -12,6 +12,7 @@ import type * as ResendOTP from "../ResendOTP.js";
 import type * as ResendPasswordReset from "../ResendPasswordReset.js";
 import type * as abuseBlocklist from "../abuseBlocklist.js";
 import type * as abuseDetection from "../abuseDetection.js";
+import type * as accountDeletion from "../accountDeletion.js";
 import type * as admin from "../admin.js";
 import type * as adminSecurity from "../adminSecurity.js";
 import type * as analytics from "../analytics.js";
@@ -146,6 +147,7 @@ declare const fullApi: ApiFromModules<{
   ResendPasswordReset: typeof ResendPasswordReset;
   abuseBlocklist: typeof abuseBlocklist;
   abuseDetection: typeof abuseDetection;
+  accountDeletion: typeof accountDeletion;
   admin: typeof admin;
   adminSecurity: typeof adminSecurity;
   analytics: typeof analytics;

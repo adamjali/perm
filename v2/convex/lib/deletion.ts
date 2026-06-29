@@ -9,8 +9,12 @@
 
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
+import { recordError } from "./errorRecording";
 
 interface PurgeResult {
+  /** The deleted user's email, captured before the user row is removed. */
+  email: string | undefined;
+  storageBlobsDeleted: number;
   cases: number;
   notifications: number;
   conversations: number;
@@ -40,13 +44,43 @@ export async function purgeAllUserData(
   ctx: MutationCtx,
   userId: Id<"users">
 ): Promise<PurgeResult> {
-  // Delete all user's cases
+  // Capture the email BEFORE deleting the user row, so callers can finish
+  // external cleanup (e.g. removing the Resend contact) after the purge.
+  const userDoc = await ctx.db.get(userId);
+  const email = userDoc?.email;
+
+  // Delete all user's cases, and their uploaded document blobs from storage
+  // (the row holds the storageId; the blob must be deleted separately or it's
+  // orphaned). Mirrors documents.removeDocument.
   const cases = await ctx.db
     .query("cases")
     .withIndex("by_user_id", (q) => q.eq("userId", userId))
     .collect();
+  let storageBlobsDeleted = 0;
+  const failedBlobs: string[] = [];
   for (const caseDoc of cases) {
+    for (const doc of caseDoc.documents ?? []) {
+      if (doc.storageId) {
+        try {
+          await ctx.storage.delete(doc.storageId as Id<"_storage">);
+          storageBlobsDeleted++;
+        } catch {
+          failedBlobs.push(doc.storageId);
+        }
+      }
+    }
     await ctx.db.delete(caseDoc._id);
+  }
+  // Record blob-deletion failures ONCE per purge (not per blob) to avoid alert
+  // spam. Orphaned blobs are non-critical but worth visibility.
+  if (failedBlobs.length > 0) {
+    await recordError(
+      ctx,
+      "mutation",
+      "deletion.purgeAllUserData.storage",
+      new Error(`Failed to delete ${failedBlobs.length} storage blob(s) during purge`),
+      { resourceId: failedBlobs.join(",").slice(0, 500), userId }
+    );
   }
 
   // Delete all user's notifications
@@ -168,6 +202,8 @@ export async function purgeAllUserData(
   await ctx.db.delete(userId);
 
   return {
+    email,
+    storageBlobsDeleted,
     cases: cases.length,
     notifications: notifications.length,
     conversations: conversations.length,

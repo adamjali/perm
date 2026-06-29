@@ -105,6 +105,11 @@ export const copyUserData = internalMutation({
         duplicateOf: undefined,
         // Clear calendar event IDs (they belong to source user's calendar)
         calendarEventIds: undefined,
+        // Drop document attachments: a copy would otherwise share the SOURCE
+        // user's _storage blobs (same storageId), and deleting either account
+        // now purges those blobs — destroying the other's files. Demo/test
+        // copies don't need the real uploads.
+        documents: [],
         // Update timestamps
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -712,9 +717,24 @@ export const deleteUserAdmin = mutation({
       adminAction: true,
     });
 
-    const result = await purgeAllUserData(ctx, args.userId);
+    // Soft-delete now (the user is immediately relabeled "deleted" in admin
+    // lists), then run the full cleanup+purge — calendar + storage + Resend —
+    // asynchronously. A mutation can't call the calendar/Resend actions inline;
+    // the hourly safety-net cron retries this if the scheduled run fails.
+    const now = Date.now();
+    await ctx.db.patch(args.userId, { deletedAt: now });
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
+      .unique();
+    if (profile) {
+      await ctx.db.patch(profile._id, { deletedAt: now, updatedAt: now });
+    }
+    await ctx.scheduler.runAfter(0, internal.accountDeletion.cleanupAndPurge, {
+      userId: args.userId,
+    });
 
-    console.info(`[admin] deleteUserAdmin: permanently deleted user ${user.email}`, result);
+    console.info(`[admin] deleteUserAdmin: scheduled full deletion for ${user.email}`);
 
     return { success: true, message: `User ${user.email} permanently deleted` };
   },
@@ -755,6 +775,12 @@ export const purgeUserInternal = internalMutation({
       return { error: "User not found" };
     }
     const result = await purgeAllUserData(ctx, args.userId);
+    // Best-effort: drop the Resend marketing contact too (CLI cleanup).
+    if (result.email) {
+      await ctx.scheduler.runAfter(0, internal.marketingEmail.removeContactByEmail, {
+        email: result.email,
+      });
+    }
     console.info(`[admin] Purged user ${args.userId} (${user.email})`, result);
     return result;
   },

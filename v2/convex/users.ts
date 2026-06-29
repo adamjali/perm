@@ -714,7 +714,7 @@ export const requestAccountDeletion = mutation({
     // Schedule the permanent deletion job to run after the grace period
     const scheduledJobId = await ctx.scheduler.runAt(
       deletionDate,
-      internal.scheduledJobs.permanentlyDeleteAccount,
+      internal.accountDeletion.cleanupAndPurge,
       { userId: userId }
     );
 
@@ -919,10 +919,8 @@ export const immediateAccountDeletion = action({
       }
     }
 
-    // Permanently delete all user data
-    await ctx.runMutation(internal.scheduledJobs.permanentlyDeleteAccount, {
-      userId,
-    });
+    // Permanently delete all user data + external cleanup (calendar + Resend).
+    await ctx.runAction(internal.accountDeletion.cleanupAndPurge, { userId });
 
     return { success: true, message: "Account permanently deleted" };
   },
