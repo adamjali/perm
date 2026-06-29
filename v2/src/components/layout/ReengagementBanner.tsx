@@ -50,10 +50,10 @@ export default function ReengagementBanner() {
       role="status"
       aria-label="Weekly summary paused"
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 sm:gap-4">
+      <div className="mx-auto flex max-w-7xl flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Mail className="h-5 w-5 flex-shrink-0 text-zinc-500 dark:text-zinc-400" />
-          <p className="min-w-0 text-xs text-zinc-700 dark:text-zinc-300 sm:text-sm">
+          <p className="min-w-0 text-sm text-zinc-700 dark:text-zinc-300">
             <span className="font-medium text-zinc-900 dark:text-zinc-100">
               Your weekly summary is paused.
             </span>{" "}
@@ -62,7 +62,8 @@ export default function ReengagementBanner() {
             </span>
           </p>
         </div>
-        <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+        {/* On mobile the row stacks; indent the buttons under the text (past the icon). */}
+        <div className="flex flex-shrink-0 items-center gap-2 pl-7 sm:pl-0">
           <Button size="sm" onClick={handleReactivate} disabled={busy}>
             Turn it back on
           </Button>

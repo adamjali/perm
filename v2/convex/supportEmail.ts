@@ -141,9 +141,14 @@ export const processInboundEmail = internalAction({
       subject: args.subject,
     });
 
-    // Forward ALL inbound mail to the human inbox (support@, perm@, etc.).
-    // Loop-safe: never forward a message already addressed to the forward target.
-    if (toEmail.toLowerCase() !== CATCH_ALL_FORWARD_TO.toLowerCase()) {
+    // Forward inbound HUMAN mail to the inbox (support@, perm@, etc.). DMARC
+    // aggregate reports (the rua target, dmarc@) are machine-generated XML — they
+    // shouldn't land in a human inbox, and forwarding each one is also an
+    // outbound send against the Resend quota. They're still stored above for the
+    // record. Loop-safe: never forward a message already addressed to the target.
+    const toLower = toEmail.toLowerCase();
+    const isMachineReport = toLower.startsWith("dmarc@");
+    if (!isMachineReport && toLower !== CATCH_ALL_FORWARD_TO.toLowerCase()) {
       try {
         const { error } = await sendEmailWithRetry(resend, {
           from: FROM_EMAIL,
