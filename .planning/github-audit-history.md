@@ -12,6 +12,29 @@
 - **Dependabot grouped PRs**: close as superseded after a verified bulk `pnpm update` (established across audits 1–3)
 - **claude-review CI auth**: uses `CLAUDE_CODE_OAUTH_TOKEN` (Max-subscription OAuth via `claude setup-token`), not `ANTHROPIC_API_KEY`. Token expires — if the job fails auth, regenerate + re-set the secret. Workflow uses the official code-review plugin + `--model claude-opus-4-7` + `pull-requests: write` + `--comment` + bot-PR skip filter.
 - **Style-object types**: define as `Pick<React.CSSProperties, …>` (not a standalone `{…}` interface) — csstype tightening in React minor bumps breaks structural assignment to a `style` prop (Audit 4: `TiltStyle` → `FeaturesGrid` TS2322 under React 19.2.7).
+- **js-yaml DoS (GHSA-h67p-54hq-rp68)**: ACCEPTED / leave-open (Audit 5). Transitive via `gray-matter@4.0.3` (latest, unmaintained) which calls `js-yaml.safeLoad`/`safeDump` — **removed in 4.x**, so forcing the patch (`>=4.2.0`) breaks all MDX frontmatter parsing. No exploit path: gray-matter only parses **repo-authored** MDX frontmatter, never untrusted input. Do NOT add a `js-yaml` override. If ever fixing for real: pass a custom js-yaml-4 engine to gray-matter via `content/index.ts`, then override. Otherwise expect 1 moderate `pnpm audit`/Dependabot entry to persist.
+- **dompurify CVE refresh**: when a new dompurify advisory lands, bump the existing `pnpm.overrides.dompurify` floor to the patched version (Audit 5: `>=3.3.2` → `>=3.4.11` for GHSA-cmwh-pvxp-8882). It's transitive-only; the override is the canonical pin.
+
+## Audit 5 — 2026-06-29
+- **health_before:** 2 medium Dependabot alerts (dompurify 3.4.10 GHSA-cmwh-pvxp-8882; js-yaml 3.x GHSA-h67p-54hq-rp68 via gray-matter) · 0 secret-scanning · 26 Semgrep "note" + 4 "warning" code-scanning (all false-positive/acknowledged — `unsafe-formatstring` template-literals + `content/index.ts` path-traversal already eslint-disabled w/ justification + `JsonLdScript` dangerouslySetInnerHTML) · CI green on `main` · branch protection healthy (strict, CodeQL required) · community 100% · 4 open Dependabot PRs (#112 checkout 6→7, #113 dev group, #114 prod group/31, #115 native-preview), all 7d old. Health **94**.
+- **health_after:** dompurify CVE fixed (override → `>=3.4.11`, resolves 3.4.11); js-yaml left open per decision (no real fix without breaking gray-matter); full gate green (typecheck 0, 2149/2149 fast tests, build ✓ zero warnings). Health **97** (1 residual accepted moderate).
+- **items_fixed:** dompurify override bump (CVE) + caret-safe bulk `pnpm update` (dev tooling: storybook 10.4.6, vite 8.1.0, eslint 10.6.0, playwright 1.61.1, happy-dom, axe, @vitejs/plugin-react) + `@typescript/native-preview` tsgo → 20260628.1 + `actions/checkout` v6→v7 across all 6 workflows.
+- **items_discussed:** 1 (js-yaml handling → "Leave open, no change"). Saved as policy.
+- **prs_closed:** #112/#113/#114/#115 closed as superseded by the bulk update.
+- **quality_issues_fixed:** 0 (gate clean on first pass under new tsgo build + dev-tool bumps).
+- **deployed:** yes — pushed to `main` (Vercel prod rebuild). No Convex deploy (no `convex/` changes; no backend-affecting deps bumped).
+- **duration:** ~30 min, standalone audit.
+
+### Changes Made
+- **Security**: `pnpm.overrides.dompurify` `>=3.3.2` → `>=3.4.11` (GHSA-cmwh-pvxp-8882 — permanent `ALLOWED_ATTR` pollution via `setConfig()`). `pnpm audit` drops to 1 moderate (js-yaml, accepted).
+- **Deps (dev, caret bulk)**: storybook+addons 10.4.5→10.4.6, vite 8.0.16→8.1.0, eslint 10.5.0→10.6.0, eslint-plugin-storybook 10.4.6, playwright/@playwright/test 1.61.0→1.61.1, happy-dom 20.10.3→20.10.6, @axe-core/react 4.11.3→4.12.1, @vitejs/plugin-react 6.0.2→6.0.3. Prod deps already current within carets (June maintenance).
+- **Dev tooling**: `@typescript/native-preview` (exact-pinned) 7.0.0-dev.20260615.1 → 20260628.1 — typecheck clean.
+- **CI**: `actions/checkout@v6` → `@v7` in all 6 workflows (indexnow, semgrep, codeql-analysis, test, claude, claude-code-review). v7 = ESM conversion + blocks fork-PR checkout on `pull_request_target`/`workflow_run` (security hardening); v7 also self-bumps js-yaml to 4.2.0.
+
+### Decisions
+- **js-yaml left open**: user chose accept/leave-open over dismiss-with-reason or custom-engine fix. Documented as Saved Policy — expect it to persist on future audits.
+- **No Convex deploy**: only frontend dev-deps + dompurify (browser sanitization) + workflow YAMLs changed; `convex/` untouched, no backend-runtime dep bumped → Vercel-only.
+- **Bulk update + supersede**: consistent with audits 1–4 — caret `pnpm update`, close grouped Dependabot PRs superseded rather than rebase-merge each.
 
 ## Audit 4 — 2026-06-09
 - **health_before:** 0 Dependabot alerts · 0 secret-scanning · CI green on `main` · branch protection healthy · community 100% (SECURITY.md present; community-profile API flag stale). 5 open Dependabot PRs — 2 grouped (#104 dev/18, #105 prod/34 incl. Convex 1.40) + #102 (tsgo), #95/#96 (Actions). #105 failing typecheck. ~26 code-scanning notes + 4 warnings (low/info). Health ≈ 95.
@@ -53,31 +76,6 @@
 - **Semgrep lockfile exclusion**: user approved — kills 26 false-positive formatstring alerts; Dependabot remains the dep-CVE source.
 - **No Convex deploy**: audit changes were frontend-dep + CI + docs only; `convex/` unchanged, so only the Vercel frontend rebuild was needed.
 
-## Audit 2 — 2026-04-21
-- **health_before:** 2 Dependabot alerts (1 critical protobufjs RCE, 1 medium dompurify) + 4 code-scanning alerts + 5 open Dependabot PRs + 3 Sentry build deprecations + Next.js middleware→proxy deprecation
-- **health_after:** Clean — CVEs patched, build emits zero warnings, all 5 PRs resolved, production deployed
-- **items_fixed:** 7 (bulk deps, sentry config migration, sentry.client.config.ts deletion, middleware→proxy rename, @types/node policy update, docs/SECURITY.md reference)
-- **items_discussed:** 2 (merge strategy, middleware→proxy rename)
-- **prs_merged:** 0 (all 5 PRs closed as superseded by commit 2db97e0)
-- **quality_issues_fixed:** 3 Sentry deprecations + 1 Next.js deprecation
-- **deployed:** yes (commit 2db97e0, Convex giant-dragon-464 deployed, Vercel production Ready 4m)
-- **duration:** ~50 min
-
-### Changes Made
-- **Security**: protobufjs 7.5.4→7.5.5 (CVE-2026-41242 critical, RCE via type field injection); dompurify 3.3.3→3.4.1 (FORBID_TAGS bypass + prototype pollution fixes)
-- **Production deps (patch/minor)**: @ai-sdk/google 3.0.62→64, @ai-sdk/react 3.0.160→170, @auth/core 0.41.1→2, @openrouter/ai-sdk-provider 2.5.1→2.8.0, @react-email/render 2.0.6→7, @remotion/* 4.0.448→450, @sentry/nextjs 10.48→10.49, ai 6.0.158→168, gsap 3.14.2→3.15.0, next 16.2.3→16.2.4, posthog-js 1.367→1.369.5, posthog-node 5.29.2→4, react-hook-form 7.72.1→7.73.1, resend 6.10→6.12.2, svix 1.90→1.91.1
-- **Dev deps (patch)**: @axe-core/react 4.11.1→2, @chromatic-com/storybook 5.1.1→2, @next/bundle-analyzer 16.2.3→4, @tailwindcss/postcss 4.2.2→4, axe-core 4.11.2→3, convex-test 0.0.47→49, eslint 10.2.0→1, eslint-config-next 16.2.3→4, happy-dom 20.8.9→20.9.0, tailwindcss 4.2.2→4, typescript 6.0.2→3, vite 8.0.8→9, vitest 4.1.4→5, @vitest/* 4.1.4→5
-- **Sentry deprecation fix**: `disableLogger: true` → `webpack.treeshake.removeDebugLogging: true`; `automaticVercelMonitors: true` → `webpack.automaticVercelMonitors: true` (next.config.ts)
-- **Sentry file cleanup**: deleted empty `sentry.client.config.ts` (client Sentry is lazy-loaded via `SentryClientInit` component; empty file was triggering rename-to-instrumentation-client.ts deprecation)
-- **Next.js 16 migration**: renamed `src/middleware.ts` → `src/proxy.ts` (middleware file convention deprecated — API-compatible, Convex Auth middleware unchanged, build tag now shows "ƒ Proxy (Middleware)")
-- **Docs**: updated `docs/SECURITY.md` middleware → proxy reference
-- **Policy fix**: @types/node policy v22 → v24 (stale; package.json uses `engines.node: 24.x` and `@types/node: ^24.12.2`)
-
-### Decisions
-- **Merge strategy**: Bulk `pnpm update` + close PRs as superseded (same as Audit 1) — user chose "your rec, want all". Avoids rebase-chain across 5 PRs, atomic verification, matches caret ranges Dependabot would have produced.
-- **middleware → proxy rename**: Discussed — user chose "Rename and verify". Zero-warning build confirms API compatibility; Convex Auth `convexAuthNextjsMiddleware` works unchanged in proxy.ts.
-- **sentry.client.config.ts deletion**: Safer than renaming content to instrumentation-client.ts (which contains PostHog init). Matches intentional lazy-load pattern already documented.
-- **pnpm overrides**: Kept existing overrides (lodash, brace-expansion, picomatch, dompurify, yaml) — they resolve transitive deps and remain active.
-
 ## Archived Summaries
+- **Audit 2 — 2026-04-21**: 2 Dependabot alerts (critical protobufjs RCE 7.5.4→7.5.5, medium dompurify 3.3.3→3.4.1) + 4 code-scanning + 5 PRs + 3 Sentry deprecations + Next 16 middleware→proxy. Bulk deps, Sentry config migration (`disableLogger`/`automaticVercelMonitors` → webpack block), deleted empty `sentry.client.config.ts`, renamed `middleware.ts`→`proxy.ts`, @types/node policy v22→v24. All 5 PRs superseded, deployed (`2db97e0`, Convex + Vercel).
 - **Audit 1 — 2026-04-11**: 27 vulns (10H/15M/2L) + 1 critical CVE (next 16.1.5→16.2.3, RSC DoS) + 9 stale PRs → bulk dep update (13+), all PRs closed superseded, deployed (`0eae6c6`). One-offs: lucide brand-icon inlining, static `icon.png` (Edge size), @types/node→22 (later 24), TS 6 / Vite 8 majors kept.
