@@ -375,12 +375,11 @@ quadrantChart
 
 ## Missing Critical Features
 
-### MISS-01: No Rate Limiting on Chat API
+### MISS-01: Chat API Rate Limiting — RESOLVED / OUTDATED (verified 2026-06-17)
 
-- **Problem:** The `/api/chat` route has no rate limiting. Each request triggers AI model calls that consume free-tier API quotas.
-- **Files:** `v2/src/app/api/chat/route.ts`
-- **Blocks:** Cost control. A malicious user could exhaust all AI provider quotas.
-- **Fix approach:** Add per-user rate limiting (e.g., 30 requests/minute) using Convex's `rateLimits` table pattern already used for auth endpoints.
+- **Status:** Outdated as written. `/api/chat` IS rate-limited and bot-gated in current code: it requires auth (returns 401 if unauthenticated), runs Vercel BotID (`checkBotId()`), and calls `api.authRateLimit.checkIpRateLimit` (per-IP) before processing. Auth is broadly hardened (`@convex-dev/rate-limiter`, per-email/per-IP limits, Turnstile CAPTCHA, abuse-strike → `abuseBlocklist`). The original "no rate limiting" finding no longer holds.
+- **Files:** `v2/src/app/api/chat/route.ts` (auth gate + `checkBotId` + `checkIpRateLimit`); `convex/authRateLimit.ts`.
+- **Remaining nuance:** the chat limit is IP-scoped (not explicit per-user) and fails open if the limiter errors. If `/api/chat` is ever exposed on an unauthenticated/public path (e.g. a beneficiary-facing tool), extend the IP rate limit + BotID to that path. Otherwise no action needed.
 
 ### MISS-02: No Error Boundary for Public Pages
 
