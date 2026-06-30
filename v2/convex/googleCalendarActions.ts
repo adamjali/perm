@@ -1086,6 +1086,22 @@ export const clearAllCalendarEvents = internalAction({
         };
       }
 
+      // No token but there ARE events: we clear local state below, but cannot
+      // delete the events from the user's Google Calendar — they orphan. Record
+      // it so it's visible (on the account-deletion path this is unrecoverable
+      // once the cases are purged, so a silent log.warn would hide a real leak).
+      if (!accessToken) {
+        await recordError(
+          ctx,
+          "action",
+          "googleCalendarActions.clearAllCalendarEvents.noToken",
+          new Error(
+            `No Google token; ${cases.length} case(s)' calendar events cannot be deleted from Google (local state cleared)`
+          ),
+          { resourceId: userId }
+        );
+      }
+
       let eventsDeleted = 0;
       let casesCleaned = 0;
       let errors = 0;

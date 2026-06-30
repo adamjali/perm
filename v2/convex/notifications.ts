@@ -754,9 +754,17 @@ export const unsubscribeWeeklyByEmail = internalMutation({
       .withIndex("by_user_id", (q) => q.eq("userId", user._id))
       .unique();
     if (!profile) return { ok: false };
-    if (profile.emailWeeklyDigest !== false) {
+    // Also clear the inactivity auto-pause marker: a deliberate one-click
+    // unsubscribe means the digest is OFF by the user's choice, not an auto-pause,
+    // so the "we paused it — turn it back on" banner must not re-prompt (and
+    // possibly re-subscribe) them.
+    const needsPatch =
+      profile.emailWeeklyDigest !== false ||
+      profile.weeklyDigestSuppressedAt !== undefined;
+    if (needsPatch) {
       await ctx.db.patch(profile._id, {
         emailWeeklyDigest: false,
+        weeklyDigestSuppressedAt: undefined,
         updatedAt: Date.now(),
       });
       log.info("Weekly digest unsubscribed via email link", { resourceId: profile._id });

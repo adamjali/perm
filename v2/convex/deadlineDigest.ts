@@ -7,9 +7,9 @@
  * into ONE digest per user.
  *
  * The trigger/dedup logic is unchanged — it calls the existing
- * `scheduledJobs.getCasesNeedingReminders` query. This lives in its own file so
- * the consolidation can ship without rewriting the dozen full-table `.filter`
- * scans elsewhere in scheduledJobs.ts.
+ * `scheduledJobs.getCasesNeedingReminders` query. This lives in its own file to
+ * avoid expanding scheduledJobs.ts, which is large and full of un-indexed
+ * full-table `.filter` scans (see CONCERNS.md) we don't want to risk touching.
  *
  * Wired from crons.ts ("deadline-reminders").
  *

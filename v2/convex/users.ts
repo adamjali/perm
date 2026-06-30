@@ -412,10 +412,12 @@ export const updateUserProfile = mutation({
         : undefined;
     }
 
-    // If the user manually re-enables the weekly digest from settings, clear the
-    // inactivity auto-pause marker so the re-engagement banner doesn't linger.
+    // If the user manually re-enables the weekly digest from settings, clear BOTH
+    // re-engagement markers — same as the banner's reactivate path — so the cron
+    // can't re-pause a digest the user just turned on and the banner doesn't linger.
     if (args.emailWeeklyDigest === true) {
       updateData.weeklyDigestSuppressedAt = undefined;
+      updateData.reengagementNudgeSentAt = undefined;
     }
 
     // Capture old doc for audit

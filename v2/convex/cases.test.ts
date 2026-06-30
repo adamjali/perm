@@ -1549,4 +1549,57 @@ describe("auto-closure cleanup when a case leaves closed", () => {
     expect(autoClosure.length).toBeGreaterThan(0);
     expect(autoClosure.every((n) => n.isRead)).toBe(true);
   });
+
+  it("editing a closed case's data recomputes it out of closed and clears the auto-closure trail (update path)", async () => {
+    const t = createTestContext();
+    const authT = await createAuthenticatedContext(t, "Update Uri");
+    const caseId = await authT.mutation(api.cases.create, {
+      employerName: "Initech",
+      beneficiaryIdentifier: "B. Two",
+      positionTitle: "Engineer",
+    });
+    await finishScheduledFunctions(t);
+
+    const userId = await authT.run(
+      async (ctx) => (await ctx.auth.getUserIdentity())!.subject as Id<"users">
+    );
+    // Simulate an auto-closure on this otherwise-valid case.
+    await authT.run(async (ctx) => {
+      await ctx.db.patch(caseId, {
+        caseStatus: "closed",
+        closureReason: "eta9089_expired",
+        closedAt: Date.now(),
+      });
+      await ctx.db.insert("notifications", {
+        userId,
+        caseId,
+        type: "auto_closure",
+        title: "Case auto-closed",
+        message: "ETA-9089 expired",
+        priority: "urgent",
+        isRead: false,
+        emailSent: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+    // Edit a field — status auto-recomputes out of closed (the data doesn't warrant closed).
+    await authT.mutation(api.cases.update, { id: caseId, employerName: "Initech Corp" });
+    await finishScheduledFunctions(t);
+
+    const updated = await authT.run(async (ctx) => ctx.db.get(caseId));
+    expect(updated?.caseStatus).not.toBe("closed");
+    expect(updated?.closureReason).toBeUndefined();
+    expect(updated?.closedAt).toBeUndefined();
+
+    const autoClosure = await authT.run(async (ctx) => {
+      const notifs = await ctx.db
+        .query("notifications")
+        .withIndex("by_case_id", (q) => q.eq("caseId", caseId))
+        .collect();
+      return notifs.filter((n) => n.type === "auto_closure");
+    });
+    expect(autoClosure.every((n) => n.isRead)).toBe(true);
+  });
 });

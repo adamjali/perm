@@ -11,9 +11,10 @@
  *      which re-checks the grace period),
  *   3. remove the Resend marketing contact — AFTER, needs only the email.
  *
- * Lives in its own (lint-hook-clean) file so it can be the scheduled deletion
- * target from every entry point; scheduledJobs.ts can't be edited (it contains
- * `.filter` scans the lint hook blocks).
+ * Lives in its own file (rather than in scheduledJobs.ts) so it can be the
+ * scheduled deletion target from every entry point without expanding that large,
+ * fragile file, which is full of un-indexed full-table `.filter` scans (see
+ * CONCERNS.md) we don't want to risk touching.
  *
  * @module
  */

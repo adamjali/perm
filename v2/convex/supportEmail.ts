@@ -3,7 +3,8 @@
  *
  * Handles inbound support emails received via Resend webhook.
  * - Stores emails in supportEmails table
- * - Forwards non-support emails to admin (replaces ImprovMX catch-all)
+ * - Forwards inbound human mail to the catch-all inbox (excludes DMARC machine
+ *   reports and the forward target itself; replaces the ImprovMX catch-all)
  * - Sends threaded replies with In-Reply-To/References headers
  * - Notifies admin of new support emails
  *
@@ -17,6 +18,7 @@ import { getResend, FROM_EMAIL, sendEmailWithRetry } from "./lib/email";
 import { requireAdmin } from "./lib/admin";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
+import { shouldForwardInbound } from "./lib/supportEmailForward";
 
 const log = loggers.email;
 
@@ -25,7 +27,9 @@ function escapeHtml(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-/** Email address to forward non-support emails to (replaces ImprovMX catch-all) */
+/** Inbox that inbound mail is forwarded to (set via SUPPORT_FORWARD_EMAIL in prod;
+ * replaces the ImprovMX catch-all). Mail addressed to this same address is not
+ * re-forwarded (loop guard). */
 const CATCH_ALL_FORWARD_TO = process.env.SUPPORT_FORWARD_EMAIL || "support@permtracker.app";
 
 // ============================================================================
@@ -141,14 +145,10 @@ export const processInboundEmail = internalAction({
       subject: args.subject,
     });
 
-    // Forward inbound HUMAN mail to the inbox (support@, perm@, etc.). DMARC
-    // aggregate reports (the rua target, dmarc@) are machine-generated XML — they
-    // shouldn't land in a human inbox, and forwarding each one is also an
-    // outbound send against the Resend quota. They're still stored above for the
-    // record. Loop-safe: never forward a message already addressed to the target.
-    const toLower = toEmail.toLowerCase();
-    const isMachineReport = toLower.startsWith("dmarc@");
-    if (!isMachineReport && toLower !== CATCH_ALL_FORWARD_TO.toLowerCase()) {
+    // Forward inbound human mail to the catch-all inbox. DMARC machine reports
+    // (dmarc@) and the forward target itself are excluded — see shouldForwardInbound.
+    // DMARC reports are still stored above for the record.
+    if (shouldForwardInbound(toEmail, CATCH_ALL_FORWARD_TO)) {
       try {
         const { error } = await sendEmailWithRetry(resend, {
           from: FROM_EMAIL,
@@ -168,7 +168,13 @@ export const processInboundEmail = internalAction({
           });
           await recordError(ctx, "action", "supportEmail.processInbound.forwardApi", new Error(error.message), { resourceId: args.resendEmailId });
         } else {
-          await ctx.runMutation(internal.supportEmail.markForwarded, { id: supportEmailId });
+          try {
+            await ctx.runMutation(internal.supportEmail.markForwarded, { id: supportEmailId });
+          } catch (markError) {
+            // The email already forwarded — a status-mark failure must not throw
+            // out of the action (that would read as a failed forward and retry).
+            await recordError(ctx, "action", "supportEmail.processInbound.markForwarded", markError, { resourceId: args.resendEmailId });
+          }
           log.info("Email forwarded to catch-all", {
             from: args.fromEmail,
             originalTo: toEmail,

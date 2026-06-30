@@ -50,6 +50,27 @@ function getAppUrl(): string {
   return process.env.APP_URL || "https://permtracker.app";
 }
 
+/** One-click unsubscribe URL for an email (weekly digest / nudge), or undefined if unconfigured. */
+async function buildUnsubscribeUrl(email: string): Promise<string | undefined> {
+  const secret = process.env.UNSUBSCRIBE_SECRET;
+  const siteUrl = process.env.CONVEX_SITE_URL;
+  if (!secret || !siteUrl) return undefined;
+  const token = await makeUnsubscribeToken(email, secret);
+  return `${siteUrl}/unsubscribe?token=${encodeURIComponent(token)}`;
+}
+
+/** RFC 8058 List-Unsubscribe headers for the one-click URL (spread into the send; {} if none). */
+function unsubscribeHeaders(url: string | undefined) {
+  return url
+    ? {
+        headers: {
+          "List-Unsubscribe": `<${url}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
+      }
+    : {};
+}
+
 /**
  * Build common URLs used in notification emails.
  */
@@ -554,13 +575,7 @@ export const sendWeeklyDigestEmail = internalAction({
     const settingsUrl = `${appUrl}/settings`;
 
     // One-click unsubscribe (weekly digest only). Omitted if the secret isn't set.
-    let unsubscribeUrl: string | undefined;
-    const unsubSecret = process.env.UNSUBSCRIBE_SECRET;
-    const siteUrl = process.env.CONVEX_SITE_URL;
-    if (unsubSecret && siteUrl) {
-      const token = await makeUnsubscribeToken(args.to, unsubSecret);
-      unsubscribeUrl = `${siteUrl}/unsubscribe?token=${encodeURIComponent(token)}`;
-    }
+    const unsubscribeUrl = await buildUnsubscribeUrl(args.to);
 
     // Cast to DigestContent type (validators ensure correct shape)
     const digestContent = args.digestContent as DigestContent;
@@ -594,14 +609,7 @@ export const sendWeeklyDigestEmail = internalAction({
       to: [args.to],
       subject,
       html,
-      ...(unsubscribeUrl
-        ? {
-            headers: {
-              "List-Unsubscribe": `<${unsubscribeUrl}>`,
-              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-            },
-          }
-        : {}),
+      ...unsubscribeHeaders(unsubscribeUrl),
     });
 
     if (error) {
@@ -631,13 +639,7 @@ export const sendReengagementNudge = internalAction({
     }
 
     const appUrl = getAppUrl();
-    let unsubscribeUrl: string | undefined;
-    const unsubSecret = process.env.UNSUBSCRIBE_SECRET;
-    const siteUrl = process.env.CONVEX_SITE_URL;
-    if (unsubSecret && siteUrl) {
-      const token = await makeUnsubscribeToken(args.to, unsubSecret);
-      unsubscribeUrl = `${siteUrl}/unsubscribe?token=${encodeURIComponent(token)}`;
-    }
+    const unsubscribeUrl = await buildUnsubscribeUrl(args.to);
 
     const html = await render(
       ReengagementNudge({ userName: args.userName, baseUrl: appUrl, unsubscribeUrl })
@@ -649,14 +651,7 @@ export const sendReengagementNudge = internalAction({
       to: [args.to],
       subject: "We've missed you at PERM Tracker",
       html,
-      ...(unsubscribeUrl
-        ? {
-            headers: {
-              "List-Unsubscribe": `<${unsubscribeUrl}>`,
-              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-            },
-          }
-        : {}),
+      ...unsubscribeHeaders(unsubscribeUrl),
     });
 
     if (error) {
@@ -669,20 +664,6 @@ export const sendReengagementNudge = internalAction({
   },
 });
 
-const deadlineDigestItemValidator = v.object({
-  caseId: v.id("cases"),
-  employerName: v.string(),
-  beneficiaryIdentifier: v.string(),
-  deadlineType: v.string(),
-  deadlineDate: v.string(),
-  daysUntil: v.number(),
-  urgency: v.union(
-    v.literal("overdue"),
-    v.literal("urgent"),
-    v.literal("upcoming"),
-    v.literal("later"),
-  ),
-});
 
 /**
  * Send a consolidated daily deadline digest — ONE email per user listing every
@@ -693,7 +674,7 @@ export const sendDeadlineDigestEmail = internalAction({
   args: {
     to: v.string(),
     userName: v.string(),
-    items: v.array(deadlineDigestItemValidator),
+    items: v.array(digestDeadlineValidator),
   },
   handler: async (ctx, args) => {
     // Guard: only send to still-valid (non-deleted, verified) users.

@@ -3,7 +3,7 @@ import {
   createTestContext,
   createAuthenticatedContext,
 } from "../../test-utils/convex";
-import { internal } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -164,5 +164,91 @@ describe("runReengagementCheck", () => {
 
     expect(result.nudged).toBe(0);
     expect(result.suppressed).toBe(0);
+  });
+});
+
+describe("reengagement state mutations + loop-closers", () => {
+  it("reactivateWeeklyDigest re-enables the digest and clears both markers", async () => {
+    const t = createTestContext();
+    const u = await makeUser(t, "Paused Pam", {
+      emailWeeklyDigest: false,
+      nudgedDaysAgo: 30,
+      suppressed: true,
+    });
+    await u.authT.mutation(api.reengagement.reactivateWeeklyDigest, {});
+    const p = await getProfile(u.authT, u.profileId);
+    expect(p?.emailWeeklyDigest).toBe(true);
+    expect(p?.weeklyDigestSuppressedAt).toBeUndefined();
+    expect(p?.reengagementNudgeSentAt).toBeUndefined();
+  });
+
+  it("dismissReengagementBanner clears the pause marker but leaves the digest OFF", async () => {
+    const t = createTestContext();
+    const u = await makeUser(t, "Dismiss Dan", {
+      emailWeeklyDigest: false,
+      suppressed: true,
+    });
+    await u.authT.mutation(api.reengagement.dismissReengagementBanner, {});
+    const p = await getProfile(u.authT, u.profileId);
+    expect(p?.weeklyDigestSuppressedAt).toBeUndefined();
+    expect(p?.emailWeeklyDigest).toBe(false); // stays off — they chose to keep it off
+  });
+
+  it("getReengagementBannerState mirrors the paused marker", async () => {
+    const t = createTestContext();
+    const paused = await makeUser(t, "Banner Bob", { emailWeeklyDigest: false, suppressed: true });
+    expect(
+      (await paused.authT.query(api.reengagement.getReengagementBannerState, {})).weeklyDigestPaused
+    ).toBe(true);
+    const active = await makeUser(t, "Active Ada", { emailWeeklyDigest: true, lastActiveDaysAgo: 1 });
+    expect(
+      (await active.authT.query(api.reengagement.getReengagementBannerState, {})).weeklyDigestPaused
+    ).toBe(false);
+  });
+
+  it("unsubscribeWeeklyByEmail turns the digest off + clears the auto-pause marker, idempotently (fix A)", async () => {
+    const t = createTestContext();
+    const u = await makeUser(t, "Unsub Uma", {
+      emailWeeklyDigest: false, // already auto-paused, then they deliberately unsubscribe
+      suppressed: true,
+    });
+    const res = await t.mutation(internal.notifications.unsubscribeWeeklyByEmail, { email: u.email });
+    expect(res.ok).toBe(true);
+    const p = await getProfile(u.authT, u.profileId);
+    expect(p?.emailWeeklyDigest).toBe(false);
+    expect(p?.weeklyDigestSuppressedAt).toBeUndefined(); // banner won't re-prompt/re-subscribe
+    // idempotent + unknown-email no-op
+    expect(
+      (await t.mutation(internal.notifications.unsubscribeWeeklyByEmail, { email: u.email })).ok
+    ).toBe(true);
+    expect(
+      (await t.mutation(internal.notifications.unsubscribeWeeklyByEmail, { email: "nobody@nowhere.test" })).ok
+    ).toBe(false);
+  });
+
+  it("re-enabling the digest from Settings clears BOTH re-engagement markers (fix B)", async () => {
+    const t = createTestContext();
+    const u = await makeUser(t, "Settings Sue", {
+      emailWeeklyDigest: false,
+      nudgedDaysAgo: 30,
+      suppressed: true,
+    });
+    await u.authT.mutation(api.users.updateUserProfile, { emailWeeklyDigest: true });
+    const p = await getProfile(u.authT, u.profileId);
+    expect(p?.emailWeeklyDigest).toBe(true);
+    expect(p?.weeklyDigestSuppressedAt).toBeUndefined();
+    expect(p?.reengagementNudgeSentAt).toBeUndefined();
+  });
+
+  it("recordMyLogin resets the nudge marker so the cycle can restart", async () => {
+    const t = createTestContext();
+    const u = await makeUser(t, "Login Lou", {
+      emailWeeklyDigest: true,
+      lastActiveDaysAgo: 90,
+      nudgedDaysAgo: 5,
+    });
+    await u.authT.mutation(api.users.recordMyLogin, {});
+    const p = await getProfile(u.authT, u.profileId);
+    expect(p?.reengagementNudgeSentAt).toBeUndefined();
   });
 });

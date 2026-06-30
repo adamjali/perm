@@ -22,12 +22,22 @@ import {
   internalMutation,
   internalAction,
 } from "./_generated/server";
+import type { QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import { loggers } from "./lib/logging";
 
 const log = loggers.scheduler;
+
+/** The user's profile row (or null), by user id. */
+function getProfileByUserId(ctx: QueryCtx | MutationCtx, userId: Id<"users">) {
+  return ctx.db
+    .query("userProfiles")
+    .withIndex("by_user_id", (q) => q.eq("userId", userId))
+    .unique();
+}
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Days of no activity before the first nudge. */
@@ -55,7 +65,9 @@ export const getReengagementCandidates = internalQuery({
     }> = [];
 
     for (const profile of profiles) {
-      if (profile.emailWeeklyDigest !== true) continue; // nothing to pause
+      // Digest is ON unless explicitly false (matches getUsersForWeeklyDigest's
+      // `!== false`), so legacy profiles with `undefined` are covered, not skipped.
+      if (profile.emailWeeklyDigest === false) continue; // nothing to pause
       if (profile.deletedAt !== undefined) continue;
       const lastSeen =
         profile.lastActiveAt ?? profile.lastLoginAt ?? profile._creationTime;
@@ -119,7 +131,14 @@ export const runReengagementCheck = internalAction({
 
     for (const c of candidates) {
       if (c.reengagementNudgeSentAt === undefined) {
-        // First nudge for this inactivity spell.
+        // First nudge for this inactivity spell. NOTE: we stamp the nudge time
+        // here even though the email send (scheduled below) is best-effort and
+        // won't throw back. Trade-off: if Resend is broadly down during this run,
+        // users get stamped without an email arriving, and the suppress pass 14
+        // days later could auto-pause their digest. Each failed send is
+        // recordError'd, so the outage is visible; gating suppression on a
+        // confirmed delivery was judged not worth the extra state for this
+        // low-stakes path.
         await ctx.scheduler.runAfter(
           emailIndex * 1000,
           internal.notificationActions.sendReengagementNudge,
@@ -159,10 +178,7 @@ export const getReengagementBannerState = query({
   handler: async (ctx): Promise<{ weeklyDigestPaused: boolean }> => {
     const userId = await getCurrentUserIdOrNull(ctx);
     if (!userId) return { weeklyDigestPaused: false };
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
+    const profile = await getProfileByUserId(ctx, userId);
     return { weeklyDigestPaused: profile?.weeklyDigestSuppressedAt !== undefined };
   },
 });
@@ -172,10 +188,7 @@ export const reactivateWeeklyDigest = mutation({
   args: {},
   handler: async (ctx): Promise<void> => {
     const userId = await getCurrentUserId(ctx);
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
+    const profile = await getProfileByUserId(ctx, userId);
     if (!profile) throw new Error("Profile not found");
     await ctx.db.patch(profile._id, {
       emailWeeklyDigest: true,
@@ -194,10 +207,7 @@ export const dismissReengagementBanner = mutation({
   args: {},
   handler: async (ctx): Promise<void> => {
     const userId = await getCurrentUserId(ctx);
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
+    const profile = await getProfileByUserId(ctx, userId);
     if (!profile) return;
     await ctx.db.patch(profile._id, {
       weeklyDigestSuppressedAt: undefined,
