@@ -46,4 +46,10 @@ export interface SocialLink {
  */
 export const SOCIAL_LINKS = [
   { href: GITHUB_REPO_URL, label: "GitHub", icon: "github" },
+  // x.com rather than twitter.com: twitter.com only 301s here, and the footer
+  // glyph is already the X mark. Label names the platform but keeps the old
+  // name for recognition, since the icon alone is still ambiguous to many users.
+  { href: "https://x.com/adamj3ali", label: "X (formerly Twitter)", icon: "twitter" },
+  // No LinkedIn entry: no brand profile exists yet. Linking linkedin.com bare,
+  // as this footer used to, is a dead link on every page.
 ] as const satisfies readonly SocialLink[];
