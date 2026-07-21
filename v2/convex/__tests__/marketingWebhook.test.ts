@@ -275,9 +275,9 @@ describe("marketingWebhook.recordContactEvent", () => {
       const t = createTestContext();
       const payload = makePayload({
         type: "contact.updated",
-        email: "subscriber@gmail.com",
+        email: "subscriber@example.com",
         unsubscribed: true,
-        firstName: "Umar",
+        firstName: "Subscriber",
       });
 
       const { id } = await t.mutation(
@@ -299,12 +299,12 @@ describe("marketingWebhook.recordContactEvent", () => {
       const row = await t.run(async (ctx) => ctx.db.get(id));
       expect(row).toMatchObject({
         svixId: "msg_realistic",
-        email: "subscriber@gmail.com",
+        email: "subscriber@example.com",
         contactId: "00000000-0000-4000-8000-000000000001",
         audienceId: "00000000-0000-4000-8000-0000000000a1",
         eventType: "contact.updated",
         unsubscribed: true,
-        firstName: "Umar",
+        firstName: "Subscriber",
         lastName: "User",
       });
       expect(row?.occurredAt).toBe(

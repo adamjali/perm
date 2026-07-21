@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { sendEmailWithRetry } from "../email";
 import type { Resend } from "resend";
 
@@ -171,6 +171,19 @@ describe("sendEmailWithRetry", () => {
   });
 
   describe("blocklist enforcement", () => {
+    // Synthetic fixture. The real blocklist entries are real people's
+    // addresses and live only in the BLOCKED_EMAILS env var, never in this
+    // public repo. See convex/lib/emailBlocklist.ts.
+    const BLOCKED = "blocked@example.com";
+
+    beforeEach(() => {
+      vi.stubEnv("BLOCKED_EMAILS", BLOCKED);
+    });
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
     it("skips blocklisted recipient and returns EmailBlocked error", async () => {
       const resend = createMockResend(async () => ({
         data: { id: "should-not-be-reached" },
@@ -179,11 +192,11 @@ describe("sendEmailWithRetry", () => {
 
       const result = await sendEmailWithRetry(resend, {
         ...baseParams,
-        to: "blocked@gmail.com",
+        to: BLOCKED,
       });
 
       expect(result.error?.name).toBe("EmailBlocked");
-      expect(result.error?.message).toContain("blocked@gmail.com");
+      expect(result.error?.message).toContain(BLOCKED);
       expect(resend.emails.send).not.toHaveBeenCalled();
     });
 
@@ -195,7 +208,7 @@ describe("sendEmailWithRetry", () => {
 
       const result = await sendEmailWithRetry(resend, {
         ...baseParams,
-        to: ["someone@example.com", "blocked@gmail.com"],
+        to: ["someone@example.com", BLOCKED],
       });
 
       expect(result.error?.name).toBe("EmailBlocked");
@@ -211,7 +224,7 @@ describe("sendEmailWithRetry", () => {
       const result = await sendEmailWithRetry(resend, {
         ...baseParams,
         to: "someone@example.com",
-        cc: "blocked@gmail.com",
+        cc: BLOCKED,
       });
 
       expect(result.error?.name).toBe("EmailBlocked");
@@ -227,7 +240,7 @@ describe("sendEmailWithRetry", () => {
       const result = await sendEmailWithRetry(resend, {
         ...baseParams,
         to: "someone@example.com",
-        bcc: "blocked@GMAIL.COM",
+        bcc: BLOCKED.toUpperCase(),
       });
 
       expect(result.error?.name).toBe("EmailBlocked");

@@ -90,14 +90,21 @@ function sendWithCtx(
 }
 
 describe("Resend email providers — send-failure handling (C3)", () => {
+  // Synthetic fixture. Real blocklist entries are real people's addresses and
+  // live only in the BLOCKED_EMAILS env var, never in this public repo.
+  // See convex/lib/emailBlocklist.ts.
+  const BLOCKED_RECIPIENT = "blocked@example.com";
+
   beforeEach(() => {
     process.env.AUTH_RESEND_KEY = "re_test_key";
+    process.env.BLOCKED_EMAILS = BLOCKED_RECIPIENT;
     vi.resetModules();
     sendMock.mockReset();
   });
 
   afterEach(() => {
     delete process.env.AUTH_RESEND_KEY;
+    delete process.env.BLOCKED_EMAILS;
   });
 
   function schedulerOf(ctx: unknown) {
@@ -152,7 +159,7 @@ describe("Resend email providers — send-failure handling (C3)", () => {
       const ctx = makeCtx();
 
       await expect(
-        sendWithCtx(provider, { identifier: "blocked@gmail.com", token: "ABCDEF123456" }, ctx),
+        sendWithCtx(provider, { identifier: BLOCKED_RECIPIENT, token: "ABCDEF123456" }, ctx),
       ).resolves.toBeUndefined();
 
       expect(sendMock).not.toHaveBeenCalled();

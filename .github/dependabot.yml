@@ -13,8 +13,10 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
-    reviewers:
-      - "adamjali"
+    # `reviewers` removed: GitHub retired the option on 2025-05-20 in favour of
+    # CODEOWNERS, so it had been dead config here. Not replaced with a
+    # CODEOWNERS file, which would add nothing on a single-maintainer repo where
+    # the owner is already notified of every PR.
     groups:
       development-dependencies:
         dependency-type: "development"
@@ -49,5 +51,3 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
-    reviewers:
-      - "adamjali"

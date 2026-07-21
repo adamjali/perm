@@ -2,7 +2,7 @@
 
 **Purpose:** Exhaustive reference for migrating from `@convex-dev/auth@0.0.91` (beta) to **Clerk**.
 **Generated:** 2026-04-20 · READ-ONLY audit.
-**Source tree:** `/Users/dev/cc/perm-tracker/v2`
+**Source tree:** `v2`
 **Stack under audit:** Next.js 16.2.3 · React 19.2.5 · Convex 1.35.1 · TypeScript strict · Vercel Hobby.
 
 > Every citation is `absolute_file_path:line`. Line numbers are accurate as of the working tree
@@ -37,7 +37,7 @@
 
 ```
 src/app/layout.tsx  (RootLayout — Server Component)
-└── <ConvexAuthNextjsServerProvider>        ← /Users/dev/cc/perm-tracker/v2/src/app/layout.tsx:142
+└── <ConvexAuthNextjsServerProvider>        ← v2/src/app/layout.tsx:142
     └── <html>
         └── <body>
             └── <SharedProviders>           ← src/app/shared-providers.tsx:12 (theme + toaster; NO auth/convex)
@@ -50,7 +50,7 @@ src/app/(public)/layout.tsx                 ← does NOT wrap Convex (public pag
 
 ### 1.2 `ConvexAuthNextjsServerProvider` — root layout
 
-**File:** `/Users/dev/cc/perm-tracker/v2/src/app/layout.tsx`
+**File:** `v2/src/app/layout.tsx`
 
 - Line 7: `import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";`
 - Line 142–165: `<ConvexAuthNextjsServerProvider>` wraps the full `<html>` tree.
@@ -60,7 +60,7 @@ at the root so every route (public, auth, authenticated) gets access to the toke
 
 ### 1.3 `ConvexAuthNextjsProvider` + `AuthProvider` + `PageContextProvider` — client chain
 
-**File:** `/Users/dev/cc/perm-tracker/v2/src/app/providers.tsx`
+**File:** `v2/src/app/providers.tsx`
 
 - Line 3: `import { ConvexAuthNextjsProvider } from "@convex-dev/auth/nextjs";`
 - Line 10–17: instantiates `ConvexReactClient(NEXT_PUBLIC_CONVEX_URL)`; throws at module-load if the env var is missing.
@@ -79,12 +79,12 @@ at the root so every route (public, auth, authenticated) gets access to the toke
   ```
 
 Mounted by:
-- `/Users/dev/cc/perm-tracker/v2/src/app/(auth)/layout.tsx:4,12` (auth route group)
-- `/Users/dev/cc/perm-tracker/v2/src/app/(authenticated)/layout.tsx:33,41` (authenticated group)
+- `v2/src/app/(auth)/layout.tsx:4,12` (auth route group)
+- `v2/src/app/(authenticated)/layout.tsx:33,41` (authenticated group)
 
 ### 1.4 `src/middleware.ts` — full breakdown
 
-**File:** `/Users/dev/cc/perm-tracker/v2/src/middleware.ts` (113 lines)
+**File:** `v2/src/middleware.ts` (113 lines)
 
 **Imports (L1–8):**
 - `convexAuthNextjsMiddleware`, `createRouteMatcher`, `nextjsMiddlewareRedirect` from `@convex-dev/auth/nextjs/server`
@@ -135,9 +135,9 @@ Grep results for `convexAuthNextjsToken`, `isAuthenticatedNextjs`, `convexAuthNe
 
 ### 1.6 Inactivity timeout + multi-tab sync
 
-**Entry point:** `AuthContext` in `/Users/dev/cc/perm-tracker/v2/src/lib/contexts/AuthContext.tsx` manages the sign-out state machine only (`idle | signingOut`).
+**Entry point:** `AuthContext` in `v2/src/lib/contexts/AuthContext.tsx` manages the sign-out state machine only (`idle | signingOut`).
 
-**InactivityTimeoutProvider:** `/Users/dev/cc/perm-tracker/v2/src/components/layout/InactivityTimeoutProvider.tsx`
+**InactivityTimeoutProvider:** `v2/src/components/layout/InactivityTimeoutProvider.tsx`
 - Mounted inside `<ConvexProviders>` in the authenticated layout at `src/app/(authenticated)/layout.tsx:42`.
 - L13: `HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000` — server-side heartbeat.
 - L24: `const { signOut } = useAuthActions();` (library hook).
@@ -147,7 +147,7 @@ Grep results for `convexAuthNextjsToken`, `isAuthenticatedNextjs`, `convexAuthNe
 - L80–83: `useInactivityTimeout({ onTimeout: performSignOut, enabled: enabled && !isSigningOut })`.
 - L88: `<TimeoutWarningModal>` — renders when `isWarningVisible && !isSigningOut`.
 
-**useInactivityTimeout hook:** `/Users/dev/cc/perm-tracker/v2/src/lib/hooks/useInactivityTimeout.ts`
+**useInactivityTimeout hook:** `v2/src/lib/hooks/useInactivityTimeout.ts`
 - **Constants (L26–43):**
   - `INACTIVITY_TIMEOUT = 15 * 60 * 1000` (15 min — hard logout)
   - `WARNING_TIME = 13 * 60 * 1000` (13 min — warning modal appears, leaving 2 min countdown)
@@ -165,7 +165,7 @@ Grep results for `convexAuthNextjsToken`, `isAuthenticatedNextjs`, `convexAuthNe
   - L327–360: `handleVisibilityChange` records `hiddenAt` on hide, recalculates elapsed on unhide; if past warning or timeout threshold, shows warning with correct remaining time or logs out immediately.
   - L363–391: `handleWindowFocus` — same logic for laptop wake / tab switch. Critical: does NOT reset the timer on focus (only on intentional interaction).
 
-**TimeoutWarningModal:** `/Users/dev/cc/perm-tracker/v2/src/components/layout/TimeoutWarningModal.tsx` (rendered by provider above).
+**TimeoutWarningModal:** `v2/src/components/layout/TimeoutWarningModal.tsx` (rendered by provider above).
 
 **Dependencies on Convex Auth library:**
 - `useAuthActions` (L3, L24 of InactivityTimeoutProvider) — migrating to Clerk means swapping to `useClerk().signOut()` or `useAuth().signOut()`.
@@ -176,7 +176,7 @@ Grep results for `convexAuthNextjsToken`, `isAuthenticatedNextjs`, `convexAuthNe
 
 ### 2.1 Full helper inventory — `convex/lib/auth.ts`
 
-All in `/Users/dev/cc/perm-tracker/v2/convex/lib/auth.ts`:
+All in `v2/convex/lib/auth.ts`:
 
 | Line | Helper | Signature | Purpose |
 |---|---|---|---|
@@ -193,7 +193,7 @@ All in `/Users/dev/cc/perm-tracker/v2/convex/lib/auth.ts`:
 
 ### 2.2 Admin helpers — `convex/lib/admin.ts`
 
-All in `/Users/dev/cc/perm-tracker/v2/convex/lib/admin.ts`:
+All in `v2/convex/lib/admin.ts`:
 
 | Line | Helper | Purpose |
 |---|---|---|
@@ -345,11 +345,11 @@ src/app/(auth)/
     └── ResetPasswordPageClient.tsx          (client component; 407 lines)
 ```
 
-- `/Users/dev/cc/perm-tracker/v2/src/app/(auth)/layout.tsx` — 42 lines; mounts `<ConvexProviders>` + `AuthHeader` + `AuthFooter` + `<SentryClientInit>`. No `<InactivityTimeoutProvider>` (unauth routes don't need it).
+- `v2/src/app/(auth)/layout.tsx` — 42 lines; mounts `<ConvexProviders>` + `AuthHeader` + `AuthFooter` + `<SentryClientInit>`. No `<InactivityTimeoutProvider>` (unauth routes don't need it).
 
 ### 3.2 `LoginPageClient.tsx` — flow breakdown
 
-**File:** `/Users/dev/cc/perm-tracker/v2/src/app/(auth)/login/LoginPageClient.tsx`
+**File:** `v2/src/app/(auth)/login/LoginPageClient.tsx`
 
 **Hooks + mutations (L41–49):**
 - `useAuthActions().signIn`
@@ -384,7 +384,7 @@ src/app/(auth)/
 
 ### 3.3 `SignupPageClient.tsx` — flow breakdown
 
-**File:** `/Users/dev/cc/perm-tracker/v2/src/app/(auth)/signup/SignupPageClient.tsx` (594 lines)
+**File:** `v2/src/app/(auth)/signup/SignupPageClient.tsx` (594 lines)
 
 **Hooks (L36–40):**
 - `useAuthActions().signIn`, `useMutation(api.users.recordMyLogin)`, `useMutation(api.authRateLimit.checkAuthRateLimit)`, `useAction(api.turnstile.verifyTurnstileToken)`, `useRouter`.
@@ -406,7 +406,7 @@ src/app/(auth)/
 
 ### 3.4 `ResetPasswordPageClient.tsx` — flow breakdown
 
-**File:** `/Users/dev/cc/perm-tracker/v2/src/app/(auth)/reset-password/ResetPasswordPageClient.tsx` (407 lines)
+**File:** `v2/src/app/(auth)/reset-password/ResetPasswordPageClient.tsx` (407 lines)
 
 **Two steps — `email` → `reset`:**
 
@@ -441,7 +441,7 @@ There is **no file** at `src/app/api/auth/[[...auth]]/route.ts`. The `/api/auth`
 
 These come from `authTables` in `@convex-dev/auth/server`, spread into `convex/schema.ts:50` (`...authTables`):
 
-**File:** `/Users/dev/cc/perm-tracker/v2/node_modules/@convex-dev/auth/src/server/implementation/types.ts` (lines 36–132)
+**File:** `v2/node_modules/@convex-dev/auth/src/server/implementation/types.ts` (lines 36–132)
 
 | Table | Fields | Indexes |
 |---|---|---|
@@ -457,7 +457,7 @@ These come from `authTables` in `@convex-dev/auth/server`, spread into `convex/s
 
 ### 4.2 App-extended `users` table
 
-**File:** `/Users/dev/cc/perm-tracker/v2/convex/schema.ts:52–66`
+**File:** `v2/convex/schema.ts:52–66`
 
 The `users` table is redefined (post-spread, overriding the default) with the same spec *plus* app fields:
 
@@ -479,7 +479,7 @@ users: defineTable({
 
 ### 4.3 App-owned table: `userProfiles`
 
-**File:** `/Users/dev/cc/perm-tracker/v2/convex/schema.ts:68–253`
+**File:** `v2/convex/schema.ts:68–253`
 
 > "Separate table for app-specific user data (survives Clerk migration)" — L68. Deliberately isolated from framework-controlled `users` table.
 
@@ -507,7 +507,7 @@ Full field list (grouped):
 
 ### 4.4 `convex/auth.ts` — full breakdown
 
-**File:** `/Users/dev/cc/perm-tracker/v2/convex/auth.ts` (172 lines)
+**File:** `v2/convex/auth.ts` (172 lines)
 
 - **L1–10:** Imports. Note `Google` from `@auth/core/providers/google`, `Password` from `@convex-dev/auth/providers/Password`, `convexAuth` from `@convex-dev/auth/server`, `ResendOTP`, `ResendPasswordReset`.
 - **L23–46: `onAuthEvent(ctx, userId)` helper** — internal post-auth hook. Runs `internal.users.ensureUserProfileInternal` with `userId`. Catches errors, calls `recordError`. Crucially **does NOT fire welcome email / admin notification** — that's deferred to the first verified login.
@@ -526,7 +526,7 @@ Full field list (grouped):
 
 ### 4.5 `convex/auth.config.ts`
 
-**File:** `/Users/dev/cc/perm-tracker/v2/convex/auth.config.ts` (11 lines, full content):
+**File:** `v2/convex/auth.config.ts` (11 lines, full content):
 
 ```ts
 const authConfig = {
@@ -569,7 +569,7 @@ Complete list of exported functions + purpose:
 
 ### 4.7 `LoginTracker.tsx` — why it exists
 
-**File:** `/Users/dev/cc/perm-tracker/v2/src/components/auth/LoginTracker.tsx` (87 lines)
+**File:** `v2/src/components/auth/LoginTracker.tsx` (87 lines)
 
 - **Problem compensated:** `createOrUpdateUser` is NOT called for password sign-ins of *existing* users (the library's `retrieveAccountWithCredentials` path bypasses it). So OAuth logins get login tracking via `onAuthEvent`, but password logins of existing users wouldn't — LoginTracker is the client-side safety net covering both.
 - **Lifecycle (L59–83):**
@@ -581,7 +581,7 @@ Complete list of exported functions + purpose:
 
 ### 4.8 `buildDefaultProfile()` — default profile factory
 
-**File:** `/Users/dev/cc/perm-tracker/v2/convex/lib/userDefaults.ts`
+**File:** `v2/convex/lib/userDefaults.ts`
 
 - L16: `TERMS_VERSION = "2026-02-17"` — ToS acceptance default.
 - L22–30: `DEFAULT_NOTIFICATION_PREFS` — `{emailNotificationsEnabled:true, emailDeadlineReminders:true, emailStatusUpdates:false, emailRfeAlerts:true, pushNotificationsEnabled:false, quietHoursEnabled:false, timezone:"America/New_York"}`.
@@ -595,10 +595,10 @@ Complete list of exported functions + purpose:
 
 ### 5.1 Sentry user identification
 
-**File:** `/Users/dev/cc/perm-tracker/v2/src/lib/sentry.ts`
+**File:** `v2/src/lib/sentry.ts`
 - L149–162: `setUser({ id, email?, username? })` wraps `Sentry.setUser(...)` with client lazy-load guard.
 
-**Binding site:** `/Users/dev/cc/perm-tracker/v2/src/components/layout/SentryUserContext.tsx`
+**Binding site:** `v2/src/components/layout/SentryUserContext.tsx`
 - L15: `useQuery(api.users.currentUser, isSigningOut ? "skip" : undefined)`.
 - L17–29: on `user` change, `setUser({ id: user._id, email, username: name })`; on sign-out, `setUser(null)`.
 - **Mounted at** `src/app/(authenticated)/layout.tsx:47`.
@@ -607,14 +607,14 @@ Migration note: Clerk's user ID will be different from Convex `_id`. If we adopt
 
 ### 5.2 PostHog user identification
 
-**Wrapper:** `/Users/dev/cc/perm-tracker/v2/src/lib/analytics.ts` — `identify`, `reset`, `optOut`, `optIn`, `hasOptedOut`, `capture`.
+**Wrapper:** `v2/src/lib/analytics.ts` — `identify`, `reset`, `optOut`, `optIn`, `hasOptedOut`, `capture`.
 
-**Binding site:** `/Users/dev/cc/perm-tracker/v2/src/components/auth/LoginTracker.tsx:65`
+**Binding site:** `v2/src/components/auth/LoginTracker.tsx:65`
 ```ts
 analytics.identify(profile._id, { name: profile.fullName });
 ```
 
-**Reset site:** `/Users/dev/cc/perm-tracker/v2/src/lib/contexts/AuthContext.tsx:89`
+**Reset site:** `v2/src/lib/contexts/AuthContext.tsx:89`
 ```ts
 beginSignOut: analytics.reset() resets PostHog identity before the transition to "signingOut".
 ```
@@ -624,10 +624,10 @@ PostHog uses `profile._id` (the `Id<"userProfiles">` string, **not** `user._id`)
 ### 5.3 Resend contact sync (marketing list)
 
 **Files:**
-- `/Users/dev/cc/perm-tracker/v2/convex/marketingEmail.ts` — `"use node"` action module.
-- `/Users/dev/cc/perm-tracker/v2/convex/marketingEmailHelpers.ts` — internalQuery helpers (separate because Node files can't have queries).
-- `/Users/dev/cc/perm-tracker/v2/convex/marketingWebhook.ts` — inbound webhook recording to `marketingEvents` table.
-- `/Users/dev/cc/perm-tracker/v2/convex/http.ts:66–102` — Resend webhook handler (filters by `body.type.startsWith("contact.")`).
+- `v2/convex/marketingEmail.ts` — `"use node"` action module.
+- `v2/convex/marketingEmailHelpers.ts` — internalQuery helpers (separate because Node files can't have queries).
+- `v2/convex/marketingWebhook.ts` — inbound webhook recording to `marketingEvents` table.
+- `v2/convex/http.ts:66–102` — Resend webhook handler (filters by `body.type.startsWith("contact.")`).
 
 **Flow:**
 - `convex/marketingEmail.ts:73–92 getMarketingSubscriptionStatus` (action) — per-user GET via Resend REST (`/contacts/<email>`).
@@ -642,7 +642,7 @@ PostHog uses `profile._id` (the `Id<"userProfiles">` string, **not** `user._id`)
 
 ### 5.4 AI chat route — userId attachment
 
-**File:** `/Users/dev/cc/perm-tracker/v2/src/app/api/chat/route.ts`
+**File:** `v2/src/app/api/chat/route.ts`
 
 - L24: imports `isAuthenticatedNextjs`, `convexAuthNextjsToken`.
 - L124–131: auth gate `isAuthenticatedNextjs()` — 401 if unauthenticated.
@@ -654,7 +654,7 @@ PostHog uses `profile._id` (the `Id<"userProfiles">` string, **not** `user._id`)
 
 ### 5.5 Push notifications — userId attachment
 
-**File:** `/Users/dev/cc/perm-tracker/v2/convex/pushSubscriptions.ts`
+**File:** `v2/convex/pushSubscriptions.ts`
 
 - L18: `import { getAuthUserId } from "@convex-dev/auth/server"` — **direct library import, bypassing `convex/lib/auth`**.
 - L33: `const userId = await getAuthUserId(ctx)` in public query.
@@ -693,7 +693,7 @@ Already covered in 5.3. Key detail: `convex/marketingEmailHelpers.ts:14–28 lis
 
 ### 6.1 Tables with `userId: v.id("users")` (required)
 
-From `/Users/dev/cc/perm-tracker/v2/convex/schema.ts`:
+From `v2/convex/schema.ts`:
 
 | Line | Table | Field |
 |---|---|---|
@@ -751,8 +751,8 @@ None found — `userId` is the sole ownership field convention throughout.
 
 ### 7.2 Cloudflare Turnstile (anti-bot)
 
-- **Client component:** `/Users/dev/cc/perm-tracker/v2/src/components/auth/AuthTurnstile.tsx` — uses `@marsidev/react-turnstile`. Reads `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (L34). Falls back to Cloudflare's "always passes" test key `1x00000000000000000000AA` in dev.
-- **Server action:** `/Users/dev/cc/perm-tracker/v2/convex/turnstile.ts` — `"use node"` action `verifyTurnstileToken` POSTs to `https://challenges.cloudflare.com/turnstile/v0/siteverify` with `TURNSTILE_SECRET_KEY`. Fail-open in dev (no secret); fail-closed in prod.
+- **Client component:** `v2/src/components/auth/AuthTurnstile.tsx` — uses `@marsidev/react-turnstile`. Reads `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (L34). Falls back to Cloudflare's "always passes" test key `1x00000000000000000000AA` in dev.
+- **Server action:** `v2/convex/turnstile.ts` — `"use node"` action `verifyTurnstileToken` POSTs to `https://challenges.cloudflare.com/turnstile/v0/siteverify` with `TURNSTILE_SECRET_KEY`. Fail-open in dev (no secret); fail-closed in prod.
 - **Env vars:**
   - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (client, `.env.example` not listed — set in Vercel env directly)
   - `TURNSTILE_SECRET_KEY` (Convex env)
@@ -760,8 +760,8 @@ None found — `userId` is the sole ownership field convention throughout.
 
 ### 7.3 Resend for email verification + password reset
 
-- `/Users/dev/cc/perm-tracker/v2/convex/ResendOTP.ts` — wraps `Email` from `@convex-dev/auth/providers/Email` with a `sendVerificationRequest` using Resend SDK. 12-char alphanumeric codes via `generateSecureOTP` (`convex/lib/crypto.ts`). Uses `process.env.AUTH_RESEND_KEY`. From address: `"PERM Tracker <noreply@permtracker.app>"`. Template: `src/emails/VerificationCode.tsx`.
-- `/Users/dev/cc/perm-tracker/v2/convex/ResendPasswordReset.ts` — identical pattern. Template: `src/emails/PasswordResetCode.tsx`.
+- `v2/convex/ResendOTP.ts` — wraps `Email` from `@convex-dev/auth/providers/Email` with a `sendVerificationRequest` using Resend SDK. 12-char alphanumeric codes via `generateSecureOTP` (`convex/lib/crypto.ts`). Uses `process.env.AUTH_RESEND_KEY`. From address: `"PERM Tracker <noreply@permtracker.app>"`. Template: `src/emails/VerificationCode.tsx`.
+- `v2/convex/ResendPasswordReset.ts` — identical pattern. Template: `src/emails/PasswordResetCode.tsx`.
 - Blocklist guard: both call `isEmailBlocked(email)` from `convex/lib/emailBlocklist.ts` and silently skip blocklisted recipients.
 - **Convex Auth wiring:** `convex/auth.ts:52` — `Password<DataModel>({ verify: ResendOTP, reset: ResendPasswordReset, ... })`.
 - **Non-throwing send:** Both `ResendOTP.sendVerificationRequest` and `ResendPasswordReset.sendVerificationRequest` log errors but don't throw. The Convex Auth library stores the verification token in the DB first; if the email fails, the user can retry to resend.
@@ -780,7 +780,7 @@ None found — `userId` is the sole ownership field convention throughout.
 
 - Inactivity limit: **15 minutes** (`useInactivityTimeout.ts:28` — `INACTIVITY_TIMEOUT`).
 - Warning fires at: **13 minutes** (`WARNING_TIME`) — modal shows for 2 minutes before hard logout.
-- Warning modal: `/Users/dev/cc/perm-tracker/v2/src/components/layout/TimeoutWarningModal.tsx`.
+- Warning modal: `v2/src/components/layout/TimeoutWarningModal.tsx`.
 - Sign-out trigger: `performSignOut` in `InactivityTimeoutProvider.tsx:42–78`:
   1. `beginSignOut()` → `analytics.reset()` → context transitions to `signingOut`.
   2. Race `signOut()` vs 8-second timeout (`InactivityTimeoutProvider.tsx:55–61`).
@@ -789,7 +789,7 @@ None found — `userId` is the sole ownership field convention throughout.
 
 ### 8.3 Sign-out flow
 
-**Primary sign-out handler (user-initiated):** `/Users/dev/cc/perm-tracker/v2/src/components/layout/Header.tsx:55–69`
+**Primary sign-out handler (user-initiated):** `v2/src/components/layout/Header.tsx:55–69`
 ```ts
 async function handleSignOut(): Promise<void> {
   if (isSigningOut) return;
@@ -816,7 +816,7 @@ async function handleSignOut(): Promise<void> {
 
 ### 9.1 Primary test utility for Convex functions
 
-**File:** `/Users/dev/cc/perm-tracker/v2/test-utils/convex.ts`
+**File:** `v2/test-utils/convex.ts`
 
 Uses `convex-test` (from `devDependencies` L136 of package.json: `"convex-test": "^0.0.47"`).
 
@@ -912,11 +912,11 @@ From grep for `asUser|withIdentity|convex-test|ConvexTest|ctx\.auth\.getUserIden
 **In `src/`:** No matches.
 
 **In `convex/`:** One non-code match:
-- `/Users/dev/cc/perm-tracker/v2/convex/schema.ts:68` — comment: `// Separate table for app-specific user data (survives Clerk migration)` — architectural intent, not a code dependency.
+- `v2/convex/schema.ts:68` — comment: `// Separate table for app-specific user data (survives Clerk migration)` — architectural intent, not a code dependency.
 
 **In `docs/`:** Two documentation hints:
-- `/Users/dev/cc/perm-tracker/v2/docs/SECURITY.md:135` — `- No MFA (planned with Clerk migration)`
-- `/Users/dev/cc/perm-tracker/v2/docs/SECURITY.md:138` — `- No password-history enforcement (Clerk will provide)`
+- `v2/docs/SECURITY.md:135` — `- No MFA (planned with Clerk migration)`
+- `v2/docs/SECURITY.md:138` — `- No password-history enforcement (Clerk will provide)`
 
 ### 11.2 Skill reference files (tooling, NOT app code)
 
@@ -926,7 +926,7 @@ From grep for `asUser|withIdentity|convex-test|ConvexTest|ctx\.auth\.getUserIden
 
 **Confirmed:** Zero `@clerk/*` packages installed.
 
-Current auth-relevant dependencies (from `/Users/dev/cc/perm-tracker/v2/package.json:32–108`):
+Current auth-relevant dependencies (from `v2/package.json:32–108`):
 - `@auth/core ^0.41.1`
 - `@convex-dev/auth ^0.0.91`  ← **beta, the one being migrated away from**
 - `lucia ^3.2.2`  ← present; used for `Scrypt` password hashing only. See `convex/admin.ts:17 import { Scrypt } from "lucia";` — used for test user creation (`createTestUserInternal`). Should remain usable until we remove test-user creation.
@@ -944,7 +944,7 @@ Convex auto-generates IDs as ~32-char base32-lowercase strings with a table pref
 
 ### 12.2 `assertConvexId` validator (tool executor)
 
-**File:** `/Users/dev/cc/perm-tracker/v2/src/app/api/chat/execute-tool/route.ts:67–79`
+**File:** `v2/src/app/api/chat/execute-tool/route.ts:67–79`
 
 ```ts
 function assertConvexId(value: unknown, tableName: string): asserts value is string {
@@ -1037,7 +1037,7 @@ Both are listed in `src/middleware.ts:23–25` as protected routes.
 
 ### 14.1 Convex deployments
 
-Per `~/.claude/projects/-Users-dev-cc-perm-tracker/memory/MEMORY.md` and project CLAUDE.md:
+Per the project memory notes and project CLAUDE.md:
 - **Prod:** `giant-dragon-464`
 - **Dev:** `giddy-peccary-484`
 
@@ -1045,7 +1045,7 @@ Both read from `v2/.env.local` (`CONVEX_DEPLOYMENT=...`, `NEXT_PUBLIC_CONVEX_URL
 
 ### 14.2 Convex auth config file
 
-**Exists at:** `/Users/dev/cc/perm-tracker/v2/convex/auth.config.ts` (11 lines).
+**Exists at:** `v2/convex/auth.config.ts` (11 lines).
 
 Content: single provider pointing at `process.env.CONVEX_SITE_URL` with `applicationID: "convex"`. This is the **self-issuer** setup: Convex Auth signs its own JWTs using `JWT_PRIVATE_KEY` stored in the Convex deployment env, validates them against the same domain. Clerk will replace this with Clerk's Frontend API URL + `applicationID: "convex"`.
 
@@ -1059,7 +1059,7 @@ Skipped per instructions.
 
 ### 15.1 `convex/abuseBlocklist.ts`
 
-**File:** `/Users/dev/cc/perm-tracker/v2/convex/abuseBlocklist.ts` (228 lines)
+**File:** `v2/convex/abuseBlocklist.ts` (228 lines)
 
 - **Uses:** `requireAdmin` from `convex/lib/admin.ts` (L32 import; L141, 174, 192, 208 call sites).
 - **Schema table:** `abuseBlocklist` at `convex/schema.ts:816–825`, keyed by normalized IP. **No user coupling** beyond admin-gate on mutations.
@@ -1068,7 +1068,7 @@ Skipped per instructions.
 
 ### 15.2 `convex/abuseDetection.ts`
 
-**File:** `/Users/dev/cc/perm-tracker/v2/convex/abuseDetection.ts` (145 lines)
+**File:** `v2/convex/abuseDetection.ts` (145 lines)
 
 **Critical for migration:** uses `(ctx.db.query("users") as any).withIndex("email", ...)` at two places:
 
@@ -1081,7 +1081,7 @@ The `as any` cast exists because Convex's strictly-typed FilterApi doesn't resol
 
 ### 15.3 `convex/authRateLimit.ts`
 
-**File:** `/Users/dev/cc/perm-tracker/v2/convex/authRateLimit.ts` (179 lines)
+**File:** `v2/convex/authRateLimit.ts` (179 lines)
 
 - L19: `import { getCurrentUserIdOrNull } from "./lib/auth"` — used in `clearAuthRateLimit` at L175 to allow only authenticated users to clear limits.
 - L49–87: `checkAuthRateLimit({email, action})` — called pre-signIn by forms.
@@ -1090,7 +1090,7 @@ The `as any` cast exists because Convex's strictly-typed FilterApi doesn't resol
 
 ### 15.4 `convex/adminSecurity.ts`
 
-**File:** `/Users/dev/cc/perm-tracker/v2/convex/adminSecurity.ts` (213 lines)
+**File:** `v2/convex/adminSecurity.ts` (213 lines)
 
 All 7 exports gate on `await requireAdmin(ctx)`:
 - `getSecuritySummary` (L17) — KPI cards.
@@ -1184,16 +1184,16 @@ Everything below is an **assumption, coupling, or implicit contract** the Clerk 
 
 ## Appendix A — Files worth reading in full before migration
 
-1. `/Users/dev/cc/perm-tracker/v2/convex/auth.ts` (172 lines) — entire auth wiring
-2. `/Users/dev/cc/perm-tracker/v2/convex/lib/auth.ts` (235 lines) — helper API
-3. `/Users/dev/cc/perm-tracker/v2/convex/lib/admin.ts` (332 lines) — admin guards + dashboard helper
-4. `/Users/dev/cc/perm-tracker/v2/convex/schema.ts` (984 lines) — schema; lines 44–253 most relevant
-5. `/Users/dev/cc/perm-tracker/v2/src/middleware.ts` (113 lines) — middleware behavior
-6. `/Users/dev/cc/perm-tracker/v2/src/app/(auth)/login/LoginPageClient.tsx` (521 lines) — login form orchestration
-7. `/Users/dev/cc/perm-tracker/v2/src/app/(auth)/signup/SignupPageClient.tsx` (594 lines) — signup form
-8. `/Users/dev/cc/perm-tracker/v2/src/app/(auth)/reset-password/ResetPasswordPageClient.tsx` (407 lines) — reset form
-9. `/Users/dev/cc/perm-tracker/v2/convex/users.ts` (1002 lines) — user lifecycle
-10. `/Users/dev/cc/perm-tracker/v2/convex/lib/deletion.ts` (185 lines) — deletion cascade
+1. `v2/convex/auth.ts` (172 lines) — entire auth wiring
+2. `v2/convex/lib/auth.ts` (235 lines) — helper API
+3. `v2/convex/lib/admin.ts` (332 lines) — admin guards + dashboard helper
+4. `v2/convex/schema.ts` (984 lines) — schema; lines 44–253 most relevant
+5. `v2/src/middleware.ts` (113 lines) — middleware behavior
+6. `v2/src/app/(auth)/login/LoginPageClient.tsx` (521 lines) — login form orchestration
+7. `v2/src/app/(auth)/signup/SignupPageClient.tsx` (594 lines) — signup form
+8. `v2/src/app/(auth)/reset-password/ResetPasswordPageClient.tsx` (407 lines) — reset form
+9. `v2/convex/users.ts` (1002 lines) — user lifecycle
+10. `v2/convex/lib/deletion.ts` (185 lines) — deletion cascade
 
 ---
 

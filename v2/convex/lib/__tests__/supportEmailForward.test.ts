@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { shouldForwardInbound } from "../supportEmailForward";
 
-const FWD = "owner@gmail.com"; // prod SUPPORT_FORWARD_EMAIL (external inbox)
+// Stands in for SUPPORT_FORWARD_EMAIL, the external inbox catch-all mail is
+// forwarded to. Only two properties matter to these assertions: it is outside
+// permtracker.app, and it is the loop-guard target. The real value is
+// deliberately not written here — it is a personal inbox and this repo is
+// public. It lives in the SUPPORT_FORWARD_EMAIL Convex env var.
+const FWD = "owner@example.com";
 
 describe("shouldForwardInbound", () => {
   it("forwards normal human inbound mail", () => {
