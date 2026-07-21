@@ -5,9 +5,16 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import SupportSection from "../SupportSection";
 
+// Imported rather than redeclared. These previously duplicated the component's
+// own literals, so when both sides said the same placeholder the test happily
+// asserted a link that went nowhere. Importing means the test tracks the single
+// source of truth instead of restating it.
+import {
+  GITHUB_BUG_REPORT_URL,
+  GITHUB_FEATURE_REQUEST_URL,
+} from "@/lib/constants/externalLinks";
+
 const SUPPORT_EMAIL = "support@permtracker.app";
-const GITHUB_BUG_REPORT_URL = "https://github.com";
-const GITHUB_FEATURE_REQUEST_URL = "https://github.com";
 
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({

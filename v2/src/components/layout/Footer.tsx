@@ -16,6 +16,10 @@
 
 import { Heart } from "lucide-react";
 
+import { NavLink } from "@/components/ui/nav-link";
+import { LawGavelSVG } from "@/components/illustrations";
+import { SOCIAL_LINKS } from "@/lib/constants/externalLinks";
+
 // Brand icons as inline SVGs — lucide-react v1.x removed brand icons
 const GithubIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -34,8 +38,11 @@ const LinkedinIcon = ({ className }: { className?: string }) => (
     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.063 2.063 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
   </svg>
 );
-import { NavLink } from "@/components/ui/nav-link";
-import { LawGavelSVG } from "@/components/illustrations";
+const SOCIAL_ICONS = {
+  github: GithubIcon,
+  twitter: TwitterIcon,
+  linkedin: LinkedinIcon,
+} as const;
 
 interface FooterProps {
   variant?: "compact" | "extended";
@@ -58,35 +65,25 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               <p className="text-sm text-white/60 leading-relaxed mb-6">
                 Free case management for immigration attorneys. Track deadlines, manage cases, never miss a filing.
               </p>
-              {/* Social links */}
+              {/* Social links. Driven by SOCIAL_LINKS so a network that has no
+                  real profile yet is simply absent, rather than linking its
+                  bare homepage as these previously did. */}
               <div className="flex gap-4">
-                <a
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/60 transition-colors hover:text-primary"
-                  aria-label="GitHub"
-                >
-                  <GithubIcon className="h-5 w-5" />
-                </a>
-                <a
-                  href="https://twitter.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/60 transition-colors hover:text-primary"
-                  aria-label="Twitter"
-                >
-                  <TwitterIcon className="h-5 w-5" />
-                </a>
-                <a
-                  href="https://linkedin.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/60 transition-colors hover:text-primary"
-                  aria-label="LinkedIn"
-                >
-                  <LinkedinIcon className="h-5 w-5" />
-                </a>
+                {SOCIAL_LINKS.map(({ href, label, icon }) => {
+                  const Icon = SOCIAL_ICONS[icon];
+                  return (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white/60 transition-colors hover:text-primary"
+                      aria-label={label}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
 

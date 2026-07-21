@@ -10,6 +10,10 @@ import type { Metadata } from "next";
 import { Mail, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { openGraphBase } from "@/lib/openGraphBase";
+import {
+  GITHUB_BUG_REPORT_URL,
+  GITHUB_FEATURE_REQUEST_URL,
+} from "@/lib/constants/externalLinks";
 
 // Brand icon as inline SVG — lucide-react v1.x removed brand icons
 const GithubIcon = ({ className }: { className?: string }) => (
@@ -79,7 +83,7 @@ export default function ContactPage() {
                 Have an idea to improve PERM Tracker? We&apos;d love to hear it.
               </p>
               <a
-                href="https://github.com/issues"
+                href={GITHUB_FEATURE_REQUEST_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover-underline text-primary font-medium"
@@ -102,7 +106,7 @@ export default function ContactPage() {
                 Found something that&apos;s not working right? Report it here.
               </p>
               <a
-                href="https://github.com/issues/new"
+                href={GITHUB_BUG_REPORT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover-underline text-primary font-medium"

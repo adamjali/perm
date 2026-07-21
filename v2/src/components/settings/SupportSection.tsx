@@ -53,16 +53,16 @@ import { captureError } from "@/lib/sentry";
 import { handleOperationError } from "@/lib/errors";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import DeleteNowDialog from "./DeleteNowDialog";
+import {
+  GITHUB_BUG_REPORT_URL,
+  GITHUB_FEATURE_REQUEST_URL,
+} from "@/lib/constants/externalLinks";
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
 const SUPPORT_EMAIL = "support@permtracker.app";
-const GITHUB_BUG_REPORT_URL =
-  "https://github.com";
-const GITHUB_FEATURE_REQUEST_URL =
-  "https://github.com";
 const DELETE_CONFIRMATION_TEXT = "DELETE";
 const GRACE_PERIOD_DAYS = 30;
 
