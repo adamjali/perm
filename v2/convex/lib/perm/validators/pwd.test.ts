@@ -1,5 +1,29 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { validatePWD } from './pwd';
+
+// V-PWD-04 warns whenever `pwd_expiration_date` is before today, so every test
+// that asserts an exact warning count implicitly depends on the current date.
+// Several fixtures below use fixed dates (2026-06-30, 2026-08-13) that were
+// future-dated when written; once real time passed them, V-PWD-04 started
+// firing and four tests began failing for no code reason. Bumping the dates
+// would only re-arm the same trap, so pin the clock instead and the file stays
+// deterministic permanently.
+//
+// Chosen so all "valid" fixtures are still future (2026-06-30, 2026-08-13,
+// 2027-06-30) and all "expired" fixtures are still past (2020-06-30,
+// 2024-02-10). Noon UTC keeps the local-time date (TZ is pinned to
+// America/New_York in vitest.config.ts) on the same calendar day, so
+// `getTodayISO()` and the tests that build dates via `toISOString()` agree.
+const FROZEN_NOW = new Date('2026-03-01T12:00:00Z');
+
+beforeAll(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(FROZEN_NOW);
+});
+
+afterAll(() => {
+  vi.useRealTimers();
+});
 
 describe('PWD Validators', () => {
   describe('V-PWD-01: PWD filing date must be before determination date', () => {
