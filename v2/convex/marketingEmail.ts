@@ -394,7 +394,8 @@ export const syncContacts = internalAction({
 /**
  * Backfill marketingEvents with a synthetic `contact.backfill` event for
  * every existing Resend contact. Used to capture subscription state that
- * predates the webhook being enabled (e.g., Umar's April 15 unsubscribe).
+ * predates the webhook being enabled (e.g. an unsubscribe that happened
+ * before the webhook existed, so no event row was ever written).
  *
  * Idempotent: svixId = `backfill_<contactId>` is stable per contact, so
  * re-running is a pure no-op (all skipped via the existing by_svix_id dedup

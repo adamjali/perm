@@ -74,7 +74,7 @@ export async function recordError(
 
   // Intentional, permanent email suppression (emailBlocklist) is not an error —
   // don't record it or alert the admin. It otherwise sent an admin email for
-  // every blocklisted recipient (e.g. a weekly "Mona blocked" ping). The send
+  // every blocklisted recipient (a weekly "blocked" ping per entry). The send
   // path already logs the skip (convex/lib/email.ts).
   if (message.includes("Blocklisted recipient(s):")) {
     return;

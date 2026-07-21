@@ -21,6 +21,8 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { loggers } from "./lib/logging";
+import { assertBlocklistConfigured } from "./lib/emailBlocklist";
+import { recordError } from "./lib/errorRecording";
 import {
   generateNotificationTitle,
   generateNotificationMessage,
@@ -68,6 +70,18 @@ export const getDisplayNames = internalQuery({
 export const runDeadlineReminders = internalAction({
   args: {},
   handler: async (ctx): Promise<{ processed: number; emailsScheduled: number }> => {
+    // Config health check. The email blocklist is a permanent suppression list
+    // sourced from the BLOCKED_EMAILS env var; if that var goes missing the
+    // list silently empties and previously blocked people start receiving mail
+    // again. This is the largest scheduled send in the system, so it is the
+    // right place to notice. Reported, never fatal: an inert blocklist must not
+    // stop the digest, or a config typo becomes a mail outage.
+    try {
+      assertBlocklistConfigured();
+    } catch (error) {
+      await recordError(ctx, "cron", "deadlineDigest.blocklistConfig", error);
+    }
+
     const reminders = await ctx.runQuery(internal.scheduledJobs.getCasesNeedingReminders);
 
     let processed = 0;

@@ -88,7 +88,7 @@ describe("checkUserName — rejects emoji", () => {
     "John 😀",
     "🎉 Party",
     "Hi 🇺🇸",            // flag emoji pair (regional indicator)
-    "Adam ✨",
+    "Maria ✨",
     "🔥 Hot Deal",
   ])("rejects %s as emoji", (input) => {
     const result = checkUserName(input);
@@ -163,7 +163,7 @@ describe("client ↔ server validators stay in lockstep", () => {
   const samples: Array<string | null> = [
     null,
     "",
-    "Adam",
+    "Maria",
     "Maria Garcia",
     "St. John",
     "https://evil.com",
@@ -194,8 +194,8 @@ describe("client ↔ server validators stay in lockstep", () => {
 
 describe("sanitizeNameForEmail — defensive last line", () => {
   it("strips https URLs", () => {
-    expect(sanitizeNameForEmail("Adam https://evil.com Mohamed")).toBe(
-      "Adam [link removed] Mohamed",
+    expect(sanitizeNameForEmail("Maria https://evil.com Garcia")).toBe(
+      "Maria [link removed] Garcia",
     );
   });
 
@@ -205,7 +205,7 @@ describe("sanitizeNameForEmail — defensive last line", () => {
   });
 
   it("strips emojis", () => {
-    expect(sanitizeNameForEmail("Adam 😀 Mohamed")).toBe("Adam  Mohamed");
+    expect(sanitizeNameForEmail("Maria 😀 Garcia")).toBe("Maria  Garcia");
   });
 
   it("truncates to MAX_NAME_LENGTH", () => {

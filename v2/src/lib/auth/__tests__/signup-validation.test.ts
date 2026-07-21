@@ -70,7 +70,7 @@ describe("validateNameValue", () => {
   });
 
   it("delegates to checkUserName for emoji detection", () => {
-    const r = validateNameValue("Adam 😀", true);
+    const r = validateNameValue("Maria 😀", true);
     expect(r.state).toBe("invalid");
     expect(r.reason).toBe("CONTAINS_EMOJI");
   });
