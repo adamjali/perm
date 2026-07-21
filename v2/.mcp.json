@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "resend": {
+    "resend-docs": {
       "type": "http",
       "url": "https://resend.com/docs/mcp"
     }
