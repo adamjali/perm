@@ -18,8 +18,9 @@
   },
   "parallelization": true,
   "brave_search": false,
-  "_skills_mtime": 1782266241281.1858,
+  "_skills_mtime": 1784399063467.1655,
   "_skills_list": [
+    "citation-management",
     "cold-outreach-perm",
     "context7-mcp",
     "create-hooks",
@@ -105,11 +106,21 @@
     "gsd-verify-work",
     "gsd-workspace",
     "gsd-workstreams",
+    "infographics",
     "janitor",
     "jina-image-search",
+    "literature-review",
+    "paper-lookup",
+    "peer-review",
     "perm-email",
+    "pptx-posters",
+    "research-poster",
+    "scientific-slides",
+    "scientific-visualization",
+    "scientific-writing",
     "site-forge",
     "site-prospector",
-    "skill-maker"
+    "skill-maker",
+    "statistical-analysis"
   ]
 }
