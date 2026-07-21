@@ -83,12 +83,20 @@ describe("getOrganizationSchema", () => {
     expect(schema.url).toBe(BASE);
   });
 
-  // The Organization entity must not carry a link to any personal account.
-  // A sameAs is only worth adding back if it is brand-owned and resolves 200;
-  // this asserts the leak stays gone rather than asserting a specific URL.
-  it("publishes no sameAs linking the brand to a personal profile", () => {
+  it("sameAs contains the real brand repo, not a placeholder", () => {
+    expect(schema.sameAs).toEqual(["https://github.com/adamjali/perm"]);
+    // Defensive: prevent regression to the placeholder bare URL
+    expect(schema.sameAs).not.toContain("https://github.com");
+  });
+
+  // This markup is served on every page and read by crawlers, so a personal
+  // account here would republish exactly the brand-to-person association that
+  // was deliberately removed. Guard the class of mistake, not one string.
+  it("never links the brand to a personal account", () => {
     const sameAs = (schema as { sameAs?: string[] }).sameAs ?? [];
-    expect(sameAs).toEqual([]);
+    for (const url of sameAs) {
+      expect(url).not.toMatch(/amohamed369|adamdragon/i);
+    }
   });
 });
 

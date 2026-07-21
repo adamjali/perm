@@ -79,12 +79,11 @@ export function getOrganizationSchema(baseUrl: string) {
       email: 'support@permtracker.app',
       contactType: 'customer support',
     },
-    // No sameAs. It previously pointed at the source repository, which tied
-    // this Organization entity to a personal account in machine-readable
-    // markup on every page. Omitted rather than repointed because the original
-    // rule still holds: a sameAs is only worth having if it resolves HTTP 200,
-    // and a bare placeholder is worse than none for entity disambiguation.
-    // Restore a single verified URL here once a brand-owned profile exists.
+    // Real brand attestation (verified HTTP 200). One real sameAs URL is
+    // strictly better than a bare placeholder for entity disambiguation.
+    // Must stay a brand-owned URL: this is machine-readable and served on every
+    // page, so anything personal here publishes that association to crawlers.
+    sameAs: ['https://github.com/adamjali/perm'],
   };
 }
 
