@@ -108,6 +108,7 @@ import type * as lib_rag_permKnowledge from "../lib/rag/permKnowledge.js";
 import type * as lib_rateLimit from "../lib/rateLimit.js";
 import type * as lib_reminderDigest from "../lib/reminderDigest.js";
 import type * as lib_sentry from "../lib/sentry.js";
+import type * as lib_supportEmailForward from "../lib/supportEmailForward.js";
 import type * as lib_suspension from "../lib/suspension.js";
 import type * as lib_unsubscribeToken from "../lib/unsubscribeToken.js";
 import type * as lib_userDefaults from "../lib/userDefaults.js";
@@ -244,6 +245,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rateLimit": typeof lib_rateLimit;
   "lib/reminderDigest": typeof lib_reminderDigest;
   "lib/sentry": typeof lib_sentry;
+  "lib/supportEmailForward": typeof lib_supportEmailForward;
   "lib/suspension": typeof lib_suspension;
   "lib/unsubscribeToken": typeof lib_unsubscribeToken;
   "lib/userDefaults": typeof lib_userDefaults;
