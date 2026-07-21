@@ -36,15 +36,15 @@
 ## Frameworks
 
 **Core:**
-- Next.js 16.2.6 — Full-stack React framework (App Router)
+- Next.js 16.2.9 — Full-stack React framework (App Router)
   - Config: `v2/next.config.ts`
   - Dev: Turbopack (`pnpm dev` runs `next dev --turbopack`)
   - Build: Webpack (`pnpm build` runs `next build --webpack`)
   - Experimental: `inlineCss`, `optimizePackageImports` (lucide-react, date-fns only)
   - React Compiler: DISABLED (causes ReferenceError with both Turbopack and Webpack)
   - `concatenateModules: false` on client bundles (prevents motion-dom export mangling)
-- React 19.2.6 — UI library (with react-dom 19.2.6)
-- Convex 1.39.1 — Serverless backend (real-time database, functions, scheduling)
+- React 19.2.7 — UI library (with react-dom 19.2.7)
+- Convex 1.42.3 — Serverless backend (real-time database, functions, scheduling)
   - Config: `v2/convex.json`
   - Schema: `v2/convex/schema.ts`
   - Auth: `v2/convex/auth.ts`
@@ -77,16 +77,16 @@
   - Config: `v2/eslint.config.mjs` (flat config)
   - Plugins: eslint-config-next 16.2.6 (core-web-vitals + typescript), eslint-plugin-security, eslint-plugin-storybook
 - PostCSS — CSS processing (`v2/postcss.config.mjs`)
-- @next/bundle-analyzer 16.2.6 — Bundle size analysis (`ANALYZE=true pnpm build`)
+- @next/bundle-analyzer 16.2.9 — Bundle size analysis (`ANALYZE=true pnpm build`)
 
 ## Key Dependencies
 
 **Critical (production functionality depends on these):**
-- `convex` 1.39.1 — Database, real-time sync, serverless functions, file storage
-- `@convex-dev/auth` 0.0.92 — Authentication layer (Google OAuth + Email/Password)
+- `convex` 1.42.3 — Database, real-time sync, serverless functions, file storage
+- `@convex-dev/auth` 0.0.93 — Authentication layer (Google OAuth + Email/Password)
 - `@auth/core` 0.41.2 — Auth.js core (used by Convex Auth for Google provider)
-- `next` 16.2.6 — Full-stack framework, routing, SSR
-- `react` / `react-dom` 19.2.6 — UI rendering
+- `next` 16.2.9 — Full-stack framework, routing, SSR
+- `react` / `react-dom` 19.2.7 — UI rendering
 
 **AI/Chat:**
 - `ai` 6.0.191 — Vercel AI SDK v6 (streaming, tool calling, UI message streams)

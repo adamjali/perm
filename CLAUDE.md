@@ -9,8 +9,8 @@
 
 ## Tech Stack
 
-- **Frontend:** Next.js 16.2.6 + React 19.2.6 + TypeScript (Vercel)
-- **Backend:** Convex 1.39 (serverless functions)
+- **Frontend:** Next.js 16.2.9 + React 19.2.7 + TypeScript (Vercel)
+- **Backend:** Convex 1.42.3 (serverless functions)
 - **Database:** Convex (built-in, real-time)
 - **Authentication:** Convex Auth + Google OAuth
 - **Email:** Resend
