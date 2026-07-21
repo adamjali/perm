@@ -50,6 +50,14 @@ export const SOCIAL_LINKS = [
   // glyph is already the X mark. Label names the platform but keeps the old
   // name for recognition, since the icon alone is still ambiguous to many users.
   { href: "https://x.com/adamj3ali", label: "X (formerly Twitter)", icon: "twitter" },
-  // No LinkedIn entry: no brand profile exists yet. Linking linkedin.com bare,
-  // as this footer used to, is a dead link on every page.
+  // A personal profile, not a company page, and the only entry here that points
+  // at a named individual. She is already the public voice of the product's
+  // email (every message signs off "Sabrina S. / PERM Tracker Team"), so this is
+  // consistent with how the brand already presents itself. Swap it for a company
+  // page if one is ever created.
+  {
+    href: "https://www.linkedin.com/in/sabrina-soltau-5b2682171",
+    label: "LinkedIn",
+    icon: "linkedin",
+  },
 ] as const satisfies readonly SocialLink[];
