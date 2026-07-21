@@ -7,6 +7,7 @@ import {
   getFAQPageSchema,
   getHomepageRatingPartialSchema,
 } from "../structuredData";
+import { GITHUB_REPO_URL } from "@/lib/constants/externalLinks";
 
 const BASE = "https://permtracker.app";
 
@@ -84,18 +85,25 @@ describe("getOrganizationSchema", () => {
   });
 
   it("sameAs contains the real brand repo, not a placeholder", () => {
-    expect(schema.sameAs).toEqual(["https://github.com/adamjali/perm"]);
+    expect(schema.sameAs).toEqual([GITHUB_REPO_URL]);
     // Defensive: prevent regression to the placeholder bare URL
     expect(schema.sameAs).not.toContain("https://github.com");
   });
 
-  // This markup is served on every page and read by crawlers, so a personal
-  // account here would republish exactly the brand-to-person association that
-  // was deliberately removed. Guard the class of mistake, not one string.
-  it("never links the brand to a personal account", () => {
+  // This markup is served on every page and read by crawlers, so a foreign
+  // account here republishes exactly the brand-to-person association that was
+  // deliberately removed.
+  //
+  // Deliberately an allowlist. The obvious version blocklists the old personal
+  // handles, but that writes them back into a public repo to assert their
+  // absence, and it only catches the two strings someone thought to list.
+  // Requiring every entry to be brand-owned catches any account, including ones
+  // that do not exist yet.
+  it("only links the brand to brand-owned destinations", () => {
     const sameAs = (schema as { sameAs?: string[] }).sameAs ?? [];
+    expect(sameAs.length).toBeGreaterThan(0);
     for (const url of sameAs) {
-      expect(url).not.toMatch(/amohamed369|adamdragon/i);
+      expect(url.startsWith(GITHUB_REPO_URL)).toBe(true);
     }
   });
 });

@@ -8,6 +8,8 @@
  * - FAQPage (FAQ rich results)
  */
 
+import { GITHUB_REPO_URL } from "@/lib/constants/externalLinks";
+
 /**
  * Single source for the schema.org `@id` fragments used to cross-link entities
  * in the root layout's `@graph`. Keep these in sync with the consumers in
@@ -83,7 +85,7 @@ export function getOrganizationSchema(baseUrl: string) {
     // strictly better than a bare placeholder for entity disambiguation.
     // Must stay a brand-owned URL: this is machine-readable and served on every
     // page, so anything personal here publishes that association to crawlers.
-    sameAs: ['https://github.com/adamjali/perm'],
+    sameAs: [GITHUB_REPO_URL],
   };
 }
 
