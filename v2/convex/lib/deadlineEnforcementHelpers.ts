@@ -72,8 +72,26 @@ export type ViolationType =
 
 /**
  * Suggested action when a deadline violation is detected.
+ *
+ * "review" means the system could not determine the right action — typically
+ * because the PWD expiration date is missing, so restart viability is unknown.
+ * It exists so that ABSENT data can never be read as "no time left" and close
+ * a case; only a date we actually hold, and which has actually run out, does
+ * that. Callers close on "close" alone, so "review" is inherently safe.
  */
-export type SuggestedAction = "close" | "restart_recruitment" | "restart_eta9089";
+export type SuggestedAction =
+  | "close"
+  | "restart_recruitment"
+  | "restart_eta9089"
+  | "review";
+
+/**
+ * Whether there is enough PWD time left to restart the process.
+ *
+ * "unknown" is deliberately distinct from "not_viable": one means we checked
+ * and the time has gone, the other means we have no date to check.
+ */
+export type RestartViability = "viable" | "not_viable" | "unknown";
 
 /**
  * Result of deadline violation check.
@@ -192,17 +210,55 @@ export function canRestartProcess(
   pwdExpirationDate: string | null | undefined,
   todayISO: string
 ): boolean {
-  if (!isValidISODate(pwdExpirationDate)) {
-    // No PWD expiration means we can't assess restart viability
-    // Default to false (conservative - require restart consideration)
-    return false;
-  }
+  // Unknown is not viable — a caller asking this yes/no question cannot be told
+  // "yes" on a date we do not hold. Callers that must distinguish "unknown"
+  // from "confirmed out of time" should use getRestartViability directly.
+  return getRestartViability(pwdExpirationDate, todayISO) === "viable";
+}
+
+/**
+ * Whether there is enough PWD time left to restart — as three states rather
+ * than two.
+ *
+ * The boolean form cannot express the difference between "the PWD has run out"
+ * and "there is no PWD date on file". Both arrive as false, and the violation
+ * checks used to map false to suggestedAction "close", so a case missing one
+ * field was closed as if its deadline had demonstrably passed. Absence of
+ * evidence became evidence of absence, and the destructive branch was the one
+ * it landed on.
+ *
+ * @param pwdExpirationDate - PWD expiration date (ISO string)
+ * @param todayISO - Reference date (ISO string)
+ * @returns "viable" (>60 days), "not_viable" (≤60 days), or "unknown" (no usable date)
+ */
+export function getRestartViability(
+  pwdExpirationDate: string | null | undefined,
+  todayISO: string
+): RestartViability {
+  if (!isValidISODate(pwdExpirationDate)) return "unknown";
 
   const daysRemaining = daysBetween(todayISO, pwdExpirationDate);
 
-  if (daysRemaining === null) return false;
+  if (daysRemaining === null) return "unknown";
 
-  return daysRemaining > MIN_DAYS_FOR_RESTART;
+  return daysRemaining > MIN_DAYS_FOR_RESTART ? "viable" : "not_viable";
+}
+
+/**
+ * Map restart viability to the action a violation should suggest.
+ *
+ * Only "not_viable" — a PWD date we hold, which has actually run out — closes
+ * a case. "unknown" routes to "review" so a human decides.
+ */
+function actionForViability(viability: RestartViability): SuggestedAction {
+  switch (viability) {
+    case "viable":
+      return "restart_recruitment";
+    case "not_viable":
+      return "close";
+    case "unknown":
+      return "review";
+  }
 }
 
 /**
@@ -295,7 +351,7 @@ function checkRecruitmentWindow(
 
   // Window has closed (past the date)
   if (daysUntil < 0) {
-    const canRestart = canRestartProcess(caseData.pwdExpirationDate, todayISO);
+    const viability = getRestartViability(caseData.pwdExpirationDate, todayISO);
 
     // Name the deadline that was actually missed. When recruitmentWindowCloses
     // is absent we are reading the ETA 9089 filing date, which is a different
@@ -308,8 +364,8 @@ function checkRecruitmentWindow(
     return {
       type: "recruitment_window_missed",
       reason,
-      suggestedAction: canRestart ? "restart_recruitment" : "close",
-      canRestart,
+      suggestedAction: actionForViability(viability),
+      canRestart: viability === "viable",
     };
   }
 
@@ -342,13 +398,13 @@ function checkFilingWindow(
 
   // Filing window has closed
   if (daysUntil < 0) {
-    const canRestart = canRestartProcess(caseData.pwdExpirationDate, todayISO);
+    const viability = getRestartViability(caseData.pwdExpirationDate, todayISO);
 
     return {
       type: "filing_window_missed",
       reason: `ETA 9089 filing window closed on ${caseData.filingWindowCloses}. ETA 9089 was not filed in time.`,
-      suggestedAction: canRestart ? "restart_recruitment" : "close",
-      canRestart,
+      suggestedAction: actionForViability(viability),
+      canRestart: viability === "viable",
     };
   }
 
@@ -394,12 +450,17 @@ function checkEta9089Expiration(
   // ETA 9089 certification has expired
   if (daysUntil < 0) {
     // Check if we can restart ETA 9089 (need valid PWD and time)
-    const canRestart = canRestartProcess(caseData.pwdExpirationDate, todayISO);
+    const viability = getRestartViability(caseData.pwdExpirationDate, todayISO);
+    const canRestart = viability === "viable";
+
+    // Default via actionForViability, so an unknown PWD yields "review" rather
+    // than "close" — this branch previously started at "close" and only moved
+    // off it when restart was confirmed viable, which meant a missing PWD date
+    // closed the case here too.
+    let suggestedAction: SuggestedAction = actionForViability(viability);
 
     // Also need to be within recruitment filing window to restart ETA 9089
     // If filing window is also closed, must restart recruitment entirely
-    let suggestedAction: SuggestedAction = "close";
-
     if (canRestart) {
       // Check if filing window is still open (filingWindowCloses is DOL-governed)
       if (isValidISODate(caseData.filingWindowCloses)) {
@@ -522,6 +583,13 @@ export function generateClosureMessage(
 
   if (violation.suggestedAction === "close") {
     return `Case for ${caseLabel} has been automatically closed: ${violation.reason}`;
+  }
+
+  // Restart viability could not be determined (usually a missing PWD
+  // expiration date). Say so plainly rather than recommending a remedy we have
+  // no basis for — and never imply the case was closed, because it wasn't.
+  if (violation.suggestedAction === "review") {
+    return `Case for ${caseLabel} needs review: ${violation.reason} The PWD expiration date is missing, so we can't tell whether there's time to restart. This case has NOT been closed.`;
   }
 
   // Case needs restart but isn't being closed

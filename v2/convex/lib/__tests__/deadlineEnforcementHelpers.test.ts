@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   checkDeadlineViolations,
   canRestartProcess,
+  getRestartViability,
   generateClosureMessage,
   generateClosureTitle,
   getTodayISO,
@@ -77,6 +78,124 @@ describe("canRestartProcess", () => {
 });
 
 // checkDeadlineViolations Tests - PWD Expiration
+
+describe("getRestartViability", () => {
+  it("distinguishes viable from not_viable by the 60-day threshold", () => {
+    expect(getRestartViability(daysFromToday(91), TODAY_ISO)).toBe("viable");
+    expect(getRestartViability(daysFromToday(45), TODAY_ISO)).toBe("not_viable");
+  });
+
+  // The whole point of the tri-state: a date we do not have is not the same
+  // as a date that has run out.
+  it("reports unknown when there is no usable PWD date", () => {
+    expect(getRestartViability(undefined, TODAY_ISO)).toBe("unknown");
+    expect(getRestartViability(null, TODAY_ISO)).toBe("unknown");
+    expect(getRestartViability("", TODAY_ISO)).toBe("unknown");
+    expect(getRestartViability("invalid-date", TODAY_ISO)).toBe("unknown");
+    expect(getRestartViability("2025/01/15", TODAY_ISO)).toBe("unknown");
+  });
+
+  it("stays consistent with the boolean canRestartProcess", () => {
+    for (const d of [daysFromToday(91), daysFromToday(45), undefined, "invalid-date"]) {
+      expect(canRestartProcess(d, TODAY_ISO)).toBe(
+        getRestartViability(d, TODAY_ISO) === "viable"
+      );
+    }
+  });
+});
+
+// A missing PWD expiration date must never be read as "no time left".
+// Previously every one of these closed the case outright.
+describe("checkDeadlineViolations - unknown restart viability", () => {
+  it("suggests review, not close, when the recruitment window passed without a PWD date", () => {
+    const violation = checkDeadlineViolations(
+      createMinimalCase({
+        caseStatus: "recruitment",
+        pwdExpirationDate: undefined,
+        recruitmentStartDate: daysFromToday(-200),
+        recruitmentComplete: false,
+        recruitmentWindowCloses: daysFromToday(-10),
+      }),
+      TODAY_ISO
+    );
+
+    expect(violation).not.toBeNull();
+    expect(violation!.type).toBe("recruitment_window_missed");
+    expect(violation!.suggestedAction).toBe("review");
+    expect(violation!.canRestart).toBe(false);
+  });
+
+  it("suggests review, not close, when the filing window passed without a PWD date", () => {
+    const violation = checkDeadlineViolations(
+      createMinimalCase({
+        caseStatus: "eta9089",
+        pwdExpirationDate: undefined,
+        filingWindowCloses: daysFromToday(-10),
+      }),
+      TODAY_ISO
+    );
+
+    expect(violation).not.toBeNull();
+    expect(violation!.type).toBe("filing_window_missed");
+    expect(violation!.suggestedAction).toBe("review");
+  });
+
+  it("suggests review, not close, when the ETA 9089 expired without a PWD date", () => {
+    const violation = checkDeadlineViolations(
+      createMinimalCase({
+        caseStatus: "i140",
+        pwdExpirationDate: undefined,
+        eta9089CertificationDate: daysFromToday(-200),
+        eta9089ExpirationDate: daysFromToday(-20),
+        i140FilingDate: undefined,
+      }),
+      TODAY_ISO
+    );
+
+    expect(violation).not.toBeNull();
+    expect(violation!.type).toBe("eta9089_expired");
+    expect(violation!.suggestedAction).toBe("review");
+  });
+
+  // The safety property that matters: neither enforcement caller acts unless
+  // suggestedAction is exactly "close", so "review" cannot close a case.
+  it("never yields close for any violation type when the PWD date is missing", () => {
+    const cases: CaseDataForEnforcement[] = [
+      createMinimalCase({
+        recruitmentStartDate: daysFromToday(-200),
+        recruitmentWindowCloses: daysFromToday(-10),
+      }),
+      createMinimalCase({ filingWindowCloses: daysFromToday(-10) }),
+      createMinimalCase({
+        eta9089CertificationDate: daysFromToday(-200),
+        eta9089ExpirationDate: daysFromToday(-20),
+      }),
+    ];
+
+    for (const c of cases) {
+      const v = checkDeadlineViolations(c, TODAY_ISO);
+      expect(v).not.toBeNull();
+      expect(v!.suggestedAction).not.toBe("close");
+    }
+  });
+
+  // A PWD date we DO hold, which HAS run out, must still close the case —
+  // the fix must not blunt genuine enforcement.
+  it("still closes when the PWD date is present and out of time", () => {
+    const violation = checkDeadlineViolations(
+      createMinimalCase({
+        caseStatus: "recruitment",
+        pwdExpirationDate: daysFromToday(45), // present, ≤60 days
+        recruitmentStartDate: daysFromToday(-200),
+        recruitmentComplete: false,
+        recruitmentWindowCloses: daysFromToday(-10),
+      }),
+      TODAY_ISO
+    );
+
+    expect(violation!.suggestedAction).toBe("close");
+  });
+});
 
 describe("checkDeadlineViolations - PWD Expiration", () => {
   it("returns pwd_expired when PWD expired and ETA 9089 not filed", () => {
