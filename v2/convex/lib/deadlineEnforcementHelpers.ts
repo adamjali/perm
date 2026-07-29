@@ -33,6 +33,10 @@ export { getTodayISO };
 
 // Re-export type for shared mapping
 import type { DeadlineNotificationType } from "./notificationHelpers";
+import {
+  isRecruitmentComplete,
+  type RecruitmentCheckInput,
+} from "./perm/recruitment/isRecruitmentComplete";
 
 // ============================================================================
 // CONSTANTS
@@ -98,6 +102,17 @@ export interface CaseDataForEnforcement {
 
   // Recruitment phase
   recruitmentStartDate?: string | null;
+  /** Derived last recruitment date — when recruitment actually finished. */
+  recruitmentEndDate?: string | null;
+  /**
+   * Whether every required recruitment step has a date (basic steps, plus the
+   * 3 additional methods for professional occupations).
+   *
+   * Required to tell "recruitment was never finished" apart from "recruitment
+   * finished on time and the deadline has since passed" — the two look
+   * identical if you only compare the window date against today.
+   */
+  recruitmentComplete?: boolean;
   recruitmentWindowCloses?: string | null;
   filingWindowCloses?: string | null;
 
@@ -122,6 +137,13 @@ export function mapCaseToEnforcementData(
     deletedAt: caseDoc.deletedAt,
     pwdExpirationDate: caseDoc.pwdExpirationDate,
     recruitmentStartDate: caseDoc.recruitmentStartDate,
+    recruitmentEndDate: caseDoc.recruitmentEndDate,
+    // Computed from the raw recruitment fields on the doc rather than stored,
+    // so it can never go stale relative to the dates it summarises. The cast is
+    // needed only because the parameter's `Record<string, unknown>` index
+    // signature shares no declared properties with RecruitmentCheckInput;
+    // a case document does carry these camelCase fields.
+    recruitmentComplete: isRecruitmentComplete(caseDoc as RecruitmentCheckInput),
     recruitmentWindowCloses: caseDoc.recruitmentWindowCloses,
     filingWindowCloses: caseDoc.filingWindowCloses,
     eta9089FilingDate: caseDoc.eta9089FilingDate,
@@ -245,6 +267,28 @@ function checkRecruitmentWindow(
 
   if (!isValidISODate(windowCloses)) return null;
 
+  // This window governs when recruitment must FINISH — nothing after that.
+  // Recruitment that completed on or before it met the deadline, so the date
+  // passing later is not a violation. Without this, every compliant case became
+  // a violation the moment its window date slipped into the past, and the daily
+  // enforcement cron closed it again every night.
+  //
+  // Both halves are required. `recruitmentComplete` alone would spare a case
+  // whose steps were all backfilled long after the deadline; the end-date
+  // comparison alone would spare a case with, say, a job order but no Sunday
+  // ads, because a partial end date can still precede the window.
+  //
+  // Cases that genuinely never finished still fall through to a violation here,
+  // and cases that finished in time but never file are still caught downstream
+  // by checkFilingWindow and checkPwdExpiration.
+  if (
+    caseData.recruitmentComplete &&
+    isValidISODate(caseData.recruitmentEndDate) &&
+    caseData.recruitmentEndDate <= windowCloses
+  ) {
+    return null;
+  }
+
   const daysUntil = daysBetween(effectiveToday, windowCloses);
 
   if (daysUntil === null) return null;
@@ -253,9 +297,17 @@ function checkRecruitmentWindow(
   if (daysUntil < 0) {
     const canRestart = canRestartProcess(caseData.pwdExpirationDate, todayISO);
 
+    // Name the deadline that was actually missed. When recruitmentWindowCloses
+    // is absent we are reading the ETA 9089 filing date, which is a different
+    // obligation and a different regulation — reporting it as the 180-day
+    // recruitment rule sent people to re-check dates that were never at fault.
+    const reason = useDolDate
+      ? `Recruitment was not completed before the ETA 9089 filing window closed on ${windowCloses}.`
+      : `Recruitment window closed on ${windowCloses}. Recruitment was not completed by the deadline.`;
+
     return {
       type: "recruitment_window_missed",
-      reason: `Recruitment window closed on ${windowCloses}. The 180-day filing deadline from first recruitment was missed.`,
+      reason,
       suggestedAction: canRestart ? "restart_recruitment" : "close",
       canRestart,
     };

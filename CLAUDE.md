@@ -7,19 +7,6 @@
 - **Frontend:** https://permtracker.app
 - **Convex Dashboard:** https://dashboard.convex.dev
 
-## Tech Stack
-
-- **Frontend:** Next.js 16.2.9 + React 19.2.7 + TypeScript (Vercel)
-- **Backend:** Convex 1.42.3 (serverless functions)
-- **Database:** Convex (built-in, real-time)
-- **Authentication:** Convex Auth + Google OAuth
-- **Email:** Resend
-- **Push Notifications:** Web Push (VAPID)
-- **AI Chat:** Vercel AI SDK v6 + Multi-provider (Gemini, Groq, Mistral, OpenRouter, Cerebras)
-- **Testing:** Vitest 4 (4300+ tests) + Playwright (E2E)
-
----
-
 ## Documentation
 
 | Topic | File |

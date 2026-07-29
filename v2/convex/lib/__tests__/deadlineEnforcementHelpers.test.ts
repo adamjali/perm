@@ -166,6 +166,127 @@ describe("checkDeadlineViolations - Recruitment Window", () => {
     const violation = checkDeadlineViolations(caseData, TODAY_ISO);
     expect(violation).toBeNull();
   });
+
+  // Regression: the window governs when recruitment must FINISH. A case that
+  // finished in time was previously flagged the moment that date slipped into
+  // the past, and the daily enforcement cron closed it again every night.
+  it("returns null when recruitment completed before the window closed", () => {
+    const caseData = createMinimalCase({
+      caseStatus: "recruitment",
+      pwdExpirationDate: daysFromToday(16),
+      recruitmentStartDate: daysFromToday(-68),
+      recruitmentEndDate: daysFromToday(-37), // finished...
+      recruitmentComplete: true,
+      recruitmentWindowCloses: daysFromToday(-14), // ...23 days before the deadline
+      eta9089FilingDate: undefined,
+    });
+
+    expect(checkDeadlineViolations(caseData, TODAY_ISO)).toBeNull();
+  });
+
+  it("still flags a case whose recruitment never completed", () => {
+    const caseData = createMinimalCase({
+      caseStatus: "recruitment",
+      pwdExpirationDate: daysFromToday(45),
+      recruitmentStartDate: daysFromToday(-200),
+      recruitmentEndDate: undefined,
+      recruitmentComplete: false,
+      recruitmentWindowCloses: daysFromToday(-10),
+      eta9089FilingDate: undefined,
+    });
+
+    const violation = checkDeadlineViolations(caseData, TODAY_ISO);
+    expect(violation).not.toBeNull();
+    expect(violation!.type).toBe("recruitment_window_missed");
+  });
+
+  // Both halves of the guard are load-bearing. A partial end date can precede
+  // the window (e.g. a job order ran, but the Sunday ads never did), so the
+  // date comparison alone would wrongly spare an unfinished case.
+  it("still flags an incomplete case whose partial end date precedes the window", () => {
+    const caseData = createMinimalCase({
+      caseStatus: "recruitment",
+      pwdExpirationDate: daysFromToday(45),
+      recruitmentStartDate: daysFromToday(-200),
+      recruitmentEndDate: daysFromToday(-60), // before the deadline...
+      recruitmentComplete: false, // ...but recruitment was never finished
+      recruitmentWindowCloses: daysFromToday(-10),
+      eta9089FilingDate: undefined,
+    });
+
+    const violation = checkDeadlineViolations(caseData, TODAY_ISO);
+    expect(violation).not.toBeNull();
+    expect(violation!.type).toBe("recruitment_window_missed");
+  });
+
+  // The mirror case: every step has a date, but they were backfilled after the
+  // deadline. Completeness alone would wrongly spare this.
+  it("still flags a complete case that finished after the window closed", () => {
+    const caseData = createMinimalCase({
+      caseStatus: "recruitment",
+      pwdExpirationDate: daysFromToday(45),
+      recruitmentStartDate: daysFromToday(-200),
+      recruitmentEndDate: daysFromToday(-5), // finished after...
+      recruitmentComplete: true,
+      recruitmentWindowCloses: daysFromToday(-10), // ...the deadline
+      eta9089FilingDate: undefined,
+    });
+
+    const violation = checkDeadlineViolations(caseData, TODAY_ISO);
+    expect(violation).not.toBeNull();
+    expect(violation!.type).toBe("recruitment_window_missed");
+  });
+
+  it("treats finishing exactly on the deadline as met", () => {
+    const caseData = createMinimalCase({
+      caseStatus: "recruitment",
+      pwdExpirationDate: daysFromToday(120),
+      recruitmentStartDate: daysFromToday(-200),
+      recruitmentEndDate: daysFromToday(-10),
+      recruitmentComplete: true,
+      recruitmentWindowCloses: daysFromToday(-10), // same day
+      eta9089FilingDate: undefined,
+    });
+
+    expect(checkDeadlineViolations(caseData, TODAY_ISO)).toBeNull();
+  });
+
+  // Completing recruitment must not mask a genuinely missed FILING deadline —
+  // that obligation is checked separately and still has to fire.
+  it("still flags the filing window when recruitment finished in time but nothing was filed", () => {
+    const caseData = createMinimalCase({
+      caseStatus: "recruitment",
+      pwdExpirationDate: daysFromToday(120),
+      recruitmentStartDate: daysFromToday(-250),
+      recruitmentEndDate: daysFromToday(-200),
+      recruitmentComplete: true,
+      recruitmentWindowCloses: daysFromToday(-100),
+      filingWindowCloses: daysFromToday(-20), // filing deadline blown
+      eta9089FilingDate: undefined,
+    });
+
+    const violation = checkDeadlineViolations(caseData, TODAY_ISO);
+    expect(violation).not.toBeNull();
+    expect(violation!.type).toBe("filing_window_missed");
+  });
+
+  // …and an expired PWD must still close the case outright.
+  it("still flags PWD expiration for a case that completed recruitment in time", () => {
+    const caseData = createMinimalCase({
+      caseStatus: "recruitment",
+      pwdExpirationDate: daysFromToday(-1),
+      recruitmentStartDate: daysFromToday(-100),
+      recruitmentEndDate: daysFromToday(-60),
+      recruitmentComplete: true,
+      recruitmentWindowCloses: daysFromToday(-30),
+      eta9089FilingDate: undefined,
+    });
+
+    const violation = checkDeadlineViolations(caseData, TODAY_ISO);
+    expect(violation).not.toBeNull();
+    expect(violation!.type).toBe("pwd_expired");
+    expect(violation!.suggestedAction).toBe("close");
+  });
 });
 
 // checkDeadlineViolations Tests - Filing Window
