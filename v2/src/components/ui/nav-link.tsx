@@ -90,8 +90,33 @@ export function NavLink({
     // Call original onClick if provided
     onClick?.(e);
 
-    // Skip loading state for same-page navigation (including hash links) — no route change occurs
-    if (e.defaultPrevented || isCurrentPage || isHashOnly) return;
+    if (e.defaultPrevented) return;
+
+    // Hash link into the page we are already on. The browser's native anchor
+    // scroll is exactly right here, so get out of its way.
+    if (isHashOnly) return;
+
+    // Link to the page we are already on.
+    //
+    // This branch exists because without it the click did literally nothing.
+    // Next.js treats a <Link> to the current route as a no-op, and the scroll
+    // reset in NavLinkProvider only fires when the pathname CHANGES, so a
+    // same-page link produced no navigation, no scroll, and no feedback of any
+    // kind. Reported from a phone as "the Blog link is broken": the reporter
+    // was on /blog, 4390px down at the footer, and tapping Blog did nothing
+    // while every other link worked. On desktop you can see which page you are
+    // on; after a long scroll on a phone, no response reads as a dead link.
+    //
+    // Scrolling to the top is both the honest answer to "take me to Blog" when
+    // you are already on Blog, and the same thing every other link does on
+    // arrival, so the footer now behaves consistently whichever one you tap.
+    // "instant" matches NavLinkProvider rather than introducing a second
+    // scrolling style, and it sidesteps a multi-thousand-pixel smooth scroll.
+    if (isCurrentPage) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "instant" });
+      return;
+    }
 
     // Set this link as actively navigating (clears other NavLinks)
     // Always coordinate via context so other components can detect navigation,
@@ -112,6 +137,12 @@ export function NavLink({
       )}
       onClick={handleClick}
       aria-disabled={isNavigating}
+      // Marks the link pointing at the page you are already on. It was absent
+      // entirely, so a screen reader announced the current page's own link
+      // identically to every other one, and nothing in the markup distinguished
+      // them. Hash links are excluded: /#features while on / points at a
+      // section, not at the page itself.
+      aria-current={isCurrentPage && !isHashOnly ? "page" : undefined}
       {...props}
     >
       {isNavigating && showLoading ? (
