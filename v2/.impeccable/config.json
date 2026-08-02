@@ -1,0 +1,32 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/app/globals.css"
+        ],
+        "createdAt": "2026-08-01T16:59:09.626Z",
+        "reason": "Structural dividers, not accent tabs: all four use the neutral var(--border) token (#333), .stat draws grid cell rules on two sides with nth-child stripping the outer edges, and .next-up-stat/.split-preview flip to border-top or drop entirely when the layout stacks. Craft floor bans a COLORED side border; the detector matches on width alone."
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "src/app/globals.css"
+        ],
+        "createdAt": "2026-08-01T16:59:09.809Z",
+        "reason": ".bg-dots is a radial-gradient dot field, not the px-tiled hairline linear-gradient line-field this rule describes."
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "bounce-spin",
+        "createdAt": "2026-08-01T17:03:58.448Z",
+        "reason": "Name match, not a curve match. The easing is cubic-bezier(0.165,0.84,0.44,1), standard easeOutQuart, every control point inside [0,1] so it cannot overshoot; it is precisely the exponential ease-out this rule recommends. The detector matches the word 'bounce' in the animation name. The class is also motivated motion, not decoration: it marks the edit-case loading skeleton while data is in flight, stops when content arrives, and prefers-reduced-motion disables it. The four purely decorative siblings were deleted on 2026-08-01."
+      }
+    ]
+  }
+}

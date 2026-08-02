@@ -69,7 +69,12 @@
   /* Transitions - matching mockup */
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-spring: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Removed 2026-08-01: a --transition-spring token. It was never referenced
+     once outside its own declaration, and its second control point sat above 1,
+     so the curve overshot the end value and sprang back. Anything that later
+     adopted the token would have inherited that rebound by default rather than
+     by choice. Real objects decelerate; they do not spring past where they are
+     going. Use --transition-normal, or author an explicit ease-out. */
 }
 
 .dark {
@@ -212,43 +217,22 @@
     );
   }
 
-  /* Bounce animations - snappy, reactive like design3 */
-  .bounce {
-    animation: bounce 2s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
-  }
-  .bounce-fast {
-    animation: bounce 1.2s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
-  }
-  .bounce-slow {
-    animation: bounce 3s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
-  }
-  .bounce-subtle {
-    animation: bounce-subtle 2s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
-  }
+  /* Loading accent.
+     This is the last survivor of a five-class bounce set (.bounce, -fast,
+     -slow, -subtle, -spin). The other four were removed on 2026-08-01: they
+     existed only in Storybook and this stylesheet, so nothing in the product
+     ever rendered them, and a perpetual translate-and-rotate is not motion this
+     product wants at rest. Motion here has to say something.
+     .bounce-spin stays because it does: it marks the edit-case loading skeleton
+     while data is in flight, which is feedback, not decoration. It stops the
+     moment the page has content, and prefers-reduced-motion disables it.
+     Do not reintroduce the others. If a resting element seems to need motion,
+     it almost certainly needs hierarchy instead.
+     The easing is easeOutQuart: every control point sits inside [0,1], so it
+     decelerates without overshooting. The design detector flags this rule on
+     the word "bounce" in the animation name, not on the curve. */
   .bounce-spin {
     animation: bounce-spin 2s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
-  }
-
-  @keyframes bounce {
-    0%, 100% {
-      transform: translateY(0) rotate(0deg);
-      box-shadow: var(--shadow-hard);
-    }
-    50% {
-      transform: translateY(-20px) rotate(90deg);
-      box-shadow: 4px 10px 0px #000;
-    }
-  }
-
-  @keyframes bounce-subtle {
-    0%, 100% {
-      transform: translateY(0);
-      box-shadow: var(--shadow-hard);
-    }
-    50% {
-      transform: translateY(-12px);
-      box-shadow: 4px 8px 0px #000;
-    }
   }
 
   @keyframes bounce-spin {
@@ -385,16 +369,26 @@
     100% { transform: translateX(-50%); }
   }
 
-  /* Scroll progress bar */
+  /* Scroll progress bar.
+     Driven by transform rather than width. This one updates on every scroll
+     frame, which makes it the worst place on the site to run layout; scaleX
+     stays on the compositor.
+     The rendering is unchanged: scaleX squashes the painted gradient exactly
+     the way a narrower width did, so the bar still shows the whole green-to-
+     purple ramp compressed into however much has been scrolled. Verified in
+     the browser, because the intuition that scaling would instead *reveal*
+     more of a full-width gradient is wrong and easy to talk yourself into. */
   .scroll-progress {
     position: fixed;
     top: 0;
     left: 0;
-    width: 0%;
+    width: 100%;
     height: 4px;
     background: linear-gradient(90deg, var(--primary), var(--stage-pwd), var(--stage-recruitment));
     z-index: 1000;
-    transition: width 0.1s ease-out;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.1s ease-out;
   }
 
   /* Pulse animation for eyebrow dot */
@@ -891,7 +885,10 @@
 .win-progress { display: flex; align-items: center; gap: 10px; }
 .win-date { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted-foreground); flex-shrink: 0; }
 .win-bar { flex: 1; height: 6px; background: rgba(128,128,128,0.2); position: relative; overflow: hidden; }
-.win-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; transition: width 0.8s ease-out; }
+/* Full width, scaled to the percentage. See WindowCard.tsx. The fill is a flat
+   stage colour with no children, so scaling paints exactly what a width change
+   painted, without putting an 800ms animation on the layout path. */
+.win-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transform: scaleX(0); transform-origin: left; transition: transform 0.8s ease-out; }
 
 /* Empty state */
 .detail-empty-state { text-align: center; padding: 36px 24px; color: var(--muted-foreground); }
@@ -899,15 +896,44 @@
 .detail-empty-state-title { font-weight: 700; margin-bottom: 4px; color: var(--foreground); }
 .detail-empty-state-desc { font-size: 0.85rem; }
 
-/* Split panel for documents/notes */
-.split-wrap { display: flex; overflow: hidden; }
-.split-wrap .split-list { flex: 1; min-width: 0; }
-.split-wrap .split-preview { width: 0; overflow: hidden; border-left: 0; transition: width 0.25s cubic-bezier(0.22,1,0.36,1), border-width 0.25s, opacity 0.2s; opacity: 0; }
-.split-wrap.preview-open .split-list { flex: 0 0 40%; max-width: 40%; overflow-y: auto; max-height: 480px; }
-.split-wrap.preview-open .split-preview { width: 60%; border-left: 3px solid var(--border); opacity: 1; overflow-y: auto; max-height: 480px; }
+/* Split panel for documents/notes.
+   Grid, not flex, because the pane has to animate open and a width transition
+   runs layout on every frame of it. grid-template-columns animates the track
+   instead, which is the same pattern as the 0fr -> 1fr height trick and the
+   only way to animate a container that holds real content (scaleX would
+   distort the children).
+
+   Three things here are load-bearing, all three verified in a browser:
+
+   1. `align-items: stretch` is grid's default and therefore redundant, but it
+      is written out because getting it wrong is invisible: a center- or
+      start-aligned grid item is sized to its own CONTENT, so it overflows the
+      0fr track instead of collapsing, and devtools still shows the track at 0.
+
+   2. `min-width: 0` on both children. Without it a grid item refuses to shrink
+      below its min-content width and the collapse silently stops short.
+
+   3. `grid-column: 2` on .split-preview is NOT decorative. Below 767px the list
+      goes display:none, which removes it from the grid entirely — the preview
+      would then become the FIRST grid item and land in the 0fr track, collapsing
+      the document preview to zero width on phones while desktop looked perfect.
+      Pinning it to track 2 keeps it where the template expects it. This was a
+      real bug in the first version of this rule, caught only by testing the
+      other breakpoint. */
+.split-wrap { display: grid; grid-template-columns: 1fr 0fr; align-items: stretch; overflow: hidden; transition: grid-template-columns 0.25s cubic-bezier(0.22,1,0.36,1); }
+.split-wrap .split-list { min-width: 0; }
+/* The divider border is applied instantly, not transitioned. border-width is a
+   layout property, and animating it bought nothing: while the pane is opening
+   the track is still near zero, so the border has no visible width to grow
+   into. Only opacity animates here; the track itself animates on the parent. */
+.split-wrap .split-preview { grid-column: 2; min-width: 0; overflow: hidden; border-left: 0; opacity: 0; transition: opacity 0.2s; }
+.split-wrap.preview-open { grid-template-columns: 40fr 60fr; }
+.split-wrap.preview-open .split-list { overflow-y: auto; max-height: 480px; }
+.split-wrap.preview-open .split-preview { border-left: 3px solid var(--border); opacity: 1; overflow-y: auto; max-height: 480px; }
 @media (max-width: 767px) {
+  .split-wrap.preview-open { grid-template-columns: 0fr 1fr; }
   .split-wrap.preview-open .split-list { display: none; }
-  .split-wrap.preview-open .split-preview { width: 100%; border-left: 0; }
+  .split-wrap.preview-open .split-preview { border-left: 0; }
 }
 
 /* Scroll list */
@@ -1283,19 +1309,26 @@ input[type="file"]::file-selector-button:active {
   display: inline-block;
 }
 
+/* Grows on transform, not width. Identical to the eye (the fill is a flat
+   colour, so a scaled 100%-wide bar and a growing 0%-wide bar paint the same
+   pixels) but width runs layout on every frame of every hover while scaleX
+   stays on the compositor. Nav hover is the most-repeated interaction on the
+   site, so it is the one worth getting off the layout path. */
 .hover-underline::after {
   content: '';
   position: absolute;
   left: 0;
   bottom: 0;
-  width: 0;
+  width: 100%;
   height: 2px;
   background-color: var(--primary);
-  transition: width 0.3s ease-out;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease-out;
 }
 
 .hover-underline:hover::after {
-  width: 100%;
+  transform: scaleX(1);
 }
 
 /* Caution tape wrapper for Next Up section */
@@ -1426,27 +1459,14 @@ button[disabled] {
   }
 }
 
-@keyframes success-pop {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 1;
-  }
-  70% {
-    transform: scale(0.9);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.animate-success-pop {
-  animation: success-pop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-}
+/* Removed 2026-08-01: a `success-pop` keyframe set and its .animate-success-pop
+   class. Nothing referenced either one anywhere in the app, and the easing was
+   an ease-in-out-back: one control point below 0, one above 1, so the scale
+   dipped under the start value and shot past the target before settling. A
+   rubber-band snap. Dead code is the cheapest kind to delete; dead code that
+   would have shipped that the moment someone reached for it is worth deleting
+   deliberately. If a success confirmation needs motion later, scale from an
+   already-visible default on an exponential ease-out. */
 
 .animate-checkmark-draw {
   stroke-dasharray: 32;
@@ -1594,9 +1614,17 @@ body[data-scroll-locked] {
   margin-bottom: 0.25em;
 }
 
-/* Blockquote */
+/* Blockquote.
+   The left rule stays. It is how a blockquote has been set for centuries, and
+   Tailwind Typography sets one too. What changed on 2026-08-01 is the colour.
+   Every other border in this prose system is var(--border) or var(--foreground)
+   at 1-2px (h2, code, pre, table, img, hr); this was the single accent-coloured
+   border in the whole style, and at 4px the heaviest one. That combination
+   (brand colour, one side, thicker than everything around it) is decoration
+   wearing the costume of structure. Neutral at 3px keeps it the heaviest rule
+   in the prose, which a pulled quote earns, without borrowing the accent. */
 .prose-neobrutalist blockquote {
-  border-left: 4px solid var(--primary);
+  border-left: 3px solid var(--border);
   padding: 1em 1.5em;
   margin: 1.5em 0;
   background: var(--muted);
@@ -1746,11 +1774,10 @@ body[data-scroll-locked] {
     scroll-behavior: auto !important;
   }
 
-  /* Completely disable decorative animations */
-  .bounce,
-  .bounce-fast,
-  .bounce-slow,
-  .bounce-subtle,
+  /* Completely disable decorative animations.
+     .bounce-spin is the loading-skeleton accent; the skeleton itself keeps a
+     slowed pulse below because it carries meaning, but the spinning square is
+     decoration on top of it and can go entirely. */
   .bounce-spin,
   .animate-blink {
     animation: none !important;

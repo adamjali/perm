@@ -28,32 +28,18 @@ export const HazardBackground: Story = {
 export const BounceAnimations: Story = {
   render: () => (
     <div className="space-y-8">
-      <p className="text-sm text-muted-foreground mb-4">Snappy, reactive bounce animations (design3 style)</p>
+      <p className="text-sm text-muted-foreground mb-4">
+        Loading-skeleton accent. The .bounce, .bounce-fast, .bounce-slow and
+        .bounce-subtle variants were removed on 2026-08-01. They were only ever
+        rendered on this page, and perpetual motion on a resting element is not
+        a default this product wants. .bounce-spin earns its place by marking
+        the edit-case skeleton while data loads.
+      </p>
       <div className="flex gap-8 items-end justify-center py-12">
-        <div className="text-center">
-          <div className="bounce w-16 h-16 bg-primary border-2 border-border" />
-          <p className="text-xs mt-8 mono">.bounce</p>
-          <p className="text-xs text-muted-foreground">2s + 90deg spin</p>
-        </div>
-        <div className="text-center">
-          <div className="bounce-fast w-16 h-16 bg-stage-pwd border-2 border-border" />
-          <p className="text-xs mt-8 mono">.bounce-fast</p>
-          <p className="text-xs text-muted-foreground">1.2s</p>
-        </div>
-        <div className="text-center">
-          <div className="bounce-slow w-16 h-16 bg-stage-recruitment border-2 border-border" />
-          <p className="text-xs mt-8 mono">.bounce-slow</p>
-          <p className="text-xs text-muted-foreground">3s</p>
-        </div>
-        <div className="text-center">
-          <div className="bounce-subtle w-16 h-16 bg-stage-eta9089 border-2 border-border" />
-          <p className="text-xs mt-8 mono">.bounce-subtle</p>
-          <p className="text-xs text-muted-foreground">no rotation</p>
-        </div>
         <div className="text-center">
           <div className="bounce-spin w-16 h-16 bg-stage-i140 border-2 border-border" />
           <p className="text-xs mt-8 mono">.bounce-spin</p>
-          <p className="text-xs text-muted-foreground">continuous spin</p>
+          <p className="text-xs text-muted-foreground">loading only</p>
         </div>
       </div>
     </div>
@@ -231,12 +217,8 @@ export const AllUtilities: Story = {
       </section>
 
       <section>
-        <h3 className="text-lg font-bold mb-4">Bounce Animations (Snappy)</h3>
+        <h3 className="text-lg font-bold mb-4">Loading Accent</h3>
         <div className="flex gap-6 items-end py-8">
-          <div className="bounce w-12 h-12 bg-primary border-2 border-border" />
-          <div className="bounce-fast w-12 h-12 bg-stage-pwd border-2 border-border" />
-          <div className="bounce-slow w-12 h-12 bg-stage-recruitment border-2 border-border" />
-          <div className="bounce-subtle w-12 h-12 bg-stage-eta9089 border-2 border-border" />
           <div className="bounce-spin w-12 h-12 bg-stage-i140 border-2 border-border" />
         </div>
       </section>

@@ -37,7 +37,11 @@ export function WindowCard({ ws, title, stageColor, startDate, endDate }: Window
             <div className="win-bar">
               <div
                 className="win-bar-fill"
-                style={{ width: `${ws.pct}%`, background: stageColor }}
+                // scaleX, not width. See .win-bar-fill in globals.css.
+                style={{
+                  transform: `scaleX(${ws.pct / 100})`,
+                  background: stageColor,
+                }}
               />
             </div>
             <span className="win-date">{fmtISOShort(endDate)}</span>

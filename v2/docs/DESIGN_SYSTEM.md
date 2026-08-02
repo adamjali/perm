@@ -304,11 +304,14 @@ Located in `v2/src/components/layout/`:
 
 | Class | Duration | Effect |
 |-------|----------|--------|
-| `.bounce` | 2s | Vertical bounce + rotation |
-| `.bounce-fast` | 1.2s | Faster bounce |
-| `.bounce-slow` | 3s | Slower bounce |
-| `.bounce-subtle` | 2s | Bounce without rotation |
-| `.bounce-spin` | 2s | Bounce with 360° spin |
+| `.bounce-spin` | 2s | Loading-skeleton accent. Bounce with 360° spin |
+
+Removed 2026-08-01: `.bounce`, `.bounce-fast`, `.bounce-slow`, `.bounce-subtle`.
+Nothing in the product used them; they appeared only in Storybook. Perpetual
+motion on an element at rest is not a default this product wants, so the set was
+cut back to the one variant that communicates something. `.bounce-spin` marks
+the edit-case loading skeleton while data is in flight and stops when content
+arrives. If a resting element seems to need motion, give it hierarchy instead.
 
 ### Hover Effects
 

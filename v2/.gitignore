@@ -69,3 +69,11 @@ outreach/
 
 # Claude Code project-local config
 .claude/
+
+# Impeccable design hook
+# config.json is shared and committed (it holds the reviewed detector ignores).
+# The rest is machine-local: hook.cache.json records absolute paths and session
+# ids, and config.local.json holds per-developer overrides. Neither belongs in a
+# public repo.
+.impeccable/hook.cache.json
+.impeccable/config.local.json

@@ -43,7 +43,10 @@ export function ScrollProgress() {
   return (
     <div
       className="scroll-progress"
-      style={{ width: `${progress}%` }}
+      // scaleX, not width. See .scroll-progress in globals.css. The bar is full
+      // width in CSS and scaled here, so the browser composites the update
+      // instead of running layout on every scroll frame.
+      style={{ transform: `scaleX(${progress / 100})` }}
       aria-hidden="true"
     />
   );
