@@ -69,7 +69,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/functions": "^3.7.4",
     "@vercel/speed-insights": "^2.0.0",
-    "ai": "^6.0.214",
+    "ai": "^6.0.240",
     "botid": "^1.5.11",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
