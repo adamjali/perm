@@ -1,16 +1,38 @@
 import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import sharp from "sharp";
+import { SOCIAL_CARD_SIZE, SOCIAL_CARD_CONTENT_TYPE } from "@/lib/socialCard";
 
 export const runtime = "nodejs";
 export const revalidate = false;
 
 export const alt = "PERM Tracker - Case Management for Immigration Attorneys";
-export const size = {
-  width: 1200,
-  height: 630,
-};
-export const contentType = "image/png";
+
+// Re-exported from src/lib/socialCard.ts so the <meta> tags in openGraphBase.ts
+// describe this route rather than a stale copy of it.
+export const size = SOCIAL_CARD_SIZE;
+
+// JPEG, not PNG. next/og renders via Satori -> resvg, which can ONLY emit PNG
+// (vercel/next.js#60366). PNG is lossless, so this card's photographic
+// background encoded to 762 KB, over WhatsApp's ~600 KB ceiling, and WhatsApp
+// drops an oversized image silently with no fallback and no error. Re-encoding
+// the same pixels to JPEG q95 lands at ~204 KB, a 73% cut the eye cannot see
+// (mean per-channel difference from the old PNG: 1.14/255).
+// The JSX below stays the single source of truth; only the container changes.
+export const contentType = SOCIAL_CARD_CONTENT_TYPE;
+
+// Card background. JPEG has no alpha channel, so the ImageResponse's
+// transparent pixels must be flattened against this or they render black.
+const BACKGROUND = "#f5f5f0";
+
+// 4:4:4 keeps full chroma resolution. The default 4:2:0 halves it, which fringes
+// the hard black borders and lime accents this card is built from.
+const JPEG_OPTIONS = {
+  quality: 95,
+  mozjpeg: true,
+  chromaSubsampling: "4:4:4",
+} as const;
 
 export default async function Image() {
   const imageData = await readFile(
@@ -19,7 +41,7 @@ export default async function Image() {
   const base64 = imageData.toString("base64");
   const dataUrl = `data:image/png;base64,${base64}`;
 
-  return new ImageResponse(
+  const png = new ImageResponse(
     (
       <div
         style={{
@@ -27,7 +49,7 @@ export default async function Image() {
           width: "100%",
           display: "flex",
           position: "relative",
-          backgroundColor: "#f5f5f0",
+          backgroundColor: BACKGROUND,
           fontFamily: "system-ui, sans-serif",
         }}
       >
@@ -175,4 +197,24 @@ export default async function Image() {
       ...size,
     }
   );
+
+  const jpeg = await sharp(Buffer.from(await png.arrayBuffer()))
+    .flatten({ background: BACKGROUND })
+    .jpeg(JPEG_OPTIONS)
+    .toBuffer();
+
+  return new Response(new Uint8Array(jpeg), {
+    headers: {
+      "Content-Type": contentType,
+      // Deliberately the same header next/og set before this route returned its
+      // own Response, so the switch to JPEG changes the format and nothing else.
+      //
+      // NOT `immutable`. This URL carries no content hash. It is plain
+      // /opengraph-image on every deploy, so an immutable year-long entry would
+      // pin whatever bytes a cache happened to fetch first and keep serving them
+      // long after a redesign. That is the exact failure this commit is undoing:
+      // a stale social card nobody can see is stale.
+      "Cache-Control": "public, max-age=0, must-revalidate",
+    },
+  });
 }

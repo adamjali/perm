@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="PERM Tracker">
+  <!--
+    Vector twin of src/app/icon.png (192x192). Geometry was measured off that
+    file pixel by pixel, not eyeballed, so the two marks stay identical:
+      canvas 192, corner radius 24  ·  brand green #2ecc40  ·  glyph pure white
+      P  stem x45 w13, bowl to x93, cap band y61-125
+      T  bar x101-151 h10, stem x120 w12
+    No dark-mode variant on purpose: the mark is the brand mark, and a solid
+    green tile with white letters already reads correctly on light and dark
+    browser chrome. Recolouring it per theme would make it a different logo.
+  -->
+  <rect width="192" height="192" rx="24" fill="#2ecc40"/>
+  <path fill="#fff" fill-rule="evenodd" d="M45 61h29a19 19 0 0 1 0 38H58v26H45Zm13 10v19h12.5a9.5 9.5 0 0 0 0-19Z"/>
+  <path fill="#fff" d="M101 61h50v10h-19v54h-12V71h-19Z"/>
+</svg>

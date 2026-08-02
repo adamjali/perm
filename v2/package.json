@@ -101,6 +101,7 @@
     "remark-gfm": "^4.0.1",
     "remotion": "4.0.474",
     "resend": "^6.16.0",
+    "sharp": "^0.34.5",
     "sonner": "^2.0.7",
     "svix": "^1.96.1",
     "tailwind-merge": "^3.6.0",

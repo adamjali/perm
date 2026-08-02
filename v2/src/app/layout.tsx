@@ -11,6 +11,7 @@ import {
   getWebSiteSchema,
   SCHEMA_IDS,
 } from "@/lib/structuredData";
+import { openGraphBase, socialCardImage } from "@/lib/openGraphBase";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -73,37 +74,42 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  // Icons configuration — static icon.png in src/app/ served at /icon.png
+  // Icons. Ordered cheapest-correct first: a browser takes the first type it
+  // understands, so the SVG wins everywhere modern and the PNG catches the rest.
+  //
+  // Two things were wrong here before 2026-08-01:
+  //  - /icon.png was declared sizes:"32x32" but src/app/icon.png is 192x192, so
+  //    anything asking for a 32px icon downloaded a 192px file to shrink it.
+  //  - /icon-192.png was listed as a <link rel="icon">, duplicating /icon.png
+  //    (identical dimensions) for a size no browser uses for a tab. The 192 and
+  //    512 rasters belong to the PWA and are already declared in manifest.ts,
+  //    which is the only place Android reads them from.
   icons: {
     icon: [
-      { url: "/icon.png", type: "image/png", sizes: "32x32" },
-      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
-      { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
+      { url: "/icon.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "192x192" },
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
-    type: "website",
-    locale: "en_US",
+    // Spread the shared base so siteName/locale/type/images stay identical to
+    // every per-page override. See src/lib/openGraphBase.ts.
+    ...openGraphBase,
     url: "/",
-    siteName: "PERM Tracker",
     title: "PERM Tracker - Free Case Tracking for Immigration Attorneys",
     description:
       "Free PERM case tracking software. Track deadlines, manage cases, never miss a filing date.",
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "PERM Tracker - Case Management for Immigration Attorneys",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "PERM Tracker - Free Case Tracking",
     description: "Free PERM case tracking for immigration attorneys.",
-    images: ["/opengraph-image"],
+    // Object form, not a bare URL string: a string emits twitter:image alone and
+    // silently drops twitter:image:alt, which is what screen readers announce
+    // for a shared link. url + alt only, because Twitter's card spec defines no
+    // twitter:image:type/width/height, so passing the full descriptor would emit
+    // three tags no consumer reads.
+    images: [{ url: socialCardImage.url, alt: socialCardImage.alt }],
     creator: "@permtracker",
     site: "@permtracker",
   },
