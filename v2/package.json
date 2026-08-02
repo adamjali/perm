@@ -35,7 +35,7 @@
     "@ai-sdk/groq": "^3.0.45",
     "@ai-sdk/mistral": "^3.0.43",
     "@ai-sdk/react": "^3.0.216",
-    "@auth/core": "^0.41.2",
+    "@auth/core": "^0.41.3",
     "@convex-dev/auth": "^0.0.93",
     "@convex-dev/rag": "^0.7.5",
     "@convex-dev/rate-limiter": "^0.3.2",
