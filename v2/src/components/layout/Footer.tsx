@@ -92,7 +92,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
                 Product
               </p>
-              <nav className="flex flex-col gap-3" aria-label="Product links">
+              <nav className="footer-links flex flex-col gap-3" aria-label="Product links">
                 <NavLink
                   href="/#features"
                   showLoading={false}
@@ -137,7 +137,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
                 Learn
               </p>
-              <nav className="flex flex-col gap-3" aria-label="Content links">
+              <nav className="footer-links flex flex-col gap-3" aria-label="Content links">
                 <NavLink
                   href="/blog"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
@@ -181,7 +181,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
                 Legal
               </p>
-              <nav className="flex flex-col gap-3" aria-label="Legal links">
+              <nav className="footer-links flex flex-col gap-3" aria-label="Legal links">
                 <NavLink
                   href="/privacy"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"

@@ -1307,6 +1307,18 @@ input[type="file"]::file-selector-button:active {
 .hover-underline {
   position: relative;
   display: inline-block;
+  /* `display: inline-block` alone does NOT shrink this to its text inside the
+     footer's `flex flex-col` columns, and the reason is two rules combining.
+     First, a flex item's inline-block is blockified to `block` by the spec, so
+     the declaration above is discarded before it applies. Second, a flex
+     container's default `align-items: stretch` sizes items across the cross
+     axis, which in a column IS the horizontal one. Result: every footer link
+     measured 304px wide around a 27-85px word, and since ::after is width:100%
+     of that box, the hover underline was a 304px rule under "Blog".
+     `fit-content` defeats the stretch (an explicit width beats it) and is a
+     no-op everywhere else, because the header nav and the compact footer are
+     horizontal rows whose items already shrink to fit. */
+  width: fit-content;
 }
 
 /* Grows on transform, not width. Identical to the eye (the fill is a flat
@@ -1329,6 +1341,44 @@ input[type="file"]::file-selector-button:active {
 
 .hover-underline:hover::after {
   transform: scaleX(1);
+}
+
+/* Footer link columns: a 44px tap target on touch devices.
+   The links are 20px tall with no padding and a 12px gap, which is a
+   comfortable target for a mouse and a poor one for a thumb. It clears WCAG
+   2.2 SC 2.5.8 (AA, 24px) via that standard's spacing exception, but misses
+   SC 2.5.5 (AAA), Apple's 44pt HIG, and this project's own 44px floor.
+
+   Widening cannot come from `fit-content` above — that shrank the box to the
+   word, which is right for the underline and makes the target NARROWER. The
+   height has to come from padding instead.
+
+   Scoped to `pointer: coarse` ("the primary input is imprecise", i.e. a
+   finger) so a mouse keeps the current tight rhythm and the footer does not
+   grow on desktop for no reason.
+
+   The arithmetic is exact: 20px line box + 24px padding = 44px, and the gap
+   drops to 0 so the pitch stays 44px. Leaving the 12px gap would push each
+   link 56px apart and balloon the footer; removing it entirely lets adjacent
+   targets touch without overlapping, which is what you want (overlapping hit
+   areas fire the wrong link near the boundary).
+
+   `bottom: 12px` on ::after is load-bearing, not cosmetic. Padding moves the
+   element's bottom edge 12px below the text, and the underline is positioned
+   against that edge, so without this the rule detaches and floats under the
+   word. */
+@media (pointer: coarse) {
+  .footer-links {
+    gap: 0;
+  }
+
+  .footer-links .hover-underline {
+    padding-block: 12px;
+  }
+
+  .footer-links .hover-underline::after {
+    bottom: 12px;
+  }
 }
 
 /* Caution tape wrapper for Next Up section */
