@@ -2,6 +2,8 @@
 
 ## Saved Policies
 <!-- Persistent rules applied automatically on future audits -->
+- **sharp — track the CVE floor, never pin to Next's copy**: sharp is NOT a peerDependency of next (next declares only sass, react, react-dom, @playwright/test, @opentelemetry/api, babel-plugin-react-compiler). Duplicate libvips comes from two *installed copies*, which a `pnpm.overrides.sharp` entry collapses. Audit 6: sharp was pinned to ^0.34.5 "to match Next's peer" while 0.34.5 carried a HIGH CVE (GHSA-f88m-g3jw-g9cj), and the Dependabot bump was wrongly waved off. Always check the advisory before declining a bump on peer-compatibility grounds.
+- **SECURITY.md false positive**: the community-profile API returns `files.security: null` for this repo even though SECURITY.md exists at the root, is committed, and health_percentage is 100. Do not score -5 or propose creating one on the strength of that field; check `contents/SECURITY.md` instead.
 - **@types/node**: pin to v24 — matches `engines.node: 24.x` (Vercel Node 24 runtime). Dependabot ignores major bumps.
 - **Dependabot security PRs for `next`**: auto-merge after local verification (config ignores non-security next bumps)
 - **lucide-react v1+ brand icons**: inline SVGs in place (Github, Twitter, Linkedin) — no external icon package
@@ -14,6 +16,14 @@
 - **Style-object types**: define as `Pick<React.CSSProperties, …>` (not a standalone `{…}` interface) — csstype tightening in React minor bumps breaks structural assignment to a `style` prop (Audit 4: `TiltStyle` → `FeaturesGrid` TS2322 under React 19.2.7).
 - **js-yaml DoS (GHSA-h67p-54hq-rp68)**: ACCEPTED / leave-open (Audit 5). Transitive via `gray-matter@4.0.3` (latest, unmaintained) which calls `js-yaml.safeLoad`/`safeDump` — **removed in 4.x**, so forcing the patch (`>=4.2.0`) breaks all MDX frontmatter parsing. No exploit path: gray-matter only parses **repo-authored** MDX frontmatter, never untrusted input. Do NOT add a `js-yaml` override. If ever fixing for real: pass a custom js-yaml-4 engine to gray-matter via `content/index.ts`, then override. Otherwise expect 1 moderate `pnpm audit`/Dependabot entry to persist.
 - **dompurify CVE refresh**: when a new dompurify advisory lands, bump the existing `pnpm.overrides.dompurify` floor to the patched version (Audit 5: `>=3.3.2` → `>=3.4.11` for GHSA-cmwh-pvxp-8882). It's transitive-only; the override is the canonical pin.
+
+## Audit 6 — 2026-08-03
+- **health 0 -> 100**: 20 open Dependabot alerts (2 critical, 11 high, 6 medium, 1 low) cleared to zero; `pnpm audit` reports no known vulnerabilities. Secret scanning already clean; code scanning findings are all note/warning, no error severity.
+- **Fixed**: next 16.2.9->16.2.12 (9 alerts), @auth/core 0.41.2->0.41.3 (3, incl. 1 critical), sharp 0.34.5->0.35.3 (2 high), @vitest/browser->4.1.10 (1 critical, dev). Override floors raised: postcss >=8.5.18, brace-expansion >=5.0.8, dompurify >=3.4.12 (per Saved Policy), plus new fast-uri >=3.1.4, sharp >=0.35.0, undici >=6.27.0 (all 9 remaining audit findings were one package via @ai-sdk/cerebras).
+- **Method**: caret `pnpm update` per Saved Policy (never --latest), then overrides for stubborn transitives, then full `pnpm install` to re-resolve — `pnpm update` alone does NOT re-apply overrides to already-locked entries, which is why sharp looked unfixed at first.
+- **Governance**: added `Typecheck + Vitest` to required status checks on main. `enforce_admins` left false deliberately so direct pushes to main (the deploy path) keep working. Required reviews left off: sole maintainer.
+- **No Convex deploy**: zero `convex/` changes, frontend-only -> Vercel only.
+- **Machine note**: five build attempts failed on ENOSPC before ~23 GB was freed. Explicitly-backgrounded builds got killed; a foreground build auto-moved to background completed. Prefer the latter on this machine.
 
 ## Audit 5 — 2026-06-29
 - **health_before:** 2 medium Dependabot alerts (dompurify 3.4.10 GHSA-cmwh-pvxp-8882; js-yaml 3.x GHSA-h67p-54hq-rp68 via gray-matter) · 0 secret-scanning · 26 Semgrep "note" + 4 "warning" code-scanning (all false-positive/acknowledged — `unsafe-formatstring` template-literals + `content/index.ts` path-traversal already eslint-disabled w/ justification + `JsonLdScript` dangerouslySetInnerHTML) · CI green on `main` · branch protection healthy (strict, CodeQL required) · community 100% · 4 open Dependabot PRs (#112 checkout 6→7, #113 dev group, #114 prod group/31, #115 native-preview), all 7d old. Health **94**.
