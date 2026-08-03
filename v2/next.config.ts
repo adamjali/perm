@@ -17,6 +17,57 @@ const withSerwist = withSerwistInit({
   swDest: "public/sw.js",
   // Disable in development to avoid caching issues during dev
   disable: process.env.NODE_ENV === "development",
+
+  // Scope the PRECACHE manifest.
+  //
+  // The "only cache static assets" note above governs RUNTIME caching in
+  // sw.ts, which is a different mechanism. The precache manifest is built
+  // separately, and with no exclusions it defaults to everything in public/ —
+  // 237 files, 15.18 MB, downloaded up front by every visitor whose browser
+  // installs the worker, whether or not they ever open the page an asset
+  // belongs to. The rule existed; nothing ever applied it here.
+  //
+  // Excluded assets are not blocked, only un-prefetched: they fetch when
+  // something asks for them, and sw.ts's runtimeCaching still stores them
+  // afterwards. The trade changes from "pay for everything up front" to "pay
+  // for what you actually view", which is what you want on cellular.
+  //
+  // It has to be `globPublicPatterns`. The two obvious hooks both fail here,
+  // silently, and it is worth writing down why so nobody retries them:
+  //
+  //   `exclude`            is handed to the webpack InjectManifest plugin,
+  //                        which only sees compilation assets (_next/static).
+  //                        public/ files never pass through it.
+  //   `manifestTransforms` runs BEFORE public/ files exist in the manifest.
+  //                        Serwist builds its transform list in this order:
+  //                          ...manifestTransforms,
+  //                          additionalPrecacheEntriesTransform(publicFiles)
+  //                        so a user transform is handed the build output only,
+  //                        and the public entries are appended immediately
+  //                        after it returns.
+  //
+  // Neither errors. Both just filter nothing, which is exactly how this was
+  // "fixed" twice without the manifest changing by a single byte.
+  //
+  // globPublicPatterns is the glob that produces those entries in the first
+  // place, so it is the one place the decision can be made. Note the `glob`
+  // package IGNORES `!`-negation inside a pattern array (verified: identical
+  // 54-file result with and without it) — exclusion has to be expressed with
+  // extglob, hence the `!(...)` forms below.
+  globPublicPatterns: [
+    // Root-level files (icons, verification, small svgs) except the OG source
+    // image, which the route reads off disk ON THE SERVER to compose the social
+    // card. No browser has any reason to request it.
+    "!(og-image-base).*",
+    // Every image directory except screenshots: 6.03 MB of product captures and
+    // screencasts, wanted only on the pages that display them. Video is served
+    // with HTTP Range requests so a player fetches just the part it is showing;
+    // precaching forces the whole file down before anyone presses play.
+    "images/!(screenshots)/**",
+    "images/*.@(png|jpg|jpeg|webp)",
+    "lottie/**",
+    ".well-known/**",
+  ],
 });
 
 const nextConfig: NextConfig = {
