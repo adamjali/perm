@@ -984,4 +984,79 @@ export default defineSchema({
     .index("by_email_and_time", ["email", "occurredAt"])
     .index("by_occurred", ["occurredAt"])
     .index("by_event_type_and_time", ["eventType", "occurredAt"]),
+
+  /**
+   * DOL processing-times snapshots
+   *
+   * Captures https://flag.dol.gov/processingtimes, which is the official
+   * ground truth for where the PERM and prevailing-wage queues actually are.
+   *
+   * DOL publishes a SNAPSHOT and overwrites it each month. The page carries no
+   * history and no archive, so the moment a new one goes up the previous
+   * figures are gone. Keeping every snapshot is the entire point of this
+   * table: it turns a single number into a measured series, which is what
+   * lets the site state how far the queue moved between two real dates
+   * instead of predicting where it will go next.
+   *
+   * Rows are immutable. A run only inserts when `contentHash` differs from the
+   * newest stored row, so re-fetching an unchanged page is a no-op and the
+   * series contains one row per genuine publication.
+   */
+  dolProcessingTimes: defineTable({
+    // DOL's own as-of stamp for the PERM section (YYYY-MM-DD). The PERM and
+    // prevailing-wage sections update on different cadences and carry
+    // different dates, so they are stored separately rather than collapsed
+    // into one misleading "last updated".
+    permAsOf: v.string(),
+    pwdAsOf: v.optional(v.string()),
+
+    // Which filing month each PERM queue is currently working.
+    // `priorityDate` is null where DOL prints "--".
+    permQueues: v.array(
+      v.object({
+        queue: v.string(),
+        priorityDate: v.union(v.string(), v.null()),
+        raw: v.string(),
+      }),
+    ),
+
+    // Average calendar days to a determination, as published by DOL.
+    permAverageDays: v.array(
+      v.object({
+        determination: v.string(),
+        month: v.union(v.string(), v.null()),
+        calendarDays: v.union(v.number(), v.null()),
+        raw: v.string(),
+      }),
+    ),
+
+    // Prevailing-wage queue across all programs (PERM, H-1B, H-2B, CW-1).
+    pwdQueues: v.array(
+      v.object({
+        program: v.string(),
+        oewsReceiptDate: v.union(v.string(), v.null()),
+        nonOewsReceiptDate: v.union(v.string(), v.null()),
+      }),
+    ),
+
+    // Prevailing-wage requests still pending for PERM, by month of receipt.
+    pwdPermBacklog: v.array(
+      v.object({
+        receiptMonth: v.string(),
+        remainingRequests: v.number(),
+      }),
+    ),
+
+    // Canonical source recorded per row, so a stored snapshot is
+    // self-describing if it is ever exported or cited.
+    sourceUrl: v.string(),
+    // When we fetched, as distinct from DOL's as-of date.
+    fetchedAt: v.number(),
+    // Stable hash of the parsed content. Drives insert-only-on-change, and
+    // catches a silent DOL correction that reuses the same as-of date.
+    contentHash: v.string(),
+  })
+    .index("by_perm_as_of", ["permAsOf"])
+    .index("by_fetched", ["fetchedAt"])
+    .index("by_content_hash", ["contentHash"]),
 });

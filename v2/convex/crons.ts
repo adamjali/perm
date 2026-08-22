@@ -218,4 +218,27 @@ crons.daily(
   internal.reengagement.runReengagementCheck
 );
 
+// ============================================================================
+// DOL PROCESSING TIMES
+// ============================================================================
+
+/**
+ * Weekly capture of https://flag.dol.gov/processingtimes.
+ *
+ * DOL overwrites this page rather than archiving it, so anything we miss is
+ * gone. Weekly rather than monthly on purpose: the PERM and prevailing-wage
+ * sections update on different cadences, DOL occasionally corrects a figure
+ * out of band, and "first work week" is not a fixed date. The run is one
+ * ~160 KB GET, and `store` inserts only when the content hash changes, so
+ * extra runs cost almost nothing and cannot pollute the series.
+ *
+ * Wednesday 15:00 UTC (11:00 ET) sits after DOL's first-work-week refresh has
+ * reliably landed in any given month.
+ */
+crons.weekly(
+  "dol-processing-times-refresh",
+  { dayOfWeek: "wednesday", hourUTC: 15, minuteUTC: 0 },
+  internal.dolProcessingTimes.refresh
+);
+
 export default crons;
