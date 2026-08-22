@@ -73,7 +73,7 @@ export function ETA9089Tab({
               </div>
               <div className="field-cell">
                 <div className="fc-label">Case Number</div>
-                <div className={`fc-val fc-val-text mono ${!caseData.eta9089CaseNumber ? "dim" : ""}`} title={caseData.eta9089CaseNumber || undefined}>{caseData.eta9089CaseNumber || "\u2014"}</div>
+                <div className={`fc-val fc-val-text mono ${!caseData.eta9089CaseNumber ? "dim" : ""}`} title={caseData.eta9089CaseNumber || undefined}>{caseData.eta9089CaseNumber || "-"}</div>
               </div>
               <div className="field-cell">
                 <div className="fc-label">Audit Date</div>
@@ -88,15 +88,15 @@ export function ETA9089Tab({
                 <div className={`fc-val mono ${!caseData.eta9089ExpirationDate ? "dim" : ""}`}>
                   {caseData.eta9089ExpirationDate ? (
                     <span style={{ color: "var(--stage-eta9089)" }}>{fmtISODate(caseData.eta9089ExpirationDate)}</span>
-                  ) : "\u2014"}
+                  ) : "-"}
                 </div>
               </div>
               <div className="field-cell">
                 <div className="fc-label">Filing Window</div>
                 <div className="fc-val mono" style={{ fontSize: "0.8rem" }}>
                   {filingWindowOpens && filingWindowCloses
-                    ? `${fmtISOShort(filingWindowOpens)} \u2013 ${fmtISOShort(filingWindowCloses)}`
-                    : "\u2014"}
+                    ? `${fmtISOShort(filingWindowOpens)} to ${fmtISOShort(filingWindowCloses)}`
+                    : "-"}
                 </div>
               </div>
             </div>
@@ -105,8 +105,8 @@ export function ETA9089Tab({
                 <Clock className="h-4 w-4 shrink-0" style={{ color: "var(--stage-eta9089)" }} />
                 <span>
                   {isFiled
-                    ? "ETA 9089 filed \u2014 awaiting DOL decision."
-                    : "Awaiting filing \u2014 recruitment must be completed first."}
+                    ? "ETA 9089 filed. Awaiting DOL decision."
+                    : "Awaiting filing. Recruitment must be completed first."}
                   {filingWindowOpens && !isFiled && (
                     <> Filing window opens <strong className="text-foreground">{fmtISODate(filingWindowOpens)}</strong>.</>
                   )}

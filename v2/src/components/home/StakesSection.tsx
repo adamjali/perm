@@ -35,7 +35,7 @@ const stakes: StakeCard[] = [
     number: "2",
     title: "PWD Expiration",
     consequence:
-      "Your prevailing wage determination expires per 20 CFR 656.40. File after expiration and you restart from zero \u2014 months of waiting, wasted.",
+      "Your prevailing wage determination expires per 20 CFR 656.40. File after expiration and you restart from zero, months of waiting wasted.",
     prevention:
       "Expiration auto-calculated from determination date using DOL rules",
     severity: "critical",
@@ -44,7 +44,7 @@ const stakes: StakeCard[] = [
     number: "3",
     title: "180-Day Filing Window",
     consequence:
-      "The ETA 9089 must be filed 30\u2013180 days after recruitment ends and before PWD expires. Miss this window and recruitment must be redone.",
+      "The ETA 9089 must be filed 30-180 days after recruitment ends and before PWD expires. Miss this window and recruitment must be redone.",
     prevention:
       "Filing window open/close dates computed from your recruitment dates",
     severity: "high",

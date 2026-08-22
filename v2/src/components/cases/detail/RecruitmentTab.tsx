@@ -328,7 +328,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                   methods.map((method, i) => {
                   const hasDate = !!(method.date || method.startDate || (method.subEntries && method.subEntries.length > 0));
                   const dateDisplay = method.startDate && method.endDate
-                    ? `${fmtISOShort(method.startDate)} \u2013 ${fmtISOShort(method.endDate)}`
+                    ? `${fmtISOShort(method.startDate)} to ${fmtISOShort(method.endDate)}`
                     : method.date
                       ? fmtISODate(method.date)
                       : null;
@@ -389,7 +389,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
           <div className="field-grid" style={{ padding: 0, borderBottom: "3px solid var(--border)" }}>
             <div className="field-cell">
               <div className="fc-label">Applicants</div>
-              <div className="fc-val">{caseData.recruitmentApplicantsCount || "\u2014"}</div>
+              <div className="fc-val">{caseData.recruitmentApplicantsCount || "-"}</div>
             </div>
             <div className="field-cell">
               <div className="fc-label flex items-center gap-1">
@@ -403,8 +403,8 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               </div>
               <div className="fc-val mono">
                 {recruitStartDate && recruitEndDate
-                  ? `${fmtISOShort(recruitStartDate)} \u2013 ${fmtISOShort(recruitEndDate)}`
-                  : "\u2014"}
+                  ? `${fmtISOShort(recruitStartDate)} to ${fmtISOShort(recruitEndDate)}`
+                  : "-"}
               </div>
             </div>
             <div className="field-cell">
@@ -418,7 +418,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                 )}
               </div>
               <div className="fc-val mono">
-                {quietPeriodEndDate ? fmtISODate(quietPeriodEndDate) : "\u2014"}
+                {quietPeriodEndDate ? fmtISODate(quietPeriodEndDate) : "-"}
               </div>
             </div>
           </div>

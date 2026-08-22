@@ -291,7 +291,7 @@ export function QuickEditFields({
    */
   const validateDateValue = useCallback((fieldName: string, value: string): string | null => {
     if (!value) return null; // empty is OK (field not filled yet)
-    if (!isValidDateString(value)) return "Enter a valid date (1900–2100).";
+    if (!isValidDateString(value)) return "Enter a valid date (1900-2100).";
     const constraint = constraints[fieldName];
     if (constraint?.min && value < constraint.min) return `Must be on or after ${constraint.min}.`;
     if (constraint?.max && value > constraint.max) return `Must be on or before ${constraint.max}.`;

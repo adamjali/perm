@@ -64,7 +64,7 @@ export function I140Tab({ caseData }: I140TabProps) {
               <div className="field-cell">
                 <div className="fc-label">Category</div>
                 <div className={`fc-val ${!caseData.i140Category ? "dim" : ""}`}>
-                  {caseData.i140Category || "\u2014"}
+                  {caseData.i140Category || "-"}
                 </div>
               </div>
               <div className="field-cell">
@@ -89,13 +89,13 @@ export function I140Tab({ caseData }: I140TabProps) {
               <div className="field-cell">
                 <div className="fc-label">Receipt Number</div>
                 <div className={`fc-val fc-val-text mono ${!caseData.i140ReceiptNumber ? "dim" : ""}`} title={caseData.i140ReceiptNumber || undefined}>
-                  {caseData.i140ReceiptNumber || "\u2014"}
+                  {caseData.i140ReceiptNumber || "-"}
                 </div>
               </div>
               <div className="field-cell">
                 <div className="fc-label">Service Center</div>
                 <div className={`fc-val fc-val-text mono ${!caseData.i140ServiceCenter ? "dim" : ""}`} title={caseData.i140ServiceCenter || undefined}>
-                  {caseData.i140ServiceCenter || "\u2014"}
+                  {caseData.i140ServiceCenter || "-"}
                 </div>
               </div>
             </div>
@@ -136,9 +136,9 @@ export function I140Tab({ caseData }: I140TabProps) {
                 <Clock className="h-4 w-4 shrink-0" style={{ color: "var(--stage-i140)" }} />
                 <span>
                   {isFiled
-                    ? "I-140 filed \u2014 awaiting USCIS decision."
+                    ? "I-140 filed. Awaiting USCIS decision."
                     : caseData.eta9089CertificationDate
-                      ? "PERM certified \u2014 ready to file I-140 with USCIS."
+                      ? "PERM certified. Ready to file I-140 with USCIS."
                       : "Awaiting PERM certification before I-140 can be filed with USCIS."}
                 </span>
               </div>

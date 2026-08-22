@@ -42,7 +42,7 @@ type SortField = keyof UserSummary;
 const PAGE_SIZE = 25;
 
 const formatTimestamp = (ts: number | null): string => {
-  if (!ts) return "\u2014";
+  if (!ts) return "-";
   const d = new Date(ts);
   return d.toLocaleString("en-US", {
     month: "short",
@@ -54,7 +54,7 @@ const formatTimestamp = (ts: number | null): string => {
 };
 
 const formatDate = (ts: number | null): string => {
-  if (!ts) return "\u2014";
+  if (!ts) return "-";
   return new Date(ts).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -166,13 +166,13 @@ const COLUMNS: {
   {
     key: "firmName" as SortField,
     label: "Firm",
-    render: (u) => <TruncatedCell maxWidth={140}>{u.firmName || "\u2014"}</TruncatedCell>,
+    render: (u) => <TruncatedCell maxWidth={140}>{u.firmName || "-"}</TruncatedCell>,
     className: "min-w-[100px] max-w-[160px]",
   },
   {
     key: "termsVersion" as SortField,
     label: "Terms Ver",
-    render: (u) => u.termsVersion || "\u2014",
+    render: (u) => u.termsVersion || "-",
     className: "min-w-[80px]",
   },
   {

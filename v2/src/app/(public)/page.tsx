@@ -65,7 +65,7 @@ const homepageFAQs = [
   {
     question: "What exactly does PERM Tracker do?",
     answer:
-      "PERM Tracker automates deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline \u2014 PWD expiration, the 30\u2013180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync so your whole team stays aligned.",
+      "PERM Tracker automates deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync so your whole team stays aligned.",
   },
   {
     question: "How is this different from using a spreadsheet?",
@@ -80,12 +80,12 @@ const homepageFAQs = [
   {
     question: "Is my client data secure?",
     answer:
-      "Sensitive fields like employer FEIN are encrypted with AES-256-GCM. The database runs on Convex\u2019s SOC 2 Type II certified infrastructure on AWS. Your cases are row-level isolated \u2014 no other user can see them. Sessions auto-expire after 15 minutes of inactivity.",
+      "Sensitive fields like employer FEIN are encrypted with AES-256-GCM. The database runs on Convex\u2019s SOC 2 Type II certified infrastructure on AWS. Your cases are row-level isolated: no other user can see them. Sessions auto-expire after 15 minutes of inactivity.",
   },
   {
     question: "Can I import my existing cases?",
     answer:
-      "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime \u2014 your data is always yours.",
+      "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime. Your data is always yours.",
   },
   {
     question: "What happens if DOL changes regulations?",

@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Check if a string is a valid, reasonable ISO date (YYYY-MM-DD).
- * Rejects dates outside the 1900–2100 range to prevent issues with
+ * Rejects dates outside the 1900-2100 range to prevent issues with
  * partial year typing in native date inputs (e.g. "0002-01-15").
  */
 function isValidDateString(str: string): boolean {

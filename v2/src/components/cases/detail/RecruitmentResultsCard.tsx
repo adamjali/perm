@@ -418,14 +418,14 @@ export function RecruitmentResultsCard({
           <div className="field-cell">
             <div className="fc-label">Applicants</div>
             <div className="fc-val mono">
-              {caseData.recruitmentApplicantsCount || "\u2014"}
+              {caseData.recruitmentApplicantsCount || "-"}
             </div>
           </div>
           <div className="field-cell">
             <div className="fc-label">Recruitment Period</div>
             <div className="fc-val mono">
               {status.recruitmentEndDate
-                ? `${fmtISOShort(caseData.recruitmentStartDate)} \u2013 ${fmtISOShort(status.recruitmentEndDate)}`
+                ? `${fmtISOShort(caseData.recruitmentStartDate)} to ${fmtISOShort(status.recruitmentEndDate)}`
                 : fmtISODate(caseData.recruitmentStartDate)}
             </div>
           </div>

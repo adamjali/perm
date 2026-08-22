@@ -93,7 +93,7 @@ export function FormHelpPanel() {
               { field: "Filing Date", desc: "When you submitted the PWD request to DOL" },
               { field: "Determination Date", desc: "When DOL issued the determination. Entering this unlocks the Recruitment section." },
               { field: "Expiration Date", desc: "Auto-calculated: determination + 1 year. All recruitment must complete before this date." },
-              { field: "Wage Amount & Level", desc: "The prevailing wage amount and level (I–IV) from the determination" },
+              { field: "Wage Amount & Level", desc: "The prevailing wage amount and level (I-IV) from the determination" },
             ]} />
             <Example>Enter the determination date first, it triggers the expiration auto-calculation and unlocks Recruitment.</Example>
           </section>

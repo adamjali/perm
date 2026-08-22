@@ -20,7 +20,7 @@ describe("fmtISODate", () => {
   });
 
   it.each([null, undefined, ""])("returns em-dash for %s", (input) => {
-    expect(fmtISODate(input as string | null | undefined)).toBe("\u2014");
+    expect(fmtISODate(input as string | null | undefined)).toBe("-");
   });
 
   it("returns raw string for invalid date", () => {
@@ -37,7 +37,7 @@ describe("fmtISOShort", () => {
   });
 
   it.each([null, undefined, ""])("returns em-dash for %s", (input) => {
-    expect(fmtISOShort(input as string | null | undefined)).toBe("\u2014");
+    expect(fmtISOShort(input as string | null | undefined)).toBe("-");
   });
 
   it("returns raw string for invalid date", () => {

@@ -79,8 +79,8 @@ const stats: Stat[] = [
 /**
  * Count-up hook with digit scramble phase.
  *
- * Phase 1 (0–600ms): Rapidly cycle random digits matching the target's digit count.
- * Phase 2 (600–2000ms): Converge toward target with easeOutQuad.
+ * Phase 1 (0-600ms): Rapidly cycle random digits matching the target's digit count.
+ * Phase 2 (600-2000ms): Converge toward target with easeOutQuad.
  *
  * When reducedMotion is true, returns the target value immediately.
  */

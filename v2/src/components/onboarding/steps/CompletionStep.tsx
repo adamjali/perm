@@ -31,7 +31,7 @@ export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
             <span className="font-heading font-semibold">
               {onboardingCaseInfo.employerName}
             </span>
-            {" \u2014 "}
+            {", "}
             <span className="text-muted-foreground">
               {onboardingCaseInfo.positionTitle}
             </span>

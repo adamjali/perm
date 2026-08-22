@@ -352,7 +352,7 @@ export function OverviewTab({
                     <div className="field-cell">
                       <div className="fc-label">PWD Case #</div>
                       <div className={`fc-val fc-val-text mono ${!caseData.pwdCaseNumber ? "dim" : ""}`} title={caseData.pwdCaseNumber || undefined}>
-                        {caseData.pwdCaseNumber || "\u2014"}
+                        {caseData.pwdCaseNumber || "-"}
                       </div>
                     </div>
                     <div className="field-cell">
@@ -370,7 +370,7 @@ export function OverviewTab({
                     <div className="field-cell">
                       <div className="fc-label">Wage Level</div>
                       <div className={`fc-val ${!caseData.pwdWageLevel ? "dim" : ""}`}>
-                        {caseData.pwdWageLevel || "\u2014"}
+                        {caseData.pwdWageLevel || "-"}
                       </div>
                     </div>
                     <div className="field-cell">
@@ -378,7 +378,7 @@ export function OverviewTab({
                       <div className={`fc-val ${caseData.pwdWageAmount === undefined ? "dim" : ""}`}>
                         {caseData.pwdWageAmount !== undefined
                           ? `${fmtCurrency(caseData.pwdWageAmount)} / yr`
-                          : "\u2014"}
+                          : "-"}
                       </div>
                     </div>
                     <div className="field-cell">
@@ -388,7 +388,7 @@ export function OverviewTab({
                           <span style={{ color: "var(--stage-eta9089)" }}>
                             {fmtISODate(caseData.pwdExpirationDate)}
                           </span>
-                        ) : "\u2014"}
+                        ) : "-"}
                       </div>
                     </div>
                   </div>
@@ -560,13 +560,13 @@ export function OverviewTab({
                       <div className="field-cell">
                         <div className="fc-label">Position</div>
                         <div className={`fc-val fc-val-text ${!caseData.jobDescriptionPositionTitle ? "dim" : ""}`} title={caseData.jobDescriptionPositionTitle || undefined}>
-                          {caseData.jobDescriptionPositionTitle || "\u2014"}
+                          {caseData.jobDescriptionPositionTitle || "-"}
                         </div>
                       </div>
                       <div className="field-cell">
                         <div className="fc-label">SOC Code</div>
                         <div className={`fc-val mono ${!caseData.socCode ? "dim" : ""}`}>
-                          {caseData.socCode || "\u2014"}
+                          {caseData.socCode || "-"}
                         </div>
                       </div>
                       <div className="field-cell">
@@ -574,7 +574,7 @@ export function OverviewTab({
                         <div className={`fc-val ${caseData.pwdWageAmount === undefined ? "dim" : ""}`}>
                           {caseData.pwdWageAmount !== undefined
                             ? `${fmtCurrency(caseData.pwdWageAmount)} / yr`
-                            : "\u2014"}
+                            : "-"}
                         </div>
                       </div>
                     </div>

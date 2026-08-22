@@ -50,7 +50,7 @@ const faqItems: FAQItem[] = [
   {
     question: "Is my client data secure?",
     answer:
-      "Sensitive fields like employer FEIN are encrypted with AES-256-GCM. The database runs on Convex\u2019s SOC 2 Type II certified infrastructure on AWS. Your cases are row-level isolated \u2014 no other user can see them. Sessions auto-expire after 15 minutes of inactivity.",
+      "Sensitive fields like employer FEIN are encrypted with AES-256-GCM. The database runs on Convex\u2019s SOC 2 Type II certified infrastructure on AWS. Your cases are row-level isolated: no other user can see them. Sessions auto-expire after 15 minutes of inactivity.",
   },
   {
     question: "Can I import my existing cases?",

@@ -169,7 +169,7 @@ function getRecruitmentSummary(values: Partial<CaseFormData>): string | undefine
   // Job order
   const joStart = fmtDate(values.jobOrderStartDate);
   const joEnd = fmtDate(values.jobOrderEndDate);
-  if (joStart && joEnd) parts.push(`Job Order ${joStart}–${joEnd}`);
+  if (joStart && joEnd) parts.push(`Job Order ${joStart}-${joEnd}`);
 
   // Sunday ads count
   const adCount = [values.sundayAdFirstDate, values.sundayAdSecondDate].filter(Boolean).length;

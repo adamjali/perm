@@ -36,7 +36,7 @@ const features: Feature[] = [
   {
     title: "Auto Deadline Calculation",
     description:
-      "Enter one date and 11 downstream deadlines update \u2014 PWD expiration, filing windows, I-140 cutoffs, recruitment method dates. No manual math.",
+      "Enter one date and 11 downstream deadlines update: PWD expiration, filing windows, I-140 cutoffs, recruitment method dates. No manual math.",
     illustration: <CalendarDeadlineSVG size={64} className="text-foreground" />,
     bgImage: "/images/features/calendar-planning.jpg",
     accentColor: "var(--stage-pwd)",
@@ -84,7 +84,7 @@ const features: Feature[] = [
   {
     title: "AI Case Assistant",
     description:
-      "Ask questions about your cases, create and update cases, check deadlines, search PERM regulations \u2014 all in plain English.",
+      "Ask questions about your cases, create and update cases, check deadlines, search PERM regulations, all in plain English.",
     illustration: (
       <svg width="64" height="64" viewBox="0 0 200 200" fill="none" className="text-foreground" aria-hidden="true">
         {/* Chat bubble */}

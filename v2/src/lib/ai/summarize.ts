@@ -78,7 +78,7 @@ Exclude:
 - Verbatim quotes unless legally critical
 - Specific case IDs, dates, and names (those are stored separately in structured facts)
 
-Format: a brief narrative (2–4 paragraphs, <1000 tokens). Focus on continuity for the next turn.`;
+Format: a brief narrative (2-4 paragraphs, <1000 tokens). Focus on continuity for the next turn.`;
 
 /**
  * Format messages for the prose summarization prompt.

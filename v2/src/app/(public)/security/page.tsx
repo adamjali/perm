@@ -102,7 +102,7 @@ export default function SecurityPage() {
                     Unauthorized use of signup form to transmit unsolicited email
                   </h3>
                   <p className="text-sm text-foreground/60 mono mt-1">
-                    April 19–20, 2026 &nbsp;·&nbsp; Status: resolved
+                    April 19-20, 2026 &nbsp;·&nbsp; Status: resolved
                   </p>
                 </div>
                 <div className="shrink-0 flex items-center gap-2 rounded-full border-2 border-green-600 bg-green-50 dark:bg-green-950/30 px-3 py-1">

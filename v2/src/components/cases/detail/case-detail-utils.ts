@@ -25,13 +25,13 @@ export const tabContainerVariants = {
 
 /** ISO date string -> "MMM d, yyyy" */
 export function fmtISODate(d?: string | null): string {
-  if (!d) return "\u2014";
+  if (!d) return "-";
   try { return format(parseISO(d), "MMM d, yyyy"); } catch { return d; }
 }
 
 /** ISO date string -> "MMM d" */
 export function fmtISOShort(d?: string | null): string {
-  if (!d) return "\u2014";
+  if (!d) return "-";
   try { return format(parseISO(d), "MMM d"); } catch { return d; }
 }
 
