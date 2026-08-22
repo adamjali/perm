@@ -658,6 +658,32 @@
    ================================================================ */
 
 /* Card container */
+/**
+ * Page-level container for the long-form public pages: privacy, terms,
+ * security, contact, and their loading skeletons.
+ *
+ * This class was referenced in 12 places from the initial commit and never
+ * defined anywhere, so it resolved to nothing and those pages shipped their
+ * content as bare text on the page background, with no surface, border or
+ * shadow. Nothing failed loudly because an undefined utility class is not an
+ * error, it is simply absent.
+ *
+ * Values are the system's standard card surface, matching the `Card`
+ * component (`bg-card border-2 border-border shadow-hard`). The hover lift
+ * Card carries is deliberately omitted: these are static article containers,
+ * not interactive elements, and a page-sized box that jumps on hover reads as
+ * a bug.
+ *
+ * Defined outside `@layer` for the same reason `.detail-card` is: Tailwind v4
+ * tree-shakes layered rules it cannot see referenced.
+ */
+.card-brutalist {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-hard);
+}
+
 .detail-card {
   border: 3px solid var(--border);
   background: var(--card);
