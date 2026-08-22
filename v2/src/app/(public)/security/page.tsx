@@ -157,9 +157,7 @@ export default function SecurityPage() {
                 </ul>
                 <p>
                   <strong>If you received an unexpected email.</strong> If you
-                  received a message referencing permtracker.app that you did not
-                  expect — particularly one containing a link or promotional
-                  content in Turkish — <strong>please do not click any links</strong>{" "}
+                  received a message referencing permtracker.app that you did not expect, particularly one containing a link or promotional content in Turkish, <strong>please do not click any links</strong>{" "}
                   in that message. The content was not authorized by PERM Tracker,
                   was not directed to you by us, and does not reflect our product
                   or services. You may safely delete the email. You will not

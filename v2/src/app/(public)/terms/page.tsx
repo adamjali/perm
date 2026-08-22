@@ -451,8 +451,7 @@ export default function TermsPage() {
               domain. Session replays record interactions (clicks, scrolls,
               navigation, and on-screen content) to help us diagnose and fix
               issues. Sentry replays mask all text and block media; PostHog
-              replays mask form inputs and passwords, but on-screen text — which
-              can include case information — is not masked by default. We never
+              replays mask form inputs and passwords, but on-screen text, which can include case information, is not masked by default. We never
               use session replays for advertising and never sell them, and we
               honor the Global Privacy Control (GPC) browser signal to opt your
               session out of analytics and replay. We also use Cloudflare
@@ -558,8 +557,7 @@ export default function TermsPage() {
               DISPUTE ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE.
             </p>
             <p className="text-foreground/80 leading-relaxed mt-4">
-              These provisions do not require arbitration — disputes remain
-              subject to the courts identified above. If the class action waiver
+              These provisions do not require arbitration. Disputes remain subject to the courts identified above. If the class action waiver
               is held unenforceable as to a particular claim, that claim (and only
               that claim) will proceed in those courts without the class action
               waiver, while the jury trial waiver and all other provisions remain

@@ -201,7 +201,7 @@ export function DemoPageClient() {
       if (foundCase) {
         setCaseToDelete({
           id: foundCase.id,
-          name: `${foundCase.employerName} — ${foundCase.beneficiaryName}`,
+          name: `${foundCase.employerName}, ${foundCase.beneficiaryName}`,
         });
         setIsDeleteOpen(true);
       }
@@ -251,7 +251,7 @@ export function DemoPageClient() {
               </h1>
               <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
                 This is a fully interactive sandbox with 5 sample cases at different PERM stages.
-                Add cases, edit dates, and watch deadlines calculate automatically — exactly like the real product.
+                Add cases, edit dates, and watch deadlines calculate automatically, exactly like the real product.
               </p>
             </div>
           </ScrollReveal>
@@ -322,7 +322,7 @@ export function DemoPageClient() {
                 </span>
               </h2>
               <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-                50-step interactive walkthrough — create cases, configure settings, use the AI assistant, and more.
+                50-step interactive walkthrough: create cases, configure settings, use the AI assistant, and more.
               </p>
             </div>
           </ScrollReveal>
@@ -336,7 +336,7 @@ export function DemoPageClient() {
                   <div className="h-2.5 w-2.5 border border-border bg-[#FFBD2E]" />
                   <div className="h-2.5 w-2.5 border border-border bg-[#28CA41]" />
                   <span className="ml-3 font-mono text-[10px] text-muted-foreground">
-                    permtracker.app — Interactive Tour
+                    permtracker.app · Interactive Tour
                   </span>
                 </div>
                 <iframe
@@ -421,7 +421,7 @@ export function DemoPageClient() {
               <SectionLabel
                 number="1"
                 title="Deadline Hub"
-                description="See your caseload summary instantly — total cases, active deadlines, due this week, and overdue items."
+                description="See your caseload summary instantly: total cases, active deadlines, due this week, and overdue items."
                 icon={<Zap className="h-4 w-4" />}
                 accentColor="var(--primary)"
               />
@@ -512,7 +512,7 @@ export function DemoPageClient() {
             <div className="mt-4 flex flex-wrap gap-2">
               <FeatureCallout
                 icon={<MousePointerClick className="h-3 w-3" />}
-                text="Try editing a case — change a date and watch downstream deadlines update"
+                text="Try editing a case: change a date and watch downstream deadlines update"
               />
             </div>
           </section>

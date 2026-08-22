@@ -156,10 +156,10 @@ export function FormHelpPanel() {
           <section>
             <SectionHeading>Validation & Errors</SectionHeading>
             <ul className="space-y-1.5 text-muted-foreground list-disc pl-4">
-              <li><strong className="text-foreground">Red asterisks (*)</strong> — Required fields. Must be filled before saving.</li>
-              <li><strong className="text-orange-500">Orange warnings</strong> — Advisory. They flag potential issues but don&rsquo;t prevent saving.</li>
-              <li><strong className="text-foreground">Date constraints</strong> — The date picker greys out invalid dates (e.g., can&rsquo;t set certification before filing).</li>
-              <li><strong className="text-foreground">Auto-status</strong> — Case status and progress auto-update based on your dates. Toggle off in Basic Info to set manually.</li>
+              <li><strong className="text-foreground">Red asterisks (*)</strong>: Required fields. Must be filled before saving.</li>
+              <li><strong className="text-orange-500">Orange warnings</strong>: Advisory. They flag potential issues but don&rsquo;t prevent saving.</li>
+              <li><strong className="text-foreground">Date constraints</strong>: The date picker greys out invalid dates (e.g., can&rsquo;t set certification before filing).</li>
+              <li><strong className="text-foreground">Auto-status</strong>: Case status and progress auto-update based on your dates. Toggle off in Basic Info to set manually.</li>
             </ul>
           </section>
 
@@ -170,11 +170,11 @@ export function FormHelpPanel() {
               Fields with an &ldquo;auto&rdquo; badge calculate automatically when you enter their trigger date:
             </p>
             <ul className="space-y-1 text-muted-foreground list-disc pl-4">
-              <li><strong className="text-foreground">PWD Expiration</strong> — Determination date + 1 year</li>
-              <li><strong className="text-foreground">Job Order End</strong> — Start date + 30 calendar days</li>
-              <li><strong className="text-foreground">NOF End</strong> — Start date + 10 business days (skips weekends & federal holidays)</li>
-              <li><strong className="text-foreground">ETA 9089 Expiration</strong> — Certification date + 180 days</li>
-              <li><strong className="text-foreground">RFI Due Date</strong> — Received date + 30 days (strict)</li>
+              <li><strong className="text-foreground">PWD Expiration</strong>: Determination date + 1 year</li>
+              <li><strong className="text-foreground">Job Order End</strong>: Start date + 30 calendar days</li>
+              <li><strong className="text-foreground">NOF End</strong>: Start date + 10 business days (skips weekends & federal holidays)</li>
+              <li><strong className="text-foreground">ETA 9089 Expiration</strong>: Certification date + 180 days</li>
+              <li><strong className="text-foreground">RFI Due Date</strong>: Received date + 30 days (strict)</li>
             </ul>
             <Example>Auto-calculated fields update instantly. You can manually override them if the auto value isn&rsquo;t right for your case.</Example>
           </section>
@@ -195,10 +195,10 @@ export function FormHelpPanel() {
           <section>
             <SectionHeading>Key Regulations</SectionHeading>
             <ul className="space-y-1 text-muted-foreground list-disc pl-4">
-              <li><strong className="text-foreground">20 CFR § 656.17(d)</strong> — Job order: 30 calendar days minimum</li>
-              <li><strong className="text-foreground">20 CFR § 656.10(d)</strong> — Notice of filing: 10 business days</li>
-              <li><strong className="text-foreground">20 CFR § 656.17(e)</strong> — 30-day quiet period, 180-day filing window</li>
-              <li><strong className="text-foreground">20 CFR § 656.40</strong> — PWD validity: 1 year from determination</li>
+              <li><strong className="text-foreground">20 CFR § 656.17(d)</strong>: Job order: 30 calendar days minimum</li>
+              <li><strong className="text-foreground">20 CFR § 656.10(d)</strong>: Notice of filing: 10 business days</li>
+              <li><strong className="text-foreground">20 CFR § 656.17(e)</strong>: 30-day quiet period, 180-day filing window</li>
+              <li><strong className="text-foreground">20 CFR § 656.40</strong>: PWD validity: 1 year from determination</li>
             </ul>
           </section>
         </div>

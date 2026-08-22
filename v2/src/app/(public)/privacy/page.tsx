@@ -64,15 +64,15 @@ export default function PrivacyPage() {
             </h3>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>
-                <strong>Email address</strong> — Used for account creation,
+                <strong>Email address</strong>: Used for account creation,
                 authentication, and notifications
               </li>
               <li>
-                <strong>Name</strong> — Obtained via Google OAuth or entered
+                <strong>Name</strong>: Obtained via Google OAuth or entered
                 during signup
               </li>
               <li>
-                <strong>Password</strong> — If you use email/password
+                <strong>Password</strong>: If you use email/password
                 authentication, your password is securely hashed and never stored
                 in plain text (managed by our authentication provider)
               </li>
@@ -266,24 +266,24 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
-                <strong>Google Gemini</strong> (Google LLC) — Primary AI provider.
+                <strong>Google Gemini</strong> (Google LLC): Primary AI provider.
                 Retains data for up to 55 days for abuse monitoring only. Does{" "}
                 <strong>not</strong> use API data to train models.
               </li>
               <li>
-                <strong>OpenRouter</strong> — AI model routing. Zero Data
+                <strong>OpenRouter</strong>: AI model routing. Zero Data
                 Retention (ZDR) by default; prompts are not stored.
               </li>
               <li>
-                <strong>Mistral AI</strong> — Fallback AI provider. API data is
+                <strong>Mistral AI</strong>: Fallback AI provider. API data is
                 not used for model training.
               </li>
               <li>
-                <strong>Groq</strong> — Fast AI inference on US-based Google Cloud
+                <strong>Groq</strong>: Fast AI inference on US-based Google Cloud
                 servers. Does not use API data for training when ZDR is enabled.
               </li>
               <li>
-                <strong>Cerebras</strong> — Emergency fallback AI inference. Does
+                <strong>Cerebras</strong>: Emergency fallback AI inference. Does
                 not use API data for model training.
               </li>
             </ul>
@@ -297,10 +297,10 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
-                <strong>Tavily</strong> — Primary web search provider
+                <strong>Tavily</strong>: Primary web search provider
               </li>
               <li>
-                <strong>Brave Search</strong> — Fallback web search provider
+                <strong>Brave Search</strong>: Fallback web search provider
               </li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
@@ -390,18 +390,17 @@ export default function PrivacyPage() {
               Session Replay
             </h3>
             <p className="text-foreground/80 leading-relaxed">
-              In addition to event analytics, PostHog records session replays —
-              playbacks of page interactions (clicks, scrolls, navigation, and
-              on-screen content) — which we use to diagnose usability issues and
+              In addition to event analytics, PostHog records session replays, playbacks of page interactions (clicks, scrolls, navigation, and
+              on-screen content), which we use to diagnose usability issues and
               improve the product.
             </p>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
-                <strong>Form inputs are masked</strong> — values you type into
+                <strong>Form inputs are masked</strong>: values you type into
                 fields, and all passwords, are redacted and not captured.
               </li>
               <li>
-                <strong>On-screen text is not masked by default</strong> — text
+                <strong>On-screen text is not masked by default</strong>: text
                 displayed on the pages you view, which can include case
                 information, may be captured in a replay. We never use these
                 replays for advertising and never sell them.
@@ -462,15 +461,15 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
-                <strong>All text content is masked</strong> — replaced with
+                <strong>All text content is masked</strong>: replaced with
                 asterisks so no readable text is captured
               </li>
               <li>
-                <strong>All images and media are blocked</strong> — replaced with
+                <strong>All images and media are blocked</strong>: replaced with
                 blank placeholders
               </li>
               <li>
-                <strong>Form input values are not recorded</strong> — keystrokes
+                <strong>Form input values are not recorded</strong>: keystrokes
                 are redacted
               </li>
               <li>
@@ -484,8 +483,7 @@ export default function PrivacyPage() {
             </h3>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>
-                <code>sendDefaultPii</code> is disabled — cookies, user agent
-                strings with PII, and request bodies are not sent
+                <code>sendDefaultPii</code> is disabled, so cookies, user agent strings with PII, and request bodies are not sent
               </li>
               <li>Request body data is stripped before transmission to Sentry</li>
               <li>
@@ -658,8 +656,7 @@ export default function PrivacyPage() {
             </h3>
             <p className="text-foreground/80 leading-relaxed">
               If we detect an abnormal volume of failed sign-in attempts
-              against the same account (for example, 10 failures within 30
-              minutes — the signature of credential-stuffing), we
+              against the same account (for example, 10 failures within 30 minutes, which is the signature of credential-stuffing), we
               automatically place the account in a temporarily locked
               state for up to 24 hours to protect the legitimate owner. We
               notify our security team and record the event for audit.
@@ -684,12 +681,11 @@ export default function PrivacyPage() {
             </h3>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>
-                <strong>Endpoint URL</strong> — Browser-generated URL for
+                <strong>Endpoint URL</strong>: Browser-generated URL for
                 receiving notifications
               </li>
               <li>
-                <strong>Encryption keys</strong> (p256dh, auth) —
-                Browser-generated keys for secure message delivery
+                <strong>Encryption keys</strong> (p256dh, auth): Browser-generated keys for secure message delivery
               </li>
             </ul>
             <p className="text-foreground/80 leading-relaxed mt-4">
@@ -992,7 +988,7 @@ export default function PrivacyPage() {
                   We do not sell or share your personal information
                 </strong>{" "}
                 (including for cross-context behavioral advertising), so there is
-                nothing to opt out of — but we still honor opt-out signals.
+                nothing to opt out of, but we still honor opt-out signals.
               </li>
               <li>
                 <strong>Global Privacy Control (GPC):</strong> we detect and
@@ -1012,8 +1008,7 @@ export default function PrivacyPage() {
                 >
                   support@permtracker.app
                 </a>{" "}
-                — no account changes are required, and you may use an authorized
-                agent.
+                (no account changes are required, and you may use an authorized agent).
               </li>
             </ul>
 
@@ -1029,15 +1024,15 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
-                <strong>Performance of a contract</strong> — to provide the
+                <strong>Performance of a contract</strong>: to provide the
                 case-tracking service you sign up for.
               </li>
               <li>
-                <strong>Legitimate interests</strong> — to secure the service,
+                <strong>Legitimate interests</strong>: to secure the service,
                 prevent abuse, and improve the product (including analytics).
               </li>
               <li>
-                <strong>Consent</strong> — for optional features such as
+                <strong>Consent</strong>: for optional features such as
                 marketing emails, which you can withdraw at any time.
               </li>
             </ul>

@@ -36,7 +36,7 @@ const faqData = [
       {
         question: "What exactly does PERM Tracker do?",
         answer:
-          "PERM Tracker automates deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline — PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus a calendar view so your whole team stays aligned.",
+          "PERM Tracker automates deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus a calendar view so your whole team stays aligned.",
       },
       {
         question: "How is this different from using a spreadsheet?",
@@ -51,12 +51,12 @@ const faqData = [
       {
         question: "Is my client data secure?",
         answer:
-          "Yes. We use industry-standard encryption, secure Google OAuth authentication, and row-level database security. Your data is isolated — no other firm can see your cases. We also offer Privacy Mode to hide sensitive information during screen sharing or presentations.",
+          "Yes. We use industry-standard encryption, secure Google OAuth authentication, and row-level database security. Your data is isolated: no other firm can see your cases. We also offer Privacy Mode to hide sensitive information during screen sharing or presentations.",
       },
       {
         question: "Can I import my existing cases?",
         answer:
-          "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime — your data is always yours.",
+          "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime. Your data is always yours.",
       },
       {
         question: "What happens if DOL changes regulations?",
@@ -81,7 +81,7 @@ const faqData = [
       {
         question: "What are the main steps in the PERM process?",
         answer:
-          "The PERM process has five main stages: (1) Prevailing Wage Determination — submit to NPWC and receive the wage level for the position. (2) Recruitment — conduct required advertising including SWA job order, newspaper ads, and additional recruitment steps for professional occupations. (3) Filing — submit ETA Form 9089 electronically after the 30-day cooling-off period. (4) DOL Review — wait for DOL adjudication (approval, denial, or audit). (5) I-140 Filing — file the immigrant petition within 180 days of PERM certification.",
+          "The PERM process has five main stages: (1) Prevailing Wage Determination: submit to NPWC and receive the wage level for the position. (2) Recruitment: conduct required advertising including SWA job order, newspaper ads, and additional recruitment steps for professional occupations. (3) Filing: submit ETA Form 9089 electronically after the 30-day cooling-off period. (4) DOL Review: wait for DOL adjudication (approval, denial, or audit). (5) I-140 Filing: file the immigrant petition within 180 days of PERM certification.",
       },
       {
         question: "What is a prevailing wage determination (PWD)?",
@@ -101,7 +101,7 @@ const faqData = [
       {
         question: "What is the ETA 9089 filing window?",
         answer:
-          "The ETA 9089 must be filed no earlier than 30 days after the end of all recruitment activities and no later than 180 days after recruitment ends. This 30-180 day filing window is a critical deadline — filing too early results in denial, and missing the 180-day cutoff means restarting recruitment entirely. PERM Tracker automatically calculates this window based on your recruitment end dates.",
+          "The ETA 9089 must be filed no earlier than 30 days after the end of all recruitment activities and no later than 180 days after recruitment ends. This 30-180 day filing window is a critical deadline: filing too early results in denial, and missing the 180-day cutoff means restarting recruitment entirely. PERM Tracker automatically calculates this window based on your recruitment end dates.",
       },
       {
         question: "How long do I have to file the I-140 after PERM certification?",
