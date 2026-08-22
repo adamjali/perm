@@ -134,6 +134,9 @@ const nextConfig: NextConfig = {
       { source: "/%24", destination: "/", permanent: true },
       { source: "/demo.html", destination: "/demo", permanent: true },
       { source: "/register.html", destination: "/signup", permanent: true },
+      // The bare path too. Only the .html form was covered, so /register was a
+      // live 404 that Googlebot had crawled and filed under "Not found (404)".
+      { source: "/register", destination: "/signup", permanent: true },
       { source: "/terms.html", destination: "/terms", permanent: true },
       { source: "/privacy.html", destination: "/privacy", permanent: true },
       { source: "/contact.html", destination: "/contact", permanent: true },
@@ -143,6 +146,23 @@ const nextConfig: NextConfig = {
   // Security headers (SOC 2 CC6/CC9)
   async headers() {
     return [
+      {
+        // Next.js turns every opengraph-image.tsx into a real, crawlable route.
+        // Google crawls them as if they were pages: five of them sat in Search
+        // Console under "Crawled - currently not indexed", which is where the one
+        // genuinely un-indexed content page was hiding. They are social cards rather than
+        // pages, so tell crawlers that directly.
+        //
+        // This does NOT break the social cards. Facebook, WhatsApp, LinkedIn and X
+        // fetch the URL named in the og:image meta tag and ignore robots directives
+        // when they do; X-Robots-Tag only governs search indexing.
+        //
+        // Pattern verified against path-to-regexp 6.3.0 (the version Next resolves):
+        // matches /opengraph-image and /<any>/<depth>/opengraph-image-<hash>, and
+        // matches no real route on this site.
+        source: "/:path*/:og(opengraph-image.*)",
+        headers: [{ key: "X-Robots-Tag", value: "noindex" }],
+      },
       {
         source: "/(.*)",
         headers: [
