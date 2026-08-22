@@ -1059,4 +1059,45 @@ export default defineSchema({
     .index("by_perm_as_of", ["permAsOf"])
     .index("by_fetched", ["fetchedAt"])
     .index("by_content_hash", ["contentHash"]),
+
+  /**
+   * Queue-reached alerts
+   *
+   * A visitor tells us the month their case was filed and we email them once,
+   * when DOL's analyst-review queue actually reaches it. That is the single
+   * question every PERM applicant has, and DOL's own page cannot answer it
+   * because it only shows today's frontier and keeps no history.
+   *
+   * Deliberately minimal: an email address and a month. We ask an optional
+   * role because it is the one field that changes what we build next, and
+   * nothing else, because nothing else would be used.
+   *
+   * Double opt-in. A row is inert until `confirmedAt` is set, so a typo'd or
+   * malicious address never receives mail. Confirm and unsubscribe both run on
+   * the existing HMAC token scheme rather than a guessable id.
+   */
+  dolQueueAlerts: defineTable({
+    email: v.string(),
+    /** Month the case was filed with DOL, "YYYY-MM". */
+    filingMonth: v.string(),
+    /** Optional, and the only segmentation we collect. */
+    role: v.optional(
+      v.union(v.literal("attorney"), v.literal("applicant"), v.literal("employer")),
+    ),
+
+    /** Null until the address is confirmed; nothing is ever sent before then. */
+    confirmedAt: v.optional(v.number()),
+    /** Set once the queue reached their month and we sent the one alert. */
+    notifiedAt: v.optional(v.number()),
+    /** Set when they opt out. Rows are kept so a later re-subscribe is honest. */
+    unsubscribedAt: v.optional(v.number()),
+
+    createdAt: v.number(),
+    /** Where the signup happened, so we can see which page actually converts. */
+    source: v.optional(v.string()),
+  })
+    .index("by_email", ["email"])
+    // Drives the notify sweep: confirmed, not yet notified, ordered by month.
+    .index("by_filing_month", ["filingMonth"])
+    .index("by_created", ["createdAt"]),
 });

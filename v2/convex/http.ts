@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { auth } from "./auth";
 import { recordError } from "./lib/errorRecording";
 import { isLiveContactEventType } from "./marketingWebhook";
@@ -262,6 +262,133 @@ http.route({
       "Unsubscribe from the weekly summary?",
       "This only stops the weekly PERM summary. Your deadline reminders keep coming, and you can turn the summary back on anytime in settings.",
       { action: `/unsubscribe?token=${encodeURIComponent(token)}` }
+    );
+  }),
+});
+
+// ============================================================================
+// Queue-reached alerts
+//
+// Double opt-in confirm, and a one-click opt-out. Both are keyed on the same
+// HMAC token scheme as the weekly digest, so a link cannot be guessed and an
+// address cannot be signed up by someone else without access to its inbox.
+// ============================================================================
+
+/**
+ * Signup endpoint.
+ *
+ * An HTTP action rather than a Convex React mutation on purpose: the public
+ * marketing layout deliberately mounts no ConvexProvider, so those pages never
+ * ship the Convex client or open a websocket. A plain POST keeps that promise
+ * and keeps the SEO pages light.
+ */
+const ALLOWED_ORIGINS = new Set([
+  "https://permtracker.app",
+  "https://www.permtracker.app",
+  "http://localhost:3000",
+]);
+
+function corsHeaders(origin: string | null): Record<string, string> {
+  const allowed = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://permtracker.app";
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    Vary: "Origin",
+  };
+}
+
+http.route({
+  path: "/queue-alert/subscribe",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/queue-alert/subscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+
+    // Treat the body as unknown and narrow every field before use.
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    if (typeof body !== "object" || body === null) {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+
+    const { email, filingMonth, role, source } = body as Record<string, unknown>;
+    if (typeof email !== "string" || typeof filingMonth !== "string") {
+      return json({ ok: false, message: "Email and filing month are both required." }, 400);
+    }
+
+    const validRole =
+      role === "attorney" || role === "applicant" || role === "employer" ? role : undefined;
+
+    const result = await ctx.runMutation(api.queueAlerts.subscribe, {
+      email,
+      filingMonth,
+      role: validRole,
+      source: typeof source === "string" ? source.slice(0, 64) : undefined,
+    });
+
+    return json(result);
+  }),
+});
+
+http.route({
+  path: "/queue-alert/confirm",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
+
+    const result = await ctx.runMutation(internal.queueAlerts.confirmByToken, { token });
+    if (!result) return new Response("Invalid or expired confirmation link.", { status: 400 });
+
+    return unsubscribePage(
+      "You're on the list",
+      `We'll email you once, when the Department of Labor's PERM analyst-review queue reaches ${result.filingMonth}. That's the only message you'll get, and DOL's current figures are always on permtracker.app/perm-processing-times.`,
+    );
+  }),
+});
+
+// POST is what Gmail and Apple Mail hit for one-click List-Unsubscribe.
+http.route({
+  path: "/queue-alert/unsubscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
+    const ok = await ctx.runMutation(internal.queueAlerts.unsubscribeByToken, { token });
+    if (!ok) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
+    return unsubscribePage("You're unsubscribed", "You won't receive a queue alert from us.");
+  }),
+});
+
+// GET shows a confirmation button rather than acting, so an inbox prefetch
+// (Apple Mail Privacy Protection and friends) cannot silently unsubscribe.
+http.route({
+  path: "/queue-alert/unsubscribe",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
+    return unsubscribePage(
+      "Cancel your queue alert?",
+      "You'll stop receiving the one-time alert about the PERM queue reaching your filing month.",
+      { action: `/queue-alert/unsubscribe?token=${encodeURIComponent(token)}` },
     );
   }),
 });

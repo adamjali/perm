@@ -139,7 +139,7 @@ export const refresh = internalAction({
       const snapshot = parseProcessingTimes(html);
       const contentHash = await hashSnapshot(snapshot);
 
-      return await ctx.runMutation(internal.dolProcessingTimes.store, {
+      const result = await ctx.runMutation(internal.dolProcessingTimes.store, {
         permAsOf: snapshot.permAsOf,
         pwdAsOf: snapshot.pwdAsOf ?? undefined,
         permQueues: snapshot.permQueues,
@@ -149,6 +149,21 @@ export const refresh = internalAction({
         sourceUrl: snapshot.sourceUrl,
         contentHash,
       });
+
+      // Only when the published figures actually changed. Firing on every run
+      // would re-scan the subscriber list weekly for no reason, and firing
+      // before the store would alert people off a snapshot we failed to keep.
+      if (result.stored) {
+        const analyst = snapshot.permQueues.find((q) => /analyst review/i.test(q.queue));
+        if (analyst?.priorityDate) {
+          await ctx.scheduler.runAfter(0, internal.queueAlerts.notifyQueueReached, {
+            frontier: analyst.priorityDate,
+            asOf: snapshot.permAsOf,
+          });
+        }
+      }
+
+      return result;
     } catch (error) {
       await recordError(ctx, "action", "dolProcessingTimes.refresh.parse", error);
       throw error;

@@ -43,6 +43,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/changelog`, lastModified: latestPostDate },
     { url: `${baseUrl}/resources`, lastModified: latestPostDate },
     { url: `${baseUrl}/faq`, lastModified: '2026-02-21' },
+    // Live DOL figures, refreshed weekly by convex/dolProcessingTimes.ts. The
+    // lastmod tracks content freshness the same way the listing pages do,
+    // rather than claiming a date the page's data may not have moved on.
+    { url: `${baseUrl}/perm-processing-times`, lastModified: latestPostDate },
     { url: `${baseUrl}/contact`, lastModified: '2026-02-07' },
     { url: `${baseUrl}/terms`, lastModified: '2026-06-15' },
     { url: `${baseUrl}/privacy`, lastModified: '2026-06-15' },
