@@ -1087,6 +1087,18 @@ export default defineSchema({
 
     /** Null until the address is confirmed; nothing is ever sent before then. */
     confirmedAt: v.optional(v.number()),
+    /**
+     * A month change requested by an unauthenticated POST, held here until the
+     * inbox owner clicks a fresh confirm link.
+     *
+     * Applying a change straight to `filingMonth` would let anyone who knows an
+     * address rewrite that person's subscription, resurrect an opt-out, or reset
+     * `notifiedAt` to trigger another send. Staging it means a hostile POST costs
+     * one confirmation email and changes nothing.
+     */
+    pendingFilingMonth: v.optional(v.string()),
+    /** Rate-limits confirmation sends so the endpoint cannot be used to mail-bomb. */
+    lastConfirmationSentAt: v.optional(v.number()),
     /** Set once the queue reached their month and we sent the one alert. */
     notifiedAt: v.optional(v.number()),
     /** Set when they opt out. Rows are kept so a later re-subscribe is honest. */

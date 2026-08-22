@@ -45,6 +45,23 @@ const log = createLogger("QueueAlerts");
  */
 const NOTIFY_BATCH_LIMIT = 40;
 
+/**
+ * Minimum gap between confirmation emails to one address.
+ *
+ * Without it, an unauthenticated endpoint that sends mail on demand is a
+ * mail-bombing tool pointed at any address the attacker chooses, and it drains
+ * the shared Resend quota that password resets depend on.
+ */
+const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
+
+/**
+ * One reply for every outcome on an existing address.
+ *
+ * Saying "you are already subscribed" would turn this into an oracle for
+ * checking whether a given person uses the service.
+ */
+const NEUTRAL_REPLY = "Check your inbox to confirm. The link expires when you use it.";
+
 const roleValidator = v.union(
   v.literal("attorney"),
   v.literal("applicant"),
@@ -120,25 +137,38 @@ export const subscribe = mutation({
       .withIndex("by_email", (q) => q.eq("email", email))
       .first();
 
+    const now = Date.now();
+
     if (existing) {
-      // Re-subscribing updates the month and clears a prior opt-out, so someone
-      // who filed a second case is not stuck with the first case's month.
-      await ctx.db.patch(existing._id, {
-        filingMonth: args.filingMonth,
-        role: args.role ?? existing.role,
-        unsubscribedAt: undefined,
-        notifiedAt: undefined,
-      });
-      if (existing.confirmedAt) {
-        return { ok: true, message: "Updated. We'll email you when DOL reaches that month." };
+      // This endpoint is unauthenticated, so the caller has proved nothing
+      // except that they can type an address. Writing straight to
+      // `filingMonth`, clearing `unsubscribedAt` or resetting `notifiedAt`
+      // here would let anyone who knows an address rewrite that person's
+      // subscription, resurrect an opt-out they are legally entitled to keep,
+      // and trigger another send. So the request is STAGED and applied only
+      // when someone with access to the inbox clicks confirm.
+      const withinCooldown =
+        existing.lastConfirmationSentAt !== undefined &&
+        now - existing.lastConfirmationSentAt < CONFIRMATION_COOLDOWN_MS;
+
+      if (withinCooldown) {
+        // Silently skip the send. Same reply either way, so the response can
+        // never be used to probe whether an address is on the list.
+        return { ok: true, message: NEUTRAL_REPLY };
       }
+
+      await ctx.db.patch(existing._id, {
+        pendingFilingMonth: args.filingMonth,
+        lastConfirmationSentAt: now,
+      });
     } else {
       await ctx.db.insert("dolQueueAlerts", {
         email,
         filingMonth: args.filingMonth,
         role: args.role,
-        createdAt: Date.now(),
+        createdAt: now,
         source: args.source,
+        lastConfirmationSentAt: now,
       });
     }
 
@@ -147,7 +177,7 @@ export const subscribe = mutation({
       filingMonth: args.filingMonth,
     });
 
-    return { ok: true, message: "Check your inbox to confirm. The link expires when you use it." };
+    return { ok: true, message: NEUTRAL_REPLY };
   },
 });
 
@@ -202,10 +232,19 @@ export const confirmByToken = internalMutation({
       .first();
     if (!row) return null;
 
-    if (!row.confirmedAt) {
-      await ctx.db.patch(row._id, { confirmedAt: Date.now(), unsubscribedAt: undefined });
-    }
-    return { email: row.email, filingMonth: row.filingMonth };
+    // Clicking confirm is the proof of inbox control, so this is the only
+    // place a staged month change, an opt-out reversal or a notify reset is
+    // allowed to take effect.
+    const filingMonth = row.pendingFilingMonth ?? row.filingMonth;
+    await ctx.db.patch(row._id, {
+      confirmedAt: row.confirmedAt ?? Date.now(),
+      filingMonth,
+      pendingFilingMonth: undefined,
+      unsubscribedAt: undefined,
+      ...(row.pendingFilingMonth ? { notifiedAt: undefined } : {}),
+    });
+
+    return { email: row.email, filingMonth };
   },
 });
 
