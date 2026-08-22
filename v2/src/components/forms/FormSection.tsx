@@ -46,7 +46,7 @@ export interface FormSectionProps {
  * - Status indicator (complete/incomplete/has-errors)
  * - Neobrutalist styling
  *
- * Note: No longer collapsible — outer CollapsibleSection handles collapse.
+ * Note: No longer collapsible, outer CollapsibleSection handles collapse.
  */
 export function FormSection({
   title,

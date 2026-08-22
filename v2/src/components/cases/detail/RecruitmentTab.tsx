@@ -398,7 +398,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                   <StatusTooltip color="amber" message="Based on current dates. Complete all recruitment activities for final dates." />
                 )}
                 {recruitmentComplete && (
-                  <StatusTooltip color="emerald" message="Recruitment complete — dates are final." />
+                  <StatusTooltip color="emerald" message="Recruitment complete. Dates are final." />
                 )}
               </div>
               <div className="fc-val mono">
@@ -414,7 +414,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                   <StatusTooltip color="amber" message="Based on current dates. Complete all recruitment activities for final dates." />
                 )}
                 {recruitmentComplete && recruitEndDate && (
-                  <StatusTooltip color="emerald" message="Recruitment complete — dates are final." />
+                  <StatusTooltip color="emerald" message="Recruitment complete. Dates are final." />
                 )}
               </div>
               <div className="fc-val mono">

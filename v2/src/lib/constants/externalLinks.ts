@@ -6,7 +6,7 @@
  *
  * These were previously hardcoded across Footer, the contact page, and the
  * settings Support section, and had drifted into placeholders that did not
- * resolve — a bare `https://github.com`, and `https://github.com/issues`,
+ * resolve, a bare `https://github.com`, and `https://github.com/issues`,
  * which is not a real page. Centralizing them means the repo can move again
  * without hunting call sites, and `GITHUB_REPO_URL` is the only line to edit.
  *

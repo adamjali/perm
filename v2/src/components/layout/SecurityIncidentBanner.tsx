@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Security Incident Banner — thin dismissible bar fixed to top of public pages.
+ * Security Incident Banner, thin dismissible bar fixed to top of public pages.
  *
  * Purpose: surface the April 19-20, 2026 signup-abuse incident to any visitor
  * who lands on the site (especially people Googling "permtracker.app phishing"

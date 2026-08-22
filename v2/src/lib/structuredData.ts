@@ -13,7 +13,7 @@ import { GITHUB_REPO_URL } from "@/lib/constants/externalLinks";
 /**
  * Single source for the schema.org `@id` fragments used to cross-link entities
  * in the root layout's `@graph`. Keep these in sync with the consumers in
- * src/app/layout.tsx — referencing this helper instead of inlining the
+ * src/app/layout.tsx, referencing this helper instead of inlining the
  * `${baseUrl}/#x` template literal everywhere prevents drift across files.
  */
 export const SCHEMA_IDS = {
@@ -140,7 +140,7 @@ export function getFAQPageSchema(faqs: { question: string; answer: string }[]) {
  * so the rating must only ship on `/`. The base SoftwareApplication schema
  * lives in the root layout's `@graph` and renders on every page; emitting
  * `aggregateRating` there would put a rating on /blog, /privacy, etc., where
- * no widget is visible — a policy violation that can suppress all rich
+ * no widget is visible, a policy violation that can suppress all rich
  * results for the domain.
  *
  * Pattern: emit a partial `SoftwareApplication` with the same `@id` as the

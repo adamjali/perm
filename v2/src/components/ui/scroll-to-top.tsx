@@ -11,7 +11,7 @@ import {
 import { ArrowUp } from "lucide-react";
 
 /**
- * ScrollToTop — neobrutalist square button, fixed bottom-right.
+ * ScrollToTop, neobrutalist square button, fixed bottom-right.
  *
  * All scroll-linked values use motion values (zero re-renders).
  * State only changes on visibility threshold crossing.

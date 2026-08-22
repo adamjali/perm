@@ -2,7 +2,7 @@
  * DemoBanner Component
  *
  * Portals into the <header> element so it's part of the same
- * fixed container — no positioning math, no scroll lag.
+ * fixed container, no positioning math, no scroll lag.
  */
 
 "use client";

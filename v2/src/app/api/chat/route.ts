@@ -54,7 +54,7 @@ function generateSessionId(): string {
 /**
  * Run the post-response summarization check. Returns a promise so the caller
  * can hand it to `after()`, which keeps the serverless invocation alive until
- * it settles. Never rejects — all errors are captured internally.
+ * it settles. Never rejects, all errors are captured internally.
  */
 async function triggerSummarizationCheck(
   conversationId: Id<"conversations">,

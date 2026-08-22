@@ -61,7 +61,7 @@ export function getPostBySlug(type: ContentType, slug: string): Post | null {
 
   // Warn about missing required frontmatter fields
   if (!data.title) console.warn(`[content] Missing title in ${type}/${slug}.mdx`);
-  if (!data.date) console.warn(`[content] Missing date in ${type}/${slug}.mdx — using today's date`);
+  if (!data.date) console.warn(`[content] Missing date in ${type}/${slug}.mdx, using today's date`);
   if (data.tags && !Array.isArray(data.tags)) console.warn(`[content] tags should be an array in ${type}/${slug}.mdx`);
 
   const meta: PostMeta = {

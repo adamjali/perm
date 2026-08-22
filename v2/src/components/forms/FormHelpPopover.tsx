@@ -73,7 +73,7 @@ export function FormHelpPanel() {
           <section>
             <SectionHeading>How This Form Works</SectionHeading>
             <p className="text-muted-foreground">
-              This form tracks dates through the four stages of the PERM labor certification process. Fill in dates as you get them — you don&rsquo;t need to complete everything at once.
+              This form tracks dates through the four stages of the PERM labor certification process. Fill in dates as you get them, you don&rsquo;t need to complete everything at once.
             </p>
             <ul className="mt-2 space-y-1 text-muted-foreground list-disc pl-4">
               <li>Sections unlock progressively as you enter prerequisite dates</li>
@@ -95,7 +95,7 @@ export function FormHelpPanel() {
               { field: "Expiration Date", desc: "Auto-calculated: determination + 1 year. All recruitment must complete before this date." },
               { field: "Wage Amount & Level", desc: "The prevailing wage amount and level (I–IV) from the determination" },
             ]} />
-            <Example>Enter the determination date first — it triggers the expiration auto-calculation and unlocks Recruitment.</Example>
+            <Example>Enter the determination date first, it triggers the expiration auto-calculation and unlocks Recruitment.</Example>
           </section>
 
           {/* Recruitment Section */}
@@ -114,7 +114,7 @@ export function FormHelpPanel() {
             <p className="text-muted-foreground">
               Check &ldquo;Professional Occupation&rdquo; if the position requires a Bachelor&rsquo;s degree or higher. You must then add 3+ additional recruitment methods (from 11 options: campus placement, job fairs, trade publications, employer website, etc.).
             </p>
-            <Example>Each method needs dates to count. Two methods is not enough — the section stays incomplete until you have three with valid dates.</Example>
+            <Example>Each method needs dates to count. Two methods is not enough, the section stays incomplete until you have three with valid dates.</Example>
           </section>
 
           {/* ETA 9089 Section */}
@@ -131,7 +131,7 @@ export function FormHelpPanel() {
             ]} />
             <h5 className="font-bold text-xs uppercase tracking-wider mt-3 mb-1">RFI (Request for Information)</h5>
             <p className="text-muted-foreground">
-              If DOL requests additional info, enter the received date — the system auto-calculates a strict 30-day due date. Missing an RFI deadline means case denial.
+              If DOL requests additional info, enter the received date, the system auto-calculates a strict 30-day due date. Missing an RFI deadline means case denial.
             </p>
           </section>
 
@@ -183,7 +183,7 @@ export function FormHelpPanel() {
           <section>
             <SectionHeading>Tips</SectionHeading>
             <ul className="space-y-1.5 text-muted-foreground list-disc pl-4">
-              <li>Enter the PWD determination date first — everything else depends on it</li>
+              <li>Enter the PWD determination date first, everything else depends on it</li>
               <li>The 30-day quiet period between recruitment and ETA 9089 filing is calculated automatically</li>
               <li>Filing window = 180 days from first recruitment activity (or PWD expiration, whichever is earlier)</li>
               <li>Use the progress bar at the top to see how far along the case is</li>

@@ -89,7 +89,7 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
         element: "[data-tour='deadline-hero']",
         title: "Deadline Command Center",
         description:
-          "Your most critical view — every deadline grouped by urgency. Overdue items surface first so nothing slips through the cracks.",
+          "Your most critical view, every deadline grouped by urgency. Overdue items surface first so nothing slips through the cracks.",
       },
       {
         element: "[data-tour='summary-tiles']",
@@ -107,7 +107,7 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
         element: "[data-tour='recent-activity']",
         title: "Activity Feed",
         description:
-          "Every change across all your cases — status updates, date edits, new notes — in real time.",
+          "Every change across all your cases, status updates, date edits, new notes, in real time.",
       },
     ],
   },
@@ -119,7 +119,7 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
         element: "[data-tour='cases-list']",
         title: "Your Case List",
         description:
-          "Every PERM case in one place. Sort by deadline, filter by stage, search by name — and click any case to see full details and edit dates.",
+          "Every PERM case in one place. Sort by deadline, filter by stage, search by name, and click any case to see full details and edit dates.",
       },
     ],
   },

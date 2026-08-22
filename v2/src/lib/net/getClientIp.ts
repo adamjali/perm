@@ -2,7 +2,7 @@
  * Trusted client-IP extraction.
  *
  * Single source of truth for resolving a request's client IP across route
- * handlers AND proxy.ts/middleware — both receive a Web `Request`, which is all
+ * handlers AND proxy.ts/middleware, both receive a Web `Request`, which is all
  * `ipAddress()` needs.
  *
  * @module lib/net/getClientIp
@@ -16,7 +16,7 @@ import { ipAddress } from '@vercel/functions';
  * On Vercel, the platform overwrites `x-forwarded-for` at its edge with the real
  * public client IP it observed (and rejects upstream-supplied values to prevent
  * spoofing). The official `@vercel/functions` `ipAddress()` helper reads those
- * Vercel-attested headers and is the version-stable way to get the IP — it
+ * Vercel-attested headers and is the version-stable way to get the IP, it
  * insulates us from header-name churn (Next.js 16 removed `request.ip`).
  *
  * Falls back to header parsing for local dev / non-Vercel runtimes only. Off

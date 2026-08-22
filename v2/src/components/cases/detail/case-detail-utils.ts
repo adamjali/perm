@@ -70,8 +70,8 @@ export interface WindowStatus {
 /**
  * Compute how far through a date window we are.
  *
- * @param startDate  ISO string — window opens
- * @param endDate    ISO string — window closes
+ * @param startDate  ISO string, window opens
+ * @param endDate    ISO string, window closes
  * @param options.filed  If true, show "Filed" chip at 100% (I-140 pattern)
  */
 export function computeWindowStatus(

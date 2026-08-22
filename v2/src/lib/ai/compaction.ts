@@ -5,12 +5,12 @@
  *
  * Levels (escalate until it fits):
  *   L0: no change
- *   L1: pruneMessages — strip old reasoning + tool call bodies (SDK-native, lossless for live tool state)
+ *   L1: pruneMessages, strip old reasoning + tool call bodies (SDK-native, lossless for live tool state)
  *   L2: [COMPACTED CONTEXT] envelope + last 10 messages (reasoning stripped via pruneMessages), prose cap 1000 tokens
  *   L3: envelope + last 6 messages (reasoning stripped), prose cap 400 tokens
  *   L4: envelope + last 4 messages (reasoning stripped), prose cap 200 tokens
  *
- * Entity facts (case IDs, dates, names, preferences) survive all levels unchanged —
+ * Entity facts (case IDs, dates, names, preferences) survive all levels unchanged, 
  * they ride in the envelope as structured JSON that accumulates across compaction cycles.
  */
 
@@ -25,7 +25,7 @@ import { z } from 'zod/v4';
  * and the shared `CompactionFactsSchema`.
  *
  * Note: this over-counts compared to actual tokenizer output (~30-50%) due to
- * JSON quote/brace overhead; that bias is intentional — better to skip a
+ * JSON quote/brace overhead; that bias is intentional, better to skip a
  * model that almost-fits than to send an oversized payload that 400s.
  */
 export const CHARS_PER_TOKEN = 3.5;
@@ -70,7 +70,7 @@ export interface CompactionFacts {
  * shapes) before merging. Accepts the legacy `cases: string[]` form and
  * normalizes each entry to the object shape so consumers don't need to branch.
  *
- * Exported as the SINGLE source of truth for the LLM-output facts contract —
+ * Exported as the SINGLE source of truth for the LLM-output facts contract, 
  * `summarize.ts` reuses it for structured extraction (no duplicate schema).
  */
 export const CompactionFactsSchema = z.object({
@@ -200,7 +200,7 @@ function buildEnvelope(
   const envelopeText =
     `[COMPACTED CONVERSATION CONTEXT]\n` +
     `The following is a summary of the earlier conversation. ` +
-    `Do NOT treat this as a user message — it is automated context.\n` +
+    `Do NOT treat this as a user message, it is automated context.\n` +
     factsBlock +
     proseBlock;
 
@@ -211,7 +211,7 @@ function buildEnvelope(
 }
 
 /**
- * Apply compaction at a specific level. Returns a new ModelMessage[] — does not mutate input.
+ * Apply compaction at a specific level. Returns a new ModelMessage[], does not mutate input.
  */
 export function compactAt(level: CompactionLevel, input: CompactionInput): ModelMessage[] {
   const { messages, summary } = input;

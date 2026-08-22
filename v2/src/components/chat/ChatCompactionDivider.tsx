@@ -5,15 +5,15 @@
  *
  * Editorial/scholarly marker inline in the chat thread at the point where
  * earlier messages have been archived into a summary + facts. Visible to the
- * user but unobtrusive — recedes when scanning, readable when reading.
+ * user but unobtrusive, recedes when scanning, readable when reading.
  *
  * Design:
  *   - Typography: `--font-heading` small-caps with 0.12em letter-spacing
  *     for the label; `--font-body` serif for prose; `--font-mono` for facts grid
  *   - Hairline rules (0.5px) flanking the centered label
- *   - Muted-foreground @ 65% opacity — present without shouting
+ *   - Muted-foreground @ 65% opacity, present without shouting
  *   - Chevron rotates 180° on expand, spring { stiffness: 600, damping: 30 }
- *   - Expand via CSS grid-template-rows 0fr → 1fr — no layout jank
+ *   - Expand via CSS grid-template-rows 0fr → 1fr, no layout jank
  *   - Full width at 375px, dark-mode tested
  *   - Zero decoration (no pulse, no glow)
  */
@@ -42,7 +42,7 @@ interface ChatCompactionDividerProps {
 /**
  * Normalize the facts prop to the canonical shape. Routes BOTH the JSON-string
  * form (Convex) and a pre-parsed object through the single canonical schema /
- * parser in compaction.ts — no second facts contract lives here.
+ * parser in compaction.ts, no second facts contract lives here.
  */
 function parseFacts(
   raw: string | CompactionFacts | null | undefined,

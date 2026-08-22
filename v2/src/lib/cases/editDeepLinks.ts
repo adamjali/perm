@@ -1,5 +1,5 @@
 /**
- * Edit Deep Links — maps case detail cards/timeline steps to edit form fields.
+ * Edit Deep Links, maps case detail cards/timeline steps to edit form fields.
  * Single source of truth for click-to-edit navigation.
  */
 

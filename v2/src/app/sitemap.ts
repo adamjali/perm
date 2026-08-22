@@ -19,7 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // upstream, etc.) would silently fall back to today's date for every URL —
     // teaching Google to ignore our lastmod values. Surface it to Sentry so an
     // empty-posts deploy can be triaged instead of shipping a misleading sitemap.
-    captureError(new Error('Sitemap built with zero content posts — content/ may be missing or all MDX parses failed'))
+    captureError(new Error('Sitemap built with zero content posts: content/ may be missing or all MDX parses failed'))
   }
   const latestPostDate = allPosts.length > 0
     ? allPosts.reduce((latest, post) => {

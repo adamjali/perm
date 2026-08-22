@@ -3,7 +3,7 @@ import { interpolate, useCurrentFrame, useVideoConfig, spring } from "remotion";
 /**
  * NeoBox - Neobrutalist card/container for Remotion compositions.
  * Matches the app's design: 0 border radius, 2px border, hard shadow.
- * All animation via useCurrentFrame — no CSS transitions.
+ * All animation via useCurrentFrame, no CSS transitions.
  */
 
 type NeoBoxProps = {

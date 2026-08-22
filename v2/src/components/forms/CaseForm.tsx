@@ -619,7 +619,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
             </div>
           </div>
           <p className="text-sm text-muted-foreground font-medium">
-            Track your PERM case dates below. Fill in what you have — save anytime and come back later.
+            Track your PERM case dates below. Fill in what you have, save anytime and come back later.
           </p>
         </div>
 

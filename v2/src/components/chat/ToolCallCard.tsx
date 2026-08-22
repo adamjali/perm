@@ -333,7 +333,7 @@ interface ToolCallListProps {
  * Automatically detects permission requests and renders InChatConfirmationCard.
  *
  * Confirmation state is always owned by `useToolOrchestrator` upstream and
- * flows in via props. This component is a pure presentation layer — it never
+ * flows in via props. This component is a pure presentation layer, it never
  * creates or mutates confirmation state, which prevents the duplicate-state
  * double-render bug where a local fallback hook would race with the
  * orchestrator's map.

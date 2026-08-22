@@ -110,7 +110,7 @@ export function generateVideoObjectSchema(
     "@context": "https://schema.org",
     "@type": "VideoObject" as const,
     name: alt,
-    description: `${alt} — from ${meta.title}`,
+    description: `${alt}, from ${meta.title}`,
     thumbnailUrl: meta.image ? `${BASE_URL}${meta.image}` : `${BASE_URL}/opengraph-image`,
     uploadDate: toISO8601(meta.date),
     contentUrl: `${BASE_URL}${src}`,
@@ -130,7 +130,7 @@ export function generateVideoObjectSchema(
  *
  * Each item carries `datePublished` and `dateModified` so Google has a date
  * signal for the listing's items (matches the pattern in `generateArticleSchema`
- * — `dateModified` falls back to `datePublished` when `meta.updated` is absent).
+ *, `dateModified` falls back to `datePublished` when `meta.updated` is absent).
  *
  * `urlFor` is an optional strategy for building each item's URL. Defaults to
  * `${BASE_URL}/${post.type}/${post.slug}` (the standard detail-route shape).

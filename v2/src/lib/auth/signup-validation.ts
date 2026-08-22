@@ -1,7 +1,7 @@
 /**
  * Field-level validation helpers for auth forms.
  *
- * Pure functions — no side effects, no state. Each returns a FieldValidation
+ * Pure functions, no side effects, no state. Each returns a FieldValidation
  * describing the current state for UI rendering + a `reason` code for
  * telemetry (so the field's error can be reported to PostHog without leaking
  * the field's contents).
@@ -27,7 +27,7 @@ export type FieldReason =
   | NameValidationFailure;
 
 /**
- * Discriminated union on `state` — `message`/`reason` exist iff the field is
+ * Discriminated union on `state`, `message`/`reason` exist iff the field is
  * `invalid`, so meaningless shapes (e.g. `{ state: "valid", reason }`) are
  * unrepresentable at compile time.
  */

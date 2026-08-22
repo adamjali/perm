@@ -61,7 +61,7 @@ export function ServiceWorkerRegistration(): null {
 
 /**
  * Clean up legacy sw-push.js registrations.
- * Just unregisters — push re-subscription is handled by repairPushSubscription.
+ * Just unregisters, push re-subscription is handled by repairPushSubscription.
  */
 async function cleanupLegacySW(): Promise<void> {
   try {

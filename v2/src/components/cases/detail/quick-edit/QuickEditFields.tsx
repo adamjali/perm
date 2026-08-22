@@ -302,7 +302,7 @@ export function QuickEditFields({
    * Handle field value change.
    * Updates form data immediately (for responsive UI). Triggers calculations
    * for valid dates AND for clears (to cascade-clear dependent fields).
-   * Skips calculations only for invalid input — avoids crashes on partial
+   * Skips calculations only for invalid input, avoids crashes on partial
    * year typing like "0002".
    */
   const handleFieldChange = useCallback((fieldName: string, value: string) => {
@@ -323,11 +323,11 @@ export function QuickEditFields({
         triggerCalculation(fieldName as keyof CaseFormData, value || undefined);
       } catch (e) {
         handleOperationError(e, {
-          userMessage: "Calculation error — use the full form.",
+          userMessage: "Calculation error. Use the full form.",
           context: { operation: "quickEditCalculation" },
           silent: true,
         });
-        setFieldErrors(prev => ({ ...prev, [fieldName]: "Calculation error — use the full form." }));
+        setFieldErrors(prev => ({ ...prev, [fieldName]: "Calculation error. Use the full form." }));
       }
     }
 

@@ -48,7 +48,7 @@ export default function RecentActivityCard({ activity }: RecentActivityCardProps
             {activity.employerName}
           </span>
           <span className="text-sm text-muted-foreground mono shrink-0 truncate max-w-[120px]" title={activity.caseNumber || undefined}>
-            {activity.caseNumber || "—"}
+            {activity.caseNumber || "-"}
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

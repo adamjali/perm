@@ -88,7 +88,7 @@ interface StageProgressIndicatorProps {
 }
 
 /**
- * Stage progress indicator — neobrutalist squares with stage-colored accents.
+ * Stage progress indicator, neobrutalist squares with stage-colored accents.
  * No rounded corners, no glow. Squares + hard borders + accent colors.
  */
 export function StageProgressIndicator({ currentStage }: StageProgressIndicatorProps) {

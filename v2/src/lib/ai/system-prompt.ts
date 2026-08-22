@@ -38,7 +38,7 @@ Use this table to understand user questions about case state:
 | pwd / filed | PWD submitted to DOL, awaiting determination |
 | recruitment / working | PWD determined, recruitment activities in progress |
 | recruitment / filed | Recruitment complete, in 30-day quiet period before filing window opens |
-| **eta9089 / working** | **Filing window is OPEN — case is ready to file ETA 9089** |
+| **eta9089 / working** | **Filing window is OPEN, case is ready to file ETA 9089** |
 | eta9089 / filed | ETA 9089 has been submitted to DOL, awaiting certification |
 | eta9089 / rfi_rfe | DOL issued an RFI on the ETA 9089 application |
 | i140 / working | ETA 9089 certified, preparing I-140 petition |
@@ -302,13 +302,13 @@ export function buildSystemPromptWithContext(context?: {
     contextLines.push('');
     contextLines.push('### Action Mode');
     if (context.actionMode === 'off') {
-      contextLines.push('- **OFF** — Read-only. Cannot create/update/delete. Tell user to enable actions.');
+      contextLines.push('- **OFF**: Read-only. Cannot create/update/delete. Tell user to enable actions.');
     } else if (context.actionMode === 'confirm') {
-      contextLines.push('- **CONFIRM** — Call action tools immediately with all info. A confirmation card appears for user to Approve/Cancel. Never ask "Should I proceed?" in text.');
+      contextLines.push('- **CONFIRM**: Call action tools immediately with all info. A confirmation card appears for user to Approve/Cancel. Never ask "Should I proceed?" in text.');
     } else if (context.actionMode === 'auto') {
-      contextLines.push('- **AUTO** — Execute immediately. Destructive actions still show confirmation.');
+      contextLines.push('- **AUTO**: Execute immediately. Destructive actions still show confirmation.');
     }
-    contextLines.push('- When `requiresPermission: true` is returned, a card appears — tell user to click Approve. Do NOT re-call the tool.');
+    contextLines.push('- When `requiresPermission: true` is returned, a card appears, tell user to click Approve. Do NOT re-call the tool.');
     contextLines.push('- If user types "yes" instead of clicking: redirect to the Approve button.');
   }
 

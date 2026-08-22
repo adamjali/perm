@@ -136,7 +136,7 @@ export default function PrintableChecklist({
 
     const doc = printWindow.document;
 
-    doc.title = `${title} — PERM Tracker`;
+    doc.title = `${title} | PERM Tracker`;
 
     const style = doc.createElement("style");
     style.textContent = [

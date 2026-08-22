@@ -302,7 +302,7 @@ export function FilingWindowIndicator({
             Opens
           </span>
           <p className="font-medium">
-            {window.opensOn ? formatDate(window.opensOn) : "—"}
+            {window.opensOn ? formatDate(window.opensOn) : "-"}
           </p>
         </div>
         <div>
@@ -310,7 +310,7 @@ export function FilingWindowIndicator({
             Closes
           </span>
           <p className="font-medium">
-            {window.closesOn ? formatDate(window.closesOn) : "—"}
+            {window.closesOn ? formatDate(window.closesOn) : "-"}
           </p>
         </div>
       </div>

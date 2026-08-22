@@ -344,12 +344,12 @@ function createCase5(): DemoCase {
 /**
  * Default demo cases representing all stages of the PERM process.
  *
- * Cases (Company — Beneficiary):
- * 1. Acme Corp (John Smith) — PWD stage, working
- * 2. Tech Solutions (Maria Garcia) — Recruitment stage, working (professional)
- * 3. Global Inc (Wei Chen) — ETA 9089 stage, filed
- * 4. Startup Labs (Raj Patel) — I-140 stage, filed (professional)
- * 5. Enterprise Co (Anna Kowalski) — Complete (approved)
+ * Cases (Company, Beneficiary):
+ * 1. Acme Corp (John Smith), PWD stage, working
+ * 2. Tech Solutions (Maria Garcia), Recruitment stage, working (professional)
+ * 3. Global Inc (Wei Chen), ETA 9089 stage, filed
+ * 4. Startup Labs (Raj Patel), I-140 stage, filed (professional)
+ * 5. Enterprise Co (Anna Kowalski), Complete (approved)
  */
 export const DEFAULT_DEMO_CASES: DemoCase[] = [
   createCase1(),

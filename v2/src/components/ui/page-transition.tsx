@@ -8,7 +8,7 @@
  * Respects prefers-reduced-motion.
  *
  * Note: AnimatePresence mode="wait" was removed because it causes intermittent
- * blank pages during client-side navigation — the exit animation races with
+ * blank pages during client-side navigation, the exit animation races with
  * Next.js App Router's Suspense streaming (loading.tsx → page swap).
  * Current behavior: enter-only animation (fade+slide-up). No exit animation
  * to avoid the Suspense race.

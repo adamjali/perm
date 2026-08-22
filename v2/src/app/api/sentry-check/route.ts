@@ -20,7 +20,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   }
 
   const timestamp = new Date().toISOString();
-  const testError = new Error("Sentry health check — this is a test event");
+  const testError = new Error("Sentry health check: this is a test event");
 
   const eventId = Sentry.captureException(testError, {
     tags: { "sentry-check": "true" },

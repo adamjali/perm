@@ -6,18 +6,18 @@
  *
  * Chain (April 2026):
  *
- *   Tier 1 — Google Gemini (primary, 1M context):
+ *   Tier 1, Google Gemini (primary, 1M context):
  *     1. Gemini 2.5 Flash (20 RPD free tier per model)
  *     2. Gemini 2.0 Flash (independent free-tier quota bucket)
  *
- *   Tier 2 — High-quota mid-size fallbacks (100k+ context):
+ *   Tier 2, High-quota mid-size fallbacks (100k+ context):
  *     3. Groq Llama 3.3 70B Versatile (30 RPM, 10k TPM free tier)
  *     4. Mistral Small (generous free tier, wrapped with tool-call-ID sanitizer)
  *
- *   Tier 3 — Free large-context emergency fallback:
+ *   Tier 3, Free large-context emergency fallback:
  *     5. GLM 4.5 Air via OpenRouter (131k context, verified reliable multi-turn tool calling)
  *
- * Cerebras llama3.1-8b is intentionally NOT in this chain — its 6k context budget
+ * Cerebras llama3.1-8b is intentionally NOT in this chain, its 6k context budget
  * cannot fit our tool definitions + system prompt. It IS exported for use by
  * `summarize.ts` for fast background entity extraction.
  *
@@ -62,7 +62,7 @@ function getApiKey(name: string): string {
   if (!value) {
     // Surface to Sentry at module load so missing env vars are an actionable
     // single issue at deploy time rather than a 401 storm during traffic.
-    const msg = `[AI Providers] Missing env var: ${name} — this provider will fail at runtime`;
+    const msg = `[AI Providers] Missing env var: ${name}, this provider will fail at runtime`;
     console.warn(msg);
     captureError(new Error(msg), {
       operation: 'ai.providers.missingEnvVar',
@@ -95,7 +95,7 @@ const openrouter = createOpenRouter({
 /**
  * Mistral requires tool_call_id to be exactly 9 alphanumeric characters.
  * Transforms any ID to exactly that shape deterministically so repeated calls
- * with the same input yield the same output — critical for matching tool-call
+ * with the same input yield the same output, critical for matching tool-call
  * parts with their tool-result parts in the same conversation.
  *
  * For IDs shorter than 9 chars, padding is seeded from a hash of the WHOLE
@@ -195,7 +195,7 @@ interface ModelConfig {
 /**
  * Estimate total input token count from call options.
  * Delegates to the shared estimator in compaction.ts; over-counts vs actual
- * model tokens by ~30-50% due to JSON overhead — biased toward skipping
+ * model tokens by ~30-50% due to JSON overhead, biased toward skipping
  * marginal models rather than sending oversized payloads.
  */
 function estimateInputTokens(options: LanguageModelV3CallOptions): number {
@@ -204,7 +204,7 @@ function estimateInputTokens(options: LanguageModelV3CallOptions): number {
 
 /**
  * Fallback chain (5 models). Each request tries from index 0.
- * No shared state between requests — every request gets a fresh attempt.
+ * No shared state between requests, every request gets a fresh attempt.
  *
  * maxInputTokens reflects the realistic usable budget including tools:
  *   - Groq free tier: 12k TPM total → cap at 10k
@@ -367,7 +367,7 @@ export class FallbackModel implements LanguageModelV3 {
 // =============================================================================
 
 /**
- * Report an UNRECOVERABLE mid-stream failure — an error that surfaced AFTER a
+ * Report an UNRECOVERABLE mid-stream failure, an error that surfaced AFTER a
  * provider's `doStream()` resolved (provider dropped the connection, 5xx
  * mid-generation, quota exhausted partway). These escape `FallbackModel`'s
  * connection-time retry loop entirely: no failover to the remaining models

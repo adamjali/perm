@@ -1280,7 +1280,7 @@ export function DemoCaseModal({
                 Auto-Cascade in Action
               </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                Try entering a PWD Determination Date — the Expiration Date
+                Try entering a PWD Determination Date, the Expiration Date
                 fills in automatically. This cascade works for NOF, Job Order,
                 ETA 9089, and RFI dates too.
               </p>

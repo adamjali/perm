@@ -1,5 +1,5 @@
 /**
- * JsonLdScript — server-side JSON-LD <script> emitter.
+ * JsonLdScript, server-side JSON-LD <script> emitter.
  *
  * Centralizes the JSON-LD <script type="application/ld+json"> emission for
  * schema.org structured data. The site ships several of these (FAQPage on

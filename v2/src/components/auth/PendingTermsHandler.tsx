@@ -8,7 +8,7 @@
  * The reactive query re-fires once the profile is created.
  *
  * Terms acceptance is now handled automatically at profile creation time via
- * buildDefaultProfile() in convex/lib/userDefaults.ts — no explicit consent
+ * buildDefaultProfile() in convex/lib/userDefaults.ts, no explicit consent
  * step is needed. Passive consent text on signup/login pages provides notice.
  *
  * Must be rendered inside a ConvexProvider with authenticated user.

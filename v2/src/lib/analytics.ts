@@ -30,7 +30,7 @@ function capture(
 
 /**
  * Safely identify a user in PostHog. Never throws.
- * Idempotent — safe to call multiple times.
+ * Idempotent, safe to call multiple times.
  */
 function identify(
   distinctId: string,

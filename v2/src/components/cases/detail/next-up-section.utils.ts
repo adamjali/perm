@@ -396,7 +396,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
   if (!caseData.eta9089FilingDate) {
     return {
       action: "File ETA 9089",
-      description: "Filing window is open — submit labor certification",
+      description: "Filing window is open: submit labor certification",
       icon: createElement(FileCheck, { className: "h-5 w-5" }),
       urgency: "soon",
     };
@@ -433,7 +433,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
   if (caseData.i140ApprovalDate) {
     return {
       action: "Case Complete",
-      description: "I-140 approved — PERM process complete!",
+      description: "I-140 approved. PERM process complete.",
       icon: createElement(CheckCircle2, { className: "h-5 w-5" }),
       urgency: "normal",
     };

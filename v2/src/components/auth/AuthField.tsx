@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AuthField — label + input + inline state feedback for auth forms.
+ * AuthField, label + input + inline state feedback for auth forms.
  *
  * Wraps the existing neo-brutalist `Input` / `PasswordInput` with:
  *   - Mono uppercase label (matches signup/login/reset pattern)
@@ -12,7 +12,7 @@
  * Visual language stays consistent with the existing case form aesthetic:
  * 2px borders, hard shadows, mono labels, snappy transitions.
  *
- * Consumer owns validation — this component only renders the state.
+ * Consumer owns validation, this component only renders the state.
  */
 
 import { CheckCircle2, AlertCircle } from "lucide-react";

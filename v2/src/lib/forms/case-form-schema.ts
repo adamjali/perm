@@ -672,7 +672,7 @@ export function getFieldLabel(fieldPath: string): string {
 /**
  * Strip empty recruitment method slots before validation.
  * Only removes entries with NO method type selected (empty dropdown slots).
- * Entries with a method selected but missing dates are kept — validation
+ * Entries with a method selected but missing dates are kept, validation
  * handles those with proper required-field errors.
  */
 export function stripIncompleteRecruitmentEntries(data: CaseFormData): CaseFormData {

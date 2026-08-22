@@ -1,5 +1,5 @@
 /**
- * Document management — frontend re-exports.
+ * Document management, frontend re-exports.
  *
  * Canonical source: convex/lib/documents.ts
  */

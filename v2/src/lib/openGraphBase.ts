@@ -7,7 +7,7 @@ import { SOCIAL_CARD_SIZE, SOCIAL_CARD_CONTENT_TYPE } from "./socialCard";
  *
  * Why this exists: Next.js 16 metadata is shallowly merged. When a page exports
  * its own `openGraph` object, Next.js REPLACES the layout's `openGraph` entirely
- * — `siteName`, `locale`, `type`, `images` are all dropped from the rendered
+ *, `siteName`, `locale`, `type`, `images` are all dropped from the rendered
  * <head> unless re-specified.
  * (https://nextjs.org/docs/app/api-reference/functions/generate-metadata#merging)
  *
@@ -22,7 +22,7 @@ import { SOCIAL_CARD_SIZE, SOCIAL_CARD_CONTENT_TYPE } from "./socialCard";
  * literal against `Metadata['openGraph']` at definition time (catches typos
  * like a misspelled `type` value), and (b) keep the object non-`readonly` so
  * consumers can spread + override its fields cleanly. The article-type override
- * in `createContentDetailPage.tsx` works fine either way — TypeScript widens
+ * in `createContentDetailPage.tsx` works fine either way, TypeScript widens
  * `type` through the spread regardless.
  *
  * Image paths are relative to `metadataBase` (set in `src/app/layout.tsx`), so

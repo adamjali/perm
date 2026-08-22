@@ -12,9 +12,9 @@
  *
  * Urgency colors:
  * - overdue:  #991B1B (dark red)
- * - urgent:   #DC2626 (red)      — 0-7 days
- * - upcoming: #F97316 (orange)   — 8-14 days
- * - later:    #2563EB (blue)     — 15+ days
+ * - urgent:   #DC2626 (red), 0-7 days
+ * - upcoming: #F97316 (orange), 8-14 days
+ * - later:    #2563EB (blue), 15+ days
  */
 
 import { Text, Section, Link } from "@react-email/components";

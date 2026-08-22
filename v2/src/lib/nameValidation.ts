@@ -1,5 +1,5 @@
 /**
- * Client-side name validation — re-export of the canonical server module.
+ * Client-side name validation, re-export of the canonical server module.
  *
  * Previously this file hand-mirrored every regex + `checkUserName` from
  * `convex/lib/nameValidation.ts`, which had to stay in lockstep by hand and
@@ -8,7 +8,7 @@
  * the authoritative server check. The canonical module is dependency-free
  * (pure regex/string logic), so it bundles safely on the client.
  *
- * @see convex/lib/nameValidation.ts — canonical source of truth
+ * @see convex/lib/nameValidation.ts, canonical source of truth
  * @module src/lib/nameValidation
  */
 

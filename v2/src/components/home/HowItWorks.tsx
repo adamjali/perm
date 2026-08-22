@@ -248,7 +248,7 @@ export function HowItWorks() {
               See How It Works in 20 Seconds
             </h3>
             <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
-              From case creation to deadline tracking — watch the entire PERM workflow.
+              From case creation to deadline tracking, watch the entire PERM workflow.
             </p>
           </div>
           {/* Product demo + Create case — side by side */}

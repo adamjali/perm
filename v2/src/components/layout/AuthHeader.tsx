@@ -193,7 +193,7 @@ export default function AuthHeader() {
                     behind a `{isLearnOpen &&}` conditional) so Googlebot sees
                     them in the initial SSR HTML, a documented sitelinks input.
                     The `"use client"` directive at the top of this file does
-                    NOT prevent SSR — Next.js still renders client components
+                    NOT prevent SSR, Next.js still renders client components
                     to HTML on the initial server response, which is what
                     Googlebot's first fetch sees before any JS runs.
 
@@ -207,7 +207,7 @@ export default function AuthHeader() {
                         a11y tree automatically without needing this attribute.
                       - `invisible pointer-events-none opacity-0` for visual.
 
-                    DO NOT revert to conditional render — that breaks SEO. */}
+                    DO NOT revert to conditional render, that breaks SEO. */}
                 <div ref={learnRef} className="relative">
                   <button
                     type="button"
@@ -351,7 +351,7 @@ export default function AuthHeader() {
           desktop Learn dropdown above. Reason: the desktop nav already SSR-
           renders all five CONTENT_NAV_LINKS visibly to Googlebot in the same
           HTML response, so the SEO sitelinks contract is satisfied at the page
-          level. Mobile is purely a viewport-specific UX surface — no Googlebot-
+          level. Mobile is purely a viewport-specific UX surface, no Googlebot-
           facing implication of mounting it lazily. */}
       {isMobileMenuOpen && (
         <div className="absolute left-0 right-0 top-full border-b-3 border-white/20 bg-black px-4 py-4 sm:hidden">

@@ -80,7 +80,7 @@ export default convexAuthNextjsMiddleware(
         // would be too noisy during any Convex outage.
         addBreadcrumb({
           category: "middleware.rate_limit",
-          message: "ip_auth check failed — falling open",
+          message: "ip_auth check failed, falling open",
           level: "warning",
           data: { error: error instanceof Error ? error.message : String(error) },
         });

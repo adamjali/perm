@@ -11,7 +11,7 @@ import { toast } from "@/lib/toast";
  * Shown on authenticated pages when a user's weekly summary was auto-paused after
  * a spell of inactivity (set by the reengagement cron). Lets them turn it back on
  * or acknowledge the pause. Both actions clear the server-side paused marker, so
- * the banner disappears on its own — no sessionStorage needed.
+ * the banner disappears on its own, no sessionStorage needed.
  *
  * Sits below the deletion/security banners. Neutral tone (not a warning) with a
  * brand-green primary action.
@@ -58,7 +58,7 @@ export default function ReengagementBanner() {
               Your weekly summary is paused.
             </span>{" "}
             <span className="hidden sm:inline">
-              We stopped it while you were away — your deadline reminders kept coming.
+              We stopped it while you were away, your deadline reminders kept coming.
             </span>
           </p>
         </div>

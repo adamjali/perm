@@ -154,9 +154,9 @@ export function getRecruitmentFieldDeadline(
     const sundayNote = config.isSunday ? ' (Sunday)' : '';
     const reasons = fieldReasons[field];
     if (limitingFactor === 'recruitment' && reasons) {
-      hint = `By ${formatDateForDisplay(maxDate)}${sundayNote} — ${reasons.recruitment}`;
+      hint = `By ${formatDateForDisplay(maxDate)}${sundayNote}, ${reasons.recruitment}`;
     } else if (limitingFactor === 'pwd' && reasons) {
-      hint = `By ${formatDateForDisplay(maxDate)}${sundayNote} — ${reasons.pwd}`;
+      hint = `By ${formatDateForDisplay(maxDate)}${sundayNote}, ${reasons.pwd}`;
     }
   }
 
@@ -233,8 +233,8 @@ function getNofStartDeadline(
     }
 
     const hint = limitingFactor === 'recruitment'
-      ? `By ${formatDateForDisplay(maxDate)} — must be posted 10 business days before recruitment deadline`
-      : `By ${formatDateForDisplay(maxDate)} — must be posted 10 business days before PWD-limited deadline`;
+      ? `By ${formatDateForDisplay(maxDate)}, must be posted 10 business days before recruitment deadline`
+      : `By ${formatDateForDisplay(maxDate)}, must be posted 10 business days before PWD-limited deadline`;
 
     return { maxDate, limitingFactor, hint };
   } catch (error) {
@@ -460,7 +460,7 @@ export function getMethodDateConstraints(
 /**
  * Calculate the relaxed deadline for the "special" additional method.
  * Per 20 CFR 656.17(e)(1)(ii), this method may complete during the quiet period.
- * Max = min(first+180, pwd) — no 30-day buffer needed.
+ * Max = min(first+180, pwd), no 30-day buffer needed.
  */
 function getSpecialMethodDeadline(
   firstRecruitmentDate: string | undefined,
@@ -498,9 +498,9 @@ function getSpecialMethodDeadline(
   let hint = '';
   if (maxDate) {
     if (limitingFactor === 'recruitment') {
-      hint = `By ${formatDateForDisplay(maxDate)} — may complete during the 30-day quiet period`;
+      hint = `By ${formatDateForDisplay(maxDate)}, may complete during the 30-day quiet period`;
     } else if (limitingFactor === 'pwd') {
-      hint = `By ${formatDateForDisplay(maxDate)} — may complete up to PWD expiration`;
+      hint = `By ${formatDateForDisplay(maxDate)}, may complete up to PWD expiration`;
     }
   }
 

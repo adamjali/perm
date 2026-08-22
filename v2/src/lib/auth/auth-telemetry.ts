@@ -10,7 +10,7 @@
  * 2. Service-level failures (network, 5xx from Cloudflare siteverify,
  *    unexpected Convex Auth errors) → Sentry (via captureError) + breadcrumb.
  *
- * Payloads never contain user input (email, name, password) — only
+ * Payloads never contain user input (email, name, password), only
  * structural reasons ("INVALID_FORMAT", "TOO_SHORT", etc.).
  */
 
@@ -67,7 +67,7 @@ export function trackPasswordResetCompleted(): void {
 
 /**
  * Track an abuse-related event (rate limit trip, account suspension, blocklist
- * add, etc). PostHog only — NOT Sentry, to avoid alert fatigue from normal
+ * add, etc). PostHog only, NOT Sentry, to avoid alert fatigue from normal
  * user errors. Use for product-abuse-pattern observability.
  */
 export function trackAbuseEvent(

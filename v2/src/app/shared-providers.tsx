@@ -7,7 +7,7 @@ import { NavLinkProvider } from "@/components/ui/nav-link";
 
 /**
  * Lightweight providers for ALL pages (public + authenticated).
- * Does NOT include Convex, auth, or AI context — those are in ConvexProviders.
+ * Does NOT include Convex, auth, or AI context, those are in ConvexProviders.
  */
 export function SharedProviders({ children }: { children: ReactNode }) {
   return (

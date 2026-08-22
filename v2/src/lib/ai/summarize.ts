@@ -2,13 +2,13 @@
  * Conversation Summarization Module
  *
  * Two-phase background pipeline:
- *   Phase 1 — Entity extraction (Cerebras llama3.1-8b, ~200ms):
+ *   Phase 1, Entity extraction (Cerebras llama3.1-8b, ~200ms):
  *     Extracts structured facts (cases, people, dates, preferences, openActions)
  *     as JSON. Merged losslessly with existing facts. Survives unlimited compactions.
  *
- *   Phase 2 — Prose summary (Mistral Small, fallback: Groq 70B):
+ *   Phase 2, Prose summary (Mistral Small, fallback: Groq 70B):
  *     Generates a single replacement prose summary bounded at ~1000 tokens.
- *     Never stacks — each cycle replaces the prior prose summary.
+ *     Never stacks, each cycle replaces the prior prose summary.
  *
  * Race protection: atomic beginSummarizing/finishSummarizing lock with 60s TTL.
  * Non-blocking: errors never propagate to the chat flow; the conversation still works.
@@ -116,7 +116,7 @@ function formatMessagesForSummary(
 }
 
 /**
- * Phase 1 — extract structured facts from messages. Non-throwing.
+ * Phase 1, extract structured facts from messages. Non-throwing.
  * Returns undefined on any failure (prose-only summary still works).
  */
 async function extractEntities(
@@ -143,7 +143,7 @@ async function extractEntities(
 }
 
 /**
- * Phase 2 — generate a prose summary with Mistral, falling back to Groq on failure.
+ * Phase 2, generate a prose summary with Mistral, falling back to Groq on failure.
  * Returns null on double failure (caller logs and skips saving).
  */
 async function generateProseSummary(
@@ -194,11 +194,11 @@ async function generateProseSummary(
  * Summarize a conversation's history.
  *
  * Two-phase:
- *   1. Entity extraction (Cerebras) — merged with existing facts
- *   2. Prose summary (Mistral → Groq fallback) — replaces existing prose
+ *   1. Entity extraction (Cerebras), merged with existing facts
+ *   2. Prose summary (Mistral → Groq fallback), replaces existing prose
  *
  * Atomic lock via beginSummarizing prevents concurrent summarization of the
- * same conversation. Errors never propagate — chat flow is always preserved.
+ * same conversation. Errors never propagate, chat flow is always preserved.
  *
  * @param conversationId - The conversation to summarize
  * @param token - Auth token for Convex API calls
@@ -227,7 +227,7 @@ export async function summarizeConversation(
 
   if (!locked) {
     console.log(
-      `[Summarization] Skipped — another process holds the lock for ${conversationId}`,
+      `[Summarization] Skipped, another process holds the lock for ${conversationId}`,
     );
     return;
   }
@@ -256,7 +256,7 @@ export async function summarizeConversation(
       );
 
     if (messages.length === 0) {
-      console.log(`[Summarization] No messages to summarize — releasing lock`);
+      console.log(`[Summarization] No messages to summarize, releasing lock`);
       await releaseLock();
       return;
     }
@@ -278,7 +278,7 @@ export async function summarizeConversation(
     if (proseText === null) {
       // Both prose models failed — release lock without saving.
       console.error(
-        `[Summarization] All prose models failed — releasing lock without updating`,
+        `[Summarization] All prose models failed, releasing lock without updating`,
       );
       await releaseLock();
       return;

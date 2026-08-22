@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * Security dashboard client — 4-tab view for abuse monitoring.
+ * Security dashboard client, 4-tab view for abuse monitoring.
  *
  * Tabs:
- *   Events       — live event stream (rate-limit strikes, system errors)
- *   Blocked IPs  — active abuseBlocklist entries + manual override
- *   Flagged Users — suspended user profiles + unsuspend action
- *   Settings     — thresholds + admin notification prefs (read-only for now)
+ *   Events, live event stream (rate-limit strikes, system errors)
+ *   Blocked IPs, active abuseBlocklist entries + manual override
+ *   Flagged Users, suspended user profiles + unsuspend action
+ *   Settings, thresholds + admin notification prefs (read-only for now)
  *
  * Neo-brutalist + "ops console" aesthetic: dark mono tables, amber/red
  * alert accents, 2px borders, hard shadows matching the rest of admin.
@@ -62,7 +62,7 @@ export default function SecurityDashboardClient() {
           <CardContent className="py-12 text-center">
             <Shield className="mx-auto h-12 w-12 text-destructive" />
             <p className="mono mt-4 font-bold uppercase tracking-widest">
-              Access denied — admin only
+              Access denied, admin only
             </p>
           </CardContent>
         </Card>
@@ -173,7 +173,7 @@ function SummaryCards({ summary }: { summary?: SummaryShape }) {
                 <Icon className="h-4 w-4 opacity-60" aria-hidden />
               </div>
               <p className="font-heading text-3xl font-black">
-                {typeof c.value === "number" ? c.value.toLocaleString() : "—"}
+                {typeof c.value === "number" ? c.value.toLocaleString() : "-"}
               </p>
             </CardContent>
           </Card>
@@ -197,7 +197,7 @@ function actorFor(event: SecurityEvent): string {
     case "rate_limit":
       return event.actor;
     default:
-      return "—";
+      return "-";
   }
 }
 
@@ -487,15 +487,15 @@ function FlaggedUsersTab() {
           <tbody className="mono">
             {flagged.map((u) => (
               <tr key={u.profileId} className="border-b border-border bg-destructive/5">
-                <td className="px-3 py-2 text-xs">{u.email ?? "—"}</td>
+                <td className="px-3 py-2 text-xs">{u.email ?? "-"}</td>
                 <td className="px-3 py-2 text-xs">
-                  {u.suspendedAt ? new Date(u.suspendedAt).toLocaleString() : "—"}
+                  {u.suspendedAt ? new Date(u.suspendedAt).toLocaleString() : "-"}
                 </td>
                 <td className="px-3 py-2 text-xs">
-                  {u.suspendedUntil ? new Date(u.suspendedUntil).toLocaleString() : "—"}
+                  {u.suspendedUntil ? new Date(u.suspendedUntil).toLocaleString() : "-"}
                 </td>
                 <td className="px-3 py-2 text-xs text-muted-foreground">
-                  {u.suspendedReason ?? "—"}
+                  {u.suspendedReason ?? "-"}
                 </td>
                 <td className="px-3 py-2 text-right">
                   <Button
@@ -526,16 +526,16 @@ function FlaggedUsersTab() {
 
 function SettingsTab() {
   const rows = [
-    ["/api/auth POST — per-IP", "500/hr"],
-    ["/api/chat POST — per-IP", "120/min"],
+    ["/api/auth POST, per-IP", "500/hr"],
+    ["/api/chat POST, per-IP", "120/min"],
     ["Auto-block after", "3 rate-limit rejections in 15 minutes"],
     ["Auto-block duration", "24 hours"],
-    ["Per-email — login", "20 per 15 min"],
-    ["Per-email — OTP verify", "10 per 15 min"],
-    ["Per-email — password reset", "5 per hour"],
-    ["Per-user — queryCases (chat tool)", "not rate-limited (auto-cached query)"],
-    ["Per-user — cases.create / .update", "60/min/user (burst 10)"],
-    ["Per-user — knowledge.searchKnowledge", "20/min/user (burst 5)"],
+    ["Per-email, login", "20 per 15 min"],
+    ["Per-email, OTP verify", "10 per 15 min"],
+    ["Per-email, password reset", "5 per hour"],
+    ["Per-user, queryCases (chat tool)", "not rate-limited (auto-cached query)"],
+    ["Per-user, cases.create / .update", "60/min/user (burst 10)"],
+    ["Per-user, knowledge.searchKnowledge", "20/min/user (burst 5)"],
   ];
   return (
     <Card className="border-2 shadow-hard">

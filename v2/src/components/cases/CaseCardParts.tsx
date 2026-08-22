@@ -160,7 +160,7 @@ export function CaseBadges({
         <Badge
           variant="outline"
           className="text-[0.625rem] px-2 py-0.5 border-2 border-dashed border-muted-foreground/50 bg-muted text-muted-foreground font-bold tracking-wider"
-          title="Sample case — delete anytime"
+          title="Sample case. Delete anytime"
         >
           SAMPLE
         </Badge>

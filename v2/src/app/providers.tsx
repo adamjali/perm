@@ -76,7 +76,7 @@ function BeforeUnloadSuppressor({ children }: { children: ReactNode }) {
 }
 
 /**
- * Convex + Auth providers — only used in auth/authenticated layouts.
+ * Convex + Auth providers, only used in auth/authenticated layouts.
  * Public pages skip this entirely, avoiding Convex WebSocket + auth overhead.
  */
 export function ConvexProviders({ children }: { children: ReactNode }) {

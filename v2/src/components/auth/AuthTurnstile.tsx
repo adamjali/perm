@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Cloudflare Turnstile widget — reusable across auth surfaces.
+ * Cloudflare Turnstile widget, reusable across auth surfaces.
  *
  * Deployed April 2026 after the signup-spam attack that used our verified
  * sender reputation to relay phishing. Runs alongside server-side name

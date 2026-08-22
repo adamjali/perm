@@ -1,7 +1,7 @@
 /**
  * Factory for content detail pages (blog, tutorials, guides, resources).
  *
- * Each content type's [slug]/page.tsx was nearly identical — same imports,
+ * Each content type's [slug]/page.tsx was nearly identical, same imports,
  * same generateStaticParams, same generateMetadata, same render.
  * This factory produces all three exports from a single content type string.
  */

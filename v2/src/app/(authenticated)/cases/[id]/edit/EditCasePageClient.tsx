@@ -424,9 +424,9 @@ export function EditCasePageClient() {
           <h1 className="font-heading text-3xl font-bold tracking-tight truncate" title={`Edit Case: ${caseData.employerName} - ${caseData.positionTitle}`}>
             Edit Case: {caseData.employerName}
           </h1>
-          <p className="text-muted-foreground mt-1 truncate" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? ` — ${caseData.beneficiaryIdentifier}` : ""}`}>
+          <p className="text-muted-foreground mt-1 truncate" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
             {caseData.positionTitle}
-            {caseData.beneficiaryIdentifier && <> — {caseData.beneficiaryIdentifier}</>}
+            {caseData.beneficiaryIdentifier && <>, {caseData.beneficiaryIdentifier}</>}
           </p>
           <p className="text-muted-foreground text-sm mt-1">
             Update case details below. All changes will be saved to your account.

@@ -4,7 +4,7 @@
  * VideoFigure
  *
  * Neobrutalist-styled video display for MDX articles.
- * The video equivalent of ScreenshotFigure — same animation,
+ * The video equivalent of ScreenshotFigure, same animation,
  * step badges, captions, and Lightbox click-to-expand.
  * IntersectionObserver controls autoplay (play when visible, pause when not).
  */

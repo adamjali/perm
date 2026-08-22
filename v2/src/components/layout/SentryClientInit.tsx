@@ -7,7 +7,7 @@ let sentryInitialized = false;
 
 /**
  * Lazily initializes Sentry client SDK.
- * Only loaded in auth/authenticated layouts — public pages get zero Sentry JS.
+ * Only loaded in auth/authenticated layouts, public pages get zero Sentry JS.
  *
  * Also installs a global handler for stale deployment errors
  * (UnrecognizedActionError) to prompt users to refresh.

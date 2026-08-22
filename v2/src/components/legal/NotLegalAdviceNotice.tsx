@@ -2,8 +2,8 @@
  * NotLegalAdviceNotice
  *
  * A quiet, persistent "not legal advice / not a law firm" footnote.
- * Designed to read as an understated, reassuring footnote — muted secondary
- * text with a small info icon — not an alarming warning banner.
+ * Designed to read as an understated, reassuring footnote, muted secondary
+ * text with a small info icon, not an alarming warning banner.
  *
  * Two contexts via the `variant` prop:
  *  - "chat":     compact single line for the AI assistant surface (narrow panel).
@@ -12,7 +12,7 @@
  * Neobrutalist tokens: muted-foreground text, hard top border separator,
  * font-mono on the deadline variant to match adjacent metadata rows.
  * Animation (when enabled) uses the project's snappy springConfig and is
- * gated on useReducedMotion() — no pulse/glow.
+ * gated on useReducedMotion(), no pulse/glow.
  */
 
 "use client";
@@ -30,9 +30,9 @@ export interface NotLegalAdviceNoticeProps {
 }
 
 const COPY: Record<NotLegalAdviceNoticeProps["variant"], string> = {
-  chat: "AI-generated information — not legal advice. PERM Tracker is not a law firm; verify with a licensed attorney.",
+  chat: "AI-generated information, not legal advice. PERM Tracker is not a law firm; verify with a licensed attorney.",
   deadline:
-    "Calculated estimate — verify all dates with official DOL/USCIS sources and a licensed attorney.",
+    "Calculated estimate, verify all dates with official DOL/USCIS sources and a licensed attorney.",
 };
 
 export function NotLegalAdviceNotice({

@@ -4,7 +4,7 @@
  * Global Error Boundary
  *
  * Catches unhandled errors in the root layout and all pages.
- * This is the last line of defense — it even catches errors
+ * This is the last line of defense, it even catches errors
  * that the per-route error.tsx boundaries miss.
  *
  * @see https://nextjs.org/docs/app/building-your-application/routing/error-handling#handling-global-errors

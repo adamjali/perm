@@ -1,5 +1,5 @@
 /**
- * Admin security dashboard — top-level route.
+ * Admin security dashboard, top-level route.
  *
  * Gated by the same admin middleware as /admin (see src/lib/admin/adminAuth).
  */

@@ -649,10 +649,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   </span>
                 )}
               </div>
-              <p className="font-heading text-[0.85rem] text-muted-foreground font-medium mt-0.5" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? ` — ${caseData.beneficiaryIdentifier}` : ""}`}>
+              <p className="font-heading text-[0.85rem] text-muted-foreground font-medium mt-0.5" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
                 {caseData.positionTitle}
                 {caseData.beneficiaryIdentifier && (
-                  <span className="font-mono text-[0.72rem] opacity-60"> — {caseData.beneficiaryIdentifier}</span>
+                  <span className="font-mono text-[0.72rem] opacity-60">, {caseData.beneficiaryIdentifier}</span>
                 )}
               </p>
             </div>

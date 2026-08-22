@@ -745,7 +745,7 @@ export function ImportModal({
                                     title={caseData?.employerName}
                                   >
                                     {caseData?.employerName || (
-                                      <span className="text-muted-foreground italic">—</span>
+                                      <span className="text-muted-foreground italic">-</span>
                                     )}
                                   </td>
                                   <td
@@ -762,7 +762,7 @@ export function ImportModal({
                                     ) : caseData?.beneficiaryIdentifier ? (
                                       caseData.beneficiaryIdentifier
                                     ) : (
-                                      <span className="text-muted-foreground italic">—</span>
+                                      <span className="text-muted-foreground italic">-</span>
                                     )}
                                   </td>
                                   <td className="px-3 py-3 text-sm">
@@ -774,7 +774,7 @@ export function ImportModal({
                                         )}
                                       </div>
                                     ) : (
-                                      <span className="text-muted-foreground italic">—</span>
+                                      <span className="text-muted-foreground italic">-</span>
                                     )}
                                   </td>
                                   <td className="px-3 py-3 text-sm">
@@ -787,7 +787,7 @@ export function ImportModal({
                                               String((caseData as Record<string, unknown>)?.pwdFilingDate || "")}
                                           </span>
                                         ) : (
-                                          <span className="text-muted-foreground italic">—</span>
+                                          <span className="text-muted-foreground italic">-</span>
                                         )}
                                       </span>
                                       {!isError && !isEditing && (

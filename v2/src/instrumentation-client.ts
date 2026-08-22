@@ -1,11 +1,11 @@
 /**
- * Next.js client-side instrumentation — runs once, before the app hydrates.
+ * Next.js client-side instrumentation, runs once, before the app hydrates.
  *
  * Next.js loads exactly ONE `instrumentation-client` file, and because this app
  * lives under `src/`, it must be THIS file (`src/instrumentation-client.ts`);
  * a root-level `instrumentation-client.ts` is silently ignored. Both PostHog
  * and Vercel BotID need to initialize here, so they live together in this one
- * file. (Splitting them across two files drops whichever one isn't here — that
+ * file. (Splitting them across two files drops whichever one isn't here, that
  * is exactly the regression that took PostHog analytics offline once BotID
  * added its own `src/instrumentation-client.ts`.)
  *

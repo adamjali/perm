@@ -5,7 +5,7 @@
  * (API routes, Server Actions, etc.).
  *
  * Configured with flushAt=1 and flushInterval=0 so events are sent
- * immediately — required for short-lived Next.js server functions.
+ * immediately, required for short-lived Next.js server functions.
  *
  * Returns null if NEXT_PUBLIC_POSTHOG_KEY is not set, so callers should
  * use optional chaining: getPostHogClient()?.capture(...)
