@@ -47,7 +47,7 @@ export function WelcomeEmail({
           Good Morning, {userName}!
         </Text>
         <Text className="em-text-body" style={styles.bodyText}>
-          Welcome to PERM Tracker &mdash; we&apos;re glad you&apos;re here!
+          Welcome to PERM Tracker. We&apos;re glad you&apos;re here.
         </Text>
         <Text className="em-text-body" style={styles.bodyText}>
           PERM Tracker helps you manage and monitor your cases in one place.
@@ -171,7 +171,7 @@ export function WelcomeEmail({
           >
             Leave us a review
           </Link>{" "}
-          or reply to this email &mdash; we read every message.
+          or reply to this email. We read every message.
         </Text>
       </Section>
 

@@ -29,7 +29,7 @@ const faqItems: FAQItem[] = [
       <>
         PERM Tracker automates the deadline management for{" "}
         <Link href="/blog/what-is-perm-labor-certification" className={faqLink}>PERM labor certification</Link>{" "}
-        cases. Enter your case dates, and it auto-calculates every critical deadline &mdash; PWD expiration, the 30&ndash;180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync so your whole team stays aligned.{" "}
+        cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync so your whole team stays aligned.{" "}
         <Link href="/tutorials/tracking-perm-deadlines" className={faqLink}>See how deadline tracking works &rarr;</Link>
       </>
     ),
@@ -56,7 +56,7 @@ const faqItems: FAQItem[] = [
     question: "Can I import my existing cases?",
     answer: (
       <>
-        Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime &mdash; your data is always yours.{" "}
+        Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime. Your data is always yours.{" "}
         <Link href="/tutorials/getting-started" className={faqLink}>Getting started tutorial &rarr;</Link>
       </>
     ),

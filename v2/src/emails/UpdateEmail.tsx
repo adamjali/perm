@@ -35,7 +35,7 @@ export function UpdateEmail({
         </Text>
         <Text className="em-text-body" style={styles.bodyText}>
           Sabrina here, from the PERM Tracker team. I wanted to say thank you
-          for being an early user &mdash; it genuinely means a lot. Every case
+          for being an early user. It genuinely means a lot. Every case
           you track helps us understand what attorneys actually need, and that
           shapes everything we build.
         </Text>
@@ -59,7 +59,7 @@ export function UpdateEmail({
           <Text className="em-text-body" style={styles.featureDesc}>
             Your DOL-compliant recruitment summary now appears directly in the
             Overview tab once all recruitment steps are complete. Copy it, edit
-            it, or revert to the auto-generated version &mdash; one click.
+            it, or revert to the auto-generated version in one click.
           </Text>
         </Section>
 
@@ -107,7 +107,7 @@ export function UpdateEmail({
           Tell Us Your Thoughts
         </Link>
         <Text className="em-text-secondary" style={styles.ctaSubtext}>
-          Takes about 2 minutes. Text or video &mdash; whatever&apos;s easier.
+          Takes about 2 minutes. Text or video, whatever&apos;s easier.
         </Text>
       </Section>
 
@@ -115,7 +115,7 @@ export function UpdateEmail({
       <Section style={styles.signoff}>
         <Text className="em-text-body" style={styles.signoffNote}>
           Thanks again for being part of this. If you ever need anything, just
-          reply to this email &mdash; we read every message.
+          reply to this email. We read every message.
         </Text>
         <Text className="em-text" style={styles.signoffName}>
           Sabrina S.

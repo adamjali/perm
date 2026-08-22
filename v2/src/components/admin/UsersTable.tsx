@@ -407,7 +407,7 @@ export function UsersTable({
           {showPagination && (
             <div className="flex items-center justify-between border-t-2 border-border px-4 py-3">
               <span className="text-sm text-muted-foreground">
-                Showing {page * PAGE_SIZE + 1}&ndash;{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}
+                Showing {page * PAGE_SIZE + 1} to {Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}
               </span>
               <div className="flex items-center gap-1">
                 <Button

@@ -134,7 +134,7 @@ export function HeroSection() {
 
             {/* Subheadline */}
             <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              PERM Tracker auto-calculates every filing window, PWD expiration, and audit response deadline &mdash; then alerts you before they hit.
+              PERM Tracker auto-calculates every filing window, PWD expiration, and audit response deadline, then alerts you before they hit.
             </p>
 
             {/* CTAs */}

@@ -297,7 +297,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                 {hasNOF ? (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <div className="recruit-posting-info" style={{ marginBottom: 10, textAlign: "center" }}>
-                      10 consecutive business days &middot; {fmtISOShort(caseData.noticeOfFilingStartDate)} &ndash; {fmtISODate(caseData.noticeOfFilingEndDate)}
+                      10 consecutive business days &middot; {fmtISOShort(caseData.noticeOfFilingStartDate)} to {fmtISODate(caseData.noticeOfFilingEndDate)}
                     </div>
                     {caseData.noticeOfFilingStartDate && caseData.noticeOfFilingEndDate && (
                       <NOFMiniCalendar start={caseData.noticeOfFilingStartDate} end={caseData.noticeOfFilingEndDate} />

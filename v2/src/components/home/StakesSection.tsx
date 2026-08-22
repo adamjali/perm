@@ -119,7 +119,7 @@ export function StakesSection() {
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
             Every PERM case has filing windows measured in days, not months. One
-            slip means starting over &mdash; or worse.
+            slip means starting over, or worse.
           </p>
         </ScrollReveal>
       </div>
