@@ -213,7 +213,7 @@ describe("generateItemListSchema", () => {
     expect(generateItemListSchema([], "resources").name).toBe("PERM Tracker Resources");
   });
 
-  it("emits one ListItem per post with correct position + url + name", () => {
+  it("emits one ListItem per post, nesting url and name in the item entity", () => {
     const posts = [
       createTestPost({ slug: "first", title: "First Post" }),
       createTestPost({ slug: "second", title: "Second Post" }),
@@ -224,29 +224,42 @@ describe("generateItemListSchema", () => {
     expect(schema.itemListElement[0]).toMatchObject({
       "@type": "ListItem",
       position: 1,
-      url: `${BASE_URL}/blog/first`,
-      name: "First Post",
+      item: {
+        "@type": "Article",
+        "@id": `${BASE_URL}/blog/first`,
+        url: `${BASE_URL}/blog/first`,
+        name: "First Post",
+      },
     });
     expect(schema.itemListElement[1]).toMatchObject({
       "@type": "ListItem",
       position: 2,
-      url: `${BASE_URL}/blog/second`,
-      name: "Second Post",
+      item: { url: `${BASE_URL}/blog/second`, name: "Second Post" },
     });
+  });
+
+  it("keeps ListItem free of properties schema.org does not define on it", () => {
+    // datePublished/dateModified on a ListItem is a schema.org validation
+    // error, and it silently flagged all five listing pages in Site Audit.
+    const schema = generateItemListSchema([createTestPost()], "blog");
+    const listItem = schema.itemListElement[0] as Record<string, unknown>;
+    expect(listItem).not.toHaveProperty("datePublished");
+    expect(listItem).not.toHaveProperty("dateModified");
+    expect(Object.keys(listItem).sort()).toEqual(["@type", "item", "position"]);
   });
 
   it("includes datePublished and dateModified per item in ISO 8601", () => {
     const post = createTestPost({ date: "2026-01-15", updated: "2026-03-04" });
     const schema = generateItemListSchema([post], "blog");
-    expect(schema.itemListElement[0].datePublished).toBe("2026-01-15T00:00:00+00:00");
-    expect(schema.itemListElement[0].dateModified).toBe("2026-03-04T00:00:00+00:00");
+    expect(schema.itemListElement[0].item.datePublished).toBe("2026-01-15T00:00:00+00:00");
+    expect(schema.itemListElement[0].item.dateModified).toBe("2026-03-04T00:00:00+00:00");
   });
 
   it("falls back dateModified to datePublished when meta.updated is absent", () => {
     const post = createTestPost({ date: "2026-02-10" });
     const schema = generateItemListSchema([post], "blog");
-    expect(schema.itemListElement[0].datePublished).toBe("2026-02-10T00:00:00+00:00");
-    expect(schema.itemListElement[0].dateModified).toBe("2026-02-10T00:00:00+00:00");
+    expect(schema.itemListElement[0].item.datePublished).toBe("2026-02-10T00:00:00+00:00");
+    expect(schema.itemListElement[0].item.dateModified).toBe("2026-02-10T00:00:00+00:00");
   });
 
   it("returns an empty list with numberOfItems=0 for an empty posts array", () => {

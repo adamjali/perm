@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleStaleDeployment } from "@/components/error/auth-error";
@@ -234,9 +234,9 @@ export function ResetPasswordPageClient() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-3xl font-heading uppercase tracking-tight">
+          <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">
             Reset Password
-          </CardTitle>
+          </h1>
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-sm text-muted-foreground">
@@ -323,9 +323,9 @@ export function ResetPasswordPageClient() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-3xl font-heading uppercase tracking-tight">
+        <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">
           Reset Password
-        </CardTitle>
+        </h1>
       </CardHeader>
       <CardContent className="space-y-6">
         <p className="text-sm text-muted-foreground">

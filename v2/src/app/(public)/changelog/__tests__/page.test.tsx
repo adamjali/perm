@@ -64,25 +64,34 @@ describe("ChangelogPage structured data", () => {
 
   it("ItemList items point at anchor URLs (/changelog#<slug>), not 404-bound detail URLs", () => {
     const ld = parseLdJsonFromPage();
-    const graph = ld["@graph"] as Array<{ "@type": string; itemListElement?: Array<{ url: string }> }>;
+    const graph = ld["@graph"] as Array<{
+      "@type": string;
+      itemListElement?: Array<{ item: { url: string } }>;
+    }>;
     const itemList = graph.find((n) => n["@type"] === "ItemList");
     expect(itemList).toBeDefined();
     const items = itemList!.itemListElement!;
     expect(items.length).toBe(2);
-    for (const item of items) {
-      // Anchor URL shape — NOT a detail URL like /changelog/entry-one which would 404
-      expect(item.url).toMatch(/^https?:\/\/[^/]+\/changelog#[a-z0-9-]+$/);
-      expect(item.url).not.toMatch(/\/changelog\/[a-z0-9-]+$/);
+    for (const entry of items) {
+      // Anchor URL shape, NOT a detail URL like /changelog/entry-one which would 404
+      expect(entry.item.url).toMatch(/^https?:\/\/[^/]+\/changelog#[a-z0-9-]+$/);
+      expect(entry.item.url).not.toMatch(/\/changelog\/[a-z0-9-]+$/);
     }
   });
 
-  it("each ItemList item carries datePublished and dateModified in ISO 8601", () => {
+  it("each ItemList entry carries its dates on the nested item, in ISO 8601", () => {
+    // The dates live on `item`, not on the ListItem: schema.org does not define
+    // datePublished/dateModified on ListItem, and putting them there flagged
+    // every listing page with a validation error.
     const ld = parseLdJsonFromPage();
-    const graph = ld["@graph"] as Array<{ "@type": string; itemListElement?: Array<{ datePublished: string; dateModified: string }> }>;
+    const graph = ld["@graph"] as Array<{
+      "@type": string;
+      itemListElement?: Array<{ item: { datePublished: string; dateModified: string } }>;
+    }>;
     const items = graph.find((n) => n["@type"] === "ItemList")!.itemListElement!;
-    expect(items[0]!.datePublished).toBe("2026-01-15T00:00:00+00:00");
+    expect(items[0]!.item.datePublished).toBe("2026-01-15T00:00:00+00:00");
     // entry-two has `updated`, so dateModified diverges from datePublished
-    expect(items[1]!.datePublished).toBe("2026-02-20T00:00:00+00:00");
-    expect(items[1]!.dateModified).toBe("2026-03-04T00:00:00+00:00");
+    expect(items[1]!.item.datePublished).toBe("2026-02-20T00:00:00+00:00");
+    expect(items[1]!.item.dateModified).toBe("2026-03-04T00:00:00+00:00");
   });
 });

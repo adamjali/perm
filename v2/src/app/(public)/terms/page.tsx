@@ -7,6 +7,7 @@
  */
 
 import type { Metadata } from "next";
+import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 
 // Force static generation for instant loading
@@ -18,6 +19,13 @@ export const metadata: Metadata = {
     "Terms of Service for PERM Tracker. Read our terms for using our PERM labor certification case management software.",
   alternates: {
     canonical: "/terms",
+  },
+  openGraph: {
+    ...openGraphBase,
+    title: "Terms of Service | PERM Tracker",
+    description:
+      "The terms that govern use of PERM Tracker.",
+    url: "/terms",
   },
   robots: {
     index: true,

@@ -13,6 +13,7 @@
  */
 
 import type { Metadata } from "next";
+import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 import { Shield, CheckCircle2 } from "lucide-react";
 
@@ -24,6 +25,13 @@ export const metadata: Metadata = {
     "Security posture, incident history, and vulnerability disclosure policy for PERM Tracker.",
   alternates: {
     canonical: "/security",
+  },
+  openGraph: {
+    ...openGraphBase,
+    title: "Security | PERM Tracker",
+    description:
+      "Security posture and public incident record for permtracker.app.",
+    url: "/security",
   },
   robots: {
     index: true,

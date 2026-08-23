@@ -50,7 +50,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "PERM Processing Times",
   description:
-    "Where the Department of Labor's PERM queue actually is right now, taken from DOL's own published figures with the date they carry. Analyst review, audit review, prevailing wage and the backlog by month.",
+    "Where DOL's PERM queue actually stands, from the Department's own published figures with the date they carry. Analyst review, audit review and prevailing wage.",
   alternates: { canonical: "/perm-processing-times" },
   openGraph: {
     ...openGraphBase,

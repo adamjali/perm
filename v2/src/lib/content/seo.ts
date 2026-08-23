@@ -128,9 +128,14 @@ export function generateVideoObjectSchema(
 /**
  * Generate ItemList schema for content listing pages.
  *
- * Each item carries `datePublished` and `dateModified` so Google has a date
- * signal for the listing's items (matches the pattern in `generateArticleSchema`
- *, `dateModified` falls back to `datePublished` when `meta.updated` is absent).
+ * Each entry nests its content in `item` as an Article, which is where the
+ * date signal has to live. An earlier version put `datePublished` and
+ * `dateModified` directly on the ListItem: neither is a ListItem property in
+ * schema.org (ListItem defines only `item`, `nextItem`, `previousItem` and
+ * `position` beyond what it inherits from Thing), so all five listing pages
+ * carried a schema.org validation error. Nesting keeps the dates and makes the
+ * markup valid, which is the shape Google documents for a list whose entries
+ * are full entities rather than bare links.
  *
  * `urlFor` is an optional strategy for building each item's URL. Defaults to
  * `${BASE_URL}/${post.type}/${post.slug}` (the standard detail-route shape).
@@ -145,14 +150,21 @@ export function generateItemListSchema(
   return {
     "@context": "https://schema.org",
     "@type": "ItemList" as const,
-    itemListElement: posts.map((post, i) => ({
-      "@type": "ListItem" as const,
-      position: i + 1,
-      url: urlFor(post),
-      name: post.meta.title,
-      datePublished: toISO8601(post.meta.date),
-      dateModified: toISO8601(post.meta.updated || post.meta.date),
-    })),
+    itemListElement: posts.map((post, i) => {
+      const url = urlFor(post);
+      return {
+        "@type": "ListItem" as const,
+        position: i + 1,
+        item: {
+          "@type": "Article" as const,
+          "@id": url,
+          url,
+          name: post.meta.title,
+          datePublished: toISO8601(post.meta.date),
+          dateModified: toISO8601(post.meta.updated || post.meta.date),
+        },
+      };
+    }),
     numberOfItems: posts.length,
     name: `PERM Tracker ${type.charAt(0).toUpperCase() + type.slice(1)}`,
   };

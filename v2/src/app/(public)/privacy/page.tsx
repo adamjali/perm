@@ -7,6 +7,7 @@
  */
 
 import type { Metadata } from "next";
+import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 
 // Force static generation for instant loading
@@ -18,6 +19,13 @@ export const metadata: Metadata = {
     "Privacy Policy for PERM Tracker. Learn how we protect your immigration case data with bank-level encryption and row-level security.",
   alternates: {
     canonical: "/privacy",
+  },
+  openGraph: {
+    ...openGraphBase,
+    title: "Privacy Policy | PERM Tracker",
+    description:
+      "How PERM Tracker collects, uses and protects immigration case data.",
+    url: "/privacy",
   },
   robots: {
     index: true,

@@ -173,6 +173,13 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                 >
                   Resources
                 </NavLink>
+                <NavLink
+                  href="/perm-processing-times"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
+                  spinnerClassName="text-primary"
+                >
+                  Processing Times
+                </NavLink>
               </nav>
             </div>
 
