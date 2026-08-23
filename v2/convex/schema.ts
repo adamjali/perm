@@ -998,9 +998,14 @@ export default defineSchema({
    * lets the site state how far the queue moved between two real dates
    * instead of predicting where it will go next.
    *
-   * Rows are immutable. A run only inserts when `contentHash` differs from the
-   * newest stored row, so re-fetching an unchanged page is a no-op and the
-   * series contains one row per genuine publication.
+   * Rows are immutable. A run only inserts when `contentHash` matches NO row we
+   * already hold, so re-fetching an unchanged page is a no-op and the series
+   * contains one row per genuine publication. Note that is any row, not merely
+   * the newest: if DOL published A, then B, then reverted to exactly A, the
+   * revert is treated as already-seen and not stored. That is deliberate (it
+   * keeps a flapping page from filling the table) and narrow in practice,
+   * because `permAsOf` is part of the hash, so a true revert would have to
+   * restore the old as-of date too.
    */
   dolProcessingTimes: defineTable({
     // DOL's own as-of stamp for the PERM section (YYYY-MM-DD). The PERM and
@@ -1056,7 +1061,9 @@ export default defineSchema({
     // catches a silent DOL correction that reuses the same as-of date.
     contentHash: v.string(),
   })
-    .index("by_perm_as_of", ["permAsOf"])
+    // by_perm_as_of was declared here and never queried. Dropped: an unused
+    // index is a write cost on every insert and a false signal about how the
+    // table is read.
     .index("by_fetched", ["fetchedAt"])
     .index("by_content_hash", ["contentHash"]),
 
@@ -1097,7 +1104,12 @@ export default defineSchema({
      * one confirmation email and changes nothing.
      */
     pendingFilingMonth: v.optional(v.string()),
-    /** Rate-limits confirmation sends so the endpoint cannot be used to mail-bomb. */
+    /**
+     * Throttles repeat confirmation sends to THIS address. It cannot stop an
+     * attacker cycling fresh addresses, which is what the per-IP limit on the
+     * HTTP route is for. Written before the send, so it records intent; a
+     * failed send clears it (see queueAlerts.clearConfirmationCooldown).
+     */
     lastConfirmationSentAt: v.optional(v.number()),
     /** Set once the queue reached their month and we sent the one alert. */
     notifiedAt: v.optional(v.number()),
@@ -1109,7 +1121,21 @@ export default defineSchema({
     source: v.optional(v.string()),
   })
     .index("by_email", ["email"])
-    // Drives the notify sweep: confirmed, not yet notified, ordered by month.
-    .index("by_filing_month", ["filingMonth"])
+    /**
+     * Drives the notify sweep.
+     *
+     * Field order matters and is not cosmetic. Leading with the two "is this
+     * row still live" flags means the range scan starts inside the un-notified,
+     * un-unsubscribed rows and never walks the ones already dealt with. An
+     * earlier version indexed `filingMonth` alone, so the sweep selected every
+     * row at or before the frontier and filtered in JS: as the frontier
+     * advanced that became a full-table read on every run, re-reading rows it
+     * had already notified, forever.
+     *
+     * `confirmedAt` is deliberately NOT in the index. Convex allows a range
+     * comparison only on the final indexed field, and `filingMonth` has to hold
+     * that position, so adding it would force `filingMonth` to equality.
+     */
+    .index("by_alert_sweep", ["notifiedAt", "unsubscribedAt", "filingMonth"])
     .index("by_created", ["createdAt"]),
 });

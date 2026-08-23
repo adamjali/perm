@@ -24,7 +24,8 @@ import {
   textOf,
   extractTables,
   analystReviewQueue,
-  analystReviewAverageDays,
+  hashSnapshot,
+  analystReviewAverage,
   DolParseError,
   DOL_PROCESSING_TIMES_URL,
 } from "./dolProcessingTimes";
@@ -61,6 +62,32 @@ describe("field helpers", () => {
         expect(parseMonthYear(input)).toBeNull();
       },
     );
+
+    it.each([
+      ["Sept 2025", "2025-09"],
+      ["Sep 2025", "2025-09"],
+      ["Sept. 2025", "2025-09"],
+      ["September, 2025", "2025-09"],
+      ["09/2025", "2025-09"],
+      ["9/2025", "2025-09"],
+    ])("reads the abbreviated and numeric forms: %s", (input, expected) => {
+      // Each of these is a real month that returned null before, and null is
+      // read downstream as "DOL published nothing".
+      expect(parseMonthYear(input)).toBe(expected);
+    });
+
+    it("is anchored, so it cannot pick a month out of surrounding prose", () => {
+      // Unanchored, this returned 2025-05: the FIRST month-year in the string.
+      // A plausible wrong month is worse than a null, because null is visible
+      // downstream and a wrong date is not.
+      expect(parseMonthYear("As of May 2025 the queue is at September 2025")).toBeNull();
+      expect(parseMonthYear("September 2025 (estimated)")).toBeNull();
+    });
+
+    it("rejects a month name that is not a month", () => {
+      expect(parseMonthYear("Someday 2025")).toBeNull();
+      expect(parseMonthYear("13/2025")).toBeNull();
+    });
   });
 
   describe("parseCount", () => {
@@ -169,13 +196,13 @@ describe("parseProcessingTimes against the real DOL page", () => {
   });
 
   it("keeps DOL's raw wording alongside the parsed value", () => {
-    const analyst = analystReviewQueue(snapshot);
+    const analyst = analystReviewQueue(snapshot.permQueues);
     expect(analyst?.raw).toBe("September 2025");
     expect(analyst?.priorityDate).toBe("2025-09");
   });
 
   it("extracts the average calendar days to a determination", () => {
-    expect(analystReviewAverageDays(snapshot)).toBe(372);
+    expect(analystReviewAverage(snapshot.permAverageDays)?.calendarDays).toBe(372);
   });
 
   it("represents a DOL '--' as null rather than zero", () => {
@@ -268,5 +295,54 @@ describe("failure policy", () => {
   it("throws when the prevailing-wage queue headers change", () => {
     const withoutPwd = FIXTURE.replace(/OEWS Receipt Date/g, "Renamed Column");
     expect(() => parseProcessingTimes(withoutPwd)).toThrow(/prevailing-wage queue table/);
+  });
+
+  // The policy above was enforced per TABLE only. The unit that actually
+  // matters is a CELL: one unreadable value in the analyst row stops every
+  // queue alert and blanks the public page, and it used to do so silently.
+
+  it("throws when a month cell becomes unreadable", () => {
+    const reworded = FIXTURE.replace("September 2025", "Q3 FY2025");
+    expect(() => parseProcessingTimes(reworded)).toThrow(DolParseError);
+    expect(() => parseProcessingTimes(reworded)).toThrow(/unreadable month/);
+  });
+
+  it("still accepts an explicit no-data placeholder rather than throwing", () => {
+    // "--" means DOL published nothing, which is information. Only values that
+    // are neither parseable nor a known placeholder are treated as a page change.
+    const blanked = FIXTURE.replace("September 2025", "N/A");
+    const snap = parseProcessingTimes(blanked);
+    expect(analystReviewQueue(snap.permQueues)?.priorityDate).toBeNull();
+  });
+
+  it("throws when the Analyst Review row disappears", () => {
+    // The table still parses and still has rows, so every earlier check passed.
+    // This is the row the entire product depends on: without it the ingestion
+    // reported success, stored a snapshot, and silently sent zero alerts.
+    const renamed = FIXTURE.replace(/Analyst Review/g, "Initial Screening");
+    expect(() => parseProcessingTimes(renamed)).toThrow(/Analyst Review/);
+  });
+});
+
+describe("hashSnapshot", () => {
+  it("changes when DOL rewords a cell without changing the parsed value", async () => {
+    // `contentHash` is documented as catching a silent DOL correction. Without
+    // the raw wording in the hash that was only half true: a reworded cell that
+    // parsed to the same month produced an identical hash, the row was not
+    // stored, and the page kept rendering the PREVIOUS wording as "exactly what
+    // DOL printed". DOL keeps no archive, so that would be unrecoverable.
+    const a = parseProcessingTimes(FIXTURE);
+    const b = parseProcessingTimes(FIXTURE.replace("September 2025", "Sept 2025"));
+
+    expect(analystReviewQueue(b.permQueues)?.priorityDate).toBe(
+      analystReviewQueue(a.permQueues)?.priorityDate,
+    );
+    expect(await hashSnapshot(a)).not.toBe(await hashSnapshot(b));
+  });
+
+  it("is stable across two parses of the same page", async () => {
+    expect(await hashSnapshot(parseProcessingTimes(FIXTURE))).toBe(
+      await hashSnapshot(parseProcessingTimes(FIXTURE)),
+    );
   });
 });

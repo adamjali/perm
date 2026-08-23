@@ -18,15 +18,26 @@
  *
  * Parsing approach: the page is a set of <table> elements, most carrying a
  * <caption> that names the section and stamps its own as-of date. Where a
- * caption is absent the header row is a reliable signature. Every lookup
- * below is therefore anchored on caption text or header text, never on table
- * index, so DOL adding or reordering a section does not silently shift the
- * data we read.
+ * caption is absent the header row is a reliable signature. Every TABLE lookup
+ * below is anchored on caption text or header text, never on table index, so
+ * DOL adding or reordering a section does not silently shift the data we read.
+ *
+ * Cells within a located table ARE read by column position. There is no
+ * per-cell header matching, so a reordered column inside an otherwise intact
+ * table would be read wrongly. That risk is bounded by two things: the tables
+ * are narrow and fixed-shape, and every value now has to parse as the type its
+ * column implies (see requireMonthCell), so a swapped column shows up as a
+ * throw rather than as a plausible wrong answer. Said explicitly because an
+ * earlier version of this paragraph claimed every lookup was anchored, which
+ * over-promised on exactly the read that is not.
  *
  * Failure policy: this parser THROWS when an expected section is missing or
  * unreadable. It must never return a half-empty snapshot, because a snapshot
  * that parsed to zero rows is indistinguishable from a month where the queue
- * genuinely did not move, and that would quietly corrupt the series.
+ * genuinely did not move, and that would quietly corrupt the series. That
+ * policy applies at CELL granularity too, not just per table: a value that is
+ * neither a recognised no-data placeholder nor parseable throws, because the
+ * unit that actually matters here is one cell in one row.
  *
  * @module
  */
@@ -93,11 +104,39 @@ export class DolParseError extends Error {
 
 const SOURCE_URL = "https://flag.dol.gov/processingtimes";
 
+/**
+ * Month name to number, including the abbreviations DOL might switch to.
+ *
+ * The full names are what the page uses today. The short forms are here
+ * because the alternative is a silent null: "Sept 2025" is a real month, and
+ * without an entry for it the cell parsed to null, which the rest of the
+ * pipeline reads as "DOL published nothing". Note "sept" as well as "sep" —
+ * both are in common US usage and only one of them is the three-letter form.
+ */
 const MONTHS: Record<string, string> = {
   january: "01", february: "02", march: "03", april: "04",
   may: "05", june: "06", july: "07", august: "08",
   september: "09", october: "10", november: "11", december: "12",
+  jan: "01", feb: "02", mar: "03", apr: "04",
+  jun: "06", jul: "07", aug: "08",
+  sep: "09", sept: "09", oct: "10", nov: "11", dec: "12",
 };
+
+/**
+ * Cell contents that mean "DOL published nothing here".
+ *
+ * This set is the entire difference between a missing value and a value we
+ * failed to read. Anything outside it that does not parse is treated as a page
+ * change and throws, rather than being flattened into the same null.
+ */
+const NO_DATA_CELLS = new Set([
+  "", "-", "--", "---", "n/a", "n/a.", "na", "none", "not available", "tbd", "pending",
+]);
+
+/** True when a cell is one of DOL's explicit no-data placeholders. */
+function isNoDataCell(raw: string): boolean {
+  return NO_DATA_CELLS.has(raw.trim().toLowerCase());
+}
 
 /**
  * The entities DOL actually emits on this page.
@@ -182,14 +221,64 @@ export function parseUsDate(input: string): string | null {
 }
 
 /**
- * "September 2025" to "2025-09". Returns null for "--", "N/A" and anything
- * that is not a month-year, which DOL uses to mean "nothing to report".
+ * "September 2025" to "2025-09". Returns null for anything that is not a
+ * month-year.
+ *
+ * ANCHORED, and that is the point. The previous pattern had no `^`/`$`, so it
+ * matched the first month-year anywhere in the cell: a cell reading
+ * "As of May 2025 the queue is at September 2025" returned 2025-05. A wrong
+ * month is worse than a missing one, because null is at least visible
+ * downstream while a plausible wrong date is not. Every sibling regex in
+ * src/lib/dolFormat.ts was already anchored; this one was the outlier.
+ *
+ * Accepts "September 2025", "Sept. 2025", "September, 2025" and "09/2025".
  */
 export function parseMonthYear(input: string): string | null {
-  const m = /([A-Za-z]+)\s+(\d{4})/.exec(input.trim());
+  const trimmed = input.trim();
+
+  const numeric = /^(\d{1,2})\s*\/\s*(\d{4})$/.exec(trimmed);
+  if (numeric) {
+    const mo = Number(numeric[1]);
+    return mo >= 1 && mo <= 12 ? `${numeric[2]}-${String(mo).padStart(2, "0")}` : null;
+  }
+
+  const m = /^([A-Za-z]+)\.?,?\s+(\d{4})$/.exec(trimmed);
   if (!m) return null;
   const mm = MONTHS[m[1]!.toLowerCase()];
   return mm ? `${m[2]}-${mm}` : null;
+}
+
+/**
+ * Parse a month cell, distinguishing "DOL published nothing" from "we could
+ * not read this".
+ *
+ * The module's failure policy says a page change must throw rather than
+ * produce a half-empty snapshot, but that was only ever enforced at TABLE
+ * granularity: a missing section threw, while an unreadable CELL quietly
+ * became null. The load-bearing unit here is a cell — one null in the analyst
+ * row stops every queue alert and blanks the public page — so the same policy
+ * has to reach this far down.
+ */
+function requireMonthCell(raw: string, what: string): string | null {
+  if (isNoDataCell(raw)) return null;
+  const parsed = parseMonthYear(raw);
+  if (parsed === null) {
+    throw new DolParseError(
+      `unreadable month in ${what}: ${JSON.stringify(raw)}. ` +
+        "Either DOL changed its date format or this is a new placeholder.",
+    );
+  }
+  return parsed;
+}
+
+/** Count cell, same no-data-versus-unreadable distinction as requireMonthCell. */
+function requireCountCell(raw: string, what: string): number | null {
+  if (isNoDataCell(raw)) return null;
+  const parsed = parseCount(raw);
+  if (parsed === null) {
+    throw new DolParseError(`unreadable count in ${what}: ${JSON.stringify(raw)}`);
+  }
+  return parsed;
 }
 
 /** "14,386" to 14386. Returns null for "--" and other non-numerics. */
@@ -227,16 +316,37 @@ export function extractTables(htmlDoc: string): ParsedTable[] {
   });
 }
 
-function findByCaption(tables: ParsedTable[], needle: string): ParsedTable | undefined {
+/**
+ * Find a table by caption, or throw naming the caption we looked for.
+ *
+ * The throw lives here rather than at each call site so the error message is
+ * generated from the same needle the matcher used. Previously they were
+ * written separately and had already drifted: one site searched for
+ * "Average Number of Days to Process PERM" while its error announced
+ * "...Process PERM Applications", which would have sent anyone debugging a DOL
+ * change looking for the wrong string.
+ */
+function requireByCaption(tables: ParsedTable[], needle: string): ParsedTable {
   const lower = needle.toLowerCase();
-  return tables.find((t) => t.caption.toLowerCase().includes(lower));
+  const found = tables.find((t) => t.caption.toLowerCase().includes(lower));
+  if (!found) throw new DolParseError(`no table captioned "${needle}"`);
+  return found;
 }
 
-function findByHeaders(tables: ParsedTable[], needles: string[]): ParsedTable | undefined {
-  return tables.find((t) => {
+/** Find a table by its header signature, or throw naming that signature. */
+function requireByHeaders(
+  tables: ParsedTable[],
+  needles: string[],
+  what: string,
+): ParsedTable {
+  const found = tables.find((t) => {
     const joined = t.headers.join(" | ").toLowerCase();
     return needles.every((n) => joined.includes(n.toLowerCase()));
   });
+  if (!found) {
+    throw new DolParseError(`no ${what} table (headers: ${needles.join(" / ")})`);
+  }
+  return found;
 }
 
 /**
@@ -256,10 +366,7 @@ export function parseProcessingTimes(htmlDoc: string): DolProcessingTimesSnapsho
   }
 
   // --- PERM priority-date queue. Caption carries DOL's own as-of date. ---
-  const permTable = findByCaption(tables, "PERM Processing Times");
-  if (!permTable) {
-    throw new DolParseError('no table captioned "PERM Processing Times"');
-  }
+  const permTable = requireByCaption(tables, "PERM Processing Times");
 
   const permAsOf = parseUsDate(permTable.caption);
   if (!permAsOf) {
@@ -270,7 +377,7 @@ export function parseProcessingTimes(htmlDoc: string): DolProcessingTimesSnapsho
     .filter((cells) => cells.length >= 2 && cells[0]!.length > 0)
     .map((cells) => ({
       queue: cells[0]!,
-      priorityDate: parseMonthYear(cells[1]!),
+      priorityDate: requireMonthCell(cells[1]!, `PERM queue row "${cells[0]!}"`),
       raw: cells[1]!,
     }));
 
@@ -278,18 +385,30 @@ export function parseProcessingTimes(htmlDoc: string): DolProcessingTimesSnapsho
     throw new DolParseError("PERM queue table parsed to zero rows");
   }
 
-  // --- Average calendar days to a determination. ---
-  const avgTable = findByCaption(tables, "Average Number of Days to Process PERM");
-  if (!avgTable) {
-    throw new DolParseError('no table captioned "Average Number of Days to Process PERM Applications"');
+  // The Analyst Review row specifically, because it is the only value in this
+  // whole document the product depends on: it is the frontier every queue
+  // alert is compared against and the headline figure on the public page.
+  // Checking that the TABLE has rows does not check that THIS row is in it, so
+  // a DOL relabel used to sail through as a successful parse and a successful
+  // store, and simply stopped every alert with no error anywhere. Whatever
+  // else changes about this page, losing this row has to be loud.
+  if (!permQueues.some((q) => /analyst review/i.test(q.queue))) {
+    throw new DolParseError(
+      "no Analyst Review row in the PERM queue table (found: " +
+        permQueues.map((q) => q.queue).join(", ") +
+        ")",
+    );
   }
+
+  // --- Average calendar days to a determination. ---
+  const avgTable = requireByCaption(tables, "Average Number of Days to Process PERM");
 
   const permAverageDays: PermDeterminationRow[] = avgTable.rows
     .filter((cells) => cells.length >= 3 && cells[0]!.length > 0)
     .map((cells) => ({
       determination: cells[0]!,
-      month: parseMonthYear(cells[1]!),
-      calendarDays: parseCount(cells[2]!),
+      month: requireMonthCell(cells[1]!, `average-days row "${cells[0]!}"`),
+      calendarDays: requireCountCell(cells[2]!, `average-days row "${cells[0]!}"`),
       raw: cells[2]!,
     }));
 
@@ -298,17 +417,21 @@ export function parseProcessingTimes(htmlDoc: string): DolProcessingTimesSnapsho
   }
 
   // --- Prevailing wage queue. No caption, so anchor on the header signature. ---
-  const pwdTable = findByHeaders(tables, ["Processing Queue", "OEWS Receipt Date"]);
-  if (!pwdTable) {
-    throw new DolParseError("no prevailing-wage queue table (headers: Processing Queue / OEWS Receipt Date)");
-  }
+  const pwdTable = requireByHeaders(
+    tables,
+    ["Processing Queue", "OEWS Receipt Date"],
+    "prevailing-wage queue",
+  );
 
   const pwdQueues: PwdQueueRow[] = pwdTable.rows
     .filter((cells) => cells.length >= 3 && cells[0]!.length > 0)
     .map((cells) => ({
       program: cells[0]!,
-      oewsReceiptDate: parseMonthYear(cells[1]!),
-      nonOewsReceiptDate: parseMonthYear(cells[2]!),
+      oewsReceiptDate: requireMonthCell(cells[1]!, `prevailing-wage row "${cells[0]!}" (OEWS)`),
+      nonOewsReceiptDate: requireMonthCell(
+        cells[2]!,
+        `prevailing-wage row "${cells[0]!}" (non-OEWS)`,
+      ),
     }));
 
   if (pwdQueues.length === 0) {
@@ -325,11 +448,18 @@ export function parseProcessingTimes(htmlDoc: string): DolProcessingTimesSnapsho
   // --- Prevailing-wage backlog for PERM, by receipt month. ---
   // Four sibling tables share this shape, one per program; the first header
   // cell names the program, so "PERM" identifies the one we want.
-  const backlogTable = findByHeaders(tables, ["PERM", "Remaining Requests"]);
-  if (!backlogTable) {
-    throw new DolParseError("no PERM prevailing-wage backlog table (headers: PERM / Remaining Requests)");
-  }
+  const backlogTable = requireByHeaders(
+    tables,
+    ["PERM", "Remaining Requests"],
+    "PERM prevailing-wage backlog",
+  );
 
+  // Unlike the tables above this one drops rows it cannot read rather than
+  // throwing. Its shape is open-ended (DOL appends a month per publication and
+  // has carried summary rows), so a strict read here would fail the whole
+  // ingestion over a "Total" line. It is also display-only: nothing downstream
+  // makes a decision from it. Both of those stop being true if it ever feeds
+  // an alert, in which case it should move to requireMonthCell like the rest.
   const pwdPermBacklog: PwdBacklogRow[] = backlogTable.rows
     .filter((cells) => cells.length >= 2)
     .map((cells) => ({
@@ -374,8 +504,16 @@ export async function hashSnapshot(snapshot: DolProcessingTimesSnapshot): Promis
   const canonical = JSON.stringify([
     snapshot.permAsOf,
     snapshot.pwdAsOf ?? null,
-    snapshot.permQueues.map((q) => [q.queue, q.priorityDate]),
-    snapshot.permAverageDays.map((d) => [d.determination, d.month, d.calendarDays]),
+    // `raw` is included deliberately. The docstring on `contentHash` claims it
+    // "catches a silent DOL correction that reuses the same as-of date", and
+    // without the raw wording that was only half true: DOL rewording a cell
+    // without changing the parsed value produced an identical hash, the row was
+    // not stored, and the page kept rendering the PREVIOUS wording as "exactly
+    // what DOL printed". DOL keeps no archive, so that correction would have
+    // been unrecoverable. `textOf` has already collapsed whitespace by this
+    // point, so this reacts to real wording changes, not reflowed markup.
+    snapshot.permQueues.map((q) => [q.queue, q.priorityDate, q.raw]),
+    snapshot.permAverageDays.map((d) => [d.determination, d.month, d.calendarDays, d.raw]),
     snapshot.pwdQueues.map((q) => [q.program, q.oewsReceiptDate, q.nonOewsReceiptDate]),
     snapshot.pwdPermBacklog.map((r) => [r.receiptMonth, r.remainingRequests]),
   ]);
@@ -390,33 +528,34 @@ export async function hashSnapshot(snapshot: DolProcessingTimesSnapshot): Promis
     .join("");
 }
 
+// `monthsBetween` used to live here. Deleted: it had zero callers anywhere,
+// including its own test file, and computed exactly what `monthsMoved` in
+// src/lib/dolFormat.ts already computes for the one place that needs it.
+
+/** The DOL row whose priority date answers "has the queue reached me yet". */
+const ANALYST_REVIEW = /analyst review/i;
+
 /**
- * Whole months between two "YYYY-MM" values, or null if either is missing.
+ * The queue row the whole product cares about.
  *
- * Used to state how far a queue moved between two stored snapshots. Both
- * inputs come from DOL, so this reports a measured change, never a forecast.
+ * Takes the ARRAY rather than a whole snapshot, and that is the difference
+ * between this being used and being decoration. Typed against the parsed
+ * snapshot it did not accept a stored Convex document (whose `pwdAsOf` is
+ * `string | undefined` rather than `string | null`), so every production call
+ * site hand-rolled the regex instead and this was reachable only from tests.
+ * Four copies of the single most load-bearing string in the feature.
  */
-export function monthsBetween(from: string | null, to: string | null): number | null {
-  if (!from || !to) return null;
-  const [fy, fm] = from.split("-").map(Number);
-  const [ty, tm] = to.split("-").map(Number);
-  if (!fy || !fm || !ty || !tm) return null;
-  return (ty - fy) * 12 + (tm - fm);
-}
-
-/** Convenience accessor: the queue row the whole product cares about. */
 export function analystReviewQueue(
-  snapshot: DolProcessingTimesSnapshot,
+  queues: readonly PermQueueRow[],
 ): PermQueueRow | undefined {
-  return snapshot.permQueues.find((q) => /analyst review/i.test(q.queue));
+  return queues.find((q) => ANALYST_REVIEW.test(q.queue));
 }
 
-/** Convenience accessor: most recent published average, if DOL reported one. */
-export function analystReviewAverageDays(
-  snapshot: DolProcessingTimesSnapshot,
-): number | null {
-  const row = snapshot.permAverageDays.find((d) => /analyst review/i.test(d.determination));
-  return row?.calendarDays ?? null;
+/** The matching average-days row, if DOL reported one. */
+export function analystReviewAverage(
+  rows: readonly PermDeterminationRow[],
+): PermDeterminationRow | undefined {
+  return rows.find((d) => ANALYST_REVIEW.test(d.determination));
 }
 
 export { SOURCE_URL as DOL_PROCESSING_TIMES_URL };

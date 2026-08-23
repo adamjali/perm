@@ -36,10 +36,17 @@ import {
   daysBetween,
   daysAsApproxMonths,
 } from "@/lib/dolFormat";
+import {
+  analystReviewQueue,
+  analystReviewAverage,
+} from "../../../../convex/lib/dolProcessingTimes";
 import { QueueAlertForm } from "./QueueAlertForm";
 
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
-const SITE = "https://permtracker.app";
+// Same expression as layout.tsx, sitemap.ts, feed.xml and seo.ts. A bare
+// literal here meant a preview deploy emitted Dataset markup pointing at
+// production, which is a different page than the one being previewed.
+const SITE = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
 
 /**
  * Revalidate hourly. The underlying data changes weekly at most, so this is
@@ -108,32 +115,63 @@ function Figure({
   );
 }
 
+/**
+ * Newest selectable filing month, computed once per server render.
+ *
+ * UTC deliberately: the alternative is the server's local month, which after
+ * ~8pm ET is already tomorrow's in UTC terms and would disagree with anything
+ * else deriving a month the same way.
+ */
+function currentMonthUtc(): string {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
 export default async function PermProcessingTimesPage() {
   const [snapshot, history] = await Promise.all([
     fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(() => null),
     fetchQuery(api.dolProcessingTimes.getHistory, { limit: 24 }).catch(() => []),
   ]);
 
-  const analyst = snapshot?.permQueues.find((q) => /analyst review/i.test(q.queue));
+  const analyst = snapshot ? analystReviewQueue(snapshot.permQueues) : undefined;
   const audit = snapshot?.permQueues.find((q) => /audit review/i.test(q.queue));
-  const analystAvg = snapshot?.permAverageDays.find((d) => /analyst review/i.test(d.determination));
-  const pwdPerm = snapshot?.pwdQueues.find((q) => q.program === "PERM");
+  const analystAvg = snapshot ? analystReviewAverage(snapshot.permAverageDays) : undefined;
+  // Matched loosely like every other row on this page. Exact equality on a
+  // scraped cell meant any DOL relabel ("PERM (OEWS)") silently dropped the
+  // card instead of showing up as a change.
+  const pwdPerm = snapshot?.pwdQueues.find((q) => /^perm\b/i.test(q.program.trim()));
 
   const analystMonth = formatMonth(analyst?.priorityDate ?? null);
   const permAsOf = formatAsOf(snapshot?.permAsOf);
 
-  // Measured movement: compare the newest snapshot against the oldest we hold
-  // that carries a different frontier. This is two published dates subtracted,
-  // which keeps it a measurement rather than a projection.
+  // Measured movement: the newest snapshot against the oldest one in this
+  // window. Two published dates subtracted, which keeps it a measurement rather
+  // than a projection.
+  //
+  // "Oldest in this window", not "oldest we hold": `history` is capped at 24, so
+  // once we have more than that this is the 24th-newest. The caption below says
+  // exactly that rather than claiming a longer record than we are reading.
   const oldest = history.length > 1 ? history[history.length - 1] : undefined;
-  const oldestAnalyst = oldest?.permQueues.find((q) => /analyst review/i.test(q.queue));
+  const oldestAnalyst = oldest ? analystReviewQueue(oldest.permQueues) : undefined;
   const movedMonths = monthsMoved(
     oldestAnalyst?.priorityDate ?? null,
     analyst?.priorityDate ?? null,
   );
-  const observedDays =
-    oldest && snapshot ? daysBetween(oldest.permAsOf, snapshot.permAsOf) : null;
-  const hasVelocity = movedMonths !== null && observedDays !== null && observedDays > 0;
+  const observedDays = daysBetween(oldest?.permAsOf, snapshot?.permAsOf);
+  // `movedMonths > 0` is doing real work. Two snapshots can differ (DOL
+  // refreshes the backlog counts monthly) while the analyst priority date holds,
+  // which rendered "the analyst review queue advanced 0 months", and a DOL
+  // correction moving the date backwards rendered "advanced -1 months". Neither
+  // is a sentence worth publishing.
+  const hasVelocity =
+    movedMonths !== null && movedMonths > 0 && observedDays !== null && observedDays > 0;
+
+  // Bar widths are relative to the largest month. Floor of 1 so a zero-count
+  // month cannot divide by zero when the backlog is empty.
+  const backlogMax = Math.max(
+    ...(snapshot?.pwdPermBacklog.map((r) => r.remainingRequests) ?? []),
+    1,
+  );
 
   const breadcrumb = generateBreadcrumbSchema([
     { name: "Home", href: "/" },
@@ -187,7 +225,12 @@ export default async function PermProcessingTimesPage() {
         </p>
       </header>
 
-      {snapshot && analystMonth ? (
+      {/* Gated on the SNAPSHOT, not on the headline month. It used to require
+          both, so a single unreadable cell in one DOL row collapsed the entire
+          page — every table, the FAQ, the signup form — down to "Live figures
+          are being fetched", which was simply false: they had been fetched,
+          parsed and stored. One missing value now hides one sentence. */}
+      {snapshot ? (
         <>
           {/* The headline. This one sentence is what the whole search cluster asks for. */}
           <section className="mt-10 border-2 border-border bg-primary/10 p-6 shadow-hard sm:p-8">
@@ -195,8 +238,16 @@ export default async function PermProcessingTimesPage() {
               Analyst review queue
             </p>
             <p className="mt-3 font-heading text-3xl font-black leading-tight sm:text-4xl">
-              DOL is reviewing PERM applications filed in {analystMonth}.
+              {analystMonth
+                ? `DOL is reviewing PERM applications filed in ${analystMonth}.`
+                : "DOL has not published a filing month for the analyst review queue."}
             </p>
+            {!analystMonth && analyst?.raw ? (
+              <p className="mt-3 text-sm text-foreground/70">
+                Its latest update prints{" "}
+                <span className="font-bold">&ldquo;{analyst.raw}&rdquo;</span> in that row.
+              </p>
+            ) : null}
             <p className="mt-4 text-sm text-foreground/70">
               DOL&apos;s figure, as of {permAsOf}.{" "}
               <a
@@ -216,7 +267,12 @@ export default async function PermProcessingTimesPage() {
               <Figure
                 label="Average to a determination"
                 value={`${analystAvg.calendarDays} days`}
-                caption={`${daysAsApproxMonths(analystAvg.calendarDays)}, for determinations DOL issued in ${formatMonth(analystAvg.month) ?? "the reported month"}.`}
+                caption={[
+                  daysAsApproxMonths(analystAvg.calendarDays),
+                  `for determinations DOL issued in ${formatMonth(analystAvg.month) ?? "the reported month"}.`,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
               />
             ) : null}
 
@@ -245,8 +301,8 @@ export default async function PermProcessingTimesPage() {
                 Observed movement
               </p>
               <p className="mt-2 text-base leading-relaxed">
-                Across the {observedDays} days we have been recording, the analyst review
-                queue advanced{" "}
+                Across the {observedDays} days between the two DOL publications on record
+                here, the analyst review queue advanced{" "}
                 <strong>
                   {movedMonths} month{movedMonths === 1 ? "" : "s"}
                 </strong>
@@ -255,11 +311,6 @@ export default async function PermProcessingTimesPage() {
               </p>
             </section>
           ) : null}
-
-          {/* Conversion sits directly under the number that creates the need for it. */}
-          <section className="mt-10">
-            <QueueAlertForm source="perm-processing-times" />
-          </section>
 
           <section className="mt-12">
             <h2 className="font-heading text-2xl font-black">Every PERM queue DOL publishes</h2>
@@ -298,30 +349,24 @@ export default async function PermProcessingTimesPage() {
                 them{snapshot.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""}.
               </p>
               <ul className="mt-4 space-y-2">
-                {(() => {
-                  const max = Math.max(
-                    ...snapshot.pwdPermBacklog.map((r) => r.remainingRequests),
-                    1,
-                  );
-                  return snapshot.pwdPermBacklog.map((row) => (
-                    <li key={row.receiptMonth} className="flex items-center gap-3">
-                      <span className="w-28 shrink-0 text-sm text-foreground/70">
-                        {formatMonth(row.receiptMonth)}
-                      </span>
-                      <span className="h-5 flex-1 border-2 border-border bg-muted">
-                        <span
-                          className="block h-full bg-primary"
-                          style={{
-                            width: `${Math.max((row.remainingRequests / max) * 100, 1)}%`,
-                          }}
-                        />
-                      </span>
-                      <span className="w-20 shrink-0 text-right text-sm font-bold tabular-nums">
-                        {formatCount(row.remainingRequests)}
-                      </span>
-                    </li>
-                  ));
-                })()}
+                {snapshot.pwdPermBacklog.map((row) => (
+                  <li key={row.receiptMonth} className="flex items-center gap-3">
+                    <span className="w-28 shrink-0 text-sm text-foreground/70">
+                      {formatMonth(row.receiptMonth)}
+                    </span>
+                    <span className="h-5 flex-1 border-2 border-border bg-muted">
+                      <span
+                        className="block h-full bg-primary"
+                        style={{
+                          width: `${Math.max((row.remainingRequests / backlogMax) * 100, 1)}%`,
+                        }}
+                      />
+                    </span>
+                    <span className="w-20 shrink-0 text-right text-sm font-bold tabular-nums">
+                      {formatCount(row.remainingRequests) ?? "--"}
+                    </span>
+                  </li>
+                ))}
               </ul>
             </section>
           ) : null}
@@ -342,6 +387,16 @@ export default async function PermProcessingTimesPage() {
           </p>
         </section>
       )}
+
+      {/* Outside the snapshot gate on purpose. Someone arriving on a day DOL's
+          page is unreadable is exactly the person who wants to be told when it
+          moves, and the form needs nothing from the snapshot to work. */}
+      <section className="mt-10">
+        <QueueAlertForm
+          source="perm-processing-times"
+          newestMonth={currentMonthUtc()}
+        />
+      </section>
 
       <section className="mt-12">
         <h2 className="font-heading text-2xl font-black">Common questions</h2>

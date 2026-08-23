@@ -8,7 +8,12 @@
  * @module
  */
 
-const MONTH_NAMES = [
+/**
+ * Exported because QueueAlertForm needs the same twelve strings to label its
+ * month picker, and had its own byte-identical copy four lines long in a
+ * sibling file. One list, one place.
+ */
+export const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ] as const;
@@ -52,16 +57,30 @@ export function monthsMoved(from: string | null, to: string | null): number | nu
   return (Number(t[1]) - Number(f[1])) * 12 + (Number(t[2]) - Number(f[2]));
 }
 
-/** Days between two "YYYY-MM-DD" stamps, used to caption a velocity figure. */
-export function daysBetween(from: string, to: string): number | null {
+/**
+ * Days between two "YYYY-MM-DD" stamps, used to caption a velocity figure.
+ *
+ * Accepts null/undefined like its neighbours rather than bare `string`. It
+ * previously did not, which meant a caller could pass a "YYYY-MM" month where a
+ * "YYYY-MM-DD" date was wanted and it compiled: `Date.parse("2025-09T00:00:00Z")`
+ * is NaN, so the function returned null and the velocity section silently
+ * vanished from the page with nothing to debug.
+ */
+export function daysBetween(
+  from: string | null | undefined,
+  to: string | null | undefined,
+): number | null {
+  if (!from || !to) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) return null;
   const a = Date.parse(`${from}T00:00:00Z`);
   const b = Date.parse(`${to}T00:00:00Z`);
   if (Number.isNaN(a) || Number.isNaN(b)) return null;
   return Math.round((b - a) / 86_400_000);
 }
 
-/** 14386 to "14,386". */
-export function formatCount(n: number): string {
+/** 14386 to "14,386". Null in, null out, like every other formatter here. */
+export function formatCount(n: number | null | undefined): string | null {
+  if (n === null || n === undefined || !Number.isFinite(n)) return null;
   return n.toLocaleString("en-US");
 }
 
@@ -71,7 +90,13 @@ export function formatCount(n: number): string {
  * because pretending 372 days is "12.2 months" implies precision DOL's own
  * average does not carry.
  */
-export function daysAsApproxMonths(days: number): string {
+export function daysAsApproxMonths(days: number | null | undefined): string | null {
+  // Guarded rather than trusting the caller: every upstream source of this
+  // number is `number | null`, and an unguarded version renders the literal
+  // string "about NaN months" onto a public page.
+  if (days === null || days === undefined || !Number.isFinite(days) || days < 0) {
+    return null;
+  }
   const months = Math.round(days / 30.44);
   return `about ${months} month${months === 1 ? "" : "s"}`;
 }

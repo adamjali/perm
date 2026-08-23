@@ -40,4 +40,39 @@ describe("unsubscribeToken", () => {
     expect(await verifyUnsubscribeToken(".onlysig", SECRET)).toBeNull();
     expect(await verifyUnsubscribeToken("onlyemail.", SECRET)).toBeNull();
   });
+
+  // ---------------------------------------------------------------------
+  // Purpose scoping
+  //
+  // Without it every token for one address was the SAME string, so the link
+  // meaning "unsubscribe me" was byte-identical to the one meaning "confirm
+  // me" and differed only in which path it was pasted into. Replaying an
+  // unsubscribe link against the confirm route undid the opt-out.
+  // ---------------------------------------------------------------------
+
+  it("mints a different token per purpose for the same address", async () => {
+    const confirm = await makeUnsubscribeToken("jake@firm.com", SECRET, "queue-confirm");
+    const unsub = await makeUnsubscribeToken("jake@firm.com", SECRET, "queue-unsubscribe");
+    expect(confirm).not.toBe(unsub);
+  });
+
+  it("does not verify a token against a different purpose", async () => {
+    const confirm = await makeUnsubscribeToken("jake@firm.com", SECRET, "queue-confirm");
+    expect(await verifyUnsubscribeToken(confirm, SECRET, "queue-confirm")).toBe("jake@firm.com");
+    expect(await verifyUnsubscribeToken(confirm, SECRET, "queue-unsubscribe")).toBeNull();
+  });
+
+  it("does not accept a scoped token on the unscoped legacy route", async () => {
+    const scoped = await makeUnsubscribeToken("jake@firm.com", SECRET, "queue-unsubscribe");
+    expect(await verifyUnsubscribeToken(scoped, SECRET)).toBeNull();
+  });
+
+  it("still verifies legacy unscoped tokens", async () => {
+    // Weekly-digest unsubscribe links are already in real inboxes signed this
+    // way and have no expiry. Breaking them would strip a working opt-out from
+    // every digest ever sent, which is worse than the risk scoping removes.
+    const legacy = await makeUnsubscribeToken("jake@firm.com", SECRET);
+    expect(await verifyUnsubscribeToken(legacy, SECRET)).toBe("jake@firm.com");
+    expect(await verifyUnsubscribeToken(legacy, SECRET, "queue-confirm")).toBeNull();
+  });
 });

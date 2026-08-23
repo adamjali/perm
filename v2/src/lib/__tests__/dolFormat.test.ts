@@ -101,3 +101,28 @@ describe("formatCount", () => {
     expect(formatCount(0)).toBe("0");
   });
 });
+
+// Guards added after a review found each of these rendered onto a public page
+// or silently removed a section, with nothing erroring in either case.
+describe("null and nonsense guards", () => {
+  it("daysBetween refuses a month where a date is wanted", () => {
+    // "2025-09" compiled fine against the old `string` signature and produced
+    // NaN, so the velocity section just vanished with nothing to debug.
+    expect(daysBetween("2025-09", "2026-08-20")).toBeNull();
+    expect(daysBetween(null, "2026-08-20")).toBeNull();
+    expect(daysBetween("2026-08-20", undefined)).toBeNull();
+  });
+
+  it("daysAsApproxMonths never renders NaN or a negative", () => {
+    expect(daysAsApproxMonths(null)).toBeNull();
+    expect(daysAsApproxMonths(undefined)).toBeNull();
+    expect(daysAsApproxMonths(Number.NaN)).toBeNull();
+    expect(daysAsApproxMonths(-30)).toBeNull();
+  });
+
+  it("formatCount passes null through instead of printing it", () => {
+    expect(formatCount(null)).toBeNull();
+    expect(formatCount(undefined)).toBeNull();
+    expect(formatCount(Number.NaN)).toBeNull();
+  });
+});

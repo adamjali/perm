@@ -1,13 +1,35 @@
 /**
- * Signed unsubscribe tokens (HMAC-SHA256 over the recipient email).
+ * Signed action tokens (HMAC-SHA256 over a purpose-scoped recipient email).
  *
  * Stateless: no per-user token column, no migration. The same secret
- * (`UNSUBSCRIBE_SECRET`) signs the token when the weekly digest is sent and
- * verifies it at the `/unsubscribe` HTTP route. A valid token proves the bearer
- * received an email at that address, so the one-click endpoint can act without a
- * login. Tampering with the email or signature fails verification.
+ * (`UNSUBSCRIBE_SECRET`) signs the token when mail is sent and verifies it at
+ * the receiving HTTP route. A valid token proves the bearer received an email
+ * at that address, so a one-click endpoint can act without a login. Tampering
+ * with the email or signature fails verification.
  *
- * Token format: `<base64url(email)>.<base64url(hmac(email))>`.
+ * ## Purpose scoping
+ *
+ * The signed message is `<purpose>:<email>`, or bare `<email>` when no purpose
+ * is given. Without a purpose, every token for one address is the same string,
+ * so a link that means "unsubscribe me" is byte-identical to one that means
+ * "confirm me" and differs only in which path it is pasted into. That let an
+ * unsubscribe link be replayed against a confirm route to undo an opt-out.
+ * Verification is scoped too: a token minted for one purpose does not verify
+ * for another, so the routes can no longer be crossed.
+ *
+ * The purpose is OPTIONAL and defaults to unscoped ON PURPOSE. Weekly-digest
+ * unsubscribe links are already sitting in real inboxes signed the old way
+ * (`convex/notificationActions.ts`), and they have no expiry, so making scoping
+ * mandatory would silently break every one of them. New callers must pass a
+ * purpose; the bare form exists only to keep those live links working.
+ *
+ * These tokens do not expire and are replayable by anyone holding the email.
+ * That is acceptable for "stop sending me mail", which is idempotent and
+ * self-harming at worst. It is NOT acceptable for anything that grants or
+ * restores a subscription, so callers on that side must re-check state rather
+ * than treat a valid token as a fresh act of consent.
+ *
+ * Token format: `<base64url(email)>.<base64url(hmac(purpose:email))>`.
  *
  * @module
  */
@@ -49,20 +71,43 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-/** Build an unsubscribe token for an email address. */
-export async function makeUnsubscribeToken(email: string, secret: string): Promise<string> {
+/**
+ * What a token is allowed to do. See the purpose-scoping note above.
+ *
+ * `undefined` means the legacy unscoped form, which exists only for weekly
+ * digest links already in the wild. Do not use it for new callers.
+ */
+export type TokenPurpose = "queue-confirm" | "queue-unsubscribe";
+
+/** The exact string that gets signed. Kept in one place so both sides agree. */
+function signedMessage(normalizedEmail: string, purpose?: TokenPurpose): string {
+  return purpose ? `${purpose}:${normalizedEmail}` : normalizedEmail;
+}
+
+/** Build an action token for an email address, scoped to one purpose. */
+export async function makeUnsubscribeToken(
+  email: string,
+  secret: string,
+  purpose?: TokenPurpose
+): Promise<string> {
   const normalized = email.trim().toLowerCase();
-  const signature = await hmacSha256(normalized, secret);
+  const signature = await hmacSha256(signedMessage(normalized, purpose), secret);
   return `${toBase64Url(encoder.encode(normalized))}.${toBase64Url(signature)}`;
 }
 
 /**
- * Verify a token. Returns the (normalized) email if the signature is valid for
- * the given secret, otherwise null. Safe for malformed input.
+ * Verify a token against one purpose. Returns the (normalized) email if the
+ * signature is valid for that secret AND that purpose, otherwise null. Safe for
+ * malformed input.
+ *
+ * Omitting `purpose` verifies only the legacy unscoped form. It does NOT accept
+ * any purpose-scoped token, which is what stops a scoped token being replayed
+ * through an older route.
  */
 export async function verifyUnsubscribeToken(
   token: string,
-  secret: string
+  secret: string,
+  purpose?: TokenPurpose
 ): Promise<string | null> {
   const dot = token.indexOf(".");
   if (dot <= 0 || dot === token.length - 1) return null;
@@ -75,6 +120,6 @@ export async function verifyUnsubscribeToken(
   }
   if (!email) return null;
 
-  const expected = toBase64Url(await hmacSha256(email, secret));
+  const expected = toBase64Url(await hmacSha256(signedMessage(email, purpose), secret));
   return safeEqual(expected, token.slice(dot + 1)) ? email : null;
 }

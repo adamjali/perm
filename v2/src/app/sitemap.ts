@@ -1,4 +1,6 @@
 import type { MetadataRoute } from 'next'
+import { fetchQuery } from 'convex/nextjs'
+import { api } from '../../convex/_generated/api'
 import { getAllPosts } from '@/lib/content'
 import { captureError } from '@/lib/sentry'
 
@@ -9,7 +11,7 @@ import { captureError } from '@/lib/sentry'
 // https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap
 export const revalidate = 86400
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://permtracker.app'
 
   // Use the most recent content date for listing pages (not build time).
@@ -28,6 +30,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       }, allPosts[0]!.meta.date)
     : new Date().toISOString().split('T')[0]!
 
+  // DOL's own as-of stamp for the processing-times page. Wrapped because the
+  // sitemap must still build if Convex is unreachable: a sitemap with one
+  // slightly stale lastmod is fine, a failed build is not.
+  const permAsOf = await fetchQuery(api.dolProcessingTimes.getLatest, {})
+    .then((snap) => snap?.permAsOf ?? null)
+    .catch(() => null)
+
   // Static pages.
   // - Homepage lastModified is derived from latestPostDate (was hardcoded):
   //   home content references the latest posts, so freshness tracks content.
@@ -43,10 +52,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/changelog`, lastModified: latestPostDate },
     { url: `${baseUrl}/resources`, lastModified: latestPostDate },
     { url: `${baseUrl}/faq`, lastModified: '2026-02-21' },
-    // Live DOL figures, refreshed weekly by convex/dolProcessingTimes.ts. The
-    // lastmod tracks content freshness the same way the listing pages do,
-    // rather than claiming a date the page's data may not have moved on.
-    { url: `${baseUrl}/perm-processing-times`, lastModified: latestPostDate },
+    // Live DOL figures, refreshed weekly by convex/dolProcessingTimes.ts.
+    // lastmod is DOL's own as-of date, which is the only thing that actually
+    // changes this page. It previously used latestPostDate, so the date moved
+    // whenever an unrelated blog post shipped and stayed put when DOL published
+    // — backwards on both counts, and the fastest way to teach a crawler that
+    // our lastmod values mean nothing.
+    { url: `${baseUrl}/perm-processing-times`, lastModified: permAsOf ?? latestPostDate },
     { url: `${baseUrl}/contact`, lastModified: '2026-02-07' },
     { url: `${baseUrl}/terms`, lastModified: '2026-06-15' },
     { url: `${baseUrl}/privacy`, lastModified: '2026-06-15' },

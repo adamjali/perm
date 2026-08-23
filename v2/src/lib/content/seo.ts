@@ -8,6 +8,21 @@ import type { PostMeta, ContentType, PostSummary } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
 
+/** Emitted identically by Article and VideoObject; written once so it stays that way. */
+const PUBLISHER = {
+  "@type": "Organization" as const,
+  name: "PERM Tracker",
+  logo: {
+    "@type": "ImageObject" as const,
+    url: `${BASE_URL}/icon-512.png`,
+  },
+};
+
+/** Absolute image URL for a post, falling back to the generated OG image. */
+function imageUrl(meta: PostMeta): string {
+  return meta.image ? `${BASE_URL}${meta.image}` : `${BASE_URL}/opengraph-image`;
+}
+
 /**
  * Convert a YYYY-MM-DD date string to ISO 8601 with explicit UTC offset for
  * schema.org `datePublished` / `dateModified` fields.
@@ -34,7 +49,7 @@ export function generateArticleSchema(
     "@type": "Article" as const,
     headline: meta.title,
     description: meta.description,
-    image: meta.image ? `${BASE_URL}${meta.image}` : `${BASE_URL}/opengraph-image`,
+    image: imageUrl(meta),
     datePublished: toISO8601(meta.date),
     dateModified: toISO8601(meta.updated || meta.date),
     author: {
@@ -42,14 +57,7 @@ export function generateArticleSchema(
       name: meta.author,
       url: BASE_URL,
     },
-    publisher: {
-      "@type": "Organization" as const,
-      name: "PERM Tracker",
-      logo: {
-        "@type": "ImageObject" as const,
-        url: `${BASE_URL}/icon-512.png`,
-      },
-    },
+    publisher: PUBLISHER,
     mainEntityOfPage: {
       "@type": "WebPage" as const,
       "@id": `${BASE_URL}/${type}/${slug}`,
@@ -73,6 +81,8 @@ export function generateHowToSchema(
     "@type": "HowTo" as const,
     name: meta.title,
     description: meta.description,
+    // Not imageUrl(): HowTo OMITS the key when there is no image rather than
+    // falling back to the generic OG card, which is a different claim.
     image: meta.image ? `${BASE_URL}${meta.image}` : undefined,
     totalTime: meta.readingTime,
     step: steps.map((s, i) => ({
@@ -111,17 +121,10 @@ export function generateVideoObjectSchema(
     "@type": "VideoObject" as const,
     name: alt,
     description: `${alt}, from ${meta.title}`,
-    thumbnailUrl: meta.image ? `${BASE_URL}${meta.image}` : `${BASE_URL}/opengraph-image`,
+    thumbnailUrl: imageUrl(meta),
     uploadDate: toISO8601(meta.date),
     contentUrl: `${BASE_URL}${src}`,
-    publisher: {
-      "@type": "Organization" as const,
-      name: "PERM Tracker",
-      logo: {
-        "@type": "ImageObject" as const,
-        url: `${BASE_URL}/icon-512.png`,
-      },
-    },
+    publisher: PUBLISHER,
   };
 }
 

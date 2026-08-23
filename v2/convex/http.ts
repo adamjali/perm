@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 import { auth } from "./auth";
 import { recordError } from "./lib/errorRecording";
 import { isLiveContactEventType } from "./marketingWebhook";
@@ -211,10 +211,14 @@ async function resolveUnsubscribeEmail(req: Request): Promise<string | null> {
   return verifyUnsubscribeToken(token, secret);
 }
 
-function unsubscribePage(title: string, body: string, button?: { action: string }): Response {
+function unsubscribePage(
+  title: string,
+  body: string,
+  button?: { action: string; label?: string },
+): Response {
   const buttonHtml = button
     ? `<form method="POST" action="${button.action}" style="margin:20px 0 0 0;">
-         <button type="submit" style="background:#18181b;color:#fffffe;border:3px solid #000001;box-shadow:4px 4px 0 #22c55e;font-size:14px;font-weight:700;padding:12px 28px;cursor:pointer;">Unsubscribe</button>
+         <button type="submit" style="background:#18181b;color:#fffffe;border:3px solid #000001;box-shadow:4px 4px 0 #22c55e;font-size:14px;font-weight:700;padding:12px 28px;cursor:pointer;">${button.label ?? "Unsubscribe"}</button>
        </form>`
     : "";
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${title}</title></head>
@@ -336,30 +340,74 @@ http.route({
     const validRole =
       role === "attorney" || role === "applicant" || role === "employer" ? role : undefined;
 
-    const result = await ctx.runMutation(api.queueAlerts.subscribe, {
+    // Best-effort caller identity for the per-IP limit. Convex populates
+    // `x-forwarded-for`; the leftmost hop is client-supplied and therefore
+    // spoofable, so this raises the cost of naive abuse rather than preventing
+    // it. The control that actually bounds damage to the shared Resend quota
+    // is the global confirmation budget inside `subscribe`, which no amount of
+    // IP or address rotation can get around.
+    const forwarded = req.headers.get("x-forwarded-for") ?? "";
+    const ip = forwarded.split(",")[0]?.trim() || "unknown";
+
+    const result = await ctx.runMutation(internal.queueAlerts.subscribe, {
       email,
       filingMonth,
       role: validRole,
       source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      ip,
     });
 
-    return json(result);
+    // 200 on success, 429 when a limit refused it, 400 when the caller sent a
+    // field we could not use. Collapsing the last two would report every typo
+    // as rate-limiting in monitoring.
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+// GET shows a button and changes nothing. Outlook Safe Links, Mimecast,
+// Proofpoint and Barracuda all fetch URLs in inbound mail, so a GET that
+// mutated would let a recipient's own mail gateway complete the double opt-in
+// on their behalf — which is exactly the thing double opt-in exists to prevent,
+// and it would break this module's promise that a wrong address costs one email
+// and nothing more. The sibling unsubscribe route has always worked this way;
+// confirm now matches it.
+http.route({
+  path: "/queue-alert/confirm",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
+    return unsubscribePage(
+      "Confirm your queue alert",
+      "We'll email you once, on the day the Department of Labor's PERM analyst-review queue reaches your filing month. That's the only message you'll get.",
+      {
+        action: `/queue-alert/confirm?token=${encodeURIComponent(token)}`,
+        label: "Confirm",
+      },
+    );
   }),
 });
 
 http.route({
   path: "/queue-alert/confirm",
-  method: "GET",
+  method: "POST",
   handler: httpAction(async (ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
     if (!token) return new Response("Invalid confirmation link.", { status: 400 });
 
     const result = await ctx.runMutation(internal.queueAlerts.confirmByToken, { token });
-    if (!result) return new Response("Invalid or expired confirmation link.", { status: 400 });
+    if (!result) {
+      // Also the answer for a valid token belonging to someone who has since
+      // unsubscribed. Deliberately not distinguished: re-subscribing is a
+      // fresh signup, not a link click.
+      return new Response("This confirmation link is no longer valid.", { status: 400 });
+    }
 
     return unsubscribePage(
       "You're on the list",
-      `We'll email you once, when the Department of Labor's PERM analyst-review queue reaches ${result.filingMonth}. That's the only message you'll get, and DOL's current figures are always on permtracker.app/perm-processing-times.`,
+      result.alreadyReached
+        ? `DOL's PERM analyst-review queue has already reached ${result.filingMonth}. Your alert is on its way now, and that's the only message you'll get. Current figures are always on permtracker.app/perm-processing-times.`
+        : `We'll email you once, when the Department of Labor's PERM analyst-review queue reaches ${result.filingMonth}. That's the only message you'll get, and DOL's current figures are always on permtracker.app/perm-processing-times.`,
     );
   }),
 });

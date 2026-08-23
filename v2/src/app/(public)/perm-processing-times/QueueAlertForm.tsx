@@ -17,6 +17,7 @@
 import { useId, useState } from "react";
 import { Bell, CheckCircle2 } from "lucide-react";
 
+import { MONTH_NAMES } from "@/lib/dolFormat";
 import { Button, Input, Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -32,21 +33,27 @@ function subscribeEndpoint(): string | null {
   return `${cloud.replace(".convex.cloud", ".convex.site")}/queue-alert/subscribe`;
 }
 
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-] as const;
+/**
+ * Filing months a live PERM case could plausibly carry: `newest` back to 2020.
+ *
+ * `newest` is passed in rather than read from `new Date()` here. The parent
+ * page sets `revalidate = 3600`, so its HTML is served from cache for an hour;
+ * a component that computed "this month" itself would, for up to an hour after
+ * a month boundary, render a client list one option longer than the cached
+ * server list and hydrate with a mismatched <select>.
+ */
+function filingMonthOptions(newest: string): { value: string; label: string }[] {
+  const m = /^(\d{4})-(\d{2})$/.exec(newest);
+  const newestYear = m ? Number(m[1]) : 2020;
+  const newestMonth = m ? Number(m[2]) - 1 : 11;
 
-/** Filing months a live PERM case could plausibly carry: this month back to 2020. */
-function filingMonthOptions(): { value: string; label: string }[] {
-  const now = new Date();
   const options: { value: string; label: string }[] = [];
-  for (let year = now.getUTCFullYear(); year >= 2020; year--) {
-    const startMonth = year === now.getUTCFullYear() ? now.getUTCMonth() : 11;
-    for (let m = startMonth; m >= 0; m--) {
+  for (let year = newestYear; year >= 2020; year--) {
+    const startMonth = year === newestYear ? newestMonth : 11;
+    for (let mo = startMonth; mo >= 0; mo--) {
       options.push({
-        value: `${year}-${String(m + 1).padStart(2, "0")}`,
-        label: `${MONTH_NAMES[m]} ${year}`,
+        value: `${year}-${String(mo + 1).padStart(2, "0")}`,
+        label: `${MONTH_NAMES[mo]} ${year}`,
       });
     }
   }
@@ -62,7 +69,14 @@ const selectClasses = cn(
   "disabled:shadow-none disabled:pointer-events-none disabled:opacity-50",
 );
 
-export function QueueAlertForm({ source }: { source: string }) {
+export function QueueAlertForm({
+  source,
+  newestMonth,
+}: {
+  source: string;
+  /** Newest selectable filing month, "YYYY-MM". Supplied by the server render. */
+  newestMonth: string;
+}) {
   const emailId = useId();
   const monthId = useId();
   const roleId = useId();
@@ -73,7 +87,7 @@ export function QueueAlertForm({ source }: { source: string }) {
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
 
-  const options = filingMonthOptions();
+  const options = filingMonthOptions(newestMonth);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

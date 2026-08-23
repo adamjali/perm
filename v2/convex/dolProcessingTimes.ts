@@ -16,15 +16,20 @@
  * @module convex/dolProcessingTimes
  */
 
-import { v } from "convex/values";
+import { v, type Infer } from "convex/values";
 import { internalAction, internalMutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import { recordError } from "./lib/errorRecording";
 import {
   parseProcessingTimes,
   hashSnapshot,
+  analystReviewQueue,
   DOL_PROCESSING_TIMES_URL,
 } from "./lib/dolProcessingTimes";
+import { createLogger } from "./lib/logging";
+
+const log = createLogger("DolProcessingTimes");
 
 /** Give DOL a generous but bounded window; the page is ~160 KB of plain HTML. */
 const FETCH_TIMEOUT_MS = 30_000;
@@ -93,9 +98,10 @@ const ingestResult = v.object({
 /**
  * Fetch the live page, parse it, and store it if the content changed.
  *
- * Scheduled monthly (see convex/crons.ts). DOL refreshes PERM in the first
- * work week of each month and prevailing wage on its own cadence, so a run
- * that finds no change is the normal case and is reported as a no-op.
+ * Scheduled WEEKLY (see convex/crons.ts). DOL refreshes PERM in the first work
+ * week of each month and prevailing wage on its own cadence, so most runs find
+ * no change and report a no-op; polling weekly just means we notice the change
+ * within days of it happening rather than on a fixed date DOL does not honour.
  */
 export const refresh = internalAction({
   args: {},
@@ -154,8 +160,30 @@ export const refresh = internalAction({
       // would re-scan the subscriber list weekly for no reason, and firing
       // before the store would alert people off a snapshot we failed to keep.
       if (result.stored) {
-        const analyst = snapshot.permQueues.find((q) => /analyst review/i.test(q.queue));
-        if (analyst?.priorityDate) {
+        const analyst = analystReviewQueue(snapshot.permQueues);
+
+        // The parser now guarantees this row exists, so reaching either branch
+        // below means something changed upstream that we should hear about.
+        // Previously this was a bare `if (analyst?.priorityDate)` with no else:
+        // a missing row or a "--" produced a stored snapshot, zero alerts, no
+        // log and no error, so the feature could be entirely dead while every
+        // dashboard stayed green. Silence is not an acceptable outcome for the
+        // one value the whole product depends on.
+        if (!analyst) {
+          await recordError(
+            ctx,
+            "action",
+            "dolProcessingTimes.refresh.analystRow",
+            new Error(
+              "Snapshot stored with no Analyst Review row; queue alerts did not run",
+            ),
+          );
+        } else if (!analyst.priorityDate) {
+          log.warn("Analyst Review row has no priority date; skipping queue alerts", {
+            raw: analyst.raw,
+            permAsOf: snapshot.permAsOf,
+          });
+        } else {
           await ctx.scheduler.runAfter(0, internal.queueAlerts.notifyQueueReached, {
             frontier: analyst.priorityDate,
             asOf: snapshot.permAsOf,
@@ -170,6 +198,27 @@ export const refresh = internalAction({
     }
   },
 });
+
+/**
+ * Compile-time proof that the stored-snapshot validator and the actual table
+ * are the same shape, in both directions.
+ *
+ * `.extend()` and `.fields` bind `storedSnapshot` and `store`'s args to
+ * `snapshotInput`, so those three genuinely cannot drift. The table body in
+ * convex/schema.ts is derived from NOTHING, and TypeScript does not
+ * excess-property-check a spread of a non-fresh variable, so an EXTRA field on
+ * the validator type-checks green and fails at runtime — in production, on the
+ * cron, once a week, on a page DOL keeps no archive of. This assertion is the
+ * only thing that catches that direction.
+ */
+type StoredMatchesTable =
+  Doc<"dolProcessingTimes"> extends Infer<typeof storedSnapshot>
+    ? Infer<typeof storedSnapshot> extends Doc<"dolProcessingTimes">
+      ? true
+      : never
+    : never;
+const _storedMatchesTable: StoredMatchesTable = true;
+void _storedMatchesTable;
 
 /**
  * Insert a snapshot, but only when its content differs from what we hold.
@@ -231,7 +280,10 @@ export const getHistory = query({
   },
   returns: v.array(storedSnapshot),
   handler: async (ctx, args) => {
-    const limit = Math.min(args.limit ?? 24, 120);
+    // Clamped at BOTH ends. This is a public query, so `limit` is caller-
+    // supplied: -1 and NaN both used to reach `.take()` unchallenged.
+    const requested = Math.floor(args.limit ?? 24);
+    const limit = Number.isFinite(requested) ? Math.min(Math.max(requested, 1), 120) : 24;
     return await ctx.db
       .query("dolProcessingTimes")
       .withIndex("by_fetched")
