@@ -29,6 +29,7 @@
 - **`ctx.scheduler.runAfter` discards return values**: a batched function that returns `{sent, remaining}` to a scheduler resumes nothing. Batched work must reschedule itself, guarded on having made progress so a total outage cannot spin a timer.
 - **Probe a fix by reverting it**: after fixing a reviewed defect, revert the fix and confirm the new test goes red before claiming coverage. Applies the existing "probe every gate with a broken input" policy to your own patch.
 - **Every verification sweep needs a control string**: assert one phrase you know is still present in the same run. A `grep -F` pattern containing `\n` matches a literal backslash-n and reports everything clean (hit twice on 2026-08-23).
+- **`pnpm test:run` is the pre-push gate, never `pnpm test:fast`**: `test:fast` runs 2 of 4 vitest projects and skips `components` (which owns `src/app/**`) and `convex`. A green `test:fast` plus a green `--project convex` still shipped a red CI on 2026-08-23, because the broken file lived in the only project neither command runs. Same family as the two-typechecker policy above: enumerate what a check actually covers before trusting it.
 
 ## Audit 8 — 2026-08-22
 - **health_before:** 100/100 by rubric, but 4 open HIGH CodeQL alerts the rubric does not score

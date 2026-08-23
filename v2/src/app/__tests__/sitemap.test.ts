@@ -13,8 +13,17 @@ vi.mock("@/lib/sentry", () => ({
   captureError: vi.fn(),
 }));
 
+// The sitemap reads DOL's own as-of date for /perm-processing-times, so the
+// lastmod moves when DOL publishes rather than when an unrelated blog post
+// ships. Mocked here so the sitemap stays a pure function of its inputs; the
+// unreachable-Convex path is asserted explicitly below.
+vi.mock("convex/nextjs", () => ({
+  fetchQuery: vi.fn(async () => ({ permAsOf: "2026-08-20" })),
+}));
+
 import { getAllPosts } from "@/lib/content";
 import { captureError } from "@/lib/sentry";
+import { fetchQuery } from "convex/nextjs";
 import sitemap, { revalidate } from "../sitemap";
 
 function mkPost(
@@ -44,33 +53,33 @@ describe("sitemap.ts", () => {
     vi.clearAllMocks();
   });
 
-  it("opts into daily ISR via revalidate=86400", () => {
+  it("opts into daily ISR via revalidate=86400", async () => {
     expect(revalidate).toBe(86400);
   });
 
-  it("homepage lastModified derives from the newest post's date or updated", () => {
+  it("homepage lastModified derives from the newest post's date or updated", async () => {
     vi.mocked(getAllPosts).mockReturnValue([
       mkPost("first", "blog", "2026-01-01"),
       mkPost("second", "blog", "2026-02-15", "2026-03-04"),
       mkPost("third", "tutorials", "2026-01-20"),
     ]);
-    const entries = sitemap();
+    const entries = await sitemap();
     const root = entries.find((e) => e.url === "https://permtracker.app");
     expect(root).toBeDefined();
     // The second post has the most recent `updated` (2026-03-04) — that should win.
     expect(root!.lastModified).toBe("2026-03-04");
   });
 
-  it("does NOT include /login or /signup (they are noindex per their page metadata)", () => {
+  it("does NOT include /login or /signup (they are noindex per their page metadata)", async () => {
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
-    const urls = sitemap().map((e) => e.url);
+    const urls = (await sitemap()).map((e) => e.url);
     expect(urls).not.toContain("https://permtracker.app/login");
     expect(urls).not.toContain("https://permtracker.app/signup");
   });
 
-  it("includes the standard public listing pages", () => {
+  it("includes the standard public listing pages", async () => {
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
-    const urls = new Set(sitemap().map((e) => e.url));
+    const urls = new Set((await sitemap()).map((e) => e.url));
     for (const path of [
       "https://permtracker.app",
       "https://permtracker.app/blog",
@@ -88,7 +97,7 @@ describe("sitemap.ts", () => {
     }
   });
 
-  it("emits per-slug URLs for blog/tutorials/guides/resources but NOT changelog", () => {
+  it("emits per-slug URLs for blog/tutorials/guides/resources but NOT changelog", async () => {
     vi.mocked(getAllPosts).mockReturnValue([
       mkPost("blog-a", "blog", "2026-01-01"),
       mkPost("tutorial-a", "tutorials", "2026-01-02"),
@@ -96,7 +105,7 @@ describe("sitemap.ts", () => {
       mkPost("resource-a", "resources", "2026-01-04"),
       mkPost("changelog-a", "changelog", "2026-01-05"),
     ]);
-    const urls = sitemap().map((e) => e.url);
+    const urls = (await sitemap()).map((e) => e.url);
     expect(urls).toContain("https://permtracker.app/blog/blog-a");
     expect(urls).toContain("https://permtracker.app/tutorials/tutorial-a");
     expect(urls).toContain("https://permtracker.app/guides/guide-a");
@@ -105,12 +114,33 @@ describe("sitemap.ts", () => {
     expect(urls).not.toContain("https://permtracker.app/changelog/changelog-a");
   });
 
-  it("captureErrors when zero posts (build-time content failure should never be silent)", () => {
+  it("captureErrors when zero posts (build-time content failure should never be silent)", async () => {
     vi.mocked(getAllPosts).mockReturnValue([]);
-    sitemap();
+    await sitemap();
     expect(captureError).toHaveBeenCalledOnce();
     const err = vi.mocked(captureError).mock.calls[0]![0];
     expect(err).toBeInstanceOf(Error);
     expect((err as Error).message).toMatch(/zero content posts/i);
+  });
+
+  it("uses DOL's as-of date for /perm-processing-times, not the newest post date", async () => {
+    // It previously used latestPostDate, so the lastmod moved whenever an
+    // unrelated blog post shipped and stayed put when DOL actually published.
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    const entry = (await sitemap()).find((e) =>
+      e.url.endsWith("/perm-processing-times"),
+    );
+    expect(entry!.lastModified).toBe("2026-08-20");
+  });
+
+  it("still builds when Convex is unreachable", async () => {
+    // A sitemap with one slightly stale lastmod is fine; a failed build is not.
+    vi.mocked(fetchQuery).mockRejectedValueOnce(new Error("convex down"));
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    const entries = await sitemap();
+    expect(entries.length).toBeGreaterThan(0);
+    expect(
+      entries.find((e) => e.url.endsWith("/perm-processing-times"))!.lastModified,
+    ).toBe("2026-01-01");
   });
 });

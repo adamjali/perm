@@ -28,8 +28,8 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:app` | `tsgo --noEmit` (app tsconfig) |
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
-| `pnpm test:fast` | ~1300 unit+PERM tests (~40s) |
-| `pnpm test:run` | Full 3600+ suite (~9min) |
+| `pnpm test:fast` | ~1300 tests, **2 of 4 projects only** (~40s). Not a pre-push gate |
+| `pnpm test:run` | **All 4 projects, 4500+ tests (~9min). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -146,6 +146,32 @@ import { toast } from "@/lib/toast";
 ```
 
 SWC minifier bug details: [CONCERNS.md TD-01](../.planning/codebase/CONCERNS.md).
+
+---
+
+## Before pushing: `pnpm test:run`, not `pnpm test:fast`
+
+`test:fast` runs **2 of the 4** vitest projects (`unit`, `unit-isolated`). It
+does NOT run `components` — which owns `src/app/**/*.test.{ts,tsx}`,
+`src/components/**`, `src/emails/**` — or `convex`.
+
+| project | covers |
+|---|---|
+| `unit` | `src/lib/**`, `src/hooks/**`, `convex/lib/perm/**`, `convex/lib/*.test.ts` |
+| `unit-isolated` | mock-heavy files needing `isolate: true` |
+| `components` | **`src/app/**`**, `src/components/**`, `src/emails/**`, `test-utils/**` |
+| `convex` | `convex/*.test.ts`, `convex/__tests__/**`, `convex/lib/__tests__/**` |
+
+Making `sitemap()` async broke `src/app/__tests__/sitemap.test.ts`
+(`sitemap().map` on a Promise). `test:fast` + `--project convex` were both green
+locally and CI went red on the first push, because the broken file was in the
+one project neither command runs. **`pnpm test:run` is the pre-push gate.**
+Same failure shape as the typecheckers below: a check that did not cover its
+subject reads exactly like a pass.
+
+**And `await x().map()` parses as `await (x().map())`.** Awaiting a newly-async
+function needs `(await x()).map()`. A blanket regex inserting `await` in front
+of every call site produces this silently on every chained one.
 
 ---
 
