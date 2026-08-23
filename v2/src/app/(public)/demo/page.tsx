@@ -27,7 +27,7 @@ export const dynamic = "force-static";
 export const metadata: Metadata = {
   title: "Try Demo",
   description:
-    "Try PERM Tracker for free. Explore all features with sample data before signing up. No account required.",
+    "Try PERM Tracker free with sample data, no account needed. Explore PERM deadline tracking, recruitment timelines, and case validation.",
   alternates: {
     canonical: "/demo",
   },

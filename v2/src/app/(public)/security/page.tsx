@@ -22,7 +22,7 @@ export const dynamic = "force-static";
 export const metadata: Metadata = {
   title: "Security",
   description:
-    "Security posture, incident history, and vulnerability disclosure policy for PERM Tracker.",
+    "Security posture, incident history, and vulnerability disclosure for PERM Tracker: encryption, access control, and how to report an issue.",
   alternates: {
     canonical: "/security",
   },
