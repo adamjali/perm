@@ -24,7 +24,9 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 |---|---|
 | `pnpm dev` | Dev server (Turbopack, :3000) |
 | `pnpm build` | Production build (Webpack — SWC bugs only appear here, see [CONCERNS.md](../.planning/codebase/CONCERNS.md) TD-01) |
-| `pnpm typecheck` | `tsgo --noEmit` |
+| `pnpm typecheck` | **Both** typecheckers — app *and* Convex. Always use this one. |
+| `pnpm typecheck:app` | `tsgo --noEmit` (app tsconfig) |
+| `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 unit+PERM tests (~40s) |
 | `pnpm test:run` | Full 3600+ suite (~9min) |
@@ -122,6 +124,17 @@ await ctx.db.patch(id, { pwdFilingDate: new Date() }); // WRONG
 // DO: ISO strings
 await ctx.db.patch(id, { pwdFilingDate: format(new Date(), "yyyy-MM-dd") });
 
+// DON'T: trust a truthiness check as a change detector
+...(row.pendingField ? { notifiedAt: undefined } : {})   // WRONG: always set
+// DO: compare against the current value
+const changed = row.pendingField !== undefined && row.pendingField !== row.field;
+
+// DON'T: write an unanchored regex to read a value out of a cell
+/([A-Za-z]+)\s+(\d{4})/   // WRONG: "As of May 2025 ... September 2025" -> 2025-05
+// DO: anchor it. A plausible WRONG value is worse than a null, because null is
+// visible downstream and a wrong date is not.
+/^([A-Za-z]+)\.?,?\s+(\d{4})$/
+
 // DON'T: Import toast from sonner directly (not auth-aware, fires during sign-out)
 import { toast } from "sonner"; // WRONG
 // DO:
@@ -133,6 +146,133 @@ import { toast } from "@/lib/toast";
 ```
 
 SWC minifier bug details: [CONCERNS.md TD-01](../.planning/codebase/CONCERNS.md).
+
+---
+
+## Two typecheckers, and passing one proves nothing about the other
+
+`pnpm typecheck` now runs both. It did not always, and that is how a broken
+`convex/` file shipped past a green local run.
+
+| | `tsconfig.json` (app) | `convex/tsconfig.json` |
+|---|---|---|
+| `lib` | `dom, dom.iterable, esnext` | **`ES2021, dom`** |
+| test files | **excluded** (`**/*.test.ts`) | **included** (`./**/*`) |
+
+Two independent gaps, either one sufficient. `Array.prototype.at` is ES2022, so
+`results.at(-1)` compiles under the app config and fails under Convex's. And
+because the app config excludes tests, `pnpm typecheck:app` never even opened
+the file. The Convex plugin's end-of-turn hook caught it only because it runs
+`convex codegen`, which typechecks with Convex's config.
+
+**Anything under `convex/` must satisfy both.** Use `pnpm typecheck`.
+`tsc -p convex --noEmit` is the pure check — `convex codegen` also uploads to
+the deployment, so it is not a typecheck substitute.
+
+---
+
+## Sending email
+
+**Resend does NOT throw on failure.** Verified in `resend@6.22.0`
+(`dist/index.mjs`): `fetchRequest` returns `{ data: null, error }` for a 429, a
+422 and a network failure alike. A bare `try { await resend.emails.send(...) }`
+has a catch block that is **dead code for every realistic failure**, and any
+line after the send runs as if it succeeded.
+
+```typescript
+// DON'T: the catch never fires, and the subscriber gets marked as mailed
+try {
+  await getResend().emails.send({ ... });
+  await ctx.runMutation(internal.x.markNotified, { id });   // runs on a 429
+} catch (e) { /* unreachable */ }
+
+// DO: sendEmailWithRetry handles both shapes AND enforces the blocklist
+const result = await sendEmailWithRetry(getResend(), { ... });
+if (result.error) { /* log, recordError, do NOT advance state */ }
+```
+
+`sendEmailWithRetry` (`convex/lib/email.ts`) is the only sanctioned path. It
+checks the returned `error`, catches genuinely-thrown network errors, retries
+rate limits with backoff, and enforces `isEmailBlocklisted`. Calling the SDK
+directly walks around all four — and makes `convex/lib/emailBlocklist.ts`'s
+stated invariant ("no code path can send to it") false.
+
+**The Resend account cap is 100/day and is SHARED** with password resets, OTP
+and deadline reminders. Exhausting it has caused a real outage. Any new sending
+path needs a budget, not just good intentions.
+
+---
+
+## Public unauthenticated endpoints
+
+`convex/http.ts` carries routes any stranger can hit. Checklist, each item
+learned from a real defect in `convex/queueAlerts.ts`:
+
+- **The mutation behind the route is `internalMutation`, never `mutation`.** A
+  public mutation is a second entry point that skips the HTTP layer's field
+  narrowing, its length caps and its rate limit, and makes the CORS allowlist
+  decorative (CORS is browser-side only; the Convex API is callable directly).
+- **A per-identity limit cannot stop identity rotation.** A per-address cooldown
+  does nothing against an attacker cycling fresh addresses; a per-IP limit does
+  nothing against a proxy pool. **Add a global budget on the shared finite
+  resource itself** — that is the only limit that cannot be rotated around.
+- **Order your guards by cost.** Cheap shape checks first. Put the length cap
+  *before* any regex that can backtrack: `/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/`
+  measured **8.2 s** on an 80k-character input in V8, and 0.005 ms with the
+  length check first. `v.string()` accepts ~1 MB.
+- **GET must not mutate.** Outlook Safe Links, Mimecast, Proofpoint and
+  Barracuda all fetch URLs in inbound mail, so a GET that acts lets a
+  recipient's own mail gateway click their links. Render a POST button instead.
+- **Distinguish 400 from 429** in the response, or every typo reads as
+  rate-limiting in monitoring.
+
+---
+
+## Action tokens (`convex/lib/unsubscribeToken.ts`)
+
+`makeUnsubscribeToken(email, secret, purpose?)` signs `<purpose>:<email>`.
+**Always pass a purpose for new callers.** Without one, every token for an
+address is the same string, so a link meaning "unsubscribe me" is byte-identical
+to one meaning "confirm me" and differs only in which path it is pasted into —
+which let an unsubscribe link be replayed against a confirm route to undo an
+opt-out.
+
+The bare form is kept **only** for weekly-digest links already sitting in real
+inboxes (`convex/notificationActions.ts`). Those have no expiry; making scoping
+mandatory would silently break every one of them.
+
+These tokens never expire and are replayable by anyone who can read the email.
+Fine for "stop sending me mail" (idempotent, self-harming at worst). **Never
+treat one as a fresh act of consent** — anything that grants or restores a
+subscription must re-check state, not trust the signature.
+
+---
+
+## Convex gotchas beyond the generated guidelines
+
+- **`ctx.scheduler.runAfter` discards the return value.** A function that
+  returns `{ sent, remaining }` to a scheduler resumes nothing. If work is
+  batched, it must **reschedule itself**; guard that on having made progress so
+  a total outage cannot spin a timer.
+- **Index field order is the difference between a bounded read and a table
+  scan.** Lead with the equality predicates that mean "is this row still live",
+  and put the range field last (Convex allows a range comparison only on the
+  final indexed field). `.collect()` then filtering in JS re-reads every row you
+  already dealt with, forever, and fails hard at the read limit rather than
+  degrading. Iterate the query with an early `break` when a JS-side predicate
+  remains.
+- **`.extend()` / `.fields` bind validators to each other, NOT to the table.**
+  The table body in `schema.ts` is derived from nothing, and TypeScript does not
+  excess-property-check a spread of a non-fresh variable, so an *extra*
+  validator field typechecks green and fails at runtime. Assert exactness:
+  ```typescript
+  type Ok = Doc<"t"> extends Infer<typeof val>
+    ? Infer<typeof val> extends Doc<"t"> ? true : never : never;
+  const _ok: Ok = true; void _ok;
+  ```
+  Probe it by adding a phantom field and confirming it goes red.
+- **Patching a field to `undefined` DELETES it**, and `JSON.stringify` hides
+  that: `{...(x ? {f: undefined} : {})}` prints as `{}`. Check `"f" in patch`.
 
 ---
 
@@ -189,6 +329,9 @@ Content in `content/{blog,tutorials,guides,changelog,resources}/*.mdx`. Processe
 | PostHog/analytics silently not capturing | Client init must be in `src/instrumentation-client.ts` (the only one Next.js loads; a root one is ignored) — PostHog + BotID coexist there. [CONCERNS.md TD-06](../.planning/codebase/CONCERNS.md) |
 | Convex action can't call another action | `ctx.scheduler.runAfter(0, ...)` instead |
 | Sitemap dates stale | Update `lastModified` in `src/app/sitemap.ts` |
+| Typecheck green locally, Convex plugin hook fails | You ran `typecheck:app` only. `pnpm typecheck` runs both — see "Two typecheckers" |
+| Email "sent" but never arrived, nothing logged | A bare `resend.emails.send()`. Resend returns `{error}`, it does not throw. Use `sendEmailWithRetry` |
+| A sweep only ever processes one batch | `scheduler.runAfter` discards return values; the function must reschedule itself |
 
 Deployment + project names: [root CLAUDE.md](../CLAUDE.md#deployment).
 
