@@ -86,6 +86,45 @@ describe("field helpers", () => {
     it("flattens a caption split across tags and newlines", () => {
       expect(textOf("<caption>\n  <strong>A</strong>\n  <em>B</em>\n</caption>")).toBe("A B");
     });
+
+    // The four cases below are the CodeQL findings on this file
+    // (js/double-escaping, js/incomplete-multi-character-sanitization,
+    // js/bad-tag-filter). Each one produced a wrong value, not just a warning.
+
+    it("decodes each entity once, so &amp;lt; stays literal", () => {
+      // Chained replaces decoded &amp; to & first, then read the resulting
+      // &lt; as a second entity and produced "<", a value DOL never published.
+      expect(textOf("A &amp;lt; B")).toBe("A &lt; B");
+      expect(textOf("Tom &amp; Jerry")).toBe("Tom & Jerry");
+      expect(textOf("5 &lt; 10")).toBe("5 < 10");
+    });
+
+    it("strips a closing tag that carries whitespace before the bracket", () => {
+      // `</script >` is valid HTML and the old pattern did not match it, so the
+      // script body survived into the parsed text.
+      expect(textOf("<script>alert(1)</script >tail")).toBe("tail");
+      expect(textOf("<style>body{}</style\n>tail")).toBe("tail");
+    });
+
+    it("does not treat a longer element name as script or style", () => {
+      expect(textOf("<scripting>kept</scripting>")).toBe("kept");
+    });
+
+    it("keeps removing script blocks until the result stops changing", () => {
+      // A single lazy pass matches the first opener to the first closer and
+      // leaves the outer </script> behind. Looping clears it.
+      expect(textOf("<script>outer<script>inner</script></script>done")).toBe("done");
+    });
+
+    it("never leaves an executable tag behind on malformed markup", () => {
+      // `<sc<script>ript>` is not valid HTML. The extractor consumes
+      // `<sc<script>` as one tag and the leftover is inert text, which is the
+      // correct outcome for a text extractor: no tag and no script survive.
+      const out = textOf("<sc<script>ript>visible");
+      expect(out).toBe("ript>visible");
+      expect(out).not.toMatch(/<\s*script/i);
+      expect(out).not.toContain("<");
+    });
   });
 });
 

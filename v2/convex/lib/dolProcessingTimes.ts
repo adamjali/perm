@@ -99,16 +99,73 @@ const MONTHS: Record<string, string> = {
   september: "09", october: "10", november: "11", december: "12",
 };
 
+/**
+ * The entities DOL actually emits on this page.
+ *
+ * Decoded in ONE pass rather than by chained `.replace` calls. Chaining them
+ * lets each replacement re-consume the previous one's output: decoding `&amp;`
+ * to `&` before handling `&lt;` turns the literal text `&amp;lt;` into `<`,
+ * which is a value DOL never published. One pass over one alternation cannot
+ * double-unescape, because each match is consumed exactly once.
+ */
+const HTML_ENTITIES: Record<string, string> = {
+  "&nbsp;": " ",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&amp;": "&",
+};
+
+/**
+ * Patterns for the two elements whose CONTENT must never reach parsed text.
+ *
+ * Written as literals rather than built from a tag name, both because the tag
+ * set is fixed and because a RegExp built from a variable is a ReDoS footgun
+ * the linter is right to flag. Two details a naive pattern gets wrong:
+ *
+ *   - `<\/script>` does not match `</script >`. HTML permits whitespace before
+ *     the closing bracket, so the tail must be `<\/script\s*>`.
+ *   - `<script` without `\b` also matches `<scripting>`, a different element.
+ */
+const SCRIPT_BLOCK = /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi;
+const STYLE_BLOCK = /<style\b[^>]*>[\s\S]*?<\/style\s*>/gi;
+
+/**
+ * Remove every match of `pattern`, repeating until the output stops changing.
+ *
+ * The loop matters because one lazy pass matches the first opener to the first
+ * closer, so nested blocks leave the outer closing tag behind.
+ */
+function stripBlocks(input: string, pattern: RegExp): string {
+  let out = input;
+  let previous: string;
+  do {
+    previous = out;
+    out = out.replace(pattern, " ");
+  } while (out !== previous);
+  return out;
+}
+
+/** Drop script and style blocks, content included. */
+function stripScriptAndStyle(input: string): string {
+  return stripBlocks(stripBlocks(input, SCRIPT_BLOCK), STYLE_BLOCK);
+}
+
 /** Strip tags, decode the handful of entities DOL emits, collapse whitespace. */
 export function textOf(fragment: string): string {
-  return fragment
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
+  let out = stripScriptAndStyle(fragment);
+
+  // Also loop here: deleting a tag can bring two fragments together that then
+  // read as a tag themselves (`<sc<script>ript>`).
+  let previous: string;
+  do {
+    previous = out;
+    out = out.replace(/<[^>]*>/g, " ");
+  } while (out !== previous);
+
+  return out
+    .replace(/&(?:nbsp|lt|gt|quot|amp|#39);/gi, (m) => HTML_ENTITIES[m.toLowerCase()] ?? m)
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -150,9 +207,9 @@ interface ParsedTable {
 
 /** Split the document into tables, each with its caption, headers and body cells. */
 export function extractTables(htmlDoc: string): ParsedTable[] {
-  const withoutScripts = htmlDoc
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "");
+  // Same whitespace-tolerant, loop-until-stable removal `textOf` uses. Table
+  // markup itself is kept, since this function's whole job is to read it.
+  const withoutScripts = stripScriptAndStyle(htmlDoc);
 
   const tables = withoutScripts.match(/<table[\s\S]*?<\/table>/gi) ?? [];
 

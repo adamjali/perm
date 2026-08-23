@@ -19,6 +19,33 @@
 - **Override floors must cap the major**: a bare `">=x.y.z"` in `pnpm.overrides` accepts *anything* above it, including majors. Audit 7: `nanoid: ">=3.3.18"` (a patch-level advisory fix) resolved to **6.0.1**, three majors up and ESM-only, while the only consumer is `postcss@8.5.25` asking for `^3.3.11`. Correct form is `">=3.3.18 <4"`. Always write the ceiling when the advisory is a patch fix, then re-`pnpm install` and confirm the resolved version.
 - **image-size (via @storybook/nextjs-vite)**: ACCEPTED / leave-open. Two HIGH DoS advisories (ICNS, and JXL/HEIF infinite loops) with `patched_versions: <0.0.0`, meaning **no fixed release exists**. devDependency only, never ships. Do not invent an override floor: there is no version to float to. Re-check when upstream publishes.
 
+- **Community-profile `issue_template: null` is a false positive too**: same unreliable endpoint as the SECURITY.md case. `.github/ISSUE_TEMPLATE/` holds bug_report.yml + feature_request.yml and health_percentage is 100. Verify on disk, never from that field.
+- **Health rubric has no code-scanning term**: a repo can score 100 with open HIGH CodeQL alerts (Audit 8 did). Always report CodeQL severity counts alongside the score rather than letting the number stand alone.
+- **Never build a RegExp from a variable in parser code**: `security/detect-non-literal-regexp` is right, and a fixed tag set should be literal patterns. Also avoids recompiling per call.
+- **Decode HTML entities in ONE pass**: chained `.replace` lets `&amp;` -> `&` be re-read as the start of `&lt;`, turning literal `&amp;lt;` into `<`. Use a single alternation with a lookup map.
+
+## Audit 8 — 2026-08-22
+- **health_before:** 100/100 by rubric, but 4 open HIGH CodeQL alerts the rubric does not score
+- **health_after:** 100/100 and 0 open alerts at every severity (dependabot, secret-scanning, CodeQL high)
+- **items_fixed:** 4 (all CodeQL HIGH) + 1 lint warning
+- **items_discussed:** 2 (CodeQL handling; enforce_admins/required-reviews, both declined)
+- **prs_merged:** 0 (0 open PRs at audit time)
+- **quality_issues_fixed:** 1 (security/detect-non-literal-regexp introduced by the fix itself)
+- **deployed:** yes (Convex required, convex/ touched)
+- **duration:** ~35 min
+
+### Changes Made
+- **js/double-escaping** (`dolProcessingTimes.ts`): entity decoding was a chain of `.replace` calls with `&amp;` decoded BEFORE `&lt;`, so the literal text `&amp;lt;` became `<`, a value DOL never published. Now one pass over a single alternation with a lookup map, which cannot double-unescape.
+- **js/bad-tag-filter + js/incomplete-multi-character-sanitization** (x3): script/style stripping used `<\/script>`, which does not match `</script >` (HTML allows whitespace before the bracket), and had no `\b` so `<scripting>` matched as `<script>`. Now literal whitespace-tolerant patterns applied until the output stops changing, since one lazy pass leaves the outer closer of a nested block behind.
+- Lint: the first fix built a RegExp from a tag-name variable and tripped `security/detect-non-literal-regexp`. Replaced with two literal patterns rather than suppressed.
+- 5 regression tests added, one per CodeQL finding plus malformed-markup behaviour. Parser suite 38 -> 43.
+
+### Decisions
+- **Fix the parser rather than dismiss**: React escapes the parser's output so the XSS framing overstated it, but the double-unescape was a real correctness bug on its own merits. User chose fix.
+- **enforce_admins stays false**: direct pushes to main are the deploy path (carried from Audit 6). Declined again.
+- **Required reviews stay off**: sole maintainer. Declined.
+- **Parity verified live, not just by tests**: after the fix, `dolProcessingTimes:refresh` against live DOL returned "unchanged since last publication", meaning the content hash was byte-identical to what the original parser stored. The hardening altered zero parsed values.
+
 ## Audit 7 — 2026-08-22 (Search Console driven)
 - **Trigger**: reviewing Google Search Console, not a scheduled audit. 21 pages listed "not indexed"; only 2 of the 6 reasons were real defects, the rest were correct canonicalisation/noindex behaviour being reported as if it were a problem.
 - **Fixed (SEO/crawl)**: `/register` was a live 404 (redirect list covered `/register.html` only) → 308 to `/signup`. Every robots.txt `Disallow` carried a trailing slash, so `/admin/` never matched `/admin`; robots paths are prefix matches, so the slashes were dropped after checking that no public route (notably `/security`) collides. Next generates a crawlable route per `opengraph-image.tsx`; five sat under "Crawled - currently not indexed" and now send `X-Robots-Tag: noindex` via `source: "/:path*/:og(opengraph-image.*)"`, verified against path-to-regexp 6.3.0 before writing.
@@ -37,67 +64,9 @@
 - **No Convex deploy**: zero `convex/` changes, frontend-only -> Vercel only.
 - **Machine note**: five build attempts failed on ENOSPC before ~23 GB was freed. Explicitly-backgrounded builds got killed; a foreground build auto-moved to background completed. Prefer the latter on this machine.
 
-## Audit 5 — 2026-06-29
-- **health_before:** 2 medium Dependabot alerts (dompurify 3.4.10 GHSA-cmwh-pvxp-8882; js-yaml 3.x GHSA-h67p-54hq-rp68 via gray-matter) · 0 secret-scanning · 26 Semgrep "note" + 4 "warning" code-scanning (all false-positive/acknowledged — `unsafe-formatstring` template-literals + `content/index.ts` path-traversal already eslint-disabled w/ justification + `JsonLdScript` dangerouslySetInnerHTML) · CI green on `main` · branch protection healthy (strict, CodeQL required) · community 100% · 4 open Dependabot PRs (#112 checkout 6→7, #113 dev group, #114 prod group/31, #115 native-preview), all 7d old. Health **94**.
-- **health_after:** dompurify CVE fixed (override → `>=3.4.11`, resolves 3.4.11); js-yaml left open per decision (no real fix without breaking gray-matter); full gate green (typecheck 0, 2149/2149 fast tests, build ✓ zero warnings). Health **97** (1 residual accepted moderate).
-- **items_fixed:** dompurify override bump (CVE) + caret-safe bulk `pnpm update` (dev tooling: storybook 10.4.6, vite 8.1.0, eslint 10.6.0, playwright 1.61.1, happy-dom, axe, @vitejs/plugin-react) + `@typescript/native-preview` tsgo → 20260628.1 + `actions/checkout` v6→v7 across all 6 workflows.
-- **items_discussed:** 1 (js-yaml handling → "Leave open, no change"). Saved as policy.
-- **prs_closed:** #112/#113/#114/#115 closed as superseded by the bulk update.
-- **quality_issues_fixed:** 0 (gate clean on first pass under new tsgo build + dev-tool bumps).
-- **deployed:** yes — pushed to `main` (Vercel prod rebuild). No Convex deploy (no `convex/` changes; no backend-affecting deps bumped).
-- **duration:** ~30 min, standalone audit.
-
-### Changes Made
-- **Security**: `pnpm.overrides.dompurify` `>=3.3.2` → `>=3.4.11` (GHSA-cmwh-pvxp-8882 — permanent `ALLOWED_ATTR` pollution via `setConfig()`). `pnpm audit` drops to 1 moderate (js-yaml, accepted).
-- **Deps (dev, caret bulk)**: storybook+addons 10.4.5→10.4.6, vite 8.0.16→8.1.0, eslint 10.5.0→10.6.0, eslint-plugin-storybook 10.4.6, playwright/@playwright/test 1.61.0→1.61.1, happy-dom 20.10.3→20.10.6, @axe-core/react 4.11.3→4.12.1, @vitejs/plugin-react 6.0.2→6.0.3. Prod deps already current within carets (June maintenance).
-- **Dev tooling**: `@typescript/native-preview` (exact-pinned) 7.0.0-dev.20260615.1 → 20260628.1 — typecheck clean.
-- **CI**: `actions/checkout@v6` → `@v7` in all 6 workflows (indexnow, semgrep, codeql-analysis, test, claude, claude-code-review). v7 = ESM conversion + blocks fork-PR checkout on `pull_request_target`/`workflow_run` (security hardening); v7 also self-bumps js-yaml to 4.2.0.
-
-### Decisions
-- **js-yaml left open**: user chose accept/leave-open over dismiss-with-reason or custom-engine fix. Documented as Saved Policy — expect it to persist on future audits.
-- **No Convex deploy**: only frontend dev-deps + dompurify (browser sanitization) + workflow YAMLs changed; `convex/` untouched, no backend-runtime dep bumped → Vercel-only.
-- **Bulk update + supersede**: consistent with audits 1–4 — caret `pnpm update`, close grouped Dependabot PRs superseded rather than rebase-merge each.
-
-## Audit 4 — 2026-06-09
-- **health_before:** 0 Dependabot alerts · 0 secret-scanning · CI green on `main` · branch protection healthy · community 100% (SECURITY.md present; community-profile API flag stale). 5 open Dependabot PRs — 2 grouped (#104 dev/18, #105 prod/34 incl. Convex 1.40) + #102 (tsgo), #95/#96 (Actions). #105 failing typecheck. ~26 code-scanning notes + 4 warnings (low/info). Health ≈ 95.
-- **health_after:** all deps current via caret bulk `pnpm update`; `pnpm audit` clean; full gate green (4381/4381 tests); Convex 1.40 deployed; grouped PRs closed superseded. Health 100.
-- **items_fixed:** 1 bulk dep update (34 prod + 18 dev) + 1 root-cause type fix (`useTilt` `TiltStyle` → `Pick<React.CSSProperties>`).
-- **items_discussed:** 1 (Phase 4 deploy plan + Convex deploy → "Approve + Convex deploy").
-- **prs_merged:** #108 (consolidated bulk update, squash). #104 + #105 closed as superseded. #95/#96/#102 left for Dependabot auto-merge.
-- **quality_issues_fixed:** 1 (FeaturesGrid `TiltStyle` TS2322 from React 19.2.x csstype tightening).
-- **deployed:** yes (commit `7b9b2a0`; Convex `giant-dragon-464` deployed — `convex` + `@convex-dev/auth` bumps affect backend; Vercel prod rebuild).
-- **duration:** part of a larger session (after email-cost-control + signup-monitoring work).
-
-### Changes Made
-- **Deps (bulk, caret)**: convex 1.39.1→1.40.0, @convex-dev/auth 0.0.92→0.0.93, next 16.2.6→16.2.7, ai →6.0.198, react 19.2.6→19.2.7, vitest →4.1.8, plus radix-ui / ai-sdk / remotion / sentry patch+minor. `pnpm audit` clean.
-- **Fix**: `src/lib/hooks/useTilt.ts` — `TiltStyle` interface → `Pick<React.CSSProperties, "transform" | "transition">` (React 19.2.x csstype tightening broke the `style` assignment in `FeaturesGrid`). No runtime change.
-
-### Decisions
-- **Dep strategy**: consolidated caret bulk `pnpm update` + closed grouped PRs #104/#105 superseded — consistent with the audits 1–3 policy. (Started from Dependabot #105's branch, rebased onto current `main`, then `pnpm update` to fold in the dev group.)
-- **Convex deploy despite no `convex/` source change**: `convex` + `@convex-dev/auth` version bumps affect backend-compiled code → deployed to apply 0.0.93.
-- **#95/#96/#102 (individual, not grouped)**: left for Dependabot auto-merge rather than superseded.
-
-## Audit 3 — 2026-05-24
-- **health_before:** 15 Dependabot alerts (6 high, 9 moderate — all transitive in `v2/pnpm-lock.yaml`) + ~26 Semgrep false-positive `unsafe-formatstring` alerts on the lockfile + 3 open Dependabot PRs + `claude-review` CI broken (missing OAuth secret + first-time workflow validation)
-- **health_after:** `pnpm audit` clean (0 vulns); Semgrep lockfile noise excluded; 3 Dependabot PRs closed superseded; `claude-review` fixed + verified live; deployed
-- **items_fixed:** 3 audit-scoped (bulk `pnpm update`, postcss/ws overrides, `.semgrepignore`) + related same-session CI/docs work (below)
-- **items_discussed:** 2 (dep strategy → "do ALL"; Semgrep lockfile exclusion → yes)
-- **prs_merged:** #92 docs (auto-merge armed); 3 Dependabot PRs (#90/#91/#77) closed as superseded. (Earlier same session: #88 PostHog outage fix, #89 claude-review — both merged.)
-- **quality_issues_fixed:** 0 (typecheck/tests/build clean; `page-context` parallel-flake confirmed passes 62/62 isolated)
-- **deployed:** yes (commit `bc29a16`; Vercel production rebuild; no Convex deploy — `convex/` unchanged)
-- **duration:** part of a larger session
-
-### Changes Made
-- **Security (deps)**: `pnpm update` — protobufjs 7.5.5→7.6.1, fast-uri + others; `pnpm.overrides` added postcss `>=8.5.10` (XSS via unescaped `</style>`), ws `>=8.20.1` (uninitialized memory disclosure). `pnpm audit` → no known vulnerabilities.
-- **Semgrep**: added `.semgrepignore` excluding `*-lock.yaml` / `package-lock.json` / `yarn.lock` + build dirs from code-pattern rules (removes 26 false-positive lockfile alerts).
-- **CI (related)**: fixed `claude-review` — set `CLAUDE_CODE_OAUTH_TOKEN`, adopted official code-review plugin at full quality (checkout@v6, `pull-requests: write`, `--comment`, `--model claude-opus-4-7`, `--append-system-prompt` for perf+tests), restored bot-PR skip filter. Verified live on PR #92.
-- **Docs (related)**: TD-06 (instrumentation-client outage) added to CONCERNS.md + CLAUDE.md (PR #92).
-
-### Decisions
-- **Dep strategy**: bulk `pnpm update` + overrides + close Dependabot PRs superseded — user "do ALL" (consistent with audits 1 & 2).
-- **Semgrep lockfile exclusion**: user approved — kills 26 false-positive formatstring alerts; Dependabot remains the dep-CVE source.
-- **No Convex deploy**: audit changes were frontend-dep + CI + docs only; `convex/` unchanged, so only the Vercel frontend rebuild was needed.
-
 ## Archived Summaries
+- 2026-06-29: health 94->97, fixed dompurify CVE + caret bulk update, closed 4 PRs
+- 2026-06-09: see archived summary
+- 2026-05-24: see archived summary
 - **Audit 2 — 2026-04-21**: 2 Dependabot alerts (critical protobufjs RCE 7.5.4→7.5.5, medium dompurify 3.3.3→3.4.1) + 4 code-scanning + 5 PRs + 3 Sentry deprecations + Next 16 middleware→proxy. Bulk deps, Sentry config migration (`disableLogger`/`automaticVercelMonitors` → webpack block), deleted empty `sentry.client.config.ts`, renamed `middleware.ts`→`proxy.ts`, @types/node policy v22→v24. All 5 PRs superseded, deployed (`2db97e0`, Convex + Vercel).
 - **Audit 1 — 2026-04-11**: 27 vulns (10H/15M/2L) + 1 critical CVE (next 16.1.5→16.2.3, RSC DoS) + 9 stale PRs → bulk dep update (13+), all PRs closed superseded, deployed (`0eae6c6`). One-offs: lucide brand-icon inlining, static `icon.png` (Edge size), @types/node→22 (later 24), TS 6 / Vite 8 majors kept.
