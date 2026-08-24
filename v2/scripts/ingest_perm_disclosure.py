@@ -64,14 +64,18 @@ COLUMN_CANDIDATES: dict[str, list[str]] = {
     "decision": ["DECISION_DATE"],
     "employer": ["EMPLOYER_NAME", "EMP_BUSINESS_NAME"],
     # The new analytical dimensions. Aggregate-only in the payload.
-    "state": ["WORKSITE_STATE", "JOB_INFO_WORK_STATE", "EMPLOYER_STATE"],
-    "soc_code": ["PW_SOC_CODE", "SOC_CODE"],
-    "soc_title": ["PW_SOC_TITLE", "SOC_TITLE"],
+    # Names verified against PERM_Record_Layout_FY2026_Q3.pdf (the new 9089
+    # form, in effect since June 2023); legacy names kept as fallbacks.
+    "state": ["PRIMARY_WORKSITE_STATE", "WORKSITE_STATE", "JOB_INFO_WORK_STATE", "EMPLOYER_STATE"],
+    "soc_code": ["PWD_SOC_CODE", "PW_SOC_CODE", "SOC_CODE"],
+    "soc_title": ["PWD_SOC_TITLE", "PW_SOC_TITLE", "SOC_TITLE"],
     "wage": [
+        "JOB_OPP_WAGE_FROM",
         "WAGE_OFFER_FROM_9089", "WAGE_OFFERED_FROM_9089", "WAGE_OFFER_FROM",
         "PW_AMOUNT_9089", "PW_WAGE", "PW_AMOUNT",
     ],
     "wage_unit": [
+        "JOB_OPP_WAGE_PER",
         "WAGE_OFFER_UNIT_OF_PAY_9089", "WAGE_UNIT_OF_PAY_9089",
         "WAGE_OFFER_UNIT_OF_PAY", "PW_UNIT_OF_PAY_9089", "PW_UNIT_OF_PAY",
     ],
@@ -85,6 +89,27 @@ US_STATES = {
     "KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ",
     "NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
     "VA","WA","WV","WI","WY","DC","PR","GU","VI","MP",
+}
+
+# Full names map to codes; anything else is dropped, never prefix-guessed.
+STATE_NAMES = {
+    "ALABAMA": "AL", "ALASKA": "AK", "ARIZONA": "AZ", "ARKANSAS": "AR",
+    "CALIFORNIA": "CA", "COLORADO": "CO", "CONNECTICUT": "CT", "DELAWARE": "DE",
+    "FLORIDA": "FL", "GEORGIA": "GA", "HAWAII": "HI", "IDAHO": "ID",
+    "ILLINOIS": "IL", "INDIANA": "IN", "IOWA": "IA", "KANSAS": "KS",
+    "KENTUCKY": "KY", "LOUISIANA": "LA", "MAINE": "ME", "MARYLAND": "MD",
+    "MASSACHUSETTS": "MA", "MICHIGAN": "MI", "MINNESOTA": "MN",
+    "MISSISSIPPI": "MS", "MISSOURI": "MO", "MONTANA": "MT", "NEBRASKA": "NE",
+    "NEVADA": "NV", "NEW HAMPSHIRE": "NH", "NEW JERSEY": "NJ",
+    "NEW MEXICO": "NM", "NEW YORK": "NY", "NORTH CAROLINA": "NC",
+    "NORTH DAKOTA": "ND", "OHIO": "OH", "OKLAHOMA": "OK", "OREGON": "OR",
+    "PENNSYLVANIA": "PA", "RHODE ISLAND": "RI", "SOUTH CAROLINA": "SC",
+    "SOUTH DAKOTA": "SD", "TENNESSEE": "TN", "TEXAS": "TX", "UTAH": "UT",
+    "VERMONT": "VT", "VIRGINIA": "VA", "WASHINGTON": "WA",
+    "WEST VIRGINIA": "WV", "WISCONSIN": "WI", "WYOMING": "WY",
+    "DISTRICT OF COLUMBIA": "DC", "PUERTO RICO": "PR", "GUAM": "GU",
+    "VIRGIN ISLANDS": "VI", "U.S. VIRGIN ISLANDS": "VI",
+    "NORTHERN MARIANA ISLANDS": "MP",
 }
 
 ANNUALIZE = {
@@ -349,8 +374,9 @@ def parse_file(path: str, seen: set[str], acc: dict) -> int:
             # The analytical dimensions. Aggregate-only; no row survives.
             outcome = norm_status(rec.get("status", ""))
             wage = annual_wage(rec.get("wage", ""), rec.get("wage_unit", ""))
-            state = (rec.get("state") or "").strip().upper()[:2]
-            if outcome and state in US_STATES:
+            raw_state = (rec.get("state") or "").strip().upper()
+            state = raw_state if raw_state in US_STATES else STATE_NAMES.get(raw_state, "")
+            if outcome and state:
                 st = acc["byState"][state]
                 st[outcome] += 1
                 st["days"].append(days)
