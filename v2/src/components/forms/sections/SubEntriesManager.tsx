@@ -65,7 +65,7 @@ export function SubEntriesManager({
 
         return (
         <div key={index} className="flex items-start gap-2">
-          <div className="flex-1 grid gap-2 md:grid-cols-2">
+          <div className="flex-1 grid grid-cols-1 gap-2 md:grid-cols-2">
             <FormField
               label={`Date ${index + 1}`}
               name={`sub-entry-date-${index}`}

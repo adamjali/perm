@@ -183,7 +183,7 @@ export function PWDSection(props: PWDSectionProps) {
 
   return (
     <FormSection title="PWD (Prevailing Wage Determination)" defaultOpen>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* ========== ROW 1: DATE FIELDS ========== */}
 
         {/* Filing Date */}

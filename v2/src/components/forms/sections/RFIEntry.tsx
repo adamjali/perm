@@ -313,7 +313,7 @@ function RFIEntryComponent({
         </FormField>
 
         {/* Date Fields Grid */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <FormField
             label="Received Date"
             name={fieldId("receivedDate")}

@@ -2123,3 +2123,52 @@ body[data-scroll-locked] {
 .dark .driver-popover.neo-popover .driver-popover-arrow-side-bottom .driver-popover-arrow {
   border-bottom-color: var(--primary);
 }
+
+/* ---------------------------------------------------------------------------
+   Temporal inputs on WebKit
+
+   WebKit's UA stylesheet (Source/WebCore/css/html.css) makes every temporal
+   input `display: inline-flex; overflow: hidden`, and then, ONLY under
+   WTF_PLATFORM_IOS_FAMILY, gives the value box `text-align: center` where
+   desktop WebKit gives it `margin-inline-end: 24px; white-space: pre`. So a
+   date reads centred on an iPhone and left-aligned everywhere else, straight
+   from the user agent.
+
+   THAT IS ALREADY HANDLED, and not by us. Tailwind v4's Preflight ships:
+
+       ::-webkit-date-and-time-value    { min-height: 1lh; text-align: inherit }
+       ::-webkit-datetime-edit          { display: inline-flex }
+       ::-webkit-datetime-edit-*-field  { padding-block: 0 }
+
+   `text-align: inherit` beats the UA's `center` and is better than the
+   `text-align: left` that every blog post recommends, because it survives RTL.
+   `inline-flex` + `min-height: 1lh` is a deliberate vertical-centring pair.
+   An earlier version of this block pasted Bootstrap's `::-webkit-datetime-edit
+   { display: block }` fix in here; because it sits after Preflight it WON, and
+   it would have undone that centring. Bootstrap's fix is written against a
+   vanilla baseline. Do not port it here.
+
+   So all that is left is a cap the Preflight does not set. Deliberately absent:
+
+   - `min-width: 0` on the control. A date input is a flex CONTAINER, not a flex
+     item, so its `min-width: auto` is already 0 and the utility is a no-op
+     there. Its automatic minimum size is 0 regardless, because the UA puts
+     `overflow: hidden` on the element itself (csswg-drafts issue 6347). Where
+     that utility earns its place is on an ANCESTOR that is a grid or flex item
+     — which is why the real fix for the overflow was giving those grids an
+     explicit `grid-cols-1`, i.e. `minmax(0, 1fr)`, instead of leaving the
+     mobile column an implicit content-sized `auto` track.
+   - `appearance: none`. It defeats native control sizing but also drops the
+     themed height (ionic-framework PR 28495), and the `width: 100%` bug it
+     works around is reported fixed in iOS 18. Reach for it only if a device
+     still overflows after the grid fix, and pin `min-height` if you do.
+--------------------------------------------------------------------------- */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+  /* Keep the UA's `display: inline-flex`; forcing `display: block` is the old
+     advice and it introduces stray bottom padding. */
+  max-width: 100%;
+}

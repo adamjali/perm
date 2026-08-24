@@ -261,7 +261,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
         />
 
         {/* ========== FORM FIELDS GRID ========== */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Filing Date */}
           <FormField
             label="Filing Date"

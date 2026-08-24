@@ -263,7 +263,7 @@ export function I140Section(props: I140SectionProps) {
         )}
 
         {/* ========== FORM FIELDS GRID ========== */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Filing Date */}
           <FormField
             label="Filing Date"
@@ -444,7 +444,7 @@ export function I140Section(props: I140SectionProps) {
                 checked={values.i140PremiumProcessing || false}
                 onCheckedChange={handleCheckboxChange("i140PremiumProcessing")}
               />
-              <div className="grid gap-1.5 leading-none">
+              <div className="grid grid-cols-1 gap-1.5 leading-none">
                 <Label
                   htmlFor="i140PremiumProcessing"
                   className="font-semibold cursor-pointer flex items-center gap-2"

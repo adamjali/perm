@@ -175,7 +175,7 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
           backwards as well as forwards.
         </p>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label htmlFor={dateId} className="text-sm font-bold">
               Your priority date
