@@ -637,27 +637,109 @@ and `</Section><Section>` block containers — a noise count, not a defect count
 
 ---
 
-## `min-width: auto` breaks form controls on iOS and nowhere else
+## A form control overflowing on iOS is the ANCESTOR's fault, not the control's
 
-A grid or flex item defaults to `min-width: auto`, so it will not shrink below
-its intrinsic width. WebKit's intrinsic width for `input[type=date]` is wider
-than Blink's, and every browser on iOS is WebKit, so a field sits correctly
-inside its card on a desktop and hangs past the right padding on an iPhone.
-Reported twice from Chrome on iOS; measured on desktop the geometry is exact,
-which is why the first look wrongly called it fine.
+Reported three times from Chrome on iOS: the date fields on a calculator page
+run past the card's right border and off the screen. Desktop measures the same
+elements as perfectly inside their container.
 
-`src/components/forms/DateInput.tsx` already carried `min-w-0` on both the
-wrapper and the control. **Use it instead of a raw `<input type="date">`** —
-the tool pages did not and reintroduced the bug.
+**The first two fixes were wrong, and they were wrong in the way the whole
+internet is wrong about this.**
 
-Gated by `form-controls-min-width.test.ts`. **That gate cannot use a regex over
-the opening tag**: `/<(input|select|textarea)\b((?:[^<>]|\n)*?)\/?>/` ends the
-capture at the first `>`, and `onChange={(e) => set(e.target.value)}` contains
-one, so every attribute after a handler is invisible. It reported a fixed
-control as broken; the mirror of that is a broken control reported clean. It
-walks the tag with a brace and quote depth counter instead.
+### `min-w-0` on the control is a no-op
 
----
+WebKit's UA stylesheet (`Source/WebCore/css/html.css`) sets, for every temporal
+input:
+
+```css
+input:is([type="date"], [type="time"], [type="datetime-local"], …) {
+  display: inline-flex;
+  overflow: hidden;
+}
+```
+
+So the control is a flex **container**, not a flex **item** — and `min-width:
+auto` only resolves to a content-based minimum for flex and grid *items*. On
+anything else it is already `0`. Worse, the popular "date inputs have a large
+intrinsic minimum" story is false: because that `overflow: hidden` sits on the
+element itself, its automatic minimum size is **0** in both engines
+([csswg-drafts#6347](https://github.com/w3c/csswg-drafts/issues/6347)).
+
+`min-w-0` earns its place on an **ancestor that really is a grid or flex item**.
+Never on the control.
+
+### The actual cause: a grid with no mobile column track
+
+Thirty-one grids across the app declared only `md:grid-cols-3` or
+`sm:grid-cols-2`. Above the breakpoint that is `repeat(N, minmax(0, 1fr))`,
+which cannot exceed its container. **Below it there is no
+`grid-template-columns` at all**, so items land in an implicit column sized by
+`grid-auto-columns: auto` — a content-sized track.
+
+Phone-only, and invisible from a desktop twice over: desktop sits above the
+breakpoint, and a narrowed desktop window still renders in Blink, where a date
+control's content contribution is small. WebKit sizes that control from its own
+stylesheet, its own padding and `system-ui`.
+
+Two utilities, doing two different jobs. Both are required:
+
+| Utility | Floors | Why the other is not enough |
+|---|---|---|
+| `grid-cols-1` | the **track** → `repeat(1, minmax(0,1fr))` | a grid *item*'s own `min-width: auto` still resolves to a content minimum inside a floored track |
+| `[&>*]:min-w-0` | the **items** | a content-sized track overflows no matter how small the items are willing to go |
+
+Applied from the container rather than by editing every wrapper `<div>`, so it
+cannot miss one. Verify the arbitrary variant actually compiled —
+`.\[\&\>\*\]\:min-w-0>*{min-width:0}` must be in the built stylesheet. One
+that fails to generate leaves an inert class behind and looks exactly like a fix.
+
+Scope is **files containing a form control**, because that is where the content
+contribution comes from the user agent rather than from us. Text is not in
+scope: it wraps, so its min-content is one word.
+
+### Do not paste the blog-post CSS on top of Preflight
+
+An earlier draft added Bootstrap's `::-webkit-datetime-edit { display: block }`
+and `::-webkit-date-and-time-value { text-align: left }`. **Tailwind v4's
+Preflight already ships a better version:**
+
+```css
+::-webkit-date-and-time-value { min-height: 1lh; text-align: inherit }
+::-webkit-datetime-edit       { display: inline-flex }
+```
+
+`text-align: inherit` beats iOS's UA `center` *and* survives RTL, which `left`
+does not; `inline-flex` + `min-height: 1lh` is a deliberate vertical-centring
+pair. Because author rules in `globals.css` land after Preflight, those
+overrides **won** — the "fix" would have undone it. Bootstrap's recipe is
+written against a vanilla baseline. Only `max-width: 100%` is kept, which
+Preflight does not set.
+
+`appearance: none` is deliberately unused: it defeats native control sizing but
+drops the themed height ([ionic#28495](https://github.com/ionic-team/ionic-framework/pull/28495)),
+and the `width: 100%` bug it works around is reported fixed in iOS 18.
+
+### This cannot be reproduced locally, and that is not a shortcut
+
+Playwright **refuses to install WebKit on macOS 12** (this machine). There is no
+iOS simulator without Xcode, and macOS Safari takes the non-iOS branch of that
+same UA stylesheet. Ionic hit the identical wall and said so: their Mobile
+Safari emulation did not reproduce the on-device rendering either. Blink can
+prove *no regression* and that nothing in the chain refuses to shrink. It cannot
+prove the fix.
+
+`scripts/diag_proxy.py` is the way out: it proxies the local production
+server and injects an overlay printing the date field's whole ancestor chain
+(display, computed width, measured width, grid template, min-width) in large
+text. Serve it on the LAN, open it on the real phone, screenshot. That is one
+decisive measurement instead of a fourth guess.
+
+Gates: `form-controls-min-width.test.ts` and `responsive-grid-tracks.test.ts`.
+The second one's first version matched `sm:grid-cols-2` as though it defined the
+mobile track and reported every affected file clean — it now requires an
+**unprefixed** `grid-cols-*`. It was also green over an unfixed file that had no
+form control, which nearly read as proof it worked; fixer and gate now share one
+scope.
 
 ## CI shuffles test order on purpose, so green locally proves less than it looks
 
