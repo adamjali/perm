@@ -19,7 +19,7 @@ import { CalendarCheck, TriangleAlert } from "lucide-react";
 import {
   calculatePWDExpiration,
   calculateRecruitmentDeadlines,
-  calculateETA9089Window,
+  calculateFilingWindow,
 } from "@/lib/perm";
 import { formatAsOf } from "@/lib/dolFormat";
 import { DateInput } from "@/components/forms/DateInput";
@@ -47,9 +47,10 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
   const [firstRecruitment, setFirstRecruitment] = useState("");
   const [lastRecruitment, setLastRecruitment] = useState("");
 
-  const result = useMemo(() => {
+  const result = useMemo((): { rows: Row[]; warnings: string[] } | null => {
     if (!DATE_RE.test(pwdDate)) return null;
     try {
+      const warnings: string[] = [];
       const pwdExpiration = calculatePWDExpiration(pwdDate);
       const rows: Row[] = [
         {
@@ -80,41 +81,65 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
           },
         );
 
-        // The window opens 30 days after the LAST recruitment step and closes
-        // 180 days after the FIRST. Passing the first date for both, as an
-        // earlier version did, silently reports an "opens" date that is only
-        // correct when recruitment happened to be a single day long.
-        const closes = calculateETA9089Window(
-          new Date(`${firstRecruitment}T00:00:00Z`),
-          new Date(`${firstRecruitment}T00:00:00Z`),
-        ).closes
-          .toISOString()
-          .slice(0, 10);
-
-        if (DATE_RE.test(lastRecruitment)) {
-          const opens = calculateETA9089Window(
-            new Date(`${firstRecruitment}T00:00:00Z`),
-            new Date(`${lastRecruitment}T00:00:00Z`),
-          ).opens
-            .toISOString()
-            .slice(0, 10);
-          rows.push({
-            label: "ETA-9089 filing window opens",
-            date: opens,
-            detail:
-              "Thirty days after the last recruitment step, the quiet period. Filing before this is an automatic denial.",
-          });
+        // 20 CFR 656.40(c): recruitment has to begin during the
+        // determination's validity. A first step after the expiration is not a
+        // timeline, it is a problem, and the dates below it would be fiction.
+        if (firstRecruitment > pwdExpiration) {
+          warnings.push(
+            `The first recruitment step is after the prevailing wage determination expires (${pwdExpiration}). Recruitment has to begin during the determination's validity, so these dates cannot support a filing as entered.`,
+          );
         }
 
-        rows.push({
-          label: "ETA-9089 filing window closes",
-          date: closes,
-          detail:
-            "One hundred and eighty days after the first recruitment step. Recruitment older than this cannot support a filing.",
-        });
+        const hasLast = DATE_RE.test(lastRecruitment);
+        if (hasLast && lastRecruitment < firstRecruitment) {
+          // Reversed order would still produce plausible-looking dates:
+          // opens = last + 30 and closes = first + 180 usually keep
+          // opens < closes, so nothing downstream would look wrong. Warn and
+          // withhold the window instead of printing arithmetic on nonsense.
+          warnings.push(
+            "The last recruitment step is before the first one. Check the order of the two dates; the filing window is not shown until they make sense.",
+          );
+        } else {
+          // The app's canonical model, not the raw calculator: the window
+          // CLOSES at the earlier of first + 180 and the PWD expiration.
+          // An earlier version called calculateETA9089Window directly, which
+          // knows nothing about the determination and happily reported a
+          // close date after the PWD had expired — a date on which filing is
+          // barred. calculateFilingWindow carries the cap and says when it
+          // applied, which is exactly the insight worth surfacing.
+          const window = calculateFilingWindow({
+            firstRecruitmentDate: firstRecruitment,
+            // With no last step yet, the close is still knowable (it hangs on
+            // the FIRST step); the open is not, so it is simply not shown.
+            lastRecruitmentDate: hasLast ? lastRecruitment : firstRecruitment,
+            pwdExpirationDate: pwdExpiration,
+          });
+          if (window) {
+            if (hasLast) {
+              rows.push({
+                label: "ETA-9089 filing window opens",
+                date: window.opens,
+                detail:
+                  "Thirty days after the last recruitment step, the quiet period. Filing before this is an automatic denial.",
+              });
+            }
+            rows.push({
+              label: "ETA-9089 filing window closes",
+              date: window.closes,
+              detail: window.isPwdLimited
+                ? "Capped by the prevailing wage expiration, which lands before the usual 180-day limit. Filing after the determination expires is barred, so the window is shorter than recruitment alone would suggest."
+                : "One hundred and eighty days after the first recruitment step. Recruitment older than this cannot support a filing.",
+            });
+            if (window.opens > window.closes) {
+              warnings.push(
+                "The window opens after it closes: the 30-day quiet period after the last step runs past the filing deadline. As entered, there is no day on which this case could be filed.",
+              );
+            }
+          }
+        }
       }
 
-      return rows;
+      return { rows, warnings };
     } catch {
       // A malformed date reaches here rather than crashing the page. The inputs
       // are date pickers, so this is the paste-a-bad-value path.
@@ -193,9 +218,28 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         </div>
       </div>
 
-      {result && result.length > 0 ? (
+      {result && result.warnings.length > 0 ? (
+        // Warnings sit ABOVE the dates: a date computed from suspect input
+        // must not read as more authoritative than the doubt about the input.
+        <div
+          className="border-b-2 border-border bg-primary/10 p-6 sm:p-8"
+          role="alert"
+        >
+          {result.warnings.map((w) => (
+            <div key={w} className="flex items-start gap-3 [&+&]:mt-4">
+              <TriangleAlert
+                className="mt-0.5 h-5 w-5 shrink-0 text-foreground"
+                aria-hidden="true"
+              />{" "}
+              <p className="text-base font-bold leading-relaxed">{w}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}{" "}
+
+      {result && result.rows.length > 0 ? (
         <div className="divide-y-2 divide-border">
-          {result.map((row) => (
+          {result.rows.map((row) => (
             <div key={row.label} className="p-6 sm:p-8">
               <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
                 {row.label}
