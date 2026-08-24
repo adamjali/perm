@@ -1,5 +1,5 @@
 /**
- * Factory for content detail pages (blog, tutorials, guides, resources).
+ * Factory for content detail pages (blog, guides, changelog).
  *
  * Each content type's [slug]/page.tsx was nearly identical, same imports,
  * same generateStaticParams, same generateMetadata, same render.
@@ -78,7 +78,7 @@ export function createContentDetailPage(type: ContentType) {
     if (!post) notFound();
 
     const related = getRelatedPosts({ slug, type, meta: post.meta });
-    const steps = type === "tutorials" ? extractHeadings(post.content) : undefined;
+    const steps = type === "guides" ? extractHeadings(post.content) : undefined;
     const videos = extractVideoRefs(post.content);
 
     return (

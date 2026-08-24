@@ -104,11 +104,11 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                   Features
                 </NavLink>{" "}
                 <NavLink
-                  href="/demo"
+                  href="/tools"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
                 >
-                  Demo
+                  Data
                 </NavLink>{" "}
                 <NavLink
                   href="/faq"
@@ -148,13 +148,6 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                   Blog
                 </NavLink>{" "}
                 <NavLink
-                  href="/tutorials"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
-                >
-                  Tutorials
-                </NavLink>{" "}
-                <NavLink
                   href="/guides"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
@@ -167,13 +160,6 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                   spinnerClassName="text-primary"
                 >
                   Changelog
-                </NavLink>{" "}
-                <NavLink
-                  href="/resources"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
-                >
-                  Resources
                 </NavLink>{" "}
                 <NavLink
                   href="/perm-processing-times"

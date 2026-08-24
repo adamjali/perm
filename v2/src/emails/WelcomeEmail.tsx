@@ -126,7 +126,7 @@ export function WelcomeEmail({
         <Text className="em-text-body" style={styles.bodyText}>
           Creating your first case takes less than one minute. Check out our{" "}
           <Link
-            href={`${baseUrl}/tutorials/getting-started`}
+            href={`${baseUrl}/guides/getting-started`}
             className="em-link-blue"
             style={styles.inlineLink}
           >

@@ -9,11 +9,9 @@
  *
  */
 
-import Image from "next/image";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
-import { useTilt } from "@/lib/hooks/useTilt";
 import {
   CalendarDeadlineSVG,
   NotificationBellSVG,
@@ -26,7 +24,6 @@ interface Feature {
   title: string;
   description: string;
   illustration: React.ReactNode;
-  bgImage: string;
   accentColor: string;
   learnMoreHref?: string;
   learnMoreText?: string;
@@ -38,9 +35,8 @@ const features: Feature[] = [
     description:
       "Enter one date and 11 downstream deadlines update: PWD expiration, filing windows, I-140 cutoffs, recruitment method dates. No manual math.",
     illustration: <CalendarDeadlineSVG size={64} className="text-foreground" />,
-    bgImage: "/images/features/calendar-planning.jpg",
     accentColor: "var(--stage-pwd)",
-    learnMoreHref: "/tutorials/tracking-perm-deadlines",
+    learnMoreHref: "/guides/tracking-perm-deadlines",
     learnMoreText: "See how deadlines work \u2192",
   },
   {
@@ -48,7 +44,6 @@ const features: Feature[] = [
     description:
       "Email, push, and in-app notifications before deadlines. Configure reminders at 1, 3, 7, 14, or 30 days. Weekly Monday digest included.",
     illustration: <NotificationBellSVG size={64} className="text-foreground" />,
-    bgImage: "/images/features/notification-phone.jpg",
     accentColor: "var(--primary)",
   },
   {
@@ -56,7 +51,6 @@ const features: Feature[] = [
     description:
       "Every PERM deadline appears on your Google Calendar automatically. Access your filing schedule from any device.",
     illustration: <CalendarSyncSVG size={64} className="text-foreground" />,
-    bgImage: "/images/features/team-meeting.jpg",
     accentColor: "var(--stage-recruitment)",
   },
   {
@@ -68,7 +62,6 @@ const features: Feature[] = [
         <TimelineSVG size={120} className="text-foreground" />
       </div>
     ),
-    bgImage: "/images/journey/filing-forms.jpg",
     accentColor: "var(--stage-eta9089)",
   },
   {
@@ -76,7 +69,6 @@ const features: Feature[] = [
     description:
       "Built-in validation catches missing recruitment steps, expired PWDs, and filing window violations before they become problems.",
     illustration: <ShieldCheckSVG size={64} className="text-foreground" />,
-    bgImage: "/images/journey/pwd-documents.jpg",
     accentColor: "var(--stage-i140)",
     learnMoreHref: "/blog/common-perm-audit-triggers",
     learnMoreText: "Common audit triggers \u2192",
@@ -99,7 +91,6 @@ const features: Feature[] = [
         <line x1="55" y1="110" x2="115" y2="110" stroke="currentColor" strokeWidth="3" opacity="0.15" strokeLinecap="round" />
       </svg>
     ),
-    bgImage: "/images/backgrounds/dark-geometric.jpg",
     accentColor: "var(--stage-closed)",
   },
 ];
@@ -109,26 +100,11 @@ const features: Feature[] = [
  * Extracted as a component so each card gets its own useTilt hook instance.
  */
 function FeatureCard({ feature }: { feature: Feature }) {
-  const { ref, style } = useTilt<HTMLDivElement>();
-
+  // No tilt and no photo underlay: the hard shadow's press-and-lift is this
+  // design's whole hover vocabulary, and six ghosted photographs behind six
+  // first-party illustrations were two visual languages on one card.
   return (
-    <div
-      ref={ref}
-      style={style}
-      className="feature-card group relative flex h-full flex-col border-2 border-border bg-background overflow-hidden shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
-    >
-      {/* Background image - subtle, tinted */}
-      <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
-        <Image
-          src={feature.bgImage}
-          alt=""
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, 33vw"
-          aria-hidden="true"
-        />
-      </div>
-
+    <div className="feature-card group relative flex h-full flex-col border-2 border-border bg-background overflow-hidden shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
       {/* Top accent bar - appears on hover */}
       <div
         className="absolute left-0 right-0 top-0 h-1.5 origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"

@@ -45,12 +45,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   //   contradictory and risks Search Console "noindex'd URL in sitemap" warnings.
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: latestPostDate },
-    { url: `${baseUrl}/demo`, lastModified: '2026-02-11' },
     { url: `${baseUrl}/blog`, lastModified: latestPostDate },
-    { url: `${baseUrl}/tutorials`, lastModified: latestPostDate },
     { url: `${baseUrl}/guides`, lastModified: latestPostDate },
     { url: `${baseUrl}/changelog`, lastModified: latestPostDate },
-    { url: `${baseUrl}/resources`, lastModified: latestPostDate },
     { url: `${baseUrl}/faq`, lastModified: '2026-02-21' },
     // Live DOL figures, refreshed weekly by convex/dolProcessingTimes.ts.
     // lastmod is DOL's own as-of date, which is the only thing that actually
@@ -69,6 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/tools/i140-calculator`, lastModified: '2026-08-23' },
     { url: `${baseUrl}/tools/priority-date-calculator`, lastModified: '2026-08-23' },
     { url: `${baseUrl}/tools/perm-deadline-calculator`, lastModified: '2026-08-23' },
+    { url: `${baseUrl}/calculators`, lastModified: '2026-08-24' },
     { url: `${baseUrl}/methodology`, lastModified: '2026-08-24' },
     { url: `${baseUrl}/contact`, lastModified: '2026-02-07' },
     { url: `${baseUrl}/terms`, lastModified: '2026-06-15' },

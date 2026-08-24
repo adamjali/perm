@@ -164,7 +164,7 @@ export default function FAQPage() {
               <p className="mt-1 text-xs text-muted-foreground">Current DOL timelines</p>
             </Link>{" "}
             <Link
-              href="/tutorials/getting-started"
+              href="/guides/getting-started"
               className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
             >
               <span className="font-heading text-sm font-bold">Getting Started</span>{" "}

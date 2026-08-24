@@ -6,12 +6,11 @@
  *
  * Sections (in order):
  * 1. HeroSection - Loss-frame headline + single CTA + dashboard reveal
- * 2. TrustStrip - Animated marquee with real feature badges
  * 3. StakesSection - Horizontal scroll PERM consequence cards (#stakes)
  * 4. HowItWorks - 3-step process with connectors + video showcase (#how)
  * 4b. ToolsSection - the four calculators, laid out as the process (#tools)
  * 5. FeaturesGrid - 6 feature cards with tilt effect (#features)
- * 6. StatsSection - Count-up statistics
+ * 6. LiveDataBand - DOL's live queue position + the tape
  * 7. SecuritySection - Neobrutalist security table (#security)
  * 8. TestimonialsSection - Value props + trust badges
  * 9. FAQSection - Common questions (#faq)
@@ -23,11 +22,9 @@
 import type { Metadata } from "next";
 import {
   HeroSection,
-  TrustStrip,
   StakesSection,
   FeaturesGrid,
   HowItWorks,
-  StatsSection,
   ToolsSection,
   SecuritySection,
   TestimonialsSection,
@@ -37,8 +34,17 @@ import {
 import { getFAQPageSchema, getHomepageRatingPartialSchema } from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { HOME_FAQS } from "@/components/home/faqData";
+import { fetchQuery } from "convex/nextjs";
+import { api } from "../../../convex/_generated/api";
+import {
+  analystReviewQueue,
+  analystReviewAverage,
+} from "../../../convex/lib/dolProcessingTimes";
+import { LiveDataBand } from "@/components/home/LiveDataBand";
 
-export const dynamic = "force-static";
+// One live DOL figure on the page: hourly ISR, same as the data pages.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   // `absolute` bypasses the root layout's `title.template: "%s | PERM Tracker"`
@@ -62,49 +68,22 @@ export const metadata: Metadata = {
   },
 };
 
-// Plain-text FAQ data for FAQPage structured data (matches FAQSection component)
-const homepageFAQs = [
-  {
-    question: "What exactly does PERM Tracker do?",
-    answer:
-      "PERM Tracker automates deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync so your whole team stays aligned.",
-  },
-  {
-    question: "How is this different from using a spreadsheet?",
-    answer:
-      "Spreadsheets require manual deadline math, don't send reminders, and break when regulations change. PERM Tracker auto-calculates 11 deadline types per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes.",
-  },
-  {
-    question: "Is PERM Tracker really free?",
-    answer:
-      "Yes, currently free. No credit card, no trial period, no case limits. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.",
-  },
-  {
-    question: "Is my client data secure?",
-    answer:
-      "Sensitive fields like employer FEIN are encrypted with AES-256-GCM. The database runs on Convex\u2019s SOC 2 Type II certified infrastructure on AWS. Your cases are row-level isolated: no other user can see them. Sessions auto-expire after 15 minutes of inactivity.",
-  },
-  {
-    question: "Can I import my existing cases?",
-    answer:
-      "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime. Your data is always yours.",
-  },
-  {
-    question: "What happens if DOL changes regulations?",
-    answer:
-      "We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don't need to manually update formulas or check for rule changes.",
-  },
-  {
-    question: "What notifications can I configure?",
-    answer:
-      "Email and push notifications for each deadline type (PWD, recruitment, ETA 9089, I-140, RFI, RFE). Set reminders at 1, 3, 7, 14, or 30 days before. Configure quiet hours. A weekly Monday digest summarizes everything upcoming.",
-  },
-];
 
-export default function HomePage() {
+
+export default async function HomePage() {
+  const snapshot = await fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(
+    () => null,
+  );
+  const analyst = snapshot ? analystReviewQueue(snapshot.permQueues) : undefined;
+  const analystAvg = snapshot
+    ? analystReviewAverage(snapshot.permAverageDays)
+    : undefined;
+
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
-  const faqSchema = getFAQPageSchema(homepageFAQs);
+  const faqSchema = getFAQPageSchema(
+    HOME_FAQS.map(({ question, answer }) => ({ question, answer })),
+  );
   // The aggregateRating ships ONLY here (homepage) — the Senja widget that
   // renders the visible review UI is mounted in TestimonialsSection on this
   // page. The partial below shares the root SoftwareApplication's @id so
@@ -118,12 +97,15 @@ export default function HomePage() {
       <JsonLdScript schema={faqSchema} />
       <JsonLdScript schema={ratingPartial} />
       <HeroSection />
-      <TrustStrip />
       <StakesSection />
       <HowItWorks />
       <ToolsSection />
+      <LiveDataBand
+        frontierMonth={analyst?.priorityDate ?? null}
+        asOf={snapshot?.permAsOf ?? null}
+        averageDays={analystAvg?.calendarDays ?? null}
+      />
       <FeaturesGrid />
-      <StatsSection />
       <SecuritySection />
       <TestimonialsSection />
       <FAQSection />

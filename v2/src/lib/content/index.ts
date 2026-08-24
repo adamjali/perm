@@ -88,7 +88,7 @@ export function getPostBySlug(type: ContentType, slug: string): Post | null {
 export function getAllPosts(type?: ContentType): PostSummary[] {
   const types: ContentType[] = type
     ? [type]
-    : ["blog", "tutorials", "guides", "changelog", "resources"];
+    : ["blog", "guides", "changelog"];
 
   const posts: PostSummary[] = [];
 

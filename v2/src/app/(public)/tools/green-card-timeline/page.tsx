@@ -118,7 +118,7 @@ export default async function GreenCardTimelinePage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 sm:pb-16">
+    <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
       <DataNav active="calculators" />
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />

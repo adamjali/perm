@@ -91,13 +91,12 @@ export default defineSchema({
     profilePhotoUrl: v.optional(v.string()),
 
     // Organization section
-    userType: v.union(
-      v.literal("individual"),
-      v.literal("firm_admin"),
-      v.literal("firm_member")
-    ),
-    firmId: v.optional(v.id("users")), // Self-reference for firm hierarchy
-    firmName: v.optional(v.string()),
+    // The firm hierarchy (firm_admin/firm_member, firmId, firmName, the
+    // by_firm_id index and three auth helpers) was declared in 2025 and never
+    // called from anywhere. Removed 2026-08-24 with zero rows carrying any of
+    // its fields; if firms become real, build the invite flow first and the
+    // schema after it.
+    userType: v.literal("individual"),
 
     // Notification settings
     emailNotificationsEnabled: v.boolean(),
@@ -187,7 +186,7 @@ export default defineSchema({
       v.literal("accountStatus"), v.literal("totalCases"), v.literal("activeCases"),
       v.literal("totalLogins"), v.literal("accountCreated"), v.literal("lastLoginTime"),
       v.literal("userType"), v.literal("emailVerified"), v.literal("verificationMethod"),
-      v.literal("deletedCases"), v.literal("firmName"), v.literal("termsVersion"),
+      v.literal("deletedCases"), v.literal("termsVersion"),
       v.literal("termsAccepted"), v.literal("lastCaseUpdate"), v.literal("deletedAt"),
       v.literal("userId"), v.literal("authProviders")
     )),
@@ -276,7 +275,6 @@ export default defineSchema({
     suspendedUntil: v.optional(v.number()),
   })
     .index("by_user_id", ["userId"])
-    .index("by_firm_id", ["firmId"])
     .index("by_deleted_at", ["deletedAt"]),
 
   // PERM case tracking

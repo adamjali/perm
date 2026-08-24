@@ -10,75 +10,15 @@
  */
 
 import * as React from "react";
-import Link from "next/link";
 import { ChevronDown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { HOME_FAQS, type HomeFaqItem } from "./faqData";
 
-const faqLink = "font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary";
 
-interface FAQItem {
-  question: string;
-  answer: React.ReactNode;
-}
-
-const faqItems: FAQItem[] = [
-  {
-    question: "What exactly does PERM Tracker do?",
-    answer: (
-      <>
-        PERM Tracker automates the deadline management for{" "}
-        <Link href="/blog/what-is-perm-labor-certification" className={faqLink}>PERM labor certification</Link>{" "}
-        cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync so your whole team stays aligned.{" "}
-        <Link href="/tutorials/tracking-perm-deadlines" className={faqLink}>See how deadline tracking works &rarr;</Link>
-      </>
-    ),
-  },
-  {
-    question: "How is this different from using a spreadsheet?",
-    answer: (
-      <>
-        <Link href="/resources/manual-vs-automated-tracking" className={faqLink}>Spreadsheets require manual deadline math</Link>, don&apos;t send reminders, and break when regulations change. PERM Tracker auto-calculates 11 deadline types per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.
-      </>
-    ),
-  },
-  {
-    question: "Is PERM Tracker really free?",
-    answer:
-      "Yes, currently free. No credit card, no trial period, no case limits. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.",
-  },
-  {
-    question: "Is my client data secure?",
-    answer:
-      "Sensitive fields like employer FEIN are encrypted with AES-256-GCM. The database runs on Convex\u2019s SOC 2 Type II certified infrastructure on AWS. Your cases are row-level isolated: no other user can see them. Sessions auto-expire after 15 minutes of inactivity.",
-  },
-  {
-    question: "Can I import my existing cases?",
-    answer: (
-      <>
-        Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime. Your data is always yours.{" "}
-        <Link href="/tutorials/getting-started" className={faqLink}>Getting started tutorial &rarr;</Link>
-      </>
-    ),
-  },
-  {
-    question: "What happens if DOL changes regulations?",
-    answer: (
-      <>
-        We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don&apos;t need to manually update formulas or check for rule changes.{" "}
-        <Link href="/blog/perm-processing-times-2026" className={faqLink}>Current processing times &rarr;</Link>
-      </>
-    ),
-  },
-  {
-    question: "What notifications can I configure?",
-    answer:
-      "Email and push notifications for each deadline type (PWD, recruitment, ETA 9089, I-140, RFI, RFE). Set reminders at 1, 3, 7, 14, or 30 days before. Configure quiet hours. A weekly Monday digest summarizes everything upcoming.",
-  },
-];
 
 interface FAQAccordionItemProps {
-  item: FAQItem;
+  item: HomeFaqItem;
   isOpen: boolean;
   onToggle: () => void;
   index: number;
@@ -142,7 +82,7 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
         <div ref={contentRef} className="overflow-hidden">
           <div className="border-t-2 border-border px-5 pb-5 pt-5">
             <p className="text-sm leading-relaxed text-muted-foreground sm:text-base sm:leading-7">
-              {item.answer}
+              {item.rich}
             </p>
           </div>
         </div>
@@ -176,7 +116,7 @@ export function FAQSection() {
 
         {/* FAQ accordion list - single stagger container */}
         <ScrollReveal direction="up" stagger className="flex flex-col gap-4">
-          {faqItems.map((item, index) => (
+          {HOME_FAQS.map((item, index) => (
             <FAQAccordionItem
               key={index}
               item={item}

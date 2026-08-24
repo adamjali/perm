@@ -132,7 +132,17 @@ const nextConfig: NextConfig = {
     return [
       // Fix GSC 404s: stray URLs → clean routes
       { source: "/%24", destination: "/", permanent: true },
-      { source: "/demo.html", destination: "/demo", permanent: true },
+      // /demo was removed 2026-08-24 (a 595-line localStorage shadow app; the
+      // product is free, so the calculators and signup ARE the trial). Old
+      // links land on the data surface.
+      // Content consolidated 2026-08-24: tutorials and resources merged into
+      // guides. Fourteen articles never justified five sections.
+      { source: "/tutorials", destination: "/guides", permanent: true },
+      { source: "/resources", destination: "/guides", permanent: true },
+      { source: "/tutorials/:slug", destination: "/guides/:slug", permanent: true },
+      { source: "/resources/:slug", destination: "/guides/:slug", permanent: true },
+      { source: "/demo", destination: "/tools", permanent: true },
+      { source: "/demo.html", destination: "/tools", permanent: true },
       { source: "/register.html", destination: "/signup", permanent: true },
       // The bare path too. Only the .html form was covered, so /register was a
       // live 404 that Googlebot had crawled and filed under "Not found (404)".

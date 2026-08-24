@@ -35,7 +35,7 @@ export const ADMIN_NAV_LINK: NavLink = {
  */
 export const AUTH_NAV_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/demo", label: "Demo" },
+  { href: "/tools", label: "Data" },
   { href: "/tools", label: "Tools" },
 ] as const satisfies readonly NavLink[];
 
@@ -71,10 +71,8 @@ export const TOOL_NAV_LINKS = [
  */
 export const CONTENT_NAV_LINKS = [
   { href: "/blog", label: "Blog" },
-  { href: "/tutorials", label: "Tutorials" },
   { href: "/guides", label: "Guides" },
   { href: "/changelog", label: "Changelog" },
-  { href: "/resources", label: "Resources" },
 ] as const satisfies readonly NavLink[];
 
 /**

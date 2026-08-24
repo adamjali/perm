@@ -583,7 +583,7 @@ export const saveAdminSortPreference = mutation({
       v.literal("accountStatus"), v.literal("totalCases"), v.literal("activeCases"),
       v.literal("totalLogins"), v.literal("accountCreated"), v.literal("lastLoginTime"),
       v.literal("userType"), v.literal("emailVerified"), v.literal("verificationMethod"),
-      v.literal("deletedCases"), v.literal("firmName"), v.literal("termsVersion"),
+      v.literal("deletedCases"), v.literal("termsVersion"),
       v.literal("termsAccepted"), v.literal("lastCaseUpdate"), v.literal("deletedAt"),
       v.literal("userId"), v.literal("authProviders")
     ),
@@ -607,7 +607,8 @@ export const saveAdminSortPreference = mutation({
  *
  * Can update:
  * - fullName (also syncs to users table name field)
- * - userType (individual | firm_admin | firm_member)
+ * - userType (a single-variant literal since the firm hierarchy was
+ *   removed; kept as an arg so the audit trail records explicit sets)
  *
  * @throws {Error} If not admin or user/profile not found
  */
@@ -615,11 +616,7 @@ export const updateUserAdmin = mutation({
   args: {
     userId: v.id("users"),
     fullName: v.optional(v.string()),
-    userType: v.optional(v.union(
-      v.literal("individual"),
-      v.literal("firm_admin"),
-      v.literal("firm_member")
-    )),
+    userType: v.optional(v.literal("individual")),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
@@ -639,7 +636,7 @@ export const updateUserAdmin = mutation({
     // Build patch object
     const profilePatch: Partial<{
       fullName: string;
-      userType: "individual" | "firm_admin" | "firm_member";
+      userType: "individual";
       updatedAt: number;
     }> = {
       updatedAt: Date.now(),

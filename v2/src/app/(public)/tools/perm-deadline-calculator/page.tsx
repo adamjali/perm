@@ -68,7 +68,7 @@ export default function PermDeadlineCalculatorPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 sm:pb-16">
+    <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
       <DataNav active="calculators" />
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
@@ -121,7 +121,7 @@ export default function PermDeadlineCalculatorPage() {
         currentHref={"/tools/perm-deadline-calculator"}
         reading={[
           { href: "/guides/perm-recruitment-checklist", label: "Recruitment checklist", note: "Each step these dates govern, and what counts as completing it." },
-          { href: "/tutorials/tracking-perm-deadlines", label: "Tracking deadlines", note: "How the same dates cascade when a determination date moves." },
+          { href: "/guides/tracking-perm-deadlines", label: "Tracking deadlines", note: "How the same dates cascade when a determination date moves." },
         ]}
       />
     </div>

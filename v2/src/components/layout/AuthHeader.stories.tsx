@@ -68,7 +68,7 @@ export const OnDemoPage: Story = {
   parameters: {
     nextjs: {
       navigation: {
-        pathname: "/demo",
+        pathname: "/tools",
       },
     },
   },

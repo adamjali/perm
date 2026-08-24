@@ -19,7 +19,6 @@ import { useParallax } from "@/lib/hooks/useGSAP";
 /** Hero background images per content type */
 const HERO_IMAGES: Partial<Record<ContentType, string>> = {
   blog: "/images/content/blog-hero.png",
-  tutorials: "/images/content/tutorials-hero.png",
   guides: "/images/content/guides-hero.png",
 };
 

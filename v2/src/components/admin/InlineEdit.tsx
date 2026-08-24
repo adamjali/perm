@@ -83,8 +83,6 @@ export function InlineEdit({
           className="h-8 border-2 border-primary bg-background px-2 text-sm outline-none"
         >
           <option value="individual">individual</option>
-          <option value="firm_admin">firm admin</option>
-          <option value="firm_member">firm member</option>
         </select>
         <button onClick={handleSave} disabled={isSaving} className="text-green-600 hover:text-green-800 p-0.5">
           <Check className="size-3.5" />

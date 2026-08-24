@@ -1,0 +1,63 @@
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+
+import { QueueTape } from "@/components/tools/QueueTape";
+import { formatAsOf, formatMonth } from "@/lib/dolFormat";
+
+/**
+ * The homepage's evidence band.
+ *
+ * It replaces a count-up stats section whose four numbers were definitional
+ * ("5 PERM stages covered") rather than evidential. This shows the one thing
+ * a visitor cannot get from any brochure: where DOL's queue actually stands,
+ * today, from DOL's own figures — the same data the product runs on.
+ *
+ * Server component; the page passes the already-fetched snapshot so the
+ * homepage makes exactly one Convex query.
+ */
+
+export interface LiveDataBandProps {
+  frontierMonth: string | null;
+  asOf: string | null;
+  averageDays: number | null;
+}
+
+export function LiveDataBand({ frontierMonth, asOf, averageDays }: LiveDataBandProps) {
+  if (!frontierMonth) return null;
+
+  return (
+    <section aria-label="Live DOL queue position" className="border-y-2 border-border bg-card">
+      <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
+        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+          <div>
+            <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+              Live from the Department of Labor
+              {asOf ? ` · ${formatAsOf(asOf)}` : null}
+            </p>{" "}
+            <h2 className="mt-2 font-heading text-3xl font-black leading-tight sm:text-4xl">
+              DOL is deciding cases filed{" "}
+              <span className="whitespace-nowrap bg-primary px-2 text-black">
+                {formatMonth(frontierMonth)}
+              </span>
+            </h2>{" "}
+            {averageDays != null ? (
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-foreground/70">
+                {averageDays} days on average to a determination. The tracker
+                turns dates like these into your case&apos;s own deadlines.
+              </p>
+            ) : null}
+          </div>
+          <Link
+            href="/tools"
+            className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-background px-5 py-2.5 font-bold shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard"
+          >
+            Open the data
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </div>
+
+        <QueueTape frontierMonth={frontierMonth} className="mt-8" monthsBehind={6} monthsAhead={8} />
+      </div>
+    </section>
+  );
+}

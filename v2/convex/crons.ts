@@ -1,7 +1,7 @@
 /**
  * Convex Cron Jobs Configuration
  *
- * Scheduled jobs (7 total):
+ * Scheduled jobs (11 total):
  * - Daily deadline enforcement (6 AM EST / 10:00 UTC)
  * - Daily deadline reminder checks (9 AM EST / 14:00 UTC)
  * - Hourly cleanup of old read notifications (90+ days, at :30)

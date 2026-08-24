@@ -21,7 +21,7 @@ export type DataSection =
 
 const SECTIONS: { key: DataSection; label: string; href: string }[] = [
   { key: "overview", label: "Overview", href: "/tools" },
-  { key: "calculators", label: "Calculators", href: "/tools#calculators" },
+  { key: "calculators", label: "Calculators", href: "/calculators" },
   { key: "processing-times", label: "Processing times", href: "/perm-processing-times" },
   { key: "visa-bulletin", label: "Visa bulletin", href: "/tools/priority-date-calculator" },
   { key: "methodology", label: "Methodology", href: "/methodology" },
@@ -31,10 +31,15 @@ export function DataNav({ active }: { active: DataSection }) {
   return (
     <nav
       aria-label="Data sections"
-      className="sticky top-16 z-30 -mx-4 border-b-2 border-border bg-background/95 backdrop-blur-sm px-4 sm:-mx-6 sm:px-6"
+      // Opaque on purpose, with a solid apron drawn ABOVE the bar: the header's
+      // real height varies by a few pixels across devices (borders, the
+      // security-banner variable), and a translucent bar over a 1-8px slit
+      // ghosts the page through it — caught on an iPhone within hours of
+      // shipping. The apron absorbs the variance instead of chasing it.
+      className="sticky top-16 z-30 -mx-4 border-b-2 border-border bg-background px-4 before:absolute before:inset-x-0 before:bottom-full before:h-10 before:bg-background sm:-mx-6 sm:px-6"
       style={{ top: "calc(4rem + var(--security-banner-h, 0px))" }}
     >
-      <div className="mx-auto flex max-w-4xl items-center gap-1 overflow-x-auto py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {SECTIONS.map((s) => {
           const isActive = s.key === active;
           return (

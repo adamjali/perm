@@ -22,8 +22,7 @@ export interface UserSummary {
   activeCases: number;
   deletedCases: number;
   lastCaseUpdate: number | null;
-  userType: "individual" | "firm_admin" | "firm_member";
-  firmName: string | null;
+  userType: "individual";
   accountStatus: "active" | "pending_deletion" | "deleted";
   deletedAt: number | null;
   termsAccepted: number | null;

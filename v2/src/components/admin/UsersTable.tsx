@@ -164,12 +164,6 @@ const COLUMNS: {
     className: "min-w-[70px] text-center",
   },
   {
-    key: "firmName" as SortField,
-    label: "Firm",
-    render: (u) => <TruncatedCell maxWidth={140}>{u.firmName || "-"}</TruncatedCell>,
-    className: "min-w-[100px] max-w-[160px]",
-  },
-  {
     key: "termsVersion" as SortField,
     label: "Terms Ver",
     render: (u) => u.termsVersion || "-",
@@ -269,7 +263,7 @@ export function UsersTable({
         await updateUser({
           userId: userId,
           ...(field === "name" ? { fullName: value } : {}),
-          ...(field === "userType" ? { userType: value as "individual" | "firm_admin" | "firm_member" } : {}),
+          ...(field === "userType" ? { userType: value as "individual" } : {}),
         });
         toast.success(`Updated ${field}`);
       } catch (error) {

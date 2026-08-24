@@ -97,8 +97,7 @@ export type UserSummaryRow = {
   activeCases: number;
   deletedCases: number;
   lastCaseUpdate: number | null;
-  userType: "individual" | "firm_admin" | "firm_member";
-  firmName: string | null;
+  userType: "individual";
   accountStatus: "active" | "pending_deletion" | "deleted";
   deletedAt: number | null;
   termsAccepted: number | null;
@@ -296,7 +295,6 @@ export async function getAdminDashboardDataHelper(
       deletedCases,
       lastCaseUpdate,
       userType: (profile?.userType || "individual") as UserSummaryRow["userType"],
-      firmName: profile?.firmName ?? null,
       accountStatus,
       deletedAt: user.deletedAt ?? null,
       termsAccepted: profile?.termsAcceptedAt ?? null,
@@ -312,7 +310,6 @@ export async function getAdminDashboardDataHelper(
         u.name.toLowerCase().includes(search) ||
         u.userType.toLowerCase().includes(search) ||
         u.accountStatus.toLowerCase().includes(search) ||
-        (u.firmName?.toLowerCase().includes(search) ?? false) ||
         u.userId.toLowerCase().includes(search)
       )
     : userSummaries;

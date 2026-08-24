@@ -5,12 +5,14 @@
  * Used by content utility functions and route pages.
  */
 
-export type ContentType =
-  | "blog"
-  | "tutorials"
-  | "guides"
-  | "changelog"
-  | "resources";
+/**
+ * Three sections, down from five on 2026-08-24. Fourteen articles never
+ * justified five listing pages, five nav slots and five OG routes — /resources
+ * held ONE file. Tutorials and resources merged into guides (their old URLs
+ * 301 there); changelog stays as a standalone update log linked from the
+ * footer rather than the content nav.
+ */
+export type ContentType = "blog" | "guides" | "changelog";
 
 /** ISO date string in YYYY-MM-DD format */
 export type ContentDateString = string & { readonly __brand?: "ContentDate" };
@@ -57,18 +59,11 @@ export const CONTENT_TYPE_CONFIG: Record<
       "Insights on PERM labor certification, immigration practice, and industry trends.",
     icon: "FileText",
   },
-  tutorials: {
-    label: "Tutorial",
-    plural: "Tutorials",
-    description:
-      "Step-by-step guides to get the most out of PERM Tracker.",
-    icon: "GraduationCap",
-  },
   guides: {
     label: "Guide",
     plural: "Guides",
     description:
-      "Comprehensive references for the PERM process and best practices.",
+      "How-tos, references, checklists and comparisons for the PERM process and for PERM Tracker itself.",
     icon: "BookOpen",
   },
   changelog: {
@@ -77,12 +72,5 @@ export const CONTENT_TYPE_CONFIG: Record<
     description:
       "Product updates, new features, and improvements to PERM Tracker.",
     icon: "Sparkles",
-  },
-  resources: {
-    label: "Resource",
-    plural: "Resources",
-    description:
-      "Tools, checklists, comparisons, and reference materials for PERM practitioners.",
-    icon: "Library",
   },
 };

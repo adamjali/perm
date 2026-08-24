@@ -14,9 +14,7 @@ export const OG_SIZE = { width: 1200, height: 630 };
 
 const TYPE_COLORS: Record<ContentType, string> = {
   blog: "#0066FF",
-  tutorials: "#9333ea",
   guides: "#059669",
-  resources: "#D97706",
   changelog: "#6B7280",
 };
 

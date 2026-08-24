@@ -5,7 +5,6 @@
  * These functions are NOT exposed to the client API.
  *
  * JOBS:
- * - checkDeadlineReminders: Daily check for upcoming deadlines, creates notifications + emails
  * - cleanupOldNotifications: Hourly cleanup of read notifications older than 90 days
  * - sendWeeklyDigest: Weekly summary email for opted-in users
  *
@@ -31,13 +30,9 @@ import { getVerifiedUserIds } from "./lib/auth";
 
 const log = loggers.scheduler;
 import {
-  generateNotificationTitle,
-  generateNotificationMessage,
-  calculatePriority,
   formatDeadlineType,
   shouldSendEmail,
   buildUserNotificationPrefs,
-  type NotificationType,
   type DeadlineNotificationType,
   type UserNotificationPrefs,
 } from "./lib/notificationHelpers";
@@ -95,44 +90,6 @@ function getDefaultPrefs(): UserNotificationPrefs {
 }
 
 // buildUserPrefs removed — use buildUserNotificationPrefs from notificationHelpers
-
-/**
- * Get current time in user's timezone as HH:MM format.
- */
-function getCurrentTimeInTimezone(timezone: string): string {
-  try {
-    const now = new Date();
-    const formatter = new Intl.DateTimeFormat("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      timeZone: timezone,
-    });
-    return formatter.format(now);
-  } catch (error) {
-    // Log invalid timezone for debugging - this indicates data corruption or invalid user preference
-    log.warn('Invalid timezone, falling back to UTC', {
-      timezone,
-      error: error instanceof Error ? error.message : 'unknown error',
-    });
-    // Note: no ctx available for error recording
-    const now = new Date();
-    return `${now.getUTCHours().toString().padStart(2, "0")}:${now.getUTCMinutes().toString().padStart(2, "0")}`;
-  }
-}
-
-/**
- * Format a date string to a human-readable format.
- */
-function formatDateForEmail(dateStr: string): string {
-  const date = new Date(dateStr + "T00:00:00Z");
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 /**
  * Calculate days until a deadline using timezone-aware "today" resolution.
@@ -417,150 +374,11 @@ export const getUsersForWeeklyDigest = internalQuery({
 // ACTIONS
 // ============================================================================
 
-/**
- * Main daily job: Check all cases for upcoming deadlines and create notifications.
- *
- * Process:
- * 1. Query all cases needing reminders (with deduplication)
- * 2. For each reminder:
- *    a. Create notification in database
- *    b. If user has email enabled, schedule email action
- *    c. If push enabled (future), schedule push action
- *
- * Idempotent: Uses deduplication query to prevent duplicate notifications.
- */
-export const checkDeadlineReminders = internalAction({
-  args: {},
-  handler: async (ctx): Promise<{ processed: number; emailsScheduled: number }> => {
-    // Get all reminders that need to be created
-    const reminders = await ctx.runQuery(internal.scheduledJobs.getCasesNeedingReminders);
+// checkDeadlineReminders was removed 2026-08-24. It was this file's original
+// daily reminder sweep, orphaned when crons.ts repointed daily reminders at
+// deadlineDigest.runDeadlineReminders — which reuses getCasesNeedingReminders
+// above, so that query stays.
 
-    let processed = 0;
-    let emailsScheduled = 0;
-
-    // Stagger emails by 1000ms each to stay under Resend's 2 req/sec rate limit.
-    // Note: sendEmailWithRetry adds its own backoff (1-4.5s) on 429 errors, so
-    // actual send timing may vary. The stagger prevents initial burst.
-    let emailIndex = 0;
-
-    for (const reminder of reminders) {
-      // Determine notification type based on deadline type
-      let notificationType: NotificationType = "deadline_reminder";
-      if (reminder.deadlineType === "rfi_due") {
-        notificationType = "rfi_alert";
-      } else if (reminder.deadlineType === "rfe_due") {
-        notificationType = "rfe_alert";
-      }
-
-      // Build case label for messages
-      const caseLabel = `${reminder.beneficiaryIdentifier} at ${reminder.employerName}`;
-
-      // Generate title and message
-      const title = generateNotificationTitle(notificationType, {
-        deadlineType: reminder.deadlineType,
-        daysUntilDeadline: reminder.daysUntilDeadline,
-        caseLabel,
-      });
-
-      const message = generateNotificationMessage(notificationType, {
-        deadlineType: reminder.deadlineType,
-        daysUntilDeadline: reminder.daysUntilDeadline,
-        caseLabel,
-        deadlineDate: reminder.deadlineDate,
-        employerName: reminder.employerName,
-        beneficiaryIdentifier: reminder.beneficiaryIdentifier,
-      });
-
-      // Calculate priority
-      const priority = calculatePriority(reminder.daysUntilDeadline, notificationType);
-
-      // Create the notification
-      const notificationId = await ctx.runMutation(internal.notifications.createNotification, {
-        userId: reminder.userId,
-        caseId: reminder.caseId,
-        type: notificationType,
-        title,
-        message,
-        priority,
-        deadlineDate: reminder.deadlineDate,
-        deadlineType: reminder.deadlineType,
-        daysUntilDeadline: Number(reminder.daysUntilDeadline),
-      });
-
-      processed++;
-
-      // Check if email should be sent
-      const currentTime = getCurrentTimeInTimezone(reminder.userPrefs.timezone);
-      const sendEmail = shouldSendEmail(
-        notificationType,
-        priority,
-        reminder.userPrefs,
-        currentTime
-      );
-
-      if (sendEmail) {
-        const formattedDate = formatDateForEmail(reminder.deadlineDate);
-        const formattedDeadlineType = formatDeadlineType(reminder.deadlineType);
-        const delayMs = emailIndex * 1000;
-
-        if (notificationType === "rfi_alert") {
-          await ctx.scheduler.runAfter(delayMs, internal.notificationActions.sendRfiAlertEmail, {
-            notificationId,
-            to: reminder.userEmail,
-            beneficiaryName: reminder.beneficiaryIdentifier,
-            companyName: reminder.employerName,
-            dueDate: formattedDate,
-            daysRemaining: reminder.daysUntilDeadline,
-            receivedDate: formattedDate, // We don't have this, use deadline as fallback
-            alertType: "reminder" as const,
-            caseId: reminder.caseId,
-          });
-        } else if (notificationType === "rfe_alert") {
-          await ctx.scheduler.runAfter(delayMs, internal.notificationActions.sendRfeAlertEmail, {
-            notificationId,
-            to: reminder.userEmail,
-            beneficiaryName: reminder.beneficiaryIdentifier,
-            companyName: reminder.employerName,
-            dueDate: formattedDate,
-            daysRemaining: reminder.daysUntilDeadline,
-            receivedDate: formattedDate, // We don't have this, use deadline as fallback
-            alertType: "reminder" as const,
-            caseId: reminder.caseId,
-          });
-        } else {
-          // Standard deadline reminder email
-          await ctx.scheduler.runAfter(delayMs, internal.notificationActions.sendDeadlineReminderEmail, {
-            notificationId,
-            to: reminder.userEmail,
-            employerName: reminder.employerName,
-            beneficiaryName: reminder.beneficiaryIdentifier,
-            deadlineType: formattedDeadlineType,
-            deadlineDate: formattedDate,
-            daysUntil: reminder.daysUntilDeadline,
-            caseId: reminder.caseId,
-          });
-        }
-
-        emailIndex++;
-        emailsScheduled++;
-      }
-
-      // Schedule push notification if user has push enabled
-      // Push follows same quiet hours logic as email
-      if (reminder.userPrefs.pushNotificationsEnabled && sendEmail) {
-        await ctx.scheduler.runAfter(0, internal.pushNotifications.sendPushNotification, {
-          userId: reminder.userId,
-          title,
-          body: message,
-          url: `/cases/${reminder.caseId}`,
-          tag: `deadline-${reminder.caseId}-${reminder.deadlineType}`,
-        });
-      }
-    }
-
-    return { processed, emailsScheduled };
-  },
-});
 
 /**
  * Hourly cleanup: Delete read notifications older than 90 days.
@@ -986,40 +804,10 @@ export const permanentlyDeleteAccount = internalMutation({
   },
 });
 
-/**
- * Process expired account deletions (safety net cron job).
- *
- * Runs hourly to catch any accounts where the scheduled deletion
- * job failed or was missed. Finds users where deletedAt < now and
- * processes their permanent deletion.
- */
-export const processExpiredDeletions = internalAction({
-  args: {},
-  handler: async (ctx): Promise<{ processed: number }> => {
-    // Get all users with expired deletion timestamps
-    const expiredUsers = await ctx.runQuery(
-      internal.scheduledJobs.getUsersWithExpiredDeletions
-    );
+// processExpiredDeletions was removed 2026-08-24, superseded by
+// accountDeletion.processExpiredDeletions (which the cron points at, and which
+// reuses getUsersWithExpiredDeletions and permanentlyDeleteAccount here).
 
-    let processed = 0;
-
-    for (const userId of expiredUsers) {
-      const result = await ctx.runMutation(
-        internal.scheduledJobs.permanentlyDeleteAccount,
-        { userId }
-      );
-
-      if (result.success) {
-        processed++;
-        log.info('Account deletion processed', { resourceId: userId });
-      } else {
-        log.info('Account deletion skipped', { resourceId: userId, reason: result.message });
-      }
-    }
-
-    return { processed };
-  },
-});
 
 /**
  * Get users whose deletion grace period has expired.

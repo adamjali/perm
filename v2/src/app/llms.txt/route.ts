@@ -18,10 +18,8 @@ export function GET() {
   // Group posts by type
   const grouped: Record<ContentType, typeof allPosts> = {
     blog: [],
-    tutorials: [],
     guides: [],
     changelog: [],
-    resources: [],
   };
   for (const post of allPosts) {
     grouped[post.type].push(post);
@@ -47,7 +45,7 @@ export function GET() {
 
   // Content hub section
   lines.push("## Content Hub", "");
-  const contentTypes: ContentType[] = ["blog", "tutorials", "guides", "resources", "changelog"];
+  const contentTypes: ContentType[] = ["blog", "guides", "changelog"];
   for (const type of contentTypes) {
     const config = CONTENT_TYPE_CONFIG[type];
     lines.push(`- [${config.plural}](${BASE_URL}/${type}): ${config.description}`);

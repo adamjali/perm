@@ -78,7 +78,6 @@ export function exportUsersToCSV(users: UserSummary[]): string {
     escapeCsvField(user.deletedCases),
     escapeCsvField(formatTimestamp(user.lastCaseUpdate)),
     escapeCsvField(user.userType),
-    escapeCsvField(user.firmName),
     escapeCsvField(user.accountStatus),
     escapeCsvField(formatTimestamp(user.deletedAt)),
     escapeCsvField(formatTimestamp(user.termsAccepted)),

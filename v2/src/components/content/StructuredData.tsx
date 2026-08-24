@@ -34,7 +34,7 @@ export default function StructuredData({ type, slug, meta, steps, videos }: Stru
 
   const schemas: object[] = [articleSchema, breadcrumbSchema];
 
-  if (type === "tutorials" && steps && steps.length > 0) {
+  if (type === "guides" && steps && steps.length > 0) {
     schemas.push(generateHowToSchema(meta, slug, steps));
   }
 

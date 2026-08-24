@@ -292,14 +292,6 @@ export const recordActivity = mutation({
  */
 export const updateUserProfile = mutation({
   args: {
-    // User type
-    userType: v.optional(v.union(
-      v.literal("individual"),
-      v.literal("firm_admin"),
-      v.literal("firm_member")
-    )),
-    firmId: v.optional(v.id("users")),
-    firmName: v.optional(v.string()),
     // Profile section
     fullName: v.optional(v.string()),
     jobTitle: v.optional(v.string()),
@@ -367,7 +359,6 @@ export const updateUserProfile = mutation({
       { value: args.fullName, name: "Full Name", limit: INPUT_LIMITS.SHORT },
       { value: args.company, name: "Company", limit: INPUT_LIMITS.SHORT },
       { value: args.jobTitle, name: "Job Title", limit: INPUT_LIMITS.SHORT },
-      { value: args.firmName, name: "Firm Name", limit: INPUT_LIMITS.SHORT },
     ]);
 
     // Get current profile or create one if it doesn't exist (upsert pattern)

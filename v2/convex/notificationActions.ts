@@ -6,7 +6,6 @@
  * then marks the notification as emailed on success.
  *
  * INTERNAL ACTIONS (server-side only):
- * - sendDeadlineReminderEmail: Send deadline reminder email
  * - sendStatusChangeEmail: Send status change email
  * - sendRfiAlertEmail: Send RFI alert email
  * - sendRfeAlertEmail: Send RFE alert email
@@ -32,7 +31,6 @@ import { getResend, FROM_EMAIL, sendEmailWithRetry } from "./lib/email";
 import { recordError } from "./lib/errorRecording";
 
 const log = loggers.email;
-import { DeadlineReminder } from "../src/emails/DeadlineReminder";
 import { StatusChange } from "../src/emails/StatusChange";
 import { RfiAlert } from "../src/emails/RfiAlert";
 import { RfeAlert } from "../src/emails/RfeAlert";
@@ -145,18 +143,6 @@ async function sendNotificationEmail(
   }
 }
 
-/**
- * Generate email subject for deadline reminders based on urgency.
- */
-function generateDeadlineSubject(deadlineType: string, employerName: string, daysUntil: number): string {
-  if (daysUntil <= 0) {
-    return `OVERDUE: ${deadlineType} for ${employerName}`;
-  }
-  if (daysUntil <= 7) {
-    return `Urgent: ${deadlineType} in ${daysUntil} day${daysUntil !== 1 ? "s" : ""}`;
-  }
-  return `Reminder: ${deadlineType} in ${daysUntil} days`;
-}
 
 /**
  * Generate email subject for RFI/RFE alerts based on urgency.
@@ -184,46 +170,11 @@ function generateAlertSubject(
 // DEADLINE REMINDER EMAIL
 // ============================================================================
 
-/**
- * Send a deadline reminder email.
- */
-export const sendDeadlineReminderEmail = internalAction({
-  args: {
-    notificationId: v.id("notifications"),
-    to: v.string(),
-    employerName: v.string(),
-    beneficiaryName: v.string(),
-    deadlineType: v.string(),
-    deadlineDate: v.string(),
-    daysUntil: v.number(),
-    caseId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const { caseUrl, settingsUrl } = buildEmailUrls(args.caseId);
+// sendDeadlineReminderEmail was removed 2026-08-24. Its only caller was
+// scheduledJobs.checkDeadlineReminders, itself orphaned when the daily sweep
+// moved to deadlineDigest (which batches per-user digests instead of
+// per-deadline sends — the shape that respects the shared Resend budget).
 
-    const html = await render(
-      DeadlineReminder({
-        employerName: args.employerName,
-        beneficiaryName: args.beneficiaryName,
-        deadlineType: args.deadlineType,
-        deadlineDate: args.deadlineDate,
-        daysUntil: args.daysUntil,
-        caseUrl: caseUrl!,
-        settingsUrl,
-      })
-    );
-
-    const subject = generateDeadlineSubject(args.deadlineType, args.employerName, args.daysUntil);
-
-    await sendNotificationEmail(ctx, {
-      to: args.to,
-      subject,
-      html,
-      notificationId: args.notificationId,
-      logContext: "deadline reminder",
-    });
-  },
-});
 
 // ============================================================================
 // STATUS CHANGE EMAIL

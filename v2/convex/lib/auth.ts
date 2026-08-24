@@ -55,34 +55,7 @@ export async function getCurrentUserProfile(ctx: AuthContext): Promise<Doc<"user
   return profile;
 }
 
-/**
- * Check if the current user is a firm admin
- * @throws {Error} If user is not authenticated or profile not found
- */
-export async function isFirmAdmin(ctx: AuthContext): Promise<boolean> {
-  const profile = await getCurrentUserProfile(ctx);
-  return profile.userType === "firm_admin";
-}
 
-/**
- * Get the current user's effective firm ID
- * - For firm admins: returns their own user ID (they are the firm)
- * - For firm members: returns their firmId
- * @throws {Error} If user is not authenticated or profile not found
- */
-export async function getCurrentUserFirmId(ctx: AuthContext): Promise<string> {
-  const profile = await getCurrentUserProfile(ctx);
-
-  if (profile.userType === "firm_admin") {
-    return profile.userId;
-  }
-
-  if (!profile.firmId) {
-    throw new Error("User is not associated with a firm");
-  }
-
-  return profile.firmId;
-}
 
 /**
  * Verify that the current user owns a specific resource
@@ -106,60 +79,6 @@ export async function verifyOwnership<T extends { userId: string }>(
   }
 }
 
-/**
- * Verify that the current user has firm-level access to a resource
- * Access is granted if:
- * - User directly owns the resource, OR
- * - User is in the same firm as the resource owner
- *
- * @param resource - The resource to check access for (or null)
- * @param resourceName - Name of the resource type (for error messages)
- * @throws {Error} If resource doesn't exist or user doesn't have access
- */
-export async function verifyFirmAccess<T extends { userId: string }>(
-  ctx: AuthContext,
-  resource: T | null,
-  resourceName: string
-): Promise<void> {
-  if (!resource) {
-    throw new Error(`${resourceName} not found`);
-  }
-
-  const userId = await getCurrentUserId(ctx);
-
-  // Direct ownership
-  if (resource.userId === userId) {
-    return;
-  }
-
-  // Check firm membership
-  const currentUserProfile = await getCurrentUserProfile(ctx);
-  const resourceOwnerProfile = await ctx.db
-    .query("userProfiles")
-    .withIndex("by_user_id", (q) => q.eq("userId", resource.userId as Id<"users">))
-    .filter((q) => q.eq(q.field("deletedAt"), undefined))
-    .first();
-
-  if (!resourceOwnerProfile) {
-    throw new Error(`${resourceName} owner profile not found`);
-  }
-
-  // Get effective firm IDs
-  const currentUserFirmId = currentUserProfile.userType === "firm_admin"
-    ? currentUserProfile.userId
-    : currentUserProfile.firmId;
-
-  const resourceOwnerFirmId = resourceOwnerProfile.userType === "firm_admin"
-    ? resourceOwnerProfile.userId
-    : resourceOwnerProfile.firmId;
-
-  // Check if in same firm
-  if (currentUserFirmId && resourceOwnerFirmId && currentUserFirmId === resourceOwnerFirmId) {
-    return;
-  }
-
-  throw new Error(`Access denied: you do not have access to this ${resourceName}`);
-}
 
 /**
  * Look up a user document by email, normalized lower-case + trimmed.

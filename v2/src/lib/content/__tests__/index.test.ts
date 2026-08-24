@@ -193,7 +193,7 @@ describe("getPostSlugs", () => {
   it("returns empty array for non-existent directory", () => {
     mockExistsSync.mockReturnValue(false);
 
-    const slugs = getPostSlugs("tutorials");
+    const slugs = getPostSlugs("guides");
 
     expect(slugs).toEqual([]);
   });
@@ -279,11 +279,11 @@ describe("getPostBySlug", () => {
       throw new Error("Invalid YAML");
     });
 
-    const post = getPostBySlug("tutorials", "bad-yaml");
+    const post = getPostBySlug("guides", "bad-yaml");
 
     expect(post).toBeNull();
     expect(errorSpy).toHaveBeenCalledWith(
-      "[content] Failed to parse frontmatter in tutorials/bad-yaml.mdx:",
+      "[content] Failed to parse frontmatter in guides/bad-yaml.mdx:",
       expect.any(Error)
     );
   });
@@ -485,16 +485,16 @@ describe("getAllPosts", () => {
   it("returns posts from a specific type when type is provided", () => {
     setupMultiTypePosts([
       { type: "blog", slug: "blog-post", data: { title: "Blog", date: "2025-01-01", tags: [], published: true } },
-      { type: "tutorials", slug: "tutorial-post", data: { title: "Tutorial", date: "2025-02-01", tags: [], published: true } },
+      { type: "guides", slug: "tutorial-post", data: { title: "Tutorial", date: "2025-02-01", tags: [], published: true } },
     ]);
 
     const blogPosts = getAllPosts("blog");
-    const tutorialPosts = getAllPosts("tutorials");
+    const guidePosts = getAllPosts("guides");
 
     expect(blogPosts).toHaveLength(1);
     expect(blogPosts[0].slug).toBe("blog-post");
-    expect(tutorialPosts).toHaveLength(1);
-    expect(tutorialPosts[0].slug).toBe("tutorial-post");
+    expect(guidePosts).toHaveLength(1);
+    expect(guidePosts[0].slug).toBe("tutorial-post");
   });
 
   it("returns posts from all types when no type is provided", () => {
@@ -521,12 +521,12 @@ describe("getAllPosts", () => {
 
   it("includes post type in each PostSummary", () => {
     setupMultiTypePosts([
-      { type: "tutorials", slug: "tut-1", data: { title: "Tut", date: "2025-01-01", tags: [], published: true } },
+      { type: "guides", slug: "tut-1", data: { title: "Tut", date: "2025-01-01", tags: [], published: true } },
     ]);
 
-    const posts = getAllPosts("tutorials");
+    const posts = getAllPosts("guides");
 
-    expect(posts[0].type).toBe("tutorials");
+    expect(posts[0].type).toBe("guides");
   });
 });
 
@@ -541,7 +541,7 @@ describe("getRelatedPosts", () => {
       { type: "blog", slug: "related-2-tags", data: { title: "Related 2", date: "2025-05-01", tags: ["perm", "labor"], published: true } },
       { type: "blog", slug: "related-1-tag", data: { title: "Related 1", date: "2025-04-01", tags: ["perm", "dol"], published: true } },
       { type: "blog", slug: "unrelated", data: { title: "Unrelated", date: "2025-03-01", tags: ["cooking", "recipe"], published: true } },
-      { type: "tutorials", slug: "tutorial-related", data: { title: "Tutorial", date: "2025-02-01", tags: ["labor"], published: true } },
+      { type: "guides", slug: "tutorial-related", data: { title: "Tutorial", date: "2025-02-01", tags: ["labor"], published: true } },
     ]);
   }
 
@@ -650,7 +650,7 @@ describe("getAllTags", () => {
     setupMultiTypePosts([
       { type: "blog", slug: "p1", data: { title: "P1", date: "2025-01-01", tags: ["perm", "immigration", "dol"], published: true } },
       { type: "blog", slug: "p2", data: { title: "P2", date: "2025-01-02", tags: ["perm", "labor"], published: true } },
-      { type: "tutorials", slug: "t1", data: { title: "T1", date: "2025-01-03", tags: ["tutorial", "immigration"], published: true } },
+      { type: "guides", slug: "t1", data: { title: "T1", date: "2025-01-03", tags: ["tutorial", "immigration"], published: true } },
     ]);
 
     const tags = getAllTags();
@@ -661,7 +661,7 @@ describe("getAllTags", () => {
   it("returns tags filtered by type when type is provided", () => {
     setupMultiTypePosts([
       { type: "blog", slug: "p1", data: { title: "P1", date: "2025-01-01", tags: ["perm", "dol"], published: true } },
-      { type: "tutorials", slug: "t1", data: { title: "T1", date: "2025-01-02", tags: ["tutorial", "guide"], published: true } },
+      { type: "guides", slug: "t1", data: { title: "T1", date: "2025-01-02", tags: ["tutorial", "guide"], published: true } },
     ]);
 
     const blogTags = getAllTags("blog");
@@ -723,7 +723,7 @@ describe("getFeaturedPosts", () => {
   it("filters by type when type is provided", () => {
     setupMultiTypePosts([
       { type: "blog", slug: "blog-feat", data: { title: "BF", date: "2025-01-01", tags: [], published: true, featured: true } },
-      { type: "tutorials", slug: "tut-feat", data: { title: "TF", date: "2025-01-02", tags: [], published: true, featured: true } },
+      { type: "guides", slug: "tut-feat", data: { title: "TF", date: "2025-01-02", tags: [], published: true, featured: true } },
     ]);
 
     const blogFeatured = getFeaturedPosts("blog");
@@ -735,7 +735,7 @@ describe("getFeaturedPosts", () => {
   it("returns featured posts from all types when no type specified", () => {
     setupMultiTypePosts([
       { type: "blog", slug: "blog-feat", data: { title: "BF", date: "2025-02-01", tags: [], published: true, featured: true } },
-      { type: "tutorials", slug: "tut-feat", data: { title: "TF", date: "2025-01-01", tags: [], published: true, featured: true } },
+      { type: "guides", slug: "tut-feat", data: { title: "TF", date: "2025-01-01", tags: [], published: true, featured: true } },
       { type: "guides", slug: "guide-regular", data: { title: "GR", date: "2025-03-01", tags: [], published: true, featured: false } },
     ]);
 

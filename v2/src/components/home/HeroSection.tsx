@@ -24,7 +24,6 @@ import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useReducedMotion } from "@/lib/animations";
-import { FloatingIcons, FloatingParticles } from "./DecorativeElements";
 import { Lightbox } from "@/components/ui/lightbox";
 
 export function HeroSection() {
@@ -51,34 +50,11 @@ export function HeroSection() {
 
   return (
     <section ref={heroRef} id="hero" className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
-      {/* Background photo with dark overlay */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/images/hero/legal-office-wide.jpg"
-          alt=""
-          fill
-          priority
-          fetchPriority="high"
-          className="object-cover"
-          sizes="100vw"
-          aria-hidden="true"
-        />
-        {/* Dark overlay - light mode vs dark mode */}
-        <div className="absolute inset-0 bg-background/92 dark:bg-background/95" />
-        {/* Green gradient accent at bottom */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-64"
-          style={{
-            background: "linear-gradient(to top, var(--primary), transparent)",
-            opacity: 0.04,
-          }}
-          aria-hidden="true"
-        />
-      </div>
-
-      {/* Floating decorative icons */}
-      <FloatingIcons className="absolute inset-0" />
-      <FloatingParticles className="absolute inset-0" />
+      {/* No photo underlay, no particles: the page's ground is the paper +
+          dot grid the whole site stands on, and the hero's one image is the
+          product screenshot below — evidence, not atmosphere. Cutting the
+          full-bleed priority JPEG here also removed the page's largest
+          first-paint payload. */}
 
       {/* Scroll indicator — mouse + line + text (CSS animations for reliability) */}
       <div
@@ -159,10 +135,10 @@ export function HeroSection() {
                   variant="outline"
                   size="lg"
                   className="h-12 border-3 border-border bg-transparent px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] text-foreground shadow-hard transition-all duration-150 hover:bg-foreground hover:text-background hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:bg-[#404040] dark:border-[rgba(255,255,255,0.3)] dark:hover:bg-primary dark:hover:text-black dark:hover:border-primary"
-                  onClick={() => navigateTo("/demo")}
+                  onClick={() => navigateTo("/tools")}
                   disabled={isNavigating}
                 >
-                  {isNavigating && targetPath === "/demo" ? (
+                  {isNavigating && targetPath === "/tools" ? (
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   ) : (
                     <Play className="mr-2 h-5 w-5" />

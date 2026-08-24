@@ -867,10 +867,10 @@ describe("Scheduled Jobs", () => {
   });
 
   // ============================================================================
-  // checkDeadlineReminders (Integration) TESTS
+  // Daily reminder pipeline (getCasesNeedingReminders + notifications) TESTS
   // ============================================================================
 
-  describe("checkDeadlineReminders (simulated action)", () => {
+  describe("daily reminder pipeline (simulated)", () => {
     it("finds reminders and can create notifications for them", async () => {
       const t = createTestContext();
       const { authT } = await createTestUserWithProfile(t, "User Action Test");
@@ -1148,9 +1148,6 @@ describe("Scheduled Jobs", () => {
   });
 
   // ============================================================================
-  // processExpiredDeletions TESTS
-  // ============================================================================
-
   // ============================================================================
   // getDeadlinesForDigest TESTS (supersession via shouldRemindForDeadline)
   // ============================================================================
@@ -1368,7 +1365,7 @@ describe("Scheduled Jobs", () => {
   // processExpiredDeletions TESTS
   // ============================================================================
 
-  describe("processExpiredDeletions (query helper)", () => {
+  describe("expired-deletion helpers (getUsersWithExpiredDeletions)", () => {
     it("getUsersWithExpiredDeletions returns users with expired deletedAt", async () => {
       const t = createTestContext();
       const { userId: expiredUserId, authT } = await createTestUserWithProfile(

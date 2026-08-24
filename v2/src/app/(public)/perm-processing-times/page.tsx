@@ -205,7 +205,7 @@ export default async function PermProcessingTimesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pb-12 sm:px-8 sm:pb-16">
+    <div className="mx-auto max-w-6xl px-4 pb-12 sm:px-8 sm:pb-16">
       <DataNav active="processing-times" />
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={datasetSchema} />
