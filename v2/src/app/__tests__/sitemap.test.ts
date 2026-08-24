@@ -98,6 +98,14 @@ describe("sitemap.ts", () => {
   });
 
   it("includes every calculator under /tools", async () => {
+    // Arrange the mock here rather than inheriting it. `vi.clearAllMocks()`
+    // clears calls but keeps implementations, so this test used to pass on the
+    // previous test's `mockReturnValue` — which holds in source order and
+    // breaks under `sequence.shuffle`, which this project turns on in CI
+    // precisely to find order dependencies like this one. Reproduced with
+    // `CI=1 vitest --sequence.seed=8`: getAllPosts() returned undefined and
+    // sitemap.ts threw on `.length`.
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
     // A tool page that ships but never reaches the sitemap is invisible to
     // search, which is most of the reason these exist as separate URLs.
     const urls = (await sitemap()).map((e) => e.url);
@@ -115,6 +123,8 @@ describe("sitemap.ts", () => {
   });
 
   it("uses DOL's as-of date for the calculators that render live figures", async () => {
+    // Arranges its own posts for the same reason as the test above.
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
     // Same reasoning as /perm-processing-times: lastmod should move when the
     // numbers move, not when an unrelated blog post ships.
     const entries = await sitemap();
