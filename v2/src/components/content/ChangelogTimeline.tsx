@@ -46,7 +46,7 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <p className="font-heading text-lg font-bold text-muted-foreground">
           No updates yet
-        </p>
+        </p>{" "}
         <p className="mt-1 text-sm text-muted-foreground">
           Check back soon for product updates.
         </p>
@@ -105,7 +105,7 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
                   <span className="flex items-center gap-1.5">
                     <span className="font-heading text-[10px] font-semibold uppercase tracking-wider text-primary">
                       Updated
-                    </span>
+                    </span>{" "}
                     <time dateTime={post.meta.updated}>{fmtDate(post.meta.updated)}</time>
                   </span>
                 )}

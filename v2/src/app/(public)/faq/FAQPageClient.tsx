@@ -34,7 +34,7 @@ export function FAQPageClient({ faqData }: FAQPageClientProps) {
             <h2 className="mb-4 font-heading text-lg font-bold tracking-tight sm:text-xl">
               {section.category}
             </h2>
-          </ScrollReveal>
+          </ScrollReveal>{" "}
 
           <ScrollReveal direction="up" stagger className="flex flex-col gap-3">
             {section.items.map((item, idx) => {
@@ -66,7 +66,7 @@ export function FAQPageClient({ faqData }: FAQPageClientProps) {
                   >
                     <span className="font-heading text-sm font-semibold tracking-tight sm:text-base">
                       {item.question}
-                    </span>
+                    </span>{" "}
                     <div
                       className={cn(
                         "shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
@@ -75,7 +75,7 @@ export function FAQPageClient({ faqData }: FAQPageClientProps) {
                     >
                       <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                     </div>
-                  </button>
+                  </button>{" "}
 
                   <div
                     id={contentId}

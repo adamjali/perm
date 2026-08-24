@@ -186,10 +186,10 @@ export function FeaturesGrid() {
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5" />
             What You Get
-          </div>
+          </div>{" "}
           <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
             Built for PERM Practitioners
-          </h2>
+          </h2>{" "}
           <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
             Stop juggling spreadsheets and calendar reminders. Every tool you need to manage PERM cases, in one place.
           </p>

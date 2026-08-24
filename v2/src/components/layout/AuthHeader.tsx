@@ -144,10 +144,10 @@ export default function AuthHeader() {
             strokeWidth={2.5}
           />
           <span>
-            <span className="text-primary transition-colors group-hover:text-black">PERM</span>
+            <span className="text-primary transition-colors group-hover:text-black">PERM</span>{" "}
             <span className="text-white transition-colors group-hover:text-black"> Tracker</span>
           </span>
-        </NavLink>
+        </NavLink>{" "}
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-6 sm:flex">
@@ -159,8 +159,8 @@ export default function AuthHeader() {
                   const sectionId = link.href.replace("#", "");
                   const isActive = activeSection === sectionId;
                   return (
-                    <a
-                      key={link.href}
+                    <React.Fragment key={link.href}>
+                      <a
                       href={link.href}
                       onClick={(e) => scrollToSection(e, link.href)}
                       className={cn(
@@ -175,9 +175,10 @@ export default function AuthHeader() {
                           isActive ? "scale-x-100" : "scale-x-0 hover:scale-x-100"
                         )}
                       />
-                    </a>
+                      </a>{" "}
+                    </React.Fragment>
                   );
-                })}
+                  })}{" "}
 
                 {/* Demo link */}
                 <NavLink
@@ -187,7 +188,7 @@ export default function AuthHeader() {
                   spinnerSize={14}
                 >
                   Demo
-                </NavLink>
+                </NavLink>{" "}
 
                 {/* Learn dropdown — links are ALWAYS rendered in the DOM (not
                     behind a `{isLearnOpen &&}` conditional) so Googlebot sees
@@ -218,7 +219,7 @@ export default function AuthHeader() {
                   >
                     Learn
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
-                  </button>
+                  </button>{" "}
                   <div
                     role="menu"
                     aria-hidden={!isLearnOpen}
@@ -229,16 +230,17 @@ export default function AuthHeader() {
                     )}
                   >
                     {CONTENT_NAV_LINKS.map((link) => (
-                      <NavLink
-                        key={link.href}
+                      <React.Fragment key={link.href}>
+                        <NavLink
                         href={link.href}
                         className="block px-4 py-2 font-heading text-sm font-semibold text-white transition-colors hover:bg-white/5 hover:text-primary"
                         spinnerClassName="text-white"
                         spinnerSize={14}
                         onClick={() => setIsLearnOpen(false)}
-                      >
+                        >
                         {link.label}
-                      </NavLink>
+                        </NavLink>{" "}
+                      </React.Fragment>
                     ))}
                   </div>
                 </div>
@@ -246,16 +248,17 @@ export default function AuthHeader() {
             ) : (
               <>
                 {AUTH_NAV_LINKS.filter((link) => link.href !== pathname).map((link) => (
-                  <NavLink
-                    key={link.href}
+                  <React.Fragment key={link.href}>
+                    <NavLink
                     href={link.href}
                     className="px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
                     spinnerClassName="text-white"
                     spinnerSize={14}
-                  >
+                    >
                     {link.label}
-                  </NavLink>
-                ))}
+                    </NavLink>{" "}
+                  </React.Fragment>
+                ))}{" "}
 
                 {/* Learn dropdown — see homepage branch above for the SSR-render
                     rationale and a11y contract. Same pattern, active-link styling. */}
@@ -272,7 +275,7 @@ export default function AuthHeader() {
                   >
                     Learn
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
-                  </button>
+                  </button>{" "}
                   <div
                     role="menu"
                     aria-hidden={!isLearnOpen}
@@ -283,25 +286,26 @@ export default function AuthHeader() {
                     )}
                   >
                     {CONTENT_NAV_LINKS.map((link) => (
-                      <NavLink
-                        key={link.href}
+                      <React.Fragment key={link.href}>
+                        <NavLink
                         href={link.href}
                         className={cn(
-                          "block px-4 py-2 font-heading text-sm font-semibold transition-colors",
-                          pathname === link.href ? "bg-primary/10 text-primary" : "text-white hover:bg-white/5 hover:text-primary"
+                        "block px-4 py-2 font-heading text-sm font-semibold transition-colors",
+                        pathname === link.href ? "bg-primary/10 text-primary" : "text-white hover:bg-white/5 hover:text-primary"
                         )}
                         spinnerClassName="text-white"
                         spinnerSize={14}
                         onClick={() => setIsLearnOpen(false)}
-                      >
+                        >
                         {link.label}
-                      </NavLink>
+                        </NavLink>{" "}
+                      </React.Fragment>
                     ))}
                   </div>
                 </div>
               </>
             )}
-          </div>
+          </div>{" "}
 
           {/* Auth Buttons */}
           <div className="flex items-center gap-3">
@@ -314,7 +318,7 @@ export default function AuthHeader() {
               >
                 Sign In
               </NavLink>
-            )}
+            )}{"XPROBEX"}
 
             {showSignUp && (
               <NavLink
@@ -325,11 +329,11 @@ export default function AuthHeader() {
               >
                 Sign Up
               </NavLink>
-            )}
+            )}{" "}
 
             <ThemeToggle />
           </div>
-        </nav>
+        </nav>{" "}
 
         {/* Mobile Menu Button */}
         <div className="flex items-center gap-3 sm:hidden">
@@ -344,7 +348,7 @@ export default function AuthHeader() {
             {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
-      </div>
+      </div>{" "}
 
       {/* Mobile Menu */}
       {/* Mobile menu — conditional render is intentionally OK here, unlike the
@@ -362,8 +366,8 @@ export default function AuthHeader() {
                   const sectionId = link.href.replace("#", "");
                   const isActive = activeSection === sectionId;
                   return (
-                    <a
-                      key={link.href}
+                    <React.Fragment key={link.href}>
+                      <a
                       href={link.href}
                       onClick={(e) => scrollToSection(e, link.href)}
                       className={cn(
@@ -372,9 +376,10 @@ export default function AuthHeader() {
                       )}
                     >
                       {link.label}
-                    </a>
+                      </a>{" "}
+                    </React.Fragment>
                   );
-                })}
+                  })}{" "}
 
                 {/* Demo link */}
                 <NavLink
@@ -385,65 +390,68 @@ export default function AuthHeader() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Demo
-                </NavLink>
+                </NavLink>{" "}
 
                 {/* Learn section */}
                 <div className="border-t border-white/10 pt-2 mt-1">
                   <p className="py-1 font-heading text-[10px] font-bold uppercase tracking-widest text-white/70">
                     Learn
-                  </p>
+                  </p>{" "}
                   {CONTENT_NAV_LINKS.map((link) => (
-                    <NavLink
-                      key={link.href}
+                    <React.Fragment key={link.href}>
+                      <NavLink
                       href={link.href}
                       className="block py-2 pl-2 font-heading text-sm font-semibold text-white transition-colors hover:text-primary"
                       spinnerClassName="text-white"
                       spinnerSize={14}
                       onClick={() => setIsMobileMenuOpen(false)}
-                    >
+                      >
                       {link.label}
-                    </NavLink>
+                      </NavLink>{" "}
+                    </React.Fragment>
                   ))}
                 </div>
               </>
             ) : (
               <>
                 {AUTH_NAV_LINKS.filter((link) => link.href !== pathname).map((link) => (
-                  <NavLink
-                    key={link.href}
+                  <React.Fragment key={link.href}>
+                    <NavLink
                     href={link.href}
                     className="block py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
                     spinnerClassName="text-white"
                     spinnerSize={14}
                     onClick={() => setIsMobileMenuOpen(false)}
-                  >
+                    >
                     {link.label}
-                  </NavLink>
-                ))}
+                    </NavLink>{" "}
+                  </React.Fragment>
+                ))}{" "}
 
                 {/* Learn section */}
                 <div className="border-t border-white/10 pt-2 mt-1">
                   <p className="py-1 font-heading text-[10px] font-bold uppercase tracking-widest text-white/70">
                     Learn
-                  </p>
+                  </p>{" "}
                   {CONTENT_NAV_LINKS.map((link) => (
-                    <NavLink
-                      key={link.href}
+                    <React.Fragment key={link.href}>
+                      <NavLink
                       href={link.href}
                       className={cn(
-                        "block py-2 pl-2 font-heading text-sm font-semibold transition-colors",
-                        pathname === link.href ? "text-primary" : "text-white hover:text-primary"
+                      "block py-2 pl-2 font-heading text-sm font-semibold transition-colors",
+                      pathname === link.href ? "text-primary" : "text-white hover:text-primary"
                       )}
                       spinnerClassName="text-white"
                       spinnerSize={14}
                       onClick={() => setIsMobileMenuOpen(false)}
-                    >
+                      >
                       {link.label}
-                    </NavLink>
+                      </NavLink>{" "}
+                    </React.Fragment>
                   ))}
                 </div>
               </>
-            )}
+            )}{" "}
             <div className="flex flex-col gap-3 border-t border-white/20 pt-3">
               {showSignIn && (
                 <NavLink
@@ -455,7 +463,7 @@ export default function AuthHeader() {
                 >
                   Sign In
                 </NavLink>
-              )}
+              )}{" "}
               {showSignUp && (
                 <NavLink
                   href="/signup"

@@ -80,10 +80,10 @@ export function TestimonialsSection() {
             <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
               <Star className="h-3.5 w-3.5" />
               Trusted by Practitioners
-            </div>
+            </div>{" "}
             <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
               What Our Users Say
-            </h2>
+            </h2>{" "}
             <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
               Immigration attorneys trust PERM Tracker to manage their cases and never miss a deadline.
             </p>
@@ -96,7 +96,7 @@ export function TestimonialsSection() {
                 key={badge.label}
                 className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground"
               >
-                <span className="flex-shrink-0">{badge.icon}</span>
+                <span className="flex-shrink-0">{badge.icon}</span>{" "}
                 <span>{badge.label}</span>
               </div>
             ))}

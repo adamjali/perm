@@ -179,10 +179,10 @@ export function HowItWorks() {
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <Route className="h-3.5 w-3.5" />
             Simple Process
-          </div>
+          </div>{" "}
           <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
             Get Started in 3 Steps
-          </h2>
+          </h2>{" "}
           <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
             From signup to case tracking in under a minute.
           </p>
@@ -218,7 +218,7 @@ export function HowItWorks() {
                       sizes="96px"
                       aria-hidden="true"
                     />
-                  </div>
+                  </div>{" "}
                   <div className="relative flex h-full w-full items-center justify-center transition-transform duration-500 group-hover:scale-110">
                     {step.illustration}
                   </div>
@@ -243,10 +243,10 @@ export function HowItWorks() {
             <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
               <Play className="h-3.5 w-3.5" />
               Watch: The PERM Process
-            </div>
+            </div>{" "}
             <h3 className="font-heading text-xl font-black tracking-tight sm:text-2xl lg:text-3xl">
               See How It Works in 20 Seconds
-            </h3>
+            </h3>{" "}
             <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
               From case creation to deadline tracking, watch the entire PERM workflow.
             </p>
@@ -263,9 +263,9 @@ export function HowItWorks() {
                   <span className="ml-2 font-mono text-[9px] text-background/50">
                     Product Demo
                   </span>
-                </div>
+                </div>{" "}
                 <VideoPlayer videoId="ProductDemo" className="border-0 shadow-none" autoPlay loop />
-              </div>
+              </div>{" "}
               <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 Watch the full demo
               </p>
@@ -282,7 +282,7 @@ export function HowItWorks() {
                     <span className="ml-2 font-mono text-[9px] text-background/50">
                       PERM Tracker
                     </span>
-                  </div>
+                  </div>{" "}
                   <figure className="not-prose">
                     <video
                       src="/images/screenshots/create-case.mp4"
@@ -298,7 +298,7 @@ export function HowItWorks() {
                     </video>
                   </figure>
                 </div>
-              </Lightbox>
+              </Lightbox>{" "}
               <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 See the full app in action
               </p>
@@ -334,7 +334,7 @@ export function HowItWorks() {
                       <span className="ml-2 font-mono text-[9px] text-background/50">
                         {screenshot.label}
                       </span>
-                    </div>
+                    </div>{" "}
                     <Image
                       src={screenshot.src}
                       alt={screenshot.alt}
@@ -344,7 +344,7 @@ export function HowItWorks() {
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 450px"
                     />
                   </div>
-                </Lightbox>
+                </Lightbox>{" "}
                 <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
                   {screenshot.label}
                 </p>

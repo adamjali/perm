@@ -246,7 +246,7 @@ export function StatsSection() {
         <svg className="absolute top-8 right-[20%] opacity-10" width="16" height="16" viewBox="0 0 16 16" fill="none">
           <line x1="8" y1="1" x2="8" y2="15" stroke="var(--primary)" strokeWidth="2.5" />
           <line x1="1" y1="8" x2="15" y2="8" stroke="var(--primary)" strokeWidth="2.5" />
-        </svg>
+        </svg>{" "}
         <svg className="absolute bottom-12 left-[15%] opacity-8" width="12" height="12" viewBox="0 0 12 12" fill="none">
           <line x1="6" y1="0" x2="6" y2="12" stroke="var(--primary)" strokeWidth="2" />
           <line x1="0" y1="6" x2="12" y2="6" stroke="var(--primary)" strokeWidth="2" />

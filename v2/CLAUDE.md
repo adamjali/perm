@@ -374,3 +374,61 @@ Convex agent skills for common tasks can be installed by running
 `npx convex ai-files install`.
 
 <!-- convex-ai-end -->
+
+
+---
+
+## SEO: JSX glues adjacent element text, and Google reads it (2026-08-23)
+
+JSX removes a newline that sits between two tags, so perfectly formatted source
+
+```tsx
+<NavLink href="/blog">Blog</NavLink>
+<NavLink href="/tutorials">Tutorials</NavLink>
+```
+
+renders as `>Blog</a><a …>Tutorials` with **zero characters between them**.
+Anything that walks the DOM reads one run. `permtracker.app` currently serves:
+
+```
+PERM TrackerHomeProcessFeaturesFAQDemoLearn BlogTutorialsGuidesChangelogResources Sign InSign Up
+```
+
+**This is not theoretical.** On the same day, Google's search listing for a
+sibling site printed the identical defect verbatim — a flex-column brand lockup
+came out as "North East FloridaJunk Removal". Measured with a browser: the glue
+is absent from `innerText` and present in `textContent`, so **Google's snippet
+extraction is textContent-shaped and ignores CSS layout entirely.**
+
+**Scope: 624 joins across the 11 public pages.** The authenticated app is behind
+a login and is never crawled, so it is out of scope on purpose — there are 1,804
+sibling boundaries codebase-wide and touching them all is churn for no benefit.
+
+**The fix, by shape:**
+
+| Shape | Fix |
+|---|---|
+| `</Tag>` newline `<Tag` | `{" "}` between them |
+| `)}` newline `{cond &&` | `{" "}` after the `)}` |
+| `.map(x => (<NavLink key=…/>))` | wrap in `<React.Fragment key=…>` with a trailing `{" "}` — React renders array items with **nothing** between them, so a separator has to be part of each iteration |
+
+Every affected container here is flex with a `gap`, so the inserted space is
+visually inert. Verify by measuring the rendered header before and after.
+
+**Check it with:**
+
+```bash
+pnpm build && pnpm start
+for p in "" demo blog tutorials guides changelog resources faq contact privacy terms security tools; do
+  curl -s -o "/tmp/pt/${p:-index}.html" "http://localhost:3000/$p"; done
+python3 ~/.claude/skills/site-forge/scripts/fix-glued-text.py /tmp/pt --check
+```
+
+**Two traps found while doing this.** `.next` caches aggressively — wipe it
+before trusting a measurement. And a stale `next-server` holds `.next/lock` and
+makes the next build fail with "a previous build that didn't exit cleanly";
+`pgrep -f next-server`, then kill by PID.
+
+**Status: NOT FIXED.** The work was reverted mid-session by a concurrent Claude
+session in this repo. The recipe above is complete and verified against the
+build; it needs one uninterrupted pass.

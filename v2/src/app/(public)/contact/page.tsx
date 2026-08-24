@@ -45,22 +45,22 @@ export default function ContactPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
       <div className="card-brutalist p-8">
-        <h1 className="font-heading text-4xl font-black mb-4">Contact Us</h1>
+        <h1 className="font-heading text-4xl font-black mb-4">Contact Us</h1>{" "}
         <p className="text-foreground/60 mb-8">
           Have questions about PERM Tracker? We&apos;re here to help.
-        </p>
+        </p>{" "}
 
         <div className="space-y-8">
           {/* Email */}
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-black bg-primary shadow-hard-sm dark:border-white">
               <Mail className="h-6 w-6 text-primary-foreground" />
-            </div>
+            </div>{" "}
             <div>
-              <h2 className="font-heading text-lg font-bold mb-1">Email</h2>
+              <h2 className="font-heading text-lg font-bold mb-1">Email</h2>{" "}
               <p className="text-foreground/60 text-sm mb-2">
                 Best for general inquiries and support requests.
-              </p>
+              </p>{" "}
               <a
                 href="mailto:support@permtracker.app"
                 className="hover-underline text-primary font-medium"
@@ -74,14 +74,14 @@ export default function ContactPage() {
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-black bg-secondary shadow-hard-sm dark:border-white">
               <MessageSquare className="h-6 w-6 text-secondary-foreground" />
-            </div>
+            </div>{" "}
             <div>
               <h2 className="font-heading text-lg font-bold mb-1">
                 Feature Requests & Feedback
-              </h2>
+              </h2>{" "}
               <p className="text-foreground/60 text-sm mb-2">
                 Have an idea to improve PERM Tracker? We&apos;d love to hear it.
-              </p>
+              </p>{" "}
               <a
                 href={GITHUB_FEATURE_REQUEST_URL}
                 target="_blank"
@@ -97,14 +97,14 @@ export default function ContactPage() {
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-black bg-accent shadow-hard-sm dark:border-white">
               <GithubIcon className="h-6 w-6 text-accent-foreground" />
-            </div>
+            </div>{" "}
             <div>
               <h2 className="font-heading text-lg font-bold mb-1">
                 Bug Reports
-              </h2>
+              </h2>{" "}
               <p className="text-foreground/60 text-sm mb-2">
                 Found something that&apos;s not working right? Report it here.
-              </p>
+              </p>{" "}
               <a
                 href={GITHUB_BUG_REPORT_URL}
                 target="_blank"
@@ -119,7 +119,7 @@ export default function ContactPage() {
 
         {/* Response time */}
         <div className="mt-12 rounded-lg border-2 border-black bg-muted p-6 shadow-hard-sm dark:border-white">
-          <h3 className="font-heading text-lg font-bold mb-2">Response Time</h3>
+          <h3 className="font-heading text-lg font-bold mb-2">Response Time</h3>{" "}
           <p className="text-foreground/60">
             We typically respond to inquiries within 24-48 hours during business
             days. For urgent matters related to case deadlines, please include

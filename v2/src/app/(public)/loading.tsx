@@ -61,7 +61,7 @@ export default function HomeLoading() {
           <div className="mb-12 text-center">
             <Skeleton className="mx-auto h-10 w-96 mb-4" />
             <Skeleton className="mx-auto h-5 w-80" />
-          </div>
+          </div>{" "}
           <div className="flex gap-6 overflow-hidden">
             <Skeleton className="h-64 w-80 flex-shrink-0" />
             <Skeleton className="h-64 w-80 flex-shrink-0" />
@@ -77,7 +77,7 @@ export default function HomeLoading() {
           <div className="mb-12 text-center">
             <Skeleton className="mx-auto h-10 w-80 mb-4" />
             <Skeleton className="mx-auto h-5 w-96" />
-          </div>
+          </div>{" "}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
               <Skeleton key={i} className="h-48" />
@@ -92,7 +92,7 @@ export default function HomeLoading() {
           <div className="mb-12 text-center">
             <Skeleton className="mx-auto h-10 w-64 mb-4" />
             <Skeleton className="mx-auto h-5 w-80" />
-          </div>
+          </div>{" "}
           <div className="grid gap-8 sm:grid-cols-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="text-center">

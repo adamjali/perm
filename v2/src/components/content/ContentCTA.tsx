@@ -40,7 +40,7 @@ export default function ContentCTA({
       >
         <div className="absolute -left-20 -top-20 h-60 w-60 border-4 border-primary/10 rotate-12" />
         <div className="absolute -bottom-16 -right-16 h-48 w-48 bg-primary/5 -rotate-6" />
-      </div>
+      </div>{" "}
 
       <div className="relative mx-auto max-w-[1400px] px-4 py-10 sm:px-8 sm:py-12">
         <motion.div
@@ -55,13 +55,13 @@ export default function ContentCTA({
             className="mb-3 font-heading text-xl font-bold sm:text-2xl"
           >
             {title}
-          </motion.h2>
+          </motion.h2>{" "}
           <motion.p
             variants={fadeUp}
             className="mx-auto mb-6 max-w-xl text-muted-foreground"
           >
             {description}
-          </motion.p>
+          </motion.p>{" "}
           <motion.div variants={fadeUp}>
             <NavLink
               href={href}

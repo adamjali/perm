@@ -103,7 +103,7 @@ export function HeroSection() {
             fill="currentColor"
             className="animate-scroll-wheel text-foreground/60 dark:text-foreground/50"
           />
-        </svg>
+        </svg>{" "}
         <div
           className="animate-scroll-line h-8 w-[1.5px] origin-top"
           style={{ background: "linear-gradient(to bottom, currentColor, transparent)" }}
@@ -153,7 +153,7 @@ export function HeroSection() {
                   )}
                   Start Tracking Cases
                 </Button>
-              </MagneticButton>
+              </MagneticButton>{" "}
               <MagneticButton>
                 <Button
                   variant="outline"
@@ -177,11 +177,11 @@ export function HeroSection() {
               <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
                 <Shield className="h-3.5 w-3.5 text-primary" />
                 256-bit Encrypted
-              </div>
+              </div>{" "}
               <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
                 <Zap className="h-3.5 w-3.5 text-primary" />
                 No Credit Card Required
-              </div>
+              </div>{" "}
               <div className="inline-flex items-center gap-1.5 border-2 border-border/30 bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground">
                 <Clock className="h-3.5 w-3.5 text-primary" />
                 11 Deadline Types Tracked
@@ -231,7 +231,7 @@ export function HeroSection() {
                   <div className="h-3 w-3 bg-[#FF5F57]" />
                   <div className="h-3 w-3 bg-[#FFBD2E]" />
                   <div className="h-3 w-3 bg-[#28CA41]" />
-                </div>
+                </div>{" "}
                 <div className="ml-3 flex-1 bg-background/10 px-3 py-1 font-mono text-[10px] text-background/60">
                   permtracker.app/dashboard
                 </div>
@@ -256,9 +256,9 @@ export function HeroSection() {
               <div className="absolute -bottom-4 -left-4 z-10 flex items-center gap-2 border-3 border-border bg-background px-4 py-2.5 shadow-hard">
                 <div className="flex h-8 w-8 items-center justify-center bg-primary">
                   <Shield className="h-4 w-4 text-black" />
-                </div>
+                </div>{" "}
                 <div>
-                  <div className="font-heading text-xs font-bold">No Credit Card</div>
+                  <div className="font-heading text-xs font-bold">No Credit Card</div>{" "}
                   <div className="font-mono text-[10px] text-muted-foreground">Get started free</div>
                 </div>
               </div>

@@ -220,7 +220,7 @@ export default function PrintableChecklist({
         >
           <CheckCheck className="h-3.5 w-3.5" />
           Check All
-        </button>
+        </button>{" "}
 
         <button
           type="button"
@@ -230,7 +230,7 @@ export default function PrintableChecklist({
         >
           <RotateCcw className="h-3.5 w-3.5" />
           Clear
-        </button>
+        </button>{" "}
 
         <button
           type="button"
@@ -240,7 +240,7 @@ export default function PrintableChecklist({
           <Printer className="h-3.5 w-3.5" />
           Print
         </button>
-      </div>
+      </div>{" "}
 
       <div ref={contentRef}>{children}</div>
     </section>

@@ -80,7 +80,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
             <span className="flex items-center gap-1.5">
               <User className="h-4 w-4" />
               {meta.author}
-            </span>
+            </span>{" "}
             <span className="flex items-center gap-1.5">
               <Calendar className="h-4 w-4" />
               <time dateTime={meta.date}>

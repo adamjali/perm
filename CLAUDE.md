@@ -73,3 +73,14 @@ Push to main triggers auto-deploy:
 - **Convex:** https://docs.convex.dev
 - **DOL PERM:** https://flag.dol.gov/programs/perm
 - **20 CFR 656.40:** https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40
+
+
+## SEO: JSX glues adjacent element text (2026-08-23)
+
+`<A/>` newline `<B/>` in JSX renders with **zero characters between them**, so
+`Blog` + `Tutorials` reads as `BlogTutorials` to anything that walks the DOM.
+Google's snippet extraction is textContent-shaped and ignores CSS layout — proven
+the same day, when it printed the identical defect verbatim in a sibling site's
+search listing. permtracker.app has **624 joins across its 11 public pages** and
+they are **not yet fixed**. Full recipe, scope and verification loop:
+[`v2/CLAUDE.md`](v2/CLAUDE.md), section "SEO: JSX glues adjacent element text".

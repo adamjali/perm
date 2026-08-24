@@ -85,7 +85,7 @@ export default function TermsLoading() {
             <Skeleton className="h-8 w-52 mb-4" />
             <Skeleton className="h-4 w-full mb-2" />
             <Skeleton className="h-4 w-5/6" />
-          </div>
+          </div>{" "}
 
           <div>
             <Skeleton className="h-8 w-36 mb-4" />

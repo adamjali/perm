@@ -63,7 +63,7 @@ export default function TableOfContents() {
     <nav aria-label="Table of contents">
       <p className="mb-3 font-heading text-xs font-bold uppercase tracking-wider text-muted-foreground">
         On this page
-      </p>
+      </p>{" "}
       <ul className="space-y-1 border-l-2 border-border">
         {headings.map((heading) => (
           <li key={heading.id}>

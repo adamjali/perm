@@ -48,7 +48,7 @@ export function SecuritySection() {
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <Shield className="h-3.5 w-3.5" />
             Security
-          </div>
+          </div>{" "}
           <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
             Your Client Data Is Protected
           </h2>
@@ -61,7 +61,7 @@ export function SecuritySection() {
             <div className="grid grid-cols-[1fr_1.5fr] border-b-3 border-border bg-foreground text-background">
               <div className="px-5 py-3 font-heading text-sm font-bold uppercase tracking-wider">
                 What Protects You
-              </div>
+              </div>{" "}
               <div className="px-5 py-3 font-heading text-sm font-bold uppercase tracking-wider border-l-2 border-background/20">
                 How
               </div>
@@ -81,7 +81,7 @@ export function SecuritySection() {
                     aria-hidden="true"
                   />
                   {row.label}
-                </div>
+                </div>{" "}
                 <div className="px-5 py-4 text-sm text-muted-foreground leading-relaxed border-l-2 border-border/30 flex items-center">
                   {row.detail}
                 </div>

@@ -87,7 +87,7 @@ export default function ContentHero({
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.7 }}
         />
-      </div>
+      </div>{" "}
 
       <div className="relative mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
         <motion.div

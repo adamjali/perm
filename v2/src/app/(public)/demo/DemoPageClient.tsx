@@ -59,14 +59,14 @@ function SectionLabel({ number, title, description, icon, accentColor = "var(--p
         style={{ backgroundColor: accentColor, color: "#000" }}
       >
         {number}
-      </div>
+      </div>{" "}
       <div>
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">{icon}</span>
+          <span className="text-muted-foreground">{icon}</span>{" "}
           <h2 className="font-heading text-xl font-bold tracking-tight">
             {title}
           </h2>
-        </div>
+        </div>{" "}
         <p className="mt-0.5 text-sm text-muted-foreground">
           {description}
         </p>
@@ -87,7 +87,7 @@ interface FeatureCalloutProps {
 function FeatureCallout({ icon, text }: FeatureCalloutProps) {
   return (
     <div className="flex items-center gap-2 border-2 border-border bg-muted/50 px-3 py-1.5">
-      <span className="text-primary">{icon}</span>
+      <span className="text-primary">{icon}</span>{" "}
       <span className="font-mono text-[11px] text-muted-foreground">{text}</span>
     </div>
   );
@@ -241,14 +241,14 @@ export function DemoPageClient() {
               <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 <Play className="h-3.5 w-3.5" />
                 Interactive Demo
-              </div>
+              </div>{" "}
               <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
                 See How Deadline{" "}
                 <span className="inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard">
                   Tracking
                 </span>{" "}
                 Works
-              </h1>
+              </h1>{" "}
               <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
                 This is a fully interactive sandbox with 5 sample cases at different PERM stages.
                 Add cases, edit dates, and watch deadlines calculate automatically, exactly like the real product.
@@ -286,8 +286,8 @@ export function DemoPageClient() {
                 >
                   <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center text-foreground">
                     {item.icon}
-                  </div>
-                  <h3 className="font-heading text-sm font-bold">{item.title}</h3>
+                  </div>{" "}
+                  <h3 className="font-heading text-sm font-bold">{item.title}</h3>{" "}
                   <p className="mt-1 text-xs text-muted-foreground">{item.desc}</p>
                 </div>
               ))}
@@ -314,18 +314,18 @@ export function DemoPageClient() {
               <div className="mb-3 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 <MousePointerClick className="h-3.5 w-3.5" />
                 Guided Tour
-              </div>
+              </div>{" "}
               <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl">
                 Click Through the{" "}
                 <span className="inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard-sm">
                   Full App
                 </span>
-              </h2>
+              </h2>{" "}
               <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
                 50-step interactive walkthrough: create cases, configure settings, use the AI assistant, and more.
               </p>
             </div>
-          </ScrollReveal>
+          </ScrollReveal>{" "}
 
           <ScrollReveal direction="up" delay={0.1}>
             <div className="mt-8">
@@ -338,7 +338,7 @@ export function DemoPageClient() {
                   <span className="ml-3 font-mono text-[10px] text-muted-foreground">
                     permtracker.app · Interactive Tour
                   </span>
-                </div>
+                </div>{" "}
                 <iframe
                   src="https://app.supademo.com/embed/cmli1lvlg1lkg5351b6olnd9n?embed_v=2"
                   loading="lazy"
@@ -361,7 +361,7 @@ export function DemoPageClient() {
           <ScrollReveal direction="up">
             <p className="mb-8 text-center font-mono text-xs uppercase tracking-widest text-background/60">
               From the real product
-            </p>
+            </p>{" "}
             <div className="grid gap-6 md:grid-cols-3">
               {[
                 {
@@ -389,7 +389,7 @@ export function DemoPageClient() {
                       <span className="ml-2 font-mono text-[9px] text-background/70">
                         {screenshot.label}
                       </span>
-                    </div>
+                    </div>{" "}
                     <Image
                       src={screenshot.src}
                       alt={screenshot.alt}
@@ -398,7 +398,7 @@ export function DemoPageClient() {
                       className="w-full"
                       sizes="(max-width: 768px) 100vw, 33vw"
                     />
-                  </div>
+                  </div>{" "}
                   <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-background/50">
                     {screenshot.label}
                   </p>
@@ -425,8 +425,8 @@ export function DemoPageClient() {
                 icon={<Zap className="h-4 w-4" />}
                 accentColor="var(--primary)"
               />
-            </ScrollReveal>
-            <h2 id="stats-heading" className="sr-only">Case Statistics</h2>
+            </ScrollReveal>{" "}
+            <h2 id="stats-heading" className="sr-only">Case Statistics</h2>{" "}
             <StatsGrid cases={cases} />
             {/* Inline tip */}
             <div className="mt-4 flex flex-wrap gap-2">
@@ -461,12 +461,12 @@ export function DemoPageClient() {
                 icon={<CalendarDays className="h-4 w-4" />}
                 accentColor="var(--stage-pwd)"
               />
-            </ScrollReveal>
-            <h2 id="preview-heading" className="sr-only">Overview</h2>
+            </ScrollReveal>{" "}
+            <h2 id="preview-heading" className="sr-only">Overview</h2>{" "}
             <div className="grid gap-4 md:grid-cols-2">
               <MiniCalendar cases={cases} />
               <MiniTimeline cases={cases} />
-            </div>
+            </div>{" "}
             <div className="mt-4 flex flex-wrap gap-2">
               <FeatureCallout
                 icon={<CalendarDays className="h-3 w-3" />}
@@ -501,8 +501,8 @@ export function DemoPageClient() {
                 icon={<LayoutGrid className="h-4 w-4" />}
                 accentColor="var(--stage-recruitment)"
               />
-            </ScrollReveal>
-            <h2 id="cases-heading" className="sr-only">Cases</h2>
+            </ScrollReveal>{" "}
+            <h2 id="cases-heading" className="sr-only">Cases</h2>{" "}
             <DemoCasesGrid
               cases={cases}
               onEdit={handleEdit}
@@ -541,7 +541,7 @@ export function DemoPageClient() {
           >
             <RefreshCw className="h-3.5 w-3.5" />
             Reset Demo Data
-          </button>
+          </button>{" "}
 
           <div className="text-center">
             <p className="font-heading text-xl font-black sm:text-2xl">
@@ -550,11 +550,11 @@ export function DemoPageClient() {
                 real
               </span>{" "}
               cases?
-            </p>
+            </p>{" "}
             <p className="mt-2 text-sm text-muted-foreground">
               Free forever. No credit card required.
             </p>
-          </div>
+          </div>{" "}
 
           <button
             type="button"

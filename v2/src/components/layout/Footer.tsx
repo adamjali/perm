@@ -61,7 +61,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
             <div className="lg:col-span-1">
               <div className="font-heading text-xl font-bold text-white mb-4">
                 <span className="text-primary">PERM</span> Tracker
-              </div>
+              </div>{" "}
               <p className="text-sm text-white/60 leading-relaxed mb-6">
                 Free case management for immigration attorneys. Track deadlines, manage cases, never miss a filing.
               </p>
@@ -91,7 +91,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
             <div>
               <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
                 Product
-              </p>
+              </p>{" "}
               <nav className="footer-links flex flex-col gap-3" aria-label="Product links">
                 <NavLink
                   href="/#features"
@@ -100,28 +100,28 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                   spinnerClassName="text-primary"
                 >
                   Features
-                </NavLink>
+                </NavLink>{" "}
                 <NavLink
                   href="/demo"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
                 >
                   Demo
-                </NavLink>
+                </NavLink>{" "}
                 <NavLink
                   href="/faq"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
                 >
                   FAQ
-                </NavLink>
+                </NavLink>{" "}
                 <NavLink
                   href="/signup"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
                 >
                   Sign Up Free
-                </NavLink>
+                </NavLink>{" "}
                 <NavLink
                   href="/login"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
@@ -136,7 +136,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
             <div>
               <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
                 Learn
-              </p>
+              </p>{" "}
               <nav className="footer-links flex flex-col gap-3" aria-label="Content links">
                 <NavLink
                   href="/blog"
@@ -144,35 +144,35 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                   spinnerClassName="text-primary"
                 >
                   Blog
-                </NavLink>
+                </NavLink>{" "}
                 <NavLink
                   href="/tutorials"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
                 >
                   Tutorials
-                </NavLink>
+                </NavLink>{" "}
                 <NavLink
                   href="/guides"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
                 >
                   Guides
-                </NavLink>
+                </NavLink>{" "}
                 <NavLink
                   href="/changelog"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
                 >
                   Changelog
-                </NavLink>
+                </NavLink>{" "}
                 <NavLink
                   href="/resources"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
                 >
                   Resources
-                </NavLink>
+                </NavLink>{" "}
                 <NavLink
                   href="/perm-processing-times"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
@@ -187,7 +187,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
             <div>
               <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
                 Legal
-              </p>
+              </p>{" "}
               <nav className="footer-links flex flex-col gap-3" aria-label="Legal links">
                 <NavLink
                   href="/privacy"
@@ -195,21 +195,21 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                   spinnerClassName="text-primary"
                 >
                   Privacy Policy
-                </NavLink>
+                </NavLink>{" "}
                 <NavLink
                   href="/terms"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
                 >
                   Terms of Service
-                </NavLink>
+                </NavLink>{" "}
                 <NavLink
                   href="/security"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
                   spinnerClassName="text-primary"
                 >
                   Security
-                </NavLink>
+                </NavLink>{" "}
                 <NavLink
                   href="/contact"
                   className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
@@ -226,11 +226,11 @@ export default function Footer({ variant = "compact" }: FooterProps) {
             <div className="flex items-center gap-3">
               <div className="opacity-30" aria-hidden="true">
                 <LawGavelSVG size={28} className="text-white" />
-              </div>
+              </div>{" "}
               <div className="mono text-xs text-white/70">
                 &copy; {currentYear} PERM Tracker. All rights reserved.
               </div>
-            </div>
+            </div>{" "}
             <div className="flex items-center gap-1 text-xs text-white/70">
               Made with <Heart className="h-3 w-3 text-primary" /> for immigration attorneys
             </div>
@@ -252,21 +252,21 @@ export default function Footer({ variant = "compact" }: FooterProps) {
             spinnerClassName="text-primary"
           >
             Privacy
-          </NavLink>
+          </NavLink>{" "}
           <NavLink
             href="/terms"
             className="hover-underline text-white transition-colors hover:text-primary"
             spinnerClassName="text-primary"
           >
             Terms
-          </NavLink>
+          </NavLink>{" "}
           <NavLink
             href="/security"
             className="hover-underline text-white transition-colors hover:text-primary"
             spinnerClassName="text-primary"
           >
             Security
-          </NavLink>
+          </NavLink>{" "}
           <NavLink
             href="/contact"
             className="hover-underline text-white transition-colors hover:text-primary"

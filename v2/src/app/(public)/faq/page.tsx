@@ -128,46 +128,46 @@ export default function FAQPage() {
         <div className="mx-auto max-w-[800px] px-4 py-10 sm:px-8 sm:py-14">
           <h1 className="mb-3 font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
             Frequently Asked Questions
-          </h1>
+          </h1>{" "}
           <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             Everything immigration attorneys need to know about PERM Tracker and
             the PERM labor certification process.
           </p>
         </div>
-      </section>
+      </section>{" "}
 
       <div className="mx-auto max-w-[800px] px-4 py-8 sm:px-8 sm:py-12">
         <FAQPageClient faqData={faqData} />
 
         <div className="mt-12 border-t-2 border-border pt-8">
-          <h2 className="mb-4 font-heading text-xl font-bold">Learn More</h2>
+          <h2 className="mb-4 font-heading text-xl font-bold">Learn More</h2>{" "}
           <div className="grid gap-3 sm:grid-cols-2">
             <Link
               href="/blog/what-is-perm-labor-certification"
               className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
             >
-              <span className="font-heading text-sm font-bold">What is PERM?</span>
+              <span className="font-heading text-sm font-bold">What is PERM?</span>{" "}
               <p className="mt-1 text-xs text-muted-foreground">Complete overview of the PERM process</p>
-            </Link>
+            </Link>{" "}
             <Link
               href="/guides/ultimate-perm-guide-2026"
               className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
             >
-              <span className="font-heading text-sm font-bold">Ultimate PERM Guide 2026</span>
+              <span className="font-heading text-sm font-bold">Ultimate PERM Guide 2026</span>{" "}
               <p className="mt-1 text-xs text-muted-foreground">Comprehensive filing reference</p>
-            </Link>
+            </Link>{" "}
             <Link
               href="/blog/perm-processing-times-2026"
               className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
             >
-              <span className="font-heading text-sm font-bold">Processing Times 2026</span>
+              <span className="font-heading text-sm font-bold">Processing Times 2026</span>{" "}
               <p className="mt-1 text-xs text-muted-foreground">Current DOL timelines</p>
-            </Link>
+            </Link>{" "}
             <Link
               href="/tutorials/getting-started"
               className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
             >
-              <span className="font-heading text-sm font-bold">Getting Started</span>
+              <span className="font-heading text-sm font-bold">Getting Started</span>{" "}
               <p className="mt-1 text-xs text-muted-foreground">Set up your first case in minutes</p>
             </Link>
           </div>

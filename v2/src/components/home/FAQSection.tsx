@@ -168,7 +168,7 @@ export function FAQSection() {
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <HelpCircle className="h-3.5 w-3.5" />
             Common Questions
-          </div>
+          </div>{" "}
           <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
             FAQ
           </h2>

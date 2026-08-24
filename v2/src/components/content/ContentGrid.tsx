@@ -28,7 +28,7 @@ export default function ContentGrid({ posts, showType }: ContentGridProps) {
       >
         <p className="font-heading text-lg font-bold text-muted-foreground">
           No content yet
-        </p>
+        </p>{" "}
         <p className="mt-1 text-sm text-muted-foreground">
           Check back soon for new articles.
         </p>

@@ -37,188 +37,188 @@ export default function TermsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
       <div className="card-brutalist p-8">
-        <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>
+        <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>{" "}
         <p className="text-foreground/60 mb-8">
           Effective Date: February 17, 2026 | Last Updated: June 15, 2026
-        </p>
+        </p>{" "}
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               1. Agreement to Terms
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               By accessing or using PERM Tracker
               (&quot;the Service&quot;), you agree to be bound by these Terms of Service
               (&quot;Terms&quot;). If you do not agree to these Terms, please do not use the
               Service.
-            </p>
+            </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               These Terms constitute a legally binding agreement between you and
               PERM Tracker regarding your use of the Service.
             </p>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               2. Description of Service
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               PERM Tracker is a web application designed to help immigration
               attorneys and law firms track Permanent Labor Certification (PERM)
               cases through the Department of Labor (DOL) and USCIS processes.
               The Service is currently offered free of charge, though we reserve
               the right to introduce fees or subscription plans in the future.
-            </p>
+            </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               The Service includes:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Case tracking and management features</li>
-              <li>Calendar and timeline views</li>
-              <li>Deadline notifications and reminders</li>
+              <li>Case tracking and management features</li>{" "}
+              <li>Calendar and timeline views</li>{" "}
+              <li>Deadline notifications and reminders</li>{" "}
               <li>Data import/export capabilities</li>
             </ul>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               3. User Accounts
-            </h2>
+            </h2>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Registration
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               To use the Service, you must create an account by providing accurate
               and complete information. You may register using email/password or
               Google OAuth.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Eligibility
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               You must be at least 18 years old and able to form a legally binding
               contract to use the Service. By creating an account, you represent
               that you meet these requirements and that the information you provide
               is accurate.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Account Security
-            </h3>
+            </h3>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>
                 You are responsible for maintaining the confidentiality of your
                 account credentials
-              </li>
+              </li>{" "}
               <li>
                 You are responsible for all activities that occur under your
                 account
-              </li>
+              </li>{" "}
               <li>
                 You must notify us immediately of any unauthorized use of your
                 account
-              </li>
+              </li>{" "}
               <li>
                 You may not share your account with others or create multiple
                 accounts
               </li>
-            </ul>
+            </ul>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Account Termination
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               You may delete your account at any time by contacting us. We reserve
               the right to suspend or terminate accounts that violate these Terms.
             </p>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               4. Acceptable Use
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               You agree to use the Service only for lawful purposes and in
               accordance with these Terms. You agree NOT to:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Use the Service for any illegal purpose or in violation of any laws</li>
-              <li>Upload false, misleading, or inaccurate information</li>
-              <li>Attempt to gain unauthorized access to the Service or other accounts</li>
-              <li>Use automated scripts, bots, or scrapers to access the Service</li>
-              <li>Interfere with or disrupt the Service or servers</li>
-              <li>Transmit viruses, malware, or other harmful code</li>
-              <li>Harass, abuse, or harm other users</li>
-              <li>Use the Service to send spam or unsolicited communications</li>
+              <li>Use the Service for any illegal purpose or in violation of any laws</li>{" "}
+              <li>Upload false, misleading, or inaccurate information</li>{" "}
+              <li>Attempt to gain unauthorized access to the Service or other accounts</li>{" "}
+              <li>Use automated scripts, bots, or scrapers to access the Service</li>{" "}
+              <li>Interfere with or disrupt the Service or servers</li>{" "}
+              <li>Transmit viruses, malware, or other harmful code</li>{" "}
+              <li>Harass, abuse, or harm other users</li>{" "}
+              <li>Use the Service to send spam or unsolicited communications</li>{" "}
               <li>Reverse engineer, decompile, or attempt to extract the source code</li>
             </ul>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               5. User Content
-            </h2>
+            </h2>{" "}
 
-            <h3 className="font-heading text-lg font-bold mt-6 mb-3">Ownership</h3>
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">Ownership</h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               You retain ownership of all case data and content you enter into the
               Service (&quot;User Content&quot;). We do not claim any ownership rights over
               your User Content.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               License to Us
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               By using the Service, you grant us a limited license to store,
               process, and display your User Content solely for the purpose of
               providing the Service to you. This license ends when you delete your
               account.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Your Responsibility
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               You are solely responsible for the accuracy and legality of your
               User Content. You represent that you have all necessary rights to
               enter the data you provide.
             </p>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               6. Intellectual Property
-            </h2>
+            </h2>{" "}
 
-            <h3 className="font-heading text-lg font-bold mt-6 mb-3">Our Rights</h3>
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">Our Rights</h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               PERM Tracker and its original content, features, and functionality
               are owned by us and are protected by copyright, trademark, and other
               intellectual property laws. This includes:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>The PERM Tracker name and logo</li>
-              <li>The application code and design</li>
+              <li>The PERM Tracker name and logo</li>{" "}
+              <li>The application code and design</li>{" "}
               <li>Documentation and help content</li>
-            </ul>
+            </ul>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Restrictions
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               You may not copy, modify, distribute, sell, or lease any part of the
               Service, nor may you reverse engineer or attempt to extract the
               source code, unless laws prohibit these restrictions or you have our
               written permission.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               No Government Affiliation
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               PERM Tracker is an independent, privately operated tool. We are not
               affiliated with, endorsed by, sponsored by, or officially connected
@@ -228,34 +228,34 @@ export default function TermsPage() {
               the property of their respective owners and are used for
               identification purposes only.
             </p>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               7. Disclaimers
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed font-bold">
               THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT
               WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-            </p>
+            </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               We specifically disclaim:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
                 Any warranty that the Service will be uninterrupted, timely,
                 secure, or error-free
-              </li>
+              </li>{" "}
               <li>
                 Any warranty regarding the accuracy or reliability of information
                 obtained through the Service
-              </li>
+              </li>{" "}
               <li>Any warranty that defects will be corrected</li>
-            </ul>
+            </ul>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Not Legal Advice
-            </h3>
+            </h3>{" "}
             <div className="rounded-lg border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
               <p className="text-foreground/80 leading-relaxed font-medium">
                 <strong>IMPORTANT:</strong> PERM Tracker is a case management tool
@@ -270,67 +270,67 @@ export default function TermsPage() {
                 legal requirements.
               </p>
             </div>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               8. Limitation of Liability
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed font-bold">
               TO THE MAXIMUM EXTENT PERMITTED BY LAW, PERM TRACKER SHALL NOT BE
               LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR
               PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Loss of data or case information</li>
-              <li>Missed deadlines or filing dates</li>
-              <li>Loss of profits or business opportunities</li>
-              <li>Service interruptions or downtime</li>
+              <li>Loss of data or case information</li>{" "}
+              <li>Missed deadlines or filing dates</li>{" "}
+              <li>Loss of profits or business opportunities</li>{" "}
+              <li>Service interruptions or downtime</li>{" "}
               <li>Errors in date calculations or notifications</li>
-            </ul>
+            </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               Our total liability for any claims arising from your use of the
               Service is limited to the greater of (a) the amount you paid to
               use the Service in the twelve (12) months preceding the claim, or
               (b) one hundred dollars ($100).
             </p>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               9. AI-Powered Features
-            </h2>
+            </h2>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               AI Chat Assistant Disclosure
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               Our Service includes an AI-powered chat assistant that provides
               case-related suggestions and information. By using this feature,
               you acknowledge and agree that:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
                 You are interacting with an <strong>artificial intelligence
                 system</strong>, not a human advisor
-              </li>
+              </li>{" "}
               <li>
                 The AI assistant uses automated algorithms to generate responses
                 based on available data
-              </li>
+              </li>{" "}
               <li>
                 Responses are generated in real-time and may not reflect the most
                 current legal developments
-              </li>
+              </li>{" "}
               <li>
                 The AI assistant is a supplemental tool designed to assist, not
                 replace, professional judgment
               </li>
-            </ul>
+            </ul>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               No Legal Advice; Professional Responsibility
-            </h3>
+            </h3>{" "}
             <div className="rounded-lg border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
               <p className="text-foreground/80 leading-relaxed font-medium">
                 <strong>IMPORTANT:</strong> The AI chat assistant does not provide
@@ -338,104 +338,104 @@ export default function TermsPage() {
                 All AI-generated suggestions, recommendations, and information are
                 for informational purposes only.
               </p>
-            </div>
+            </div>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               You acknowledge that you are solely responsible for independently
               reviewing, verifying, and validating all AI-generated content before
               relying on it for any immigration case or filing. The use of AI
               features does not diminish or transfer your professional
               responsibility or potential liability as a legal professional.
-            </p>
+            </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               Immigration law is complex and frequently changing. AI-generated
               suggestions regarding PERM processes, deadlines, or requirements
               must be verified against current USCIS regulations, Department of
               Labor requirements, and applicable law before use in any matter.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               AI Accuracy Limitations
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               AI-generated content may contain errors, inaccuracies, or
               &quot;hallucinations&quot; (plausible-sounding but incorrect information). We
               make no warranties regarding the accuracy, completeness, or
               currentness of AI-generated suggestions. You acknowledge that AI
               systems may:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Misinterpret complex or ambiguous queries</li>
-              <li>Generate responses based on outdated training data</li>
-              <li>Produce confident-sounding but factually incorrect information</li>
-              <li>Fail to recognize edge cases or jurisdiction-specific requirements</li>
+              <li>Misinterpret complex or ambiguous queries</li>{" "}
+              <li>Generate responses based on outdated training data</li>{" "}
+              <li>Produce confident-sounding but factually incorrect information</li>{" "}
+              <li>Fail to recognize edge cases or jurisdiction-specific requirements</li>{" "}
               <li>Miss recent regulatory changes or case law developments</li>
-            </ul>
+            </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               You agree to independently verify all AI-generated information
               before relying on it for case strategy, filing decisions, client
               communications, or deadline calculations.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               AI Data Processing
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               When you use the AI chat assistant, the following data may be
               processed by third-party AI service providers (including Google
               Gemini, OpenRouter, Mistral AI, Groq, and Cerebras):
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Your queries and messages to the AI system</li>
-              <li>Case-related information referenced in conversations</li>
+              <li>Your queries and messages to the AI system</li>{" "}
+              <li>Case-related information referenced in conversations</li>{" "}
               <li>Conversation history for context continuity</li>
-            </ul>
+            </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               These providers do not use your data to train AI models. See our{" "}
               <a href="/privacy" className="text-primary hover:underline">
                 Privacy Policy
               </a>{" "}
               for detailed provider-specific data handling and retention policies.
-            </p>
+            </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               <strong>Do not include</strong> Social Security numbers, passport
               numbers, financial account information, or other highly sensitive
               personal data in AI chat queries.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Immigration-Specific AI Limitations
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               The AI assistant&apos;s suggestions do not override or supersede:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Department of Labor (DOL) regulations and guidance</li>
-              <li>U.S. Citizenship and Immigration Services (USCIS) policies</li>
-              <li>Applicable federal regulations (including 20 CFR Part 656)</li>
-              <li>Published agency interpretations and policy memoranda</li>
+              <li>Department of Labor (DOL) regulations and guidance</li>{" "}
+              <li>U.S. Citizenship and Immigration Services (USCIS) policies</li>{" "}
+              <li>Applicable federal regulations (including 20 CFR Part 656)</li>{" "}
+              <li>Published agency interpretations and policy memoranda</li>{" "}
               <li>Binding case law and administrative decisions</li>
-            </ul>
+            </ul>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Limitation of Liability for AI Features
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed font-bold">
               TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR
               ANY DAMAGES ARISING FROM RELIANCE ON AI-GENERATED CONTENT WITHOUT
               INDEPENDENT VERIFICATION, AI ERRORS OR HALLUCINATIONS, MISSED
               DEADLINES BASED ON AI SUGGESTIONS, OR PROFESSIONAL MALPRACTICE
               CLAIMS RELATED TO USE OF AI FEATURES.
-            </p>
+            </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               Your use of AI features is at your own risk. You acknowledge that
               you are a legal professional responsible for all work product and
               client advice, regardless of what tools or technologies you use to
               assist in your practice.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Consent to AI Data Processing
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               By using PERM Tracker, you consent to the processing of your data
               by third-party AI service providers as described above and in our{" "}
@@ -445,11 +445,11 @@ export default function TermsPage() {
               . AI conversation data is retained for 90 days and then
               automatically deleted. You may delete individual conversations at
               any time from the AI chat interface.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Analytics & Session Recording
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We use PostHog for product analytics (event tracking, feature
               usage) and session replay, Sentry for error tracking with session
@@ -475,95 +475,95 @@ export default function TermsPage() {
               </a>
               .
             </p>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               10. Indemnification
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               You agree to indemnify, defend, and hold harmless PERM Tracker and
               its operators from any claims, damages, losses, or expenses
               (including reasonable attorney&apos;s fees) arising from:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Your use of the Service</li>
-              <li>Your violation of these Terms</li>
-              <li>Your violation of any third-party rights</li>
+              <li>Your use of the Service</li>{" "}
+              <li>Your violation of these Terms</li>{" "}
+              <li>Your violation of any third-party rights</li>{" "}
               <li>Any content you submit to the Service</li>
             </ul>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               11. Service Modifications & Pricing
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We reserve the right to:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Modify or discontinue the Service (or any part) at any time</li>
-              <li>Introduce fees, subscription plans, or change pricing at any time</li>
-              <li>Offer premium features or tiers alongside or instead of free access</li>
+              <li>Modify or discontinue the Service (or any part) at any time</li>{" "}
+              <li>Introduce fees, subscription plans, or change pricing at any time</li>{" "}
+              <li>Offer premium features or tiers alongside or instead of free access</li>{" "}
               <li>Impose limits on certain features or restrict access</li>
-            </ul>
+            </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               If we introduce fees for features you currently use for free, we
               will provide at least 7 days advance notice. Your continued use
               of paid features after the effective date constitutes acceptance
               of the applicable fees.
             </p>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               12. Termination
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We may terminate or suspend your access to the Service immediately,
               without prior notice, for any reason, including:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Violation of these Terms</li>
-              <li>Request by law enforcement or government agencies</li>
-              <li>Discontinuation or material modification of the Service</li>
+              <li>Violation of these Terms</li>{" "}
+              <li>Request by law enforcement or government agencies</li>{" "}
+              <li>Discontinuation or material modification of the Service</li>{" "}
               <li>Extended periods of inactivity</li>
-            </ul>
+            </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               Upon termination, your right to use the Service will immediately
               cease. You may request your data before termination.
             </p>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               13. Governing Law &amp; Dispute Resolution
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               These Terms shall be governed by and construed in accordance with
               the laws of the{" "}
               <strong>District of Columbia, United States</strong>, without regard
               to its conflict of law provisions.
-            </p>
+            </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               Any disputes arising from these Terms or the Service shall be
               resolved in the courts located in the District of Columbia, and you
               consent to the personal jurisdiction of such courts.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Class Action &amp; Jury Trial Waiver
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed font-bold">
               TO THE FULLEST EXTENT PERMITTED BY LAW, YOU AND PERM TRACKER AGREE
               THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN AN INDIVIDUAL
               CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED
               CLASS, COLLECTIVE, CONSOLIDATED, OR REPRESENTATIVE PROCEEDING.
-            </p>
+            </p>{" "}
             <p className="text-foreground/80 leading-relaxed font-bold mt-4">
               YOU AND PERM TRACKER EACH WAIVE ANY RIGHT TO A TRIAL BY JURY IN ANY
               DISPUTE ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE.
-            </p>
+            </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               These provisions do not require arbitration. Disputes remain subject to the courts identified above. If the class action waiver
               is held unenforceable as to a particular claim, that claim (and only
@@ -571,48 +571,48 @@ export default function TermsPage() {
               waiver, while the jury trial waiver and all other provisions remain
               in full force.
             </p>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               14. Changes to Terms
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We reserve the right to modify these Terms at any time. If we make
               material changes, we will provide notice by:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Posting the updated Terms on this page</li>
-              <li>Updating the &quot;Last Updated&quot; date</li>
+              <li>Posting the updated Terms on this page</li>{" "}
+              <li>Updating the &quot;Last Updated&quot; date</li>{" "}
               <li>Sending an email notification (for material changes)</li>
-            </ul>
+            </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               Your continued use of the Service after changes constitutes
               acceptance of the new Terms.
             </p>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               15. Severability
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               If any provision of these Terms is found to be unenforceable or
               invalid, that provision will be limited or eliminated to the minimum
               extent necessary, and the remaining provisions will remain in full
               force and effect.
             </p>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               16. Entire Agreement &amp; Assignment
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               These Terms, together with our Privacy Policy, constitute the entire
               agreement between you and PERM Tracker regarding the Service and
               supersede any prior agreements.
-            </p>
+            </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               You may not assign or transfer these Terms, or any rights or
               obligations under them, without our prior written consent. We may
@@ -621,25 +621,25 @@ export default function TermsPage() {
               assets. These Terms bind and benefit the parties and their permitted
               successors and assigns.
             </p>
-          </section>
+          </section>{" "}
 
           <section id="attorney-privilege">
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               17. Attorney-Client Privilege & Data Storage
-            </h2>
+            </h2>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Service Provider Status
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               PERM Tracker operates solely as a technology service provider. We
               provide software tools for case management and do not:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Provide legal advice or participate in attorney-client relationships</li>
-              <li>Make decisions about your cases or client matters</li>
+              <li>Provide legal advice or participate in attorney-client relationships</li>{" "}
+              <li>Make decisions about your cases or client matters</li>{" "}
               <li>Share your data with third parties except as required for service operation</li>
-            </ul>
+            </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               Authorized PERM Tracker personnel have technical access to the
               database infrastructure and may access your case data only when
@@ -648,30 +648,30 @@ export default function TermsPage() {
               and reliability of the service, or comply with legal obligations.
               We do not routinely browse, review, or analyze the content of your
               case data outside of these limited circumstances.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Cloud Infrastructure
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               Your data is stored on third-party cloud infrastructure providers
               (including Convex and related services). While we implement
               industry-standard security measures including:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Encryption in transit (TLS/HTTPS) and at rest</li>
-              <li>Row-level security ensuring users cannot access other users&apos; data</li>
-              <li>Regular security audits and updates</li>
+              <li>Encryption in transit (TLS/HTTPS) and at rest</li>{" "}
+              <li>Row-level security ensuring users cannot access other users&apos; data</li>{" "}
+              <li>Regular security audits and updates</li>{" "}
               <li>Internal database access restricted to authorized personnel for service operation only (see Service Provider Status above)</li>
-            </ul>
+            </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               You acknowledge that your case data is stored on cloud
               infrastructure operated by third-party providers.
-            </p>
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Your Professional Obligations
-            </h3>
+            </h3>{" "}
             <div className="rounded-lg border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
               <p className="text-foreground/80 leading-relaxed font-medium">
                 <strong>FOR ATTORNEYS:</strong> You are solely responsible for
@@ -681,46 +681,46 @@ export default function TermsPage() {
                 regarding cloud storage of client data. We recommend consulting
                 your state bar&apos;s guidance on this matter.
               </p>
-            </div>
+            </div>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Legal Process & Subpoenas
-            </h3>
+            </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               If we receive a subpoena, court order, or other legal process
               seeking your data:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
                 We will notify you promptly unless prohibited by law or court order
-              </li>
+              </li>{" "}
               <li>
                 We will give you reasonable opportunity to seek protective relief
                 where possible
-              </li>
+              </li>{" "}
               <li>
                 We will only disclose data as required by valid legal process
-              </li>
+              </li>{" "}
               <li>
                 We encourage you to maintain your own records and backups of
                 critical case information
               </li>
-            </ul>
+            </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               We do not provide legal advice regarding privilege claims or
               responses to legal process. You should consult with qualified
               counsel regarding any legal process affecting your data.
             </p>
-          </section>
+          </section>{" "}
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
               18. Contact Us
-            </h2>
+            </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               If you have any questions about these Terms of Service, please
               contact us:
-            </p>
+            </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
                 <strong>Email:</strong>{" "}
@@ -730,10 +730,10 @@ export default function TermsPage() {
                 >
                   support@permtracker.app
                 </a>
-              </li>
+              </li>{" "}
               <li>
                 <strong>Application:</strong> PERM Tracker
-              </li>
+              </li>{" "}
               <li>
                 <strong>Operator:</strong> PERM Tracker, Washington, DC 20001
               </li>

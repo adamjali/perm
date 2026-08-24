@@ -129,7 +129,7 @@ export function QueueAlertForm({
         <div className="flex items-start gap-3">
           <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <div>
-            <p className="font-heading text-lg font-black">Check your inbox</p>
+            <p className="font-heading text-lg font-black">Check your inbox</p>{" "}
             <p className="mt-1 text-sm leading-relaxed text-foreground/70">{message}</p>
           </div>
         </div>
@@ -147,15 +147,15 @@ export function QueueAlertForm({
         <h2 className="font-heading text-xl font-black sm:text-2xl">
           Get told when DOL reaches your month
         </h2>
-      </div>
+      </div>{" "}
       <p className="mt-2 text-sm leading-relaxed text-foreground/70">
         One email, sent when the analyst-review queue reaches the month your case was filed.
         It is not a newsletter and nothing else follows it.
-      </p>
+      </p>{" "}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <Label htmlFor={emailId}>Email</Label>
+          <Label htmlFor={emailId}>Email</Label>{" "}
           <Input
             id={emailId}
             type="email"
@@ -165,10 +165,10 @@ export function QueueAlertForm({
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@firm.com"
           />
-        </div>
+        </div>{" "}
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor={monthId}>Month your case was filed</Label>
+          <Label htmlFor={monthId}>Month your case was filed</Label>{" "}
           <select
             id={monthId}
             required
@@ -184,21 +184,21 @@ export function QueueAlertForm({
             ))}
           </select>
         </div>
-      </div>
+      </div>{" "}
 
       <div className="mt-4 flex flex-col gap-2">
         <Label htmlFor={roleId}>
           You are <span className="font-normal text-foreground/50">(optional)</span>
-        </Label>
+        </Label>{" "}
         <select
           id={roleId}
           value={role}
           onChange={(e) => setRole(e.target.value)}
           className={cn(selectClasses, "sm:max-w-sm")}
         >
-          <option value="">Prefer not to say</option>
-          <option value="attorney">An immigration attorney or paralegal</option>
-          <option value="applicant">The person the case is for</option>
+          <option value="">Prefer not to say</option>{" "}
+          <option value="attorney">An immigration attorney or paralegal</option>{" "}
+          <option value="applicant">The person the case is for</option>{" "}
           <option value="employer">The sponsoring employer</option>
         </select>
       </div>
@@ -211,7 +211,7 @@ export function QueueAlertForm({
 
       <Button type="submit" disabled={status === "sending"} className="mt-6 w-full sm:w-auto">
         {status === "sending" ? "Sending" : "Email me when it happens"}
-      </Button>
+      </Button>{" "}
 
       <p className="mt-4 text-xs leading-relaxed text-foreground/50">
         The month is the only thing that decides when we write to you. You confirm by email

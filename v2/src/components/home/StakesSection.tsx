@@ -113,10 +113,10 @@ export function StakesSection() {
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <AlertTriangle className="h-3.5 w-3.5" />
             The Stakes
-          </div>
+          </div>{" "}
           <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
             What a Missed Deadline Actually Costs
-          </h2>
+          </h2>{" "}
           <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
             Every PERM case has filing windows measured in days, not months. One
             slip means starting over, or worse.
@@ -249,9 +249,9 @@ export function StakesSection() {
       {/* Scroll hint + bottom CTA */}
       <div className="flex flex-col items-center gap-4 pt-8">
         <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-          <span>Scroll to explore</span>
+          <span>Scroll to explore</span>{" "}
           <ArrowRight className="h-4 w-4 scroll-hint-icon" />
-        </div>
+        </div>{" "}
         <p className="text-sm text-muted-foreground text-center">
           Every one of these deadlines is calculated automatically.
         </p>

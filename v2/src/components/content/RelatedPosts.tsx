@@ -29,7 +29,7 @@ export default function RelatedPosts({ posts }: RelatedPostsProps) {
           transition={{ duration: 0.4 }}
         >
           Related Articles
-        </motion.h2>
+        </motion.h2>{" "}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((post, i) => (
             <motion.div

@@ -38,7 +38,7 @@ export default function ArticleLayout({
 
       <ArticleBody title={meta.title} url={url}>
         {children}
-      </ArticleBody>
+      </ArticleBody>{" "}
 
       <ContentCTA />
       {related.length > 0 && <RelatedPosts posts={related} />}

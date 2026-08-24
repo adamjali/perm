@@ -86,7 +86,7 @@ export function CTASection() {
         <svg className="absolute top-[40%] left-[4%] opacity-8" width="16" height="16" viewBox="0 0 16 16" fill="none">
           <line x1="8" y1="1" x2="8" y2="15" stroke="black" strokeWidth="2.5" />
           <line x1="1" y1="8" x2="15" y2="8" stroke="black" strokeWidth="2.5" />
-        </svg>
+        </svg>{" "}
         <svg className="absolute bottom-[35%] right-[5%] opacity-8" width="14" height="14" viewBox="0 0 14 14" fill="none">
           <line x1="7" y1="1" x2="7" y2="13" stroke="black" strokeWidth="2" />
           <line x1="1" y1="7" x2="13" y2="7" stroke="black" strokeWidth="2" />
@@ -100,19 +100,19 @@ export function CTASection() {
           {/* Rocket illustration */}
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center">
             <RocketLaunchSVG size={64} className="text-black" />
-          </div>
+          </div>{" "}
 
           <div>
             <p className="mb-3 font-mono text-sm text-black/60 uppercase tracking-wider">
               The next filing window is already counting down.
-            </p>
+            </p>{" "}
             <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl">
               Stop Tracking Deadlines Manually
-            </h2>
+            </h2>{" "}
             <p className="mx-auto mt-3 max-w-lg text-base text-black/70">
               No credit card required. Set up in under 5 minutes.
             </p>
-          </div>
+          </div>{" "}
 
           <div className="mt-6 flex flex-col items-center gap-5">
             <MagneticButton>

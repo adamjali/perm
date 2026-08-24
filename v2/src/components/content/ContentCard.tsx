@@ -96,7 +96,7 @@ export default function ContentCard({ post, showType }: ContentCardProps) {
                   year: "numeric",
                   timeZone: "UTC",
                 })}
-              </span>
+              </span>{" "}
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {meta.readingTime}
