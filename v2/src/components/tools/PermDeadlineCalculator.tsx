@@ -139,7 +139,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
           the prevailing wage determination under 20 CFR 656.
         </p>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label htmlFor={pwdId} className="text-sm font-bold">
               Prevailing wage determination date

@@ -717,7 +717,7 @@ export function DemoCaseModal({
               />
             </FormField>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid [&>*]:min-w-0 grid-cols-2 gap-4">
               <FormField
                 label="Case Status"
                 name="status"

@@ -369,7 +369,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
           <h4 className="text-sm font-semibold text-muted-foreground mb-3">
             Sunday Newspaper Ads
           </h4>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-3">
             {/* First Sunday Ad */}
             <FormField
               label="First Sunday Ad"
@@ -482,7 +482,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
           <h4 className="text-sm font-semibold text-muted-foreground mb-3">
             Job Order
           </h4>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-3">
             {/* Job Order Start Date */}
             <FormField
               label="Job Order Start"
@@ -552,7 +552,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
           <h4 className="text-sm font-semibold text-muted-foreground mb-3">
             Notice of Filing
           </h4>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
             {/* Notice of Filing Start Date */}
             <FormField
               label="Notice Start"
@@ -600,7 +600,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
           <h4 className="text-sm font-semibold text-muted-foreground mb-3">
             Recruitment Results
           </h4>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-1">
+          <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-1">
             {/* Applicant Count */}
             <FormField
               label="Applicant Count"
@@ -678,7 +678,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                     {methods.map((method, index) => (
                       <div
                         key={index}
-                        className="grid grid-cols-1 gap-3 p-3 rounded-lg border border-border bg-muted/20"
+                        className="grid [&>*]:min-w-0 grid-cols-1 gap-3 p-3 rounded-lg border border-border bg-muted/20"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -755,7 +755,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                           if (methodCategory === 'date-range') {
                             // Date-range methods (job_website_ad, employer_website, private_employment_firm)
                             return (
-                              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                              <div className="grid [&>*]:min-w-0 grid-cols-1 gap-3 md:grid-cols-3">
                                 <FormField
                                   label="Start Date"
                                   name={`method-start-${index}`}
@@ -839,7 +839,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
 
                           // Single-date methods (default)
                           return (
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                            <div className="grid [&>*]:min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
                               <FormField
                                 label="Date"
                                 name={`method-date-${index}`}
