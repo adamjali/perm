@@ -476,7 +476,7 @@ export function LoginPageClient() {
             />
           </svg>
           SIGN IN WITH GOOGLE
-        </Button>
+        </Button>{" "}
 
         {/* Passive consent — terms acceptance via sign-in wrap */}
         <p className="text-xs text-muted-foreground text-center leading-relaxed">

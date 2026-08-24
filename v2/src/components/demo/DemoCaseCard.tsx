@@ -128,7 +128,7 @@ export function DemoCaseCard({ case: caseData, onEdit, onDelete }: DemoCaseCardP
             className={`inline-flex items-center px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-black ${stageBgClass}`}
           >
             {stageLabel}
-          </span>
+          </span>{" "}
 
           {/* Professional badge */}
           {isProfessionalOccupation && (
@@ -161,7 +161,7 @@ export function DemoCaseCard({ case: caseData, onEdit, onDelete }: DemoCaseCardP
         {/* Names — company first */}
         <h3 className="truncate font-heading text-base font-bold leading-tight">
           {caseData.employerName}
-        </h3>
+        </h3>{" "}
         <p className="truncate text-sm text-muted-foreground">
           {caseData.beneficiaryName}
         </p>

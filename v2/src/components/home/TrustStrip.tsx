@@ -164,7 +164,7 @@ export function TrustStrip() {
             className="flex items-center gap-2.5 font-heading text-sm font-semibold uppercase tracking-[0.1em]"
           >
             <span className="flex-shrink-0">{badge.icon}</span>{" "}
-            <span>{badge.text}</span>
+            <span>{badge.text}</span>{" "}
             {/* Separator dot */}
             <span className="ml-6 mr-2 h-1.5 w-1.5 bg-primary opacity-50" aria-hidden="true" />
           </div>

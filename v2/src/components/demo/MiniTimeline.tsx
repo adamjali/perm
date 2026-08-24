@@ -157,7 +157,7 @@ export function MiniTimeline({ cases }: MiniTimelineProps) {
                 <div className="min-w-0">
                   <p className="truncate text-xs font-bold">
                     {caseData.employerName}
-                  </p>
+                  </p>{" "}
                   <p className="truncate text-[10px] text-muted-foreground">
                     {caseData.beneficiaryName}
                   </p>
@@ -181,7 +181,7 @@ export function MiniTimeline({ cases }: MiniTimelineProps) {
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[10px] text-muted-foreground">
                   {progressLabel}
-                </span>
+                </span>{" "}
                 <span className="font-mono text-[10px] font-bold">
                   {isClosed && caseData.progressStatus === "approved" ? 100 : progress}%
                 </span>

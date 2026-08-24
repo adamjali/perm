@@ -240,7 +240,7 @@ export function OverviewTab({
                       </div>
                       <div style={{ flex: 1 }}>
                         <div className="next-up-label">Next Up</div>
-                        <h3>{nextAction.action}</h3>
+                        <h3>{nextAction.action}</h3>{" "}
                         <p>{nextAction.description}</p>
                       </div>
                       {canExpand && (
@@ -465,7 +465,7 @@ export function OverviewTab({
                         onChange={(e) => setEditPositionTitle(e.target.value)}
                         placeholder="e.g., Software Engineer"
                         maxLength={200}
-                        className="w-full border-[3px] border-border bg-card px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary"
+                        className="w-full min-w-0 border-[3px] border-border bg-card px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary"
                       />
                     </div>
 
@@ -484,7 +484,7 @@ export function OverviewTab({
                         placeholder="Enter job requirements..."
                         rows={8}
                         maxLength={10000}
-                        className="w-full border-[3px] border-border bg-card px-3 py-2 text-sm resize-y focus:outline-none focus:border-primary"
+                        className="w-full min-w-0 border-[3px] border-border bg-card px-3 py-2 text-sm resize-y focus:outline-none focus:border-primary"
                       />
                       <div className="text-right font-mono text-[10px] text-muted-foreground mt-1">
                         {editDescription.length.toLocaleString()} chars

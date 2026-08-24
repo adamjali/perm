@@ -137,7 +137,7 @@ export function ChatHistory({
                     <div className="pr-16">
                       <p className="font-medium text-sm truncate" title={conv.title}>
                         {conv.title}
-                      </p>
+                      </p>{" "}
                       <p className="text-xs text-muted-foreground mt-1">
                         {formatDistanceToNow(conv.updatedAt, { addSuffix: true })}
                       </p>

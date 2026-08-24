@@ -370,7 +370,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
         {/* ========== WARNINGS ========== */}
         {warnings?.eta9089FilingDate && (
           <div className="rounded-lg border-2 border-orange-300 bg-orange-50 p-3 text-sm text-orange-800 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-700">
-            <p className="font-semibold">⚠ Warning</p>
+            <p className="font-semibold">⚠ Warning</p>{" "}
             <p>{warnings.eta9089FilingDate}</p>
           </div>
         )}

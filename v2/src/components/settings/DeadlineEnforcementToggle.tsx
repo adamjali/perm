@@ -106,9 +106,9 @@ export default function DeadlineEnforcementToggle() {
         <div className="text-sm text-amber-800 dark:text-amber-200">
           <p className="font-medium mb-1">Important</p>
           <ul className="list-disc list-inside space-y-1 text-amber-700 dark:text-amber-300">
-            <li>Cases are closed when PWD expires before ETA 9089 filing</li>
-            <li>Cases are closed when filing windows pass without action</li>
-            <li>You&apos;ll see a notification when cases are auto-closed</li>
+            <li>Cases are closed when PWD expires before ETA 9089 filing</li>{" "}
+            <li>Cases are closed when filing windows pass without action</li>{" "}
+            <li>You&apos;ll see a notification when cases are auto-closed</li>{" "}
             <li>Closed cases can still be viewed but not edited</li>
           </ul>
         </div>

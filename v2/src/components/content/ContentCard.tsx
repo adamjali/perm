@@ -8,6 +8,7 @@
  * Motion whileHover lift + image zoom.
  */
 
+import { Fragment } from "react";
 import Image from "next/image";
 import { motion } from "motion/react";
 import { Calendar, Clock, Loader2 } from "lucide-react";
@@ -66,12 +67,16 @@ export default function ContentCard({ post, showType }: ContentCardProps) {
             {meta.tags.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-1.5">
                 {meta.tags.slice(0, 3).map((tag) => (
-                  <span
-                    key={tag}
-                    className="border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
-                  >
-                    {tag}
-                  </span>
+                  // Mapped siblings arrive in the DOM with nothing between
+                  // them, so the chips read as "toolscase-managementimmigration"
+                  // to any extractor. A whitespace-only text node between flex
+                  // items is not rendered as a flex item, so it costs nothing.
+                  <Fragment key={tag}>
+                    {" "}
+                    <span className="border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {tag}
+                    </span>
+                  </Fragment>
                 ))}
               </div>
             )}
@@ -79,7 +84,7 @@ export default function ContentCard({ post, showType }: ContentCardProps) {
             {/* Title */}
             <h3 className="mb-2 font-heading text-base font-bold leading-tight transition-colors duration-200 group-hover:text-primary sm:text-lg">
               {meta.title}
-            </h3>
+            </h3>{" "}
 
             {/* Description */}
             <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-muted-foreground">

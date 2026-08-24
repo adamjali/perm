@@ -373,7 +373,7 @@ const CaseScene: React.FC<{ brandColor: string }> = ({ brandColor }) => {
                   }}
                 >
                   {c.name}
-                </span>
+                </span>{" "}
                 <span
                   style={{
                     backgroundColor: c.color,
@@ -550,7 +550,7 @@ const CalendarScene: React.FC<{ brandColor: string }> = ({ brandColor }) => {
                   }}
                 >
                   {d.date}
-                </span>
+                </span>{" "}
                 <span
                   style={{
                     fontFamily: "'Inter', system-ui, sans-serif",

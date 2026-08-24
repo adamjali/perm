@@ -182,7 +182,7 @@ export default function Header(): React.ReactElement {
             strokeWidth={2.5}
           />
           <span>
-            <span className="text-primary transition-colors group-hover:text-black">PERM</span>
+            <span className="text-primary transition-colors group-hover:text-black">PERM</span>{" "}
             <span className="text-white transition-colors group-hover:text-black"> Tracker</span>
           </span>
         </Link>

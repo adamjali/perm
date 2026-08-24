@@ -157,7 +157,7 @@ export function PermTimelineEstimator({
             id={selectId}
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            className="mt-2 block w-full min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-xs"
+            className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-xs"
           >
             {options.map((o) => (
               <option key={o.value} value={o.value}>
@@ -198,13 +198,16 @@ export function PermTimelineEstimator({
               </p>{" "}
               <p className="mt-2 font-heading text-3xl font-black leading-none sm:text-4xl">
                 {formatMonth(model.estimatedDate.slice(0, 7))}
-              </p>
+              </p>{" "}
+              {/* The separator has to sit here, before the conditional. When
+                  the range is absent this <p> is followed directly by the
+                  basis paragraph, and the two run together. */}
               {model.earliestDate && model.latestDate ? (
                 <p className="mt-2 text-base font-bold text-foreground/70">
                   Range {formatMonth(model.earliestDate.slice(0, 7))} to{" "}
                   {formatMonth(model.latestDate.slice(0, 7))}
                 </p>
-              ) : null}
+              ) : null}{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
                 {model.basis}
               </p>{" "}

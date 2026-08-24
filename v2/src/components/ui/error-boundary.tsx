@@ -62,7 +62,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="p-6 border-2 border-destructive bg-destructive/10 rounded-lg">
           <h2 className="font-heading text-xl font-bold text-destructive mb-2">
             Something went wrong
-          </h2>
+          </h2>{" "}
           <p className="text-sm text-muted-foreground mb-4">
             An error occurred while loading this section.
             {process.env.NODE_ENV === "development" && this.state.error && (
@@ -96,7 +96,7 @@ export function DashboardErrorFallback({
     <div className="p-6 border-2 border-destructive bg-destructive/10 rounded-lg">
       <h2 className="font-heading text-xl font-bold text-destructive mb-2">
         Unable to load dashboard
-      </h2>
+      </h2>{" "}
       <p className="text-sm text-muted-foreground mb-4">
         There was a problem loading your dashboard data. Please try refreshing the page.
         {process.env.NODE_ENV === "development" && error && (

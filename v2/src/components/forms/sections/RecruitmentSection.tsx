@@ -662,7 +662,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                     <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700">
                       <p className="font-semibold">
                         {filledMethodsCount}/3 required methods selected
-                      </p>
+                      </p>{" "}
                       <p className="text-xs mt-1">
                         Professional occupations require 3 additional recruitment methods per 20 CFR § 656.17(e)
                       </p>
@@ -709,7 +709,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                             value={method.method}
                             onChange={(e) => handleMethodTypeChange(index, e.target.value)}
                             className={cn(
-                              "flex h-10 w-full rounded-md border-2 border-border bg-background px-3 py-2 text-sm",
+                              "flex h-10 w-full min-w-0 rounded-md border-2 border-border bg-background px-3 py-2 text-sm",
                               "ring-offset-background placeholder:text-muted-foreground",
                               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:opacity-50",

@@ -130,7 +130,7 @@ export function HeroSection() {
               <span className="hero-shimmer-text inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
                 Missed Deadline
               </span>
-            </h1>
+            </h1>{" "}
 
             {/* Subheadline */}
             <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">

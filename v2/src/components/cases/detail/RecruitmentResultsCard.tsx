@@ -379,7 +379,7 @@ export function RecruitmentResultsCard({
               ref={textareaRef}
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
-              className="w-full min-h-[200px] bg-transparent text-sm leading-relaxed resize-none outline-none font-mono"
+              className="w-full min-w-0 min-h-[200px] bg-transparent text-sm leading-relaxed resize-none outline-none font-mono"
               placeholder="Enter custom recruitment results text..."
             />
           ) : (

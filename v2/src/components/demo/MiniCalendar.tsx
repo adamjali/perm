@@ -358,7 +358,7 @@ export function MiniCalendar({ cases }: MiniCalendarProps) {
             <div className="mb-2 flex items-center justify-between">
               <span className="font-heading text-xs font-bold">
                 {formatEventDate(selectedDate)}
-              </span>
+              </span>{" "}
               <span className="font-mono text-[10px] text-muted-foreground">
                 {selectedEvents.length} deadline{selectedEvents.length > 1 ? "s" : ""}
               </span>
@@ -374,7 +374,7 @@ export function MiniCalendar({ cases }: MiniCalendarProps) {
                 >
                   <div className={`mt-0.5 h-2 w-2 shrink-0 ${STAGE_COLORS[event.type]}`} />
                   <div className="min-w-0">
-                    <p className="text-xs font-bold leading-tight">{event.label}</p>
+                    <p className="text-xs font-bold leading-tight">{event.label}</p>{" "}
                     <p className="truncate text-[10px] text-muted-foreground">
                       {event.caseName}
                     </p>

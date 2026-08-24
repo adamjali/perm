@@ -76,9 +76,9 @@ export function FormHelpPanel() {
               This form tracks dates through the four stages of the PERM labor certification process. Fill in dates as you get them, you don&rsquo;t need to complete everything at once.
             </p>
             <ul className="mt-2 space-y-1 text-muted-foreground list-disc pl-4">
-              <li>Sections unlock progressively as you enter prerequisite dates</li>
-              <li>Some dates auto-calculate (marked with an &ldquo;auto&rdquo; badge)</li>
-              <li>Save anytime and come back later</li>
+              <li>Sections unlock progressively as you enter prerequisite dates</li>{" "}
+              <li>Some dates auto-calculate (marked with an &ldquo;auto&rdquo; badge)</li>{" "}
+              <li>Save anytime and come back later</li>{" "}
               <li>A green checkmark appears when a section is complete</li>
             </ul>
           </section>
@@ -103,14 +103,14 @@ export function FormHelpPanel() {
             <SectionHeading>2. Recruitment</SectionHeading>
             <p className="text-muted-foreground mb-2">
               All PERM cases require three basic recruitment steps. Professional occupations (Bachelor&rsquo;s+) require three additional methods.
-            </p>
+            </p>{" "}
             <h5 className="font-bold text-xs uppercase tracking-wider mt-3 mb-1">Basic Requirements</h5>
             <FieldList items={[
               { field: "Job Order", desc: "Start date triggers auto-calculated end (30 calendar days inclusive per 20 CFR § 656.17(d))" },
               { field: "Sunday Ads", desc: "Two newspaper ads on different Sundays, at least 7 days apart" },
               { field: "Notice of Filing", desc: "Start date triggers auto-calculated end (10 business days, skipping federal holidays)" },
             ]} />
-            <h5 className="font-bold text-xs uppercase tracking-wider mt-3 mb-1">Professional Occupations</h5>
+            <h5 className="font-bold text-xs uppercase tracking-wider mt-3 mb-1">Professional Occupations</h5>{" "}
             <p className="text-muted-foreground">
               Check &ldquo;Professional Occupation&rdquo; if the position requires a Bachelor&rsquo;s degree or higher. You must then add 3+ additional recruitment methods (from 11 options: campus placement, job fairs, trade publications, employer website, etc.).
             </p>
@@ -129,7 +129,7 @@ export function FormHelpPanel() {
               { field: "Certification Date", desc: "When DOL certified the application. Triggers auto-calculated expiration (180 days) and unlocks I-140." },
               { field: "Audit", desc: "If DOL audits the case, enter the audit received and submitted dates" },
             ]} />
-            <h5 className="font-bold text-xs uppercase tracking-wider mt-3 mb-1">RFI (Request for Information)</h5>
+            <h5 className="font-bold text-xs uppercase tracking-wider mt-3 mb-1">RFI (Request for Information)</h5>{" "}
             <p className="text-muted-foreground">
               If DOL requests additional info, enter the received date, the system auto-calculates a strict 30-day due date. Missing an RFI deadline means case denial.
             </p>
@@ -146,7 +146,7 @@ export function FormHelpPanel() {
               { field: "Receipt Number", desc: "The USCIS receipt number (e.g., EAC-12-345-67890)" },
               { field: "Approval/Denial Date", desc: "The outcome date. Completing this marks the section done." },
             ]} />
-            <h5 className="font-bold text-xs uppercase tracking-wider mt-3 mb-1">RFE (Request for Evidence)</h5>
+            <h5 className="font-bold text-xs uppercase tracking-wider mt-3 mb-1">RFE (Request for Evidence)</h5>{" "}
             <p className="text-muted-foreground">
               If USCIS requests evidence, enter the received date and due date (typically ~87 days). Unlike RFI, the RFE due date is manually entered since USCIS sets it per case.
             </p>
@@ -156,9 +156,9 @@ export function FormHelpPanel() {
           <section>
             <SectionHeading>Validation & Errors</SectionHeading>
             <ul className="space-y-1.5 text-muted-foreground list-disc pl-4">
-              <li><strong className="text-foreground">Red asterisks (*)</strong>: Required fields. Must be filled before saving.</li>
-              <li><strong className="text-orange-500">Orange warnings</strong>: Advisory. They flag potential issues but don&rsquo;t prevent saving.</li>
-              <li><strong className="text-foreground">Date constraints</strong>: The date picker greys out invalid dates (e.g., can&rsquo;t set certification before filing).</li>
+              <li><strong className="text-foreground">Red asterisks (*)</strong>: Required fields. Must be filled before saving.</li>{" "}
+              <li><strong className="text-orange-500">Orange warnings</strong>: Advisory. They flag potential issues but don&rsquo;t prevent saving.</li>{" "}
+              <li><strong className="text-foreground">Date constraints</strong>: The date picker greys out invalid dates (e.g., can&rsquo;t set certification before filing).</li>{" "}
               <li><strong className="text-foreground">Auto-status</strong>: Case status and progress auto-update based on your dates. Toggle off in Basic Info to set manually.</li>
             </ul>
           </section>
@@ -170,10 +170,10 @@ export function FormHelpPanel() {
               Fields with an &ldquo;auto&rdquo; badge calculate automatically when you enter their trigger date:
             </p>
             <ul className="space-y-1 text-muted-foreground list-disc pl-4">
-              <li><strong className="text-foreground">PWD Expiration</strong>: Determination date + 1 year</li>
-              <li><strong className="text-foreground">Job Order End</strong>: Start date + 30 calendar days</li>
-              <li><strong className="text-foreground">NOF End</strong>: Start date + 10 business days (skips weekends & federal holidays)</li>
-              <li><strong className="text-foreground">ETA 9089 Expiration</strong>: Certification date + 180 days</li>
+              <li><strong className="text-foreground">PWD Expiration</strong>: Determination date + 1 year</li>{" "}
+              <li><strong className="text-foreground">Job Order End</strong>: Start date + 30 calendar days</li>{" "}
+              <li><strong className="text-foreground">NOF End</strong>: Start date + 10 business days (skips weekends & federal holidays)</li>{" "}
+              <li><strong className="text-foreground">ETA 9089 Expiration</strong>: Certification date + 180 days</li>{" "}
               <li><strong className="text-foreground">RFI Due Date</strong>: Received date + 30 days (strict)</li>
             </ul>
             <Example>Auto-calculated fields update instantly. You can manually override them if the auto value isn&rsquo;t right for your case.</Example>
@@ -183,10 +183,10 @@ export function FormHelpPanel() {
           <section>
             <SectionHeading>Tips</SectionHeading>
             <ul className="space-y-1.5 text-muted-foreground list-disc pl-4">
-              <li>Enter the PWD determination date first, everything else depends on it</li>
-              <li>The 30-day quiet period between recruitment and ETA 9089 filing is calculated automatically</li>
-              <li>Filing window = 180 days from first recruitment activity (or PWD expiration, whichever is earlier)</li>
-              <li>Use the progress bar at the top to see how far along the case is</li>
+              <li>Enter the PWD determination date first, everything else depends on it</li>{" "}
+              <li>The 30-day quiet period between recruitment and ETA 9089 filing is calculated automatically</li>{" "}
+              <li>Filing window = 180 days from first recruitment activity (or PWD expiration, whichever is earlier)</li>{" "}
+              <li>Use the progress bar at the top to see how far along the case is</li>{" "}
               <li>Click any section header to open/close it, even if prerequisites aren&rsquo;t met</li>
             </ul>
           </section>
@@ -195,9 +195,9 @@ export function FormHelpPanel() {
           <section>
             <SectionHeading>Key Regulations</SectionHeading>
             <ul className="space-y-1 text-muted-foreground list-disc pl-4">
-              <li><strong className="text-foreground">20 CFR § 656.17(d)</strong>: Job order: 30 calendar days minimum</li>
-              <li><strong className="text-foreground">20 CFR § 656.10(d)</strong>: Notice of filing: 10 business days</li>
-              <li><strong className="text-foreground">20 CFR § 656.17(e)</strong>: 30-day quiet period, 180-day filing window</li>
+              <li><strong className="text-foreground">20 CFR § 656.17(d)</strong>: Job order: 30 calendar days minimum</li>{" "}
+              <li><strong className="text-foreground">20 CFR § 656.10(d)</strong>: Notice of filing: 10 business days</li>{" "}
+              <li><strong className="text-foreground">20 CFR § 656.17(e)</strong>: 30-day quiet period, 180-day filing window</li>{" "}
               <li><strong className="text-foreground">20 CFR § 656.40</strong>: PWD validity: 1 year from determination</li>
             </ul>
           </section>
@@ -220,7 +220,7 @@ function FieldList({ items }: { items: { field: string; desc: string }[] }) {
     <dl className="space-y-1.5">
       {items.map((item) => (
         <div key={item.field} className="flex gap-2">
-          <dt className="font-semibold text-foreground shrink-0 min-w-[100px]">{item.field}</dt>
+          <dt className="font-semibold text-foreground shrink-0 min-w-[100px]">{item.field}</dt>{" "}
           <dd className="text-muted-foreground">{item.desc}</dd>
         </div>
       ))}

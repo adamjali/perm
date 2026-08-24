@@ -194,7 +194,7 @@ function NotificationItem({
           title={notification.title}
         >
           {notification.title}
-        </p>
+        </p>{" "}
 
         {/* Message - 2 line truncate */}
         <p className="text-xs text-muted-foreground line-clamp-2" style={{ overflowWrap: "break-word", wordBreak: "break-word" }} title={notification.message}>
@@ -274,7 +274,7 @@ function EmptyState() {
       </div>
       <p className="text-sm font-heading font-bold text-foreground">
         No notifications
-      </p>
+      </p>{" "}
       <p className="text-xs text-muted-foreground mt-1">
         You&apos;re all caught up!
       </p>

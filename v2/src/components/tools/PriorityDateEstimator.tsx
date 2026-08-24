@@ -27,6 +27,7 @@ import {
 } from "@/lib/perm";
 import { formatMonth, formatMonthShort, formatAsOf } from "@/lib/dolFormat";
 import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
+import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -179,12 +180,13 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
             <Label htmlFor={dateId} className="text-sm font-bold">
               Your priority date
             </Label>
-            <input
+            {/* Shared DateInput: it carries min-w-0, which is what keeps a date
+                field inside its grid track on iOS. */}
+            <DateInput
               id={dateId}
-              type="date"
               value={priorityDate}
               onChange={(e) => setPriorityDate(e.target.value)}
-              className="mt-2 block min-h-[44px] w-full border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2"
             />
           </div>
           <div>
@@ -195,7 +197,7 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
               id={catId}
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="mt-2 block min-h-[44px] w-full border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               {CATEGORIES.map((c) => (
                 <option key={c.code} value={c.code}>
@@ -212,7 +214,7 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
               id={countryId}
               value={country}
               onChange={(e) => setCountry(e.target.value as CountryKey)}
-              className="mt-2 block min-h-[44px] w-full border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               {COUNTRIES.map((c) => (
                 <option key={c.code} value={c.code}>
@@ -229,7 +231,7 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
               id={chartId}
               value={chart}
               onChange={(e) => setChart(e.target.value as ChartKind)}
-              className="mt-2 block min-h-[44px] w-full border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               {CHARTS.map((c) => (
                 <option key={c.code} value={c.code}>

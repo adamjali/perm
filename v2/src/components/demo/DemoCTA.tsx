@@ -32,12 +32,12 @@ export function DemoCTA() {
                 real
               </span>{" "}
               cases?
-            </h2>
+            </h2>{" "}
 
             <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">
               Everything you just tried in this demo, auto-calculated deadlines,
               calendar view, case progress, works the same way with your real caseload.
-            </p>
+            </p>{" "}
 
             {/* Feature highlights */}
             <div className="mt-8 grid gap-4 sm:grid-cols-3">

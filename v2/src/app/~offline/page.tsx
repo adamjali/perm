@@ -29,13 +29,13 @@ export default function OfflinePage() {
           {/* Heading */}
           <h1 className="font-heading text-3xl font-bold text-center text-foreground mb-4">
             You&apos;re Offline
-          </h1>
+          </h1>{" "}
 
           {/* Description */}
           <p className="text-center text-muted-foreground font-body mb-8">
             It looks like you&apos;ve lost your internet connection.
             Your data will load automatically when you&apos;re back online.
-          </p>
+          </p>{" "}
 
           {/* Status indicator */}
           <div className="bg-muted border-2 border-border p-4 mb-8">
@@ -67,11 +67,11 @@ export default function OfflinePage() {
               <li className="flex items-start gap-2">
                 <span className="text-primary font-bold mt-0.5">1.</span>
                 Check your WiFi or mobile data connection
-              </li>
+              </li>{" "}
               <li className="flex items-start gap-2">
                 <span className="text-primary font-bold mt-0.5">2.</span>
                 Try moving to an area with better signal
-              </li>
+              </li>{" "}
               <li className="flex items-start gap-2">
                 <span className="text-primary font-bold mt-0.5">3.</span>
                 Your unsaved work will sync when reconnected

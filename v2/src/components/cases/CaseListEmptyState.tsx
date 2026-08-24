@@ -50,11 +50,11 @@ export function CaseListEmptyState({
         </div>
 
         {/* Message */}
-        <h2 className="font-heading text-2xl font-bold mb-2">No cases yet</h2>
+        <h2 className="font-heading text-2xl font-bold mb-2">No cases yet</h2>{" "}
         <p className="text-muted-foreground text-center max-w-md mb-6">
           Get started by adding your first PERM case. Track deadlines, manage documents,
           and stay organized.
-        </p>
+        </p>{" "}
 
         {/* CTA Button */}
         <Button onClick={onAddCase} size="lg">
@@ -78,7 +78,7 @@ export function CaseListEmptyState({
       {/* Message */}
       <h2 className="font-heading text-2xl font-bold mb-2">
         No cases match your filters
-      </h2>
+      </h2>{" "}
       <p className="text-muted-foreground text-center max-w-md mb-6">
         Try adjusting your filters to see more results.
       </p>

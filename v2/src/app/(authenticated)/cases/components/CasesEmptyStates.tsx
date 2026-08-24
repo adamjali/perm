@@ -21,7 +21,7 @@ export function NewUserEmptyState({ onAddCase, isAddingCase }: NewUserEmptyState
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold">Cases</h1>
+          <h1 className="font-heading text-3xl font-bold">Cases</h1>{" "}
           <p className="text-muted-foreground mt-1">0 total cases</p>
         </div>
         <Button
@@ -70,7 +70,7 @@ export function NoResultsEmptyState({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold">Cases</h1>
+          <h1 className="font-heading text-3xl font-bold">Cases</h1>{" "}
           <p className="text-muted-foreground mt-1">
             No cases match your filters
           </p>

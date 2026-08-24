@@ -155,7 +155,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
         {/* Title */}
         <h3 className="relative font-heading text-lg font-bold mb-2">
           {feature.title}
-        </h3>
+        </h3>{" "}
 
         {/* Description */}
         <p className="relative flex-1 text-sm text-muted-foreground leading-relaxed">

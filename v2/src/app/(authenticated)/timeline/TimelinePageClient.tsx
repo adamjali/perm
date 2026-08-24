@@ -217,7 +217,7 @@ export function TimelinePageClient() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-heading text-3xl font-bold">Timeline</h1>
+            <h1 className="font-heading text-3xl font-bold">Timeline</h1>{" "}
             <p className="text-muted-foreground mt-1">
               Visualize your case progress
             </p>
@@ -237,7 +237,7 @@ export function TimelinePageClient() {
           <div className="text-center max-w-md">
             <h2 className="font-heading text-xl font-semibold mb-2">
               No Cases to Display
-            </h2>
+            </h2>{" "}
             <p className="text-muted-foreground mb-4">
               Add cases to see them visualized on the timeline. Each case will
               show its stages and milestones across time.

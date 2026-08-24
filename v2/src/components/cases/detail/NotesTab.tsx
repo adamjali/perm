@@ -510,6 +510,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                       onChange={(e) => setNewPriority(e.target.value as NotePriority)}
                       style={{
                         height: 26,
+                        minWidth: 0, // see the date input below
                         padding: "0 6px",
                         border: "2px solid var(--border)",
                         background: "var(--background)",
@@ -558,6 +559,12 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                       onChange={(e) => setNewDueDate(e.target.value)}
                       style={{
                         height: 26,
+                        // A flex item defaults to `min-width: auto`, so it will
+                        // not shrink below its intrinsic width. WebKit's
+                        // intrinsic width for a date control is wider than
+                        // Blink's, so without this the field overflows this row
+                        // on iPhone while measuring correctly on a desktop.
+                        minWidth: 0,
                         padding: "0 6px",
                         border: "2px solid var(--border)",
                         background: "var(--background)",

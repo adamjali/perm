@@ -91,7 +91,7 @@ export function DashboardPageClient() {
         <div>
           <h1 className="font-heading text-2xl font-bold">
             Welcome back, {firstName}
-          </h1>
+          </h1>{" "}
           <p className="text-muted-foreground mt-1">
             Overview of your PERM cases
           </p>

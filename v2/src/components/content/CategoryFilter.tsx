@@ -9,6 +9,7 @@
  */
 
 import { motion } from "motion/react";
+import { Fragment } from "react";
 import { cn } from "@/lib/utils";
 
 interface CategoryFilterProps {
@@ -47,27 +48,36 @@ export default function CategoryFilter({
         All
       </button>
       {tags.map((tag) => (
-        <button
-          key={tag}
-          type="button"
-          onClick={() => onTagChange(activeTag === tag ? null : tag)}
-          className={cn(
-            "relative border-2 border-border px-3 py-1 font-mono text-xs uppercase tracking-wide transition-colors duration-150",
-            activeTag === tag
-              ? "bg-primary font-bold text-black"
-              : "bg-card text-muted-foreground hover:bg-muted"
-          )}
-        >
-          {activeTag === tag && (
-            <motion.div
-              layoutId="activeFilter"
-              className="absolute inset-0 border-2 border-black bg-primary"
-              style={{ zIndex: -1 }}
-              transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            />
-          )}
-          {tag}
-        </button>
+        // The Fragment exists for the separator. Two <button> elements
+        // rendered by a .map() land in the DOM with nothing between them, so
+        // every extractor reads "auditbest-practicescase-management" as one
+        // word. No source-level gate can catch this: the glue is between array
+        // elements, not between two tags written on separate lines. A
+        // whitespace-only text node between flex items is not rendered as a
+        // flex item, so it costs nothing visually.
+        <Fragment key={tag}>
+          {" "}
+          <button
+            type="button"
+            onClick={() => onTagChange(activeTag === tag ? null : tag)}
+            className={cn(
+              "relative border-2 border-border px-3 py-1 font-mono text-xs uppercase tracking-wide transition-colors duration-150",
+              activeTag === tag
+                ? "bg-primary font-bold text-black"
+                : "bg-card text-muted-foreground hover:bg-muted"
+            )}
+          >
+            {activeTag === tag && (
+              <motion.div
+                layoutId="activeFilter"
+                className="absolute inset-0 border-2 border-black bg-primary"
+                style={{ zIndex: -1 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
+            )}
+            {tag}
+          </button>
+        </Fragment>
       ))}
     </div>
   );

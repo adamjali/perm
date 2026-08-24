@@ -219,7 +219,7 @@ export function InChatConfirmationCard({
             {/* Tool Name */}
             <span className="font-heading font-bold text-sm truncate">
               {displayName}
-            </span>
+            </span>{" "}
 
             {/* Destructive warning icon */}
             {isDestructive && status === 'pending' && (

@@ -19,6 +19,7 @@
  * arithmetic on two dates DOL printed.
  */
 
+import { Fragment } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchQuery } from "convex/nextjs";
@@ -101,8 +102,8 @@ function Figure({
 }) {
   return (
     <div className="border-2 border-border bg-card p-5 shadow-hard">
-      <p className="text-xs font-bold uppercase tracking-wider text-foreground/50">{label}</p>
-      <p className="mt-2 font-heading text-3xl font-black leading-none sm:text-4xl">{value}</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-foreground/50">{label}</p>{" "}
+      <p className="mt-2 font-heading text-3xl font-black leading-none sm:text-4xl">{value}</p>{" "}
       {caption ? <p className="mt-2 text-sm text-foreground/60">{caption}</p> : null}
     </div>
   );
@@ -199,7 +200,7 @@ export default async function PermProcessingTimesPage() {
       <header>
         <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           PERM processing times
-        </h1>
+        </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Where the Department of Labor&apos;s queues actually stand, taken from DOL&apos;s own
           published figures and refreshed every week.
@@ -217,7 +218,7 @@ export default async function PermProcessingTimesPage() {
           <section className="mt-10 border-2 border-border bg-primary/10 p-6 shadow-hard sm:p-8">
             <p className="text-xs font-bold uppercase tracking-wider text-foreground/50">
               Analyst review queue
-            </p>
+            </p>{" "}
             <p className="mt-3 font-heading text-3xl font-black leading-tight sm:text-4xl">
               {analystMonth
                 ? `DOL is reviewing PERM applications filed in ${analystMonth}.`
@@ -280,7 +281,7 @@ export default async function PermProcessingTimesPage() {
             <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard">
               <p className="text-xs font-bold uppercase tracking-wider text-foreground/50">
                 Observed movement
-              </p>
+              </p>{" "}
               <p className="mt-2 text-base leading-relaxed">
                 Across the {observedDays} days between the two DOL publications on record
                 here, the analyst review queue advanced{" "}
@@ -301,17 +302,17 @@ export default async function PermProcessingTimesPage() {
                   <tr>
                     <th scope="col" className="border-b-2 border-border p-3 font-black">
                       Queue
-                    </th>
+                    </th>{" "}
                     <th scope="col" className="border-b-2 border-border p-3 font-black">
                       Currently working
-                    </th>
+                    </th>{" "}
                   </tr>
                 </thead>
                 <tbody>
                   {snapshot.permQueues.map((q) => (
                     <tr key={q.queue} className="border-b border-border/40 last:border-0">
-                      <td className="p-3 font-medium">{q.queue}</td>
-                      <td className="p-3 tabular-nums">{formatMonth(q.priorityDate) ?? q.raw}</td>
+                      <td className="p-3 font-medium">{q.queue}</td>{" "}
+                      <td className="p-3 tabular-nums">{formatMonth(q.priorityDate) ?? q.raw}</td>{" "}
                     </tr>
                   ))}
                 </tbody>
@@ -324,17 +325,21 @@ export default async function PermProcessingTimesPage() {
             <section className="mt-12">
               <h2 className="font-heading text-2xl font-black">
                 Prevailing wage requests still pending
-              </h2>
+              </h2>{" "}
               <p className="mt-2 text-foreground/70">
                 PERM prevailing wage requests DOL has not yet decided, by the month it received
                 them{snapshot.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""}.
               </p>
               <ul className="mt-4 space-y-2">
                 {snapshot.pwdPermBacklog.map((row) => (
-                  <li key={row.receiptMonth} className="flex items-center gap-3">
+                  // Mapped <li> siblings arrive with nothing between them, so
+                  // the months read as "December 2025 11January 2026 63".
+                  <Fragment key={row.receiptMonth}>
+                    {" "}
+                    <li className="flex items-center gap-3">
                     <span className="w-28 shrink-0 text-sm text-foreground/70">
                       {formatMonth(row.receiptMonth)}
-                    </span>
+                    </span>{" "}
                     <span className="h-5 flex-1 border-2 border-border bg-muted">
                       <span
                         className="block h-full bg-primary"
@@ -342,11 +347,12 @@ export default async function PermProcessingTimesPage() {
                           width: `${Math.max((row.remainingRequests / backlogMax) * 100, 1)}%`,
                         }}
                       />
-                    </span>
+                    </span>{" "}
                     <span className="w-20 shrink-0 text-right text-sm font-bold tabular-nums">
                       {formatCount(row.remainingRequests) ?? "--"}
                     </span>
                   </li>
+                  </Fragment>
                 ))}
               </ul>
             </section>
@@ -373,7 +379,7 @@ export default async function PermProcessingTimesPage() {
           on one page would compete for the same question, and this page's job
           is the reference figures. */}
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-2xl font-black">Where does your case sit?</h2>
+        <h2 className="font-heading text-2xl font-black">Where does your case sit?</h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
           The figures above are DOL&apos;s position across every case. The
           calculator puts your own filing month against them and shows what each
@@ -403,7 +409,7 @@ export default async function PermProcessingTimesPage() {
         <dl className="mt-4 space-y-6">
           {FAQ.map((item) => (
             <div key={item.question}>
-              <dt className="font-heading text-lg font-bold">{item.question}</dt>
+              <dt className="font-heading text-lg font-bold">{item.question}</dt>{" "}
               <dd className="mt-2 leading-relaxed text-foreground/70">{item.answer}</dd>
             </div>
           ))}
@@ -411,7 +417,7 @@ export default async function PermProcessingTimesPage() {
       </section>
 
       <section className="mt-12 border-2 border-border bg-muted p-6">
-        <h2 className="font-heading text-xl font-black">Where these numbers come from</h2>
+        <h2 className="font-heading text-xl font-black">Where these numbers come from</h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
           Every figure on this page is published by the Office of Foreign Labor Certification
           at{" "}
@@ -425,7 +431,7 @@ export default async function PermProcessingTimesPage() {
           </a>
           , and carries the date DOL attached to it. We read that page weekly and keep each
           publication, because DOL overwrites its own and keeps no archive.
-        </p>
+        </p>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
           Nothing here is modelled or extrapolated. Where a number is missing, DOL did not
           publish one, and this page says so rather than filling the gap.
@@ -435,7 +441,7 @@ export default async function PermProcessingTimesPage() {
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-2xl font-black">
           These are DOL&apos;s deadlines. Yours are the ones you control.
-        </h2>
+        </h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
           The queue moves when it moves. The dates that are actually in your hands are the
           recruitment window, the quiet period and the filing window, and every one of them is

@@ -123,7 +123,7 @@ export function TemplateSelector({
               <CommandEmpty>
                 <div className="flex flex-col items-center gap-2 py-4">
                   <FileText className="h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">No templates found</p>
+                  <p className="text-sm text-muted-foreground">No templates found</p>{" "}
                   <p className="text-xs text-muted-foreground">
                     Create one by filling in the description below
                   </p>

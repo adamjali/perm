@@ -82,10 +82,10 @@ export function UserDeleteConfirmModal({ user, onClose }: UserDeleteConfirmModal
           <div className="border-2 border-destructive bg-destructive/10 p-4 space-y-2">
             <p className="font-bold text-sm">This will permanently delete:</p>
             <ul className="text-sm space-y-1 list-disc list-inside">
-              <li>{user.totalCases} case{user.totalCases !== 1 ? "s" : ""}</li>
-              <li>All notifications</li>
-              <li>All conversations and messages</li>
-              <li>All user settings and preferences</li>
+              <li>{user.totalCases} case{user.totalCases !== 1 ? "s" : ""}</li>{" "}
+              <li>All notifications</li>{" "}
+              <li>All conversations and messages</li>{" "}
+              <li>All user settings and preferences</li>{" "}
               <li>The user account</li>
             </ul>
           </div>

@@ -77,7 +77,7 @@ export default function UrgencyGroup({
       >
         <span className="font-heading font-extrabold text-sm uppercase tracking-widest flex items-center gap-2">
           {title}
-        </span>
+        </span>{" "}
         <span className="font-mono font-extrabold text-xl">{items.length}</span>
       </div>
 

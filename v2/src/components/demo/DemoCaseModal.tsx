@@ -1267,7 +1267,7 @@ export function DemoCaseModal({
                 onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                 placeholder="Add any notes about this case..."
                 rows={3}
-                className="flex w-full border-2 border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y"
+                className="flex w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y"
               />
             </FormField>
           </section>
@@ -1278,7 +1278,7 @@ export function DemoCaseModal({
             <div>
               <p className="text-xs font-bold text-foreground">
                 Auto-Cascade in Action
-              </p>
+              </p>{" "}
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 Try entering a PWD Determination Date, the Expiration Date
                 fills in automatically. This cascade works for NOF, Job Order,

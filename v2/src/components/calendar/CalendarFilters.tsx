@@ -310,7 +310,7 @@ export function CalendarFilters({
             data-testid="case-selection-btn"
           >
             <ListFilter className="size-4" />
-            <span>Cases</span>
+            <span>Cases</span>{" "}
             <span
               className={cn(
                 "ml-1 px-2 py-0.5 text-xs font-bold border-2 border-border",

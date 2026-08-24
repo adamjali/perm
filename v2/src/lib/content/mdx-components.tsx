@@ -95,7 +95,7 @@ function ProductCTA({
 }) {
   return (
     <div className="not-prose my-8 border-2 border-border bg-primary/5 p-6 shadow-hard">
-      <p className="mb-2 font-heading text-lg font-bold text-foreground">{title}</p>
+      <p className="mb-2 font-heading text-lg font-bold text-foreground">{title}</p>{" "}
       <p className="mb-4 text-sm text-muted-foreground">{description}</p>
       <NavLink
         href={href}

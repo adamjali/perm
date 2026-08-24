@@ -524,7 +524,7 @@ export default function NotificationPreferencesSection({
                     <span className={`text-sm font-medium flex items-center gap-2 ${!emailEnabled ? "opacity-50" : ""}`}>
                       <BellRing className="w-4 h-4" />
                       Deadline Reminders
-                    </span>
+                    </span>{" "}
                     <p className={`text-xs text-muted-foreground ${!emailEnabled ? "opacity-50" : ""}`}>
                       Get notified about upcoming deadlines
                     </p>
@@ -634,7 +634,7 @@ export default function NotificationPreferencesSection({
         <div className="mt-6 pt-6 border-t border-border">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <p className="text-sm font-medium text-foreground">Test Email</p>
+              <p className="text-sm font-medium text-foreground">Test Email</p>{" "}
               <p className="text-xs text-muted-foreground">Send a test email to {userEmail}</p>
             </div>
             <TestButton
@@ -688,7 +688,7 @@ export default function NotificationPreferencesSection({
         <div className="mt-6 pt-6 border-t border-border">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <p className="text-sm font-medium text-foreground">Test Push Notification</p>
+              <p className="text-sm font-medium text-foreground">Test Push Notification</p>{" "}
               <p className="text-xs text-muted-foreground">Send a test notification to this browser</p>
             </div>
             <TestButton

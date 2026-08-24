@@ -213,7 +213,7 @@ function NotFoundState() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
       <div className="text-center space-y-2">
-        <h2 className="font-heading text-2xl font-bold">Case Not Found</h2>
+        <h2 className="font-heading text-2xl font-bold">Case Not Found</h2>{" "}
         <p className="text-muted-foreground">
           The case you&apos;re looking for doesn&apos;t exist or has been deleted.
         </p>
@@ -939,7 +939,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               day: "numeric",
               year: "numeric",
             })}
-          </span>
+          </span>{" "}
           <span>
             Updated:{" "}
             {new Date(caseData.updatedAt).toLocaleDateString("en-US", {

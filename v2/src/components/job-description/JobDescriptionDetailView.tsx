@@ -529,7 +529,7 @@ export function JobDescriptionDetailView({
                     <div className="space-y-1">
                       <dt className="text-sm font-medium text-muted-foreground">
                         Position Title
-                      </dt>
+                      </dt>{" "}
                       <dd className="text-sm">{positionTitle}</dd>
                     </div>
                   )}

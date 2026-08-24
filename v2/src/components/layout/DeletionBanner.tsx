@@ -83,7 +83,7 @@ export default function DeletionBanner() {
             <span className="hidden sm:inline">
               Your account is scheduled for deletion on{" "}
               <strong>{deletionDate}</strong>.{" "}
-            </span>
+            </span>{" "}
             <span className="sm:hidden">
               Deletion scheduled: <strong>{deletionDate}</strong>.{" "}
             </span>

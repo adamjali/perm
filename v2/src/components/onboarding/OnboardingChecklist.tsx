@@ -45,7 +45,7 @@ export function OnboardingChecklist() {
           <div>
             <h3 className="font-heading font-bold text-base">
               Getting Started
-            </h3>
+            </h3>{" "}
             <p className="text-xs text-muted-foreground">
               Complete these steps to get the most out of PERM Tracker
             </p>
@@ -75,7 +75,7 @@ export function OnboardingChecklist() {
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs font-heading font-semibold">
             {completedCount}/{totalCount} complete
-          </span>
+          </span>{" "}
           <span className="text-xs text-muted-foreground">
             {progressPercent}%
           </span>

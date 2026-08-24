@@ -52,7 +52,7 @@ export function RoleStep({ onNext }: RoleStepProps) {
     <div className="flex flex-col items-center px-2">
       <h2 className="font-heading text-2xl sm:text-3xl font-bold mb-1 text-center">
         What&apos;s your role?
-      </h2>
+      </h2>{" "}
       <p className="text-muted-foreground text-sm mb-6 text-center">
         This helps us personalize your experience
       </p>
@@ -85,7 +85,7 @@ export function RoleStep({ onNext }: RoleStepProps) {
                 <Icon className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <p className="font-heading font-semibold text-sm">{role}</p>
+                <p className="font-heading font-semibold text-sm">{role}</p>{" "}
                 <p className="text-xs text-muted-foreground">{description}</p>
               </div>
             </button>

@@ -46,14 +46,14 @@ export default function RecentActivityCard({ activity }: RecentActivityCardProps
         <div className="flex items-center gap-2 mb-1">
           <span className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary transition-colors" title={activity.employerName}>
             {activity.employerName}
-          </span>
+          </span>{" "}
           <span className="text-sm text-muted-foreground mono shrink-0 truncate max-w-[120px]" title={activity.caseNumber || undefined}>
             {activity.caseNumber || "-"}
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="truncate" title={activity.positionTitle}>{activity.positionTitle}</span>
-          <span className="shrink-0">•</span>
+          <span className="truncate" title={activity.positionTitle}>{activity.positionTitle}</span>{" "}
+          <span className="shrink-0">•</span>{" "}
           <span className="truncate" title={activity.action}>{activity.action}</span>
         </div>
       </div>

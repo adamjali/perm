@@ -16,6 +16,7 @@
  * drawings, not for bars.
  */
 
+import { Fragment } from "react";
 import { formatMonth } from "@/lib/dolFormat";
 import type { PwdBacklogMonth } from "@/lib/perm";
 import { cn } from "@/lib/utils";
@@ -49,48 +50,53 @@ export function PwdBacklogChart({
           const width = (row.remainingRequests / max) * 100;
 
           return (
-            <li
-              key={row.receiptMonth}
-              className="grid grid-cols-[7.5rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[9rem_1fr_5.5rem]"
-            >
-              <span
-                className={cn(
-                  "text-sm",
-                  isSelected ? "font-black" : "text-foreground/70",
-                )}
+            // The separator is why this is a Fragment. Mapped <li> siblings
+            // arrive with nothing between them, so the rows read as
+            // "December 2025 11January 2026 63" to any extractor.
+            <Fragment key={row.receiptMonth}>
+              {" "}
+              <li
+                className="grid grid-cols-[7.5rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[9rem_1fr_5.5rem]"
               >
-                {formatMonth(row.receiptMonth)}
-              </span>
-
-              {/* The track is always full width, so a small bar reads as small
-                  rather than as a missing row. */}
-              <span className="h-6 w-full border-2 border-border bg-muted">
                 <span
                   className={cn(
-                    "block h-full",
-                    isSelected
-                      ? "bg-primary"
-                      : isAhead
-                        ? "bg-foreground/70"
-                        : "bg-foreground/20",
+                    "text-sm",
+                    isSelected ? "font-black" : "text-foreground/70",
                   )}
-                  // A bar under ~1% is invisible at any width, and four of
-                  // these months are genuinely near zero. A floor keeps the row
-                  // legible without misrepresenting the value, which the number
-                  // beside it states exactly.
-                  style={{ width: `${Math.max(width, 1.5)}%` }}
-                />
-              </span>{" "}
+                >
+                  {formatMonth(row.receiptMonth)}
+                </span>{" "}
 
-              <span
-                className={cn(
-                  "text-right text-sm tabular-nums",
-                  isSelected ? "font-black" : "text-foreground/70",
-                )}
-              >
-                {row.remainingRequests.toLocaleString("en-US")}
-              </span>
-            </li>
+                {/* The track is always full width, so a small bar reads as small
+                    rather than as a missing row. */}
+                <span className="h-6 w-full border-2 border-border bg-muted">
+                  <span
+                    className={cn(
+                      "block h-full",
+                      isSelected
+                        ? "bg-primary"
+                        : isAhead
+                          ? "bg-foreground/70"
+                          : "bg-foreground/20",
+                    )}
+                    // A bar under ~1% is invisible at any width, and four of
+                    // these months are genuinely near zero. A floor keeps the row
+                    // legible without misrepresenting the value, which the number
+                    // beside it states exactly.
+                    style={{ width: `${Math.max(width, 1.5)}%` }}
+                  />
+                </span>{" "}
+
+                <span
+                  className={cn(
+                    "text-right text-sm tabular-nums",
+                    isSelected ? "font-black" : "text-foreground/70",
+                  )}
+                >
+                  {row.remainingRequests.toLocaleString("en-US")}
+                </span>
+                </li>
+            </Fragment>
           );
         })}
       </ol>

@@ -44,7 +44,7 @@ export function DemoCasesGrid({ cases, onEdit, onDelete, onAdd }: DemoCasesGridP
           <div className="text-center">
             <p className="font-heading font-bold text-muted-foreground">
               No cases yet
-            </p>
+            </p>{" "}
             <p className="mt-1 text-sm text-muted-foreground/70">
               Click &quot;Add Case&quot; to create your first demo case
             </p>

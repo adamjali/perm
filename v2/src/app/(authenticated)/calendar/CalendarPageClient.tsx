@@ -123,7 +123,7 @@ function CalendarEmptyState() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="font-heading text-3xl font-bold">Calendar</h1>
+        <h1 className="font-heading text-3xl font-bold">Calendar</h1>{" "}
         <p className="text-muted-foreground mt-1">
           View your case deadlines and milestones
         </p>
@@ -137,7 +137,7 @@ function CalendarEmptyState() {
           </div>
           <h2 className="font-heading text-xl font-semibold mb-2">
             No Deadlines to Display
-          </h2>
+          </h2>{" "}
           <p className="text-muted-foreground mb-6">
             Add cases with milestone dates to see them on the calendar. Each
             deadline will appear as an event color-coded by stage.
@@ -295,7 +295,7 @@ export function CalendarPageClient() {
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="font-heading text-3xl font-bold">Calendar</h1>
+          <h1 className="font-heading text-3xl font-bold">Calendar</h1>{" "}
           <p className="text-muted-foreground mt-1">
             View your case deadlines and milestones
           </p>
@@ -309,7 +309,7 @@ export function CalendarPageClient() {
             </div>
             <h2 className="font-heading text-xl font-semibold mb-2">
               No Deadlines Visible
-            </h2>
+            </h2>{" "}
             <p className="text-muted-foreground">
               Your cases exist but don&apos;t have milestone dates set, or all
               deadline types are hidden. Update your cases with dates to see
@@ -342,7 +342,7 @@ export function CalendarPageClient() {
             <div>
               <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
                 Sync deadlines to Google Calendar
-              </p>
+              </p>{" "}
               <p className="text-xs text-blue-600 dark:text-blue-300">
                 Connect your Google Calendar to automatically sync case deadlines
               </p>
@@ -361,7 +361,7 @@ export function CalendarPageClient() {
 
       {/* Header */}
       <div className="mb-4">
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold">Calendar</h1>
+        <h1 className="font-heading text-2xl sm:text-3xl font-bold">Calendar</h1>{" "}
         <p className="text-sm sm:text-base text-muted-foreground mt-1">
           {events.length} deadline{events.length !== 1 ? "s" : ""} across{" "}
           {calendarCases.length} case{calendarCases.length !== 1 ? "s" : ""}

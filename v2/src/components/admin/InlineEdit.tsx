@@ -105,7 +105,7 @@ export function InlineEdit({
         onKeyDown={handleKeyDown}
         autoFocus
         disabled={isSaving}
-        className="h-8 w-full border-2 border-primary bg-background px-2 text-sm outline-none"
+        className="h-8 w-full min-w-0 border-2 border-primary bg-background px-2 text-sm outline-none"
       />
       <button onClick={handleSave} disabled={isSaving} className="text-green-600 hover:text-green-800 p-0.5 flex-shrink-0">
         <Check className="size-3.5" />

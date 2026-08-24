@@ -100,7 +100,7 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
                 <span className="flex items-center gap-2">
                   <Calendar className="h-3.5 w-3.5" />
                   <time dateTime={post.meta.date}>{fmtDate(post.meta.date)}</time>
-                </span>
+                </span>{" "}
                 {post.meta.updated && post.meta.updated !== post.meta.date && (
                   <span className="flex items-center gap-1.5">
                     <span className="font-heading text-[10px] font-semibold uppercase tracking-wider text-primary">
@@ -109,12 +109,12 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
                     <time dateTime={post.meta.updated}>{fmtDate(post.meta.updated)}</time>
                   </span>
                 )}
-              </div>
+              </div>{" "}
 
               {/* Title */}
               <h2 className="mb-2 font-heading text-lg font-bold sm:text-xl">
                 {post.meta.title}
-              </h2>
+              </h2>{" "}
 
               {/* Description */}
               <p className="mb-4 leading-relaxed text-muted-foreground">
@@ -126,12 +126,13 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
                 <div className="flex flex-wrap items-center gap-2">
                   <Tag className="h-3 w-3 text-muted-foreground" />
                   {post.meta.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
-                    >
-                      {tag}
-                    </span>
+                    // Mapped siblings glue: "changelogupdatetimelineaiux".
+                    <React.Fragment key={tag}>
+                      {" "}
+                      <span className="border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {tag}
+                      </span>
+                    </React.Fragment>
                   ))}
                 </div>
               )}

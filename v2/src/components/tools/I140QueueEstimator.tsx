@@ -16,7 +16,7 @@
  * One shared chart fed different numbers reads as filler.
  */
 
-import { useId, useMemo, useState } from "react";
+import { Fragment, useId, useMemo, useState } from "react";
 import { FileText, TrendingUp, TriangleAlert } from "lucide-react";
 
 import { estimateI140Queue, type I140QuarterStats } from "@/lib/perm";
@@ -130,7 +130,7 @@ export function I140QueueEstimator({
             id={selectId}
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="mt-2 block min-h-[44px] w-full border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-md"
+            className="mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-md"
           >
             {subtypes.map((s) => (
               <option key={s.code} value={s.code}>
@@ -222,37 +222,42 @@ export function I140QueueEstimator({
           {[...subtypes]
             .sort((a, b) => b.pending - a.pending)
             .map((s) => (
-              <li
-                key={s.code}
-                className="grid grid-cols-[4.5rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[16rem_1fr_5rem]"
-              >
-                <span
-                  className={cn(
-                    "truncate text-sm",
-                    s.code === code ? "font-black" : "text-foreground/70",
-                  )}
+              // Mapped <li> siblings arrive with nothing between them, so the
+              // rows read as "NIW National interest waiver 89,215E31 Skilled
+              // worker 35,847" to any extractor.
+              <Fragment key={s.code}>
+                {" "}
+                <li
+                  className="grid grid-cols-[4.5rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[16rem_1fr_5rem]"
                 >
-                  <span className="sm:hidden">{s.code}</span>{" "}
-                  <span className="hidden sm:inline">{s.label}</span>
-                </span>{" "}
-                <span className="h-6 w-full border-2 border-border bg-muted">
                   <span
                     className={cn(
-                      "block h-full",
-                      s.code === code ? "bg-primary" : "bg-foreground/25",
+                      "truncate text-sm",
+                      s.code === code ? "font-black" : "text-foreground/70",
                     )}
-                    style={{ width: `${Math.max((s.pending / maxPending) * 100, 1.5)}%` }}
-                  />
-                </span>{" "}
-                <span
-                  className={cn(
-                    "text-right text-sm tabular-nums",
-                    s.code === code ? "font-black" : "text-foreground/70",
-                  )}
-                >
-                  {s.pending.toLocaleString("en-US")}
-                </span>
-              </li>
+                  >
+                    <span className="sm:hidden">{s.code}</span>{" "}
+                    <span className="hidden sm:inline">{s.label}</span>
+                  </span>{" "}
+                  <span className="h-6 w-full border-2 border-border bg-muted">
+                    <span
+                      className={cn(
+                        "block h-full",
+                        s.code === code ? "bg-primary" : "bg-foreground/25",
+                      )}
+                      style={{ width: `${Math.max((s.pending / maxPending) * 100, 1.5)}%` }}
+                    />
+                  </span>{" "}
+                  <span
+                    className={cn(
+                      "text-right text-sm tabular-nums",
+                      s.code === code ? "font-black" : "text-foreground/70",
+                    )}
+                  >
+                    {s.pending.toLocaleString("en-US")}
+                  </span>
+                  </li>
+              </Fragment>
             ))}
         </ol>
       </div>

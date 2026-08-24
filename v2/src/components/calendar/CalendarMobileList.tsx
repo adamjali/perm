@@ -209,7 +209,7 @@ export function CalendarMobileList({
         </div>
         <h3 className="font-heading text-lg font-semibold mb-2">
           No Upcoming Deadlines
-        </h3>
+        </h3>{" "}
         <p className="text-sm text-muted-foreground max-w-[280px]">
           No deadlines in the next {daysToShow} days. Check back later or view
           the full calendar.

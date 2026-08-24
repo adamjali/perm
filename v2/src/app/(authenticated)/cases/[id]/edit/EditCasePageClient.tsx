@@ -157,7 +157,7 @@ function NotFoundState() {
     <div className="mx-auto max-w-4xl px-4 py-16">
       <div className="text-center space-y-6">
         <div className="space-y-2">
-          <h1 className="font-heading text-3xl font-bold">Case not found</h1>
+          <h1 className="font-heading text-3xl font-bold">Case not found</h1>{" "}
           <p className="text-muted-foreground text-lg">
             The case you&apos;re looking for doesn&apos;t exist or you don&apos;t have access.
           </p>
@@ -423,11 +423,11 @@ export function EditCasePageClient() {
         <div className="pl-6 min-w-0">
           <h1 className="font-heading text-3xl font-bold tracking-tight truncate" title={`Edit Case: ${caseData.employerName} - ${caseData.positionTitle}`}>
             Edit Case: {caseData.employerName}
-          </h1>
+          </h1>{" "}
           <p className="text-muted-foreground mt-1 truncate" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
             {caseData.positionTitle}
             {caseData.beneficiaryIdentifier && <>, {caseData.beneficiaryIdentifier}</>}
-          </p>
+          </p>{" "}
           <p className="text-muted-foreground text-sm mt-1">
             Update case details below. All changes will be saved to your account.
           </p>

@@ -112,7 +112,7 @@ export default function GlobalError({
         <div style={{ textAlign: "center", maxWidth: 480, padding: 24 }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>
             Something went wrong
-          </h1>
+          </h1>{" "}
           <p style={{ color: "#666", marginBottom: 24 }}>
             An unexpected error occurred. Our team has been notified.
           </p>

@@ -48,7 +48,7 @@ export function ResponseEntryGrid({
           <span className="flex items-center gap-1.5">
             {alertTriangleIcon}
             {fullLabel}
-          </span>
+          </span>{" "}
           <span className="font-mono text-[0.6rem] font-bold uppercase px-2 py-0.5 border-2 border-border bg-muted text-muted-foreground">
             {subtitle}
           </span>

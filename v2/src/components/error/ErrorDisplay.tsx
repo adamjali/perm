@@ -44,7 +44,7 @@ export function ErrorDisplay({
       <div className="text-center">
         <h2 className="font-heading text-xl font-bold text-foreground">
           {title}
-        </h2>
+        </h2>{" "}
         <p className="mt-2 max-w-md text-sm text-muted-foreground">{message}</p>
         {details && (
           <p className="mt-1 font-mono text-xs text-muted-foreground/60">

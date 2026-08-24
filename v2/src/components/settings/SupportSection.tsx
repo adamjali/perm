@@ -227,7 +227,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
         </div>
         <p className="text-sm text-muted-foreground mb-6">
           Get help, report issues, or suggest new features
-        </p>
+        </p>{" "}
 
         {/* Support Links Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -246,10 +246,10 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
                 Contact Support
                 <ExternalLink className="h-3 w-3 text-muted-foreground" />
-              </span>
+              </span>{" "}
               <span className="text-xs text-muted-foreground">{SUPPORT_EMAIL}</span>
             </div>
-          </a>
+          </a>{" "}
 
           {/* Report Bug */}
           <a
@@ -266,12 +266,12 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
                 Report a Bug
                 <ExternalLink className="h-3 w-3 text-muted-foreground" />
-              </span>
+              </span>{" "}
               <span className="text-xs text-muted-foreground">
                 GitHub Issues
               </span>
             </div>
-          </a>
+          </a>{" "}
 
           {/* Request Feature */}
           <a
@@ -288,7 +288,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
                 Request Feature
                 <ExternalLink className="h-3 w-3 text-muted-foreground" />
-              </span>
+              </span>{" "}
               <span className="text-xs text-muted-foreground">
                 GitHub Issues
               </span>
@@ -320,7 +320,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             <div className="text-center">
               <span className="font-heading font-bold text-sm block">
                 {isRestarting ? "Starting..." : "Replay Tour"}
-              </span>
+              </span>{" "}
               <span className="text-xs text-muted-foreground">
                 Product walkthrough
               </span>
@@ -387,7 +387,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium">Deletion Scheduled</p>
+                  <p className="text-sm font-medium">Deletion Scheduled</p>{" "}
                   <p className="text-xs">
                     Your account will be permanently deleted on {deletionDate}
                   </p>
@@ -429,8 +429,8 @@ export default function SupportSection({ profile }: SupportSectionProps) {
       <div className="bg-muted/30 border border-border p-4">
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <Info className="h-4 w-4" />
-          <span className="font-mono text-xs">PERM Tracker v{appVersion}</span>
-          <span className="text-muted-foreground/50">|</span>
+          <span className="font-mono text-xs">PERM Tracker v{appVersion}</span>{" "}
+          <span className="text-muted-foreground/50">|</span>{" "}
           <span className="text-xs">&copy; {currentYear} PERM Tracker</span>
         </div>
       </div>
@@ -449,12 +449,12 @@ export default function SupportSection({ profile }: SupportSectionProps) {
                   This will schedule your account for permanent deletion. You will
                   have <strong>{GRACE_PERIOD_DAYS} days</strong> to cancel this
                   action.
-                </p>
+                </p>{" "}
                 <p>After the grace period, the following will be permanently deleted:</p>
                 <ul className="list-disc list-inside text-sm space-y-1 ml-2">
-                  <li>All your PERM cases and related data</li>
-                  <li>Notification preferences and history</li>
-                  <li>Calendar sync settings</li>
+                  <li>All your PERM cases and related data</li>{" "}
+                  <li>Notification preferences and history</li>{" "}
+                  <li>Calendar sync settings</li>{" "}
                   <li>Your user profile</li>
                 </ul>
                 <p className="font-medium">

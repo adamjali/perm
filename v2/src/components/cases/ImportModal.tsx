@@ -489,7 +489,7 @@ export function ImportModal({
                     // Reset input so same file can be re-selected
                     e.target.value = "";
                   }}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="absolute inset-0 w-full min-w-0 h-full opacity-0 cursor-pointer"
                   aria-label="Select file"
                   disabled={isParsing}
                 />
@@ -497,14 +497,14 @@ export function ImportModal({
                 {isParsing ? (
                   <div className="py-4">
                     <Loader2 className="mx-auto h-12 w-12 mb-4 text-primary animate-spin" />
-                    <p className="text-lg font-medium mb-2">Parsing file...</p>
+                    <p className="text-lg font-medium mb-2">Parsing file...</p>{" "}
                     <p className="text-sm text-muted-foreground">Validating case data</p>
                   </div>
                 ) : (
                   <>
                     <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-lg font-medium mb-2">Drag & drop your JSON file here</p>
-                    <p className="text-sm text-muted-foreground">or click to browse</p>
+                    <p className="text-lg font-medium mb-2">Drag & drop your JSON file here</p>{" "}
+                    <p className="text-sm text-muted-foreground">or click to browse</p>{" "}
                     <p className="text-xs text-muted-foreground mt-2">Accepts .json files only</p>
                   </>
                 )}
@@ -531,7 +531,7 @@ export function ImportModal({
                       <div>
                         <p className="font-medium text-amber-900 dark:text-amber-100">
                           Legacy Format Detected
-                        </p>
+                        </p>{" "}
                         <p className="text-sm text-amber-800 dark:text-amber-200 mt-1">
                           This file appears to be from an older version. Field names will be
                           automatically converted to the new format.
@@ -548,7 +548,7 @@ export function ImportModal({
                         <p className="font-medium text-orange-900 dark:text-orange-100">
                           {parseResult.casesNeedingBeneficiary} Case
                           {parseResult.casesNeedingBeneficiary !== 1 ? "s" : ""} Need Foreign Worker Info
-                        </p>
+                        </p>{" "}
                         <p className="text-sm text-orange-800 dark:text-orange-200 mt-1">
                           These cases were imported from a legacy format without foreign worker IDs. They
                           have been marked with{" "}
@@ -613,7 +613,7 @@ export function ImportModal({
                                   ? `"${warning.employerName.slice(0, 12)}${warning.employerName.length > 12 ? "…" : ""}"`
                                   : `Row ${warning.row + 1}`}
                                 :
-                              </span>
+                              </span>{" "}
                               <span className="text-foreground">{warning.message}</span>
                             </div>
                           ))}
@@ -655,7 +655,7 @@ export function ImportModal({
                                     ? `"${warning.employerName.slice(0, 12)}${warning.employerName.length > 12 ? "…" : ""}"`
                                     : `Row ${warning.row + 1}`}
                                   :
-                                </span>
+                                </span>{" "}
                                 <span className="text-foreground">{warning.message}</span>
                                 {warning.originalValue && (
                                   <span className="text-muted-foreground/50 ml-auto shrink-0">
@@ -897,7 +897,7 @@ export function ImportModal({
                             onChange={(e) => handleEditFieldChange("caseStatus", e.target.value)}
                             disabled={isSavingEdit}
                             className={cn(
-                              "h-9 w-full rounded-md border border-input bg-background px-3 py-1",
+                              "h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1",
                               "text-sm ring-offset-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:opacity-50",
@@ -924,7 +924,7 @@ export function ImportModal({
                             onChange={(e) => handleEditFieldChange("progressStatus", e.target.value)}
                             disabled={isSavingEdit}
                             className={cn(
-                              "h-9 w-full rounded-md border border-input bg-background px-3 py-1",
+                              "h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1",
                               "text-sm ring-offset-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:opacity-50",
@@ -999,7 +999,7 @@ export function ImportModal({
                 <div>
                   <p className="font-medium text-amber-900 dark:text-amber-100">
                     {duplicates.length} Duplicate{duplicates.length !== 1 ? "s" : ""} Found
-                  </p>
+                  </p>{" "}
                   <p className="text-sm text-amber-800 dark:text-amber-200 mt-1">
                     These cases already exist in your database. Choose to skip them or replace the existing ones.
                   </p>
@@ -1118,7 +1118,7 @@ export function ImportModal({
                 <div>
                   <p className="font-medium text-green-900 dark:text-green-100">
                     Import Successful
-                  </p>
+                  </p>{" "}
                   <p className="text-sm text-green-800 dark:text-green-200 mt-1">
                     {importSummary.importedCount > 0 && (
                       <span>{importSummary.importedCount} case{importSummary.importedCount !== 1 ? "s" : ""} imported</span>
@@ -1143,7 +1143,7 @@ export function ImportModal({
                     <div>
                       <p className="font-medium text-amber-900 dark:text-amber-100">
                         {importSummary.validationWarnings.length} Case{importSummary.validationWarnings.length !== 1 ? "s" : ""} with Validation Issues
-                      </p>
+                      </p>{" "}
                       <p className="text-sm text-amber-800 dark:text-amber-200 mt-1">
                         These cases were imported but have data that doesn&apos;t meet PERM regulatory requirements.
                         Review and update them to ensure compliance.
@@ -1163,7 +1163,7 @@ export function ImportModal({
                         <div className="flex items-start gap-2 mb-2">
                           <span className="font-medium text-sm text-amber-900 dark:text-amber-100">
                             {warning.employerName}
-                          </span>
+                          </span>{" "}
                           <span className="text-xs text-amber-700 dark:text-amber-300">
                             / {warning.beneficiaryIdentifier}
                           </span>
@@ -1176,7 +1176,7 @@ export function ImportModal({
                             >
                               <span className="font-mono text-amber-600 dark:text-amber-400 flex-shrink-0">
                                 [{error.ruleId}]
-                              </span>
+                              </span>{" "}
                               <span>{error.message}</span>
                             </li>
                           ))}

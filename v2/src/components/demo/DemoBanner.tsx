@@ -34,7 +34,7 @@ export function DemoBanner() {
       >
         <span className="text-center">
           Demo Mode - Changes saved to this browser only
-        </span>
+        </span>{" "}
         <span className="mx-1 hidden sm:inline">|</span>
         <Link
           href="/signup"

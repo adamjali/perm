@@ -121,7 +121,7 @@ export default function TimeoutWarningModal({
           className="text-center text-muted-foreground mb-6"
         >
           You&apos;ve been inactive for a while. Your session will end in:
-        </p>
+        </p>{" "}
 
         {/* Countdown */}
         <div
@@ -143,7 +143,7 @@ export default function TimeoutWarningModal({
         {/* Advice */}
         <p className="text-center text-sm text-muted-foreground mb-8 italic">
           Click &quot;Stay Logged In&quot; to continue working, or you&apos;ll be logged out to protect your account.
-        </p>
+        </p>{" "}
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">

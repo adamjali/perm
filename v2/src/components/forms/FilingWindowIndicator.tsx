@@ -289,7 +289,7 @@ export function FilingWindowIndicator({
             />
           </div>
           <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-            <span>{progress}% elapsed</span>
+            <span>{progress}% elapsed</span>{" "}
             <span>{100 - progress}% remaining</span>
           </div>
         </div>
@@ -300,7 +300,7 @@ export function FilingWindowIndicator({
         <div>
           <span className="text-muted-foreground text-xs uppercase tracking-wide">
             Opens
-          </span>
+          </span>{" "}
           <p className="font-medium">
             {window.opensOn ? formatDate(window.opensOn) : "-"}
           </p>
@@ -308,7 +308,7 @@ export function FilingWindowIndicator({
         <div>
           <span className="text-muted-foreground text-xs uppercase tracking-wide">
             Closes
-          </span>
+          </span>{" "}
           <p className="font-medium">
             {window.closesOn ? formatDate(window.closesOn) : "-"}
           </p>
@@ -320,7 +320,7 @@ export function FilingWindowIndicator({
         <div className="mt-3 text-center">
           <span className="text-3xl font-bold text-slate-600 dark:text-slate-300">
             {window.daysUntilOpen}
-          </span>
+          </span>{" "}
           <span className="text-sm text-muted-foreground ml-1">days until open</span>
         </div>
       )}
@@ -338,7 +338,7 @@ export function FilingWindowIndicator({
               transition={shouldPulse ? { repeat: Infinity, duration: 1.5 } : undefined}
             >
               {window.daysRemaining}
-            </motion.span>
+            </motion.span>{" "}
             <span className="text-sm text-muted-foreground ml-1">days remaining</span>
           </div>
         )}

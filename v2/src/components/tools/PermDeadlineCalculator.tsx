@@ -22,6 +22,7 @@ import {
   calculateETA9089Window,
 } from "@/lib/perm";
 import { formatAsOf } from "@/lib/dolFormat";
+import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -143,12 +144,15 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
             <Label htmlFor={pwdId} className="text-sm font-bold">
               Prevailing wage determination date
             </Label>
-            <input
+            {/* The shared DateInput, not a raw <input type="date">. It carries
+                min-w-0 on the control and its wrapper, which is what stops a
+                date field overflowing its grid track on iOS, where the
+                intrinsic width is wider than on Blink. */}
+            <DateInput
               id={pwdId}
-              type="date"
               value={pwdDate}
               onChange={(e) => setPwdDate(e.target.value)}
-              className="mt-2 block min-h-[44px] w-full border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2"
             />
           </div>
           <div>
@@ -156,12 +160,15 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
               First recruitment step{" "}
               <span className="font-normal text-foreground/60">(optional)</span>
             </Label>
-            <input
+            {/* The shared DateInput, not a raw <input type="date">. It carries
+                min-w-0 on the control and its wrapper, which is what stops a
+                date field overflowing its grid track on iOS, where the
+                intrinsic width is wider than on Blink. */}
+            <DateInput
               id={recruitId}
-              type="date"
               value={firstRecruitment}
               onChange={(e) => setFirstRecruitment(e.target.value)}
-              className="mt-2 block min-h-[44px] w-full border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2"
             />
           </div>
           <div>
@@ -169,12 +176,15 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
               Last recruitment step{" "}
               <span className="font-normal text-foreground/60">(optional)</span>
             </Label>
-            <input
+            {/* The shared DateInput, not a raw <input type="date">. It carries
+                min-w-0 on the control and its wrapper, which is what stops a
+                date field overflowing its grid track on iOS, where the
+                intrinsic width is wider than on Blink. */}
+            <DateInput
               id={lastRecruitId}
-              type="date"
               value={lastRecruitment}
               onChange={(e) => setLastRecruitment(e.target.value)}
-              className="mt-2 block min-h-[44px] w-full border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2"
             />
             <p className="mt-2 text-sm text-foreground/60">
               Needed for the date the filing window opens.

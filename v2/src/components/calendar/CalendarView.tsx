@@ -235,13 +235,13 @@ export function CalendarView({
             {userViewMode === "list" ? (
               <>
                 <Grid3X3 className="size-4" />
-                <span className="hidden sm:inline">Calendar View</span>
+                <span className="hidden sm:inline">Calendar View</span>{" "}
                 <span className="sm:hidden">Calendar</span>
               </>
             ) : (
               <>
                 <List className="size-4" />
-                <span className="hidden sm:inline">List View</span>
+                <span className="hidden sm:inline">List View</span>{" "}
                 <span className="sm:hidden">List</span>
               </>
             )}

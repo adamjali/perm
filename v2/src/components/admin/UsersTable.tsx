@@ -393,7 +393,7 @@ export function UsersTable({
               <div className="p-12 text-center text-muted-foreground">
                 {search ? (
                   <div>
-                    <p className="font-bold">No users found</p>
+                    <p className="font-bold">No users found</p>{" "}
                     <p className="text-sm mt-1">Try a different search term</p>
                   </div>
                 ) : (

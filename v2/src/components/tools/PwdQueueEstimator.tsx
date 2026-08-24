@@ -104,7 +104,7 @@ export function PwdQueueEstimator({
             id={selectId}
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            className="mt-2 block min-h-[44px] w-full border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-xs"
+            className="mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-xs"
           >
             {options.map((o) => (
               <option key={o.value} value={o.value}>

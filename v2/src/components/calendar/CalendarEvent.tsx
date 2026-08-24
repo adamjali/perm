@@ -98,7 +98,7 @@ function TooltipContent({ event }: { event: CalendarEventType }) {
         {/* Status row */}
         {event.caseStatus && (
           <div className="case-tooltip-row">
-            <span className="case-tooltip-label">Status</span>
+            <span className="case-tooltip-label">Status</span>{" "}
             <span
               className="case-tooltip-status"
               style={{ color: stageColor, borderColor: stageColor }}
@@ -110,7 +110,7 @@ function TooltipContent({ event }: { event: CalendarEventType }) {
 
         {/* Stage row */}
         <div className="case-tooltip-row">
-          <span className="case-tooltip-label">Stage</span>
+          <span className="case-tooltip-label">Stage</span>{" "}
           <span className="case-tooltip-value">{formatStage(event.stage)}</span>
         </div>
 
@@ -146,7 +146,7 @@ const EventPill = forwardRef<HTMLDivElement, EventPillProps>(
       }}
       onClick={onClick}
     >
-      <span className="event-title">{title}</span>
+      <span className="event-title">{title}</span>{" "}
       <span className="sync-icon">📅</span>
     </div>
   )

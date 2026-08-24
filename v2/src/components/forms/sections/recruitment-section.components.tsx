@@ -158,10 +158,10 @@ export function RecruitmentDeadlineIndicator({
         <div>
           <span className="text-muted-foreground text-xs uppercase tracking-wide">
             Must Complete By
-          </span>
+          </span>{" "}
           <p className="font-medium">
             {format(recruitmentDeadline, "MMM d, yyyy")}
-          </p>
+          </p>{" "}
           <p className="text-xs text-muted-foreground mt-0.5">
             {limitingFactor === '150-day'
               ? '(150 days from first recruitment)'
@@ -171,7 +171,7 @@ export function RecruitmentDeadlineIndicator({
         <div>
           <span className="text-muted-foreground text-xs uppercase tracking-wide">
             PWD Expires
-          </span>
+          </span>{" "}
           <p className="font-medium">
             {format(parseISO(pwdExpirationDate), "MMM d, yyyy")}
           </p>
@@ -182,7 +182,7 @@ export function RecruitmentDeadlineIndicator({
         <div className="text-center pt-2">
           <span className={cn("text-2xl font-bold", config.textColor)}>
             {daysRemaining}
-          </span>
+          </span>{" "}
           <span className="text-sm text-muted-foreground ml-1">
             days remaining
           </span>

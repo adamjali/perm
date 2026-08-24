@@ -77,7 +77,7 @@ export default function SecurityDashboardClient() {
         <div>
           <h1 className="font-heading text-3xl font-black uppercase tracking-tight">
             Security Ops
-          </h1>
+          </h1>{" "}
           <p className="mono text-xs uppercase tracking-widest text-muted-foreground">
             Abuse monitoring · blocklist · flagged users
           </p>

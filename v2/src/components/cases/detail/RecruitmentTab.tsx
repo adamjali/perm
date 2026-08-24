@@ -320,7 +320,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                 <span className="flex items-center gap-1.5">
                   <Users className="h-3.5 w-3.5" />
                   Additional Methods
-                </span>
+                </span>{" "}
                 <span className="head-badge">{methods.length} / {caseData.isProfessionalOccupation ? Math.max(3, methods.length) : methods.length}</span>
               </div>
               <div className="detail-card-body" style={{ padding: 0 }}>

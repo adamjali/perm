@@ -339,7 +339,7 @@ export function I140Section(props: I140SectionProps) {
               value={values.i140Category || ""}
               onChange={handleInputChange}
               className={cn(
-                "flex h-10 w-full rounded-md border-2 border-border bg-background px-3 py-2 text-sm",
+                "flex h-10 w-full min-w-0 rounded-md border-2 border-border bg-background px-3 py-2 text-sm",
                 "ring-offset-background placeholder:text-muted-foreground",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 "disabled:cursor-not-allowed disabled:opacity-50",
@@ -413,7 +413,7 @@ export function I140Section(props: I140SectionProps) {
               value={values.i140ServiceCenter || ""}
               onChange={handleInputChange}
               className={cn(
-                "flex h-10 w-full rounded-md border-2 border-border bg-background px-3 py-2 text-sm",
+                "flex h-10 w-full min-w-0 rounded-md border-2 border-border bg-background px-3 py-2 text-sm",
                 "ring-offset-background placeholder:text-muted-foreground",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 "disabled:cursor-not-allowed disabled:opacity-50",
@@ -474,7 +474,7 @@ export function I140Section(props: I140SectionProps) {
         {/* ========== WARNINGS ========== */}
         {warnings?.i140FilingDate && (
           <div className="rounded-lg border-2 border-orange-300 bg-orange-50 p-3 text-sm text-orange-800 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-700">
-            <p className="font-semibold">⚠ Warning</p>
+            <p className="font-semibold">⚠ Warning</p>{" "}
             <p>{warnings.i140FilingDate}</p>
           </div>
         )}

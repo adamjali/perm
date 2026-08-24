@@ -697,8 +697,8 @@ export function DocumentsTab({
 
                   {/* Meta */}
                   <div className="preview-meta">
-                    <span>Uploaded: {fmtTimestamp(selectedDoc.uploadedAt)}</span>
-                    <span>{getFileTypeLabel(selectedDoc.mimeType)}</span>
+                    <span>Uploaded: {fmtTimestamp(selectedDoc.uploadedAt)}</span>{" "}
+                    <span>{getFileTypeLabel(selectedDoc.mimeType)}</span>{" "}
                     <span>{formatFileSize(selectedDoc.size)}</span>
                     {selectedDoc.category && (
                       <span

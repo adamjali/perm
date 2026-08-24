@@ -28,21 +28,21 @@ export default function AuthFooter() {
             spinnerClassName="text-primary"
           >
             Privacy
-          </NavLink>
+          </NavLink>{" "}
           <NavLink
             href="/terms"
             className="hover-underline text-white transition-colors hover:text-primary"
             spinnerClassName="text-primary"
           >
             Terms
-          </NavLink>
+          </NavLink>{" "}
           <NavLink
             href="/security"
             className="hover-underline text-white transition-colors hover:text-primary"
             spinnerClassName="text-primary"
           >
             Security
-          </NavLink>
+          </NavLink>{" "}
           <NavLink
             href="/contact"
             className="hover-underline text-white transition-colors hover:text-primary"

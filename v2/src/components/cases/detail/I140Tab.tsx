@@ -54,7 +54,7 @@ export function I140Tab({ caseData }: I140TabProps) {
               <span className="flex items-center gap-1.5">
                 <Shield className="h-3.5 w-3.5" />
                 I-140 Petition
-              </span>
+              </span>{" "}
               <span className="head-badge">{statusLabel}</span>
             </div>
 

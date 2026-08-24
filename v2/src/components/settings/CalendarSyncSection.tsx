@@ -551,7 +551,7 @@ export default function CalendarSyncSection({
             <div>
               <p className="text-sm font-medium text-foreground">
                 Google Calendar
-              </p>
+              </p>{" "}
               <p className="text-xs text-muted-foreground">
                 {isConnected
                   ? connectedEmail || "Your calendar is connected and ready to sync"
@@ -615,7 +615,7 @@ export default function CalendarSyncSection({
               <div>
                 <p className="text-sm font-medium text-foreground">
                   Sync All Cases
-                </p>
+                </p>{" "}
                 <p className="text-xs text-muted-foreground">
                   {isSyncingAll
                     ? `Syncing ${syncEligibleCount} case${syncEligibleCount !== 1 ? "s" : ""} to calendar...`
@@ -698,7 +698,7 @@ export default function CalendarSyncSection({
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-foreground font-medium">
                             {estimatedCasesProcessed} of {syncEligibleCount} cases
-                          </span>
+                          </span>{" "}
                           <span className="text-muted-foreground">
                             {syncElapsedSeconds}s elapsed
                             {remainingSeconds > 0 && ` • ~${remainingSeconds}s remaining`}
@@ -723,7 +723,7 @@ export default function CalendarSyncSection({
               <div>
                 <p className="text-sm font-medium text-foreground">
                   Clear All Calendar Events
-                </p>
+                </p>{" "}
                 <p className="text-xs text-muted-foreground">
                   {isClearingEvents
                     ? `Removing ${casesWithEvents.estimatedEventCount} event${casesWithEvents.estimatedEventCount !== 1 ? "s" : ""} from ${casesWithEvents.caseCount} case${casesWithEvents.caseCount !== 1 ? "s" : ""}...`
@@ -810,7 +810,7 @@ export default function CalendarSyncSection({
                             {totalEvents > 0
                               ? `~${estimatedEventsProcessed} of ${totalEvents} events from ${totalCases} case${totalCases !== 1 ? "s" : ""}`
                               : "Processing..."}
-                          </span>
+                          </span>{" "}
                           <span className="text-muted-foreground">
                             {clearElapsedSeconds}s elapsed
                             {remainingSeconds > 0 && ` • ~${remainingSeconds}s remaining`}

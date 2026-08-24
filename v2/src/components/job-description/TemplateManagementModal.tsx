@@ -316,7 +316,7 @@ export function TemplateManagementModal({
                         </div>
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {template.description}
-                        </p>
+                        </p>{" "}
                         <p className="text-xs text-muted-foreground mt-1">
                           Used {template.usageCount}× • Updated {formatTemplateDate(template.updatedAt)}
                         </p>
@@ -521,9 +521,9 @@ export function TemplateManagementModal({
                         <div className="space-y-4">
                           {/* Metadata row - compact */}
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground border-b border-border pb-3">
-                            <span>Created {formatTemplateDate(selectedTemplate.createdAt)}</span>
-                            <span>Updated {formatTemplateDate(selectedTemplate.updatedAt)}</span>
-                            <span>Used {selectedTemplate.usageCount} times</span>
+                            <span>Created {formatTemplateDate(selectedTemplate.createdAt)}</span>{" "}
+                            <span>Updated {formatTemplateDate(selectedTemplate.updatedAt)}</span>{" "}
+                            <span>Used {selectedTemplate.usageCount} times</span>{" "}
                             <span>{selectedTemplate.description.length.toLocaleString()} chars</span>
                           </div>
 
@@ -564,7 +564,7 @@ export function TemplateManagementModal({
                     <FileText className="h-12 sm:h-16 w-12 sm:w-16 text-muted-foreground mb-4" />
                     <p className="text-base sm:text-lg font-medium text-muted-foreground">
                       Select a template
-                    </p>
+                    </p>{" "}
                     <p className="text-sm text-muted-foreground mt-1">
                       Choose a template from the list to view or edit
                     </p>
@@ -587,7 +587,7 @@ export function TemplateManagementModal({
             <AlertDialogDescription className="space-y-2">
               <span className="block">
                 This action cannot be undone. The template will be permanently removed from the database.
-              </span>
+              </span>{" "}
               <span className="block text-amber-600 dark:text-amber-400">
                 Any cases using this template will retain their job description content, but the template link will be removed.
               </span>

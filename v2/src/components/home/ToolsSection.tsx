@@ -90,7 +90,7 @@ export function ToolsSection() {
                       reads "Prevailing wageHow many requests..." as one word. */}
                   <p className="mt-2 flex-1 text-base leading-relaxed text-foreground/70">
                     {s.question}
-                  </p>
+                  </p>{" "}
                   {/* The one stage the employer controls is the one that
                       restarts the case when it is missed, so it is marked. */}
                   <span

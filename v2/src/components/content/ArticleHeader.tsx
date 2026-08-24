@@ -54,7 +54,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
             className="mb-3 inline-block border-2 border-border bg-primary px-2 py-0.5 font-heading text-xs font-bold uppercase tracking-wider text-black"
           >
             {config.label}
-          </motion.span>
+          </motion.span>{" "}
 
           {/* Title */}
           <motion.h1
@@ -62,7 +62,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
             className="mb-4 font-heading text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl"
           >
             {meta.title}
-          </motion.h1>
+          </motion.h1>{" "}
 
           {/* Description */}
           <motion.p

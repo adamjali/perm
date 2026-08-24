@@ -32,13 +32,13 @@ export default function NotFound() {
             {/* Heading */}
             <h1 className="font-heading text-3xl sm:text-4xl font-bold text-foreground uppercase tracking-tight mb-3">
               Dead End
-            </h1>
+            </h1>{" "}
 
             {/* Description */}
             <p className="text-muted-foreground mb-8 max-w-sm">
               The page you&apos;re looking for doesn&apos;t exist or has been
               moved. Check the URL or head back to familiar ground.
-            </p>
+            </p>{" "}
 
             {/* Action buttons */}
             <div className="flex flex-col sm:flex-row gap-3">

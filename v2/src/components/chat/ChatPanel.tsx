@@ -242,7 +242,7 @@ export function ChatPanel({
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
             <MessageSquare className="h-12 w-12 mb-4 opacity-30" />
-            <p className="text-sm">Start a conversation</p>
+            <p className="text-sm">Start a conversation</p>{" "}
             <p className="text-xs mt-1 opacity-70">
               Ask about PERM process, deadlines, or the app
             </p>
@@ -318,7 +318,7 @@ export function ChatPanel({
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-red-800 dark:text-red-200">
                       Having trouble connecting
-                    </p>
+                    </p>{" "}
                     <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                       Our AI services are experiencing high demand. Please try again in a moment.
                     </p>

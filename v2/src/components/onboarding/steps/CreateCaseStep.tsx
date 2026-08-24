@@ -73,7 +73,7 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
     <div className="flex flex-col items-center px-2">
       <h2 className="font-heading text-2xl sm:text-3xl font-bold mb-1 text-center">
         Create your first case
-      </h2>
+      </h2>{" "}
       <p className="text-muted-foreground text-sm mb-6 text-center">
         Just a few fields to get started. You can add details later.
       </p>

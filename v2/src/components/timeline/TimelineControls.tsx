@@ -113,7 +113,7 @@ export function TimelineControls({
             >
               <div className="flex items-center">
                 <Calendar className="size-4 mr-2" />
-                <span className="hidden sm:inline">{currentRangeLabel}</span>
+                <span className="hidden sm:inline">{currentRangeLabel}</span>{" "}
                 <span className="sm:hidden">
                   {timeRange}M
                 </span>
@@ -154,7 +154,7 @@ export function TimelineControls({
         >
           <div className="flex items-center">
             <Filter className="size-4 mr-2" />
-            <span className="hidden sm:inline">Select Cases</span>
+            <span className="hidden sm:inline">Select Cases</span>{" "}
             <span className="sm:hidden">Cases</span>
           </div>
           <span

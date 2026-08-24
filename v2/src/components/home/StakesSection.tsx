@@ -219,7 +219,7 @@ export function StakesSection() {
                 {/* Title */}
                 <h3 className="mb-2 font-heading text-xl font-bold">
                   {stake.title}
-                </h3>
+                </h3>{" "}
 
                 {/* Consequence */}
                 <p className="mb-5 text-[15px] leading-relaxed text-muted-foreground">

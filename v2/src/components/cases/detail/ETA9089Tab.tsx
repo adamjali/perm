@@ -61,7 +61,7 @@ export function ETA9089Tab({
               <span className="flex items-center gap-1.5">
                 <FileText className="h-3.5 w-3.5" />
                 ETA Form 9089
-              </span>
+              </span>{" "}
               <span className="head-badge">
                 {isCertified ? "Certified" : isFiled ? "Filed" : "Pending"}
               </span>

@@ -50,7 +50,7 @@ export default function UpcomingDeadlineItem({ deadline }: UpcomingDeadlineItemP
       <div className="flex-1 min-w-0">
         <p className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary transition-colors" title={employerName}>
           {employerName}
-        </p>
+        </p>{" "}
         <p className="text-xs text-muted-foreground uppercase tracking-wide truncate" title={label}>
           {label}
         </p>
@@ -61,7 +61,7 @@ export default function UpcomingDeadlineItem({ deadline }: UpcomingDeadlineItemP
         <CaseStageBadge stage={caseStatus} bordered className="text-xs px-2 py-0.5" />
         <span className="text-xs text-muted-foreground whitespace-nowrap">
           {safeFormatShortDate(dueDate)}
-        </span>
+        </span>{" "}
         <span
           className={cn(
             "text-sm font-bold mono min-w-[4rem] text-right",

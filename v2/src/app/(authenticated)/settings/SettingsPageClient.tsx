@@ -83,7 +83,7 @@ function AutoCloseSection() {
       <div>
         <h2 className="font-heading text-xl font-bold mb-2">
           Deadline Enforcement
-        </h2>
+        </h2>{" "}
         <p className="text-muted-foreground text-sm">
           Configure automatic case closure based on expired deadlines.
         </p>
@@ -241,7 +241,7 @@ export function SettingsPageClient() {
       <div data-tour="settings-page" className="space-y-8">
         {/* Page Header */}
         <div>
-          <h1 className="font-heading text-3xl font-bold">Settings</h1>
+          <h1 className="font-heading text-3xl font-bold">Settings</h1>{" "}
           <p className="text-muted-foreground mt-1">
             Manage your account preferences
           </p>

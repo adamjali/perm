@@ -35,7 +35,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
 
       <h2 className="font-heading text-2xl sm:text-3xl font-bold mb-2">
         Welcome to PERM Tracker
-      </h2>
+      </h2>{" "}
       <p className="text-muted-foreground text-sm sm:text-base max-w-md mb-8">
         Track every PERM deadline, never miss a filing window, and keep all your
         cases organized in one place.
@@ -51,7 +51,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
               <item.icon className="w-4 h-4 text-primary" strokeWidth={2.5} />
             </div>
             <div className="min-w-0">
-              <p className="font-heading font-semibold text-sm">{item.text}</p>
+              <p className="font-heading font-semibold text-sm">{item.text}</p>{" "}
               <p className="text-xs text-muted-foreground">{item.detail}</p>
             </div>
           </div>

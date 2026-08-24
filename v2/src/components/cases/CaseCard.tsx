@@ -225,7 +225,7 @@ export const CaseCard = memo(function CaseCard({
           <div className="flex-1 min-w-0">
             <h3 className="font-heading font-bold text-lg leading-tight truncate text-black dark:text-black" title={employerName}>
               {employerName}
-            </h3>
+            </h3>{" "}
             <p className="text-sm text-[#666666] truncate" title={positionTitle || beneficiaryIdentifier}>{positionTitle || beneficiaryIdentifier}</p>
           </div>
           <CaseBadges

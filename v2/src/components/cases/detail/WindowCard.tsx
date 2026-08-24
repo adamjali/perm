@@ -22,12 +22,12 @@ export function WindowCard({ ws, title, stageColor, startDate, endDate }: Window
         <div className="win-accent" style={{ background: stageColor }} />
         <div className="win-inner">
           <div className="win-header">
-            <span className="win-title">{title}</span>
+            <span className="win-title">{title}</span>{" "}
             <span className="win-chip" style={ws.chipStyle}>{ws.chip}</span>
           </div>
           <div className="win-hero">
             <div>
-              <span className="win-hero-num" style={{ color: stageColor }}>{ws.days}</span>
+              <span className="win-hero-num" style={{ color: stageColor }}>{ws.days}</span>{" "}
               <span className="win-hero-unit">days</span>
             </div>
             <div className="win-hero-label">{ws.label}</div>

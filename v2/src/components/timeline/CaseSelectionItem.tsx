@@ -72,7 +72,7 @@ export function CaseSelectionItem({
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm truncate" title={caseData.employerName}>
           {caseData.employerName}
-        </p>
+        </p>{" "}
         <p
           className="text-xs text-muted-foreground truncate"
           title={caseData.positionTitle}

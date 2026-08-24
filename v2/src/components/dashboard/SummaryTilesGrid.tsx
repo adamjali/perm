@@ -70,7 +70,7 @@ function SummaryTilesGridContent({
                      transition-all duration-150 px-4 py-2 overflow-hidden"
         >
           <div className="flex items-center gap-2">
-            <span className="mono text-2xl font-bold">{total}</span>
+            <span className="mono text-2xl font-bold">{total}</span>{" "}
             <span className="text-xs font-semibold uppercase tracking-wide opacity-90">
               Total
             </span>

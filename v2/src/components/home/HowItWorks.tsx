@@ -227,7 +227,7 @@ export function HowItWorks() {
                 {/* Title */}
                 <h3 className="font-heading text-xl font-bold mb-2">
                   {step.title}
-                </h3>
+                </h3>{" "}
 
                 {/* Description */}
                 <p className="text-[15px] text-muted-foreground leading-relaxed max-w-[280px] mx-auto">

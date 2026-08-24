@@ -100,9 +100,9 @@ export default function DeleteNowDialog({
               </div>
               <p>The following will be permanently deleted immediately:</p>
               <ul className="list-disc list-inside text-sm space-y-1 ml-2">
-                <li>All your PERM cases and related data</li>
-                <li>Notification preferences and history</li>
-                <li>Calendar sync settings</li>
+                <li>All your PERM cases and related data</li>{" "}
+                <li>Notification preferences and history</li>{" "}
+                <li>Calendar sync settings</li>{" "}
                 <li>Your user profile</li>
               </ul>
             </div>

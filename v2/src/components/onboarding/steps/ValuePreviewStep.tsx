@@ -39,7 +39,7 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
     <div className="flex flex-col items-center px-2">
       <h2 className="font-heading text-2xl sm:text-3xl font-bold mb-1 text-center">
         Here&apos;s what happens next
-      </h2>
+      </h2>{" "}
       <p className="text-muted-foreground text-sm mb-6 text-center">
         Your case is live. Here&apos;s what PERM Tracker does for you automatically.
       </p>
@@ -64,7 +64,7 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
             <div className="pb-5">
               <p className="font-heading font-semibold text-sm">
                 {feature.title}
-              </p>
+              </p>{" "}
               <p className="text-xs text-muted-foreground mt-0.5">
                 {feature.description}
               </p>

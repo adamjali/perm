@@ -87,7 +87,7 @@ export function EmptyState({
         ) : null}
       </div>
 
-      <h2 className="relative font-heading text-2xl font-bold mb-2">{heading}</h2>
+      <h2 className="relative font-heading text-2xl font-bold mb-2">{heading}</h2>{" "}
 
       <p className="relative text-muted-foreground text-center max-w-md mb-6">
         {description}

@@ -249,7 +249,7 @@ function NotificationListItem({
             title={notification.title}
           >
             {notification.title}
-          </p>
+          </p>{" "}
           <span className="text-xs text-muted-foreground font-mono whitespace-nowrap shrink-0">
             {safeFormatDistanceToNow(notification.createdAt)}
           </span>
@@ -377,7 +377,7 @@ function EmptyState({ activeTab }: { activeTab: NotificationTabType }) {
       >
         <Bell className="h-8 w-8 text-muted-foreground" />
       </div>
-      <p className="text-lg font-heading font-bold text-foreground">{title}</p>
+      <p className="text-lg font-heading font-bold text-foreground">{title}</p>{" "}
       <p className="text-sm text-muted-foreground mt-2 max-w-xs">{description}</p>
     </div>
   );

@@ -101,7 +101,7 @@ export default function ContentHero({
             className="mb-4 inline-block border-2 border-border bg-primary px-3 py-1 font-heading text-xs font-bold uppercase tracking-wider text-black"
           >
             {config.label}
-          </motion.span>
+          </motion.span>{" "}
 
           {/* Title */}
           <motion.h1
@@ -109,7 +109,7 @@ export default function ContentHero({
             className="mb-4 font-heading text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl"
           >
             {title ?? config.plural}
-          </motion.h1>
+          </motion.h1>{" "}
 
           {/* Description */}
           <motion.p

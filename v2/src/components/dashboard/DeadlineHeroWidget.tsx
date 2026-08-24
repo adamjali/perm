@@ -144,7 +144,7 @@ function DeadlineHeroEmptyState({
         <div className="flex flex-col items-center justify-center rounded-none border-2 border-border bg-background p-8 text-center">
           <p className="mb-4 text-lg text-muted-foreground">
             No upcoming deadlines
-          </p>
+          </p>{" "}
           <p className="text-sm text-muted-foreground">
             Create a case to start tracking deadlines
           </p>

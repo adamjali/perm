@@ -140,7 +140,7 @@ export function EmailLayout({
           {/* Header */}
           <Section className="em-header" style={styles.header}>
             <Text style={styles.logo}>
-              <span style={styles.logoPerm}>PERM</span>
+              <span style={styles.logoPerm}>PERM</span>{" "}
               <span style={styles.logoTracker}> Tracker</span>
             </Text>
           </Section>

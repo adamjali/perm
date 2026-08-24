@@ -166,7 +166,7 @@ export default function AutoClosureAlertBanner() {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold text-amber-900 dark:text-amber-100 truncate" title={alert.employerName}>
                   {alert.employerName}
-                </span>
+                </span>{" "}
                 <span className="text-amber-700 dark:text-amber-300 text-sm truncate" title={alert.positionTitle}>
                   - {alert.positionTitle}
                 </span>
@@ -174,7 +174,7 @@ export default function AutoClosureAlertBanner() {
               <div className="flex items-center gap-2 mt-1 text-sm text-amber-600 dark:text-amber-400">
                 <span className="inline-flex items-center px-2 py-0.5 bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 text-xs font-medium rounded-sm">
                   {formatClosureReason(alert.closureReason)}
-                </span>
+                </span>{" "}
                 <span className="text-xs text-amber-500 dark:text-amber-500">
                   {formatTimeAgo(alert.createdAt)}
                 </span>

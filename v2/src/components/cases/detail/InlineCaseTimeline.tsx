@@ -512,7 +512,7 @@ export function InlineCaseTimeline({
                           )}
                           aria-hidden="true"
                         >
-                          <span className="font-bold">{rangeBar.label}</span>
+                          <span className="font-bold">{rangeBar.label}</span>{" "}
                           <span className="mx-1.5 opacity-40">|</span>
                           {formatISODate(rangeBar.startDate)} to {formatISODate(rangeBar.endDate)}
                           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
