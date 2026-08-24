@@ -114,6 +114,21 @@ if (filingDate > certDate + 180) { ... } // WRONG
 // DON'T: Manual business day calculation
 // DO: import { addBusinessDays } from '@/lib/perm';
 
+// DON'T: call a raw calculator when a canonical composite exists
+const w = calculateETA9089Window(first, last);      // WRONG: no PWD cap
+// DO: the composite carries the rule the raw arithmetic cannot know —
+// the window CLOSES at the earlier of first+180 and the PWD expiration,
+// and isPwdLimited says when the cap applied. The deadline tool shipped
+// close dates on which filing is barred by using the raw call.
+const w = calculateFilingWindow({ firstRecruitmentDate, lastRecruitmentDate, pwdExpirationDate });
+
+// DON'T: assert "obvious" PERM arithmetic in tests from memory
+expect(expiration).toBe(addDays(det, 90));           // WRONG
+// calculatePWDExpiration implements the OEWS wage-year rule: a January
+// determination expires June 30 of THAT year, not det+90. A test asserting
+// +90 days failed against the real model — which is the whole argument for
+// central logic. Derive expected values by READING the calculator.
+
 // DON'T: Use ?? in dense expressions (SWC minifier drops vars with ~20+ ?? chains → prod ReferenceError)
 const value = a ?? b ?? c ?? d ?? e; // WRONG
 // DO: Use || or ternary
@@ -553,6 +568,12 @@ difference between 403 and 404 is the only thing that says which problem you hav
 - **`nohup cmd &` makes the harness report the WRAPPER finishing, not the job.**
   A 5-minute build "completed" in seconds with no `.next/server`. Use the tool's
   own background flag.
+- **A deploy watcher's marker must be unique to the NEW deploy, and in the
+  artefact that actually changed.** One watcher fired instantly because its
+  marker was already satisfied by the previous deploy; a second spun forever
+  because it grepped served HTML for copy that only renders after user input —
+  client-component strings live in the JS chunks
+  (`/_next/static/chunks/app/**/page-*.js`), not the page HTML. Grep the chunk.
 - **Assert the port, not the status code.** `pnpm dev` found 3000 taken and
   silently used 3001; the 200s came from another session's server and one page
   even returned a stale 500. `lsof -nP -iTCP:<port> -sTCP:LISTEN` before trusting
@@ -790,6 +811,23 @@ Two things the parser must not simplify:
 
 **A CDX wildcard over a whole path truncates at the row limit**, and returned
 bulletins from 2022 while reporting success. Query per calendar year.
+
+## Calculator tools: warnings above results, withhold on nonsense
+
+The 2026-08-24 audit standard for the /tools suite, now pinned by
+`PermDeadlineCalculator.test.tsx`:
+
+- Free-text date tools guard shape (`DATE_RE` + try/catch) and ride
+  `DateInput`'s 1900-2100 clamp. Everything else is select-driven so invalid
+  input cannot exist.
+- **Cross-field nonsense warns and withholds rather than computing quietly.**
+  Reversed recruitment order still yields plausible-looking dates
+  (opens=last+30, closes=first+180 usually keeps opens<closes), so without an
+  explicit warning nothing ever LOOKS wrong. The warning band renders ABOVE the
+  date rows: a date computed from suspect input must not read as more
+  authoritative than the doubt about the input.
+- Every data-fed view keeps an empty state linking the primary source, for the
+  deploy-skew window.
 
 ## Extract shared logic the SECOND time, not the third
 
