@@ -48,7 +48,8 @@ describe("PermDeadlineCalculator", () => {
     render(<PermDeadlineCalculator />);
     setDate(/prevailing wage determination date/i, "2026-06-01"); // expires 2026-08-30
     setDate(/first recruitment step/i, "2026-01-10"); // natural close 2026-07-09
-    expect(screen.getByText("July 9, 2026")).toBeInTheDocument();
+    // The window diagram repeats dates on its axis, so count, not unique.
+    expect(screen.getAllByText("July 9, 2026").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/one hundred and eighty days/i)).toBeInTheDocument();
     expect(screen.queryByText(/capped by the prevailing wage/i)).not.toBeInTheDocument();
   });

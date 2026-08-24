@@ -42,6 +42,7 @@ import {
   analystReviewAverage,
 } from "../../../convex/lib/dolProcessingTimes";
 import { LiveDataBand } from "@/components/home/LiveDataBand";
+import { SectionDivider } from "@/components/home/SectionDivider";
 
 // One live DOL figure on the page: hourly ISR, same as the data pages.
 export const revalidate = 3600;
@@ -109,6 +110,7 @@ export default async function HomePage() {
       <SecuritySection />
       <TestimonialsSection />
       <FAQSection />
+      <SectionDivider kind="step" fill="var(--primary)" />
       <CTASection />
     </>
   );

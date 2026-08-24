@@ -129,7 +129,13 @@ export function CTASection() {
                   <Rocket className="mr-2 h-5 w-5" />
                 )}
                 Start Tracking Cases
-              </Button>
+              </Button>{" "}
+            <a
+              href="/tools"
+              className="mt-4 block font-bold text-black underline decoration-black/40 decoration-2 underline-offset-4 transition-colors hover:decoration-black"
+            >
+              Or start with the live data — no account
+            </a>
             </MagneticButton>
           </div>
         </ScrollReveal>

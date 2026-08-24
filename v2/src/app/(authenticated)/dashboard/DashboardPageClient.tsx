@@ -13,6 +13,7 @@ import UpcomingDeadlinesWidget from "@/components/dashboard/UpcomingDeadlinesWid
 import AddCaseButton from "@/components/dashboard/AddCaseButton";
 import AutoClosureAlertBanner from "@/components/dashboard/AutoClosureAlertBanner";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
+import { QueuePulseWidget } from "@/components/dashboard/QueuePulseWidget";
 
 export function DashboardPageClient() {
   const router = useRouter();
@@ -108,6 +109,7 @@ export function DashboardPageClient() {
       <DeadlineHeroWidget />
 
       {/* Summary Tiles Grid */}
+      <QueuePulseWidget />
       <SummaryTilesGrid cornerVariant="tag" />
 
       {/* Onboarding Checklist - shown for new users after wizard */}

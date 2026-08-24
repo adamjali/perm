@@ -23,6 +23,7 @@ import {
 } from "@/lib/perm";
 import { formatAsOf } from "@/lib/dolFormat";
 import { DateInput } from "@/components/forms/DateInput";
+import { DeadlineWindowDiagram } from "./DeadlineWindowDiagram";
 import { Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -47,10 +48,25 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
   const [firstRecruitment, setFirstRecruitment] = useState("");
   const [lastRecruitment, setLastRecruitment] = useState("");
 
-  const result = useMemo((): { rows: Row[]; warnings: string[] } | null => {
+  const result = useMemo((): {
+    rows: Row[];
+    warnings: string[];
+    diagram: {
+      pwdExpiration: string;
+      windowOpens?: string;
+      windowCloses?: string;
+      isPwdLimited?: boolean;
+    } | null;
+  } | null => {
     if (!DATE_RE.test(pwdDate)) return null;
     try {
       const warnings: string[] = [];
+      let diagram: {
+        pwdExpiration: string;
+        windowOpens?: string;
+        windowCloses?: string;
+        isPwdLimited?: boolean;
+      } | null = null;
       const pwdExpiration = calculatePWDExpiration(pwdDate);
       const rows: Row[] = [
         {
@@ -115,6 +131,12 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
             pwdExpirationDate: pwdExpiration,
           });
           if (window) {
+            diagram = {
+              pwdExpiration,
+              windowOpens: hasLast ? window.opens : undefined,
+              windowCloses: window.closes,
+              isPwdLimited: window.isPwdLimited,
+            };
             if (hasLast) {
               rows.push({
                 label: "ETA-9089 filing window opens",
@@ -139,7 +161,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         }
       }
 
-      return { rows, warnings };
+      return { rows, warnings, diagram: diagram ?? { pwdExpiration } };
     } catch {
       // A malformed date reaches here rather than crashing the page. The inputs
       // are date pickers, so this is the paste-a-bad-value path.
@@ -234,6 +256,20 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
               <p className="text-base font-bold leading-relaxed">{w}</p>
             </div>
           ))}
+        </div>
+      ) : null}{" "}
+
+      {result && result.diagram && DATE_RE.test(pwdDate) ? (
+        <div className="border-b-2 border-border p-6 sm:p-8">
+          <DeadlineWindowDiagram
+            pwdDate={pwdDate}
+            pwdExpiration={result.diagram.pwdExpiration}
+            firstRecruitment={DATE_RE.test(firstRecruitment) ? firstRecruitment : undefined}
+            lastRecruitment={DATE_RE.test(lastRecruitment) ? lastRecruitment : undefined}
+            windowOpens={result.diagram.windowOpens}
+            windowCloses={result.diagram.windowCloses}
+            isPwdLimited={result.diagram.isPwdLimited}
+          />
         </div>
       ) : null}{" "}
 

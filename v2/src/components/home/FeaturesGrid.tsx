@@ -142,7 +142,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
         {feature.learnMoreHref && (
           <Link
             href={feature.learnMoreHref}
-            className="relative mt-3 inline-block text-xs font-semibold text-primary transition-colors duration-200 hover:text-primary/80"
+            className="relative mt-3 inline-block text-xs font-semibold text-foreground underline decoration-primary decoration-2 underline-offset-2 transition-colors duration-200 hover:text-primary"
           >
             {feature.learnMoreText}
           </Link>

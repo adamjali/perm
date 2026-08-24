@@ -17,14 +17,13 @@
 
 import { useRef } from "react";
 import Image from "next/image";
-import { Loader2, Rocket, Play, Shield, Zap, Clock } from "lucide-react";
+import { Loader2, Shield, Zap, Clock } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
-import { Button } from "@/components/ui/button";
-import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useReducedMotion } from "@/lib/animations";
 import { Lightbox } from "@/components/ui/lightbox";
+import { QueueFlowCanvas } from "./QueueFlowCanvas";
 
 export function HeroSection() {
   const { isNavigating, navigateTo, targetPath } = useNavigationLoading();
@@ -50,11 +49,14 @@ export function HeroSection() {
 
   return (
     <section ref={heroRef} id="hero" className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
-      {/* No photo underlay, no particles: the page's ground is the paper +
-          dot grid the whole site stands on, and the hero's one image is the
-          product screenshot below — evidence, not atmosphere. Cutting the
-          full-bleed priority JPEG here also removed the page's largest
-          first-paint payload. */}
+      {/* The one ambient moment on the site: the queue itself, drifting.
+          Cases as dots, grey while they wait, primary once they cross the
+          frontier — the same metaphor the tape and the timeline calculator
+          draw. Canvas 2D, IO-gated, 30fps, one static frame under
+          prefers-reduced-motion. */}
+      <div className="absolute inset-0 z-0" aria-hidden="true">
+        <QueueFlowCanvas />
+      </div>
 
       {/* Scroll indicator — mouse + line + text (CSS animations for reliability) */}
       <div
@@ -96,56 +98,76 @@ export function HeroSection() {
           <ScrollReveal direction="up" stagger className="flex flex-col gap-6">
             {/* Eyebrow with animated dot */}
             <div className="inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
-              <span className="pulse-dot h-2 w-2 bg-primary" />
-              PERM Deadline Management
+              <span className="h-2 w-2 bg-primary" aria-hidden="true" />
+              Live DOL data · Automatic deadlines
             </div>
 
             {/* Headline with shimmer accent */}
             <h1 className="font-heading text-3xl font-black leading-[1.1] tracking-[-0.02em] sm:text-4xl lg:text-5xl xl:text-6xl">
-              Never Lose a Case to a{" "}
-              <span className="hero-shimmer-text inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-                Missed Deadline
+              The whole PERM process,{" "}
+              <span className="inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
+                tracked
               </span>
             </h1>{" "}
 
-            {/* Subheadline */}
+            {/* Subheadline: the problem, then the two halves of the answer. */}
             <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              PERM Tracker auto-calculates every filing window, PWD expiration, and audit response deadline, then alerts you before they hit.
+              A PERM case takes a year and one missed date can end it. We show
+              where DOL&apos;s queue stands from its own published data, and we
+              compute every deadline in your case automatically. Free.
             </p>
 
-            {/* CTAs */}
-            <div className="flex flex-wrap gap-4 pt-4">
-              <MagneticButton>
-                <Button
-                  size="lg"
-                  className="h-14 border-3 border-border px-8 font-heading text-base font-bold uppercase tracking-[0.05em] shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
-                  onClick={() => navigateTo("/signup")}
-                  disabled={isNavigating}
-                >
-                  {isNavigating && targetPath === "/signup" ? (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  ) : (
-                    <Rocket className="mr-2 h-5 w-5" />
-                  )}
-                  Start Tracking Cases
-                </Button>
-              </MagneticButton>{" "}
-              <MagneticButton>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="h-12 border-3 border-border bg-transparent px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] text-foreground shadow-hard transition-all duration-150 hover:bg-foreground hover:text-background hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:bg-[#404040] dark:border-[rgba(255,255,255,0.3)] dark:hover:bg-primary dark:hover:text-black dark:hover:border-primary"
-                  onClick={() => navigateTo("/tools")}
-                  disabled={isNavigating}
-                >
+            {/* Two doors: the site's whole demarcation, made at the top.
+                One product, two readers — the person waiting and the person
+                managing — each named in their own words, each linking into
+                the other's half further down the page. */}
+            <div className="grid gap-4 pt-4 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => navigateTo("/tools")}
+                disabled={isNavigating}
+                className="group flex flex-col border-3 border-border bg-tint-primary p-5 text-left shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+              >
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+                  Waiting on a case
+                </span>{" "}
+                <span className="mt-2 font-heading text-lg font-black leading-tight">
+                  See where the queue stands
+                </span>{" "}
+                <span className="mt-2 text-sm leading-relaxed text-foreground/70">
+                  Live DOL figures, decision estimates, and one email when
+                  your month comes up.
+                </span>{" "}
+                <span className="mt-3 inline-flex items-center gap-2 font-bold">
                   {isNavigating && targetPath === "/tools" ? (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  ) : (
-                    <Play className="mr-2 h-5 w-5" />
-                  )}
-                  View Demo
-                </Button>
-              </MagneticButton>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : null}
+                  Open the data →
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigateTo("/signup")}
+                disabled={isNavigating}
+                className="group flex flex-col border-3 border-border bg-foreground p-5 text-left text-background shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+              >
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+                  Managing cases
+                </span>{" "}
+                <span className="mt-2 font-heading text-lg font-black leading-tight">
+                  Track every deadline
+                </span>{" "}
+                <span className="mt-2 text-sm leading-relaxed text-background/70">
+                  Filing windows, PWD expirations and audit responses computed
+                  per case, with alerts and calendar sync.
+                </span>{" "}
+                <span className="mt-3 inline-flex items-center gap-2 font-bold text-background underline decoration-primary decoration-2 underline-offset-4">
+                  {isNavigating && targetPath === "/signup" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : null}
+                  Start tracking free →
+                </span>
+              </button>
             </div>
 
             {/* Trust badges - visual chips */}
