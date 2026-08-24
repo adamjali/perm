@@ -853,7 +853,7 @@ export function ImportModal({
                         </Button>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid [&>*]:min-w-0 grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Employer Name */}
                         <div className="space-y-2">
                           <Label htmlFor="edit-employer" className="text-xs font-medium">

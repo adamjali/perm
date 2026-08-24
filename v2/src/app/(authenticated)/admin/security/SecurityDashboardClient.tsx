@@ -157,7 +157,7 @@ function SummaryCards({ summary }: { summary?: SummaryShape }) {
     { label: "Flagged Users", value: summary?.flaggedUsers, accent: "destructive" as const, icon: UserX },
   ];
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+    <div className="grid [&>*]:min-w-0 grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
       {cards.map((c) => {
         const Icon = c.icon;
         return (
@@ -573,7 +573,7 @@ function DashboardSkeleton() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-8">
       <Skeleton className="h-8 w-64" />
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid [&>*]:min-w-0 grid-cols-2 gap-4 sm:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-24" />
         ))}

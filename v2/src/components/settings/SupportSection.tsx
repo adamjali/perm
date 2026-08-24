@@ -230,7 +230,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
         </p>{" "}
 
         {/* Support Links Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Contact Support */}
           <a
             href={`mailto:${SUPPORT_EMAIL}`}

@@ -141,7 +141,7 @@ export function I140QueueEstimator({
         </div>
       </div>
 
-      <div className="grid gap-px border-b-2 border-border bg-border sm:grid-cols-2">
+      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2">
         <div className="bg-primary/10 p-6 sm:p-8">
           <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
             Petitions waiting
@@ -169,7 +169,7 @@ export function I140QueueEstimator({
 
       {/* The two figures side by side. They disagree, and the disagreement is
           the most useful thing on the page. */}
-      <div className="grid gap-px border-b-2 border-border bg-border sm:grid-cols-2">
+      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2">
         {published ? (
           <div className="bg-card p-6 sm:p-8">
             <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
@@ -228,7 +228,7 @@ export function I140QueueEstimator({
               <Fragment key={s.code}>
                 {" "}
                 <li
-                  className="grid grid-cols-[4.5rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[16rem_1fr_5rem]"
+                  className="grid [&>*]:min-w-0 grid-cols-[4.5rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[16rem_1fr_5rem]"
                 >
                   <span
                     className={cn(

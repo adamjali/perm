@@ -322,7 +322,7 @@ export function OverviewTab({
       })()}
 
       {/* 2-Column Layout: Timeline Sidebar + Main (matching mockup) */}
-      <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
         {/* Sidebar: Vertical Timeline */}
         {!isMobile && (
           <div className="space-y-6">
@@ -335,7 +335,7 @@ export function OverviewTab({
         {/* Main column */}
         <div className="space-y-6">
           {/* PWD + Quick Stats side by side (mockup: 1.8fr 1fr) */}
-          <div className="grid gap-6 md:grid-cols-[1.8fr_1fr]">
+          <div className="grid [&>*]:min-w-0 grid-cols-1 gap-6 md:grid-cols-[1.8fr_1fr]">
             <motion.div variants={itemVariants}>
               <Link href={buildEditUrl(caseData._id, "pwdFilingDate")} className="detail-card-link" title="Edit in case form">
                 <div className="detail-card">

@@ -20,10 +20,22 @@ import { join } from "node:path";
  * `repeat(1, minmax(0, 1fr))`. The `minmax(0, …)` is the whole point: it floors
  * the track at zero so it can always shrink to its container.
  *
- * Scoped to components that render a date control, because that is where the
- * content contribution is set by the browser rather than by us — WebKit's UA
- * stylesheet makes temporal inputs `display: inline-flex` with its own padding
- * and font, so their intrinsic width is not something this codebase controls.
+ * Scoped to files that render a FORM CONTROL of any kind, because that is
+ * where the content contribution is set by the browser rather than by us: a
+ * control's intrinsic width comes from the UA stylesheet, its own padding and
+ * a system font, none of which this codebase picks. Text is not in scope — it
+ * wraps, so its min-content is a word and it cannot blow out a track.
+ *
+ * That boundary was drawn too tight at first. Scoping to `<DateInput>` alone
+ * left fourteen grids unfixed, including ToolPageFooter, which sits on every
+ * calculator page directly beneath the card the date fields are in, and
+ * I140QueueEstimator, whose `<select>` has an intrinsic width of its own.
+ *
+ * Two utilities are required, and they do different jobs:
+ *   `grid-cols-1`     floors the TRACK  — repeat(1, minmax(0, 1fr))
+ *   `[&>*]:min-w-0`   floors the ITEMS  — a grid item's own `min-width: auto`
+ *                     still resolves to a content-based minimum inside a
+ *                     floored track, so the track alone is not enough.
  */
 
 const ROOT = "src";
@@ -55,10 +67,10 @@ describe("responsive grids define a mobile track", () => {
     (f) => !/\.test\.tsx$|__tests__|\.stories\./.test(f),
   );
 
-  const withDateControl = files.filter((f) => {
+  const CONTROL = /<(?:input|select|textarea|DateInput|SelectInput|Input|Textarea)\b/;
+  const withControl = files.filter((f) => {
     // eslint-disable-next-line security/detect-non-literal-fs-filename -- walk() only yields ROOT paths
-    const source = readFileSync(f, "utf8");
-    return /<DateInput\b/.test(source) || /type="date"/.test(source);
+    return CONTROL.test(readFileSync(f, "utf8"));
   });
 
   it("scans a plausible number of files", () => {
@@ -66,20 +78,24 @@ describe("responsive grids define a mobile track", () => {
     // version of this check matched `sm:grid-cols-2` as if it defined the
     // mobile track and reported every one of these files clean.
     expect(files.length).toBeGreaterThan(100);
-    expect(withDateControl.length).toBeGreaterThan(5);
+    expect(withControl.length).toBeGreaterThan(20);
   });
 
-  it("gives every grid around a date control an explicit column track", () => {
+  it("gives every grid around a form control an explicit column track", () => {
     const offenders: string[] = [];
-    for (const file of withDateControl) {
+    for (const file of withControl) {
       // eslint-disable-next-line security/detect-non-literal-fs-filename -- from withDateControl
       const source = readFileSync(file, "utf8");
       for (const m of source.matchAll(CLASS_ATTR)) {
         const classes = m[1] ?? m[2] ?? "";
         if (!IS_GRID.test(classes)) continue;
-        if (UNPREFIXED_COLS.test(classes)) continue;
         const line = source.slice(0, m.index).split("\n").length;
-        offenders.push(`${file}:${line} — "${classes.slice(0, 60)}"`);
+        if (!UNPREFIXED_COLS.test(classes)) {
+          offenders.push(`${file}:${line} no mobile track — "${classes.slice(0, 50)}"`);
+        }
+        if (!classes.includes("[&>*]:min-w-0")) {
+          offenders.push(`${file}:${line} items unfloored — "${classes.slice(0, 50)}"`);
+        }
       }
     }
     expect(offenders).toEqual([]);

@@ -171,7 +171,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
     <FormSection title="Basic Information" defaultOpen>
       <div className="space-y-4">
         {/* ========== PRIMARY FIELDS ========== */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
           {/* Employer Name (Full Width) */}
           <FormField
             label="Employer Name"
@@ -280,7 +280,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
             {/* Case Status */}
             <FormField
               label="Case Status"

@@ -277,7 +277,7 @@ export default function QuietHoursSection({
               className="space-y-4 overflow-hidden"
             >
               {/* Time Pickers */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div className="grid [&>*]:min-w-0 grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 {/* Start Time */}
                 <div className="space-y-1.5">
                   <Label
