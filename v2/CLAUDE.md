@@ -594,6 +594,92 @@ a plausible number of files first.
 **Verify on the BUILT page, not the source.** The count that matters is what an
 extractor reads out of the rendered HTML.
 
+### A source-level gate cannot see most of it (measured 2026-08-24)
+
+`no-glued-jsx-text.test.ts` reported clean while **153 real pairs** were being
+served, and the live site was serving **172** — among them
+`PrivacyTermsSecurityContact` in the auth footer and
+`All2026auditbest-practices` on every content index. Five blind spots, four of
+them structural and unfixable in a source scan:
+
+| Shape | Why the pattern misses it |
+|---|---|
+| `{items.map(...)}` | the glue is between ARRAY ELEMENTS; there is no newline between two tags in the source at all |
+| `<NavLink>`, any custom component | not in any HTML tag list |
+| `<motion.h1>` | renders an `<h1>` under a dotted lowercase name |
+| `</p>{cond ? (…) : null}<p>` | the next token is `{`, not `<`, and the glue only exists in the branch that renders nothing |
+| `</h3>{/* Consequence */}<p>` | a comment renders nothing but stops a whitespace-only pattern matching. **House style here: 26 pairs across 21 files hid behind it.** |
+
+The gate now handles comments and `motion.*`. It still cannot see the other
+three, so **the authoritative check is the rendered one**:
+
+```bash
+pnpm build && PORT=3100 pnpm start
+python3 scripts/audit_glued_text.py --base http://127.0.0.1:3100   # exit 1 on any
+```
+
+Two things that script gets right and an obvious version does not. **Adjacency
+is not glue** — two icon-only links have no text between them and are fine, so
+it requires a word character on BOTH sides; a first pass without that reported
+293 where 153 were real. And **read forward from AFTER the opening tag**: an
+earlier version started inside it, so the first character was always `>` or a
+space, and it reported zero over a page with fourteen pairs. It was caught by
+probing with six fixtures, three that must match and three that must not.
+
+**Fix for a `.map()` is a keyed `Fragment` with a leading `{" "}`.** A
+whitespace-only text node between flex or grid items is not rendered as an item,
+so it costs nothing visually.
+
+**Scope is public pages.** The authenticated app is behind a login and is never
+crawled. Extending the gate to every capitalised component tag produces **517
+findings across 118 files** and a sample showed most are `</FormField><FormField>`
+and `</Section><Section>` block containers — a noise count, not a defect count.
+
+---
+
+## `min-width: auto` breaks form controls on iOS and nowhere else
+
+A grid or flex item defaults to `min-width: auto`, so it will not shrink below
+its intrinsic width. WebKit's intrinsic width for `input[type=date]` is wider
+than Blink's, and every browser on iOS is WebKit, so a field sits correctly
+inside its card on a desktop and hangs past the right padding on an iPhone.
+Reported twice from Chrome on iOS; measured on desktop the geometry is exact,
+which is why the first look wrongly called it fine.
+
+`src/components/forms/DateInput.tsx` already carried `min-w-0` on both the
+wrapper and the control. **Use it instead of a raw `<input type="date">`** —
+the tool pages did not and reintroduced the bug.
+
+Gated by `form-controls-min-width.test.ts`. **That gate cannot use a regex over
+the opening tag**: `/<(input|select|textarea)\b((?:[^<>]|\n)*?)\/?>/` ends the
+capture at the first `>`, and `onChange={(e) => set(e.target.value)}` contains
+one, so every attribute after a handler is invisible. It reported a fixed
+control as broken; the mirror of that is a broken control reported clean. It
+walks the tag with a brace and quote depth counter instead.
+
+---
+
+## CI shuffles test order on purpose, so green locally proves less than it looks
+
+`vitest.config.ts` sets `sequence.shuffle: !!process.env.CI`, and the workflow
+runs `pnpm test:run --retry=2`. A test that relies on a previous test's mock
+passes in source order and fails on CI.
+
+`vi.clearAllMocks()` clears CALLS and keeps IMPLEMENTATIONS, so a
+`mockReturnValue` set in one test survives into the next. Two `sitemap.test.ts`
+tests were built on that and went red on CI while all 4,734 passed locally.
+
+**Reproduce it before diagnosing** — the local repro is one flag:
+
+```bash
+CI=1 pnpm exec vitest run src/app/__tests__/sitemap.test.ts \
+  --project components --sequence.seed=8
+```
+
+Every test arranges its own state. Do not paper over it by defaulting the value
+in production code: `getAllPosts()` reads the local content directory and always
+returns an array, so a default there only hides the next badly-arranged test.
+
 ## The visa bulletin, and when an archive is the right answer
 
 travel.state.gov refuses automated clients. Seven direct routes were tried and
