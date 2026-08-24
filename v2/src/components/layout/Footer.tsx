@@ -65,7 +65,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                 <span className="text-primary">PERM</span> Tracker
               </div>{" "}
               <p className="text-sm text-white/60 leading-relaxed mb-6">
-                Free case management for immigration attorneys. Track deadlines, manage cases, never miss a filing.
+                Live DOL data for the wait, automatic deadlines for the work. Free for applicants and attorneys.
               </p>
               {/* Social links. Driven by SOCIAL_LINKS so a network that has no
                   real profile yet is simply absent, rather than linking its
@@ -243,7 +243,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               </div>
             </div>{" "}
             <div className="flex items-center gap-1 text-xs text-white/70">
-              Made with <Heart className="h-3 w-3 text-primary" /> for immigration attorneys
+              Made with <Heart className="h-3 w-3 text-primary" /> for everyone in the PERM line
             </div>
           </div>
         </div>

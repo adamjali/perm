@@ -1145,6 +1145,36 @@ export default defineSchema({
 
     computedAt: v.number(),
     /** Insert-only-on-change, matching `dolProcessingTimes`. */
+    /**
+     * Analytical dimensions from the same union, added 2026-08-24. Aggregate
+     * only — the ingest never lets a row survive its parse loop, and employer
+     * names are as printed in DOL's public disclosure file.
+     */
+    byState: v.optional(v.array(v.object({
+      state: v.string(),
+      total: v.number(),
+      certified: v.number(),
+      denied: v.number(),
+      withdrawn: v.number(),
+      medianDays: v.union(v.number(), v.null()),
+      medianAnnualWage: v.union(v.number(), v.null()),
+    }))),
+    topOccupations: v.optional(v.array(v.object({
+      code: v.string(),
+      title: v.string(),
+      total: v.number(),
+      certified: v.number(),
+      denied: v.number(),
+      medianDays: v.union(v.number(), v.null()),
+      medianAnnualWage: v.union(v.number(), v.null()),
+    }))),
+    topEmployers: v.optional(v.array(v.object({
+      name: v.string(),
+      total: v.number(),
+      certified: v.number(),
+      denied: v.number(),
+      medianDays: v.union(v.number(), v.null()),
+    }))),
     contentHash: v.string(),
   })
     .index("by_computed", ["computedAt"])

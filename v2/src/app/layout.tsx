@@ -44,11 +44,11 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app"
   ),
   title: {
-    default: "PERM Tracker - Free Case Tracking for Immigration Attorneys",
+    default: "PERM Tracker - Live PERM Data and Deadline Tracking",
     template: "%s | PERM Tracker",
   },
   description:
-    "Free PERM case tracking software for immigration attorneys. Track deadlines, manage labor certification cases, and never miss a filing date.",
+    "Free PERM tracking for applicants and attorneys: live DOL queue data, decision estimates, and every case deadline computed automatically.",
   keywords: [
     "PERM",
     "immigration",
@@ -96,14 +96,14 @@ export const metadata: Metadata = {
     // every per-page override. See src/lib/openGraphBase.ts.
     ...openGraphBase,
     url: "/",
-    title: "PERM Tracker - Free Case Tracking for Immigration Attorneys",
+    title: "PERM Tracker - Live PERM Data and Deadline Tracking",
     description:
-      "Free PERM case tracking software. Track deadlines, manage cases, never miss a filing date.",
+      "Live DOL queue data for the wait, automatic deadlines for the work. Free.",
   },
   twitter: {
     card: "summary_large_image",
     title: "PERM Tracker - Free Case Tracking",
-    description: "Free PERM case tracking for immigration attorneys.",
+    description: "Live PERM data for applicants, automatic deadlines for attorneys. Free.",
     // Object form, not a bare URL string: a string emits twitter:image alone and
     // silently drops twitter:image:alt, which is what screen readers announce
     // for a shared link. url + alt only, because Twitter's card spec defines no

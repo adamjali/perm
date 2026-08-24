@@ -36,7 +36,6 @@ export const ADMIN_NAV_LINK: NavLink = {
 export const AUTH_NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/tools", label: "Data" },
-  { href: "/tools", label: "Tools" },
 ] as const satisfies readonly NavLink[];
 
 /**
@@ -46,7 +45,7 @@ export const AUTH_NAV_LINKS = [
  * AUTH_NAV_LINKS, so the hub has to be placed explicitly there too. Keeping the
  * href and label here means the two branches cannot drift.
  */
-export const TOOLS_NAV_LINK: NavLink = { href: "/tools", label: "Tools" };
+export const TOOLS_NAV_LINK: NavLink = { href: "/tools", label: "Data" };
 
 /**
  * The calculators, for the footer and any in-content listing.

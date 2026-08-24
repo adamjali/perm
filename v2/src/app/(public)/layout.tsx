@@ -20,6 +20,7 @@ import { PageTransition } from "@/components/ui/page-transition";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { HashScrollHandler } from "@/components/ui/hash-scroll-handler";
 import { ViewportDiag } from "@/components/diag/ViewportDiag";
+import { AmbientMurmuration } from "@/components/home/AmbientMurmuration";
 
 export default function PublicLayout({
   children,
@@ -28,6 +29,10 @@ export default function PublicLayout({
 }) {
   return (
     <div className="relative flex min-h-screen flex-col bg-background">
+      {/* One ambient system for the whole public surface: a small murmuration
+          at field opacity, steered by scroll along an invisible path. Opaque
+          bands cover it; it lives on the dotted ground between them. */}
+      <AmbientMurmuration />
       {/* Scroll progress indicator */}
       <ScrollProgress />
 

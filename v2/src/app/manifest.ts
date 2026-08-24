@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'PERM Tracker',
     short_name: 'PERM Tracker',
-    description: 'Free PERM case tracking software for immigration attorneys',
+    description: 'Live PERM data and automatic deadline tracking, free',
     start_url: '/dashboard',
     display: 'standalone',
     background_color: '#ffffff',

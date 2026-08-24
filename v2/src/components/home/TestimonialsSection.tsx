@@ -85,7 +85,7 @@ export function TestimonialsSection() {
               What Our Users Say
             </h2>{" "}
             <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
-              Immigration attorneys trust PERM Tracker to manage their cases and never miss a deadline.
+              Applicants and attorneys use PERM Tracker to follow the queue and never miss a deadline.
             </p>
           </div>
 

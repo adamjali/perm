@@ -85,7 +85,11 @@ const nextConfig: NextConfig = {
 
   experimental: {
     // Inline critical CSS to eliminate render-blocking stylesheets
-    inlineCss: true,
+    // inlineCss was ON and measured ~250KB of styles inlined into EVERY HTML
+    // response alongside the linked sheets — the worst of both: uncacheable
+    // across pages, re-parsed per navigation, and doubled delivery. Inlining
+    // pays only when the CSS is small; this site's is not. (2026-08-24)
+    inlineCss: false,
     // Tree-shake barrel exports for these packages
     // motion/react removed — its dep motion-dom has ESM export bugs with Webpack
     // zod removed — optimizePackageImports breaks ZodNumber.int() (ReferenceError: int is not defined)

@@ -185,16 +185,6 @@ export default function AuthHeader() {
                   );
                   })}{" "}
 
-                {/* Demo link */}
-                <NavLink
-                  href="/tools"
-                  className="relative px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
-                  spinnerClassName="text-white"
-                  spinnerSize={14}
-                >
-                  Data
-                </NavLink>{" "}
-
                 {/* Tools hub. The homepage branch renders section anchors
                     instead of AUTH_NAV_LINKS, so this link has to be placed
                     here explicitly or the suite is unreachable from the
@@ -399,17 +389,6 @@ export default function AuthHeader() {
                     </React.Fragment>
                   );
                   })}{" "}
-
-                {/* Demo link */}
-                <NavLink
-                  href="/tools"
-                  className="block py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
-                  spinnerClassName="text-white"
-                  spinnerSize={14}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Data
-                </NavLink>{" "}
 
                 {/* Tools hub, same reasoning as the desktop branch. */}
                 <NavLink

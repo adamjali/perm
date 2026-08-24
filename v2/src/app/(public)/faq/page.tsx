@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     ...openGraphBase,
     title: "FAQ | PERM Tracker",
     description:
-      "Everything immigration attorneys need to know about PERM Tracker and the PERM labor certification process.",
+      "What applicants and attorneys ask about PERM Tracker and the PERM labor certification process.",
     url: "/faq",
   },
 };
@@ -46,7 +46,7 @@ const faqData = [
       {
         question: "Is PERM Tracker really free?",
         answer:
-          "Yes, completely free. No credit card, no trial period, no case limits. Immigration attorneys deserve quality tools without typical SaaS pricing. We may introduce optional premium features in the future, but the core tracking and deadline management will always be free.",
+          "Yes, completely free. No credit card, no trial period, no case limits. We may introduce optional premium features in the future, but the data, the calculators and the core deadline tracking stay free.",
       },
       {
         question: "Is my client data secure?",
@@ -130,7 +130,7 @@ export default function FAQPage() {
             Frequently Asked Questions
           </h1>{" "}
           <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Everything immigration attorneys need to know about PERM Tracker and
+            What applicants and attorneys ask about PERM Tracker and
             the PERM labor certification process.
           </p>
         </div>

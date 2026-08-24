@@ -37,6 +37,37 @@ const frontierValidator = v.object({
   decisions: v.number(),
 });
 
+const stateStatValidator = v.object({
+  /** Two-letter worksite state/territory. */
+  state: v.string(),
+  total: v.number(),
+  certified: v.number(),
+  denied: v.number(),
+  withdrawn: v.number(),
+  medianDays: v.union(v.number(), v.null()),
+  medianAnnualWage: v.union(v.number(), v.null()),
+});
+
+const socStatValidator = v.object({
+  code: v.string(),
+  title: v.string(),
+  total: v.number(),
+  certified: v.number(),
+  denied: v.number(),
+  medianDays: v.union(v.number(), v.null()),
+  medianAnnualWage: v.union(v.number(), v.null()),
+});
+
+const employerStatValidator = v.object({
+  /** As printed in DOL's public disclosure file. */
+  name: v.string(),
+  total: v.number(),
+  certified: v.number(),
+  denied: v.number(),
+  medianDays: v.union(v.number(), v.null()),
+});
+
+
 /**
  * Store a computed snapshot.
  *
@@ -56,6 +87,14 @@ export const storeStats = internalMutation({
     cohorts: v.array(cohortValidator),
     clearanceByMonth: v.array(clearanceValidator),
     frontierHistory: v.array(frontierValidator),
+    /**
+     * The analytical dimensions, added 2026-08-24. Optional so payloads from
+     * the previous script version still validate. Aggregate-only by
+     * construction: the ingest never lets a row survive its parse loop.
+     */
+    byState: v.optional(v.array(stateStatValidator)),
+    topOccupations: v.optional(v.array(socStatValidator)),
+    topEmployers: v.optional(v.array(employerStatValidator)),
     contentHash: v.string(),
   },
   returns: v.object({
@@ -100,6 +139,9 @@ export const storeStats = internalMutation({
       frontierHistory: args.frontierHistory,
       computedAt: Date.now(),
       contentHash: args.contentHash,
+          byState: args.byState,
+      topOccupations: args.topOccupations,
+      topEmployers: args.topEmployers,
     });
 
     return {
@@ -121,6 +163,9 @@ export const getLatest = query({
       cohorts: v.array(cohortValidator),
       clearanceByMonth: v.array(clearanceValidator),
       frontierHistory: v.array(frontierValidator),
+      byState: v.optional(v.array(stateStatValidator)),
+      topOccupations: v.optional(v.array(socStatValidator)),
+      topEmployers: v.optional(v.array(employerStatValidator)),
       computedAt: v.number(),
     }),
     v.null(),
@@ -140,6 +185,9 @@ export const getLatest = query({
       cohorts: row.cohorts,
       clearanceByMonth: row.clearanceByMonth,
       frontierHistory: row.frontierHistory,
+      byState: row.byState,
+      topOccupations: row.topOccupations,
+      topEmployers: row.topEmployers,
       computedAt: row.computedAt,
     };
   },

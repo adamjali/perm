@@ -5,12 +5,12 @@
  * Complete landing page matching mockup-home-v2.html design.
  *
  * Sections (in order):
- * 1. HeroSection - Loss-frame headline + single CTA + dashboard reveal
+ * 1. HeroSection - two doors + queue-flow canvas
+ * 2. LiveDataBand - DOL's live queue position + the tape
  * 3. StakesSection - Horizontal scroll PERM consequence cards (#stakes)
  * 4. HowItWorks - 3-step process with connectors + video showcase (#how)
  * 4b. ToolsSection - the four calculators, laid out as the process (#tools)
  * 5. FeaturesGrid - 6 feature cards with tilt effect (#features)
- * 6. LiveDataBand - DOL's live queue position + the tape
  * 7. SecuritySection - Neobrutalist security table (#security)
  * 8. TestimonialsSection - Value props + trust badges
  * 9. FAQSection - Common questions (#faq)
@@ -43,6 +43,7 @@ import {
 } from "../../../convex/lib/dolProcessingTimes";
 import { LiveDataBand } from "@/components/home/LiveDataBand";
 import { SectionDivider } from "@/components/home/SectionDivider";
+import { Preloader } from "@/components/home/Preloader";
 
 // One live DOL figure on the page: hourly ISR, same as the data pages.
 export const revalidate = 3600;
@@ -52,9 +53,9 @@ export const metadata: Metadata = {
   // (Next.js docs § Template). Without this, Next.js appends " | PERM Tracker"
   // to a literal that already starts with the brand → "...| PERM Tracker | PERM
   // Tracker" doubled. Using `absolute` is the documented escape hatch.
-  title: { absolute: "PERM Tracker - Deadline Management for Immigration Attorneys" },
+  title: { absolute: "PERM Tracker - Live PERM Data and Deadlines" },
   description:
-    "PERM case tracking software for immigration attorneys. Auto-calculate 11 deadline types, get alerts before they hit, sync to Google Calendar.",
+    "Where DOL's PERM queue stands today, and every case deadline computed automatically. For the person waiting and the person managing. Free.",
   alternates: {
     canonical: "/",
   },
@@ -79,6 +80,9 @@ export default async function HomePage() {
   const analystAvg = snapshot
     ? analystReviewAverage(snapshot.permAverageDays)
     : undefined;
+  const pwdPending = snapshot?.pwdPermBacklog?.length
+    ? snapshot.pwdPermBacklog.reduce((sum, r) => sum + r.remainingRequests, 0)
+    : null;
 
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
@@ -94,16 +98,21 @@ export default async function HomePage() {
 
   return (
     <>
+      <Preloader />
       {/* FAQPage + homepage aggregateRating partial. Server-built schemas only. */}
       <JsonLdScript schema={faqSchema} />
       <JsonLdScript schema={ratingPartial} />
       <HeroSection />
-      <StakesSection />
-      <HowItWorks />
-      <ToolsSection />
       <LiveDataBand
         frontierMonth={analyst?.priorityDate ?? null}
         asOf={snapshot?.permAsOf ?? null}
+        averageDays={analystAvg?.calendarDays ?? null}
+      />
+      <StakesSection />
+      <HowItWorks />
+      <ToolsSection
+        pwdPending={pwdPending}
+        frontierMonth={analyst?.priorityDate ?? null}
         averageDays={analystAvg?.calendarDays ?? null}
       />
       <FeaturesGrid />

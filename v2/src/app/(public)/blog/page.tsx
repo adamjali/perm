@@ -16,7 +16,7 @@ export const dynamic = "force-static";
 export const metadata: Metadata = {
   title: "Blog",
   description:
-    "Insights on PERM labor certification, immigration practice tips, and industry trends for immigration attorneys.",
+    "Insights on PERM labor certification, DOL processing data, and practical guidance for applicants and attorneys.",
   alternates: { canonical: "/blog" },
   openGraph: {
     ...openGraphBase,

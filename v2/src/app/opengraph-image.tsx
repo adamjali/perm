@@ -7,7 +7,7 @@ import { SOCIAL_CARD_SIZE, SOCIAL_CARD_CONTENT_TYPE } from "@/lib/socialCard";
 export const runtime = "nodejs";
 export const revalidate = false;
 
-export const alt = "PERM Tracker - Case Management for Immigration Attorneys";
+export const alt = "PERM Tracker - Live PERM Data and Deadline Tracking";
 
 // Re-exported from src/lib/socialCard.ts so the <meta> tags in openGraphBase.ts
 // describe this route rather than a stale copy of it.
@@ -150,7 +150,7 @@ export default async function Image() {
               marginBottom: "24px",
             }}
           >
-            Free Case Tracking for Immigration Attorneys
+            Live PERM Data and Deadline Tracking
           </div>
 
           {/* Feature pills */}

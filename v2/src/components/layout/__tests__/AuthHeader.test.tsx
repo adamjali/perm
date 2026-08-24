@@ -162,15 +162,15 @@ describe("AuthHeader: the tools hub", () => {
     // the calculators shipped, leaving them reachable from one page.
     vi.mocked(usePathname).mockReturnValue("/");
     renderWithProviders(<AuthHeader />);
-    const links = screen.getAllByRole("link", { name: /^tools$/i });
+    const links = screen.getAllByRole("link", { name: /^data$/i });
     expect(links.length).toBeGreaterThan(0);
     expect(links[0]).toHaveAttribute("href", "/tools");
   });
 
   it("links to /tools in the desktop nav on an interior page", () => {
-    vi.mocked(usePathname).mockReturnValue("/demo");
+    vi.mocked(usePathname).mockReturnValue("/login");
     renderWithProviders(<AuthHeader />);
-    expect(screen.getAllByRole("link", { name: /^tools$/i })[0]).toHaveAttribute(
+    expect(screen.getAllByRole("link", { name: /^data$/i })[0]).toHaveAttribute(
       "href",
       "/tools",
     );
@@ -186,7 +186,7 @@ describe("AuthHeader: the tools hub", () => {
     const toggle = screen.getByRole("button", { name: /toggle menu/i });
     fireEvent.click(toggle);
 
-    const links = await screen.findAllByRole("link", { name: /^tools$/i });
+    const links = await screen.findAllByRole("link", { name: /^data$/i });
     expect(links.length).toBeGreaterThanOrEqual(2); // desktop + mobile
     expect(links.every((l) => l.getAttribute("href") === "/tools")).toBe(true);
   });
@@ -195,7 +195,7 @@ describe("AuthHeader: the tools hub", () => {
     vi.mocked(usePathname).mockReturnValue("/blog");
     renderWithProviders(<AuthHeader />);
     fireEvent.click(screen.getByRole("button", { name: /toggle menu/i }));
-    const links = await screen.findAllByRole("link", { name: /^tools$/i });
+    const links = await screen.findAllByRole("link", { name: /^data$/i });
     expect(links.length).toBeGreaterThanOrEqual(2);
   });
 });

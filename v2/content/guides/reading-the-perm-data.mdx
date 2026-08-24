@@ -1,0 +1,73 @@
+---
+title: "How to Read the PERM Data"
+description: "A working guide to the live DOL figures and the six calculators: what each number means, where it comes from, and which one answers your question."
+date: "2026-08-24"
+author: "PERM Tracker Team"
+image: "/images/content/dol-building.jpg"
+imageAlt: "The U.S. Department of Labor building"
+tags: ["guide", "data", "calculators", "processing-times", "dol"]
+category: "data"
+seoTitle: "How to Read the PERM Data"
+seoDescription: "What DOL's queue position, the average to a determination, and the backlog counts actually mean, and which PERM calculator answers which question."
+published: true
+---
+
+DOL publishes real figures about the PERM queue, and most of the confusion
+around processing times comes from reading them as something they are not.
+This guide walks through each number on our [data overview](/tools) and each
+of the [six calculators](/calculators), in the order a case meets them.
+
+## The queue position
+
+The headline figure on the [overview](/tools) is the filing month DOL is
+deciding right now in analyst review, the queue nearly every case sits in.
+Subtract your filing month from that month and you have your rough distance
+in queue terms. The tape below it draws the same fact: cleared months solid,
+waiting months empty, the frontier flagged.
+
+Two cautions. The position is a month, not a promise — DOL clears a month
+over weeks, ordered alphabetically by employer inside it. And audited cases
+sit in a separate, slower queue with its own published position.
+
+## The average, and why it disagrees with everyone
+
+DOL also publishes an average number of days to a determination. On the day
+we wrote this it said 372, while public tools reported anywhere from 335 to
+503\. The spread has mechanical causes — different populations, different
+windows, different data ages — and the [methodology page](/methodology)
+takes them apart one by one. When two numbers disagree, the first question
+is what each one is measuring, and the second is when its data was published.
+
+## Which calculator answers which question
+
+**Before filing.** The [prevailing wage queue](/tools/pwd-calculator) is a
+count, not a model: how many wage requests sit ahead of the month yours was
+received. The [deadline calculator](/tools/perm-deadline-calculator) is the
+one exact tool in the set — recruitment windows, the quiet period and the
+ETA-9089 filing window are arithmetic in the regulations, so those dates are
+computed, not estimated.
+
+**While waiting.** The [decision estimator](/tools/perm-timeline-calculator)
+shows every model its data supports for your filing month, labelled, and lets
+them disagree. If you want one email when DOL reaches your month, set a
+[queue alert](/perm-processing-times) — it fires once and nothing else
+follows it.
+
+**After certification.** The [I-140 calculator](/tools/i140-calculator) puts
+USCIS's published processing time next to its own queue arithmetic, and the
+gap between the two is the useful part. The
+[priority date calculator](/tools/priority-date-calculator) shows where a
+date stands against the visa bulletin and which way the cutoff has been
+moving — backwards more often than people expect.
+
+**The whole picture.** The [green card timeline](/tools/green-card-timeline)
+draws every stage to scale and is honest about the one nobody can number:
+the wait for a visa number depends on the bulletin, so it is shown as a
+question, not a figure.
+
+## For caseloads
+
+Every date the deadline calculator produces, the
+[tracker](/signup) computes automatically per case, with alerts and calendar
+sync. The public calculators and the tracker run the same regulatory
+arithmetic from one shared engine, so the two can never disagree.

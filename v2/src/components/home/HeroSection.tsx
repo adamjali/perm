@@ -23,7 +23,6 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useReducedMotion } from "@/lib/animations";
 import { Lightbox } from "@/components/ui/lightbox";
-import { QueueFlowCanvas } from "./QueueFlowCanvas";
 
 export function HeroSection() {
   const { isNavigating, navigateTo, targetPath } = useNavigationLoading();
@@ -49,14 +48,6 @@ export function HeroSection() {
 
   return (
     <section ref={heroRef} id="hero" className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
-      {/* The one ambient moment on the site: the queue itself, drifting.
-          Cases as dots, grey while they wait, primary once they cross the
-          frontier — the same metaphor the tape and the timeline calculator
-          draw. Canvas 2D, IO-gated, 30fps, one static frame under
-          prefers-reduced-motion. */}
-      <div className="absolute inset-0 z-0" aria-hidden="true">
-        <QueueFlowCanvas />
-      </div>
 
       {/* Scroll indicator — mouse + line + text (CSS animations for reliability) */}
       <div

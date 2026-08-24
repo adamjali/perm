@@ -20,7 +20,7 @@ import {
   CalendarDeadlineSVG,
   NotificationBellSVG,
 } from "@/components/illustrations";
-import VideoPlayer from "@/components/content/VideoPlayer";
+import { DeferredShowcase } from "./DeferredShowcase";
 import { Lightbox } from "@/components/ui/lightbox";
 
 interface Step {
@@ -264,7 +264,7 @@ export function HowItWorks() {
                     Product Demo
                   </span>
                 </div>{" "}
-                <VideoPlayer videoId="ProductDemo" className="border-0 shadow-none" autoPlay loop />
+                <DeferredShowcase />
               </div>{" "}
               <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 Watch the full demo

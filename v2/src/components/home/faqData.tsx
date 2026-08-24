@@ -26,6 +26,21 @@ export interface HomeFaqItem {
 export const HOME_FAQS: HomeFaqItem[] = [
   {
     question:
+      "Where do the numbers on the data pages come from?",
+    answer:
+      "Every figure comes from a government source with the date it was published: DOL's FLAG processing times, DOL's quarterly disclosure files, USCIS's quarterly I-140 counts, and the State Department's visa bulletin. The methodology page lists each source and its cadence, and explains why public estimators disagree with each other.",
+    rich: (
+      <>
+        Every figure comes from a government source with the date it was
+        published: DOL&apos;s FLAG processing times, DOL&apos;s quarterly
+        disclosure files, USCIS&apos;s quarterly I-140 counts, and the State
+        Department&apos;s visa bulletin.{" "}
+        <Link href="/methodology" className={faqLink}>How the numbers are computed &rarr;</Link>
+      </>
+    ),
+  },
+  {
+    question:
       "What exactly does PERM Tracker do?",
     answer:
       "PERM Tracker automates deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync so your whole team stays aligned.",

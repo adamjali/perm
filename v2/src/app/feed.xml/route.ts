@@ -41,7 +41,7 @@ export function GET() {
   <channel>
     <title>PERM Tracker</title>
     <link>${BASE_URL}</link>
-    <description>Insights on PERM labor certification, immigration practice, and case management for immigration attorneys.</description>
+    <description>Insights on PERM labor certification, DOL processing data, and case management for applicants and attorneys.</description>
     <language>en-us</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="${BASE_URL}/feed.xml" rel="self" type="application/rss+xml" />

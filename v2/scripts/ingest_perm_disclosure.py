@@ -54,8 +54,73 @@ PERFORMANCE_PAGE = "https://www.dol.gov/agencies/eta/foreign-labor/performance"
 NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 EXCEL_EPOCH = date(1899, 12, 30)  # 1900 date system, including its leap-year bug
 
-# Only these columns are read. Deliberately excludes every contact field.
-COLUMNS = {0: "case", 1: "status", 2: "received", 3: "decision", 5: "employer"}
+# Columns are resolved BY HEADER NAME per file — indexes drift between fiscal
+# years, and a silent shift would swap one state's numbers for another's.
+# Candidates are tried in order. Deliberately excludes every contact field.
+COLUMN_CANDIDATES: dict[str, list[str]] = {
+    "case": ["CASE_NUMBER", "CASE_NO"],
+    "status": ["CASE_STATUS", "STATUS"],
+    "received": ["RECEIVED_DATE", "CASE_RECEIVED_DATE"],
+    "decision": ["DECISION_DATE"],
+    "employer": ["EMPLOYER_NAME", "EMP_BUSINESS_NAME"],
+    # The new analytical dimensions. Aggregate-only in the payload.
+    "state": ["WORKSITE_STATE", "JOB_INFO_WORK_STATE", "EMPLOYER_STATE"],
+    "soc_code": ["PW_SOC_CODE", "SOC_CODE"],
+    "soc_title": ["PW_SOC_TITLE", "SOC_TITLE"],
+    "wage": [
+        "WAGE_OFFER_FROM_9089", "WAGE_OFFERED_FROM_9089", "WAGE_OFFER_FROM",
+        "PW_AMOUNT_9089", "PW_WAGE", "PW_AMOUNT",
+    ],
+    "wage_unit": [
+        "WAGE_OFFER_UNIT_OF_PAY_9089", "WAGE_UNIT_OF_PAY_9089",
+        "WAGE_OFFER_UNIT_OF_PAY", "PW_UNIT_OF_PAY_9089", "PW_UNIT_OF_PAY",
+    ],
+}
+# case/status/received/decision must resolve or the file is unusable; the
+# analytical dimensions degrade gracefully (their aggregates just go absent).
+REQUIRED_FIELDS = ("case", "status", "received", "decision")
+
+US_STATES = {
+    "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
+    "KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ",
+    "NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
+    "VA","WA","WV","WI","WY","DC","PR","GU","VI","MP",
+}
+
+ANNUALIZE = {
+    "YEAR": 1.0, "YR": 1.0, "ANNUAL": 1.0, "ANNUALLY": 1.0,
+    "HOUR": 2080.0, "HR": 2080.0, "HOURLY": 2080.0,
+    "WEEK": 52.0, "WK": 52.0, "WEEKLY": 52.0,
+    "MONTH": 12.0, "MTH": 12.0, "MONTHLY": 12.0,
+    "BI-WEEKLY": 26.0, "BIWEEKLY": 26.0, "BI WEEKLY": 26.0,
+}
+
+
+def annual_wage(raw: str, unit: str) -> int | None:
+    """Annualized offered wage, or None when it cannot be trusted."""
+    try:
+        amount = float(raw.replace("$", "").replace(",", "").strip())
+    except (ValueError, AttributeError):
+        return None
+    factor = ANNUALIZE.get(unit.strip().upper())
+    if factor is None:
+        return None
+    annual = amount * factor
+    # Outside this band it is a typo or a unit mismatch, not a salary.
+    if not 15_000 <= annual <= 1_000_000:
+        return None
+    return round(annual)
+
+
+def norm_status(raw: str) -> str | None:
+    s = raw.strip().upper()
+    if s.startswith("CERTIFIED"):
+        return "certified"  # Certified and Certified-Expired both count
+    if s.startswith("DENIED"):
+        return "denied"
+    if s.startswith("WITHDRAWN"):
+        return "withdrawn"
+    return None
 
 # A complete browser header set. DOL fronts www.dol.gov with Akamai, which
 # answers a bare or partial UA with 403 "Access Denied" (Reference #18...,
@@ -217,14 +282,15 @@ def parse_file(path: str, seen: set[str], acc: dict) -> int:
                 el.clear()
 
     rows = kept = 0
+    colmap: dict[int, str] = {}
     with z.open("xl/worksheets/sheet1.xml") as f:
         for _, el in iterparse(f, events=("end",)):
             if el.tag != NS + "row":
                 continue
-            rec: dict[str, str] = {}
+            cells: dict[int, str] = {}
             for c in el.findall(NS + "c"):
                 ci = col_index(c.get("r", "A1"))
-                if ci not in COLUMNS:
+                if rows > 0 and ci not in colmap:
                     continue
                 v = c.find(NS + "v")
                 if v is None or v.text is None:
@@ -236,12 +302,31 @@ def parse_file(path: str, seen: set[str], acc: dict) -> int:
                     val = "".join(t.text or "" for t in c.iter(NS + "t"))
                 else:
                     val = v.text
-                rec[COLUMNS[ci]] = val
+                cells[ci] = val
             el.clear()
 
             rows += 1
             if rows == 1:
-                continue  # header
+                # Resolve every field from the header names, first candidate
+                # that exists wins. Indexes drift between fiscal years.
+                header = {v.strip().upper(): k for k, v in cells.items() if v}
+                for field, names in COLUMN_CANDIDATES.items():
+                    for name in names:
+                        if name in header:
+                            colmap[header[name]] = field
+                            break
+                resolved = set(colmap.values())
+                missing = [f for f in REQUIRED_FIELDS if f not in resolved]
+                if missing:
+                    raise SystemExit(
+                        f"FATAL: {os.path.basename(path)} header resolves none of "
+                        f"{missing}. Header was: {sorted(header)[:40]}"
+                    )
+                absent = [f for f in COLUMN_CANDIDATES if f not in resolved]
+                if absent:
+                    log(f"    (no column for {absent}; those aggregates degrade)")
+                continue
+            rec = {colmap[ci]: val for ci, val in cells.items()}
 
             case_no = (rec.get("case") or "").strip()
             if not case_no or case_no in seen:
@@ -260,6 +345,34 @@ def parse_file(path: str, seen: set[str], acc: dict) -> int:
             acc["cohorts"][received[:7]].append(days)
             acc["clearance"][decided[:7]] += 1
             acc["frontier"][decided[:7]][received[:7]] += 1
+
+            # The analytical dimensions. Aggregate-only; no row survives.
+            outcome = norm_status(rec.get("status", ""))
+            wage = annual_wage(rec.get("wage", ""), rec.get("wage_unit", ""))
+            state = (rec.get("state") or "").strip().upper()[:2]
+            if outcome and state in US_STATES:
+                st = acc["byState"][state]
+                st[outcome] += 1
+                st["days"].append(days)
+                if wage is not None:
+                    st["wages"].append(wage)
+            soc = (rec.get("soc_code") or "").strip()
+            if outcome and soc:
+                so = acc["bySoc"][soc[:10]]
+                so[outcome] += 1
+                so["days"].append(days)
+                if wage is not None:
+                    so["wages"].append(wage)
+                title = (rec.get("soc_title") or "").strip()
+                if title and not so["title"]:
+                    so["title"] = title[:80]
+            employer = " ".join((rec.get("employer") or "").split())[:80]
+            if outcome and employer:
+                em = acc["byEmployer"][employer.upper()]
+                em[outcome] += 1
+                em["days"].append(days)
+                if not em["name"]:
+                    em["name"] = employer
 
     log(f"  {os.path.basename(path)}: {rows - 1:,} sheet rows, {kept:,} new cases")
     return kept
@@ -303,6 +416,53 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
                 )
                 break
 
+    def tot(d: dict) -> int:
+        return d["certified"] + d["denied"] + d["withdrawn"]
+
+    by_state = [
+        {
+            "state": st,
+            "total": tot(d),
+            "certified": d["certified"],
+            "denied": d["denied"],
+            "withdrawn": d["withdrawn"],
+            "medianDays": percentile(d["days"], 50),
+            "medianAnnualWage": percentile(d["wages"], 50),
+        }
+        for st, d in sorted(acc["byState"].items())
+        if tot(d) >= 25  # a state with a handful of rows is noise, not a rate
+    ]
+
+    top_socs = [
+        {
+            "code": code,
+            "title": d["title"] or code,
+            "total": tot(d),
+            "certified": d["certified"],
+            "denied": d["denied"],
+            "medianDays": percentile(d["days"], 50),
+            "medianAnnualWage": percentile(d["wages"], 50),
+        }
+        for code, d in sorted(
+            acc["bySoc"].items(), key=lambda kv: -tot(kv[1])
+        )[:60]
+        if tot(d) >= 50
+    ]
+
+    top_employers = [
+        {
+            "name": d["name"],
+            "total": tot(d),
+            "certified": d["certified"],
+            "denied": d["denied"],
+            "medianDays": percentile(d["days"], 50),
+        }
+        for _, d in sorted(
+            acc["byEmployer"].items(), key=lambda kv: -tot(kv[1])
+        )[:100]
+        if tot(d) >= 25
+    ]
+
     payload = {
         "sourceFiles": [name for name, _ in files],
         "uniqueCases": unique,
@@ -311,6 +471,9 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
             {"month": m, "decisions": n} for m, n in sorted(acc["clearance"].items())
         ],
         "frontierHistory": frontier,
+        "byState": by_state,
+        "topOccupations": top_socs,
+        "topEmployers": top_employers,
     }
     body = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     payload["contentHash"] = hashlib.sha256(body.encode()).hexdigest()
@@ -334,6 +497,9 @@ def main() -> int:
         "cohorts": defaultdict(list),
         "clearance": Counter(),
         "frontier": defaultdict(Counter),
+        "byState": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "wages": []}),
+        "bySoc": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "wages": [], "title": ""}),
+        "byEmployer": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "name": ""}),
     }
     seen: set[str] = set()
 
