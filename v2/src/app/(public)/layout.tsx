@@ -19,6 +19,7 @@ import { ScrollProgress } from "@/components/home";
 import { PageTransition } from "@/components/ui/page-transition";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { HashScrollHandler } from "@/components/ui/hash-scroll-handler";
+import { ViewportDiag } from "@/components/diag/ViewportDiag";
 
 export default function PublicLayout({
   children,
@@ -68,6 +69,9 @@ export default function PublicLayout({
 
       {/* Back-to-top button */}
       <ScrollToTop />
+
+      {/* On-device layout diagnostic. Inert without ?diag=1 in the URL. */}
+      <ViewportDiag />
     </div>
   );
 }

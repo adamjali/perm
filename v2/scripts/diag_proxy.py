@@ -30,42 +30,74 @@ OVERLAY = b"""<script>
 (function () {
   function run() {
     var el = document.querySelector('input[type="date"]');
-    if (!el) { return setTimeout(run, 300); }
-    var card = el.closest('.shadow-hard') || el.closest('[class*="border-2"]');
-    var cardW = card ? card.getBoundingClientRect().width : null;
-    var rows = [], n = el, depth = 0;
-    while (n && n !== document.body && depth < 9) {
-      var cs = getComputedStyle(n), r = n.getBoundingClientRect();
-      rows.push({
-        t: n.tagName.toLowerCase(),
-        c: (typeof n.className === 'string' ? n.className : '').slice(0, 34),
-        d: cs.display,
-        w: cs.width,
-        rw: Math.round(r.width),
-        r: Math.round(r.right),
-        gt: cs.gridTemplateColumns,
-        mw: cs.minWidth
-      });
-      n = n.parentElement; depth++;
+    var cw = document.documentElement.clientWidth;
+    var out = '';
+
+    // 1. Viewport truth. If visualViewport.scale != 1 the page is ZOOMED and
+    //    everything else is a symptom of that, not of layout.
+    var vv = window.visualViewport;
+    var meta = document.querySelector('meta[name="viewport"]');
+    out += 'VIEWPORT\\n' +
+      '  html.clientWidth ' + cw + '   innerWidth ' + window.innerWidth + '\\n' +
+      '  visualViewport ' + (vv ? Math.round(vv.width) + ' @ scale ' + vv.scale.toFixed(3) : 'n/a') + '\\n' +
+      '  screen ' + screen.width + '  dpr ' + window.devicePixelRatio + '\\n' +
+      '  scrollWidth ' + document.documentElement.scrollWidth +
+      '  (overflow ' + Math.max(0, document.documentElement.scrollWidth - cw) + 'px)\\n' +
+      '  meta: ' + (meta ? meta.content : 'MISSING') + '\\n\\n';
+
+    // 2. The culprit hunt: every element wider than the viewport, widest first.
+    //    The one with no wide CHILDREN is the true source; its ancestors are
+    //    just stretched by it.
+    var wide = [];
+    var all = document.querySelectorAll('body *');
+    for (var i = 0; i < all.length; i++) {
+      var r = all[i].getBoundingClientRect();
+      if (r.width > cw + 1 || r.right > cw + 1) {
+        wide.push({ el: all[i], w: Math.round(r.width), right: Math.round(r.right) });
+      }
     }
-    var out = 'viewport ' + window.innerWidth + '  dpr ' + window.devicePixelRatio +
-              '  card ' + (cardW === null ? '?' : Math.round(cardW)) + '\\n' +
-              'UA ' + (navigator.userAgent.match(/(iPhone|Version\\/[\\d.]+|CriOS\\/[\\d.]+|Safari)/g) || []).join(' ') + '\\n\\n';
-    rows.forEach(function (x, i) {
-      out += i + ' ' + x.t + ' .' + x.c + '\\n' +
-             '   disp=' + x.d + ' minw=' + x.mw + '\\n' +
-             '   width=' + x.w + ' measured=' + x.rw + ' right=' + x.r + '\\n' +
-             (x.gt && x.gt !== 'none' ? '   cols=' + x.gt + '\\n' : '');
-    });
+    wide.sort(function (a, b) { return b.w - a.w; });
+    out += 'ELEMENTS WIDER THAN VIEWPORT: ' + wide.length + '\\n';
+    for (var j = 0; j < Math.min(wide.length, 12); j++) {
+      var x = wide[j], n = x.el;
+      var cls = (typeof n.className === 'string' ? n.className : '').slice(0, 44);
+      var hasWideChild = false;
+      for (var k = 0; k < n.children.length; k++) {
+        var cr = n.children[k].getBoundingClientRect();
+        if (cr.width > cw + 1 || cr.right > cw + 1) { hasWideChild = true; break; }
+      }
+      out += '  ' + (hasWideChild ? '     ' : 'ROOT>') + ' ' +
+        n.tagName.toLowerCase() + ' w=' + x.w + ' right=' + x.right +
+        ' .' + cls + '\\n';
+    }
+    out += '\\n';
+
+    // 3. The date field ancestor chain, when there is one.
+    if (el) {
+      var node = el, depth = 0;
+      out += 'DATE FIELD CHAIN\\n';
+      while (node && node !== document.body && depth < 9) {
+        var cs = getComputedStyle(node), rr = node.getBoundingClientRect();
+        out += '  ' + depth + ' ' + node.tagName.toLowerCase() +
+          ' disp=' + cs.display + ' minw=' + cs.minWidth +
+          ' w=' + Math.round(rr.width) + ' right=' + Math.round(rr.right) +
+          (cs.gridTemplateColumns !== 'none' ? ' cols=' + cs.gridTemplateColumns : '') +
+          ' .' + (typeof node.className === 'string' ? node.className : '').slice(0, 30) + '\\n';
+        node = node.parentElement; depth++;
+      }
+    } else {
+      out += 'no date input on this page\\n';
+    }
+
     var pre = document.createElement('pre');
     pre.textContent = out;
     pre.style.cssText = 'position:relative;z-index:99999;background:#111;color:#0f0;' +
-      'font:12px/1.35 ui-monospace,Menlo,monospace;padding:10px;margin:0;' +
+      'font:12px/1.4 ui-monospace,Menlo,monospace;padding:10px;margin:0;' +
       'white-space:pre-wrap;word-break:break-all;border-bottom:4px solid #0f0';
     document.body.insertBefore(pre, document.body.firstChild);
   }
-  if (document.readyState === 'complete') { setTimeout(run, 600); }
-  else { window.addEventListener('load', function () { setTimeout(run, 600); }); }
+  if (document.readyState === 'complete') { setTimeout(run, 800); }
+  else { window.addEventListener('load', function () { setTimeout(run, 800); }); }
 })();
 </script></body>"""
 
