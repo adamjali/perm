@@ -5,6 +5,7 @@ import { fetchQuery } from "convex/nextjs";
 
 import { api } from "../../../../../convex/_generated/api";
 import { I140QueueEstimator } from "@/components/tools/I140QueueEstimator";
+import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 
@@ -130,6 +131,14 @@ export default async function I140CalculatorPage() {
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
+
+      <ToolPageFooter
+        currentHref={"/tools/i140-calculator"}
+        reading={[
+          { href: "/guides/ultimate-perm-guide-2026", label: "The full PERM guide", note: "Where the petition sits in the process, and what has to be approved first." },
+          { href: "/blog/what-is-perm-labor-certification", label: "What PERM actually is", note: "The labor certification the petition depends on, in plain terms." },
+        ]}
+      />
     </div>
   );
 }

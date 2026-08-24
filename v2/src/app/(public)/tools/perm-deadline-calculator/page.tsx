@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { PermDeadlineCalculator } from "@/components/tools/PermDeadlineCalculator";
+import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 
@@ -118,6 +119,14 @@ export default function PermDeadlineCalculatorPage() {
         </Link>
         <p className="mt-3 text-sm text-foreground/50">Free, and there is no case limit.</p>
       </section>
+
+      <ToolPageFooter
+        currentHref={"/tools/perm-deadline-calculator"}
+        reading={[
+          { href: "/guides/perm-recruitment-checklist", label: "Recruitment checklist", note: "Each step these dates govern, and what counts as completing it." },
+          { href: "/tutorials/tracking-perm-deadlines", label: "Tracking deadlines", note: "How the same dates cascade when a determination date moves." },
+        ]}
+      />
     </div>
   );
 }

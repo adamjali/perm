@@ -124,18 +124,19 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
   return (
     <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
       <div className="border-b-2 border-border p-6 sm:p-8">
-        <div className="flex items-start gap-3">
-          <CalendarCheck className="mt-1 h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
-          <div>
-            <h2 className="font-heading text-2xl font-black leading-tight">
-              Your PERM deadlines
-            </h2>
-            <p className="mt-2 text-base leading-relaxed text-foreground/70">
-              These are not estimates. Every date below is fixed arithmetic on
-              the prevailing wage determination under 20 CFR 656.
-            </p>
-          </div>
+        {/* The icon sits beside the heading only. Wrapping the copy in
+            the icon flex indented it 36px against the form below, which
+            reads as the inputs sticking out to the left. */}
+        <div className="flex items-center gap-3">
+          <CalendarCheck className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
+          <h2 className="font-heading text-2xl font-black leading-tight">
+            Your PERM deadlines
+          </h2>
         </div>
+        <p className="mt-3 text-base leading-relaxed text-foreground/70">
+          These are not estimates. Every date below is fixed arithmetic on
+          the prevailing wage determination under 20 CFR 656.
+        </p>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div>

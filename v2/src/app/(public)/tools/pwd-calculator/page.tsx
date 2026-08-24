@@ -5,6 +5,7 @@ import { fetchQuery } from "convex/nextjs";
 
 import { api } from "../../../../../convex/_generated/api";
 import { PwdQueueEstimator } from "@/components/tools/PwdQueueEstimator";
+import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 
@@ -124,6 +125,14 @@ export default async function PwdCalculatorPage() {
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
+
+      <ToolPageFooter
+        currentHref={"/tools/pwd-calculator"}
+        reading={[
+          { href: "/guides/complete-perm-filing-guide", label: "The complete filing guide", note: "What the determination is for, and every date it sets once issued." },
+          { href: "/perm-processing-times", label: "DOL processing times", note: "The prevailing wage queues alongside the PERM ones, from DOL's own page." },
+        ]}
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { fetchQuery } from "convex/nextjs";
 import { api } from "../../../../../convex/_generated/api";
 import { PermTimelineEstimator } from "@/components/tools/PermTimelineEstimator";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
+import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { currentMonthUtc } from "@/lib/dolFormat";
@@ -143,6 +144,14 @@ export default async function PermTimelineCalculatorPage() {
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
+
+      <ToolPageFooter
+        currentHref={"/tools/perm-timeline-calculator"}
+        reading={[
+          { href: "/perm-processing-times", label: "DOL processing times", note: "Every queue DOL publishes, refreshed weekly, with the figures this calculator reads." },
+          { href: "/blog/perm-processing-times-2026", label: "What drives a PERM timeline", note: "Audits, supervised recruitment and the things that take a case out of order." },
+        ]}
+      />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   type I140Category,
 } from "@/lib/processing-times/i140ProcessingTimes";
 import { GreenCardTimelineView } from "@/components/tools/GreenCardTimelineView";
+import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 
@@ -187,6 +188,14 @@ export default async function GreenCardTimelinePage() {
           ))}
         </dl>
       </section>
+
+      <ToolPageFooter
+        currentHref={"/tools/green-card-timeline"}
+        reading={[
+          { href: "/guides/ultimate-perm-guide-2026", label: "The full PERM guide", note: "The stages in detail, and the rules that fix the ones you control." },
+          { href: "/blog/what-is-perm-labor-certification", label: "What PERM actually is", note: "The labor certification stage, in plain terms." },
+        ]}
+      />
     </div>
   );
 }

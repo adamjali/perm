@@ -18,7 +18,9 @@ import { Heart } from "lucide-react";
 
 import { NavLink } from "@/components/ui/nav-link";
 import { LawGavelSVG } from "@/components/illustrations";
+import { Fragment } from "react";
 import { SOCIAL_LINKS } from "@/lib/constants/externalLinks";
+import { TOOL_NAV_LINKS } from "@/lib/constants/navigation";
 
 // Brand icons as inline SVGs — lucide-react v1.x removed brand icons
 const GithubIcon = ({ className }: { className?: string }) => (
@@ -56,7 +58,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
       <footer className="relative z-50 border-t-3 border-black bg-black dark:border-white dark:bg-black">
         <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8">
           {/* Multi-column grid */}
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {/* Brand column */}
             <div className="lg:col-span-1">
               <div className="font-heading text-xl font-bold text-white mb-4">
@@ -180,6 +182,29 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                 >
                   Processing Times
                 </NavLink>
+              </nav>
+            </div>
+
+            {/* Calculators column. The suite shipped reachable from exactly
+                one inbound link, which is the orphan-page defect: a page can
+                return 200, sit in the sitemap, and still be invisible because
+                nothing indexable points at it. */}
+            <div>
+              <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
+                Calculators
+              </p>{" "}
+              <nav className="footer-links flex flex-col gap-3" aria-label="Calculator links">
+                {TOOL_NAV_LINKS.map((link) => (
+                  <Fragment key={link.href}>
+                    <NavLink
+                      href={link.href}
+                      className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
+                      spinnerClassName="text-primary"
+                    >
+                      {link.label}
+                    </NavLink>{" "}
+                  </Fragment>
+                ))}
               </nav>
             </div>
 

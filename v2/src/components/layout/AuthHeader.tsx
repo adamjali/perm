@@ -21,7 +21,12 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { AUTH_NAV_LINKS, HOME_SECTION_LINKS, CONTENT_NAV_LINKS } from "@/lib/constants/navigation";
+import {
+  AUTH_NAV_LINKS,
+  HOME_SECTION_LINKS,
+  CONTENT_NAV_LINKS,
+  TOOLS_NAV_LINK,
+} from "@/lib/constants/navigation";
 import ThemeToggle from "./ThemeToggle";
 import { NavLink } from "@/components/ui/nav-link";
 import { FileText, Menu, X, ChevronDown } from "lucide-react";
@@ -188,6 +193,19 @@ export default function AuthHeader() {
                   spinnerSize={14}
                 >
                   Demo
+                </NavLink>{" "}
+
+                {/* Tools hub. The homepage branch renders section anchors
+                    instead of AUTH_NAV_LINKS, so this link has to be placed
+                    here explicitly or the suite is unreachable from the
+                    homepage nav. */}
+                <NavLink
+                  href={TOOLS_NAV_LINK.href}
+                  className="relative px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
+                  spinnerClassName="text-white"
+                  spinnerSize={14}
+                >
+                  {TOOLS_NAV_LINK.label}
                 </NavLink>{" "}
 
                 {/* Learn dropdown — links are ALWAYS rendered in the DOM (not
@@ -390,6 +408,17 @@ export default function AuthHeader() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Demo
+                </NavLink>{" "}
+
+                {/* Tools hub, same reasoning as the desktop branch. */}
+                <NavLink
+                  href={TOOLS_NAV_LINK.href}
+                  className="block py-2 font-heading text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
+                  spinnerClassName="text-white"
+                  spinnerSize={14}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {TOOLS_NAV_LINK.label}
                 </NavLink>{" "}
 
                 {/* Learn section */}

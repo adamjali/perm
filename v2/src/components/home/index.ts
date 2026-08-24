@@ -15,3 +15,4 @@ export { FAQSection } from "./FAQSection";
 export { CTASection } from "./CTASection";
 export { TestimonialsSection } from "./TestimonialsSection";
 export { ScrollProgress } from "./DecorativeElements";
+export { ToolsSection } from "./ToolsSection";

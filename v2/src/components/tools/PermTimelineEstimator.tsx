@@ -134,19 +134,20 @@ export function PermTimelineEstimator({
   return (
     <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
       <div className="border-b-2 border-border p-6 sm:p-8">
-        <div className="flex items-start gap-3">
-          <CalendarClock className="mt-1 h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
-          <div>
-            <h2 className="font-heading text-2xl font-black leading-tight">
-              When will DOL decide my PERM?
-            </h2>
-            <p className="mt-2 text-base leading-relaxed text-foreground/70">
-              Pick the month DOL received your ETA-9089. Every figure below comes
-              from DOL&apos;s own published data, and each one says where it came
-              from.
-            </p>
-          </div>
+        {/* The icon sits beside the heading only. Wrapping the copy in
+            the icon flex indented it 36px against the form below, which
+            reads as the inputs sticking out to the left. */}
+        <div className="flex items-center gap-3">
+          <CalendarClock className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
+          <h2 className="font-heading text-2xl font-black leading-tight">
+            When will DOL decide my PERM?
+          </h2>
         </div>
+        <p className="mt-3 text-base leading-relaxed text-foreground/70">
+          Pick the month DOL received your ETA-9089. Every figure below comes
+          from DOL&apos;s own published data, and each one says where it came
+          from.
+        </p>
 
         <div className="mt-6">
           <Label htmlFor={selectId} className="text-sm font-bold">

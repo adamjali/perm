@@ -36,6 +36,32 @@ export const ADMIN_NAV_LINK: NavLink = {
 export const AUTH_NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/demo", label: "Demo" },
+  { href: "/tools", label: "Tools" },
+] as const satisfies readonly NavLink[];
+
+/**
+ * The tools hub, as a single link.
+ *
+ * The homepage branch of AuthHeader renders its section anchors rather than
+ * AUTH_NAV_LINKS, so the hub has to be placed explicitly there too. Keeping the
+ * href and label here means the two branches cannot drift.
+ */
+export const TOOLS_NAV_LINK: NavLink = { href: "/tools", label: "Tools" };
+
+/**
+ * The calculators, for the footer and any in-content listing.
+ *
+ * Ordered as the hub orders them: the overview first, then the individual
+ * calculators. The suite was reachable from exactly one inbound link when it
+ * shipped, which is the orphan-page defect: a page can return 200, sit in the
+ * sitemap, and still be invisible because nothing indexable points at it.
+ */
+export const TOOL_NAV_LINKS = [
+  { href: "/tools/green-card-timeline", label: "Green card timeline" },
+  { href: "/tools/perm-timeline-calculator", label: "PERM processing time" },
+  { href: "/tools/pwd-calculator", label: "Prevailing wage queue" },
+  { href: "/tools/i140-calculator", label: "I-140 queue" },
+  { href: "/tools/perm-deadline-calculator", label: "PERM deadlines" },
 ] as const satisfies readonly NavLink[];
 
 /**

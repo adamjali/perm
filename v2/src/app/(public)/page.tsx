@@ -9,6 +9,7 @@
  * 2. TrustStrip - Animated marquee with real feature badges
  * 3. StakesSection - Horizontal scroll PERM consequence cards (#stakes)
  * 4. HowItWorks - 3-step process with connectors + video showcase (#how)
+ * 4b. ToolsSection - the four calculators, laid out as the process (#tools)
  * 5. FeaturesGrid - 6 feature cards with tilt effect (#features)
  * 6. StatsSection - Count-up statistics
  * 7. SecuritySection - Neobrutalist security table (#security)
@@ -27,6 +28,7 @@ import {
   FeaturesGrid,
   HowItWorks,
   StatsSection,
+  ToolsSection,
   SecuritySection,
   TestimonialsSection,
   FAQSection,
@@ -119,6 +121,7 @@ export default function HomePage() {
       <TrustStrip />
       <StakesSection />
       <HowItWorks />
+      <ToolsSection />
       <FeaturesGrid />
       <StatsSection />
       <SecuritySection />
