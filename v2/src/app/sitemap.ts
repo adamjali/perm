@@ -67,6 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/tools/perm-timeline-calculator`, lastModified: permAsOf ?? '2026-08-23' },
     { url: `${baseUrl}/tools/pwd-calculator`, lastModified: permAsOf ?? '2026-08-23' },
     { url: `${baseUrl}/tools/i140-calculator`, lastModified: '2026-08-23' },
+    { url: `${baseUrl}/tools/priority-date-calculator`, lastModified: '2026-08-23' },
     { url: `${baseUrl}/tools/perm-deadline-calculator`, lastModified: '2026-08-23' },
     { url: `${baseUrl}/contact`, lastModified: '2026-02-07' },
     { url: `${baseUrl}/terms`, lastModified: '2026-06-15' },

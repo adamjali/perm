@@ -6,6 +6,7 @@ import { fetchQuery } from "convex/nextjs";
 import { api } from "../../../../../convex/_generated/api";
 import { I140QueueEstimator } from "@/components/tools/I140QueueEstimator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
+import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 
@@ -103,14 +104,7 @@ export default async function I140CalculatorPage() {
 
       <section className="mt-12">
         <h2 className="font-heading text-2xl font-black">Common questions</h2>
-        <dl className="mt-6 space-y-6">
-          {FAQS.map((f) => (
-            <div key={f.q} className="border-2 border-border bg-card p-6 shadow-hard">
-              <dt className="font-heading text-lg font-black">{f.q}</dt>{" "}
-              <dd className="mt-3 text-base leading-relaxed text-foreground/70">{f.a}</dd>
-            </div>
-          ))}
-        </dl>
+        <FaqList items={FAQS} />
       </section>
 
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">

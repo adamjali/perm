@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CalendarCheck, CalendarClock, FileText, Route, Scale } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarCheck,
+  CalendarClock,
+  CalendarRange,
+  FileText,
+  Route,
+  Scale,
+} from "lucide-react";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -55,6 +63,14 @@ const TOOLS = [
     name: "I-140 queue calculator",
     blurb:
       "How many petitions are waiting in your category against how fast USCIS clears them, next to the processing time USCIS publishes. The two disagree, and the gap is the useful part.",
+  },
+  {
+    href: "/tools/priority-date-calculator",
+    icon: CalendarRange,
+    kind: "History",
+    name: "Priority date calculator",
+    blurb:
+      "Where a priority date sits against the visa bulletin, and which way the cutoff has moved. It goes backwards more often than people expect.",
   },
   {
     href: "/tools/perm-deadline-calculator",

@@ -20,6 +20,7 @@
  */
 
 import { useId } from "react";
+import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
 import { formatMonth, formatMonthShort } from "@/lib/dolFormat";
 import { cn } from "@/lib/utils";
 
@@ -84,22 +85,9 @@ export function FrontierProgressChart({
     .join(" ");
   const area = `${line} L${px(xs[xs.length - 1]!)},${H - PAD_B} L${px(xs[0]!)},${H - PAD_B} Z`;
 
-  // Five x labels, spaced EVENLY across the series including both ends.
-  // Taking every nth point and then appending the last one leaves a short final
-  // gap: with 20 points that put ticks 4 apart until the last pair, which
-  // landed 3 apart and printed "Mar 2026" hard against "Jun 2026".
-  const TICK_COUNT = 5;
-  const lastIndex = points.length - 1;
-  const xTicks =
-    points.length <= TICK_COUNT
-      ? points
-      : Array.from(
-          new Set(
-            Array.from({ length: TICK_COUNT }, (_, j) =>
-              Math.round((j * lastIndex) / (TICK_COUNT - 1)),
-            ),
-          ),
-        ).map((i) => points[i]!);
+  // Evenly spaced x labels including both ends. Shared with the priority-date
+  // chart, because writing it out twice is how the collision came back.
+  const xTickIndices = evenTickIndices(points.length);
 
   // Three y labels: the ends of the observed range plus the midpoint.
   const yTicks = [yMin, Math.round((yMin + yMax) / 2), yMax].filter(
@@ -193,27 +181,19 @@ export function FrontierProgressChart({
           </text>
         ))}
 
-        {xTicks.map((p, i) => {
-          // The end labels anchor inward. Centred on the last tick, a label
-          // like "June 2026" runs ~15px past the right edge of the viewBox and
-          // is clipped; the anchor point itself is inside, so checking only
-          // the point misses it.
-          const isFirst = i === 0;
-          const isLast = i === xTicks.length - 1;
-          return (
-            <text
-              key={`x-${p.decisionMonth}`}
-              x={px(monthIndex(p.decisionMonth))}
-              y={H - PAD_B + 22}
-              textAnchor={isFirst ? "start" : isLast ? "end" : "middle"}
-              fontSize="13"
-              fill="currentColor"
-              fillOpacity="0.7"
-            >
-              {formatMonthShort(p.decisionMonth)}
-            </text>
-          );
-        })}
+        {xTickIndices.map((idx, i) => (
+          <text
+            key={`x-${points[idx]!.decisionMonth}`}
+            x={px(monthIndex(points[idx]!.decisionMonth))}
+            y={H - PAD_B + 22}
+            textAnchor={tickAnchor(i, xTickIndices.length)}
+            fontSize="13"
+            fill="currentColor"
+            fillOpacity="0.7"
+          >
+            {formatMonthShort(points[idx]!.decisionMonth)}
+          </text>
+        ))}
       </svg>
       </div>
 

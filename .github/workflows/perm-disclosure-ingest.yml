@@ -6,10 +6,17 @@ name: Federal data ingest
 # Two sources, both quarterly, both reachable to scripts:
 #   DOL   PERM disclosure files (www.dol.gov) - 156 MB, 1.21 GB uncompressed
 #   USCIS I-140 counts (www.uscis.gov)        - a few hundred KB
+#   DOS   visa bulletin, via the Internet Archive - monthly, ~20 KB
 #
 # USCIS's PROCESSING TIMES are deliberately absent: they live on
-# egov.uscis.gov behind a bot challenge, as does the DOS Visa Bulletin. Those
-# figures are maintained as small dated tables in the app instead.
+# egov.uscis.gov behind a bot challenge and are maintained as a small dated
+# table in the app instead.
+#
+# The visa bulletin comes from the Internet Archive rather than
+# travel.state.gov, which refuses automated clients. Reading a public archive
+# of a public page is a different thing from defeating a bot protection. The
+# trade is freshness: the archive lags by a month or two, so the page built on
+# it is framed as a history and labels every figure with its bulletin month.
 #
 # This runs here rather than in a Convex action because it cannot run there:
 # one quarterly file is ~156 MB compressed and **1.21 GB of XML uncompressed**,
@@ -26,8 +33,11 @@ name: Federal data ingest
 
 on:
   schedule:
-    # 06:00 UTC on the 8th of Jan/Apr/Jul/Oct.
+    # 06:00 UTC on the 8th of Jan/Apr/Jul/Oct, a few days after each federal
+    # quarter ends, which is when DOL and USCIS republish.
     - cron: "0 6 8 1,4,7,10 *"
+    # The visa bulletin is monthly, and the archive needs time to capture it.
+    - cron: "0 7 20 * *"
   workflow_dispatch:
     inputs:
       files:
@@ -98,6 +108,16 @@ jobs:
         run: |
           python3 scripts/ingest_uscis_i140.py --out "${RUNNER_TEMP}/uscis-payload.json"
 
+      - name: Download the visa bulletin series
+        working-directory: v2
+        # Non-fatal: the archive is a free public service and a slow day for it
+        # must not fail the DOL and USCIS ingests, which are the load-bearing
+        # ones. The mutation refuses a short series anyway.
+        continue-on-error: true
+        run: |
+          python3 scripts/ingest_visa_bulletin.py \
+            --out "${RUNNER_TEMP}/visa-bulletin.json" --months 18
+
       - name: Store aggregates in Convex
         working-directory: v2
         env:
@@ -111,3 +131,9 @@ jobs:
             "$(cat "${RUNNER_TEMP}/perm-payload.json")" --prod
           npx --yes convex run uscisI140:storeStats \
             "$(cat "${RUNNER_TEMP}/uscis-payload.json")" --prod
+          if [ -s "${RUNNER_TEMP}/visa-bulletin.json" ]; then
+            npx --yes convex run visaBulletin:storeBulletins \
+              "$(cat "${RUNNER_TEMP}/visa-bulletin.json")" --prod
+          else
+            echo "visa bulletin payload absent; skipping (see the step above)"
+          fi

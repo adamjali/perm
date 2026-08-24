@@ -73,6 +73,7 @@ import type * as lib_perm_calculators_greenCardTimeline from "../lib/perm/calcul
 import type * as lib_perm_calculators_i140 from "../lib/perm/calculators/i140.js";
 import type * as lib_perm_calculators_i140Queue from "../lib/perm/calculators/i140Queue.js";
 import type * as lib_perm_calculators_index from "../lib/perm/calculators/index.js";
+import type * as lib_perm_calculators_priorityDate from "../lib/perm/calculators/priorityDate.js";
 import type * as lib_perm_calculators_pwd from "../lib/perm/calculators/pwd.js";
 import type * as lib_perm_calculators_pwdQueue from "../lib/perm/calculators/pwdQueue.js";
 import type * as lib_perm_calculators_queueEstimate from "../lib/perm/calculators/queueEstimate.js";
@@ -145,6 +146,7 @@ import type * as turnstile from "../turnstile.js";
 import type * as uscisI140 from "../uscisI140.js";
 import type * as userCaseOrder from "../userCaseOrder.js";
 import type * as users from "../users.js";
+import type * as visaBulletin from "../visaBulletin.js";
 import type * as webSearch from "../webSearch.js";
 import type * as welcomeEmail from "../welcomeEmail.js";
 import type * as welcomeEmailHelpers from "../welcomeEmailHelpers.js";
@@ -221,6 +223,7 @@ declare const fullApi: ApiFromModules<{
   "lib/perm/calculators/i140": typeof lib_perm_calculators_i140;
   "lib/perm/calculators/i140Queue": typeof lib_perm_calculators_i140Queue;
   "lib/perm/calculators/index": typeof lib_perm_calculators_index;
+  "lib/perm/calculators/priorityDate": typeof lib_perm_calculators_priorityDate;
   "lib/perm/calculators/pwd": typeof lib_perm_calculators_pwd;
   "lib/perm/calculators/pwdQueue": typeof lib_perm_calculators_pwdQueue;
   "lib/perm/calculators/queueEstimate": typeof lib_perm_calculators_queueEstimate;
@@ -293,6 +296,7 @@ declare const fullApi: ApiFromModules<{
   uscisI140: typeof uscisI140;
   userCaseOrder: typeof userCaseOrder;
   users: typeof users;
+  visaBulletin: typeof visaBulletin;
   webSearch: typeof webSearch;
   welcomeEmail: typeof welcomeEmail;
   welcomeEmailHelpers: typeof welcomeEmailHelpers;

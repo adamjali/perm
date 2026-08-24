@@ -1153,6 +1153,43 @@ export default defineSchema({
     .index("by_content_hash", ["contentHash"]),
 
   /**
+   * The employment-based visa bulletin, as a series.
+   *
+   * Sourced from the Internet Archive, because travel.state.gov refuses
+   * automated clients behind a bot challenge and defeating that is not
+   * something this project does. Reading a public archive of a public page is
+   * a different thing, and the archive is built to be read programmatically.
+   *
+   * The trade is freshness: the archive lags the live bulletin by a month or
+   * two, so nothing built on this may claim to hold the current month. Every
+   * row carries the bulletin's own month, and the pages label figures with it.
+   *
+   * A series rather than a snapshot on purpose. Anyone can read this month's
+   * cutoff off the State Department's page; what they cannot get is the
+   * direction, and direction is what matters. Across the archived run EB-2
+   * India advanced from January 2013 to July 2014, went backwards to September
+   * 2013, then became unavailable.
+   */
+  visaBulletins: defineTable({
+    /** The bulletin's own month, `YYYY-MM`. Not when it was archived. */
+    bulletinMonth: v.string(),
+    /** Wayback timestamp of the snapshot read, for provenance. */
+    archivedAt: v.string(),
+    sourceUrl: v.string(),
+    /**
+     * Cutoffs per category, per country, exactly as the bulletin prints them:
+     * a `DDMMMYY` date, `C` for current, or `U` for unavailable. Stored raw so
+     * the parser stays in one place and a cell we cannot read is visible as
+     * itself rather than silently becoming a date.
+     */
+    finalAction: v.any(),
+    datesForFiling: v.any(),
+    computedAt: v.number(),
+  })
+    .index("by_month", ["bulletinMonth"])
+    .index("by_computed", ["computedAt"]),
+
+  /**
    * USCIS I-140 counts, per petition subtype, for the newest published quarter.
    *
    * Separate from `i140ProcessingTimes` in the frontend, and the two answer

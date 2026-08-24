@@ -61,6 +61,7 @@ export const TOOL_NAV_LINKS = [
   { href: "/tools/perm-timeline-calculator", label: "PERM processing time" },
   { href: "/tools/pwd-calculator", label: "Prevailing wage queue" },
   { href: "/tools/i140-calculator", label: "I-140 queue" },
+  { href: "/tools/priority-date-calculator", label: "Priority dates" },
   { href: "/tools/perm-deadline-calculator", label: "PERM deadlines" },
 ] as const satisfies readonly NavLink[];
 

@@ -108,6 +108,7 @@ describe("sitemap.ts", () => {
         "https://permtracker.app/tools/pwd-calculator",
         "https://permtracker.app/tools/green-card-timeline",
         "https://permtracker.app/tools/i140-calculator",
+        "https://permtracker.app/tools/priority-date-calculator",
         "https://permtracker.app/tools/perm-deadline-calculator",
       ]),
     );
