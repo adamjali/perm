@@ -54,7 +54,16 @@ export function I140QueueEstimator({
   className,
 }: I140QueueEstimatorProps) {
   const selectId = useId();
-  const [code, setCode] = useState<string>(() => subtypes[0]?.code || "NIW");
+  // Defaults to the largest category by pending volume rather than whatever
+  // USCIS happens to tabulate first, because that is the one most visitors are
+  // in. On current figures it is the national interest waiver, at roughly half
+  // of every I-140 pending.
+  const [code, setCode] = useState<string>(
+    () =>
+      [...subtypes].sort((a, b) => b.pending - a.pending)[0]?.code ||
+      subtypes[0]?.code ||
+      "NIW",
+  );
 
   const estimate = useMemo(() => {
     if (subtypes.length === 0) return null;

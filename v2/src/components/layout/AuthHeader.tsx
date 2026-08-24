@@ -141,7 +141,7 @@ export default function AuthHeader() {
         {/* Logo */}
         <NavLink
           href="/"
-          className="group flex items-center gap-2 px-2 py-1 font-heading text-2xl font-bold transition-colors hover:bg-primary"
+          className="group flex min-h-[44px] items-center gap-2 px-2 py-1 font-heading text-2xl font-bold transition-colors hover:bg-primary"
           spinnerClassName="text-primary group-hover:text-black"
         >
           <FileText
@@ -336,7 +336,7 @@ export default function AuthHeader() {
               >
                 Sign In
               </NavLink>
-            )}{"XPROBEX"}
+            )}{" "}
 
             {showSignUp && (
               <NavLink
@@ -359,7 +359,8 @@ export default function AuthHeader() {
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="flex h-10 w-10 items-center justify-center border-2 border-white/20 text-white transition-colors hover:bg-white/10"
+            // 44px, not 40: the hamburger is the only way into the menu on a phone.
+            className="flex h-11 w-11 items-center justify-center border-2 border-white/20 text-white transition-colors hover:bg-white/10"
             aria-label="Toggle menu"
             aria-expanded={isMobileMenuOpen}
           >

@@ -38,7 +38,8 @@ export default function ThemeToggle() {
       <button
         type="button"
         aria-label="Toggle theme"
-        className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-transparent transition-all duration-150"
+        // 44px, not 40: a standalone control has to clear the tap-target floor.
+        className="relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-transparent transition-all duration-150"
       >
         <div className="size-5" />
       </button>
