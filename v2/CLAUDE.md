@@ -432,3 +432,127 @@ makes the next build fail with "a previous build that didn't exit cleanly";
 **Status: NOT FIXED.** The work was reverted mid-session by a concurrent Claude
 session in this repo. The recipe above is complete and verified against the
 build; it needs one uninterrupted pass.
+
+---
+
+## Next 16 renamed middleware to proxy, and the export counts too
+
+`src/middleware.ts` became `src/proxy.ts` and `export default` became a named
+`export const proxy`. This repo had done the first half and not the second, and
+the symptom is nasty: **`next dev` works, `next build` compiles all 59 pages,
+and then `Collecting build traces` dies with ENOENT on
+`.next/server/proxy.js.nft.json`.** Next emits `middleware.js` down the legacy
+path for a default export while the tracer keys off the FILE name and looks for
+`proxy.js`.
+
+**A warm `.next` hides it entirely.** A stale `proxy.js.nft.json` from an older
+build satisfies the tracer, so the failure only appears on a clean build, which
+is what CI and a fresh clone do.
+
+Convex Auth still documents only the default export, so export both from one
+handler:
+
+```ts
+const handler = convexAuthNextjsMiddleware(...);
+export default handler;      // Convex Auth's documented shape
+export const proxy = handler; // what Next 16 looks for
+```
+
+Verify by `rm -rf .next && pnpm build` and confirming `.next/server/proxy.js`
+and `proxy.js.nft.json` exist. `middleware.js` present instead means it is
+still on the legacy path.
+
+---
+
+## Which federal hosts serve scripts, and which refuse (measured 2026-08-23)
+
+| Host | Automated fetch | What lives there |
+|---|---|---|
+| `flag.dol.gov` | **200** | PERM processing times, the weekly ingest |
+| `www.dol.gov` | **200** with a FULL browser header set | quarterly PERM disclosure files |
+| `www.uscis.gov` | **200** | quarterly I-140 counts (23-65 KB) |
+| `egov.uscis.gov` | **403 Cloudflare challenge** | USCIS processing times |
+| `travel.state.gov` | **403 Cloudflare challenge** | the DOS visa bulletin |
+
+**Run a control before blaming your own traffic.** cloudflare.com, discord.com
+and reddit all returned 200 from the same IP in the same minute, which is what
+proved the two 403s are agency policy rather than an IP reputation problem.
+
+**Seven routes were tried on travel.state.gov and all failed:** curl with the
+full header set, urllib, WebFetch, the Jina reader proxy (returns Cloudflare's
+"Just a moment"), the canonical `/content/dam/.../visabulletin_<Month><Year>.pdf`
+path, alternate JSON/RSS paths, and a real browser through the Chrome extension
+(still on the challenge after 25s). Do not spend the session re-deriving this,
+and do not defeat a government site's bot protection.
+
+**An access matrix goes stale fast.** The June-2026 research for this project
+recorded travel.state.gov as "freely scriptable, PDF and HTML both served to
+scripts", verified 200. Two months later every path 403s. Re-verify before
+building on a recorded result.
+
+**A partial header set reads exactly like a dead link.** `www.dol.gov` answers
+a bare UA with 403 "Access Denied" and the full `Sec-Fetch-*` / `Sec-Ch-Ua`
+set with 200. Sustained traffic then earns a 403 anyway: the same request that
+returned 200 came back 403 twenty minutes and 240 MB later, from curl and
+urllib alike. Back off; do not go hunting for a header you are missing.
+
+**Discover the URL, never construct it.** DOL moved its current-year disclosure
+file to `/media/` while the archive stayed on `/sites/dolgov/files/ETA/oflc/pdfs/`.
+A hardcoded path returns a styled 404 that looks like a dead link, and the
+difference between 403 and 404 is the only thing that says which problem you have.
+
+---
+
+## Reading a government spreadsheet
+
+- **XLSX omits empty cells entirely**, so indexing a row's `<c>` children by
+  position silently shifts every column after the first blank. Resolve each
+  cell from its own `r="A1"` reference. `scripts/lib_gov_data.py` does this.
+- **A quarterly disclosure file is a window on DETERMINATIONS, not a record of
+  a filing-month cohort.** A case filed 2024-07 and decided 2025-08 sits in the
+  FY2025 file and is absent from FY2026, so one file shows an old cohort's slow
+  tail and a new one's fast head and both look like medians. Union the files and
+  de-duplicate by case number: 112,550 cases became 259,489.
+- **DOL's disclosure files contain NO pending rows.** Every record has a
+  decision date, so a completion fraction computed from them is always exactly
+  1.0. A survivorship guard built on that ratio can never fire. Judge cohort
+  maturity against DOL's published frontier instead.
+- **The June-2026 cohort's raw median is 1 day**, and March-2026's is 6, because
+  the only cases decided so far are instant withdrawals. Publishing either would
+  be indefensible. This is why the guard exists.
+- **The frontier DOL never publishes can be reconstructed backwards.** For each
+  month of determinations, take the filing month at their median. That series is
+  the only way to measure how fast the queue advances, because DOL publishes
+  today's position and keeps no archive.
+
+---
+
+## Verification traps this session actually hit
+
+- **The LSP reported stale diagnostics roughly eight times**, naming exports
+  that exist and tables that had just been generated. `pnpm typecheck` is
+  authoritative; the editor squiggles are not.
+- **A required prop fed by a Convex query is undefined during deploy skew.**
+  Adding a field to a query without redeploying the functions made
+  `frontierHistory.length` throw and took the whole page down to nav and footer.
+  A frontend deployed ahead of its backend hits the same window in production.
+  Default the array.
+- **`[^>]*` in an SVG attribute regex runs into `fill-opacity="0.7"`,** whose
+  tail is literally `y="0.7"`, so every label reported y=1. Measure text with
+  `getBBox()` in the browser, not with a regex and a characters-times-7 estimate.
+- **Checking only the anchor point misses a label that overflows.** "Jun 2026"
+  centred at x=704 in a 720-wide viewBox is inside by its anchor and 15px past
+  the edge by its box. Anchor the end labels inward.
+- **Ticks taken as every nth point plus the last one leave a short final gap.**
+  Space them evenly across the series including both ends, or the last two
+  labels collide while the rest look fine.
+- **SVG axis text scales with the viewBox.** 13px in a 720-unit box rendered at
+  5.5px in a 306px phone column. Give the drawing a min-width and let it scroll
+  in its own container rather than picking one font size that is wrong at one end.
+- **`nohup cmd &` makes the harness report the WRAPPER finishing, not the job.**
+  A 5-minute build "completed" in seconds with no `.next/server`. Use the tool's
+  own background flag.
+- **Assert the port, not the status code.** `pnpm dev` found 3000 taken and
+  silently used 3001; the 200s came from another session's server and one page
+  even returned a stale 500. `lsof -nP -iTCP:<port> -sTCP:LISTEN` before trusting
+  a local check, and never kill a process you did not start.

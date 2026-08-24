@@ -69,6 +69,7 @@ import type * as lib_logging from "../lib/logging.js";
 import type * as lib_nameValidation from "../lib/nameValidation.js";
 import type * as lib_notificationHelpers from "../lib/notificationHelpers.js";
 import type * as lib_perm_calculators_eta9089 from "../lib/perm/calculators/eta9089.js";
+import type * as lib_perm_calculators_greenCardTimeline from "../lib/perm/calculators/greenCardTimeline.js";
 import type * as lib_perm_calculators_i140 from "../lib/perm/calculators/i140.js";
 import type * as lib_perm_calculators_i140Queue from "../lib/perm/calculators/i140Queue.js";
 import type * as lib_perm_calculators_index from "../lib/perm/calculators/index.js";
@@ -216,6 +217,7 @@ declare const fullApi: ApiFromModules<{
   "lib/nameValidation": typeof lib_nameValidation;
   "lib/notificationHelpers": typeof lib_notificationHelpers;
   "lib/perm/calculators/eta9089": typeof lib_perm_calculators_eta9089;
+  "lib/perm/calculators/greenCardTimeline": typeof lib_perm_calculators_greenCardTimeline;
   "lib/perm/calculators/i140": typeof lib_perm_calculators_i140;
   "lib/perm/calculators/i140Queue": typeof lib_perm_calculators_i140Queue;
   "lib/perm/calculators/index": typeof lib_perm_calculators_index;
