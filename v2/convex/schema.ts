@@ -1068,6 +1068,131 @@ export default defineSchema({
     .index("by_content_hash", ["contentHash"]),
 
   /**
+   * Derived statistics from DOL's quarterly PERM disclosure files.
+   *
+   * AGGREGATES ONLY, and that is a hard boundary rather than a preference. The
+   * source rows carry `ATTY_AG_EMAIL`, `EMP_POC_EMAIL`, `DECL_PREP_EMAIL`,
+   * direct phone numbers and street addresses for roughly 112,000 real people.
+   * The file is public, republishing it is not our business, and nothing on
+   * this table can identify a case or a person. The ingest computes counts and
+   * percentiles and discards every row.
+   *
+   * Written as one snapshot document rather than a row per cohort, matching
+   * `dolProcessingTimes` above. The whole payload is a few KB against Convex's
+   * 1 MB document limit, and a snapshot keeps a published figure and the data
+   * it came from atomically consistent.
+   *
+   * Ingestion cannot run inside Convex: a single quarterly file is 1.21 GB of
+   * XML uncompressed, so it is stream-parsed outside and only the result is
+   * written here.
+   */
+  permDisclosureStats: defineTable({
+    /** Filenames unioned for this snapshot, e.g. `PERM_Disclosure_Data_FY2026_Q3.xlsx`. */
+    sourceFiles: v.array(v.string()),
+    /** Distinct cases across the union, after de-duplicating by case number. */
+    uniqueCases: v.number(),
+
+    /**
+     * Receipt-to-determination percentiles per filing month, over DECIDED
+     * cases only.
+     *
+     * These are unsafe to read for a filing month DOL has not worked through:
+     * the disclosure files contain no pending rows, so a recent month shows
+     * only its earliest closures. Measured on real data, the June-2026 cohort's
+     * median is 1 day. `cohortMaturity()` in
+     * `convex/lib/perm/calculators/queueEstimate.ts` is what decides whether a
+     * row here may be published, and it keys on DOL's frontier, never on
+     * anything in this table.
+     */
+    cohorts: v.array(
+      v.object({
+        /** Filing month, `YYYY-MM`. */
+        cohortMonth: v.string(),
+        decided: v.number(),
+        p25: v.union(v.number(), v.null()),
+        p50: v.union(v.number(), v.null()),
+        p75: v.union(v.number(), v.null()),
+        p90: v.union(v.number(), v.null()),
+      }),
+    ),
+
+    /** Determinations issued per calendar month. DOL's actual clearance rate. */
+    clearanceByMonth: v.array(
+      v.object({
+        /** `YYYY-MM` of the determination. */
+        month: v.string(),
+        decisions: v.number(),
+      }),
+    ),
+
+    /**
+     * The frontier history DOL does not publish.
+     *
+     * DOL's processing-times page shows only where the queue stands today and
+     * keeps no archive, so the rate at which it advances cannot be read from
+     * DOL at all. Determination dates let it be reconstructed backwards: for
+     * each month of decisions, the median filing month those decisions came
+     * from. That series is what makes the queue-advance model measurable
+     * instead of assumed.
+     */
+    frontierHistory: v.array(
+      v.object({
+        /** `YYYY-MM` in which the determinations were issued. */
+        decisionMonth: v.string(),
+        /** `YYYY-MM` filing month at the median of those determinations. */
+        medianFilingMonth: v.string(),
+        decisions: v.number(),
+      }),
+    ),
+
+    computedAt: v.number(),
+    /** Insert-only-on-change, matching `dolProcessingTimes`. */
+    contentHash: v.string(),
+  })
+    .index("by_computed", ["computedAt"])
+    .index("by_content_hash", ["contentHash"]),
+
+  /**
+   * USCIS I-140 counts, per petition subtype, for the newest published quarter.
+   *
+   * Separate from `i140ProcessingTimes` in the frontend, and the two answer
+   * different questions on purpose. That table holds what USCIS says a case
+   * takes, measured over petitions already decided. This one holds how many are
+   * stacked up and how fast they are clearing, which on real figures disagrees:
+   * the national interest waiver shows 89,215 pending against 6,325 completed
+   * in a quarter, while USCIS publishes 29 to 32 months for the same category.
+   * Both are true, because NIW intake is outrunning its output.
+   *
+   * Ingested by `scripts/ingest_uscis_i140.py` from www.uscis.gov, which serves
+   * scripts. The processing-time figures live on egov.uscis.gov behind a bot
+   * challenge and are deliberately not fetched by anything.
+   */
+  uscisI140Stats: defineTable({
+    /** The workbook this came from, e.g. `i140_fy2026_q2_v1.xlsx`. */
+    sourceFile: v.string(),
+    /** USCIS's own quarter label, e.g. `FY2026 Q2`. */
+    asOfQuarter: v.string(),
+    subtypes: v.array(
+      v.object({
+        /** USCIS subtype code, e.g. `NIW`. */
+        code: v.string(),
+        label: v.string(),
+        received: v.number(),
+        approved: v.number(),
+        denied: v.number(),
+        /** Awaiting a decision at quarter end. Never by receipt month: USCIS
+         *  does not publish that, so "how many are ahead of me" is unanswerable. */
+        pending: v.number(),
+      }),
+    ),
+    computedAt: v.number(),
+    /** Insert-only-on-change, matching the other ingested tables. */
+    contentHash: v.string(),
+  })
+    .index("by_computed", ["computedAt"])
+    .index("by_content_hash", ["contentHash"]),
+
+  /**
    * Queue-reached alerts
    *
    * A visitor tells us the month their case was filed and we email them once,

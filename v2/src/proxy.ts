@@ -43,7 +43,18 @@ const isAuthRoute = createRouteMatcher(["/login", "/signup"]);
 // limit here does NOT throttle normal page navigation.
 const isConvexAuthApiRoute = createRouteMatcher(["/api/auth", "/api/auth/"]);
 
-export default convexAuthNextjsMiddleware(
+/**
+ * Next 16 renamed this file convention from `middleware.ts` to `proxy.ts` and
+ * the export from `default` to a named `proxy`. Convex Auth still documents
+ * only the default export, so both are exported from one handler: the default
+ * keeps Convex Auth's documented shape, and the named export is what Next 16
+ * looks for.
+ *
+ * Without the named export the build emits `middleware.js` down the legacy
+ * path while `Collecting build traces` looks for `proxy.js.nft.json`, and a
+ * clean build fails with ENOENT after compiling successfully.
+ */
+const handler = convexAuthNextjsMiddleware(
   async (request, { convexAuth }) => {
     // Per-IP rate-limit gate on Convex Auth API route (defense-in-depth
     // alongside the per-email limit inside Convex). Only POSTs matter —
@@ -120,6 +131,9 @@ export default convexAuthNextjsMiddleware(
     },
   }
 );
+
+export default handler;
+export const proxy = handler;
 
 export const config = {
   // Match all routes except static files and Next.js internals

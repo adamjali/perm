@@ -97,6 +97,32 @@ describe("sitemap.ts", () => {
     }
   });
 
+  it("includes every calculator under /tools", async () => {
+    // A tool page that ships but never reaches the sitemap is invisible to
+    // search, which is most of the reason these exist as separate URLs.
+    const urls = (await sitemap()).map((e) => e.url);
+    expect(urls).toEqual(
+      expect.arrayContaining([
+        "https://permtracker.app/tools",
+        "https://permtracker.app/tools/perm-timeline-calculator",
+        "https://permtracker.app/tools/pwd-calculator",
+        "https://permtracker.app/tools/green-card-timeline",
+        "https://permtracker.app/tools/i140-calculator",
+        "https://permtracker.app/tools/perm-deadline-calculator",
+      ]),
+    );
+  });
+
+  it("uses DOL's as-of date for the calculators that render live figures", async () => {
+    // Same reasoning as /perm-processing-times: lastmod should move when the
+    // numbers move, not when an unrelated blog post ships.
+    const entries = await sitemap();
+    const timeline = entries.find((e) => e.url.endsWith("/tools/perm-timeline-calculator"));
+    const pwd = entries.find((e) => e.url.endsWith("/tools/pwd-calculator"));
+    expect(timeline?.lastModified).toBe("2026-08-20");
+    expect(pwd?.lastModified).toBe("2026-08-20");
+  });
+
   it("emits per-slug URLs for blog/tutorials/guides/resources but NOT changelog", async () => {
     vi.mocked(getAllPosts).mockReturnValue([
       mkPost("blog-a", "blog", "2026-01-01"),

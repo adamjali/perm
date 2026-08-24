@@ -33,6 +33,19 @@ export function formatMonth(value: string | null | undefined): string | null {
   return name ? `${name} ${m[1]}` : null;
 }
 
+/**
+ * "2026-08" to "Aug 2026". For axis labels and other tight columns.
+ *
+ * The full form overflows a chart gutter: "September 2024" is 98px at 13px
+ * type, which ran past the left edge of a 96px axis gutter.
+ */
+export function formatMonthShort(value: string | null | undefined): string | null {
+  const full = formatMonth(value);
+  if (!full) return null;
+  const [name, year] = full.split(" ");
+  return name && year ? `${name.slice(0, 3)} ${year}` : full;
+}
+
 /** "2026-08-20" to "August 20, 2026". Used for DOL's own as-of stamps. */
 export function formatAsOf(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -99,4 +112,16 @@ export function daysAsApproxMonths(days: number | null | undefined): string | nu
   }
   const months = Math.round(days / 30.44);
   return `about ${months} month${months === 1 ? "" : "s"}`;
+}
+
+/**
+ * Newest selectable filing month, computed once per server render.
+ *
+ * UTC deliberately: the alternative is the server's local month, which after
+ * ~8pm ET is already tomorrow's in UTC terms and would disagree with anything
+ * else deriving a month the same way.
+ */
+export function currentMonthUtc(): string {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
 }

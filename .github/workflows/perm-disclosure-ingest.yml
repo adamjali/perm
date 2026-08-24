@@ -1,0 +1,113 @@
+name: Federal data ingest
+
+# Downloads the quarterly federal datasets this app cites, reduces them to
+# aggregates, and stores those in Convex.
+#
+# Two sources, both quarterly, both reachable to scripts:
+#   DOL   PERM disclosure files (www.dol.gov) - 156 MB, 1.21 GB uncompressed
+#   USCIS I-140 counts (www.uscis.gov)        - a few hundred KB
+#
+# USCIS's PROCESSING TIMES are deliberately absent: they live on
+# egov.uscis.gov behind a bot challenge, as does the DOS Visa Bulletin. Those
+# figures are maintained as small dated tables in the app instead.
+#
+# This runs here rather than in a Convex action because it cannot run there:
+# one quarterly file is ~156 MB compressed and **1.21 GB of XML uncompressed**,
+# well past what an action can download, hold or parse. A GitHub runner has the
+# memory and the time; Convex receives ~5 KB of counts and percentiles.
+#
+# Quarterly, a few days after each federal quarter ends, because that is when
+# DOL republishes. The job is idempotent: the mutation hashes its payload and
+# stores nothing when DOL has not changed the files, so an extra run is free.
+#
+# Manual run:
+#   python3 v2/scripts/ingest_perm_disclosure.py --out /tmp/perm.json
+#   npx convex run permDisclosure:storeStats "$(cat /tmp/perm.json)" --prod
+
+on:
+  schedule:
+    # 06:00 UTC on the 8th of Jan/Apr/Jul/Oct.
+    - cron: "0 6 8 1,4,7,10 *"
+  workflow_dispatch:
+    inputs:
+      files:
+        description: "How many recent disclosure files to union"
+        required: false
+        default: "2"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: perm-disclosure-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    # The download plus two streaming parses of ~1.8 GB of XML runs well under
+    # this, but a DOL throttle triggers backoff and the default 6h is far too
+    # generous for a job that should either work or fail visibly.
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Download and reduce DOL disclosure files
+        working-directory: v2
+        # The dispatch input goes through env and is checked against a digit
+        # pattern before it reaches a shell. Interpolating `${{ ... }}` straight
+        # into `run:` splices the value into the command itself, so a crafted
+        # input would execute rather than be read as an argument.
+        env:
+          FILE_COUNT: ${{ github.event.inputs.files || '2' }}
+        run: |
+          case "$FILE_COUNT" in
+            ''|*[!0-9]*) echo "FATAL: files must be a positive integer" >&2; exit 1 ;;
+          esac
+          python3 scripts/ingest_perm_disclosure.py \
+            --files "$FILE_COUNT" \
+            --out "${RUNNER_TEMP}/perm-payload.json"
+
+      # Fails the job rather than storing a truncated payload. The script
+      # already refuses to write an empty one; this catches a partial write.
+      - name: Check the payload before sending it
+        run: |
+          python3 - "${RUNNER_TEMP}/perm-payload.json" <<'PY'
+          import json, sys
+          payload = json.load(open(sys.argv[1]))
+          cohorts = len(payload["cohorts"])
+          frontier = len(payload["frontierHistory"])
+          print(f"unique cases    {payload['uniqueCases']:,}")
+          print(f"cohorts         {cohorts}")
+          print(f"frontier points {frontier}")
+          if payload["uniqueCases"] < 50_000 or cohorts < 10 or frontier < 5:
+              sys.exit("FATAL: payload is too small to be a real quarter of DOL data")
+          PY
+
+      - name: Download and reduce USCIS I-140 counts
+        working-directory: v2
+        run: |
+          python3 scripts/ingest_uscis_i140.py --out "${RUNNER_TEMP}/uscis-payload.json"
+
+      - name: Store aggregates in Convex
+        working-directory: v2
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: |
+          if [ -z "$CONVEX_DEPLOY_KEY" ]; then
+            echo "FATAL: CONVEX_DEPLOY_KEY is not set" >&2
+            exit 1
+          fi
+          npx --yes convex run permDisclosure:storeStats \
+            "$(cat "${RUNNER_TEMP}/perm-payload.json")" --prod
+          npx --yes convex run uscisI140:storeStats \
+            "$(cat "${RUNNER_TEMP}/uscis-payload.json")" --prod

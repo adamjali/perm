@@ -147,6 +147,39 @@ export {
   calculateI140FilingDeadline,
   // RFI
   calculateRFIDueDate,
+  // Queue estimation. Unlike everything above, these are FORECASTS over DOL's
+  // queue rather than statutory arithmetic, and they are wrong by construction.
+  // Callers must render every model returned, with its own label and source,
+  // rather than picking one and presenting it as the answer.
+  estimateQueueDecision,
+  measureFrontierAdvance,
+  measureFrontierAdvanceRange,
+  estimatePwdQueue,
+  estimateI140Queue,
+  buildGreenCardTimeline,
+  keyDatesFromPwd,
+  type StageCertainty,
+  type TimelineStage,
+  type GreenCardTimelineInput,
+  type GreenCardTimeline,
+  type I140QuarterStats,
+  type I140QueueInput,
+  type I140QueueEstimate,
+  measurePwdClearance,
+  type PwdBacklogMonth,
+  type PwdQueueInput,
+  type PwdQueueEstimate,
+  cohortMaturity,
+  reportablePercentiles,
+  COHORT_SETTLED_MONTHS,
+  type QueueEstimate,
+  type QueueEstimateInput,
+  type QueuePosition,
+  type CohortMaturity,
+  type CohortStat,
+  type DolFrontier,
+  type EstimateModel,
+  type EstimateModelId,
 } from './calculators';
 
 // ============================================================================

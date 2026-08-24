@@ -59,6 +59,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // — backwards on both counts, and the fastest way to teach a crawler that
     // our lastmod values mean nothing.
     { url: `${baseUrl}/perm-processing-times`, lastModified: permAsOf ?? latestPostDate },
+    // Calculators. Their lastmod tracks DOL's own as-of stamp where they render
+    // live figures, for the same reason /perm-processing-times does: the date
+    // should move when the numbers move, not when an unrelated post ships.
+    { url: `${baseUrl}/tools`, lastModified: '2026-08-23' },
+    { url: `${baseUrl}/tools/green-card-timeline`, lastModified: permAsOf ?? '2026-08-23' },
+    { url: `${baseUrl}/tools/perm-timeline-calculator`, lastModified: permAsOf ?? '2026-08-23' },
+    { url: `${baseUrl}/tools/pwd-calculator`, lastModified: permAsOf ?? '2026-08-23' },
+    { url: `${baseUrl}/tools/i140-calculator`, lastModified: '2026-08-23' },
+    { url: `${baseUrl}/tools/perm-deadline-calculator`, lastModified: '2026-08-23' },
     { url: `${baseUrl}/contact`, lastModified: '2026-02-07' },
     { url: `${baseUrl}/terms`, lastModified: '2026-06-15' },
     { url: `${baseUrl}/privacy`, lastModified: '2026-06-15' },

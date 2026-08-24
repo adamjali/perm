@@ -16,7 +16,7 @@ import { useI140Section } from "@/components/forms/useCaseFormSection";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
-import type { I140Category, ServiceCenter } from "@/lib/processing-times/i140ProcessingTimes";
+import type { I140Category } from "@/lib/processing-times/i140ProcessingTimes";
 import { Info, CheckCircle2 } from "lucide-react";
 
 // ============================================================================
@@ -461,11 +461,12 @@ export function I140Section(props: I140SectionProps) {
 
           {/* Processing Time Estimate (Full Width) */}
           <div className="md:col-span-2">
+            {/* Service center is no longer passed: USCIS reports I-140 under a
+                single office, so a per-center estimate would be invented. The
+                field is still recorded on the case. */}
             <ProcessingTimeEstimate
               category={(values.i140Category || "") as I140Category}
-              serviceCenter={(values.i140ServiceCenter || "") as ServiceCenter}
               isPremiumProcessing={values.i140PremiumProcessing || false}
-              filingDate={values.i140FilingDate}
             />
           </div>
         </div>

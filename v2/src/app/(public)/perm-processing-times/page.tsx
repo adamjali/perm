@@ -28,14 +28,7 @@ import { api } from "../../../../convex/_generated/api";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
-import {
-  formatMonth,
-  formatAsOf,
-  formatCount,
-  monthsMoved,
-  daysBetween,
-  daysAsApproxMonths,
-} from "@/lib/dolFormat";
+import { currentMonthUtc, daysAsApproxMonths, daysBetween, formatAsOf, formatCount, formatMonth, monthsMoved } from "@/lib/dolFormat";
 import {
   analystReviewQueue,
   analystReviewAverage,
@@ -113,18 +106,6 @@ function Figure({
       {caption ? <p className="mt-2 text-sm text-foreground/60">{caption}</p> : null}
     </div>
   );
-}
-
-/**
- * Newest selectable filing month, computed once per server render.
- *
- * UTC deliberately: the alternative is the server's local month, which after
- * ~8pm ET is already tomorrow's in UTC terms and would disagree with anything
- * else deriving a month the same way.
- */
-function currentMonthUtc(): string {
-  const now = new Date();
-  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 export default async function PermProcessingTimesPage() {
@@ -387,6 +368,25 @@ export default async function PermProcessingTimesPage() {
           </p>
         </section>
       )}
+
+      {/* Links to the calculator rather than embedding it. Two live estimators
+          on one page would compete for the same question, and this page's job
+          is the reference figures. */}
+      <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+        <h2 className="font-heading text-2xl font-black">Where does your case sit?</h2>
+        <p className="mt-3 leading-relaxed text-foreground/70">
+          The figures above are DOL&apos;s position across every case. The
+          calculator puts your own filing month against them and shows what each
+          way of measuring implies.
+        </p>
+        <Link
+          href="/tools/perm-timeline-calculator"
+          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg"
+        >
+          Open the processing time calculator
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      </section>
 
       {/* Outside the snapshot gate on purpose. Someone arriving on a day DOL's
           page is unreadable is exactly the person who wants to be told when it

@@ -1,127 +1,87 @@
 "use client";
 
-import * as React from "react";
 import { motion } from "motion/react";
-import { Clock, Zap, Calendar, Info } from "lucide-react";
+import { Clock, Info, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
+  PROCESSING_TIMES_AS_OF,
+  PROCESSING_TIMES_SOURCE_URL,
+  formatMonthRange,
   getI140ProcessingTime,
-  getI140CompletionDateRange,
-  formatProcessingTimeRange,
-  formatCompletionDateRange,
+  getPremiumBusinessDays,
   type I140Category,
-  type ServiceCenter,
 } from "@/lib/processing-times/i140ProcessingTimes";
-
-// ============================================================================
-// TYPES
-// ============================================================================
+import { formatAsOf } from "@/lib/dolFormat";
 
 export interface ProcessingTimeEstimateProps {
-  /** I-140 category (EB-1, EB-2, EB-2-NIW, EB-3) */
+  /** Petition category recorded on the case. */
   category: I140Category;
-  /** USCIS Service Center */
-  serviceCenter: ServiceCenter;
-  /** Whether premium processing is selected */
+  /** Whether premium processing is selected. */
   isPremiumProcessing: boolean;
-  /** Filing date (to calculate estimated completion) */
-  filingDate?: string;
-  /** Additional className */
   className?: string;
-  /** Compact mode for smaller display */
+  /** Single-line variant for tight spaces. */
   compact?: boolean;
 }
 
-// ============================================================================
-// COMPONENT
-// ============================================================================
-
 /**
- * ProcessingTimeEstimate Component
+ * USCIS I-140 processing times for a category.
  *
- * Displays I-140 processing time estimates based on:
- * - Category (EB-1, EB-2, EB-2-NIW, EB-3)
- * - Service Center (Texas, Nebraska, California, Vermont)
- * - Premium Processing toggle
+ * Shows the subtypes rather than one figure, because within a category they
+ * diverge enormously: EB-1 runs 15.5 months for an outstanding professor and
+ * 34.5 for extraordinary ability. An earlier version showed one number per
+ * category per service center and was wrong by up to 4x.
  *
- * Shows:
- * - Time range (median to 93rd percentile)
- * - Estimated completion dates if filing date provided
- * - Premium processing note when selected
+ * Service center is deliberately not an input. USCIS reports I-140 under a
+ * single office, so offering the choice implied a precision the source does
+ * not have.
  */
 export function ProcessingTimeEstimate({
   category,
-  serviceCenter,
   isPremiumProcessing,
-  filingDate,
   className,
   compact = false,
 }: ProcessingTimeEstimateProps) {
-  // Get processing time data
-  const processingTime = getI140ProcessingTime(
-    category,
-    serviceCenter,
-    isPremiumProcessing
-  );
+  const range = getI140ProcessingTime(category);
+  const premiumDays = getPremiumBusinessDays(category);
 
-  const completionDates =
-    filingDate && processingTime
-      ? getI140CompletionDateRange(
-          category,
-          serviceCenter,
-          filingDate,
-          isPremiumProcessing
-        )
-      : null;
-
-  // If no data available, show placeholder
-  if (!category || !serviceCenter) {
+  if (!category) {
     return (
       <div
         className={cn(
           "rounded-lg border-2 border-border bg-muted/30 p-3 text-sm text-muted-foreground",
-          className
+          className,
         )}
       >
         <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4" />
-          <span>Select category and service center to see processing time estimates</span>
+          <Clock className="h-4 w-4" aria-hidden="true" />
+          <span>Choose a petition category to see USCIS processing times.</span>
         </div>
       </div>
     );
   }
 
-  if (!processingTime) {
-    return null;
-  }
+  if (!range) return null;
+
+  const tone = isPremiumProcessing
+    ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20"
+    : "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20";
 
   if (compact) {
     return (
-      <div
-        className={cn(
-          "rounded-md border-2 px-3 py-2",
-          isPremiumProcessing
-            ? "border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700"
-            : "border-blue-300 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700",
-          className
-        )}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            {isPremiumProcessing ? (
-              <Zap className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            ) : (
-              <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            )}
-            <span className="text-sm font-medium">
-              {isPremiumProcessing ? "15 business days" : formatProcessingTimeRange(processingTime)}
-            </span>
-          </div>
-          {completionDates && (
-            <span className="text-xs text-muted-foreground">
-              Est: {formatCompletionDateRange(completionDates)}
-            </span>
+      <div className={cn("rounded-md border-2 px-3 py-2", tone, className)}>
+        <div className="flex items-center gap-2">
+          {isPremiumProcessing ? (
+            <Zap className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+          ) : (
+            <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
           )}
+          <span className="text-sm font-medium">
+            {isPremiumProcessing
+              ? premiumDays
+                ? `${premiumDays} business days`
+                : "15 or 45 business days, by subcategory"
+              : formatMonthRange(range.lowMonths, range.highMonths)}
+          </span>
         </div>
       </div>
     );
@@ -132,58 +92,79 @@ export function ProcessingTimeEstimate({
       initial={{ opacity: 0, y: -5 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className={cn(
-        "rounded-lg border-2 p-4",
-        isPremiumProcessing
-          ? "border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700"
-          : "border-blue-300 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700",
-        className
-      )}
+      className={cn("rounded-lg border-2 p-4", tone, className)}
     >
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="mb-3 flex items-center gap-2">
         {isPremiumProcessing ? (
-          <Zap className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+          <Zap className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
         ) : (
-          <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
         )}
-        <span className="font-semibold text-sm">
-          {isPremiumProcessing ? "Premium Processing" : "Processing Time Estimate"}
+        <span className="text-sm font-semibold">
+          {isPremiumProcessing ? "Premium processing" : "USCIS processing time"}
         </span>
       </div>
 
-      {/* Time Range */}
-      <div className="grid grid-cols-2 gap-4 text-sm">
+      {isPremiumProcessing ? (
         <div>
-          <span className="text-muted-foreground text-xs uppercase tracking-wide">
-            {isPremiumProcessing ? "Guaranteed Review" : "Expected Time"}
-          </span>
-          <p className="font-bold text-lg">
-            {isPremiumProcessing
-              ? "15 business days"
-              : formatProcessingTimeRange(processingTime)}
+          <p className="text-lg font-bold">
+            {premiumDays
+              ? `${premiumDays} business days`
+              : "15 or 45 business days"}
           </p>
+          {/* EB-1 is the case that breaks a single number: E11 and E12 get 15
+              business days, E13 gets 45. */}
+          {!premiumDays ? (
+            <ul className="mt-2 space-y-1 text-sm">
+              {range.subtypes.map((s) => (
+                <li key={s.code} className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">{s.label}</span>
+                  <span className="font-medium tabular-nums">
+                    {s.premiumBusinessDays} days
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
-        {completionDates && (
-          <div>
-            <span className="text-muted-foreground text-xs uppercase tracking-wide">
-              Est. Completion
-            </span>
-            <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <p className="font-medium">{formatCompletionDateRange(completionDates)}</p>
-            </div>
-          </div>
-        )}
-      </div>
+      ) : (
+        <div>
+          <p className="text-lg font-bold tabular-nums">
+            {formatMonthRange(range.lowMonths, range.highMonths)}
+          </p>
+          {/* Always list the subtypes when a category has more than one: the
+              spread within EB-1 and EB-3 is wider than the gap between them. */}
+          {range.subtypes.length > 1 ? (
+            <ul className="mt-2 space-y-1 text-sm">
+              {range.subtypes.map((s) => (
+                <li key={s.code} className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">{s.label}</span>
+                  <span className="font-medium tabular-nums">
+                    {formatMonthRange(s.lowMonths, s.highMonths)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      )}
 
-      {/* Info note */}
       <div className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
-        <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <p>
           {isPremiumProcessing
-            ? "Premium Processing guarantees initial review within 15 business days but does not guarantee approval."
-            : "Times based on USCIS data. 50% processed by median, 93% by max."}
+            ? "Premium processing guarantees a first review inside the window. It does not guarantee approval, and the clock restarts if USCIS issues a request for evidence."
+            : "The lower figure is where half of cases finish, the upper where 93% do."}{" "}
+          USCIS published these on {formatAsOf(PROCESSING_TIMES_AS_OF)}.{" "}
+          <a
+            href={PROCESSING_TIMES_SOURCE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2"
+          >
+            Check the current figures
+          </a>
+          .
         </p>
       </div>
     </motion.div>

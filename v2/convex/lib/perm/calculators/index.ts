@@ -23,3 +23,40 @@ export {
 } from './recruitment';
 export { calculateI140FilingDeadline } from './i140';
 export { calculateRFIDueDate } from './rfi';
+export {
+  estimateQueueDecision,
+  measureFrontierAdvance,
+  measureFrontierAdvanceRange,
+  cohortMaturity,
+  reportablePercentiles,
+  COHORT_SETTLED_MONTHS,
+  type QueueEstimate,
+  type QueueEstimateInput,
+  type QueuePosition,
+  type CohortMaturity,
+  type CohortStat,
+  type DolFrontier,
+  type EstimateModel,
+  type EstimateModelId,
+} from './queueEstimate';
+export {
+  estimatePwdQueue,
+  measurePwdClearance,
+  type PwdBacklogMonth,
+  type PwdQueueInput,
+  type PwdQueueEstimate,
+} from './pwdQueue';
+export {
+  estimateI140Queue,
+  type I140QuarterStats,
+  type I140QueueInput,
+  type I140QueueEstimate,
+} from './i140Queue';
+export {
+  buildGreenCardTimeline,
+  keyDatesFromPwd,
+  type StageCertainty,
+  type TimelineStage,
+  type GreenCardTimelineInput,
+  type GreenCardTimeline,
+} from './greenCardTimeline';
