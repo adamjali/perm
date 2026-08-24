@@ -17,7 +17,7 @@ export const dynamic = "force-static";
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
   description:
-    "Answers to common questions about PERM labor certification, the PERM Tracker platform, deadlines, recruitment, and case management for immigration attorneys.",
+    "Answers to common questions about PERM labor certification, deadlines, recruitment, and case management with PERM Tracker.",
   alternates: { canonical: "/faq" },
   openGraph: {
     ...openGraphBase,

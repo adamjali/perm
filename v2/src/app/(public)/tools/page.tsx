@@ -33,7 +33,7 @@ import { QueueTape } from "@/components/tools/QueueTape";
 
 const TITLE = "PERM Calculators and Live DOL Data";
 const DESCRIPTION =
-  "Where the PERM queue stands today, and free calculators built on the Department of Labor's own published data: decision times, the prevailing wage queue, and every statutory deadline.";
+  "Where the PERM queue stands today, and free calculators built on DOL's own published data: decision times, the wage queue, and every statutory deadline.";
 
 export const metadata: Metadata = {
   title: TITLE,

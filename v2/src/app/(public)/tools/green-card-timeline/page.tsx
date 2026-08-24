@@ -26,7 +26,7 @@ import { DataNav } from "@/components/tools/DataNav";
 
 const TITLE = "Employment Green Card Timeline";
 const DESCRIPTION =
-  "Every stage of an employment-based green card, drawn to scale from published DOL and USCIS figures: the prevailing wage queue, recruitment, the PERM decision, the I-140, and the wait for a visa number.";
+  "Every stage of an employment-based green card, drawn to scale from published DOL and USCIS figures, from the prevailing wage queue to the visa number wait.";
 
 export const metadata: Metadata = {
   title: TITLE,

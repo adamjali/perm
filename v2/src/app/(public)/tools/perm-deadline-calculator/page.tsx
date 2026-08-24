@@ -21,7 +21,7 @@ import { DataNav } from "@/components/tools/DataNav";
 
 const TITLE = "PERM Deadline Calculator";
 const DESCRIPTION =
-  "Work out every PERM deadline from the prevailing wage determination date: recruitment window, notice of filing, quiet period and the ETA-9089 filing window. Exact arithmetic under 20 CFR 656, not an estimate.";
+  "Work out every PERM deadline from the prevailing wage determination: recruitment window, notice of filing, quiet period and the ETA-9089 filing window.";
 
 export const metadata: Metadata = {
   title: TITLE,

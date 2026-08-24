@@ -25,7 +25,7 @@ import { DataNav } from "@/components/tools/DataNav";
 
 const TITLE = "PERM Processing Time Calculator";
 const DESCRIPTION =
-  "Estimate when the Department of Labor will decide your PERM case. Every figure comes from DOL's own published queue data and disclosure files, with its source shown.";
+  "Estimate when the Department of Labor will decide your PERM case, from DOL's own published queue data and disclosure files, with every source shown.";
 
 export const metadata: Metadata = {
   title: TITLE,

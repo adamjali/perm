@@ -22,7 +22,7 @@ import { DataNav } from "@/components/tools/DataNav";
 
 const TITLE = "I-140 Processing Time and Queue Calculator";
 const DESCRIPTION =
-  "How many I-140 petitions are waiting in your category, how fast USCIS is clearing them, and how that compares to the processing time USCIS publishes. All figures are USCIS's own.";
+  "How many I-140 petitions are waiting in your category, how fast USCIS clears them, and how that compares to the processing time USCIS publishes.";
 
 export const metadata: Metadata = {
   title: TITLE,

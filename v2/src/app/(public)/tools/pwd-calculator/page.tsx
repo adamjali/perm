@@ -20,9 +20,9 @@ import { DataNav } from "@/components/tools/DataNav";
  * pending counts per receipt month here, which it does not for PERM itself.
  */
 
-const TITLE = "Prevailing Wage (PWD) Processing Time Calculator";
+const TITLE = "PWD Processing Time Calculator";
 const DESCRIPTION =
-  "See exactly how many prevailing wage requests are ahead of yours in DOL's queue, from DOL's own published backlog. The first step of a PERM, and the one that sets every deadline after it.";
+  "See how many prevailing wage requests are ahead of yours, from DOL's own published backlog. The first step of a PERM, and the one that sets every deadline.";
 
 export const metadata: Metadata = {
   title: TITLE,
