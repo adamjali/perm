@@ -556,3 +556,68 @@ difference between 403 and 404 is the only thing that says which problem you hav
   silently used 3001; the 200s came from another session's server and one page
   even returned a stale 500. `lsof -nP -iTCP:<port> -sTCP:LISTEN` before trusting
   a local check, and never kill a process you did not start.
+
+---
+
+## A debug marker chosen to be visible is visible to everyone
+
+`XPROBEX` shipped to production in the site header, between Sign In and Sign
+Up. It was a sentinel someone used to check that a whitespace fix had applied,
+and it survived because the change it arrived with was 34 files of
+near-identical `{" "}` insertions that got characterised by diff statistics
+rather than read.
+
+**Reading a diff means reading it.** `+609/-636 lines, all JSX space
+insertions` was true and still hid a string rendering on every page.
+`src/app/__tests__/no-debug-artifacts.test.ts` is the cheap gate.
+
+## Glued JSX text: the defect that keeps coming back
+
+JSX strips the whitespace between two elements on separate lines, so
+
+```jsx
+<p>Petitions waiting</p>
+<p>{count}</p>
+```
+
+reaches the DOM as `Petitions waiting89,215` to every extractor that walks it.
+CSS hides it because the children are block or flex, so it is invisible in a
+browser and wrong everywhere that matters. Google has reproduced the glued form
+verbatim in a search listing.
+
+It came back twice in one session: a sweep fixed 609 across the app, then a new
+component introduced four more days later, then the gate written to catch that
+missed six more because it scanned the components and not the pages. Fix is an
+explicit `{" "}`. Gate is `no-glued-jsx-text.test.ts`, and it asserts it scanned
+a plausible number of files first.
+
+**Verify on the BUILT page, not the source.** The count that matters is what an
+extractor reads out of the rendered HTML.
+
+## The visa bulletin, and when an archive is the right answer
+
+travel.state.gov refuses automated clients. Seven direct routes were tried and
+all refused. The Internet Archive is not a way around that: it is a public
+archive of public pages built to be read programmatically, and reading it
+circumvents nothing.
+
+**The trade is freshness, and it changes the product for the better.** The
+archive lags a month or two, so a "current cutoff" page would be wrong. A
+HISTORY is honest by construction, and it is the more useful half anyway: this
+month's number is on the State Department's own page, the direction is not.
+
+Two things the parser must not simplify:
+- **A cutoff cell is a date, or `C`, or `U`.** Treating `U` as a very old date
+  reports "nearly there" at the moment the category shut.
+- **Assert the column order.** The family-sponsored chart has El Salvador where
+  the employment chart has India, and the assertion is what caught a
+  family chart being parsed as an employment one.
+
+**A CDX wildcard over a whole path truncates at the row limit**, and returned
+bulletins from 2022 while reporting success. Query per calendar year.
+
+## Extract shared logic the SECOND time, not the third
+
+Evenly spaced chart ticks were written out twice. The label collision was found
+and fixed on one chart, and came straight back on the other because the logic
+had been duplicated rather than shared. Two callers is enough.
