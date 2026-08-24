@@ -35,6 +35,9 @@ import {
   analystReviewAverage,
 } from "../../../../convex/lib/dolProcessingTimes";
 import { QueueAlertForm } from "./QueueAlertForm";
+import { DataNav } from "@/components/tools/DataNav";
+import { QueueTape } from "@/components/tools/QueueTape";
+import { QueueHistoryChart } from "@/components/tools/QueueHistoryChart";
 
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
 // Same expression as layout.tsx, sitemap.ts, feed.xml and seo.ts. A bare
@@ -118,6 +121,16 @@ export default async function PermProcessingTimesPage() {
   const analyst = snapshot ? analystReviewQueue(snapshot.permQueues) : undefined;
   const audit = snapshot?.permQueues.find((q) => /audit review/i.test(q.queue));
   const analystAvg = snapshot ? analystReviewAverage(snapshot.permAverageDays) : undefined;
+  // The chart's input: one point per stored snapshot that carries an analyst
+  // queue reading. `history` is newest-first from the query; the chart sorts.
+  const historyPoints = history
+    .map((snap) => {
+      const q = analystReviewQueue(snap.permQueues);
+      return q?.priorityDate && snap.permAsOf
+        ? { asOf: snap.permAsOf, frontierMonth: q.priorityDate }
+        : null;
+    })
+    .filter((x): x is { asOf: string; frontierMonth: string } => x !== null);
   // Matched loosely like every other row on this page. Exact equality on a
   // scraped cell meant any DOL relabel ("PERM (OEWS)") silently dropped the
   // card instead of showing up as a change.
@@ -192,7 +205,9 @@ export default async function PermProcessingTimesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-8 sm:py-16">
+    <div className="mx-auto max-w-4xl px-4 pb-12 sm:px-8 sm:pb-16">
+      <DataNav active="processing-times" />
+      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={datasetSchema} />
       <JsonLdScript schema={faqSchema} />
       <JsonLdScript schema={breadcrumb} />
@@ -215,7 +230,7 @@ export default async function PermProcessingTimesPage() {
       {snapshot ? (
         <>
           {/* The headline. This one sentence is what the whole search cluster asks for. */}
-          <section className="mt-10 border-2 border-border bg-primary/10 p-6 shadow-hard sm:p-8">
+          <section className="mt-10 border-2 border-border bg-tint-primary p-6 shadow-hard sm:p-8">
             <p className="text-xs font-bold uppercase tracking-wider text-foreground/50">
               Analyst review queue
             </p>{" "}
@@ -275,6 +290,18 @@ export default async function PermProcessingTimesPage() {
             ) : null}
           </section>
 
+          {analyst?.priorityDate ? (
+            <section className="mt-8">
+              <h2 className="font-heading text-2xl font-black">The queue, drawn</h2>{" "}
+              <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+                Every PERM waits in filing-month order and DOL clears the line
+                oldest first. Solid months are cleared; the flag is where the
+                queue stands today.
+              </p>
+              <QueueTape frontierMonth={analyst.priorityDate} className="mt-6" />
+            </section>
+          ) : null}
+
           {/* Measured movement. Only shown once we hold two snapshots that differ,
               because a velocity from a single observation would be invented. */}
           {hasVelocity ? (
@@ -291,6 +318,17 @@ export default async function PermProcessingTimesPage() {
                 . That is the difference between two dates DOL published, not a forecast of
                 the next one.
               </p>
+            </section>
+          ) : null}
+
+          {historyPoints.length >= 2 ? (
+            <section className="mt-8">
+              <h2 className="font-heading text-2xl font-black">Movement on record</h2>{" "}
+              <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+                Every reading DOL has published since we started keeping them.
+                DOL shows only its current position; the record is ours.
+              </p>
+              <QueueHistoryChart points={historyPoints} className="mt-6" />
             </section>
           ) : null}
 

@@ -77,7 +77,7 @@ export default function SecurityPage() {
               Tracker, please report it privately by emailing{" "}
               <a
                 href="mailto:security@permtracker.app"
-                className="font-bold text-primary hover:underline"
+                className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
               >
                 security@permtracker.app
               </a>
@@ -171,7 +171,7 @@ export default function SecurityPage() {
                   or services. You may safely delete the email. You will not
                   receive further messages from us unless you choose to sign up
                   for an account directly at{" "}
-                  <Link href="/" className="font-bold text-primary hover:underline">
+                  <Link href="/" className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                     permtracker.app
                   </Link>
                   .
@@ -194,7 +194,7 @@ export default function SecurityPage() {
               security-relevant events occur. For questions about this page, contact{" "}
               <a
                 href="mailto:security@permtracker.app"
-                className="font-bold text-primary hover:underline"
+                className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
               >
                 security@permtracker.app
               </a>

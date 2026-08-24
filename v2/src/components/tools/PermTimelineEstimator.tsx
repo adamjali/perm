@@ -81,7 +81,7 @@ function filingMonthOptions(today: string): { value: string; label: string }[] {
 
 const POSITION_COPY: Record<string, { tone: string; heading: string }> = {
   "awaiting-queue": {
-    tone: "bg-primary/10",
+    tone: "bg-tint-primary",
     heading: "DOL has not reached your filing month yet",
   },
   "queue-reached": {

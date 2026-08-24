@@ -103,7 +103,7 @@ export function GreenCardTimelineView({ timeline, className }: GreenCardTimeline
         })}
       </ol>
 
-      <figcaption className="mt-6 border-2 border-border bg-primary/10 p-6">
+      <figcaption className="mt-6 border-2 border-border bg-tint-primary p-6">
         <p className="font-heading text-xl font-black leading-tight">
           {months(timeline.employerControlledMonths)} of {total} are on your
           side of the process.

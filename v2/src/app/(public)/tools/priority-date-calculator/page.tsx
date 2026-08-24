@@ -8,6 +8,7 @@ import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { DataNav } from "@/components/tools/DataNav";
 
 /**
  * Priority dates against the visa bulletin.
@@ -74,7 +75,9 @@ export default async function PriorityDateCalculatorPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 sm:pb-16">
+      <DataNav active="visa-bulletin" />
+      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
 
       <header>

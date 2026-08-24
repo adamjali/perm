@@ -2204,3 +2204,41 @@ input[type="week"] {
   color: inherit;
   max-width: 100%;
 }
+
+/* An OPAQUE primary tint for stat panels. `bg-primary/10` is translucent, and
+   what sits behind a panel is not always the card: the I-140 stat grid uses
+   the `gap-px bg-border` hairline trick, so in light mode the surface under
+   its cells is pure BLACK, and 10% lime over black rendered a dark green panel
+   with near-black text on the live site. Mixing the tint into the card colour
+   makes the panel self-contained: the same readable surface whatever it sits
+   on, in both themes. */
+.bg-tint-primary {
+  background-color: color-mix(in srgb, var(--primary) 12%, var(--card));
+}
+
+/* Offset block — the strongest layering device from the client-site system,
+   translated to this design language: the block behind a card is PRIMARY, the
+   offset matches --shadow-hard's 8px, and it must be a WRAPPER. A ::before with
+   z-index:-1 on the element that carries the background paints over that
+   element's own background inside its stacking context, and every card renders
+   as a solid slab of accent. */
+.pop {
+  position: relative;
+}
+.pop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  transform: translate(8px, 8px);
+  background: var(--primary);
+  border: 2px solid var(--border);
+}
+.pop > * {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+}
+.pop-ink::before {
+  background: var(--foreground);
+}

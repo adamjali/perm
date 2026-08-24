@@ -11,6 +11,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { currentMonthUtc } from "@/lib/dolFormat";
+import { DataNav } from "@/components/tools/DataNav";
 
 /**
  * PERM decision-date calculator.
@@ -79,7 +80,9 @@ export default async function PermTimelineCalculatorPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 sm:pb-16">
+      <DataNav active="calculators" />
+      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
 
       <header>

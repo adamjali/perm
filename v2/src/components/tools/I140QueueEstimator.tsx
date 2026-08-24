@@ -142,7 +142,7 @@ export function I140QueueEstimator({
       </div>
 
       <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2">
-        <div className="bg-primary/10 p-6 sm:p-8">
+        <div className="bg-tint-primary p-6 sm:p-8">
           <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
             Petitions waiting
           </p>{" "}

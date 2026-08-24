@@ -14,6 +14,7 @@ import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { DataNav } from "@/components/tools/DataNav";
 
 /**
  * The whole employment-based green card in one view.
@@ -117,7 +118,9 @@ export default async function GreenCardTimelinePage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 sm:pb-16">
+      <DataNav active="calculators" />
+      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
 
       <header>
@@ -167,7 +170,7 @@ export default async function GreenCardTimelinePage() {
           >
             <h2 className="font-heading text-lg font-black">{t.name}</h2>{" "}
             <p className="mt-2 flex-1 text-base leading-relaxed text-foreground/70">{t.blurb}</p>{" "}
-            <span className="mt-4 inline-flex items-center gap-2 font-bold text-primary">
+            <span className="mt-4 inline-flex items-center gap-2 font-bold text-foreground underline decoration-primary decoration-2 underline-offset-4">
               Open
               <ArrowRight
                 className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
