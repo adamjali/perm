@@ -49,7 +49,7 @@ export function ToolPageFooter({ currentHref, reading }: ToolPageFooterProps) {
                       className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
                       aria-hidden="true"
                     />
-                  </span>
+                  </span>{" "}
                   <span className="mt-2 text-base leading-relaxed text-foreground/70">
                     {r.note}
                   </span>

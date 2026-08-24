@@ -118,10 +118,10 @@ export function PwdQueueEstimator({
       <div className="border-b-2 border-border bg-primary/10 p-6 sm:p-8">
         <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
           Requests ahead of yours
-        </p>
+        </p>{" "}
         <p className="mt-2 font-heading text-4xl font-black leading-none sm:text-5xl">
           {estimate.requestsAhead.toLocaleString("en-US")}
-        </p>
+        </p>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           Still pending from months before {formatMonth(month)}, out of{" "}
           {estimate.totalPending.toLocaleString("en-US")} pending in total.
@@ -151,7 +151,7 @@ export function PwdQueueEstimator({
           part that changes what someone expects: DOL has nearly cleared
           everything before March and then it jumps by an order of magnitude. */}
       <div className="border-b-2 border-border p-6 sm:p-8">
-        <h3 className="font-heading text-lg font-black">Where the backlog sits</h3>
+        <h3 className="font-heading text-lg font-black">Where the backlog sits</h3>{" "}
         <p className="mt-2 text-base leading-relaxed text-foreground/70">
           Every month DOL still has prevailing wage requests pending for, and how
           many.
@@ -167,10 +167,10 @@ export function PwdQueueEstimator({
         <div className="border-b-2 border-border p-6 sm:p-8">
           <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
             Estimated determination
-          </p>
+          </p>{" "}
           <p className="mt-2 font-heading text-3xl font-black leading-none sm:text-4xl">
             {formatMonth(estimate.estimatedMonth)}
-          </p>
+          </p>{" "}
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
             At the {Math.round(clearancePerMonth || 0).toLocaleString("en-US")}{" "}
             requests a month DOL has been clearing.

@@ -127,10 +127,10 @@ export default async function GreenCardTimelinePage() {
           >
             Tools
           </Link>
-        </p>
+        </p>{" "}
         <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
           Green card timeline
-        </h1>
+        </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Every stage of an employment-based green card, drawn to scale from what
           DOL and USCIS publish.
@@ -164,8 +164,8 @@ export default async function GreenCardTimelinePage() {
             href={t.href}
             className="group flex flex-col border-2 border-border bg-card p-6 shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            <h2 className="font-heading text-lg font-black">{t.name}</h2>
-            <p className="mt-2 flex-1 text-base leading-relaxed text-foreground/70">{t.blurb}</p>
+            <h2 className="font-heading text-lg font-black">{t.name}</h2>{" "}
+            <p className="mt-2 flex-1 text-base leading-relaxed text-foreground/70">{t.blurb}</p>{" "}
             <span className="mt-4 inline-flex items-center gap-2 font-bold text-primary">
               Open
               <ArrowRight
@@ -182,7 +182,7 @@ export default async function GreenCardTimelinePage() {
         <dl className="mt-6 space-y-6">
           {FAQS.map((f) => (
             <div key={f.q} className="border-2 border-border bg-card p-6 shadow-hard">
-              <dt className="font-heading text-lg font-black">{f.q}</dt>
+              <dt className="font-heading text-lg font-black">{f.q}</dt>{" "}
               <dd className="mt-3 text-base leading-relaxed text-foreground/70">{f.a}</dd>
             </div>
           ))}

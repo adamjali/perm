@@ -227,7 +227,7 @@ export function FrontierProgressChart({
           {targetReached
             ? ", which the queue has already passed."
             : ". The queue reaches you where the solid line meets it."}
-        </p>
+        </p>{" "}
         <p>
           Reconstructed from determination dates in DOL&apos;s disclosure files.
           DOL publishes today&apos;s position but keeps no history, so this

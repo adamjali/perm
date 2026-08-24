@@ -92,7 +92,7 @@ export default function ToolsPage() {
       <header>
         <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           PERM calculators
-        </h1>
+        </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Free, and built on the Department of Labor&apos;s own published
           figures. Each one says where its numbers come from, and says so when it
@@ -115,10 +115,10 @@ export default function ToolsPage() {
                   {t.kind}
                 </span>
               </div>
-              <h2 className="mt-4 font-heading text-xl font-black leading-tight">{t.name}</h2>
+              <h2 className="mt-4 font-heading text-xl font-black leading-tight">{t.name}</h2>{" "}
               <p className="mt-3 flex-1 text-base leading-relaxed text-foreground/70">
                 {t.blurb}
-              </p>
+              </p>{" "}
               <span className="mt-5 inline-flex items-center gap-2 font-bold text-primary">
                 Open
                 <ArrowRight
@@ -134,14 +134,14 @@ export default function ToolsPage() {
       <section className="mt-12 border-2 border-border bg-muted p-6 sm:p-8">
         <h2 className="font-heading text-xl font-black">
           Why some of these refuse to give you a number
-        </h2>
+        </h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           Two of the three answer questions about a queue, and a queue estimate
           is a forecast rather than a fact. Where DOL publishes enough to be sure
           you get a figure and its source. Where it does not, you get the count
           that is real and a plain statement of what is missing, rather than a
           number that looks precise because it was made up.
-        </p>
+        </p>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           The deadline calculator is the exception. Those dates are arithmetic in
           the regulations, so they are exact.

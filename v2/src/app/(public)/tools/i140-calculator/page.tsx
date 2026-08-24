@@ -83,10 +83,10 @@ export default async function I140CalculatorPage() {
           >
             Tools
           </Link>
-        </p>
+        </p>{" "}
         <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
           I-140 queue calculator
-        </h1>
+        </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           How many petitions are waiting in your category, and how that compares
           to the processing time USCIS publishes.
@@ -106,7 +106,7 @@ export default async function I140CalculatorPage() {
         <dl className="mt-6 space-y-6">
           {FAQS.map((f) => (
             <div key={f.q} className="border-2 border-border bg-card p-6 shadow-hard">
-              <dt className="font-heading text-lg font-black">{f.q}</dt>
+              <dt className="font-heading text-lg font-black">{f.q}</dt>{" "}
               <dd className="mt-3 text-base leading-relaxed text-foreground/70">{f.a}</dd>
             </div>
           ))}
@@ -116,7 +116,7 @@ export default async function I140CalculatorPage() {
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-2xl font-black">
           The I-140 comes after the part you control
-        </h2>
+        </h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
           A petition can only be filed once the labor certification is approved,
           and that certification has to be filed inside a window fixed by the

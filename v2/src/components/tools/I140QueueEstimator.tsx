@@ -145,10 +145,10 @@ export function I140QueueEstimator({
         <div className="bg-primary/10 p-6 sm:p-8">
           <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
             Petitions waiting
-          </p>
+          </p>{" "}
           <p className="mt-2 font-heading text-4xl font-black leading-none">
             {estimate.pending.toLocaleString("en-US")}
-          </p>
+          </p>{" "}
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
             {Math.round(estimate.shareOfAllPending * 100)}% of every I-140 USCIS
             has pending.
@@ -157,10 +157,10 @@ export function I140QueueEstimator({
         <div className="bg-card p-6 sm:p-8">
           <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
             Decided last quarter
-          </p>
+          </p>{" "}
           <p className="mt-2 font-heading text-4xl font-black leading-none">
             {estimate.completedInQuarter.toLocaleString("en-US")}
-          </p>
+          </p>{" "}
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
             Approvals and denials both, since either one clears a petition.
           </p>
@@ -174,10 +174,10 @@ export function I140QueueEstimator({
           <div className="bg-card p-6 sm:p-8">
             <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
               USCIS published time
-            </p>
+            </p>{" "}
             <p className="mt-2 font-heading text-2xl font-black leading-none">
               {formatMonthRange(published.lowMonths, published.highMonths)}
-            </p>
+            </p>{" "}
             <p className="mt-3 text-base leading-relaxed text-foreground/70">
               Measured over petitions already decided.
             </p>
@@ -187,10 +187,10 @@ export function I140QueueEstimator({
           <div className="bg-card p-6 sm:p-8">
             <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
               Queue at this pace
-            </p>
+            </p>{" "}
             <p className="mt-2 font-heading text-2xl font-black leading-none">
               {estimate.monthsToClear} months
-            </p>
+            </p>{" "}
             <p className="mt-3 text-base leading-relaxed text-foreground/70">
               {estimate.pending.toLocaleString("en-US")} waiting divided by{" "}
               {estimate.completedInQuarter.toLocaleString("en-US")} a quarter.
@@ -213,7 +213,7 @@ export function I140QueueEstimator({
       ) : null}
 
       <div className="border-b-2 border-border p-6 sm:p-8">
-        <h3 className="font-heading text-lg font-black">Where the backlog sits</h3>
+        <h3 className="font-heading text-lg font-black">Where the backlog sits</h3>{" "}
         <p className="mt-2 text-base leading-relaxed text-foreground/70">
           Every I-140 petition type USCIS reports, and how many are waiting on
           each.
@@ -232,9 +232,9 @@ export function I140QueueEstimator({
                     s.code === code ? "font-black" : "text-foreground/70",
                   )}
                 >
-                  <span className="sm:hidden">{s.code}</span>
+                  <span className="sm:hidden">{s.code}</span>{" "}
                   <span className="hidden sm:inline">{s.label}</span>
-                </span>
+                </span>{" "}
                 <span className="h-6 w-full border-2 border-border bg-muted">
                   <span
                     className={cn(
@@ -243,7 +243,7 @@ export function I140QueueEstimator({
                     )}
                     style={{ width: `${Math.max((s.pending / maxPending) * 100, 1.5)}%` }}
                   />
-                </span>
+                </span>{" "}
                 <span
                   className={cn(
                     "text-right text-sm tabular-nums",

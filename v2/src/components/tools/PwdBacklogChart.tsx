@@ -80,7 +80,7 @@ export function PwdBacklogChart({
                   // beside it states exactly.
                   style={{ width: `${Math.max(width, 1.5)}%` }}
                 />
-              </span>
+              </span>{" "}
 
               <span
                 className={cn(
@@ -99,11 +99,11 @@ export function PwdBacklogChart({
         <span className="flex items-center gap-2">
           <span className="h-3 w-3 border-2 border-border bg-foreground/70" aria-hidden="true" />
           Ahead of yours
-        </span>
+        </span>{" "}
         <span className="flex items-center gap-2">
           <span className="h-3 w-3 border-2 border-border bg-primary" aria-hidden="true" />
           Your month
-        </span>
+        </span>{" "}
         <span className="flex items-center gap-2">
           <span className="h-3 w-3 border-2 border-border bg-foreground/20" aria-hidden="true" />
           Received after yours

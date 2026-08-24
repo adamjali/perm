@@ -189,10 +189,10 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
             <div key={row.label} className="p-6 sm:p-8">
               <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
                 {row.label}
-              </p>
+              </p>{" "}
               <p className="mt-2 font-heading text-2xl font-black leading-none sm:text-3xl">
                 {formatAsOf(row.date)}
-              </p>
+              </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">{row.detail}</p>
             </div>
           ))}

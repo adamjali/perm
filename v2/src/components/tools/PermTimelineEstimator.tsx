@@ -173,10 +173,10 @@ export function PermTimelineEstimator({
         <div className={cn("border-b-2 border-border p-6 sm:p-8", position.tone)}>
           <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
             Queue position
-          </p>
+          </p>{" "}
           <p className="mt-2 font-heading text-xl font-black leading-tight sm:text-2xl">
             {position.heading}
-          </p>
+          </p>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">
             DOL&apos;s analyst review queue is working{" "}
             <strong>{formatMonth(frontier.analystQueueMonth)}</strong>, as of{" "}
@@ -195,7 +195,7 @@ export function PermTimelineEstimator({
             <div key={model.id} className="p-6 sm:p-8">
               <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
                 {model.label}
-              </p>
+              </p>{" "}
               <p className="mt-2 font-heading text-3xl font-black leading-none sm:text-4xl">
                 {formatMonth(model.estimatedDate.slice(0, 7))}
               </p>
@@ -207,7 +207,7 @@ export function PermTimelineEstimator({
               ) : null}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
                 {model.basis}
-              </p>
+              </p>{" "}
               <p className="mt-2 text-sm text-foreground/60">Source: {model.source}</p>
             </div>
           ))}

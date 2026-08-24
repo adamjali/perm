@@ -86,14 +86,14 @@ export function GreenCardTimelineView({ timeline, className }: GreenCardTimeline
               <Icon className="mt-1 h-5 w-5 shrink-0 text-foreground/60" aria-hidden="true" />
               <div>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-                  <h3 className="font-heading text-lg font-black">{stage.label}</h3>
+                  <h3 className="font-heading text-lg font-black">{stage.label}</h3>{" "}
                   <span className="text-base font-bold tabular-nums">
                     {stage.months === null ? "No published figure" : months(stage.months)}
                   </span>
                 </div>
                 <p className="mt-2 text-base leading-relaxed text-foreground/70">
                   {stage.detail}
-                </p>
+                </p>{" "}
                 <p className="mt-2 text-sm text-foreground/60">
                   {meta.label}. {meta.note}
                 </p>
@@ -107,7 +107,7 @@ export function GreenCardTimelineView({ timeline, className }: GreenCardTimeline
         <p className="font-heading text-xl font-black leading-tight">
           {months(timeline.employerControlledMonths)} of {total} are on your
           side of the process.
-        </p>
+        </p>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           The rest is queue time at DOL and USCIS, plus a wait for a visa number
           that no published figure covers. The recruitment window is the part

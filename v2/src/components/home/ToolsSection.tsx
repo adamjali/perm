@@ -57,7 +57,7 @@ export function ToolsSection() {
         <div className="max-w-2xl">
           <h2 className="font-heading text-3xl font-black leading-tight sm:text-4xl">
             Free calculators, on the government&apos;s own numbers
-          </h2>
+          </h2>{" "}
           <p className="mt-4 text-lg leading-relaxed text-foreground/70">
             Four stages, four questions. Each one answers from what DOL and USCIS
             publish, says where the figure came from, and says so when the data
@@ -85,7 +85,9 @@ export function ToolsSection() {
                   </div>
                   <h3 className="mt-4 font-heading text-lg font-black leading-tight">
                     {s.name}
-                  </h3>
+                  </h3>{" "}
+                  {/* JSX drops the newline between these two, so an extractor
+                      reads "Prevailing wageHow many requests..." as one word. */}
                   <p className="mt-2 flex-1 text-base leading-relaxed text-foreground/70">
                     {s.question}
                   </p>

@@ -74,10 +74,10 @@ export default function PermDeadlineCalculatorPage() {
           <Link href="/tools" className="underline underline-offset-2 hover:text-primary">
             Tools
           </Link>
-        </p>
+        </p>{" "}
         <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
           PERM deadline calculator
-        </h1>
+        </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Every date the regulations fix, worked out from your prevailing wage
           determination. Nothing here is a forecast.
@@ -93,7 +93,7 @@ export default function PermDeadlineCalculatorPage() {
         <dl className="mt-6 space-y-6">
           {FAQS.map((f) => (
             <div key={f.q} className="border-2 border-border bg-card p-6 shadow-hard">
-              <dt className="font-heading text-lg font-black">{f.q}</dt>
+              <dt className="font-heading text-lg font-black">{f.q}</dt>{" "}
               <dd className="mt-3 text-base leading-relaxed text-foreground/70">{f.a}</dd>
             </div>
           ))}
@@ -103,7 +103,7 @@ export default function PermDeadlineCalculatorPage() {
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-2xl font-black">
           Working these out once is the easy part
-        </h2>
+        </h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
           The hard part is a year later, when a determination date moves and
           every date after it moves with it. PERM Tracker recalculates the whole

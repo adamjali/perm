@@ -86,10 +86,10 @@ export default async function PermTimelineCalculatorPage() {
           <Link href="/tools" className="underline underline-offset-2 hover:text-primary">
             Tools
           </Link>
-        </p>
+        </p>{" "}
         <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
           PERM processing time calculator
-        </h1>
+        </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Estimate when the Department of Labor will decide your case, from
           DOL&apos;s own queue figures and its published record of decided cases.
@@ -118,7 +118,7 @@ export default async function PermTimelineCalculatorPage() {
         <dl className="mt-6 space-y-6">
           {FAQS.map((f) => (
             <div key={f.q} className="border-2 border-border bg-card p-6 shadow-hard">
-              <dt className="font-heading text-lg font-black">{f.q}</dt>
+              <dt className="font-heading text-lg font-black">{f.q}</dt>{" "}
               <dd className="mt-3 text-base leading-relaxed text-foreground/70">{f.a}</dd>
             </div>
           ))}
@@ -128,7 +128,7 @@ export default async function PermTimelineCalculatorPage() {
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-2xl font-black">
           DOL&apos;s date is a forecast. Yours are arithmetic.
-        </h2>
+        </h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
           Nobody can tell you exactly when DOL will decide. The dates that are
           genuinely fixed are the ones on your side of the process: the
