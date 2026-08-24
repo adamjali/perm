@@ -127,7 +127,7 @@ export default function CalculatorsPage() {
           Calculators
         </p>{" "}
         <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Pick the question
+          Six calculators, one per question
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Six calculators, one per question a PERM case raises. Each one says
@@ -135,7 +135,44 @@ export default function CalculatorsPage() {
         </p>
       </header>
 
+      {/* The hub's real job: route the reader's situation to the right
+          tool, in the order the process happens. */}
       <section className="mt-10">
+        <h2 className="font-heading text-2xl font-black">Which one answers your question?</h2>
+        <div className="mt-6 overflow-x-auto">
+          <table className="w-full border-2 border-border text-left text-sm shadow-hard-sm">
+            <thead className="bg-foreground text-background">
+              <tr>
+                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Your situation</th>{" "}
+                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Ask</th>{" "}
+                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Use</th>
+              </tr>
+            </thead>
+            <tbody className="bg-card">
+              {[
+                { s: "Wage request filed, nothing since", q: "How many are ahead of mine?", href: "/tools/pwd-calculator", tool: "Prevailing wage queue" },
+                { s: "Determination in hand, planning recruitment", q: "By when must we file?", href: "/tools/perm-deadline-calculator", tool: "Deadline calculator" },
+                { s: "ETA-9089 filed, waiting", q: "When will DOL decide?", href: "/tools/perm-timeline-calculator", tool: "Decision estimator" },
+                { s: "PERM certified, I-140 next or pending", q: "How deep is USCIS's queue?", href: "/tools/i140-calculator", tool: "I-140 queue" },
+                { s: "I-140 approved, watching the bulletin", q: "Is my date current, and which way is it moving?", href: "/tools/priority-date-calculator", tool: "Priority dates" },
+                { s: "Just starting, or explaining it to someone", q: "How long is the whole thing?", href: "/tools/green-card-timeline", tool: "Green card timeline" },
+              ].map((r) => (
+                <tr key={r.href} className="border-t border-border/40">
+                  <td className="p-3">{r.s}</td>{" "}
+                  <td className="p-3 text-foreground/70">{r.q}</td>{" "}
+                  <td className="p-3">
+                    <a href={r.href} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                      {r.tool}
+                    </a>
+                  </td>{" "}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="mt-12">
         <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-x-4 sm:gap-y-8">
           {TOOLS.map((t) => {
             const Icon = t.icon;
@@ -146,12 +183,12 @@ export default function CalculatorsPage() {
                 className={
                   "group flex h-full flex-col border-2 border-border p-6 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 " +
                   (t.tone === "ink"
-                    ? "bg-foreground text-background shadow-hard hover:-translate-y-[1px] hover:shadow-hard-lg"
+                    ? "bg-foreground text-background shadow-hard hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
                     : t.tone === "tint"
-                      ? "bg-tint-primary shadow-hard hover:-translate-y-[1px] hover:shadow-hard-lg"
+                      ? "bg-tint-primary shadow-hard hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
                       : t.tone === "pop"
-                        ? "bg-card hover:-translate-x-[1px] hover:-translate-y-[1px]"
-                        : "bg-card shadow-hard hover:-translate-y-[1px] hover:shadow-hard-lg")
+                        ? "bg-card hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-y-0 active:shadow-hard-sm"
+                        : "bg-card shadow-hard hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm")
                 }
               >
                 <div className="flex items-center gap-3">

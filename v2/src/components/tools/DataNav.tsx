@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 
 /**
@@ -16,6 +17,9 @@ export type DataSection =
   | "overview"
   | "calculators"
   | "processing-times"
+  | "by-state"
+  | "wages"
+  | "employers"
   | "visa-bulletin"
   | "methodology";
 
@@ -23,6 +27,9 @@ const SECTIONS: { key: DataSection; label: string; href: string }[] = [
   { key: "overview", label: "Overview", href: "/tools" },
   { key: "calculators", label: "Calculators", href: "/calculators" },
   { key: "processing-times", label: "Processing times", href: "/perm-processing-times" },
+  { key: "by-state", label: "By state", href: "/perm-by-state" },
+  { key: "wages", label: "Wages", href: "/perm-wages" },
+  { key: "employers", label: "Employers", href: "/perm-employers" },
   { key: "visa-bulletin", label: "Visa bulletin", href: "/tools/priority-date-calculator" },
   { key: "methodology", label: "Methodology", href: "/methodology" },
 ];
@@ -42,9 +49,12 @@ export function DataNav({ active }: { active: DataSection }) {
       <div className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {SECTIONS.map((s) => {
           const isActive = s.key === active;
+          // Keyed Fragment with a real space: mapped siblings render with
+          // ZERO characters between them otherwise, and every DOM extractor
+          // (Google included) reads the tab labels as one glued word.
           return (
+            <Fragment key={s.key}>{" "}
             <Link
-              key={s.key}
               href={s.href}
               aria-current={isActive ? "page" : undefined}
               className={
@@ -56,6 +66,7 @@ export function DataNav({ active }: { active: DataSection }) {
             >
               {s.label}
             </Link>
+            </Fragment>
           );
         })}
       </div>

@@ -330,7 +330,7 @@ export function CaseFilterBar({
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-11 h-11 text-base"
           />
-          <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-foreground/60 dark:text-foreground/50 pointer-events-none transition-transform duration-150 group-hover:-translate-y-[calc(50%+1px)]" />
+          <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-foreground/60 dark:text-foreground/50 pointer-events-none transition-transform duration-150 group-hover:-translate-y-[calc(50%+1px)] active:translate-y-0 active:shadow-hard-sm" />
         </div>
 
         {/* Case Status Dropdown */}

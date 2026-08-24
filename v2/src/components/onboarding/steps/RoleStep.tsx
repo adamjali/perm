@@ -71,7 +71,7 @@ export function RoleStep({ onNext }: RoleStepProps) {
                 "flex items-start gap-3 p-4 min-h-[56px] border-2 text-left transition-all duration-150 cursor-pointer",
                 isSelected
                   ? "border-primary bg-primary/10 shadow-hard"
-                  : "border-border bg-card shadow-hard-sm hover:-translate-y-[2px] hover:shadow-hard"
+                  : "border-border bg-card shadow-hard-sm hover:-translate-y-[2px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
               )}
             >
               <div

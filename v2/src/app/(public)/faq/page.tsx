@@ -110,6 +110,31 @@ const faqData = [
       },
     ],
   },
+  {
+    category: "The Live Data",
+    items: [
+      {
+        question: "Where do the processing time numbers come from?",
+        answer:
+          "Straight from the Department of Labor. The queue position and average days come from DOL's own published processing times, refreshed automatically, and the medians come from DOL's quarterly disclosure files: 250,000+ real decided cases, unioned and de-duplicated by case number. The methodology page shows every figure's recipe.",
+      },
+      {
+        question: "Which states file the most PERM cases?",
+        answer:
+          "California and Texas lead by a wide margin, and volume tracks industry concentration rather than a faster or slower line: DOL works one national queue, oldest first. The interactive state map shows filings, approval rates, median days and median wages for every state, from DOL's own files.",
+      },
+      {
+        question: "What do PERM cases actually pay?",
+        answer:
+          "The wages page shows median offered wages by occupation from DOL's disclosure files. These are wages employers committed to in federal filings, not survey estimates, which makes them the hardest salary data available for sponsored roles. Hourly and other units are annualized before medians are taken.",
+      },
+      {
+        question: "Which employers sponsor the most green cards?",
+        answer:
+          "The employers page ranks the hundred biggest PERM sponsors in the current disclosure window, searchable, with each one's filings, certifications, approval rate and median processing days. Names appear exactly as DOL prints them, so one company can appear under several legal entities.",
+      },
+    ],
+  },
 ];
 
 // Flatten all FAQ items for structured data

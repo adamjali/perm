@@ -146,7 +146,7 @@ export default async function ToolsPage() {
         </div>
         <Link
           href="/calculators"
-          className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-5 py-2.5 font-bold text-black shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard"
+          className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-5 py-2.5 font-bold text-black shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
         >
           Open the calculators
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -154,6 +154,68 @@ export default async function ToolsPage() {
       </section>
 
       {/* The two sides of the product, connected in one band. */}
+      {/* The disclosure aggregates: three cuts of the same quarterly files. */}
+      <section className="mt-12">
+        <h2 className="font-heading text-2xl font-black">The whole field, three ways</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base text-foreground/70">
+          Every filing in DOL&apos;s quarterly disclosure files, cut by place,
+          pay and sponsor.
+        </p>
+        <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
+          {[
+            {
+              href: "/perm-by-state",
+              label: "By state",
+              blurb: "An interactive map of filings, approval rates and wages per worksite state.",
+              tone: "tint",
+            },
+            {
+              href: "/perm-wages",
+              label: "Wages",
+              blurb: "Median offered wages by occupation - committed figures, not survey estimates.",
+              tone: "ink",
+            },
+            {
+              href: "/perm-employers",
+              label: "Employers",
+              blurb: "The hundred biggest sponsors, ranked, searchable, with their track records.",
+              tone: "card",
+            },
+          ].map((c) => (
+            <a
+              key={c.href}
+              href={c.href}
+              className={
+                "group flex flex-col border-2 border-border p-6 transition-all duration-150 hover:-translate-y-[2px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm " +
+                (c.tone === "ink"
+                  ? "bg-foreground text-background shadow-hard"
+                  : c.tone === "tint"
+                    ? "bg-tint-primary shadow-hard"
+                    : "bg-card shadow-hard")
+              }
+            >
+              <h3 className="font-heading text-lg font-black">{c.label}</h3>{" "}
+              <p
+                className={
+                  "mt-2 flex-1 text-sm leading-relaxed " +
+                  (c.tone === "ink" ? "text-background/70" : "text-foreground/70")
+                }
+              >
+                {c.blurb}
+              </p>{" "}
+              <span
+                className={
+                  "mt-4 font-mono text-xs font-bold uppercase tracking-wider " +
+                  (c.tone === "ink" ? "text-primary" : "text-foreground/60 group-hover:text-primary")
+                }
+              >
+                Open →
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
+
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
           <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
@@ -186,7 +248,7 @@ export default async function ToolsPage() {
           </p>{" "}
           <Link
             href="/signup"
-            className="mt-5 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-5 py-2.5 font-bold text-black shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard"
+            className="mt-5 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-5 py-2.5 font-bold text-black shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
           >
             Start tracking
             <ArrowRight className="h-4 w-4" aria-hidden="true" />

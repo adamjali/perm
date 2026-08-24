@@ -499,7 +499,7 @@ export function OverviewTab({
                             type="button"
                             onClick={clearJobDesc}
                             disabled={isClearingJobDesc}
-                            className="flex items-center gap-1 px-3 py-1.5 border-[3px] border-border text-[11px] font-mono font-bold uppercase tracking-wider text-destructive hover:bg-destructive hover:text-white hover:border-destructive hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50"
+                            className="flex items-center gap-1 px-3 py-1.5 border-[3px] border-border text-[11px] font-mono font-bold uppercase tracking-wider text-destructive hover:bg-destructive hover:text-white hover:border-destructive hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm"
                           >
                             <Trash2 className="h-3 w-3" />
                             {isClearingJobDesc ? "Clearing..." : "Clear"}
@@ -510,7 +510,7 @@ export function OverviewTab({
                           onClick={handleSaveAsTemplate}
                           disabled={isSavingTemplate || !editPositionTitle.trim() || !editDescription.trim()}
                           className={cn(
-                            "flex items-center gap-1 px-3 py-1.5 border-[3px] text-[11px] font-mono font-bold uppercase tracking-wider hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50",
+                            "flex items-center gap-1 px-3 py-1.5 border-[3px] text-[11px] font-mono font-bold uppercase tracking-wider hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm",
                             isExistingTemplateName
                               ? "border-blue-500 hover:bg-blue-500 hover:text-white"
                               : "border-border hover:bg-[var(--primary)] hover:text-black hover:border-black dark:hover:border-white/50"
@@ -533,7 +533,7 @@ export function OverviewTab({
                           type="button"
                           onClick={cancelEditJobDesc}
                           disabled={isSavingJobDesc}
-                          className="px-3 py-1.5 border-[3px] border-border text-[11px] font-mono font-bold uppercase tracking-wider hover:bg-muted hover:-translate-y-[1px] hover:shadow-hard-sm transition-all"
+                          className="px-3 py-1.5 border-[3px] border-border text-[11px] font-mono font-bold uppercase tracking-wider hover:bg-muted hover:-translate-y-[1px] hover:shadow-hard-sm transition-all active:translate-y-0 active:shadow-hard-sm"
                         >
                           Cancel
                         </button>
@@ -541,7 +541,7 @@ export function OverviewTab({
                           type="button"
                           onClick={saveJobDesc}
                           disabled={isSavingJobDesc || !editDescription.trim()}
-                          className="px-3 py-1.5 border-[3px] border-black bg-primary text-primary-foreground text-[11px] font-mono font-bold uppercase tracking-wider shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all disabled:opacity-50"
+                          className="px-3 py-1.5 border-[3px] border-black bg-primary text-primary-foreground text-[11px] font-mono font-bold uppercase tracking-wider shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm"
                         >
                           {isSavingJobDesc ? (
                             <span className="flex items-center gap-1">
@@ -649,7 +649,7 @@ export function OverviewTab({
               size="sm"
               onClick={onToggleTimeline}
               disabled={isUpdating}
-              className="gap-1.5 border-[3px] border-border font-mono text-[0.68rem] font-bold uppercase tracking-wide shadow-[2px_2px_0_var(--border)] hover:-translate-y-[1px] hover:shadow-[3px_3px_0_var(--border)] transition-all"
+              className="gap-1.5 border-[3px] border-border font-mono text-[0.68rem] font-bold uppercase tracking-wide shadow-[2px_2px_0_var(--border)] hover:-translate-y-[1px] hover:shadow-[3px_3px_0_var(--border)] transition-all active:translate-y-0 active:shadow-hard-sm"
             >
               {isOnTimeline ? (
                 <>

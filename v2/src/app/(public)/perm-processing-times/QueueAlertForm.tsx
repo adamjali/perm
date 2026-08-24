@@ -64,7 +64,7 @@ function filingMonthOptions(newest: string): { value: string; label: string }[] 
 const selectClasses = cn(
   "border-input h-11 w-full min-w-0 border-2 bg-background px-3 py-1 text-base",
   "shadow-hard-sm transition-all duration-150 outline-none md:text-sm",
-  "hover:shadow-hard hover:-translate-y-[1px]",
+  "hover:shadow-hard hover:-translate-y-[1px] active:translate-y-0 active:shadow-hard-sm",
   "focus:shadow-hard focus:ring-2 focus:ring-ring focus-visible:border-ring focus:-translate-y-[1px]",
   "disabled:shadow-none disabled:pointer-events-none disabled:opacity-50",
 );

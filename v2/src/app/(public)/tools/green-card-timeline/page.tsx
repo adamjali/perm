@@ -141,7 +141,8 @@ export default async function GreenCardTimelinePage() {
         </p>
       </header>
 
-      <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+      <div className="pop mt-10">
+      <section className="border-2 border-border bg-card p-6 sm:p-8">
         <GreenCardTimelineView timeline={timeline} />
         {i140Label ? (
           <p className="mt-6 text-sm text-foreground/60">
@@ -155,6 +156,42 @@ export default async function GreenCardTimelinePage() {
           </p>
         ) : null}
       </section>
+      </div>
+
+      {/* Who controls what: the single most useful fact about the timeline,
+          drawn as structure rather than said in a paragraph. */}
+      <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
+          <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+            You control
+          </p>{" "}
+          <p className="mt-2 font-heading text-lg font-black">Recruitment and filing</p>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+            The recruitment window and the filing dates are the only stages an
+            employer paces. Missing one restarts the case.
+          </p>
+        </div>
+        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
+          <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+            DOL controls
+          </p>{" "}
+          <p className="mt-2 font-heading text-lg font-black">The two queues</p>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+            The prevailing wage determination and the PERM decision move at
+            DOL&apos;s published pace, oldest first.
+          </p>
+        </div>
+        <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard-sm">
+          <p className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+            USCIS and State control
+          </p>{" "}
+          <p className="mt-2 font-heading text-lg font-black">The petition and the number</p>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-background/70">
+            The I-140 runs on USCIS&apos;s queue. The visa number depends on the
+            bulletin, which is why that stage carries no figure.
+          </p>
+        </div>
+      </section>
 
       <section className="mt-12 grid gap-6 sm:grid-cols-2">
         {[
@@ -166,7 +203,7 @@ export default async function GreenCardTimelinePage() {
           <Link
             key={t.href}
             href={t.href}
-            className="group flex flex-col border-2 border-border bg-card p-6 shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="group flex flex-col border-2 border-border bg-card p-6 shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:translate-y-0 active:shadow-hard-sm"
           >
             <h2 className="font-heading text-lg font-black">{t.name}</h2>{" "}
             <p className="mt-2 flex-1 text-base leading-relaxed text-foreground/70">{t.blurb}</p>{" "}

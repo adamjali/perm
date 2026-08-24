@@ -151,7 +151,7 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
                   "px-3 py-2.5 min-h-[44px] text-xs font-heading font-semibold uppercase tracking-wide border-2 transition-all duration-150 cursor-pointer",
                   caseStatus === stage.value
                     ? "border-border bg-primary text-primary-foreground shadow-hard-sm"
-                    : "border-border bg-card text-foreground hover:-translate-y-[1px] hover:shadow-hard-sm"
+                    : "border-border bg-card text-foreground hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-hard-sm"
                 )}
               >
                 {stage.label}

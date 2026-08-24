@@ -486,7 +486,7 @@ still on the legacy path.
 |---|---|---|
 | `flag.dol.gov` | **200** | PERM processing times, the weekly ingest |
 | `www.dol.gov` | **200** with a FULL browser header set | quarterly PERM disclosure files |
-| `www.uscis.gov` | **200** | quarterly I-140 counts (23-65 KB) |
+| `www.uscis.gov` | **200** from residential IPs; intermittently 403s GitHub's datacenter runners (2026-08-24) | quarterly I-140 counts (23-65 KB) |
 | `egov.uscis.gov` | **403 Cloudflare challenge** | USCIS processing times |
 | `travel.state.gov` | **403 Cloudflare challenge** | the DOS visa bulletin |
 

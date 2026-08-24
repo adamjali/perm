@@ -50,7 +50,7 @@ export const SelectInput = React.forwardRef<HTMLSelectElement, SelectInputProps>
           // Dark mode: native <option> elements use system colors; color-scheme ensures they match
           "dark:text-foreground dark:[color-scheme:dark]",
           // Hover state
-          "hover:shadow-hard hover:-translate-y-[1px]",
+          "hover:shadow-hard hover:-translate-y-[1px] active:translate-y-0 active:shadow-hard-sm",
           // Focus state
           "focus:shadow-hard focus:ring-2 focus:ring-ring focus-visible:border-ring focus:-translate-y-[1px]",
           // Disabled state

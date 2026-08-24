@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowRight, CalendarCheck, CalendarClock, FileText, Scale } from "lucide-react";
 
@@ -101,7 +102,8 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
             const Icon = s.icon;
             const ink = s.tone === "ink";
             return (
-              <li key={s.href} className="relative flex">
+              <Fragment key={s.href}>{" "}
+              <li className="relative flex">
                 {/* The numeral sits ON the rail. */}
                 <span
                   aria-hidden="true"
@@ -116,7 +118,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
                 <Link
                   href={s.href}
                   className={
-                    "group flex w-full flex-col border-2 border-border p-6 pl-8 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 hover:-translate-y-[2px] hover:shadow-hard-lg md:pl-6 md:pt-8 " +
+                    "group flex w-full flex-col border-2 border-border p-6 pl-8 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 hover:-translate-y-[2px] hover:shadow-hard-lg md:pl-6 md:pt-8  active:translate-y-0 active:shadow-hard-sm" +
                     (ink
                       ? "bg-foreground text-background shadow-hard"
                       : s.tone === "tint"
@@ -129,7 +131,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
                     {s.stat ? (
                       <span
                         className={
-                          "border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider " +
+                          "border px-1.5 py-0.5 font-mono text-xs font-bold uppercase tracking-wider " +
                           (ink
                             ? "border-background/30 text-background/80"
                             : "border-border/40 text-foreground/60")
@@ -153,15 +155,16 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
                   <span
                     className={
                       s.owner.startsWith("You")
-                        ? "mt-4 inline-block border-2 border-border bg-primary px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-black"
-                        : "mt-4 inline-block text-[11px] font-bold uppercase tracking-wider " +
-                          (ink ? "text-background/50" : "text-foreground/45")
+                        ? "mt-4 inline-block border-2 border-border bg-primary px-2 py-1 text-xs font-bold uppercase tracking-wider text-black"
+                        : "mt-4 inline-block text-xs font-bold uppercase tracking-wider " +
+                          (ink ? "text-background/50" : "text-foreground/50")
                     }
                   >
                     {s.owner}
                   </span>
                 </Link>
               </li>
+              </Fragment>
             );
           })}
         </ol>
@@ -169,7 +172,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
         <div className="mt-10 flex flex-wrap items-center gap-4">
           <Link
             href="/calculators"
-            className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg"
+            className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
           >
             See all six calculators
             <ArrowRight className="h-4 w-4" aria-hidden="true" />

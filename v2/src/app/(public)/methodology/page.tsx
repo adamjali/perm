@@ -208,7 +208,7 @@ export default function MethodologyPage() {
         </div>
         <Link
           href="/tools"
-          className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-5 py-2.5 font-bold text-black shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard"
+          className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-5 py-2.5 font-bold text-black shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
         >
           Open the calculators
           <ArrowRight className="h-4 w-4" aria-hidden="true" />

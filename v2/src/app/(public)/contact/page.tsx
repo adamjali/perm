@@ -53,7 +53,7 @@ export default function ContactPage() {
         <div className="space-y-8">
           {/* Email */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-black bg-primary shadow-hard-sm dark:border-white">
+            <div className="flex h-12 w-12 items-center justify-center border-2 border-black bg-primary shadow-hard-sm dark:border-white">
               <Mail className="h-6 w-6 text-primary-foreground" />
             </div>{" "}
             <div>
@@ -72,7 +72,7 @@ export default function ContactPage() {
 
           {/* Feature Requests */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-black bg-secondary shadow-hard-sm dark:border-white">
+            <div className="flex h-12 w-12 items-center justify-center border-2 border-black bg-secondary shadow-hard-sm dark:border-white">
               <MessageSquare className="h-6 w-6 text-secondary-foreground" />
             </div>{" "}
             <div>
@@ -95,7 +95,7 @@ export default function ContactPage() {
 
           {/* Bug Reports */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-black bg-accent shadow-hard-sm dark:border-white">
+            <div className="flex h-12 w-12 items-center justify-center border-2 border-black bg-accent shadow-hard-sm dark:border-white">
               <GithubIcon className="h-6 w-6 text-accent-foreground" />
             </div>{" "}
             <div>
@@ -118,7 +118,7 @@ export default function ContactPage() {
         </div>
 
         {/* Response time */}
-        <div className="mt-12 rounded-lg border-2 border-black bg-muted p-6 shadow-hard-sm dark:border-white">
+        <div className="mt-12 border-2 border-black bg-muted p-6 shadow-hard-sm dark:border-white">
           <h3 className="font-heading text-lg font-bold mb-2">Response Time</h3>{" "}
           <p className="text-foreground/60">
             We typically respond to inquiries within 24-48 hours during business

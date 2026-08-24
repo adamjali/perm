@@ -19,7 +19,7 @@ export default function ContactLoading() {
         <div className="space-y-8">
           {/* Email section */}
           <div className="flex items-start gap-4">
-            <Skeleton className="h-12 w-12 rounded-lg" />
+            <Skeleton className="h-12 w-12 " />
             <div className="flex-1">
               <Skeleton className="h-6 w-20 mb-1" />
               <Skeleton className="h-4 w-64 mb-2" />
@@ -29,7 +29,7 @@ export default function ContactLoading() {
 
           {/* Feature Requests section */}
           <div className="flex items-start gap-4">
-            <Skeleton className="h-12 w-12 rounded-lg" />
+            <Skeleton className="h-12 w-12 " />
             <div className="flex-1">
               <Skeleton className="h-6 w-56 mb-1" />
               <Skeleton className="h-4 w-72 mb-2" />
@@ -39,7 +39,7 @@ export default function ContactLoading() {
 
           {/* Bug Reports section */}
           <div className="flex items-start gap-4">
-            <Skeleton className="h-12 w-12 rounded-lg" />
+            <Skeleton className="h-12 w-12 " />
             <div className="flex-1">
               <Skeleton className="h-6 w-36 mb-1" />
               <Skeleton className="h-4 w-64 mb-2" />
@@ -49,7 +49,7 @@ export default function ContactLoading() {
         </div>
 
         {/* Response time box */}
-        <div className="mt-12 rounded-lg border-2 border-black bg-muted p-6 shadow-hard-sm dark:border-white">
+        <div className="mt-12 border-2 border-black bg-muted p-6 shadow-hard-sm dark:border-white">
           <Skeleton className="h-6 w-40 mb-2" />
           <Skeleton className="h-4 w-full mb-2" />
           <Skeleton className="h-4 w-5/6" />

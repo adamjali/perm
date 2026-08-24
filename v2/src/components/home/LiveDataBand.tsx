@@ -49,7 +49,7 @@ export function LiveDataBand({ frontierMonth, asOf, averageDays }: LiveDataBandP
           </div>
           <Link
             href="/tools"
-            className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-background px-5 py-2.5 font-bold shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard"
+            className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-background px-5 py-2.5 font-bold shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
           >
             Open the data
             <ArrowRight className="h-4 w-4" aria-hidden="true" />

@@ -43,7 +43,7 @@ export function QueuePulseWidget() {
         </p>{" "}
         <Link
           href="/tools/perm-timeline-calculator"
-          className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-background px-4 py-2 text-sm font-bold shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard"
+          className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-background px-4 py-2 text-sm font-bold shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
         >
           Estimate a decision
           <ArrowRight className="h-4 w-4" aria-hidden="true" />

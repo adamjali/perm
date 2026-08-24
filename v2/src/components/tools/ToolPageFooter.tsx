@@ -39,7 +39,7 @@ export function ToolPageFooter({ currentHref, reading }: ToolPageFooterProps) {
               <li key={r.href} className="flex">
                 <Link
                   href={r.href}
-                  className="group flex w-full flex-col border-2 border-border bg-card p-5 shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="group flex w-full flex-col border-2 border-border bg-card p-5 shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:translate-y-0 active:shadow-hard-sm"
                 >
                   <span className="flex items-start justify-between gap-3">
                     <span className="font-heading text-base font-black leading-tight">
@@ -67,7 +67,7 @@ export function ToolPageFooter({ currentHref, reading }: ToolPageFooterProps) {
             <li key={t.href}>
               <Link
                 href={t.href}
-                className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-card px-4 py-2 font-bold shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-card px-4 py-2 font-bold shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:translate-y-0 active:shadow-hard-sm"
               >
                 {t.label}
                 <ArrowRight className="h-4 w-4 text-primary" aria-hidden="true" />

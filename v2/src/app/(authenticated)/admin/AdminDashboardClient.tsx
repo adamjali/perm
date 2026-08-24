@@ -124,7 +124,7 @@ export default function AdminDashboardClient() {
         </div>
         <a
           href="/admin/security"
-          className="mono flex items-center gap-2 border-2 border-foreground bg-background px-4 py-2 text-xs font-bold uppercase tracking-widest shadow-hard-sm transition-all hover:-translate-y-[1px] hover:shadow-hard"
+          className="mono flex items-center gap-2 border-2 border-foreground bg-background px-4 py-2 text-xs font-bold uppercase tracking-widest shadow-hard-sm transition-all hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
         >
           <Shield className="h-4 w-4" aria-hidden />
           Security Ops

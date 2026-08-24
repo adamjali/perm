@@ -251,7 +251,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
             // Base styles - neobrutalist
             "h-11 w-full min-w-0 border-2 bg-background px-3 py-1 text-base shadow-hard-sm transition-all duration-150 outline-none md:text-sm",
             // Hover state
-            "hover:shadow-hard hover:-translate-y-[1px]",
+            "hover:shadow-hard hover:-translate-y-[1px] active:translate-y-0 active:shadow-hard-sm",
             // Focus state
             "focus:shadow-hard focus:ring-2 focus:ring-ring focus-visible:border-ring focus:-translate-y-[1px]",
             // Disabled state

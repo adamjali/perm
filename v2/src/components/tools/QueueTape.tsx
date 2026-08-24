@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -63,8 +64,8 @@ export function QueueTape({
             const isFrontier = m === frontierMonth;
             const isYou = m === selectedMonth;
             return (
+              <Fragment key={m}>{" "}
               <div
-                key={m}
                 className={cn(
                   "relative flex h-16 items-end justify-center border-r border-border/30 pb-1 last:border-r-0",
                   cleared && "bg-primary",
@@ -82,7 +83,7 @@ export function QueueTape({
                 />
                 <span
                   className={cn(
-                    "font-mono text-[10px] font-bold leading-none",
+                    "font-mono text-[11px] font-bold leading-none",
                     cleared || isFrontier ? "text-black/80" : "text-foreground/50",
                     // Room is tight: label every other month, ends always.
                     months.indexOf(m) % 2 !== 0 &&
@@ -91,18 +92,21 @@ export function QueueTape({
                 >
                   {label(m)}
                 </span>
-
+                {/* Real space: the flag span is adjacent to the label span
+                    and would glue for every DOM extractor. */}
+                {" "}
                 {isFrontier ? (
-                  <span className="absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-foreground px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-background">
+                  <span className="absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-foreground px-1.5 py-0.5 font-mono text-xs font-bold uppercase tracking-wider text-background">
                     DOL is here
                   </span>
                 ) : null}
                 {isYou && !isFrontier ? (
-                  <span className="absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-primary px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-black">
+                  <span className="absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-primary px-1.5 py-0.5 font-mono text-xs font-bold uppercase tracking-wider text-black">
                     You
                   </span>
                 ) : null}
               </div>
+              </Fragment>
             );
           })}
         </div>

@@ -68,6 +68,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/tools/perm-deadline-calculator`, lastModified: '2026-08-23' },
     { url: `${baseUrl}/calculators`, lastModified: '2026-08-24' },
     { url: `${baseUrl}/methodology`, lastModified: '2026-08-24' },
+    // The disclosure aggregates: lastmod tracks the quarterly ingest.
+    { url: `${baseUrl}/perm-by-state`, lastModified: permAsOf ?? '2026-08-24' },
+    { url: `${baseUrl}/perm-wages`, lastModified: permAsOf ?? '2026-08-24' },
+    { url: `${baseUrl}/perm-employers`, lastModified: permAsOf ?? '2026-08-24' },
     { url: `${baseUrl}/contact`, lastModified: '2026-02-07' },
     { url: `${baseUrl}/terms`, lastModified: '2026-06-15' },
     { url: `${baseUrl}/privacy`, lastModified: '2026-06-15' },

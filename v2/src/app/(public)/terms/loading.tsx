@@ -73,7 +73,7 @@ export default function TermsLoading() {
             <Skeleton className="h-4 w-full mb-2" />
             <Skeleton className="h-4 w-2/3 mb-4" />
             {/* Warning box */}
-            <div className="rounded-lg border-2 border-black bg-muted p-4 dark:border-white">
+            <div className="border-2 border-black bg-muted p-4 dark:border-white">
               <Skeleton className="h-4 w-full mb-2" />
               <Skeleton className="h-4 w-full mb-2" />
               <Skeleton className="h-4 w-3/4" />

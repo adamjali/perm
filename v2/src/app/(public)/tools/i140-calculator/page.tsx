@@ -122,7 +122,7 @@ export default async function I140CalculatorPage() {
         </p>
         <Link
           href="/tools/perm-deadline-calculator"
-          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg"
+          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
         >
           Work out your filing window
           <ArrowRight className="h-4 w-4" aria-hidden="true" />

@@ -256,7 +256,7 @@ export default function TermsPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Not Legal Advice
             </h3>{" "}
-            <div className="rounded-lg border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
+            <div className="border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
               <p className="text-foreground/80 leading-relaxed font-medium">
                 <strong>IMPORTANT:</strong> PERM Tracker is a case management tool
                 only. The Service does not provide legal advice, and nothing in
@@ -331,7 +331,7 @@ export default function TermsPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               No Legal Advice; Professional Responsibility
             </h3>{" "}
-            <div className="rounded-lg border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
+            <div className="border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
               <p className="text-foreground/80 leading-relaxed font-medium">
                 <strong>IMPORTANT:</strong> The AI chat assistant does not provide
                 legal advice and does not create an attorney-client relationship.
@@ -672,7 +672,7 @@ export default function TermsPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Your Professional Obligations
             </h3>{" "}
-            <div className="rounded-lg border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
+            <div className="border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
               <p className="text-foreground/80 leading-relaxed font-medium">
                 <strong>FOR ATTORNEYS:</strong> You are solely responsible for
                 determining whether use of cloud-based case management software
