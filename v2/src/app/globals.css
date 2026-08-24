@@ -2168,7 +2168,31 @@ input[type="time"],
 input[type="datetime-local"],
 input[type="month"],
 input[type="week"] {
-  /* Keep the UA's `display: inline-flex`; forcing `display: block` is the old
+  /* MEASURED ON THE DEVICE, 2026-08-24, via the ?diag=1 overlay on an iPhone
+     (440pt @3x, Chrome iOS 151). With `w-full min-w-0` on the control and the
+     grid fully floored, WebKit rendered the input at
+
+         computed min-width: 107px   used width: 412px
+
+     inside a 356px parent whose grid track was correctly 356px. That is the
+     native theme ignoring both the author `width: 100%` and `min-width: 0` on
+     a temporal control. The one lever that defeats native control sizing is
+     turning the native theme off. (The claim that iOS 18 fixed the width bug
+     did not survive contact with this device.)
+
+     `appearance: none` drops the themed height and colours with it, so the
+     things the theme was providing are pinned here and by the components:
+     every DateInput carries h-11 (44px) and bg-background/border-2; the value
+     box is normalised by Tailwind Preflight (`::-webkit-date-and-time-value
+     { min-height: 1lh; text-align: inherit }`); and `color: inherit` clears
+     the iOS UA's `-apple-system-blue` value text, which was never chosen by
+     this design. The picker still opens on tap and via showPicker() — the
+     native affordance is a behaviour of the input, not of its theme.
+
+     Keep the UA's `display: inline-flex`; forcing `display: block` is the old
      advice and it introduces stray bottom padding. */
+  -webkit-appearance: none;
+  appearance: none;
+  color: inherit;
   max-width: 100%;
 }
