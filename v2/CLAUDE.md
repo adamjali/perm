@@ -352,6 +352,7 @@ Content in `content/{blog,tutorials,guides,changelog,resources}/*.mdx`. Processe
 | `X is not defined` (prod build) | Check SWC minifier, `optimizePackageImports`, `concatenateModules`, React Compiler |
 | Auth callback not firing | `createOrUpdateUser` skips password sign-ins — use `LoginTracker` |
 | Toast during sign-out | Import `@/lib/toast`, not `sonner` |
+| Pull-to-refresh dead on mobile | `overscroll-behavior-y: none` on html/body kills the gesture (its documented purpose). Removed 2026-08-24; theme the bounce region with `html { background-color }` instead. `contain` is no escape hatch on the root |
 | PostHog/analytics silently not capturing | Client init must be in `src/instrumentation-client.ts` (the only one Next.js loads; a root one is ignored) — PostHog + BotID coexist there. [CONCERNS.md TD-06](../.planning/codebase/CONCERNS.md) |
 | Convex action can't call another action | `ctx.scheduler.runAfter(0, ...)` instead |
 | Sitemap dates stale | Update `lastModified` in `src/app/sitemap.ts` |

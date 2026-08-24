@@ -1210,8 +1210,15 @@
     scroll-behavior: smooth;
     /* Offset for fixed header on hash navigation (4rem header + 1rem breathing room) */
     scroll-padding-top: 5rem;
-    /* Prevent iOS elastic overscroll on vertical axis only — keep horizontal for browser back/forward swipe */
-    overscroll-behavior-y: none;
+    /* Overscroll is left at its default on the vertical axis. It used to be
+       `overscroll-behavior-y: none` "to prevent iOS elastic overscroll", and
+       that property's documented effect on the root is disabling the browser's
+       own overscroll affordances — pull-to-refresh first among them. Users
+       noticed refresh was dead before anyone noticed the bounce was gone.
+       (`contain` is no escape hatch: on the root it disables the gesture too.)
+       The bounce region is themed via background-color below, which is the
+       part of "elastic overscroll" that was actually worth fixing. */
+    background-color: var(--background);
     /* Fill available viewport height */
     height: 100%;
     height: -webkit-fill-available;
@@ -1221,8 +1228,9 @@
   }
   body {
     @apply bg-background text-foreground font-body;
-    /* Prevent overscroll bounce on vertical axis only — keep horizontal for browser back/forward swipe */
-    overscroll-behavior-y: none;
+    /* No overscroll-behavior here either — see the html comment. Root
+       pull-to-refresh needs BOTH html and body clear of it; either one set to
+       none (or contain) kills the gesture. */
     /* Ensure height fills viewport */
     min-height: 100%;
     min-height: 100vh;
