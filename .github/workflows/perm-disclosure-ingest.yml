@@ -125,13 +125,27 @@ jobs:
           python3 scripts/ingest_visa_bulletin.py \
             --out "${RUNNER_TEMP}/visa-bulletin.json" --months 18
 
+      # The payloads always survive the run: if the store step cannot run
+      # (secret missing) or fails, `gh run download` retrieves them and
+      # `npx convex run ...:storeStats` finishes the job from any machine
+      # with Convex CLI auth.
+      - name: Upload payload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: federal-payloads
+          path: ${{ runner.temp }}/*.json
+          retention-days: 7
+          if-no-files-found: error
+
       - name: Store aggregates in Convex
         working-directory: v2
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
         run: |
           if [ -z "$CONVEX_DEPLOY_KEY" ]; then
-            echo "FATAL: CONVEX_DEPLOY_KEY is not set" >&2
+            echo "WARNING: CONVEX_DEPLOY_KEY secret is not set on this repo." >&2
+            echo "The payloads are uploaded as the federal-payloads artifact;" >&2
+            echo "store them manually with npx convex run ...:storeStats." >&2
             exit 1
           fi
           # DOL is required - the job exists for this payload.
