@@ -728,11 +728,17 @@ Safari emulation did not reproduce the on-device rendering either. Blink can
 prove *no regression* and that nothing in the chain refuses to shrink. It cannot
 prove the fix.
 
-`scripts/diag_proxy.py` is the way out: it proxies the local production
-server and injects an overlay printing the date field's whole ancestor chain
-(display, computed width, measured width, grid template, min-width) in large
-text. Serve it on the LAN, open it on the real phone, screenshot. That is one
-decisive measurement instead of a fourth guess.
+The way out is measurement on the device. Two instruments exist; use the
+second first:
+- `src/components/diag/ViewportDiag.tsx` ships in the public layout, inert
+  until the URL carries `?diag=1`, then prints viewport truth (including
+  `visualViewport.scale` — silent iOS zoom), every element wider than the
+  viewport with the true source marked `ROOT>`, and the date field's ancestor
+  chain. This is what actually settled the bug: one screenshot from the phone
+  named the input itself, at 412px inside a 356px parent, `minw=107px`.
+- `scripts/diag_proxy.py` does the same via a LAN proxy of the local build —
+  but this machine's firewall blocks inbound connections, which is exactly how
+  the LAN route failed. Prefer the deployed `?diag=1`.
 
 Gates: `form-controls-min-width.test.ts` and `responsive-grid-tracks.test.ts`.
 The second one's first version matched `sm:grid-cols-2` as though it defined the
