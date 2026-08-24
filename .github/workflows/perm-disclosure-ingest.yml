@@ -5,7 +5,10 @@ name: Federal data ingest
 #
 # Two sources, both quarterly, both reachable to scripts:
 #   DOL   PERM disclosure files (www.dol.gov) - 156 MB, 1.21 GB uncompressed
-#   USCIS I-140 counts (www.uscis.gov)        - a few hundred KB
+#   USCIS I-140 counts (www.uscis.gov)        - a few hundred KB. Reachable
+#         from residential IPs; 403s from GitHub's datacenter range (measured
+#         2026-08-24), so the step is non-fatal here and the manual-run path
+#         below covers it from a home connection.
 #   DOS   visa bulletin, via the Internet Archive - monthly, ~20 KB
 #
 # USCIS's PROCESSING TIMES are deliberately absent: they live on
@@ -105,6 +108,10 @@ jobs:
 
       - name: Download and reduce USCIS I-140 counts
         working-directory: v2
+        # Non-fatal: www.uscis.gov serves residential IPs and 403s GitHub's
+        # datacenter range. An optional source must never sink the DOL store,
+        # which is the load-bearing one. The store step checks per-payload.
+        continue-on-error: true
         run: |
           python3 scripts/ingest_uscis_i140.py --out "${RUNNER_TEMP}/uscis-payload.json"
 
@@ -127,10 +134,15 @@ jobs:
             echo "FATAL: CONVEX_DEPLOY_KEY is not set" >&2
             exit 1
           fi
+          # DOL is required - the job exists for this payload.
           npx --yes convex run permDisclosure:storeStats \
             "$(cat "${RUNNER_TEMP}/perm-payload.json")" --prod
-          npx --yes convex run uscisI140:storeStats \
-            "$(cat "${RUNNER_TEMP}/uscis-payload.json")" --prod
+          if [ -s "${RUNNER_TEMP}/uscis-payload.json" ]; then
+            npx --yes convex run uscisI140:storeStats \
+              "$(cat "${RUNNER_TEMP}/uscis-payload.json")" --prod
+          else
+            echo "USCIS payload absent; skipping (see the step above)"
+          fi
           if [ -s "${RUNNER_TEMP}/visa-bulletin.json" ]; then
             npx --yes convex run visaBulletin:storeBulletins \
               "$(cat "${RUNNER_TEMP}/visa-bulletin.json")" --prod
