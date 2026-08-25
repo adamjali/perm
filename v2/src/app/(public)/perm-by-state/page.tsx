@@ -19,7 +19,7 @@ import { USStateMap, type StateStat } from "@/components/tools/USStateMap";
 
 const TITLE = "PERM Filings by State";
 const DESCRIPTION =
-  "Interactive map of PERM labor certification filings by worksite state: volume, approval rate, median processing days and median wage, from DOL's own disclosure files.";
+  "Interactive map of PERM filings by worksite state: volume, approval rate, median days and median wage, from DOL's own disclosure files.";
 
 export const metadata: Metadata = {
   title: TITLE,

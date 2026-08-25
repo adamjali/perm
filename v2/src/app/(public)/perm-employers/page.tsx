@@ -20,7 +20,7 @@ import { EmployersExplorer, type EmployerStat } from "./EmployersExplorer";
 
 const TITLE = "Top PERM Sponsors";
 const DESCRIPTION =
-  "The companies filing the most PERM labor certifications: filings, certifications, approval rates and median processing days per employer, from DOL's own disclosure files.";
+  "The companies filing the most PERM cases: volume, approval rates and median processing days per sponsor, straight from DOL's own disclosure files.";
 
 export const metadata: Metadata = {
   title: TITLE,

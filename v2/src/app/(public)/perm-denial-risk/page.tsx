@@ -20,7 +20,7 @@ import { RateBars } from "@/components/tools/RateBars";
 
 const TITLE = "PERM Denial Rates";
 const DESCRIPTION =
-  "What actually correlates with a PERM denial, measured from DOL's disclosure files: by offered wage, by fiscal year, and by the risk factors the ETA-9089 itself records.";
+  "What correlates with a PERM denial, measured from DOL's files: by offered wage, by fiscal year, and by the factors the ETA-9089 records.";
 
 export const metadata: Metadata = {
   title: TITLE,

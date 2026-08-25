@@ -20,7 +20,7 @@ import { AttorneysExplorer, type AttorneyStat } from "./AttorneysExplorer";
 
 const TITLE = "Top PERM Law Firms";
 const DESCRIPTION =
-  "The law firms filing the most PERM labor certifications: case volume, certifications, approval rates and median processing days per firm, from DOL's own disclosure files.";
+  "The law firms filing the most PERM cases: volume, approval rates and median processing days per firm, straight from DOL's own disclosure files.";
 
 export const metadata: Metadata = {
   title: TITLE,

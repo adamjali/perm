@@ -22,7 +22,7 @@ import { DataNav } from "@/components/tools/DataNav";
 
 const TITLE = "PWD Processing Time Calculator";
 const DESCRIPTION =
-  "See how many prevailing wage requests are ahead of yours, from DOL's own published backlog. The first step of a PERM, and the one that sets every deadline.";
+  "How many prevailing wage requests sit ahead of yours, from DOL's own published backlog. The first PERM step, and the one that sets every deadline.";
 
 export const metadata: Metadata = {
   title: TITLE,

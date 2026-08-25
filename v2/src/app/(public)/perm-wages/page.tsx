@@ -21,7 +21,7 @@ import { WagesExplorer } from "./WagesExplorer";
 
 const TITLE = "PERM Salaries by Occupation";
 const DESCRIPTION =
-  "What PERM cases actually pay: median offered wages, filing volume, approval rates and processing days for the top occupations, from DOL's own disclosure files.";
+  "What PERM cases actually pay: median offered wages by occupation, with volume and approval rates, from DOL's own disclosure files.";
 
 export const metadata: Metadata = {
   title: TITLE,
