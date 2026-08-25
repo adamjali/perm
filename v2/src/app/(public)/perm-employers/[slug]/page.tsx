@@ -93,7 +93,11 @@ export async function generateMetadata({
   // sentence is short and the name is never cut.
   const description = `${row.name}: ${row.total.toLocaleString("en-US")} PERM filings${rate != null ? `, ${rate.toFixed(1)}% approved` : ""}, from DOL's own disclosure files.`;
   return {
-    title,
+    // A legal entity name can run past what Google shows on its own
+    // ("VERIZON COMMUNICATIONS INC AND ALL ITS SUBSIDIARIES AND AFFILIATES"),
+    // so above 60 characters the brand suffix is dropped rather than the
+    // name being crowded out. Same rule as the SOC titles.
+    title: title.length > 60 ? { absolute: title } : title,
     description,
     alternates: { canonical: `/perm-employers/${slug}` },
     openGraph: {

@@ -92,7 +92,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
                   timeZone: "UTC",
                 })}
               </time>
-            </span>
+            </span>{" "}
             {meta.updated && meta.updated !== meta.date && (
               <span className="flex items-center gap-1.5 text-xs">
                 Updated{" "}

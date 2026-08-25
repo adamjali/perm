@@ -102,7 +102,11 @@ def audit(base: str, path: str) -> list[str]:
     if path in DATA_PAGES:
         if EMPTY_STATE in html:
             out.append(f"{path}: RENDERING ITS EMPTY STATE - data pipeline broken")
-        elif DATA_PAGES[path] not in html:
+        # Case-insensitive: DOL prints whatever the filer typed, so the
+        # display name for a merged entity is whichever spelling had the most
+        # cases - often all caps. A case-sensitive check called a correct
+        # page broken.
+        elif DATA_PAGES[path].lower() not in html.lower():
             out.append(f"{path}: expected live figure {DATA_PAGES[path]!r} absent")
 
     return out

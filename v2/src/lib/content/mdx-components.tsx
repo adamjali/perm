@@ -361,17 +361,21 @@ export const mdxComponents: MDXComponents = {
       {children}
     </thead>
   ),
+  // The trailing space in each cell is deliberate. Cells render adjacent with
+  // nothing between them, so "Stage" and "Estimated Time" reach any DOM
+  // extractor as "StageEstimated Time" - every markdown table in every
+  // article, invisible in a browser because cells are laid out separately.
   th: ({ children, ...props }) => (
     <th
       className="border-2 border-border px-4 py-2 text-left font-heading font-bold"
       {...props}
     >
-      {children}
+      {children}{" "}
     </th>
   ),
   td: ({ children, ...props }) => (
     <td className="border-2 border-border px-4 py-2" {...props}>
-      {children}
+      {children}{" "}
     </td>
   ),
 
