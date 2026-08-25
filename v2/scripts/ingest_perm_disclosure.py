@@ -181,6 +181,71 @@ def no(raw: str | None) -> bool:
     return (raw or "").strip().upper()[:1] == "N"
 
 
+# Legal suffixes and connectives. DOL prints whatever the filer typed, so one
+# firm arrives as six spellings that differ only in punctuation, case and
+# these words. Stripping them is conservative: two names only merge when
+# every remaining word is identical.
+_ENTITY_NOISE = {
+    "llp", "llc", "inc", "pc", "plc", "pllc", "lp", "ltd", "corp",
+    "corporation", "co", "company", "pa", "chartered", "and", "the",
+}
+
+
+def entity_key(name: str) -> str:
+    """A merge key for one real-world entity across its printed spellings.
+
+    Measured on the FY2026 files: Fragomen appeared as SIX rows totalling
+    30,180 cases against a published 24,059, occupying five extra ranks and
+    giving each spelling its own page claiming to be a distinct firm. The
+    fix belongs here, before ranking, not in slug disambiguation after it.
+    """
+    cleaned = re.sub(r"[^a-z0-9 ]+", " ", name.lower())
+    words = [w for w in cleaned.split() if w not in _ENTITY_NOISE]
+    return " ".join(words) or cleaned.strip()
+
+
+def merge_entities(bucket: dict, name_of) -> list[dict]:
+    """Pool rows that are one entity, keeping the busiest spelling's name.
+
+    Medians are recomputed from the POOLED day and wage lists. Averaging the
+    per-spelling medians would be a median of medians, which is not the
+    median of the combined population and can sit outside it entirely.
+    """
+    merged: dict[str, dict] = {}
+    for d in bucket.values():
+        key = entity_key(name_of(d))
+        cur = merged.get(key)
+        if cur is None:
+            merged[key] = {
+                "certified": d["certified"],
+                "denied": d["denied"],
+                "withdrawn": d.get("withdrawn", 0),
+                "days": list(d["days"]),
+                "wages": list(d.get("wages", [])),
+                "name": d.get("name", ""),
+                "title": d.get("title", ""),
+                "state": d.get("state", ""),
+                "_top": d["certified"] + d["denied"] + d.get("withdrawn", 0),
+            }
+            continue
+        n = d["certified"] + d["denied"] + d.get("withdrawn", 0)
+        cur["certified"] += d["certified"]
+        cur["denied"] += d["denied"]
+        cur["withdrawn"] += d.get("withdrawn", 0)
+        cur["days"].extend(d["days"])
+        cur["wages"].extend(d.get("wages", []))
+        # The busiest spelling is the one people recognise, so it wins the
+        # display name and carries the state with it.
+        if n > cur["_top"]:
+            cur["_top"] = n
+            cur["name"] = d.get("name", "") or cur["name"]
+            cur["title"] = d.get("title", "") or cur["title"]
+            cur["state"] = d.get("state", "") or cur["state"]
+        elif not cur["state"]:
+            cur["state"] = d.get("state", "")
+    return list(merged.values())
+
+
 def norm_status(raw: str) -> str | None:
     s = raw.strip().upper()
     if s.startswith("CERTIFIED"):
@@ -572,8 +637,9 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
             "denied": d["denied"],
             "medianDays": percentile(d["days"], 50),
         }
-        for _, d in sorted(
-            acc["byEmployer"].items(), key=lambda kv: -tot(kv[1])
+        for d in sorted(
+            merge_entities(acc["byEmployer"], lambda x: x["name"]),
+            key=lambda d: -tot(d),
         )
         if tot(d) >= ENTITY_FLOOR
     ]
@@ -587,8 +653,9 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
             "denied": d["denied"],
             "medianDays": percentile(d["days"], 50),
         }
-        for _, d in sorted(
-            acc["byAttorney"].items(), key=lambda kv: -tot(kv[1])
+        for d in sorted(
+            merge_entities(acc["byAttorney"], lambda x: x["name"]),
+            key=lambda d: -tot(d),
         )
         if tot(d) >= ENTITY_FLOOR
     ]
