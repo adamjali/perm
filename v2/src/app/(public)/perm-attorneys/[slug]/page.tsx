@@ -68,7 +68,7 @@ export async function generateMetadata({
   if (!row) return { title: "Employer not found" };
   const rate = approval(row);
   const title = `${row.name} PERM Cases`;
-  const description = `${row.name} filed ${row.total.toLocaleString("en-US")} PERM labor certifications in DOL's current disclosure window${rate != null ? `, with a ${rate.toFixed(1)}% approval rate` : ""}. Case volume, certifications and median processing days from DOL's own files.`;
+  const description = `${row.name}: ${row.total.toLocaleString("en-US")} PERM cases${rate != null ? `, ${rate.toFixed(1)}% approved` : ""}, from DOL's own disclosure files.`;
   return {
     title,
     description,

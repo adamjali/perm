@@ -834,3 +834,58 @@ The 2026-08-24 audit standard for the /tools suite, now pinned by
 Evenly spaced chart ticks were written out twice. The label collision was found
 and fixed on one chart, and came straight back on the other because the logic
 had been duplicated rather than shared. Two callers is enough.
+
+---
+
+## The rival's whole API is public, and its data is a quarter stale (2026-08-24)
+
+permtrack.app is the namesake competitor. Every endpoint under
+`permtrack.app/api/*` answers unauthenticated - all stats, the 321,725-row
+case browser, the risk estimator, and the "PRO" decision predictor - so the
+product is readable end to end without touching anything gated.
+
+Two facts that reframe the rivalry, both measured:
+- **`/api/stats/data-freshness` returns `oflc_through: 2026-03-31`.** Ours runs
+  through 2026-06-30. They hold more history; we hold fresher data.
+- **`/api/flags` shows `risk_estimator: false`, `i485_queue: false`,
+  `daily_decisions: false`** - three features built and switched off in prod.
+
+**Their moat is per-case FLAG scanning, not the disclosure files.** The live
+pending backlog (39 months, ~99k pending), daily decision counts, and the RFI
+funnel all come from scanning individual case numbers on flag.dol.gov. Every
+other thing they ship runs off the same quarterly XLSX we already ingest -
+which is why the tier-one gaps closed in a day.
+
+**Their formulas, decoded:** risk score is
+`3.00 + Σ weight×(subsetRate − 3.00)` (SOC 0.50, state 0.20, wage 0.15, five
+booleans sharing 0.15/N); predictor is `queue_position ÷ pace`, pace from the
+last 28 days split weekday/weekend, walked forward business-day-aware.
+
+**Where we deliberately diverge:** they roll their denial factors into one
+letter-graded score. We publish the measured rates and refuse the blend,
+because the factors are not independent and one number would read as
+precision the data cannot support. `/perm-denial-risk` says that on the page,
+above the bars.
+
+Full teardown and the remaining gap list:
+`~/.claude/explanations/20260619_perm_competitor_teardown/DETAILED-permtrack.md`
+plus the 2026-08-24 live delta in the auto-memory
+`permtrack-gap-closure.md`.
+
+## Auditing every page: read the sitemap, and decode before you measure
+
+`scripts/audit_all_pages.py --base https://permtracker.app` walks every URL in
+the live sitemap (298 of them) and checks status, title, description length,
+h1 count, canonical, and that the data-fed pages are not silently rendering
+their empty state. It reads the sitemap rather than a hand-kept list, because
+a page nobody remembered is the page that breaks.
+
+**Its first run reported nine over-length descriptions and two were the
+detector.** It measured the raw `content="..."` attribute, where every
+apostrophe is `&#x27;` - six characters where the reader and Google see one.
+A 150-character description reported as 160. **This fires on OUR copy
+specifically**, because house style is contraction-heavy, and passes clean on
+generic prose: the same shape as the meta-description regex bug already in the
+global CLAUDE.md. Unescape before measuring, and probe with six fixtures
+(three that must flag, three that must not, including an entity-heavy
+150-character control).

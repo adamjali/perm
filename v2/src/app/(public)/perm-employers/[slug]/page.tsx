@@ -68,7 +68,10 @@ export async function generateMetadata({
   if (!row) return { title: "Employer not found" };
   const rate = approval(row);
   const title = `${row.name} PERM Filings`;
-  const description = `${row.name} filed ${row.total.toLocaleString("en-US")} PERM labor certifications in DOL's current disclosure window${rate != null ? `, with a ${rate.toFixed(1)}% approval rate` : ""}. Volume, certifications and median processing days from DOL's own files.`;
+  // Names run long, so the template must fit inside 155 with the longest of
+  // them. Truncating the NAME would be worse than a short sentence, so the
+  // sentence is short and the name is never cut.
+  const description = `${row.name}: ${row.total.toLocaleString("en-US")} PERM filings${rate != null ? `, ${rate.toFixed(1)}% approved` : ""}, from DOL's own disclosure files.`;
   return {
     title,
     description,

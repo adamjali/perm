@@ -70,7 +70,16 @@ export async function generateMetadata({
   if (!row) return { title: "Employer not found" };
   const rate = approval(row);
   const title = `${row.title} PERM Salary and Filings`;
-  const description = `Median offered wage${row.medianAnnualWage != null ? ` of $${Math.round(row.medianAnnualWage).toLocaleString("en-US")}` : ""} across ${row.total.toLocaleString("en-US")} PERM filings for ${row.title} (SOC ${row.code}), with approval rate and median processing days from DOL's own files.`;
+  // SOC titles run to 79 characters ("Secretaries and Administrative
+  // Assistants, Except Legal, Medical, and Executive"), which pushed the full
+  // sentence one character past the 155 the SERP shows. Drop the trailing
+  // clause when the title is long rather than truncating mid-word.
+  const wagePart =
+    row.medianAnnualWage != null
+      ? `: $${Math.round(row.medianAnnualWage).toLocaleString("en-US")} median offered`
+      : "";
+  const head = `${row.title} PERM wages${wagePart} across ${row.total.toLocaleString("en-US")} filings`;
+  const description = head.length <= 120 ? `${head}, from DOL's own files.` : `${head}.`;
   return {
     title,
     description,
