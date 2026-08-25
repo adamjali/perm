@@ -206,48 +206,66 @@ export const mdxComponents: MDXComponents = {
   PrintableChecklist,
 
   // Headings
+  //
+  // Every block renderer emits a trailing space. MDX renders sibling blocks
+  // with NOTHING between them, so `</h3><p>` reaches anything walking the DOM
+  // as one run of characters: a live guide served "Timing Requirements||Per 20
+  // CFR 656.17(e)". CSS hides it because both children are block-level, and
+  // Google has reproduced this exact defect verbatim in a real search listing.
+  // A whitespace text node between two block elements collapses to nothing
+  // visually, so this costs no layout.
   h1: ({ children, id, ...props }) => (
-    <h1
-      id={id}
-      className="mb-6 mt-12 font-heading text-3xl font-bold tracking-tight sm:text-4xl"
-      {...props}
-    >
-      {children}
-    </h1>
+    <>
+      <h1
+        id={id}
+        className="mb-6 mt-12 font-heading text-3xl font-bold tracking-tight sm:text-4xl"
+        {...props}
+      >
+        {children}
+      </h1>{" "}
+    </>
   ),
   h2: ({ children, id, ...props }) => (
-    <h2
-      id={id}
-      className="mb-4 mt-10 scroll-mt-24 font-heading text-2xl font-bold tracking-tight"
-      {...props}
-    >
-      {children}
-    </h2>
+    <>
+      <h2
+        id={id}
+        className="mb-4 mt-10 scroll-mt-24 font-heading text-2xl font-bold tracking-tight"
+        {...props}
+      >
+        {children}
+      </h2>{" "}
+    </>
   ),
   h3: ({ children, id, ...props }) => (
-    <h3
-      id={id}
-      className="mb-3 mt-8 scroll-mt-24 font-heading text-xl font-bold"
-      {...props}
-    >
-      {children}
-    </h3>
+    <>
+      <h3
+        id={id}
+        className="mb-3 mt-8 scroll-mt-24 font-heading text-xl font-bold"
+        {...props}
+      >
+        {children}
+      </h3>{" "}
+    </>
   ),
   h4: ({ children, id, ...props }) => (
-    <h4
-      id={id}
-      className="mb-2 mt-6 scroll-mt-24 font-heading text-lg font-bold"
-      {...props}
-    >
-      {children}
-    </h4>
+    <>
+      <h4
+        id={id}
+        className="mb-2 mt-6 scroll-mt-24 font-heading text-lg font-bold"
+        {...props}
+      >
+        {children}
+      </h4>{" "}
+    </>
   ),
 
   // Body text
   p: ({ children, ...props }) => (
-    <p className="mb-4 leading-relaxed text-foreground/90" {...props}>
-      {children}
-    </p>
+    <>
+      <p className="mb-4 leading-relaxed text-foreground/90" {...props}>
+        {children}
+      </p>{" "}
+    </>
   ),
 
   // Links

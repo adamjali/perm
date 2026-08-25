@@ -255,14 +255,16 @@ export function FilterableStatTable<T>({
               >
                 <option value="">All</option>
                 {(facetOptions[f.key] ?? []).map((o) => (
-                  <option key={o} value={o}>
-                    {f.format ? f.format(o) : o}
-                  </option>
+                  <Fragment key={o}>
+                    {" "}
+                    <option value={o}>{f.format ? f.format(o) : o}</option>
+                  </Fragment>
                 ))}
               </select>
             </label>
           ))}
 
+          {" "}
           {csv ? (
             <button
               type="button"
@@ -271,7 +273,7 @@ export function FilterableStatTable<T>({
             >
               Download CSV
             </button>
-          ) : null}
+          ) : null}{" "}
         </div>
 
         {/* Status. Never let a filtered count read as the whole corpus, and
@@ -318,7 +320,7 @@ export function FilterableStatTable<T>({
               >
                 Load all {corpusSize.toLocaleString("en-US")}
               </button>
-            ) : null}
+            ) : null}{" "}
             <label className="flex min-h-[44px] items-center gap-2 text-sm text-foreground/60">
               <span className="font-mono text-xs font-bold uppercase tracking-wider">
                 Rows
@@ -332,9 +334,10 @@ export function FilterableStatTable<T>({
                 className="border-2 border-border bg-card px-2 py-1.5 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {PAGE_SIZES.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
+                  <Fragment key={n}>
+                    {" "}
+                    <option value={n}>{n}</option>
+                  </Fragment>
                 ))}
               </select>
             </label>
@@ -351,29 +354,31 @@ export function FilterableStatTable<T>({
               {columns.map((c) => {
                 const isSorted = c.key === sortKey;
                 return (
-                  <th
-                    key={c.key}
-                    scope="col"
-                    aria-sort={isSorted ? (sortDesc ? "descending" : "ascending") : "none"}
-                    className={
-                      "p-0 " +
-                      (c.numeric ? "text-right " : "") +
-                      (c.secondary ? "hidden sm:table-cell" : "")
-                    }
-                  >
-                    <button
-                      type="button"
-                      onClick={() => toggleSort(c.key, c.numeric)}
+                  <Fragment key={c.key}>
+                    {" "}
+                      <th
+                      scope="col"
+                      aria-sort={isSorted ? (sortDesc ? "descending" : "ascending") : "none"}
                       className={
-                        "min-h-[44px] w-full px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary " +
-                        (c.numeric ? "text-right" : "text-left") +
-                        (isSorted ? " text-primary" : "")
+                        "p-0 " +
+                        (c.numeric ? "text-right " : "") +
+                        (c.secondary ? "hidden sm:table-cell" : "")
                       }
                     >
-                      {c.label}
-                      {isSorted ? (sortDesc ? " ↓" : " ↑") : ""}
-                    </button>
-                  </th>
+                      <button
+                        type="button"
+                        onClick={() => toggleSort(c.key, c.numeric)}
+                        className={
+                          "min-h-[44px] w-full px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary " +
+                          (c.numeric ? "text-right" : "text-left") +
+                          (isSorted ? " text-primary" : "")
+                        }
+                      >
+                        {c.label}
+                        {isSorted ? (sortDesc ? " ↓" : " ↑") : ""}
+                      </button>
+                    </th>
+                  </Fragment>
                 );
               })}
             </tr>
@@ -419,7 +424,7 @@ export function FilterableStatTable<T>({
         >
           <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
             Page {safePage + 1} of {pageCount.toLocaleString("en-US")}
-          </p>
+          </p>{" "}
           <div className="flex gap-2">
             <button
               type="button"
@@ -431,7 +436,7 @@ export function FilterableStatTable<T>({
               className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-xs font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
             >
               ← Prev
-            </button>
+            </button>{" "}
             <button
               type="button"
               onClick={() => {

@@ -88,6 +88,37 @@ def sitemap_paths(base: str) -> list[str]:
     return [re.sub(r"^https?://[^/]+", "", loc) or "/" for loc in locs]
 
 
+def route_shape(path: str) -> str:
+    """
+    The TEMPLATE a URL renders, not the URL.
+
+    `/perm-employers/microsoft-corporation` and 12,239 siblings are one React
+    component. Scanning all of them costs 12,240 requests to learn what three
+    would tell you, and a gate nobody can afford to run is not a gate. The
+    shape is the leading segments with the final slug replaced by a marker.
+    """
+    parts = [seg for seg in path.strip("/").split("/") if seg]
+    if not parts:
+        return "/"
+    if len(parts) == 1:
+        return "/" + parts[0]
+    return "/" + "/".join(parts[:-1]) + "/:slug"
+
+
+def sample_by_shape(paths: list[str], per_shape: int) -> tuple[list[str], dict[str, int]]:
+    """One page per template, plus `per_shape - 1` more, in sitemap order."""
+    picked: list[str] = []
+    seen: dict[str, int] = {}
+    sizes: dict[str, int] = {}
+    for path in paths:
+        shape = route_shape(path)
+        sizes[shape] = sizes.get(shape, 0) + 1
+        if seen.get(shape, 0) < per_shape:
+            seen[shape] = seen.get(shape, 0) + 1
+            picked.append(path)
+    return picked, sizes
+
+
 def glued_pairs(markup: str) -> list[str]:
     """Boundaries where real text abuts real text, with context either side."""
     found = []
@@ -106,12 +137,32 @@ def glued_pairs(markup: str) -> list[str]:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--base", default="http://127.0.0.1:3100")
+    ap.add_argument(
+        "--per-shape",
+        type=int,
+        default=3,
+        help="pages to scan per route template (0 = every URL, slow)",
+    )
     args = ap.parse_args()
 
-    pages = sitemap_paths(args.base) or FALLBACK_PAGES
-    if not pages:
+    all_pages = sitemap_paths(args.base) or FALLBACK_PAGES
+    if not all_pages:
         raise SystemExit("FATAL: no URLs to scan; the audit can see nothing")
-    print(f"urls from   : {'sitemap' if len(pages) > len(FALLBACK_PAGES) else 'fallback list'}")
+    print(f"urls from   : {'sitemap' if len(all_pages) > len(FALLBACK_PAGES) else 'fallback list'}")
+
+    if args.per_shape > 0:
+        pages, sizes = sample_by_shape(all_pages, args.per_shape)
+        # Say what was SKIPPED. A sampled run that prints only its own count
+        # reads as full coverage, which is the same lie as a silent truncation.
+        big = {k: v for k, v in sizes.items() if v > args.per_shape}
+        print(f"templates   : {len(sizes)}")
+        if big:
+            skipped = sum(v - args.per_shape for v in big.values())
+            detail = ", ".join(f"{k} ({v:,})" for k, v in sorted(big.items(), key=lambda kv: -kv[1]))
+            print(f"sampled     : {args.per_shape}/template; {skipped:,} URLs not fetched -> {detail}")
+    else:
+        pages, sizes = all_pages, {}
+        print(f"sampled     : no; fetching all {len(all_pages):,} URLs")
 
     total, scanned, blind = 0, 0, []
     for path in pages:
