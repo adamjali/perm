@@ -37,6 +37,12 @@ const rankCol: StatColumn<EntityRow> = {
   key: "rank",
   label: "#",
   numeric: true,
+  // Hidden on a phone. The table has a 560px minimum and a 390px viewport
+  // shows whatever fits, so the rank column was occupying the space where
+  // the filing count belongs. The list is sorted by volume by default, so
+  // position is legible from the order; the count is not legible from
+  // anything, and it is the number people came for.
+  secondary: true,
   sortValue: (e) => e.rank,
   render: (e) => <span className="text-foreground/50">{e.rank}</span>,
 };
