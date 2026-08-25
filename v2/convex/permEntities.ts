@@ -244,8 +244,11 @@ export const countByKind = query({
  * every entity with `minDecided` decided cases has `total >= minDecided` and
  * therefore sits above every entity that does not. Scanning the head of the
  * rank index until `total` drops below the threshold reaches all of them.
- * Measured at minDecided=30: the last qualifying employer is rank 980 of
- * 12,240, the last law firm 933 of 3,208, the last occupation 373 of 762.
+ * Measured at minDecided=30 over FY2025+FY2026 (12,240 employers): the last
+ * qualifying employer was rank 980, the last law firm 933, the last
+ * occupation 373. Re-measured after FY2024 landed (16,305 employers): 1,338,
+ * 1,134 and 535. One extra fiscal year moved the employer cohort by 358, so
+ * the scan needs real headroom rather than a bound that fits today.
  *
  * `complete` reports whether that proof held on this run. A quarter where the
  * distribution shifts far enough to fill the scan is a partial denominator,
@@ -256,7 +259,17 @@ export const countByKind = query({
  * Convex's query cache serves all 12,240 employer pages from one execution
  * until the next quarterly ingest writes the table.
  */
-const COHORT_SCAN = 1500;
+/**
+ * 3,000, not 1,500.
+ *
+ * At 1,500 the employer cohort was already 1,338 after one extra fiscal year,
+ * 89% of the bound. Crossing it does not break anything, because `complete`
+ * goes false and the pages withhold the percentile rather than compute one
+ * against a truncated field, but it would silently turn the feature off for
+ * a quarter and nobody would know why. 3,001 reads is still comfortably under
+ * Convex's 4,096-per-execution limit.
+ */
+const COHORT_SCAN = 3000;
 
 export const fieldDistribution = query({
   args: { kind: kindValidator, minDecided: v.number() },
