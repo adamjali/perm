@@ -66,14 +66,28 @@ export interface FilterableStatTableProps<T> {
 
 const PAGE_SIZES = [25, 50, 100, 250] as const;
 
-function compare(a: number | string | null, b: number | string | null): number {
-  // Nulls last, whichever way the column is pointing. A missing median is not
-  // a low median, and sorting it as one puts "no data" above real figures.
+/**
+ * Order two cells, nulls ALWAYS last.
+ *
+ * The null handling has to live here, above the direction flip, rather than
+ * inside a comparator whose result gets negated: negating "null goes after"
+ * turns it into "null goes first" on a descending sort, which is how "no
+ * data" ends up at the top of a column sorted by median days, reading as the
+ * fastest employer on the page. A missing median is not a low median.
+ */
+function compare(
+  a: number | string | null,
+  b: number | string | null,
+  desc: boolean,
+): number {
   if (a === null && b === null) return 0;
   if (a === null) return 1;
   if (b === null) return -1;
-  if (typeof a === "number" && typeof b === "number") return a - b;
-  return String(a).localeCompare(String(b));
+  const cmp =
+    typeof a === "number" && typeof b === "number"
+      ? a - b
+      : String(a).localeCompare(String(b));
+  return desc ? -cmp : cmp;
 }
 
 function toCsv<T>(spec: CsvSpec<T>, rows: T[]): string {
@@ -143,10 +157,7 @@ export function FilterableStatTable<T>({
 
     const col = columns.find((c) => c.key === sortKey) ?? columns[0];
     if (col) {
-      out.sort((a, b) => {
-        const cmp = compare(col.sortValue(a), col.sortValue(b));
-        return sortDesc ? -cmp : cmp;
-      });
+      out.sort((a, b) => compare(col.sortValue(a), col.sortValue(b), sortDesc));
     }
     return out;
   }, [working, columns, query, sortKey, sortDesc, searchText, facets, facetValues]);
@@ -266,7 +277,7 @@ export function FilterableStatTable<T>({
         {/* Status. Never let a filtered count read as the whole corpus, and
             never let a partial dataset read as a complete answer. */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p aria-live="polite" className="text-sm text-foreground/70">
+          <p role="status" aria-live="polite" className="text-sm text-foreground/70">
             {loading ? (
               <>Loading all {corpusSize.toLocaleString("en-US")} {noun}…</>
             ) : loadError ? (
