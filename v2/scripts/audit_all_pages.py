@@ -14,7 +14,11 @@ from __future__ import annotations
 import argparse
 import html as html_mod
 import re
+import os
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib_sitemap_sample import describe_sampling, sample_by_shape  # noqa: E402
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -116,6 +120,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="https://permtracker.app")
     ap.add_argument("--limit", type=int, default=0, help="audit only the first N URLs")
+    ap.add_argument(
+        "--per-shape",
+        type=int,
+        default=3,
+        help="URLs to audit per route template (0 = every URL, slow)",
+    )
     args = ap.parse_args()
 
     print(f"target        : {args.base}")
@@ -129,9 +139,17 @@ def main() -> int:
         paths.append(p)
     if not paths:
         sys.exit("FATAL: sitemap parsed to zero URLs; the audit can see nothing")
+    print(f"urls in sitemap: {len(locs)}")
+    # Sample by TEMPLATE, not by position. `--limit N` takes the first N, and
+    # since the sitemap emits 12,240 employer URLs before anything else, a
+    # positional cut audits one component 500 times and every other page zero
+    # times. That reads as broad coverage and is the opposite.
+    if args.per_shape > 0:
+        paths, sizes = sample_by_shape(paths, args.per_shape)
+        for line in describe_sampling(sizes, args.per_shape):
+            print(line)
     if args.limit:
         paths = paths[: args.limit]
-    print(f"urls in sitemap: {len(locs)}")
     print(f"urls audited   : {len(paths)}")
 
     findings: list[str] = []
