@@ -20,6 +20,11 @@
  */
 
 import * as React from "react";
+
+// useLayoutEffect warns when React renders this on the server. Same idiom the
+// SecurityIncidentBanner already uses.
+const useIsoLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
 import { usePathname } from "next/navigation";
 import {
   AUTH_NAV_LINKS,
@@ -35,6 +40,8 @@ import { cn } from "@/lib/utils";
 export default function AuthHeader() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = React.useState(false);
+  // Armed only AFTER the first paint. See the scroll effect below.
+  const [motionArmed, setMotionArmed] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isLearnOpen, setIsLearnOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState<string>("hero");
@@ -55,14 +62,31 @@ export default function AuthHeader() {
   const showSignUp = pathname !== "/signup";
   const isHomePage = pathname === "/";
 
-  // Track scroll position for header shadow effect
-  React.useEffect(() => {
+  // Track scroll position for header padding.
+  //
+  // A LAYOUT effect, not a passive one, and this is the whole point. This
+  // component is mounted by three different layouts, so every navigation
+  // between the public group and the auth group UNMOUNTS and REMOUNTS it with
+  // `isScrolled` back at false. A passive effect corrects that after the
+  // browser has already painted, so a visitor arriving from a scrolled page
+  // saw the tall bar for one frame and then watched it animate 12px shorter.
+  // That twitch is a real part of "the header flashes a different one".
+  //
+  // useLayoutEffect runs synchronously before paint, so the first frame is
+  // already correct. `motionArmed` then flips in a passive effect (which runs
+  // AFTER that paint) so the corrected value never animates into place on
+  // arrival, while ordinary scrolling still transitions.
+  useIsoLayoutEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  React.useEffect(() => {
+    setMotionArmed(true);
   }, []);
 
   // IntersectionObserver for scroll-spy (more accurate than scroll position)
@@ -133,7 +157,8 @@ export default function AuthHeader() {
     <header
       style={{ top: "var(--security-banner-h, 0px)" }}
       className={cn(
-        "fixed inset-x-0 z-50 border-b-3 border-white/20 bg-black transition-[padding,top] duration-200",
+        "fixed inset-x-0 z-50 border-b-3 border-white/20 bg-black",
+        motionArmed && "transition-[padding,top] duration-200",
         isScrolled ? "py-1.5" : "py-3"
       )}
     >
