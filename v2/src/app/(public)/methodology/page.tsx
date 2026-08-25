@@ -52,24 +52,32 @@ const SPREAD = [
 const SOURCES = [
   {
     name: "DOL FLAG processing times",
+    seal: "/agency/dol-seal.png",
+    sealAlt: "Seal of the US Department of Labor",
     what: "Queue positions and average days, the figures on the processing times page.",
     cadence: "Checked weekly. A new snapshot is stored only when the figures change.",
     href: "https://flag.dol.gov/processingtimes",
   },
   {
     name: "DOL PERM disclosure files",
+    seal: "/agency/dol-seal.png",
+    sealAlt: "Seal of the US Department of Labor",
     what: "Case-level decisions, the basis of the timeline calculator's cohort record. The files are unioned and de-duplicated by case number: 259,489 cases at last ingest.",
     cadence: "Quarterly, when DOL publishes.",
     href: "https://www.dol.gov/agencies/eta/foreign-labor/performance",
   },
   {
     name: "USCIS I-140 quarterly counts",
+    seal: "/agency/dhs-seal.png",
+    sealAlt: "Seal of the US Department of Homeland Security",
     what: "Pending and completed petitions by category, the I-140 calculator's queue.",
     cadence: "Quarterly, when USCIS publishes.",
     href: "https://www.uscis.gov/tools/reports-and-studies/immigration-and-citizenship-data",
   },
   {
     name: "State Department visa bulletin",
+    seal: "/agency/dos-seal.png",
+    sealAlt: "Seal of the US Department of State",
     what: "Employment-based cutoff dates. The live page refuses automated readers, so our series comes from the Internet Archive and lags the current month. That is why the priority date calculator is framed as a history.",
     cadence: "Monthly.",
     href: "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
@@ -83,7 +91,7 @@ export default function MethodologyPage() {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <JsonLdScript schema={breadcrumb} />
 
       <DataNav active="methodology" />
@@ -155,8 +163,21 @@ export default function MethodologyPage() {
                 (i % 2 === 0 ? "bg-card" : "bg-tint-primary")
               }
             >
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className="font-heading text-lg font-black">{s.name}</h3>{" "}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  {/* The agency's own seal, sourced from its published
+                      artwork - identification, not endorsement. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={s.seal}
+                    alt={s.sealAlt}
+                    width={44}
+                    height={44}
+                    loading="lazy"
+                    className="h-11 w-11 shrink-0"
+                  />
+                  <h3 className="font-heading text-lg font-black">{s.name}</h3>
+                </div>{" "}
                 <a
                   href={s.href}
                   target="_blank"

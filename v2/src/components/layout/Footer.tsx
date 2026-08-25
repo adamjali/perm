@@ -73,13 +73,20 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               <div className="flex gap-4">
                 {SOCIAL_LINKS.map(({ href, label, icon }) => {
                   const Icon = SOCIAL_ICONS[icon];
+                  // LinkedIn's mark has an official color (#0A66C2); GitHub
+                  // and X are officially monochrome, so theme white IS their
+                  // brand-correct form on this dark ground.
+                  const brand =
+                    icon === "linkedin"
+                      ? "text-[#0A66C2] brightness-125 hover:brightness-150"
+                      : "text-white/70 hover:text-white";
                   return (
                     <a
                       key={label}
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-white/60 transition-colors hover:text-primary"
+                      className={"flex min-h-[44px] min-w-[44px] items-center justify-center transition-all " + brand}
                       aria-label={label}
                     >
                       <Icon className="h-5 w-5" />

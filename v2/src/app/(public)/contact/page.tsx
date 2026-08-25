@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { Mail, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { ContactForm } from "./ContactForm";
 import {
   GITHUB_BUG_REPORT_URL,
   GITHUB_FEATURE_REQUEST_URL,
@@ -50,7 +51,12 @@ export default function ContactPage() {
           Have questions about PERM Tracker? We&apos;re here to help.
         </p>{" "}
 
-        <div className="space-y-8">
+        {/* The form is the primary path; the addresses below stay for anyone
+            who would rather use their own mail client. */}
+        <ContactForm />
+
+        <h2 className="mt-12 font-heading text-2xl font-black">Other ways in</h2>
+        <div className="mt-6 space-y-8">
           {/* Email */}
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 items-center justify-center border-2 border-black bg-primary shadow-hard-sm dark:border-white">

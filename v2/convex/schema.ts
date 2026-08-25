@@ -1328,4 +1328,21 @@ export default defineSchema({
      */
     .index("by_alert_sweep", ["notifiedAt", "unsubscribedAt", "filingMonth"])
     .index("by_created", ["createdAt"]),
+
+  /**
+   * Contact-form submissions. Stored first, THEN forwarded by a scheduled
+   * action, so a Resend outage loses nothing - the message is already here.
+   */
+  contactMessages: defineTable({
+    name: v.string(),
+    email: v.string(),
+    message: v.string(),
+    /** Best-effort caller IP for the per-IP limit; spoofable, cost-raiser only. */
+    ip: v.string(),
+    createdAt: v.number(),
+    /** Set when the forward to support@ actually succeeded. */
+    notifiedAt: v.optional(v.number()),
+  })
+    .index("by_created", ["createdAt"])
+    .index("by_ip_created", ["ip", "createdAt"]),
 });

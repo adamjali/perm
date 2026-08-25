@@ -109,6 +109,7 @@ export default async function HomePage() {
         averageDays={analystAvg?.calendarDays ?? null}
       />
       <StakesSection />
+      <SectionDivider kind="tape" fill="var(--muted)" />
       <HowItWorks />
       <ToolsSection
         pwdPending={pwdPending}
@@ -116,6 +117,7 @@ export default async function HomePage() {
         averageDays={analystAvg?.calendarDays ?? null}
       />
       <FeaturesGrid />
+      <SectionDivider kind="ledger" fill="var(--muted)" />
       <SecuritySection />
       <TestimonialsSection />
       <FAQSection />

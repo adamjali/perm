@@ -441,4 +441,77 @@ http.route({
   }),
 });
 
+/**
+ * The contact form. Same posture as the queue-alert routes: the internal
+ * mutation owns the budgets, the route owns the shape - cheap guards first,
+ * the length caps BEFORE the email regex, and the honeypot answers success
+ * without writing anything.
+ */
+http.route({
+  path: "/contact",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/contact",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    if (typeof body !== "object" || body === null) {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    const { name, email, message, website } = body as Record<string, unknown>;
+
+    // Honeypot: a filled "website" field is a bot. Pretend success, write
+    // nothing, send nothing.
+    if (typeof website === "string" && website.trim() !== "") {
+      return json({ ok: true, message: "Sent. We read everything and reply by email." });
+    }
+
+    if (typeof name !== "string" || typeof email !== "string" || typeof message !== "string") {
+      return json({ ok: false, message: "Name, email and message are all required." }, 400);
+    }
+    // Length caps BEFORE the regex: an unbounded string into a backtracking
+    // pattern is a compute-exhaustion primitive.
+    const cleanName = name.trim();
+    const cleanEmail = email.trim();
+    const cleanMessage = message.trim();
+    if (cleanName.length === 0 || cleanName.length > 120) {
+      return json({ ok: false, message: "Give us a name up to 120 characters." }, 400);
+    }
+    if (cleanEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cleanEmail)) {
+      return json({ ok: false, message: "That email address doesn't look right." }, 400);
+    }
+    if (cleanMessage.length < 10 || cleanMessage.length > 4000) {
+      return json({ ok: false, message: "The message needs 10 to 4,000 characters." }, 400);
+    }
+
+    const forwarded = req.headers.get("x-forwarded-for") ?? "";
+    const ip = forwarded.split(",")[0]?.trim() || "unknown";
+
+    const result = await ctx.runMutation(internal.contactForm.submit, {
+      name: cleanName,
+      email: cleanEmail,
+      message: cleanMessage,
+      ip,
+    });
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
 export default http;

@@ -47,7 +47,7 @@ export function HeroSection() {
 
 
   return (
-    <section ref={heroRef} id="hero" className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
+    <section ref={heroRef} id="hero" className="relative overflow-hidden lg:min-h-[calc(100vh-4rem)]">
 
       {/* Scroll indicator — mouse + line + text (CSS animations for reliability) */}
       <div
@@ -83,7 +83,7 @@ export function HeroSection() {
       </div>
 
       {/* Content container */}
-      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] max-w-[1400px] items-center px-4 pb-16 pt-6 sm:px-8 sm:pb-20 sm:pt-10 lg:pb-24 lg:pt-12">
+      <div className="relative z-10 mx-auto flex max-w-[1400px] items-center px-4 pb-10 pt-6 sm:px-8 sm:pb-14 sm:pt-10 lg:min-h-[calc(100vh-4rem)] lg:pb-24 lg:pt-12">
         <div className="grid w-full items-center gap-10 lg:grid-cols-2 lg:gap-12">
           {/* Left column - Text content (single stagger container) */}
           <ScrollReveal direction="up" stagger className="flex flex-col gap-6">

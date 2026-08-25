@@ -39,7 +39,7 @@ export default function PrivacyPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Privacy Policy</h1>{" "}
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: June 15, 2026
+          Effective Date: February 17, 2026 | Last Updated: August 24, 2026
         </p>{" "}
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
@@ -105,6 +105,21 @@ export default function PrivacyPage() {
               <li>Dismissed deadline alerts</li>{" "}
               <li>Calendar sync preferences</li>{" "}
               <li>AI chat action mode preferences</li>
+            </ul>{" "}
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Contact Form Submissions
+            </h3>{" "}
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>
+                Name, email address and message text you submit through the
+                contact form, plus the submitting IP address (used only for
+                abuse rate-limiting)
+              </li>{" "}
+              <li>
+                Submissions are stored and forwarded to our support inbox so we
+                can reply; they are never used for marketing and never shared
+              </li>
             </ul>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">

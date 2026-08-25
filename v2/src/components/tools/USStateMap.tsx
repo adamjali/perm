@@ -32,6 +32,9 @@ export interface StateStat {
 
 const BUCKET_MIX = [8, 16, 28, 44, 62] as const;
 
+/** Too small to carry an inside label; they stack at the right edge. */
+const SMALL_STATES = new Set(["VT", "NH", "MA", "RI", "CT", "NJ", "DE", "MD", "DC"]);
+
 function fmtInt(n: number): string {
   return n.toLocaleString("en-US");
 }
@@ -90,7 +93,7 @@ export function USStateMap({ states }: { states: StateStat[] }) {
     <div>
       <div className="-mx-1 overflow-x-auto px-1">
         <svg
-          viewBox={`0 0 ${US_MAP_VIEWBOX.w} ${US_MAP_VIEWBOX.h}`}
+          viewBox={`0 0 ${US_MAP_VIEWBOX.w + 60} ${US_MAP_VIEWBOX.h}`}
           role="group"
           aria-label="PERM filings by worksite state"
           className="block h-auto w-full min-w-[560px]"
@@ -130,6 +133,59 @@ export function USStateMap({ states }: { states: StateStat[] }) {
               />
             );
           })}
+          {/* State labels: big states carry theirs at the centroid with a
+              halo (paint-order) so they read on every fill; the crowded
+              Northeast nine move to a leader-line stack at the right edge,
+              which is why the viewBox is wider than the geometry. Labels
+              never intercept the pointer - the shapes own the interaction. */}
+          <g aria-hidden="true" pointerEvents="none">
+            {US_STATES.filter((sh) => !SMALL_STATES.has(sh.abbr)).map((sh) => (
+              <text
+                key={sh.abbr}
+                x={sh.cx}
+                y={sh.cy + 4}
+                textAnchor="middle"
+                fontSize="11"
+                fontFamily="var(--font-mono)"
+                fontWeight="700"
+                fill="var(--foreground)"
+                stroke="var(--card)"
+                strokeWidth="3"
+                paintOrder="stroke"
+              >
+                {sh.abbr}
+              </text>
+            ))}
+            {US_STATES.filter((sh) => SMALL_STATES.has(sh.abbr))
+              .sort((a, b) => a.cy - b.cy)
+              .map((sh, i) => {
+                const ly = 150 + i * 30;
+                return (
+                  <g key={sh.abbr}>
+                    <line
+                      x1={sh.cx}
+                      y1={sh.cy}
+                      x2={995}
+                      y2={ly}
+                      stroke="var(--foreground)"
+                      strokeOpacity="0.35"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x={1000}
+                      y={ly + 4}
+                      fontSize="11"
+                      fontFamily="var(--font-mono)"
+                      fontWeight="700"
+                      fill="var(--foreground)"
+                    >
+                      {sh.abbr}
+                    </text>
+                  </g>
+                );
+              })}
+          </g>
+
           {/* Re-draw the active outline last so it wins the paint order. */}
           {activeAbbr
             ? (() => {

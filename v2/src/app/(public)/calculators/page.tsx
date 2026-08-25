@@ -21,6 +21,14 @@ import {
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
+import {
+  BulletinStepsMini,
+  QueueDepthMini,
+  ScaleBarsMini,
+  TapeMini,
+  TwoBarsMini,
+  WindowSpansMini,
+} from "@/components/tools/MiniDiagrams";
 
 const TITLE = "PERM Calculators";
 const DESCRIPTION =
@@ -43,6 +51,7 @@ export const dynamic = "force-static";
 const TOOLS = [
   {
     href: "/tools/perm-timeline-calculator",
+    viz: "tape" as const,
     icon: CalendarClock,
     name: "PERM processing time calculator",
     kind: "Estimate",
@@ -52,6 +61,7 @@ const TOOLS = [
   },
   {
     href: "/tools/perm-deadline-calculator",
+    viz: "spans" as const,
     icon: CalendarCheck,
     name: "PERM deadline calculator",
     kind: "Exact",
@@ -61,6 +71,7 @@ const TOOLS = [
   },
   {
     href: "/tools/pwd-calculator",
+    viz: "queue" as const,
     icon: Scale,
     name: "Prevailing wage queue calculator",
     kind: "Count",
@@ -70,6 +81,7 @@ const TOOLS = [
   },
   {
     href: "/tools/i140-calculator",
+    viz: "twobars" as const,
     icon: FileText,
     kind: "Count",
     name: "I-140 queue calculator",
@@ -79,6 +91,7 @@ const TOOLS = [
   },
   {
     href: "/tools/priority-date-calculator",
+    viz: "steps" as const,
     icon: CalendarRange,
     kind: "History",
     name: "Priority date calculator",
@@ -88,6 +101,7 @@ const TOOLS = [
   },
   {
     href: "/tools/green-card-timeline",
+    viz: "scale" as const,
     icon: Route,
     kind: "Overview",
     name: "Green card timeline",
@@ -117,7 +131,7 @@ export default function CalculatorsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <JsonLdScript schema={itemList} />
 
       <DataNav active="calculators" />
@@ -130,8 +144,8 @@ export default function CalculatorsPage() {
           Six calculators, one per question
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          Six calculators, one per question a PERM case raises. Each one says
-          where its numbers come from, and says so when it cannot answer.
+          Each one answers a question a PERM case raises, says where its numbers
+          come from, and says so when it cannot answer.
         </p>
       </header>
 
@@ -205,6 +219,15 @@ export default function CalculatorsPage() {
                 <h3 className="mt-4 font-heading text-xl font-black leading-tight">
                   {t.name}
                 </h3>{" "}
+                {/* The tool's idea, drawn in the shared mini-diagram system. */}
+                <div className="mt-4 max-w-[170px]">
+                  {t.viz === "tape" ? <TapeMini /> : null}
+                  {t.viz === "spans" ? <WindowSpansMini /> : null}
+                  {t.viz === "queue" ? <QueueDepthMini /> : null}
+                  {t.viz === "twobars" ? <TwoBarsMini /> : null}
+                  {t.viz === "steps" ? <BulletinStepsMini /> : null}
+                  {t.viz === "scale" ? <ScaleBarsMini /> : null}
+                </div>{" "}
                 <p
                   className={
                     "mt-3 flex-1 text-base leading-relaxed " +

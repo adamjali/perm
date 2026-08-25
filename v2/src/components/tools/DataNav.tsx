@@ -46,7 +46,7 @@ export function DataNav({ active }: { active: DataSection }) {
       className="sticky top-16 z-30 -mx-4 border-b-2 border-border bg-background px-4 before:absolute before:inset-x-0 before:bottom-full before:h-10 before:bg-background sm:-mx-6 sm:px-6"
       style={{ top: "calc(4rem + var(--security-banner-h, 0px))" }}
     >
-      <div className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {SECTIONS.map((s) => {
           const isActive = s.key === active;
           // Keyed Fragment with a real space: mapped siblings render with

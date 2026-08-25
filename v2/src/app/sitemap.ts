@@ -48,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/blog`, lastModified: latestPostDate },
     { url: `${baseUrl}/guides`, lastModified: latestPostDate },
     { url: `${baseUrl}/changelog`, lastModified: latestPostDate },
-    { url: `${baseUrl}/faq`, lastModified: '2026-02-21' },
+    { url: `${baseUrl}/faq`, lastModified: '2026-08-24' },
     // Live DOL figures, refreshed weekly by convex/dolProcessingTimes.ts.
     // lastmod is DOL's own as-of date, which is the only thing that actually
     // changes this page. It previously used latestPostDate, so the date moved
@@ -72,9 +72,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/perm-by-state`, lastModified: permAsOf ?? '2026-08-24' },
     { url: `${baseUrl}/perm-wages`, lastModified: permAsOf ?? '2026-08-24' },
     { url: `${baseUrl}/perm-employers`, lastModified: permAsOf ?? '2026-08-24' },
-    { url: `${baseUrl}/contact`, lastModified: '2026-02-07' },
+    { url: `${baseUrl}/contact`, lastModified: '2026-08-24' },
     { url: `${baseUrl}/terms`, lastModified: '2026-06-15' },
-    { url: `${baseUrl}/privacy`, lastModified: '2026-06-15' },
+    { url: `${baseUrl}/privacy`, lastModified: '2026-08-24' },
     { url: `${baseUrl}/security`, lastModified: '2026-06-15' },
   ]
 

@@ -22,6 +22,7 @@ import type * as authRateLimit from "../authRateLimit.js";
 import type * as calendar from "../calendar.js";
 import type * as cases from "../cases.js";
 import type * as chatCaseData from "../chatCaseData.js";
+import type * as contactForm from "../contactForm.js";
 import type * as conversationMessages from "../conversationMessages.js";
 import type * as conversationSummary from "../conversationSummary.js";
 import type * as conversations from "../conversations.js";
@@ -172,6 +173,7 @@ declare const fullApi: ApiFromModules<{
   calendar: typeof calendar;
   cases: typeof cases;
   chatCaseData: typeof chatCaseData;
+  contactForm: typeof contactForm;
   conversationMessages: typeof conversationMessages;
   conversationSummary: typeof conversationSummary;
   conversations: typeof conversations;

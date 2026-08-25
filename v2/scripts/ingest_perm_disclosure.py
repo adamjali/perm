@@ -79,6 +79,17 @@ COLUMN_CANDIDATES: dict[str, list[str]] = {
         "WAGE_OFFER_UNIT_OF_PAY_9089", "WAGE_UNIT_OF_PAY_9089",
         "WAGE_OFFER_UNIT_OF_PAY", "PW_UNIT_OF_PAY_9089", "PW_UNIT_OF_PAY",
     ],
+    # The law firm on the filing. This is the column that speaks to the
+    # attorney half of the audience, and no competitor surfaces it for them.
+    # Names read off PERM_Record_Layout_FY2026_Q3.pdf, not guessed: every one
+    # of my first guesses here was wrong, and a wrong column name degrades
+    # silently to "no data" rather than erroring.
+    "attorney": ["ATTY_AG_LAW_FIRM_NAME", "LAWFIRM_NAME_BUSINESS", "AGENT_ATTORNEY_FIRM_NAME"],
+    "attorney_state": ["ATTY_AG_STATE", "AGENT_ATTORNEY_STATE"],
+    # Risk factors DOL records on the form itself (Form 9089, Sections A & G).
+    "layoff": ["OTHER_REQ_EMP_LAYOFF", "EMP_LAYOFF_IN_PAST_SIX_MONTHS"],
+    "ownership": ["EMP_WORKER_INTEREST", "FW_OWNERSHIP_INTEREST"],
+    "fulltime": ["OTHER_REQ_IS_FULLTIME_EMP", "JOB_OPP_FULL_TIME"],
 }
 # case/status/received/decision must resolve or the file is unusable; the
 # analytical dimensions degrade gracefully (their aggregates just go absent).
@@ -135,6 +146,39 @@ def annual_wage(raw: str, unit: str) -> int | None:
     if not 15_000 <= annual <= 1_000_000:
         return None
     return round(annual)
+
+
+WAGE_BANDS = [
+    (60_000, "Under $60K"),
+    (80_000, "$60K-$80K"),
+    (100_000, "$80K-$100K"),
+    (130_000, "$100K-$130K"),
+    (float("inf"), "Over $130K"),
+]
+
+
+def wage_band(wage: int) -> str:
+    """The band an annualized wage falls in. Same cut points as the field uses."""
+    for ceiling, label in WAGE_BANDS:
+        if wage < ceiling:
+            return label
+    return WAGE_BANDS[-1][1]
+
+
+def fiscal_year(iso: str) -> str:
+    """Federal fiscal year of a decision date: FY starts October 1."""
+    y, m = int(iso[:4]), int(iso[5:7])
+    return str(y + 1 if m >= 10 else y)
+
+
+def yes(raw: str | None) -> bool:
+    """DOL writes Y/N (and occasionally Yes/No) for its boolean fields."""
+    return (raw or "").strip().upper()[:1] == "Y"
+
+
+def no(raw: str | None) -> bool:
+    """Explicit N only. A BLANK is unknown, and unknown is not 'part time'."""
+    return (raw or "").strip().upper()[:1] == "N"
 
 
 def norm_status(raw: str) -> str | None:
@@ -392,6 +436,40 @@ def parse_file(path: str, seen: set[str], acc: dict) -> int:
                 title = (rec.get("soc_title") or "").strip()
                 if title and not so["title"]:
                     so["title"] = title[:80]
+            # Denial-risk dimensions. Only DECIDED cases carry a rate, and
+            # "denied" is the numerator: withdrawals are neither approvals nor
+            # denials, so they stay out of both.
+            if outcome in ("certified", "denied"):
+                is_denied = 1 if outcome == "denied" else 0
+                if wage is not None:
+                    band = wage_band(wage)
+                    acc["riskWage"][band][0] += 1
+                    acc["riskWage"][band][1] += is_denied
+                fy = fiscal_year(decided)
+                acc["riskYear"][fy][0] += 1
+                acc["riskYear"][fy][1] += is_denied
+                for flag, present in (
+                    ("layoff", yes(rec.get("layoff"))),
+                    ("ownership", yes(rec.get("ownership"))),
+                    ("partTime", no(rec.get("fulltime"))),
+                ):
+                    if present:
+                        acc["riskFlags"][flag][0] += 1
+                        acc["riskFlags"][flag][1] += is_denied
+                if outcome == "certified" and wage is not None:
+                    acc["allWages"].append(wage)
+
+            attorney = " ".join((rec.get("attorney") or "").split())[:80]
+            if outcome and attorney and attorney.lower() not in ("n/a", "na", "none"):
+                at = acc["byAttorney"][attorney.upper()]
+                at[outcome] += 1
+                at["days"].append(days)
+                if not at["name"]:
+                    at["name"] = attorney
+                if not at["state"]:
+                    ast = (rec.get("attorney_state") or "").strip().upper()
+                    at["state"] = ast if ast in US_STATES else STATE_NAMES.get(ast, "")
+
             employer = " ".join((rec.get("employer") or "").split())[:80]
             if outcome and employer:
                 em = acc["byEmployer"][employer.upper()]
@@ -489,6 +567,70 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
         if tot(d) >= 25
     ]
 
+    top_attorneys = [
+        {
+            "name": d["name"],
+            "state": d["state"],
+            "total": tot(d),
+            "certified": d["certified"],
+            "denied": d["denied"],
+            "medianDays": percentile(d["days"], 50),
+        }
+        for _, d in sorted(
+            acc["byAttorney"].items(), key=lambda kv: -tot(kv[1])
+        )[:100]
+        if tot(d) >= 25
+    ]
+
+    # The national wage ladder over certified cases. A lone median hides the
+    # spread that makes a wage figure usable; the percentiles are the product.
+    wages = acc["allWages"]
+    wage_ladder = (
+        {
+            "count": len(wages),
+            "p10": percentile(wages, 10),
+            "p25": percentile(wages, 25),
+            "p50": percentile(wages, 50),
+            "p75": percentile(wages, 75),
+            "p90": percentile(wages, 90),
+        }
+        if len(wages) >= 1000
+        else None
+    )
+
+    def rate_rows(bucket: dict, order: list[str] | None = None) -> list[dict]:
+        keys = order or sorted(bucket)
+        out = []
+        for k in keys:
+            if k not in bucket:
+                continue
+            decided, denied = bucket[k]
+            if decided < 100:  # too few decisions to carry a rate
+                continue
+            out.append(
+                {
+                    "bucket": k,
+                    "decided": decided,
+                    "denied": denied,
+                    "denialRate": round(denied / decided * 100, 2),
+                }
+            )
+        return out
+
+    risk = {
+        "byWage": rate_rows(acc["riskWage"], [label for _, label in WAGE_BANDS]),
+        "byYear": rate_rows(acc["riskYear"]),
+        "byFlag": rate_rows(acc["riskFlags"], ["layoff", "ownership", "partTime"]),
+    }
+    # The baseline every rate is read against: denials over decided cases.
+    decided_total = sum(v[0] for v in acc["riskYear"].values())
+    denied_total = sum(v[1] for v in acc["riskYear"].values())
+    risk["baseline"] = {
+        "decided": decided_total,
+        "denied": denied_total,
+        "denialRate": round(denied_total / decided_total * 100, 2) if decided_total else 0.0,
+    }
+
     payload = {
         "sourceFiles": [name for name, _ in files],
         "uniqueCases": unique,
@@ -498,6 +640,9 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
         ],
         "frontierHistory": frontier,
         "byState": by_state,
+        "topAttorneys": top_attorneys,
+        "wageLadder": wage_ladder,
+        "risk": risk,
         "topOccupations": top_socs,
         "topEmployers": top_employers,
     }
@@ -526,6 +671,13 @@ def main() -> int:
         "byState": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "wages": []}),
         "bySoc": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "wages": [], "title": ""}),
         "byEmployer": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "name": ""}),
+        "byAttorney": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "name": "", "state": ""}),
+        # Denial-risk dimensions. Each holds [decided, denied].
+        "riskWage": defaultdict(lambda: [0, 0]),
+        "riskYear": defaultdict(lambda: [0, 0]),
+        "riskFlags": defaultdict(lambda: [0, 0]),
+        # Every certified wage, for the national percentile ladder.
+        "allWages": [],
     }
     seen: set[str] = set()
 

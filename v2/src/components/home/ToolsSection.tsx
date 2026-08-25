@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, CalendarCheck, CalendarClock, FileText, Scale } from "lucide-react";
 
 import { formatMonth } from "@/lib/dolFormat";
+import { QueueDepthMini, TapeMini, WindowSpansMini } from "@/components/tools/MiniDiagrams";
 
 /**
  * The calculators, on the homepage, drawn as the process itself.
@@ -28,6 +29,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
       href: "/tools/pwd-calculator",
       icon: Scale,
       n: "01",
+      viz: "queue" as const,
       name: "Prevailing wage",
       question: "How many requests are ahead of mine?",
       owner: "DOL decides the pace",
@@ -38,6 +40,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
       href: "/tools/perm-deadline-calculator",
       icon: CalendarCheck,
       n: "02",
+      viz: "spans" as const,
       name: "Your deadlines",
       question: "By when must we file?",
       owner: "You set the pace",
@@ -48,6 +51,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
       href: "/tools/perm-timeline-calculator",
       icon: CalendarClock,
       n: "03",
+      viz: "tape" as const,
       name: "PERM decision",
       question: "When will DOL decide?",
       owner: "DOL decides the pace",
@@ -62,6 +66,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
       href: "/tools/i140-calculator",
       icon: FileText,
       n: "04",
+      viz: "queue-deep" as const,
       name: "I-140 petition",
       question: "How deep is the queue?",
       owner: "USCIS decides the pace",
@@ -72,7 +77,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
 
   return (
     <section id="tools" className="border-t-2 border-border py-20 sm:py-28">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
         <div className="max-w-2xl">
           <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
             The process, in order
@@ -118,7 +123,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
                 <Link
                   href={s.href}
                   className={
-                    "group flex w-full flex-col border-2 border-border p-6 pl-8 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 hover:-translate-y-[2px] hover:shadow-hard-lg md:pl-6 md:pt-8  active:translate-y-0 active:shadow-hard-sm" +
+                    "group flex w-full flex-col border-2 border-border p-6 pl-8 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 hover:-translate-y-[2px] hover:shadow-hard-lg md:pl-6 md:pt-8  active:translate-y-0 active:shadow-hard-sm " +
                     (ink
                       ? "bg-foreground text-background shadow-hard"
                       : s.tone === "tint"
@@ -142,6 +147,14 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
                     ) : null}
                   </div>
                   <h3 className="mt-4 font-heading text-lg font-black leading-tight">{s.name}</h3>{" "}
+                  {/* The stage's idea, drawn: a queue is depth, a window is
+                      spans, the DOL line is the tape. */}
+                  <div className="mt-3 max-w-[150px]">
+                    {s.viz === "queue" ? <QueueDepthMini /> : null}
+                    {s.viz === "spans" ? <WindowSpansMini /> : null}
+                    {s.viz === "tape" ? <TapeMini /> : null}
+                    {s.viz === "queue-deep" ? <QueueDepthMini deep /> : null}
+                  </div>{" "}
                   <p
                     className={
                       "mt-2 flex-1 text-base leading-relaxed " +
