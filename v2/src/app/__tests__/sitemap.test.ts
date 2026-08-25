@@ -188,4 +188,47 @@ describe("sitemap.ts", () => {
     // correct output: a sitemap must never advertise a URL that 404s.
     expect(entries.some((e) => e.url.includes("/perm-employers/"))).toBe(false);
   });
+
+  it("lists EVERY entity, not just the head of each kind", async () => {
+    // The previous sitemap read the aggregate document, which is capped at 250
+    // rows per kind to fit Convex's 1 MB limit, so it submitted 750 URLs for
+    // 16,210 real pages. This asserts the walk pages past a single batch: the
+    // employer kind returns a FULL 2,000-row page and then a partial one, which
+    // is exactly the case a single un-paged read gets wrong.
+    const page = (kind: string, from: number, n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        slug: `${kind}-${from + i}`,
+        name: `${kind} ${from + i}`,
+        rank: from + i,
+        total: 10,
+        certified: 9,
+        denied: 1,
+        medianDays: 400,
+      }));
+
+    vi.mocked(fetchQuery).mockImplementation((async (_fn: unknown, args: unknown) => {
+      const a = (args ?? {}) as { kind?: string; afterRank?: number };
+      if (!a.kind) return { permAsOf: "2026-08-20" };
+      const after = a.afterRank ?? 0;
+      if (a.kind === "employer") {
+        // 2,000 then 500: a full page must not be mistaken for the end.
+        if (after === 0) return page("employer", 1, 2000);
+        if (after === 2000) return page("employer", 2001, 500);
+        return [];
+      }
+      if (after === 0) return page(a.kind, 1, 3);
+      return [];
+    }) as unknown as typeof fetchQuery);
+
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    const entries = await sitemap();
+    const count = (p: string) => entries.filter((e) => e.url.includes(p)).length;
+
+    expect(count("/perm-employers/")).toBe(2500);
+    expect(count("/perm-attorneys/")).toBe(3);
+    expect(count("/perm-wages/")).toBe(3);
+    // The last row of the second page has to be present, or the walk stopped
+    // early somewhere that a total count alone would not reveal.
+    expect(entries.some((e) => e.url.endsWith("/perm-employers/employer-2500"))).toBe(true);
+  });
 });

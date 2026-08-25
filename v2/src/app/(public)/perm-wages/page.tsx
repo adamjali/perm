@@ -1,7 +1,7 @@
 /**
  * PERM wages by occupation.
  *
- * The top occupations in the current disclosure window with their median
+ * Every occupation in the current disclosure window with its median
  * offered wage, volume, approval rate and median days — the numbers a
  * beneficiary compares an offer against and an attorney benchmarks a
  * prevailing wage strategy against. All from DOL's own files; nothing
@@ -16,8 +16,8 @@ import { api } from "../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
-import { withUniqueSlugs } from "@/lib/entitySlug";
-import { WagesExplorer } from "./WagesExplorer";
+import { EntityExplorer } from "@/components/tools/EntityExplorer";
+import { fetchEntitySeed } from "@/lib/entitySeed";
 
 const TITLE = "PERM Salaries by Occupation";
 const DESCRIPTION =
@@ -43,11 +43,7 @@ function fmtWage(n: number): string {
 
 export default async function PermWagesPage() {
   const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
-  const rawOccupations = stats?.topOccupations ?? [];
-  const occupations = withUniqueSlugs(
-    [...rawOccupations].sort((a, b) => b.total - a.total),
-    (o) => o.title,
-  ).map(({ slug, item }) => ({ ...item, slug }));
+  const { rows: occupations, total: occupationCount } = await fetchEntitySeed("occupation");
   const ladder = stats?.wageLadder ?? null;
 
   // The chart: the ten biggest occupations by volume, bar length = wage, so
@@ -108,9 +104,9 @@ export default async function PermWagesPage() {
                   const wage = o.medianAnnualWage;
                   const w = wage == null ? 0 : Math.max(6, (wage / maxWage) * 100);
                   return (
-                    <div key={o.code} className="grid grid-cols-[minmax(0,220px)_1fr] items-center gap-3">
-                      <p className="truncate text-sm font-bold" title={o.title}>
-                        {o.title}
+                    <div key={o.slug} className="grid grid-cols-[minmax(0,220px)_1fr] items-center gap-3">
+                      <p className="truncate text-sm font-bold" title={o.name}>
+                        {o.name}
                       </p>
                       <div className="flex min-w-0 items-center gap-2">
                         <div
@@ -178,20 +174,23 @@ export default async function PermWagesPage() {
                 </p>{" "}
                 <p className="max-w-md text-base leading-relaxed text-background/70">
                   Median of the occupation medians below — the centre of what a
-                  sponsored role pays across the top {occupations.length}{" "}
-                  occupations.
+                  sponsored role pays across all{" "}
+                  {occupationCount.toLocaleString("en-US")} occupations.
                 </p>
               </div>
             </section>
           ) : null}
 
           <section className="mt-12">
-            <h2 className="font-heading text-2xl font-black">Every occupation</h2>{" "}
+            <h2 className="font-heading text-2xl font-black">
+              All {occupationCount.toLocaleString("en-US")} occupations
+            </h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
-              Search by title or SOC code. Sort any column.
+              Search by title or SOC code, narrow to a job family, sort any
+              column, take the whole thing as a CSV.
             </p>
             <div className="mt-6">
-              <WagesExplorer occupations={occupations} />
+              <EntityExplorer kind="occupation" rows={occupations} total={occupationCount} />
             </div>
           </section>
         </>

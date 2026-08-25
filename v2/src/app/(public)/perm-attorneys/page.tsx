@@ -9,18 +9,16 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchQuery } from "convex/nextjs";
 
-import { api } from "../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
-import { withUniqueSlugs } from "@/lib/entitySlug";
-import { AttorneysExplorer, type AttorneyStat } from "./AttorneysExplorer";
+import { EntityExplorer } from "@/components/tools/EntityExplorer";
+import { fetchEntitySeed } from "@/lib/entitySeed";
 
-const TITLE = "Top PERM Law Firms";
+const TITLE = "Every PERM Law Firm, Ranked";
 const DESCRIPTION =
-  "The law firms filing the most PERM cases: volume, approval rates and median processing days per firm, straight from DOL's own disclosure files.";
+  "Every law firm filing PERM cases: volume, approval rate and median processing days per firm, searchable and sortable, from DOL's own disclosure files.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -41,12 +39,7 @@ function fmtInt(n: number): string {
 }
 
 export default async function PermAttorneysPage() {
-  const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
-  const raw = stats?.topAttorneys ?? [];
-  const attorneys: AttorneyStat[] = withUniqueSlugs(
-    [...raw].sort((a, b) => b.total - a.total),
-    (a) => a.name,
-  ).map(({ slug, item }, i) => ({ ...item, slug, rank: i + 1 }));
+  const { rows: attorneys, total: firmCount } = await fetchEntitySeed("attorney");
 
   const topTen = attorneys.slice(0, 10);
   const maxTotal = Math.max(1, ...topTen.map((a) => a.total));
@@ -76,8 +69,9 @@ export default async function PermAttorneysPage() {
           Who files the most PERM cases
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          Every PERM filing names the firm that made it. These are the hundred
-          most active, with what each one&apos;s cases did.
+          Every PERM filing names the firm that made it. All
+          {" "}{firmCount.toLocaleString("en-US")} of them are here, with what
+          each one&apos;s cases did.
         </p>
       </header>
 
@@ -117,13 +111,15 @@ export default async function PermAttorneysPage() {
           </section>
 
           <section className="mt-12">
-            <h2 className="font-heading text-2xl font-black">The full hundred</h2>{" "}
+            <h2 className="font-heading text-2xl font-black">
+              All {firmCount.toLocaleString("en-US")} firms
+            </h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
-              Firm names appear exactly as filed, so one practice can appear
-              under several spellings.
+              Spellings of one firm are pooled, so a practice DOL prints six
+              ways counts once. Filter by the state the firm files from.
             </p>
             <div className="mt-6">
-              <AttorneysExplorer attorneys={attorneys} />
+              <EntityExplorer kind="attorney" rows={attorneys} total={firmCount} />
             </div>
           </section>
         </>

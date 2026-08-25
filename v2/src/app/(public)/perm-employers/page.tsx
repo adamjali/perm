@@ -1,26 +1,24 @@
 /**
  * PERM filings by employer.
  *
- * The hundred biggest sponsors in the current disclosure window, ranked by
- * volume, with certifications, approval rate and median days. A beneficiary
+ * Every sponsor in the current disclosure window, ranked by volume, with
+ * certifications, approval rate and median days. A beneficiary
  * checks their own employer's track record; an attorney benchmarks a client
  * against the field. Names appear exactly as DOL prints them.
  */
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchQuery } from "convex/nextjs";
 
-import { api } from "../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
-import { withUniqueSlugs } from "@/lib/entitySlug";
-import { EmployersExplorer, type EmployerStat } from "./EmployersExplorer";
+import { EntityExplorer } from "@/components/tools/EntityExplorer";
+import { fetchEntitySeed } from "@/lib/entitySeed";
 
-const TITLE = "Top PERM Sponsors";
+const TITLE = "Every PERM Employer, Ranked";
 const DESCRIPTION =
-  "The companies filing the most PERM cases: volume, approval rates and median processing days per sponsor, straight from DOL's own disclosure files.";
+  "Every company that filed a PERM case: volume, approval rate and median processing days per sponsor, searchable and sortable, from DOL's own disclosure files.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -41,15 +39,10 @@ function fmtInt(n: number): string {
 }
 
 export default async function PermEmployersPage() {
-  const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
-  const raw = stats?.topEmployers ?? [];
-  // Slugs come from the same helper the detail routes use, over the same
-  // volume-sorted order, so a link here and generateStaticParams there can
-  // never disagree about which entity owns a URL.
-  const employers: EmployerStat[] = withUniqueSlugs(
-    [...raw].sort((a, b) => b.total - a.total),
-    (e) => e.name,
-  ).map(({ slug, item }, i) => ({ ...item, slug, rank: i + 1 }));
+  // Seeded from the entity TABLE, not the aggregate document. The aggregate
+  // is capped at 250 rows per kind to fit Convex's 1 MB document limit, so
+  // a page built on it could only ever show 250 of 12,240 sponsors.
+  const { rows: employers, total: employerCount } = await fetchEntitySeed("employer");
 
   const topTen = employers.slice(0, 10);
   const maxTotal = Math.max(1, ...topTen.map((e) => e.total));
@@ -79,8 +72,9 @@ export default async function PermEmployersPage() {
           Who sponsors the most
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          The hundred employers filing the most PERM cases in the current
-          disclosure window. Search yours; the whole table sorts.
+          Every employer that filed a PERM case in the current disclosure
+          window, all {employerCount.toLocaleString("en-US")} of them.
+          Search yours, filter by state, sort any column.
         </p>
       </header>
 
@@ -120,13 +114,15 @@ export default async function PermEmployersPage() {
           </section>
 
           <section className="mt-12">
-            <h2 className="font-heading text-2xl font-black">The full hundred</h2>{" "}
+            <h2 className="font-heading text-2xl font-black">
+              All {employerCount.toLocaleString("en-US")} sponsors
+            </h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
               DOL prints legal entity names, so a company you know by one name
               may appear under several.
             </p>
             <div className="mt-6">
-              <EmployersExplorer employers={employers} />
+              <EntityExplorer kind="employer" rows={employers} total={employerCount} />
             </div>
           </section>
         </>

@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 import { fetchQuery } from 'convex/nextjs'
 import { api } from '../../convex/_generated/api'
 import { getAllPosts } from '@/lib/content'
-import { withUniqueSlugs } from '@/lib/entitySlug'
+import { fetchAllEntitiesServer } from '@/lib/entitySeed'
 import { captureError } from '@/lib/sentry'
 
 // Next.js sitemap routes are cached by default and only regenerated when
@@ -86,27 +86,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/security`, lastModified: '2026-06-15' },
   ]
 
-  // One page per entity: 100 sponsors, 100 firms, 60 occupations.
+  // One page per entity, for EVERY entity: 12,240 sponsors, 3,208 firms, 762
+  // occupations. This used to read the aggregate document, which is capped at
+  // 250 rows per kind so it fits Convex's 1 MB limit, and so submitted 750 of
+  // 16,210 real pages.
+  //
+  // Slugs come from the entity TABLE, which is the same source the pages and
+  // the index tables read. Deriving them here instead would be a second
+  // implementation of the collision rule, and a slug computed two ways is a
+  // sitemap entry that 404s.
   const entityDate = permAsOf ?? '2026-08-24'
+  const [employers, firms, occupations] = await Promise.all([
+    fetchAllEntitiesServer('employer').catch(() => []),
+    fetchAllEntitiesServer('attorney').catch(() => []),
+    fetchAllEntitiesServer('occupation').catch(() => []),
+  ])
   const entityUrls: MetadataRoute.Sitemap = [
-    ...withUniqueSlugs(
-      [...(disclosure?.topEmployers ?? [])].sort((a, b) => b.total - a.total),
-      (e) => e.name,
-    ).map(({ slug }) => ({
+    ...employers.map(({ slug }) => ({
       url: `${baseUrl}/perm-employers/${slug}`,
       lastModified: entityDate,
     })),
-    ...withUniqueSlugs(
-      [...(disclosure?.topAttorneys ?? [])].sort((a, b) => b.total - a.total),
-      (a) => a.name,
-    ).map(({ slug }) => ({
+    ...firms.map(({ slug }) => ({
       url: `${baseUrl}/perm-attorneys/${slug}`,
       lastModified: entityDate,
     })),
-    ...withUniqueSlugs(
-      [...(disclosure?.topOccupations ?? [])].sort((a, b) => b.total - a.total),
-      (o) => o.title,
-    ).map(({ slug }) => ({
+    ...occupations.map(({ slug }) => ({
       url: `${baseUrl}/perm-wages/${slug}`,
       lastModified: entityDate,
     })),
