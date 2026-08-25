@@ -5,7 +5,7 @@ import { Send } from "lucide-react";
 
 /**
  * The contact form. Posts to the Convex HTTP route, which owns the shape
- * checks and budgets; this side owns honest states — sending, sent, refused —
+ * checks and budgets; this side owns honest states (sending, sent, refused)
  * and never pretends. The hidden "website" field is the honeypot: humans
  * never see it, bots fill it, the route answers success and writes nothing.
  */
@@ -129,7 +129,7 @@ export function ContactForm() {
         <Send className="h-4 w-4" aria-hidden="true" />
       </button>
       <p className="mt-3 text-sm text-foreground/60">
-        Lands in our inbox as email — replies come from a person.
+        Lands in our inbox as email. Replies come from a person.
       </p>
     </form>
   );

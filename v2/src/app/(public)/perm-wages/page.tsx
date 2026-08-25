@@ -2,7 +2,7 @@
  * PERM wages by occupation.
  *
  * Every occupation in the current disclosure window with its median
- * offered wage, volume, approval rate and median days — the numbers a
+ * offered wage, volume, approval rate and median days: the numbers a
  * beneficiary compares an offer against and an attorney benchmarks a
  * prevailing wage strategy against. All from DOL's own files; nothing
  * modeled, nothing invented.
@@ -86,7 +86,7 @@ export default async function PermWagesPage() {
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           The wage on a PERM filing is the wage the employer committed to in a
-          federal filing — harder currency than any salary survey. These are
+          federal filing, which is harder currency than any salary survey. These are
           the medians by occupation for the current disclosure window.
         </p>
       </header>
@@ -173,7 +173,7 @@ export default async function PermWagesPage() {
                   {fmtWage(overallMedian)}
                 </p>{" "}
                 <p className="max-w-md text-base leading-relaxed text-background/70">
-                  Median of the occupation medians below — the centre of what a
+                  Median of the occupation medians below. The centre of what a
                   sponsored role pays across all{" "}
                   {occupationCount.toLocaleString("en-US")} occupations.
                 </p>

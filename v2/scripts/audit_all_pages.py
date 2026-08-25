@@ -64,6 +64,37 @@ def text_of(html: str) -> str:
     return re.sub(r"\s+", " ", h)
 
 
+
+def prose_em_dashes(html: str) -> list[str]:
+    """
+    Em-dashes used as PROSE punctuation, which house style bans.
+
+    A lone "—" in a table cell is the standard no-value marker and is fine;
+    the rule is about the writing tell, not the character, and flagging a null
+    marker just teaches people to rule-lawyer the glyph instead of fixing
+    sentences. So the test is whether the dash shares a text run with words.
+
+    Working on tag-stripped text cannot tell the two apart (a stripped row
+    reads "Software Developers 57,876 — 94.6%"), and requiring no tag beside
+    the dash misses prose that spans an inline link. Both were tried. This
+    reads the innermost text run instead: everything between the nearest ">"
+    before the dash and the nearest "<" after it.
+    """
+    body = re.sub(r"<(script|style)\b[^>]*>.*?</\1>", " ", html, flags=re.S | re.I)
+    hits: list[str] = []
+    for m in re.finditer("\u2014", body):
+        left = body.rfind(">", 0, m.start()) + 1
+        right = body.find("<", m.end())
+        if right == -1:
+            right = len(body)
+        run = html_mod.unescape(body[left:right])
+        # The run is the dash and nothing else: a no-value cell, not prose.
+        if run.strip().strip("\u2014").strip() == "":
+            continue
+        hits.append(re.sub(r"\s+", " ", run).strip()[:80])
+    return hits
+
+
 def audit(base: str, path: str) -> list[str]:
     url = base.rstrip("/") + path
     status, html = get(url)
@@ -102,6 +133,13 @@ def audit(base: str, path: str) -> list[str]:
 
     if not re.search(r'rel="canonical"', html):
         out.append(f"{path}: no canonical")
+
+    # House style bans the em-dash in visible copy. Checked on the RENDERED
+    # page rather than in source, because source carries them in comments and
+    # in generated strings, and only what a reader sees is the violation.
+    # Measured on 39 live pages the day this was added: 21 across 8 pages.
+    for hit in prose_em_dashes(html):
+        out.append(f"{path}: em-dash in prose -> '{hit}'")
 
     if path in DATA_PAGES:
         if EMPTY_STATE in html:
