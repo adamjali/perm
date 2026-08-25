@@ -17,6 +17,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
 import { fetchQuery } from "convex/nextjs";
 
@@ -168,6 +169,12 @@ export default async function AttorneyPage({
   const { slug } = await params;
   const result = await loadSubject(slug);
   if (result.status === "missing") notFound();
+  // Stored and searchable is not the same as having a page. Below the
+  // threshold the page would say "one case, certified" and nothing more, and
+  // 65,000 of those is a doorway-page pattern rather than a directory. The
+  // index tables render these rows unlinked, and the sitemap omits them, so
+  // nothing points here.
+  if (result.status === "found" && !hasOwnPage(result.row)) notFound();
 
   const row = result.status === "found" ? result.row : null;
 

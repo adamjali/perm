@@ -212,7 +212,7 @@ function NotificationListItem({
       className={cn(
         "group w-full text-left relative cursor-pointer",
         "flex items-start gap-4 p-4",
-        "border-b-2 border-black/10 last:border-b-0",
+        "border-b-2 border-border last:border-b-0",
         "transition-colors duration-150",
         "hover:bg-gray-50 dark:hover:bg-gray-800",
         "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset",
@@ -229,7 +229,7 @@ function NotificationListItem({
       <div
         className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center",
-          "rounded-none border-2 border-black",
+          "rounded-none border-2 border-border",
           "bg-white dark:bg-gray-800"
         )}
       >
@@ -319,11 +319,11 @@ function NotificationListSkeleton() {
   return (
     <div className="space-y-4">
       <Skeleton variant="line" className="h-6 w-24" />
-      <div className="border-2 border-black shadow-hard">
+      <div className="border-2 border-border shadow-hard">
         {[...Array(3)].map((_, i) => (
           <div
             key={i}
-            className="flex items-start gap-4 p-4 border-b-2 border-black/10 last:border-b-0"
+            className="flex items-start gap-4 p-4 border-b-2 border-border last:border-b-0"
           >
             <Skeleton className="w-1.5 h-16" />
             <Skeleton className="h-10 w-10 shrink-0" />
@@ -371,7 +371,7 @@ function EmptyState({ activeTab }: { activeTab: NotificationTabType }) {
       <div
         className={cn(
           "flex h-16 w-16 items-center justify-center mb-4",
-          "rounded-none border-2 border-black/20",
+          "rounded-none border-2 border-border",
           "bg-muted"
         )}
       >
@@ -503,7 +503,7 @@ export default function NotificationList({
           </h3>
 
           {/* Notifications in group */}
-          <div className="border-2 border-black shadow-hard">
+          <div className="border-2 border-border shadow-hard">
             {notifications.map((notification) => (
               <NotificationListItem
                 key={notification._id}

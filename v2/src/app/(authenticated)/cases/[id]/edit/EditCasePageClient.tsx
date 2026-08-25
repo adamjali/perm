@@ -157,14 +157,14 @@ function NotFoundState() {
     <div className="mx-auto max-w-4xl px-4 py-16">
       <div className="text-center space-y-6">
         <div className="space-y-2">
-          <h1 className="font-heading text-3xl font-bold">Case not found</h1>{" "}
-          <p className="text-muted-foreground text-lg">
+          <h1 className="font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl">Case not found</h1>{" "}
+          <p className="text-base leading-relaxed text-foreground/70">
             The case you&apos;re looking for doesn&apos;t exist or you don&apos;t have access.
           </p>
         </div>
         <Link
           href="/cases"
-          className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="inline-flex min-h-[44px] items-center justify-center border-2 border-border bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
         >
           Back to Cases
         </Link>
@@ -412,7 +412,7 @@ export function EditCasePageClient() {
   } as unknown as CaseFormInitialData;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       {/* Breadcrumb */}
       <Breadcrumb caseData={caseData} />
 
@@ -421,14 +421,14 @@ export function EditCasePageClient() {
         {/* Corner accent decoration */}
         <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary border-2 border-foreground shadow-hard-sm" />
         <div className="pl-6 min-w-0">
-          <h1 className="font-heading text-3xl font-bold tracking-tight truncate" title={`Edit Case: ${caseData.employerName} - ${caseData.positionTitle}`}>
-            Edit Case: {caseData.employerName}
+          <h1 className="truncate font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl" title={`Edit Case: ${caseData.employerName} - ${caseData.positionTitle}`}>
+            {caseData.employerName}
           </h1>{" "}
-          <p className="text-muted-foreground mt-1 truncate" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
+          <p className="mt-2 truncate font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
             {caseData.positionTitle}
             {caseData.beneficiaryIdentifier && <>, {caseData.beneficiaryIdentifier}</>}
           </p>{" "}
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="mt-3 max-w-[60ch] text-base leading-relaxed text-foreground/70">
             Update case details below. All changes will be saved to your account.
           </p>
         </div>

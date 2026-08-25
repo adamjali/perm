@@ -171,7 +171,7 @@ interface SectionCardProps {
 
 function SectionCard({ icon: Icon, title, description, headerRight, children }: SectionCardProps): React.ReactElement {
   return (
-    <div className="bg-card border-2 border-black p-6" style={{ boxShadow: "4px 4px 0px #000" }}>
+    <div className="border-2 border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Icon className="w-5 h-5 text-foreground" />
@@ -204,14 +204,14 @@ function PushStatusBadge({ status, enabled }: PushStatusBadgeProps): React.React
   if (enabled && status.subscribed) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
-        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-600 dark:bg-green-400" />
         Enabled
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border border-border">
-      <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
       Disabled
     </span>
   );

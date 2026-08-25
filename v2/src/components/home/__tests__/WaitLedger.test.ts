@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   evenTicks,
+  labelRows,
   measure,
   monthIndex,
+  plateMetrics,
   shortLabel,
   type WaitLedgerRow,
 } from "../WaitLedger";
@@ -59,6 +61,71 @@ describe("evenTicks", () => {
     expect(evenTicks(0, 7)).toEqual([]);
     expect(evenTicks(1, 7)).toEqual([0]);
     expect(evenTicks(3, 99)).toEqual([0, 1, 2]);
+  });
+});
+
+describe("plateMetrics", () => {
+  /** Rows plus the gaps between them. */
+  const plate = (n: number) => {
+    const { rowH, gapH } = plateMetrics(n);
+    return n * rowH + Math.max(0, n - 1) * gapH;
+  };
+
+  it("keeps the plate a similar height as the series grows", () => {
+    // The whole point: DOL adds a month every publication, and a written-down
+    // row height turns that into a figure that grows past the fold on a
+    // schedule. 33 rows was the height that pushed the hero's CTAs off-screen.
+    for (const n of [24, 33, 45, 60]) {
+      expect(plate(n)).toBeGreaterThan(200);
+      expect(plate(n)).toBeLessThan(420);
+    }
+  });
+
+  it("never returns a row too thin to draw a bar in", () => {
+    for (const n of [1, 33, 120, 500]) {
+      expect(plateMetrics(n).rowH).toBeGreaterThanOrEqual(4);
+      expect(plateMetrics(n).gapH).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("caps the row height so a short series is not drawn as fenceposts", () => {
+    expect(plateMetrics(3).rowH).toBe(9);
+  });
+
+  it("never divides by zero on an empty series", () => {
+    expect(plateMetrics(0).rowH).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe("labelRows", () => {
+  it("always labels a pinned row", () => {
+    expect(labelRows(33, 7, [19, 32])).toEqual(
+      expect.arrayContaining([19, 32]),
+    );
+  });
+
+  it("drops an axis tick that would print on top of a pinned row", () => {
+    // 0 and 32 are both natural ticks over 33 rows; pinning 31 must remove 32
+    // rather than nudge it, because a moved tick is no longer an axis.
+    const out = labelRows(33, 7, [31]);
+    expect(out).toContain(31);
+    expect(out).not.toContain(32);
+  });
+
+  it("keeps every label at least three rows from the next", () => {
+    const out = labelRows(33, 7, [19, 32]);
+    const gaps = out.slice(1).map((v, i) => v - out[i]!);
+    expect(Math.min(...gaps)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("ignores pins outside the series rather than labelling a row that is not there", () => {
+    expect(labelRows(10, 4, [-1, 10, 99, 1.5])).not.toEqual(
+      expect.arrayContaining([-1, 10, 99, 1.5]),
+    );
+  });
+
+  it("returns nothing for an empty series", () => {
+    expect(labelRows(0, 7, [0])).toEqual([]);
   });
 });
 

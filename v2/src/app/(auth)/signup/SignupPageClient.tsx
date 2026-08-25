@@ -334,14 +334,14 @@ export function SignupPageClient() {
 
   if (step === "verification") {
     return (
-      <Card>
+      <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
         <CardHeader>
-          <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">
+          <h1 className="font-heading text-3xl font-black uppercase leading-none tracking-tight sm:text-4xl">
             Verify Email
           </h1>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base leading-relaxed text-foreground/70">
             We&apos;ve sent a 12-character verification code to{" "}
             <span className="font-semibold text-foreground">{verificationEmail}</span>
           </p>
@@ -376,7 +376,7 @@ export function SignupPageClient() {
             </Button>
           </form>
 
-          <div className="pt-4 text-center border-t-2 border-black">
+          <div className="pt-4 text-center border-t-2 border-border">
             <button
               onClick={() => setStep("credentials")}
               className="text-sm font-bold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
@@ -390,11 +390,16 @@ export function SignupPageClient() {
   }
 
   return (
-    <Card>
+    <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
       <CardHeader>
-        <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">
+        <h1 className="font-heading text-3xl font-black uppercase leading-none tracking-tight sm:text-4xl">
           Sign Up
-        </h1>
+        </h1>{" "}
+        <p className="mt-3 text-base leading-relaxed text-foreground/70">
+          Track every case you&apos;re responsible for. Filing windows, wage
+          expirations and audit responses are computed from the dates you enter,
+          and you get an email before each one. Free.
+        </p>
       </CardHeader>
       <CardContent className="space-y-6">
         <form onSubmit={handleCredentialsSubmit} className="space-y-5" noValidate>
@@ -493,7 +498,7 @@ export function SignupPageClient() {
             {turnstileError && (
               <p
                 role="alert"
-                className="text-xs mono font-bold uppercase tracking-wider text-destructive text-center"
+                className="mono text-center text-sm font-bold uppercase tracking-wider text-destructive"
               >
                 Verification check failed. Refresh the page and try again.
               </p>
@@ -513,7 +518,7 @@ export function SignupPageClient() {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t-2 border-black" />
+            <div className="w-full border-t-2 border-border" />
           </div>
           <div className="relative flex justify-center text-xs">
             <span className="bg-card px-3 mono uppercase tracking-widest font-bold">
@@ -553,7 +558,7 @@ export function SignupPageClient() {
         </Button>{" "}
 
         {/* Passive consent — terms acceptance via sign-in wrap */}
-        <p className="text-xs text-muted-foreground text-center leading-relaxed">
+        <p className="text-center text-sm leading-relaxed text-muted-foreground">
           By creating an account, you agree to our{" "}
           <a
             href="/terms"
@@ -576,7 +581,7 @@ export function SignupPageClient() {
         </p>{" "}
 
         {/* Cloud storage disclaimer */}
-        <p className="text-xs text-muted-foreground text-center leading-relaxed">
+        <p className="text-center text-sm leading-relaxed text-muted-foreground">
           PERM Tracker is a case management tool, not a legal service. Your data
           is stored securely on cloud infrastructure with encryption. We use
           analytics and session-recording tools to improve the product (you can
@@ -590,8 +595,8 @@ export function SignupPageClient() {
           </NavLink>
         </p>
 
-        <div className="pt-4 text-center border-t-2 border-black">
-          <p className="text-sm text-muted-foreground">
+        <div className="pt-4 text-center border-t-2 border-border">
+          <p className="text-base leading-relaxed text-foreground/70">
             Already have an account?{" "}
             <NavLink
               href="/login"

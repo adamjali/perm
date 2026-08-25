@@ -69,7 +69,7 @@ export default function CaseDetailLoading() {
           {/* Card 1 */}
           <div className="border-2 border-border p-4">
             <Skeleton variant="line" className="w-32 h-5 mb-3" />
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="space-y-1">
                   <Skeleton variant="line" className="w-20 h-3" />
@@ -81,7 +81,7 @@ export default function CaseDetailLoading() {
           {/* Card 2 */}
           <div className="border-2 border-border p-4">
             <Skeleton variant="line" className="w-28 h-5 mb-3" />
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="space-y-1">
                   <Skeleton variant="line" className="w-20 h-3" />

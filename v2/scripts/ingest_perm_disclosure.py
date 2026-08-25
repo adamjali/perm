@@ -451,12 +451,18 @@ BROWSER_HEADERS = {
 # How many of the most recent files to union. Two quarterly files span enough
 # determination history to close out every cohort DOL has worked through.
 DEFAULT_FILE_COUNT = 2
-# A cohort below this many decided cases is noise, not a distribution.
-# The smallest decided-case count at which an entity's own numbers mean
-# something. Below three, an "approval rate" is one or two coin flips and a
-# median is a single value. Those cases still count nationally; the entity
-# simply does not get a row or a page of its own.
-ENTITY_FLOOR = 3
+# EVERY entity is stored. The floor that used to live here was a STORAGE
+# floor, and it hid 65,026 of 82,677 employers -- 79% of them -- so searching
+# for a small sponsor returned "no match" for a company that is plainly in
+# DOL's files. That is a worse failure than a thin row.
+#
+# The judgement the old floor encoded is still right and still applied, just
+# further downstream: below three decided cases an approval rate is one or two
+# coin flips and a median is a single value. So those entities are stored and
+# searchable, and MIN_TOTAL_FOR_PAGE (src/lib/entityPayload.ts) decides which
+# of them get a page of their own and a sitemap entry. Rates below
+# MIN_DECIDED_FOR_RATE are withheld on the page regardless.
+ENTITY_FLOOR = 1
 
 MIN_COHORT_SIZE = 30
 # Receipt-to-determination outside this range is a data error, not a case.

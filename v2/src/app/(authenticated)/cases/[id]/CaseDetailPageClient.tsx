@@ -146,9 +146,9 @@ function CaseDetailSkeleton() {
           </div>
         </div>
         {/* Stage Bar */}
-        <div className="flex border-t-[3px] border-black">
+        <div className="flex border-t-[3px] border-border">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex-1 py-2.5 px-2 border-r-[3px] border-black last:border-r-0">
+            <div key={i} className="flex-1 py-2.5 px-2 border-r-[3px] border-border last:border-r-0">
               <Skeleton variant="line" className="w-full h-4 mx-auto max-w-[80px]" />
             </div>
           ))}
@@ -171,7 +171,7 @@ function CaseDetailSkeleton() {
           {/* Next Up */}
           <Skeleton variant="block" className="h-20" />
           {/* 2-col layout */}
-          <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
             {/* Timeline sidebar */}
             <div className="space-y-4">
               <Skeleton variant="block" className="h-8" />
@@ -187,7 +187,7 @@ function CaseDetailSkeleton() {
             </div>
             <div className="space-y-6">
               {/* PWD + Quick Stats */}
-              <div className="grid gap-6 md:grid-cols-[1.8fr_1fr]">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.8fr_1fr]">
                 <Skeleton variant="block" className="h-48" />
                 <Skeleton variant="block" className="h-48" />
               </div>
@@ -608,7 +608,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       {/* ================================================================ */}
       <motion.div
         variants={headerVariants}
-        className="bg-card border-b-[3px] border-black relative z-[2] overflow-hidden -mt-6 full-bleed"
+        className="bg-card border-b-[3px] border-border relative z-[2] overflow-hidden -mt-6 full-bleed"
       >
         {/* Stage accent strip */}
         <div className="h-1" style={{ backgroundColor: stageColor }} />
@@ -803,7 +803,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         {/* Stage Bar — flat segments matching mockup */}
         {!isClosed && (
           <div
-            className="flex border-t-[3px] border-black mt-3.5"
+            className="flex border-t-[3px] border-border mt-3.5"
             role="progressbar"
             aria-valuenow={currentStage + 1}
             aria-valuemin={1}
@@ -820,7 +820,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   key={stage}
                   className={cn(
                     "flex-1 py-2.5 px-2 text-center font-mono text-[0.7rem] font-bold uppercase tracking-wide flex items-center justify-center gap-1.5",
-                    "border-r-[3px] border-black last:border-r-0",
+                    "border-r-[3px] border-border last:border-r-0",
                     isDone && "bg-card text-foreground",
                     isActive && "text-white",
                     !isDone && !isActive && "bg-muted text-muted-foreground"

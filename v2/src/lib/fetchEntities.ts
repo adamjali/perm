@@ -20,3 +20,24 @@ export async function fetchAllEntities(kind: EntityKind): Promise<EntityRow[]> {
   }
   return payload.rows.map(unpackRow);
 }
+
+/**
+ * Search the whole corpus by name, server-side.
+ *
+ * The index table can only filter what it has downloaded, and it downloads a
+ * bounded head of the rank order. This is what makes a sponsor with two cases
+ * findable at all.
+ */
+export async function searchEntities(
+  kind: EntityKind,
+  text: string,
+): Promise<EntityRow[]> {
+  const q = text.trim();
+  if (q.length < 2) return [];
+  const res = await fetch(
+    `/api/perm-entities/${kind}?q=${encodeURIComponent(q.slice(0, 120))}`,
+  );
+  if (!res.ok) throw new Error(`perm-entities search ${kind}: HTTP ${res.status}`);
+  const payload = (await res.json()) as EntityPayload;
+  return Array.isArray(payload.rows) ? payload.rows.map(unpackRow) : [];
+}

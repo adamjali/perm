@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 
 import type { EntityKind, EntityRow } from "@/lib/entityPayload";
-import { fetchAllEntities } from "@/lib/fetchEntities";
+import { fetchAllEntities, searchEntities } from "@/lib/fetchEntities";
 
 import {
   ATTORNEY_COLUMNS,
@@ -69,6 +69,10 @@ export function EntityExplorer({
 }) {
   const cfg = CONFIG[kind];
   const loadAll = useCallback(() => fetchAllEntities(kind), [kind]);
+  const searchRemote = useCallback(
+    (text: string) => searchEntities(kind, text),
+    [kind],
+  );
 
   return (
     <FilterableStatTable<EntityRow>
@@ -83,6 +87,7 @@ export function EntityExplorer({
       noun={cfg.noun}
       totalCount={total}
       loadAll={loadAll}
+      searchRemote={searchRemote}
     />
   );
 }

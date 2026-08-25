@@ -90,7 +90,7 @@ export default function DeleteNowDialog({
               {/* Danger callout */}
               <div
                 className="flex items-start gap-2 p-3 bg-destructive/10 border-2 border-destructive/30"
-                style={{ boxShadow: "2px 2px 0px rgba(239, 68, 68, 0.3)" }}
+                style={{ boxShadow: "var(--shadow-hard-sm)" }}
               >
                 <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
                 <p className="text-destructive font-bold text-sm">

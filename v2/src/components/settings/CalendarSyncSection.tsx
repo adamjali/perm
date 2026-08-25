@@ -129,7 +129,7 @@ function ConnectionStatusBadge({ connected }: ConnectionStatusBadgeProps) {
   if (connected) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
-        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-600 dark:bg-green-400" />
         Connected
       </span>
     );
@@ -137,7 +137,7 @@ function ConnectionStatusBadge({ connected }: ConnectionStatusBadgeProps) {
 
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border border-border">
-      <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
       Not Connected
     </span>
   );
@@ -510,8 +510,8 @@ export default function CalendarSyncSection({
     <div className="space-y-6">
       {/* Calendar Sync Section */}
       <div
-        className="bg-card border-2 border-black p-6"
-        style={{ boxShadow: "4px 4px 0px #000" }}
+        className="bg-card border-2 border-border p-6"
+        style={{ boxShadow: "var(--shadow-hard)" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
@@ -530,7 +530,7 @@ export default function CalendarSyncSection({
         {/* Google Calendar Connection Status with Connect/Disconnect buttons */}
         <div
           className="flex items-center justify-between p-4 bg-muted/50 border-2 border-border mb-5"
-          style={{ boxShadow: "2px 2px 0px rgba(0,0,0,0.1)" }}
+          style={{ boxShadow: "var(--shadow-hard-sm)" }}
         >
           <div className="flex items-center gap-3">
             <div
@@ -568,7 +568,7 @@ export default function CalendarSyncSection({
               onClick={handleDisconnect}
               disabled={isDisconnecting}
               className="border-2 border-red-500 dark:border-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-600 dark:hover:border-red-400 transition-colors"
-              style={{ boxShadow: "2px 2px 0px rgba(239,68,68,0.4)" }}
+              style={{ boxShadow: "var(--shadow-hard-sm)" }}
             >
               {isDisconnecting ? (
                 <>
@@ -588,7 +588,7 @@ export default function CalendarSyncSection({
               onClick={handleConnect}
               disabled={isConnecting}
               className="border-2 border-black dark:border-white bg-primary hover:bg-primary/90 text-black font-semibold"
-              style={{ boxShadow: "2px 2px 0px #000" }}
+              style={{ boxShadow: "var(--shadow-hard-sm)" }}
             >
               {isConnecting ? (
                 <>
@@ -609,7 +609,7 @@ export default function CalendarSyncSection({
         {isConnected && masterEnabled && (
           <div
             className="p-4 bg-muted/30 border-2 border-border mb-5 space-y-3"
-            style={{ boxShadow: "2px 2px 0px rgba(0,0,0,0.1)" }}
+            style={{ boxShadow: "var(--shadow-hard-sm)" }}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -632,7 +632,7 @@ export default function CalendarSyncSection({
                 onClick={handleSyncAll}
                 disabled={isSyncingAll || syncEligibleCount === 0}
                 className="border-2 border-emerald-500 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-600 dark:hover:border-emerald-400 transition-colors"
-                style={{ boxShadow: "2px 2px 0px rgba(16,185,129,0.4)" }}
+                style={{ boxShadow: "var(--shadow-hard-sm)" }}
               >
                 {isSyncingAll ? (
                   <>
@@ -673,7 +673,7 @@ export default function CalendarSyncSection({
                     return (
                       <>
                         {/* Progress bar - neobrutalist with hard edges */}
-                        <div className="relative h-3 bg-muted border-2 border-black overflow-hidden">
+                        <div className="relative h-3 bg-muted border-2 border-border overflow-hidden">
                           {/* Background pulse */}
                           <motion.div
                             className="absolute inset-0 bg-primary/20 dark:bg-primary/30"
@@ -717,7 +717,7 @@ export default function CalendarSyncSection({
         {isConnected && (
           <div
             className="p-4 bg-muted/30 border-2 border-border mb-5 space-y-3"
-            style={{ boxShadow: "2px 2px 0px rgba(0,0,0,0.1)" }}
+            style={{ boxShadow: "var(--shadow-hard-sm)" }}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -740,7 +740,7 @@ export default function CalendarSyncSection({
                 onClick={handleClearAllEvents}
                 disabled={isClearingEvents || isSyncingAll}
                 className="border-2 border-amber-500 dark:border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:border-amber-600 dark:hover:border-amber-400 transition-colors"
-                style={{ boxShadow: "2px 2px 0px rgba(245,158,11,0.4)" }}
+                style={{ boxShadow: "var(--shadow-hard-sm)" }}
               >
                 {isClearingEvents ? (
                   <>
@@ -783,7 +783,7 @@ export default function CalendarSyncSection({
                     return (
                       <>
                         {/* Progress bar - neobrutalist with hard edges */}
-                        <div className="relative h-3 bg-muted border-2 border-black overflow-hidden">
+                        <div className="relative h-3 bg-muted border-2 border-border overflow-hidden">
                           {/* Background pulse */}
                           <motion.div
                             className="absolute inset-0 bg-amber-500/20 dark:bg-amber-500/30"

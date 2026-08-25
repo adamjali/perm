@@ -61,8 +61,9 @@ export function DashboardPageClient() {
           className="animate-in fade-in fill-mode-forwards"
           style={{ animationDuration: "0.2s" }}
         >
-          <Skeleton variant="line" className="w-48 h-10 mb-2" />
-          <Skeleton variant="line" className="w-64 h-6" />
+          <Skeleton variant="line" className="mb-3 h-4 w-32" />
+          <Skeleton variant="line" className="mb-3 h-10 w-64" />
+          <Skeleton variant="line" className="h-6 w-full max-w-[52ch]" />
         </div>
         <div
           className="animate-in fade-in slide-in-from-bottom-2 fill-mode-forwards"
@@ -88,13 +89,17 @@ export function DashboardPageClient() {
   return (
     <div className="space-y-6">
       {/* Welcome Header + Primary CTA */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-2xl font-bold">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            Dashboard
+          </p>{" "}
+          <h1 className="mt-2 font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl">
             Welcome back, {firstName}
           </h1>{" "}
-          <p className="text-muted-foreground mt-1">
-            Overview of your PERM cases
+          <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-foreground/70">
+            Every filing window, wage expiration and audit deadline in your
+            cases, computed from the dates you have entered.
           </p>
         </div>
         <div className="shrink-0">
@@ -116,7 +121,7 @@ export function DashboardPageClient() {
       <OnboardingChecklist />
 
       {/* Two-column layout: Upcoming Deadlines | Recent Activity */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 md:grid-cols-2">
         <UpcomingDeadlinesWidget />
         <RecentActivityWidget />
       </div>

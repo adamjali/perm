@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
@@ -79,29 +79,29 @@ function UserMenu({ userName }: UserMenuProps) {
       <DropdownMenuTrigger
         className="group flex cursor-pointer items-center gap-2 rounded-none border-2 border-transparent bg-transparent px-3 py-2 text-sm font-medium text-white transition-all hover:border-white/50 hover:bg-white/10 focus:outline-none"
       >
-        <span className="max-w-[120px] truncate">{userName}</span>
+        <span className="max-w-[100px] truncate">{userName}</span>
         <ChevronDown className="size-4 transition-transform duration-150 group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="end"
-        className="min-w-[180px] border-4 border-black bg-white shadow-hard rounded-none p-0"
+        className="min-w-[180px] rounded-none border-3 border-border bg-popover p-0 text-popover-foreground shadow-hard"
       >
         <DropdownMenuItem
           onSelect={handleSettingsClick}
           disabled={isNavigatingToSettings || isOnSettingsPage}
           className={cn(
-            "flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-none cursor-pointer",
-            "border-b-2 border-black",
+            "flex cursor-pointer items-center gap-3 rounded-none px-4 py-3 text-sm font-semibold",
+            "border-b-2 border-border",
             isOnSettingsPage
-              ? "bg-gray-100 text-gray-400 cursor-default"
-              : "text-black hover:bg-gray-100"
+              ? "cursor-default bg-muted text-muted-foreground"
+              : "hover:bg-muted"
           )}
         >
           {isNavigatingToSettings ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
-            <Settings className={cn("size-4", isOnSettingsPage && "text-gray-400")} />
+            <Settings className={cn("size-4", isOnSettingsPage && "text-muted-foreground")} />
           )}
           {getSettingsLabel()}
         </DropdownMenuItem>
@@ -109,7 +109,7 @@ function UserMenu({ userName }: UserMenuProps) {
         <DropdownMenuItem
           onSelect={handleSignOut}
           disabled={isSigningOut}
-          className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black rounded-none cursor-pointer hover:bg-gray-100"
+          className="flex cursor-pointer items-center gap-3 rounded-none px-4 py-3 text-sm font-semibold hover:bg-muted"
         >
           {isSigningOut ? (
             <Loader2 className="size-4 animate-spin" />
@@ -170,12 +170,12 @@ export default function Header(): React.ReactElement {
     : AUTHENTICATED_NAV_LINKS;
 
   return (
-    <header className="sticky top-0 z-50 border-b-3 border-black bg-black dark:border-white dark:bg-black">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-8">
+    <header className="sticky top-0 z-50 border-b-3 border-white/20 bg-black">
+      <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-3 sm:px-8">
         {/* Logo */}
         <Link
           href="/dashboard"
-          className="group flex items-center gap-1.5 sm:gap-2 px-1.5 sm:px-2 py-1 text-xl sm:text-2xl font-bold font-heading transition-all duration-150 hover:bg-primary hover:shadow-hard shrink-0"
+          className="group flex min-h-[44px] shrink-0 items-center gap-2 px-2 py-1 font-heading text-xl font-bold transition-colors hover:bg-primary sm:text-2xl"
         >
           <FileText
             className="size-6 text-primary transition-colors group-hover:text-black"
@@ -195,20 +195,21 @@ export default function Header(): React.ReactElement {
               const isActive = pathname === link.href;
               const tourId = link.href === "/cases" ? "nav-cases" : link.href === "/calendar" ? "nav-calendar" : undefined;
               return (
-                <NavLink
-                  key={link.href}
-                  href={link.href}
-                  spinnerClassName="text-primary"
-                  data-tour={tourId}
-                  className={cn(
-                    "hover-underline px-3 lg:px-4 py-2 text-sm font-semibold font-heading uppercase tracking-wide transition-colors",
-                    isActive
-                      ? "text-primary"
-                      : "text-white hover:text-primary"
-                  )}
-                >
-                  {link.label}
-                </NavLink>
+                <Fragment key={link.href}>
+                  <NavLink
+                    href={link.href}
+                    spinnerClassName="text-primary"
+                    data-tour={tourId}
+                    className={cn(
+                      "hover-underline px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors lg:px-4",
+                      isActive
+                        ? "text-primary"
+                        : "text-white hover:text-primary"
+                    )}
+                  >
+                    {link.label}
+                  </NavLink>{" "}
+                </Fragment>
               );
             })}
           </div>
@@ -218,8 +219,14 @@ export default function Header(): React.ReactElement {
             <NotificationDropdown />
           </NotificationBell>
 
-          {/* User dropdown - hidden below lg, shown in mobile menu */}
-          <div className="hidden lg:block">
+          {/* User dropdown - hidden below lg, shown in mobile menu.
+              The slot is a FIXED width because `user` arrives from a Convex
+              query, not from the server render: without it the four nav links
+              jump left the moment the name resolves, on every load. 148px is
+              the trigger at its widest (px-3 x2 + the 100px name cap + gap-2 +
+              a 16px chevron), so a short name simply sits right-aligned in a
+              box that never changes size. */}
+          <div className="hidden w-[148px] shrink-0 justify-end lg:flex">
             {user && <UserMenu userName={displayName} />}
           </div>
 
@@ -241,7 +248,7 @@ export default function Header(): React.ReactElement {
 
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
-        <div className="absolute left-0 right-0 top-full border-b-4 border-white/20 bg-black px-4 py-4 lg:hidden z-50">
+        <div className="absolute inset-x-0 top-full z-50 border-b-3 border-white/20 bg-black px-4 py-4 lg:hidden">
           <nav className="flex flex-col gap-1">
             {/* Navigation Links */}
             {navLinks.map((link) => {

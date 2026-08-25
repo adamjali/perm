@@ -482,7 +482,7 @@ describe("QuietHoursSection", () => {
         <QuietHoursSection profile={defaultProfile} />
       );
 
-      const card = container.querySelector(".border-2.border-black");
+      const card = container.querySelector(".border-2.border-border");
       expect(card).toBeInTheDocument();
     });
 

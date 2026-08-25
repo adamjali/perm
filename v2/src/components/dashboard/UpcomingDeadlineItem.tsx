@@ -39,7 +39,7 @@ export default function UpcomingDeadlineItem({ deadline }: UpcomingDeadlineItemP
       loadingIndicator="overlay"
       className={cn(
         "group flex items-center justify-between gap-3 px-4 py-3",
-        "border-2 border-black",
+        "border-2 border-border",
         "bg-card hover:-translate-y-0.5 hover:shadow-hard-sm",
         "transition-all duration-150",
         "active:translate-y-0 active:shadow-none"

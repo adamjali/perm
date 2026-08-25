@@ -30,7 +30,9 @@
  *     immediately and the panel never paints at all
  */
 
-const CAP_MS = 1800;
+// 1200, not 1800. The cap is the only guarantee, so it is also the longest
+// anyone can be made to wait for decoration. 1.8s reads as "stuck".
+const CAP_MS = 1200;
 const EXIT_MS = 560;
 
 /**
@@ -60,6 +62,22 @@ export const PRELOADER_BOOT = `
     },${EXIT_MS});
   }
   var cap=setTimeout(leave,${CAP_MS});
+  // ANY interaction dismisses it. Two reasons, both real bugs before this.
+  //
+  // The pathname gate above is evaluated ONCE, at parse time. A visitor who
+  // clicks a link on the home page before the curtain lifts carries
+  // data-pre="on" with them, so the full-viewport cover AND the scroll lock
+  // land on /signup, where there is no .pre markup to animate out. The page
+  // underneath is fine and completely hidden, which is exactly the reported
+  // "loads forever, have to refresh".
+  //
+  // And independently: a curtain that ignores someone who is already trying
+  // to use the page is not a load state, it is an obstacle. leave() is
+  // idempotent, so firing it early costs nothing.
+  ['click','keydown','wheel','touchstart','pointerdown'].forEach(function(t){
+    addEventListener(t,leave,{once:true,capture:true,passive:true});
+  });
+  addEventListener('pagehide',leave,{once:true});
   function ready(){
     clearTimeout(cap);
     var fonts=(d.fonts&&d.fonts.ready)?d.fonts.ready:Promise.resolve();

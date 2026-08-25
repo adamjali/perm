@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 
 // Widget container base styles
 export const WIDGET_CONTAINER_CLASSES =
-  "bg-card border-4 border-black shadow-hard overflow-hidden";
+  "bg-card border-4 border-border shadow-hard overflow-hidden";
 
 // ============================================================================
 // WidgetHeader
@@ -52,7 +52,7 @@ export function WidgetHeader({
     <div
       className={cn(
         "flex items-center justify-between p-5",
-        hasBorder && "border-b-2 border-black"
+        hasBorder && "border-b-2 border-border"
       )}
     >
       <div className="flex items-center gap-3">
@@ -205,7 +205,7 @@ export function WidgetEmptyState({
           className={cn(
             "inline-block px-6 py-3",
             "bg-primary text-primary-foreground",
-            "border-4 border-black",
+            "border-4 border-border",
             "shadow-hard hover:shadow-hard-lg",
             "hover:-translate-x-0.5 hover:-translate-y-0.5",
             "transition-all duration-200",

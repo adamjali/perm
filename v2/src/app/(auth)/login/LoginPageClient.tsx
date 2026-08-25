@@ -285,14 +285,14 @@ export function LoginPageClient() {
 
   if (step === "verification") {
     return (
-      <Card>
+      <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
         <CardHeader>
-          <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">
+          <h1 className="font-heading text-3xl font-black uppercase leading-none tracking-tight sm:text-4xl">
             Verify Email
           </h1>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base leading-relaxed text-foreground/70">
             Your email hasn&apos;t been verified yet. We&apos;ve sent a 12-character
             verification code to{" "}
             <span className="font-semibold text-foreground">{email}</span>
@@ -328,14 +328,14 @@ export function LoginPageClient() {
             </Button>
           </form>
 
-          <div className="pt-4 text-center border-t-2 border-black">
+          <div className="pt-4 text-center border-t-2 border-border">
             <button
               onClick={() => setStep("login")}
               className="text-sm font-bold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
             >
               &larr; Back to sign in
             </button>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="mt-2 text-sm text-muted-foreground">
               Didn&apos;t get the code? Go back and sign in again to resend it.
             </p>
           </div>
@@ -345,9 +345,9 @@ export function LoginPageClient() {
   }
 
   return (
-    <Card>
+    <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
       <CardHeader>
-        <h1 className="text-3xl font-heading font-semibold uppercase tracking-tight leading-none">
+        <h1 className="font-heading text-3xl font-black uppercase leading-none tracking-tight sm:text-4xl">
           Sign In
         </h1>
       </CardHeader>
@@ -439,7 +439,7 @@ export function LoginPageClient() {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t-2 border-black" />
+            <div className="w-full border-t-2 border-border" />
           </div>
           <div className="relative flex justify-center text-xs">
             <span className="bg-card px-3 mono uppercase tracking-widest font-bold">
@@ -479,7 +479,7 @@ export function LoginPageClient() {
         </Button>{" "}
 
         {/* Passive consent — terms acceptance via sign-in wrap */}
-        <p className="text-xs text-muted-foreground text-center leading-relaxed">
+        <p className="text-center text-sm leading-relaxed text-muted-foreground">
           By signing in, you agree to our{" "}
           <a
             href="/terms"
@@ -501,8 +501,8 @@ export function LoginPageClient() {
           .
         </p>
 
-        <div className="pt-4 text-center border-t-2 border-black">
-          <p className="text-sm text-muted-foreground">
+        <div className="pt-4 text-center border-t-2 border-border">
+          <p className="text-base leading-relaxed text-foreground/70">
             Don&apos;t have an account?{" "}
             <NavLink
               href="/signup"

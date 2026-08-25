@@ -226,7 +226,7 @@ export const CaseCard = memo(function CaseCard({
             <h3 className="font-heading font-bold text-lg leading-tight truncate text-black dark:text-black" title={employerName}>
               {employerName}
             </h3>{" "}
-            <p className="text-sm text-[#666666] truncate" title={positionTitle || beneficiaryIdentifier}>{positionTitle || beneficiaryIdentifier}</p>
+            <p className="text-sm text-muted-foreground truncate" title={positionTitle || beneficiaryIdentifier}>{positionTitle || beneficiaryIdentifier}</p>
           </div>
           <CaseBadges
             duplicateOf={duplicateOf}
@@ -262,7 +262,7 @@ export const CaseCard = memo(function CaseCard({
                 )}
               </span>
             ) : (
-              <span className="text-sm text-[#666666]">No upcoming deadlines</span>
+              <span className="text-sm text-muted-foreground">No upcoming deadlines</span>
             )}
           </div>
           <CalendarSyncIndicator enabled={calendarSyncEnabled ?? false} isGoogleConnected={isGoogleConnected} />

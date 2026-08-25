@@ -42,6 +42,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { SortableCaseCard } from "@/components/cases/SortableCaseCard";
 import { CaseCard } from "@/components/cases/CaseCard";
 import { CaseFilterBar } from "@/components/cases/CaseFilterBar";
+import { PageHeading } from "../components/PageHeading";
 import { CasePagination } from "@/components/cases/CasePagination";
 import { SelectionBar } from "@/components/cases/SelectionBar";
 import { ImportModal } from "@/components/cases/ImportModal";
@@ -1006,10 +1007,10 @@ export function CasesPageClient() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="font-heading text-3xl font-bold">Cases</h1>{" "}
-            <p className="text-muted-foreground mt-1">
-              {totalCount} {totalCount === 1 ? "case" : "cases"}
-            </p>
+            <PageHeading
+              eyebrow={`${totalCount} ${totalCount === 1 ? "case" : "cases"}`}
+              title="Cases"
+            />
           </div>
           <ViewToggle view={viewMode} onChange={handleViewModeChange} />
         </div>

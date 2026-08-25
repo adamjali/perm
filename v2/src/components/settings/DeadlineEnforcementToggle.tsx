@@ -54,7 +54,7 @@ export default function DeadlineEnforcementToggle() {
   // Show loading state while profile loads
   if (profile === undefined) {
     return (
-      <div className="bg-card border-2 border-black p-6 animate-pulse" style={{ boxShadow: "4px 4px 0px #000" }}>
+      <div className="animate-pulse border-2 border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
         <div className="h-6 bg-muted rounded w-1/3 mb-4" />
         <div className="h-4 bg-muted rounded w-2/3" />
       </div>
@@ -63,8 +63,8 @@ export default function DeadlineEnforcementToggle() {
 
   return (
     <div
-      className="bg-card border-2 border-black p-6"
-      style={{ boxShadow: "4px 4px 0px #000" }}
+      className="border-2 border-border bg-card p-6"
+      style={{ boxShadow: "var(--shadow-hard)" }}
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
@@ -118,10 +118,8 @@ export default function DeadlineEnforcementToggle() {
       <div className="mt-4 pt-4 border-t border-border">
         <div className="flex items-center gap-2 text-sm">
           <div
-            className={`w-2 h-2 rounded-full ${
-              isEnabled
-                ? "bg-green-500 animate-pulse"
-                : "bg-muted-foreground"
+            className={`h-2 w-2 shrink-0 ${
+              isEnabled ? "bg-primary" : "bg-muted-foreground"
             }`}
           />
           <span className="text-muted-foreground">

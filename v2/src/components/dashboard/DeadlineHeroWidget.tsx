@@ -25,7 +25,7 @@ import UrgencyGroup from "./UrgencyGroup";
 
 // Container styles shared across all states
 const CONTAINER_CLASSES =
-  "overflow-hidden rounded-none border-[3px] border-black shadow-hard";
+  "overflow-hidden rounded-none border-[3px] border-border shadow-hard";
 
 // ============================================================================
 // Sub-components
@@ -44,7 +44,7 @@ function DeadlineHeroLoadingSkeleton(): ReactNode {
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className={`p-4 min-h-[120px] ${i < 3 ? "md:border-r-2 border-black" : ""}`}
+              className={`p-4 min-h-[120px] ${i < 3 ? "md:border-r-2 border-border" : ""}`}
             >
               <Skeleton className="h-6 w-24 mb-3" />
               <Skeleton className="h-16 mb-2" />
@@ -73,7 +73,7 @@ function DeadlineHeroHeader({
   onRefresh,
 }: DeadlineHeroHeaderProps): ReactNode {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b-2 border-black">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b-2 border-border">
       <div className="flex items-center gap-2">
         <AlertTriangle
           className={`size-6 ${hasOverdue ? "text-destructive" : "text-muted-foreground"}`}
@@ -206,7 +206,7 @@ export default function DeadlineHeroWidget(): ReactNode {
   const hasOverdue = data.overdue.length > 0;
 
   return (
-    <div data-tour="deadline-hero" className="overflow-hidden rounded-none border-3 border-black shadow-hard">
+    <div data-tour="deadline-hero" className="overflow-hidden rounded-none border-3 border-border shadow-hard">
       <div className="hazard-strip-red" aria-hidden="true" />
       <div className="bg-card">
         <DeadlineHeroHeader

@@ -233,7 +233,7 @@ export default function AuthHeader() {
                     aria-hidden={!isLearnOpen}
                     inert={!isLearnOpen}
                     className={cn(
-                      "absolute left-0 top-full z-50 mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(46,204,64,0.3)] transition-opacity duration-150",
+                      "absolute left-0 top-full z-50 mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(255,255,255,0.2)] transition-opacity duration-150",
                       !isLearnOpen && "invisible pointer-events-none opacity-0"
                     )}
                   >
@@ -289,7 +289,7 @@ export default function AuthHeader() {
                     aria-hidden={!isLearnOpen}
                     inert={!isLearnOpen}
                     className={cn(
-                      "absolute left-0 top-full z-50 mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(46,204,64,0.3)] transition-opacity duration-150",
+                      "absolute left-0 top-full z-50 mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(255,255,255,0.2)] transition-opacity duration-150",
                       !isLearnOpen && "invisible pointer-events-none opacity-0"
                     )}
                   >
@@ -331,7 +331,7 @@ export default function AuthHeader() {
             {showSignUp && (
               <NavLink
                 href="/signup"
-                className="border-2 border-black bg-primary px-4 py-2 font-heading text-sm font-semibold text-black shadow-[2px_2px_0px_rgba(0,0,0,0.5)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_rgba(0,0,0,0.5)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                className="border-2 border-black bg-primary px-4 py-2 font-heading text-sm font-semibold text-black shadow-[2px_2px_0px_rgba(255,255,255,0.3)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
                 spinnerClassName="text-black"
                 spinnerSize={14}
               >
@@ -476,7 +476,7 @@ export default function AuthHeader() {
               {showSignUp && (
                 <NavLink
                   href="/signup"
-                  className="block border-2 border-black bg-primary px-4 py-2 text-center font-heading text-sm font-semibold text-black shadow-[2px_2px_0px_rgba(0,0,0,0.5)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                  className="block border-2 border-black bg-primary px-4 py-2 text-center font-heading text-sm font-semibold text-black shadow-[2px_2px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
                   spinnerClassName="text-black"
                   spinnerSize={14}
                   onClick={() => setIsMobileMenuOpen(false)}

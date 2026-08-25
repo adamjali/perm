@@ -299,7 +299,7 @@ export function OverviewTab({
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-                    className="overflow-hidden border-t-[3px] border-black bg-card"
+                    className="overflow-hidden border-t-[3px] border-border bg-card"
                   >
                     <div className="p-4">
                       <QuickEditFields

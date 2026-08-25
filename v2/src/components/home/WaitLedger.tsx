@@ -1,7 +1,9 @@
 import { cn } from "@/lib/utils";
 
+import { ArrowRight } from "./icons";
+
 /**
- * The wait, measured. Twenty months of it.
+ * The wait, measured. Every month DOL has decided cases in.
  *
  * WHAT IT DRAWS. One row per month in which DOL issued determinations. The
  * row's segment runs from the median FILING month of the cases decided that
@@ -16,13 +18,34 @@ import { cn } from "@/lib/utils";
  * case filed and decided in the same month is a zero-length segment) and it
  * still separates 13 from 17 by a quarter of the plate.
  *
+ * WHY THE MOVEMENT IS PRINTED AND NOT LEFT TO BE READ OFF THE FIELD. A
+ * quarter of the plate is a real difference and it is still not a GLANCE.
+ * Reading 17 down to 13 out of the staircase means comparing two segment
+ * lengths thirty rows apart while both ends are also sliding right, which is
+ * a measurement, not a first impression. So the two rows the headline
+ * actually cites are named at the top at display size and marked in the
+ * field. The staircase is the evidence; the readout is the statement.
+ *
+ * WHY THE ROW PITCH IS COMPUTED AND NOT WRITTEN DOWN. This series grows by a
+ * month every time DOL publishes, and the first version of this figure was
+ * 33 fixed-height rows: 660px of plate that ran past the fold, pushed the
+ * page's two primary calls to action below it, and would have been 900px by
+ * next summer. An unbounded series in a hero is a layout that breaks on a
+ * schedule. `plateMetrics` spends a fixed height and divides it by however
+ * many rows there are, so the plate is the same size at 33 rows and at 60
+ * and no data is dropped to achieve that.
+ *
+ * WHY ONLY SOME ROWS CARRY NUMBERS. A 13px label in a 10px row pitch
+ * overlaps its neighbours. The month and the wait are printed on the axis
+ * rows plus the two marked rows, which `labelRows` keeps three rows apart;
+ * every row keeps its full value in the screen-reader text regardless.
+ *
  * WHY THIS SERIES IS SAFE TO PUBLISH AND A COHORT MEDIAN IS NOT. This
  * conditions on the month a case was DECIDED, not the month it was filed.
  * Every case in a row is therefore fully observed by construction, so the
  * survivorship trap that makes a recent filing-cohort median meaningless
  * (June 2026's raw cohort median is 1 day, because the only cases decided so
- * far are instant withdrawals) cannot reach it. Row counts run 7,505 to
- * 19,787 determinations, and the most recent row is the largest.
+ * far are instant withdrawals) cannot reach it.
  *
  * WHAT IT IS NOT. Not a prediction, not an estimate, and not anyone's
  * personal wait. It is a median over cases DOL has already decided.
@@ -93,6 +116,48 @@ export function evenTicks(n: number, count: number): number[] {
   return [...out].sort((a, b) => a - b);
 }
 
+/**
+ * Row height and gap for a series of `n` rows, so the plate is a fixed size
+ * however long the series gets.
+ *
+ * The alternative, a written-down row height, makes the figure grow by one
+ * row every time DOL publishes. That is a layout that breaks on a schedule
+ * rather than on a change, which is the kind nobody is watching for.
+ */
+export function plateMetrics(n: number): { rowH: number; gapH: number } {
+  /** Total px the plate spends on rows, gaps included. */
+  const TARGET = 330;
+  const gapH = n > 40 ? 2 : 3;
+  const rowH = Math.max(
+    4,
+    Math.min(9, Math.round(TARGET / Math.max(1, n)) - gapH),
+  );
+  return { rowH, gapH };
+}
+
+/**
+ * Which rows carry a printed month and wait: the evenly spaced axis rows,
+ * plus `pinned` rows that must be labelled whatever the spacing works out to.
+ *
+ * A pinned row always wins. An axis tick within `MIN_GAP` rows of one is
+ * dropped rather than nudged, because two labels a row apart in a 10px pitch
+ * print on top of each other, and a moved tick is no longer an axis.
+ */
+export function labelRows(
+  n: number,
+  count: number,
+  pinned: number[],
+): number[] {
+  const MIN_GAP = 3;
+  const pins = [
+    ...new Set(pinned.filter((i) => Number.isInteger(i) && i >= 0 && i < n)),
+  ];
+  const out = new Set(pins);
+  for (const t of evenTicks(n, count))
+    if (pins.every((p) => Math.abs(p - t) >= MIN_GAP)) out.add(t);
+  return [...out].sort((a, b) => a - b);
+}
+
 interface Measured {
   row: WaitLedgerRow;
   /** Whole months from filing to determination. */
@@ -146,6 +211,46 @@ export function measure(rows: WaitLedgerRow[]): {
   };
 }
 
+/**
+ * One end of the movement: a wait in months, and the month it was measured in.
+ *
+ * The peak reading is deliberately quieter than the current one. They are the
+ * same kind of fact and only one of them is true today.
+ */
+function Reading({
+  label,
+  wait,
+  month,
+  current,
+}: {
+  label: string;
+  wait: number;
+  month: string;
+  current?: boolean;
+}) {
+  return (
+    <div className="min-w-0">
+      <p className="font-mono text-[13px] font-semibold uppercase tracking-[0.1em] text-black/70">
+        {label}
+      </p>{" "}
+      <p
+        className={cn(
+          "mt-1 font-heading font-black leading-none tracking-[-0.03em]",
+          current ? "text-black" : "text-black/60",
+        )}
+      >
+        <span className="text-[2.5rem] sm:text-[3rem]">{wait}</span>{" "}
+        <span className="font-mono text-[15px] font-semibold tracking-normal">
+          months
+        </span>
+      </p>{" "}
+      <p className="mt-1 font-mono text-[13px] font-semibold text-black/70">
+        decided {shortLabel(month)}
+      </p>
+    </div>
+  );
+}
+
 export function WaitLedger({
   rows,
   className,
@@ -157,8 +262,32 @@ export function WaitLedger({
   if (!data) return null;
 
   const { items } = data;
-  const current = items[items.length - 1]!;
-  const ticks = new Set(evenTicks(items.length, 7));
+  const nowIndex = items.length - 1;
+  const now = items[nowIndex]!;
+  let peakIndex = 0;
+  for (let i = 1; i < items.length; i++)
+    if (items[i]!.wait > items[peakIndex]!.wait) peakIndex = i;
+  const peak = items[peakIndex]!;
+  // A series that has not come down yet states one reading rather than
+  // dressing a flat or rising line up as a descent.
+  const descended = peakIndex !== nowIndex && peak.wait > now.wait;
+
+  const { rowH, gapH } = plateMetrics(items.length);
+  // EVERY row at the maximum is drawn heavy, not just the first one. A series
+  // this long ties at its peak, and marking one of two identical 17s makes the
+  // other look like a mistake. The readout names the FIRST, because "the peak"
+  // is when it got there.
+  const isMarked = new Set<number>([nowIndex]);
+  if (descended)
+    items.forEach((it, i) => {
+      if (it.wait === peak.wait) isMarked.add(i);
+    });
+  // Labels are pinned to the two rows the readout names, and to those only:
+  // a run of tied peaks sits on consecutive rows, and consecutive labels
+  // print on top of each other.
+  const labelled = new Set(
+    labelRows(items.length, 7, descended ? [peakIndex, nowIndex] : [nowIndex]),
+  );
 
   return (
     <figure
@@ -196,8 +325,28 @@ export function WaitLedger({
           </span>{" "}
           <span className="font-mono text-[13px] font-semibold text-black/70">
             {shortLabel(items[0]!.row.decisionMonth)} to{" "}
-            {shortLabel(current.row.decisionMonth)}
+            {shortLabel(now.row.decisionMonth)}
           </span>
+        </div>
+
+        {/* The statement. Two readings the field below is the evidence for. */}
+        <div className="flex items-end gap-6 border-b-2 border-black/25 py-4 sm:gap-9">
+          {descended ? (
+            <>
+              <Reading
+                label="Peak"
+                wait={peak.wait}
+                month={peak.row.decisionMonth}
+              />{" "}
+              <ArrowRight className="mb-[1.35rem] shrink-0 text-[22px] text-black/55" />{" "}
+            </>
+          ) : null}
+          <Reading
+            label="Now"
+            wait={now.wait}
+            month={now.row.decisionMonth}
+            current
+          />
         </div>
 
         <p className="sr-only">
@@ -205,37 +354,51 @@ export function WaitLedger({
           month. One entry per month of determinations.
         </p>
 
-        <ul className="mt-3 flex flex-col gap-[5px] sm:gap-[7px]">
+        <ul className="mt-4 flex flex-col" style={{ gap: `${gapH}px` }}>
           {items.map((item, i) => {
-            const isCurrent = i === items.length - 1;
+            const isCurrent = i === nowIndex;
+            const mark = isMarked.has(i);
+            const shows = labelled.has(i);
             return (
               <li
                 key={item.row.decisionMonth}
                 className="flex items-center gap-2 sm:gap-3"
+                style={{ height: `${rowH}px` }}
               >
                 <span
                   aria-hidden="true"
-                  className="w-[52px] shrink-0 text-right font-mono text-[13px] font-semibold leading-none text-black/65 sm:w-[58px]"
+                  className={cn(
+                    "w-[52px] shrink-0 text-right font-mono text-[13px] leading-none sm:w-[58px]",
+                    mark
+                      ? "font-black text-black"
+                      : "font-semibold text-black/65",
+                  )}
                 >
-                  {ticks.has(i) ? shortLabel(item.row.decisionMonth) : ""}
+                  {shows ? shortLabel(item.row.decisionMonth) : ""}
                 </span>{" "}
                 <span
                   aria-hidden="true"
-                  className="relative h-[7px] min-w-0 flex-1 sm:h-[9px]"
+                  className="relative h-full min-w-0 flex-1"
                 >
                   <span
                     className={cn(
-                      "wl-seg absolute inset-y-0 block",
+                      "wl-seg absolute block",
                       isCurrent
                         ? // Lime on manila measures 1.73:1, so this bar is
                           // defined by its edge, never by its fill.
                           "border-2 border-black bg-primary"
-                        : "bg-black/80",
+                        : mark
+                          ? "bg-black"
+                          : "bg-black/80",
                     )}
                     style={
                       {
                         left: `${item.left}%`,
                         width: `${item.width}%`,
+                        // A marked row eats its own gap so it reads heavier
+                        // than the field without moving anything below it.
+                        height: `${mark ? rowH + gapH : rowH}px`,
+                        top: `${mark ? -gapH / 2 : 0}px`,
                         "--i": i,
                       } as React.CSSProperties
                     }
@@ -245,12 +408,12 @@ export function WaitLedger({
                   aria-hidden="true"
                   className={cn(
                     "w-[26px] shrink-0 text-right font-mono leading-none",
-                    isCurrent
+                    mark
                       ? "text-[15px] font-black text-black"
                       : "text-[13px] font-semibold text-black/65",
                   )}
                 >
-                  {item.wait}
+                  {shows ? item.wait : ""}
                 </span>{" "}
                 <span className="sr-only">
                   Cases decided in {shortLabel(item.row.decisionMonth)} had a

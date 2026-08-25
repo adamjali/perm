@@ -229,8 +229,8 @@ export default function QuietHoursSection({
 
   return (
     <div
-      className="bg-card border-2 border-black p-6"
-      style={{ boxShadow: "4px 4px 0px #000" }}
+      className="bg-card border-2 border-border p-6"
+      style={{ boxShadow: "var(--shadow-hard)" }}
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">

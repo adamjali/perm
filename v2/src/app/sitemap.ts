@@ -3,6 +3,7 @@ import { fetchQuery } from 'convex/nextjs'
 import { api } from '../../convex/_generated/api'
 import { getAllPosts } from '@/lib/content'
 import { fetchAllEntitiesServer } from '@/lib/entitySeed'
+import { hasOwnPage } from '@/lib/entityPayload'
 import { captureError } from '@/lib/sentry'
 
 // Next.js sitemap routes are cached by default and only regenerated when
@@ -119,16 +120,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     )
   }
 
+  // Only entities that HAVE a page. Everything below the threshold is stored
+  // and searchable but has no URL, and a sitemap must never advertise one
+  // that 404s.
+  const pageworthy = (rows: { slug: string; total: number }[]) =>
+    rows.filter(hasOwnPage)
   const entityUrls: MetadataRoute.Sitemap = [
-    ...employers.map(({ slug }) => ({
+    ...pageworthy(employers).map(({ slug }) => ({
       url: `${baseUrl}/perm-employers/${slug}`,
       lastModified: entityDate,
     })),
-    ...firms.map(({ slug }) => ({
+    ...pageworthy(firms).map(({ slug }) => ({
       url: `${baseUrl}/perm-attorneys/${slug}`,
       lastModified: entityDate,
     })),
-    ...occupations.map(({ slug }) => ({
+    ...pageworthy(occupations).map(({ slug }) => ({
       url: `${baseUrl}/perm-wages/${slug}`,
       lastModified: entityDate,
     })),

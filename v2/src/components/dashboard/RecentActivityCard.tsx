@@ -35,7 +35,7 @@ export default function RecentActivityCard({ activity }: RecentActivityCardProps
       loadingIndicator="overlay"
       className={cn(
         "group flex items-center justify-between gap-4",
-        "bg-card border-2 border-black",
+        "bg-card border-2 border-border",
         "hover:-translate-y-0.5 hover:shadow-hard-sm",
         "transition-all duration-150",
         "px-4 py-3"

@@ -62,6 +62,12 @@ export interface FilterableStatTableProps<T> {
   facets?: Facet<T>[];
   csv?: CsvSpec<T>;
   pageSize?: number;
+  /**
+   * Search the whole corpus server-side. Used only when the local search over
+   * the downloaded rows finds nothing, which for a bounded download is the
+   * ordinary case for anything outside the head of the ranking.
+   */
+  searchRemote?: (text: string) => Promise<T[]>;
 }
 
 const PAGE_SIZES = [25, 50, 100, 250] as const;
@@ -114,6 +120,7 @@ export function FilterableStatTable<T>({
   facets = [],
   csv,
   pageSize: initialPageSize = 50,
+  searchRemote,
 }: FilterableStatTableProps<T>) {
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState(initialSort);
@@ -162,7 +169,42 @@ export function FilterableStatTable<T>({
     return out;
   }, [working, columns, query, sortKey, sortDesc, searchText, facets, facetValues]);
 
-  const pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
+  // When the local list has nothing and the corpus is bigger than what was
+  // downloaded, ask the server. Debounced, and the newest query wins.
+  const [remote, setRemote] = useState<T[] | null>(null);
+  const [remoteBusy, setRemoteBusy] = useState(false);
+  const remoteSeq = useRef(0);
+  const q = query.trim();
+  const wantRemote =
+    searchRemote !== undefined && q.length >= 2 && visible.length === 0;
+
+  useEffect(() => {
+    if (!wantRemote || !searchRemote) {
+      setRemote(null);
+      setRemoteBusy(false);
+      return;
+    }
+    const id = ++remoteSeq.current;
+    setRemoteBusy(true);
+    const t = setTimeout(() => {
+      searchRemote(q)
+        .then((r) => {
+          if (remoteSeq.current === id) setRemote(r);
+        })
+        .catch(() => {
+          if (remoteSeq.current === id) setRemote([]);
+        })
+        .finally(() => {
+          if (remoteSeq.current === id) setRemoteBusy(false);
+        });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [wantRemote, q, searchRemote]);
+
+  const shown = visible.length === 0 && remote !== null ? remote : visible;
+  const usingRemote = shown === remote && remote !== null && remote.length > 0;
+
+  const pageCount = Math.max(1, Math.ceil(shown.length / pageSize));
   // A filter that shortens the list can strand the viewer on a page past the
   // end, which renders as an empty table over a non-empty result.
   const safePage = Math.min(page, pageCount - 1);
@@ -171,8 +213,8 @@ export function FilterableStatTable<T>({
   }, [page, safePage]);
 
   const pageRows = useMemo(
-    () => visible.slice(safePage * pageSize, safePage * pageSize + pageSize),
-    [visible, safePage, pageSize],
+    () => shown.slice(safePage * pageSize, safePage * pageSize + pageSize),
+    [shown, safePage, pageSize],
   );
 
   const facetOptions = useMemo(() => {
@@ -293,6 +335,15 @@ export function FilterableStatTable<T>({
                 {corpusSize.toLocaleString("en-US")} {noun}. Search or sort to
                 read all of them.
               </>
+            ) : usingRemote ? (
+              <>
+                Found{" "}
+                <strong className="font-bold">
+                  {remote.length.toLocaleString("en-US")}
+                </strong>{" "}
+                {noun} by name, searched across all of them. Ones with fewer
+                than three filings have no page of their own.
+              </>
             ) : filtersOn ? (
               <>
                 <strong className="font-bold">
@@ -408,8 +459,9 @@ export function FilterableStatTable<T>({
             {pageRows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-3 py-8 text-center text-foreground/60">
-                  Nothing matches that. Clear the search and the filters to see
-                  the full list.
+                  {remoteBusy
+                    ? `Searching all ${noun}\u2026`
+                    : `Nothing matches that. Clear the search and the filters to see the full list.`}
                 </td>
               </tr>
             ) : null}

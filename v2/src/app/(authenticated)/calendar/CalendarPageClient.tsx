@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { CalendarView, type CaseDataMap, CalendarFilters } from "@/components/calendar";
 import type { CaseForSelection } from "@/components/timeline";
+import { PageHeading } from "../components/PageHeading";
 
 // Import V1-style calendar CSS (Tippy.js theme, event styling)
 import "@/app/calendar-v1.css";
@@ -123,10 +124,10 @@ function CalendarEmptyState() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="font-heading text-3xl font-bold">Calendar</h1>{" "}
-        <p className="text-muted-foreground mt-1">
-          View your case deadlines and milestones
-        </p>
+        <PageHeading
+          title="Calendar"
+          lede="View your case deadlines and milestones"
+        />
       </div>
 
       {/* Empty state message */}
@@ -295,10 +296,10 @@ export function CalendarPageClient() {
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="font-heading text-3xl font-bold">Calendar</h1>{" "}
-          <p className="text-muted-foreground mt-1">
-            View your case deadlines and milestones
-          </p>
+          <PageHeading
+            title="Calendar"
+            lede="View your case deadlines and milestones"
+          />
         </div>
 
         {/* Calendar view with empty state message */}
@@ -333,7 +334,7 @@ export function CalendarPageClient() {
       {!isGoogleConnected && (
         <div
           className="mb-4 flex items-center justify-between gap-4 px-4 py-3 bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-200 dark:border-blue-800"
-          style={{ boxShadow: "2px 2px 0px rgba(59,130,246,0.3)" }}
+          style={{ boxShadow: "var(--shadow-hard-sm)" }}
         >
           <div className="flex items-center gap-3">
             <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700">
@@ -351,7 +352,7 @@ export function CalendarPageClient() {
           <Link
             href="/settings?tab=calendar-sync"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white border-2 border-black transition-colors"
-            style={{ boxShadow: "2px 2px 0px #000" }}
+            style={{ boxShadow: "var(--shadow-hard-sm)" }}
           >
             Connect
             <ExternalLink className="w-3.5 h-3.5" />
@@ -361,11 +362,10 @@ export function CalendarPageClient() {
 
       {/* Header */}
       <div className="mb-4">
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold">Calendar</h1>{" "}
-        <p className="text-sm sm:text-base text-muted-foreground mt-1">
-          {events.length} deadline{events.length !== 1 ? "s" : ""} across{" "}
-          {calendarCases.length} case{calendarCases.length !== 1 ? "s" : ""}
-        </p>
+        <PageHeading
+          eyebrow={`${events.length} deadline${events.length !== 1 ? "s" : ""} across ${calendarCases.length} case${calendarCases.length !== 1 ? "s" : ""}`}
+          title="Calendar"
+        />
       </div>
 
       {/* Filters */}

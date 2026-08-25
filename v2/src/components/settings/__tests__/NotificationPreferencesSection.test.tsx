@@ -811,7 +811,7 @@ describe("NotificationPreferencesSection", () => {
         <NotificationPreferencesSection profile={defaultProfile} userEmail={TEST_EMAIL} />
       );
 
-      const cards = container.querySelectorAll(".border-2.border-black");
+      const cards = container.querySelectorAll(".border-2.border-border");
       expect(cards.length).toBeGreaterThanOrEqual(3); // 3 sections
     });
 

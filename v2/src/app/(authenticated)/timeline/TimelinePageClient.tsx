@@ -13,6 +13,7 @@ import { TimelineGrid } from "@/components/timeline/TimelineGrid";
 import { TimelineControls } from "@/components/timeline/TimelineControls";
 import { TimelineLegend } from "@/components/timeline/TimelineLegend";
 import { CaseSelectionModal, type CaseForSelection } from "@/components/timeline/CaseSelectionModal";
+import { PageHeading } from "../components/PageHeading";
 
 export function TimelinePageClient() {
   const router = useRouter();
@@ -217,10 +218,10 @@ export function TimelinePageClient() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-heading text-3xl font-bold">Timeline</h1>{" "}
-            <p className="text-muted-foreground mt-1">
-              Visualize your case progress
-            </p>
+            <PageHeading
+              title="Timeline"
+              lede="Visualize your case progress"
+            />
           </div>
           <TimelineControls
             timeRange={timeRange}

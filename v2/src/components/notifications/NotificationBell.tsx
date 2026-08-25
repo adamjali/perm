@@ -99,7 +99,7 @@ export default function NotificationBell({ className, children }: NotificationBe
                 // Typography
                 "text-[10px] font-bold font-heading leading-none",
                 // Border for contrast
-                "border-2 border-black",
+                "border-2 border-border",
                 // Animation: scale in
                 "animate-in zoom-in-50 duration-200"
               )}
@@ -120,7 +120,7 @@ export default function NotificationBell({ className, children }: NotificationBe
           // Remove default shadcn rounded corners
           "rounded-none",
           // Neobrutalist styling - use design token for proper dark mode
-          "border-2 border-black bg-popover",
+          "border-2 border-border bg-popover",
           "shadow-hard",
           // Size - let inner content handle overflow (no max-h here to avoid double scroll)
           // Override default padding

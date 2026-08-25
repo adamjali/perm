@@ -1418,6 +1418,14 @@ export default defineSchema({
     computedAt: v.number(),
   })
     /** Detail pages: one exact row. */
+    // Name search, so an entity is findable even when it is far outside the
+    // slice the index page has loaded. The page lazy-loads a bounded head of
+    // the rank order; without this, searching for a small sponsor returns
+    // "no match" when the row exists and simply was not downloaded.
+    .searchIndex("search_name", {
+      searchField: "name",
+      filterFields: ["kind"],
+    })
     .index("by_kind_slug", ["kind", "slug"])
     /** Listing and generateStaticParams: ordered, bounded reads. */
     .index("by_kind_rank", ["kind", "rank"]),

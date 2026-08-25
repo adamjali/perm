@@ -54,7 +54,7 @@ function CaseCardSkeleton({ index }: { index: number }) {
         </div>
 
         {/* Action buttons row */}
-        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-black/20">
+        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
           <Skeleton variant="block" className="flex-1 h-8" />
           <Skeleton variant="block" className="w-16 h-8" />
           <Skeleton variant="block" className="w-8 h-8" />

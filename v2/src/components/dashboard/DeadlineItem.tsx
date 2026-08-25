@@ -177,7 +177,7 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
     return createPortal(
       <div
         className={cn(
-          "fixed w-56 bg-card border-2 border-black",
+          "fixed w-56 bg-card border-2 border-border",
           "shadow-hard p-3 space-y-2 pointer-events-none",
           "animate-in fade-in-0 zoom-in-95 duration-150"
         )}
@@ -230,7 +230,7 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
           onClick={handleClick}
           className={cn(
             "group relative flex items-center justify-between",
-            "px-4 py-3 bg-card border-2 border-black",
+            "px-4 py-3 bg-card border-2 border-border",
             "cursor-pointer transition-all duration-150 ease-out",
             "hover:-translate-y-0.5 hover:shadow-[4px_4px_0_var(--foreground)]",
             isOverdue && "border-red-600 dark:border-red-500",

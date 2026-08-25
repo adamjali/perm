@@ -195,6 +195,47 @@ describe("FilterableStatTable", () => {
 
   });
 
+  it("asks the server when the LOCAL search finds nothing", async () => {
+    // The page downloads a bounded head of the ranking, so a name outside it
+    // is absent from `rows` and a purely client-side search answers "no
+    // match" for a row that plainly exists. That was 79% of employers.
+    const remoteHit: Row = { name: "Tiny Bakery LLC", total: 2, state: "OR", days: null };
+    const searchRemote = vi.fn(async () => [remoteHit]);
+    render(
+      <FilterableStatTable
+        rows={ROWS}
+        {...base()}
+        totalCount={82677}
+        loadAll={async () => ROWS}
+        searchRemote={searchRemote}
+      />,
+    );
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "Tiny Bakery" },
+    });
+    await waitFor(() => expect(searchRemote).toHaveBeenCalledWith("Tiny Bakery"));
+    await waitFor(() =>
+      expect(bodyOrder().some((r) => r.includes("Tiny Bakery LLC"))).toBe(true),
+    );
+    expect(screen.getByRole("status").textContent).toMatch(/searched across all of them/);
+  });
+
+  it("does not ask the server when the local search already answered", async () => {
+    const searchRemote = vi.fn(async () => []);
+    render(
+      <FilterableStatTable
+        rows={ROWS}
+        {...base()}
+        totalCount={82677}
+        loadAll={async () => ROWS}
+        searchRemote={searchRemote}
+      />,
+    );
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "micro" } });
+    await waitFor(() => expect(bodyOrder()).toHaveLength(1));
+    expect(searchRemote).not.toHaveBeenCalled();
+  });
+
   it("does not strand the viewer on a page that no longer exists", () => {
     // The clamp's real trigger is the ROW SET shrinking underneath the viewer,
     // not a filter: every control here resets the page to 0, so filtering can

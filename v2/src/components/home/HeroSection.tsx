@@ -32,6 +32,14 @@ import {
  * `html[data-pre="off"]` so it plays when the curtain lifts instead of behind
  * it.
  *
+ * WHY THE DOORS LIVE IN THE TEXT COLUMN. They used to be a second grid row,
+ * and the instrument beside them spanned both rows. Grid sizes a row to fit a
+ * spanning item, so the instrument's height became the height of the space
+ * between the subcopy and the doors: at 33 monthly rows that was roughly
+ * 400px of nothing, with both primary calls to action pushed below the fold
+ * on a 900px screen. Text and doors are one flow now, so no third element can
+ * size the gap between them however tall it grows.
+ *
  * DELIBERATELY ABSENT, all removed from the previous version:
  *   - lucide-react icons (the library is superseded here by Phosphor)
  *   - a browser chrome bar built out of divs around a screenshot, which is
@@ -66,11 +74,11 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
       id="hero"
       className="relative border-b-3 border-border lg:min-h-[calc(100dvh-4rem)]"
     >
-      <div className="relative z-10 mx-auto grid max-w-[1400px] grid-cols-1 items-start gap-8 px-4 pb-12 pt-8 [&>*]:min-w-0 sm:px-8 sm:pb-16 sm:pt-12 lg:grid-cols-12 lg:gap-x-12 lg:pb-20 lg:pt-16">
+      <div className="relative z-10 mx-auto grid max-w-[1400px] grid-cols-1 items-start gap-10 px-4 pb-12 pt-8 [&>*]:min-w-0 sm:px-8 sm:pb-16 sm:pt-12 lg:grid-cols-12 lg:gap-x-12 lg:pb-20 lg:pt-16">
         {/* Dateline. The as-of stamp is the most characteristic artifact in
             this subject's world, so it is set as part of the claim rather
             than hidden in fine print under it. */}
-        <div className="lg:col-span-5">
+        <div className="flex flex-col lg:col-span-5">
           <p className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
             {current
               ? `DOL determinations through ${shortLabel(current.row.decisionMonth)}`
@@ -107,11 +115,55 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
                 in your case automatically. Free.
               </>
             )}
-          </p>
+          </p>{" "}
+          {/* The two doors, inside the text column on purpose. They used to be a
+              second grid row whose height the instrument set; now nothing sits
+              between them and the subcopy that can grow. Real links, so a
+              crawler and a middle-click both work. */}
+          <div className="mt-8 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2 lg:mt-10">
+            <Link
+              href="/tools"
+              className="group flex flex-col border-3 border-border bg-card p-5 shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+            >
+              <span className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                Waiting on a case
+              </span>{" "}
+              <span className="mt-2 font-heading text-lg font-black leading-tight">
+                See where the queue stands
+              </span>{" "}
+              <span className="mt-2 text-base leading-relaxed text-foreground/70">
+                Live DOL figures and one email when your filing month comes up.
+              </span>{" "}
+              <span className="mt-3 inline-flex items-center gap-2 font-bold">
+                Open the data{" "}
+                <ArrowRight className="transition-transform duration-150 group-hover:translate-x-1" />
+              </span>
+            </Link>
+            <Link
+              href="/signup"
+              className="group flex flex-col border-3 border-border bg-foreground p-5 text-background shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+            >
+              <span className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-background/70">
+                Managing cases
+              </span>{" "}
+              <span className="mt-2 font-heading text-lg font-black leading-tight">
+                Track every deadline
+              </span>{" "}
+              <span className="mt-2 text-base leading-relaxed text-background/80">
+                Filing windows, wage expirations and audit responses, computed
+                per case.
+              </span>{" "}
+              <span className="mt-3 inline-flex items-center gap-2 font-bold underline decoration-primary decoration-2 underline-offset-4">
+                Start tracking free{" "}
+                <ArrowRight className="transition-transform duration-150 group-hover:translate-x-1" />
+              </span>
+            </Link>
+          </div>
         </div>
 
-        {/* The instrument. Row 1 on desktop, spanning both text rows. */}
-        <div className="lg:col-span-7 lg:row-span-2">
+        {/* The instrument. One grid cell, its own height, beside the column
+            above and never sizing anything in it. */}
+        <div className="lg:col-span-7">
           {data ? (
             <WaitLedger rows={waitRows} />
           ) : (
@@ -135,48 +187,6 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               </a>
             </div>
           )}
-        </div>
-
-        {/* The two doors. One product, two readers, each named in their own
-            words. Real links, so a crawler and a middle-click both work. */}
-        <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2 lg:col-span-5 lg:self-end">
-          <Link
-            href="/tools"
-            className="group flex flex-col border-3 border-border bg-card p-5 shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
-          >
-            <span className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-              Waiting on a case
-            </span>{" "}
-            <span className="mt-2 font-heading text-lg font-black leading-tight">
-              See where the queue stands
-            </span>{" "}
-            <span className="mt-2 text-base leading-relaxed text-foreground/70">
-              Live DOL figures and one email when your filing month comes up.
-            </span>{" "}
-            <span className="mt-3 inline-flex items-center gap-2 font-bold">
-              Open the data{" "}
-              <ArrowRight className="transition-transform duration-150 group-hover:translate-x-1" />
-            </span>
-          </Link>
-          <Link
-            href="/signup"
-            className="group flex flex-col border-3 border-border bg-foreground p-5 text-background shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
-          >
-            <span className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-background/70">
-              Managing cases
-            </span>{" "}
-            <span className="mt-2 font-heading text-lg font-black leading-tight">
-              Track every deadline
-            </span>{" "}
-            <span className="mt-2 text-base leading-relaxed text-background/80">
-              Filing windows, wage expirations and audit responses, computed per
-              case.
-            </span>{" "}
-            <span className="mt-3 inline-flex items-center gap-2 font-bold underline decoration-primary decoration-2 underline-offset-4">
-              Start tracking free{" "}
-              <ArrowRight className="transition-transform duration-150 group-hover:translate-x-1" />
-            </span>
-          </Link>
         </div>
       </div>
     </section>

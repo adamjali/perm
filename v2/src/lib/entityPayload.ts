@@ -103,3 +103,19 @@ export function approvalRate(r: {
   const decided = r.certified + r.denied;
   return decided === 0 ? null : r.certified / decided;
 }
+
+/**
+ * Filings an entity needs before it gets a page of its own.
+ *
+ * Every entity is STORED and searchable; this decides which are worth a URL.
+ * Below three, the page would say "one case, certified" and nothing else,
+ * and 65,000 of those is the doorway-page pattern rather than a directory.
+ * The sitemap, `generateStaticParams` and the index tables all read this, so
+ * a row that links somewhere and a page that exists cannot disagree.
+ */
+export const MIN_TOTAL_FOR_PAGE = 3;
+
+/** Does this entity have a page, or is it search-only? */
+export function hasOwnPage(row: { total: number }): boolean {
+  return row.total >= MIN_TOTAL_FOR_PAGE;
+}

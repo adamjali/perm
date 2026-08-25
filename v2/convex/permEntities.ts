@@ -420,3 +420,63 @@ export const comparables = query({
     };
   },
 });
+
+/**
+ * Find entities by name, anywhere in the corpus.
+ *
+ * The index pages server-render a head and lazily fetch a bounded slice of
+ * the rank order, so a client-side search can only ever see what was
+ * downloaded. For a corpus of 16,000 sponsors that is most of them; the
+ * moment the floor drops it is a small minority, and "no match" for a row
+ * that exists is a worse answer than a slow one.
+ *
+ * Bounded by construction: a search index read is not a scan, and `limit` is
+ * clamped server-side so a caller cannot ask for the table.
+ */
+export const searchByName = query({
+  args: {
+    kind: kindValidator,
+    text: v.string(),
+    limit: v.optional(v.number()),
+  },
+  returns: v.array(
+    v.object({
+      slug: v.string(),
+      name: v.string(),
+      rank: v.number(),
+      total: v.number(),
+      certified: v.number(),
+      denied: v.number(),
+      medianDays: v.union(v.number(), v.null()),
+      medianAnnualWage: v.optional(v.union(v.number(), v.null())),
+      state: v.optional(v.string()),
+      code: v.optional(v.string()),
+    }),
+  ),
+  handler: async (ctx, { kind, text, limit }) => {
+    // Cheap guard first. A search index will happily accept a megabyte of
+    // text; v.string() allows roughly that, and this route is reachable by
+    // anyone. Length before anything that scales with length.
+    const q = text.trim().slice(0, 120);
+    if (q.length < 2) return [];
+    const take = Math.min(Math.max(1, limit ?? 50), 200);
+    const rows = await ctx.db
+      .query("permEntities")
+      .withSearchIndex("search_name", (s) =>
+        s.search("name", q).eq("kind", kind),
+      )
+      .take(take);
+    return rows.map((row) => ({
+      slug: row.slug,
+      name: row.name,
+      rank: row.rank,
+      total: row.total,
+      certified: row.certified,
+      denied: row.denied,
+      medianDays: row.medianDays,
+      medianAnnualWage: row.medianAnnualWage,
+      state: row.state,
+      code: row.code,
+    }));
+  },
+});

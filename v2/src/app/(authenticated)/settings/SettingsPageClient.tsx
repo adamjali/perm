@@ -17,6 +17,7 @@ import QuietHoursSection from "@/components/settings/QuietHoursSection";
 import CalendarSyncSection from "@/components/settings/CalendarSyncSection";
 import SupportSection from "@/components/settings/SupportSection";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeading } from "../components/PageHeading";
 
 // ============================================================================
 // CONSTANTS
@@ -48,7 +49,7 @@ function SettingsPageSkeleton() {
       {/* Layout Skeleton */}
       <div className="flex flex-col md:flex-row gap-8">
         {/* Mobile tabs skeleton */}
-        <div className="md:hidden flex gap-2 overflow-hidden pb-4 border-b-2 border-black/20">
+        <div className="md:hidden flex gap-2 overflow-hidden pb-4 border-b-2 border-border">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-10 w-24 flex-shrink-0" />
           ))}
@@ -241,10 +242,11 @@ export function SettingsPageClient() {
       <div data-tour="settings-page" className="space-y-8">
         {/* Page Header */}
         <div>
-          <h1 className="font-heading text-3xl font-bold">Settings</h1>{" "}
-          <p className="text-muted-foreground mt-1">
-            Manage your account preferences
-          </p>
+          <PageHeading
+            eyebrow="Account"
+            title="Settings"
+            lede="Manage your account preferences"
+          />
         </div>
 
         {/* Settings Layout with Navigation */}

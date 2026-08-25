@@ -579,7 +579,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
       );
 
-      const card = container.querySelector(".border-2.border-black");
+      const card = container.querySelector(".border-2.border-border");
       expect(card).toBeInTheDocument();
     });
 
@@ -597,7 +597,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
       );
 
-      const photoContainer = container.querySelector(".w-20.h-20.border-2.border-black");
+      const photoContainer = container.querySelector(".w-20.h-20.border-2.border-border");
       expect(photoContainer).toBeInTheDocument();
     });
   });
