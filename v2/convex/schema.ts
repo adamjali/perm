@@ -1426,6 +1426,260 @@ export default defineSchema({
    * Contact-form submissions. Stored first, THEN forwarded by a scheduled
    * action, so a Resend outage loses nothing - the message is already here.
    */
+  /**
+   * One row per PERM case DOL has published a decision for.
+   *
+   * Everything else derived from the disclosure files is an aggregate. This
+   * is the exception, and it is deliberate: the rival product ships a
+   * case-level browser and we hold the same source rows, so the only thing
+   * separating us from it was where the rows were dropped.
+   *
+   * PRIVACY BOUNDARY, UNCHANGED IN SUBSTANCE. The source rows carry
+   * `ATTY_AG_EMAIL`, `EMP_POC_EMAIL`, `DECL_PREP_EMAIL`, direct phone
+   * numbers and street addresses for roughly 112,000 real people. Not one
+   * of those columns is read by the ingest, and none of them can appear
+   * here. Every field below is an organisation, a date, a job, or a wage -
+   * the same facts DOL prints in the public file and the same facts the
+   * aggregate pages already publish, just not yet summed.
+   *
+   * SIZE. ~259,000 rows against a 1 MB document limit is exactly why this
+   * is a table and not an array on `permDisclosureStats`. Rows are replaced
+   * wholesale each quarter (`clearBatch` looped, then `insertChunk`),
+   * following `permEntities`, because Convex counts reads PER FUNCTION
+   * EXECUTION and a clear-then-insert mutation cannot delete 259,000 rows
+   * however it batches them internally.
+   *
+   * INDEXES. Every browse index ends in `decisionDate`, which buys the date
+   * range filter on all of them for free (Convex allows a range comparison
+   * only on the final indexed field). The leading fields are the slice, and
+   * `planCaseQuery` in `convex/permCases.ts` is the only thing that chooses
+   * among them - it is a pure function so the mapping can be tested, because
+   * picking the wrong index here is the difference between a bounded read
+   * and a table scan that dies at 4,096 documents.
+   *
+   * A later index addition must be declared `staged: true`: adding one to a
+   * table this size blocks the deploy until the backfill finishes.
+   */
+  permCases: defineTable({
+    /** DOL's case number, e.g. `A-24123-45678`. Unique within the window. */
+    caseNumber: v.string(),
+    status: v.union(
+      v.literal("certified"),
+      v.literal("denied"),
+      v.literal("withdrawn"),
+    ),
+    /** Receipt date, `YYYY-MM-DD`. */
+    receivedDate: v.string(),
+    /** Determination date, `YYYY-MM-DD`. The sort key of every browse index. */
+    decisionDate: v.string(),
+    /** Receipt to determination. Stored, not derived: the ingest REJECTS a
+     *  row outside 0..2500 days, so this value is a filtered fact rather
+     *  than arithmetic anyone can redo from the two dates. */
+    days: v.number(),
+    /** Federal fiscal year of the DECISION. Present only because a search
+     *  index filter field cannot express a date range; browse paths use a
+     *  `decisionDate` range instead. */
+    fiscalYear: v.string(),
+    employerName: v.string(),
+    /** Matching `permEntities` slug, or "" for an employer below the entity
+     *  floor of 3 cases. "" means no detail page, so no link is rendered. */
+    employerSlug: v.string(),
+    /** Two-letter worksite state, or "" when DOL published none we resolve.
+     *  Empty string rather than an absent field on purpose: every index over
+     *  it stays dense and every filter over it is total. */
+    state: v.string(),
+    jobTitle: v.string(),
+    socCode: v.string(),
+    socTitle: v.string(),
+    attorneyName: v.string(),
+    attorneySlug: v.string(),
+    /** Offered wage annualised from DOL's amount and unit-of-pay columns.
+     *  `null` when the pair could not be trusted, which is not the same as
+     *  zero and must not render as one. */
+    wage: v.union(v.number(), v.null()),
+    computedAt: v.number(),
+  })
+    /** Case-number lookup: one row, one read. */
+    .index("by_case_number", ["caseNumber"])
+    /** Everything, newest first. */
+    .index("by_decision", ["decisionDate"])
+    .index("by_status_decision", ["status", "decisionDate"])
+    .index("by_state_decision", ["state", "decisionDate"])
+    .index("by_state_status_decision", ["state", "status", "decisionDate"])
+    .index("by_soc_decision", ["socCode", "decisionDate"])
+    .index("by_soc_status_decision", ["socCode", "status", "decisionDate"])
+    .index("by_employer_decision", ["employerSlug", "decisionDate"])
+    .index("by_employer_status_decision", ["employerSlug", "status", "decisionDate"])
+    .index("by_attorney_decision", ["attorneySlug", "decisionDate"])
+    .index("by_attorney_status_decision", ["attorneySlug", "status", "decisionDate"])
+    /**
+     * Free text over the organisation names, which is the one thing no
+     * ordered index can serve. Both cover the long tail that `permEntities`
+     * cannot: an employer with one or two cases has no entity row, so name
+     * search is the only way to reach it.
+     *
+     * `fiscalYear` is a filter field because search filters are equality
+     * only - a date range is not expressible here the way it is on the
+     * browse indexes.
+     */
+    .searchIndex("search_employer", {
+      searchField: "employerName",
+      filterFields: ["status", "state", "fiscalYear"],
+    })
+    .searchIndex("search_attorney", {
+      searchField: "attorneyName",
+      filterFields: ["status", "state", "fiscalYear"],
+    }),
+
+  /**
+   * What the case browser covers, and the exact counts behind its filters.
+   *
+   * Counts NEVER come from counting `permCases`. Counting a filtered set
+   * means reading it, and a read that walks 50,000 rows to print a number
+   * dies at Convex's 4,096-document limit. These are computed by the ingest
+   * over EXACTLY the rows it emitted, so a facet total and the rows the
+   * browser pages through cannot disagree - they are the same pass.
+   *
+   * `byState` duplicates `permDisclosureStats.byState` on purpose and is not
+   * the same list: that one drops states under 25 cases and carries medians,
+   * and a browser that pages through rows the header refuses to count is
+   * worse than a small duplication.
+   */
+  permCasesMeta: defineTable({
+    sourceFiles: v.array(v.string()),
+    /** Rows emitted, which is the number the browser can actually reach. */
+    totalCases: v.number(),
+    firstDecisionDate: v.string(),
+    lastDecisionDate: v.string(),
+    firstReceivedDate: v.string(),
+    lastReceivedDate: v.string(),
+    byStatus: v.array(
+      v.object({
+        status: v.union(
+          v.literal("certified"),
+          v.literal("denied"),
+          v.literal("withdrawn"),
+        ),
+        count: v.number(),
+      }),
+    ),
+    byFiscalYear: v.array(
+      v.object({
+        fiscalYear: v.string(),
+        total: v.number(),
+        certified: v.number(),
+        denied: v.number(),
+        withdrawn: v.number(),
+      }),
+    ),
+    byState: v.array(
+      v.object({
+        state: v.string(),
+        total: v.number(),
+        certified: v.number(),
+        denied: v.number(),
+        withdrawn: v.number(),
+      }),
+    ),
+    computedAt: v.number(),
+    contentHash: v.string(),
+  }).index("by_computed", ["computedAt"]),
+
+  /**
+   * Wage percentile cells for the salary explorer.
+   *
+   * One row per (partition, key, fiscal year). Three partitions - occupation,
+   * state, and occupation-by-state - each emitted per fiscal year and once
+   * more pooled as `"all"`.
+   *
+   * PER YEAR MATTERS once the ingest reaches back five years. Pooling a 2022
+   * salary with a 2026 one and publishing the median reports a rate that was
+   * never the market rate in any year of it, which is the same defect as
+   * averaging a 2016 processing time into a 2026 estimate.
+   *
+   * A TABLE RATHER THAN A DOCUMENT, and the reason is arithmetic. A cell
+   * needs F values to be published and each case lands in exactly one cell,
+   * so a partition yields at most N/F cells: at N = 259,489, occupation-by-
+   * state at F = 100 can reach 2,594 cells and the three partitions together
+   * about 26,000 rows worst case. That is comfortable for a table and far
+   * past the 1 MB document limit.
+   *
+   * Every percentile here is LINEAR INTERPOLATION between closest ranks - the
+   * convention `percentile()` in the ingest states and every other figure on
+   * the site already uses. Wages are annualised from DOL's amount and
+   * unit-of-pay columns before any of this, and values outside the
+   * plausibility band are EXCLUDED, not clamped. `permWageMeta` records that
+   * policy and how many rows it dropped, because silently excluding outliers
+   * and silently keeping them look identical from the outside.
+   */
+  permWageStats: defineTable({
+    kind: v.union(
+      v.literal("occupation"),
+      v.literal("state"),
+      v.literal("occupationState"),
+    ),
+    /** The partition key. For `occupationState` it is `<soc>|<state>`. */
+    key: v.string(),
+    /** "" on a state row. */
+    socCode: v.string(),
+    socTitle: v.string(),
+    /** "" on an occupation row. */
+    state: v.string(),
+    /** A federal fiscal year, or `"all"` for the pooled row. */
+    fiscalYear: v.string(),
+    count: v.number(),
+    p5: v.number(),
+    p10: v.number(),
+    p25: v.number(),
+    p50: v.number(),
+    p75: v.number(),
+    p90: v.number(),
+    p95: v.number(),
+    mean: v.number(),
+    /** Counts aligned to `permWageMeta.binEdges`, one entry per bin. */
+    histogram: v.array(v.number()),
+    computedAt: v.number(),
+  })
+    /** One cell, for a detail view. */
+    .index("by_kind_year_key", ["kind", "fiscalYear", "key"])
+    /** The busiest cells in a partition and year, for a ranked listing. */
+    .index("by_kind_year_count", ["kind", "fiscalYear", "count"]),
+
+  /**
+   * The salary explorer's shared axis and its stated policy.
+   *
+   * One row, replaced each ingest. `binEdges` lives here rather than being
+   * hardcoded in a chart so every histogram in `permWageStats` shares one
+   * axis and two of them can be laid over each other.
+   */
+  permWageMeta: defineTable({
+    sourceFiles: v.array(v.string()),
+    /** Lower bound of each histogram bin. The last bin is open-ended. */
+    binEdges: v.array(v.number()),
+    /** Minimum cell size before a cell is published, per partition shape. */
+    floors: v.object({ single: v.number(), pair: v.number() }),
+    policy: v.object({
+      /** `exclude-out-of-band`: what happens to an implausible wage. */
+      rule: v.string(),
+      min: v.number(),
+      max: v.number(),
+      /** Certified cases carrying a published wage of any kind. */
+      considered: v.number(),
+      kept: v.number(),
+      excluded: v.number(),
+      /** `below-band`, `above-band`, `unknown-unit`, `unparseable`, `ok`. */
+      excludedByReason: v.array(
+        v.object({ reason: v.string(), count: v.number() }),
+      ),
+      population: v.string(),
+      percentileMethod: v.string(),
+    }),
+    cells: v.number(),
+    fiscalYears: v.array(v.string()),
+    computedAt: v.number(),
+    contentHash: v.string(),
+  }).index("by_computed", ["computedAt"]),
+
   contactMessages: defineTable({
     name: v.string(),
     email: v.string(),
