@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "convex/react";
+// NOT convex/react: this is a PUBLIC page and there is no ConvexProvider
+// above it by design. See src/lib/useConvexHttpQuery.ts.
+import { useConvexHttpQuery } from "@/lib/useConvexHttpQuery";
 
 import { api } from "../../../convex/_generated/api";
 
@@ -231,18 +233,18 @@ export function CaseBrowser({
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [dimension, stateValue, socValue, employerSlug, attorneySlug, status, fiscalYear, pathname, router]);
 
-  const page = useQuery(api.permCases.listCases, {
+  const page = useConvexHttpQuery(api.permCases.listCases, {
     paginationOpts: { numItems: pageSize, cursor: cursors[pageIndex] ?? null },
     filter,
     order,
   });
 
-  const caseHit = useQuery(
+  const caseHit = useConvexHttpQuery(
     api.permCases.lookupByCaseNumber,
     caseQuery ? { caseNumber: caseQuery } : "skip",
   );
 
-  const nameHits = useQuery(
+  const nameHits = useConvexHttpQuery(
     api.permCases.searchCases,
     nameQuery.length >= 2 ? { field: nameField, text: nameQuery, limit: 50 } : "skip",
   );
