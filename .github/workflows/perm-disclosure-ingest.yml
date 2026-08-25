@@ -135,23 +135,6 @@ jobs:
       # (secret missing) or fails, `gh run download` retrieves them and
       # `npx convex run ...:storeStats` finishes the job from any machine
       # with Convex CLI auth.
-      - name: Upload payload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: federal-payloads
-          # The case stream is .ndjson.gz, and a *.json glob would drop the
-          # single largest thing this job produces precisely when the store
-          # step failed, which is when the artifact matters.
-          path: |
-            ${{ runner.temp }}/*.json
-            ${{ runner.temp }}/*.ndjson.gz
-          retention-days: 7
-          if-no-files-found: error
-
-      # The entity arrays are now uncapped, and uncapped they do not fit in a
-      # Convex document: 12,000 employer rows measured 1.14 MB against a 1 MB
-      # limit. So the full set goes to its own table, and the aggregate
-      # document keeps only what the index pages render.
       - name: Split the payload
         working-directory: v2
         run: |
@@ -169,12 +152,40 @@ jobs:
               p[k] = sorted(full[k], key=lambda r: -r["total"])[:TOP]
           out = os.environ["RUNNER_TEMP"] + "/perm-aggregate.json"
           json.dump(p, open(out, "w"))
-          size = os.path.getsize(out) / 1024 / 1024
-          print(f"aggregate document {size:.2f} MB")
-          if size > 0.9:
-              raise SystemExit("FATAL: aggregate payload is near the 1 MB document limit")
+          n = os.path.getsize(out)
+          print(f"aggregate document {n/1024/1024:.2f} MB ({n:,} bytes)")
+          # TWO ceilings, and the binding one is not the document limit.
+          # The next step passes this file as a single shell argument, and
+          # Linux caps ONE argument at MAX_ARG_STRLEN = 131,072 bytes however
+          # much ARG_MAX allows in total. The wage payload hit exactly this at
+          # 632 KB with "Argument list too long", and this file is already at
+          # 86% of it. Convex's 1 MB document limit is the looser one.
+          ARG_LIMIT = 131_072
+          if n > ARG_LIMIT * 0.95:
+              raise SystemExit(
+                  f"FATAL: aggregate is {n:,} bytes, at or past the "
+                  f"{ARG_LIMIT:,}-byte single-argument limit the store step "
+                  f"passes it through. Chunk it like permEntities does."
+              )
           PY
 
+      - name: Upload payload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: federal-payloads
+          # The case stream is .ndjson.gz, and a *.json glob would drop the
+          # single largest thing this job produces precisely when the store
+          # step failed, which is when the artifact matters.
+          path: |
+            ${{ runner.temp }}/*.json
+            ${{ runner.temp }}/*.ndjson.gz
+          retention-days: 7
+          if-no-files-found: error
+
+      # The entity arrays are now uncapped, and uncapped they do not fit in a
+      # Convex document: 12,000 employer rows measured 1.14 MB against a 1 MB
+      # limit. So the full set goes to its own table, and the aggregate
+      # document keeps only what the index pages render.
       - name: Store every entity in its own table
         working-directory: v2
         env:
@@ -203,20 +214,15 @@ jobs:
             echo "No case stream produced; skipping" >&2
             exit 0
           fi
-          python3 scripts/store_cases.py \
-            --cases "${RUNNER_TEMP}/perm-cases.ndjson.gz" --prod
-
-      - name: Store wage percentiles
-        working-directory: v2
-        env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-        run: |
-          if [ -z "$CONVEX_DEPLOY_KEY" ] || [ ! -s "${RUNNER_TEMP}/perm-wages.json" ]; then
-            echo "Skipping wage percentiles (no key or no payload)" >&2
-            exit 0
+          # Wage cells go in the same invocation: store_cases.py owns both
+          # writers, and both need the chunked clearBatch/insertChunk dance
+          # rather than a single call.
+          WAGES=""
+          if [ -s "${RUNNER_TEMP}/perm-wages.json" ]; then
+            WAGES="--wages ${RUNNER_TEMP}/perm-wages.json"
           fi
-          npx --yes convex run permWageStats:storeStats \
-            "$(cat "${RUNNER_TEMP}/perm-wages.json")" --prod
+          python3 scripts/store_cases.py \
+            --cases "${RUNNER_TEMP}/perm-cases.ndjson.gz" $WAGES --prod
 
       - name: Store aggregates in Convex
         working-directory: v2
