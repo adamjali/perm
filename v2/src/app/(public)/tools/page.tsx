@@ -156,12 +156,12 @@ export default async function ToolsPage() {
       {/* The two sides of the product, connected in one band. */}
       {/* The disclosure aggregates: three cuts of the same quarterly files. */}
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">The whole field, three ways</h2>{" "}
+        <h2 className="font-heading text-2xl font-black">The whole field, five ways</h2>{" "}
         <p className="mt-2 max-w-2xl text-base text-foreground/70">
           Every filing in DOL&apos;s quarterly disclosure files, cut by place,
-          pay and sponsor.
+          pay, sponsor, firm and outcome.
         </p>
-        <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
               href: "/perm-by-state",
@@ -180,6 +180,18 @@ export default async function ToolsPage() {
               label: "Employers",
               blurb: "The hundred biggest sponsors, ranked, searchable, with their track records.",
               tone: "card",
+            },
+            {
+              href: "/perm-attorneys",
+              label: "Law firms",
+              blurb: "Who files the most PERM cases, with volume, approval rate and median days.",
+              tone: "card",
+            },
+            {
+              href: "/perm-denial-risk",
+              label: "Denial rates",
+              blurb: "What actually gets denied, by wage, by year, and by what the form declares.",
+              tone: "tint",
             },
           ].map((c) => (
             <a

@@ -58,6 +58,50 @@ const socStatValidator = v.object({
   medianAnnualWage: v.union(v.number(), v.null()),
 });
 
+/** A law firm's record, keyed on the firm name DOL prints. */
+const attorneyStatValidator = v.object({
+  name: v.string(),
+  /** Two-letter state, or "" when DOL's cell was unusable. */
+  state: v.string(),
+  total: v.number(),
+  certified: v.number(),
+  denied: v.number(),
+  medianDays: v.union(v.number(), v.null()),
+});
+
+/** National offered-wage percentiles over certified cases. */
+const wageLadderValidator = v.object({
+  count: v.number(),
+  p10: v.union(v.number(), v.null()),
+  p25: v.union(v.number(), v.null()),
+  p50: v.union(v.number(), v.null()),
+  p75: v.union(v.number(), v.null()),
+  p90: v.union(v.number(), v.null()),
+});
+
+/** One denial-rate row: a bucket, its decided count, and its rate. */
+const riskRowValidator = v.object({
+  bucket: v.string(),
+  decided: v.number(),
+  denied: v.number(),
+  denialRate: v.number(),
+});
+
+/**
+ * Denial-risk tables. Withdrawals sit in neither numerator nor denominator -
+ * a withdrawn case is not an approval and not a denial.
+ */
+const riskValidator = v.object({
+  baseline: v.object({
+    decided: v.number(),
+    denied: v.number(),
+    denialRate: v.number(),
+  }),
+  byWage: v.array(riskRowValidator),
+  byYear: v.array(riskRowValidator),
+  byFlag: v.array(riskRowValidator),
+});
+
 const employerStatValidator = v.object({
   /** As printed in DOL's public disclosure file. */
   name: v.string(),
@@ -95,6 +139,9 @@ export const storeStats = internalMutation({
     byState: v.optional(v.array(stateStatValidator)),
     topOccupations: v.optional(v.array(socStatValidator)),
     topEmployers: v.optional(v.array(employerStatValidator)),
+    topAttorneys: v.optional(v.array(attorneyStatValidator)),
+    wageLadder: v.optional(v.union(wageLadderValidator, v.null())),
+    risk: v.optional(riskValidator),
     contentHash: v.string(),
   },
   returns: v.object({
@@ -142,6 +189,9 @@ export const storeStats = internalMutation({
           byState: args.byState,
       topOccupations: args.topOccupations,
       topEmployers: args.topEmployers,
+      topAttorneys: args.topAttorneys,
+      wageLadder: args.wageLadder,
+      risk: args.risk,
     });
 
     return {
@@ -166,6 +216,9 @@ export const getLatest = query({
       byState: v.optional(v.array(stateStatValidator)),
       topOccupations: v.optional(v.array(socStatValidator)),
       topEmployers: v.optional(v.array(employerStatValidator)),
+      topAttorneys: v.optional(v.array(attorneyStatValidator)),
+      wageLadder: v.optional(v.union(wageLadderValidator, v.null())),
+      risk: v.optional(riskValidator),
       computedAt: v.number(),
     }),
     v.null(),
@@ -188,6 +241,9 @@ export const getLatest = query({
       byState: row.byState,
       topOccupations: row.topOccupations,
       topEmployers: row.topEmployers,
+      topAttorneys: row.topAttorneys,
+      wageLadder: row.wageLadder,
+      risk: row.risk,
       computedAt: row.computedAt,
     };
   },

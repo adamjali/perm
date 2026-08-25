@@ -1175,6 +1175,61 @@ export default defineSchema({
       denied: v.number(),
       medianDays: v.union(v.number(), v.null()),
     }))),
+
+    /**
+     * The law firm on the filing. DOL publishes it and no competitor surfaces
+     * it for the people it describes, which is the attorney half of this
+     * product's audience.
+     */
+    topAttorneys: v.optional(v.array(v.object({
+      name: v.string(),
+      state: v.string(),
+      total: v.number(),
+      certified: v.number(),
+      denied: v.number(),
+      medianDays: v.union(v.number(), v.null()),
+    }))),
+
+    /** National offered-wage percentiles over certified cases. */
+    wageLadder: v.optional(v.union(v.object({
+      count: v.number(),
+      p10: v.union(v.number(), v.null()),
+      p25: v.union(v.number(), v.null()),
+      p50: v.union(v.number(), v.null()),
+      p75: v.union(v.number(), v.null()),
+      p90: v.union(v.number(), v.null()),
+    }), v.null())),
+
+    /**
+     * Denial rates by wage band, fiscal year and form flag. Withdrawals are in
+     * neither the numerator nor the denominator: a withdrawn case is not an
+     * approval and not a denial, and counting it as either misstates the rate.
+     */
+    risk: v.optional(v.object({
+      baseline: v.object({
+        decided: v.number(),
+        denied: v.number(),
+        denialRate: v.number(),
+      }),
+      byWage: v.array(v.object({
+        bucket: v.string(),
+        decided: v.number(),
+        denied: v.number(),
+        denialRate: v.number(),
+      })),
+      byYear: v.array(v.object({
+        bucket: v.string(),
+        decided: v.number(),
+        denied: v.number(),
+        denialRate: v.number(),
+      })),
+      byFlag: v.array(v.object({
+        bucket: v.string(),
+        decided: v.number(),
+        denied: v.number(),
+        denialRate: v.number(),
+      })),
+    })),
     contentHash: v.string(),
   })
     .index("by_computed", ["computedAt"])

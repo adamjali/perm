@@ -43,6 +43,7 @@ function fmtWage(n: number): string {
 export default async function PermWagesPage() {
   const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
   const occupations = stats?.topOccupations ?? [];
+  const ladder = stats?.wageLadder ?? null;
 
   // The chart: the ten biggest occupations by volume, bar length = wage, so
   // the drawing answers "what do the big categories pay" in one look.
@@ -127,6 +128,42 @@ export default async function PermWagesPage() {
               </p>
             </div>
           </section>
+
+          {ladder ? (
+            <section className="mt-10 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
+              <h2 className="font-heading text-2xl font-black">
+                The whole wage ladder
+              </h2>{" "}
+              <p className="mt-2 max-w-2xl text-base leading-relaxed text-background/70">
+                Every certified case in the window with a readable wage, sorted
+                and cut at five points. A single median would hide what this
+                distribution actually looks like.
+              </p>
+              <dl className="mt-6 grid [&>*]:min-w-0 grid-cols-2 gap-4 sm:grid-cols-5">
+                {[
+                  { k: "10th", v: ladder.p10 },
+                  { k: "25th", v: ladder.p25 },
+                  { k: "Median", v: ladder.p50 },
+                  { k: "75th", v: ladder.p75 },
+                  { k: "90th", v: ladder.p90 },
+                ].map((d) => (
+                  <div key={d.k} className={d.k === "Median" ? "border-2 border-primary bg-primary/15 p-3" : "p-3"}>
+                    <dt className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+                      {d.k}
+                    </dt>{" "}
+                    <dd className="mt-1 font-heading text-xl font-black tabular-nums sm:text-2xl">
+                      {d.v == null ? "—" : fmtWage(d.v)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="mt-5 text-sm text-background/60">
+                From {ladder.count.toLocaleString("en-US")} certified cases. The
+                gap between the 25th and the median is the two-market split:
+                hourly roles at one end, salaried knowledge work at the other.
+              </p>
+            </section>
+          ) : null}
 
           {overallMedian != null ? (
             <section className="mt-10 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">

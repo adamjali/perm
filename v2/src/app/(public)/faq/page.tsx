@@ -129,6 +129,16 @@ const faqData = [
           "The wages page shows median offered wages by occupation from DOL's disclosure files. These are wages employers committed to in federal filings, not survey estimates, which makes them the hardest salary data available for sponsored roles. Hourly and other units are annualized before medians are taken.",
       },
       {
+        question: "What is the PERM denial rate?",
+        answer:
+          "Denials are rare: across DOL's current disclosure window under 3% of decided PERM cases were denied, with withdrawn cases excluded from both sides of that ratio. The rate is not evenly spread. Our denial rates page breaks it down by offered wage, by fiscal year, and by the three risk questions the ETA-9089 itself asks, and is explicit that a group rate is not a probability for any single case.",
+      },
+      {
+        question: "Which law firms file the most PERM cases?",
+        answer:
+          "Fragomen files by far the most, followed by Berry Appleman & Leiden and Ogletree Deakins. Our law firms page ranks the hundred most active firms with case volume, approval rate and median processing days, straight from the firm name DOL prints on every filing. Approval rates cluster above 99% across the whole list.",
+      },
+      {
         question: "Which employers sponsor the most green cards?",
         answer:
           "The employers page ranks the hundred biggest PERM sponsors in the current disclosure window, searchable, with each one's filings, certifications, approval rate and median processing days. Names appear exactly as DOL prints them, so one company can appear under several legal entities.",
