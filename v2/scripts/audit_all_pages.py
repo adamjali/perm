@@ -35,13 +35,23 @@ TITLE_MAX = 62
 
 # Pages whose whole job is live figures. If one of these renders its empty
 # state, the data pipeline is broken and the page is lying by omission.
+#
+# Values are REGEXES for the SHAPE of the expected figure, not the figure
+# itself. Pinning the literal value means the gate fails every time DOL
+# publishes: adding FY2024 moved the occupation median from $139,464 to
+# $139,128 and the audit called a correct page broken. A shape still catches
+# the thing this is for, which is a page rendering zeros or its empty state,
+# and it does not cry wolf once a quarter.
 DATA_PAGES = {
-    "/perm-by-state": "45,727",
-    "/perm-wages": "139,464",
-    "/perm-employers": "Microsoft",
-    "/perm-attorneys": "Fragomen",
-    "/perm-denial-risk": "2.57",
-    "/perm-processing-times": "DOL",
+    # A five- or six-figure filing count with a thousands separator.
+    "/perm-by-state": r"\d{2,3},\d{3}",
+    # A six-figure annual wage.
+    "/perm-wages": r"\$1\d{2},\d{3}",
+    "/perm-employers": r"Microsoft",
+    "/perm-attorneys": r"Fragomen",
+    # A denial rate printed to two decimals.
+    "/perm-denial-risk": r"\d\.\d{2}%",
+    "/perm-processing-times": r"DOL",
 }
 EMPTY_STATE = "aggregates land with the quarterly"
 
@@ -148,8 +158,10 @@ def audit(base: str, path: str) -> list[str]:
         # display name for a merged entity is whichever spelling had the most
         # cases - often all caps. A case-sensitive check called a correct
         # page broken.
-        elif DATA_PAGES[path].lower() not in html.lower():
-            out.append(f"{path}: expected live figure {DATA_PAGES[path]!r} absent")
+        elif not re.search(DATA_PAGES[path], html, re.I):
+            out.append(
+                f"{path}: no live figure matching {DATA_PAGES[path]!r}"
+            )
 
     return out
 
