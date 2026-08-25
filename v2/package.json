@@ -14,6 +14,7 @@
     "typecheck": "pnpm typecheck:app && pnpm typecheck:convex",
     "typecheck:app": "tsgo --noEmit",
     "typecheck:convex": "tsc -p convex --noEmit",
+    "audit:pages": "python3 scripts/audit_all_pages.py --base https://permtracker.app",
     "typecheck:tsc": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",

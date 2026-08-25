@@ -69,7 +69,15 @@ export async function generateMetadata({
   const row = findBySlug(slugged, slug);
   if (!row) return { title: "Employer not found" };
   const rate = approval(row);
-  const title = `${row.title} PERM Salary and Filings`;
+  // SOC titles are themselves the searched phrase and run to 79 characters,
+  // so padding a long one just pushes it past what Google shows. Add the
+  // qualifier only when there is room for it.
+  const title =
+    row.title.length <= 42
+      ? `${row.title} PERM Salary and Filings`
+      : row.title.length <= 55
+        ? `${row.title} PERM Salary`
+        : row.title;
   // SOC titles run to 79 characters ("Secretaries and Administrative
   // Assistants, Except Legal, Medical, and Executive"), which pushed the full
   // sentence one character past the 155 the SERP shows. Drop the trailing
@@ -81,7 +89,10 @@ export async function generateMetadata({
   const head = `${row.title} PERM wages${wagePart} across ${row.total.toLocaleString("en-US")} filings`;
   const description = head.length <= 120 ? `${head}, from DOL's own files.` : `${head}.`;
   return {
-    title,
+    // When the SOC title alone already fills the space Google shows, the
+    // brand suffix is the least valuable thing in it - `absolute` drops the
+    // "| PERM Tracker" template rather than crowding out the searched phrase.
+    title: title.length > 60 ? { absolute: title } : title,
     description,
     alternates: { canonical: `/perm-wages/${slug}` },
     openGraph: {

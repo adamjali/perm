@@ -874,7 +874,7 @@ plus the 2026-08-24 live delta in the auto-memory
 
 ## Auditing every page: read the sitemap, and decode before you measure
 
-`scripts/audit_all_pages.py --base https://permtracker.app` walks every URL in
+`pnpm audit:pages` (scripts/audit_all_pages.py) walks every URL in
 the live sitemap (298 of them) and checks status, title, description length,
 h1 count, canonical, and that the data-fed pages are not silently rendering
 their empty state. It reads the sitemap rather than a hand-kept list, because
@@ -889,3 +889,12 @@ generic prose: the same shape as the meta-description regex bug already in the
 global CLAUDE.md. Unescape before measuring, and probe with six fixtures
 (three that must flag, three that must not, including an entity-heavy
 150-character control).
+
+**Its second run found the other half: ten occupation TITLES over the limit,**
+because a SOC title is itself up to 79 characters ("Secretaries and
+Administrative Assistants, Except Legal, Medical, and Executive") and the
+template was padding it with " PERM Salary and Filings | PERM Tracker".
+The SOC title IS the searched phrase, so the fix is to add the qualifier only
+when there is room and to pass `title: { absolute }` above 60 characters,
+which drops the brand suffix rather than crowding out the phrase people
+actually type. Max rendered title went 118 -> 79.
