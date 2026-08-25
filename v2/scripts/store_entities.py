@@ -43,13 +43,23 @@ def with_unique_slugs(items: list[dict], name_of) -> list[tuple[str, dict]]:
     return out
 
 
-def run(fn: str, payload: dict, prod: bool) -> None:
+def run(fn: str, payload: dict, prod: bool) -> dict:
+    """Call a Convex function and return its parsed result."""
     cmd = ["npx", "--yes", "convex", "run", fn, json.dumps(payload)]
     if prod:
         cmd.append("--prod")
     res = subprocess.run(cmd, capture_output=True, text=True)
     if res.returncode != 0:
         sys.exit(f"FATAL: {fn} failed\n{res.stderr[-2000:]}")
+    # The CLI prints the return value as JSON, sometimes after a notice line.
+    out = res.stdout.strip()
+    start = out.find("{")
+    if start == -1:
+        return {}
+    try:
+        return json.loads(out[start:])
+    except json.JSONDecodeError:
+        return {}
 
 
 def main() -> int:
@@ -96,13 +106,20 @@ def main() -> int:
 
         assert len({r["slug"] for r in prepared}) == len(prepared), f"{kind}: slug collision survived"
 
+        # Clear first, in its own repeated call. Convex counts reads per
+        # function execution, so the delete cannot live inside the insert.
+        cleared = 0
+        while True:
+            res = run("permEntities:clearKind", {"kind": kind}, args.prod)
+            deleted = res.get("deleted", 0)
+            cleared += deleted
+            if res.get("done") or deleted == 0:
+                break
+        print(f"  {kind:11s} cleared {cleared:,} existing rows")
+
         for start in range(0, len(prepared), CHUNK):
             chunk = prepared[start : start + CHUNK]
-            run(
-                "permEntities:replaceChunk",
-                {"kind": kind, "first": start == 0, "rows": chunk},
-                args.prod,
-            )
+            run("permEntities:insertChunk", {"kind": kind, "rows": chunk}, args.prod)
             print(f"  {kind:11s} {start + len(chunk):>6,} / {len(prepared):,}")
         total_written += len(prepared)
         print(f"{kind:11s} {len(prepared):,} rows stored")

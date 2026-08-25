@@ -10,10 +10,10 @@ import { internalMutation, query } from "./_generated/server";
  * limit. That made the old top-100 cap an architectural constraint wearing an
  * editorial disguise, which is the worst kind.
  *
- * Writes are chunked and internal. A quarterly ingest replaces a whole kind,
- * so `replaceChunk` takes an explicit `first` flag: the first chunk clears
- * the kind, the rest append. Doing the clear inside every chunk would delete
- * the rows the previous chunk just wrote.
+ * Writes are chunked and internal, and CLEARING IS SEPARATE FROM INSERTING.
+ * Convex caps reads at 4,096 per function execution, so a clear-then-insert
+ * mutation cannot delete 12,250 rows however it batches them internally. The
+ * caller loops `clearKind` until it reports done, then sends `insertChunk`.
  */
 
 const entityValidator = v.object({
@@ -35,35 +35,38 @@ const kindValidator = v.union(
   v.literal("occupation"),
 );
 
-export const replaceChunk = internalMutation({
-  args: {
-    kind: kindValidator,
-    /** True only for the first chunk of a run: clears the existing rows. */
-    first: v.boolean(),
-    rows: v.array(entityValidator),
+/**
+ * Delete up to `max` rows of one kind, reporting whether more remain.
+ *
+ * Clearing has to be its own repeated call, not a loop inside the insert.
+ * Convex caps reads at 4,096 PER FUNCTION EXECUTION, so paging inside a
+ * single mutation buys nothing — 12,250 employers is 12,250 reads however
+ * they are batched, and the first real ingest failed exactly there. The
+ * caller loops on `done`.
+ */
+export const clearKind = internalMutation({
+  args: { kind: kindValidator, max: v.optional(v.number()) },
+  returns: v.object({ deleted: v.number(), done: v.boolean() }),
+  handler: async (ctx, { kind, max }) => {
+    const take = Math.min(Math.max(1, max ?? 1500), 2000);
+    const batch = await ctx.db
+      .query("permEntities")
+      .withIndex("by_kind_rank", (q) => q.eq("kind", kind))
+      .take(take);
+    for (const row of batch) await ctx.db.delete(row._id);
+    return { deleted: batch.length, done: batch.length < take };
   },
-  returns: v.object({ deleted: v.number(), inserted: v.number() }),
-  handler: async (ctx, { kind, first, rows }) => {
-    let deleted = 0;
-    if (first) {
-      // Bounded by the index rather than a table scan, and paged so a large
-      // kind cannot blow the mutation's read limit in one go.
-      for (;;) {
-        const batch = await ctx.db
-          .query("permEntities")
-          .withIndex("by_kind_rank", (q) => q.eq("kind", kind))
-          .take(400);
-        if (batch.length === 0) break;
-        for (const row of batch) await ctx.db.delete(row._id);
-        deleted += batch.length;
-        if (batch.length < 400) break;
-      }
-    }
+});
+
+export const insertChunk = internalMutation({
+  args: { kind: kindValidator, rows: v.array(entityValidator) },
+  returns: v.object({ inserted: v.number() }),
+  handler: async (ctx, { kind, rows }) => {
     const computedAt = Date.now();
     for (const row of rows) {
       await ctx.db.insert("permEntities", { ...row, kind, computedAt });
     }
-    return { deleted, inserted: rows.length };
+    return { inserted: rows.length };
   },
 });
 
