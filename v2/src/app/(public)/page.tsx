@@ -75,20 +75,6 @@ export const metadata: Metadata = {
   },
 };
 
-const MEASUREMENT_FIXTURE = (() => {
-  // 33 decision months, Oct 2023 to Jun 2026, carrying the three real anchors
-  // asserted in WaitLedger.test.ts: Oct 24 = 14 months, Feb 26 = 17 (the
-  // peak), Jun 26 = 13. Row COUNT is what sets the plate height, so the
-  // measurement is exact for any 33-row series.
-  const waits = [13,13,14,14,14,14,15,15,14,14,14,14,15,15,16,16,16,17,17,16,16,17,17,16,15,15,17,16,15,14,14,13,13];
-  return waits.map((w, i) => {
-    const m = 2023 * 12 + 9 + i;
-    const f = m - w;
-    const iso = (v: number) => `${Math.floor(v / 12)}-${String((v % 12) + 1).padStart(2, "0")}`;
-    return { decisionMonth: iso(m), medianFilingMonth: iso(f), decisions: 7505 + i * 380 };
-  });
-})();
-
 export default async function HomePage() {
   // Two independent federal sources with two different as-of stamps, and they
   // must not be conflated: the processing-times snapshot is DOL's weekly queue
@@ -125,7 +111,7 @@ export default async function HomePage() {
       {/* FAQPage + homepage aggregateRating partial. Server-built schemas only. */}
       <JsonLdScript schema={faqSchema} />
       <JsonLdScript schema={ratingPartial} />
-      <HeroSection waitRows={disclosure?.frontierHistory?.length ? disclosure.frontierHistory : MEASUREMENT_FIXTURE} />
+      <HeroSection waitRows={disclosure?.frontierHistory ?? []} />
       <LiveDataBand
         frontierMonth={analyst?.priorityDate ?? null}
         asOf={snapshot?.permAsOf ?? null}

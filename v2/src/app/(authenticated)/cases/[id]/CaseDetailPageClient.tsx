@@ -913,7 +913,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           size="sm"
           onClick={() => setDeleteDialogOpen(true)}
           disabled={isDeleting}
-          className="border-[3px] border-[#DC2626] text-[#DC2626] bg-white hover:bg-[#DC2626] hover:text-white font-mono text-xs font-bold uppercase tracking-wide transition-all gap-1.5 dark:bg-white dark:text-[#DC2626] dark:border-[#DC2626] dark:hover:bg-[#DC2626] dark:hover:text-white"
+          className="border-[3px] border-[#DC2626] bg-card text-[#DC2626] hover:bg-[#DC2626] hover:text-white font-mono text-xs font-bold uppercase tracking-wide transition-all gap-1.5 dark:bg-white dark:text-[#DC2626] dark:border-[#DC2626] dark:hover:bg-[#DC2626] dark:hover:text-white"
         >
           {isDeleting ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />

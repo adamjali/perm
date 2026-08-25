@@ -146,8 +146,10 @@ const EventPill = forwardRef<HTMLDivElement, EventPillProps>(
       }}
       onClick={onClick}
     >
-      <span className="event-title">{title}</span>{" "}
-      <span className="sync-icon">📅</span>
+      {/* The calendar emoji that used to sit here rendered on EVERY pill
+          unconditionally, so it distinguished nothing, and emoji are not
+          part of this UI's vocabulary. */}
+      <span className="event-title">{title}</span>
     </div>
   )
 );

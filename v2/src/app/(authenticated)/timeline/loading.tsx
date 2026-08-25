@@ -23,8 +23,11 @@ export default function TimelineLoading() {
       {/* Header Controls Skeleton - matches TimelineControls layout */}
       <div className="mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4 sm:gap-3">
-          {/* Title */}
-          <Skeleton variant="line" className="w-32 h-10" />
+          {/* Title + lede */}
+          <div className="min-w-0">
+            <Skeleton variant="line" className="h-10 w-40" />
+            <Skeleton variant="line" className="mt-3 h-5 w-56" />
+          </div>
 
           {/* Controls row */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">

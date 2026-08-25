@@ -233,22 +233,18 @@
     font-family: var(--font-mono);
   }
 
-  /* Skeleton loading animation - matches design4 */
+  /* Skeleton placeholder ground.
+     NO SHIMMER. The previous version swept an infinite gradient across two
+     hardcoded greys (#eeeeee/#dddddd, and a separate #3a3a3a pair under
+     .dark): a perpetual animation, which is banned, and theme-blind on top of
+     it. A skeleton stands in for a card, so it takes the card's own muted
+     ground and the Skeleton component draws the --border edge. This is also
+     exactly what a prefers-reduced-motion visitor already saw, so the two
+     audiences now get the same thing.
+     background-COLOR, not the `background` shorthand: the shorthand also reset
+     background-image on any caller that had set one. */
   .skeleton-pulse {
-    background: linear-gradient(90deg, #eeeeee 25%, #dddddd 50%, #eeeeee 75%);
-    background-size: 200% 100%;
-    animation: skeleton-move 1.5s ease-in-out infinite;
-  }
-
-  .dark .skeleton-pulse {
-    background: linear-gradient(90deg, #3a3a3a 25%, #4a4a4a 50%, #3a3a3a 75%);
-    background-size: 200% 100%;
-    animation: skeleton-move 1.5s ease-in-out infinite;
-  }
-
-  @keyframes skeleton-move {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    background-color: var(--muted);
   }
 
   /* Hazard background - yellow/black diagonal stripes */
@@ -1904,18 +1900,13 @@ body[data-scroll-locked] {
   }
 
   /* Completely disable decorative animations.
-     .bounce-spin is the loading-skeleton accent; the skeleton itself keeps a
-     slowed pulse below because it carries meaning, but the spinning square is
-     decoration on top of it and can go entirely. */
+     .bounce-spin is the loading-skeleton accent; the spinning square is
+     decoration on top of the skeleton and can go entirely.
+     .skeleton-pulse used to be slowed to 3s here. It no longer animates at
+     all, for anyone, so there is nothing left to slow. */
   .bounce-spin,
   .animate-blink {
     animation: none !important;
-  }
-
-  /* Skeleton loading is functional (communicates loading state),
-     so we preserve a slowed-down version instead of disabling */
-  .skeleton-pulse {
-    animation-duration: 3s !important;
   }
 
   /* Ensure visibility for entrance animations (instant reveal) */

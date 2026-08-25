@@ -87,7 +87,7 @@ export function FavoriteBookmark({
         <Bookmark
           className={cn(
             "w-4 h-4 mt-0.5",
-            isFavorite ? "text-yellow-800 fill-yellow-800" : "text-gray-600"
+            isFavorite ? "text-yellow-800 fill-yellow-800" : "text-black/60"
           )}
         />
       )}

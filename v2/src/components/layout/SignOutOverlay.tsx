@@ -40,7 +40,7 @@ export default function SignOutOverlay() {
 
       {/* Glass panel modal - slide up with scale */}
       <div
-        className="relative z-10 glass-panel border-2 border-black shadow-hard-lg
+        className="relative z-10 glass-panel border-2 border-border shadow-hard-lg
                    flex flex-col items-center gap-4 px-10 py-8
                    animate-in fade-in slide-in-from-bottom-4 zoom-in-95 duration-200"
       >

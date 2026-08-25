@@ -254,7 +254,7 @@ export const CaseCard = memo(function CaseCard({
                 </span>
               </div>
             ) : isClosed ? (
-              <span className="text-sm text-gray-500 dark:text-gray-400 italic truncate" title={`Closed ${caseData.closedAt ? formatCompactDate(caseData.closedAt) : ""}${formatClosureReasonLabel(caseData.closedReason) ? ` - ${formatClosureReasonLabel(caseData.closedReason)}` : ""}`}>
+              <span className="truncate text-sm italic text-black/60" title={`Closed ${caseData.closedAt ? formatCompactDate(caseData.closedAt) : ""}${formatClosureReasonLabel(caseData.closedReason) ? ` - ${formatClosureReasonLabel(caseData.closedReason)}` : ""}`}>
                 Closed{" "}
                 {caseData.closedAt ? formatCompactDate(caseData.closedAt) : ""}
                 {formatClosureReasonLabel(caseData.closedReason) && (
@@ -341,7 +341,7 @@ function ClosedCaseButtons({
         variant="outline"
         size="sm"
         disabled={isViewLoading}
-        className="flex-1 text-xs bg-transparent border-2 border-gray-500 text-gray-600 hover:bg-gray-100 disabled:opacity-70"
+        className="flex-1 border-2 border-black/50 bg-transparent text-xs text-black/70 hover:bg-black/5 disabled:opacity-70"
         onClick={onViewClick}
         aria-label="View"
       >
@@ -362,7 +362,7 @@ function ClosedCaseButtons({
       <Button
         variant="outline"
         size="sm"
-        className="text-xs bg-transparent border-2 border-gray-500 text-gray-600 hover:bg-gray-100"
+        className="border-2 border-black/50 bg-transparent text-xs text-black/70 hover:bg-black/5"
         onClick={onDeleteClick}
         aria-label="Delete"
       >

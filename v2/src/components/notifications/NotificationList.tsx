@@ -106,7 +106,7 @@ function getPriorityColor(priority: NotificationPriority): string {
       return "bg-[#059669]";
     case "low":
     default:
-      return "bg-gray-400";
+      return "bg-muted-foreground";
   }
 }
 
@@ -214,7 +214,7 @@ function NotificationListItem({
         "flex items-start gap-4 p-4",
         "border-b-2 border-border last:border-b-0",
         "transition-colors duration-150",
-        "hover:bg-gray-50 dark:hover:bg-gray-800",
+        "hover:bg-muted",
         "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset",
         !notification.isRead && "bg-primary/5 dark:bg-primary/10"
       )}
@@ -230,7 +230,7 @@ function NotificationListItem({
         className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center",
           "rounded-none border-2 border-border",
-          "bg-white dark:bg-gray-800"
+          "bg-card"
         )}
       >
         <IconComponent className="h-5 w-5 text-foreground" />

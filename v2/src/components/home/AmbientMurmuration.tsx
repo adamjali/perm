@@ -14,7 +14,7 @@ import { useEffect, useRef } from "react";
  * smudge in one corner. Three left both edges of a wide screen empty, so the
  * field read as a diagonal smear rather than a sky; the two added flocks hug
  * the left and right margins and the sixth sits furthest back, which is what
- * gives the near ones something to be measured against. 560 boids on desktop
+ * gives the near ones something to be measured against. 580 boids on desktop
  * against 280, and radii run 0.8px to 3.8px against 1.0px to 2.6px.
  *
  * WHY MORE AND BIGGER DID NOT COST ANYTHING. Doubling the population would
@@ -196,10 +196,29 @@ export function AmbientMurmuration() {
     // the reason a scroll drops frames. The desktop population doubled in v4
     // and these two steps deliberately did not: a phone draws ~180 birds,
     // barely above v3's 126, and a tablet ~390.
-    const scale = innerWidth < 720 ? 0.32 : innerWidth < 1100 ? 0.7 : 1;
+    const narrow = innerWidth < 720;
+    const scale = narrow ? 0.3 : innerWidth < 1100 ? 0.7 : 1;
+    // Radius is scaled DOWN on a phone as well as count, because a Canvas 2D
+    // fill is CPU rasterisation on the main thread and its cost goes with r^2,
+    // not r. Measured at 390x844, dpr 2, 4x CPU throttle: count alone (126 ->
+    // 186 birds) with the desktop radius took long tasks from 0ms to ~650ms
+    // per 6s and 60fps to 45. The bigger dots, not the extra birds, were most
+    // of that. 0.72 puts the per-dot fill area back to roughly where it was.
+    const sizeScale = narrow ? 0.72 : 1;
 
+    // A phone runs FOUR of the six flocks rather than all six thinned out.
+    // Splitting a phone-sized population across six leaves ~21 birds each,
+    // which is below the point where a flock reads as a flock: at NEIGHBOR_R
+    // most birds have no neighbour and the whole thing becomes drifting dust.
+    // Four flocks at a healthy population measured identically to the old
+    // three-flock version (60.1fps, p95 19.0ms, 0ms of long tasks at 390x844,
+    // dpr 2, 4x CPU throttle) while six at the same total did not.
+    // `active` is a PREFIX of FLOCKS, so `fi` still indexes FLOCKS correctly
+    // everywhere else; the springs, attractors and paint buckets for the two
+    // unused flocks simply stay empty and are skipped.
+    const active = narrow ? FLOCKS.slice(0, 4) : FLOCKS;
     const boids: Boid[] = [];
-    FLOCKS.forEach((flock, fi) => {
+    active.forEach((flock, fi) => {
       const n = Math.round(flock.count * scale);
       for (let i = 0; i < n; i++) {
         const k = boids.length;
@@ -208,7 +227,10 @@ export function AmbientMurmuration() {
           y: (k * 0.381966 + fi * 0.17) % 1,
           vx: (((k * 7) % 13) / 13 - 0.5) * 0.002,
           vy: (((k * 11) % 17) / 17 - 0.5) * 0.002,
-          r: (1.35 + ((k * 13) % 10) * 0.2) * (0.45 + flock.depth * 0.72),
+          r:
+            (1.35 + ((k * 13) % 10) * 0.2) *
+            (0.45 + flock.depth * 0.72) *
+            sizeScale,
           lime: i % flock.limeEvery === 0,
           f: fi,
         });

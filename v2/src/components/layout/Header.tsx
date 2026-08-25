@@ -77,7 +77,7 @@ function UserMenu({ userName }: UserMenuProps) {
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger
-        className="group flex cursor-pointer items-center gap-2 rounded-none border-2 border-transparent bg-transparent px-3 py-2 text-sm font-medium text-white transition-all hover:border-white/50 hover:bg-white/10 focus:outline-none"
+        className="group flex min-h-[44px] cursor-pointer items-center gap-2 rounded-none border-2 border-transparent bg-transparent px-3 py-2 text-sm font-medium text-white transition-all hover:border-white/50 hover:bg-white/10 focus:outline-none focus-visible:border-white/50"
       >
         <span className="max-w-[100px] truncate">{userName}</span>
         <ChevronDown className="size-4 transition-transform duration-150 group-data-[state=open]:rotate-180" />

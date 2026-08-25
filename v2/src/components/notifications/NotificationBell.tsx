@@ -63,7 +63,7 @@ export default function NotificationBell({ className, children }: NotificationBe
           aria-label={`Notifications${showBadge ? ` (${unreadCount} unread)` : ""}`}
           className={cn(
             // Base styles matching ThemeToggle
-            "group relative flex h-10 w-10 cursor-pointer items-center justify-center",
+            "group relative flex h-11 w-11 cursor-pointer items-center justify-center",
             "rounded-none border-2 border-transparent bg-transparent",
             "text-white transition-all duration-200",
             // Hover/active states
@@ -98,8 +98,9 @@ export default function NotificationBell({ className, children }: NotificationBe
                 "bg-[#DC2626] text-white",
                 // Typography
                 "text-[10px] font-bold font-heading leading-none",
-                // Border for contrast
-                "border-2 border-border",
+                // Border carves the badge off the icon. The header bar is
+                // bg-black in both themes, so this ring does not follow --border.
+                "border-2 border-black",
                 // Animation: scale in
                 "animate-in zoom-in-50 duration-200"
               )}

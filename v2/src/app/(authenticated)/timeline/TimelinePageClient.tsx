@@ -245,7 +245,7 @@ export function TimelinePageClient() {
             </p>
             <button
               onClick={() => router.push("/cases/new")}
-              className="inline-flex items-center justify-center px-4 py-2 bg-primary text-primary-foreground font-medium rounded-md shadow-brutal-sm hover:shadow-brutal-hover transition-shadow"
+              className="inline-flex min-h-[44px] items-center justify-center border-3 border-border bg-primary px-6 py-3 font-heading font-bold text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
             >
               Add Your First Case
             </button>

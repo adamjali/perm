@@ -100,7 +100,7 @@ function getPriorityColor(priority: NotificationPriority): string {
       return "bg-[#059669]"; // Normal green
     case "low":
     default:
-      return "bg-gray-400"; // Low gray
+      return "bg-muted-foreground"; // Low gray
   }
 }
 
@@ -155,7 +155,7 @@ function NotificationItem({
         "flex items-start gap-3 p-3",
         "border-b-2 border-border last:border-b-0",
         "transition-colors duration-150",
-        "hover:bg-gray-50 dark:hover:bg-gray-800",
+        "hover:bg-muted",
         "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset",
         // Unread styling
         !notification.isRead && "bg-primary/5 dark:bg-primary/10"

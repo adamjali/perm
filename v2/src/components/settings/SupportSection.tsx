@@ -236,8 +236,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             href={`mailto:${SUPPORT_EMAIL}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center gap-3 p-4 border-2 border-border bg-card hover:bg-accent transition-colors group"
-            style={{ boxShadow: "var(--shadow-hard-sm)" }}
+            className="group flex flex-col items-center gap-3 border-2 border-border bg-card p-4 shadow-hard-sm transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard active:translate-x-0.5 active:translate-y-0.5 active:shadow-hard-sm"
           >
             <div className="p-3 bg-primary/10 border-2 border-primary/20 group-hover:bg-primary/20 transition-colors">
               <Mail className="h-6 w-6 text-primary" />
@@ -256,8 +255,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             href={GITHUB_BUG_REPORT_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center gap-3 p-4 border-2 border-border bg-card hover:bg-accent transition-colors group"
-            style={{ boxShadow: "var(--shadow-hard-sm)" }}
+            className="group flex flex-col items-center gap-3 border-2 border-border bg-card p-4 shadow-hard-sm transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard active:translate-x-0.5 active:translate-y-0.5 active:shadow-hard-sm"
           >
             <div className="p-3 bg-destructive/10 border-2 border-destructive/20 group-hover:bg-destructive/20 transition-colors">
               <Bug className="h-6 w-6 text-destructive" />
@@ -278,8 +276,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             href={GITHUB_FEATURE_REQUEST_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center gap-3 p-4 border-2 border-border bg-card hover:bg-accent transition-colors group"
-            style={{ boxShadow: "var(--shadow-hard-sm)" }}
+            className="group flex flex-col items-center gap-3 border-2 border-border bg-card p-4 shadow-hard-sm transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard active:translate-x-0.5 active:translate-y-0.5 active:shadow-hard-sm"
           >
             <div className="p-3 bg-yellow-500/10 border-2 border-yellow-500/20 group-hover:bg-yellow-500/20 transition-colors">
               <Lightbulb className="h-6 w-6 text-yellow-500" />
@@ -307,14 +304,13 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               }
             }}
             disabled={isRestarting}
-            className="flex flex-col items-center gap-3 p-4 border-2 border-border bg-card hover:bg-accent transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ boxShadow: "var(--shadow-hard-sm)" }}
+            className="group flex flex-col items-center gap-3 border-2 border-border bg-card p-4 shadow-hard-sm transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard active:translate-x-0.5 active:translate-y-0.5 active:shadow-hard-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-hard-sm disabled:hover:translate-x-0 disabled:hover:translate-y-0"
           >
-            <div className="p-3 bg-lime-500/10 border-2 border-lime-500/20 group-hover:bg-lime-500/20 transition-colors">
+            <div className="p-3 bg-primary/10 border-2 border-primary/20 group-hover:bg-primary/20 transition-colors">
               {isRestarting ? (
-                <div className="h-6 w-6 border-2 border-lime-600 dark:border-lime-400 border-t-transparent animate-spin rounded-full" />
+                <div className="h-6 w-6 border-2 border-primary border-t-transparent animate-spin rounded-full" />
               ) : (
-                <PlayCircle className="h-6 w-6 text-lime-600 dark:text-lime-400" />
+                <PlayCircle className="h-6 w-6 text-primary" />
               )}
             </div>
             <div className="text-center">

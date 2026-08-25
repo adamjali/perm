@@ -19,8 +19,8 @@ export default function CalendarLoading() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <Skeleton variant="line" className="w-32 h-10 mb-2" />
-          <Skeleton variant="line" className="w-56 h-5" />
+          <Skeleton variant="line" className="mb-2 h-4 w-56" />
+          <Skeleton variant="line" className="h-10 w-40" />
         </div>
       </div>
 

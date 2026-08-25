@@ -90,14 +90,14 @@ export default function TimeoutWarningModal({
 
       {/* Modal */}
       <div
-        className="relative z-10 glass-panel border-2 border-black shadow-hard-lg
+        className="relative z-10 glass-panel border-2 border-border shadow-hard-lg
                    w-full max-w-md mx-4 p-8
                    animate-in fade-in slide-in-from-bottom-4 zoom-in-95 duration-300"
       >
         {/* Header with icon */}
         <div className="flex flex-col items-center gap-4 mb-6">
           <div
-            className={`p-3 rounded-full border-2 border-black ${
+            className={`p-3 rounded-full border-2 border-border ${
               isUrgent ? "bg-red-100 dark:bg-red-900/30" : "bg-amber-100 dark:bg-amber-900/30"
             }`}
           >
@@ -125,7 +125,7 @@ export default function TimeoutWarningModal({
 
         {/* Countdown */}
         <div
-          className={`text-center py-4 px-6 mb-6 border-2 border-black ${
+          className={`text-center py-4 px-6 mb-6 border-2 border-border ${
             isUrgent
               ? "bg-red-50 dark:bg-red-900/20"
               : "bg-muted"
