@@ -31,7 +31,8 @@
     "test:all": "vitest run && ./run-e2e-tests.sh",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "qa": "bash scripts/qa.sh"
+    "qa": "bash scripts/qa.sh",
+    "audit:stale": "python3 scripts/audit_staleness.py"
   },
   "dependencies": {
     "@ai-sdk/cerebras": "^2.0.76",
