@@ -32,10 +32,8 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchQuery } from "convex/nextjs";
 import { ArrowRight, ArrowSquareOut } from "@phosphor-icons/react/ssr";
 
-import { api } from "../../../../../convex/_generated/api";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
@@ -51,6 +49,7 @@ import { DecisionsByMonth, QueueHistoryChart } from "@/components/tools/QueueHis
 import { PwdBacklogChart } from "@/components/tools/PwdBacklogChart";
 import { FreshnessDots, type Freshness } from "@/components/tools/Insight";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import { getProcessingTimes, getProcessingTimesHistory } from "@/lib/turso/processingTimes";
 
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
 // Same expression as layout.tsx, sitemap.ts, feed.xml and seo.ts. A bare
@@ -128,8 +127,8 @@ function Figure({
 
 export default async function PermProcessingTimesPage() {
   const [snapshot, history, disclosure] = await Promise.all([
-    fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(() => null),
-    fetchQuery(api.dolProcessingTimes.getHistory, { limit: 24 }).catch(() => []),
+    getProcessingTimes(),
+    getProcessingTimesHistory(24),
     // The quarterly files, for the decisions-per-month series. A separate
     // publication on a separate cadence, labelled as such on the page.
     getDisclosureStats(),

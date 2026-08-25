@@ -39,8 +39,6 @@ import {
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { HOME_FAQS } from "@/components/home/faqData";
-import { fetchQuery } from "convex/nextjs";
-import { api } from "../../../../convex/_generated/api";
 import {
   analystReviewQueue,
   analystReviewAverage,
@@ -50,6 +48,7 @@ import { SectionDivider } from "@/components/home/SectionDivider";
 import { deriveFigures } from "@/components/home/dataPageFigures";
 import { Preloader } from "@/components/home/Preloader";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import { getProcessingTimes } from "@/lib/turso/processingTimes";
 
 // One live DOL figure on the page: hourly ISR, same as the data pages.
 // The disclosure files are quarterly, so an hourly window bought
@@ -86,7 +85,7 @@ export default async function HomePage() {
   // page, the disclosure stats are its quarterly determination files. Fetched
   // in parallel, server-side, once per revalidate window.
   const [snapshot, disclosure] = await Promise.all([
-    fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(() => null),
+    getProcessingTimes(),
     getDisclosureStats(),
   ]);
   const analyst = snapshot

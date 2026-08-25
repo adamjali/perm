@@ -9,10 +9,8 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchQuery } from "convex/nextjs";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
 
-import { api } from "../../../../../convex/_generated/api";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import {
@@ -28,6 +26,7 @@ import {
   WindowSpansMini,
 } from "@/components/tools/MiniDiagrams";
 import { QueueTape } from "@/components/tools/QueueTape";
+import { getProcessingTimes } from "@/lib/turso/processingTimes";
 
 const TITLE = "Live PERM Data Overview";
 const DESCRIPTION =
@@ -53,9 +52,7 @@ export const metadata: Metadata = {
 export const revalidate = 86400;
 
 export default async function ToolsPage() {
-  const snapshot = await fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(
-    () => null,
-  );
+  const snapshot = await getProcessingTimes();
   const analyst = snapshot ? analystReviewQueue(snapshot.permQueues) : undefined;
   const analystAvg = snapshot
     ? analystReviewAverage(snapshot.permAverageDays)

@@ -15,6 +15,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
+import { getEstimatorData } from "@/lib/turso/estimate";
 
 /**
  * The whole employment-based green card in one view.
@@ -72,7 +73,7 @@ function monthsFromDays(days: number | null): number | null {
 
 export default async function GreenCardTimelinePage() {
   const [permData, uscisData] = await Promise.all([
-    fetchQuery(api.permEstimate.getEstimatorData, {}).catch(() => null),
+    getEstimatorData(),
     fetchQuery(api.uscisI140.getLatest, {}).catch(() => null),
   ]);
 

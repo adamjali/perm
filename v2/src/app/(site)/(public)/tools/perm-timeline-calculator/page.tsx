@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
-import { fetchQuery } from "convex/nextjs";
 
-import { api } from "../../../../../../convex/_generated/api";
 import { PermTimelineEstimator } from "@/components/tools/PermTimelineEstimator";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
@@ -12,6 +10,7 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { currentMonthUtc } from "@/lib/dolFormat";
 import { DataNav } from "@/components/tools/DataNav";
+import { getEstimatorData } from "@/lib/turso/estimate";
 
 /**
  * PERM decision-date calculator.
@@ -69,7 +68,7 @@ const FAQS = [
 export default async function PermTimelineCalculatorPage() {
   // Wrapped: a page that cannot reach Convex must still render its explanation,
   // its FAQ and its signup rather than failing the route outright.
-  const data = await fetchQuery(api.permEstimate.getEstimatorData, {}).catch(() => null);
+  const data = await getEstimatorData();
 
   const today = new Date().toISOString().slice(0, 10);
 

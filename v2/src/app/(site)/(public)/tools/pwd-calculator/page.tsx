@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
-import { fetchQuery } from "convex/nextjs";
 
-import { api } from "../../../../../../convex/_generated/api";
 import { PwdQueueEstimator } from "@/components/tools/PwdQueueEstimator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
+import { getPwdEstimatorData } from "@/lib/turso/estimate";
 
 /**
  * Prevailing wage determination queue calculator.
@@ -62,7 +61,7 @@ const FAQS = [
 ];
 
 export default async function PwdCalculatorPage() {
-  const data = await fetchQuery(api.permEstimate.getPwdEstimatorData, {}).catch(() => null);
+  const data = await getPwdEstimatorData();
 
   const faqSchema = {
     "@context": "https://schema.org",

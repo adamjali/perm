@@ -17,6 +17,7 @@
  */
 import "server-only";
 
+import type { BulletinMonth } from "@/lib/perm";
 import type { EntityKind, EntityRow } from "@/lib/entityPayload";
 
 import { one, rows } from "./client";
@@ -340,4 +341,27 @@ export async function getVisaBulletins(): Promise<
     finalAction: x.final_action ? JSON.parse(x.final_action) : null,
     datesForFiling: x.dates_for_filing ? JSON.parse(x.dates_for_filing) : null,
   }));
+}
+
+/**
+ * The bulletin series in the shape the priority-date chart expects: ascending
+ * by month, with `archivedAt` and `sourceUrl` as plain strings.
+ *
+ * Both are non-null for every row the archive ingest writes, but the columns
+ * are nullable, so the coercion happens once here instead of at the call
+ * site. `getVisaBulletins` above stays honest about the column types.
+ */
+export async function getVisaBulletinSeries(): Promise<
+  Array<BulletinMonth & { archivedAt: string; sourceUrl: string }>
+> {
+  const all = await getVisaBulletins();
+  return all
+    .map((b) => ({
+      bulletinMonth: b.bulletinMonth,
+      archivedAt: b.archivedAt ?? "",
+      sourceUrl: b.sourceUrl ?? "",
+      finalAction: b.finalAction as BulletinMonth["finalAction"],
+      datesForFiling: b.datesForFiling as BulletinMonth["datesForFiling"],
+    }))
+    .sort((a, b) => a.bulletinMonth.localeCompare(b.bulletinMonth));
 }

@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchQuery } from "convex/nextjs";
 
-import { api } from "../../../../../../convex/_generated/api";
 import { PriorityDateEstimator } from "@/components/tools/PriorityDateEstimator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
+import { getVisaBulletinSeries } from "@/lib/turso/publicData";
 
 /**
  * Priority dates against the visa bulletin.
@@ -180,7 +179,7 @@ const FAQS = [
 
 export default async function PriorityDateCalculatorPage() {
   const [bulletins, uscis] = await Promise.all([
-    fetchQuery(api.visaBulletin.getSeries, {}).catch(() => []),
+    getVisaBulletinSeries(),
     fetchUscisGuidance(),
   ]);
 
