@@ -17,7 +17,7 @@
  */
 
 import { useId, useMemo, useState } from "react";
-import { CalendarRange, TrendingDown, TriangleAlert } from "lucide-react";
+import { CalendarRange, History, TrendingDown, TriangleAlert } from "lucide-react";
 
 import {
   estimatePriorityDate,
@@ -33,7 +33,61 @@ import { cn } from "@/lib/utils";
 
 export interface PriorityDateEstimatorProps {
   bulletins: readonly BulletinMonth[];
+  /**
+   * Today, `YYYY-MM-DD`, computed on the server and passed down.
+   *
+   * Deliberately not read from `new Date()` in here. This is a client
+   * component on an otherwise static page, so a server render either side of
+   * midnight from the client's would disagree and React would flag a
+   * hydration mismatch. One value, decided once, is also what makes the
+   * future-date check testable.
+   */
+  today: string;
+  /**
+   * The newest bulletin the State Department has actually published,
+   * `YYYY-MM`, read from USCIS at render time. Null when that read failed.
+   *
+   * It matters that this is sourced rather than guessed: the bulletin is
+   * forward-dated, so on 2026-08-25 the bulletin in force is August and
+   * September is already out. Deriving "how far behind" from the calendar
+   * alone understates it by one, and inventing the number is exactly the
+   * thing this page must not do.
+   */
+  currentBulletinMonth?: string | null;
+  /**
+   * Which chart USCIS accepts for EMPLOYMENT-BASED adjustment filings in
+   * `currentBulletinMonth`, read from USCIS at render time. Null when that
+   * read failed.
+   *
+   * Worth surfacing because it decides whether an I-485 can be filed at all,
+   * it changes month to month, and it is the one current, primary fact this
+   * page can honestly show while its cutoff series is stuck in the past.
+   */
+  currentEmploymentChart?: "Final Action Dates" | "Dates for Filing" | null;
   className?: string;
+}
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const DAY_MS = 86_400_000;
+const DOS_BULLETIN_URL =
+  "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html";
+const USCIS_CHARTS_URL =
+  "https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/adjustment-of-status-filing-charts-from-the-visa-bulletin";
+
+/** Whole months from `from` to `to`, both `YYYY-MM`. Negative if `to` is earlier. */
+function monthsBetween(from: string, to: string): number {
+  const [fy, fm] = from.split("-").map(Number);
+  const [ty, tm] = to.split("-").map(Number);
+  if (fy === undefined || fm === undefined || ty === undefined || tm === undefined) return 0;
+  return (ty - fy) * 12 + (tm - fm);
+}
+
+function countOfMonths(n: number): string {
+  return n === 1 ? "one month" : `${n} months`;
+}
+
+function countOfBulletins(n: number): string {
+  return n === 1 ? "one bulletin" : `${n} bulletins`;
 }
 
 const CATEGORIES = [
@@ -74,7 +128,13 @@ const PAD_R = 16;
 const PAD_T = 26;
 const PAD_B = 42;
 
-export function PriorityDateEstimator({ bulletins, className }: PriorityDateEstimatorProps) {
+export function PriorityDateEstimator({
+  bulletins,
+  today,
+  currentBulletinMonth = null,
+  currentEmploymentChart = null,
+  className,
+}: PriorityDateEstimatorProps) {
   const dateId = useId();
   const catId = useId();
   const countryId = useId();
@@ -86,14 +146,96 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
   const [country, setCountry] = useState<CountryKey>("india");
   const [chart, setChart] = useState<ChartKind>("finalAction");
 
+  const pdWellFormed = DATE_RE.test(priorityDate);
+
+  // A priority date is the day DOL received the PERM application, or USCIS the
+  // I-140. A date in the future names nothing that has happened, so there is
+  // no fact to compare against a cutoff.
+  //
+  // The old behaviour was the dangerous kind of wrong: 2027-05-25 against a
+  // 2014 cutoff returned a confident "your date was not yet current" and a
+  // days-later count in the thousands. Every number was arithmetic, none of it
+  // meant anything, and nothing on the page suggested doubt. Warn and
+  // withhold, the same way the deadline calculator handles reversed
+  // recruitment dates.
+  const warnings = useMemo(() => {
+    const out: string[] = [];
+    if (pdWellFormed && priorityDate > today) {
+      out.push(
+        `A priority date of ${formatAsOf(priorityDate)} is in the future. The priority date is the day DOL received the PERM application, or USCIS received the I-140, so it cannot be later than today. Nothing is compared against the bulletin until that is corrected.`,
+      );
+    }
+    return out;
+  }, [pdWellFormed, priorityDate, today]);
+
+  // One flag, read by the verdict, the caveats and the chart alike, so a
+  // withheld date cannot leak back in through the drawing.
+  const pdUsable = pdWellFormed && warnings.length === 0;
+
   const estimate = useMemo(() => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(priorityDate)) return null;
+    if (!pdUsable) return null;
     try {
       return estimatePriorityDate({ priorityDate, category, country, chart, bulletins });
     } catch {
       return null;
     }
-  }, [priorityDate, category, country, chart, bulletins]);
+  }, [pdUsable, priorityDate, category, country, chart, bulletins]);
+
+  // How stale, stated in the two units that are actually true at once: the
+  // newest bulletin here versus today's calendar month, and versus the newest
+  // bulletin the State Department has published.
+  const newestMonth = useMemo(
+    () =>
+      bulletins.reduce<string | null>(
+        (acc, b) => (acc === null || b.bulletinMonth > acc ? b.bulletinMonth : acc),
+        null,
+      ),
+    [bulletins],
+  );
+  const todayMonth = today.slice(0, 7);
+  const monthsBehind = newestMonth ? Math.max(monthsBetween(newestMonth, todayMonth), 0) : 0;
+  const bulletinsBehind =
+    newestMonth && currentBulletinMonth
+      ? Math.max(monthsBetween(newestMonth, currentBulletinMonth), 0)
+      : null;
+
+  // USCIS names its charts in prose; the selector names them in ours. One
+  // mapping so the comparison below is a string equality and not a guess.
+  const selectedChartName =
+    chart === "finalAction" ? "Final Action Dates" : "Dates for Filing";
+  const uscisChartDiffers =
+    currentEmploymentChart !== null && currentEmploymentChart !== selectedChartName;
+
+  // When the newest cutoff is U, the verdict alone is a dead end: "closed that
+  // month" is true and tells the reader nothing about their own case. The last
+  // bulletin that DID publish a cutoff is where they can still see where they
+  // stand.
+  // Returns an already-narrowed shape rather than the raw CutoffPoint: the
+  // loop rules `unavailable` out at runtime, and handing the union back leaves
+  // the JSX unable to reach `.iso` without a cast.
+  const lastOpen = useMemo<
+    | { bulletinMonth: string; kind: "current" }
+    | { bulletinMonth: string; kind: "date"; iso: string }
+    | null
+  >(() => {
+    if (!estimate || estimate.latest?.kind !== "unavailable") return null;
+    for (let i = estimate.history.length - 1; i >= 0; i -= 1) {
+      const point = estimate.history[i]!;
+      if (point.cutoff.kind === "current") {
+        return { bulletinMonth: point.bulletinMonth, kind: "current" };
+      }
+      if (point.cutoff.kind === "date") {
+        return { bulletinMonth: point.bulletinMonth, kind: "date", iso: point.cutoff.iso };
+      }
+    }
+    return null;
+  }, [estimate]);
+
+  // Positive means the priority date sits BEFORE that cutoff, so it was past it.
+  const lastOpenDeltaDays =
+    lastOpen && lastOpen.kind === "date" && pdUsable
+      ? Math.round((Date.parse(lastOpen.iso) - Date.parse(priorityDate)) / DAY_MS)
+      : null;
 
   // The series is drawn whether or not a priority date has been entered: the
   // movement is worth seeing on its own.
@@ -128,7 +270,7 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
         <p className="text-base leading-relaxed">
           The visa bulletin series is being fetched. Until it lands,{" "}
           <a
-            href="https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html"
+            href={DOS_BULLETIN_URL}
             className="font-bold underline underline-offset-2 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
@@ -143,14 +285,38 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
 
   const dated = series.filter((s) => s.state === "date" && s.iso);
   const times = dated.map((s) => Date.parse(s.iso!));
-  const pdTime = /^\d{4}-\d{2}-\d{2}$/.test(priorityDate) ? Date.parse(priorityDate) : null;
-  const yMin = Math.min(...times, ...(pdTime ? [pdTime] : []));
-  const yMax = Math.max(...times, ...(pdTime ? [pdTime] : []));
-  const ySpan = Math.max(yMax - yMin, 1);
+  // A withheld priority date is withheld from the drawing too. A 2027 date
+  // left in the domain stretches the y axis by years and squashes the real
+  // series into a band a few pixels tall, so the chart would misreport the
+  // very movement it exists to show.
+  const pdTime = pdUsable ? Date.parse(priorityDate) : null;
+
+  // The vertical scale exists only if something dated is plotted. A category
+  // that reads C in every bulletin has no dates at all, and an earlier version
+  // gated the whole figure on `dated.length >= 2` and so drew NOTHING for it:
+  // EB-1 worldwide is C across the entire series, so the one case the legend
+  // describes as "a green bar is a month the category was current" was the one
+  // case that never rendered a bar.
+  const yDomain = (() => {
+    if (times.length === 0) return null;
+    const all = [...times, ...(pdTime !== null ? [pdTime] : [])];
+    let lo = Math.min(...all);
+    let hi = Math.max(...all);
+    // A single distinct value would collapse the axis and print three
+    // identical tick labels. Give it half a year of room either side.
+    if (hi === lo) {
+      lo -= 180 * DAY_MS;
+      hi += 180 * DAY_MS;
+    }
+    return { lo, hi, span: hi - lo };
+  })();
 
   const px = (i: number) =>
     PAD_L + (series.length <= 1 ? 0 : (i / (series.length - 1)) * (W - PAD_L - PAD_R));
-  const py = (t: number) => H - PAD_B - ((t - yMin) / ySpan) * (H - PAD_T - PAD_B);
+  const py = (t: number) =>
+    yDomain === null
+      ? H - PAD_B
+      : H - PAD_B - ((t - yDomain.lo) / yDomain.span) * (H - PAD_T - PAD_B);
 
   // Segments, not one polyline. A month with no cutoff is a BREAK: joining
   // across it draws a smooth rise through a period when the category was
@@ -170,7 +336,9 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
   }
 
   const xTickIndices = evenTickIndices(series.length);
-  const yTicks = [yMin, (yMin + yMax) / 2, yMax];
+  const yTicks = yDomain
+    ? [yDomain.lo, (yDomain.lo + yDomain.hi) / 2, yDomain.hi]
+    : [];
   const isoOf = (t: number) => new Date(t).toISOString().slice(0, 7);
 
   return (
@@ -181,11 +349,11 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
           <h2 className="font-heading text-2xl font-black leading-tight">
             Is my priority date current?
           </h2>
-        </div>
+        </div>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           And, more usefully, which way the line has been moving. Cutoffs go
           backwards as well as forwards.
-        </p>
+        </p>{" "}
 
         <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -258,6 +426,120 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
         </div>
       </div>
 
+      {warnings.length > 0 ? (
+        // Warnings sit ABOVE everything they cast doubt on. A date computed
+        // from suspect input must never read as more authoritative than the
+        // doubt about the input, and below the answer is where nobody looks.
+        <div className="border-b-2 border-border bg-tint-primary p-6 sm:p-8" role="alert">
+          {warnings.map((w) => (
+            <div key={w} className="flex items-start gap-3 [&+&]:mt-4">
+              <TriangleAlert
+                className="mt-0.5 h-5 w-5 shrink-0 text-foreground"
+                aria-hidden="true"
+              />{" "}
+              <p className="text-base font-bold leading-relaxed">{w}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}{" "}
+
+      {newestMonth ? (
+        // Which bulletin is being read, and how old it is, next to the answer
+        // rather than in a footnote. Being two bulletins behind is defensible.
+        // Being two bulletins behind silently is not.
+        <div className="border-b-2 border-border bg-muted p-6 sm:p-8">
+          <div className="flex items-start gap-3">
+            <History className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
+            <div>
+              <p className="text-base font-bold leading-relaxed">
+                Reading the {formatMonth(newestMonth)} visa bulletin
+                {bulletinsBehind !== null && bulletinsBehind > 0 ? (
+                  <>
+                    , {countOfBulletins(bulletinsBehind)} behind the current one
+                    ({formatMonth(currentBulletinMonth!)})
+                  </>
+                ) : monthsBehind > 0 ? (
+                  <>, {countOfMonths(monthsBehind)} behind {formatMonth(todayMonth)}</>
+                ) : null}
+                .
+              </p>{" "}
+              {monthsBehind > 0 || (bulletinsBehind !== null && bulletinsBehind > 0) ? (
+                <>
+                  <p className="mt-2 text-base leading-relaxed text-foreground/70">
+                    That&apos;s the newest bulletin this page can read, and it
+                    won&apos;t catch up on its own. The State Department
+                    publishes the bulletin on a site that refuses automated
+                    requests, and since mid-July 2026 it has refused the
+                    Internet Archive&apos;s crawler too, so the months after{" "}
+                    {formatMonth(newestMonth)} have never been archived
+                    anywhere this page can reach.
+                  </p>{" "}
+                  <p className="mt-2 text-base leading-relaxed text-foreground/70">
+                    For the current cutoff, read it at the source. What
+                    everything below has that the current bulletin does not is
+                    the movement: {bulletins.length} bulletins of it, including
+                    the months the cutoff went backwards.
+                  </p>{" "}
+                </>
+              ) : (
+                <p className="mt-2 text-base leading-relaxed text-foreground/70">
+                  Everything below comes from that bulletin and the ones before
+                  it. Cutoffs change every month, in both directions.
+                </p>
+              )}{" "}
+              <p className="mt-3">
+                <a
+                  href={DOS_BULLETIN_URL}
+                  className="inline-flex min-h-[44px] items-center font-bold underline underline-offset-2 hover:text-primary"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open the current visa bulletin at travel.state.gov
+                </a>
+              </p>{" "}
+
+              {currentBulletinMonth && currentEmploymentChart ? (
+                // The one CURRENT, primary fact this page can honestly show
+                // while its own cutoff series is stuck in the past. Which
+                // chart USCIS accepts decides whether an I-485 can be filed at
+                // all, it changes month to month, and it is published on a
+                // host that serves scripts. Dated, sourced, and never used to
+                // infer a cutoff.
+                <div className="mt-4 border-2 border-border bg-card p-4">
+                  <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+                    What USCIS is accepting now
+                  </p>{" "}
+                  <p className="mt-2 text-base leading-relaxed text-foreground/70">
+                    For {formatMonth(currentBulletinMonth)}, USCIS says
+                    employment-based adjustment of status filings must use the{" "}
+                    <strong>{currentEmploymentChart}</strong> chart.
+                    {uscisChartDiffers ? (
+                      <>
+                        {" "}
+                        You have the <strong>{selectedChartName}</strong> chart
+                        selected above, which is the other one.
+                      </>
+                    ) : null}
+                  </p>{" "}
+                  <p className="mt-2 text-sm leading-relaxed text-foreground/60">
+                    Read from uscis.gov on {formatAsOf(today)}. It publishes
+                    which chart controls, not the cutoff dates themselves.{" "}
+                    <a
+                      href={USCIS_CHARTS_URL}
+                      className="font-bold underline underline-offset-2 hover:text-primary"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      USCIS filing charts
+                    </a>
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}{" "}
+
       {estimate && estimate.asOfBulletin ? (
         <div
           className={cn(
@@ -297,6 +579,55 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
               "No visa numbers were available in this category, so no priority date qualified."
             )}
           </p>{" "}
+          {estimate.latest?.kind === "unavailable" && lastOpen ? (
+            // "Closed that month" is true and it is a dead end: it says
+            // nothing about the reader's own case. The last bulletin that did
+            // publish a cutoff is where they can still see where they stand,
+            // and that gap is the thing worth watching when it reopens.
+            <div className="mt-4 border-2 border-border bg-card p-4">
+              <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+                Where your date stood before it closed
+              </p>{" "}
+              <p className="mt-2 text-base leading-relaxed text-foreground/70">
+                {lastOpen.kind === "current" ? (
+                  <>
+                    The last bulletin here before it closed is{" "}
+                    <strong>{formatMonth(lastOpen.bulletinMonth)}</strong>, and
+                    the category was <strong>current</strong> that month: open
+                    to every priority date, including yours.
+                  </>
+                ) : (
+                  <>
+                    The last cutoff published in this category is{" "}
+                    <strong>{formatAsOf(lastOpen.iso)}</strong>, in the{" "}
+                    <strong>{formatMonth(lastOpen.bulletinMonth)}</strong>{" "}
+                    bulletin.{" "}
+                    {lastOpenDeltaDays === null ? null : lastOpenDeltaDays >= 0 ? (
+                      <>
+                        Yours is{" "}
+                        {lastOpenDeltaDays.toLocaleString("en-US")} days earlier
+                        than that, so it was past the cutoff and would have been
+                        current in that month.
+                      </>
+                    ) : (
+                      <>
+                        Yours is{" "}
+                        {Math.abs(lastOpenDeltaDays).toLocaleString("en-US")}{" "}
+                        days later than that, so the cutoff still had that much
+                        ground to cover.
+                      </>
+                    )}
+                  </>
+                )}
+              </p>{" "}
+              <p className="mt-3 text-base leading-relaxed text-foreground/70">
+                That is the gap to watch when the category reopens. October
+                starts a new fiscal year with a fresh allocation of visa
+                numbers, and the cutoff the category reopens at is set then. It
+                is not obliged to return to where it stood.
+              </p>
+            </div>
+          ) : null}{" "}
           {estimate.latest?.kind === "unavailable" ? (
             <div className="mt-4 border-2 border-border bg-card p-4">
               <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
@@ -330,7 +661,7 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
         </div>
       ) : null}
 
-      {dated.length >= 2 ? (
+      {series.length >= 2 ? (
         <div className="border-b-2 border-border p-6 sm:p-8">
           <h3 className="font-heading text-lg font-black">How the cutoff has moved</h3>{" "}
           <figure className="m-0">
@@ -339,7 +670,11 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
                 viewBox={`0 0 ${W} ${H}`}
                 className="block h-auto w-full min-w-[34rem]"
                 role="img"
-                aria-label={`Cutoff dates for ${category} ${country} from ${formatMonth(series[0]!.month)} to ${formatMonth(series[series.length - 1]!.month)}.`}
+                aria-label={
+                  yDomain === null
+                    ? `${category} ${country} published no cutoff date in any bulletin from ${formatMonth(series[0]!.month)} to ${formatMonth(series[series.length - 1]!.month)}; each month was either current or closed.`
+                    : `Cutoff dates for ${category} ${country} from ${formatMonth(series[0]!.month)} to ${formatMonth(series[series.length - 1]!.month)}.`
+                }
               >
                 <defs>
                   <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
@@ -403,14 +738,14 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
                     >
                       <title>
                         {s.state === "unavailable"
-                          ? `${s.month}: category closed, no visa numbers`
-                          : `${s.month}: current, open to every priority date`}
+                          ? `${formatMonth(s.month)}: category closed, no visa numbers`
+                          : `${formatMonth(s.month)}: current, open to every priority date`}
                       </title>
                     </rect>
                   ),
                 )}
 
-                {pdTime !== null ? (
+                {pdTime !== null && yDomain !== null ? (
                   <line
                     x1={PAD_L}
                     x2={W - PAD_R}
@@ -454,11 +789,21 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
             </div>
             <figcaption className="mt-4 space-y-2 text-sm leading-relaxed text-foreground/70">
               <p>
-                <span className="font-bold text-foreground">The line</span> is the
-                cutoff in each bulletin along the bottom, and it breaks wherever
-                there was no cutoff to plot. A{" "}
+                {yDomain !== null ? (
+                  <>
+                    <span className="font-bold text-foreground">The line</span>{" "}
+                    is the cutoff in each bulletin along the bottom, and it
+                    breaks wherever there was no cutoff to plot. A{" "}
+                  </>
+                ) : (
+                  <>
+                    No bulletin in this range published a cutoff date for this
+                    category, so there is no line to draw. Every month was one
+                    of the two other states instead. A{" "}
+                  </>
+                )}
                 <span className="font-bold text-primary">green bar</span> is a month
-                the category was <strong>current</strong> — open to every priority
+                the category was <strong>current</strong>, open to every priority
                 date. A{" "}
                 <span className="font-bold text-[var(--data-bad-ink)]">red bar</span>{" "}
                 is a month it was <strong>closed</strong>, with no visa numbers at
@@ -495,9 +840,11 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
                 </li>
               ))}
               <li className="text-base leading-relaxed text-foreground/70">
-                This holds archived bulletins, so it is behind the current month.{" "}
+                It cannot tell you this month&apos;s cutoff. It holds archived
+                bulletins only, and the archive itself stops at{" "}
+                {newestMonth ? formatMonth(newestMonth) : "the last month captured"}.{" "}
                 <a
-                  href="https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html"
+                  href={DOS_BULLETIN_URL}
                   className="font-bold underline underline-offset-2 hover:text-primary"
                   target="_blank"
                   rel="noopener noreferrer"

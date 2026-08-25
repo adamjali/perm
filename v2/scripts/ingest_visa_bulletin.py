@@ -10,12 +10,42 @@ The Internet Archive is a different thing: a public archive of public pages,
 built to be read programmatically. Reading an archived copy is not
 circumventing anything, and it is what this uses.
 
-The trade is FRESHNESS. The archive lags the live site by a month or two, so
-this can never claim to hold the current month's bulletin. That is why the
-product built on it is a HISTORY: how a cutoff has moved over the months, with
-every month labelled by the bulletin it came from. A movement series is honest
-about being historical in a way that "here is this month's number" would not be,
-and the movement is the part people actually cannot get anywhere else.
+The trade is FRESHNESS. The archive lags the live site, so this can never claim
+to hold the current month's bulletin. That is why the product built on it is a
+HISTORY: how a cutoff has moved over the months, with every month labelled by
+the bulletin it came from. A movement series is honest about being historical in
+a way that "here is this month's number" would not be, and the movement is the
+part people actually cannot get anywhere else.
+
+THE LAG IS NO LONGER A MONTH OR TWO. Measured 2026-08-25: travel.state.gov began
+serving 403 to the Internet Archive's own crawler in mid-July 2026. The last
+successful capture of any bulletin page is 2026-07-14; the first refused one is
+2026-07-17. Every capture attempt since is the 4.8 KB Cloudflare block page, so
+the August 2026 and September 2026 bulletins have never been archived at all
+(15 and 28 capture attempts respectively, all 403, latest 2026-08-23).
+
+    month       captures   status codes
+    2026-07     16         7x 200, 4x 403, 5x no-status
+    2026-08     15         15x 403
+    2026-09     28         28x 403
+
+So 2026-07 is the newest bulletin obtainable from any route this project is
+willing to use, and it will stay that way until travel.state.gov relaxes. This
+is a CEILING, not a backlog: re-running this script cannot fix it. The product
+says so on the page rather than presenting a stale figure as a current one.
+
+Routes measured the same day, with cloudflare.com/discord.com/flag.dol.gov as
+controls (all reachable, so this is agency policy and not our IP):
+
+    travel.state.gov, bare UA                    403
+    travel.state.gov, full browser header set    403 (identical 5,868-byte body)
+    www.uscis.gov filing-charts page             200, but carries NO cutoffs;
+                                                 it names the current bulletin
+                                                 month and links to DOS
+    federalregister.gov API                      200, publishes rules about the
+                                                 bulletin, never the bulletin
+    archive.today mirror                         429, and a less reputable
+                                                 archive is not worth leaning on
 
 Usage:
     python3 scripts/ingest_visa_bulletin.py --out /tmp/vb.json --months 18
@@ -24,6 +54,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import datetime
 import hashlib
 import html
 import json
@@ -38,10 +69,23 @@ import urllib.request
 # matches thousands of URLs and the row limit truncates before it reaches the
 # recent ones, which silently returned bulletins from 2022 while reporting
 # success.
+#
+# `collapse=urlkey` is deliberately ABSENT, and its absence is load-bearing.
+# CDX collapse keeps the FIRST row of each group, and rows are ordered by
+# urlkey then timestamp, so it hands back the OLDEST capture of every bulletin.
+# That silently defeated the "keep the latest snapshot" rule below: for the
+# July 2026 bulletin it returned the 2026-06-18 capture while a 2026-07-14 one
+# existed. An early capture can predate the page being filled in, which is the
+# exact failure the rule was written to avoid.
+#
+# `filter=statuscode:200` is also load-bearing now that travel.state.gov
+# refuses the archive's crawler: without it every August and September 2026
+# capture would parse as a bulletin-shaped page with no charts on it.
+CDX_LIMIT = 2000
 CDX_TEMPLATE = (
     "http://web.archive.org/cdx/search/cdx"
     "?url=travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin/{year}/*"
-    "&output=json&filter=statuscode:200&collapse=urlkey&limit=400"
+    f"&output=json&filter=statuscode:200&limit={CDX_LIMIT}"
 )
 UA = {
     "User-Agent": (
@@ -100,9 +144,17 @@ def discover_snapshots(limit: int, years: list[int]) -> list[tuple[str, str, str
     rows: list[list[str]] = []
     for year in years:
         try:
-            rows += json.loads(fetch(CDX_TEMPLATE.format(year=year)))[1:]
+            year_rows = json.loads(fetch(CDX_TEMPLATE.format(year=year)))[1:]
         except Exception as exc:  # noqa: BLE001
             log(f"  {year}: {exc}")
+            continue
+        # Truncation is silent and drops whole months. Rows come back ordered
+        # by urlkey, so hitting the limit loses the alphabetically-last
+        # bulletins rather than the oldest ones, which is not a pattern anyone
+        # would spot in the output.
+        if len(year_rows) >= CDX_LIMIT:
+            log(f"  WARNING {year}: hit the {CDX_LIMIT}-row CDX limit; months may be missing")
+        rows += year_rows
     best: dict[str, tuple[str, str]] = {}
     for _key, ts, url, *_rest in rows:
         m = re.search(r"visa-bulletin-for-([a-z]+)-(\d{4})\.html", url, re.I)
@@ -178,7 +230,6 @@ def main() -> int:
     ap.add_argument("--years", type=int, nargs="*", help="Calendar years to search")
     args = ap.parse_args()
 
-    import datetime
     this_year = datetime.date.today().year
     years = args.years or [this_year, this_year - 1]
     snapshots = discover_snapshots(args.months, years)
@@ -209,8 +260,29 @@ def main() -> int:
     log("")
     log(f"bulletins parsed  {len(bulletins)}")
     if bulletins:
-        log(f"newest            {bulletins[0]['bulletinMonth']}")
+        newest = bulletins[0]["bulletinMonth"]
+        log(f"newest            {newest}")
         log(f"oldest            {bulletins[-1]['bulletinMonth']}")
+
+        # State the lag rather than leaving it to be noticed. The archive route
+        # has a ceiling it cannot cross on its own (see the module docstring),
+        # so "two months behind" is the expected steady state, not a sign the
+        # run failed.
+        today = datetime.date.today()
+        ny, nm = (int(x) for x in newest.split("-"))
+        behind = (today.year - ny) * 12 + (today.month - nm)
+        log(f"today             {today:%Y-%m}")
+        log(f"months behind     {behind}")
+        if behind >= 1:
+            log(
+                "                  the archive holds no later bulletin. This is a"
+                " ceiling, not a backlog:"
+            )
+            log(
+                "                  travel.state.gov refuses the archive's crawler,"
+                " so re-running will not help."
+            )
+
     if len(bulletins) < 3:
         raise SystemExit("FATAL: fewer than three bulletins parsed. Refusing to write.")
 
