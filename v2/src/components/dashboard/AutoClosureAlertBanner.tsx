@@ -21,7 +21,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { AlertTriangle, ChevronDown, ChevronUp, X, ExternalLink } from "lucide-react";
+import { ArrowSquareOut, CaretDown, CaretUp, Warning as AlertTriangle, X } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { handleOperationError } from "@/lib/errors";
@@ -146,9 +146,9 @@ export default function AutoClosureAlertBanner() {
               aria-label={isExpanded ? "Collapse alerts" : "Expand alerts"}
             >
               {isExpanded ? (
-                <ChevronUp className="w-4 h-4" />
+                <CaretUp className="w-4 h-4" />
               ) : (
-                <ChevronDown className="w-4 h-4" />
+                <CaretDown className="w-4 h-4" />
               )}
             </Button>
           )}
@@ -188,7 +188,7 @@ export default function AutoClosureAlertBanner() {
                   className="p-1.5 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors"
                   title="View case"
                 >
-                  <ExternalLink className="w-4 h-4" />
+                  <ArrowSquareOut className="w-4 h-4" />
                 </Link>
               )}
               <button

@@ -10,7 +10,7 @@
  */
 
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Sparkle } from "@phosphor-icons/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import {
   CalendarDeadlineSVG,
@@ -160,7 +160,7 @@ export function FeaturesGrid() {
         {/* Section header */}
         <ScrollReveal direction="up" className="mb-8 text-center sm:mb-10">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5" />
+            <Sparkle className="h-3.5 w-3.5" />
             What You Get
           </div>{" "}
           <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">

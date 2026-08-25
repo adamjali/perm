@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
-import { X, Plus, MessageSquare, Trash2 } from 'lucide-react';
+import { ChatText, Plus, Trash as Trash2, X } from "@phosphor-icons/react/ssr";
 import { formatDistanceToNow } from 'date-fns';
 import { springConfig } from '@/lib/animations';
 import { cn } from '@/lib/utils';
@@ -115,7 +115,7 @@ export function ChatHistory({
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {!conversations || conversations.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
-                  <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <ChatText className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   <p className="text-sm">No conversations yet</p>
                 </div>
               ) : (

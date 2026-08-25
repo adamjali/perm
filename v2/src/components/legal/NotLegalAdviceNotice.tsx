@@ -18,7 +18,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Info } from "lucide-react";
+import { Info } from "@phosphor-icons/react/ssr";
 import { springConfig, useReducedMotion } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 

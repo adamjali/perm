@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { AlertTriangle, X } from "lucide-react";
+import { Warning as AlertTriangle, X } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 

@@ -33,7 +33,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchQuery } from "convex/nextjs";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight, ArrowSquareOut } from "@phosphor-icons/react/ssr";
 
 import { api } from "../../../../../convex/_generated/api";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -295,7 +295,7 @@ export default async function PermProcessingTimesPage() {
                 rel="noopener noreferrer"
               >
                 Source
-                <ExternalLink className="ml-1 inline h-3 w-3" aria-hidden="true" />
+                <ArrowSquareOut className="ml-1 inline h-3 w-3" aria-hidden="true" />
               </a>
             </p>
           </section>

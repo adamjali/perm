@@ -3,13 +3,7 @@
 import * as React from "react";
 import { useState, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  Plus,
-  Trash2,
-  SortAsc,
-  Flag,
-  Tag,
-} from "lucide-react";
+import { Flag, Plus, SortAscending, Tag, Trash as Trash2 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -532,7 +526,7 @@ export function NotesJournal({
 
           {/* Sort dropdown */}
           <div className="flex items-center gap-1.5">
-            <SortAsc className="h-3.5 w-3.5 text-muted-foreground" />
+            <SortAscending className="h-3.5 w-3.5 text-muted-foreground" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}

@@ -1,14 +1,7 @@
 "use client";
 
 import { useCallback, useRef, type KeyboardEvent } from "react";
-import {
-  LayoutDashboard,
-  Users,
-  FileText,
-  Scale,
-  FolderOpen,
-  StickyNote,
-} from "lucide-react";
+import { FileText, FolderOpen, Note as StickyNote, Scales as Scale, SquaresFour as LayoutDashboard, Users } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 export type TabId =

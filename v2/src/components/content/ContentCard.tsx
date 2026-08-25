@@ -11,7 +11,7 @@
 import { Fragment } from "react";
 import Image from "next/image";
 import { motion } from "motion/react";
-import { Calendar, Clock, Loader2 } from "lucide-react";
+import { Calendar, CircleNotch, Clock } from "@phosphor-icons/react";
 import type { PostSummary } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { NavLink, useNavigationContext } from "@/components/ui/nav-link";
@@ -39,7 +39,7 @@ export default function ContentCard({ post, showType }: ContentCardProps) {
           {/* Loading overlay */}
           {isNavigating && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <CircleNotch className="h-6 w-6 animate-spin text-primary" />
             </div>
           )}
           {/* Image */}

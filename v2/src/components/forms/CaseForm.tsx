@@ -35,16 +35,7 @@ import { useMutation } from "convex/react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zod4Resolver } from "@/lib/forms/zod4-resolver";
 import { api } from "../../../convex/_generated/api";
-import {
-  AlertTriangle,
-  XCircle,
-  FileText,
-  ClipboardList,
-  FileCheck,
-  Building2,
-  StickyNote,
-  Trash2,
-} from "lucide-react";
+import { Building as Building2, ClipboardText, FileArrowUp as FileCheck, FileText, Note as StickyNote, Trash as Trash2, Warning as AlertTriangle, XCircle } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -635,7 +626,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
         </CollapsibleSection>
 
         {/* Recruitment Section */}
-        <CollapsibleSection name="recruitment" title="Recruitment" state={sectionStates.recruitment} onToggle={() => toggleSection("recruitment")} icon={<ClipboardList className="size-5" />} description="Sunday ads, job order, and notice of filing">
+        <CollapsibleSection name="recruitment" title="Recruitment" state={sectionStates.recruitment} onToggle={() => toggleSection("recruitment")} icon={<ClipboardText className="size-5" />} description="Sunday ads, job order, and notice of filing">
           <RecruitmentSection />
         </CollapsibleSection>
 

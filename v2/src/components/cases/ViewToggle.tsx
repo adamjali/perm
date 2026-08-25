@@ -12,7 +12,7 @@
 import { useCallback, useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { LayoutGrid, List } from "lucide-react";
+import { List, SquaresFour as LayoutGrid } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 
 export type ViewMode = "card" | "list";

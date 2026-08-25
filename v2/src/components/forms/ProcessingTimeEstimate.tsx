@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Clock, Info, Zap } from "lucide-react";
+import { Clock, Info, Lightning as Zap } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import {
   PROCESSING_TIMES_AS_OF,

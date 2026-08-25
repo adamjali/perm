@@ -14,7 +14,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import { Search, ArrowUp, ArrowDown, Copy } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, MagnifyingGlass as Search } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

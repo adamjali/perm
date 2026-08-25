@@ -6,7 +6,7 @@ import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { Calendar as CalendarIcon, Plus, Info, ExternalLink } from "lucide-react";
+import { ArrowSquareOut, Calendar as CalendarIcon, Info, Plus } from "@phosphor-icons/react";
 
 import { api } from "../../../../convex/_generated/api";
 import { caseToCalendarEvents } from "@/lib/calendar/event-mapper";
@@ -355,7 +355,7 @@ export function CalendarPageClient() {
             style={{ boxShadow: "var(--shadow-hard-sm)" }}
           >
             Connect
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ArrowSquareOut className="w-3.5 h-3.5" />
           </Link>
         </div>
       )}

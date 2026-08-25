@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { motion } from "motion/react";
 import { format, parseISO, differenceInDays, addDays } from "date-fns";
-import { Check, Flag, Newspaper, FileText, Users, BarChart3, Clock, Info } from "lucide-react";
+import { ChartBar, Check, Clock, FileText, Flag, Info, Newspaper, Users } from "@phosphor-icons/react";
 import Link from "next/link";
 import { getMethodLabel } from "@/lib/recruitment";
 import { isBusinessDay, getFederalHolidays, getFirstRecruitmentDate, getLastRecruitmentDate, isBasicRecruitmentComplete, isProfessionalRecruitmentComplete, FILING_WINDOW_WAIT_DAYS } from "@/lib/perm";
@@ -382,7 +382,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
         <div className="detail-card">
           <div className="detail-card-head ch-muted">
             <span className="flex items-center gap-1.5">
-              <BarChart3 className="h-3.5 w-3.5" />
+              <ChartBar className="h-3.5 w-3.5" />
               Summary
             </span>
           </div>

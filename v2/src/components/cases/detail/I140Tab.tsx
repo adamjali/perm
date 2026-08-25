@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import Link from "next/link";
-import { Shield, Clock } from "lucide-react";
+import { Clock, Shield } from "@phosphor-icons/react";
 import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
 import { itemVariants, tabContainerVariants, fmtISODate, computeWindowStatus } from "./case-detail-utils";

@@ -14,7 +14,7 @@
  * - Monospace font for numbers
  */
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CaretLeft, CaretRight } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -130,7 +130,7 @@ export function CasePagination({
           aria-label="Previous page"
           className="gap-1"
         >
-          <ChevronLeft className="size-4" />
+          <CaretLeft className="size-4" />
           Previous
         </Button>
 
@@ -144,7 +144,7 @@ export function CasePagination({
           className="gap-1"
         >
           Next
-          <ChevronRight className="size-4" />
+          <CaretRight className="size-4" />
         </Button>
 
         {/* Page Size Dropdown */}

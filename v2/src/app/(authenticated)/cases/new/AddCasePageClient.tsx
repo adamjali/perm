@@ -7,7 +7,7 @@ import { useMutation, useConvex } from "convex/react";
 import { analytics } from "@/lib/analytics";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
-import { ChevronRight } from "lucide-react";
+import { CaretRight } from "@phosphor-icons/react";
 import { api } from "../../../../../convex/_generated/api";
 import { CaseForm } from "@/components/forms/CaseForm";
 import {
@@ -207,7 +207,7 @@ export function AddCasePageClient() {
         >
           Cases
         </button>
-        <ChevronRight className="size-4" />
+        <CaretRight className="size-4" />
         <span className="text-foreground font-medium">Add New Case</span>
       </nav>
 

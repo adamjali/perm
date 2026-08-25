@@ -16,16 +16,7 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import {
-  Shield,
-  AlertTriangle,
-  Ban,
-  UserX,
-  Settings as SettingsIcon,
-  Activity,
-  Loader2,
-  Check,
-} from "lucide-react";
+import { Check, CircleNotch, Gear as SettingsIcon, Prohibit as Ban, Pulse as Activity, Shield, UserMinus as UserX, Warning as AlertTriangle } from "@phosphor-icons/react";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
@@ -349,7 +340,7 @@ function BlockedIpsTab() {
               className="sm:min-w-[120px]"
             >
               {pending === "add" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <CircleNotch className="h-4 w-4 animate-spin" />
               ) : (
                 "BLOCK"
               )}
@@ -414,7 +405,7 @@ function BlockedIpsTab() {
                         disabled={pending === b.ip}
                       >
                         {pending === b.ip ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <CircleNotch className="h-3 w-3 animate-spin" />
                         ) : (
                           "UNBLOCK"
                         )}
@@ -505,7 +496,7 @@ function FlaggedUsersTab() {
                     disabled={pending === u.userId}
                   >
                     {pending === u.userId ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <CircleNotch className="h-3 w-3 animate-spin" />
                     ) : (
                       "UNSUSPEND"
                     )}

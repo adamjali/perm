@@ -11,7 +11,7 @@
 import { type ReactNode } from "react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
-import { History } from "lucide-react";
+import { ClockCounterClockwise as History } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "../../../convex/_generated/api";

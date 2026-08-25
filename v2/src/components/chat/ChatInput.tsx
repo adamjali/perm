@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback, KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
-import { Send, Mic, MicOff, Square } from 'lucide-react';
+import { Microphone as Mic, MicrophoneSlash, PaperPlaneTilt as Send, Square } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import { captureError } from '@/lib/sentry';
 
@@ -335,7 +335,7 @@ export function ChatInput({
           aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
         >
           {isRecording ? (
-            <MicOff className="h-4 w-4" />
+            <MicrophoneSlash className="h-4 w-4" />
           ) : (
             <Mic className="h-4 w-4" />
           )}

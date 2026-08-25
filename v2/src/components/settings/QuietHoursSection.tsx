@@ -28,7 +28,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Moon, Clock, Globe, Check, Info, AlertTriangle } from "lucide-react";
+import { Check, Clock, Globe, Info, Moon, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
 import { useSettingsSectionDirtyState } from "./SettingsUnsavedChangesContext";

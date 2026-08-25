@@ -18,19 +18,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import {
-  Upload,
-  AlertCircle,
-  InfoIcon,
-  AlertTriangle,
-  UserX,
-  ChevronDown,
-  ChevronUp,
-  X,
-  Pencil,
-  Check,
-  Loader2,
-} from "lucide-react";
+import { CaretDown, CaretUp, Check, CircleNotch, Info, Pencil, Upload, UserMinus as UserX, Warning as AlertTriangle, WarningCircle as AlertCircle, X } from "@phosphor-icons/react/ssr";
 import {
   Dialog,
   DialogContent,
@@ -496,7 +484,7 @@ export function ImportModal({
 
                 {isParsing ? (
                   <div className="py-4">
-                    <Loader2 className="mx-auto h-12 w-12 mb-4 text-primary animate-spin" />
+                    <CircleNotch className="mx-auto h-12 w-12 mb-4 text-primary animate-spin" />
                     <p className="text-lg font-medium mb-2">Parsing file...</p>{" "}
                     <p className="text-sm text-muted-foreground">Validating case data</p>
                   </div>
@@ -527,7 +515,7 @@ export function ImportModal({
                   {/* Legacy Format Warning */}
                   {parseResult.isLegacyFormat && (
                     <div className="flex items-start gap-3 p-4 border-2 border-amber-500 bg-amber-50 dark:bg-amber-950/20">
-                      <InfoIcon className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                      <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium text-amber-900 dark:text-amber-100">
                           Legacy Format Detected
@@ -581,7 +569,7 @@ export function ImportModal({
                         }}
                       >
                         <div className="flex items-center gap-2">
-                          <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                          <Info className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm font-medium">
                             {parseResult.warnings.length} Conversion Note
                             {parseResult.warnings.length !== 1 ? "s" : ""}
@@ -590,9 +578,9 @@ export function ImportModal({
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <span className="text-xs">{showAllWarnings ? "Collapse" : "Expand"}</span>
                           {showAllWarnings ? (
-                            <ChevronUp className="h-4 w-4" />
+                            <CaretUp className="h-4 w-4" />
                           ) : (
-                            <ChevronDown className="h-4 w-4" />
+                            <CaretDown className="h-4 w-4" />
                           )}
                         </div>
                       </div>
@@ -817,12 +805,12 @@ export function ImportModal({
                       >
                         {showAllCases ? (
                           <>
-                            <ChevronUp className="h-4 w-4" />
+                            <CaretUp className="h-4 w-4" />
                             <span>Show less</span>
                           </>
                         ) : (
                           <>
-                            <ChevronDown className="h-4 w-4" />
+                            <CaretDown className="h-4 w-4" />
                             <span>
                               Show all {parseResult.valid.length + parseResult.errors.length} cases
                             </span>
@@ -948,7 +936,7 @@ export function ImportModal({
                         <Button size="sm" onClick={handleSaveEdit} disabled={isSavingEdit}>
                           {isSavingEdit ? (
                             <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              <CircleNotch className="h-4 w-4 mr-2 animate-spin" />
                               Saving...
                             </>
                           ) : (

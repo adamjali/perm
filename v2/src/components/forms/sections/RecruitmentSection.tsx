@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Plus, Trash2 } from "lucide-react";
+import { GraduationCap, Plus, Trash as Trash2 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { useRecruitmentSection } from "@/components/forms/useCaseFormSection";

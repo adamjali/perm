@@ -23,7 +23,7 @@
  */
 
 import { motion } from 'motion/react';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, CircleNotch, MagnifyingGlass as Search, XCircle } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import { springConfig } from '@/lib/animations';
 import {
@@ -32,7 +32,6 @@ import {
   getToolLoadingMessage,
   TOOL_ICONS,
 } from './tool-icons';
-import { Search } from 'lucide-react';
 import {
   summarizeToolResult,
   summarizeToolArgs,
@@ -232,7 +231,7 @@ function StatusIcon({
         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
         className="text-primary"
       >
-        <Loader2 className="h-3.5 w-3.5" />
+        <CircleNotch className="h-3.5 w-3.5" />
       </motion.div>
     );
   }

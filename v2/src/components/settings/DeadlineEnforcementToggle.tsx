@@ -14,7 +14,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, Shield } from "lucide-react";
+import { Shield, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { analytics } from "@/lib/analytics";
 import { useAuthContext } from "@/lib/contexts/AuthContext";

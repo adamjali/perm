@@ -17,7 +17,7 @@
 
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { Z_INDEX } from "@/lib/constants/zIndex";
-import { Loader2 } from "lucide-react";
+import { CircleNotch } from "@phosphor-icons/react";
 
 export default function SignOutOverlay() {
   const { isSigningOut } = useAuthContext();
@@ -45,7 +45,7 @@ export default function SignOutOverlay() {
                    animate-in fade-in slide-in-from-bottom-4 zoom-in-95 duration-200"
       >
         {/* Spinner - Forest Green */}
-        <Loader2 className="size-8 animate-spin text-primary" strokeWidth={2.5} />
+        <CircleNotch className="size-8 animate-spin text-primary" />
 
         {/* Text */}
         <div className="text-center">

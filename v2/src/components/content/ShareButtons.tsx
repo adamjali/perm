@@ -10,7 +10,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Link2, Check } from "lucide-react";
+import { Check, Link } from "@phosphor-icons/react";
 interface ShareButtonsProps {
   title: string;
   url: string;
@@ -101,7 +101,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
               exit={{ scale: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <Link2 className="h-4 w-4" />
+              <Link className="h-4 w-4" />
             </motion.span>
           )}
         </AnimatePresence>

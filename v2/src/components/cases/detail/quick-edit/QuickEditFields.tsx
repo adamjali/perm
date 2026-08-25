@@ -17,7 +17,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useMutation } from "convex/react";
 import { motion } from "motion/react";
-import { Check, Loader2, AlertCircle, ExternalLink, Info, Clock } from "lucide-react";
+import { ArrowSquareOut, Check, CircleNotch, Clock, Info, WarningCircle as AlertCircle } from "@phosphor-icons/react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
@@ -213,7 +213,7 @@ function ComplexActionDisplay({ message, onNavigateToForm }: ComplexActionDispla
           className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
         >
           Open full edit form
-          <ExternalLink className="h-3.5 w-3.5" />
+          <ArrowSquareOut className="h-3.5 w-3.5" />
         </button>
       )}
     </motion.div>
@@ -504,7 +504,7 @@ export function QuickEditFields({
       >
         {submitStatus === "saving" ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <CircleNotch className="h-4 w-4 animate-spin" />
             <span>Saving...</span>
           </>
         ) : submitStatus === "saved" ? (

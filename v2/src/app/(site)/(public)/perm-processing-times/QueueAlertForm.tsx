@@ -15,7 +15,7 @@
  */
 
 import { useId, useState } from "react";
-import { Bell, CheckCircle2 } from "lucide-react";
+import { Bell, CheckCircle as CheckCircle2 } from "@phosphor-icons/react";
 
 import { MONTH_NAMES } from "@/lib/dolFormat";
 import { Button, Input, Label } from "@/components/ui";

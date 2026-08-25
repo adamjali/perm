@@ -30,7 +30,7 @@ import { FormField } from "@/components/forms/FormField";
 import { Input } from "@/components/ui/input";
 import { SelectInput, type SelectOption } from "@/components/forms/SelectInput";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Globe, Check } from "lucide-react";
+import { Check, Envelope as Mail, Globe, User } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
 import { useSettingsSectionDirtyState } from "./SettingsUnsavedChangesContext";

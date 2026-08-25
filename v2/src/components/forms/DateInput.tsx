@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { X, Calendar } from "lucide-react";
+import { Calendar, X } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 // ============================================================================

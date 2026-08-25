@@ -10,9 +10,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchQuery } from "convex/nextjs";
-import {
-  ArrowRight,
-} from "lucide-react";
+import { ArrowRight } from "@phosphor-icons/react/ssr";
 
 import { api } from "../../../../../convex/_generated/api";
 import { openGraphBase } from "@/lib/openGraphBase";

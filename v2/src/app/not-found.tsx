@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft, House as Home } from "@phosphor-icons/react/ssr";
 
 /**
  * A 404 must not be indexable. Without this it inherits the site default and
@@ -58,14 +58,14 @@ export default function NotFound() {
                 href="/"
                 className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-heading font-bold text-sm uppercase tracking-wide px-6 py-3 border-2 border-border shadow-hard hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-150"
               >
-                <Home className="w-4 h-4" strokeWidth={2.5} />
+                <Home className="w-4 h-4" />
                 Home
               </Link>
               <Link
                 href="/dashboard"
                 className="inline-flex items-center justify-center gap-2 bg-card text-foreground font-heading font-bold text-sm uppercase tracking-wide px-6 py-3 border-2 border-border shadow-hard hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-150"
               >
-                <ArrowLeft className="w-4 h-4" strokeWidth={2.5} />
+                <ArrowLeft className="w-4 h-4" />
                 Dashboard
               </Link>
             </div>

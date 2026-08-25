@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Clock, Bell, Calendar, Bot } from "lucide-react";
+import { Bell, Calendar, Clock, Robot as Bot } from "@phosphor-icons/react";
 
 interface ValuePreviewStepProps {
   onNext: () => void;
@@ -52,7 +52,6 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
               <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-primary/10 border-2 border-border">
                 <feature.icon
                   className="w-4 h-4 text-primary"
-                  strokeWidth={2.5}
                 />
               </div>
               {index < FEATURES.length - 1 && (

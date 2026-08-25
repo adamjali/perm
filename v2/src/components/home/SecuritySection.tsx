@@ -8,7 +8,7 @@
  *
  */
 
-import { Shield } from "lucide-react";
+import { Shield } from "@phosphor-icons/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 interface SecurityRow {

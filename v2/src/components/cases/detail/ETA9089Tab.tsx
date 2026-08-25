@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import Link from "next/link";
-import { FileText, Clock } from "lucide-react";
+import { Clock, FileText } from "@phosphor-icons/react";
 import { isRecruitmentComplete } from "@/lib/perm";
 import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";

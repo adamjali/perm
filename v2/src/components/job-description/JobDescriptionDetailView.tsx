@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { FileText, Copy, Check, ChevronDown, Trash2, Pencil, Settings2, Save, Sparkles } from "lucide-react";
+import { CaretDown, Check, Copy, FileText, FloppyDisk as Save, Pencil, Sliders, Sparkle, Trash as Trash2 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -309,7 +309,7 @@ export function JobDescriptionDetailView({
               {characterCount.toLocaleString()} chars
             </span>
           )}
-          <ChevronDown
+          <CaretDown
             className={cn(
               "h-5 w-5 text-muted-foreground transition-transform duration-200",
               isOpen && "rotate-180"
@@ -355,7 +355,7 @@ export function JobDescriptionDetailView({
                             onClick={() => setManagementOpen(true)}
                             className="border-2 gap-1.5 min-h-[44px]"
                           >
-                            <Settings2 className="h-5 w-5 sm:h-4 sm:w-4" />
+                            <Sliders className="h-5 w-5 sm:h-4 sm:w-4" />
                             <span className="hidden sm:inline">Manage</span>
                           </Button>
                         </TooltipTrigger>
@@ -475,7 +475,7 @@ export function JobDescriptionDetailView({
                             </>
                           ) : (
                             <>
-                              <Sparkles className="h-5 w-5 sm:h-4 sm:w-4" />
+                              <Sparkle className="h-5 w-5 sm:h-4 sm:w-4" />
                               <span className="text-sm">{isSavingTemplate ? "Saving..." : "Save Template"}</span>
                             </>
                           )}
@@ -555,7 +555,7 @@ export function JobDescriptionDetailView({
                                 }}
                                 className="h-9 sm:h-8 gap-1.5 text-xs min-w-[44px] px-2 sm:px-3"
                               >
-                                <Settings2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                                <Sliders className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                                 <span>Templates</span>
                               </Button>
                             </TooltipTrigger>

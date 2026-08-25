@@ -1,17 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import {
-  Search,
-  Trash2,
-  FileText,
-  Pencil,
-  Copy,
-  Check,
-  X,
-  ChevronRight,
-  ChevronLeft,
-} from "lucide-react";
+import { CaretLeft, CaretRight, Check, Copy, FileText, MagnifyingGlass as Search, Pencil, Trash as Trash2, X } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -248,7 +238,7 @@ export function TemplateManagementModal({
                 onClick={handleBackToList}
                 className="w-fit -ml-2 mb-2 gap-1.5 min-h-[44px]"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <CaretLeft className="h-4 w-4" />
                 Back to Templates
               </Button>
             )}
@@ -312,7 +302,7 @@ export function TemplateManagementModal({
                       >
                         <div className="flex items-center justify-between gap-2 min-w-0">
                           <span className="font-medium truncate flex-1 min-w-0">{template.name}</span>
-                          <ChevronRight className="h-5 w-5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                          <CaretRight className="h-5 w-5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                         </div>
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {template.description}

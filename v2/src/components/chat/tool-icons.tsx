@@ -5,43 +5,18 @@
  * Used by ToolCallCard for consistent visual representation.
  *
  * Design System: Neobrutalist (PERM Tracker v2)
- * - Icons from lucide-react
+ * - Icons from @phosphor-icons/react
  * - Colors follow semantic meaning
  */
 
-import {
-  Database,
-  BookOpen,
-  Globe,
-  Pencil,
-  Trash2,
-  Calendar,
-  CalendarPlus,
-  CalendarMinus,
-  Search,
-  FileText,
-  RefreshCw,
-  Navigation2,
-  Eye,
-  ArrowDown,
-  Plus,
-  Archive,
-  RotateCcw,
-  Check,
-  CheckCheck,
-  Bell,
-  BellOff,
-  Settings,
-  SlidersHorizontal,
-  CalendarSync,
-  type LucideIcon,
-} from 'lucide-react';
+import { Archive, ArrowCounterClockwise as RotateCcw, ArrowDown, ArrowsClockwise as CalendarSync, ArrowsClockwise as RefreshCw, Bell, BellSlash as BellOff, BookOpen, Calendar, CalendarMinus, CalendarPlus, Check, Checks as CheckCheck, Database, Eye, FileText, Gear as Settings, Globe, MagnifyingGlass as Search, NavigationArrow as Navigation2, Pencil, Plus, SlidersHorizontal, Trash as Trash2 } from "@phosphor-icons/react/ssr";
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 
 /**
  * Tool name to icon mapping
  * Keys match AI SDK tool names from lib/ai/tools.ts
  */
-export const TOOL_ICONS: Record<string, LucideIcon> = {
+export const TOOL_ICONS: Record<string, PhosphorIcon> = {
   // Read-only tools (current)
   queryCases: Database,
   searchKnowledge: BookOpen,
@@ -287,7 +262,7 @@ export const TOOL_LOADING_MESSAGES: Record<string, string> = {
 /**
  * Get icon for a tool, with fallback
  */
-export function getToolIcon(tool: string): LucideIcon {
+export function getToolIcon(tool: string): PhosphorIcon {
   return TOOL_ICONS[tool] ?? Search;
 }
 

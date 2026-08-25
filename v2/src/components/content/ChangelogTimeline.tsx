@@ -11,7 +11,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { motion } from "motion/react";
-import { Calendar, Tag } from "lucide-react";
+import { Calendar, Tag } from "@phosphor-icons/react";
 import type { PostSummary } from "@/lib/content/types";
 import { useScrollStagger } from "@/lib/hooks/useGSAP";
 

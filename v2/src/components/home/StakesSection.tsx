@@ -10,7 +10,7 @@
  */
 
 import * as React from "react";
-import { AlertTriangle, ArrowRight, Shield } from "lucide-react";
+import { ArrowRight, Shield, Warning as AlertTriangle } from "@phosphor-icons/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 interface StakeCard {
@@ -211,7 +211,6 @@ export function StakesSection() {
                     <AlertTriangle
                       className="h-12 w-12"
                       style={{ color: severityColors[stake.severity] }}
-                      strokeWidth={1.5}
                     />
                   </div>
                 </div>

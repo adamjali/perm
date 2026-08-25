@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Check, Clock, Circle } from "lucide-react";
+import { Check, Circle, Clock } from "@phosphor-icons/react";
 import { parseISO, format } from "date-fns";
 import { extractMilestones } from "@/lib/timeline/milestones";
 import { isRecruitmentComplete } from "@/lib/perm";

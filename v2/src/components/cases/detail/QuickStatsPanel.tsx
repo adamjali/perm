@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, type RefCallback } from "react";
-import { TrendingUp } from "lucide-react";
+import { TrendUp as TrendingUp } from "@phosphor-icons/react";
 import { parseISO, differenceInDays } from "date-fns";
 import { extractMilestones } from "@/lib/timeline/milestones";
 import { calculateNextDeadline } from "./next-up-section.utils";

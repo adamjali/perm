@@ -17,7 +17,7 @@
  */
 
 import { Fragment, useId, useMemo, useState } from "react";
-import { FileText, TrendingUp, TriangleAlert } from "lucide-react";
+import { FileText, TrendUp as TrendingUp, Warning } from "@phosphor-icons/react";
 
 import { estimateI140Queue, type I140QuarterStats } from "@/lib/perm";
 import {
@@ -264,7 +264,7 @@ export function I140QueueEstimator({
 
       <div className="bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
-          <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
+          <Warning className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
           <div>
             <h3 className="font-heading text-base font-black">What this can’t tell you</h3>
             <ul className="mt-3 space-y-2">

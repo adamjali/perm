@@ -10,7 +10,7 @@ import { Fragment } from "react";
 
 import Image from "next/image";
 import { motion } from "motion/react";
-import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, User } from "@phosphor-icons/react";
 import { NavLink } from "@/components/ui/nav-link";
 import type { PostMeta, ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";

@@ -23,14 +23,7 @@
  */
 
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  CheckCircle,
-  XCircle,
-  Loader2,
-  AlertTriangle,
-  Check,
-  X,
-} from 'lucide-react';
+import { Check, CheckCircle, CircleNotch, MagnifyingGlass as Search, Warning as AlertTriangle, X, XCircle } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import { springConfig } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
@@ -39,7 +32,6 @@ import {
   getToolDisplayName,
   TOOL_ICONS,
 } from './tool-icons';
-import { Search } from 'lucide-react';
 import type { ConfirmationStatus } from '@/lib/ai/tool-confirmation-types';
 
 // Re-export for backwards compatibility
@@ -99,7 +91,7 @@ function StatusIcon({ status }: { status: ConfirmationStatus }) {
         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
         className="text-primary"
       >
-        <Loader2 className="h-4 w-4" />
+        <CircleNotch className="h-4 w-4" />
       </motion.div>
     );
   }

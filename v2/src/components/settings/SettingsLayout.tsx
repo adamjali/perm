@@ -3,15 +3,7 @@
 import { useCallback, useRef, KeyboardEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
-import {
-  User,
-  Bell,
-  Moon,
-  Calendar,
-  Shield,
-  HelpCircle,
-  LucideIcon,
-} from "lucide-react";
+import { Bell, Calendar, Moon, Question as HelpCircle, Shield, User, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { useSettingsUnsavedChanges } from "./SettingsUnsavedChangesContext";
 
 // ============================================================================
@@ -29,7 +21,7 @@ export type SettingsSectionType =
 interface NavItem {
   id: SettingsSectionType;
   label: string;
-  icon: LucideIcon;
+  icon: PhosphorIcon;
 }
 
 interface SettingsLayoutProps {

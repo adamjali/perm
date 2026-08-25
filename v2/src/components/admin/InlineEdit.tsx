@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X } from "@phosphor-icons/react";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import type { Id } from "../../../convex/_generated/dataModel";

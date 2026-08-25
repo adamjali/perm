@@ -17,7 +17,7 @@
  */
 
 import { useId, useMemo, useState } from "react";
-import { CalendarClock, Info, TriangleAlert } from "lucide-react";
+import { CalendarDot as CalendarClock, Info, Warning } from "@phosphor-icons/react";
 
 import { estimateQueueDecision, type CohortStat, type DolFrontier } from "@/lib/perm";
 import { formatMonth } from "@/lib/dolFormat";
@@ -241,7 +241,7 @@ export function PermTimelineEstimator({
       {estimate.caveats.length > 0 ? (
         <div className="border-t-2 border-border bg-muted p-6 sm:p-8">
           <div className="flex items-start gap-3">
-            <TriangleAlert
+            <Warning
               className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70"
               aria-hidden="true"
             />

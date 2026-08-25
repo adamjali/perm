@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { Flag, Briefcase, CalendarMinus, CalendarPlus, FileText, ChevronDown, ArrowRight, Pencil, Copy, Check, Trash2, Loader2, FilePlus, Save } from "lucide-react";
+import { ArrowRight, Briefcase, CalendarMinus, CalendarPlus, CaretDown, Check, CircleNotch, Copy, FilePlus, FileText, Flag, FloppyDisk as Save, Pencil, Trash as Trash2 } from "@phosphor-icons/react";
 import { ConvexError } from "convex/values";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { calculateNextAction, calculateNextDeadline } from "./next-up-section.utils";
@@ -250,7 +250,7 @@ export function OverviewTab({
                           className="shrink-0"
                           aria-hidden="true"
                         >
-                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                          <CaretDown className="h-5 w-5 text-muted-foreground" />
                         </motion.div>
                       )}
                       {navigateUrl && !canExpand && (
@@ -517,7 +517,7 @@ export function OverviewTab({
                           )}
                         >
                           {isSavingTemplate ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <CircleNotch className="h-3 w-3 animate-spin" />
                           ) : isExistingTemplateName ? (
                             <Save className="h-3 w-3" />
                           ) : (
@@ -545,7 +545,7 @@ export function OverviewTab({
                         >
                           {isSavingJobDesc ? (
                             <span className="flex items-center gap-1">
-                              <Loader2 className="h-3 w-3 animate-spin" />
+                              <CircleNotch className="h-3 w-3 animate-spin" />
                               Saving...
                             </span>
                           ) : "Save"}

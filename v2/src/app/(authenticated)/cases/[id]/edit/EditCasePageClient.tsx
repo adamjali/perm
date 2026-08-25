@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
-import { ChevronRight } from "lucide-react";
+import { CaretRight } from "@phosphor-icons/react";
 import Link from "next/link";
 import { api } from "../../../../../../convex/_generated/api";
 import type { Id, Doc } from "../../../../../../convex/_generated/dataModel";
@@ -187,7 +187,7 @@ function Breadcrumb({ caseData }: { caseData: Doc<"cases"> }) {
       >
         Cases
       </button>
-      <ChevronRight className="size-4 shrink-0" />
+      <CaretRight className="size-4 shrink-0" />
       <button
         onClick={() => router.push(`/cases/${caseData._id}`)}
         className="hover:text-foreground transition-colors truncate"
@@ -195,7 +195,7 @@ function Breadcrumb({ caseData }: { caseData: Doc<"cases"> }) {
       >
         {caseData.employerName} - {caseData.positionTitle}
       </button>
-      <ChevronRight className="size-4 shrink-0" />
+      <CaretRight className="size-4 shrink-0" />
       <span className="text-foreground font-medium shrink-0">Edit</span>
     </nav>
   );

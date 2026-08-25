@@ -26,18 +26,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { handleOperationError } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import { safeFormatDistanceToNow } from "@/lib/utils/date";
-import {
-  Bell,
-  Calendar,
-  AlertTriangle,
-  RefreshCw,
-  Info,
-  Clock,
-  Trash2,
-  Check,
-  Loader2,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowsClockwise as RefreshCw, Bell, Calendar, Check, CircleNotch, Clock, Info, Trash as Trash2, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { NotificationTabType } from "./NotificationTabs";
 
@@ -86,7 +76,7 @@ interface NotificationListProps {
 }
 
 // Icon mapping for notification types
-const NOTIFICATION_ICONS: Record<NotificationType, LucideIcon> = {
+const NOTIFICATION_ICONS: Record<NotificationType, PhosphorIcon> = {
   deadline_reminder: Calendar,
   status_change: RefreshCw,
   rfe_alert: AlertTriangle,
@@ -529,7 +519,7 @@ export default function NotificationList({
           >
             {isLoadingMore ? (
               <>
-                <Loader2 className="size-4 mr-2 animate-spin" />
+                <CircleNotch className="size-4 mr-2 animate-spin" />
                 Loading...
               </>
             ) : (

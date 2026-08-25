@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertTriangle, Zap } from "lucide-react";
+import { Lightning as Zap, Warning as AlertTriangle } from "@phosphor-icons/react";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 

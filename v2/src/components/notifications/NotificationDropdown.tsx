@@ -26,7 +26,7 @@
 
 import { useState, useEffect } from "react";
 import { handleOperationError } from "@/lib/errors";
-import { Bell, Calendar, AlertTriangle, RefreshCw, Info, Clock, X, Loader2, type LucideIcon } from "lucide-react";
+import { ArrowsClockwise as RefreshCw, Bell, Calendar, CircleNotch, Clock, Info, Warning as AlertTriangle, X, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
@@ -78,7 +78,7 @@ interface Notification {
 /**
  * Icon mapping for notification types
  */
-const NOTIFICATION_ICONS: Record<NotificationType, LucideIcon> = {
+const NOTIFICATION_ICONS: Record<NotificationType, PhosphorIcon> = {
   deadline_reminder: Calendar,
   status_change: RefreshCw,
   rfe_alert: AlertTriangle,
@@ -467,7 +467,7 @@ export default function NotificationDropdown() {
             >
               {navigatingToAll ? "Loading..." : remainingCount > 0 ? `+${remainingCount} more` : "View all"}
               {navigatingToAll ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <CircleNotch className="h-4 w-4 animate-spin" />
               ) : (
                 <svg
                   width="16"

@@ -7,7 +7,7 @@
  */
 
 import { differenceInDays, format, parseISO } from "date-fns";
-import { AlertTriangle, Clock, CalendarClock } from "lucide-react";
+import { CalendarDot as CalendarClock, Clock, Warning as AlertTriangle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { calculateRecruitmentWindowCloses, getFirstRecruitmentDate } from "@/lib/perm";
 

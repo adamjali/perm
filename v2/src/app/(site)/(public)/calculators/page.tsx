@@ -8,15 +8,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ArrowRight,
-  CalendarCheck,
-  CalendarClock,
-  CalendarRange,
-  FileText,
-  Route,
-  Scale,
-} from "lucide-react";
+import { ArrowRight, CalendarBlank as CalendarRange, CalendarCheck, CalendarDot as CalendarClock, FileText, Path as Route, Scales as Scale } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";

@@ -6,13 +6,7 @@ import { api } from "../../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { ONBOARDING_ROLES } from "@/lib/onboarding/constants";
 import type { UserRole } from "@/lib/onboarding/types";
-import {
-  Scale,
-  Briefcase,
-  Building2,
-  UserCheck,
-  HelpCircle,
-} from "lucide-react";
+import { Briefcase, Building as Building2, Question as HelpCircle, Scales as Scale, UserCheck } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { handleOperationError } from "@/lib/errors";
 

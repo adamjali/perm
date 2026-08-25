@@ -10,7 +10,7 @@
  */
 
 import Image from "next/image";
-import { Rocket, Loader2 } from "lucide-react";
+import { CircleNotch, Rocket } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
@@ -124,7 +124,7 @@ export function CTASection() {
                 disabled={isNavigating}
               >
                 {isNavigating && targetPath === "/signup" ? (
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  <CircleNotch className="mr-2 h-5 w-5 animate-spin" />
                 ) : (
                   <Rocket className="mr-2 h-5 w-5" />
                 )}

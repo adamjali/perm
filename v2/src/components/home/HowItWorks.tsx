@@ -11,7 +11,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Route, Play } from "lucide-react";
+import { Path as Route, Play } from "@phosphor-icons/react";
 import { useInView } from "motion/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useReducedMotion } from "@/lib/animations";

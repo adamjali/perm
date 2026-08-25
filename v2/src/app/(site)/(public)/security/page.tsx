@@ -15,7 +15,7 @@
 import type { Metadata } from "next";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
-import { Shield, CheckCircle2 } from "lucide-react";
+import { CheckCircle as CheckCircle2, Shield } from "@phosphor-icons/react/ssr";
 
 export const dynamic = "force-static";
 

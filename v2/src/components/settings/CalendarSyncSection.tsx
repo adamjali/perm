@@ -41,7 +41,7 @@ import { api } from "../../../convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Calendar, Cloud, AlertTriangle, Check, Loader2, X, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowsClockwise as RefreshCw, Calendar, Check, CircleNotch, Cloud, Trash as Trash2, Warning as AlertTriangle, X } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 
@@ -572,7 +572,7 @@ export default function CalendarSyncSection({
             >
               {isDisconnecting ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                   Disconnecting...
                 </>
               ) : (
@@ -592,7 +592,7 @@ export default function CalendarSyncSection({
             >
               {isConnecting ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                   Connecting...
                 </>
               ) : (
@@ -636,7 +636,7 @@ export default function CalendarSyncSection({
               >
                 {isSyncingAll ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                     Syncing...
                   </>
                 ) : (
@@ -744,7 +744,7 @@ export default function CalendarSyncSection({
               >
                 {isClearingEvents ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                     Clearing...
                   </>
                 ) : (

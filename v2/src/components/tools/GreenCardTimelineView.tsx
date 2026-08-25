@@ -14,7 +14,7 @@
  * legible at any width.
  */
 
-import { CircleAlert, Lock, Timer } from "lucide-react";
+import { Lock, Timer, WarningCircle as CircleAlert } from "@phosphor-icons/react";
 import type { GreenCardTimeline, TimelineStage } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 

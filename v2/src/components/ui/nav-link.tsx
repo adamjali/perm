@@ -14,7 +14,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef, ComponentProps, createContext, useContext } from "react";
-import { Loader2 } from "lucide-react";
+import { CircleNotch } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 // Context to coordinate loading states across NavLinks
@@ -147,7 +147,7 @@ export function NavLink({
     >
       {isNavigating && showLoading ? (
         <span className="inline-flex items-center gap-2">
-          <Loader2
+          <CircleNotch
             size={spinnerSize}
             className={cn("animate-spin", spinnerClassName)}
           />

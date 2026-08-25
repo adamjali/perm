@@ -17,7 +17,7 @@
 
 "use client";
 
-import { Plus, Loader2 } from "lucide-react";
+import { CircleNotch, Plus } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
@@ -57,7 +57,7 @@ export default function AddCaseButton() {
       )}
     >
       {isNavigating ? (
-        <Loader2 className="size-5 animate-spin" />
+        <CircleNotch className="size-5 animate-spin" />
       ) : (
         <Plus className="size-5" />
       )}

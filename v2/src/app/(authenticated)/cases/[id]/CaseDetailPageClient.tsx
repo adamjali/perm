@@ -6,20 +6,7 @@ import { useQuery, useMutation } from "convex/react";
 import { motion } from "motion/react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
-import {
-  ArrowLeft,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  Archive,
-  RotateCcw,
-  CalendarCheck,
-  CalendarX,
-  AlertTriangle,
-  Bookmark,
-  Loader2,
-  Check,
-} from "lucide-react";
+import { Archive, ArrowCounterClockwise as RotateCcw, ArrowLeft, Bookmark, CalendarCheck, CalendarX, Check, CircleNotch, DotsThreeVertical, Pencil, Trash as Trash2, Warning as AlertTriangle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -627,7 +614,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               disabled={isAnyNavigating}
             >
               {isNavigating ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <CircleNotch className="h-5 w-5 animate-spin" />
               ) : (
                 <ArrowLeft className="h-5 w-5" />
               )}
@@ -675,7 +662,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 aria-pressed={caseData.isFavorite}
               >
                 {isTogglingFavorite ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <CircleNotch className="h-5 w-5 animate-spin" />
                 ) : (
                   <Bookmark
                     className={cn(
@@ -713,7 +700,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 aria-pressed={caseData.calendarSyncEnabled}
               >
                 {isTogglingCalendarSync ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
+                  <CircleNotch className="h-5 w-5 animate-spin text-emerald-600" />
                 ) : caseData.calendarSyncEnabled && isGoogleConnected ? (
                   <CalendarCheck className="h-5 w-5 text-emerald-600" />
                 ) : caseData.calendarSyncEnabled && !isGoogleConnected ? (
@@ -734,7 +721,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 )}
               >
                 {isEditNavigating ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <CircleNotch className="h-4 w-4 animate-spin" />
                 ) : (
                   <Pencil className="h-4 w-4" />
                 )}
@@ -753,7 +740,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     )}
                     disabled={isUpdating || isAnyNavigating}
                   >
-                    <MoreVertical className="h-5 w-5" />
+                    <DotsThreeVertical className="h-5 w-5" />
                     <span className="sr-only">Actions</span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -830,7 +817,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 >
                   {isDone ? (
                     <span className="w-[14px] h-[14px] rounded-full bg-emerald-600 dark:bg-emerald-500 flex items-center justify-center shrink-0">
-                      <Check className="h-[9px] w-[9px] text-white" strokeWidth={3.5} />
+                      <Check className="h-[9px] w-[9px] text-white" />
                     </span>
                   ) : (
                     <span
@@ -916,7 +903,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           className="border-[3px] border-[#DC2626] bg-card text-[#DC2626] hover:bg-[#DC2626] hover:text-white font-mono text-xs font-bold uppercase tracking-wide transition-all gap-1.5 dark:bg-white dark:text-[#DC2626] dark:border-[#DC2626] dark:hover:bg-[#DC2626] dark:hover:text-white"
         >
           {isDeleting ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <CircleNotch className="h-3.5 w-3.5 animate-spin" />
           ) : (
             <Trash2 className="h-3.5 w-3.5" />
           )}

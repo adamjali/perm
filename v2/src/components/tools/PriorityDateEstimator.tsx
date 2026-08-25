@@ -17,7 +17,7 @@
  */
 
 import { useId, useMemo, useState } from "react";
-import { CalendarRange, History, TrendingDown, TriangleAlert } from "lucide-react";
+import { CalendarBlank as CalendarRange, ClockCounterClockwise as History, TrendDown, Warning } from "@phosphor-icons/react";
 
 import {
   estimatePriorityDate,
@@ -433,7 +433,7 @@ export function PriorityDateEstimator({
         <div className="border-b-2 border-border bg-tint-primary p-6 sm:p-8" role="alert">
           {warnings.map((w) => (
             <div key={w} className="flex items-start gap-3 [&+&]:mt-4">
-              <TriangleAlert
+              <Warning
                 className="mt-0.5 h-5 w-5 shrink-0 text-foreground"
                 aria-hidden="true"
               />{" "}
@@ -652,7 +652,7 @@ export function PriorityDateEstimator({
 
       {estimate && estimate.retrogressions.length > 0 ? (
         <div className="flex items-start gap-3 border-b-2 border-border bg-muted p-6 sm:p-8">
-          <TrendingDown className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
+          <TrendDown className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
           <p className="text-base leading-relaxed">
             <strong>This cutoff has gone backwards.</strong> It retrogressed in{" "}
             {estimate.retrogressions.map((m) => formatMonth(m)).join(", ")}. Being
@@ -828,7 +828,7 @@ export function PriorityDateEstimator({
 
       <div className="bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
-          <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
+          <Warning className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
           <div>
             <h3 className="font-heading text-base font-black">What this can’t tell you</h3>{" "}
             <ul className="mt-3 space-y-2">

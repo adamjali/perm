@@ -3,7 +3,7 @@
 import * as React from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Clock, CheckCircle, XCircle, CalendarClock } from "lucide-react";
+import { CalendarDot as CalendarClock, CheckCircle, Clock, Warning as AlertTriangle, XCircle } from "@phosphor-icons/react";
 import { format, parseISO, differenceInDays } from "date-fns";
 
 // ============================================================================

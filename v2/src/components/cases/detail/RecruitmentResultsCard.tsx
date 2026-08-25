@@ -2,18 +2,7 @@
 
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  ClipboardList,
-  Copy,
-  Check,
-  Pencil,
-  Save,
-  X,
-  RotateCcw,
-  Clock,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
+import { ArrowCounterClockwise as RotateCcw, Check, CheckCircle as CheckCircle2, ClipboardText, Clock, Copy, FloppyDisk as Save, Pencil, X, XCircle } from "@phosphor-icons/react";
 import {
   generateRecruitmentResultsText,
   calculateRecruitmentStatus,
@@ -226,7 +215,7 @@ export function RecruitmentResultsCard({
         {/* ── Header ── */}
         <div className="detail-card-head ch-rec">
           <span className="flex items-center gap-1.5">
-            <ClipboardList className="h-3.5 w-3.5" />
+            <ClipboardText className="h-3.5 w-3.5" />
             Recruitment Results
             {isCustom && !isEditing && (
               <span className="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-900 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-600/20 ml-1">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, UserCheck, UserX, Clock, FolderOpen, TrendingUp } from "lucide-react";
+import { Clock, FolderOpen, TrendUp as TrendingUp, UserCheck, UserMinus as UserX, Users } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AdminStatsGridProps {
@@ -73,7 +73,7 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
               {stat.label}
             </CardTitle>
             <div className={`p-2 border-2 border-border ${stat.bgColor} shadow-hard-sm`}>
-              <stat.icon className={`size-4 ${stat.color}`} strokeWidth={2.5} />
+              <stat.icon className={`size-4 ${stat.color}`} />
             </div>
           </CardHeader>
           <CardContent>

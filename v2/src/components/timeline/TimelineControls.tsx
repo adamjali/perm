@@ -16,7 +16,7 @@
 
 "use client";
 
-import { Calendar, Filter, ChevronDown, ZoomIn, ZoomOut } from "lucide-react";
+import { Calendar, CaretDown, Funnel as Filter, MagnifyingGlassMinus, MagnifyingGlassPlus } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -85,7 +85,7 @@ export function TimelineControls({
             className="flex items-center gap-2 px-3 py-2 border-2 border-border bg-background shadow-hard min-h-[44px]"
             data-testid="zoom-control"
           >
-            <ZoomOut className="size-4 text-muted-foreground" />
+            <MagnifyingGlassMinus className="size-4 text-muted-foreground" />
             <input
               type="range"
               min={50}
@@ -97,7 +97,7 @@ export function TimelineControls({
               aria-label="Zoom level"
               data-testid="zoom-slider"
             />
-            <ZoomIn className="size-4 text-muted-foreground" />
+            <MagnifyingGlassPlus className="size-4 text-muted-foreground" />
             <span className="text-xs font-medium text-muted-foreground min-w-[3ch] text-right">
               {zoomLevel}%
             </span>
@@ -118,7 +118,7 @@ export function TimelineControls({
                   {timeRange}M
                 </span>
               </div>
-              <ChevronDown className="size-4 ml-2 opacity-70" />
+              <CaretDown className="size-4 ml-2 opacity-70" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent

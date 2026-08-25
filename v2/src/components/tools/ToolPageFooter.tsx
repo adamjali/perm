@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "@phosphor-icons/react/ssr";
 
 import { TOOL_NAV_LINKS } from "@/lib/constants/navigation";
 

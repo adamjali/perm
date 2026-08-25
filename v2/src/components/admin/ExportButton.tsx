@@ -1,6 +1,6 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { Download } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { exportUsersToCSV, downloadCSV } from "@/lib/admin/csvExport";
 import { toast } from "@/lib/toast";

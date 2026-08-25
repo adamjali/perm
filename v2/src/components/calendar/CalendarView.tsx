@@ -42,7 +42,7 @@ import { CalendarEvent as CalendarEventComponent } from "./CalendarEvent";
 import { CalendarEventPopover } from "./CalendarEventPopover";
 import { CalendarMobileList } from "./CalendarMobileList";
 import { Button } from "@/components/ui/button";
-import { List, Grid3X3 } from "lucide-react";
+import { GridNine, List } from "@phosphor-icons/react/ssr";
 
 // ============================================================================
 // Types
@@ -234,7 +234,7 @@ export function CalendarView({
           >
             {userViewMode === "list" ? (
               <>
-                <Grid3X3 className="size-4" />
+                <GridNine className="size-4" />
                 <span className="hidden sm:inline">Calendar View</span>{" "}
                 <span className="sm:hidden">Calendar</span>
               </>

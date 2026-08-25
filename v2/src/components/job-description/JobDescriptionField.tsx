@@ -2,16 +2,7 @@
 
 import * as React from "react";
 import { useState, useCallback, useEffect } from "react";
-import {
-  ChevronDown,
-  Copy,
-  Check,
-  FileText,
-  Save,
-  RefreshCw,
-  Sparkles,
-  Trash2,
-} from "lucide-react";
+import { ArrowsClockwise as RefreshCw, CaretDown, Check, Copy, FileText, FloppyDisk as Save, Sparkle, Trash as Trash2 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -370,7 +361,7 @@ export function JobDescriptionField({
               {characterCount.toLocaleString()}/{maxLength.toLocaleString()}
             </span>
           )}
-          <ChevronDown
+          <CaretDown
             className={cn(
               "h-5 w-5 text-muted-foreground transition-transform duration-200",
               isExpanded && "rotate-180"
@@ -551,7 +542,7 @@ export function JobDescriptionField({
                       </>
                     ) : (
                       <>
-                        <Sparkles className="h-5 w-5 sm:h-4 sm:w-4" />
+                        <Sparkle className="h-5 w-5 sm:h-4 sm:w-4" />
                         <span className="text-sm">{isSaving ? "Saving..." : "Save Template"}</span>
                       </>
                     )}

@@ -17,12 +17,12 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { type LucideIcon } from "lucide-react";
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export interface EmptyStateProps {
-  icon?: LucideIcon;
+  icon?: PhosphorIcon;
   illustration?: React.ReactNode;
   heading: string;
   description: string;
@@ -82,7 +82,7 @@ export function EmptyState({
           </div>
         ) : Icon ? (
           <div className="p-6 border-4 border-border bg-muted shadow-hard-sm">
-            <Icon className="size-24 text-muted-foreground" strokeWidth={1.5} />
+            <Icon className="size-24 text-muted-foreground" />
           </div>
         ) : null}
       </div>

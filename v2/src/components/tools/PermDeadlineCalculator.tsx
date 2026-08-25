@@ -14,7 +14,7 @@
  */
 
 import { useId, useMemo, useState } from "react";
-import { CalendarCheck, TriangleAlert } from "lucide-react";
+import { CalendarCheck, Warning } from "@phosphor-icons/react";
 
 import {
   calculatePWDExpiration,
@@ -249,7 +249,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         >
           {result.warnings.map((w) => (
             <div key={w} className="flex items-start gap-3 [&+&]:mt-4">
-              <TriangleAlert
+              <Warning
                 className="mt-0.5 h-5 w-5 shrink-0 text-foreground"
                 aria-hidden="true"
               />{" "}
@@ -298,7 +298,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
 
       <div className="border-t-2 border-border bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
-          <TriangleAlert
+          <Warning
             className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70"
             aria-hidden="true"
           />

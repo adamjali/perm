@@ -4,7 +4,7 @@
  * - NoResultsEmptyState: shown when filters match nothing
  */
 
-import { Plus } from "lucide-react";
+import { Plus } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import { CaseListEmptyState } from "@/components/cases/CaseListEmptyState";
 import { CaseFilterBar } from "@/components/cases/CaseFilterBar";

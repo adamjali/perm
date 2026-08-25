@@ -4,7 +4,7 @@ import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash as Trash2 } from "@phosphor-icons/react";
 import type { SubEntry } from "@/lib/shared/types";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 

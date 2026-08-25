@@ -9,7 +9,7 @@
  */
 
 import { motion, AnimatePresence } from "motion/react";
-import { Search, X } from "lucide-react";
+import { MagnifyingGlass as Search, X } from "@phosphor-icons/react";
 
 interface ContentSearchProps {
   value: string;

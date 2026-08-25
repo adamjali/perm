@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo, type CSSProperties } from "react";
 import { motion } from "motion/react";
-import { MessageCircle, Send, Trash2, ChevronLeft, ChevronRight, X, Pencil, Flag, Tag, CalendarDays, CheckCircle } from "lucide-react";
+import { CalendarDots, CaretLeft, CaretRight, ChatCircle, CheckCircle, Flag, PaperPlaneTilt as Send, Pencil, Tag, Trash as Trash2, X } from "@phosphor-icons/react";
 import {
   NOTE_CATEGORY_LABELS,
   NOTE_PRIORITIES,
@@ -229,7 +229,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
         <div className="detail-card" style={{ overflow: "hidden" }}>
           <div className="detail-card-head ch-yellow" style={{ gap: 8 }}>
             <span className="flex items-center gap-1.5">
-              <MessageCircle className="h-3.5 w-3.5" />
+              <ChatCircle className="h-3.5 w-3.5" />
               Case Notes
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -307,7 +307,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                 </div>
               ) : visibleNotes.length === 0 ? (
                 <div className="detail-empty-state" style={{ padding: "32px 20px" }}>
-                  <MessageCircle className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
+                  <ChatCircle className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
                   <div className="detail-empty-state-title">No notes</div>
                   <div className="detail-empty-state-desc">Add a note below to get started.</div>
                 </div>
@@ -317,11 +317,11 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
               {totalPages > 1 && (
                 <div className="pagination-bar">
                   <button onClick={() => setPage((p) => p - 1)} disabled={page === 0}>
-                    <ChevronLeft className="h-3 w-3" />
+                    <CaretLeft className="h-3 w-3" />
                   </button>
                   <span>{page + 1} / {totalPages}</span>
                   <button onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages - 1}>
-                    <ChevronRight className="h-3 w-3" />
+                    <CaretRight className="h-3 w-3" />
                   </button>
                 </div>
               )}
@@ -333,10 +333,10 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                   <div className="preview-nav">
                     <div className="preview-nav-btns">
                       <button className="icon-btn" onClick={() => navNote(-1)} disabled={visibleNotes.findIndex((n) => n.id === selectedId) <= 0} title="Previous">
-                        <ChevronLeft className="h-3.5 w-3.5" />
+                        <CaretLeft className="h-3.5 w-3.5" />
                       </button>
                       <button className="icon-btn" onClick={() => navNote(1)} disabled={visibleNotes.findIndex((n) => n.id === selectedId) >= visibleNotes.length - 1} title="Next">
-                        <ChevronRight className="h-3.5 w-3.5" />
+                        <CaretRight className="h-3.5 w-3.5" />
                       </button>
                     </div>
                     <button className="icon-btn" onClick={closePreview} title="Close">
@@ -552,7 +552,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
 
                   {/* Due Date */}
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <CalendarDays className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
+                    <CalendarDots className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
                     <input
                       type="date"
                       value={newDueDate}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { Search, Mail, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ArrowsDownUp, CaretDoubleLeft, CaretDoubleRight, CaretLeft, CaretRight, Envelope as Mail, MagnifyingGlass as Search, Trash as Trash2 } from "@phosphor-icons/react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -326,7 +326,7 @@ export function UsersTable({
                         className="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wide"
                       >
                         {col.label}
-                        <ArrowUpDown
+                        <ArrowsDownUp
                           className={`size-3 ${sortField === col.key ? "text-primary" : "opacity-30"}`}
                         />
                       </button>
@@ -411,7 +411,7 @@ export function UsersTable({
                   disabled={page === 0}
                   title="First page"
                 >
-                  <ChevronsLeft className="size-4" />
+                  <CaretDoubleLeft className="size-4" />
                 </Button>
                 <Button
                   size="icon-sm"
@@ -420,7 +420,7 @@ export function UsersTable({
                   disabled={page === 0}
                   title="Previous page"
                 >
-                  <ChevronLeft className="size-4" />
+                  <CaretLeft className="size-4" />
                 </Button>
                 <span className="px-3 text-sm font-bold tabular-nums">
                   {page + 1} / {totalPages}
@@ -432,7 +432,7 @@ export function UsersTable({
                   disabled={page >= totalPages - 1}
                   title="Next page"
                 >
-                  <ChevronRight className="size-4" />
+                  <CaretRight className="size-4" />
                 </Button>
                 <Button
                   size="icon-sm"
@@ -441,7 +441,7 @@ export function UsersTable({
                   disabled={page >= totalPages - 1}
                   title="Last page"
                 >
-                  <ChevronsRight className="size-4" />
+                  <CaretDoubleRight className="size-4" />
                 </Button>
               </div>
             </div>

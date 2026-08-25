@@ -36,18 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Mail,
-  Bug,
-  Lightbulb,
-  Info,
-  ExternalLink,
-  Trash2,
-  AlertTriangle,
-  Zap,
-  PlayCircle,
-  Download,
-} from "lucide-react";
+import { ArrowSquareOut, Bug, Download, Envelope as Mail, Info, Lightbulb, Lightning as Zap, PlayCircle, Trash as Trash2, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleOperationError } from "@/lib/errors";
@@ -244,7 +233,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             <div className="text-center">
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
                 Contact Support
-                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                <ArrowSquareOut className="h-3 w-3 text-muted-foreground" />
               </span>{" "}
               <span className="text-xs text-muted-foreground">{SUPPORT_EMAIL}</span>
             </div>
@@ -263,7 +252,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             <div className="text-center">
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
                 Report a Bug
-                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                <ArrowSquareOut className="h-3 w-3 text-muted-foreground" />
               </span>{" "}
               <span className="text-xs text-muted-foreground">
                 GitHub Issues
@@ -284,7 +273,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             <div className="text-center">
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
                 Request Feature
-                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                <ArrowSquareOut className="h-3 w-3 text-muted-foreground" />
               </span>{" "}
               <span className="text-xs text-muted-foreground">
                 GitHub Issues

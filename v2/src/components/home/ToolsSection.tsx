@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import Link from "next/link";
-import { ArrowRight, CalendarCheck, CalendarClock, FileText, Scale } from "lucide-react";
+import { ArrowRight, CalendarCheck, CalendarDot as CalendarClock, FileText, Scales as Scale } from "@phosphor-icons/react/ssr";
 
 import { formatMonth } from "@/lib/dolFormat";
 import { QueueDepthMini, TapeMini, WindowSpansMini } from "@/components/tools/MiniDiagrams";

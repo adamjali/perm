@@ -13,7 +13,7 @@
 import { type ReactNode } from "react";
 import { useQuery } from "convex/react";
 import { useState, useEffect } from "react";
-import { RefreshCw, AlertTriangle } from "lucide-react";
+import { ArrowsClockwise as RefreshCw, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
 
 import { api } from "../../../convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";

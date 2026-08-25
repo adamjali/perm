@@ -25,7 +25,7 @@
 
 "use client";
 
-import { X, Download, FileJson, Archive, Trash2, RotateCcw, Calendar, CalendarOff } from "lucide-react";
+import { Archive, ArrowCounterClockwise as RotateCcw, Calendar, CalendarSlash, Download, FileJs, Trash as Trash2, X } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 
 // ============================================================================
@@ -143,7 +143,7 @@ export function SelectionBar({
               aria-label="Export JSON"
               disabled={isLoading}
             >
-              <FileJson className="size-4 mr-1.5" />
+              <FileJs className="size-4 mr-1.5" />
               Export JSON
             </Button>
             {hasClosedCases && (
@@ -187,7 +187,7 @@ export function SelectionBar({
                   aria-label="Unsync from Calendar"
                   disabled={isLoading}
                 >
-                  <CalendarOff className="size-4 mr-1.5" />
+                  <CalendarSlash className="size-4 mr-1.5" />
                   Unsync
                 </Button>
               </>
@@ -268,7 +268,7 @@ export function SelectionBar({
               className="flex-1"
               disabled={isLoading}
             >
-              <FileJson className="size-4 mr-1.5" />
+              <FileJs className="size-4 mr-1.5" />
               JSON
             </Button>
           </div>
@@ -318,7 +318,7 @@ export function SelectionBar({
                   className="flex-1"
                   disabled={isLoading}
                 >
-                  <CalendarOff className="size-4 mr-1.5" />
+                  <CalendarSlash className="size-4 mr-1.5" />
                   Unsync
                 </Button>
               </>

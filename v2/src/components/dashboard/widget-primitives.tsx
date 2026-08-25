@@ -9,7 +9,7 @@
 
 import { type ReactNode } from "react";
 import Link from "next/link";
-import { Loader2, type LucideIcon } from "lucide-react";
+import { CircleNotch, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,7 @@ export const WIDGET_CONTAINER_CLASSES =
 
 interface WidgetHeaderProps {
   /** Header icon */
-  icon: LucideIcon;
+  icon: PhosphorIcon;
   /** Icon color class override */
   iconClassName?: string;
   /** Title text */
@@ -108,7 +108,7 @@ export function WidgetHeaderAction({
     >
       {isNavigating ? (
         <>
-          <Loader2 className="size-4 animate-spin" />
+          <CircleNotch className="size-4 animate-spin" />
           {loadingLabel}
         </>
       ) : (
@@ -171,7 +171,7 @@ export function WidgetLoadingSkeleton({
 
 interface WidgetEmptyStateProps {
   /** Icon to display */
-  icon: LucideIcon;
+  icon: PhosphorIcon;
   /** Primary message */
   message: string;
   /** Secondary/description text */

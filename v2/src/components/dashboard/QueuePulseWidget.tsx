@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "convex/react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "@phosphor-icons/react";
 
 import { api } from "../../../convex/_generated/api";
 import { analystReviewQueue } from "../../../convex/lib/dolProcessingTimes";

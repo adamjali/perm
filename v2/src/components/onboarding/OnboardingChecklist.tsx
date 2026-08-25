@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { X, Check, ChevronRight, Sparkles } from "lucide-react";
+import { CaretRight, Check, Sparkle, X } from "@phosphor-icons/react";
 import { useOnboarding } from "./OnboardingProvider";
 import { CHECKLIST_ITEMS } from "@/lib/onboarding/constants";
 import { cn } from "@/lib/utils";
@@ -41,7 +41,7 @@ export function OnboardingChecklist() {
       {/* Header */}
       <div className="flex items-start justify-between p-4 pb-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" strokeWidth={2.5} />
+          <Sparkle className="w-5 h-5 text-primary" />
           <div>
             <h3 className="font-heading font-bold text-base">
               Getting Started
@@ -120,7 +120,6 @@ export function OnboardingChecklist() {
                 {isComplete && (
                   <Check
                     className="w-3 h-3 text-primary-foreground"
-                    strokeWidth={3}
                   />
                 )}
               </div>
@@ -144,7 +143,7 @@ export function OnboardingChecklist() {
 
               {/* Arrow for clickable items */}
               {isClickable && (
-                <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <CaretRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               )}
             </button>
           );

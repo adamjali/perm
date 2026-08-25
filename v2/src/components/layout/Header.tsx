@@ -7,7 +7,7 @@ import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { handleOperationError } from "@/lib/errors";
-import { ChevronDown, Settings, LogOut, FileText, Loader2, Menu, X } from "lucide-react";
+import { CaretDown, CircleNotch, FileText, Gear as Settings, List as Menu, SignOut, X } from "@phosphor-icons/react";
 import { api } from "../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { AUTHENTICATED_NAV_LINKS, ADMIN_NAV_LINK } from "@/lib/constants/navigation";
@@ -80,7 +80,7 @@ function UserMenu({ userName }: UserMenuProps) {
         className="group flex min-h-[44px] cursor-pointer items-center gap-2 rounded-none border-2 border-transparent bg-transparent px-3 py-2 text-sm font-medium text-white transition-all hover:border-white/50 hover:bg-white/10 focus:outline-none focus-visible:border-white/50"
       >
         <span className="max-w-[100px] truncate">{userName}</span>
-        <ChevronDown className="size-4 transition-transform duration-150 group-data-[state=open]:rotate-180" />
+        <CaretDown className="size-4 transition-transform duration-150 group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
@@ -99,7 +99,7 @@ function UserMenu({ userName }: UserMenuProps) {
           )}
         >
           {isNavigatingToSettings ? (
-            <Loader2 className="size-4 animate-spin" />
+            <CircleNotch className="size-4 animate-spin" />
           ) : (
             <Settings className={cn("size-4", isOnSettingsPage && "text-muted-foreground")} />
           )}
@@ -112,9 +112,9 @@ function UserMenu({ userName }: UserMenuProps) {
           className="flex cursor-pointer items-center gap-3 rounded-none px-4 py-3 text-sm font-semibold hover:bg-muted"
         >
           {isSigningOut ? (
-            <Loader2 className="size-4 animate-spin" />
+            <CircleNotch className="size-4 animate-spin" />
           ) : (
-            <LogOut className="size-4" />
+            <SignOut className="size-4" />
           )}
           {isSigningOut ? "Signing out..." : "Sign Out"}
         </DropdownMenuItem>
@@ -179,7 +179,6 @@ export default function Header(): React.ReactElement {
         >
           <FileText
             className="size-6 text-primary transition-colors group-hover:text-black"
-            strokeWidth={2.5}
           />
           <span>
             <span className="text-primary transition-colors group-hover:text-black">PERM</span>{" "}
@@ -289,9 +288,9 @@ export default function Header(): React.ReactElement {
                   className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary text-left disabled:opacity-50"
                 >
                   {isSigningOut ? (
-                    <Loader2 className="size-4 animate-spin" />
+                    <CircleNotch className="size-4 animate-spin" />
                   ) : (
-                    <LogOut className="size-4" />
+                    <SignOut className="size-4" />
                   )}
                   {isSigningOut ? "Signing out..." : "Sign Out"}
                 </button>

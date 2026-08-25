@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { CaretLeft, CaretRight, Question as HelpCircle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -38,13 +38,13 @@ export function FormHelpPanel() {
       >
         {isOpen ? (
           <>
-            <ChevronRight className="h-4 w-4 shrink-0" />
+            <CaretRight className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">Close</span>
           </>
         ) : (
           <>
             <HelpCircle className="h-4 w-4 shrink-0" />
-            <ChevronLeft className="h-4 w-4 shrink-0" />
+            <CaretLeft className="h-4 w-4 shrink-0" />
           </>
         )}
       </button>

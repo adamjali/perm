@@ -8,7 +8,7 @@ import { DateInput } from "@/components/forms/DateInput";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle as CheckCircle2, X } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { getRfiRfeUrgency, type UrgencyLevelWithCompletion } from "@/lib/status/urgency";
 import type { CaseFormData, RFEEntry as RFEEntryType } from "@/lib/forms/case-form-schema";

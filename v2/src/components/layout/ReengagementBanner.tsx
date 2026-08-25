@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { Mail } from "lucide-react";
+import { Envelope as Mail } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/lib/toast";
 

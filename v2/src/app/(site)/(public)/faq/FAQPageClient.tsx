@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown } from "lucide-react";
+import { CaretDown } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
@@ -73,7 +73,7 @@ export function FAQPageClient({ faqData }: FAQPageClientProps) {
                         isOpen && "rotate-180"
                       )}
                     >
-                      <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
+                      <CaretDown className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                     </div>
                   </button>{" "}
 

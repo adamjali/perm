@@ -23,7 +23,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { motion } from "motion/react";
-import { Calendar, Eye, EyeOff, ExternalLink } from "lucide-react";
+import { ArrowSquareOut, Calendar, Eye, EyeSlash as EyeOff } from "@phosphor-icons/react/ssr";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -389,7 +389,7 @@ export function CalendarEventPopover({
             onClick={handleViewCase}
             className="bg-primary hover:bg-primary/90"
           >
-            <ExternalLink className="size-4" aria-hidden="true" />
+            <ArrowSquareOut className="size-4" aria-hidden="true" />
             <span>View Case</span>
           </Button>
         </DialogFooter>

@@ -2,7 +2,7 @@
 
 import { RocketLaunchSVG } from "@/components/illustrations";
 import { Button } from "@/components/ui/button";
-import { Clock, Calendar, FolderOpen } from "lucide-react";
+import { Calendar, Clock, FolderOpen } from "@phosphor-icons/react";
 
 interface WelcomeStepProps {
   onNext: () => void;
@@ -48,7 +48,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
             className="flex items-start gap-3 text-left p-3 border-2 border-border bg-card shadow-hard-sm"
           >
             <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-primary/10 border-2 border-border">
-              <item.icon className="w-4 h-4 text-primary" strokeWidth={2.5} />
+              <item.icon className="w-4 h-4 text-primary" />
             </div>
             <div className="min-w-0">
               <p className="font-heading font-semibold text-sm">{item.text}</p>{" "}

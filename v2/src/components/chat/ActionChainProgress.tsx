@@ -17,10 +17,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  Loader2, Check, X, Clock, Lock, ChevronDown, ChevronUp,
-  RefreshCw, Archive, Trash2, Calendar, Search, Database
-} from 'lucide-react';
+import { Archive, ArrowsClockwise as RefreshCw, Calendar, CaretDown, CaretUp, Check, CircleNotch, Clock, Database, Lock, MagnifyingGlass as Search, Trash as Trash2, X } from "@phosphor-icons/react/ssr";
 import { cn } from '@/lib/utils';
 import { springConfig, STAGGER_DELAY } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
@@ -81,7 +78,7 @@ function StatusIcon({ status }: { status: ActionStep['status'] }) {
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
         >
-          <Loader2 className="h-4 w-4 text-primary" />
+          <CircleNotch className="h-4 w-4 text-primary" />
         </motion.div>
       );
     case 'done':
@@ -306,12 +303,12 @@ export function ActionChainProgress({
         >
           {isCollapsed ? (
             <>
-              <ChevronDown className="h-3 w-3" />
+              <CaretDown className="h-3 w-3" />
               Show {completedSteps.length} completed steps
             </>
           ) : (
             <>
-              <ChevronUp className="h-3 w-3" />
+              <CaretUp className="h-3 w-3" />
               Collapse completed steps
             </>
           )}

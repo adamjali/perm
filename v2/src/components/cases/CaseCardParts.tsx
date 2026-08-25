@@ -3,7 +3,7 @@
  * Extracted presentational components used by CaseCard.
  */
 
-import { Bookmark, Calendar, AlertTriangle, Pin, Loader2 } from "lucide-react";
+import { Bookmark, Calendar, CircleNotch, PushPin, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { formatCompactDate, getStageColorVar } from "./case-card.utils";
@@ -82,7 +82,7 @@ export function FavoriteBookmark({
       onClick={onToggle}
     >
       {isToggling ? (
-        <Loader2 className="w-4 h-4 mt-0.5 animate-spin text-yellow-700" />
+        <CircleNotch className="w-4 h-4 mt-0.5 animate-spin text-yellow-700" />
       ) : (
         <Bookmark
           className={cn(
@@ -127,9 +127,9 @@ export function PinIndicator({
       aria-label={isToggling ? "Updating pin status" : "Card pinned open"}
     >
       {isToggling ? (
-        <Loader2 className="w-3 h-3 -rotate-45 animate-spin" />
+        <CircleNotch className="w-3 h-3 -rotate-45 animate-spin" />
       ) : (
-        <Pin className="w-3 h-3 -rotate-45" />
+        <PushPin className="w-3 h-3 -rotate-45" />
       )}
     </div>
   );

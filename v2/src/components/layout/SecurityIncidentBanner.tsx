@@ -23,7 +23,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { X, AlertTriangle } from "lucide-react";
+import { Warning as AlertTriangle, X } from "@phosphor-icons/react";
 
 const EXPIRES_AT_UTC = new Date("2026-04-27T00:00:00Z").getTime();
 const LS_KEY = "security-incident-2026-04-19-dismissed";

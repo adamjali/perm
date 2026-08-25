@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState, useEffect, useTransition } from "react";
-import { Plus, CheckSquare, Upload, AlertTriangle } from "lucide-react";
+import { CheckSquare, Plus, Upload, Warning as AlertTriangle } from "@phosphor-icons/react";
 import {
   DndContext,
   DragOverlay,

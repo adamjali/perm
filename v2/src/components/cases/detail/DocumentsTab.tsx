@@ -2,20 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "motion/react";
-import {
-  FolderOpen,
-  Upload,
-  Download,
-  Trash2,
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  Loader2,
-  Image as ImageIcon,
-  FileSpreadsheet,
-  Maximize2,
-} from "lucide-react";
+import { ArrowsOut, CaretLeft, CaretRight, CircleNotch, Download, FileText, FileXls, FolderOpen, Image as ImageIcon, Trash as Trash2, Upload, X } from "@phosphor-icons/react";
 import {
   DOCUMENT_CATEGORIES,
   DOCUMENT_CATEGORY_LABELS,
@@ -55,7 +42,7 @@ function getFileTypeLabel(mimeType: string): string {
 function getFileIcon(mimeType: string) {
   if (mimeType.startsWith("image/")) return <ImageIcon className="h-5 w-5" />;
   if (mimeType.includes("spreadsheet") || mimeType.includes("excel") || mimeType.includes("xlsx"))
-    return <FileSpreadsheet className="h-5 w-5" />;
+    return <FileXls className="h-5 w-5" />;
   return <FileText className="h-5 w-5" />;
 }
 
@@ -86,7 +73,7 @@ function DocumentPreview({ doc, onFullscreen }: { doc: DocumentEntry; onFullscre
             title="Full screen"
             style={{ position: "absolute", top: 8, right: 8 }}
           >
-            <Maximize2 className="h-3.5 w-3.5" />
+            <ArrowsOut className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
@@ -126,7 +113,7 @@ function DocumentPreview({ doc, onFullscreen }: { doc: DocumentEntry; onFullscre
             style={{ position: "absolute", top: 8, right: 8 }}
             onClick={(e) => { e.stopPropagation(); onFullscreen(); }}
           >
-            <Maximize2 className="h-3.5 w-3.5" />
+            <ArrowsOut className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
@@ -206,7 +193,7 @@ function FullscreenViewer({
             disabled={!hasPrev}
             title="Previous"
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
+            <CaretLeft className="h-3.5 w-3.5" />
           </button>
           <button
             className="icon-btn"
@@ -214,7 +201,7 @@ function FullscreenViewer({
             disabled={!hasNext}
             title="Next"
           >
-            <ChevronRight className="h-3.5 w-3.5" />
+            <CaretRight className="h-3.5 w-3.5" />
           </button>
         </div>
         <div className="doc-fullscreen-name">{doc.name}</div>
@@ -452,7 +439,7 @@ export function DocumentsTab({
                   disabled={isUploading || !!pendingFile}
                 >
                   {isUploading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <CircleNotch className="h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Upload className="h-3.5 w-3.5" />
                   )}
@@ -512,7 +499,7 @@ export function DocumentsTab({
                 disabled={isUploading}
               >
                 {isUploading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <CircleNotch className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   "Upload"
                 )}
@@ -607,11 +594,11 @@ export function DocumentsTab({
               {totalPages > 1 && (
                 <div className="pagination-bar">
                   <button onClick={() => setPage((p) => p - 1)} disabled={page === 0}>
-                    <ChevronLeft className="h-3 w-3" />
+                    <CaretLeft className="h-3 w-3" />
                   </button>
                   <span>{page + 1} / {totalPages}</span>
                   <button onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages - 1}>
-                    <ChevronRight className="h-3 w-3" />
+                    <CaretRight className="h-3 w-3" />
                   </button>
                 </div>
               )}
@@ -662,7 +649,7 @@ export function DocumentsTab({
                         disabled={documents.findIndex((d) => d.id === selectedId) <= 0}
                         title="Previous"
                       >
-                        <ChevronLeft className="h-3.5 w-3.5" />
+                        <CaretLeft className="h-3.5 w-3.5" />
                       </button>
                       <button
                         className="icon-btn"
@@ -670,7 +657,7 @@ export function DocumentsTab({
                         disabled={documents.findIndex((d) => d.id === selectedId) >= documents.length - 1}
                         title="Next"
                       >
-                        <ChevronRight className="h-3.5 w-3.5" />
+                        <CaretRight className="h-3.5 w-3.5" />
                       </button>
                     </div>
                     <button
@@ -733,7 +720,7 @@ export function DocumentsTab({
                         }}
                         onClick={() => setFullscreenId(selectedDoc.id)}
                       >
-                        <Maximize2 className="h-3.5 w-3.5" /> Full Screen
+                        <ArrowsOut className="h-3.5 w-3.5" /> Full Screen
                       </button>
                     )}
                     <a

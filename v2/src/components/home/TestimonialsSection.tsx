@@ -8,7 +8,7 @@
  */
 
 import Script from "next/script";
-import { Star, MessageSquarePlus } from "lucide-react";
+import { ChatDots, Star } from "@phosphor-icons/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 interface TrustBadge {
@@ -125,7 +125,7 @@ export function TestimonialsSection() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 border-3 border-border bg-primary px-5 py-2.5 font-heading text-sm font-bold uppercase tracking-wide text-black shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
             >
-              <MessageSquarePlus className="h-4 w-4" />
+              <ChatDots className="h-4 w-4" />
               Leave a Review
             </a>
           </div>

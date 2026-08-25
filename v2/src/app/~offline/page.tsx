@@ -11,7 +11,7 @@
  * - Bold, direct messaging
  */
 
-import { WifiOff, RefreshCw } from "lucide-react";
+import { ArrowsClockwise as RefreshCw, WifiSlash } from "@phosphor-icons/react";
 
 export default function OfflinePage() {
   return (
@@ -22,7 +22,7 @@ export default function OfflinePage() {
           {/* Icon container */}
           <div className="flex justify-center mb-6">
             <div className="w-20 h-20 bg-muted border-2 border-border shadow-hard-sm flex items-center justify-center">
-              <WifiOff className="w-10 h-10 text-muted-foreground" strokeWidth={2.5} />
+              <WifiSlash className="w-10 h-10 text-muted-foreground" />
             </div>
           </div>
 
@@ -53,7 +53,7 @@ export default function OfflinePage() {
             className="w-full bg-primary text-primary-foreground font-heading font-bold text-lg py-4 px-6 border-2 border-border shadow-hard hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-150"
           >
             <span className="flex items-center justify-center gap-2">
-              <RefreshCw className="w-5 h-5" strokeWidth={2.5} />
+              <RefreshCw className="w-5 h-5" />
               Try Again
             </span>
           </button>

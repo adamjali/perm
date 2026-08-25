@@ -17,7 +17,7 @@
  * Created: 2025-12-30
  */
 
-import { Bell } from "lucide-react";
+import { Bell } from "@phosphor-icons/react";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";

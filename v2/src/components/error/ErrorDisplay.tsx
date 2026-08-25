@@ -6,12 +6,13 @@
  */
 
 import * as React from "react";
-import { type LucideIcon, AlertTriangle } from "lucide-react";
+import { Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
 export interface ErrorAction {
   label: string;
-  icon?: LucideIcon;
+  icon?: PhosphorIcon;
   onClick: () => void;
   variant?: "default" | "outline" | "destructive";
 }
@@ -19,7 +20,7 @@ export interface ErrorAction {
 export interface ErrorDisplayProps {
   title: string;
   message: string;
-  icon?: LucideIcon;
+  icon?: PhosphorIcon;
   actions?: ErrorAction[];
   details?: string;
   className?: string;

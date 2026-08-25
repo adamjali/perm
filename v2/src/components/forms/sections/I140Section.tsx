@@ -17,7 +17,7 @@ import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
 import type { I140Category } from "@/lib/processing-times/i140ProcessingTimes";
-import { Info, CheckCircle2 } from "lucide-react";
+import { CheckCircle as CheckCircle2, Info } from "@phosphor-icons/react";
 
 // ============================================================================
 // TYPES

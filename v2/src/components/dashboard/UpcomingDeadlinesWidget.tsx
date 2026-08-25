@@ -10,7 +10,7 @@
 
 import { type ReactNode } from "react";
 import { useQuery } from "convex/react";
-import { Calendar } from "lucide-react";
+import { Calendar } from "@phosphor-icons/react/ssr";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
 import { api } from "../../../convex/_generated/api";

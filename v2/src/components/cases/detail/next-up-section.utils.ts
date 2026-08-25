@@ -6,17 +6,7 @@
  */
 
 import { createElement, type ReactNode } from "react";
-import {
-  AlertTriangle,
-  HourglassIcon,
-  FileText,
-  Briefcase,
-  FileCheck,
-  Award,
-  CheckCircle2,
-  Clock,
-  GraduationCap,
-} from "lucide-react";
+import { Briefcase, Certificate as Award, CheckCircle as CheckCircle2, Clock, FileArrowUp as FileCheck, FileText, GraduationCap, Hourglass as HourglassIcon, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
 import type { CaseStatus, ProgressStatus } from "@/lib/perm";
 import {
   isProfessionalRecruitmentComplete,

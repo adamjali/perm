@@ -8,11 +8,22 @@ vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
 }));
 
-// Mock lucide-react icons
-vi.mock("lucide-react", () => ({
-  AlertTriangle: () => <div data-testid="alert-triangle-icon" />,
-  RefreshCcw: () => <div data-testid="refresh-icon" />,
-  Home: () => <div data-testid="home-icon" />,
+// Mock the Phosphor icons this tree renders. These are the package's EXPORT
+// names, not the local aliases the components import them under.
+//
+// Both specifiers are needed: RouteError is a client component and takes its
+// icons from the main entry, while the warning triangle is rendered by
+// ErrorDisplay, which has no "use client" and so resolves to /ssr. Mocking one
+// leaves the other drawing a real SVG that carries no test id.
+vi.mock("@phosphor-icons/react", () => ({
+  Warning: () => <div data-testid="alert-triangle-icon" />,
+  ArrowCounterClockwise: () => <div data-testid="refresh-icon" />,
+  House: () => <div data-testid="home-icon" />,
+}));
+vi.mock("@phosphor-icons/react/ssr", () => ({
+  Warning: () => <div data-testid="alert-triangle-icon" />,
+  ArrowCounterClockwise: () => <div data-testid="refresh-icon" />,
+  House: () => <div data-testid="home-icon" />,
 }));
 
 describe("RouteError", () => {

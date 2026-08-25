@@ -21,7 +21,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { EyeOff, ShieldCheck, Zap } from "lucide-react";
+import { EyeSlash as EyeOff, Lightning as Zap, ShieldCheck } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import type { ActionMode } from "@/lib/ai/tool-permissions";
 

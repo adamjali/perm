@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle as CheckCircle2, WarningCircle as AlertCircle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 export type SectionStatus = "complete" | "incomplete" | "has-errors" | undefined;

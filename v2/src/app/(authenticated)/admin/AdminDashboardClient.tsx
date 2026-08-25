@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
-import { Shield, AlertCircle } from "lucide-react";
+import { Shield, WarningCircle as AlertCircle } from "@phosphor-icons/react";
 import { AdminStatsGrid } from "@/components/admin/AdminStatsGrid";
 import { UsersTable } from "@/components/admin/UsersTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,7 +111,7 @@ export default function AdminDashboardClient() {
       <div className="flex items-center justify-between gap-4 border-b-4 border-border pb-6">
         <div className="flex items-center gap-4">
           <div className="flex size-12 items-center justify-center border-2 border-border bg-primary shadow-hard">
-            <Shield className="size-6 text-black" strokeWidth={2.5} />
+            <Shield className="size-6 text-black" />
           </div>
           <div>
             <h1 className="font-heading text-3xl font-bold uppercase tracking-wide">

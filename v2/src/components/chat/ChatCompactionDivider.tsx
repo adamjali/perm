@@ -20,7 +20,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown } from 'lucide-react';
+import { CaretDown } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import {
   CompactionFactsSchema,
@@ -138,7 +138,7 @@ export function ChatCompactionDivider({
             className="shrink-0"
             aria-hidden
           >
-            <ChevronDown className="size-3.5" />
+            <CaretDown className="size-3.5" />
           </motion.span>
         )}
       </button>

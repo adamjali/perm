@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Check, ChevronsUpDown, FileText, Settings2 } from "lucide-react";
+import { CaretUpDown, Check, FileText, Sliders } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -113,7 +113,7 @@ export function TemplateSelector({
                 {selectedTemplate ? selectedTemplate.name : "Load Template..."}
               </span>
             </div>
-            <ChevronsUpDown className="h-5 w-5 sm:h-4 sm:w-4 shrink-0 opacity-50" />
+            <CaretUpDown className="h-5 w-5 sm:h-4 sm:w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[calc(100vw-2rem)] max-w-[300px] p-0 border-2" align="start">
@@ -165,7 +165,7 @@ export function TemplateSelector({
                   }}
                   className="gap-2 min-h-[44px] py-2"
                 >
-                  <Settings2 className="h-5 w-5 sm:h-4 sm:w-4" />
+                  <Sliders className="h-5 w-5 sm:h-4 sm:w-4" />
                   <span>Manage Templates...</span>
                 </CommandItem>
               </CommandGroup>

@@ -9,7 +9,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight, ArrowSquareOut } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -185,7 +185,7 @@ export default function MethodologyPage() {
                   className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold underline underline-offset-2 hover:text-primary"
                 >
                   Source
-                  <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                  <ArrowSquareOut className="h-3.5 w-3.5" aria-hidden="true" />
                 </a>
               </div>
               <p className="mt-2 text-base leading-relaxed text-foreground/70">{s.what}</p>{" "}

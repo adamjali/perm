@@ -34,7 +34,7 @@ import {
 } from "@/lib/constants/navigation";
 import ThemeToggle from "./ThemeToggle";
 import { NavLink } from "@/components/ui/nav-link";
-import { FileText, Menu, X, ChevronDown } from "lucide-react";
+import { CaretDown, FileText, List as Menu, X } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 export default function AuthHeader() {
@@ -171,7 +171,6 @@ export default function AuthHeader() {
         >
           <FileText
             className="size-6 text-primary transition-colors group-hover:text-black"
-            strokeWidth={2.5}
           />
           <span>
             <span className="text-primary transition-colors group-hover:text-black">PERM</span>{" "}
@@ -251,7 +250,7 @@ export default function AuthHeader() {
                     aria-haspopup="menu"
                   >
                     Learn
-                    <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
+                    <CaretDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
                   </button>{" "}
                   <div
                     role="menu"
@@ -307,7 +306,7 @@ export default function AuthHeader() {
                     aria-haspopup="menu"
                   >
                     Learn
-                    <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
+                    <CaretDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
                   </button>{" "}
                   <div
                     role="menu"

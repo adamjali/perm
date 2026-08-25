@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
-import { CheckCheck, Trash2, AlertTriangle } from "lucide-react";
+import { Checks as CheckCheck, Trash as Trash2, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 
 interface BulkActionsProps {

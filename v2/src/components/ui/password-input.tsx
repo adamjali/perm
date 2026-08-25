@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ComponentProps } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeSlash as EyeOff } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -42,9 +42,9 @@ function PasswordInput({
         )}
       >
         {visible ? (
-          <EyeOff className="h-4 w-4" strokeWidth={2.25} />
+          <EyeOff className="h-4 w-4" />
         ) : (
-          <Eye className="h-4 w-4" strokeWidth={2.25} />
+          <Eye className="h-4 w-4" />
         )}
       </button>
     </div>

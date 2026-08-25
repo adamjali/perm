@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useCallback, useEffect, useState } from "react";
-import { Printer, CheckCheck, RotateCcw } from "lucide-react";
+import { ArrowCounterClockwise as RotateCcw, Checks as CheckCheck, Printer } from "@phosphor-icons/react";
 
 /**
  * Generate a localStorage key from the checklist title.

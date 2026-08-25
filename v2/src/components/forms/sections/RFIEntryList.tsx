@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback } from "react";
 import { useWatch } from "react-hook-form";
-import { Plus, AlertCircle } from "lucide-react";
+import { Plus, WarningCircle as AlertCircle } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { RFIEntry } from "./RFIEntry";

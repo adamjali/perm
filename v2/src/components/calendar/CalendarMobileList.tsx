@@ -29,13 +29,7 @@ import {
   isTomorrow,
   addDays,
 } from "date-fns";
-import {
-  Calendar,
-  ChevronRight,
-  AlertCircle,
-  Clock,
-  CheckCircle2,
-} from "lucide-react";
+import { Calendar, CaretRight, CheckCircle as CheckCircle2, Clock, WarningCircle as AlertCircle } from "@phosphor-icons/react/ssr";
 
 import { cn } from "@/lib/utils";
 import type { CalendarEvent } from "@/lib/calendar/types";
@@ -316,7 +310,7 @@ export function CalendarMobileList({
                   </div>
 
                   {/* Chevron indicator */}
-                  <ChevronRight
+                  <CaretRight
                     className="size-5 text-muted-foreground shrink-0"
                     aria-hidden="true"
                   />

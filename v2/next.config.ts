@@ -93,7 +93,7 @@ const nextConfig: NextConfig = {
     // Tree-shake barrel exports for these packages
     // motion/react removed — its dep motion-dom has ESM export bugs with Webpack
     // zod removed — optimizePackageImports breaks ZodNumber.int() (ReferenceError: int is not defined)
-    optimizePackageImports: ["lucide-react", "date-fns"],
+    optimizePackageImports: ["date-fns"],
   },
 
   // Disable Webpack ModuleConcatenationPlugin on client bundles

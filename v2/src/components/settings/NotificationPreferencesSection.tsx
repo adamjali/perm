@@ -10,11 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Mail, Bell, BellRing, AlertTriangle, Check, Send, Smartphone, Clock,
-  Minus, Plus, ChevronDown, FileText, Briefcase, Calendar, FileCheck,
-  HelpCircle, AlertCircle, Newspaper, Megaphone, Loader2, LucideIcon,
-} from "lucide-react";
+import { Bell, BellRinging, Briefcase, Calendar, CaretDown, Check, CircleNotch, Clock, DeviceMobile as Smartphone, Envelope as Mail, FileArrowUp as FileCheck, FileText, Megaphone, Minus, Newspaper, PaperPlaneTilt as Send, Plus, Question as HelpCircle, Warning as AlertTriangle, WarningCircle as AlertCircle, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import {
@@ -162,7 +158,7 @@ function TestButton({ onClick, disabled, loading, justSent, label, sentLabel = "
 }
 
 interface SectionCardProps {
-  icon: LucideIcon;
+  icon: PhosphorIcon;
   title: string;
   description: string;
   headerRight?: React.ReactNode;
@@ -519,10 +515,10 @@ export default function NotificationPreferencesSection({
                   disabled={!emailEnabled}
                   className={`flex-1 flex items-center gap-2 text-left ${!emailEnabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 >
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${deadlineRemindersExpanded ? "rotate-0" : "-rotate-90"} ${!emailEnabled ? "opacity-50" : ""}`} />
+                  <CaretDown className={`w-4 h-4 transition-transform duration-200 ${deadlineRemindersExpanded ? "rotate-0" : "-rotate-90"} ${!emailEnabled ? "opacity-50" : ""}`} />
                   <div className="space-y-0.5 flex-1">
                     <span className={`text-sm font-medium flex items-center gap-2 ${!emailEnabled ? "opacity-50" : ""}`}>
-                      <BellRing className="w-4 h-4" />
+                      <BellRinging className="w-4 h-4" />
                       Deadline Reminders
                     </span>{" "}
                     <p className={`text-xs text-muted-foreground ${!emailEnabled ? "opacity-50" : ""}`}>
@@ -618,7 +614,7 @@ export default function NotificationPreferencesSection({
               </p>
             </div>
             {marketingLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              <CircleNotch className="w-4 h-4 animate-spin text-muted-foreground" />
             ) : marketingSubscribed === null ? (
               <span className="text-xs text-muted-foreground">Not available</span>
             ) : (

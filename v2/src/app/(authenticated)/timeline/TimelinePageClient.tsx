@@ -4,7 +4,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "@phosphor-icons/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { Skeleton } from "@/components/ui/skeleton";

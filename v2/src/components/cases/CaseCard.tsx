@@ -17,7 +17,7 @@ import { memo, useMemo } from "react";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useQuery } from "convex/react";
 import { toast } from "@/lib/toast";
-import { MoreHorizontal, Trash2, Archive, RotateCcw, Eye, Loader2 } from "lucide-react";
+import { Archive, ArrowCounterClockwise as RotateCcw, CircleNotch, DotsThree, Eye, Trash as Trash2 } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import { getUrgencyFromDeadline, getUrgencyDotClass } from "@/lib/status";
 import { Button } from "@/components/ui/button";
@@ -345,7 +345,7 @@ function ClosedCaseButtons({
         onClick={onViewClick}
         aria-label="View"
       >
-        {isViewLoading ? <Loader2 className="size-3 mr-1.5 animate-spin" /> : <Eye className="size-3 mr-1.5" />}
+        {isViewLoading ? <CircleNotch className="size-3 mr-1.5 animate-spin" /> : <Eye className="size-3 mr-1.5" />}
         {isViewLoading ? "Loading..." : "View"}
       </Button>
       <Button
@@ -356,7 +356,7 @@ function ClosedCaseButtons({
         onClick={onReopenClick}
         aria-label="Reopen"
       >
-        {isReopening ? <Loader2 className="size-3 mr-1.5 animate-spin" /> : <RotateCcw className="size-3 mr-1.5" />}
+        {isReopening ? <CircleNotch className="size-3 mr-1.5 animate-spin" /> : <RotateCcw className="size-3 mr-1.5" />}
         {isReopening ? "Reopening..." : "Reopen"}
       </Button>
       <Button
@@ -406,7 +406,7 @@ function ActiveCaseButtons({
       >
         {isViewLoading ? (
           <>
-            <Loader2 className="size-3 mr-1.5 animate-spin" />
+            <CircleNotch className="size-3 mr-1.5 animate-spin" />
             Loading...
           </>
         ) : (
@@ -423,7 +423,7 @@ function ActiveCaseButtons({
       >
         {isEditLoading ? (
           <>
-            <Loader2 className="size-3 mr-1.5 animate-spin" />
+            <CircleNotch className="size-3 mr-1.5 animate-spin" />
             Loading...
           </>
         ) : (
@@ -439,7 +439,7 @@ function ActiveCaseButtons({
             aria-label="More options"
             onClick={(e) => e.stopPropagation()}
           >
-            <MoreHorizontal className="size-4" />
+            <DotsThree className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

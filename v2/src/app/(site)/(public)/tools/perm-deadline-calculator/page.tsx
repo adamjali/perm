@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "@phosphor-icons/react/ssr";
 
 import { PermDeadlineCalculator } from "@/components/tools/PermDeadlineCalculator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";

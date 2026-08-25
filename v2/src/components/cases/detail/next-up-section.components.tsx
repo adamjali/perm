@@ -8,14 +8,7 @@
 
 import { Fragment } from "react";
 import { motion } from "motion/react";
-import {
-  Clock,
-  CheckCircle2,
-  FileText,
-  Briefcase,
-  FileCheck,
-  Award,
-} from "lucide-react";
+import { Briefcase, Certificate as Award, CheckCircle as CheckCircle2, Clock, FileArrowUp as FileCheck, FileText } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import {
   getUrgencyLevel,

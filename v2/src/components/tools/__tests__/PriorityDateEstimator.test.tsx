@@ -66,7 +66,7 @@ function selectByLabel(label: RegExp, value: string) {
 /**
  * The figure itself, never the whole container.
  *
- * A bare `querySelectorAll("rect")` also collects the rects inside the lucide
+ * A bare `querySelectorAll("rect")` also collects the rects inside the Phosphor
  * icons in the header and the date field, so a bar count comes back inflated
  * by however many icons happen to be on screen. That reads as a product bug
  * and is not one.
