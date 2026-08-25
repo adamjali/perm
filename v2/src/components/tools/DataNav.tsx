@@ -21,6 +21,7 @@ export type DataSection =
   | "wages"
   | "employers"
   | "attorneys"
+  | "cases"
   | "risk"
   | "visa-bulletin"
   | "methodology";
@@ -33,6 +34,7 @@ const SECTIONS: { key: DataSection; label: string; href: string }[] = [
   { key: "wages", label: "Wages", href: "/perm-wages" },
   { key: "employers", label: "Employers", href: "/perm-employers" },
   { key: "attorneys", label: "Law firms", href: "/perm-attorneys" },
+  { key: "cases", label: "Case search", href: "/perm-cases" },
   { key: "risk", label: "Denial rates", href: "/perm-denial-risk" },
   { key: "visa-bulletin", label: "Visa bulletin", href: "/tools/priority-date-calculator" },
   { key: "methodology", label: "Methodology", href: "/methodology" },

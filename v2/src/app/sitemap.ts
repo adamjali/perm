@@ -79,6 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/perm-wages`, lastModified: permAsOf ?? '2026-08-24' },
     { url: `${baseUrl}/perm-employers`, lastModified: permAsOf ?? '2026-08-24' },
     { url: `${baseUrl}/perm-attorneys`, lastModified: permAsOf ?? '2026-08-24' },
+    { url: `${baseUrl}/perm-cases`, lastModified: permAsOf ?? '2026-08-24' },
     { url: `${baseUrl}/perm-denial-risk`, lastModified: permAsOf ?? '2026-08-24' },
     { url: `${baseUrl}/contact`, lastModified: '2026-08-24' },
     { url: `${baseUrl}/terms`, lastModified: '2026-06-15' },
