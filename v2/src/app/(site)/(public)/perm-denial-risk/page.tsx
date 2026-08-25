@@ -15,9 +15,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchQuery } from "convex/nextjs";
 
-import { api } from "../../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { socGroup } from "@/lib/socGroups";
@@ -26,6 +24,7 @@ import { DataNav } from "@/components/tools/DataNav";
 import { RateViews, RankedRateViews, type RateRow } from "@/components/tools/RateBars";
 import { CENSUS_REGION } from "@/components/tools/USStateMap";
 import { FreshnessDots, InsightLede } from "@/components/tools/Insight";
+import { getDisclosureStats } from "@/lib/turso/publicData";
 
 const TITLE = "PERM Denial Rates";
 // 147 characters. Anything past ~155 is truncated mid-sentence in the SERP,
@@ -79,7 +78,7 @@ function denialRate(denied: number, decided: number): number | null {
 }
 
 export default async function PermDenialRiskPage() {
-  const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
+  const stats = await getDisclosureStats();
   const risk = stats?.risk ?? null;
   const baseline = risk?.baseline ?? null;
   const sourceWindow = stats?.sourceFiles?.length

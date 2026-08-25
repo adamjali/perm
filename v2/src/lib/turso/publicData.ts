@@ -104,9 +104,147 @@ async function doc<T>(key: string): Promise<T | null> {
   return { ...(JSON.parse(r.json) as object), computedAt: r.computed_at } as T;
 }
 
-/** The aggregate series: cohorts, clearance, frontier, byState, wage ladder, risk. */
-export function getDisclosureStats<T = Record<string, unknown>>(): Promise<T | null> {
-  return doc<T>("disclosure_stats");
+/**
+ * The aggregate document, typed.
+ *
+ * Mirrors the return validator the Convex query used to declare. Written out
+ * rather than inferred from the JSON: `JSON.parse` yields `any`, and a
+ * generic default of `Record<string, unknown>` collapses every field to `{}`,
+ * which typechecks at the call site and then renders nothing. The nullable
+ * percentiles are nullable in the data, not as a formality - a wage ladder is
+ * only meaningful if all three rungs exist and ascend.
+ */
+export interface Cohort {
+  cohortMonth: string;
+  decided: number;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+  p90: number | null;
+}
+export interface ClearanceMonth {
+  month: string;
+  decisions: number;
+}
+export interface FrontierPoint {
+  decisionMonth: string;
+  medianFilingMonth: string;
+  decisions: number;
+}
+export interface StateStat {
+  state: string;
+  total: number;
+  certified: number;
+  denied: number;
+  withdrawn: number;
+  medianDays: number | null;
+  medianAnnualWage: number | null;
+}
+export interface SocStat {
+  code: string;
+  title: string;
+  total: number;
+  certified: number;
+  denied: number;
+  medianDays: number | null;
+  medianAnnualWage: number | null;
+}
+export interface EmployerStat {
+  name: string;
+  total: number;
+  certified: number;
+  denied: number;
+  medianDays: number | null;
+}
+export interface AttorneyStat extends EmployerStat {
+  /** Two-letter state, or "" when DOL's cell was unusable. */
+  state: string;
+}
+export interface WageLadder {
+  count: number;
+  p10: number | null;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+  p90: number | null;
+}
+export interface RiskRow {
+  bucket: string;
+  decided: number;
+  denied: number;
+  denialRate: number;
+}
+export interface Risk {
+  baseline: { decided: number; denied: number; denialRate: number };
+  byWage: RiskRow[];
+  byYear: RiskRow[];
+  byFlag: RiskRow[];
+}
+export interface DisclosureStats {
+  sourceFiles: string[];
+  uniqueCases: number;
+  cohorts: Cohort[];
+  clearanceByMonth: ClearanceMonth[];
+  frontierHistory: FrontierPoint[];
+  byState?: StateStat[];
+  topOccupations?: SocStat[];
+  topEmployers?: EmployerStat[];
+  topAttorneys?: AttorneyStat[];
+  wageLadder?: WageLadder | null;
+  risk?: Risk;
+  computedAt: number;
+}
+
+/**
+ * How many entity rows the aggregate document carries per kind.
+ *
+ * THIS NUMBER IS LOAD-BEARING AND MUST NOT BE RAISED CASUALLY.
+ * `dataPageFigures.deriveFigures` turns these arrays into "the largest
+ * sponsors account for N% of cases". That statistic is only meaningful
+ * against a FIXED head of the ranking - hand it all 16,305 employers and the
+ * share becomes ~100% and the published figure quietly changes meaning while
+ * still rendering a plausible number.
+ *
+ * 250 is what the Convex aggregate happened to hold, for an unrelated reason
+ * (its 1 MB document cap). The cap is gone; the statistic's definition is
+ * not, so the number is now an explicit editorial choice rather than an
+ * accident of the old backend.
+ */
+export const STATS_ENTITY_HEAD = 250;
+
+/**
+ * The aggregate series: cohorts, clearance, frontier, byState, wage ladder,
+ * risk - plus the head of each entity ranking.
+ *
+ * The entity arrays are hydrated from `perm_entities` rather than stored a
+ * second time in the document. Keeping a copy in both places is how the
+ * truncated 250-row version became the de-facto source of truth for pages
+ * that should have been reading the full table.
+ */
+export async function getDisclosureStats<T = DisclosureStats>(): Promise<T | null> {
+  const base = await doc<Record<string, unknown>>("disclosure_stats");
+  if (!base) return null;
+  const [employers, attorneys, occupations] = await Promise.all([
+    getEntitySeed("employer", STATS_ENTITY_HEAD),
+    getEntitySeed("attorney", STATS_ENTITY_HEAD),
+    getEntitySeed("occupation", STATS_ENTITY_HEAD),
+  ]);
+  return {
+    ...base,
+    topEmployers: employers.rows.map((r) => ({
+      name: r.name, total: r.total, certified: r.certified,
+      denied: r.denied, medianDays: r.medianDays,
+    })),
+    topAttorneys: attorneys.rows.map((r) => ({
+      name: r.name, total: r.total, certified: r.certified,
+      denied: r.denied, medianDays: r.medianDays, state: r.state,
+    })),
+    topOccupations: occupations.rows.map((r) => ({
+      title: r.name, code: r.code, total: r.total, certified: r.certified,
+      denied: r.denied, medianDays: r.medianDays,
+      medianAnnualWage: r.medianAnnualWage,
+    })),
+  } as T;
 }
 
 /** Corpus metadata: totals, date span, byStatus / byFiscalYear / byState. */

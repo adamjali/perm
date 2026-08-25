@@ -40,6 +40,7 @@ import {
   entityTitle,
   rateReliability,
 } from "@/components/tools/EntityContext";
+import { getDisclosureStats } from "@/lib/turso/publicData";
 
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178
@@ -188,7 +189,7 @@ export default async function EmployerPage({
   // arguments on every page of this kind, so Convex's query cache answers all
   // 12,240 of them from one execution until the next quarterly ingest.
   const [stats, dist, near] = await Promise.all([
-    fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null),
+    getDisclosureStats(),
     fetchQuery(api.permEntities.fieldDistribution, {
       kind: KIND,
       minDecided: MIN_DECIDED_FOR_RATE,

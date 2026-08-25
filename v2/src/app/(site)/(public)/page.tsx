@@ -49,6 +49,7 @@ import { LiveDataBand } from "@/components/home/LiveDataBand";
 import { SectionDivider } from "@/components/home/SectionDivider";
 import { deriveFigures } from "@/components/home/dataPageFigures";
 import { Preloader } from "@/components/home/Preloader";
+import { getDisclosureStats } from "@/lib/turso/publicData";
 
 // One live DOL figure on the page: hourly ISR, same as the data pages.
 // The disclosure files are quarterly, so an hourly window bought
@@ -86,7 +87,7 @@ export default async function HomePage() {
   // in parallel, server-side, once per revalidate window.
   const [snapshot, disclosure] = await Promise.all([
     fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(() => null),
-    fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null),
+    getDisclosureStats(),
   ]);
   const analyst = snapshot
     ? analystReviewQueue(snapshot.permQueues)

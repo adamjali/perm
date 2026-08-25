@@ -40,6 +40,7 @@ import {
   entityTitle,
   rateReliability,
 } from "@/components/tools/EntityContext";
+import { getDisclosureStats } from "@/lib/turso/publicData";
 
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178
@@ -187,7 +188,7 @@ export default async function AttorneyPage({
   // peer window is wide because the state filter thins it hard: California
   // holds 604 firms and Wyoming a handful.
   const [stats, dist, near] = await Promise.all([
-    fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null),
+    getDisclosureStats(),
     fetchQuery(api.permEntities.fieldDistribution, {
       kind: KIND,
       minDecided: MIN_DECIDED_FOR_RATE,

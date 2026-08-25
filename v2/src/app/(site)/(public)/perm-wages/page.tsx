@@ -10,14 +10,13 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchQuery } from "convex/nextjs";
 
-import { api } from "../../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { EntityExplorer } from "@/components/tools/EntityExplorer";
 import { fetchEntitySeed } from "@/lib/entitySeed";
+import { getDisclosureStats } from "@/lib/turso/publicData";
 
 const TITLE = "PERM Salaries by Occupation";
 const DESCRIPTION =
@@ -46,7 +45,7 @@ function fmtWage(n: number): string {
 }
 
 export default async function PermWagesPage() {
-  const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
+  const stats = await getDisclosureStats();
   const { rows: occupations, total: occupationCount } = await fetchEntitySeed("occupation");
   const ladder = stats?.wageLadder ?? null;
 

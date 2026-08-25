@@ -50,6 +50,7 @@ import { QueueTape } from "@/components/tools/QueueTape";
 import { DecisionsByMonth, QueueHistoryChart } from "@/components/tools/QueueHistoryChart";
 import { PwdBacklogChart } from "@/components/tools/PwdBacklogChart";
 import { FreshnessDots, type Freshness } from "@/components/tools/Insight";
+import { getDisclosureStats } from "@/lib/turso/publicData";
 
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
 // Same expression as layout.tsx, sitemap.ts, feed.xml and seo.ts. A bare
@@ -131,7 +132,7 @@ export default async function PermProcessingTimesPage() {
     fetchQuery(api.dolProcessingTimes.getHistory, { limit: 24 }).catch(() => []),
     // The quarterly files, for the decisions-per-month series. A separate
     // publication on a separate cadence, labelled as such on the page.
-    fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null),
+    getDisclosureStats(),
   ]);
 
   const decisionsByMonth = disclosure?.clearanceByMonth ?? [];

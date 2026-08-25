@@ -15,13 +15,12 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchQuery } from "convex/nextjs";
 
-import { api } from "../../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { StateExplorer, type StateStat } from "@/components/tools/USStateMap";
+import { getDisclosureStats } from "@/lib/turso/publicData";
 
 const TITLE = "PERM Filings by State";
 const DESCRIPTION =
@@ -50,7 +49,7 @@ function fmtInt(n: number): string {
 }
 
 export default async function PermByStatePage() {
-  const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
+  const stats = await getDisclosureStats();
   const byState: StateStat[] = stats?.byState ?? [];
   const uniqueCases = stats?.uniqueCases ?? 0;
 
