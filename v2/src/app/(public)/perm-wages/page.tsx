@@ -16,6 +16,7 @@ import { api } from "../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
+import { withUniqueSlugs } from "@/lib/entitySlug";
 import { WagesExplorer } from "./WagesExplorer";
 
 const TITLE = "PERM Salaries by Occupation";
@@ -42,7 +43,11 @@ function fmtWage(n: number): string {
 
 export default async function PermWagesPage() {
   const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
-  const occupations = stats?.topOccupations ?? [];
+  const rawOccupations = stats?.topOccupations ?? [];
+  const occupations = withUniqueSlugs(
+    [...rawOccupations].sort((a, b) => b.total - a.total),
+    (o) => o.title,
+  ).map(({ slug, item }) => ({ ...item, slug }));
   const ladder = stats?.wageLadder ?? null;
 
   // The chart: the ten biggest occupations by volume, bar length = wage, so

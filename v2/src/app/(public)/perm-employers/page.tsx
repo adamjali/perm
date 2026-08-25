@@ -15,6 +15,7 @@ import { api } from "../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
+import { withUniqueSlugs } from "@/lib/entitySlug";
 import { EmployersExplorer, type EmployerStat } from "./EmployersExplorer";
 
 const TITLE = "Top PERM Sponsors";
@@ -42,9 +43,13 @@ function fmtInt(n: number): string {
 export default async function PermEmployersPage() {
   const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
   const raw = stats?.topEmployers ?? [];
-  const employers: EmployerStat[] = [...raw]
-    .sort((a, b) => b.total - a.total)
-    .map((e, i) => ({ ...e, rank: i + 1 }));
+  // Slugs come from the same helper the detail routes use, over the same
+  // volume-sorted order, so a link here and generateStaticParams there can
+  // never disagree about which entity owns a URL.
+  const employers: EmployerStat[] = withUniqueSlugs(
+    [...raw].sort((a, b) => b.total - a.total),
+    (e) => e.name,
+  ).map(({ slug, item }, i) => ({ ...item, slug, rank: i + 1 }));
 
   const topTen = employers.slice(0, 10);
   const maxTotal = Math.max(1, ...topTen.map((e) => e.total));

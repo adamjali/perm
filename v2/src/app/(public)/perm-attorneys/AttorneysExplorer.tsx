@@ -1,10 +1,14 @@
 "use client";
 
+import Link from "next/link";
+
 import { FilterableStatTable, type StatColumn } from "@/components/tools/FilterableStatTable";
 
 /** Row shape mirrors convex/permDisclosure.ts attorneyStatValidator plus rank. */
 export interface AttorneyStat {
   rank: number;
+  /** Assigned by the page via withUniqueSlugs, so collisions are resolved. */
+  slug: string;
   name: string;
   state: string;
   total: number;
@@ -30,12 +34,15 @@ const COLUMNS: StatColumn<AttorneyStat>[] = [
     label: "Firm",
     sortValue: (a) => a.name,
     render: (a) => (
-      <span className="font-bold">
+      <Link
+        href={`/perm-attorneys/${a.slug}`}
+        className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+      >
         {a.name}
         {a.state ? (
           <span className="ml-2 font-mono text-xs font-normal text-foreground/50">{a.state}</span>
         ) : null}
-      </span>
+      </Link>
     ),
   },
   {

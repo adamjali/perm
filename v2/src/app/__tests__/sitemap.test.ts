@@ -171,12 +171,19 @@ describe("sitemap.ts", () => {
 
   it("still builds when Convex is unreachable", async () => {
     // A sitemap with one slightly stale lastmod is fine; a failed build is not.
-    vi.mocked(fetchQuery).mockRejectedValueOnce(new Error("convex down"));
+    // The route makes TWO Convex reads (the processing snapshot and the
+    // disclosure aggregates that the entity URLs come from), so "unreachable"
+    // has to mean both of them: a single Once would leave the second call
+    // succeeding and stop testing the thing this test is named for.
+    vi.mocked(fetchQuery).mockRejectedValue(new Error("convex down"));
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
     const entries = await sitemap();
     expect(entries.length).toBeGreaterThan(0);
     expect(
       entries.find((e) => e.url.endsWith("/perm-processing-times"))!.lastModified,
     ).toBe("2026-01-01");
+    // With no aggregates there are no entity pages to list, and that is the
+    // correct output: a sitemap must never advertise a URL that 404s.
+    expect(entries.some((e) => e.url.includes("/perm-employers/"))).toBe(false);
   });
 });

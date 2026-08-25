@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { fetchQuery } from 'convex/nextjs'
 import { api } from '../../convex/_generated/api'
 import { getAllPosts } from '@/lib/content'
+import { withUniqueSlugs } from '@/lib/entitySlug'
 import { captureError } from '@/lib/sentry'
 
 // Next.js sitemap routes are cached by default and only regenerated when
@@ -33,6 +34,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // DOL's own as-of stamp for the processing-times page. Wrapped because the
   // sitemap must still build if Convex is unreachable: a sitemap with one
   // slightly stale lastmod is fine, a failed build is not.
+  // The entity pages come from the same aggregates the pages read, through
+  // the same slug helper, so the sitemap can never list a URL that does not
+  // resolve or miss one that does.
+  const disclosure = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null)
+
   const permAsOf = await fetchQuery(api.dolProcessingTimes.getLatest, {})
     .then((snap) => snap?.permAsOf ?? null)
     .catch(() => null)
@@ -80,6 +86,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/security`, lastModified: '2026-06-15' },
   ]
 
+  // One page per entity: 100 sponsors, 100 firms, 60 occupations.
+  const entityDate = permAsOf ?? '2026-08-24'
+  const entityUrls: MetadataRoute.Sitemap = [
+    ...withUniqueSlugs(
+      [...(disclosure?.topEmployers ?? [])].sort((a, b) => b.total - a.total),
+      (e) => e.name,
+    ).map(({ slug }) => ({
+      url: `${baseUrl}/perm-employers/${slug}`,
+      lastModified: entityDate,
+    })),
+    ...withUniqueSlugs(
+      [...(disclosure?.topAttorneys ?? [])].sort((a, b) => b.total - a.total),
+      (a) => a.name,
+    ).map(({ slug }) => ({
+      url: `${baseUrl}/perm-attorneys/${slug}`,
+      lastModified: entityDate,
+    })),
+    ...withUniqueSlugs(
+      [...(disclosure?.topOccupations ?? [])].sort((a, b) => b.total - a.total),
+      (o) => o.title,
+    ).map(({ slug }) => ({
+      url: `${baseUrl}/perm-wages/${slug}`,
+      lastModified: entityDate,
+    })),
+  ]
+
   // Dynamic content pages (blog, tutorials, guides, resources)
   const contentPages: MetadataRoute.Sitemap = getAllPosts()
     .filter((post) => post.type !== 'changelog') // Changelog is a single page, no individual routes
@@ -88,5 +120,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: post.meta.updated ?? post.meta.date,
     }))
 
-  return [...staticPages, ...contentPages]
+  return [...staticPages, ...entityUrls, ...contentPages]
 }

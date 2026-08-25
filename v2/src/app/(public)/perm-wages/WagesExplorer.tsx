@@ -1,9 +1,13 @@
 "use client";
 
+import Link from "next/link";
+
 import { FilterableStatTable, type StatColumn } from "@/components/tools/FilterableStatTable";
 
 /** Row shape mirrors convex/permDisclosure.ts socStatValidator. */
 export interface OccupationStat {
+  /** Assigned by the page via withUniqueSlugs, so collisions are resolved. */
+  slug: string;
   code: string;
   title: string;
   total: number;
@@ -24,7 +28,13 @@ const COLUMNS: StatColumn<OccupationStat>[] = [
     sortValue: (o) => o.title,
     render: (o) => (
       <span className="font-bold">
-        {o.title} <span className="font-mono text-xs font-normal text-foreground/50">{o.code}</span>
+        <Link
+          href={`/perm-wages/${o.slug}`}
+          className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+        >
+          {o.title}
+        </Link>{" "}
+        <span className="font-mono text-xs font-normal text-foreground/50">{o.code}</span>
       </span>
     ),
   },

@@ -15,6 +15,7 @@ import { api } from "../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
+import { withUniqueSlugs } from "@/lib/entitySlug";
 import { AttorneysExplorer, type AttorneyStat } from "./AttorneysExplorer";
 
 const TITLE = "Top PERM Law Firms";
@@ -42,9 +43,10 @@ function fmtInt(n: number): string {
 export default async function PermAttorneysPage() {
   const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
   const raw = stats?.topAttorneys ?? [];
-  const attorneys: AttorneyStat[] = [...raw]
-    .sort((a, b) => b.total - a.total)
-    .map((a, i) => ({ ...a, rank: i + 1 }));
+  const attorneys: AttorneyStat[] = withUniqueSlugs(
+    [...raw].sort((a, b) => b.total - a.total),
+    (a) => a.name,
+  ).map(({ slug, item }, i) => ({ ...item, slug, rank: i + 1 }));
 
   const topTen = attorneys.slice(0, 10);
   const maxTotal = Math.max(1, ...topTen.map((a) => a.total));

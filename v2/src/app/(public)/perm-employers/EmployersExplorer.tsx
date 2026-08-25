@@ -1,11 +1,15 @@
 "use client";
 
+import Link from "next/link";
+
 import { FilterableStatTable, type StatColumn } from "@/components/tools/FilterableStatTable";
 
 /** Row shape mirrors convex/permDisclosure.ts employerStatValidator, plus the
  *  precomputed rank (by volume) so filtering never renumbers anyone. */
 export interface EmployerStat {
   rank: number;
+  /** Assigned by the page via withUniqueSlugs, so collisions are resolved. */
+  slug: string;
   name: string;
   total: number;
   certified: number;
@@ -29,7 +33,14 @@ const COLUMNS: StatColumn<EmployerStat>[] = [
     key: "name",
     label: "Employer",
     sortValue: (e) => e.name,
-    render: (e) => <span className="font-bold">{e.name}</span>,
+    render: (e) => (
+      <Link
+        href={`/perm-employers/${e.slug}`}
+        className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+      >
+        {e.name}
+      </Link>
+    ),
   },
   {
     key: "total",
