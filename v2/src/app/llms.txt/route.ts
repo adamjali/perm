@@ -140,7 +140,11 @@ const MONTHS = [
  * what it read to what it was asked. An ISO month is unambiguous and this
  * file is not a wire format, so it gets the words.
  */
-function fmtMonth(iso: string): string {
+function fmtMonth(iso: string | null): string {
+  // Total on purpose. Both callers read a nullable field off a Convex doc,
+  // and a formatter that only accepts the happy shape pushes the null check
+  // out to every call site, where one of them will be forgotten.
+  if (!iso) return "an unstated month";
   const m = /^(\d{4})-(\d{2})$/.exec(iso);
   if (!m) return iso;
   const name = MONTHS[Number(m[2]) - 1];
