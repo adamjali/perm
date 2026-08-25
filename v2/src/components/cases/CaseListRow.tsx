@@ -61,7 +61,7 @@ export const CaseListRow = memo(function CaseListRow({
 
   const handleRowClick = useCallback(
     (e: React.MouseEvent) => {
-      // Don't navigate if clicking checkbox
+      // Don’t navigate if clicking checkbox
       if ((e.target as HTMLElement).closest('[role="checkbox"]')) {
         return;
       }

@@ -51,7 +51,7 @@ describe("UpcomingDeadlinesWidget", () => {
       renderWithProviders(<UpcomingDeadlinesWidget />);
 
       expect(screen.getByText(/no deadlines in next 30 days/i)).toBeInTheDocument();
-      expect(screen.getByText(/you're all caught up!/i)).toBeInTheDocument();
+      expect(screen.getByText(/you[’']re all caught up!/i)).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: /next 30 days/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /calendar/i })).toBeInTheDocument();
     });

@@ -82,8 +82,8 @@ export default function SecurityPage() {
                 security@permtracker.app
               </a>
               . Include a description of the issue, steps to reproduce, and any
-              proof-of-concept details. We will acknowledge your report within 72
-              hours and coordinate on disclosure timing. We do not operate a paid
+              proof-of-concept details. We’ll acknowledge your report within 72
+              hours and coordinate on disclosure timing. We don’t operate a paid
               bug-bounty program at this time, but we credit reporters who wish to
               be named in the incident record below.
             </p>
@@ -165,10 +165,10 @@ export default function SecurityPage() {
                 </ul>{" "}
                 <p>
                   <strong>If you received an unexpected email.</strong> If you
-                  received a message referencing permtracker.app that you did not expect, particularly one containing a link or promotional content in Turkish, <strong>please do not click any links</strong>{" "}
-                  in that message. The content was not authorized by PERM Tracker,
-                  was not directed to you by us, and does not reflect our product
-                  or services. You may safely delete the email. You will not
+                  received a message referencing permtracker.app that you didn’t expect, particularly one containing a link or promotional content in Turkish, <strong>please don’t click any links</strong>{" "}
+                  in that message. The content wasn’t authorized by PERM Tracker,
+                  wasn’t directed to you by us, and doesn’t reflect our product
+                  or services. You may safely delete the email. You won’t
                   receive further messages from us unless you choose to sign up
                   for an account directly at{" "}
                   <Link href="/" className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">

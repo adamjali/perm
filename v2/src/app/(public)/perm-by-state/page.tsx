@@ -127,7 +127,7 @@ export default async function PermByStatePage() {
               </p>{" "}
               <p className="mt-2 text-sm leading-relaxed text-foreground/70">
                 DOL works one national queue, so median days barely move by
-                state. Volume and wages move a lot. That is industry mix, not
+                state. Volume and wages move a lot. That’s industry mix, not
                 a faster line. The{" "}
                 <Link href="/methodology" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                   methodology
@@ -175,7 +175,7 @@ export default async function PermByStatePage() {
         <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Waiting on a case here?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            The state does not change your place in line. The filing month
+            The state doesn’t change your place in line. The filing month
             does. The{" "}
             <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision estimator

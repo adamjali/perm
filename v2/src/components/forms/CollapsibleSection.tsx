@@ -39,7 +39,7 @@ export interface CollapsibleSectionProps {
  * A collapsible form section with dependency indicators.
  *
  * Features:
- * - Always openable (even when prerequisites aren't met)
+ * - Always openable (even when prerequisites aren’t met)
  * - Animated expand/collapse
  * - Completion checkmark + summary when collapsed
  * - Soft prerequisite note when opened without prerequisites

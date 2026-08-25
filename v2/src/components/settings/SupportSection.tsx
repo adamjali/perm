@@ -159,7 +159,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
           ? error.message
           : "Failed to request account deletion";
       toast.error(message);
-      // Note: Don't call cancelSignOut() here - beginSignOut() hasn't been called yet
+      // Note: Don’t call cancelSignOut() here - beginSignOut() hasn’t been called yet
       // because we only reach this catch if requestDeletion() fails
     } finally {
       setIsDeleting(false);
@@ -442,7 +442,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             <DialogDescription asChild>
               <div className="text-muted-foreground text-sm space-y-3 pt-2">
                 <p>
-                  This will schedule your account for permanent deletion. You will
+                  This will schedule your account for permanent deletion. You’ll
                   have <strong>{GRACE_PERIOD_DAYS} days</strong> to cancel this
                   action.
                 </p>{" "}

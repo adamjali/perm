@@ -142,7 +142,7 @@ function RFEEntryComponent({
   if (entryErrors) {
     for (const [key, value] of Object.entries(entryErrors)) {
       if (value && typeof value === "object" && "message" in value) {
-        // RHF doesn't distinguish warnings from errors, but we could add a "type" check here
+        // RHF doesn’t distinguish warnings from errors, but we could add a "type" check here
         fieldErrors[key] = (value as { message: string }).message;
       }
     }

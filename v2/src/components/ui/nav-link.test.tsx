@@ -89,7 +89,7 @@ describe("NavLink pointing somewhere else", () => {
     window.scrollTo = scrollToSpy as unknown as typeof window.scrollTo;
   });
 
-  it("navigates normally and does not hijack the scroll", () => {
+  it("navigates normally and doesn’t hijack the scroll", () => {
     mockPathname = "/";
     render(<NavLink href="/blog">Blog</NavLink>);
 
@@ -103,7 +103,7 @@ describe("NavLink pointing somewhere else", () => {
     expect(link).not.toHaveAttribute("aria-current");
   });
 
-  it("does not treat a nested route as the same page", () => {
+  it("doesn’t treat a nested route as the same page", () => {
     // Tapping "Blog" from a blog POST must still go to the blog index.
     mockPathname = "/blog/perm-processing-times-2026";
     render(<NavLink href="/blog">Blog</NavLink>);

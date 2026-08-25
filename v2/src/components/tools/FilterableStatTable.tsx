@@ -326,7 +326,7 @@ export function FilterableStatTable<T>({
               <>Loading all {corpusSize.toLocaleString("en-US")} {noun}…</>
             ) : loadError ? (
               <span className="font-bold text-data-bad-ink">
-                That list did not load. Showing the top{" "}
+                That list didn’t load. Showing the top{" "}
                 {rows.length.toLocaleString("en-US")} only.
               </span>
             ) : partial ? (
@@ -406,7 +406,6 @@ export function FilterableStatTable<T>({
                 const isSorted = c.key === sortKey;
                 return (
                   <Fragment key={c.key}>
-                    {" "}
                       <th
                       scope="col"
                       aria-sort={isSorted ? (sortDesc ? "descending" : "ascending") : "none"}
@@ -427,6 +426,13 @@ export function FilterableStatTable<T>({
                       >
                         {c.label}
                         {isSorted ? (sortDesc ? " ↓" : " ↑") : ""}
+                        {/* Separator INSIDE the cell. Between two <th> it is
+                            a whitespace text node whose parent is <tr>, which
+                            is invalid HTML; React warns it will break
+                            hydration, and the test runner surfaced exactly
+                            that. Inside, it still separates the columns for
+                            anything walking the DOM and costs no layout. */}
+                        {" "}
                       </button>
                     </th>
                   </Fragment>
@@ -442,7 +448,6 @@ export function FilterableStatTable<T>({
                     the DOM. A space between cells costs nothing in a table. */}
                 {columns.map((c) => (
                   <Fragment key={c.key}>
-                    {" "}
                     <td
                       className={
                         "px-3 py-2.5 " +
@@ -450,7 +455,7 @@ export function FilterableStatTable<T>({
                         (c.secondary ? "hidden sm:table-cell" : "")
                       }
                     >
-                      {c.render(row, safePage * pageSize + i)}
+                      {c.render(row, safePage * pageSize + i)}{" "}
                     </td>
                   </Fragment>
                 ))}

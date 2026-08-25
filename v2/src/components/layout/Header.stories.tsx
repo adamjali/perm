@@ -25,7 +25,7 @@ const NAV_LINKS = [
   { label: "Settings", href: "/settings" },
 ];
 
-// Static header component for Storybook (doesn't use Convex)
+// Static header component for Storybook (doesn’t use Convex)
 function StaticHeader({
   pathname = "/dashboard",
   userName,

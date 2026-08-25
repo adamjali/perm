@@ -77,7 +77,7 @@ const TOOLS = [
     kind: "Count",
     tone: "paper",
     blurb:
-      "How many wage requests sit ahead of yours. DOL publishes this one as an actual pending count, so it is a fact rather than a model.",
+      "How many wage requests sit ahead of yours. DOL publishes this one as an actual pending count, so it’s a fact rather than a model.",
   },
   {
     href: "/tools/i140-calculator",
@@ -145,7 +145,7 @@ export default function CalculatorsPage() {
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Each one answers a question a PERM case raises, says where its numbers
-          come from, and says so when it cannot answer.
+          come from, and says so when it can’t answer.
         </p>
       </header>
 
@@ -157,8 +157,8 @@ export default function CalculatorsPage() {
           <table className="w-full border-2 border-border text-left text-sm shadow-hard-sm">
             <thead className="bg-foreground text-background">
               <tr>
-                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Your situation</th>{" "}
-                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Ask</th>{" "}
+                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Your situation{" "}</th>
+                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Ask{" "}</th>
                 <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Use</th>
               </tr>
             </thead>
@@ -172,13 +172,13 @@ export default function CalculatorsPage() {
                 { s: "Just starting, or explaining it to someone", q: "How long is the whole thing?", href: "/tools/green-card-timeline", tool: "Green card timeline" },
               ].map((r) => (
                 <tr key={r.href} className="border-t border-border/40">
-                  <td className="p-3">{r.s}</td>{" "}
-                  <td className="p-3 text-foreground/70">{r.q}</td>{" "}
+                  <td className="p-3">{r.s}{" "}</td>
+                  <td className="p-3 text-foreground/70">{r.q}{" "}</td>
                   <td className="p-3">
                     <a href={r.href} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                       {r.tool}
                     </a>
-                  </td>{" "}
+                  {" "}</td>
                 </tr>
               ))}
             </tbody>
@@ -271,10 +271,10 @@ export default function CalculatorsPage() {
         </h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           A queue estimate is a forecast. Where DOL publishes enough to be sure,
-          you get a figure and its source. Where it does not, you get the count
-          that is real and a plain statement of what is missing. The deadline
+          you get a figure and its source. Where it doesn’t, you get the count
+          that’s real and a plain statement of what’s missing. The deadline
           calculator is the exception: those dates are arithmetic in the
-          regulations, so they are exact.
+          regulations, so they’re exact.
         </p>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           Public estimators disagree with each other by months on the same

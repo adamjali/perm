@@ -166,7 +166,7 @@ export default function TimeoutWarningModal({
 
         {/* Keyboard hint */}
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Press <kbd className="mono px-1.5 py-0.5 border border-black/20 bg-muted rounded-sm">Esc</kbd> to stay logged in
+          Press <kbd className="mono rounded-sm border border-border bg-muted px-1.5 py-0.5">Esc</kbd> to stay logged in
         </p>
       </div>
     </div>

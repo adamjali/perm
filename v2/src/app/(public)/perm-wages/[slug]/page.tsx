@@ -355,7 +355,7 @@ export default async function OccupationPage({
                 : `This occupation has ${fmt(reliability.decided)} decided cases, so its wage and its median days are marked but left unranked, and no approval rate is drawn at all.`}{" "}
               {dist.complete
                 ? ""
-                : "The scan behind this cohort did not reach past the last qualifying occupation, so read it as the busiest part of the field rather than all of it. "}
+                : "The scan behind this cohort didn’t reach past the last qualifying occupation, so read it as the busiest part of the field rather than all of it. "}
             </>
           }
           source="DOL PERM disclosure files"
@@ -433,7 +433,7 @@ export default async function OccupationPage({
               The occupations ranked either side of this one by filing volume.{" "}
               {group
                 ? `Nothing else in the ${group.toLowerCase()} major group filed a PERM case in this window.`
-                : "This row has no readable SOC code, so it can't be grouped with its own line of work."}
+                : "This row has no readable SOC code, so it can’t be grouped with its own line of work."}
             </>
           )
         }
@@ -476,7 +476,7 @@ export default async function OccupationPage({
             ),
           },
           {
-            head: "A median isn't an offer",
+            head: "A median isn’t an offer",
             body: (
               <>
                 It&apos;s the middle of every wage committed to for this occupation
@@ -493,7 +493,7 @@ export default async function OccupationPage({
             ),
           },
           {
-            head: "Approval isn't about the occupation",
+            head: "Approval isn’t about the occupation",
             body: (
               <>
                 The denial rate moves with what happened in the filing rather
@@ -509,7 +509,7 @@ export default async function OccupationPage({
             ),
           },
           {
-            head: "Nothing here is pending",
+            head: "Nothing here’s pending",
             body: (
               <>
                 Every case in DOL&apos;s disclosure files carries a decision

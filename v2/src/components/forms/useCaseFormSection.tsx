@@ -329,7 +329,7 @@ export function useBasicInfoSection(props?: {
   const errors = props?.errors || context?.errors || {};
   // Cast FormFieldChangeHandler to simpler signature for backward compatibility
   const onChange = (props?.onChange || context?.onChange || (() => {})) as (field: string, value: string) => void;
-  // Don't provide noop fallback - let component handle undefined for fallback logic
+  // Don’t provide noop fallback - let component handle undefined for fallback logic
   const onCaseStatusChange = props?.onCaseStatusChange || context?.onCaseStatusChange;
   const onProgressStatusChange = props?.onProgressStatusChange || context?.onProgressStatusChange;
   const isAutoStatusEnabled = props?.isAutoStatusEnabled ?? context?.isAutoStatusEnabled ?? true;

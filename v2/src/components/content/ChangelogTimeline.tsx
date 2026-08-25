@@ -16,7 +16,7 @@ import type { PostSummary } from "@/lib/content/types";
 import { useScrollStagger } from "@/lib/hooks/useGSAP";
 
 // Shared formatting for the entry's published/updated <time> elements. Module
-// scope so the Intl.DateTimeFormatOptions object isn't reallocated each render.
+// scope so the Intl.DateTimeFormatOptions object isn’t reallocated each render.
 const DATE_FMT: Intl.DateTimeFormatOptions = {
   month: "long",
   day: "numeric",

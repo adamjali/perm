@@ -57,7 +57,7 @@ export function TimelineMilestone({
   const clampedPosition = Math.max(0, Math.min(100, position));
 
   // Calculate tooltip alignment based on position
-  // Near left edge (< 25%): align left so tooltip doesn't extend past container
+  // Near left edge (< 25%): align left so tooltip doesn’t extend past container
   // Near right edge (> 75%): align right
   // Otherwise: center
   const tooltipAlignment = clampedPosition < 25

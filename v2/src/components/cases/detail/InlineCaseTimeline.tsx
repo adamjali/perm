@@ -42,7 +42,7 @@ export interface InlineCaseTimelineProps {
 // CONSTANTS
 // ============================================================================
 
-/** Minimum padding (months) around data so edges don't sit flush */
+/** Minimum padding (months) around data so edges don’t sit flush */
 const MIN_PAD_MONTHS = 1;
 /** Minimum total window size in months (never smaller than this) */
 const MIN_WINDOW_MONTHS = 4;
@@ -139,7 +139,7 @@ function generateMonthHeaders(
 
 /**
  * Compute a window that fits ALL milestones and range bars, with padding.
- * Falls back to ±3 months around today if there's no data.
+ * Falls back to ±3 months around today if there’s no data.
  */
 function computeAutoWindow(
   milestones: Milestone[],

@@ -255,7 +255,7 @@ export default function CalendarSyncSection({
       const errorMessages: Record<string, string> = {
         oauth_init_failed: "Failed to start Google sign-in. Please try again.",
         credentials_not_configured:
-          "Google Calendar is not configured. Please contact support to set up calendar integration.",
+          "Google Calendar isn’t configured. Please contact support to set up calendar integration.",
         missing_env_vars:
           "Server configuration error. Google Calendar credentials are missing.",
         no_code: "Authorization was cancelled. Please try again.",

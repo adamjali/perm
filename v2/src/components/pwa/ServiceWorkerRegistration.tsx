@@ -79,7 +79,7 @@ async function cleanupLegacySW(): Promise<void> {
       }
     }
   } catch {
-    // Best-effort — don't block anything
+    // Best-effort — don’t block anything
   }
 }
 

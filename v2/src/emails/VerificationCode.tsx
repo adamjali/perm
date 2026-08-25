@@ -32,7 +32,7 @@ export function VerificationCode({
   return (
     <EmailLayout
       previewText={`PERM Tracker: Your verification code is ${code}`}
-      footerText="You're receiving this email because someone requested a verification code for this email address."
+      footerText="You’re receiving this email because someone requested a verification code for this email address."
       hideSettingsLink
     >
       {/* Header */}

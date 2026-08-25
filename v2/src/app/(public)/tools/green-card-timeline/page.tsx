@@ -45,15 +45,15 @@ export const revalidate = 3600;
 const FAQS = [
   {
     q: "How long does an employment-based green card take?",
-    a: "The labor certification and petition stages together run a bit over two years on current published figures. After that comes the wait for a visa number, which depends on category and country of birth and for some applicants is longer than everything before it combined. Any single total that covers all of it is hiding that variation.",
+    a: "The labor certification and petition stages together run a bit over two years on current published figures. After that comes the wait for a visa number, which depends on category and country of birth and for some applicants is longer than everything before it combined. Any single total that covers all of it’s hiding that variation.",
   },
   {
     q: "Which parts of the process can an employer actually control?",
-    a: "The recruitment window and the filing window, and that is roughly two months of the total. Both are fixed arithmetic on the prevailing wage determination date, and both restart the case if they are missed. Everything else is queue time at DOL or USCIS.",
+    a: "The recruitment window and the filing window, and that’s roughly two months of the total. Both are fixed arithmetic on the prevailing wage determination date, and both restart the case if they’re missed. Everything else is queue time at DOL or USCIS.",
   },
   {
     q: "Why is there no number on the visa bulletin stage?",
-    a: "Because the cutoff dates come only from the monthly visa bulletin published by the State Department, and we do not have an automated way to read it. Putting an estimate there without a source we can stand behind would be inventing a legally consequential date.",
+    a: "Because the cutoff dates come only from the monthly visa bulletin published by the State Department, and we don’t have an automated way to read it. Putting an estimate there without a source we can stand behind would be inventing a legally consequential date.",
   },
   {
     q: "Does premium processing shorten the whole timeline?",

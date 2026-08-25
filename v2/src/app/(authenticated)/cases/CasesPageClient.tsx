@@ -101,7 +101,7 @@ export function CasesPageClient() {
   const [viewMode, setViewMode] = useState<ViewMode>(() => getStoredViewMode());
 
   // Restore sort/filters from localStorage on mount when URL has no params.
-  // useState initializers can't reliably access localStorage during SSR/hydration,
+  // useState initializers can’t reliably access localStorage during SSR/hydration,
   // so we restore in useEffect (client-only, runs once after mount).
   const hasURLParams = searchParams.toString().length > 0;
   useEffect(() => {
@@ -566,7 +566,7 @@ export function CasesPageClient() {
       // Fallback to current page if query fails
       const currentPageIds = processedCases.map((c) => c._id);
       setSelectedCaseIds(new Set(currentPageIds));
-      toast.error("Could not select all cases. Selected current page only.");
+      toast.error("Couldn’t select all cases. Selected current page only.");
     }
   }, [convex, filters, processedCases]);
 

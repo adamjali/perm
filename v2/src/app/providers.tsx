@@ -10,7 +10,7 @@ import { PageContextProvider } from "@/lib/ai/page-context";
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 if (!convexUrl) {
   throw new Error(
-    "NEXT_PUBLIC_CONVEX_URL environment variable is not set. " +
+    "NEXT_PUBLIC_CONVEX_URL environment variable isn’t set. " +
     "Please add it to your .env.local file or deployment environment."
   );
 }

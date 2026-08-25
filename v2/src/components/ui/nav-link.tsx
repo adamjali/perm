@@ -120,7 +120,7 @@ export function NavLink({
 
     // Set this link as actively navigating (clears other NavLinks)
     // Always coordinate via context so other components can detect navigation,
-    // even when this NavLink doesn't show its own spinner (showLoading=false)
+    // even when this NavLink doesn’t show its own spinner (showLoading=false)
     if (context) {
       context.setActiveNavigation(targetHref || "/");
     }

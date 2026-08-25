@@ -78,7 +78,7 @@ const SOURCES = [
     name: "State Department visa bulletin",
     seal: "/agency/dos-seal.png",
     sealAlt: "Seal of the US Department of State",
-    what: "Employment-based cutoff dates. The live page refuses automated readers, so our series comes from the Internet Archive and lags the current month. That is why the priority date calculator is framed as a history.",
+    what: "Employment-based cutoff dates. The live page refuses automated readers, so our series comes from the Internet Archive and lags the current month. That’s why the priority date calculator is framed as a history.",
     cadence: "Monthly.",
     href: "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
   },
@@ -125,7 +125,7 @@ export default function MethodologyPage() {
               <tr>
                 <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">
                   Source
-                </th>{" "}
+                {" "}</th>
                 <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">
                   Reported
                 </th>
@@ -134,8 +134,8 @@ export default function MethodologyPage() {
             <tbody className="bg-card">
               {SPREAD.map((row) => (
                 <tr key={row.source} className="border-t border-border/40">
-                  <td className="p-3">{row.source}</td>{" "}
-                  <td className="p-3 font-mono font-bold tabular-nums">{row.value}</td>{" "}
+                  <td className="p-3">{row.source}{" "}</td>
+                  <td className="p-3 font-mono font-bold tabular-nums">{row.value}{" "}</td>
                 </tr>
               ))}
             </tbody>
@@ -148,7 +148,7 @@ export default function MethodologyPage() {
           them aside. It can run on this quarter&apos;s data or on a file from
           March. And a tool built on crowd reports measures its own users
           rather than the queue. None of these are lies. Publishing the number
-          without saying which choices produced it is the problem.
+          without saying which choices produced it’s the problem.
         </p>
       </section>
 
@@ -215,7 +215,7 @@ export default function MethodologyPage() {
           </li>{" "}
           <li className="border-l-4 border-primary pl-4">
             Undated numbers. Every figure carries the date of the data behind
-            it, because a number that cannot age is a number you cannot trust.
+            it, because a number that can’t age is a number you can’t trust.
           </li>
         </ul>
       </section>

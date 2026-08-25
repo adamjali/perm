@@ -439,7 +439,7 @@ export function RecruitmentResultsCard({
             <DialogTitle>Revert to Auto-Generated Text?</DialogTitle>
             <DialogDescription>
               This will discard your custom recruitment results text and replace
-              it with the automatically generated version. This action cannot be
+              it with the automatically generated version. This action can’t be
               undone.
             </DialogDescription>
           </DialogHeader>

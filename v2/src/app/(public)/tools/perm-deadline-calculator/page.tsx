@@ -40,7 +40,7 @@ export const dynamic = "force-static";
 const FAQS = [
   {
     q: "When does the PERM filing window open and close?",
-    a: "It opens 30 days after the last recruitment step, which is the quiet period, and closes 180 days after the first recruitment step. Filing inside the quiet period is an automatic denial, and recruitment older than 180 days cannot support a filing at all.",
+    a: "It opens 30 days after the last recruitment step, which is the quiet period, and closes 180 days after the first recruitment step. Filing inside the quiet period is an automatic denial, and recruitment older than 180 days can’t support a filing at all.",
   },
   {
     q: "When does a prevailing wage determination expire?",
@@ -84,7 +84,7 @@ export default function PermDeadlineCalculatorPage() {
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Every date the regulations fix, worked out from your prevailing wage
-          determination. Nothing here is a forecast.
+          determination. Nothing here’s a forecast.
         </p>
       </header>
 
@@ -116,7 +116,7 @@ export default function PermDeadlineCalculatorPage() {
           Start tracking free
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
-        <p className="mt-3 text-sm text-foreground/50">Free, and there is no case limit.</p>
+        <p className="mt-3 text-sm text-foreground/50">Free, and there’s no case limit.</p>
       </section>
 
       <ToolPageFooter

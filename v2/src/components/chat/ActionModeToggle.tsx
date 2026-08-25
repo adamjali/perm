@@ -53,17 +53,17 @@ const MODE_CONFIG: Record<ActionMode, ModeConfig> = {
   off: {
     icon: EyeOff,
     label: "OFF",
-    tooltip: "Read-only mode - I'll only answer questions",
+    tooltip: "Read-only mode - I’ll only answer questions",
   },
   confirm: {
     icon: ShieldCheck,
     label: "CONFIRM",
-    tooltip: "I'll ask before taking actions",
+    tooltip: "I’ll ask before taking actions",
   },
   auto: {
     icon: Zap,
     label: "AUTO",
-    tooltip: "I'll act immediately (destructive actions still ask)",
+    tooltip: "I’ll act immediately (destructive actions still ask)",
   },
 };
 

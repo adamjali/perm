@@ -48,7 +48,7 @@ export function DashboardPageClient() {
     }
   }, [currentUser, router]);
 
-  // Don't render while redirecting or checking auth
+  // Don’t render while redirecting or checking auth
   if (currentUser === null) {
     return null;
   }

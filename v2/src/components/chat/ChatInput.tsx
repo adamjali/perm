@@ -171,11 +171,11 @@ export function ChatInput({
     }
 
     // Determine if we need a space before the transcript
-    // Add space if: there's content before AND it doesn't end with whitespace
+    // Add space if: there’s content before AND it doesn’t end with whitespace
     const needsSpaceBefore = start > 0 && !/\s$/.test(currentValue.slice(0, start));
 
     // Determine if we need a space after the transcript
-    // Add space if: there's content after AND it doesn't start with whitespace
+    // Add space if: there’s content after AND it doesn’t start with whitespace
     const hasContentAfter = end < currentValue.length;
     const needsSpaceAfter = hasContentAfter && !/^\s/.test(currentValue.slice(end));
 

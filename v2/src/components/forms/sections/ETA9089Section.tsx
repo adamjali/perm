@@ -86,7 +86,7 @@ function buildFilingWindowData(
   pwdExpirationDate: string | undefined,
   recruitmentComplete: boolean
 ): FilingWindowData {
-  // If recruitment isn't complete, show that status
+  // If recruitment isn’t complete, show that status
   if (!recruitmentComplete) {
     return { isOpen: false, isRecruitmentComplete: false };
   }

@@ -53,14 +53,14 @@ export function SignupPageClient() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   // "Touched" flags — a field only shows invalid state after first blur or
-  // an attempted submit, so users aren't yelled at while typing.
+  // an attempted submit, so users aren’t yelled at while typing.
   const [emailTouched, setEmailTouched] = useState(false);
   const [nameTouched, setNameTouched] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [confirmTouched, setConfirmTouched] = useState(false);
 
   // Track which fields have already had an "invalid" event reported, so
-  // every keystroke doesn't spam PostHog. A ref (not state) — we don't
+  // every keystroke doesn’t spam PostHog. A ref (not state) — we don’t
   // need to re-render when it changes.
   const reportedInvalidRef = useRef<Set<string>>(new Set());
 
@@ -112,7 +112,7 @@ export function SignupPageClient() {
 
   // Field config drives blur handling so each field's touched-setter +
   // validator + telemetry key live in ONE place. The map key IS the reportKey,
-  // so the confirm field can't drift between "confirm" and "confirm_password"
+  // so the confirm field can’t drift between "confirm" and "confirm_password"
   // across blur / cascade / submit-blocked reporting.
   const fieldConfig = useMemo<
     Record<
@@ -200,7 +200,7 @@ export function SignupPageClient() {
         captureTurnstileServiceError(verifyError, "signup");
         trackTurnstileFail("signup", "service_error");
         setTurnstileToken(null);
-        toast.error("Couldn't verify the security check. Please refresh and try again.");
+        toast.error("Couldn’t verify the security check. Please refresh and try again.");
         setIsLoading(false);
         return;
       }
@@ -236,7 +236,7 @@ export function SignupPageClient() {
       const lower = message.toLowerCase();
 
       // Server-level validation rejections — surface at the right field
-      if (lower.includes("names can't contain") || lower.includes("invalid characters") || lower.includes("repeated content") || (lower.includes("names must be") && lower.includes("characters"))) {
+      if (lower.includes("names can’t contain") || lower.includes("invalid characters") || lower.includes("repeated content") || (lower.includes("names must be") && lower.includes("characters"))) {
         setNameTouched(true);
         toast.error(message);
         return;

@@ -180,13 +180,13 @@ function QueueHistoryTable({
           <tr>
             <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
               DOL published
-            </th>{" "}
+            {" "}</th>
             <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
               Working filings from
-            </th>{" "}
+            {" "}</th>
             <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
               Moved
-            </th>{" "}
+            {" "}</th>
             <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
               Days since last
             </th>
@@ -198,10 +198,10 @@ function QueueHistoryTable({
             const g = gapDays.get(p.asOf) ?? null;
             return (
               <tr key={p.asOf} className="border-t border-border/40">
-                <td className="px-3 py-2.5 tabular-nums">{p.asOf}</td>{" "}
+                <td className="px-3 py-2.5 tabular-nums">{p.asOf}{" "}</td>
                 <td className="px-3 py-2.5 font-bold">
                   {formatMonth(p.frontierMonth) ?? p.frontierMonth}
-                </td>{" "}
+                {" "}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums">
                   {m === null ? (
                     <span className="text-foreground/40">—</span>
@@ -210,7 +210,7 @@ function QueueHistoryTable({
                   ) : (
                     `${m > 0 ? "+" : ""}${m} month${Math.abs(m) === 1 ? "" : "s"}`
                   )}
-                </td>{" "}
+                {" "}</td>
                 <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
                   {g === null ? "—" : g}
                 </td>
@@ -303,8 +303,8 @@ export function QueueHistoryChart({ points, className }: QueueHistoryChartProps)
         chart={
           chart ?? (
             <p className="border-2 border-border bg-card p-6 text-base text-foreground/70 shadow-hard-sm">
-              The queue month did not change across these {shown.length} readings, so
-              there is no step to draw. The table has every reading and its date.
+              The queue month didn’t change across these {shown.length} readings, so
+              there’s no step to draw. The table has every reading and its date.
             </p>
           )
         }
@@ -312,7 +312,7 @@ export function QueueHistoryChart({ points, className }: QueueHistoryChartProps)
       />
       <figcaption className="mt-3 text-sm text-foreground/70">
         Each step is a published DOL reading. Flat stretches are weeks where the
-        queue month did not move.
+        queue month didn’t move.
       </figcaption>
     </figure>
   );
@@ -456,13 +456,13 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
                 <tr>
                   <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
                     Month
-                  </th>{" "}
+                  {" "}</th>
                   <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
                     Decisions
-                  </th>{" "}
+                  {" "}</th>
                   <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
                     Change
-                  </th>{" "}
+                  {" "}</th>
                   <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
                     Share of window
                   </th>
@@ -473,15 +473,15 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
                   const c = changes.get(p.month) ?? null;
                   return (
                     <tr key={p.month} className="border-t border-border/40">
-                      <td className="px-3 py-2.5 font-bold">{formatMonth(p.month)}</td>{" "}
+                      <td className="px-3 py-2.5 font-bold">{formatMonth(p.month)}{" "}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums">
                         {p.decisions.toLocaleString("en-US")}
-                      </td>{" "}
+                      {" "}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums text-foreground/70">
                         {c === null
                           ? "—"
                           : `${c > 0 ? "+" : ""}${c.toLocaleString("en-US")}`}
-                      </td>{" "}
+                      {" "}</td>
                       <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
                         {windowTotal > 0
                           ? `${((p.decisions / windowTotal) * 100).toFixed(1)}%`
@@ -504,8 +504,8 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
         {collapsed ? (
           <p>
             {formatMonth(collapsed.month)} carries{" "}
-            {collapsed.decisions.toLocaleString("en-US")}. That is what the files
-            contain for that month, and the files do not say why.
+            {collapsed.decisions.toLocaleString("en-US")}. That’s what the files
+            contain for that month, and the files don’t say why.
           </p>
         ) : null}
       </figcaption>

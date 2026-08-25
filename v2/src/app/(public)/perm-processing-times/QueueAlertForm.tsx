@@ -98,7 +98,7 @@ export function QueueAlertForm({
 
     try {
       const endpoint = subscribeEndpoint();
-      if (!endpoint) throw new Error("Convex URL is not configured");
+      if (!endpoint) throw new Error("Convex URL isn’t configured");
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -150,7 +150,7 @@ export function QueueAlertForm({
       </div>{" "}
       <p className="mt-2 text-sm leading-relaxed text-foreground/70">
         One email, sent when the analyst-review queue reaches the month your case was filed.
-        It is not a newsletter and nothing else follows it.
+        It isn’t a newsletter and nothing else follows it.
       </p>{" "}
 
       <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
@@ -215,7 +215,7 @@ export function QueueAlertForm({
 
       <p className="mt-4 text-xs leading-relaxed text-foreground/50">
         The month is the only thing that decides when we write to you. You confirm by email
-        first, so an address cannot be signed up by someone who does not control it, and one
+        first, so an address can’t be signed up by someone who doesn’t control it, and one
         click opts out.
       </p>
     </form>

@@ -251,7 +251,7 @@ export function ChatPanel({
           <div className="space-y-4" style={{ opacity: showMessages ? 1 : 0 }}>
             {messages.map((message, index) => {
               // Check if this message existed in the previous render cycle
-              // New messages won't be in previousMessageIds until after this render commits
+              // New messages won’t be in previousMessageIds until after this render commits
               const wasSeenBefore = previousMessageIds.has(message.id);
 
               // Only apply stagger delay on initial mount, after messages become visible

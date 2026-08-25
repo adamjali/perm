@@ -222,7 +222,7 @@ export function CaseListView({
     <div className="border-2 border-border bg-background shadow-hard overflow-visible">
       {groups.map((group) => (
         <div key={group.key}>
-          {/* Group header - only show if there's a label */}
+          {/* Group header - only show if there’s a label */}
           {group.label && (
             <div
               className={cn(

@@ -30,7 +30,7 @@ export default function ReengagementBanner() {
       await reactivate({});
       toast.success("Weekly summary turned back on");
     } catch {
-      toast.error("Couldn't turn it back on. Try again.");
+      toast.error("Couldn’t turn it back on. Try again.");
       setBusy(false);
     }
   };

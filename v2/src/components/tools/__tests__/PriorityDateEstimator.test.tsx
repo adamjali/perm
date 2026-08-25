@@ -232,7 +232,7 @@ describe("PriorityDateEstimator: a closed category", () => {
     setPriorityDate("2013-01-01");
     expect(screen.getByText(/October starts a new fiscal year/i)).toBeInTheDocument();
     // And it must not promise the cutoff comes back to where it was.
-    expect(screen.getByText(/not obliged to return to where it stood/i)).toBeInTheDocument();
+    expect(screen.getByText(/(is(n’t| not)) obliged to return to where it stood/i)).toBeInTheDocument();
   });
 });
 

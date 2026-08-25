@@ -341,7 +341,7 @@ export default async function AttorneyPage({
                 : `This firm has ${fmt(reliability.decided)} decided cases, so its median days is marked but left unranked, and no approval rate is drawn at all.`}{" "}
               {dist.complete
                 ? ""
-                : "The scan behind this cohort did not reach past the last qualifying firm, so read it as the busiest part of the field rather than all of it. "}
+                : "The scan behind this cohort didn’t reach past the last qualifying firm, so read it as the busiest part of the field rather than all of it. "}
             </>
           }
           source="DOL PERM disclosure files"
@@ -448,7 +448,7 @@ export default async function AttorneyPage({
               <>
                 It measures filings that DOL approved or denied. Whether the
                 case was worth filing, what it cost, and how the firm handled
-                an audit are not in these files.
+                an audit aren’t in these files.
               </>
             ),
           },
@@ -457,7 +457,7 @@ export default async function AttorneyPage({
             body: (
               <>
                 {thinMedian
-                  ? "That is a middle of a handful, and it moves with which months those few cases were filed in rather than with the firm."
+                  ? "That’s a middle of a handful, and it moves with which months those few cases were filed in rather than with the firm."
                   : "DOL works one national queue, oldest first, whoever filed the case, so this says when the firm's cases were filed at least as much as anything about the firm."}{" "}
                 Where the queue stands today is on the{" "}
                 <Link

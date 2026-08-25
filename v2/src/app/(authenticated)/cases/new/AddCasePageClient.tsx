@@ -85,7 +85,7 @@ export function AddCasePageClient() {
         if (errorMessage.includes("network") || errorMessage.includes("Network")) {
           toast.error("Network error. Please check your connection and try again.");
         } else if (errorMessage.includes("permission") || errorMessage.includes("Permission") || errorMessage.includes("unauthorized")) {
-          toast.error("You don't have permission to create cases.");
+          toast.error("You don’t have permission to create cases.");
         } else if (errorMessage.includes("validation") || errorMessage.includes("Validation")) {
           toast.error("Validation error. Please check your input and try again.");
         } else {
@@ -134,7 +134,7 @@ export function AddCasePageClient() {
         console.error("Failed to check for duplicates:", error);
         captureError(error);
         // On error checking duplicates, warn user and ask for confirmation
-        toast.warning("Could not verify if this case already exists");
+        toast.warning("Couldn’t verify if this case already exists");
         setPendingFormData(formData);
         setShowCheckFailedDialog(true);
       }
@@ -285,7 +285,7 @@ export function AddCasePageClient() {
           <DialogHeader>
             <DialogTitle>Unable to Check for Duplicates</DialogTitle>
             <DialogDescription>
-              We could not verify whether a case already exists for{" "}
+              We couldn’t verify whether a case already exists for{" "}
               <strong>{pendingFormData?.employerName}</strong> /{" "}
               <strong>{pendingFormData?.beneficiaryIdentifier}</strong>.
             </DialogDescription>

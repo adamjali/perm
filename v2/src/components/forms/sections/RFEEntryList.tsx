@@ -121,11 +121,11 @@ export function RFEEntryList({
   const { entries, addEntry, removeEntry } = useRfeFieldArray();
 
   // Watch live form values for RFE entries to detect completion status changes.
-  // useFieldArray's `fields` only contains default/initial values and doesn't update
+  // useFieldArray's `fields` only contains default/initial values and doesn’t update
   // when setValue is called on individual fields (like responseSubmittedDate).
   const watchedEntries = useWatch<CaseFormData, "rfeEntries">({ name: "rfeEntries" });
 
-  // Check if there's already an active entry using LIVE watched values
+  // Check if there’s already an active entry using LIVE watched values
   const hasActiveEntry = useMemo(
     () => (watchedEntries ?? []).some((e) => !e?.responseSubmittedDate),
     [watchedEntries]

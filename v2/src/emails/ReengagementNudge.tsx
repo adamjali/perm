@@ -2,7 +2,7 @@
  * ReengagementNudge Email Template
  *
  * Sent once when a user goes inactive, a warm "your cases are still tracked,
- * here's the way back in" nudge. If it's ignored and the user stays inactive,
+ * here’s the way back in" nudge. If it’s ignored and the user stays inactive,
  * the weekly digest auto-suppresses server-side (the in-app banner explains how
  * to turn it back on). Weekly-only unsubscribe link is included.
  *
@@ -31,12 +31,12 @@ export function ReengagementNudge({
   settingsUrl = "https://permtracker.app/settings",
   unsubscribeUrl,
 }: ReengagementNudgeProps) {
-  const previewText = "Your PERM cases are still tracked, here's a quick way back in.";
+  const previewText = "Your PERM cases are still tracked, here’s a quick way back in.";
 
   const caseLine =
     activeCaseCount && activeCaseCount > 0
-      ? `your ${activeCaseCount} PERM ${activeCaseCount === 1 ? "case is" : "cases are"} still being tracked, and we're still watching every deadline for you.`
-      : "your PERM cases are still being tracked, and we're still watching every deadline for you.";
+      ? `your ${activeCaseCount} PERM ${activeCaseCount === 1 ? "case is" : "cases are"} still being tracked, and we’re still watching every deadline for you.`
+      : "your PERM cases are still being tracked, and we’re still watching every deadline for you.";
 
   return (
     <EmailLayout previewText={previewText} settingsUrl={settingsUrl}>

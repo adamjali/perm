@@ -266,7 +266,7 @@ export function I140QueueEstimator({
         <div className="flex items-start gap-3">
           <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
           <div>
-            <h3 className="font-heading text-base font-black">What this cannot tell you</h3>
+            <h3 className="font-heading text-base font-black">What this can’t tell you</h3>
             <ul className="mt-3 space-y-2">
               {estimate.caveats.map((c) => (
                 <li key={c} className="text-base leading-relaxed text-foreground/70">

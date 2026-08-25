@@ -586,7 +586,7 @@ export function TemplateManagementModal({
             <AlertDialogTitle>Permanently Delete Template?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <span className="block">
-                This action cannot be undone. The template will be permanently removed from the database.
+                This action can’t be undone. The template will be permanently removed from the database.
               </span>{" "}
               <span className="block text-amber-600 dark:text-amber-400">
                 Any cases using this template will retain their job description content, but the template link will be removed.

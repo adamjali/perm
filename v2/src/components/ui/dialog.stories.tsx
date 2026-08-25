@@ -89,7 +89,7 @@ export const Destructive: Story = {
         <DialogHeader>
           <DialogTitle>Are you sure?</DialogTitle>
           <DialogDescription>
-            This action cannot be undone. This will permanently delete the case
+            This action can’t be undone. This will permanently delete the case
             and all associated data.
           </DialogDescription>
         </DialogHeader>

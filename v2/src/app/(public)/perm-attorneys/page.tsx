@@ -105,7 +105,7 @@ export default async function PermAttorneysPage() {
               <p className="mt-5 text-sm text-foreground/60">
                 Volume, not quality. Approval rates cluster above 99% across
                 every firm on this list, so the number that separates them is
-                the work you cannot see in a spreadsheet.
+                the work you can’t see in a spreadsheet.
               </p>
             </div>
           </section>

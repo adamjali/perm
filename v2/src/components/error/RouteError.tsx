@@ -40,7 +40,7 @@ export function RouteError({
     }
 
     if (isExpiredSession) {
-      // Session expired — redirect gracefully, don't report to Sentry
+      // Session expired — redirect gracefully, don’t report to Sentry
       window.location.href = "/login?expired=1";
       return;
     }

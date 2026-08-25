@@ -128,7 +128,7 @@ export default function SecurityDashboardClient() {
 // SUMMARY CARDS (top — F-pattern, biggest number top-left)
 // ==========================================================================
 
-// Derived from the query's return type so the card shape can't drift from the
+// Derived from the query's return type so the card shape can’t drift from the
 // API (e.g. the backend's `generatedAt` field is included automatically).
 type SummaryShape = FunctionReturnType<typeof api.adminSecurity.getSecuritySummary>;
 

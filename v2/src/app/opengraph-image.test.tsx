@@ -49,7 +49,7 @@ describe("opengraph-image", () => {
     RENDER_TIMEOUT_MS
   );
 
-  it("describes itself to scrapers exactly as it is served", () => {
+  it("describes itself to scrapers exactly as it’s served", () => {
     // og:image:type promising one format while the route serves another is not
     // visible anywhere at runtime: the image still loads. Only a check catches it.
     expect(socialCardImage.type).toBe(contentType);

@@ -87,17 +87,17 @@ const FAQ = [
   {
     question: "What does the analyst review priority date mean?",
     answer:
-      "It is the month whose applications DOL is currently adjudicating. If the date reads September 2025, DOL is working through cases filed in September 2025. It is a queue position, not a decision date, and it moves forward as DOL clears cases.",
+      "It’s the month whose applications DOL is currently adjudicating. If the date reads September 2025, DOL is working through cases filed in September 2025. It’s a queue position, not a decision date, and it moves forward as DOL clears cases.",
   },
   {
     question: "Why is the prevailing wage date different from the PERM date?",
     answer:
-      "They are two separate queues at two separate stages. A prevailing wage determination comes before recruitment and before the ETA 9089 is filed, so it has its own backlog and its own published position. DOL also updates the two sections on different schedules, which is why they carry different as-of dates here.",
+      "They’re two separate queues at two separate stages. A prevailing wage determination comes before recruitment and before the ETA 9089 is filed, so it has its own backlog and its own published position. DOL also updates the two sections on different schedules, which is why they carry different as-of dates here.",
   },
   {
     question: "Can PERM be processed faster than the published average?",
     answer:
-      "There is no premium processing for PERM. An individual case can land either side of the average depending on whether it is selected for audit, and audited cases sit in a separate queue that DOL publishes its own priority date for.",
+      "There’s no premium processing for PERM. An individual case can land either side of the average depending on whether it’s selected for audit, and audited cases sit in a separate queue that DOL publishes its own priority date for.",
   },
   {
     question: "Where does this data come from?",
@@ -278,7 +278,7 @@ export default async function PermProcessingTimesPage() {
             <p className="mt-3 font-heading text-3xl font-black leading-tight sm:text-4xl">
               {analystMonth
                 ? `DOL is reviewing PERM applications filed in ${analystMonth}.`
-                : "DOL has not published a filing month for the analyst review queue."}
+                : "DOL hasn’t published a filing month for the analyst review queue."}
             </p>
             {!analystMonth && analyst?.raw ? (
               <p className="mt-3 text-sm text-foreground/70">
@@ -356,7 +356,7 @@ export default async function PermProcessingTimesPage() {
                 <strong>
                   {movedMonths} month{movedMonths === 1 ? "" : "s"}
                 </strong>
-                . That is the difference between two dates DOL published, not a forecast of
+                . That’s the difference between two dates DOL published, not a forecast of
                 the next one.
               </p>
             </section>
@@ -397,17 +397,17 @@ export default async function PermProcessingTimesPage() {
                   <tr>
                     <th scope="col" className="border-b-2 border-border p-3 font-black">
                       Queue
-                    </th>{" "}
+                    {" "}</th>
                     <th scope="col" className="border-b-2 border-border p-3 font-black">
                       Currently working
-                    </th>{" "}
+                    {" "}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {snapshot.permQueues.map((q) => (
                     <tr key={q.queue} className="border-b border-border/40 last:border-0">
-                      <td className="p-3 font-medium">{q.queue}</td>{" "}
-                      <td className="p-3 tabular-nums">{formatMonth(q.priorityDate) ?? q.raw}</td>{" "}
+                      <td className="p-3 font-medium">{q.queue}{" "}</td>
+                      <td className="p-3 tabular-nums">{formatMonth(q.priorityDate) ?? q.raw}{" "}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -422,7 +422,7 @@ export default async function PermProcessingTimesPage() {
                 Prevailing wage requests still pending
               </h2>{" "}
               <p className="mt-2 max-w-2xl text-foreground/70">
-                PERM prevailing wage requests DOL has not yet decided, by the month it received
+                PERM prevailing wage requests DOL hasn’t yet decided, by the month it received
                 them{snapshot.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""}. A
                 running total from the oldest month is what answers how many
                 requests sit ahead of a given one, so each month carries one
@@ -507,7 +507,7 @@ export default async function PermProcessingTimesPage() {
           publication, because DOL overwrites its own and keeps no archive.
         </p>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
-          Nothing is modelled or extrapolated. Where a number is missing, DOL did not
+          Nothing is modelled or extrapolated. Where a number is missing, DOL didn’t
           publish one, and we say so rather than filling the gap.
         </p>
       </section>
@@ -531,7 +531,7 @@ export default async function PermProcessingTimesPage() {
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
         <p className="mt-3 text-sm text-foreground/50">
-          Free, and there is no case limit. See the{" "}
+          Free, and there’s no case limit. See the{" "}
           <Link href="/guides/perm-recruitment-checklist" className="underline underline-offset-2">
             recruitment checklist
           </Link>{" "}

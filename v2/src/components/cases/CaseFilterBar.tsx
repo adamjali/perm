@@ -149,7 +149,7 @@ export function CaseFilterBar({
         setActiveTab("active");
       }
     }
-    // If specific status is set but not complete/closed, don't change tab (user is filtering within active)
+    // If specific status is set but not complete/closed, don’t change tab (user is filtering within active)
   }, [filters.status, filters.progressStatus, filters.activeOnly]);
 
   // ============================================================================
@@ -158,10 +158,10 @@ export function CaseFilterBar({
 
   // Debounce search input (300ms) - uses refs to avoid dependency array triggering re-runs
   useEffect(() => {
-    // Only trigger if search value actually changed from what's in filters
+    // Only trigger if search value actually changed from what’s in filters
     const currentSearch = filtersRef.current.searchQuery ?? "";
     if (searchInput === currentSearch) {
-      return; // No change, don't trigger update
+      return; // No change, don’t trigger update
     }
 
     const timer = setTimeout(() => {

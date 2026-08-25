@@ -153,7 +153,7 @@ export function ProcessingTimeEstimate({
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <p>
           {isPremiumProcessing
-            ? "Premium processing guarantees a first review inside the window. It does not guarantee approval, and the clock restarts if USCIS issues a request for evidence."
+            ? "Premium processing guarantees a first review inside the window. It doesn’t guarantee approval, and the clock restarts if USCIS issues a request for evidence."
             : "The lower figure is where half of cases finish, the upper where 93% do."}{" "}
           USCIS published these on {formatAsOf(PROCESSING_TIMES_AS_OF)}.{" "}
           <a

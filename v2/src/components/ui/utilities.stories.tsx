@@ -31,7 +31,7 @@ export const BounceAnimations: Story = {
       <p className="text-sm text-muted-foreground mb-4">
         Loading-skeleton accent. The .bounce, .bounce-fast, .bounce-slow and
         .bounce-subtle variants were removed on 2026-08-01. They were only ever
-        rendered on this page, and perpetual motion on a resting element is not
+        rendered on this page, and perpetual motion on a resting element isn’t
         a default this product wants. .bounce-spin earns its place by marking
         the edit-case skeleton while data loads.
       </p>

@@ -98,7 +98,7 @@ export function SecurityIncidentBanner() {
           <span className="font-bold mono uppercase tracking-wider text-[10px] sm:text-xs mr-2">
             Security notice
           </span>
-          Unsolicited emails sent on Apr 19-20 did not originate from PERM Tracker.{" "}
+          Unsolicited emails sent on Apr 19-20 didn’t originate from PERM Tracker.{" "}
           <Link
             href="/security"
             className="font-bold underline decoration-2 underline-offset-2 hover:text-amber-950 dark:hover:text-white"

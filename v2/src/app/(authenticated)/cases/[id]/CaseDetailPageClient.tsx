@@ -251,7 +251,7 @@ function DeleteConfirmDialog({
         <DialogHeader>
           <DialogTitle>Delete Case</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete &quot;{caseName}&quot;? This action cannot be
+            Are you sure you want to delete &quot;{caseName}&quot;? This action can’t be
             undone.
           </DialogDescription>
         </DialogHeader>

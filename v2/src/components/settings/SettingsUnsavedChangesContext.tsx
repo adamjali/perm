@@ -110,7 +110,7 @@ export function SettingsUnsavedChangesProvider({
   );
 
   // Use the unsaved changes hook for browser navigation protection
-  // disabled during sign-out so beforeunload dialog doesn't block session expiry redirect
+  // disabled during sign-out so beforeunload dialog doesn’t block session expiry redirect
   const {
     setDirty,
     shouldShowDialog,

@@ -73,7 +73,7 @@ export function SelectionBar({
   onBulkCalendarSync,
   isCalendarConnected = false,
 }: SelectionBarProps) {
-  // Don't render if no cases are selected
+  // Don’t render if no cases are selected
   if (selectedCount === 0) {
     return null;
   }

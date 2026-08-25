@@ -57,8 +57,8 @@ export default function PrivacyPage() {
             </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               By using PERM Tracker, you agree to the collection and use of
-              information in accordance with this policy. If you do not agree with
-              this policy, please do not use our service.
+              information in accordance with this policy. If you don’t agree with
+              this policy, please don’t use our service.
             </p>
           </section>{" "}
 
@@ -118,7 +118,7 @@ export default function PrivacyPage() {
               </li>{" "}
               <li>
                 Submissions are stored and forwarded to our support inbox so we
-                can reply; they are never used for marketing and never shared
+                can reply; they’re never used for marketing and never shared
               </li>
             </ul>{" "}
 
@@ -248,7 +248,7 @@ export default function PrivacyPage() {
             </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               While we implement robust security measures, no method of
-              transmission over the Internet is 100% secure. We cannot guarantee
+              transmission over the Internet is 100% secure. We can’t guarantee
               absolute security of your data.
             </p>
           </section>{" "}
@@ -295,7 +295,7 @@ export default function PrivacyPage() {
               </li>{" "}
               <li>
                 <strong>OpenRouter</strong>: AI model routing. Zero Data
-                Retention (ZDR) by default; prompts are not stored.
+                Retention (ZDR) by default; prompts aren’t stored.
               </li>{" "}
               <li>
                 <strong>Mistral AI</strong>: Fallback AI provider. API data is
@@ -303,7 +303,7 @@ export default function PrivacyPage() {
               </li>{" "}
               <li>
                 <strong>Groq</strong>: Fast AI inference on US-based Google Cloud
-                servers. Does not use API data for training when ZDR is enabled.
+                servers. Doesn’t use API data for training when ZDR is enabled.
               </li>{" "}
               <li>
                 <strong>Cerebras</strong>: Emergency fallback AI inference. Does
@@ -327,7 +327,7 @@ export default function PrivacyPage() {
               </li>
             </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
-              Search queries are derived from your questions and do not include
+              Search queries are derived from your questions and don’t include
               your personal information or case data.
             </p>{" "}
 
@@ -347,7 +347,7 @@ export default function PrivacyPage() {
 
             <div className="border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
               <p className="text-foreground/80 leading-relaxed font-medium">
-                <strong>IMPORTANT:</strong> Do not share Social Security numbers,
+                <strong>IMPORTANT:</strong> Don’t share Social Security numbers,
                 passport numbers, financial account information, or other highly
                 sensitive personal data in AI chat messages. The AI assistant is
                 designed to help with case management, not to process sensitive
@@ -379,9 +379,9 @@ export default function PrivacyPage() {
               User Identification
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              When you are logged in, analytics events are linked to your
+              When you’re logged in, analytics events are linked to your
               account to help us understand usage patterns. Your identity is
-              reset on logout so anonymous browsing is not linked to your
+              reset on logout so anonymous browsing isn’t linked to your
               account.
             </p>{" "}
 
@@ -423,7 +423,7 @@ export default function PrivacyPage() {
                 fields, and all passwords, are redacted and not captured.
               </li>{" "}
               <li>
-                <strong>On-screen text is not masked by default</strong>: text
+                <strong>On-screen text isn’t masked by default</strong>: text
                 displayed on the pages you view, which can include case
                 information, may be captured in a replay. We never use these
                 replays for advertising and never sell them.
@@ -492,7 +492,7 @@ export default function PrivacyPage() {
                 blank placeholders
               </li>{" "}
               <li>
-                <strong>Form input values are not recorded</strong>: keystrokes
+                <strong>Form input values aren’t recorded</strong>: keystrokes
                 are redacted
               </li>{" "}
               <li>
@@ -506,7 +506,7 @@ export default function PrivacyPage() {
             </h3>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>
-                <code>sendDefaultPii</code> is disabled, so cookies, user agent strings with PII, and request bodies are not sent
+                <code>sendDefaultPii</code> is disabled, so cookies, user agent strings with PII, and request bodies aren’t sent
               </li>{" "}
               <li>Request body data is stripped before transmission to Sentry</li>{" "}
               <li>
@@ -712,7 +712,7 @@ export default function PrivacyPage() {
               </li>
             </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
-              This data does not contain personally identifiable information and
+              This data doesn’t contain personally identifiable information and
               consists of technical identifiers generated by your browser.
             </p>{" "}
 
@@ -769,7 +769,7 @@ export default function PrivacyPage() {
               </li>
             </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
-              We do not access your existing calendar events, contacts, or other
+              We don’t access your existing calendar events, contacts, or other
               Google services through this integration.
             </p>
           </section>{" "}
@@ -805,7 +805,7 @@ export default function PrivacyPage() {
             </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               These storage technologies are used for application functionality
-              and service improvement. They do not track you across other
+              and service improvement. They don’t track you across other
               websites.
             </p>
           </section>{" "}
@@ -885,9 +885,9 @@ export default function PrivacyPage() {
             <div className="border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
               <p className="text-foreground/80 leading-relaxed font-medium">
                 <strong>
-                  We do not sell or share your personal information.
+                  We don’t sell or share your personal information.
                 </strong>{" "}
-                We have never sold your data, and we do not share it for
+                We have never sold your data, and we don’t share it for
                 cross-context behavioral advertising, as those terms are defined
                 under the California Consumer Privacy Act (CCPA). We disclose
                 personal information only to the service providers listed above,
@@ -991,31 +991,31 @@ export default function PrivacyPage() {
               >
                 support@permtracker.app
               </a>
-              . We will respond within 30-45 days.
+              . We’ll respond within 30-45 days.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               California Residents (CCPA/CPRA)
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              If you are a California resident, you have the right to know what
+              If you’re a California resident, you have the right to know what
               personal information we collect and how we use it, to access and
               delete it, to correct inaccurate information, to opt out of the
               sale or sharing of personal information, and to limit the use of
-              sensitive personal information. We will not discriminate against
+              sensitive personal information. We won’t discriminate against
               you for exercising these rights.
             </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
                 <strong>
-                  We do not sell or share your personal information
+                  We don’t sell or share your personal information
                 </strong>{" "}
-                (including for cross-context behavioral advertising), so there is
+                (including for cross-context behavioral advertising), so there’s
                 nothing to opt out of, but we still honor opt-out signals.
               </li>{" "}
               <li>
                 <strong>Global Privacy Control (GPC):</strong> we detect and
-                honor the GPC browser signal; when it is present, we disable
+                honor the GPC browser signal; when it’s present, we disable
                 analytics and session replay for your session.
               </li>{" "}
               <li>
@@ -1039,7 +1039,7 @@ export default function PrivacyPage() {
               EEA, UK &amp; Switzerland (GDPR / UK GDPR)
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              If you are located in the European Economic Area, the United
+              If you’re located in the European Economic Area, the United
               Kingdom, or Switzerland, you have the rights of access,
               rectification, erasure, restriction, portability, and objection,
               and the right to withdraw consent at any time. Our legal bases for
@@ -1064,7 +1064,7 @@ export default function PrivacyPage() {
               protection authority (in the UK, the Information
               Commissioner&apos;s Office). International transfers of your data to
               the United States rely on Standard Contractual Clauses (see Section
-              16). We do not engage in solely-automated decision-making that
+              16). We don’t engage in solely-automated decision-making that
               produces legal or similarly significant effects.
             </p>
           </section>{" "}
@@ -1075,7 +1075,7 @@ export default function PrivacyPage() {
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               Your data is primarily stored and processed in the United States.
-              If you are located in the European Economic Area (EEA), United
+              If you’re located in the European Economic Area (EEA), United
               Kingdom, or Switzerland, your data may be transferred to the United
               States by our service providers (Convex, AI providers, Sentry,
               PostHog).
@@ -1092,8 +1092,8 @@ export default function PrivacyPage() {
               17. Children&apos;s Privacy
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              PERM Tracker is not intended for use by individuals under the age of
-              13. We do not knowingly collect personal information from children
+              PERM Tracker isn’t intended for use by individuals under the age of
+              13. We don’t knowingly collect personal information from children
               under 13. If you become aware that a child has provided us with
               personal information, please contact us immediately.
             </p>
@@ -1104,7 +1104,7 @@ export default function PrivacyPage() {
               18. Changes to This Policy
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              We may update this Privacy Policy from time to time. We will notify
+              We may update this Privacy Policy from time to time. We’ll notify
               you of any changes by:
             </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">

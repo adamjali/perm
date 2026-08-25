@@ -377,7 +377,7 @@ export function CaseBrowser({
               No case with that number in this window.
             </p>{" "}
             <p className="mt-2 text-base leading-relaxed text-foreground/70">
-              That is not the same as no such case. DOL&apos;s disclosure files carry
+              That isn’t the same as no such case. DOL&apos;s disclosure files carry
               decided cases only, so a case still waiting on a determination
               appears in none of them. If yours is pending, the{" "}
               <Link
@@ -596,7 +596,7 @@ export function CaseBrowser({
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
             Showing the best {nameHits ? fmtInt(nameHits.length) : "…"} name
             matches, ordered by how well they match rather than by date, and
-            capped. The filters above do not apply to a name search.{" "}
+            capped. The filters above don’t apply to a name search.{" "}
             <button
               type="button"
               onClick={() => {

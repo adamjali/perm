@@ -58,7 +58,7 @@ export function OnboardingChecklist() {
               await dismissChecklist();
             } catch (error) {
               handleOperationError(error, {
-                userMessage: "Couldn't dismiss checklist. Please try again.",
+                userMessage: "Couldn’t dismiss checklist. Please try again.",
                 context: { operation: "dismissChecklist" },
               });
             }

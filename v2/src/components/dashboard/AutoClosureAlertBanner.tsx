@@ -77,7 +77,7 @@ export default function AutoClosureAlertBanner() {
   const dismissOne = useMutation(api.deadlineEnforcement.dismissAutoClosureAlert);
   const dismissAll = useMutation(api.deadlineEnforcement.dismissAllAutoClosureAlerts);
 
-  // Don't render if no alerts or still loading
+  // Don’t render if no alerts or still loading
   if (!alerts || alerts.length === 0) {
     return null;
   }

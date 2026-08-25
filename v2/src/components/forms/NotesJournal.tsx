@@ -353,7 +353,7 @@ export function NotesJournal({
   const handleSaveEdit = useCallback(() => {
     if (!editingNoteId) return;
     const trimmed = editingContent.trim();
-    if (!trimmed) return; // Don't save empty notes
+    if (!trimmed) return; // Don’t save empty notes
     onChange(
       notes.map((note) =>
         note.id === editingNoteId ? { ...note, content: trimmed } : note

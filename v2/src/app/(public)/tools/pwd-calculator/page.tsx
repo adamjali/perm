@@ -40,8 +40,8 @@ export const revalidate = 3600;
 
 const FAQS = [
   {
-    q: "What is a prevailing wage determination?",
-    a: "It is DOL's ruling on the minimum wage an employer must offer for a specific job in a specific place. It is filed on form ETA-9141 and it has to be issued before the PERM recruitment can be relied on, which is why it sits in front of everything else.",
+    q: "What’s a prevailing wage determination?",
+    a: "It’s DOL's ruling on the minimum wage an employer must offer for a specific job in a specific place. It’s filed on form ETA-9141 and it has to be issued before the PERM recruitment can be relied on, which is why it sits in front of everything else.",
   },
   {
     q: "Why does the prevailing wage queue matter so much?",
@@ -52,7 +52,7 @@ const FAQS = [
     a: "DOL publishes how many requests are pending but not how fast it clears them. The count of requests ahead of you is exact and comes straight from DOL. Turning that into a date needs a clearance rate, and rather than assume one we measure it from DOL's own figures as they change over time.",
   },
   {
-    q: "What is the difference between the OEWS and non-OEWS queues?",
+    q: "What’s the difference between the OEWS and non-OEWS queues?",
     a: "OEWS is the Occupational Employment and Wage Statistics survey, which is the default wage source. A request that relies on a different source, like an employer-provided survey, goes through a separate queue that DOL reports separately and which usually runs at a different pace.",
   },
 ];
@@ -110,7 +110,7 @@ export default async function PwdCalculatorPage() {
           Once the determination lands, the clock is arithmetic
         </h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
-          The wait is out of your hands. What happens after is not: the
+          The wait is out of your hands. What happens after isn’t: the
           recruitment window, the quiet period and the filing window all run
           from the determination date, and missing one restarts the case.
         </p>

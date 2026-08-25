@@ -44,7 +44,7 @@ function EditPageSkeleton() {
 
       {/* Title skeleton with spinning accent */}
       <div className="relative">
-        <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary border-2 border-foreground bounce-spin" />
+        <div className="absolute -top-2 -left-2 h-6 w-6 border-2 border-foreground bg-primary shadow-hard-sm" />
         <div className="pl-6 space-y-2">
           <Skeleton variant="line" className="h-8 w-3/4" />
           <Skeleton variant="line" className="h-4 w-1/2" />
@@ -311,7 +311,7 @@ export function EditCasePageClient() {
         return;
       }
 
-      // Add mode path (shouldn't reach here for edit page, but type-safe handling)
+      // Add mode path (shouldn’t reach here for edit page, but type-safe handling)
       const formData = formDataOrId;
       // Check if employer or beneficiary changed (these are what define duplicates)
       const employerChanged = caseData && formData.employerName.toLowerCase().trim() !== caseData.employerName.toLowerCase().trim();
@@ -347,7 +347,7 @@ export function EditCasePageClient() {
           console.error("Failed to check for duplicates:", error);
           captureError(error);
           // On error, warn but allow update to proceed
-          toast.warning("Could not verify duplicates, proceeding with update");
+          toast.warning("Couldn’t verify duplicates, proceeding with update");
         }
       }
 
@@ -404,7 +404,7 @@ export function EditCasePageClient() {
 
   // Convert Convex case data to form data (handle BigInt conversion)
   // Cast via unknown since Convex documents include extra fields (_id, _creationTime, documents)
-  // that aren't in CaseFormData. The initializeFormData helper extracts only relevant fields.
+  // that aren’t in CaseFormData. The initializeFormData helper extracts only relevant fields.
   const formData = {
     ...caseData,
     recruitmentApplicantsCount: Number(caseData.recruitmentApplicantsCount || 0),
@@ -473,7 +473,7 @@ export function EditCasePageClient() {
                 >
                   view the existing case
                 </button>{" "}
-                or update this one anyway (it will be marked as a duplicate).
+                or update this one anyway (it’ll be marked as a duplicate).
               </p>
             )}
           </div>

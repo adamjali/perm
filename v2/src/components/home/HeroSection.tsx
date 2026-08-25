@@ -174,7 +174,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
                 Queue history unavailable
               </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
-                The determination history could not be read just now. DOL
+                The determination history couldn’t be read just now. DOL
                 publishes the underlying disclosure files itself.
               </p>{" "}
               <a

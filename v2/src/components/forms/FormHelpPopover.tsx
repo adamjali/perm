@@ -114,7 +114,7 @@ export function FormHelpPanel() {
             <p className="text-muted-foreground">
               Check &ldquo;Professional Occupation&rdquo; if the position requires a Bachelor&rsquo;s degree or higher. You must then add 3+ additional recruitment methods (from 11 options: campus placement, job fairs, trade publications, employer website, etc.).
             </p>
-            <Example>Each method needs dates to count. Two methods is not enough, the section stays incomplete until you have three with valid dates.</Example>
+            <Example>Each method needs dates to count. Two methods isn’t enough, the section stays incomplete until you have three with valid dates.</Example>
           </section>
 
           {/* ETA 9089 Section */}

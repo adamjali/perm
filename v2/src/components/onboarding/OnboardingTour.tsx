@@ -40,7 +40,7 @@ export function OnboardingTour({
     }
   }, []);
 
-  // Start Driver.js for the current phase when we're on the right page
+  // Start Driver.js for the current phase when we’re on the right page
   useEffect(() => {
     if (!active || tourPhase === null) return;
     if (tourCompletedRef.current) return;
@@ -48,13 +48,13 @@ export function OnboardingTour({
     const phaseConfig = TOUR_PHASES.find((p) => p.phase === tourPhase);
     if (!phaseConfig) return;
 
-    // Check if we're on the right page for this phase
+    // Check if we’re on the right page for this phase
     if (pathname !== phaseConfig.page) {
       router.push(phaseConfig.page);
       return;
     }
 
-    // Don't re-start the same phase
+    // Don’t re-start the same phase
     if (hasStartedPhase.current === tourPhase) return;
     hasStartedPhase.current = tourPhase;
 
@@ -141,7 +141,7 @@ export function OnboardingTour({
 
     return () => {
       clearInterval(pollTimer);
-      // Don't reset hasStartedPhase — prevents double-run on strict mode re-renders
+      // Don’t reset hasStartedPhase — prevents double-run on strict mode re-renders
     };
   }, [active, tourPhase, pathname, router, cleanup, onPhaseComplete, onTourSkip]);
 

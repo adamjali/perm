@@ -5,11 +5,11 @@ import type { ProgressStatus } from "@/lib/perm"
 // Progress status visual config - neobrutalist bold colors with black borders
 const progressConfig: Record<ProgressStatus, { className: string; label: string }> = {
   working: {
-    className: "bg-neutral-200 text-neutral-900 border-black dark:bg-neutral-700 dark:text-neutral-100",
+    className: "bg-neutral-200 text-neutral-900 border-black dark:border-white/40 dark:bg-neutral-700 dark:text-neutral-100",
     label: "Working on it",
   },
   waiting_intake: {
-    className: "bg-neutral-100 text-neutral-700 border-black dark:bg-neutral-800 dark:text-neutral-300",
+    className: "bg-neutral-100 text-neutral-700 border-black dark:border-white/40 dark:bg-neutral-800 dark:text-neutral-300",
     label: "Waiting for Intake",
   },
   filed: {

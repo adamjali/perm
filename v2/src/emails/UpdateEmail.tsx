@@ -25,7 +25,7 @@ export function UpdateEmail({
   return (
     <EmailLayout
       previewText="A quick update and a small ask from me."
-      footerText="You're receiving this because you signed up for PERM Tracker."
+      footerText="You’re receiving this because you signed up for PERM Tracker."
       hideSettingsLink
     >
       {/* Greeting */}
@@ -44,7 +44,7 @@ export function UpdateEmail({
       {/* Divider */}
       <Hr className="em-divider" style={styles.divider} />
 
-      {/* What's New */}
+      {/* What’s New */}
       <Section style={styles.updateSection}>
         <Text className="em-text" style={styles.sectionTitle}>
           What&apos;s new

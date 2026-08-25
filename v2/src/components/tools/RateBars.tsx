@@ -210,14 +210,19 @@ export function RateTable({
         <caption className="sr-only">{caption}</caption>
         <thead className="bg-foreground text-background">
           <tr>
-            {head("label", unitLabel, false)} {head("rate", "Denial rate")}{" "}
+            {/* No whitespace between these: a text node whose parent is
+                <tr> is invalid HTML and React warns it breaks hydration.
+                Each head() already carries its own trailing separator. */}
+            {head("label", unitLabel, false)}
+            {head("rate", "Denial rate")}
             <th
               scope="col"
               className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell"
             >
               95% range
-            </th>{" "}
-            {head("denied", "Denied")} {head("decided", "Decided")}{" "}
+            {" "}</th>
+            {head("denied", "Denied")}
+            {head("decided", "Decided")}
             <th
               scope="col"
               className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell"
@@ -238,15 +243,15 @@ export function RateTable({
                       {r.note}
                     </span>
                   ) : null}
-                </td>{" "}
-                <td className="px-3 py-2.5 text-right tabular-nums">{r.rate.toFixed(2)}%</td>{" "}
+                {" "}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums">{r.rate.toFixed(2)}%{" "}</td>
                 <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/60 sm:table-cell">
                   {ci ? `${ci.lo.toFixed(2)}–${ci.hi.toFixed(2)}%` : "—"}
-                </td>{" "}
+                {" "}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums">
                   {r.denied === undefined ? "—" : fmtInt(r.denied)}
-                </td>{" "}
-                <td className="px-3 py-2.5 text-right tabular-nums">{fmtInt(r.decided)}</td>{" "}
+                {" "}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums">{fmtInt(r.decided)}{" "}</td>
                 <td className="hidden px-3 py-2.5 text-right sm:table-cell">
                   <BaselineMultiple rate={r.rate} baseline={baseline} />
                 </td>

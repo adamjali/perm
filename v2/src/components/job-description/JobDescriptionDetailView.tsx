@@ -272,7 +272,7 @@ export function JobDescriptionDetailView({
     }
   }, [isEditing, editDescription, description]);
 
-  // Don't render section if no description AND no templates to manage
+  // Don’t render section if no description AND no templates to manage
   if (!hasContent && !positionTitle && templates.length === 0) {
     return null;
   }

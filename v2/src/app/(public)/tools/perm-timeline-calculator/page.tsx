@@ -46,7 +46,7 @@ export const revalidate = 3600;
 const FAQS = [
   {
     q: "How accurate is a PERM processing time estimate?",
-    a: "It is a forecast over a queue, not a deadline, so it is wrong by some margin every time. The honest way to read it is as a range that narrows as DOL gets closer to your filing month. Public PERM estimators currently disagree with each other by around nine months on the same filing date, mostly because they assume different things about how fast DOL is moving.",
+    a: "It’s a forecast over a queue, not a deadline, so it’s wrong by some margin every time. The honest way to read it’s as a range that narrows as DOL gets closer to your filing month. Public PERM estimators currently disagree with each other by around nine months on the same filing date, mostly because they assume different things about how fast DOL is moving.",
   },
   {
     q: "Why do you show more than one number?",

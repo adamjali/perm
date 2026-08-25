@@ -19,6 +19,7 @@ import { useState } from "react";
 import { analytics } from "@/lib/analytics";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { handleOperationError } from "@/lib/errors";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DeadlineEnforcementToggle() {
   const { isSigningOut } = useAuthContext();
@@ -54,9 +55,9 @@ export default function DeadlineEnforcementToggle() {
   // Show loading state while profile loads
   if (profile === undefined) {
     return (
-      <div className="animate-pulse border-2 border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
-        <div className="h-6 bg-muted rounded w-1/3 mb-4" />
-        <div className="h-4 bg-muted rounded w-2/3" />
+      <div className="border-2 border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
+        <Skeleton variant="line" className="mb-4 h-6 w-1/3" />
+        <Skeleton variant="line" className="h-4 w-2/3" />
       </div>
     );
   }

@@ -819,7 +819,7 @@ export function DocumentsTab({
                 marginBottom: 20,
               }}
             >
-              This will permanently delete the document. This action cannot be
+              This will permanently delete the document. This action can’t be
               undone.
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>

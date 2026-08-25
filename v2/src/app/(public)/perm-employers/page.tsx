@@ -107,7 +107,7 @@ export default async function PermEmployersPage() {
                 ))}
               </div>
               <p className="mt-5 text-sm text-foreground/60">
-                A big sponsor is not a faster one: DOL works one national
+                A big sponsor isn’t a faster one: DOL works one national
                 queue, oldest first, whoever filed the case.
               </p>
             </div>

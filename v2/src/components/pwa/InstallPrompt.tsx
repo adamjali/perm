@@ -8,7 +8,7 @@
  * - Captures beforeinstallprompt event
  * - Provides useInstallPrompt hook for settings page
  * - Detects if app is already installed (standalone mode)
- * - Non-intrusive - doesn't auto-show banners
+ * - Non-intrusive - doesn’t auto-show banners
  *
  * Phase: 31 (PWA)
  * Created: 2025-01-11

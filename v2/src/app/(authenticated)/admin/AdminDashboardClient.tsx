@@ -97,7 +97,7 @@ export default function AdminDashboardClient() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              You do not have permission to access the admin dashboard.
+              You don’t have permission to access the admin dashboard.
             </p>
           </CardContent>
         </Card>

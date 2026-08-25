@@ -106,7 +106,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
     }
   }, [selectedId, visibleNotes, page]);
 
-  // Reset page if it's out of bounds after delete
+  // Reset page if it’s out of bounds after delete
   useEffect(() => {
     if (page > 0 && page >= totalPages) {
       setPage(Math.max(0, totalPages - 1));

@@ -17,7 +17,7 @@ export const dynamic = "force-static";
 export const metadata: Metadata = {
   title: "Changelog",
   description:
-    "Product updates, new features, and improvements to PERM Tracker. See what's new and what's coming next.",
+    "Product updates, new features, and improvements to PERM Tracker. See what’s new and what’s coming next.",
   alternates: { canonical: "/changelog" },
   openGraph: {
     ...openGraphBase,

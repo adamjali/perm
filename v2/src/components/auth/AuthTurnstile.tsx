@@ -21,7 +21,7 @@
  *   - Compact flexible size
  *   - Graceful failure: exposes `onError` → parent can render retry state
  *
- * Uses Cloudflare test keys in dev if live key isn't configured, so local
+ * Uses Cloudflare test keys in dev if live key isn’t configured, so local
  * development works without a real Cloudflare account.
  */
 
@@ -72,7 +72,7 @@ export function AuthTurnstile({
   }, []);
 
   if (!LIVE_SITE_KEY && process.env.NODE_ENV === "production") {
-    // Prod MUST have a real key — log loud error but don't block the user
+    // Prod MUST have a real key — log loud error but don’t block the user
     console.error(
       "[Turnstile] NEXT_PUBLIC_TURNSTILE_SITE_KEY missing in production",
     );

@@ -82,7 +82,7 @@ function filingMonthOptions(today: string): { value: string; label: string }[] {
 const POSITION_COPY: Record<string, { tone: string; heading: string }> = {
   "awaiting-queue": {
     tone: "bg-tint-primary",
-    heading: "DOL has not reached your filing month yet",
+    heading: "DOL hasn’t reached your filing month yet",
   },
   "queue-reached": {
     tone: "bg-primary/20",
@@ -218,7 +218,7 @@ export function PermTimelineEstimator({
       ) : (
         <div className="p-6 sm:p-8">
           <p className="text-base leading-relaxed">
-            There is not enough published DOL data to put a date on this filing
+            There isn’t enough published DOL data to put a date on this filing
             month yet.
           </p>
         </div>
@@ -246,7 +246,7 @@ export function PermTimelineEstimator({
               aria-hidden="true"
             />
             <div>
-              <h3 className="font-heading text-base font-black">What this cannot tell you</h3>
+              <h3 className="font-heading text-base font-black">What this can’t tell you</h3>
               <ul className="mt-3 space-y-2">
                 {estimate.caveats.map((c) => (
                   <li key={c} className="text-base leading-relaxed text-foreground/70">

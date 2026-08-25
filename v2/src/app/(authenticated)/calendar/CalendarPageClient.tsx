@@ -275,7 +275,7 @@ export function CalendarPageClient() {
     }
   }, [calendarCases, preferences, router]);
 
-  // Don't render while redirecting or checking auth
+  // Don’t render while redirecting or checking auth
   if (calendarCases === null || preferences === null) {
     return null;
   }

@@ -1,145 +1,37 @@
 /**
- * Calendar-specific CSS animations and micro-interactions
+ * Calendar theming for react-big-calendar.
  *
- * This file contains additional animations for the calendar view
- * that complement the inline styles in CalendarView.tsx
+ * Dark-mode event shadows, keyboard focus rings, high-contrast support and the
+ * reduced-motion overrides for the .rbc-* classes the library emits. Imported
+ * once, by (authenticated)/calendar/CalendarPageClient.tsx.
+ *
+ * It used to be titled "animations and micro-interactions" and carried five
+ * animation classes; see the note below for why none of them survive.
  *
  * Phase: 23.1 (Calendar UI)
  * Created: 2025-12-28
  */
 
 /* ============================================================================
-   CALENDAR LOADING ANIMATION
+   NOTE ON THE ANIMATIONS THAT USED TO LIVE HERE
+   ============================================================================
+
+   Five animation classes were removed on 2026-08-25 because nothing in src/
+   referenced any of them, and two were banned on their own merits:
+
+     .calendar-skeleton-cell   a SECOND shimmer engine, duplicating the one in
+                               globals.css, running an infinite sweep
+     .calendar-event-urgent    @keyframes event-urgent-pulse animated a
+                               RED-TINTED box-shadow, rgba(220,38,38,...), on
+                               an infinite loop. A coloured shadow is glow and
+                               a perpetual pulse is banned; this was both.
+     .calendar-event-enter
+     .calendar-view-enter-*    entrance animations, unused
+     .calendar-popover-enter
+
+   The reduced-motion block below no longer needs to name them.
    ============================================================================ */
 
-/* Skeleton shimmer for calendar grid cells */
-.calendar-skeleton-cell {
-  position: relative;
-  overflow: hidden;
-}
-
-.calendar-skeleton-cell::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.3) 50%,
-    transparent 100%
-  );
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
-}
-
-.dark .calendar-skeleton-cell::after {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    transparent 100%
-  );
-}
-
-@keyframes skeleton-shimmer {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
-/* ============================================================================
-   CALENDAR EVENT ANIMATIONS
-   ============================================================================ */
-
-/* Event entry animation for new events */
-@keyframes event-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.calendar-event-enter {
-  animation: event-enter 0.2s ease-out forwards;
-}
-
-/* Event pulse for urgent deadlines */
-@keyframes event-urgent-pulse {
-  0%, 100% {
-    box-shadow: 2px 2px 0 rgba(220, 38, 38, 0.3);
-  }
-  50% {
-    box-shadow: 4px 4px 0 rgba(220, 38, 38, 0.5);
-  }
-}
-
-.calendar-event-urgent {
-  animation: event-urgent-pulse 2s ease-in-out infinite;
-}
-
-/* ============================================================================
-   NAVIGATION TRANSITIONS
-   ============================================================================ */
-
-/* Month/week transition */
-@keyframes view-slide-left {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes view-slide-right {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.calendar-view-enter-left {
-  animation: view-slide-left 0.2s ease-out forwards;
-}
-
-.calendar-view-enter-right {
-  animation: view-slide-right 0.2s ease-out forwards;
-}
-
-/* ============================================================================
-   TOOLTIP/POPOVER ANIMATIONS
-   ============================================================================ */
-
-/* Popover scale-in */
-@keyframes popover-scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.calendar-popover-enter {
-  animation: popover-scale-in 0.15s ease-out forwards;
-}
 
 /* ============================================================================
    DARK MODE ADJUSTMENTS
@@ -155,7 +47,9 @@
 }
 
 .dark .calendar-container .rbc-event.rbc-selected {
-  box-shadow: 4px 4px 0 var(--primary) !important;
+  /* Was `4px 4px 0 var(--primary)`, a lime glow, and !important so nothing
+     could override it. Selection is carried by the outline below. */
+  box-shadow: var(--shadow-hard) !important;
 }
 
 /* Today cell pulse for dark mode */
@@ -195,14 +89,6 @@
   .calendar-container .rbc-event,
   .calendar-container .rbc-day-bg {
     transition: none !important;
-    animation: none !important;
-  }
-
-  .calendar-event-enter,
-  .calendar-event-urgent,
-  .calendar-view-enter-left,
-  .calendar-view-enter-right,
-  .calendar-popover-enter {
     animation: none !important;
   }
 

@@ -42,7 +42,7 @@ export const revalidate = 3600;
 const FAQS = [
   {
     q: "Why does the queue imply a longer wait than the processing time USCIS publishes?",
-    a: "They measure different things. The published time looks backwards at petitions USCIS has already decided. The queue looks at the pile that is still there. When more petitions arrive than leave, as is happening with national interest waivers, the pile grows and a case filed today sits behind more work than the cases that have just finished did.",
+    a: "They measure different things. The published time looks backwards at petitions USCIS has already decided. The queue looks at the pile that’s still there. When more petitions arrive than leave, as is happening with national interest waivers, the pile grows and a case filed today sits behind more work than the cases that have just finished did.",
   },
   {
     q: "How many I-140 petitions are pending?",
@@ -50,11 +50,11 @@ const FAQS = [
   },
   {
     q: "Can you tell me how many petitions are ahead of mine?",
-    a: "No, and nobody honestly can. USCIS publishes pending petitions by category but never by month of receipt, so there is no way to work out where any particular case sits in the order. The prevailing wage queue is different because DOL does publish that breakdown.",
+    a: "No, and nobody honestly can. USCIS publishes pending petitions by category but never by month of receipt, so there’s no way to work out where any particular case sits in the order. The prevailing wage queue is different because DOL does publish that breakdown.",
   },
   {
     q: "Does premium processing skip the queue?",
-    a: "Yes, that is what it buys. USCIS commits to a first review within 15 business days for most I-140 categories, or 45 for EB-1C multinational executives and EB-2 national interest waivers. It guarantees a review, not an approval, and the clock restarts if USCIS issues a request for evidence.",
+    a: "Yes, that’s what it buys. USCIS commits to a first review within 15 business days for most I-140 categories, or 45 for EB-1C multinational executives and EB-2 national interest waivers. It guarantees a review, not an approval, and the clock restarts if USCIS issues a request for evidence.",
   },
 ];
 

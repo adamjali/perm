@@ -144,7 +144,7 @@ export function LoginPageClient() {
       }
 
       // Interaction-only Turnstile: if Cloudflare decided no challenge was
-      // needed, token may be missing — that's a legitimate low-risk user,
+      // needed, token may be missing — that’s a legitimate low-risk user,
       // proceed without pre-flight verification. If a token IS present, we
       // verify it server-side (catches bot-mimic + replay attempts).
       if (turnstileToken) {
@@ -161,7 +161,7 @@ export function LoginPageClient() {
         } catch (verifyError) {
           captureTurnstileServiceError(verifyError, "login");
           trackTurnstileFail("login", "service_error");
-          // Fail open — login shouldn't be blocked by a Cloudflare outage.
+          // Fail open — login shouldn’t be blocked by a Cloudflare outage.
           console.warn("[Login] Turnstile verify threw; proceeding without check");
         }
       }
@@ -186,7 +186,7 @@ export function LoginPageClient() {
         // Email not verified — provider re-sent a verification code
         setStep("verification");
         trackLoginFailed("unverified_email");
-        toast.info("Your email isn't verified yet. We've sent a new verification code.");
+        toast.info("Your email isn’t verified yet. We’ve sent a new verification code.");
       }
     } catch (error) {
       if (handleStaleDeployment(error)) return;

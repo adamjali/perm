@@ -112,13 +112,13 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
     let left: number;
     if (placement === "right") {
       left = rect.right + gap;
-      // Ensure card doesn't overflow right edge
+      // Ensure card doesn’t overflow right edge
       if (left + cardWidth > viewportWidth - gap) {
         left = viewportWidth - cardWidth - gap;
       }
     } else {
       left = rect.left - cardWidth - gap;
-      // Ensure card doesn't overflow left edge (prevent negative values)
+      // Ensure card doesn’t overflow left edge (prevent negative values)
       if (left < gap) {
         left = gap;
       }

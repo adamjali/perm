@@ -95,7 +95,7 @@ export default function DeleteNowDialog({
                 <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
                 <p className="text-destructive font-bold text-sm">
                   This will permanently delete your account and all data RIGHT
-                  NOW. This cannot be undone.
+                  NOW. This can’t be undone.
                 </p>
               </div>
               <p>The following will be permanently deleted immediately:</p>

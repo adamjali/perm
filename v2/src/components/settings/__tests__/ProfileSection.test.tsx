@@ -119,7 +119,7 @@ describe("ProfileSection", () => {
       );
 
       expect(screen.getByText("Email")).toBeInTheDocument();
-      expect(screen.getByText("Email cannot be changed")).toBeInTheDocument();
+      expect(screen.getByText("Email can’t be changed")).toBeInTheDocument();
     });
 
     it("renders Timezone field with label and hint", () => {

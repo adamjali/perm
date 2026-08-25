@@ -2,7 +2,7 @@
  * LoginTracker
  *
  * Fallback login counter for OAuth flows (Google sign-in) where we
- * can't call recordMyLogin() directly because the page redirects.
+ * can’t call recordMyLogin() directly because the page redirects.
  *
  * For password logins, recordMyLogin() is called directly in
  * LoginPageClient after successful signIn().

@@ -49,7 +49,7 @@ export function createContentDetailPage(type: ContentType) {
         // file-based opengraph-image.tsx at this route segment. Next 16.2.6
         // (node_modules/next/dist/lib/metadata/resolve-metadata.js:148) skips
         // the file-based image merge whenever `source.openGraph.hasOwnProperty('images')`
-        // is true — and that's exactly what would happen if we spread
+        // is true — and that’s exactly what would happen if we spread
         // `openGraphBase` (which carries a default image) verbatim.
         const { images: _omitImagesForPerSlugOG, ...ogBaseNoImages } = openGraphBase;
         return {

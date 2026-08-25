@@ -40,12 +40,12 @@ export function SendEmailModal({ user, onClose }: SendEmailModalProps) {
 
     // Validation
     if (!subject.trim()) {
-      toast.error("Subject cannot be empty");
+      toast.error("Subject can’t be empty");
       return;
     }
 
     if (!body.trim()) {
-      toast.error("Message cannot be empty");
+      toast.error("Message can’t be empty");
       return;
     }
 

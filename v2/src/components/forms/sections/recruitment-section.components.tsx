@@ -36,7 +36,7 @@ export interface RecruitmentDeadlineIndicatorProps {
  *
  * Individual recruitment steps (job order, notice of filing, Sunday ads) each have
  * their own per-step deadlines computed from the first recruitment date and PWD
- * expiration, these are shown in the What's Next section on the case detail page.
+ * expiration, these are shown in the What’s Next section on the case detail page.
  *
  * The earlier of the two overall constraints is shown, with indication of which is limiting.
  */

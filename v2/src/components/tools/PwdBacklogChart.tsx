@@ -133,13 +133,13 @@ function BacklogTable({
           <tr>
             <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
               Received
-            </th>{" "}
+            {" "}</th>
             <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
               Still pending
-            </th>{" "}
+            {" "}</th>
             <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
               Share
-            </th>{" "}
+            {" "}</th>
             <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
               This month and older
             </th>
@@ -156,13 +156,13 @@ function BacklogTable({
             >
               <td className="px-3 py-2.5 font-bold">
                 {formatMonth(row.receiptMonth)}
-              </td>{" "}
+              {" "}</td>
               <td className="px-3 py-2.5 text-right tabular-nums">
                 {fmtInt(row.remainingRequests)}
-              </td>{" "}
+              {" "}</td>
               <td className="px-3 py-2.5 text-right tabular-nums text-foreground/70">
                 {total > 0 ? `${((row.remainingRequests / total) * 100).toFixed(1)}%` : "—"}
-              </td>{" "}
+              {" "}</td>
               <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
                 {fmtInt(cumulative.get(row.receiptMonth) ?? 0)}
               </td>
@@ -171,11 +171,11 @@ function BacklogTable({
         </tbody>
         <tfoot className="bg-muted">
           <tr className="border-t-2 border-border">
-            <td className="px-3 py-2.5 font-black">Whole pile</td>{" "}
+            <td className="px-3 py-2.5 font-black">Whole pile{" "}</td>
             <td className="px-3 py-2.5 text-right font-black tabular-nums">
               {fmtInt(total)}
-            </td>{" "}
-            <td className="px-3 py-2.5" />{" "}
+            {" "}</td>
+            <td className="px-3 py-2.5" />
             <td className="hidden px-3 py-2.5 sm:table-cell" />
           </tr>
         </tfoot>

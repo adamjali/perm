@@ -50,7 +50,7 @@ export default function TermsPage() {
             <p className="text-foreground/80 leading-relaxed">
               By accessing or using PERM Tracker
               (&quot;the Service&quot;), you agree to be bound by these Terms of Service
-              (&quot;Terms&quot;). If you do not agree to these Terms, please do not use the
+              (&quot;Terms&quot;). If you don’t agree to these Terms, please don’t use the
               Service.
             </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
@@ -110,11 +110,11 @@ export default function TermsPage() {
             </h3>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>
-                You are responsible for maintaining the confidentiality of your
+                You’re responsible for maintaining the confidentiality of your
                 account credentials
               </li>{" "}
               <li>
-                You are responsible for all activities that occur under your
+                You’re responsible for all activities that occur under your
                 account
               </li>{" "}
               <li>
@@ -165,7 +165,7 @@ export default function TermsPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">Ownership</h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               You retain ownership of all case data and content you enter into the
-              Service (&quot;User Content&quot;). We do not claim any ownership rights over
+              Service (&quot;User Content&quot;). We don’t claim any ownership rights over
               your User Content.
             </p>{" "}
 
@@ -183,7 +183,7 @@ export default function TermsPage() {
               Your Responsibility
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              You are solely responsible for the accuracy and legality of your
+              You’re solely responsible for the accuracy and legality of your
               User Content. You represent that you have all necessary rights to
               enter the data you provide.
             </p>
@@ -220,7 +220,7 @@ export default function TermsPage() {
               No Government Affiliation
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              PERM Tracker is an independent, privately operated tool. We are not
+              PERM Tracker is an independent, privately operated tool. We aren’t
               affiliated with, endorsed by, sponsored by, or officially connected
               to the U.S. Department of Labor (DOL), U.S. Citizenship and
               Immigration Services (USCIS), or any other government agency. All
@@ -259,13 +259,13 @@ export default function TermsPage() {
             <div className="border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
               <p className="text-foreground/80 leading-relaxed font-medium">
                 <strong>IMPORTANT:</strong> PERM Tracker is a case management tool
-                only. The Service does not provide legal advice, and nothing in
+                only. The Service doesn’t provide legal advice, and nothing in
                 the Service should be construed as legal advice. The Service
                 calculates dates based on general PERM processing rules, but you
                 should always verify deadlines with official DOL and USCIS
                 resources and consult with qualified legal professionals. PERM
-                Tracker does not guarantee the accuracy, completeness, or
-                timeliness of any deadline, calculation, or date, and you are
+                Tracker doesn’t guarantee the accuracy, completeness, or
+                timeliness of any deadline, calculation, or date, and you’re
                 solely responsible for independently verifying all dates and
                 legal requirements.
               </p>
@@ -311,7 +311,7 @@ export default function TermsPage() {
             </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
-                You are interacting with an <strong>artificial intelligence
+                You’re interacting with an <strong>artificial intelligence
                 system</strong>, not a human advisor
               </li>{" "}
               <li>
@@ -333,17 +333,17 @@ export default function TermsPage() {
             </h3>{" "}
             <div className="border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
               <p className="text-foreground/80 leading-relaxed font-medium">
-                <strong>IMPORTANT:</strong> The AI chat assistant does not provide
-                legal advice and does not create an attorney-client relationship.
+                <strong>IMPORTANT:</strong> The AI chat assistant doesn’t provide
+                legal advice and doesn’t create an attorney-client relationship.
                 All AI-generated suggestions, recommendations, and information are
                 for informational purposes only.
               </p>
             </div>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
-              You acknowledge that you are solely responsible for independently
+              You acknowledge that you’re solely responsible for independently
               reviewing, verifying, and validating all AI-generated content before
               relying on it for any immigration case or filing. The use of AI
-              features does not diminish or transfer your professional
+              features doesn’t diminish or transfer your professional
               responsibility or potential liability as a legal professional.
             </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
@@ -390,14 +390,14 @@ export default function TermsPage() {
               <li>Conversation history for context continuity</li>
             </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
-              These providers do not use your data to train AI models. See our{" "}
+              These providers don’t use your data to train AI models. See our{" "}
               <a href="/privacy" className="text-primary hover:underline">
                 Privacy Policy
               </a>{" "}
               for detailed provider-specific data handling and retention policies.
             </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
-              <strong>Do not include</strong> Social Security numbers, passport
+              <strong>Don’t include</strong> Social Security numbers, passport
               numbers, financial account information, or other highly sensitive
               personal data in AI chat queries.
             </p>{" "}
@@ -406,7 +406,7 @@ export default function TermsPage() {
               Immigration-Specific AI Limitations
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              The AI assistant&apos;s suggestions do not override or supersede:
+              The AI assistant&apos;s suggestions don’t override or supersede:
             </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>Department of Labor (DOL) regulations and guidance</li>{" "}
@@ -428,7 +428,7 @@ export default function TermsPage() {
             </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               Your use of AI features is at your own risk. You acknowledge that
-              you are a legal professional responsible for all work product and
+              you’re a legal professional responsible for all work product and
               client advice, regardless of what tools or technologies you use to
               assist in your practice.
             </p>{" "}
@@ -459,14 +459,14 @@ export default function TermsPage() {
               domain. Session replays record interactions (clicks, scrolls,
               navigation, and on-screen content) to help us diagnose and fix
               issues. Sentry replays mask all text and block media; PostHog
-              replays mask form inputs and passwords, but on-screen text, which can include case information, is not masked by default. We never
+              replays mask form inputs and passwords, but on-screen text, which can include case information, isn’t masked by default. We never
               use session replays for advertising and never sell them, and we
               honor the Global Privacy Control (GPC) browser signal to opt your
               session out of analytics and replay. We also use Cloudflare
               Turnstile on our authentication forms (sign-up, sign-in, password
               reset) and Vercel BotID on our AI chat and authentication endpoints
               to prevent automated abuse; both process limited device and
-              interaction signals but do not read the contents of form fields or
+              interaction signals but don’t read the contents of form fields or
               message bodies. We additionally enforce per-IP and per-email rate
               limits on these endpoints. By using the Service, you consent to
               this data collection as described in our{" "}
@@ -565,7 +565,7 @@ export default function TermsPage() {
               DISPUTE ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE.
             </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
-              These provisions do not require arbitration. Disputes remain subject to the courts identified above. If the class action waiver
+              These provisions don’t require arbitration. Disputes remain subject to the courts identified above. If the class action waiver
               is held unenforceable as to a particular claim, that claim (and only
               that claim) will proceed in those courts without the class action
               waiver, while the jury trial waiver and all other provisions remain
@@ -579,7 +579,7 @@ export default function TermsPage() {
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We reserve the right to modify these Terms at any time. If we make
-              material changes, we will provide notice by:
+              material changes, we’ll provide notice by:
             </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>Posting the updated Terms on this page</li>{" "}
@@ -633,7 +633,7 @@ export default function TermsPage() {
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               PERM Tracker operates solely as a technology service provider. We
-              provide software tools for case management and do not:
+              provide software tools for case management and don’t:
             </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>Provide legal advice or participate in attorney-client relationships</li>{" "}
@@ -646,7 +646,7 @@ export default function TermsPage() {
               necessary to: provide technical support you have requested,
               diagnose and fix bugs affecting your account, maintain the security
               and reliability of the service, or comply with legal obligations.
-              We do not routinely browse, review, or analyze the content of your
+              We don’t routinely browse, review, or analyze the content of your
               case data outside of these limited circumstances.
             </p>{" "}
 
@@ -660,7 +660,7 @@ export default function TermsPage() {
             </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>Encryption in transit (TLS/HTTPS) and at rest</li>{" "}
-              <li>Row-level security ensuring users cannot access other users&apos; data</li>{" "}
+              <li>Row-level security ensuring users can’t access other users&apos; data</li>{" "}
               <li>Regular security audits and updates</li>{" "}
               <li>Internal database access restricted to authorized personnel for service operation only (see Service Provider Status above)</li>
             </ul>{" "}
@@ -674,7 +674,7 @@ export default function TermsPage() {
             </h3>{" "}
             <div className="border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
               <p className="text-foreground/80 leading-relaxed font-medium">
-                <strong>FOR ATTORNEYS:</strong> You are solely responsible for
+                <strong>FOR ATTORNEYS:</strong> You’re solely responsible for
                 determining whether use of cloud-based case management software
                 is appropriate under your jurisdiction&apos;s rules of professional
                 conduct. Many state bar associations have issued ethics opinions
@@ -692,14 +692,14 @@ export default function TermsPage() {
             </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
-                We will notify you promptly unless prohibited by law or court order
+                We’ll notify you promptly unless prohibited by law or court order
               </li>{" "}
               <li>
-                We will give you reasonable opportunity to seek protective relief
+                We’ll give you reasonable opportunity to seek protective relief
                 where possible
               </li>{" "}
               <li>
-                We will only disclose data as required by valid legal process
+                We’ll only disclose data as required by valid legal process
               </li>{" "}
               <li>
                 We encourage you to maintain your own records and backups of
@@ -707,7 +707,7 @@ export default function TermsPage() {
               </li>
             </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
-              We do not provide legal advice regarding privilege claims or
+              We don’t provide legal advice regarding privilege claims or
               responses to legal process. You should consult with qualified
               counsel regarding any legal process affecting your data.
             </p>

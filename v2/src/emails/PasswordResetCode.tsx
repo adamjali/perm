@@ -32,7 +32,7 @@ export function PasswordResetCode({
   return (
     <EmailLayout
       previewText={`PERM Tracker: Your password reset code is ${code}`}
-      footerText="You're receiving this email because a password reset was requested for this email address."
+      footerText="You’re receiving this email because a password reset was requested for this email address."
       hideSettingsLink
     >
       {/* Header */}

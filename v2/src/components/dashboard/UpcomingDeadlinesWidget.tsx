@@ -97,7 +97,7 @@ export default function UpcomingDeadlinesWidget(): ReactNode {
         <WidgetEmptyState
           icon={Calendar}
           message="No deadlines in next 30 days"
-          description="You're all caught up!"
+          description="You’re all caught up!"
         />
       )}
     </div>

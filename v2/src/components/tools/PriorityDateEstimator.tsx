@@ -476,7 +476,7 @@ export function PriorityDateEstimator({
                   </p>{" "}
                   <p className="mt-2 text-base leading-relaxed text-foreground/70">
                     For the current cutoff, read it at the source. What
-                    everything below has that the current bulletin does not is
+                    everything below has that the current bulletin doesn’t is
                     the movement: {bulletins.length} bulletins of it, including
                     the months the cutoff went backwards.
                   </p>{" "}
@@ -559,7 +559,7 @@ export function PriorityDateEstimator({
               ? "This category was closed that month"
               : estimate.isCurrent
                 ? "Your date was current"
-                : "Your date was not yet current"}
+                : "Your date wasn’t yet current"}
           </p>{" "}
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
             {estimate.latest?.kind === "date" ? (
@@ -621,10 +621,10 @@ export function PriorityDateEstimator({
                 )}
               </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
-                That is the gap to watch when the category reopens. October
+                That’s the gap to watch when the category reopens. October
                 starts a new fiscal year with a fresh allocation of visa
                 numbers, and the cutoff the category reopens at is set then. It
-                is not obliged to return to where it stood.
+                isn’t obliged to return to where it stood.
               </p>
             </div>
           ) : null}{" "}
@@ -637,8 +637,8 @@ export function PriorityDateEstimator({
                 Each category gets a fixed number of visas per fiscal year. When
                 a category uses its allocation, the State Department marks it
                 &quot;U&quot; for the rest of the year and it reopens in October
-                with the new year&apos;s numbers. It is a normal annual event,
-                not a change in the rules, and it is most common in the last
+                with the new year&apos;s numbers. It’s a normal annual event,
+                not a change in the rules, and it’s most common in the last
                 months of the fiscal year.
               </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
@@ -656,7 +656,7 @@ export function PriorityDateEstimator({
           <p className="text-base leading-relaxed">
             <strong>This cutoff has gone backwards.</strong> It retrogressed in{" "}
             {estimate.retrogressions.map((m) => formatMonth(m)).join(", ")}. Being
-            current in one bulletin does not mean being current in the next.
+            current in one bulletin doesn’t mean being current in the next.
           </p>
         </div>
       ) : null}
@@ -798,7 +798,7 @@ export function PriorityDateEstimator({
                 ) : (
                   <>
                     No bulletin in this range published a cutoff date for this
-                    category, so there is no line to draw. Every month was one
+                    category, so there’s no line to draw. Every month was one
                     of the two other states instead. A{" "}
                   </>
                 )}
@@ -830,7 +830,7 @@ export function PriorityDateEstimator({
         <div className="flex items-start gap-3">
           <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
           <div>
-            <h3 className="font-heading text-base font-black">What this cannot tell you</h3>{" "}
+            <h3 className="font-heading text-base font-black">What this can’t tell you</h3>{" "}
             <ul className="mt-3 space-y-2">
               {(estimate?.caveats ?? [
                 "Enter a priority date to see where it sits against the cutoff.",
@@ -840,7 +840,7 @@ export function PriorityDateEstimator({
                 </li>
               ))}
               <li className="text-base leading-relaxed text-foreground/70">
-                It cannot tell you this month&apos;s cutoff. It holds archived
+                It can’t tell you this month&apos;s cutoff. It holds archived
                 bulletins only, and the archive itself stops at{" "}
                 {newestMonth ? formatMonth(newestMonth) : "the last month captured"}.{" "}
                 <a

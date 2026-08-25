@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState((current) => {
       // Only transition from idle to signingOut
       if (current === "idle") {
-        // Reset PostHog identity so the next user isn't attributed to the previous one
+        // Reset PostHog identity so the next user isn’t attributed to the previous one
         analytics.reset();
         return "signingOut";
       }

@@ -198,7 +198,7 @@ export function CalendarEventPopover({
   const updatePreferences = useMutation(api.calendar.updateCalendarPreferences);
   const [isHiding, setIsHiding] = React.useState(false);
 
-  // Don't render if no event
+  // Don’t render if no event
   if (!event) {
     return null;
   }

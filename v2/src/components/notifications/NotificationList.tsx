@@ -344,11 +344,11 @@ function EmptyState({ activeTab }: { activeTab: NotificationTabType }) {
   const messages: Record<NotificationTabType, { title: string; description: string }> = {
     all: {
       title: "No notifications",
-      description: "You're all caught up! No notifications to display.",
+      description: "You’re all caught up! No notifications to display.",
     },
     unread: {
       title: "No unread notifications",
-      description: "You've read all your notifications. Great job staying on top of things!",
+      description: "You’ve read all your notifications. Great job staying on top of things!",
     },
     deadlines: {
       title: "No deadline notifications",

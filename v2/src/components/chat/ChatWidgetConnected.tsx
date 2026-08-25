@@ -89,7 +89,7 @@ export function ChatWidgetConnected() {
   });
 
   // Callback to persist tool execution results to Convex
-  // This ensures confirmations don't reappear after page refresh
+  // This ensures confirmations don’t reappear after page refresh
   const handlePersistToolResult = useCallback(
     async (
       toolCallId: string,
@@ -118,7 +118,7 @@ export function ChatWidgetConnected() {
           console.warn('[ChatWidget] Tool result persistence returned false - tool call not found in DB. This may be a timing issue.');
         }
       } catch (err) {
-        // Log but don't throw - persistence is best-effort
+        // Log but don’t throw - persistence is best-effort
         console.error('[ChatWidget] Failed to persist tool result:', err);
         captureError(err);
       }

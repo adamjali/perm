@@ -361,7 +361,7 @@ export default function NotificationPreferencesSection({
   // Push notification toggle handler
   const handlePushToggle = useCallback(async (value: boolean): Promise<void> => {
     if (!pushStatus?.supported) {
-      toast.error("Push notifications are not supported in this browser");
+      toast.error("Push notifications aren’t supported in this browser");
       return;
     }
     if (pushStatus.permission === "denied") {
@@ -481,7 +481,7 @@ export default function NotificationPreferencesSection({
   const handleWeeklyDigestToggle = useCallback((value: boolean): void => {
     if (!value) {
       toast("Weekly digest disabled", {
-        description: "You will no longer receive Monday morning summaries.",
+        description: "You’ll no longer receive Monday morning summaries.",
         action: {
           label: "Undo",
           onClick: () => handleToggle("emailWeeklyDigest", true, setWeeklyDigest),
@@ -664,7 +664,7 @@ export default function NotificationPreferencesSection({
               </Label>
               <p className={`text-xs text-muted-foreground ${!pushStatus?.supported || isUpdatingPush ? "opacity-50" : ""}`}>
                 {!pushStatus?.supported
-                  ? "Push notifications are not supported in this browser"
+                  ? "Push notifications aren’t supported in this browser"
                   : "Receive instant notifications in your browser"}
               </p>
             </div>
@@ -681,7 +681,7 @@ export default function NotificationPreferencesSection({
           </WarningBanner>
 
           <WarningBanner visible={pushStatus?.supported === false} variant="muted">
-            Push notifications are not supported in this browser. Try using Chrome, Firefox, or Edge.
+            Push notifications aren’t supported in this browser. Try using Chrome, Firefox, or Edge.
           </WarningBanner>
         </div>
 

@@ -89,7 +89,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
           </h2>{" "}
           <p className="mt-4 text-lg leading-relaxed text-foreground/70">
             Free calculators on the government&apos;s own numbers. Each one says
-            where its figure came from, and says so when the data cannot answer.
+            where its figure came from, and says so when the data can’t answer.
           </p>
         </div>
 

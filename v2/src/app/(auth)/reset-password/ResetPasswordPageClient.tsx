@@ -141,7 +141,7 @@ export function ResetPasswordPageClient() {
         captureTurnstileServiceError(verifyError, "reset_password");
         trackTurnstileFail("reset_password", "service_error");
         setTurnstileToken(null);
-        toast.error("Couldn't verify the security check. Please refresh and try again.");
+        toast.error("Couldn’t verify the security check. Please refresh and try again.");
         setIsLoading(false);
         return;
       }
@@ -155,7 +155,7 @@ export function ResetPasswordPageClient() {
       await signIn("password", formData);
       trackPasswordResetRequested();
       setStep("reset");
-      toast.success("If an account exists with this email, we've sent a reset code.");
+      toast.success("If an account exists with this email, we’ve sent a reset code.");
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
@@ -169,11 +169,11 @@ export function ResetPasswordPageClient() {
         toast.error("Network error. Please check your connection and try again.");
       } else {
         // Expected: InvalidAccountId (no password account), Convex's generic
-        // "Server Error" mask. Don't capture to Sentry. Always show the same
+        // "Server Error" mask. Don’t capture to Sentry. Always show the same
         // success message to avoid leaking email existence.
         trackPasswordResetRequested();
         setStep("reset");
-        toast.success("If an account exists with this email, we've sent a reset code.");
+        toast.success("If an account exists with this email, we’ve sent a reset code.");
       }
     } finally {
       setIsLoading(false);
@@ -213,7 +213,7 @@ export function ResetPasswordPageClient() {
       if (isExpiredError(message)) {
         toast.error("Reset code expired. Please request a new one.");
       } else if (lower.includes("invalid password")) {
-        toast.error("Password does not meet requirements. Must be at least 8 characters.");
+        toast.error("Password doesn’t meet requirements. Must be at least 8 characters.");
       } else if (isInvalidCodeError(message)) {
         toast.error("Invalid reset code. Please check and try again.");
       } else if (isRateLimitError(message)) {

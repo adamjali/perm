@@ -117,11 +117,11 @@ export function RFIEntryList({
   const { entries, addEntry, removeEntry } = useRfiFieldArray();
 
   // Watch live form values for RFI entries to detect completion status changes.
-  // useFieldArray's `fields` only contains default/initial values and doesn't update
+  // useFieldArray's `fields` only contains default/initial values and doesn’t update
   // when setValue is called on individual fields (like responseSubmittedDate).
   const watchedEntries = useWatch<CaseFormData, "rfiEntries">({ name: "rfiEntries" });
 
-  // Check if there's already an active entry using LIVE watched values
+  // Check if there’s already an active entry using LIVE watched values
   const hasActiveEntry = useMemo(
     () => (watchedEntries ?? []).some((e) => !e?.responseSubmittedDate),
     [watchedEntries]

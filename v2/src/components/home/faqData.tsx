@@ -57,7 +57,7 @@ export const HOME_FAQS: HomeFaqItem[] = [
     question:
       "How is this different from using a spreadsheet?",
     answer:
-      "Spreadsheets require manual deadline math, don't send reminders, and break when regulations change. PERM Tracker auto-calculates 11 deadline types per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes.",
+      "Spreadsheets require manual deadline math, don’t send reminders, and break when regulations change. PERM Tracker auto-calculates 11 deadline types per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes.",
     rich: (
       <>
         <Link href="/guides/manual-vs-automated-tracking" className={faqLink}>Spreadsheets require manual deadline math</Link>, don&apos;t send reminders, and break when regulations change. PERM Tracker auto-calculates 11 deadline types per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.
@@ -94,7 +94,7 @@ export const HOME_FAQS: HomeFaqItem[] = [
     question:
       "What happens if DOL changes regulations?",
     answer:
-      "We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don't need to manually update formulas or check for rule changes.",
+      "We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don’t need to manually update formulas or check for rule changes.",
     rich: (
       <>
         We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don&apos;t need to manually update formulas or check for rule changes.{" "}

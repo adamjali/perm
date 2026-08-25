@@ -89,7 +89,7 @@ function getInitials(name: string | undefined): string | null {
 function getBrowserTimezone(): string {
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    // Check if it's a US timezone we support
+    // Check if it’s a US timezone we support
     const isSupported = US_TIMEZONES.some((opt) => opt.value === tz);
     return isSupported ? tz : "America/New_York"; // Default to Eastern if unsupported
   } catch {
@@ -236,7 +236,7 @@ export default function ProfileSection({
         </FormField>
 
         {/* Email (Read-only) */}
-        <FormField label="Email" name="email" hint="Email cannot be changed">
+        <FormField label="Email" name="email" hint="Email can’t be changed">
           <div className="relative">
             <Input
               id="email"

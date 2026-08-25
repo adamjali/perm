@@ -472,7 +472,7 @@ export function DisclosureNote({
           : "DOL's PERM disclosure files"}
         , unioned and de-duplicated by case number
         {uniqueCases ? `: ${fmt(uniqueCases)} cases` : ""}. Every case in them
-        carries a decision, so nothing here counts what is still pending. How
+        carries a decision, so nothing here counts what’s still pending. How
         each figure is built, and what it can and can&apos;t answer, is set out in
         the{" "}
         <Link
@@ -506,10 +506,10 @@ export function EntityDataGap({
 }) {
   return (
     <section className="border-2 border-border bg-card p-6 shadow-hard-sm sm:p-8">
-      <h2 className="font-heading text-xl font-black">The figures did not load</h2>{" "}
+      <h2 className="font-heading text-xl font-black">The figures didn’t load</h2>{" "}
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-        {what} is in DOL&apos;s disclosure files, but this page could not read
-        the current figures. That is usually a few minutes around a data
+        {what} is in DOL&apos;s disclosure files, but this page couldn’t read
+        the current figures. That’s usually a few minutes around a data
         refresh rather than anything missing. Reload, or start from{" "}
         <Link
           href={backHref}

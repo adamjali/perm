@@ -31,7 +31,7 @@ const WY: StateStat = {
   state: "WY", total: 20, certified: 20, denied: 0, withdrawn: 0,
   medianDays: 300, medianAnnualWage: 90000,
 };
-/** A territory DOL records and the Albers composite cannot draw. */
+/** A territory DOL records and the Albers composite can(?:’t|not) draw. */
 const PR: StateStat = {
   state: "PR", total: 300, certified: 290, denied: 10, withdrawn: 0,
   medianDays: 470, medianAnnualWage: 40000,
@@ -196,7 +196,12 @@ describe("StateStatTable", () => {
   it("puts the denominator next to the rate, so no rate stands alone", () => {
     render(<StateStatTable states={STATES} />);
     const row = screen.getByText(/Wyoming/).closest("tr")!;
-    const cells = within(row).getAllByRole("cell").map((c) => c.textContent);
+    // Trimmed: each cell carries a trailing separator space so that adjacent
+    // cells do not read as one run to anything walking the DOM. Asserting a
+    // cell's raw textContent including whitespace is brittle for no gain.
+    const cells = within(row)
+      .getAllByRole("cell")
+      .map((c) => (c.textContent ?? "").trim());
     // #, State, Filings, Certified, Denied, Withdrawn, Decided, Approval, …
     expect(cells[6]).toBe("20");
     expect(cells[7]).toBe("100.0%");

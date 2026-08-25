@@ -123,13 +123,13 @@ export default async function PermCasesPage() {
           the people most likely to be searching. */}
       <section className="pop mt-8 max-w-3xl">
         <div className="border-2 border-border bg-tint-primary p-5 sm:p-6">
-          <h2 className="font-heading text-lg font-black">What is in here, and what is not</h2>{" "}
+          <h2 className="font-heading text-lg font-black">What’s in here, and what isn’t</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/80">
             DOL publishes cases it has already decided. There are no pending
             rows in these files at all, so a case still waiting on a
-            determination will not be here, however recently it was filed.
-            Finding nothing says where your case is not, and nothing about how
-            it is going.
+            determination won’t be here, however recently it was filed.
+            Finding nothing says where your case isn’t, and nothing about how
+            it’s going.
           </p>{" "}
           {meta ? (
             <p className="mt-3 text-sm leading-relaxed text-foreground/70">
@@ -184,9 +184,9 @@ export default async function PermCasesPage() {
 
       <section className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Your case is not in here?</h2>{" "}
+          <h2 className="font-heading text-lg font-black">Your case isn’t in here?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">
-            That is what a pending case looks like. The{" "}
+            That’s what a pending case looks like. The{" "}
             <Link
               href="/tools/perm-timeline-calculator"
               className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"

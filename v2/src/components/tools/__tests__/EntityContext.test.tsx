@@ -366,7 +366,7 @@ describe("EntityDataGap", () => {
     render(
       <EntityDataGap what="This employer" backHref="/perm-employers" backLabel="the ranking" />,
     );
-    expect(screen.getByText(/figures did not load/i)).toBeInTheDocument();
+    expect(screen.getByText(/figures did(?:n’t| not) load/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /the ranking/ })).toHaveAttribute(
       "href",
       "/perm-employers",

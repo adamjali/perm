@@ -41,7 +41,7 @@ export function UserDeleteConfirmModal({ user, onClose }: UserDeleteConfirmModal
 
     // Validation
     if (confirmEmail !== user.email) {
-      toast.error("Email does not match");
+      toast.error("Email doesn’t match");
       return;
     }
 
@@ -74,7 +74,7 @@ export function UserDeleteConfirmModal({ user, onClose }: UserDeleteConfirmModal
             Delete User
           </DialogTitle>
           <DialogDescription>
-            This action cannot be undone. All user data will be permanently deleted.
+            This action can’t be undone. All user data will be permanently deleted.
           </DialogDescription>
         </DialogHeader>
 

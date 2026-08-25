@@ -76,13 +76,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const isLoading = onboardingState === undefined;
 
   // Skip logic: only skip while loading, no profile, or waiting for terms acceptance.
-  // Once terms are accepted, onboarding shows for ALL users who haven't completed it.
+  // Once terms are accepted, onboarding shows for ALL users who haven’t completed it.
   const shouldSkipOnboarding = useMemo(() => {
     if (isLoading) return true;
     if (onboardingState === null) return true;
-    // Already completed → don't skip (show checklist)
+    // Already completed → don’t skip (show checklist)
     if (onboardingState.onboardingCompletedAt !== null) return false;
-    // In progress → don't skip (show wizard/tour)
+    // In progress → don’t skip (show wizard/tour)
     if (onboardingState.onboardingStep !== null) return false;
     // Defer to PendingTermsHandler until terms are accepted
     if (onboardingState.termsAcceptedAt === null) return true;
@@ -128,7 +128,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const skipWizard = useCallback(async () => {
     try {
-      // Create sample case so dashboard isn't empty
+      // Create sample case so dashboard isn’t empty
       await createSampleCaseMutation({});
       // Auto-complete the create_case checklist item
       await completeItem({ itemId: "create_case" });
@@ -146,7 +146,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const startTour = useCallback(() => {
     tourEndedRef.current = false; // Allow auto-activation
-    setWizardDismissed(true); // Close wizard immediately (don't wait for DB)
+    setWizardDismissed(true); // Close wizard immediately (don’t wait for DB)
     setTourActive(true);
     setTourPhase("dashboard");
     // Create sample case alongside user's own case (fire-and-forget)
@@ -162,7 +162,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const skipTour = useCallback(() => {
     tourEndedRef.current = true; // Block auto-reactivation until mutation lands
-    setWizardDismissed(true); // Close wizard immediately (don't wait for DB)
+    setWizardDismissed(true); // Close wizard immediately (don’t wait for DB)
     setTourActive(false);
     setTourPhase(null);
     // Create sample case alongside user's own case (fire-and-forget)

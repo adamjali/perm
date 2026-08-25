@@ -67,13 +67,13 @@ export function TimelineRangeBar({
   // Calculate width from positions
   const width = Math.max(0, clampedEnd - clampedStart);
 
-  // Don't render if width is 0 or negative
+  // Don’t render if width is 0 or negative
   if (width <= 0) {
     return null;
   }
 
   // Calculate tooltip alignment based on bar center position
-  // Near left edge (< 25%): align left so tooltip doesn't extend past container
+  // Near left edge (< 25%): align left so tooltip doesn’t extend past container
   // Near right edge (> 75%): align right
   // Otherwise: center
   const centerPosition = (clampedStart + clampedEnd) / 2;

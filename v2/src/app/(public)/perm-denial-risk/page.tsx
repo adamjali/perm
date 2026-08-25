@@ -63,9 +63,9 @@ const FLAG_LABELS: Record<
     what: "The foreign worker holds an ownership interest in the employer (Section A, Item 16).",
   },
   partTime: {
-    label: "Position is not full time",
-    clause: "the position is not full time",
-    what: "The job opportunity is not full time (Section G, Item 1).",
+    label: "Position isn’t full time",
+    clause: "the position isn’t full time",
+    what: "The job opportunity isn’t full time (Section G, Item 1).",
   },
 };
 
@@ -139,7 +139,7 @@ export default async function PermDenialRiskPage() {
     mainEntity: [
       {
         "@type": "Question",
-        name: "What is the PERM denial rate?",
+        name: "What’s the PERM denial rate?",
         acceptedAnswer: {
           "@type": "Answer",
           text: baseline
@@ -152,7 +152,7 @@ export default async function PermDenialRiskPage() {
         name: "What raises the risk of a PERM denial?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "In DOL's own files the strongest correlates are a position that is not full time and a foreign worker with an ownership interest in the employer. Both are recorded on the ETA-9089 itself. These are group rates, not probabilities for an individual case.",
+          text: "In DOL's own files the strongest correlates are a position that isn’t full time and a foreign worker with an ownership interest in the employer. Both are recorded on the ETA-9089 itself. These are group rates, not probabilities for an individual case.",
         },
       },
       {
@@ -160,7 +160,7 @@ export default async function PermDenialRiskPage() {
         name: "Which occupations have the highest PERM denial rate?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Denial rates by occupation are on this page, ranked over the occupations with enough decided cases to carry a rate. The floor matters: an occupation with a handful of decisions can read as 25% denied on a single denial, so rates below the floor are not ranked at all.",
+          text: "Denial rates by occupation are on this page, ranked over the occupations with enough decided cases to carry a rate. The floor matters: an occupation with a handful of decisions can read as 25% denied on a single denial, so rates below the floor aren’t ranked at all.",
         },
       },
     ],
@@ -229,8 +229,8 @@ export default async function PermDenialRiskPage() {
               <p className="max-w-lg text-base leading-relaxed text-foreground/70">
                 is the field baseline: {baseline.denied.toLocaleString("en-US")} denials in{" "}
                 {baseline.decided.toLocaleString("en-US")} decided cases. Withdrawn cases
-                sit on neither side of that ratio, because a withdrawal is not an
-                approval and not a denial. It is the reference every other rate
+                sit on neither side of that ratio, because a withdrawal isn’t an
+                approval and not a denial. It’s the reference every other rate
                 is measured against.
               </p>
             </div>
@@ -239,14 +239,14 @@ export default async function PermDenialRiskPage() {
           {/* Read this before the bars, not after. */}
           <section className="mt-6 border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
             <h2 className="font-heading text-lg font-black">
-              What these rates can and cannot tell you
+              What these rates can and can’t tell you
             </h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-              Each bar is the denial rate of a group, measured. It is not the
+              Each bar is the denial rate of a group, measured. It isn’t the
               probability that a particular case is denied, and the factors are
               not independent of each other: wage correlates with occupation,
               which correlates with everything else. A single blended risk score
-              built from these would read as precision we cannot support, so
+              built from these would read as precision we can’t support, so
               what you get is the measured rates and nothing layered on top.
             </p>{" "}
             <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/70">
@@ -289,7 +289,7 @@ export default async function PermDenialRiskPage() {
               <h2 className="font-heading text-2xl font-black">By offered wage</h2>{" "}
               <p className="mt-2 text-base text-foreground/70">
                 Denial rate falls as the offered wage rises, and the lowest band
-                is not the worst one.
+                isn’t the worst one.
               </p>
               <div className="mt-6">
                 <RateViews
@@ -353,7 +353,7 @@ export default async function PermDenialRiskPage() {
               </div>
               <p className="mt-4 max-w-2xl text-sm leading-relaxed text-foreground/60">
                 These are the occupations DOL&apos;s files record the most cases
-                for, so a job with very few filings nationally is not here at
+                for, so a job with very few filings nationally isn’t here at
                 all. Volume, median wage and processing days for each one sit on
                 the{" "}
                 <Link
@@ -422,7 +422,7 @@ export default async function PermDenialRiskPage() {
           <h2 className="font-heading text-lg font-black">Filing a case?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
             None of these factors is a reason to file differently than the
-            regulations require. They are a reason to document the ones that
+            regulations require. They’re a reason to document the ones that
             apply. The{" "}
             <Link href="/tools/perm-deadline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               deadline calculator

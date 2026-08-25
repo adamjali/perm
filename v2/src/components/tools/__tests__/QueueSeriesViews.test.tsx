@@ -113,12 +113,12 @@ describe("DecisionsByMonth", () => {
   it("names the month that collapses, and stops there", () => {
     render(<DecisionsByMonth points={DECISIONS} />);
     expect(screen.getByText(/October 2025 carries 21/)).toBeInTheDocument();
-    expect(screen.getByText(/the files do not say why/)).toBeInTheDocument();
+    expect(screen.getByText(/the files do(n.t| not) say why/)).toBeInTheDocument();
   });
 
   it("does not invent an outlier when the record has none", () => {
     render(<DecisionsByMonth points={DECISIONS.filter((d) => d.decisions > 1000)} />);
-    expect(screen.queryByText(/the files do not say why/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/the files do(n.t| not) say why/)).not.toBeInTheDocument();
   });
 
   it("re-scopes both the bars and the table to the window", () => {

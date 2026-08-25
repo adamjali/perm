@@ -113,7 +113,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
           // opens < closes, so nothing downstream would look wrong. Warn and
           // withhold the window instead of printing arithmetic on nonsense.
           warnings.push(
-            "The last recruitment step is before the first one. Check the order of the two dates; the filing window is not shown until they make sense.",
+            "The last recruitment step is before the first one. Check the order of the two dates; the filing window isn’t shown until they make sense.",
           );
         } else {
           // The app's canonical model, not the raw calculator: the window
@@ -150,11 +150,11 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
               date: window.closes,
               detail: window.isPwdLimited
                 ? "Capped by the prevailing wage expiration, which lands before the usual 180-day limit. Filing after the determination expires is barred, so the window is shorter than recruitment alone would suggest."
-                : "One hundred and eighty days after the first recruitment step. Recruitment older than this cannot support a filing.",
+                : "One hundred and eighty days after the first recruitment step. Recruitment older than this can’t support a filing.",
             });
             if (window.opens > window.closes) {
               warnings.push(
-                "The window opens after it closes: the 30-day quiet period after the last step runs past the filing deadline. As entered, there is no day on which this case could be filed.",
+                "The window opens after it closes: the 30-day quiet period after the last step runs past the filing deadline. As entered, there’s no day on which this case could be filed.",
               );
             }
           }
@@ -182,7 +182,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
           </h2>
         </div>
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
-          These are not estimates. Every date below is fixed arithmetic on
+          These aren’t estimates. Every date below is fixed arithmetic on
           the prevailing wage determination under 20 CFR 656.
         </p>
 
@@ -303,7 +303,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
             aria-hidden="true"
           />
           <p className="text-base leading-relaxed text-foreground/70">
-            This works out the standard windows and is not legal advice.
+            This works out the standard windows and isn’t legal advice.
             Professional roles need three additional recruitment steps beyond
             the ones listed here, and supervised recruitment runs on a different
             set of rules entirely.

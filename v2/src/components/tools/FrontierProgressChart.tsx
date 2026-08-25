@@ -227,13 +227,13 @@ function FrontierTable({
           <tr>
             <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
               Decisions in
-            </th>{" "}
+            {" "}</th>
             <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
               Median filing month
-            </th>{" "}
+            {" "}</th>
             <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
               Advanced
-            </th>{" "}
+            {" "}</th>
             <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
               Decisions
             </th>
@@ -253,10 +253,10 @@ function FrontierTable({
               >
                 <td className="px-3 py-2.5 tabular-nums">
                   {formatMonth(p.decisionMonth)}
-                </td>{" "}
+                {" "}</td>
                 <td className="px-3 py-2.5 font-bold">
                   {formatMonth(p.medianFilingMonth)}
-                </td>{" "}
+                {" "}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums">
                   {a === null ? (
                     <span className="text-foreground/40">—</span>
@@ -265,7 +265,7 @@ function FrontierTable({
                   ) : (
                     `${a > 0 ? "+" : ""}${a} month${Math.abs(a) === 1 ? "" : "s"}`
                   )}
-                </td>{" "}
+                {" "}</td>
                 <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
                   {p.decisions.toLocaleString("en-US")}
                 </td>
@@ -381,7 +381,7 @@ export function FrontierProgressChart({
         <p>
           Reconstructed from determination dates in DOL&apos;s disclosure files.
           DOL publishes today&apos;s position but keeps no history, so this
-          series cannot be read from DOL directly.
+          series can’t be read from DOL directly.
         </p>
       </figcaption>
     </figure>

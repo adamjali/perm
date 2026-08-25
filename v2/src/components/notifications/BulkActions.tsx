@@ -151,7 +151,7 @@ export default function BulkActions({ className }: BulkActionsProps) {
             </DialogTitle>
             <DialogDescription>
               Are you sure you want to delete all {readCount} read notification
-              {readCount !== 1 ? "s" : ""}? This action cannot be undone.
+              {readCount !== 1 ? "s" : ""}? This action can’t be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -109,11 +109,11 @@ export function TimelinePageClient() {
     [updatePreferences, allCasesForSelection]
   );
 
-  // Calculate whether there's an explicit selection (not "all active")
+  // Calculate whether there’s an explicit selection (not "all active")
   const hasActiveSelection = useMemo(() => {
     if (!preferences) return false;
     // If selectedCaseIds is null or undefined, it means "all active" = no active filter
-    // If it's an array, there's an explicit selection
+    // If it’s an array, there’s an explicit selection
     return (
       preferences.selectedCaseIds !== null &&
       preferences.selectedCaseIds !== undefined &&

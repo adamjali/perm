@@ -76,7 +76,7 @@ export function TemplateUpdateConfirmDialog({
     } catch (error) {
       console.error("[TemplateUpdateConfirmDialog] Overwrite failed:", error);
       captureError(error);
-      // Don't close dialog on error - let user retry or cancel
+      // Don’t close dialog on error - let user retry or cancel
     } finally {
       setIsProcessing(false);
     }
@@ -93,7 +93,7 @@ export function TemplateUpdateConfirmDialog({
     } catch (error) {
       console.error("[TemplateUpdateConfirmDialog] Save as new failed:", error);
       captureError(error);
-      // Don't close dialog on error - let user retry or cancel
+      // Don’t close dialog on error - let user retry or cancel
     } finally {
       setIsProcessing(false);
     }

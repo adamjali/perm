@@ -153,12 +153,12 @@ async function fetchUscisGuidance(): Promise<UscisGuidance | null> {
 
 const FAQS = [
   {
-    q: "What is a priority date?",
-    a: "For an employment-based case it is the date DOL received the PERM application, or the date USCIS received the I-140 where no labor certification was required. It is your place in the queue for a visa number, and it stays with you across most category changes.",
+    q: "What’s a priority date?",
+    a: "For an employment-based case it’s the date DOL received the PERM application, or the date USCIS received the I-140 where no labor certification was required. It’s your place in the queue for a visa number, and it stays with you across most category changes.",
   },
   {
     q: "Why is this behind the current bulletin?",
-    a: "The State Department publishes the bulletin on a site that refuses automated requests, so these figures come from a public archive of the same pages. In mid-July 2026 that site began refusing the archive's crawler too, so the bulletins published after July 2026 have not been captured anywhere this page can read, and the series stops there until that changes. Every figure is labelled with the bulletin it came from, and the current bulletin is one click away on the State Department's own site.",
+    a: "The State Department publishes the bulletin on a site that refuses automated requests, so these figures come from a public archive of the same pages. In mid-July 2026 that site began refusing the archive's crawler too, so the bulletins published after July 2026 haven’t been captured anywhere this page can read, and the series stops there until that changes. Every figure is labelled with the bulletin it came from, and the current bulletin is one click away on the State Department's own site.",
   },
   {
     q: "What does it mean when a category shows U?",
@@ -166,11 +166,11 @@ const FAQS = [
   },
   {
     q: "Can a cutoff move backwards?",
-    a: "Yes, and it does. Retrogression happens when demand in a category turns out higher than expected, and a date that was current one month can stop being current the next. That is the main reason this page shows the whole series rather than just the latest number.",
+    a: "Yes, and it does. Retrogression happens when demand in a category turns out higher than expected, and a date that was current one month can stop being current the next. That’s the main reason this page shows the whole series rather than just the latest number.",
   },
   {
     q: "Which chart should I use, final action or dates for filing?",
-    a: "Final action dates govern when a green card can actually be approved. Dates for filing govern when the adjustment application can be submitted, but only in months when USCIS says it is honouring that chart, which it announces separately.",
+    a: "Final action dates govern when a green card can actually be approved. Dates for filing govern when the adjustment application can be submitted, but only in months when USCIS says it’s honouring that chart, which it announces separately.",
   },
 ];
 

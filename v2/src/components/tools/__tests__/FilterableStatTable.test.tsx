@@ -172,7 +172,7 @@ describe("FilterableStatTable", () => {
     );
     fireEvent.focus(screen.getByRole("searchbox"));
     await waitFor(() =>
-      expect(screen.getByRole("status").textContent).toMatch(/did not load/),
+      expect(screen.getByRole("status").textContent).toMatch(/did(n.t| not) load/),
     );
     expect(bodyOrder()).toHaveLength(3);
   });

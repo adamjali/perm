@@ -107,7 +107,7 @@ export function SentryClientInit() {
             );
           })
           .catch((err) => {
-            // Replay is non-critical, but log so we know if it's broken
+            // Replay is non-critical, but log so we know if it’s broken
             if (process.env.NODE_ENV === 'development') {
               console.debug('[Sentry] Session Replay failed to load:', err);
             }

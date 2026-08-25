@@ -78,7 +78,7 @@ export default async function ToolsPage() {
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Live figures from the Department of Labor, and free calculators built
           on them. Each one says where its numbers come from, and says so when
-          it cannot answer.
+          it can’t answer.
         </p>
       </header>
 

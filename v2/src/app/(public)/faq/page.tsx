@@ -41,7 +41,7 @@ const faqData = [
       {
         question: "How is this different from using a spreadsheet?",
         answer:
-          "Spreadsheets require manual deadline math, don't send reminders, and break when regulations change. PERM Tracker auto-calculates 15+ deadlines per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.",
+          "Spreadsheets require manual deadline math, don’t send reminders, and break when regulations change. PERM Tracker auto-calculates 15+ deadlines per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.",
       },
       {
         question: "Is PERM Tracker really free?",
@@ -61,7 +61,7 @@ const faqData = [
       {
         question: "What happens if DOL changes regulations?",
         answer:
-          "We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don't need to manually update formulas or check for rule changes.",
+          "We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don’t need to manually update formulas or check for rule changes.",
       },
     ],
   },
@@ -69,9 +69,9 @@ const faqData = [
     category: "PERM Process",
     items: [
       {
-        question: "What is PERM labor certification?",
+        question: "What’s PERM labor certification?",
         answer:
-          "PERM (Program Electronic Review Management) is the process by which U.S. employers demonstrate to the Department of Labor that there are no qualified, willing, and available U.S. workers for a position offered to a foreign national. It is typically the first step in the employment-based green card process for EB-2 and EB-3 categories.",
+          "PERM (Program Electronic Review Management) is the process by which U.S. employers demonstrate to the Department of Labor that there are no qualified, willing, and available U.S. workers for a position offered to a foreign national. It’s typically the first step in the employment-based green card process for EB-2 and EB-3 categories.",
       },
       {
         question: "How long does the PERM process take?",
@@ -84,7 +84,7 @@ const faqData = [
           "The PERM process has five main stages: (1) Prevailing Wage Determination: submit to NPWC and receive the wage level for the position. (2) Recruitment: conduct required advertising including SWA job order, newspaper ads, and additional recruitment steps for professional occupations. (3) Filing: submit ETA Form 9089 electronically after the 30-day cooling-off period. (4) DOL Review: wait for DOL adjudication (approval, denial, or audit). (5) I-140 Filing: file the immigrant petition within 180 days of PERM certification.",
       },
       {
-        question: "What is a prevailing wage determination (PWD)?",
+        question: "What’s a prevailing wage determination (PWD)?",
         answer:
           "A prevailing wage determination is issued by the National Prevailing Wage Center (NPWC) and establishes the minimum wage the employer must offer for the PERM position. The wage is based on the occupation, skill level, and geographic area. PWDs are valid for one year from the determination date, and the PERM application must be filed before expiration.",
       },
@@ -99,7 +99,7 @@ const faqData = [
           "Common PERM audit triggers include: layoffs in the same occupation within 6 months, job requirements that exceed the norm for the occupation (such as requiring a specific degree or foreign language without business necessity), discrepancies between the job offer and the beneficiary's qualifications, unusual wage levels, and random selection. Clean documentation and well-justified job requirements significantly reduce audit risk.",
       },
       {
-        question: "What is the ETA 9089 filing window?",
+        question: "What’s the ETA 9089 filing window?",
         answer:
           "The ETA 9089 must be filed no earlier than 30 days after the end of all recruitment activities and no later than 180 days after recruitment ends. This 30-180 day filing window is a critical deadline: filing too early results in denial, and missing the 180-day cutoff means restarting recruitment entirely. PERM Tracker automatically calculates this window based on your recruitment end dates.",
       },
@@ -129,9 +129,9 @@ const faqData = [
           "The wages page shows median offered wages by occupation from DOL's disclosure files. These are wages employers committed to in federal filings, not survey estimates, which makes them the hardest salary data available for sponsored roles. Hourly and other units are annualized before medians are taken.",
       },
       {
-        question: "What is the PERM denial rate?",
+        question: "What’s the PERM denial rate?",
         answer:
-          "Denials are rare: across DOL's current disclosure window under 3% of decided PERM cases were denied, with withdrawn cases excluded from both sides of that ratio. The rate is not evenly spread. Our denial rates page breaks it down by offered wage, by fiscal year, and by the three risk questions the ETA-9089 itself asks, and is explicit that a group rate is not a probability for any single case.",
+          "Denials are rare: across DOL's current disclosure window under 3% of decided PERM cases were denied, with withdrawn cases excluded from both sides of that ratio. The rate isn’t evenly spread. Our denial rates page breaks it down by offered wage, by fiscal year, and by the three risk questions the ETA-9089 itself asks, and is explicit that a group rate isn’t a probability for any single case.",
       },
       {
         question: "Which law firms file the most PERM cases?",
@@ -181,7 +181,7 @@ export default function FAQPage() {
               href="/blog/what-is-perm-labor-certification"
               className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
             >
-              <span className="font-heading text-sm font-bold">What is PERM?</span>{" "}
+              <span className="font-heading text-sm font-bold">What’s PERM?</span>{" "}
               <p className="mt-1 text-xs text-muted-foreground">Complete overview of the PERM process</p>
             </Link>{" "}
             <Link

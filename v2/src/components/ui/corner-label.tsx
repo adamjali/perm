@@ -51,7 +51,7 @@ export default function CornerLabel({
     <div
       className={cn(
         // Base styles
-        "absolute z-10 border-4 border-black px-2 py-1",
+        "absolute z-10 border-4 border-border px-2 py-1",
         // Typography
         "mono text-xs font-medium",
         // Position

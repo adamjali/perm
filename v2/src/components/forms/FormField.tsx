@@ -176,7 +176,7 @@ export function FormField({
       )}
 
       {/* Input wrapper — clip-path expands visible area by 5px so
-           neobrutalist hard shadows (4px offset on hover) aren't clipped,
+           neobrutalist hard shadows (4px offset on hover) aren’t clipped,
            while still containing the shake animation */}
       <div
         className={cn(

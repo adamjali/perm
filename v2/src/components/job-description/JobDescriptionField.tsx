@@ -266,7 +266,7 @@ export function JobDescriptionField({
       } catch (error) {
         const msg = getErrorMessage(error);
         if (msg.startsWith("TEMPLATE_EXISTS:")) {
-          // Server found a duplicate the client didn't know about — ask to update
+          // Server found a duplicate the client didn’t know about — ask to update
           setPendingUpdate({ name: positionTitle.trim(), description });
         } else {
           toast.error(msg || "Failed to save template");
@@ -508,7 +508,7 @@ export function JobDescriptionField({
                   disabled={isLoading}
                   className={cn(
                     "border-2 resize-y min-h-[100px] sm:min-h-[120px]",
-                    "rows-5 sm:rows-8", // Tailwind doesn't support rows directly, handled via style
+                    "rows-5 sm:rows-8", // Tailwind doesn’t support rows directly, handled via style
                     isOverLimit && "border-destructive focus-visible:ring-destructive"
                   )}
                   style={{ minHeight: "min(120px, 30vh)" }} // Dynamic min height for mobile

@@ -187,7 +187,7 @@ export function EmailLayout({
 
 /**
  * Inline styles for email client compatibility.
- * Email clients don't support external CSS or most modern CSS features.
+ * Email clients don’t support external CSS or most modern CSS features.
  */
 const styles = {
   body: {

@@ -50,7 +50,7 @@ export function ContactForm() {
       }
     } catch {
       setPhase("error");
-      setNote("Couldn't reach the server. Email us directly instead.");
+      setNote("Couldn’t reach the server. Email us directly instead.");
     }
   };
 

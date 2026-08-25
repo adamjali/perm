@@ -345,7 +345,7 @@ export default async function EmployerPage({
                 : `This sponsor has ${fmt(reliability.decided)} decided cases, so its median days is marked but left unranked, and no approval rate is drawn at all.`}{" "}
               {dist.complete
                 ? ""
-                : "The scan behind this cohort did not reach past the last qualifying sponsor, so read it as the busiest part of the field rather than all of it. "}
+                : "The scan behind this cohort didn’t reach past the last qualifying sponsor, so read it as the busiest part of the field rather than all of it. "}
             </>
           }
           source="DOL PERM disclosure files"
@@ -420,7 +420,7 @@ export default async function EmployerPage({
         className="mt-12"
         items={[
           {
-            head: "Volume isn't quality, and it isn't speed",
+            head: "Volume isn’t quality, and it isn’t speed",
             body: (
               <>
                 A big sponsor is a practised one, nothing more. DOL works a
@@ -446,13 +446,13 @@ export default async function EmployerPage({
             body: (
               <>
                 {thinMedian
-                  ? "That is a middle of a handful, and it moves entirely with which months those few cases were filed in."
+                  ? "That’s a middle of a handful, and it moves entirely with which months those few cases were filed in."
                   : "It says when this sponsor's cases were filed at least as much as it says anything about the sponsor, because the queue is national and first in, first out."}
               </>
             ),
           },
           {
-            head: "Nothing here is pending",
+            head: "Nothing here’s pending",
             body: (
               <>
                 Every case in DOL&apos;s disclosure files carries a decision

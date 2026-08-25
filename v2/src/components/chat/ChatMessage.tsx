@@ -85,7 +85,7 @@ export function ChatMessage({
 
   // Only show tool calls for assistant messages
   const hasToolCalls = !isUser && toolCalls && toolCalls.length > 0;
-  // Show message bubble if there's content OR if we're streaming (shows cursor)
+  // Show message bubble if there’s content OR if we’re streaming (shows cursor)
   const showBubble = content.length > 0 || isStreaming || isTyping;
 
   return (
@@ -95,7 +95,7 @@ export function ChatMessage({
         isUser ? 'items-end' : 'items-start'
       )}
     >
-      {/* Message bubble - only show if there's content or actively streaming */}
+      {/* Message bubble - only show if there’s content or actively streaming */}
       {showBubble && (
         <div
           className={cn(
