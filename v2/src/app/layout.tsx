@@ -32,7 +32,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 // Viewport configuration for proper mobile scaling
-import { PRELOADER_BOOT } from "@/components/home/Preloader";
+import { PRELOADER_BOOT, PRELOADER_CSS } from "@/components/home/Preloader";
+import { HomeCurtainNav } from "@/components/home/HomeCurtainNav";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -166,6 +167,15 @@ export default async function RootLayout({
             over it. The script gates on location.pathname so the other
             routes are untouched.
           */}
+          {/*
+            ABOVE the script, and inline, on purpose. The cover rule and the
+            background colour it paints with both used to live in globals.css
+            — an external stylesheet. WebKit paints before a pending
+            stylesheet, so the script set the attribute, the browser painted
+            the header, and the cover only arrived with the CSS. The
+            attribute was working; there was no rule yet to act on it.
+          */}
+          <style dangerouslySetInnerHTML={{ __html: PRELOADER_CSS }} />
           <script dangerouslySetInnerHTML={{ __html: PRELOADER_BOOT }} />
           <link rel="alternate" type="application/rss+xml" title="PERM Tracker RSS Feed" href="/feed.xml" />
           {/* JSON-LD structured data for rich search results
@@ -182,6 +192,12 @@ export default async function RootLayout({
           className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} font-body antialiased`}
         >
           <div className="grain-overlay" aria-hidden="true" />
+          {/*
+            Mounted at the ROOT, not in the public layout, because a link
+            home exists in the authenticated chrome and the auth pages too.
+            Renders null; it only listens.
+          */}
+          <HomeCurtainNav />
           <SharedProviders>{children}</SharedProviders>
           <SpeedInsights />
           <Analytics />

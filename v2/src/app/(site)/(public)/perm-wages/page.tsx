@@ -35,7 +35,11 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 3600;
+// The disclosure files are quarterly, so an hourly window bought
+// nothing and cost a regeneration per page per hour across 21,178
+// entity pages. A day bounds staleness far below the data's own
+// cadence. The ingest should also revalidate on demand.
+export const revalidate = 86400;
 
 function fmtWage(n: number): string {
   return `$${Math.round(n).toLocaleString("en-US")}`;

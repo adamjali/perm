@@ -37,7 +37,7 @@ function subscribeEndpoint(): string | null {
  * Filing months a live PERM case could plausibly carry: `newest` back to 2020.
  *
  * `newest` is passed in rather than read from `new Date()` here. The parent
- * page sets `revalidate = 3600`, so its HTML is served from cache for an hour;
+ * page sets `revalidate = 21600`, so its HTML is served from cache for six hours;
  * a component that computed "this month" itself would, for up to an hour after
  * a month boundary, render a client list one option longer than the cached
  * server list and hydrate with a mismatched <select>.

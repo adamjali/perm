@@ -2297,7 +2297,15 @@ input[type="week"] {
  * curtain either. Both directions matter.
  * ------------------------------------------------------------------ */
 html[data-pre="on"] { overflow: hidden; }
-html[data-pre="off"] .pre { display: none; }
+/* An ABSENT attribute must hide the curtain too. `[data-pre="off"]`
+   matches only when the attribute is literally "off", and the boot
+   script returns early on every route except "/", so on /blog the
+   attribute is never set at all. A soft navigation to / then rendered
+   .pre with nothing in the document able to dismiss it: the reported
+   "loads forever, have to refresh". :not([data-pre="on"]) is also
+   higher specificity than the bare .pre rule below, so it wins
+   regardless of stylesheet order. */
+html:not([data-pre="on"]) .pre { display: none; }
 
 /*
  * The cover, drawn from the ATTRIBUTE rather than from the .pre element.

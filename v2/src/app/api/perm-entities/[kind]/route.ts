@@ -17,7 +17,10 @@ import { isEntityKind, packRow, type EntityPayload } from "@/lib/entityPayload";
  *
  * The data changes quarterly, so it is cached hard at the edge.
  */
-export const revalidate = 3600;
+// Daily, not hourly. This route returns an entire entity kind - 16,305
+// employers - so it is the largest single regeneration on the site, and
+// the disclosure files behind it are quarterly.
+export const revalidate = 86400;
 
 export async function GET(
   _request: Request,

@@ -61,7 +61,8 @@ const SITE = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
  * Revalidate hourly. The underlying data changes weekly at most, so this is
  * about bounding staleness cheaply rather than chasing updates.
  */
-export const revalidate = 3600;
+// DOL refreshes the queue weekly; six hours is well inside that.
+export const revalidate = 21600;
 
 export const metadata: Metadata = {
   title: "PERM Processing Times",

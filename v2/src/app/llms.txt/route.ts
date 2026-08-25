@@ -26,7 +26,7 @@ import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 /** The public data surface, in the order a reader would want it. */
 const DATA_PAGES: { path: string; label: string; blurb: string }[] = [

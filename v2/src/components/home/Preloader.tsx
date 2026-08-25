@@ -1,24 +1,37 @@
 /**
  * The home load curtain. A SERVER component on purpose.
  *
- * The previous version was a client component that styled itself from an
- * inline <style> and gated on React state, which meant it could not exist
- * until hydration — so the page painted first and the curtain arrived after
- * it, which is the opposite of a curtain. It also skipped itself via
- * sessionStorage inside that same effect, so a returning visitor saw a flash
- * of nothing at all.
+ * Three separate defects were reported against the previous version, and
+ * they had three separate causes. All three are addressed here.
  *
- * This version renders as static markup in the server response, and its
- * boot script runs from <head> (see PRELOADER_BOOT, mounted in the root
- * layout) so the decision is made before a byte of body paints.
+ * 1. "still see the blank site with header before this pops up"
  *
- * THE SCRIPT CANNOT LIVE HERE, and the previous version's claim that it ran
- * "before the browser paints the body" was measurably false. This component
- * is rendered by the home PAGE, which sits below the layout's header, so on
- * the deployed document <header> was at byte 8,339 and this markup at
- * 64,073. Any connection slow enough to paint incrementally showed the
- * header and then had the curtain slam over it. The cover is now drawn by
- * `html[data-pre="on"] body::before`, which needs no markup at all.
+ *    The cover rule (`html[data-pre="on"] body::before`) lived in
+ *    globals.css, and so did the `var(--background)` it painted with.
+ *    globals.css is an EXTERNAL stylesheet, and WebKit paints before a
+ *    pending stylesheet — so on a cold or slow load the boot script set the
+ *    attribute, the browser painted the header, and the cover only appeared
+ *    once the stylesheet landed. The attribute was doing its job; there was
+ *    simply no rule in the document yet to act on it.
+ *
+ *    PRELOADER_CSS below is now inlined in <head>, above the script, with
+ *    LITERAL colours rather than custom properties (a var() defined in the
+ *    same pending stylesheet is no better than the rule that uses it).
+ *
+ * 2. "sometimes doesn't even appear"
+ *
+ *    A sessionStorage flag skipped the curtain for the rest of the session,
+ *    so whether you saw it depended on invisible state. Removed: it now
+ *    behaves the same way every time. The cap is short and any interaction
+ *    dismisses it, so showing it always is cheap.
+ *
+ * 3. "skeleton loading states and blank page with just header happens
+ *    instead" on a client-side navigation
+ *
+ *    The boot script runs once per DOCUMENT. Clicking Home from /blog is a
+ *    soft navigation — no new document, no script, so the route's ordinary
+ *    loading.tsx skeleton showed instead. Handled by HomeCurtainNav, which
+ *    arms the same attribute on link click. See that file.
  *
  * Doctrine carried from the client-site fleet:
  *   - the failsafe timer is armed FIRST, before anything that can throw
@@ -35,6 +48,32 @@
 const CAP_MS = 1200;
 const EXIT_MS = 560;
 
+// Literal, because these are the two values of --background and this CSS has
+// to work before the stylesheet that defines that variable exists.
+const BG_LIGHT = "#FAFAFA";
+const BG_DARK = "#0A0A0A";
+
+/**
+ * The only rules that must exist before first paint. Everything else about
+ * the curtain's appearance can arrive with globals.css, because by then the
+ * cover is already up and nothing underneath is visible.
+ *
+ * Theme resolution mirrors next-themes (attribute="class", defaultTheme=
+ * "system"): prefers-color-scheme is the correct guess when no explicit
+ * choice has been made, and the .light/.dark classes it writes onto <html>
+ * override it in both directions.
+ */
+export const PRELOADER_CSS = `
+html[data-pre="on"]{overflow:hidden}
+html:not([data-pre="on"]) .pre{display:none}
+html[data-pre="on"] body::before{content:"";position:fixed;inset:0;z-index:199;background:${BG_LIGHT}}
+@media (prefers-color-scheme:dark){
+html[data-pre="on"]:not(.light) body::before{background:${BG_DARK}}
+}
+html[data-pre="on"].dark body::before{background:${BG_DARK}}
+html[data-pre="on"].light body::before{background:${BG_LIGHT}}
+`;
+
 /**
  * Runs before first paint. Kept deliberately small and dependency-free —
  * everything it touches exists at parse time.
@@ -45,15 +84,14 @@ export const PRELOADER_BOOT = `
   // Runs from <head>, so it fires on EVERY route and has to exclude itself.
   // The curtain is a home-page device; the rest of the site has no .pre
   // markup and an attribute set there would lock scroll over nothing.
+  //
+  // Soft navigations never reach this line at all (no new document), which
+  // is what HomeCurtainNav exists to cover.
   if(location.pathname!=='/')return;
-  try{
-    if(sessionStorage.getItem('pt-preloaded')){h.setAttribute('data-pre','off');return}
-  }catch(e){}
   h.setAttribute('data-pre','on');
   var done=false;
   function leave(){
     if(done)return; done=true;
-    try{sessionStorage.setItem('pt-preloaded','1')}catch(e){}
     var el=d.querySelector('.pre');
     if(el)el.classList.add('pre-leave');
     setTimeout(function(){
