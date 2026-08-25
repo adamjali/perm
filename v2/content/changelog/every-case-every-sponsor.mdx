@@ -1,0 +1,72 @@
+---
+title: "Every case, every sponsor, and a hero that says something"
+description: "Case-level search arrives, the entity pages go from 250 rows to all 16,210, and every chart gets a table view and filters worth using."
+date: "2026-08-25"
+image: "/images/content/perm-tracker-desk.png"
+imageAlt: "Federal data documentation"
+category: "Feature"
+---
+
+The data was already in the files. Most of this release is about no longer
+throwing it away between the ingest and the page.
+
+## Every entity, not the first 250
+
+The employer page said "the full hundred" and rendered 250 rows. Behind it sat
+12,240 employers, 3,208 law firms and 762 occupations, all of them ingested,
+none of them reachable.
+
+The aggregate document those pages read is capped per kind so it fits inside
+Convex's one-megabyte document limit, so the cap was an architectural
+constraint wearing an editorial disguise. Pages now read the entity table
+directly and pull the rest on demand. Search, filter by state or job family,
+sort any column, page through it, or take the whole thing as a CSV.
+
+One detail that matters more than it sounds: searching or sorting a 250-row
+slice answers a question about 12,240 rows using a fraction of them, and it
+looks exactly like a correct answer. The first interaction of any kind now
+loads the full set, and until it lands the count line says plainly that it is
+reading a slice.
+
+## Case-level search
+
+`/perm-cases` searches individual published cases by case number, employer,
+law firm, state or occupation, with the offered wage and the days each one
+took. It reads the same quarterly disclosure files as everything else here.
+
+No contact data goes near it. DOL's files carry emails, phone numbers and
+street addresses for roughly 112,000 people; the ingest reads none of those
+columns, and every field stored is an organisation, a date, a job, a wage or
+a status.
+
+## Entity pages that say something
+
+Sixteen thousand pages built from four numbers each were nearly identical to
+one another. Each one now places its subject in the field: where it sits in
+the distribution, its rank neighbours, comparable sponsors in the same state
+or occupations in the same job family.
+
+Rates over tiny populations are withheld rather than printed. Three
+certifications out of three is not a 100% approval rate, and showing it as
+one would be the confident wrongness this site exists to avoid.
+
+## Charts you can interrogate
+
+Every chart carries a table view with the real numbers, because a chart is
+for the shape and a table is for the value. Scope controls came with it:
+fiscal year on the denial-rate page, range on the time series, metric on the
+map, and a minimum-case threshold so a rate measured over two cases cannot
+top a ranking.
+
+## Priority dates, honestly dated
+
+The visa bulletin history now states which bulletin it is reading and how old
+that is, next to the answer rather than in a footnote. A priority date in the
+future gets a warning instead of a confident reply.
+
+We cannot publish the current month. The State Department refuses automated
+clients, the public archive we read lags by about two months, and USCIS
+confirms the newer bulletins exist without reproducing their tables. So the
+page says so and links to the State Department directly. What it has that
+nobody else publishes is the movement: which way a cutoff has gone across
+twenty bulletins, backwards as well as forwards.
