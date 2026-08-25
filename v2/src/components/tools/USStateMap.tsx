@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 
 import { US_MAP_VIEWBOX, US_STATES } from "@/lib/usStatesGeometry";
+import { stateName } from "@/lib/usStateNames";
+import { ScopeSelect } from "./DataView";
+import { FilterableStatTable, type CsvSpec, type StatColumn } from "./FilterableStatTable";
 
 /**
  * The by-state choropleth: real Census geometry (Albers USA composite,
@@ -11,13 +14,21 @@ import { US_MAP_VIEWBOX, US_STATES } from "@/lib/usStatesGeometry";
  *
  * Interaction follows the house two-controls rule: the map is a browsing
  * surface, so hovering a state PREVIEWS it in the panel and clicking PINS it.
- * Keyboard: every state is focusable, focus previews, Enter/Space pins — no
- * hover-only path. The panel is in normal flow below the drawing, so nothing
- * is drawn over the map and nothing needs to reserve space.
+ * The state list is a `<select>`, so choosing from it SELECTS — a list that
+ * previewed on hover would fire once per option as the pointer travelled down
+ * it and make each option's own hover styling ambiguous. Keyboard: every
+ * state is focusable, focus previews, Enter/Space pins — no hover-only path.
+ * The panel is in normal flow below the drawing, so nothing is drawn over the
+ * map and nothing needs to reserve space.
  *
  * Fills are opaque color-mix tints of the brand lime over the card surface
  * (translucent fills over dark grounds burned us before), quantized into five
- * buckets by filing volume.
+ * buckets by the metric on display.
+ *
+ * THE FLOOR APPLIES TO RATES AND MEDIANS, NEVER TO A COUNT. An approval rate
+ * over seventeen decided cases is noise, and colouring a state by it puts the
+ * emptiest state at one end of the scale. A filing count over seventeen cases
+ * is simply seventeen, so it needs no floor and never gets one.
  */
 
 export interface StateStat {
@@ -35,6 +46,27 @@ const BUCKET_MIX = [8, 16, 28, 44, 62] as const;
 /** Too small to carry an inside label; they stack at the right edge. */
 const SMALL_STATES = new Set(["VT", "NH", "MA", "RI", "CT", "NJ", "DE", "MD", "DC"]);
 
+/**
+ * Census regions, plus a bucket for the territories DOL records that the
+ * Census regions do not cover. Used as a table facet: it is the standard
+ * grouping, not one we invented.
+ */
+export const CENSUS_REGION: Record<string, string> = {
+  CT: "Northeast", ME: "Northeast", MA: "Northeast", NH: "Northeast", RI: "Northeast",
+  VT: "Northeast", NJ: "Northeast", NY: "Northeast", PA: "Northeast",
+  IL: "Midwest", IN: "Midwest", MI: "Midwest", OH: "Midwest", WI: "Midwest",
+  IA: "Midwest", KS: "Midwest", MN: "Midwest", MO: "Midwest", NE: "Midwest",
+  ND: "Midwest", SD: "Midwest",
+  DE: "South", DC: "South", FL: "South", GA: "South", MD: "South", NC: "South",
+  SC: "South", VA: "South", WV: "South", AL: "South", KY: "South", MS: "South",
+  TN: "South", AR: "South", LA: "South", OK: "South", TX: "South",
+  AZ: "West", CO: "West", ID: "West", MT: "West", NV: "West", NM: "West",
+  UT: "West", WY: "West", AK: "West", CA: "West", HI: "West", OR: "West",
+  WA: "West",
+  PR: "Territories", VI: "Territories", GU: "Territories", MP: "Territories",
+  AS: "Territories",
+};
+
 function fmtInt(n: number): string {
   return n.toLocaleString("en-US");
 }
@@ -43,14 +75,103 @@ function fmtWage(n: number | null): string {
   return n == null ? "—" : `$${Math.round(n).toLocaleString("en-US")}`;
 }
 
+function decidedOf(s: StateStat): number {
+  return s.certified + s.denied;
+}
+
 function certRate(s: StateStat): string {
-  const decided = s.certified + s.denied;
+  const decided = decidedOf(s);
   return decided === 0 ? "—" : `${((s.certified / decided) * 100).toFixed(1)}%`;
 }
 
-export function USStateMap({ states }: { states: StateStat[] }) {
+export type StateMetric = "total" | "approval" | "denial" | "days" | "wage";
+
+interface MetricSpec {
+  label: string;
+  /** The value the map colours by, or null when the state cannot carry one. */
+  value: (s: StateStat) => number | null;
+  format: (v: number) => string;
+  /** The population the floor is checked against. */
+  population: (s: StateStat) => number;
+  /** A count needs no floor; a rate or a median does. */
+  floored: boolean;
+  /** Names the population, for the legend. */
+  populationNoun: string;
+}
+
+export const STATE_METRICS: Record<StateMetric, MetricSpec> = {
+  total: {
+    label: "Filings",
+    value: (s) => s.total,
+    format: (v) => fmtInt(v),
+    population: (s) => s.total,
+    floored: false,
+    populationNoun: "filings",
+  },
+  approval: {
+    label: "Approval rate",
+    value: (s) => (decidedOf(s) > 0 ? (s.certified / decidedOf(s)) * 100 : null),
+    format: (v) => `${v.toFixed(1)}%`,
+    population: decidedOf,
+    floored: true,
+    populationNoun: "decided cases",
+  },
+  denial: {
+    label: "Denial rate",
+    value: (s) => (decidedOf(s) > 0 ? (s.denied / decidedOf(s)) * 100 : null),
+    format: (v) => `${v.toFixed(2)}%`,
+    population: decidedOf,
+    floored: true,
+    populationNoun: "decided cases",
+  },
+  days: {
+    label: "Median days",
+    value: (s) => s.medianDays,
+    format: (v) => fmtInt(Math.round(v)),
+    population: (s) => s.total,
+    floored: true,
+    populationNoun: "filings",
+  },
+  wage: {
+    label: "Median wage",
+    value: (s) => s.medianAnnualWage,
+    format: (v) => fmtWage(v),
+    population: (s) => s.total,
+    floored: true,
+    populationNoun: "filings",
+  },
+};
+
+export const STATE_FLOORS = [0, 25, 100, 250, 1000] as const;
+export const DEFAULT_STATE_FLOOR = 100;
+
+export interface USStateMapProps {
+  states: StateStat[];
+  /** Controlled metric. Omit and the map runs its own. */
+  metric?: StateMetric;
+  onMetricChange?: (m: StateMetric) => void;
+  /** Controlled population floor. Omit and the map runs its own. */
+  floor?: number;
+  onFloorChange?: (n: number) => void;
+}
+
+export function USStateMap({
+  states,
+  metric: metricProp,
+  onMetricChange,
+  floor: floorProp,
+  onFloorChange,
+}: USStateMapProps) {
   const [pinned, setPinned] = useState<string | null>(null);
   const [previewed, setPreviewed] = useState<string | null>(null);
+  const [ownMetric, setOwnMetric] = useState<StateMetric>("total");
+  const [ownFloor, setOwnFloor] = useState<number>(DEFAULT_STATE_FLOOR);
+
+  const metric = metricProp ?? ownMetric;
+  const floor = floorProp ?? ownFloor;
+  const setMetric = onMetricChange ?? setOwnMetric;
+  const setFloor = onFloorChange ?? setOwnFloor;
+  const spec = STATE_METRICS[metric];
 
   const byAbbr = useMemo(() => {
     const m = new Map<string, StateStat>();
@@ -58,23 +179,52 @@ export function USStateMap({ states }: { states: StateStat[] }) {
     return m;
   }, [states]);
 
-  const thresholds = useMemo(() => {
-    const totals = states.map((s) => s.total).sort((a, b) => a - b);
-    if (totals.length === 0) return [];
-    const q = (p: number) => totals[Math.min(totals.length - 1, Math.floor(p * totals.length))] ?? 0;
-    return [q(0.2), q(0.4), q(0.6), q(0.8)];
-  }, [states]);
+  /** The value a state is coloured by, or null when it is withheld. */
+  const metricValue = useMemo(() => {
+    const out = new Map<string, number>();
+    for (const s of states) {
+      if (spec.floored && spec.population(s) < floor) continue;
+      const v = spec.value(s);
+      if (v !== null && Number.isFinite(v)) out.set(s.state, v);
+    }
+    return out;
+  }, [states, spec, floor]);
 
-  const bucketOf = (total: number): number => {
+  // Quintile cuts over the values actually on the map, recomputed whenever the
+  // metric or the floor moves. Cutting on a fixed scale would leave four of
+  // five buckets empty the moment the metric changed.
+  const thresholds = useMemo(() => {
+    const vals = [...metricValue.values()].sort((a, b) => a - b);
+    if (vals.length === 0) return [];
+    const q = (p: number) => vals[Math.min(vals.length - 1, Math.floor(p * vals.length))] ?? 0;
+    return [q(0.2), q(0.4), q(0.6), q(0.8)];
+  }, [metricValue]);
+
+  const range = useMemo(() => {
+    const vals = [...metricValue.values()];
+    if (vals.length === 0) return null;
+    return { lo: Math.min(...vals), hi: Math.max(...vals), n: vals.length };
+  }, [metricValue]);
+
+  const bucketOf = (v: number): number => {
     let b = 0;
-    for (const t of thresholds) if (total > t) b += 1;
+    for (const t of thresholds) if (v > t) b += 1;
     return Math.min(b, BUCKET_MIX.length - 1);
   };
+
+  // Rank in the metric on display, over the states that carry a value.
+  const rankOf = useMemo(() => {
+    const out = new Map<string, number>();
+    [...metricValue.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([abbr], i) => out.set(abbr, i + 1));
+    return out;
+  }, [metricValue]);
 
   const activeAbbr = previewed ?? pinned;
   const active = activeAbbr ? byAbbr.get(activeAbbr) : undefined;
   const activeName = activeAbbr
-    ? US_STATES.find((s) => s.abbr === activeAbbr)?.name ?? activeAbbr
+    ? US_STATES.find((s) => s.abbr === activeAbbr)?.name ?? stateName(activeAbbr)
     : null;
 
   const national = useMemo(() => {
@@ -89,30 +239,76 @@ export function USStateMap({ states }: { states: StateStat[] }) {
     return { total, certified, denied };
   }, [states]);
 
+  const mappable = useMemo(
+    () =>
+      US_STATES.filter((sh) => byAbbr.has(sh.abbr))
+        .map((sh) => ({ abbr: sh.abbr, name: sh.name }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [byAbbr],
+  );
+
   return (
     <div>
+      {/* What the map is coloured by, and how thin a population is allowed to
+          carry a colour. Both re-draw the fills, the legend and the ranking. */}
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <ScopeSelect
+          label="Colour by"
+          value={metric}
+          onChange={(v) => setMetric(v as StateMetric)}
+          hint="Changes which figure the map is shaded by."
+          options={(Object.keys(STATE_METRICS) as StateMetric[]).map((k) => ({
+            value: k,
+            label: STATE_METRICS[k].label,
+          }))}
+        />{" "}
+        <ScopeSelect
+          label="Min cases"
+          value={String(floor)}
+          onChange={(v) => setFloor(Number(v))}
+          hint="States with fewer cases than this are left uncoloured on rates and medians, because a rate over a handful of cases is noise. Counts are never withheld, and the table below always shows every state."
+          options={STATE_FLOORS.map((n) => ({
+            value: String(n),
+            label: n === 0 ? "No floor" : `${fmtInt(n)}+`,
+          }))}
+        />{" "}
+        <ScopeSelect
+          label="Go to"
+          value={pinned ?? ""}
+          onChange={(v) => setPinned(v === "" ? null : v)}
+          hint="Pins a state in the panel below the map."
+          options={[
+            { value: "", label: "Whole country" },
+            ...mappable.map((s) => ({ value: s.abbr, label: s.name })),
+          ]}
+        />
+      </div>
+
       <div className="-mx-1 overflow-x-auto px-1">
         <svg
           viewBox={`0 0 ${US_MAP_VIEWBOX.w + 60} ${US_MAP_VIEWBOX.h}`}
           role="group"
-          aria-label="PERM filings by worksite state"
+          aria-label={`PERM filings by worksite state, shaded by ${spec.label.toLowerCase()}`}
           className="block h-auto w-full min-w-[560px]"
         >
           {US_STATES.map((shape) => {
             const stat = byAbbr.get(shape.abbr);
             const isActive = shape.abbr === activeAbbr || shape.abbr === pinned;
-            const mix = stat ? BUCKET_MIX[bucketOf(stat.total)] : 0;
+            const v = metricValue.get(shape.abbr);
+            const label = !stat
+              ? `${shape.name}: no data`
+              : metric === "total"
+                ? `${shape.name}: ${fmtInt(stat.total)} PERM filings`
+                : v === undefined
+                  ? `${shape.name}: ${spec.label} withheld, ${fmtInt(spec.population(stat))} ${spec.populationNoun} is under the floor. ${fmtInt(stat.total)} PERM filings`
+                  : `${shape.name}: ${spec.label} ${spec.format(v)}, over ${fmtInt(spec.population(stat))} ${spec.populationNoun}. ${fmtInt(stat.total)} PERM filings`;
             return (
               <path
                 key={shape.abbr}
                 d={shape.d}
                 role="button"
                 tabIndex={0}
-                aria-label={
-                  stat
-                    ? `${shape.name}: ${fmtInt(stat.total)} PERM filings`
-                    : `${shape.name}: no data`
-                }
+                aria-label={label}
                 onMouseEnter={() => setPreviewed(shape.abbr)}
                 onMouseLeave={() => setPreviewed(null)}
                 onFocus={() => setPreviewed(shape.abbr)}
@@ -126,7 +322,12 @@ export function USStateMap({ states }: { states: StateStat[] }) {
                 }}
                 className="cursor-pointer outline-none focus-visible:stroke-[3]"
                 style={{
-                  fill: `color-mix(in srgb, var(--primary) ${mix}%, var(--card))`,
+                  fill:
+                    v === undefined
+                      ? stat
+                        ? "color-mix(in srgb, var(--data-none) 22%, var(--card))"
+                        : "var(--card)"
+                      : `color-mix(in srgb, var(--primary) ${BUCKET_MIX[bucketOf(v)]}%, var(--card))`,
                   stroke: isActive ? "var(--foreground)" : "var(--border)",
                   strokeWidth: isActive ? 2.5 : 1,
                 }}
@@ -205,23 +406,43 @@ export function USStateMap({ states }: { states: StateStat[] }) {
         </svg>
       </div>
 
-      {/* Legend: five volume buckets, lowest to highest. */}
+      {/* Legend: five buckets, and the range they actually span. A scale with
+          no numbers on it is a decoration. */}
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
         <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
-          Filings
+          {spec.label}
         </span>{" "}
-        {BUCKET_MIX.map((mix, i) => (
-          <span key={mix} className="inline-flex items-center gap-1.5">
+        <span className="text-xs text-foreground/60">
+          {range ? spec.format(range.lo) : "—"}
+        </span>{" "}
+        {BUCKET_MIX.map((mix) => (
+          <span
+            key={mix}
+            aria-hidden="true"
+            className="inline-block h-3.5 w-6 border border-border"
+            style={{ background: `color-mix(in srgb, var(--primary) ${mix}%, var(--card))` }}
+          />
+        ))}{" "}
+        <span className="text-xs text-foreground/60">
+          {range ? spec.format(range.hi) : "—"}
+        </span>{" "}
+        {spec.floored && floor > 0 ? (
+          <span className="inline-flex items-center gap-1.5">
             <span
               aria-hidden="true"
-              className="inline-block h-3.5 w-3.5 border border-border"
-              style={{ background: `color-mix(in srgb, var(--primary) ${mix}%, var(--card))` }}
+              className="inline-block h-3.5 w-6 border border-border"
+              style={{ background: "color-mix(in srgb, var(--data-none) 22%, var(--card))" }}
             />
             <span className="text-xs text-foreground/60">
-              {i === 0 ? "fewest" : i === BUCKET_MIX.length - 1 ? "most" : ""}
+              Under {fmtInt(floor)} {spec.populationNoun}, not shaded
             </span>
           </span>
-        ))}
+        ) : null}{" "}
+        <span className="text-xs text-foreground/50">
+          {range
+            ? `${range.n} of ${states.length} shaded`
+            : "Nothing clears the floor at this setting"}
+        </span>
       </div>
 
       {/* The reading panel: preview follows the pointer, a click pins. */}
@@ -234,7 +455,9 @@ export function USStateMap({ states }: { states: StateStat[] }) {
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="font-heading text-xl font-black">{activeName}</h3>{" "}
               <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
-                {pinned === activeAbbr ? "Pinned — tap another state to move" : "Tap to pin"}
+                {pinned === activeAbbr
+                  ? "Pinned. Another state replaces it"
+                  : "Tapping pins it"}
               </p>
             </div>
             <dl className="mt-4 grid [&>*]:min-w-0 grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -257,6 +480,27 @@ export function USStateMap({ states }: { states: StateStat[] }) {
                 </div>
               ))}
             </dl>
+            <p className="mt-4 text-sm leading-relaxed text-foreground/70">
+              {metricValue.has(active.state) ? (
+                <>
+                  {spec.label} here is{" "}
+                  <strong className="font-bold">
+                    {spec.format(metricValue.get(active.state)!)}
+                  </strong>
+                  , {rankOf.get(active.state)}
+                  {ordinalSuffix(rankOf.get(active.state) ?? 0)} of the{" "}
+                  {range?.n ?? 0} states carrying that figure, over{" "}
+                  {fmtInt(spec.population(active))} {spec.populationNoun}.
+                </>
+              ) : (
+                <>
+                  {spec.label} is withheld here: {fmtInt(spec.population(active))}{" "}
+                  {spec.populationNoun} is under the floor of {fmtInt(floor)}, and a rate
+                  over a population that small says more about the sample than the state.
+                  The figures above are the counts themselves, which need no floor.
+                </>
+              )}
+            </p>
           </div>
         ) : (
           <div>
@@ -264,11 +508,217 @@ export function USStateMap({ states }: { states: StateStat[] }) {
             <p className="mt-2 text-base leading-relaxed text-foreground/70">
               {fmtInt(national.total)} PERM filings across {states.length} states and
               territories in the current disclosure window, {fmtInt(national.certified)}{" "}
-              certified. Hover or tap a state for its own numbers.
+              certified. Hovering or tapping a state shows its own numbers.
             </p>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function ordinalSuffix(n: number): string {
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 13) return "th";
+  const mod10 = n % 10;
+  return mod10 === 1 ? "st" : mod10 === 2 ? "nd" : mod10 === 3 ? "rd" : "th";
+}
+
+interface RankedState extends StateStat {
+  rank: number;
+  name: string;
+  region: string | null;
+  decided: number;
+}
+
+/**
+ * Every state and territory as exact figures — including the five DOL records
+ * that the map cannot draw, which is most of why the table is not optional.
+ *
+ * The floor never removes a row here. It decides what the map is willing to
+ * COLOUR; the table's job is to show the reader the denominator and let them
+ * judge, which is why `Decided` sits next to every rate.
+ */
+export function StateStatTable({ states }: { states: StateStat[] }) {
+  const rows = useMemo<RankedState[]>(
+    () =>
+      [...states]
+        .sort((a, b) => b.total - a.total)
+        .map((s, i) => ({
+          ...s,
+          rank: i + 1,
+          name: stateName(s.state),
+          region: CENSUS_REGION[s.state] ?? null,
+          decided: decidedOf(s),
+        })),
+    [states],
+  );
+
+  const columns: StatColumn<RankedState>[] = [
+    {
+      key: "rank",
+      label: "#",
+      numeric: true,
+      sortValue: (s) => s.rank,
+      render: (s) => <span className="text-foreground/50">{s.rank}</span>,
+    },
+    {
+      key: "name",
+      label: "State",
+      sortValue: (s) => s.name,
+      render: (s) => (
+        <span className="font-bold">
+          {s.name} <span className="font-mono text-xs text-foreground/50">{s.state}</span>
+        </span>
+      ),
+    },
+    {
+      key: "total",
+      label: "Filings",
+      numeric: true,
+      sortValue: (s) => s.total,
+      render: (s) => fmtInt(s.total),
+    },
+    {
+      key: "certified",
+      label: "Certified",
+      numeric: true,
+      secondary: true,
+      sortValue: (s) => s.certified,
+      render: (s) => fmtInt(s.certified),
+    },
+    {
+      key: "denied",
+      label: "Denied",
+      numeric: true,
+      secondary: true,
+      sortValue: (s) => s.denied,
+      render: (s) => fmtInt(s.denied),
+    },
+    {
+      key: "withdrawn",
+      label: "Withdrawn",
+      numeric: true,
+      secondary: true,
+      sortValue: (s) => s.withdrawn,
+      render: (s) => fmtInt(s.withdrawn),
+    },
+    {
+      key: "decided",
+      label: "Decided",
+      numeric: true,
+      sortValue: (s) => s.decided,
+      render: (s) => fmtInt(s.decided),
+    },
+    {
+      key: "approval",
+      label: "Approval",
+      numeric: true,
+      // Null, not zero, when nothing was decided. A state with no decisions is
+      // not a state with a 0% approval rate, and sorting it as one would put it
+      // at the bottom of a ranking it does not belong in.
+      sortValue: (s) => (s.decided > 0 ? s.certified / s.decided : null),
+      render: (s) => certRate(s),
+    },
+    {
+      key: "days",
+      label: "Median days",
+      numeric: true,
+      secondary: true,
+      sortValue: (s) => s.medianDays,
+      render: (s) => (s.medianDays == null ? "—" : fmtInt(Math.round(s.medianDays))),
+    },
+    {
+      key: "wage",
+      label: "Median wage",
+      numeric: true,
+      sortValue: (s) => s.medianAnnualWage,
+      render: (s) => fmtWage(s.medianAnnualWage),
+    },
+  ];
+
+  const csv: CsvSpec<RankedState> = {
+    filename: "perm-filings-by-state.csv",
+    header: [
+      "rank", "state", "state_code", "region", "filings", "certified", "denied",
+      "withdrawn", "decided", "approval_rate_pct", "median_days", "median_annual_wage",
+    ],
+    row: (s) => [
+      s.rank,
+      s.name,
+      s.state,
+      s.region,
+      s.total,
+      s.certified,
+      s.denied,
+      s.withdrawn,
+      s.decided,
+      s.decided > 0 ? ((s.certified / s.decided) * 100).toFixed(2) : "",
+      s.medianDays == null ? "" : Math.round(s.medianDays),
+      s.medianAnnualWage == null ? "" : Math.round(s.medianAnnualWage),
+    ],
+  };
+
+  return (
+    <FilterableStatTable<RankedState>
+      rows={rows}
+      columns={columns}
+      facets={[
+        {
+          key: "region",
+          label: "Region",
+          value: (s) => s.region,
+        },
+      ]}
+      csv={csv}
+      searchText={(s) => `${s.name} ${s.state} ${s.region ?? ""}`}
+      searchPlaceholder="California, TX, Midwest…"
+      initialSort="total"
+      caption="Every state and territory with PERM filings, certifications, denials, withdrawals, approval rate, median days and median offered wage"
+      noun="states and territories"
+      // Every state and territory in one page, so all of them are in the
+      // served HTML. A paged reference table is a reference table a crawler
+      // reads a quarter of.
+      pageSize={100}
+    />
+  );
+}
+
+/**
+ * The map and the full table under one set of controls.
+ *
+ * They share the metric and the floor deliberately: two independent floor
+ * selects on one page is two answers to the same question, and a reader who
+ * changed one would reasonably believe they had changed both.
+ */
+export function StateExplorer({ states }: { states: StateStat[] }) {
+  const [metric, setMetric] = useState<StateMetric>("total");
+  const [floor, setFloor] = useState<number>(DEFAULT_STATE_FLOOR);
+
+  return (
+    <Fragment>
+      <section className="pop mt-10">
+        <div className="border-2 border-border bg-card p-4 sm:p-6">
+          <USStateMap
+            states={states}
+            metric={metric}
+            onMetricChange={setMetric}
+            floor={floor}
+            onFloorChange={setFloor}
+          />
+        </div>
+      </section>{" "}
+      <section className="mt-12">
+        <h2 className="font-heading text-2xl font-black">Every state, ranked</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base text-foreground/70">
+          Every column sorts, every region filters, and the whole set downloads
+          as a CSV. Approval rate never appears without the decided count
+          behind it, because a rate is only worth what its denominator is.
+        </p>
+        <div className="mt-6">
+          <StateStatTable states={states} />
+        </div>
+      </section>
+    </Fragment>
   );
 }

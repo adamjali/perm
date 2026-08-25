@@ -2,9 +2,15 @@
  * PERM filings by state: the map page.
  *
  * Real Census geometry filled from the live DOL disclosure aggregates —
- * filings, approval rate, median days and median wage per worksite state.
- * The rival keeps a state map behind its paywall; ours is free, on the open
- * data, with the methodology one tab away.
+ * filings, approval rate, denial rate, median days and median wage per
+ * worksite state. The rival keeps a state map behind its paywall; ours is
+ * free, on the open data, with the methodology one tab away.
+ *
+ * The map and the table share one metric selector and one population floor.
+ * A choropleth shaded by a rate over seventeen decided cases is a picture of
+ * a sample size, so the floor decides how thin a state is allowed to be
+ * before its rate stops being coloured — and it never touches a count, which
+ * needs no floor.
  */
 
 import type { Metadata } from "next";
@@ -15,7 +21,7 @@ import { api } from "../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
-import { USStateMap, type StateStat } from "@/components/tools/USStateMap";
+import { StateExplorer, type StateStat } from "@/components/tools/USStateMap";
 
 const TITLE = "PERM Filings by State";
 const DESCRIPTION =
@@ -46,6 +52,9 @@ export default async function PermByStatePage() {
 
   const ranked = [...byState].sort((a, b) => b.total - a.total);
   const top = ranked[0];
+  const smallHalf = ranked.slice(Math.ceil(ranked.length / 2));
+  const smallHalfTotal = smallHalf.reduce((sum, s) => sum + s.total, 0);
+  const topBeatsSmallHalf = Boolean(top) && (top?.total ?? 0) > smallHalfTotal;
 
   const datasetSchema = {
     "@context": "https://schema.org",
@@ -73,21 +82,18 @@ export default async function PermByStatePage() {
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           Every certified, denied and withdrawn case in the current disclosure
-          window, placed at its worksite state. Hover to read a state, tap to
-          pin it.
+          window, placed at its worksite state. The map shades by volume,
+          approval rate, denial rate, median days or median wage. Hovering a
+          state reads it, and tapping pins it.
         </p>
       </header>
 
       {byState.length > 0 ? (
         <>
-          <section className="pop mt-10">
-            <div className="border-2 border-border bg-card p-4 sm:p-6">
-              <USStateMap states={byState} />
-            </div>
-          </section>
+          <StateExplorer states={byState} />
 
           {/* The three facts the map cannot say at a glance. */}
-          <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
+          <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard-sm">
               <p className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
                 Cases in this window
@@ -108,9 +114,11 @@ export default async function PermByStatePage() {
                 {top ? top.state : "—"}
               </p>{" "}
               <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-                {top
-                  ? `${fmtInt(top.total)} filings — more than the bottom half of the map combined.`
-                  : "Awaiting the next quarterly ingest."}
+                {!top
+                  ? "Awaiting the next quarterly ingest."
+                  : topBeatsSmallHalf
+                    ? `${fmtInt(top.total)} filings, more than the ${smallHalf.length} smallest states put together.`
+                    : `${fmtInt(top.total)} filings, ${((top.total / (uniqueCases || 1)) * 100).toFixed(0)}% of the window.`}
               </p>
             </div>
             <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
@@ -119,7 +127,7 @@ export default async function PermByStatePage() {
               </p>{" "}
               <p className="mt-2 text-sm leading-relaxed text-foreground/70">
                 DOL works one national queue, so median days barely move by
-                state. Volume and wages move a lot — that is industry mix, not
+                state. Volume and wages move a lot. That is industry mix, not
                 a faster line. The{" "}
                 <Link href="/methodology" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                   methodology
@@ -129,43 +137,24 @@ export default async function PermByStatePage() {
             </div>
           </section>
 
-          <section className="mt-12">
-            <h2 className="font-heading text-2xl font-black">Every state, ranked</h2>
-            <div className="mt-6 overflow-x-auto">
-              <table className="w-full min-w-[640px] border-2 border-border text-left text-sm shadow-hard-sm">
-                <thead className="bg-foreground text-background">
-                  <tr>
-                    <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">#</th>{" "}
-                    <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">State</th>{" "}
-                    <th scope="col" className="p-3 text-right font-mono text-xs font-bold uppercase tracking-wider">Filings</th>{" "}
-                    <th scope="col" className="p-3 text-right font-mono text-xs font-bold uppercase tracking-wider">Certified</th>{" "}
-                    <th scope="col" className="p-3 text-right font-mono text-xs font-bold uppercase tracking-wider">Approval</th>{" "}
-                    <th scope="col" className="p-3 text-right font-mono text-xs font-bold uppercase tracking-wider">Median wage</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-card">
-                  {ranked.map((s, i) => {
-                    const decided = s.certified + s.denied;
-                    return (
-                      <tr key={s.state} className="border-t border-border/40">
-                        <td className="p-3 tabular-nums text-foreground/50">{i + 1}</td>{" "}
-                        <td className="p-3 font-bold">{s.state}</td>{" "}
-                        <td className="p-3 text-right tabular-nums">{fmtInt(s.total)}</td>{" "}
-                        <td className="p-3 text-right tabular-nums">{fmtInt(s.certified)}</td>{" "}
-                        <td className="p-3 text-right tabular-nums">
-                          {decided === 0 ? "—" : `${((s.certified / decided) * 100).toFixed(1)}%`}
-                        </td>{" "}
-                        <td className="p-3 text-right tabular-nums">
-                          {s.medianAnnualWage == null
-                            ? "—"
-                            : `$${Math.round(s.medianAnnualWage).toLocaleString("en-US")}`}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+          <section className="mt-10 border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
+            <h2 className="font-heading text-lg font-black">
+              Reading a rate off a small state
+            </h2>{" "}
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+              The smallest jurisdictions here decide a couple of dozen cases in
+              a whole window. One denial swings a rate like that by several
+              points, so the map leaves them uncoloured on rates and medians
+              rather than shading them as if the figure meant the same thing it
+              does in California. Drop the floor to nothing and they come back,
+              with the same denominator sitting beside them in the table.
+              Denial rates ranked this way, with a 95% range on each one, are
+              on the{" "}
+              <Link href="/perm-denial-risk" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                denial rates page
+              </Link>
+              .
+            </p>
           </section>
         </>
       ) : (
@@ -186,7 +175,7 @@ export default async function PermByStatePage() {
         <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Waiting on a case here?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            The state does not change your place in line — the filing month
+            The state does not change your place in line. The filing month
             does. The{" "}
             <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision estimator

@@ -18,7 +18,7 @@ import { fetchEntitySeed } from "@/lib/entitySeed";
 
 const TITLE = "Every PERM Employer, Ranked";
 const DESCRIPTION =
-  "Every company that filed a PERM case: volume, approval rate and median processing days per sponsor, searchable and sortable, from DOL's own disclosure files.";
+  "Every company that filed a PERM case: volume, approval rate and median days per sponsor, searchable and sortable, from DOL's own disclosure files.";
 
 export const metadata: Metadata = {
   title: TITLE,

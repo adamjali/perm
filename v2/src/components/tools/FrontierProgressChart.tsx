@@ -17,10 +17,19 @@
  * SVG rather than CSS here because it is a line across two axes. Every label
  * sits outside the plot area in its own gutter, and the viewBox is sized to the
  * content so the drawing fills its column instead of floating in padding.
+ *
+ * Two controls sit on it. The window narrows the drawing to the most recent
+ * months, because "how fast is it moving lately" and "how fast has it moved
+ * across the record" are different questions and the line answers whichever
+ * one you point it at. The table is the same series as figures, with the
+ * decision count behind each point: a month at the median of 8,890 decisions
+ * and a month at the median of 19,787 are not equally solid, and the chart
+ * cannot show that.
  */
 
-import { useId } from "react";
+import { Fragment, useId, useMemo, useState } from "react";
 import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
+import { DataView, ScopeSelect } from "@/components/tools/DataView";
 import { formatMonth, formatMonthShort } from "@/lib/dolFormat";
 import { cn } from "@/lib/utils";
 
@@ -50,17 +59,14 @@ const PAD_R = 16;
 const PAD_T = 20;
 const PAD_B = 44; // x labels
 
-export function FrontierProgressChart({
-  history,
+function FrontierSvg({
+  points,
   filingMonth,
-  className,
-}: FrontierProgressChartProps) {
+}: {
+  points: FrontierPoint[];
+  filingMonth: string;
+}) {
   const gradientId = useId();
-
-  const points = [...history].sort((a, b) =>
-    a.decisionMonth.localeCompare(b.decisionMonth),
-  );
-  if (points.length < 2) return null;
 
   const xs = points.map((p) => monthIndex(p.decisionMonth));
   const ys = points.map((p) => monthIndex(p.medianFilingMonth));
@@ -97,15 +103,12 @@ export function FrontierProgressChart({
   const toMonth = (idx: number) =>
     `${Math.floor(idx / 12)}-${String((idx % 12) + 1).padStart(2, "0")}`;
 
-  const targetReached = target <= ys[ys.length - 1]!;
-
   return (
-    <figure className={cn("m-0", className)}>
-      {/* The drawing has a minimum width and scrolls inside this container.
-          Fitting it to a 390px phone scales the 13px axis labels to about
-          5.5px, which is unreadable; shrinking the viewBox instead would make
-          the same labels oversized on a desktop. */}
-      <div className="-mx-1 overflow-x-auto px-1">
+    /* The drawing has a minimum width and scrolls inside this container.
+       Fitting it to a 390px phone scales the 13px axis labels to about
+       5.5px, which is unreadable; shrinking the viewBox instead would make
+       the same labels oversized on a desktop. */
+    <div className="-mx-1 overflow-x-auto px-1">
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full min-w-[36rem]"
@@ -195,7 +198,174 @@ export function FrontierProgressChart({
           </text>
         ))}
       </svg>
-      </div>
+    </div>
+  );
+}
+
+/**
+ * The same series as figures. `Advanced` is measured against the month before
+ * it in the WHOLE record, never in the window on screen, so narrowing the view
+ * cannot change what a row says happened.
+ */
+function FrontierTable({
+  rows,
+  advance,
+  filingMonth,
+}: {
+  rows: FrontierPoint[];
+  advance: Map<string, number | null>;
+  filingMonth: string;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[560px] border-2 border-border text-left text-sm shadow-hard-sm">
+        <caption className="sr-only">
+          The filing month DOL was deciding in each month of determinations,
+          with the number of decisions behind each figure
+        </caption>
+        <thead className="bg-foreground text-background">
+          <tr>
+            <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
+              Decisions in
+            </th>{" "}
+            <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
+              Median filing month
+            </th>{" "}
+            <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
+              Advanced
+            </th>{" "}
+            <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
+              Decisions
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-card">
+          {[...rows].reverse().map((p) => {
+            const a = advance.get(p.decisionMonth) ?? null;
+            const isTarget = p.medianFilingMonth === filingMonth;
+            return (
+              <tr
+                key={p.decisionMonth}
+                className={cn(
+                  "border-t border-border/40",
+                  isTarget && "bg-tint-primary",
+                )}
+              >
+                <td className="px-3 py-2.5 tabular-nums">
+                  {formatMonth(p.decisionMonth)}
+                </td>{" "}
+                <td className="px-3 py-2.5 font-bold">
+                  {formatMonth(p.medianFilingMonth)}
+                </td>{" "}
+                <td className="px-3 py-2.5 text-right tabular-nums">
+                  {a === null ? (
+                    <span className="text-foreground/40">—</span>
+                  ) : a === 0 ? (
+                    <span className="text-foreground/50">no change</span>
+                  ) : (
+                    `${a > 0 ? "+" : ""}${a} month${Math.abs(a) === 1 ? "" : "s"}`
+                  )}
+                </td>{" "}
+                <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
+                  {p.decisions.toLocaleString("en-US")}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Windows offered, in months of determinations. */
+const FRONTIER_WINDOWS = [6, 12] as const;
+
+export function FrontierProgressChart({
+  history,
+  filingMonth,
+  className,
+}: FrontierProgressChartProps) {
+  const [window, setWindow] = useState<string>("all");
+
+  const points = useMemo(
+    () => [...history].sort((a, b) => a.decisionMonth.localeCompare(b.decisionMonth)),
+    [history],
+  );
+
+  const advance = useMemo(() => {
+    const out = new Map<string, number | null>();
+    points.forEach((p, i) => {
+      const prev = i > 0 ? points[i - 1] : undefined;
+      out.set(
+        p.decisionMonth,
+        prev
+          ? monthIndex(p.medianFilingMonth) - monthIndex(prev.medianFilingMonth)
+          : null,
+      );
+    });
+    return out;
+  }, [points]);
+
+  if (points.length < 2) return null;
+
+  const n = points.length;
+  const take = window === "all" ? n : Number(window);
+  const shown = points.slice(Math.max(0, n - take));
+
+  // Only offer a window the record can fill. An option that returns the same
+  // chart is a control that does nothing.
+  const options = [
+    ...FRONTIER_WINDOWS.filter((w) => w < n).map((w) => ({
+      value: String(w),
+      label: `Last ${w} months`,
+    })),
+    { value: "all", label: `All ${n} months` },
+  ];
+
+  const first = shown[0]!;
+  const last = shown[shown.length - 1]!;
+  const movedAcross =
+    monthIndex(last.medianFilingMonth) - monthIndex(first.medianFilingMonth);
+  const elapsed = monthIndex(last.decisionMonth) - monthIndex(first.decisionMonth);
+  const targetReached =
+    monthIndex(filingMonth) <= monthIndex(points[points.length - 1]!.medianFilingMonth);
+
+  const controls =
+    options.length > 1 ? (
+      <Fragment>
+        <ScopeSelect
+          label="Window"
+          value={window}
+          onChange={setWindow}
+          hint="Narrows the chart and the table to the most recent months of determinations."
+          options={options}
+        />{" "}
+        <p className="text-sm text-foreground/70">
+          {formatMonth(first.decisionMonth)} to {formatMonth(last.decisionMonth)}
+          {elapsed > 0 ? (
+            <>
+              {" "}
+              <span className="text-foreground/50">
+                ({movedAcross} month{movedAcross === 1 ? "" : "s"} of queue in {elapsed}{" "}
+                month{elapsed === 1 ? "" : "s"} of calendar)
+              </span>
+            </>
+          ) : null}
+        </p>
+      </Fragment>
+    ) : undefined;
+
+  return (
+    <figure className={cn("m-0", className)}>
+      <DataView
+        label="Queue advance"
+        controls={controls}
+        chart={<FrontierSvg points={shown} filingMonth={filingMonth} />}
+        table={
+          <FrontierTable rows={shown} advance={advance} filingMonth={filingMonth} />
+        }
+      />
 
       <figcaption className="mt-4 space-y-2 text-sm leading-relaxed text-foreground/70">
         <p>

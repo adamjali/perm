@@ -17,9 +17,19 @@
  * The discipline that follows from that: nothing on this page is derived,
  * modelled or extrapolated. Every figure is either printed by DOL or is
  * arithmetic on two dates DOL printed.
+ *
+ * TWO DOL PUBLICATIONS SIT HERE, ON TWO CADENCES. The queue positions come
+ * from flag.dol.gov weekly. The decisions-per-month counts come from the
+ * quarterly disclosure files. Both are DOL's own figures and neither is
+ * modelled, but they go stale at different rates, so the page labels which
+ * is which rather than letting one freshness date stand for the whole thing.
+ *
+ * Every chart carries the same numbers as a table, in the served HTML, and a
+ * switch between them. Where a series is long enough for the question "what
+ * about lately" to differ from "what about across the record", it carries a
+ * window control too.
  */
 
-import { Fragment } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchQuery } from "convex/nextjs";
@@ -29,7 +39,7 @@ import { api } from "../../../../convex/_generated/api";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
-import { currentMonthUtc, daysAsApproxMonths, daysBetween, formatAsOf, formatCount, formatMonth, monthsMoved } from "@/lib/dolFormat";
+import { currentMonthUtc, daysAsApproxMonths, daysBetween, formatAsOf, formatMonth, monthsMoved } from "@/lib/dolFormat";
 import {
   analystReviewQueue,
   analystReviewAverage,
@@ -37,7 +47,9 @@ import {
 import { QueueAlertForm } from "./QueueAlertForm";
 import { DataNav } from "@/components/tools/DataNav";
 import { QueueTape } from "@/components/tools/QueueTape";
-import { QueueHistoryChart } from "@/components/tools/QueueHistoryChart";
+import { DecisionsByMonth, QueueHistoryChart } from "@/components/tools/QueueHistoryChart";
+import { PwdBacklogChart } from "@/components/tools/PwdBacklogChart";
+import { FreshnessDots, type Freshness } from "@/components/tools/Insight";
 
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
 // Same expression as layout.tsx, sitemap.ts, feed.xml and seo.ts. A bare
@@ -70,7 +82,7 @@ const FAQ = [
   {
     question: "How long is PERM processing taking right now?",
     answer:
-      "DOL publishes an average number of calendar days to a determination each month, alongside the filing month its analysts are currently working. Both figures appear on this page with the date DOL attached to them. The average describes cases DOL finished recently, so it describes the past rather than forecasting your case.",
+      "DOL publishes an average number of calendar days to a determination each month, alongside the filing month its analysts are currently working. Both carry the date DOL attached to them. The average describes cases DOL finished recently, so it describes the past rather than forecasting your case.",
   },
   {
     question: "What does the analyst review priority date mean?",
@@ -85,12 +97,12 @@ const FAQ = [
   {
     question: "Can PERM be processed faster than the published average?",
     answer:
-      "There is no premium processing for PERM. An individual case can land either side of the average depending on whether it is selected for audit, and audited cases sit in a separate queue with its own priority date, shown above.",
+      "There is no premium processing for PERM. An individual case can land either side of the average depending on whether it is selected for audit, and audited cases sit in a separate queue that DOL publishes its own priority date for.",
   },
   {
     question: "Where does this data come from?",
     answer:
-      "Directly from the Department of Labor's Office of Foreign Labor Certification, at flag.dol.gov/processingtimes. This page reads that source weekly and stores each publication. Nothing here is estimated or modelled.",
+      "Directly from the Department of Labor's Office of Foreign Labor Certification, at flag.dol.gov/processingtimes. PERM Tracker reads that source weekly and stores every publication. Nothing is estimated or modelled.",
   },
 ];
 
@@ -113,10 +125,20 @@ function Figure({
 }
 
 export default async function PermProcessingTimesPage() {
-  const [snapshot, history] = await Promise.all([
+  const [snapshot, history, disclosure] = await Promise.all([
     fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(() => null),
     fetchQuery(api.dolProcessingTimes.getHistory, { limit: 24 }).catch(() => []),
+    // The quarterly files, for the decisions-per-month series. A separate
+    // publication on a separate cadence, labelled as such on the page.
+    fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null),
   ]);
+
+  const decisionsByMonth = disclosure?.clearanceByMonth ?? [];
+  const disclosureWindow = disclosure?.sourceFiles?.length
+    ? disclosure.sourceFiles
+        .map((f) => f.replace(/^PERM_Disclosure_Data_/, "").replace(/\.xlsx$/, ""))
+        .join(" + ")
+    : null;
 
   const analyst = snapshot ? analystReviewQueue(snapshot.permQueues) : undefined;
   const audit = snapshot?.permQueues.find((q) => /audit review/i.test(q.queue));
@@ -139,6 +161,28 @@ export default async function PermProcessingTimesPage() {
   const analystMonth = formatMonth(analyst?.priorityDate ?? null);
   const permAsOf = formatAsOf(snapshot?.permAsOf);
 
+  // Two publications, two cadences, both named. A dot is only rendered for a
+  // source that actually carries a date: an "as of" with nothing behind it is
+  // the exact claim this page exists to avoid making.
+  //
+  // They are two separate `FreshnessDots` rather than one with two items
+  // BECAUSE OF A REAL DEFECT: that component maps its items to sibling spans
+  // with nothing between them, so two dots reach the DOM as
+  // "...August 20, 2026DOL disclosure files..." to every extractor that walks
+  // it. Measured on this page. The proper fix is a separator inside
+  // `Insight.tsx`; until that lands, one item each and an explicit space.
+  const flagFreshness: Freshness | null =
+    snapshot?.permAsOf && formatAsOf(snapshot.permAsOf)
+      ? {
+          label: "DOL FLAG queue page",
+          asOf: formatAsOf(snapshot.permAsOf) as string,
+          kind: "live",
+        }
+      : null;
+  const disclosureFreshness: Freshness | null = disclosureWindow
+    ? { label: "DOL disclosure files", asOf: disclosureWindow, kind: "window" }
+    : null;
+
   // Measured movement: the newest snapshot against the oldest one in this
   // window. Two published dates subtracted, which keeps it a measurement rather
   // than a projection.
@@ -160,13 +204,6 @@ export default async function PermProcessingTimesPage() {
   // is a sentence worth publishing.
   const hasVelocity =
     movedMonths !== null && movedMonths > 0 && observedDays !== null && observedDays > 0;
-
-  // Bar widths are relative to the largest month. Floor of 1 so a zero-count
-  // month cannot divide by zero when the backlog is empty.
-  const backlogMax = Math.max(
-    ...(snapshot?.pwdPermBacklog.map((r) => r.remainingRequests) ?? []),
-    1,
-  );
 
   const breadcrumb = generateBreadcrumbSchema([
     { name: "Home", href: "/" },
@@ -220,6 +257,10 @@ export default async function PermProcessingTimesPage() {
           Where the Department of Labor&apos;s queues actually stand, taken from DOL&apos;s own
           published figures and refreshed every week.
         </p>
+        <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-1.5">
+          {flagFreshness ? <FreshnessDots items={[flagFreshness]} /> : null}{" "}
+          {disclosureFreshness ? <FreshnessDots items={[disclosureFreshness]} /> : null}
+        </div>
       </header>
 
       {/* Gated on the SNAPSHOT, not on the headline month. It used to require
@@ -332,6 +373,22 @@ export default async function PermProcessingTimesPage() {
             </section>
           ) : null}
 
+          {decisionsByMonth.length >= 2 ? (
+            <section className="mt-12">
+              <h2 className="font-heading text-2xl font-black">
+                How much DOL decides in a month
+              </h2>{" "}
+              <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+                The queue position says where the line is. This says how fast
+                DOL is emptying it: every determination in the quarterly
+                disclosure files, counted by the month it was issued. From the
+                disclosure files rather than the weekly queue page, so it lags
+                by a quarter and gains a year and a half of history in return.
+              </p>
+              <DecisionsByMonth points={decisionsByMonth} className="mt-6" />
+            </section>
+          ) : null}
+
           <section className="mt-12">
             <h2 className="font-heading text-2xl font-black">Every PERM queue DOL publishes</h2>
             <div className="mt-4 overflow-x-auto">
@@ -364,35 +421,14 @@ export default async function PermProcessingTimesPage() {
               <h2 className="font-heading text-2xl font-black">
                 Prevailing wage requests still pending
               </h2>{" "}
-              <p className="mt-2 text-foreground/70">
+              <p className="mt-2 max-w-2xl text-foreground/70">
                 PERM prevailing wage requests DOL has not yet decided, by the month it received
-                them{snapshot.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""}.
+                them{snapshot.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""}. A
+                running total from the oldest month is what answers how many
+                requests sit ahead of a given one, so each month carries one
+                alongside its share of the pile.
               </p>
-              <ul className="mt-4 space-y-2">
-                {snapshot.pwdPermBacklog.map((row) => (
-                  // Mapped <li> siblings arrive with nothing between them, so
-                  // the months read as "December 2025 11January 2026 63".
-                  <Fragment key={row.receiptMonth}>
-                    {" "}
-                    <li className="flex items-center gap-3">
-                    <span className="w-28 shrink-0 text-sm text-foreground/70">
-                      {formatMonth(row.receiptMonth)}
-                    </span>{" "}
-                    <span className="h-5 flex-1 border-2 border-border bg-muted">
-                      <span
-                        className="block h-full bg-primary"
-                        style={{
-                          width: `${Math.max((row.remainingRequests / backlogMax) * 100, 1)}%`,
-                        }}
-                      />
-                    </span>{" "}
-                    <span className="w-20 shrink-0 text-right text-sm font-bold tabular-nums">
-                      {formatCount(row.remainingRequests) ?? "--"}
-                    </span>
-                  </li>
-                  </Fragment>
-                ))}
-              </ul>
+              <PwdBacklogChart backlog={snapshot.pwdPermBacklog} className="mt-6" />
             </section>
           ) : null}
         </>
@@ -419,7 +455,7 @@ export default async function PermProcessingTimesPage() {
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-2xl font-black">Where does your case sit?</h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
-          The figures above are DOL&apos;s position across every case. The
+          DOL&apos;s figures describe its position across every case. The
           calculator puts your own filing month against them and shows what each
           way of measuring implies.
         </p>
@@ -457,7 +493,7 @@ export default async function PermProcessingTimesPage() {
       <section className="mt-12 border-2 border-border bg-muted p-6">
         <h2 className="font-heading text-xl font-black">Where these numbers come from</h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
-          Every figure on this page is published by the Office of Foreign Labor Certification
+          Every one of these figures is published by the Office of Foreign Labor Certification
           at{" "}
           <a
             href={DOL_SOURCE}
@@ -471,8 +507,8 @@ export default async function PermProcessingTimesPage() {
           publication, because DOL overwrites its own and keeps no archive.
         </p>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
-          Nothing here is modelled or extrapolated. Where a number is missing, DOL did not
-          publish one, and this page says so rather than filling the gap.
+          Nothing is modelled or extrapolated. Where a number is missing, DOL did not
+          publish one, and we say so rather than filling the gap.
         </p>
       </section>
 
