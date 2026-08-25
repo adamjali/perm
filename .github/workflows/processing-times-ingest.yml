@@ -1,0 +1,80 @@
+name: DOL processing times
+
+# Fetches https://flag.dol.gov/processingtimes and stores the parsed snapshot
+# in Turso.
+#
+# This used to be a Convex cron. It moved because that is exactly how the data
+# went stale without anyone noticing: the Convex deployment was disabled for
+# exceeding its free tier, the cron stopped with it, and the page kept
+# rendering the last snapshot as though it were current. A scheduled job that
+# lives in the same system as the data it feeds fails silently together with
+# it.
+#
+# WEEKLY, because that is DOL's own cadence. The job is idempotent: the row is
+# keyed by DOL's own `permAsOf` date, so a run on a day DOL has not
+# republished replaces one row with an identical one and never fabricates a
+# history point. That matters - the PWD drain rate is measured BETWEEN two
+# snapshots with different as-of dates, so inventing points would invent a
+# rate.
+#
+# flag.dol.gov serves scripts without any header ceremony. That is NOT true of
+# www.dol.gov, which 403s a bare user agent and 403s a full browser header set
+# again after sustained traffic. Measured 2026-08-25 with cloudflare.com and
+# discord.com as controls, because "the site blocks bots" and "we are rate
+# limited" need completely different responses and look identical from one
+# failed request.
+#
+# Manual run:
+#   cd v2 && node --experimental-strip-types scripts/ingest_processing_times.mts
+
+on:
+  schedule:
+    # 07:00 UTC every Tuesday. DOL updates the page early in the week; a day's
+    # lag costs nothing against a queue measured in months.
+    - cron: "0 7 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: processing-times-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install
+        working-directory: v2
+        # The ingest needs @libsql/client and the parser's own (zero)
+        # dependencies. A frozen lockfile so a transitive bump cannot change
+        # what a scheduled job runs without a commit saying so.
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Fetch and store
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          # The script reads .env.local; in CI the values arrive as secrets, so
+          # materialise them into the file it expects rather than teaching the
+          # script two ways to find a credential.
+          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          node --experimental-strip-types scripts/ingest_processing_times.mts
+
+      - name: Remove credentials
+        if: always()
+        working-directory: v2
+        run: rm -f .env.local

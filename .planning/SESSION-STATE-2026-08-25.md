@@ -2,42 +2,41 @@
 
 Written so nothing is lost. Everything below is measured, not remembered.
 
-## THE BLOCKER (needs Adam)
+## RESOLVED SINCE THE FIRST DRAFT: the public data surface moved to Turso
 
-**Convex free plan exceeded; the deployment is DISABLED.** Every read and
-every write returns `You have exceeded the free plan limits`. Production data
-pages serve their empty states. I cannot shed data to recover because writes
-are off too.
+Convex is STILL disabled (reads and writes both; `permCases:getMeta` returns
+"You have exceeded the free plan limits"), so the table could not be dropped
+to recover. Instead the whole PUBLIC data surface moved to Turso, which fixes
+the public site without waiting on a billing decision and means a
+data-volume problem can never take it down again.
 
-- Convex free/Starter: **0.5 GB database storage**, 1 GB I/O, 1M function calls.
-- Convex Pro: **$25 per developer/month**, 50 GB storage, 25M calls.
-- Cause: 373,939 `permCases` rows with 7 regular + 2 full-text indexes, plus
-  21,178 entities and a third search index added on 2026-08-25.
-- Our case payload measures **125 MB uncompressed / 14 MB gzipped**; in SQLite
-  with indexes, budget ~250 MB.
+**Turso, account `adamjali`, db `permtracker-public-data`, AWS us-east-1**
+(same region as Vercel's iad1). Free tier: 5 GB. Credentials in
+`v2/.env.local` (gitignored, never committed).
 
-### Options
-1. **Convex Pro, $25/mo.** Everything returns immediately, nothing lost.
-2. **Move only `permCases` (+ `permWageStats`) off Convex**, keep aggregates,
-   entities, bulletins and processing times there (they fit free comfortably).
-   Recommended target: **Turso** (see below).
-3. **Drop the case browser**, revert to aggregates only. Free, loses the
-   feature that closed the biggest gap to permtrack.
+| table | rows |
+|---|---|
+| perm_cases | 373,939 |
+| perm_entities | 21,178 (ALL - no top-250 cap) |
+| perm_wage_stats | 2,190 |
+| perm_docs | 3 |
+| visa_bulletins | 10 |
+| processing_times | 1 (permAsOf 2026-08-20, fetched live) |
 
-### Storage comparison, fetched 2026-08-25 (not from memory)
-| | Free storage | Notes |
-|---|---|---|
-| **Turso** | **5 GB**, 500M row reads/mo, 10M writes/mo, 100 DBs | SQLite/libSQL. FTS5 full-text built in. `@libsql/client` speaks HTTP straight from a Vercel function, no Worker needed. Next tier $4.99/mo for 9 GB. |
-| Cloudflare D1 | **500 MB** (paid 10 GB) | Same ceiling we just hit. Also needs a Worker in front; the REST API is not for app traffic. |
-| Cloudflare R2 | 10 GB, no egress fees | Object storage, not queryable. Right for the raw XLSX archive, wrong for a case browser. |
-| Neon / Supabase | 0.5 GB | Same ceiling. |
+219 MB = **4.3% of the free tier**. Zero table scans across 5 browse probes.
+For contrast this one table would be 43% of Convex's entire 512 MB.
 
-**Recommendation: Turso.** Our ~250 MB is 5% of its free tier, it is SQLite so
-the case browser's filters and name search map directly onto indexes and FTS5,
-and it needs no extra infrastructure between Vercel and the data.
+**What is STILL on Convex, correctly:** accounts, user-tracked cases, chat,
+notifications, audit logs, admin. The authenticated app is still down until
+the billing question is settled.
 
-**What Adam needs to do:** create the account and hand over
-`TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`. Everything after that is mine.
+### The billing question, still open
+1. **Convex Pro, $25/mo** - authenticated app returns immediately.
+2. **Stay free**: with the public data gone, dropping `permCases` +
+   `permWageStats` would put the deployment back under 512 MB permanently -
+   but dropping needs WRITES, which are disabled. Would need Convex support
+   to re-enable briefly. Drafting that request is a reasonable next step.
+3. The public site does not need either: it is on Turso now.
 
 ## DONE AND DEPLOYED
 
@@ -65,7 +64,33 @@ and it needs no extra infrastructure between Vercel and the data.
 
 ## OPEN
 
-1. **Preloader still not right per Adam.** Must be the absolute first thing
+0. **Vercel Fluid Active CPU hit 77% (3h4m/4h)** on the Jul26-Aug25 cycle.
+   Cause was hourly ISR on quarterly data across the newly-unhidden 21,178
+   entity pages. Retuned to 86400s (21600s for processing-times) and
+   committed. Re-check next cycle; if still climbing, move to on-demand
+   revalidation from the ingest.
+
+1. **Preloader: FOUR causes found, all fixed, NOT yet verified on device.**
+   (a) the cover rule + its colour lived in globals.css, an external
+   stylesheet, and WebKit paints before a pending stylesheet - so the header
+   painted before the cover existed. Now inlined in <head> above the script.
+   (b) a sessionStorage flag made it appear only once per session.
+   (c) soft navigation never re-ran the <head> script - HomeCurtainNav now
+   arms it on link click. (d) THE "LOADS FOREVER" ONE: the hide rule was
+   `[data-pre="off"]`, which does not match an ABSENT attribute, and the
+   boot script returns early on every route except "/". So a soft nav to /
+   from /blog rendered .pre with nothing able to dismiss it. Now
+   `:not([data-pre="on"])`, which fails safe.
+
+2. **Icon migration DONE** - lucide-react removed from package.json, 0 files
+   importing it, 164 on Phosphor, and correctly removed from
+   optimizePackageImports (which has caused prod-only ReferenceErrors here).
+
+3. **Remaining Convex calls on public pages** (agent `turso-queries` is on
+   these): permCases.getMeta, permEntities.{getBySlug, fieldDistribution,
+   comparables, listByKind}. src/lib/turso/{cases,entities}.ts written.
+
+4. **Preloader still not verified on a real device.** Must be the absolute first thing
    for every entry path: typed URL, click from another page, cross-group
    navigation. Currently a skeleton/blank-with-header shows instead. NEEDS
    RESEARCH (Next.js App Router first-paint ordering).
