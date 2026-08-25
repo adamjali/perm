@@ -43,10 +43,10 @@ on:
     - cron: "0 7 20 * *"
   workflow_dispatch:
     inputs:
-      files:
-        description: "How many recent disclosure files to union"
+      since_fy:
+        description: "Earliest fiscal year to union (e.g. 2024). Takes whole years, so the FY2024 old-form/new-form pair is never split."
         required: false
-        default: "2"
+        default: "2025"
 
 permissions:
   contents: read
@@ -81,14 +81,20 @@ jobs:
         # into `run:` splices the value into the command itself, so a crafted
         # input would execute rather than be read as an argument.
         env:
-          FILE_COUNT: ${{ github.event.inputs.files || '2' }}
+          SINCE_FY: ${{ github.event.inputs.since_fy || '2025' }}
         run: |
-          case "$FILE_COUNT" in
-            ''|*[!0-9]*) echo "FATAL: files must be a positive integer" >&2; exit 1 ;;
+          case "$SINCE_FY" in
+            ''|*[!0-9]*) echo "FATAL: since_fy must be a 4-digit year" >&2; exit 1 ;;
           esac
+          # --since-fy, not --files. DOL replaced the ETA-9089 mid-FY2024 and
+          # published BOTH an old-form and a new-form file for that year, so a
+          # count can take one of the pair and undercount FY2024 while looking
+          # entirely plausible. Selecting by year cannot split a year.
           python3 scripts/ingest_perm_disclosure.py \
-            --files "$FILE_COUNT" \
-            --out "${RUNNER_TEMP}/perm-payload.json"
+            --since-fy "$SINCE_FY" \
+            --out "${RUNNER_TEMP}/perm-payload.json" \
+            --cases-out "${RUNNER_TEMP}/perm-cases.ndjson.gz" \
+            --wages-out "${RUNNER_TEMP}/perm-wages.json"
 
       # Fails the job rather than storing a truncated payload. The script
       # already refuses to write an empty one; this catches a partial write.
@@ -133,7 +139,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: federal-payloads
-          path: ${{ runner.temp }}/*.json
+          # The case stream is .ndjson.gz, and a *.json glob would drop the
+          # single largest thing this job produces precisely when the store
+          # step failed, which is when the artifact matters.
+          path: |
+            ${{ runner.temp }}/*.json
+            ${{ runner.temp }}/*.ndjson.gz
           retention-days: 7
           if-no-files-found: error
 
@@ -174,6 +185,38 @@ jobs:
             exit 0
           fi
           python3 scripts/store_entities.py --payload "${RUNNER_TEMP}/perm-payload.json" --prod
+
+      # Case rows are the biggest write this job makes. Kept separate from the
+      # entity step so a failure here is legible as its own failure rather
+      # than taking the entity write down with it, and skipped without error
+      # when the ingest produced no case stream.
+      - name: Store case-level rows
+        working-directory: v2
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: |
+          if [ -z "$CONVEX_DEPLOY_KEY" ]; then
+            echo "CONVEX_DEPLOY_KEY absent; skipping (stream is in the artifact)" >&2
+            exit 0
+          fi
+          if [ ! -s "${RUNNER_TEMP}/perm-cases.ndjson.gz" ]; then
+            echo "No case stream produced; skipping" >&2
+            exit 0
+          fi
+          python3 scripts/store_cases.py \
+            --cases "${RUNNER_TEMP}/perm-cases.ndjson.gz" --prod
+
+      - name: Store wage percentiles
+        working-directory: v2
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: |
+          if [ -z "$CONVEX_DEPLOY_KEY" ] || [ ! -s "${RUNNER_TEMP}/perm-wages.json" ]; then
+            echo "Skipping wage percentiles (no key or no payload)" >&2
+            exit 0
+          fi
+          npx --yes convex run permWageStats:storeStats \
+            "$(cat "${RUNNER_TEMP}/perm-wages.json")" --prod
 
       - name: Store aggregates in Convex
         working-directory: v2
