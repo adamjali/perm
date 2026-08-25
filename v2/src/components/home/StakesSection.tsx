@@ -246,11 +246,15 @@ export function StakesSection() {
         </div>
       </div>
 
-      {/* Scroll hint + bottom CTA */}
+      {/* Names the set instead of instructing. "Scroll to explore" is a cue
+          that tells the reader to do something they can already see is
+          possible, and its arrow carried `scroll-hint-icon`, an
+          `animation: infinite` pulse. The count is read off the array so it
+          cannot go stale. */}
       <div className="flex flex-col items-center gap-4 pt-8">
-        <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-          <span>Scroll to explore</span>{" "}
-          <ArrowRight className="h-4 w-4 scroll-hint-icon" />
+        <div className="flex items-center gap-2 font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          <span>{stakes.length} ways a case is lost</span>{" "}
+          <ArrowRight className="h-4 w-4" />
         </div>{" "}
         <p className="text-sm text-muted-foreground text-center">
           Every one of these deadlines is calculated automatically.

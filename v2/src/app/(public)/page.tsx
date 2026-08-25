@@ -5,11 +5,12 @@
  * Complete landing page matching mockup-home-v2.html design.
  *
  * Sections (in order):
- * 1. HeroSection - two doors + queue-flow canvas
+ * 1. HeroSection - the measured wait, then the two doors
  * 2. LiveDataBand - DOL's live queue position + the tape
  * 3. StakesSection - Horizontal scroll PERM consequence cards (#stakes)
  * 4. HowItWorks - 3-step process with connectors + video showcase (#how)
  * 4b. ToolsSection - the four calculators, laid out as the process (#tools)
+ * 4c. SectionDivider(comb) - graduations, where the page turns to instruments
  * 5. FeaturesGrid - 6 feature cards with tilt effect (#features)
  * 7. SecuritySection - Neobrutalist security table (#security)
  * 8. TestimonialsSection - Value props + trust badges
@@ -31,7 +32,10 @@ import {
   FAQSection,
   CTASection,
 } from "@/components/home";
-import { getFAQPageSchema, getHomepageRatingPartialSchema } from "@/lib/structuredData";
+import {
+  getFAQPageSchema,
+  getHomepageRatingPartialSchema,
+} from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { HOME_FAQS } from "@/components/home/faqData";
@@ -43,6 +47,7 @@ import {
 } from "../../../convex/lib/dolProcessingTimes";
 import { LiveDataBand } from "@/components/home/LiveDataBand";
 import { SectionDivider } from "@/components/home/SectionDivider";
+import { deriveFigures } from "@/components/home/dataPageFigures";
 import { Preloader } from "@/components/home/Preloader";
 
 // One live DOL figure on the page: hourly ISR, same as the data pages.
@@ -70,13 +75,18 @@ export const metadata: Metadata = {
   },
 };
 
-
-
 export default async function HomePage() {
-  const snapshot = await fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(
-    () => null,
-  );
-  const analyst = snapshot ? analystReviewQueue(snapshot.permQueues) : undefined;
+  // Two independent federal sources with two different as-of stamps, and they
+  // must not be conflated: the processing-times snapshot is DOL's weekly queue
+  // page, the disclosure stats are its quarterly determination files. Fetched
+  // in parallel, server-side, once per revalidate window.
+  const [snapshot, disclosure] = await Promise.all([
+    fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(() => null),
+    fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null),
+  ]);
+  const analyst = snapshot
+    ? analystReviewQueue(snapshot.permQueues)
+    : undefined;
   const analystAvg = snapshot
     ? analystReviewAverage(snapshot.permAverageDays)
     : undefined;
@@ -84,8 +94,7 @@ export default async function HomePage() {
     ? snapshot.pwdPermBacklog.reduce((sum, r) => sum + r.remainingRequests, 0)
     : null;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
   const faqSchema = getFAQPageSchema(
     HOME_FAQS.map(({ question, answer }) => ({ question, answer })),
   );
@@ -102,15 +111,17 @@ export default async function HomePage() {
       {/* FAQPage + homepage aggregateRating partial. Server-built schemas only. */}
       <JsonLdScript schema={faqSchema} />
       <JsonLdScript schema={ratingPartial} />
-      <HeroSection />
+      <HeroSection waitRows={disclosure?.frontierHistory ?? []} />
       <LiveDataBand
         frontierMonth={analyst?.priorityDate ?? null}
         asOf={snapshot?.permAsOf ?? null}
         averageDays={analystAvg?.calendarDays ?? null}
+        figures={deriveFigures(disclosure)}
       />
       <StakesSection />
       <SectionDivider kind="tape" fill="var(--muted)" />
       <HowItWorks />
+      <SectionDivider kind="comb" fill="var(--background)" />
       <ToolsSection
         pwdPending={pwdPending}
         frontierMonth={analyst?.priorityDate ?? null}

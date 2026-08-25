@@ -175,6 +175,14 @@
   --color-data-bad-ink: var(--data-bad-ink);
   --color-data-none: var(--data-none);
   --color-data-none-ink: var(--data-none-ink);
+
+  /* The docket bed. `--manila` has existed since the case-file components
+     were built but was never exposed to Tailwind, so `bg-manila` silently
+     generated nothing. Additive only: the raw custom properties above are
+     untouched. */
+  --color-manila: var(--manila);
+  --color-manila-dark: var(--manila-dark);
+  --color-manila-shadow: var(--manila-shadow);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
@@ -2365,4 +2373,37 @@ html[data-pre="off"] .pre { display: none; }
   .pre-mark, .pre-name, .pre-sub, .pre-track { animation: none; }
   .pre-bar { animation: none; transform: scaleX(0.92); }
   .pre-spin { animation: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Wait-ledger draw-in
+   ---------------------------------------------------------------------------
+   The hero figure's segments extend rightward once, in sequence, when the
+   preloader curtain lifts. Motivated rather than decorative: the segments
+   growing left to right enacts the passage of time the figure measures, and
+   the stagger walks the eye down to the shortest and most recent row.
+
+   ADDITIVE, NEVER LOAD-BEARING. The default state is a fully drawn segment.
+   The rule only applies under `html[data-pre="off"]`, which the preloader's
+   boot script sets; with JavaScript off that attribute is never written, the
+   rule never matches, and the figure renders complete. A reveal animation
+   must not be the only thing that makes content visible.
+
+   Not an `infinite` animation, and there is no pulse: it runs once and stops.
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-pre="off"] .wl-seg {
+    transform-origin: left center;
+    animation: wl-draw 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 20ms);
+  }
+}
+
+@keyframes wl-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }

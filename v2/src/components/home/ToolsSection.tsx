@@ -75,8 +75,10 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
     },
   ];
 
+  // No top border here: page.tsx draws this seam with a `comb` SectionDivider,
+  // and a flat rule sitting below the silhouette reads as a stray line.
   return (
-    <section id="tools" className="border-t-2 border-border py-20 sm:py-28">
+    <section id="tools" className="py-20 sm:py-28">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
         <div className="max-w-2xl">
           <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
