@@ -102,6 +102,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     fetchAllEntitiesServer('attorney').catch(() => []),
     fetchAllEntitiesServer('occupation').catch(() => []),
   ])
+  // A build whose Convex is unreachable, or pointed at a deployment holding a
+  // handful of test rows, silently drops 16,210 URLs and still emits a
+  // perfectly valid sitemap. That is exactly what a local build did: 61 URLs
+  // instead of 16,255, because it read the dev deployment. `revalidate` heals
+  // it within a day, but a silent 99.6% loss should never be silent.
+  const entityTotal = employers.length + firms.length + occupations.length
+  if (entityTotal < 500) {
+    captureError(
+      new Error(
+        `Sitemap built with only ${entityTotal} entity URLs ` +
+          `(employers ${employers.length}, firms ${firms.length}, ` +
+          `occupations ${occupations.length}). Convex may be unreachable or ` +
+          `pointed at a non-production deployment.`,
+      ),
+    )
+  }
+
   const entityUrls: MetadataRoute.Sitemap = [
     ...employers.map(({ slug }) => ({
       url: `${baseUrl}/perm-employers/${slug}`,

@@ -155,10 +155,26 @@ describe("sitemap.ts", () => {
   it("captureErrors when zero posts (build-time content failure should never be silent)", async () => {
     vi.mocked(getAllPosts).mockReturnValue([]);
     await sitemap();
-    expect(captureError).toHaveBeenCalledOnce();
-    const err = vi.mocked(captureError).mock.calls[0]![0];
-    expect(err).toBeInstanceOf(Error);
-    expect((err as Error).message).toMatch(/zero content posts/i);
+    // Assert the SPECIFIC error rather than the call count. The default mock
+    // returns no entities either, so the entity-loss guard fires in the same
+    // run, and a toHaveBeenCalledOnce() here fails for a reason that has
+    // nothing to do with what this test is named for.
+    const messages = vi
+      .mocked(captureError)
+      .mock.calls.map((c) => (c[0] as Error).message);
+    expect(messages.some((m) => /zero content posts/i.test(m))).toBe(true);
+  });
+
+  it("captureErrors when the entity walk comes back nearly empty", async () => {
+    // A build whose Convex is unreachable, or pointed at a deployment holding
+    // a few test rows, emits a perfectly valid sitemap missing 16,210 URLs. A
+    // local build did exactly that: 61 URLs instead of 16,255.
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    await sitemap();
+    const messages = vi
+      .mocked(captureError)
+      .mock.calls.map((c) => (c[0] as Error).message);
+    expect(messages.some((m) => /entity URLs/i.test(m))).toBe(true);
   });
 
   it("uses DOL's as-of date for /perm-processing-times, not the newest post date", async () => {
