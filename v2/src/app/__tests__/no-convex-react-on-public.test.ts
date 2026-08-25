@@ -22,7 +22,7 @@ import { describe, expect, it } from "vitest";
  */
 
 const ROOT = join(process.cwd(), "src");
-const PUBLIC_DIR = join(ROOT, "app", "(public)");
+const PUBLIC_DIR = join(ROOT, "app", "(site)", "(public)");
 /** Components a public route is allowed to render must obey the same rule. */
 const SHARED_DIRS = [join(ROOT, "components", "tools"), join(ROOT, "components", "home")];
 

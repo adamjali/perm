@@ -467,9 +467,9 @@ describe("FieldPosition", () => {
  */
 describe("no HTML entities inside JS string literals", () => {
   const FILES = [
-    "src/app/(public)/perm-employers/[slug]/page.tsx",
-    "src/app/(public)/perm-attorneys/[slug]/page.tsx",
-    "src/app/(public)/perm-wages/[slug]/page.tsx",
+    "src/app/(site)/(public)/perm-employers/[slug]/page.tsx",
+    "src/app/(site)/(public)/perm-attorneys/[slug]/page.tsx",
+    "src/app/(site)/(public)/perm-wages/[slug]/page.tsx",
     "src/components/tools/EntityContext.tsx",
   ];
   const ENTITY_IN_STRING = /"[^"\n]*&(?:[a-zA-Z]+|#\d+|#x[0-9a-fA-F]+);[^"\n]*"/;
@@ -519,9 +519,9 @@ describe("no HTML entities inside JS string literals", () => {
  */
 describe("the warning sits above the figures on every entity page", () => {
   const PAGES = [
-    "src/app/(public)/perm-employers/[slug]/page.tsx",
-    "src/app/(public)/perm-attorneys/[slug]/page.tsx",
-    "src/app/(public)/perm-wages/[slug]/page.tsx",
+    "src/app/(site)/(public)/perm-employers/[slug]/page.tsx",
+    "src/app/(site)/(public)/perm-attorneys/[slug]/page.tsx",
+    "src/app/(site)/(public)/perm-wages/[slug]/page.tsx",
   ];
 
   it.each(PAGES)("%s puts ReliabilityBand before the stat grid", (rel) => {
