@@ -215,6 +215,12 @@ BROWSER_HEADERS = {
 # determination history to close out every cohort DOL has worked through.
 DEFAULT_FILE_COUNT = 2
 # A cohort below this many decided cases is noise, not a distribution.
+# The smallest decided-case count at which an entity's own numbers mean
+# something. Below three, an "approval rate" is one or two coin flips and a
+# median is a single value. Those cases still count nationally; the entity
+# simply does not get a row or a page of its own.
+ENTITY_FLOOR = 3
+
 MIN_COHORT_SIZE = 30
 # Receipt-to-determination outside this range is a data error, not a case.
 MAX_PLAUSIBLE_DAYS = 2500
@@ -549,10 +555,15 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
         }
         for code, d in sorted(
             acc["bySoc"].items(), key=lambda kv: -tot(kv[1])
-        )[:60]
-        if tot(d) >= 50
+        )
+        if tot(d) >= ENTITY_FLOOR
     ]
 
+    # Every employer that clears the floor, not a top-N. A page for a
+    # one-case filer is noise -- a 100% approval rate over a single decision
+    # is not a rate -- so ENTITY_FLOOR is the smallest N where the numbers
+    # mean anything, and everything below it still counts toward the
+    # national totals, it just does not get its own row.
     top_employers = [
         {
             "name": d["name"],
@@ -563,8 +574,8 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
         }
         for _, d in sorted(
             acc["byEmployer"].items(), key=lambda kv: -tot(kv[1])
-        )[:100]
-        if tot(d) >= 25
+        )
+        if tot(d) >= ENTITY_FLOOR
     ]
 
     top_attorneys = [
@@ -578,8 +589,8 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
         }
         for _, d in sorted(
             acc["byAttorney"].items(), key=lambda kv: -tot(kv[1])
-        )[:100]
-        if tot(d) >= 25
+        )
+        if tot(d) >= ENTITY_FLOOR
     ]
 
     # The national wage ladder over certified cases. A lone median hides the

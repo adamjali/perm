@@ -133,7 +133,7 @@ describe("sitemap.ts", () => {
     expect(pwd?.lastModified).toBe("2026-08-20");
   });
 
-  it("emits per-slug URLs for blog/tutorials/guides/resources but NOT changelog", async () => {
+  it("emits per-slug URLs for every content type, changelog included", async () => {
     vi.mocked(getAllPosts).mockReturnValue([
       mkPost("blog-a", "blog", "2026-01-01"),
       mkPost("tutorial-a", "tutorials", "2026-01-02"),
@@ -146,8 +146,10 @@ describe("sitemap.ts", () => {
     expect(urls).toContain("https://permtracker.app/tutorials/tutorial-a");
     expect(urls).toContain("https://permtracker.app/guides/guide-a");
     expect(urls).toContain("https://permtracker.app/resources/resource-a");
-    // Changelog entries have NO detail routes — must not be in the sitemap
-    expect(urls).not.toContain("https://permtracker.app/changelog/changelog-a");
+    // Changelog entries DO have detail routes now. They were written months
+    // ago and served a 404 the whole time, because the content type was
+    // supported everywhere except the route itself.
+    expect(urls).toContain("https://permtracker.app/changelog/changelog-a");
   });
 
   it("captureErrors when zero posts (build-time content failure should never be silent)", async () => {

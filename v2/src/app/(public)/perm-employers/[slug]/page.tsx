@@ -18,6 +18,8 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { findBySlug, withUniqueSlugs } from "@/lib/entitySlug";
+import { FieldPosition } from "@/components/tools/FieldPosition";
+import { FigurePlate } from "@/components/tools/FigurePlate";
 
 export const revalidate = 3600;
 
@@ -29,9 +31,23 @@ interface EmployerRow {
   medianDays: number | null;
 }
 
+/**
+ * The subject, from the entity table. Every entity lives there, not just
+ * the head of the list the aggregate document carries, so a slug for a
+ * smaller employer still resolves instead of 404ing.
+ */
+async function loadSubject(slug: string) {
+  return fetchQuery(api.permEntities.getBySlug, { kind: "employer", slug }).catch(
+    () => null,
+  );
+}
+
 async function load() {
   const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
   const rows = [...(stats?.topEmployers ?? [])].sort((a, b) => b.total - a.total);
+  // The aggregate document carries the head of the list, which is what the
+  // distribution drawing needs. The SUBJECT is looked up in the entity
+  // table, so a slug outside that head still resolves to a real page.
   return {
     slugged: withUniqueSlugs<EmployerRow>(rows, (r) => r.name),
     nationalDays: stats?.cohorts?.length
@@ -53,8 +69,11 @@ function approval(r: EmployerRow): number | null {
 }
 
 export async function generateStaticParams() {
+  // Only the head is prerendered. The rest are valid routes that generate on
+  // first request and cache for an hour, which keeps a 12,000-entity build
+  // from taking hours for pages almost nobody opens.
   const { slugged } = await load();
-  return slugged.map((s) => ({ slug: s.slug }));
+  return slugged.slice(0, 100).map((s) => ({ slug: s.slug }));
 }
 
 export async function generateMetadata({
@@ -63,8 +82,9 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const subject = await loadSubject(slug);
   const { slugged } = await load();
-  const row = findBySlug(slugged, slug);
+  const row = subject ?? findBySlug(slugged, slug);
   if (!row) return { title: "Employer not found" };
   const rate = approval(row);
   const title = `${row.name} PERM Filings`;
@@ -92,10 +112,13 @@ export default async function EmployerPage({
 }) {
   const { slug } = await params;
   const { slugged, nationalDays, baselineRate } = await load();
-  const row = findBySlug(slugged, slug);
+  const subject = await loadSubject(slug);
+  const row = subject ?? findBySlug(slugged, slug);
   if (!row) notFound();
 
-  const rank = slugged.findIndex((s) => s.slug === slug) + 1;
+  // The table carries a rank for every entity; the aggregate list only
+  // knows about its own head.
+  const rank = subject?.rank ?? slugged.findIndex((s) => s.slug === slug) + 1;
   const rate = approval(row);
   const nationalApproval = baselineRate == null ? null : 100 - baselineRate;
   const daysDelta =
@@ -168,6 +191,43 @@ export default async function EmployerPage({
           ))}
         </div>
       </section>
+
+      {/* The page's own question, drawn: where does this sponsor sit in the
+          field? A stat card states a number; only the distribution says
+          whether that number is unusual. */}
+      <FigurePlate
+        n="01"
+        title="Position in the field"
+        subject={`${slugged.length.toLocaleString("en-US")} sponsors`}
+        caption="Each bar is a count of sponsors at that value. The line marks this one."
+        source="DOL PERM disclosure files"
+        className="mt-10"
+      >
+        <div className="grid [&>*]:min-w-0 grid-cols-1 gap-8 md:grid-cols-2">
+          <FieldPosition
+            population={slugged
+              .map((x) => approval(x.item))
+              .filter((n): n is number => n != null)}
+            value={rate ?? 0}
+            valueLabel={rate == null ? "—" : `${rate.toFixed(1)}%`}
+            measure="Approval rate"
+            betterWhen="higher"
+            format={(n) => `${n.toFixed(0)}%`}
+          />
+          <FieldPosition
+            population={slugged
+              .map((x) => x.item.medianDays)
+              .filter((n): n is number => n != null)}
+            value={row.medianDays ?? 0}
+            valueLabel={
+              row.medianDays == null ? "—" : `${Math.round(row.medianDays)} days`
+            }
+            measure="Median days to decision"
+            betterWhen="lower"
+            format={(n) => `${Math.round(n)}d`}
+          />
+        </div>
+      </FigurePlate>
 
       <section className="mt-10 border-2 border-border bg-tint-primary p-6 shadow-hard-sm sm:p-8">
         <h2 className="font-heading text-xl font-black">What this does and does not say</h2>{" "}

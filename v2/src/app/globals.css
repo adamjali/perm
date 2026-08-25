@@ -61,6 +61,24 @@
   --urgency-soon: #EA580C;
   --urgency-normal: #2563EB;
 
+  /*
+   * The data scale. Lime alone can only say "yes", so every chart was
+   * reduced to present/absent. These four carry meaning in the drawings and
+   * nowhere else: they are not brand colours and never appear on chrome.
+   *
+   * Contrast measured against --background #FAFAFA and --foreground #000:
+   *   amber #B45309 on paper = 5.24:1   rust #B3271A on paper = 6.53:1
+   *   slate #4B5563 on paper = 7.56:1
+   * The lighter variants are FILL colours for shapes, never text.
+   */
+  --data-good: #2ECC40;        /* cleared, approved, you */
+  --data-warn: #E8A33D;        /* in progress, above baseline */
+  --data-warn-ink: #B45309;    /* the same meaning, as text */
+  --data-bad: #E05A44;         /* denied, unavailable, retrogressed */
+  --data-bad-ink: #B3271A;     /* the same meaning, as text */
+  --data-none: #94A3B8;        /* not reached, no data */
+  --data-none-ink: #4B5563;    /* the same meaning, as text */
+
   /* Manila Folder Colors */
   --manila: #F5E6C8;
   --manila-dark: #E8D4A8;
@@ -78,6 +96,18 @@
 }
 
 .dark {
+  /*
+   * Dark ground: the fills lift and the "ink" variants become readable ON
+   * dark rather than on paper. Measured against --background #0A0A0A:
+   *   #FBBF24 = 11.4:1   #F87171 = 7.7:1   #CBD5E1 = 13.6:1
+   */
+  --data-warn: #FBBF24;
+  --data-warn-ink: #FBBF24;
+  --data-bad: #F87171;
+  --data-bad-ink: #F87171;
+  --data-none: #64748B;
+  --data-none-ink: #CBD5E1;
+
   --background: #0A0A0A;
   --foreground: #FAFAFA;
   --card: #1A1A1A;
@@ -138,6 +168,13 @@
   --color-urgency-urgent: var(--urgency-urgent);
   --color-urgency-soon: var(--urgency-soon);
   --color-urgency-normal: var(--urgency-normal);
+  --color-data-good: var(--data-good);
+  --color-data-warn: var(--data-warn);
+  --color-data-warn-ink: var(--data-warn-ink);
+  --color-data-bad: var(--data-bad);
+  --color-data-bad-ink: var(--data-bad-ink);
+  --color-data-none: var(--data-none);
+  --color-data-none-ink: var(--data-none-ink);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
@@ -2243,27 +2280,89 @@ input[type="week"] {
   background: var(--foreground);
 }
 
-/* Home load curtain. The scroll lock lives on html so the page cannot scroll
-   underneath the curtain; it releases the moment the element unmounts. */
-html:has(.pre) {
-  overflow: hidden;
-}
+/* ------------------------------------------------------------------ *
+ * The home load curtain.
+ *
+ * Every rule lives HERE, in the stylesheet the document loads in <head>,
+ * and the markup is server-rendered as the first child of <body>. The
+ * previous version styled itself from a <style> inside a client component
+ * and gated on React state, so it could not paint before hydration and the
+ * page flashed through it. A curtain that arrives after the content is not
+ * a curtain.
+ *
+ * The inline script in the markup flips data-pre on <html> before first
+ * paint, so a repeat visit in the same session never sees a flash of
+ * curtain either. Both directions matter.
+ * ------------------------------------------------------------------ */
+html[data-pre="on"] { overflow: hidden; }
+html[data-pre="off"] .pre { display: none; }
+
 .pre {
-  transition: transform 0.45s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.45s ease;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: var(--background);
+  transition: transform 0.55s cubic-bezier(0.65, 0, 0.35, 1);
 }
-.pre-leave {
-  transform: translateY(-101%);
+.pre-leave { transform: translateY(-101%); }
+
+.pre-mark { color: var(--primary); animation: pre-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.pre-name {
+  font-family: var(--font-heading), system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.6rem, 4vw, 2.1rem);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--foreground);
+  animation: pre-in 0.45s 0.06s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.pre-name b { color: var(--primary); font-weight: 900; }
+.pre-sub {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--foreground) 55%, transparent);
+  animation: pre-in 0.45s 0.12s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.pre-track {
+  width: min(260px, 60vw);
+  height: 6px;
+  border: 2px solid var(--border);
+  background: var(--card);
+  overflow: hidden;
+  animation: pre-in 0.45s 0.16s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .pre-bar {
-  animation: pre-fill 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  display: block;
+  height: 100%;
+  background: var(--primary);
   transform-origin: left;
+  animation: pre-fill 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
-@keyframes pre-fill {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+.pre-spin {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid color-mix(in srgb, var(--foreground) 22%, transparent);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: pre-spin 0.68s linear infinite;
 }
+
+@keyframes pre-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes pre-fill { from { transform: scaleX(0); } to { transform: scaleX(0.92); } }
+@keyframes pre-spin { to { transform: rotate(360deg); } }
+
 @media (prefers-reduced-motion: reduce) {
-  .pre { transition: opacity 0.2s ease; }
+  .pre { transition: opacity 0.25s ease; }
   .pre-leave { transform: none; opacity: 0; }
-  .pre-bar { animation: none; transform: scaleX(1); }
+  .pre-mark, .pre-name, .pre-sub, .pre-track { animation: none; }
+  .pre-bar { animation: none; transform: scaleX(0.92); }
+  .pre-spin { animation: none; }
 }

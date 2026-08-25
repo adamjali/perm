@@ -39,8 +39,17 @@ const COLUMNS: StatColumn<AttorneyStat>[] = [
         className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
       >
         {a.name}
+        {/* A real space, not just a margin. Without it the firm name abuts
+            its state code for every extractor that walks the DOM: "Foster
+            LLP" + "TX" reads as "Foster LLPTX", and 73 rows shipped that
+            way. CSS margin is not a character. */}
         {a.state ? (
-          <span className="ml-2 font-mono text-xs font-normal text-foreground/50">{a.state}</span>
+          <>
+            {" "}
+            <span className="ml-1 font-mono text-xs font-normal text-foreground/50">
+              {a.state}
+            </span>
+          </>
         ) : null}
       </Link>
     ),

@@ -22,6 +22,13 @@ import {
   analystReviewAverage,
 } from "../../../../convex/lib/dolProcessingTimes";
 import { DataNav } from "@/components/tools/DataNav";
+import {
+  BulletinStepsMini,
+  QueueDepthMini,
+  ScaleBarsMini,
+  TwoBarsMini,
+  WindowSpansMini,
+} from "@/components/tools/MiniDiagrams";
 import { QueueTape } from "@/components/tools/QueueTape";
 
 const TITLE = "Live PERM Data Overview";
@@ -168,30 +175,35 @@ export default async function ToolsPage() {
               label: "By state",
               blurb: "An interactive map of filings, approval rates and wages per worksite state.",
               tone: "tint",
+              viz: "scale" as const,
             },
             {
               href: "/perm-wages",
               label: "Wages",
               blurb: "Median offered wages by occupation - committed figures, not survey estimates.",
               tone: "ink",
+              viz: "twobars" as const,
             },
             {
               href: "/perm-employers",
               label: "Employers",
               blurb: "The hundred biggest sponsors, ranked, searchable, with their track records.",
               tone: "card",
+              viz: "queue" as const,
             },
             {
               href: "/perm-attorneys",
               label: "Law firms",
               blurb: "Who files the most PERM cases, with volume, approval rate and median days.",
               tone: "card",
+              viz: "spans" as const,
             },
             {
               href: "/perm-denial-risk",
               label: "Denial rates",
               blurb: "What actually gets denied, by wage, by year, and by what the form declares.",
               tone: "tint",
+              viz: "steps" as const,
             },
           ].map((c) => (
             <a
@@ -207,6 +219,18 @@ export default async function ToolsPage() {
               }
             >
               <h3 className="font-heading text-lg font-black">{c.label}</h3>{" "}
+              {/* The card's own subject, drawn. */}
+              <div
+                className={
+                  "mt-3 max-w-[150px] " + (c.tone === "ink" ? "text-background" : "text-foreground")
+                }
+              >
+                {c.viz === "scale" ? <ScaleBarsMini /> : null}
+                {c.viz === "twobars" ? <TwoBarsMini /> : null}
+                {c.viz === "queue" ? <QueueDepthMini /> : null}
+                {c.viz === "spans" ? <WindowSpansMini /> : null}
+                {c.viz === "steps" ? <BulletinStepsMini /> : null}
+              </div>{" "}
               <p
                 className={
                   "mt-2 flex-1 text-sm leading-relaxed " +

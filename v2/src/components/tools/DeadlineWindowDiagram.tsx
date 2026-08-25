@@ -107,9 +107,14 @@ export function DeadlineWindowDiagram({
           className="block h-auto w-full min-w-[560px] border-2 border-border bg-card shadow-hard-sm"
         >
           {/* Date rails at the domain's ends. */}
+          {/* The rails mark the domain's two ends, so the label must sit at
+              the date's own x. An earlier version drew the LINE at px(iso)
+              and the LABEL at a fixed page edge, which put "February 28" 204
+              units away, directly under June 30 — a date the axis never
+              labelled at all. They are one thing and share one coordinate. */}
           {[
-            { iso: rows[0]!.from, anchor: "start" as const, x: PAD.left },
-            { iso: rows[rows.length - 1]!.to, anchor: "end" as const, x: W - PAD.right },
+            { iso: rows[0]!.from, anchor: "start" as const },
+            { iso: rows[rows.length - 1]!.to, anchor: "end" as const },
           ].map((t) => (
             <g key={t.iso + t.anchor}>
               <line
@@ -121,7 +126,7 @@ export function DeadlineWindowDiagram({
                 strokeOpacity="0.3"
               />
               <text
-                x={t.x}
+                x={px(t.iso)}
                 y={H - PAD.bottom + 24}
                 textAnchor={t.anchor}
                 fontSize="12"

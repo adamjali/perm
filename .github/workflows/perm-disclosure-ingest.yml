@@ -137,6 +137,44 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+      # The entity arrays are now uncapped, and uncapped they do not fit in a
+      # Convex document: 12,000 employer rows measured 1.14 MB against a 1 MB
+      # limit. So the full set goes to its own table, and the aggregate
+      # document keeps only what the index pages render.
+      - name: Split the payload
+        working-directory: v2
+        run: |
+          python3 - <<'PY'
+          import json, os
+          src = os.environ["RUNNER_TEMP"] + "/perm-payload.json"
+          p = json.load(open(src))
+          full = {k: p.get(k) or [] for k in ("topEmployers", "topAttorneys", "topOccupations")}
+          for k, v in full.items():
+              print(f"{k:16s} {len(v):,} entities")
+          # The aggregate document carries the head of each list; the table
+          # carries all of it. One order, so ranks and slugs agree.
+          TOP = 250
+          for k in full:
+              p[k] = sorted(full[k], key=lambda r: -r["total"])[:TOP]
+          out = os.environ["RUNNER_TEMP"] + "/perm-aggregate.json"
+          json.dump(p, open(out, "w"))
+          size = os.path.getsize(out) / 1024 / 1024
+          print(f"aggregate document {size:.2f} MB")
+          if size > 0.9:
+              raise SystemExit("FATAL: aggregate payload is near the 1 MB document limit")
+          PY
+
+      - name: Store every entity in its own table
+        working-directory: v2
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: |
+          if [ -z "$CONVEX_DEPLOY_KEY" ]; then
+            echo "CONVEX_DEPLOY_KEY absent; skipping (payload is in the artifact)" >&2
+            exit 0
+          fi
+          python3 scripts/store_entities.py --payload "${RUNNER_TEMP}/perm-payload.json" --prod
+
       - name: Store aggregates in Convex
         working-directory: v2
         env:
@@ -150,7 +188,7 @@ jobs:
           fi
           # DOL is required - the job exists for this payload.
           npx --yes convex run permDisclosure:storeStats \
-            "$(cat "${RUNNER_TEMP}/perm-payload.json")" --prod
+            "$(cat "${RUNNER_TEMP}/perm-aggregate.json")" --prod
           if [ -s "${RUNNER_TEMP}/uscis-payload.json" ]; then
             npx --yes convex run uscisI140:storeStats \
               "$(cat "${RUNNER_TEMP}/uscis-payload.json")" --prod

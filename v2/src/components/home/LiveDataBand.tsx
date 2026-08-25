@@ -57,6 +57,31 @@ export function LiveDataBand({ frontierMonth, asOf, averageDays }: LiveDataBandP
         </div>
 
         <QueueTape frontierMonth={frontierMonth} className="mt-8" monthsBehind={6} monthsAhead={8} />
+
+        {/* The homepage linked to none of the data pages: they were reachable
+            only through the nav, so each had exactly one inbound body link
+            from its own index. These are the entry points. */}
+        <nav aria-label="Data pages" className="mt-10 grid [&>*]:min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {[
+            { href: "/perm-by-state", label: "By state", what: "Filings and wages per worksite state" },
+            { href: "/perm-wages", label: "Wages", what: "Median offered wage by occupation" },
+            { href: "/perm-employers", label: "Employers", what: "Who sponsors the most" },
+            { href: "/perm-attorneys", label: "Law firms", what: "Who files the most" },
+            { href: "/perm-denial-risk", label: "Denial rates", what: "What actually gets denied" },
+          ].map((d) => (
+            <Link
+              key={d.href}
+              href={d.href}
+              className="group flex flex-col border-2 border-border bg-background p-4 shadow-hard-sm transition-all duration-150 hover:-translate-y-[2px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
+            >
+              <span className="font-heading text-base font-black">{d.label}</span>{" "}
+              <span className="mt-1 text-sm leading-snug text-foreground/60">{d.what}</span>{" "}
+              <span className="mt-3 font-mono text-xs font-bold uppercase tracking-wider text-foreground/50 group-hover:text-primary">
+                Open →
+              </span>
+            </Link>
+          ))}
+        </nav>
       </div>
     </section>
   );

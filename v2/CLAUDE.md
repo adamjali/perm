@@ -898,3 +898,64 @@ The SOC title IS the searched phrase, so the fix is to add the qualifier only
 when there is room and to pass `title: { absolute }` above 60 characters,
 which drops the brand suffix rather than crowding out the phrase people
 actually type. Max rendered title went 118 -> 79.
+
+## A chart legend that says the opposite of what it draws (2026-08-25)
+
+The priority-date chart drew a shaded bar for every month with no plottable
+cutoff, at two opacities, and captioned all of them as *"a month with no visa
+numbers at all"*. But there are **two non-date states and they are
+opposites**: `C` means the category was open to EVERY priority date, `U` means
+it was shut to all of them. The lighter bar meant the exact reverse of what
+the caption said, on 20 of 60 category/country combinations.
+
+**Two shapes that differ only in opacity will get one caption.** If two states
+need different words, give them different colours. They are now lime and rust
+with a `<title>` each, and the caption names both.
+
+The same file joined its cutoff points into one `<polyline>`, so a run of
+closed months was bridged by a smooth rising segment — drawing movement
+through a period when the category was shut and nothing moved. **A gap in a
+series is a BREAK, not a point to interpolate through.** Split into segments
+at every gap.
+
+## An axis label belongs at its own coordinate
+
+`DeadlineWindowDiagram` drew the right-hand rail LINE at `px(lastDate)` and
+its LABEL at a fixed `W - PAD.right`. Whenever the filing window was not
+capped by the wage expiration — the ordinary case — the label sat **204 units
+away from the date it named**, printed under a different date that the axis
+never labelled at all. On a page headed "These are not estimates."
+
+**A line and its label are one thing and share one coordinate.** They were
+only ever correct when the two dates coincided.
+
+## Convex documents cap at 1 MB, and a "top N" may be load-bearing
+
+The entity arrays lived inside the `permDisclosureStats` document capped at
+the top 100. Measured, the uncapped set is **1.14 MB of employers alone**
+against a 1 MB document limit — so the cap was an architectural constraint
+wearing an editorial disguise, and removing it would have failed the store
+at ingest time rather than in review.
+
+Entities now live in `permEntities`, one row each, written in chunks of 400
+with the first chunk clearing the kind. Detail pages resolve the subject via
+`permEntities.getBySlug` so every entity has a page; `generateStaticParams`
+prerenders only the first 100 and the rest arrive through ISR, because
+prerendering 12,000 pages costs hours for pages almost nobody opens.
+
+**The slug rules are duplicated in `scripts/store_entities.py` and
+`src/lib/entitySlug.ts` deliberately** — a slug computed differently in the
+writer than in the reader is a detail page that 404s from its own index — and
+the Python copy is asserted against the same fixtures as the TypeScript one.
+
+## DOL prints one firm under six spellings
+
+Fragomen appears at ranks 1, 9, 23, 31, 50 and 57 under six slugs, because
+the collision resolver appends `-2`, `-3` rather than merging. Published
+total 24,059; summed across its rows, **30,180**. Each leaf page presents
+itself as a distinct firm with its own "#N by volume".
+
+The index pages disclose that one practice can appear under several
+spellings. The leaf pages do not, and the ranks are wrong either way.
+**Entity identity needs normalisation before ranking, not slug
+disambiguation after it.**

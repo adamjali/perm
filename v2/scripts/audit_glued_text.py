@@ -53,7 +53,13 @@ WORD = re.compile(r"[A-Za-z0-9]")
 
 # Public pages only. The authenticated app is behind a login and is never
 # crawled, so it is deliberately out of scope.
-PAGES = [
+#
+# THIS LIST IS A FALLBACK, NOT THE SUBJECT. It covered 21 URLs while the site
+# served 298, so the sweep reported "0 glued pairs" over a site with 1,006 of
+# them - a checker that cannot see its subject reads exactly like a pass. The
+# sitemap is the authority now; this list is only used when the sitemap
+# cannot be fetched.
+FALLBACK_PAGES = [
     "/", "/tools", "/tools/perm-timeline-calculator", "/tools/pwd-calculator",
     "/tools/perm-deadline-calculator", "/tools/i140-calculator",
     "/tools/priority-date-calculator", "/tools/green-card-timeline",
@@ -65,6 +71,21 @@ PAGES = [
 # Asserted present on every page. A sweep that silently stops matching reports
 # everything as fixed, so it has to prove it can still see its subject.
 CONTROL = "PERM"
+
+
+def sitemap_paths(base: str) -> list[str]:
+    """Every URL the site publishes, which is what "every page" has to mean."""
+    try:
+        req = urllib.request.Request(
+            base.rstrip("/") + "/sitemap.xml",
+            headers={"User-Agent": "Mozilla/5.0 (permtracker glue audit)"},
+        )
+        with urllib.request.urlopen(req, timeout=30) as r:
+            body = r.read().decode("utf-8", "replace")
+    except Exception:
+        return []
+    locs = re.findall(r"<loc>(.*?)</loc>", body)
+    return [re.sub(r"^https?://[^/]+", "", loc) or "/" for loc in locs]
 
 
 def glued_pairs(markup: str) -> list[str]:
@@ -87,8 +108,13 @@ def main() -> int:
     ap.add_argument("--base", default="http://127.0.0.1:3100")
     args = ap.parse_args()
 
+    pages = sitemap_paths(args.base) or FALLBACK_PAGES
+    if not pages:
+        raise SystemExit("FATAL: no URLs to scan; the audit can see nothing")
+    print(f"urls from   : {'sitemap' if len(pages) > len(FALLBACK_PAGES) else 'fallback list'}")
+
     total, scanned, blind = 0, 0, []
-    for path in PAGES:
+    for path in pages:
         url = f"{args.base}{path}"
         try:
             with urllib.request.urlopen(url, timeout=30) as r:
@@ -108,7 +134,7 @@ def main() -> int:
                 print(f"    {h}")
 
     # Counts before the verdict, so a run that saw nothing cannot read as a pass.
-    print(f"\npages scanned   : {scanned}/{len(PAGES)}")
+    print(f"\npages scanned   : {scanned}/{len(pages)}")
     # Do not claim the sweep is healthy when it fetched nothing: that line
     # printed "the sweep is not blind" over a run that scanned 0 of 21 pages.
     verdict = "n/a — nothing was scanned" if scanned == 0 else (blind or "none — the sweep is not blind")

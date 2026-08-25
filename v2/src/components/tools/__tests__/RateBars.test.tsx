@@ -32,11 +32,25 @@ describe("RateBars", () => {
     expect(screen.getByText(/Field baseline, 2\.57%/)).toBeInTheDocument();
   });
 
-  it("distinguishes above-baseline rows from below-baseline ones", () => {
+  it("grades a bar by how far above the field it sits, not merely whether it is", () => {
     const { container } = render(<RateBars rows={ROWS} baseline={2.57} />);
-    // Two rows sit above the baseline (54.31, 25.74) and one below (0.59).
-    expect(container.querySelectorAll(".bg-foreground.h-full")).toHaveLength(2);
-    expect(container.querySelectorAll(".bg-primary.h-full")).toHaveLength(1);
+    const fills = [...container.querySelectorAll<HTMLElement>(".h-full")].map(
+      (el) => el.style.background,
+    );
+    // 54.31 and 25.74 are both >= 2x the 2.57 field; 0.59 is below it. A
+    // two-colour version made a 1.2x and a 21x look identical.
+    expect(fills.filter((f) => f.includes("data-bad"))).toHaveLength(2);
+    expect(fills.filter((f) => f.includes("primary"))).toHaveLength(1);
+  });
+
+  it("states each rate as a multiple of the field, which is the readable form", () => {
+    render(<RateBars rows={ROWS} baseline={2.57} />);
+    // 54.31 / 2.57 = 21.1 -> rounded, because a decimal there is noise.
+    expect(screen.getByText("21x the field")).toBeInTheDocument();
+    // 25.74 / 2.57 = 10.0
+    expect(screen.getByText("10x the field")).toBeInTheDocument();
+    // 0.59 / 2.57 = 0.2, kept to one decimal.
+    expect(screen.getByText("0.2x the field")).toBeInTheDocument();
   });
 
   it("keeps a small rate visible instead of collapsing it to nothing", () => {

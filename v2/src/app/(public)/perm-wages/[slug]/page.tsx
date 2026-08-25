@@ -17,6 +17,8 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { findBySlug, withUniqueSlugs } from "@/lib/entitySlug";
+import { FieldPosition } from "@/components/tools/FieldPosition";
+import { FigurePlate } from "@/components/tools/FigurePlate";
 
 export const revalidate = 3600;
 
@@ -30,9 +32,23 @@ interface OccupationRow {
   medianAnnualWage: number | null;
 }
 
+/**
+ * The subject, from the entity table. Every entity lives there, not just
+ * the head of the list the aggregate document carries, so a slug for a
+ * smaller occupation still resolves instead of 404ing.
+ */
+async function loadSubject(slug: string) {
+  return fetchQuery(api.permEntities.getBySlug, { kind: "occupation", slug }).catch(
+    () => null,
+  );
+}
+
 async function load() {
   const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
   const rows = [...(stats?.topOccupations ?? [])].sort((a, b) => b.total - a.total);
+  // The aggregate document carries the head of the list, which is what the
+  // distribution drawing needs. The SUBJECT is looked up in the entity
+  // table, so a slug outside that head still resolves to a real page.
   return {
     slugged: withUniqueSlugs<OccupationRow>(rows, (r) => r.title),
     nationalDays: stats?.cohorts?.length
@@ -55,8 +71,11 @@ function approval(r: OccupationRow): number | null {
 }
 
 export async function generateStaticParams() {
+  // Only the head is prerendered. The rest are valid routes that generate on
+  // first request and cache for an hour, which keeps a 12,000-entity build
+  // from taking hours for pages almost nobody opens.
   const { slugged } = await load();
-  return slugged.map((s) => ({ slug: s.slug }));
+  return slugged.slice(0, 100).map((s) => ({ slug: s.slug }));
 }
 
 export async function generateMetadata({
@@ -65,8 +84,14 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const found = await loadSubject(slug);
+  // The table stores every entity's label as `name`; an occupation's label
+  // is its `title` here. One mapping, at the boundary.
+  const subject = found
+    ? { ...found, title: found.name, code: found.code ?? "", medianAnnualWage: found.medianAnnualWage ?? null }
+    : null;
   const { slugged } = await load();
-  const row = findBySlug(slugged, slug);
+  const row = subject ?? findBySlug(slugged, slug);
   if (!row) return { title: "Employer not found" };
   const rate = approval(row);
   // SOC titles are themselves the searched phrase and run to 79 characters,
@@ -111,10 +136,18 @@ export default async function OccupationPage({
 }) {
   const { slug } = await params;
   const { slugged, nationalDays, baselineRate, ladder } = await load();
-  const row = findBySlug(slugged, slug);
+  const found = await loadSubject(slug);
+  // The table stores every entity's label as `name`; an occupation's label
+  // is its `title` here. One mapping, at the boundary.
+  const subject = found
+    ? { ...found, title: found.name, code: found.code ?? "", medianAnnualWage: found.medianAnnualWage ?? null }
+    : null;
+  const row = subject ?? findBySlug(slugged, slug);
   if (!row) notFound();
 
-  const rank = slugged.findIndex((s) => s.slug === slug) + 1;
+  // The table carries a rank for every entity; the aggregate list only
+  // knows about its own head.
+  const rank = subject?.rank ?? slugged.findIndex((s) => s.slug === slug) + 1;
   const rate = approval(row);
   const nationalApproval = baselineRate == null ? null : 100 - baselineRate;
   const daysDelta =
@@ -191,6 +224,40 @@ export default async function OccupationPage({
           ))}
         </div>
       </section>
+
+      <FigurePlate
+        n="01"
+        title="Wage against every occupation"
+        subject={`${slugged.length.toLocaleString("en-US")} occupations`}
+        caption="Each bar counts occupations at that median wage. The line marks this one. PERM runs two labour markets through one process, which is why the field is bimodal rather than a bell."
+        source="DOL PERM disclosure files"
+        className="mt-10"
+      >
+        <div className="grid [&>*]:min-w-0 grid-cols-1 gap-8 md:grid-cols-2">
+          <FieldPosition
+            population={slugged
+              .map((x) => x.item.medianAnnualWage)
+              .filter((n): n is number => n != null)}
+            value={row.medianAnnualWage ?? 0}
+            valueLabel={
+              row.medianAnnualWage == null
+                ? "—"
+                : `$${Math.round(row.medianAnnualWage).toLocaleString("en-US")}`
+            }
+            measure="Median offered wage"
+            betterWhen="higher"
+            format={(n) => `$${Math.round(n / 1000)}k`}
+          />
+          <FieldPosition
+            population={slugged.map((x) => x.item.total)}
+            value={row.total}
+            valueLabel={`${row.total.toLocaleString("en-US")} filings`}
+            measure="Filing volume"
+            betterWhen="higher"
+            format={(n) => (n >= 1000 ? `${Math.round(n / 1000)}k` : String(Math.round(n)))}
+          />
+        </div>
+      </FigurePlate>
 
       <section className="mt-10 border-2 border-border bg-tint-primary p-6 shadow-hard-sm sm:p-8">
         <h2 className="font-heading text-xl font-black">Reading the wage</h2>{" "}

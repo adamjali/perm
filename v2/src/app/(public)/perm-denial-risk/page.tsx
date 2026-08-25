@@ -17,6 +17,7 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { RateBars } from "@/components/tools/RateBars";
+import { FreshnessDots, InsightLede } from "@/components/tools/Insight";
 
 const TITLE = "PERM Denial Rates";
 const DESCRIPTION =
@@ -55,6 +56,24 @@ export default async function PermDenialRiskPage() {
   const stats = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null);
   const risk = stats?.risk ?? null;
   const baseline = risk?.baseline ?? null;
+  const sourceWindow = stats?.sourceFiles?.length
+    ? stats.sourceFiles
+        .map((f) => f.replace(/^PERM_Disclosure_Data_/, "").replace(/\.xlsx$/, ""))
+        .join(" + ")
+    : "the current window";
+  // The single strongest correlate, named. A page that makes the reader find
+  // the biggest number themselves has not finished its job.
+  const topFlag =
+    risk?.byFlag && risk.byFlag.length > 0
+      ? [...risk.byFlag].sort((a, b) => b.denialRate - a.denialRate)[0]!
+      : null;
+  const topMultiple =
+    topFlag && baseline && baseline.denialRate > 0
+      ? (() => {
+          const x = topFlag.denialRate / baseline.denialRate;
+          return x >= 10 ? `${Math.round(x)}x` : `${x.toFixed(1)}x`;
+        })()
+      : "";
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -102,18 +121,49 @@ export default async function PermDenialRiskPage() {
 
       {risk && baseline ? (
         <>
+          {/* The finding, stated. Every figure in it is on this page. */}
+          <div className="mt-8">
+            <FreshnessDots
+              items={[
+                { label: "DOL disclosure files", asOf: sourceWindow, kind: "window" },
+              ]}
+            />
+          </div>
+
+          <section className="mt-6">
+            <InsightLede
+              verdict={topFlag ? `${topMultiple} the field` : undefined}
+              direction="bad"
+              source={`${baseline.denied.toLocaleString("en-US")} denials in ${baseline.decided.toLocaleString("en-US")} decided cases`}
+            >
+              {topFlag ? (
+                <>
+                  A PERM case is denied {baseline.denialRate}% of the time. A{" "}
+                  {(FLAG_LABELS[topFlag.bucket]?.label ?? topFlag.bucket).toLowerCase()} is
+                  denied {topFlag.denialRate}% of the time — {topMultiple} the rate of the
+                  field, on {topFlag.decided.toLocaleString("en-US")} decided cases.
+                </>
+              ) : (
+                <>
+                  A PERM case is denied {baseline.denialRate}% of the time,{" "}
+                  {baseline.denied.toLocaleString("en-US")} in{" "}
+                  {baseline.decided.toLocaleString("en-US")} decided cases.
+                </>
+              )}
+            </InsightLede>
+          </section>
+
           {/* The baseline every other number on the page is read against. */}
-          <section className="mt-10 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
+          <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard-sm sm:p-8">
             <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
               <p className="font-heading text-5xl font-black tabular-nums">
                 {baseline.denialRate}%
               </p>{" "}
-              <p className="max-w-lg text-base leading-relaxed text-background/70">
-                of decided PERM cases were denied in the current window —{" "}
-                {baseline.denied.toLocaleString("en-US")} of{" "}
-                {baseline.decided.toLocaleString("en-US")}. Withdrawn cases sit
-                on neither side of that ratio, because a withdrawal is not an
-                approval and not a denial.
+              <p className="max-w-lg text-base leading-relaxed text-foreground/70">
+                is the field baseline: {baseline.denied.toLocaleString("en-US")} denials in{" "}
+                {baseline.decided.toLocaleString("en-US")} decided cases. Withdrawn cases
+                sit on neither side of that ratio, because a withdrawal is not an
+                approval and not a denial. Every bar below is read against this line.
               </p>
             </div>
           </section>

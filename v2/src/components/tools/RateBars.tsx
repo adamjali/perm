@@ -9,6 +9,8 @@
  * 80,000 are not the same claim.
  */
 
+import { BaselineMultiple } from "./Insight";
+
 export interface RateRow {
   label: string;
   /** Optional one-line explanation of what the bucket means. */
@@ -26,15 +28,26 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
     <div className="border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
       <div className="space-y-5">
         {rows.map((r) => {
-          const above = r.rate > baseline;
+          const ratio = baseline > 0 ? r.rate / baseline : 1;
+          // Three bands, not two: at the field, above it, and far above it.
+          // A lime/black binary made a 1.2x and a 21x look identical.
+          const fill =
+            ratio >= 2
+              ? "var(--data-bad)"
+              : ratio >= 1.2
+                ? "var(--data-warn)"
+                : "var(--primary)";
           return (
             <div key={r.label}>
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                 <p className="text-sm font-bold">{r.label}</p>{" "}
-                <p className="font-mono text-sm font-bold tabular-nums">
-                  {r.rate.toFixed(2)}%{" "}
-                  <span className="font-normal text-foreground/50">
-                    of {r.decided.toLocaleString("en-US")}
+                <p className="flex items-baseline gap-2 font-mono text-sm font-bold tabular-nums">
+                  <BaselineMultiple rate={r.rate} baseline={baseline} />
+                  <span>
+                    {r.rate.toFixed(2)}%{" "}
+                    <span className="font-normal text-foreground/50">
+                      of {r.decided.toLocaleString("en-US")}
+                    </span>
                   </span>
                 </p>
               </div>
@@ -42,8 +55,11 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
                   against the field rather than against itself. */}
               <div className="relative mt-2 h-6 border-2 border-border bg-background">
                 <div
-                  className={above ? "h-full bg-foreground" : "h-full bg-primary"}
-                  style={{ width: `${Math.max(1.5, (r.rate / max) * 100)}%` }}
+                  className="h-full"
+                  style={{
+                    width: `${Math.max(1.5, (r.rate / max) * 100)}%`,
+                    background: fill,
+                  }}
                 />
                 <span
                   aria-hidden="true"
@@ -64,8 +80,12 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
           Field baseline, {baseline.toFixed(2)}%
         </span>{" "}
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden="true" className="inline-block h-3 w-3 border border-border bg-foreground" />
-          Above baseline
+          <span aria-hidden="true" className="inline-block h-3 w-3 border border-border" style={{ background: "var(--data-warn)" }} />
+          Above the field
+        </span>{" "}
+        <span className="inline-flex items-center gap-1.5">
+          <span aria-hidden="true" className="inline-block h-3 w-3 border border-border" style={{ background: "var(--data-bad)" }} />
+          Twice the field or more
         </span>
       </p>
     </div>

@@ -1,5 +1,5 @@
 import AuthHeader from "@/components/layout/AuthHeader";
-import AuthFooter from "@/components/layout/AuthFooter";
+import Footer from "@/components/layout/Footer";
 import { SentryClientInit } from "@/components/layout/SentryClientInit";
 import { ConvexProviders } from "@/app/providers";
 
@@ -34,7 +34,7 @@ export default function AuthLayout({
 
       {/* Footer */}
       <div className="relative z-20 flex-shrink-0">
-        <AuthFooter />
+        <Footer variant="extended" />
       </div>
     </div>
     </ConvexProviders>

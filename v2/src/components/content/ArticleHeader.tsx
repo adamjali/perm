@@ -1,4 +1,5 @@
 "use client";
+import { Fragment } from "react";
 
 /**
  * ArticleHeader
@@ -117,13 +118,19 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
               variants={fadeUp}
               className="mt-4 flex flex-wrap gap-1.5"
             >
+              {/* React renders array items with NOTHING between them, so a
+                  bare map glues every chip into one word for any extractor
+                  that walks the DOM: five tags came out as
+                  "checklistrecruitmentcompliancerequirementsreference" on
+                  every article. A keyed Fragment carrying a real space costs
+                  nothing visually inside a flex row with a gap. */}
               {meta.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="border border-border bg-muted px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
-                >
-                  {tag}
-                </span>
+                <Fragment key={tag}>
+                  {" "}
+                  <span className="border border-border bg-muted px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                    {tag}
+                  </span>
+                </Fragment>
               ))}
             </motion.div>
           )}

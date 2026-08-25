@@ -152,10 +152,22 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
     PAD_L + (series.length <= 1 ? 0 : (i / (series.length - 1)) * (W - PAD_L - PAD_R));
   const py = (t: number) => H - PAD_B - ((t - yMin) / ySpan) * (H - PAD_T - PAD_B);
 
-  const line = series
-    .map((s, i) => (s.state === "date" && s.iso ? `${px(i)},${py(Date.parse(s.iso))}` : null))
-    .filter(Boolean)
-    .join(" ");
+  // Segments, not one polyline. A month with no cutoff is a BREAK: joining
+  // across it draws a smooth rise through a period when the category was
+  // shut and nothing moved, inventing movement that never happened.
+  const lineSegments: string[] = [];
+  {
+    let run: string[] = [];
+    series.forEach((s, i) => {
+      if (s.state === "date" && s.iso) {
+        run.push(`${px(i)},${py(Date.parse(s.iso))}`);
+      } else {
+        if (run.length > 1) lineSegments.push(run.join(" "));
+        run = [];
+      }
+    });
+    if (run.length > 1) lineSegments.push(run.join(" "));
+  }
 
   const xTickIndices = evenTickIndices(series.length);
   const yTicks = [yMin, (yMin + yMax) / 2, yMax];
@@ -250,7 +262,11 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
         <div
           className={cn(
             "border-b-2 border-border p-6 sm:p-8",
-            estimate.isCurrent ? "bg-primary/15" : "bg-muted",
+            estimate.latest?.kind === "unavailable"
+              ? "bg-[color-mix(in_srgb,var(--data-bad)_14%,var(--card))]"
+              : estimate.isCurrent
+                ? "bg-primary/15"
+                : "bg-muted",
           )}
         >
           <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
@@ -258,7 +274,7 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
           </p>{" "}
           <p className="mt-2 font-heading text-2xl font-black leading-tight sm:text-3xl">
             {estimate.latest?.kind === "unavailable"
-              ? "This category was unavailable"
+              ? "This category was closed that month"
               : estimate.isCurrent
                 ? "Your date was current"
                 : "Your date was not yet current"}
@@ -278,9 +294,28 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
             ) : estimate.latest?.kind === "current" ? (
               "The category was open to every priority date."
             ) : (
-              "No visa numbers were available in this category, whatever the priority date."
+              "No visa numbers were available in this category, so no priority date qualified."
             )}
-          </p>
+          </p>{" "}
+          {estimate.latest?.kind === "unavailable" ? (
+            <div className="mt-4 border-2 border-border bg-card p-4">
+              <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+                Why a category closes
+              </p>{" "}
+              <p className="mt-2 text-base leading-relaxed text-foreground/70">
+                Each category gets a fixed number of visas per fiscal year. When
+                a category uses its allocation, the State Department marks it
+                &quot;U&quot; for the rest of the year and it reopens in October
+                with the new year&apos;s numbers. It is a normal annual event,
+                not a change in the rules, and it is most common in the last
+                months of the fiscal year.
+              </p>{" "}
+              <p className="mt-3 text-base leading-relaxed text-foreground/70">
+                The chart below still shows where the cutoff stood before it
+                closed, which is the part worth watching.
+              </p>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -325,15 +360,18 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
                   />
                 ))}
 
-                <polyline
-                  points={line}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                  className="text-primary"
-                />
+                {lineSegments.map((pts) => (
+                  <polyline
+                    key={pts.slice(0, 24)}
+                    points={pts}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    className="text-primary"
+                  />
+                ))}
 
                 {series.map((s, i) =>
                   s.state === "date" && s.iso ? (
@@ -346,18 +384,29 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
                       className="text-primary"
                     />
                   ) : (
-                    // A month with no numbers is drawn as a full-height bar, not
-                    // as a missing point, because "shut" is a state and a gap
-                    // reads as absent data.
+                    // Two OPPOSITE states, drawn in opposite colours. "Current"
+                    // means open to every priority date; "unavailable" means
+                    // shut to all of them. An earlier version drew both as the
+                    // same grey bar in two opacities and captioned them both
+                    // as "no visa numbers at all", which was exactly backwards
+                    // for the lighter one.
                     <rect
                       key={s.month}
                       x={px(i) - 5}
                       y={PAD_T}
                       width="10"
                       height={H - PAD_T - PAD_B}
-                      fill="currentColor"
-                      fillOpacity={s.state === "unavailable" ? 0.22 : 0.08}
-                    />
+                      fill={
+                        s.state === "unavailable" ? "var(--data-bad)" : "var(--primary)"
+                      }
+                      fillOpacity={s.state === "unavailable" ? 0.3 : 0.22}
+                    >
+                      <title>
+                        {s.state === "unavailable"
+                          ? `${s.month}: category closed, no visa numbers`
+                          : `${s.month}: current, open to every priority date`}
+                      </title>
+                    </rect>
                   ),
                 )}
 
@@ -406,9 +455,14 @@ export function PriorityDateEstimator({ bulletins, className }: PriorityDateEsti
             <figcaption className="mt-4 space-y-2 text-sm leading-relaxed text-foreground/70">
               <p>
                 <span className="font-bold text-foreground">The line</span> is the
-                cutoff in each bulletin along the bottom. A{" "}
-                <span className="font-bold text-foreground">shaded bar</span> is a
-                month with no visa numbers at all.
+                cutoff in each bulletin along the bottom, and it breaks wherever
+                there was no cutoff to plot. A{" "}
+                <span className="font-bold text-primary">green bar</span> is a month
+                the category was <strong>current</strong> — open to every priority
+                date. A{" "}
+                <span className="font-bold text-[var(--data-bad-ink)]">red bar</span>{" "}
+                is a month it was <strong>closed</strong>, with no visa numbers at
+                all.
                 {pdTime !== null ? (
                   <>
                     {" "}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 /**
@@ -127,13 +127,17 @@ export function FilterableStatTable<T>({
           <tbody className="bg-card">
             {visible.map((row, i) => (
               <tr key={i} className="border-t border-border/40">
+                {/* Cells rendered from a map arrive with nothing between
+                    them, so every row reads as one run of characters to
+                    anything walking the DOM. A space between cells costs
+                    nothing in a table and makes the row parse as a row. */}
                 {columns.map((c) => (
-                  <td
-                    key={c.key}
-                    className={"px-3 py-2.5 " + (c.numeric ? "text-right tabular-nums" : "")}
-                  >
-                    {c.render(row, i)}
-                  </td>
+                  <Fragment key={c.key}>
+                    {" "}
+                    <td className={"px-3 py-2.5 " + (c.numeric ? "text-right tabular-nums" : "")}>
+                      {c.render(row, i)}
+                    </td>
+                  </Fragment>
                 ))}
               </tr>
             ))}

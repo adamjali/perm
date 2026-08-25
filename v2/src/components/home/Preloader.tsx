@@ -1,96 +1,102 @@
-"use client";
-
-import { useEffect, useState } from "react";
-
 /**
- * The load curtain, fleet pattern: dark ground, brand mark, wordmark,
- * progress bar, spinner, slide-up exit.
+ * The home load curtain. A SERVER component on purpose.
  *
- * The first version flashed the page before covering it, because its styling
- * lived in the linked stylesheet: the browser paints the raw document before
- * a pending stylesheet arrives, so the curtain existed in the HTML and looked
- * like nothing. Every rule it needs now ships in its own inline <style>,
- * parsed with the markup — the curtain is styled from the first paint or it
- * is not a curtain.
+ * The previous version was a client component that styled itself from an
+ * inline <style> and gated on React state, which meant it could not exist
+ * until hydration — so the page painted first and the curtain arrived after
+ * it, which is the opposite of a curtain. It also skipped itself via
+ * sessionStorage inside that same effect, so a returning visitor saw a flash
+ * of nothing at all.
  *
- * Doctrine carried over: the timeout failsafe is armed before anything that
- * could throw; dismiss on window load or the cap, whichever first; never wait
- * on a lazy image; session-once; reduced motion gets a fade.
+ * This version renders as static markup in the server response, and one
+ * inline script — parsed and executed before the browser paints the body —
+ * decides in the same tick whether the curtain shows at all. Both failure
+ * directions are closed: content never flashes through it, and it never
+ * flashes over content it should have skipped.
+ *
+ * Doctrine carried from the client-site fleet:
+ *   - the failsafe timer is armed FIRST, before anything that can throw
+ *   - dismiss on window load OR the cap, whichever comes first
+ *   - never wait on a lazy image; the cap is the only guarantee
+ *   - scroll locked via html[data-pre="on"], released by the same attribute
+ *   - <noscript> removes it entirely when JS is off
+ *   - never a 0s CSS animation as the failsafe: it applies its end state
+ *     immediately and the panel never paints at all
  */
 
-const CAP_MS = 1600;
-const KEY = "pt-preloaded";
+const CAP_MS = 1800;
+const EXIT_MS = 560;
 
-const CSS = `
-.pt-pre{position:fixed;inset:0;z-index:200;background:#0a0a0a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transform:translateY(0);transition:transform .6s cubic-bezier(.76,0,.24,1)}
-.pt-pre.leave{transform:translateY(-101%)}
-.pt-pre-mark{width:56px;height:56px;color:#2ECC40;animation:ptPreIn .5s cubic-bezier(.2,.8,.2,1) both}
-.pt-pre-name{font-weight:800;font-size:clamp(1.6rem,4vw,2.1rem);letter-spacing:-.02em;line-height:1;color:#fff;animation:ptPreIn .5s .06s cubic-bezier(.2,.8,.2,1) both}
-.pt-pre-name b{color:#2ECC40;font-weight:800}
-.pt-pre-sub{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:700;animation:ptPreIn .5s .12s cubic-bezier(.2,.8,.2,1) both}
-.pt-pre-bar{width:min(260px,60vw);height:4px;background:rgba(255,255,255,.14);overflow:hidden;border:1px solid rgba(255,255,255,.18);animation:ptPreIn .5s .16s cubic-bezier(.2,.8,.2,1) both}
-.pt-pre-bar i{display:block;height:100%;background:#2ECC40;transform-origin:left;animation:ptPreBar 1.45s cubic-bezier(.3,.6,.4,1) both}
-.pt-pre-spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.22);border-top-color:#2ECC40;border-radius:50%;animation:ptPreSpin .68s linear infinite}
-@keyframes ptPreIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes ptPreBar{from{transform:scaleX(0)}to{transform:scaleX(.92)}}
-@keyframes ptPreSpin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.pt-pre{transition:opacity .3s ease}.pt-pre.leave{transform:none;opacity:0}.pt-pre-spin,.pt-pre-bar i{animation:none}.pt-pre-bar i{transform:scaleX(.92)}.pt-pre-mark,.pt-pre-name,.pt-pre-sub,.pt-pre-bar{animation:none}}
+/**
+ * Runs before first paint. Kept deliberately small and dependency-free —
+ * everything it touches exists at parse time.
+ */
+const BOOT = `
+(function(){
+  var d=document,h=d.documentElement;
+  try{
+    if(sessionStorage.getItem('pt-preloaded')){h.setAttribute('data-pre','off');return}
+  }catch(e){}
+  h.setAttribute('data-pre','on');
+  var done=false;
+  function leave(){
+    if(done)return; done=true;
+    try{sessionStorage.setItem('pt-preloaded','1')}catch(e){}
+    var el=d.querySelector('.pre');
+    if(el)el.classList.add('pre-leave');
+    setTimeout(function(){
+      h.setAttribute('data-pre','off');
+      if(el&&el.parentNode)el.parentNode.removeChild(el);
+    },${EXIT_MS});
+  }
+  var cap=setTimeout(leave,${CAP_MS});
+  function ready(){
+    clearTimeout(cap);
+    var fonts=(d.fonts&&d.fonts.ready)?d.fonts.ready:Promise.resolve();
+    Promise.race([fonts,new Promise(function(r){setTimeout(r,600)})]).then(leave,leave);
+  }
+  if(d.readyState==='complete')ready();
+  else addEventListener('load',ready,{once:true});
+})();
 `;
 
 export function Preloader() {
-  const [gone, setGone] = useState(false);
-  const [leaving, setLeaving] = useState(false);
-
-  useEffect(() => {
-    if (sessionStorage.getItem(KEY)) {
-      setGone(true);
-      return;
-    }
-    let done = false;
-    const leave = () => {
-      if (done) return;
-      done = true;
-      sessionStorage.setItem(KEY, "1");
-      setLeaving(true);
-      window.setTimeout(() => setGone(true), 640);
-    };
-    // Failsafe FIRST.
-    const cap = window.setTimeout(leave, CAP_MS);
-    if (document.readyState === "complete") leave();
-    else window.addEventListener("load", leave, { once: true });
-    return () => window.clearTimeout(cap);
-  }, []);
-
-  if (gone) return null;
-
   return (
-    <div className={"pt-pre pre" + (leaving ? " leave" : "")} role="status" aria-label="Loading">
-      <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      {/* The header's own document mark, inlined so nothing has to load. */}
-      <svg
-        className="pt-pre-mark"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-        <path d="M10 9H8" />
-        <path d="M16 13H8" />
-        <path d="M16 17H8" />
-      </svg>
-      <div className="pt-pre-name">
-        <b>PERM</b> Tracker
-      </div>{" "}
-      <div className="pt-pre-sub">Live DOL data · Automatic deadlines</div>{" "}
-      <div className="pt-pre-bar">
-        <i />
-      </div>{" "}
-      <div className="pt-pre-spin" aria-hidden="true" />
-    </div>
+    <>
+      <div className="pre" role="status" aria-label="Loading PERM Tracker">
+        {/* The header's own document mark, inlined so nothing has to load. */}
+        <svg
+          className="pre-mark"
+          width="56"
+          height="56"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+          <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+          <path d="M10 9H8" />
+          <path d="M16 13H8" />
+          <path d="M16 17H8" />
+        </svg>
+        <div className="pre-name">
+          <b>PERM</b> Tracker
+        </div>{" "}
+        <div className="pre-sub">Live DOL data · Automatic deadlines</div>{" "}
+        <div className="pre-track">
+          <i className="pre-bar" />
+        </div>{" "}
+        <div className="pre-spin" aria-hidden="true" />
+      </div>
+      <script dangerouslySetInnerHTML={{ __html: BOOT }} />
+      <noscript>
+        {/* With JS off nothing can ever dismiss it, so it must not exist. */}
+        <style>{`.pre{display:none}html{overflow:auto}`}</style>
+      </noscript>
+    </>
   );
 }

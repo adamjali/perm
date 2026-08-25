@@ -1385,6 +1385,44 @@ export default defineSchema({
     .index("by_created", ["createdAt"]),
 
   /**
+   * One row per PERM entity: employer, law firm, or occupation.
+   *
+   * These used to live as arrays inside the permDisclosureStats document,
+   * capped at the top 100. Measured, the uncapped set is 1.14 MB of
+   * employers alone against Convex's 1 MB document limit, so the cap was
+   * load-bearing rather than editorial and the data had to move.
+   *
+   * Rows are replaced wholesale per kind on each quarterly ingest, keyed by
+   * `slug` so a URL that worked last quarter still works this one.
+   */
+  permEntities: defineTable({
+    kind: v.union(
+      v.literal("employer"),
+      v.literal("attorney"),
+      v.literal("occupation"),
+    ),
+    /** URL segment. Unique within a kind; collisions resolved at ingest. */
+    slug: v.string(),
+    name: v.string(),
+    /** Rank by filing volume within its kind, 1-based. */
+    rank: v.number(),
+    total: v.number(),
+    certified: v.number(),
+    denied: v.number(),
+    medianDays: v.union(v.number(), v.null()),
+    /** Occupations and employers carry a wage; law firms do not. */
+    medianAnnualWage: v.optional(v.union(v.number(), v.null())),
+    /** Law firms carry a state; the SOC code lives here for occupations. */
+    state: v.optional(v.string()),
+    code: v.optional(v.string()),
+    computedAt: v.number(),
+  })
+    /** Detail pages: one exact row. */
+    .index("by_kind_slug", ["kind", "slug"])
+    /** Listing and generateStaticParams: ordered, bounded reads. */
+    .index("by_kind_rank", ["kind", "rank"]),
+
+  /**
    * Contact-form submissions. Stored first, THEN forwarded by a scheduled
    * action, so a Resend outage loses nothing - the message is already here.
    */

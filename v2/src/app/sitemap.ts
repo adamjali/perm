@@ -114,7 +114,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Dynamic content pages (blog, tutorials, guides, resources)
   const contentPages: MetadataRoute.Sitemap = getAllPosts()
-    .filter((post) => post.type !== 'changelog') // Changelog is a single page, no individual routes
     .map((post) => ({
       url: `${baseUrl}/${post.type}/${post.slug}`,
       lastModified: post.meta.updated ?? post.meta.date,

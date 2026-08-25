@@ -1,5 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Home } from "lucide-react";
+
+/**
+ * A 404 must not be indexable. Without this it inherits the site default and
+ * serves `index, follow`, which invites Google to index every mistyped URL
+ * and to treat links FROM this page as real inbound links — that is how a
+ * page ends up "reachable" only from the error page and counted as linked.
+ */
+export const metadata: Metadata = {
+  title: "Page not found",
+  robots: { index: false, follow: false },
+};
 
 export default function NotFound() {
   return (
