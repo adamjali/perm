@@ -8,11 +8,17 @@
  * sessionStorage inside that same effect, so a returning visitor saw a flash
  * of nothing at all.
  *
- * This version renders as static markup in the server response, and one
- * inline script — parsed and executed before the browser paints the body —
- * decides in the same tick whether the curtain shows at all. Both failure
- * directions are closed: content never flashes through it, and it never
- * flashes over content it should have skipped.
+ * This version renders as static markup in the server response, and its
+ * boot script runs from <head> (see PRELOADER_BOOT, mounted in the root
+ * layout) so the decision is made before a byte of body paints.
+ *
+ * THE SCRIPT CANNOT LIVE HERE, and the previous version's claim that it ran
+ * "before the browser paints the body" was measurably false. This component
+ * is rendered by the home PAGE, which sits below the layout's header, so on
+ * the deployed document <header> was at byte 8,339 and this markup at
+ * 64,073. Any connection slow enough to paint incrementally showed the
+ * header and then had the curtain slam over it. The cover is now drawn by
+ * `html[data-pre="on"] body::before`, which needs no markup at all.
  *
  * Doctrine carried from the client-site fleet:
  *   - the failsafe timer is armed FIRST, before anything that can throw
@@ -31,9 +37,13 @@ const EXIT_MS = 560;
  * Runs before first paint. Kept deliberately small and dependency-free —
  * everything it touches exists at parse time.
  */
-const BOOT = `
+export const PRELOADER_BOOT = `
 (function(){
   var d=document,h=d.documentElement;
+  // Runs from <head>, so it fires on EVERY route and has to exclude itself.
+  // The curtain is a home-page device; the rest of the site has no .pre
+  // markup and an attribute set there would lock scroll over nothing.
+  if(location.pathname!=='/')return;
   try{
     if(sessionStorage.getItem('pt-preloaded')){h.setAttribute('data-pre','off');return}
   }catch(e){}
@@ -92,7 +102,6 @@ export function Preloader() {
         </div>{" "}
         <div className="pre-spin" aria-hidden="true" />
       </div>
-      <script dangerouslySetInnerHTML={{ __html: BOOT }} />
       <noscript>
         {/* With JS off nothing can ever dismiss it, so it must not exist. */}
         <style>{`.pre{display:none}html{overflow:auto}`}</style>

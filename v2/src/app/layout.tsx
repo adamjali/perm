@@ -32,6 +32,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 // Viewport configuration for proper mobile scaling
+import { PRELOADER_BOOT } from "@/components/home/Preloader";
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -154,6 +156,17 @@ export default async function RootLayout({
     <ConvexAuthNextjsServerProvider>
       <html lang="en" suppressHydrationWarning>
         <head>
+          {/*
+            The home curtain's boot script, FIRST in <head>.
+            It has to be here rather than beside the curtain markup: that
+            markup is rendered by the home page, below this layout's header,
+            so on the deployed document the header was at byte 8,339 and the
+            curtain at 64,073. Any connection slow enough to paint
+            incrementally showed the header and then had the curtain slam
+            over it. The script gates on location.pathname so the other
+            routes are untouched.
+          */}
+          <script dangerouslySetInnerHTML={{ __html: PRELOADER_BOOT }} />
           <link rel="alternate" type="application/rss+xml" title="PERM Tracker RSS Feed" href="/feed.xml" />
           {/* JSON-LD structured data for rich search results
               Note: Using dangerouslySetInnerHTML is safe here because structuredData

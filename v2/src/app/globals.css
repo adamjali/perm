@@ -2291,8 +2291,11 @@ input[type="week"] {
 /* ------------------------------------------------------------------ *
  * The home load curtain.
  *
- * Every rule lives HERE, in the stylesheet the document loads in <head>,
- * and the markup is server-rendered as the first child of <body>. The
+ * Every rule lives HERE, in the stylesheet the document loads in <head>.
+ * The markup is NOT the first child of <body> - it is rendered by the
+ * home page, below the layout's header - which is why the cover above
+ * is keyed off the attribute the <head> script sets rather than off the
+ * element. The
  * previous version styled itself from a <style> inside a client component
  * and gated on React state, so it could not paint before hydration and the
  * page flashed through it. A curtain that arrives after the content is not
@@ -2304,6 +2307,29 @@ input[type="week"] {
  * ------------------------------------------------------------------ */
 html[data-pre="on"] { overflow: hidden; }
 html[data-pre="off"] .pre { display: none; }
+
+/*
+ * The cover, drawn from the ATTRIBUTE rather than from the .pre element.
+ *
+ * `.pre` is real markup and it sits 56 KB into the document, after the
+ * header, because it is rendered by the page and the header belongs to the
+ * layout above it. Measured on the deployed page: <header> at byte 8,339,
+ * the curtain at 64,073. So on any connection slow enough to paint
+ * incrementally the browser shows the header and THEN slams the curtain
+ * over it, which is worse than having no curtain.
+ *
+ * The boot script sets this attribute from <head>, before a single byte of
+ * body has painted, so this pseudo-element is the thing that actually
+ * closes the flash. The branded `.pre` panel layers on top at z-index 200
+ * when it parses.
+ */
+html[data-pre="on"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+  background: var(--background);
+}
 
 .pre {
   position: fixed;
