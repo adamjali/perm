@@ -393,3 +393,36 @@ export async function countPageworthy(kind: EntityKind): Promise<number> {
   );
   return r?.n ?? 0;
 }
+
+export interface DatasetFreshness {
+  dataset: string;
+  asOf: string | null;
+  fetchedAt: number;
+  source: string;
+  cadence: string;
+  note: string | null;
+}
+
+/**
+ * The freshness registry: what every dataset is, where it comes from, the
+ * date it carries, and how often it moves. Written by the ingest scripts;
+ * rendered by <DataProvenance> so provenance sits ON the page instead of in
+ * a methodology page nobody visits. A row per dataset, replaced on ingest.
+ */
+export async function getFreshness(): Promise<Record<string, DatasetFreshness>> {
+  const r = await rows<Record<string, unknown>>(
+    "SELECT dataset, as_of, fetched_at, source, cadence, note FROM data_freshness",
+  );
+  const out: Record<string, DatasetFreshness> = {};
+  for (const x of r) {
+    out[x.dataset as string] = {
+      dataset: x.dataset as string,
+      asOf: (x.as_of as string) ?? null,
+      fetchedAt: (x.fetched_at as number) ?? 0,
+      source: (x.source as string) ?? "",
+      cadence: (x.cadence as string) ?? "",
+      note: (x.note as string) ?? null,
+    };
+  }
+  return out;
+}
