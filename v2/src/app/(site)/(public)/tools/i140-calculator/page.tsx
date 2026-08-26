@@ -141,7 +141,7 @@ export default async function I140CalculatorPage() {
         currentHref={"/tools/i140-calculator"}
         reading={[
           { href: "/guides/ultimate-perm-guide-2026", label: "The full PERM guide", note: "Where the petition sits in the process, and what has to be approved first." },
-          { href: "/blog/what-is-perm-labor-certification", label: "What PERM actually is", note: "The labor certification the petition depends on, in plain terms." },
+          { href: "/blog/what-is-perm-labor-certification", label: "What PERM is", note: "The labor certification the petition depends on, in plain terms." },
         ]}
       />
     </div>

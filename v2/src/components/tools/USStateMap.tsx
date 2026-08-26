@@ -497,7 +497,7 @@ export function USStateMap({
                   {spec.label} is withheld here: {fmtInt(spec.population(active))}{" "}
                   {spec.populationNoun} is under the floor of {fmtInt(floor)}, and a rate
                   over a population that small says more about the sample than the state.
-                  The figures above are the counts themselves, which need no floor.
+                  Counts carry no floor, so those are shown for every state.
                 </>
               )}
             </p>

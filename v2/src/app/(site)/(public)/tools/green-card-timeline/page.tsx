@@ -236,7 +236,7 @@ export default async function GreenCardTimelinePage() {
         currentHref={"/tools/green-card-timeline"}
         reading={[
           { href: "/guides/ultimate-perm-guide-2026", label: "The full PERM guide", note: "The stages in detail, and the rules behind the ones you control." },
-          { href: "/blog/what-is-perm-labor-certification", label: "What PERM actually is", note: "The labor certification stage, in plain terms." },
+          { href: "/blog/what-is-perm-labor-certification", label: "What PERM is", note: "The labor certification stage, in plain terms." },
         ]}
       />
     </div>

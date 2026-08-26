@@ -21,7 +21,7 @@ import { getDisclosureStats } from "@/lib/turso/publicData";
 import { DataProvenance } from "@/components/data/DataProvenance";
 const TITLE = "PERM Salaries by Occupation";
 const DESCRIPTION =
-  "What PERM cases actually pay: median offered wages by occupation, with volume and approval rates, from DOL's own disclosure files.";
+  "What PERM cases pay: median offered wages by occupation, with volume and approval rates, from DOL's own disclosure files.";
 
 export const metadata: Metadata = {
   title: TITLE,

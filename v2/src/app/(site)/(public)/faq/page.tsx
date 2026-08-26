@@ -124,7 +124,7 @@ const faqData = [
           "California and Texas lead by a wide margin, and volume tracks industry concentration rather than a faster or slower line: DOL works one national queue, oldest first. The interactive state map shows filings, approval rates, median days and median wages for every state, from DOL's own files.",
       },
       {
-        question: "What do PERM cases actually pay?",
+        question: "What do PERM cases pay?",
         answer:
           "The wages page shows median offered wages by occupation from DOL's disclosure files. These are wages employers committed to in federal filings. Hourly and other units are annualized before medians are taken.",
       },

@@ -210,7 +210,7 @@ export function LoginPageClient() {
       } else {
         trackLoginFailed("invalid_credentials");
         toast.error(
-          "Invalid email or password. If you signed up with Google, use the Google button below.",
+          "Invalid email or password. If you signed up with Google, use the Google sign-in button.",
         );
       }
     } finally {

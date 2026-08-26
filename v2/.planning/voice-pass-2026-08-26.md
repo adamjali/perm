@@ -470,3 +470,40 @@
 
 - OLD: PERM Tracker auto-calculates 15+ deadlines per case based on DOL regulations (20 CFR 656)
   NEW: PERM Tracker auto-calculates 11 deadline types per case based on DOL regulations (20 CFR 656)
+
+## Final sweep stragglers
+
+### `src/app/(site)/(auth)/signup/SignupPageClient.tsx`
+
+- OLD: and you get an email before each one. Free.
+  NEW: and you get an email before each one.
+
+### `src/app/(site)/(auth)/login/LoginPageClient.tsx`
+
+- OLD: "Invalid email or password. If you signed up with Google, use the Google button below.",
+  NEW: "Invalid email or password. If you signed up with Google, use the Google sign-in button.",
+
+### `src/components/tools/USStateMap.tsx`
+
+- OLD: The figures above are the counts themselves, which need no floor.
+  NEW: Counts carry no floor, so those are shown for every state.
+
+### `src/app/(site)/(public)/faq/page.tsx`
+
+- OLD: question: "What do PERM cases actually pay?",
+  NEW: question: "What do PERM cases pay?",
+
+### `src/app/(site)/(public)/perm-wages/page.tsx`
+
+- OLD: const DESCRIPTION = "What PERM cases actually pay: median offered wages by occupation, with volume and approval rates, from DOL's own disclosure files.";
+  NEW: const DESCRIPTION = "What PERM cases pay: median offered wages by occupation, with volume and approval rates, from DOL's own disclosure files.";
+
+### `src/app/(site)/(public)/tools/i140-calculator/page.tsx`
+
+- OLD: label: "What PERM actually is", note: "The labor certification the petition depends on, in plain terms." }
+  NEW: label: "What PERM is", note: "The labor certification the petition depends on, in plain terms." }
+
+### `src/app/(site)/(public)/tools/green-card-timeline/page.tsx`
+
+- OLD: label: "What PERM actually is", note: "The labor certification stage, in plain terms." }
+  NEW: label: "What PERM is", note: "The labor certification stage, in plain terms." }

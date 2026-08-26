@@ -398,7 +398,7 @@ export function SignupPageClient() {
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           Track every case you&apos;re responsible for. Filing windows, wage
           expirations and audit responses are computed from the dates you enter,
-          and you get an email before each one. Free.
+          and you get an email before each one.
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
