@@ -149,6 +149,46 @@ def rows_from(cases_path: pathlib.Path, employers, firms):
             )
 
 
+def row_fingerprint(row: tuple) -> str:
+    """A short hash of everything except the key.
+
+    Cheap change detection. A quarterly disclosure file is a SUPERSET of the
+    last one: the vast majority of rows are byte-identical, a few thousand
+    have a new decision, and the rest are new cases. Rewriting all 373,939
+    every quarter costs ~4.76M row-writes (the table plus ten indexes);
+    writing only what moved costs a fraction of that and finishes in seconds
+    instead of four minutes.
+    """
+    import hashlib
+    return hashlib.blake2b("\x1f".join("" if v is None else str(v) for v in row[1:]).encode(),
+                           digest_size=8).hexdigest()
+
+
+def existing_fingerprints(db: Turso) -> dict[str, str]:
+    """case_number -> fingerprint for everything already stored.
+
+    Read in pages: 373,939 rows in one response is tens of megabytes of JSON
+    and the pipeline has a response cap.
+    """
+    out: dict[str, str] = {}
+    page = 20000
+    after = ""
+    while True:
+        res = db.execute(
+            f"SELECT {','.join(COLUMNS)} FROM perm_cases "
+            "WHERE case_number > ? ORDER BY case_number LIMIT ?", [after, page])
+        rows = res["response"]["result"]["rows"]
+        if not rows:
+            break
+        for r in rows:
+            vals = tuple(None if c["type"] == "null" else c["value"] for c in r)
+            out[str(vals[0])] = row_fingerprint(vals)
+        after = str(out and rows[-1][0]["value"])
+        if len(rows) < page:
+            break
+    return out
+
+
 def main() -> int:
     artifact = pathlib.Path(sys.argv[1] if len(sys.argv) > 1
                             else sorted(pathlib.Path("/tmp/ingest-artifact").iterdir())[0])
@@ -164,8 +204,18 @@ def main() -> int:
 
     employers, firms = slug_maps(json.load(open(payload_path)))
 
-    log("  creating schema (dropping any previous load)")
-    db.script(SCHEMA)
+    incremental = "--incremental" in sys.argv
+    if incremental:
+        log("  incremental: reading existing fingerprints")
+        have = existing_fingerprints(db)
+        log(f"    {len(have):,} rows already stored")
+        if not have:
+            log("    table is empty - falling back to a full load")
+            incremental = False
+    if not incremental:
+        have = {}
+        log("  creating schema (dropping any previous load)")
+        db.script(SCHEMA)
 
     placeholders = "(" + ",".join("?" * len(COLUMNS)) + ")"
     insert_head = f"INSERT OR REPLACE INTO perm_cases ({','.join(COLUMNS)}) VALUES "
@@ -191,7 +241,11 @@ def main() -> int:
         db.pipeline(pending + [{"type": "close"}])
         pending = []
 
+    skipped = 0
     for row in rows_from(cases, employers, firms):
+        if incremental and have.get(str(row[0])) == row_fingerprint(row):
+            skipped += 1
+            continue
         batch.append(row)
         sent += 1
         if len(batch) >= ROWS_PER_STMT:
@@ -203,7 +257,15 @@ def main() -> int:
                     log(f"    {sent:>7,} rows  ({rate:,.0f}/s)")
     flush_stmt()
     flush_request()
-    log(f"  inserted {sent:,} rows in {time.time() - t0:,.0f}s")
+    log(f"  wrote {sent:,} rows in {time.time() - t0:,.0f}s"
+        + (f"  ({skipped:,} unchanged, skipped)" if incremental else ""))
+
+    if incremental:
+        # The indexes already exist and were maintained by the writes above.
+        # Rebuilding them would undo the entire point of the incremental path.
+        got = int(db.scalar("SELECT count(*) FROM perm_cases") or 0)
+        log(f"  VERIFY count(*) = {got:,}")
+        return 0
 
     log("  building indexes")
     ti = time.time()

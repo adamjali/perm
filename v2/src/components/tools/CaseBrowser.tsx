@@ -241,7 +241,33 @@ export function CaseBrowser({
 
   // One url per distinct question, so the hook's dependency is the question
   // itself and a repeat is served from the edge cache rather than Turso.
+  /**
+   * A dimension is picked but its value is not.
+   *
+   * The empty option is a real, addressable slice on the server: 12,017 cases
+   * genuinely carry a blank worksite state, so `state=""` returns them. That
+   * is correct as an API contract and wrong as a default view - someone who
+   * has chosen "State" and not yet chosen one is mid-thought, not asking for
+   * the cases DOL left blank. Prompt instead of answering a question they did
+   * not ask.
+   */
+  const awaitingValue =
+    (dimension === "state" && stateValue === "") ||
+    (dimension === "occupation" && socValue === "") ||
+    (dimension === "employer" && employerSlug === "") ||
+    (dimension === "attorney" && attorneySlug === "");
+
+  const dimensionLabel =
+    dimension === "state"
+      ? "a state"
+      : dimension === "occupation"
+        ? "an occupation"
+        : dimension === "employer"
+          ? "an employer"
+          : "a law firm";
+
   const listUrl = useMemo(() => {
+    if (awaitingValue) return "skip" as const;
     const p = new URLSearchParams({ action: "list", kind: filter.slice.kind });
     const s = filter.slice;
     if (s.kind === "state") p.set("state", s.state);
@@ -256,7 +282,7 @@ export function CaseBrowser({
     const cursor = cursors[pageIndex];
     if (cursor) p.set("cursor", cursor);
     return `/api/perm-cases?${p.toString()}`;
-  }, [filter, order, pageSize, cursors, pageIndex]);
+  }, [filter, order, pageSize, cursors, pageIndex, awaitingValue]);
 
   const { data: page, failed: pageFailed } = usePublicQuery<CasePage>(listUrl);
 
@@ -671,7 +697,15 @@ export function CaseBrowser({
           ) : null}
         </div>
 
-        {page === undefined && !searching && !pageFailed ? (
+        {awaitingValue && !searching ? (
+          <div className="mt-6 border-2 border-border bg-card p-6 shadow-hard-sm">
+            <p className="text-base text-foreground/70">
+              Pick {dimensionLabel} to see its cases.
+            </p>
+          </div>
+        ) : null}
+
+        {page === undefined && !searching && !pageFailed && !awaitingValue ? (
           <p className="mt-6 text-base text-foreground/60">Reading the case table…</p>
         ) : null}
 
@@ -685,7 +719,9 @@ export function CaseBrowser({
           </div>
         ) : null}
 
-        {shown.length === 0 && (searching ? nameHits !== undefined : page !== undefined) ? (
+        {shown.length === 0 &&
+        !awaitingValue &&
+        (searching ? nameHits !== undefined : page !== undefined) ? (
           <div className="mt-6 border-2 border-border bg-card p-6 shadow-hard-sm">
             <p className="text-base text-foreground/70">
               Nothing matches that combination in this disclosure window.
