@@ -142,10 +142,11 @@ export default async function ToolsPage() {
 
       <section className="mt-10 flex flex-wrap items-center justify-between gap-4 border-2 border-border bg-tint-primary p-6 shadow-hard sm:p-8">
         <div>
-          <h2 className="font-heading text-2xl font-black">Six calculators</h2>{" "}
+          <h2 className="font-heading text-2xl font-black">Seven calculators</h2>{" "}
           <p className="mt-1 max-w-xl text-base text-foreground/70">
-            Decision times, the wage queue, the I-140 backlog, priority dates,
-            the whole green card drawn to scale, and every statutory deadline.
+            Decision times, the wage queue, the I-140 backlog, the I-485
+            queue, priority dates, the whole green card drawn to scale, and
+            every statutory deadline.
           </p>
         </div>
         <Link

@@ -8,13 +8,14 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CalendarBlank as CalendarRange, CalendarCheck, CalendarDot as CalendarClock, FileText, Path as Route, Scales as Scale } from "@phosphor-icons/react/ssr";
+import { ArrowRight, CalendarBlank as CalendarRange, CalendarCheck, CalendarDot as CalendarClock, FileText, Path as Route, Scales as Scale, Users } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import {
   BulletinStepsMini,
+  CertaintyRangeMini,
   QueueDepthMini,
   ScaleBarsMini,
   TapeMini,
@@ -82,6 +83,16 @@ const TOOLS = [
       "How many petitions are waiting in your category against how fast USCIS clears them, next to the processing time USCIS publishes.",
   },
   {
+    href: "/tools/i485-queue-position",
+    viz: "range" as const,
+    icon: Users,
+    kind: "Range",
+    name: "I-485 queue position",
+    tone: "ink",
+    blurb:
+      "How many employment-based adjustment applications USCIS had pending ahead of a priority date. USCIS withholds its smallest counts, so the answer is a floor and a ceiling.",
+  },
+  {
     href: "/tools/priority-date-calculator",
     viz: "steps" as const,
     icon: CalendarRange,
@@ -136,7 +147,7 @@ export default function CalculatorsPage() {
           PERM calculators
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          Six calculators, each answering one question a PERM case raises.
+          Seven calculators, each answering one question a PERM case raises.
         </p>
       </header>
 
@@ -159,6 +170,7 @@ export default function CalculatorsPage() {
                 { s: "Determination in hand, planning recruitment", q: "By when must we file?", href: "/tools/perm-deadline-calculator", tool: "Deadline calculator" },
                 { s: "ETA-9089 filed, waiting", q: "When will DOL decide?", href: "/tools/perm-timeline-calculator", tool: "Decision estimator" },
                 { s: "PERM certified, I-140 next or pending", q: "How deep is USCIS's queue?", href: "/tools/i140-calculator", tool: "I-140 queue" },
+                { s: "I-140 approved, waiting to adjust status", q: "How many are ahead of me?", href: "/tools/i485-queue-position", tool: "I-485 queue position" },
                 { s: "I-140 approved, watching the bulletin", q: "Is my date current, and which way is it moving?", href: "/tools/priority-date-calculator", tool: "Priority dates" },
                 { s: "Just starting, or explaining it to someone", q: "How long is the whole thing?", href: "/tools/green-card-timeline", tool: "Green card timeline" },
               ].map((r) => (
@@ -218,6 +230,7 @@ export default function CalculatorsPage() {
                   {t.viz === "twobars" ? <TwoBarsMini /> : null}
                   {t.viz === "steps" ? <BulletinStepsMini /> : null}
                   {t.viz === "scale" ? <ScaleBarsMini /> : null}
+                  {t.viz === "range" ? <CertaintyRangeMini /> : null}
                 </div>{" "}
                 <p
                   className={

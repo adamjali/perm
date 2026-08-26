@@ -38,6 +38,7 @@ function label(d: string): string {
     "visa-bulletin": "Visa bulletin",
     "daily-decisions": "Daily decisions",
     "uscis-i140-times": "I-140 times",
+    "i485-inventory": "I-485 pending inventory",
     entities: "Employers and firms",
   };
   return names[d] ?? d;

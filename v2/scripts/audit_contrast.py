@@ -61,6 +61,48 @@ MANILA = [
 ]
 
 
+# Surfaces and graphics the PAIRS table cannot reach, because they are not
+# tokens. `.bg-tint-primary` is `color-mix(in srgb, --primary 12%, --card)`
+# and the bar fills are opacity-derived, so both are computed here from the
+# real tokens per theme instead of being read as hex literals.
+#
+# Added after measuring a page by hand found them ungated: tint-primary is
+# used on /tools, /calculators and the I-485 queue page and had never been
+# checked, and a data bar at foreground/25 measured 1.82:1 against its own
+# track, under the 3:1 floor for a graphical object.
+#
+# (text token or None for a graphic, alpha, surface expression, label, floor)
+DERIVED = [
+    ("--foreground", 1.0, "tint", "ink on the primary tint", 4.5),
+    ("--foreground", 0.7, "tint", "body at 70% on the primary tint", 4.5),
+    ("--foreground", 0.6, "tint", "label at 60% on the primary tint", 4.5),
+    ("--foreground", 0.45, "muted", "data bar fill against its track", 3.0),
+    ("--border", 1.0, "muted", "hatch stroke against the hatched base", 3.0),
+]
+
+# Boundaries a reader has to SEE, where more than one thing can carry them.
+#
+# The certainty bar's two segments meet without a gap. Comparing their fills
+# alone reports FAIL at 1.96:1 in light mode and passes at 8.14:1 in dark,
+# which is true and is not the question: the segments are separated by a 2px
+# --border rule that measures 9.83:1 against lime, and by hatching, which is
+# a texture difference no ratio describes. A boundary is perceivable if ANY
+# of its carriers clears the floor, so the check takes the best one. Testing
+# only the fills would have made this gate permanently red over a boundary
+# that is, measurably, the most visible edge on the page.
+#
+# (label, floor, [(token_a, surface_a), ...] candidate carriers)
+BOUNDARIES = [
+    ("certainty bar: solid meets hatched", 3.0,
+     [("--primary", "muted"), ("--border", "--primary")]),
+]
+
+
+def mix(a, b, pa):
+    """color-mix(in srgb, a pa%, b)."""
+    return tuple(round(x * pa + y * (1 - pa)) for x, y in zip(a, b))
+
+
 def blend(fg, bg, a):
     return tuple(round(f * a + b * (1 - a)) for f, b in zip(fg, bg))
 
@@ -105,6 +147,28 @@ def main() -> int:
             if not ok: bad += 1
             print(f"    {'ok  ' if ok else 'FAIL'} {r:5.2f}:1 (need {floor})  {label}"
                   f"  {t}={toks[t].strip()} on {s_}={toks[s_].strip()}")
+    for name, toks in (("LIGHT", light), ("DARK", dark)):
+        print(f"\n  === {name}, DERIVED SURFACES ===")
+        tint = mix(rgb(toks["--primary"]), rgb(toks["--card"]), 0.12)
+        surfaces = {"tint": tint, "muted": rgb(toks["--muted"])}
+        for tok, a, sfc_name, label, floor in DERIVED:
+            sfc = surfaces[sfc_name]
+            r = ratio(blend(rgb(toks[tok]), sfc, a), sfc)
+            ok = r >= floor
+            if not ok:
+                bad += 1
+            print(f"    {'ok  ' if ok else 'FAIL'} {r:5.2f}:1 (need {floor})  {label}")
+        for label, floor, carriers in BOUNDARIES:
+            best = max(
+                ratio(surfaces.get(a) or rgb(toks[a]), surfaces.get(b) or rgb(toks[b]))
+                for a, b in carriers
+            )
+            ok = best >= floor
+            if not ok:
+                bad += 1
+            print(f"    {'ok  ' if ok else 'FAIL'} {best:5.2f}:1 (need {floor})  "
+                  f"{label} (best carrier of {len(carriers)})")
+
     print("\n  === MANILA (theme-invariant surface) ===")
     for fg, a, sfc, label, floor in MANILA:
         eff = blend(rgb(fg), rgb(sfc), a)

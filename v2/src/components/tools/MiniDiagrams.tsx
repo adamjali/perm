@@ -183,3 +183,74 @@ export function TwoBarsMini() {
     </svg>
   );
 }
+
+/**
+ * An answer that is a range: a floor that is certain, and a span that is not.
+ *
+ * The I-485 queue drawn as its own certainty bar. Solid to the floor, hatched
+ * across the width USCIS withholds, scaled to the ceiling with no empty track
+ * behind it, so it reads as a measurement with a known precision rather than
+ * as a progress meter.
+ *
+ * The hatch is explicit lines rather than an SVG `<pattern>` because a pattern
+ * needs an id, and this kit is server-rendered with no `useId` available. The
+ * lines are clamped to the hatched rect in arithmetic, which also keeps the
+ * shape deterministic as the rest of the kit is.
+ */
+export function CertaintyRangeMini() {
+  const X0 = 4;
+  const X1 = 116;
+  const SPLIT = 68;
+  const TOP = 16;
+  const BOT = 32;
+  // Lines at 45 degrees: y = -x + c, swept across the hatched rect and
+  // clamped at both ends so none of them overhangs it.
+  const hatch: { x1: number; y1: number; x2: number; y2: number }[] = [];
+  for (let c = SPLIT + TOP; c <= X1 + BOT; c += 6) {
+    let xb = c - BOT;
+    let yb = BOT;
+    let xt = c - TOP;
+    let yt = TOP;
+    if (xb < SPLIT) {
+      xb = SPLIT;
+      yb = c - SPLIT;
+    }
+    if (xt > X1) {
+      xt = X1;
+      yt = c - X1;
+    }
+    if (xt > xb) hatch.push({ x1: xb, y1: yb, x2: xt, y2: yt });
+  }
+  return (
+    <svg viewBox="0 0 120 48" className={FRAME} aria-hidden="true">
+      <rect x={X0} y={TOP} width={SPLIT - X0} height={BOT - TOP} fill="var(--primary)" />
+      {hatch.map((l, i) => (
+        <line
+          key={i}
+          x1={l.x1}
+          y1={l.y1}
+          x2={l.x2}
+          y2={l.y2}
+          stroke="currentColor"
+          strokeWidth="1.2"
+          opacity="0.45"
+        />
+      ))}
+      <rect
+        x={X0}
+        y={TOP}
+        width={X1 - X0}
+        height={BOT - TOP}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <text x={X0} y={10} fontSize="8" fontFamily="var(--font-mono)" fontWeight="700" fill="currentColor" opacity="0.7">
+        AT LEAST
+      </text>
+      <text x={X1} y={44} fontSize="8" fontFamily="var(--font-mono)" fontWeight="700" fill="currentColor" opacity="0.7" textAnchor="end">
+        AT MOST
+      </text>
+    </svg>
+  );
+}
