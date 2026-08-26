@@ -83,7 +83,7 @@ export default function PermDeadlineCalculatorPage() {
           PERM deadline calculator
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          Every date the regulations fix, worked out from your prevailing wage
+          Every deadline in your case, calculated from your prevailing wage
           determination. Nothing here’s a forecast.
         </p>
       </header>

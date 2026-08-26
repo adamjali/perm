@@ -298,10 +298,10 @@ export function USStateMap({
             const label = !stat
               ? `${shape.name}: no data`
               : metric === "total"
-                ? `${shape.name}: ${fmtInt(stat.total)} PERM filings`
+                ? `${shape.name}: ${fmtInt(stat.total)} PERM cases were filed`
                 : v === undefined
-                  ? `${shape.name}: ${spec.label} withheld, ${fmtInt(spec.population(stat))} ${spec.populationNoun} is under the floor. ${fmtInt(stat.total)} PERM filings`
-                  : `${shape.name}: ${spec.label} ${spec.format(v)}, over ${fmtInt(spec.population(stat))} ${spec.populationNoun}. ${fmtInt(stat.total)} PERM filings`;
+                  ? `${shape.name}: ${spec.label.toLowerCase()} withheld, fewer than ${fmtInt(floor)} ${spec.populationNoun}. ${fmtInt(stat.total)} cases were filed`
+                  : `${shape.name}: ${spec.label.toLowerCase()} ${spec.format(v)}, from ${fmtInt(spec.population(stat))} ${spec.populationNoun}. ${fmtInt(stat.total)} cases were filed`;
             return (
               <path
                 key={shape.abbr}
@@ -434,7 +434,7 @@ export function USStateMap({
               style={{ background: "color-mix(in srgb, var(--data-none) 22%, var(--card))" }}
             />
             <span className="text-xs text-foreground/60">
-              Under {fmtInt(floor)} {spec.populationNoun}, not shaded
+              Fewer than {fmtInt(floor)} {spec.populationNoun}, not shaded
             </span>
           </span>
         ) : null}{" "}
@@ -489,7 +489,7 @@ export function USStateMap({
                   </strong>
                   , {rankOf.get(active.state)}
                   {ordinalSuffix(rankOf.get(active.state) ?? 0)} of the{" "}
-                  {range?.n ?? 0} states carrying that figure, over{" "}
+                  {range?.n ?? 0} states with that figure, from{" "}
                   {fmtInt(spec.population(active))} {spec.populationNoun}.
                 </>
               ) : (

@@ -559,7 +559,7 @@ export function PriorityDateEstimator({
               ? "This category was closed that month"
               : estimate.isCurrent
                 ? "Your date was current"
-                : "Your date wasn’t yet current"}
+                : "Your date wasn’t current yet"}
           </p>{" "}
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
             {estimate.latest?.kind === "date" ? (

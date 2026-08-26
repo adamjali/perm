@@ -54,15 +54,18 @@ export function I140QueueEstimator({
   className,
 }: I140QueueEstimatorProps) {
   const selectId = useId();
-  // Defaults to the largest category by pending volume rather than whatever
-  // USCIS happens to tabulate first, because that is the one most visitors are
-  // in. On current figures it is the national interest waiver, at roughly half
-  // of every I-140 pending.
+  // Defaults to EB-2 advanced degree, NOT the largest subtype by volume.
+  // The largest is the national interest waiver - which never files a PERM
+  // at all, so on a PERM site it is the one subtype almost no visitor is in.
+  // Defaulting to it showed a practicing attorney NIW's 29-32 month range as
+  // the apparent answer, when her cases (E21/E31, the PERM path) run 2.5-8.5
+  // months. The default is the subtype a PERM case actually becomes.
   const [code, setCode] = useState<string>(
     () =>
-      [...subtypes].sort((a, b) => b.pending - a.pending)[0]?.code ||
+      (subtypes.some((s) => s.code === "E21") ? "E21" : null) ||
+      (subtypes.some((s) => s.code === "E31") ? "E31" : null) ||
       subtypes[0]?.code ||
-      "NIW",
+      "E21",
   );
 
   const estimate = useMemo(() => {
@@ -167,8 +170,11 @@ export function I140QueueEstimator({
         </div>
       </div>
 
-      {/* The two figures side by side. They disagree, and the disagreement is
-          the most useful thing on the page. */}
+      {/* USCIS's own published time leads; the raw queue counts sit above as
+          data. The old fourth card divided pending by quarterly clearance and
+          headlined the result as "N months" - an inventory-turnover figure
+          that reads as a personal wait time. It answered a question nobody
+          asks with a number experts read as wrong, so it is gone. */}
       <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2">
         {published ? (
           <div className="bg-card p-6 sm:p-8">
@@ -183,17 +189,25 @@ export function I140QueueEstimator({
             </p>
           </div>
         ) : null}
-        {estimate.monthsToClear !== null ? (
+        {published?.premiumBusinessDays ? (
           <div className="bg-card p-6 sm:p-8">
             <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
-              Queue at this pace
+              With premium processing
             </p>{" "}
             <p className="mt-2 font-heading text-2xl font-black leading-none">
-              {estimate.monthsToClear} months
+              {published.premiumBusinessDays} business days
             </p>{" "}
             <p className="mt-3 text-base leading-relaxed text-foreground/70">
-              {estimate.pending.toLocaleString("en-US")} waiting divided by{" "}
-              {estimate.completedInQuarter.toLocaleString("en-US")} a quarter.
+              USCIS commits to a decision or refunds the fee.{" "}
+              <a
+                href="https://egov.uscis.gov/processing-times/"
+                className="font-bold underline underline-offset-2 hover:text-primary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Check today&apos;s exact time on USCIS&apos;s page
+              </a>
+              .
             </p>
           </div>
         ) : null}

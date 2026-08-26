@@ -110,7 +110,7 @@ describe("USStateMap population floor", () => {
       target: { value: "approval" },
     });
     expect(fillOf(/Wyoming/)).toContain("data-none");
-    expect(screen.getByText(/Under 100 decided cases, not shaded/)).toBeInTheDocument();
+    expect(screen.getByText(/Fewer than 100 decided cases, not shaded/)).toBeInTheDocument();
   });
 
   it("shades it again when the floor is dropped, which is the control doing its job", () => {
@@ -182,7 +182,7 @@ describe("USStateMap state selector", () => {
       target: { value: "approval" },
     });
     expect(
-      screen.getByRole("button", { name: /Texas: Approval rate 99.0%, over 500 decided cases/ }),
+      screen.getByRole("button", { name: /Texas: approval rate 99.0%, from 500 decided cases/ }),
     ).toBeInTheDocument();
   });
 });

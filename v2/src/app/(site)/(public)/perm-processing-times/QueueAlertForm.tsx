@@ -145,11 +145,11 @@ export function QueueAlertForm({
       <div className="flex items-center gap-2">
         <Bell className="h-5 w-5 text-primary" aria-hidden="true" />
         <h2 className="font-heading text-xl font-black sm:text-2xl">
-          Get told when DOL reaches your month
+          Get notified when DOL reaches your month
         </h2>
       </div>{" "}
       <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-        One email, sent when the analyst-review queue reaches the month your case was filed.
+        We’ll email you when the analyst-review queue reaches the month your case was filed.
         It isn’t a newsletter and nothing else follows it.
       </p>{" "}
 

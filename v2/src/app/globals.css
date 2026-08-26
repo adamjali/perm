@@ -184,11 +184,21 @@
    mode - on dark the lime already measures 9.26:1 and --primary-text is the
    lime itself.
    --------------------------------------------------------------------------- */
-.text-primary { color: var(--primary-text); }
-.text-destructive { color: var(--destructive-text); }
-/* Icons inherit via currentColor, so stroke/fill follow automatically. */
-.fill-primary { fill: var(--primary-text); }
-.stroke-primary { stroke: var(--primary-text); }
+/* INSIDE @layer utilities, deliberately. The first version of these was
+   unlayered, and an unlayered rule beats every layered one - which silently
+   broke hover:text-* and group-hover:text-* on any element using
+   text-primary: the header logo's "PERM" stayed lime on its lime hover
+   because group-hover:text-black could no longer apply. In the utilities
+   layer these still override the generated .text-primary (same layer, later
+   in source), while variant rules like .group:hover .group-hover\:text-black
+   win again on plain specificity, which is the cascade behaving as designed. */
+@layer utilities {
+  .text-primary { color: var(--primary-text); }
+  .text-destructive { color: var(--destructive-text); }
+  /* Icons inherit via currentColor, so stroke/fill follow automatically. */
+  .fill-primary { fill: var(--primary-text); }
+  .stroke-primary { stroke: var(--primary-text); }
+}
 
 @theme inline {
   --color-background: var(--background);

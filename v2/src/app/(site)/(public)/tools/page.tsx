@@ -104,7 +104,7 @@ export default async function ToolsPage() {
               {analystAvg?.calendarDays != null ? `${analystAvg.calendarDays} days` : "—"}
             </p>{" "}
             <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-              Over cases DOL decided recently. Audits pull it up.
+              Over cases DOL decided recently. An RFI or audit can make an individual case take longer.
             </p>
           </div>
           <div className="border-2 border-border bg-card p-6 shadow-hard">
@@ -257,7 +257,7 @@ export default async function ToolsPage() {
             For your own case
           </p>{" "}
           <h2 className="mt-2 font-heading text-xl font-black">
-            Get one email when DOL reaches your month
+            Get notified when DOL reaches your month
           </h2>{" "}
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
             No newsletter, no account. Set it on the{" "}

@@ -132,7 +132,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
                 See where the queue stands
               </span>{" "}
               <span className="mt-2 text-base leading-relaxed text-foreground/70">
-                Live DOL figures and one email when your filing month comes up.
+                Live DOL figures and an alert when your filing month comes up.
               </span>{" "}
               <span className="mt-3 inline-flex items-center gap-2 font-bold">
                 Open the data{" "}

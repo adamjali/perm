@@ -167,13 +167,17 @@ export default function AuthHeader() {
         <NavLink
           href="/"
           className="group flex min-h-[44px] items-center gap-2 px-2 py-1 font-heading text-2xl font-bold transition-colors hover:bg-primary"
-          spinnerClassName="text-primary group-hover:text-black"
+          spinnerClassName="text-(--primary) group-hover:text-black"
         >
           <FileText
-            className="size-6 text-primary transition-colors group-hover:text-black"
+            className="size-6 text-(--primary) transition-colors group-hover:text-black"
           />
           <span>
-            <span className="text-primary transition-colors group-hover:text-black">PERM</span>{" "}
+            {/* text-(--primary), not text-primary: the header is black in both themes,
+                so the logo keeps the bright lime everywhere. text-primary now resolves
+                to the darkened light-mode reading colour, which made the green change
+                between themes on a surface that never changes. */}
+            <span className="text-(--primary) transition-colors group-hover:text-black">PERM</span>{" "}
             <span className="text-white transition-colors group-hover:text-black"> Tracker</span>
           </span>
         </NavLink>{" "}

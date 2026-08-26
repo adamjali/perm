@@ -98,7 +98,7 @@ const FAQ = [
   {
     question: "Can PERM be processed faster than the published average?",
     answer:
-      "There’s no premium processing for PERM. An individual case can land either side of the average depending on whether it’s selected for audit, and audited cases sit in a separate queue that DOL publishes its own priority date for.",
+      "There’s no premium processing for PERM. An individual case can take longer if DOL issues a request for information (RFI) or selects it for audit. Audited cases sit in a separate queue that DOL publishes its own date for.",
   },
   {
     question: "Where does this data come from?",
