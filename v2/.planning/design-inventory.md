@@ -396,3 +396,76 @@ rest resolve to 0 through `--radius`.
 **Type is the biggest single axis:** 456 `text-xs` (12px, under the 14px label
 floor) plus 116 arbitrary `text-[Npx]` across 24 distinct sizes, of which
 `10px` (33) and `11px` (16) are the worst.
+
+
+---
+
+# Status palette: the measurements behind the --data-* mapping
+
+Recorded here because the commit that carried them (12 files, 226 palette
+classes) was swept into `7d22be58` by a concurrent session and its message was
+lost. The code change is in HEAD; this is the reasoning.
+
+## Family mapping
+
+amber, orange and yellow all meant *caution*, so all three collapse to
+`--data-warn`. emerald and green to `--data-good`. red to `--data-bad`. 73
+`dark:` variants were deleted rather than translated: the tokens already carry
+both themes, so a `dark:` twin is now noise and a chance for the halves to
+drift.
+
+## Tint opacity is measured, not chosen
+
+Ink on its own tint, light theme, worst case across `--card` and
+`--background`:
+
+| pair | ratio | verdict |
+|---|---:|---|
+| `data-warn-ink` on `warn/10` | 4.48 | under the floor |
+| `data-warn-ink` on `warn/8` | **4.55** | shipped |
+| `data-bad-ink` on `bad/10` | **5.46** | shipped |
+| `data-bad-ink` on `bad/20` | 4.63 | ok |
+| `text-primary` on `good/5` | 4.37 | under |
+| `text-primary` on `good/10` | 4.18 | under |
+
+The warn tint moved 10 -> 8 and its hover 20 -> 16. The tint gives way; the ink
+never does.
+
+**`--data-good` has no `-ink` variant**, so its text token is `--primary-text`,
+and that pair fails at every opacity. No tint value fixes it, so the good family
+carries its hue in the border and drops the tint. `text-primary` on the plain
+card measures 4.53.
+
+Inside a tinted panel the ink is `--foreground` (~18:1 on any of these tints).
+Verified afterwards that no className block, and no parent/child pair within 25
+lines, leaves a semantic ink on its own tint below 4.5.
+
+## Two token defects found while measuring
+
+Both are in tokens that already shipped, and neither is caused by this pass:
+
+| pair | light | verdict |
+|---|---:|---|
+| `--primary-text` on `--muted` | **4.33** | fails |
+| `--destructive-text` on `--muted` | **4.31** | fails |
+
+Both pass on `--card` and `--background` (4.53 / 4.51, tight). So
+`text-primary` or `text-destructive` on a `bg-muted` panel is under the floor in
+light mode. `audit_contrast.py` does not currently check ink against `--muted`.
+
+## The stage colours are not text colours
+
+Measured on `--card`, light:
+
+| token | on card | verdict |
+|---|---:|---|
+| `--stage-pwd` #0066FF | 4.63 | ok light, **3.60 on the dark card** |
+| `--stage-recruitment` #9333EA | 5.16 | ok |
+| `--stage-eta9089` #D97706 | 3.05 | fails |
+| `--stage-i140` #059669 | 3.61 | fails |
+| `--stage-closed` #6B7280 | 4.63 | ok |
+
+Three of five fail as text somewhere. They are fills and markers, and there are
+no `--stage-*-ink` variants. This is why the PWD row in `InlineCaseTimeline`
+keeps `text-blue-600 dark:text-blue-400`: the token would be *less* readable
+than what is there. Adding `--stage-*-ink` is a token-system change.
