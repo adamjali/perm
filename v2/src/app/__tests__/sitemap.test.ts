@@ -63,7 +63,6 @@ import {
   pagesEntries,
   parseChildName,
   urlsetXml,
-  SITEMAP_CHUNK,
 } from "@/lib/sitemap/build";
 import { revalidate } from "../sitemap.xml/route";
 

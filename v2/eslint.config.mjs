@@ -87,6 +87,15 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-explicit-any": "off",
       // Test files may have expression statements for assertions
       "@typescript-eslint/no-unused-expressions": "off",
+      // The repo-walking GATE tests (no-glued-jsx-text, no-server-only-in-client,
+      // text-contrast, sitemap) read the source tree with paths derived from
+      // process.cwd() and build patterns from their own banned-class tables.
+      // These two rules exist to catch USER-INPUT reaching fs/RegExp at
+      // runtime; a test walking its own repository is the false-positive case
+      // by construction, and the warnings had been accumulating as tolerated
+      // baseline noise, which teaches people to ignore the linter.
+      "security/detect-non-literal-fs-filename": "off",
+      "security/detect-non-literal-regexp": "off",
     },
   },
 ]);

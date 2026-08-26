@@ -57,11 +57,9 @@ const GLUED = new RegExp(
 );
 
 function walk(dir: string, out: string[] = []): string[] {
-  // eslint-disable-next-line security/detect-non-literal-fs-filename -- seeded from literal ROOTS
   for (const entry of readdirSync(dir)) {
     if (entry === "node_modules" || entry === ".next") continue;
     const full = join(dir, entry);
-    // eslint-disable-next-line security/detect-non-literal-fs-filename -- same
     if (statSync(full).isDirectory()) walk(full, out);
     else if (full.endsWith(".tsx")) out.push(full);
   }
@@ -85,7 +83,6 @@ describe("adjacent JSX elements are separated", () => {
     // swept now, so the scope is the whole tree.
     const offenders = files
       .map((f) => {
-        // eslint-disable-next-line security/detect-non-literal-fs-filename -- walk() only yields ROOTS paths
         const hits = readFileSync(f, "utf8").match(GLUED);
         return hits ? `${f}: ${hits.length} (${hits[0]!.trim().slice(0, 40)})` : null;
       })

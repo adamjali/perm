@@ -29,11 +29,9 @@ const FORBIDDEN = [
 ];
 
 function walk(dir: string, out: string[] = []): string[] {
-  // eslint-disable-next-line security/detect-non-literal-fs-filename -- seeded from literal ROOTS
   for (const entry of readdirSync(dir)) {
     if (entry === "node_modules" || entry === ".next") continue;
     const full = join(dir, entry);
-    // eslint-disable-next-line security/detect-non-literal-fs-filename -- same
     if (statSync(full).isDirectory()) walk(full, out);
     else if (EXTENSIONS.some((e) => full.endsWith(e))) out.push(full);
   }
@@ -55,7 +53,6 @@ describe("no debug artifacts in shipped source", () => {
     "no source file contains %s",
     (_label, pattern) => {
       const offenders = files.filter((f) =>
-        // eslint-disable-next-line security/detect-non-literal-fs-filename -- walk() only yields ROOTS paths
         pattern.test(readFileSync(f, "utf8")),
       );
       expect(offenders).toEqual([]);

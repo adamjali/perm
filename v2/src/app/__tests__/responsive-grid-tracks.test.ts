@@ -51,11 +51,9 @@ const IS_GRID = /(?:^|\s)grid(?:\s|$)/;
 const CLASS_ATTR = /className=(?:"([^"]*)"|\{cn\(\s*"([^"]*)")/g;
 
 function walk(dir: string, out: string[] = []): string[] {
-  // eslint-disable-next-line security/detect-non-literal-fs-filename -- seeded from the literal ROOT
   for (const entry of readdirSync(dir)) {
     if (entry === "node_modules" || entry === ".next") continue;
     const full = join(dir, entry);
-    // eslint-disable-next-line security/detect-non-literal-fs-filename -- same
     if (statSync(full).isDirectory()) walk(full, out);
     else if (full.endsWith(".tsx")) out.push(full);
   }
@@ -69,7 +67,6 @@ describe("responsive grids define a mobile track", () => {
 
   const CONTROL = /<(?:input|select|textarea|DateInput|SelectInput|Input|Textarea)\b/;
   const withControl = files.filter((f) => {
-    // eslint-disable-next-line security/detect-non-literal-fs-filename -- walk() only yields ROOT paths
     return CONTROL.test(readFileSync(f, "utf8"));
   });
 
@@ -84,7 +81,6 @@ describe("responsive grids define a mobile track", () => {
   it("gives every grid around a form control an explicit column track", () => {
     const offenders: string[] = [];
     for (const file of withControl) {
-      // eslint-disable-next-line security/detect-non-literal-fs-filename -- from withDateControl
       const source = readFileSync(file, "utf8");
       for (const m of source.matchAll(CLASS_ATTR)) {
         const classes = m[1] ?? m[2] ?? "";
