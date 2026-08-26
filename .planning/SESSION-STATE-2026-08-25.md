@@ -126,3 +126,44 @@ the billing question is settled.
   2026, so the visa bulletin lag will not self-resolve.
 - www.dol.gov 403s this laptop after sustained traffic but serves CI fine.
   Run the ingest via `gh workflow run perm-disclosure-ingest.yml`.
+
+
+## READY TO DEPLOY, NOT DEPLOYED (2026-08-25, end of session)
+
+Everything below is committed on `main` locally and **not pushed**. Pushing
+triggers the Vercel production deploy.
+
+### Verified, on the built artifact rather than the source
+- `pnpm build` EXIT=0 (clean `.next`, 377 static pages).
+- Served the production build and fetched each page:
+  /perm-employers 4,527 chars with MICROSOFT and Amazon (was 1,323 = nav and
+  footer only), /perm-wages 6,891 with Software Developers, /perm-by-state
+  6,882 with CALIFORNIA, /perm-processing-times 9,493 with Analyst Review.
+- Sitemap **21,224 URLs / 2.3 MB**. Live currently serves **46** - the entity
+  URLs were being silently dropped by `.catch(() => [])` against a dead
+  Convex, so Google has been told this site has 46 pages.
+- Re-ran the whole check with the READ-ONLY token, which is what production
+  will use, to close the deploy-skew gap. Identical output, and
+  /api/perm-cases?action=list&state=NY returned real rows.
+- Read-only token PROVEN read-only: a CREATE TABLE against it is refused
+  server-side ("SQL write operations are forbidden"). Not taken on trust.
+
+### Environment
+| where | var | value |
+|---|---|---|
+| Vercel production + development | TURSO_DATABASE_URL, TURSO_AUTH_TOKEN | **read-only** token |
+| GitHub repo `adamjali/perm` secrets | TURSO_DATABASE_URL, TURSO_AUTH_TOKEN | read-write (ingest) |
+| `v2/.env.local` (gitignored) | both, plus TURSO_READONLY_TOKEN | read-write locally |
+
+**Vercel PREVIEW env is NOT set.** The CLI refuses stdin for preview and
+demands `--value`, which would put the token in the process list. One manual
+step if PR previews are ever needed.
+
+### Two operational limits worth knowing
+- **The build OOMs at Node's ~2 GB default.** It is the first build in which
+  the 21,178 sitemap URLs actually exist. `package.json` now reserves 6 GB,
+  inside Vercel's 8 GB builder. Compile takes ~19 min.
+- **The migration cost 4.76M row-writes of Turso's 10M/month free
+  allowance** (~12.7 writes per row across the table plus 10 indexes). That
+  is roughly TWO full reloads per month. Quarterly ingests are fine; casual
+  full reloads are not.
