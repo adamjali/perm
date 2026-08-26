@@ -256,13 +256,8 @@ export function HowItWorks() {
             {/* Product Demo video */}
             <div>
               <div className="border-3 border-border shadow-hard overflow-hidden">
-                <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
-                  <div className="h-2 w-2 bg-[#FF5F57]" />
-                  <div className="h-2 w-2 bg-[#FFBD2E]" />
-                  <div className="h-2 w-2 bg-[#28CA41]" />
-                  <span className="ml-2 font-mono text-[9px] text-background/50">
-                    Product Demo
-                  </span>
+                <div className="border-b-3 border-border bg-foreground px-5 py-3 font-heading text-sm font-bold uppercase tracking-wider text-background">
+                  Product Demo
                 </div>{" "}
                 <DeferredShowcase />
               </div>{" "}
@@ -275,13 +270,8 @@ export function HowItWorks() {
             <div>
               <Lightbox videoSrc="/images/screenshots/create-case.mp4" alt="PERM Tracker app walkthrough">
                 <div className="group border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-                  <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
-                    <div className="h-2 w-2 bg-[#FF5F57]" />
-                    <div className="h-2 w-2 bg-[#FFBD2E]" />
-                    <div className="h-2 w-2 bg-[#28CA41]" />
-                    <span className="ml-2 font-mono text-[9px] text-background/50">
-                      PERM Tracker
-                    </span>
+                  <div className="border-b-3 border-border bg-foreground px-5 py-3 font-heading text-sm font-bold uppercase tracking-wider text-background">
+                    PERM Tracker
                   </div>{" "}
                   <figure className="not-prose">
                     <video
@@ -327,13 +317,8 @@ export function HowItWorks() {
               <div key={screenshot.label} className="group">
                 <Lightbox src={screenshot.src} alt={screenshot.alt} caption={screenshot.label}>
                   <div className="border-3 border-border shadow-hard overflow-hidden transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
-                    <div className="flex items-center gap-1.5 border-b-2 border-border bg-foreground px-3 py-1.5">
-                      <div className="h-2 w-2 bg-[#FF5F57]" />
-                      <div className="h-2 w-2 bg-[#FFBD2E]" />
-                      <div className="h-2 w-2 bg-[#28CA41]" />
-                      <span className="ml-2 font-mono text-[9px] text-background/50">
-                        {screenshot.label}
-                      </span>
+                    <div className="border-b-3 border-border bg-foreground px-5 py-3 font-heading text-sm font-bold uppercase tracking-wider text-background">
+                      {screenshot.label}
                     </div>{" "}
                     <Image
                       src={screenshot.src}
@@ -344,10 +329,7 @@ export function HowItWorks() {
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 450px"
                     />
                   </div>
-                </Lightbox>{" "}
-                <p className="mt-3 text-center font-mono text-sm uppercase tracking-widest text-muted-foreground">
-                  {screenshot.label}
-                </p>
+                </Lightbox>
               </div>
             ))}
           </div>
