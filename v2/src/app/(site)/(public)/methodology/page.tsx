@@ -197,7 +197,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mt-12 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
-        <h2 className="font-heading text-2xl font-black">What we refuse to publish</h2>
+        <h2 className="font-heading text-2xl font-black">What we refuse to publish</h2>{" "}
         <ul className="mt-4 grid gap-3 text-base leading-relaxed text-background/80">
           <li className="border-l-4 border-primary pl-4">
             A single blended estimate. Each calculator shows every model its

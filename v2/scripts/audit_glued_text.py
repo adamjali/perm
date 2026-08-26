@@ -47,7 +47,20 @@ import sys
 import urllib.request
 
 # Tags whose text an extractor concatenates with its neighbour's.
-TAGS = "h1|h2|h3|h4|h5|h6|p|span|a|li|dt|dd|strong|b|em|td|th|button|label"
+#
+# `ul|ol` added 2026-08-26. Without them `</h3><ul>` never matched, so a
+# heading glued to the list beneath it was invisible to this gate - which is
+# how "What this can't tell youWhen you will be reached" shipped on a new tool
+# page and was found by a reading agent instead. A gate blind to a whole
+# shape reports a clean sweep over it.
+#
+# `div` is deliberately NOT here, and the decision is measured rather than
+# assumed. Over six live pages: current 0 findings, +ul|ol 1 (real, on
+# /methodology), +ul|ol|div 28 - and the extra 27 are nav and layout
+# containers. They are real glue by the textContent standard, but they are
+# the "noise count, not a defect count" the repo already booked when it tried
+# widening scope to every block container. Re-measure before adding it.
+TAGS = "h1|h2|h3|h4|h5|h6|p|span|a|li|dt|dd|strong|b|em|td|th|button|label|ul|ol"
 # The opening tag is captured WHOLE, so reading forward starts after it. An
 # earlier version captured only its first character and so read `>` or a space
 # as the first character every time, and reported a clean sweep over a page with
