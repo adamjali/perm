@@ -65,7 +65,7 @@ export function LiveDataBand({
       <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
           <div>
-            <p className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-foreground/55">
+            <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-foreground/55">
               Live from the Department of Labor
               {asOf ? ` · ${formatAsOf(asOf)}` : null}
             </p>{" "}
@@ -125,10 +125,10 @@ export function LiveDataBand({
                   <span className="block font-heading text-2xl font-black leading-none">
                     {figures.states.topCases.toLocaleString("en-US")}
                   </span>{" "}
-                  <span className="mt-1 block font-mono text-[13px] font-semibold text-foreground/60">
+                  <span className="mt-1 block font-mono text-sm font-semibold text-foreground/60">
                     in {figures.states.top}, most of any
                   </span>{" "}
-                  <span className="mt-1 block font-mono text-[13px] text-foreground/55">
+                  <span className="mt-1 block font-mono text-sm text-foreground/55">
                     {figures.states.lowCases.toLocaleString("en-US")} in{" "}
                     {figures.states.low}, fewest
                   </span>
@@ -153,7 +153,7 @@ export function LiveDataBand({
                     // separator has to be part of each iteration.
                     <Fragment key={rung}>
                       {" "}
-                      <span className="flex items-baseline justify-between gap-2 border-b border-border/25 py-[3px] font-mono text-[13px] last:border-b-0">
+                      <span className="flex items-baseline justify-between gap-2 border-b border-border/25 py-[3px] font-mono text-sm last:border-b-0">
                         <span className="text-foreground/55">{rung}</span>{" "}
                         <span className="font-semibold tabular-nums">
                           ${value.toLocaleString("en-US")}
@@ -174,7 +174,7 @@ export function LiveDataBand({
                     <span className="block font-heading text-2xl font-black leading-none">
                       {figures.employerShare}%
                     </span>{" "}
-                    <span className="mt-1 block font-mono text-[13px] font-semibold text-foreground/60">
+                    <span className="mt-1 block font-mono text-sm font-semibold text-foreground/60">
                       of cases, top 250 sponsors
                     </span>
                   </>
@@ -190,7 +190,7 @@ export function LiveDataBand({
                     <span className="block font-heading text-2xl font-black leading-none">
                       {figures.attorneyShare}%
                     </span>{" "}
-                    <span className="mt-1 block font-mono text-[13px] font-semibold text-foreground/60">
+                    <span className="mt-1 block font-mono text-sm font-semibold text-foreground/60">
                       of cases, top 250 filers
                     </span>
                   </>
@@ -205,10 +205,10 @@ export function LiveDataBand({
                   <span className="block font-heading text-2xl font-black leading-none">
                     {figures.denial.rate}%
                   </span>{" "}
-                  <span className="mt-1 block font-mono text-[13px] font-semibold text-foreground/60">
+                  <span className="mt-1 block font-mono text-sm font-semibold text-foreground/60">
                     denied
                   </span>{" "}
-                  <span className="mt-1 block font-mono text-[13px] text-foreground/55">
+                  <span className="mt-1 block font-mono text-sm text-foreground/55">
                     {figures.denial.denied.toLocaleString("en-US")} of{" "}
                     {figures.denial.decided.toLocaleString("en-US")}
                   </span>
@@ -232,7 +232,7 @@ export function LiveDataBand({
               <span className="mt-3 block text-sm leading-snug text-foreground/60">
                 {d.what}
               </span>{" "}
-              <span className="mt-auto inline-flex items-center gap-1.5 pt-3 font-mono text-[13px] font-semibold uppercase tracking-[0.1em] text-foreground/55 group-hover:text-foreground">
+              <span className="mt-auto inline-flex items-center gap-1.5 pt-3 font-mono text-sm font-semibold uppercase tracking-[0.1em] text-foreground/55 group-hover:text-foreground">
                 Open{" "}
                 <ArrowRight className="transition-transform duration-150 group-hover:translate-x-0.5" />
               </span>

@@ -110,7 +110,7 @@ export function StakesSection() {
       {/* Header */}
       <div className="mx-auto max-w-[1400px] px-4 pb-12 text-center sm:px-8">
         <ScrollReveal direction="up">
-          <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
             <AlertTriangle className="h-3.5 w-3.5" />
             The Stakes
           </div>{" "}
@@ -137,10 +137,10 @@ export function StakesSection() {
             style={{
               width: `${scrollProgress}%`,
               background: `linear-gradient(90deg,
-                #DC2626 0%,
-                #DC2626 40%,
-                #EA580C 70%,
-                #EA580C 100%)`,
+                var(--urgency-urgent) 0%,
+                var(--urgency-urgent) 40%,
+                var(--urgency-soon) 70%,
+                var(--urgency-soon) 100%)`,
             }}
           />
         </div>
@@ -221,7 +221,7 @@ export function StakesSection() {
                 </h3>{" "}
 
                 {/* Consequence */}
-                <p className="mb-5 text-[15px] leading-relaxed text-muted-foreground">
+                <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
                   {stake.consequence}
                 </p>
 
@@ -231,7 +231,7 @@ export function StakesSection() {
                     <Shield
                       className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary"
                     />
-                    <p className="text-xs font-semibold text-foreground leading-relaxed">
+                    <p className="text-sm font-semibold text-foreground leading-relaxed">
                       PERM Tracker prevents this:{" "}
                       <span className="font-normal text-muted-foreground">
                         {stake.prevention}
@@ -251,7 +251,7 @@ export function StakesSection() {
           `animation: infinite` pulse. The count is read off the array so it
           cannot go stale. */}
       <div className="flex flex-col items-center gap-4 pt-8">
-        <div className="flex items-center gap-2 font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        <div className="flex items-center gap-2 font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
           <span>{stakes.length} ways a case is lost</span>{" "}
           <ArrowRight className="h-4 w-4" />
         </div>{" "}

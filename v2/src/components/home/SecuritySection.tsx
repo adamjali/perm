@@ -45,7 +45,7 @@ export function SecuritySection() {
       <div className="mx-auto max-w-[900px] px-4 py-16 sm:px-8 sm:py-20">
         {/* Section header */}
         <ScrollReveal direction="up" className="mb-10 text-center sm:mb-12">
-          <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
             <Shield className="h-3.5 w-3.5" />
             Security
           </div>{" "}

@@ -230,7 +230,7 @@ function Reading({
 }) {
   return (
     <div className="min-w-0">
-      <p className="font-mono text-[13px] font-semibold uppercase tracking-[0.1em] text-black/70">
+      <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-black/70">
         {label}
       </p>{" "}
       <p
@@ -240,11 +240,11 @@ function Reading({
         )}
       >
         <span className="text-[2.5rem] sm:text-[3rem]">{wait}</span>{" "}
-        <span className="font-mono text-[15px] font-semibold tracking-normal">
+        <span className="font-mono text-sm font-semibold tracking-normal">
           months
         </span>
       </p>{" "}
-      <p className="mt-1 font-mono text-[13px] font-semibold text-black/70">
+      <p className="mt-1 font-mono text-sm font-semibold text-black/70">
         decided {shortLabel(month)}
       </p>
     </div>
@@ -320,10 +320,10 @@ export function WaitLedger({
 
       <div className="px-4 pb-4 pt-4 sm:px-6 sm:pb-5 sm:pt-5">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b-2 border-black/25 pb-3">
-          <span className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-black/75">
+          <span className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-black/75">
             Filing to determination
           </span>{" "}
-          <span className="font-mono text-[13px] font-semibold text-black/70">
+          <span className="font-mono text-sm font-semibold text-black/70">
             {shortLabel(items[0]!.row.decisionMonth)} to{" "}
             {shortLabel(now.row.decisionMonth)}
           </span>
@@ -368,7 +368,7 @@ export function WaitLedger({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "w-[52px] shrink-0 text-right font-mono text-[13px] leading-none sm:w-[58px]",
+                    "w-[52px] shrink-0 text-right font-mono text-sm leading-none sm:w-[58px]",
                     mark
                       ? "font-black text-black"
                       : "font-semibold text-black/65",
@@ -409,8 +409,8 @@ export function WaitLedger({
                   className={cn(
                     "w-[26px] shrink-0 text-right font-mono leading-none",
                     mark
-                      ? "text-[15px] font-black text-black"
-                      : "text-[13px] font-semibold text-black/65",
+                      ? "text-sm font-black text-black"
+                      : "text-sm font-semibold text-black/65",
                   )}
                 >
                   {shows ? item.wait : ""}
@@ -425,7 +425,7 @@ export function WaitLedger({
           })}
         </ul>
 
-        <figcaption className="mt-4 border-t-2 border-black/25 pt-3 font-mono text-[13px] leading-relaxed text-black/70">
+        <figcaption className="mt-4 border-t-2 border-black/25 pt-3 font-mono text-sm leading-relaxed text-black/70">
           Months in the queue, by the month DOL decided the case. Medians over{" "}
           {items
             .reduce((sum, i) => sum + i.row.decisions, 0)

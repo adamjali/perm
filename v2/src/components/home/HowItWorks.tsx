@@ -176,7 +176,7 @@ export function HowItWorks() {
       <div ref={sectionRef} className="mx-auto max-w-[1400px] px-4 py-16 sm:px-8 sm:py-20">
         {/* Section header */}
         <ScrollReveal direction="up" className="mb-12 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
             <Route className="h-3.5 w-3.5" />
             Simple Process
           </div>{" "}
@@ -230,7 +230,7 @@ export function HowItWorks() {
                 </h3>{" "}
 
                 {/* Description */}
-                <p className="text-[15px] text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
                   {step.description}
                 </p>
               </div>
@@ -240,7 +240,7 @@ export function HowItWorks() {
         {/* Product screenshots — see it in action */}
         <ScrollReveal direction="up" delay={0.3} className="mt-12">
           <div className="text-center mb-8">
-            <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+            <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
               <Play className="h-3.5 w-3.5" />
               Watch: The PERM Process
             </div>{" "}
@@ -266,7 +266,7 @@ export function HowItWorks() {
                 </div>{" "}
                 <DeferredShowcase />
               </div>{" "}
-              <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              <p className="mt-3 text-center font-mono text-sm uppercase tracking-widest text-muted-foreground">
                 Watch the full demo
               </p>
             </div>
@@ -299,7 +299,7 @@ export function HowItWorks() {
                   </figure>
                 </div>
               </Lightbox>{" "}
-              <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              <p className="mt-3 text-center font-mono text-sm uppercase tracking-widest text-muted-foreground">
                 See the full app in action
               </p>
             </div>
@@ -345,7 +345,7 @@ export function HowItWorks() {
                     />
                   </div>
                 </Lightbox>{" "}
-                <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                <p className="mt-3 text-center font-mono text-sm uppercase tracking-widest text-muted-foreground">
                   {screenshot.label}
                 </p>
               </div>

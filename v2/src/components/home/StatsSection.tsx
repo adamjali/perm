@@ -210,7 +210,7 @@ function StatItem({ stat, isInView, reducedMotion }: StatItemProps) {
       </div>
 
       {/* Label */}
-      <div className="mt-2 font-mono text-xs uppercase tracking-widest opacity-70">
+      <div className="mt-2 font-mono text-sm uppercase tracking-widest opacity-70">
         {stat.label}
       </div>
     </div>

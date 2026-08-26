@@ -33,7 +33,7 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
     <div
       className={cn(
         "relative border-3 border-border bg-background",
-        "transition-all duration-200",
+        "transition-all duration-150",
         // Cubic bezier for snappy neobrutalist feel
         "[transition-timing-function:cubic-bezier(0.165,0.84,0.44,1)]",
         isOpen
@@ -105,7 +105,7 @@ export function FAQSection() {
       <div className="mx-auto max-w-[800px] px-4 sm:px-8">
         {/* Section header */}
         <ScrollReveal direction="up" className="mb-10 text-center sm:mb-12">
-          <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
             <HelpCircle className="h-3.5 w-3.5" />
             Common Questions
           </div>{" "}

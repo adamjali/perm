@@ -78,7 +78,7 @@ export function TestimonialsSection() {
         <ScrollReveal direction="up" stagger>
           {/* Section header */}
           <div className="mb-8 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+            <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
               <Star className="h-3.5 w-3.5" />
               Reviews
             </div>{" "}
@@ -95,7 +95,7 @@ export function TestimonialsSection() {
             {trustBadges.map((badge) => (
               <div
                 key={badge.label}
-                className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground"
+                className="flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground"
               >
                 <span className="flex-shrink-0">{badge.icon}</span>{" "}
                 <span>{badge.label}</span>

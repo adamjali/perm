@@ -79,7 +79,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
             this subject's world, so it is set as part of the claim rather
             than hidden in fine print under it. */}
         <div className="flex flex-col lg:col-span-5">
-          <p className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
             {current
               ? `DOL determinations through ${shortLabel(current.row.decisionMonth)}`
               : "Live DOL data, automatic deadlines"}
@@ -125,7 +125,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               href="/tools"
               className="group flex flex-col border-3 border-border bg-card p-5 shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
             >
-              <span className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              <span className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 Waiting on a case
               </span>{" "}
               <span className="mt-2 font-heading text-lg font-black leading-tight">
@@ -143,7 +143,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               href="/signup"
               className="group flex flex-col border-3 border-border bg-foreground p-5 text-background shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
             >
-              <span className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-background/70">
+              <span className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-background/70">
                 Managing cases
               </span>{" "}
               <span className="mt-2 font-heading text-lg font-black leading-tight">
@@ -170,7 +170,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
             /* Empty state. The deploy-skew window and a failed fetch both land
                here, and it must offer the primary source rather than a blank. */
             <div className="border-3 border-border bg-card p-6 shadow-hard">
-              <p className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 Queue history unavailable
               </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">

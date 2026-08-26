@@ -142,7 +142,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
         {feature.learnMoreHref && (
           <Link
             href={feature.learnMoreHref}
-            className="relative mt-3 inline-block text-xs font-semibold text-foreground underline decoration-primary decoration-2 underline-offset-2 transition-colors duration-200 hover:text-primary"
+            className="relative mt-3 inline-block text-sm font-semibold text-foreground underline decoration-primary decoration-2 underline-offset-2 transition-colors duration-150 hover:text-primary"
           >
             {feature.learnMoreText}
           </Link>
@@ -159,7 +159,7 @@ export function FeaturesGrid() {
       <div className="mx-auto max-w-[1400px] px-4 pt-12 pb-16 sm:px-8 sm:pt-14 sm:pb-20">
         {/* Section header */}
         <ScrollReveal direction="up" className="mb-8 text-center sm:mb-10">
-          <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
             <Sparkle className="h-3.5 w-3.5" />
             What You Get
           </div>{" "}
