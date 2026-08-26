@@ -385,13 +385,12 @@ export default async function EmployerPage({
         className="mt-12"
         items={[
           {
-            head: "Volume isn’t quality, and it isn’t speed",
+            head: "Volume doesn’t change the wait",
             body: (
               <>
-                A big sponsor is a practised one, nothing more. DOL works a
-                single national queue, oldest first, whoever filed the case, so
-                a company with four thousand filings waits exactly as long as
-                one with three.
+                DOL works a single national queue, oldest first, whoever filed
+                the case, so a company with four thousand filings waits exactly
+                as long as one with three.
               </>
             ),
           },
@@ -412,12 +411,12 @@ export default async function EmployerPage({
               <>
                 {thinMedian
                   ? "That’s a middle of a handful, and it moves entirely with which months those few cases were filed in."
-                  : "It says when this sponsor's cases were filed at least as much as it says anything about the sponsor, because the queue is national and first in, first out."}
+                  : "The queue is national and first in, first out, so this figure follows when the cases were filed as much as it follows the sponsor."}
               </>
             ),
           },
           {
-            head: "Nothing here’s pending",
+            head: "Nothing here is pending",
             body: (
               <>
                 Every case in DOL&apos;s disclosure files carries a decision
@@ -453,8 +452,7 @@ export default async function EmployerPage({
             >
               decision estimator
             </Link>{" "}
-            reads your filing month against where DOL is now, which is the part
-            that actually decides your wait.
+            reads your filing month against where DOL is now.
           </p>
         </div>
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">

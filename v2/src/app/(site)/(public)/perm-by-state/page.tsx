@@ -85,9 +85,8 @@ export default async function PermByStatePage() {
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           Every certified, denied and withdrawn case in the current disclosure
-          window, placed at its worksite state. The map shades by volume,
-          approval rate, denial rate, median days or median wage. Hovering a
-          state reads it, and tapping pins it.
+          window, placed at its worksite state. Hover a state to read it, tap to
+          pin it.
         </p>
       </header>
 
@@ -130,8 +129,7 @@ export default async function PermByStatePage() {
               </p>{" "}
               <p className="mt-2 text-sm leading-relaxed text-foreground/70">
                 DOL works one national queue, so median days barely move by
-                state. Volume and wages move a lot. That’s industry mix, not
-                a faster line. The{" "}
+                state. Volume and wages move a lot, which is industry mix. The{" "}
                 <Link href="/methodology" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                   methodology
                 </Link>{" "}
@@ -145,14 +143,11 @@ export default async function PermByStatePage() {
               Reading a rate off a small state
             </h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-              The smallest jurisdictions here decide a couple of dozen cases in
-              a whole window. One denial swings a rate like that by several
-              points, so the map leaves them uncoloured on rates and medians
-              rather than shading them as if the figure meant the same thing it
-              does in California. Drop the floor to nothing and they come back,
-              with the same denominator sitting beside them in the table.
-              Denial rates ranked this way, with a 95% range on each one, are
-              on the{" "}
+              The smallest jurisdictions decide a couple of dozen cases in a whole
+              window, where one denial swings a rate by several points. Those stay
+              uncoloured on rates and medians. Drop the floor to nothing and they
+              come back, with the same denominator beside them in the table.
+              Denial rates ranked with a 95% range on each are on the{" "}
               <Link href="/perm-denial-risk" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                 denial rates page
               </Link>
@@ -189,8 +184,8 @@ export default async function PermByStatePage() {
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Filing them?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            Benchmark a case against the national medians, then let the tracker
-            carry the deadlines.{" "}
+            Benchmark a case against the national medians, then track its
+            deadlines.{" "}
             <Link href="/signup" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               Free account
             </Link>

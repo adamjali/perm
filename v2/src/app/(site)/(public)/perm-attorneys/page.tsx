@@ -74,8 +74,8 @@ export default async function PermAttorneysPage() {
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           Every PERM filing names the firm that made it. All
-          {" "}{firmCount.toLocaleString("en-US")} of them are here, with what
-          each one&apos;s cases did.
+          {" "}{firmCount.toLocaleString("en-US")} of them, with volume, approval
+          rate and median days.
         </p>
       </header>
 
@@ -107,9 +107,8 @@ export default async function PermAttorneysPage() {
                 ))}
               </div>
               <p className="mt-5 text-sm text-foreground/60">
-                Volume, not quality. Approval rates cluster above 99% across
-                every firm on this list, so the number that separates them is
-                the work you can’t see in a spreadsheet.
+                Approval rates cluster above 99% across every firm on this
+                list, so the ranking is by volume alone.
               </p>
             </div>
           </section>
@@ -144,8 +143,8 @@ export default async function PermAttorneysPage() {
         <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Running a PERM practice?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-background/70">
-            Benchmark your own volume and median against the field here, then
-            let the tracker carry the deadlines on every case.{" "}
+            Benchmark your own volume and median against the field, then track
+            the deadlines on every case.{" "}
             <Link href="/signup" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
               Free account
             </Link>

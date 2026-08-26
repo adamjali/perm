@@ -103,7 +103,7 @@ const FAQ = [
   {
     question: "Where does this data come from?",
     answer:
-      "Directly from the Department of Labor's Office of Foreign Labor Certification, at flag.dol.gov/processingtimes. PERM Tracker reads that source weekly and stores every publication. Nothing is estimated or modelled.",
+      "Directly from the Department of Labor's Office of Foreign Labor Certification, at flag.dol.gov/processingtimes. PERM Tracker reads that source weekly and stores every publication.",
   },
 ];
 
@@ -255,8 +255,8 @@ export default async function PermProcessingTimesPage() {
           PERM processing times
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          Where the Department of Labor&apos;s queues actually stand, taken from DOL&apos;s own
-          published figures and refreshed every week.
+          Where the Department of Labor&apos;s queues stand, from DOL&apos;s own published
+          figures, refreshed every week.
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-1.5">
           {flagFreshness ? <FreshnessDots items={[flagFreshness]} /> : null}{" "}
@@ -336,9 +336,8 @@ export default async function PermProcessingTimesPage() {
             <section className="mt-8">
               <h2 className="font-heading text-2xl font-black">The queue, drawn</h2>{" "}
               <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-                Every PERM waits in filing-month order and DOL clears the line
-                oldest first. Solid months are cleared; the flag is where the
-                queue stands today.
+                Every PERM waits in filing-month order. Solid months are cleared;
+                the flag is where the queue stands today.
               </p>
               <QueueTape frontierMonth={analyst.priorityDate} className="mt-6" />
             </section>
@@ -357,8 +356,7 @@ export default async function PermProcessingTimesPage() {
                 <strong>
                   {movedMonths} month{movedMonths === 1 ? "" : "s"}
                 </strong>
-                . That’s the difference between two dates DOL published, not a forecast of
-                the next one.
+                . That’s the difference between two dates DOL published.
               </p>
             </section>
           ) : null}
@@ -368,7 +366,6 @@ export default async function PermProcessingTimesPage() {
               <h2 className="font-heading text-2xl font-black">Movement on record</h2>{" "}
               <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
                 Every reading DOL has published since we started keeping them.
-                DOL shows only its current position; the record is ours.
               </p>
               <QueueHistoryChart points={historyPoints} className="mt-6" />
             </section>
@@ -380,11 +377,9 @@ export default async function PermProcessingTimesPage() {
                 How much DOL decides in a month
               </h2>{" "}
               <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-                The queue position says where the line is. This says how fast
-                DOL is emptying it: every determination in the quarterly
-                disclosure files, counted by the month it was issued. From the
-                disclosure files rather than the weekly queue page, so it lags
-                by a quarter and gains a year and a half of history in return.
+                Every determination in DOL&apos;s quarterly disclosure files, counted
+                by the month it was issued. Those files lag the weekly queue page
+                by a quarter and carry a year and a half of history.
               </p>
               <DecisionsByMonth points={decisionsByMonth} className="mt-6" />
             </section>
@@ -456,9 +451,7 @@ export default async function PermProcessingTimesPage() {
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-2xl font-black">Where does your case sit?</h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
-          DOL&apos;s figures describe its position across every case. The
-          calculator puts your own filing month against them and shows what each
-          way of measuring implies.
+          The calculator reads your own filing month against these figures.
         </p>
         <Link
           href="/tools/perm-timeline-calculator"
@@ -508,21 +501,18 @@ export default async function PermProcessingTimesPage() {
           publication, because DOL overwrites its own and keeps no archive.
         </p>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
-          Nothing is modelled or extrapolated. Where a number is missing, DOL didn’t
-          publish one, and we say so rather than filling the gap.
+          Where a number is missing here, DOL didn’t publish one.
         </p>
       </section>
 
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-2xl font-black">
-          These are DOL&apos;s deadlines. Yours are the ones you control.
+          The deadlines you control
         </h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
-          The queue moves when it moves. The dates that are actually in your hands are the
-          recruitment window, the quiet period and the filing window, and every one of them is
-          fixed arithmetic on your prevailing wage determination date. PERM Tracker computes
-          them for every case you run, and warns you before the deadline that matters rather
-          than after it.
+          The recruitment window, the quiet period and the filing window are fixed
+          arithmetic on your prevailing wage determination date. PERM Tracker computes
+          them for every case you run and sends a reminder before each one.
         </p>
         <Link
           href="/signup"
@@ -532,7 +522,7 @@ export default async function PermProcessingTimesPage() {
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
         <p className="mt-3 text-sm text-muted-foreground">
-          Free, and there’s no case limit. See the{" "}
+          There’s no case limit. See the{" "}
           <Link href="/guides/perm-recruitment-checklist" className="underline underline-offset-2">
             recruitment checklist
           </Link>{" "}

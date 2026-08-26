@@ -102,10 +102,10 @@ export default async function PermCasesPage() {
 
       <header className="max-w-2xl">
         <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          One row per decided case
+          From DOL&apos;s own disclosure files
         </p>{" "}
         <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Every case, not just the totals
+          Every decided case
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           {meta ? (
@@ -133,15 +133,12 @@ export default async function PermCasesPage() {
             DOL publishes cases it has already decided. There are no pending
             rows in these files at all, so a case still waiting on a
             determination won’t be here, however recently it was filed.
-            Finding nothing says where your case isn’t, and nothing about how
-            it’s going.
           </p>{" "}
           {meta ? (
             <p className="mt-3 text-sm leading-relaxed text-foreground/70">
               Source: {meta.sourceFiles.join(", ") || "DOL PERM disclosure files"}.
-              Counts on this page come from that data, not from the rows on
-              screen, so a filtered count is a count of that filter and never
-              of the whole file.{" "}
+              Counts come from the full files rather than the rows on screen, so
+              a filtered count covers only that filter.{" "}
               <Link
                 href="/methodology"
                 className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -191,15 +188,14 @@ export default async function PermCasesPage() {
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Your case isn’t in here?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">
-            That’s what a pending case looks like. The{" "}
+            A pending case is in none of DOL&apos;s files. The{" "}
             <Link
               href="/tools/perm-timeline-calculator"
               className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
             >
               decision estimator
             </Link>{" "}
-            takes your filing month and reads it against where DOL is actually
-            working.
+            reads your filing month against where DOL is working now.
           </p>
         </div>
         <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">

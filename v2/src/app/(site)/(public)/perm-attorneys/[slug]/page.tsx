@@ -457,8 +457,7 @@ export default async function AttorneyPage({
             >
               decision estimator
             </Link>{" "}
-            reads your filing month against where DOL is now, which is the part
-            that actually decides your wait.
+            reads your filing month against where DOL is now.
           </p>
         </div>
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">

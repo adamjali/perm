@@ -111,8 +111,8 @@ export default async function PermEmployersPage() {
                 ))}
               </div>
               <p className="mt-5 text-sm text-foreground/60">
-                A big sponsor isn’t a faster one: DOL works one national
-                queue, oldest first, whoever filed the case.
+                DOL works one national queue, oldest first, whoever filed the
+                case.
               </p>
             </div>
           </section>
@@ -147,8 +147,7 @@ export default async function PermEmployersPage() {
         <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Your employer is on the list?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            Their volume says how practiced the process is; your date says when
-            you clear it. The{" "}
+            Their volume doesn’t change your place in line. The{" "}
             <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision estimator
             </Link>{" "}

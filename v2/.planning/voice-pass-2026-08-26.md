@@ -146,3 +146,164 @@
 
 - OLD: Six calculators, one per question </h1>{" "} <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70"> Each one answers a question a PERM case raises, says where its numbers come from, and says so when it can’t answer. </p>
   NEW: PERM calculators </h1>{" "} <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70"> Six calculators, each answering one question a PERM case raises. </p>
+
+## Data pages: /perm-processing-times, /perm-by-state
+
+### `src/app/(site)/(public)/perm-processing-times/page.tsx`
+
+- OLD: PERM Tracker reads that source weekly and stores every publication. Nothing is estimated or modelled.
+  NEW: PERM Tracker reads that source weekly and stores every publication.
+- OLD: Where the Department of Labor&apos;s queues actually stand, taken from DOL&apos;s own published figures and refreshed every week.
+  NEW: Where the Department of Labor&apos;s queues stand, from DOL&apos;s own published figures, refreshed every week.
+- OLD: Every PERM waits in filing-month order and DOL clears the line oldest first. Solid months are cleared; the flag is where the queue stands today.
+  NEW: Every PERM waits in filing-month order. Solid months are cleared; the flag is where the queue stands today.
+- OLD: . That’s the difference between two dates DOL published, not a forecast of the next one.
+  NEW: . That’s the difference between two dates DOL published.
+- OLD: Every reading DOL has published since we started keeping them. DOL shows only its current position; the record is ours.
+  NEW: Every reading DOL has published since we started keeping them.
+- OLD: The queue position says where the line is. This says how fast DOL is emptying it: every determination in the quarterly disclosure files, counted by the month it was issued. From the disclosure files rather than the weekly queue page, so it lags by a quarter and gains a year and a half of history in return.
+  NEW: Every determination in DOL&apos;s quarterly disclosure files, counted by the month it was issued. Those files lag the weekly queue page by a quarter and carry a year and a half of history.
+- OLD: DOL&apos;s figures describe its position across every case. The calculator puts your own filing month against them and shows what each way of measuring implies.
+  NEW: The calculator reads your own filing month against these figures.
+- OLD: Nothing is modelled or extrapolated. Where a number is missing, DOL didn’t publish one, and we say so rather than filling the gap.
+  NEW: Where a number is missing here, DOL didn’t publish one.
+- OLD: These are DOL&apos;s deadlines. Yours are the ones you control.
+  NEW: The deadlines you control
+- OLD: The queue moves when it moves. The dates that are actually in your hands are the recruitment window, the quiet period and the filing window, and every one of them is fixed arithmetic on your prevailing wage determination date. PERM Tracker computes them for every case you run, and warns you before the deadline that matters rather than after it.
+  NEW: The recruitment window, the quiet period and the filing window are fixed arithmetic on your prevailing wage determination date. PERM Tracker computes them for every case you run and sends a reminder before each one.
+- OLD: Free, and there’s no case limit. See the{" "}
+  NEW: There’s no case limit. See the{" "}
+
+### `src/app/(site)/(public)/perm-by-state/page.tsx`
+
+- OLD: Every certified, denied and withdrawn case in the current disclosure window, placed at its worksite state. The map shades by volume, approval rate, denial rate, median days or median wage. Hovering a state reads it, and tapping pins it.
+  NEW: Every certified, denied and withdrawn case in the current disclosure window, placed at its worksite state. Hover a state to read it, tap to pin it.
+- OLD: DOL works one national queue, so median days barely move by state. Volume and wages move a lot. That’s industry mix, not a faster line. The{" "}
+  NEW: DOL works one national queue, so median days barely move by state. Volume and wages move a lot, which is industry mix. The{" "}
+- OLD: The smallest jurisdictions here decide a couple of dozen cases in a whole window. One denial swings a rate like that by several points, so the map leaves them uncoloured on rates and medians rather than shading them as if the figure meant the same thing it does in California. Drop the floor to nothing and they come back, with the same denominator sitting beside them in the table. Denial rates ranked this way, with a 95% range on each one, are on the{" "}
+  NEW: The smallest jurisdictions decide a couple of dozen cases in a whole window, where one denial swings a rate by several points. Those stay uncoloured on rates and medians. Drop the floor to nothing and they come back, with the same denominator beside them in the table. Denial rates ranked with a 95% range on each are on the{" "}
+- OLD: Benchmark a case against the national medians, then let the tracker carry the deadlines.{" "}
+  NEW: Benchmark a case against the national medians, then track its deadlines.{" "}
+
+## Data pages: /perm-denial-risk, /perm-wages
+
+### `src/app/(site)/(public)/perm-denial-risk/page.tsx`
+
+- OLD: Measured, not modeled </p>{" "} <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl"> What actually gets denied </h1>{" "} <p className="mt-4 text-lg leading-relaxed text-foreground/70"> PERM denials are rare and concentrated. These are the rates DOL&apos;s files record, cut by the factors the form itself asks about, by the job, and by where the work is. </p>
+  NEW: Denial rates </p>{" "} <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl"> What gets denied </h1>{" "} <p className="mt-4 text-lg leading-relaxed text-foreground/70"> The denial rates DOL&apos;s files record, by the factors the form asks about, by job, and by worksite. </p>
+- OLD: sit on neither side of that ratio, because a withdrawal isn’t an approval and not a denial. It’s the reference every other rate is measured against.
+  NEW: sit on neither side of that ratio, because a withdrawal is neither an approval nor a denial. It’s the reference every other rate is measured against.
+- OLD: Each bar is the denial rate of a group, measured. It isn’t the probability that a particular case is denied, and the factors are not independent of each other: wage correlates with occupation, which correlates with everything else. A single blended risk score built from these would read as precision we can’t support, so what you get is the measured rates and nothing layered on top.
+  NEW: Each bar is the denial rate of a group. It isn’t the probability that a particular case is denied, and the factors are not independent of each other: wage correlates with occupation, which correlates with everything else. A single blended risk score built from these would read as precision the data can’t support, so these are the measured rates, unblended.
+- OLD: Denial rate falls as the offered wage rises, and the lowest band isn’t the worst one.
+  NEW: Denial rate against the wage the employer offered, in bands.
+- OLD: The rate moves year to year, so a figure quoted without its year is a figure without a meaning.
+  NEW: The rate moves year to year, so every figure here carries its year.
+- OLD: Denials cluster in a handful of job families and are close to absent in others. The floor decides how small a group is allowed to carry a rate at all; the family filter and the search narrow it further.
+  NEW: Denials cluster in a handful of job families and are close to absent in others. Occupations below the minimum population carry no rate.
+- OLD: DOL works one national queue, so this ranks where denials land, not where cases take longer. Several states decide too few cases to carry a rate at all, which is what the floor is for.
+  NEW: DOL works one national queue, so this ranks where denials land. Several states decide too few cases to carry a rate at all, which is what the floor is for.
+- OLD: Denials are rare. Most of the wait is queue, not risk. The{" "}
+  NEW: Denials are rare, and most of the wait is queue time. The{" "}
+
+### `src/app/(site)/(public)/perm-wages/page.tsx`
+
+- OLD: Offered wages, not survey estimates
+  NEW: From DOL&apos;s own disclosure files
+- OLD: The wage on a PERM filing is the wage the employer committed to in a federal filing, which is harder currency than any salary survey. These are the medians by occupation for the current disclosure window.
+  NEW: The wage on a PERM filing is the wage the employer committed to in a federal filing. These are the medians by occupation for the current disclosure window.
+- OLD: From {ladder.count.toLocaleString("en-US")} certified cases. The gap between the 25th and the median is the two-market split: hourly roles at one end, salaried knowledge work at the other.
+  NEW: From {ladder.count.toLocaleString("en-US")} certified cases. The gap between the 25th and the median spans hourly roles at one end and salaried knowledge work at the other.
+- OLD: Median of the occupation medians below. The centre of what a sponsored role pays across all{" "} {occupationCount.toLocaleString("en-US")} occupations.
+  NEW: Median of the occupation medians, across all{" "} {occupationCount.toLocaleString("en-US")} occupations.
+- OLD: Search by title or SOC code, narrow to a job family, sort any column, take the whole thing as a CSV.
+  NEW: Search by title or SOC code, filter by job family, sort any column, or download the CSV.
+- OLD: Your own case&apos;s pace depends on its filing month, not its wage. The{" "}
+  NEW: A case&apos;s pace depends on its filing month rather than its wage. The{" "}
+- OLD: says exactly how every figure is computed.
+  NEW: says how every figure is computed.
+
+## Data pages (continued)
+
+### `src/app/(site)/(public)/perm-wages/page.tsx`
+
+- OLD: Every certified case in the window with a readable wage, sorted and cut at five points. A single median would hide what this distribution actually looks like.
+  NEW: Every certified case in the window with a readable wage, sorted and cut at five points.
+
+## Data pages: /perm-employers, /perm-attorneys, /perm-cases, /methodology
+
+### `src/app/(site)/(public)/perm-employers/page.tsx`
+
+- OLD: A big sponsor isn’t a faster one: DOL works one national queue, oldest first, whoever filed the case.
+  NEW: DOL works one national queue, oldest first, whoever filed the case.
+- OLD: Their volume says how practiced the process is; your date says when you clear it. The{" "}
+  NEW: Their volume doesn’t change your place in line. The{" "}
+
+### `src/app/(site)/(public)/perm-attorneys/page.tsx`
+
+- OLD: Every PERM filing names the firm that made it. All {" "}{firmCount.toLocaleString("en-US")} of them are here, with what each one&apos;s cases did.
+  NEW: Every PERM filing names the firm that made it. All {" "}{firmCount.toLocaleString("en-US")} of them, with volume, approval rate and median days.
+- OLD: Volume, not quality. Approval rates cluster above 99% across every firm on this list, so the number that separates them is the work you can’t see in a spreadsheet.
+  NEW: Approval rates cluster above 99% across every firm on this list, so the ranking is by volume alone.
+- OLD: Benchmark your own volume and median against the field here, then let the tracker carry the deadlines on every case.{" "}
+  NEW: Benchmark your own volume and median against the field, then track the deadlines on every case.{" "}
+
+### `src/app/(site)/(public)/perm-cases/page.tsx`
+
+- OLD: One row per decided case </p>{" "} <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl"> Every case, not just the totals </h1>{" "}
+  NEW: From DOL&apos;s own disclosure files </p>{" "} <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl"> Every decided case </h1>{" "}
+- OLD: determination won’t be here, however recently it was filed. Finding nothing says where your case isn’t, and nothing about how it’s going.
+  NEW: determination won’t be here, however recently it was filed.
+- OLD: Counts on this page come from that data, not from the rows on screen, so a filtered count is a count of that filter and never of the whole file.{" "}
+  NEW: Counts come from the full files rather than the rows on screen, so a filtered count covers only that filter.{" "}
+- OLD: That’s what a pending case looks like. The{" "}
+  NEW: A pending case is in none of DOL&apos;s files. The{" "}
+- OLD: takes your filing month and reads it against where DOL is actually working.
+  NEW: reads your filing month against where DOL is working now.
+
+### `src/app/(site)/(public)/methodology/page.tsx`
+
+- OLD: published average was 372. This page explains where a spread like that comes from, and how we keep our side of it honest.
+  NEW: published average was 372.
+- OLD: Readings taken 2026-08-24, all describing average PERM processing time. The spread is real, and most of it has a mechanical cause.
+  NEW: Readings taken 2026-08-24, all describing average PERM processing time. Most of the spread has a mechanical cause.
+- OLD: rather than the queue. None of these are lies. Publishing the number without saying which choices produced it’s the problem.
+  NEW: rather than the queue. None of these choices is wrong on its own. What matters is saying which one produced the number.
+- OLD: Medians over immature cohorts. A month whose only decided cases are instant withdrawals has a median of one day, and publishing it would be indefensible.
+  NEW: Medians over immature cohorts. A month whose only decided cases are instant withdrawals has a median of one day.
+- OLD: Undated numbers. Every figure carries the date of the data behind it, because a number that can’t age is a number you can’t trust.
+  NEW: Undated numbers. Every figure carries the date of the data behind it.
+
+## Entity detail pages (/perm-{employers,attorneys,wages}/[slug])
+
+### `src/app/(site)/(public)/perm-employers/[slug]/page.tsx`
+
+- OLD: head: "Volume isn’t quality, and it isn’t speed",
+  NEW: head: "Volume doesn’t change the wait",
+- OLD: A big sponsor is a practised one, nothing more. DOL works a single national queue, oldest first, whoever filed the case, so a company with four thousand filings waits exactly as long as one with three.
+  NEW: DOL works a single national queue, oldest first, whoever filed the case, so a company with four thousand filings waits exactly as long as one with three.
+- OLD: : "It says when this sponsor's cases were filed at least as much as it says anything about the sponsor, because the queue is national and first in, first out."}
+  NEW: : "The queue is national and first in, first out, so this figure follows when the cases were filed as much as it follows the sponsor."}
+- OLD: head: "Nothing here’s pending",
+  NEW: head: "Nothing here is pending",
+- OLD: reads your filing month against where DOL is now, which is the part that actually decides your wait.
+  NEW: reads your filing month against where DOL is now.
+
+### `src/app/(site)/(public)/perm-attorneys/[slug]/page.tsx`
+
+- OLD: reads your filing month against where DOL is now, which is the part that actually decides your wait.
+  NEW: reads your filing month against where DOL is now.
+
+### `src/app/(site)/(public)/perm-wages/[slug]/page.tsx`
+
+- OLD: head: "Nothing here’s pending",
+  NEW: head: "Nothing here is pending",
+- OLD: , published as separate rates rather than blended into a score.
+  NEW: , published as separate rates.
+
+## Entity detail pages (continued)
+
+### `src/app/(site)/(public)/perm-wages/[slug]/page.tsx`
+
+- OLD: This is the median wage employers committed to in federal filings for this occupation, which makes it harder currency than a salary survey. It mixes every experience level and every metro, and it&apos;s a floor rather than a market rate: the employer must offer at least the prevailing wage DOL determines for the occupation, level and county.
+  NEW: This is the median wage employers committed to in federal filings for this occupation. It mixes every experience level and every metro, and it&apos;s a floor: the employer must offer at least the prevailing wage DOL determines for the occupation, level and county.

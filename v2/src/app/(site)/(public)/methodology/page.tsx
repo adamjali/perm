@@ -106,8 +106,7 @@ export default function MethodologyPage() {
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           On one day in August 2026, public PERM tools reported the same
           headline figure as anywhere from 335 to 503 days, while DOL&apos;s own
-          published average was 372. This page explains where a spread like
-          that comes from, and how we keep our side of it honest.
+          published average was 372.
         </p>
       </header>
 
@@ -117,7 +116,7 @@ export default function MethodologyPage() {
         </h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
           Readings taken 2026-08-24, all describing average PERM processing
-          time. The spread is real, and most of it has a mechanical cause.
+          time. Most of the spread has a mechanical cause.
         </p>
         <div className="mt-6 overflow-x-auto">
           <table className="w-full border-2 border-border text-left text-sm shadow-hard-sm">
@@ -147,8 +146,8 @@ export default function MethodologyPage() {
           those are different populations. It can include audited cases or set
           them aside. It can run on this quarter&apos;s data or on a file from
           March. And a tool built on crowd reports measures its own users
-          rather than the queue. None of these are lies. Publishing the number
-          without saying which choices produced it’s the problem.
+          rather than the queue. None of these choices is wrong on its own. What
+          matters is saying which one produced the number.
         </p>
       </section>
 
@@ -206,16 +205,14 @@ export default function MethodologyPage() {
           </li>{" "}
           <li className="border-l-4 border-primary pl-4">
             Medians over immature cohorts. A month whose only decided cases are
-            instant withdrawals has a median of one day, and publishing it
-            would be indefensible.
+            instant withdrawals has a median of one day.
           </li>{" "}
           <li className="border-l-4 border-primary pl-4">
             Stages nobody can measure. Where a wait depends on visa-number
             availability, the timeline says so instead of inventing a figure.
           </li>{" "}
           <li className="border-l-4 border-primary pl-4">
-            Undated numbers. Every figure carries the date of the data behind
-            it, because a number that can’t age is a number you can’t trust.
+            Undated numbers. Every figure carries the date of the data behind it.
           </li>
         </ul>
       </section>

@@ -177,15 +177,14 @@ export default async function PermDenialRiskPage() {
 
       <header className="max-w-2xl">
         <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Measured, not modeled
+          Denial rates
         </p>{" "}
         <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
-          What actually gets denied
+          What gets denied
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          PERM denials are rare and concentrated. These are the rates DOL&apos;s
-          files record, cut by the factors the form itself asks about, by the
-          job, and by where the work is.
+          The denial rates DOL&apos;s files record, by the factors the form asks
+          about, by job, and by worksite.
         </p>
       </header>
 
@@ -232,9 +231,9 @@ export default async function PermDenialRiskPage() {
               <p className="max-w-lg text-base leading-relaxed text-foreground/70">
                 is the field baseline: {baseline.denied.toLocaleString("en-US")} denials in{" "}
                 {baseline.decided.toLocaleString("en-US")} decided cases. Withdrawn cases
-                sit on neither side of that ratio, because a withdrawal isn’t an
-                approval and not a denial. It’s the reference every other rate
-                is measured against.
+                sit on neither side of that ratio, because a withdrawal is neither
+                an approval nor a denial. It’s the reference every other rate is
+                measured against.
               </p>
             </div>
           </section>
@@ -245,12 +244,12 @@ export default async function PermDenialRiskPage() {
               What these rates can and can’t tell you
             </h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-              Each bar is the denial rate of a group, measured. It isn’t the
-              probability that a particular case is denied, and the factors are
-              not independent of each other: wage correlates with occupation,
-              which correlates with everything else. A single blended risk score
-              built from these would read as precision we can’t support, so
-              what you get is the measured rates and nothing layered on top.
+              Each bar is the denial rate of a group. It isn’t the probability
+              that a particular case is denied, and the factors are not
+              independent of each other: wage correlates with occupation, which
+              correlates with everything else. A single blended risk score built
+              from these would read as precision the data can’t support, so these
+              are the measured rates, unblended.
             </p>{" "}
             <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/70">
               Two limits worth knowing before reading a ranking. A rate over a
@@ -291,8 +290,7 @@ export default async function PermDenialRiskPage() {
             <div>
               <h2 className="font-heading text-2xl font-black">By offered wage</h2>{" "}
               <p className="mt-2 text-base text-foreground/70">
-                Denial rate falls as the offered wage rises, and the lowest band
-                isn’t the worst one.
+                Denial rate against the wage the employer offered, in bands.
               </p>
               <div className="mt-6">
                 <RateViews
@@ -314,8 +312,7 @@ export default async function PermDenialRiskPage() {
           <section className="mt-12">
             <h2 className="font-heading text-2xl font-black">By fiscal year</h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
-              The rate moves year to year, so a figure quoted without its year
-              is a figure without a meaning.
+              The rate moves year to year, so every figure here carries its year.
             </p>
             <div className="mt-6 max-w-2xl">
               <RateViews
@@ -338,9 +335,8 @@ export default async function PermDenialRiskPage() {
               <h2 className="font-heading text-2xl font-black">By occupation</h2>{" "}
               <p className="mt-2 max-w-2xl text-base text-foreground/70">
                 Denials cluster in a handful of job families and are close to
-                absent in others. The floor decides how small a group is allowed
-                to carry a rate at all; the family filter and the search narrow
-                it further.
+                absent in others. Occupations below the minimum population carry
+                no rate.
               </p>
               <div className="mt-6">
                 <RankedRateViews
@@ -374,10 +370,9 @@ export default async function PermDenialRiskPage() {
             <section className="mt-12">
               <h2 className="font-heading text-2xl font-black">By worksite state</h2>{" "}
               <p className="mt-2 max-w-2xl text-base text-foreground/70">
-                DOL works one national queue, so this ranks where denials
-                land, not where cases take longer. Several states decide too
-                few cases to carry a rate at all, which is what the floor is
-                for.
+                DOL works one national queue, so this ranks where denials land.
+                Several states decide too few cases to carry a rate at all, which
+                is what the floor is for.
               </p>
               <div className="mt-6">
                 <RankedRateViews
@@ -436,7 +431,7 @@ export default async function PermDenialRiskPage() {
         <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Waiting on one?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            Denials are rare. Most of the wait is queue, not risk. The{" "}
+            Denials are rare, and most of the wait is queue time. The{" "}
             <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision estimator
             </Link>{" "}

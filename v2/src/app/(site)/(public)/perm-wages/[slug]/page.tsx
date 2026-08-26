@@ -414,10 +414,9 @@ export default async function OccupationPage({
         <h2 className="font-heading text-xl font-black">Reading the wage</h2>{" "}
         <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/70">
           This is the median wage employers committed to in federal filings for
-          this occupation, which makes it harder currency than a salary survey.
-          It mixes every experience level and every metro, and it&apos;s a floor
-          rather than a market rate: the employer must offer at least the
-          prevailing wage DOL determines for the occupation, level and county.
+          this occupation. It mixes every experience level and every metro, and
+          it&apos;s a floor: the employer must offer at least the prevailing wage
+          DOL determines for the occupation, level and county.
           {ladder?.p25 != null && ladder.p75 != null ? (
             <>
               {" "}
@@ -471,12 +470,12 @@ export default async function OccupationPage({
                 >
                   denial risk page
                 </Link>
-                , published as separate rates rather than blended into a score.
+                , published as separate rates.
               </>
             ),
           },
           {
-            head: "Nothing here’s pending",
+            head: "Nothing here is pending",
             body: (
               <>
                 Every case in DOL&apos;s disclosure files carries a decision

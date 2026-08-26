@@ -82,15 +82,15 @@ export default async function PermWagesPage() {
 
       <header className="max-w-2xl">
         <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Offered wages, not survey estimates
+          From DOL&apos;s own disclosure files
         </p>{" "}
         <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
           What PERM cases pay
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           The wage on a PERM filing is the wage the employer committed to in a
-          federal filing, which is harder currency than any salary survey. These are
-          the medians by occupation for the current disclosure window.
+          federal filing. These are the medians by occupation for the current
+          disclosure window.
         </p>
       </header>
 
@@ -140,8 +140,7 @@ export default async function PermWagesPage() {
               </h2>{" "}
               <p className="mt-2 max-w-2xl text-base leading-relaxed text-background/70">
                 Every certified case in the window with a readable wage, sorted
-                and cut at five points. A single median would hide what this
-                distribution actually looks like.
+                and cut at five points.
               </p>
               <dl className="mt-6 grid [&>*]:min-w-0 grid-cols-2 gap-4 sm:grid-cols-5">
                 {[
@@ -163,8 +162,8 @@ export default async function PermWagesPage() {
               </dl>
               <p className="mt-5 text-sm text-background/60">
                 From {ladder.count.toLocaleString("en-US")} certified cases. The
-                gap between the 25th and the median is the two-market split:
-                hourly roles at one end, salaried knowledge work at the other.
+                gap between the 25th and the median spans hourly roles at one end
+                and salaried knowledge work at the other.
               </p>
             </section>
           ) : null}
@@ -176,8 +175,7 @@ export default async function PermWagesPage() {
                   {fmtWage(overallMedian)}
                 </p>{" "}
                 <p className="max-w-md text-base leading-relaxed text-background/70">
-                  Median of the occupation medians below. The centre of what a
-                  sponsored role pays across all{" "}
+                  Median of the occupation medians, across all{" "}
                   {occupationCount.toLocaleString("en-US")} occupations.
                 </p>
               </div>
@@ -189,8 +187,8 @@ export default async function PermWagesPage() {
               All {occupationCount.toLocaleString("en-US")} occupations
             </h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
-              Search by title or SOC code, narrow to a job family, sort any
-              column, take the whole thing as a CSV.
+              Search by title or SOC code, filter by job family, sort any column,
+              or download the CSV.
             </p>
             <div className="mt-6">
               <EntityExplorer kind="occupation" rows={occupations} total={occupationCount} />
@@ -214,8 +212,8 @@ export default async function PermWagesPage() {
         <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Comparing an offer?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            Your own case&apos;s pace depends on its filing month, not its
-            wage. The{" "}
+            A case&apos;s pace depends on its filing month rather than its wage.
+            The{" "}
             <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision estimator
             </Link>{" "}
@@ -233,7 +231,7 @@ export default async function PermWagesPage() {
             <Link href="/methodology" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               methodology
             </Link>{" "}
-            says exactly how every figure is computed.
+            says how every figure is computed.
           </p>
         </div>
       </section>
