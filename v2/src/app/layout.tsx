@@ -176,6 +176,18 @@ export default async function RootLayout({
             attribute was working; there was no rule yet to act on it.
           */}
           <style dangerouslySetInnerHTML={{ __html: PRELOADER_CSS }} />
+          {/*
+            A RAW <script>, deliberately, not next/script.
+            Verified against Next's own source (client/script.tsx +
+            client/app-bootstrap.ts): in the App Router a
+            `strategy="beforeInteractive"` script does NOT render as a real
+            script tag. It pushes metadata onto `self.__next_s`, and
+            appBootstrap creates the element later, with hydration blocked
+            until that queue drains. A curtain that runs after the JS bundle
+            has loaded is useless — it would paint over content the visitor
+            can already see. This runs at parse time, which is the only thing
+            that works here.
+          */}
           <script dangerouslySetInnerHTML={{ __html: PRELOADER_BOOT }} />
           <link rel="alternate" type="application/rss+xml" title="PERM Tracker RSS Feed" href="/feed.xml" />
           {/* JSON-LD structured data for rich search results

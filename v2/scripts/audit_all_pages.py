@@ -193,9 +193,15 @@ def main() -> int:
         print(f"sitemap index : {len(children)} child sitemaps")
         locs = []
         for child in children:
-            cs, cbody = get(re.sub(r"^https?://[^/]+", "", child) or "/")
+            # get() takes a FULL url. Re-hosting onto --base so a staging run
+            # follows staging's own children rather than production's.
+            child_url = args.base.rstrip("/") + (re.sub(r"^https?://[^/]+", "", child) or "/")
+            cs, cbody = get(child_url)
             if cs != 200:
-                sys.exit(f"FATAL: child sitemap {child} returned {cs}")
+                # Print the BODY on failure: get() returns the exception text
+                # there when it could not connect at all, and a bare status of
+                # 0 says nothing about why.
+                sys.exit(f"FATAL: child sitemap {child_url} returned {cs}: {cbody[:200]}")
             found = re.findall(r"<loc>(.*?)</loc>", cbody)
             print(f"  {child.rsplit('/', 1)[-1]:24s} {len(found):>6,} urls")
             locs.extend(found)
