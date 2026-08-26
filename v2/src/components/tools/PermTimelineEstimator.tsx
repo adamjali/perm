@@ -27,6 +27,13 @@ import {
   type FrontierPoint,
 } from "@/components/tools/FrontierProgressChart";
 import { Label } from "@/components/ui";
+import {
+  deriveQueueAhead,
+  findVolumeAnomalies,
+  type MonthQueue,
+} from "@/lib/queueAhead";
+import { CaseNumberField } from "@/components/tools/CaseNumberField";
+import { QueueMonthChart } from "@/components/tools/QueueMonthChart";
 import { cn } from "@/lib/utils";
 
 export interface PermTimelineEstimatorProps {
@@ -67,6 +74,24 @@ export interface PermTimelineEstimatorProps {
    * as an absent card rather than a zero.
    */
   pace?: Pace | null;
+  /**
+   * Every filing month's queue progress, including PENDING counts.
+   *
+   * The one question DOL's own files cannot answer: its quarterly disclosure
+   * release carries a decision date on every record and no pending rows at
+   * all, so "how many are in front of me" is underivable from it. These
+   * counts are mirrored per-case status, and `queueSource` names the mirror
+   * on the page rather than in a footnote.
+   *
+   * Optional and defaulted for the same reason `frontierHistory` is: a
+   * frontend deployed ahead of its data reads undefined here, and treating
+   * it as guaranteed took a whole page down once already.
+   */
+  months?: readonly MonthQueue[];
+  /** Months DOL has started and not finished, from the same series. */
+  activeRange?: { from: string; to: string } | null;
+  /** Attribution for the pending counts, rendered where the counts are. */
+  queueSource?: string | null;
   /** Renders the compact variant used inside other pages. */
   compact?: boolean;
   className?: string;
@@ -112,6 +137,9 @@ export function PermTimelineEstimator({
   frontierHistory = [],
   today,
   pace = null,
+  months = [],
+  activeRange = null,
+  queueSource = null,
   compact = false,
   className,
 }: PermTimelineEstimatorProps) {
@@ -195,6 +223,33 @@ export function PermTimelineEstimator({
     };
   }, [envelope, month, today]);
 
+  /** Measured, not projected: pending cases filed before the chosen month. */
+  const queue = useMemo(() => deriveQueueAhead(months, month), [months, month]);
+
+  /** Months whose filing volume collapsed, so the chart can say why. */
+  const anomalies = useMemo(() => findVolumeAnomalies(months), [months]);
+
+  /**
+   * A decoded case number the month picker cannot represent.
+   *
+   * The picker covers the months a live PERM could plausibly carry. A number
+   * decoding outside that is either very old or a typo, and quietly leaving
+   * the picker where it was would show an answer for a month the reader never
+   * chose. So: say so, and change nothing.
+   */
+  const [caseWarning, setCaseWarning] = useState<string | null>(null);
+
+  function handleDecode(parsed: { filingMonth: string }) {
+    if (options.some((o) => o.value === parsed.filingMonth)) {
+      setCaseWarning(null);
+      setMonth(parsed.filingMonth);
+      return;
+    }
+    setCaseWarning(
+      "That month is outside the range this calculator covers, so the figures below still show the month picked above.",
+    );
+  }
+
   return (
     <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
       <div className="border-b-2 border-border p-6 sm:p-8">
@@ -229,6 +284,12 @@ export function PermTimelineEstimator({
             ))}
           </select>
         </div>
+
+        <CaseNumberField
+          className="mt-6"
+          onDecode={handleDecode}
+          warning={caseWarning}
+        />
       </div>
 
       {/* THE ANSWER, at the size the question was asked. Everything in this
@@ -280,9 +341,25 @@ export function PermTimelineEstimator({
 
           {/* Stat cards. Each one is a single published figure, labelled with
               where it came from - not a derived score. */}
-          <div className="mt-6 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-3">
+          {/* Flex-wrap rather than a fixed column count: every card here is
+              conditional, and a 3-across grid holding 3 of 4 cards leaves an
+              empty cell that reads as a card that failed to load. */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            {months.length > 0 ? (
+              <div className="min-w-0 flex-1 basis-60 border-2 border-border bg-background p-4">
+                <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  Cases ahead of you
+                </p>{" "}
+                <p className="mt-1 font-heading text-2xl font-black leading-none">
+                  {queue.ahead.toLocaleString("en-US")}
+                </p>{" "}
+                <p className="mt-1 text-sm text-foreground/70">
+                  still undecided, filed before {formatMonth(month)}
+                </p>
+              </div>
+            ) : null}
             {pace ? (
-              <div className="border-2 border-border bg-background p-4">
+              <div className="min-w-0 flex-1 basis-60 border-2 border-border bg-background p-4">
                 <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   DOL pace
                 </p>{" "}
@@ -295,7 +372,7 @@ export function PermTimelineEstimator({
               </div>
             ) : null}
             {frontier ? (
-              <div className="border-2 border-border bg-background p-4">
+              <div className="min-w-0 flex-1 basis-60 border-2 border-border bg-background p-4">
                 <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   Queue is at
                 </p>{" "}
@@ -308,7 +385,7 @@ export function PermTimelineEstimator({
               </div>
             ) : null}
             {estimate.monthsBehindFrontier !== null ? (
-              <div className="border-2 border-border bg-background p-4">
+              <div className="min-w-0 flex-1 basis-60 border-2 border-border bg-background p-4">
                 <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   Your month
                 </p>{" "}
@@ -345,6 +422,51 @@ export function PermTimelineEstimator({
               ? ` Your month is ${estimate.monthsBehindFrontier} further on.`
               : ""}
           </p>
+        </div>
+      ) : null}
+
+      {/* The queue itself, drawn. This is the only band on the page built on
+          pending counts, which is why it carries its own attribution. */}
+      {months.length > 0 ? (
+        <div className="border-b-2 border-border p-6 sm:p-8">
+          <h3 className="font-heading text-xl font-black leading-tight sm:text-2xl">
+            How far DOL has got through each month
+          </h3>{" "}
+          <p className="mt-3 text-base leading-relaxed text-foreground/70">
+            {activeRange ? (
+              <>
+                DOL is visibly working{" "}
+                <b className="font-bold text-foreground">
+                  {formatMonth(activeRange.from)} to {formatMonth(activeRange.to)}
+                </b>
+                : those months have decisions in them and are not finished.
+                Months above are done, months below have not been reached.
+              </>
+            ) : (
+              <>
+                Every filing month, oldest first. Months at the top are done
+                and months at the bottom have not been reached.
+              </>
+            )}
+          </p>
+
+          <QueueMonthChart
+            className="mt-6"
+            months={months}
+            selectedMonth={month}
+            anomalies={anomalies}
+          />
+
+          {/* Provenance where the data is, not in a footnote: these are the
+              only figures here that DOL does not publish itself. */}
+          {queueSource ? (
+            <p className="mt-6 border-t-2 border-border pt-3 text-sm text-muted-foreground">
+              <span className="font-bold text-foreground/80">Pending counts:</span>{" "}
+              {queueSource}. DOL&apos;s own disclosure files carry a decision
+              date on every record and no pending rows at all, so a count of
+              what is still in front of you cannot be read from them.
+            </p>
+          ) : null}
         </div>
       ) : null}
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
 
 import { PermTimelineEstimator } from "@/components/tools/PermTimelineEstimator";
-import { getDailyDecisions } from "@/lib/turso/publicData";
+import { getDailyDecisions, getQueueAhead } from "@/lib/turso/publicData";
 import { businessDayPace } from "@/lib/dolPace";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
@@ -79,6 +79,13 @@ export default async function PermTimelineCalculatorPage() {
 
   const today = new Date().toISOString().slice(0, 10);
 
+  // Fetched with the frontier month so the server and the client agree on the
+  // default selection. `months` is the whole series either way, and the
+  // client re-derives `ahead` for whichever month the reader picks.
+  const queue = await getQueueAhead(
+    data?.frontier ? data.frontier.analystQueueMonth : today.slice(0, 7),
+  );
+
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,
@@ -119,6 +126,9 @@ export default async function PermTimelineCalculatorPage() {
           disclosure={data ? data.disclosure : null}
           today={today}
           pace={pace}
+          months={queue ? queue.months : []}
+          activeRange={queue ? queue.activeRange : null}
+          queueSource={queue ? queue.source : null}
         />
       </section>
 
@@ -152,7 +162,7 @@ export default async function PermTimelineCalculatorPage() {
         </Link>
       </section>
 
-      <DataProvenance datasets={["perm-cases", "processing-times"]} />
+      <DataProvenance datasets={["perm-cases", "processing-times", "perm-month-stats"]} />
 
 
       <ToolPageFooter
