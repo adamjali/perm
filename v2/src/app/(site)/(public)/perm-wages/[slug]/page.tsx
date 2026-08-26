@@ -146,6 +146,9 @@ export async function generateMetadata({
   const head = `${name} PERM wages${wagePart} across ${fmt(row.total)} filings`;
   const description = head.length <= 120 ? `${head}, from DOL's own files.` : `${head}.`;
   return {
+    // Thin-page defense: a sub-floor entity page exists for people but is
+    // not offered to the index. The sitemap already omits it.
+    ...(row && !hasOwnPage(row) ? { robots: { index: false, follow: true } } : {}),
     // When the SOC title alone already fills the space Google shows, the
     // brand suffix is the least valuable thing in it - `absolute` drops the
     // "| PERM Tracker" template rather than crowding out the searched phrase.
@@ -169,12 +172,11 @@ export default async function OccupationPage({
   const { slug } = await params;
   const row = await loadSubject(slug);
   if (!row) notFound();
-  // Stored and searchable is not the same as having a page. Below the
-  // threshold the page would say "one case, certified" and nothing more, and
-  // 65,000 of those is a doorway-page pattern rather than a directory. The
-  // index tables render these rows unlinked, and the sitemap omits them, so
-  // nothing points here.
-  if (!hasOwnPage(row)) notFound();
+  // Below the page threshold the page still RENDERS - an attorney searched a
+  // two-case firm she knows, found it, and a result that 404s on click is
+  // worse than absence. The doorway-page defense moved to metadata: sub-floor
+  // pages are noindex (set in generateMetadata) and the sitemap omits them,
+  // so crawlers are told exactly what these are while people get the page.
   // The first two digits of a SOC code are its major group, so this costs a
   // lookup rather than new data. `socGroups.ts` holds the one copy of it.
   const group = socGroup(row.code);

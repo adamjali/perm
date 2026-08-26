@@ -63,7 +63,12 @@ export async function getEntitySeed(
       `SELECT ${ENTITY_COLS} FROM perm_entities WHERE kind = ? ORDER BY rank LIMIT ?`,
       [kind, limit],
     ),
-    one<{ n: number }>("SELECT count(*) AS n FROM perm_entities WHERE kind = ?", [kind]),
+    // Pageworthy count, so the header's "N employers" matches what the table
+    // can actually enumerate; the sub-floor corpus is reachable via search.
+    one<{ n: number }>(
+      "SELECT count(*) AS n FROM perm_entities WHERE kind = ? AND total >= ?",
+      [kind, MIN_TOTAL_FOR_PAGE],
+    ),
   ]);
   return { rows: head.map(toEntityRow), total: count?.n ?? head.length };
 }
@@ -77,9 +82,16 @@ export async function getEntitySeed(
  * it rather than being carried over as decoration.
  */
 export async function getAllEntities(kind: EntityKind): Promise<EntityRow[]> {
+  // Pageworthy rows only. Storage floor dropped to 1 on 2026-08-26 (71,748
+  // employers instead of 16,305 - an attorney searched a 2-case firm she
+  // knows and found nothing), but this feeds the bulk /api dump and the
+  // sitemap: returning every row would quadruple a ~900 KB payload for rows
+  // that have no ranked place in the index table. Search reaches the whole
+  // corpus through searchByName; a sub-floor entity's page still renders on
+  // demand via getEntityBySlug.
   const all = await rows<EntityDbRow>(
-    `SELECT ${ENTITY_COLS} FROM perm_entities WHERE kind = ? ORDER BY rank`,
-    [kind],
+    `SELECT ${ENTITY_COLS} FROM perm_entities WHERE kind = ? AND total >= ? ORDER BY rank`,
+    [kind, MIN_TOTAL_FOR_PAGE],
   );
   return all.map(toEntityRow);
 }

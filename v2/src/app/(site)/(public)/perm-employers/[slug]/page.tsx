@@ -139,6 +139,9 @@ export async function generateMetadata({
   const description =
     head.length <= 120 ? `${head}, from DOL's own disclosure files.` : `${head}.`;
   return {
+    // Thin-page defense: a sub-floor entity page exists for people but is
+    // not offered to the index. The sitemap already omits it.
+    ...(row && !hasOwnPage(row) ? { robots: { index: false, follow: true } } : {}),
     // A legal entity name can run past what Google shows on its own
     // ("VERIZON COMMUNICATIONS INC AND ALL ITS SUBSIDIARIES AND AFFILIATES"),
     // so `entityTitle` drops the brand suffix, then the qualifier, rather than
@@ -164,12 +167,11 @@ export default async function EmployerPage({
   const { slug } = await params;
   const row = await loadSubject(slug);
   if (!row) notFound();
-  // Stored and searchable is not the same as having a page. Below the
-  // threshold the page would say "one case, certified" and nothing more, and
-  // 65,000 of those is a doorway-page pattern rather than a directory. The
-  // index tables render these rows unlinked, and the sitemap omits them, so
-  // nothing points here.
-  if (!hasOwnPage(row)) notFound();
+  // Below the page threshold the page still RENDERS - an attorney searched a
+  // two-case firm she knows, found it, and a result that 404s on click is
+  // worse than absence. The doorway-page defense moved to metadata: sub-floor
+  // pages are noindex (set in generateMetadata) and the sitemap omits them,
+  // so crawlers are told exactly what these are while people get the page.
 
   // The three context reads run together. `fieldDistribution` takes the same
   // arguments on every page of this kind, and memoises on them, so all 16,305

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { approvalRate, hasOwnPage, type EntityRow } from "@/lib/entityPayload";
+import { approvalRate, type EntityRow } from "@/lib/entityPayload";
 import { socGroup } from "@/lib/socGroups";
 import { stateName } from "@/lib/usStateNames";
 
@@ -52,20 +52,17 @@ function nameCol(base: string, label: string): StatColumn<EntityRow> {
     key: "name",
     label,
     sortValue: (e) => e.name,
-    // Below the page threshold there is no page, so there is no link. A link
-    // to a 404 is worse than plain text, and the row is still the answer to
-    // "did they file at all", which is what the search was asking.
-    render: (e) =>
-      hasOwnPage(e) ? (
-        <Link
-          href={`${base}/${e.slug}`}
-          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-        >
-          {e.name}
-        </Link>
-      ) : (
-        <span className="font-bold">{e.name}</span>
-      ),
+    // Every stored entity has a page now (sub-floor ones render on demand
+    // and carry noindex), so every row links. The old unlinked branch existed
+    // because those pages 404ed - which turned a search hit into a dead end.
+    render: (e) => (
+      <Link
+        href={`${base}/${e.slug}`}
+        className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+      >
+        {e.name}
+      </Link>
+    ),
   };
 }
 
@@ -183,16 +180,12 @@ export const OCCUPATION_COLUMNS: StatColumn<EntityRow>[] = [
     sortValue: (e) => e.name,
     render: (e) => (
       <span className="font-bold">
-        {hasOwnPage(e) ? (
-          <Link
-            href={`/perm-wages/${e.slug}`}
-            className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-          >
-            {e.name}
-          </Link>
-        ) : (
-          e.name
-        )}{" "}
+        <Link
+          href={`/perm-wages/${e.slug}`}
+          className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+        >
+          {e.name}
+        </Link>{" "}
         <span className="font-mono text-xs font-normal text-muted-foreground">
           {e.code ?? ""}
         </span>
