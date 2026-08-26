@@ -23,6 +23,7 @@ import { api } from "../../../convex/_generated/api";
 import { getAllPosts } from "@/lib/content";
 import type { ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
+import { getDisclosureStats } from "@/lib/turso/publicData";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
 
@@ -155,7 +156,7 @@ export async function GET() {
   const allPosts = getAllPosts();
 
   const [disclosure, dol] = await Promise.all([
-    fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null),
+    getDisclosureStats().catch(() => null),
     fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(() => null),
   ]);
 

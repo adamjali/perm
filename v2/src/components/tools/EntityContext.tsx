@@ -40,7 +40,7 @@ import { cn } from "@/lib/utils";
  *     255 of 12,240 employers reach - it is where the number stops being
  *     pure noise and starts being worth printing with a caveat.
  *
- * The same bar defines the comparison cohort in `permEntities.fieldDistribution`,
+ * The same bar defines the comparison cohort in `fieldDistribution` in src/lib/turso/entities.ts,
  * and the page passes this constant in as that query's argument so the two
  * cannot drift apart.
  */

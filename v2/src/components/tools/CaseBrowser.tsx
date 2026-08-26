@@ -3,11 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-// NOT convex/react: this is a PUBLIC page and there is no ConvexProvider
-// above it by design. See src/lib/useConvexHttpQuery.ts.
-import { useConvexHttpQuery } from "@/lib/useConvexHttpQuery";
-
-import { api } from "../../../convex/_generated/api";
+// A public page has no ConvexProvider above it by design, and the Turso
+// client is server-only, so the reads go through /api/perm-cases. See
+// src/lib/usePublicQuery.ts.
+import { usePublicQuery } from "@/lib/usePublicQuery";
+// TYPE ONLY, and that is what makes it legal here. `@/lib/turso/cases` imports
+// `server-only`, so a value import would be a build error in a client
+// component - correctly, because the token behind it grants access to the
+// whole database. A type import compiles to nothing, and it is worth having:
+// the response shape is a JSON boundary, so a field renamed on the server
+// would otherwise fail at runtime instead of at compile time.
+import type { CasePage } from "@/lib/turso/cases";
 
 /**
  * The case-level browser.
@@ -17,7 +23,7 @@ import { api } from "../../../convex/_generated/api";
  * **A count never comes from counting rows.** Every total on screen comes from
  * the coverage document the ingest wrote, over exactly the rows it emitted.
  * Counting a filtered set would mean reading it, and reading 50,000 rows to
- * print a number is the failure `convex/permCases.ts` is arranged to avoid.
+ * print a number is the failure `src/lib/turso/cases.ts` is arranged to avoid.
  * Where no exact total exists for the current combination, the page shows the
  * row range and says nothing else, rather than inventing one.
  *
@@ -171,8 +177,8 @@ export function CaseBrowser({
   const [order, setOrder] = useState<"newest" | "oldest">("newest");
   const [pageSize, setPageSize] = useState(50);
 
-  // --- paging: an explicit cursor stack, because Convex cursors are opaque
-  // and a "page 3" button needs the cursor page 3 started at.
+  // --- paging: an explicit cursor stack, because a cursor is opaque to this
+  // component and a "page 3" button needs the cursor page 3 started at.
   const [cursors, setCursors] = useState<(string | null)[]>([null]);
   const pageIndex = cursors.length - 1;
 
@@ -233,20 +239,37 @@ export function CaseBrowser({
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [dimension, stateValue, socValue, employerSlug, attorneySlug, status, fiscalYear, pathname, router]);
 
-  const page = useConvexHttpQuery(api.permCases.listCases, {
-    paginationOpts: { numItems: pageSize, cursor: cursors[pageIndex] ?? null },
-    filter,
-    order,
-  });
+  // One url per distinct question, so the hook's dependency is the question
+  // itself and a repeat is served from the edge cache rather than Turso.
+  const listUrl = useMemo(() => {
+    const p = new URLSearchParams({ action: "list", kind: filter.slice.kind });
+    const s = filter.slice;
+    if (s.kind === "state") p.set("state", s.state);
+    else if (s.kind === "occupation") p.set("soc", s.socCode);
+    else if (s.kind === "employer") p.set("employer", s.employerSlug);
+    else if (s.kind === "attorney") p.set("firm", s.attorneySlug);
+    if (filter.status) p.set("status", filter.status);
+    if (filter.from) p.set("from", filter.from);
+    if (filter.to) p.set("to", filter.to);
+    p.set("order", order);
+    p.set("numItems", String(pageSize));
+    const cursor = cursors[pageIndex];
+    if (cursor) p.set("cursor", cursor);
+    return `/api/perm-cases?${p.toString()}`;
+  }, [filter, order, pageSize, cursors, pageIndex]);
 
-  const caseHit = useConvexHttpQuery(
-    api.permCases.lookupByCaseNumber,
-    caseQuery ? { caseNumber: caseQuery } : "skip",
+  const { data: page, failed: pageFailed } = usePublicQuery<CasePage>(listUrl);
+
+  const { data: caseHit, failed: caseFailed } = usePublicQuery<CaseRow | null>(
+    caseQuery
+      ? `/api/perm-cases?action=lookup&caseNumber=${encodeURIComponent(caseQuery)}`
+      : "skip",
   );
 
-  const nameHits = useConvexHttpQuery(
-    api.permCases.searchCases,
-    nameQuery.length >= 2 ? { field: nameField, text: nameQuery, limit: 50 } : "skip",
+  const { data: nameHits, failed: nameFailed } = usePublicQuery<CaseRow[]>(
+    nameQuery.length >= 2
+      ? `/api/perm-cases?action=search&field=${nameField}&limit=50&text=${encodeURIComponent(nameQuery)}`
+      : "skip",
   );
 
   const rows = page?.page ?? [];
@@ -368,8 +391,14 @@ export function CaseBrowser({
             Look it up
           </button>
         </form>
-        {caseQuery !== "" && caseHit === undefined ? (
+        {caseQuery !== "" && caseHit === undefined && !caseFailed ? (
           <p className="mt-4 text-base text-foreground/60">Checking…</p>
+        ) : null}
+        {caseFailed ? (
+          <p className="mt-4 text-base text-foreground/70">
+            The case table couldn’t be reached just now. That’s a fault at our
+            end, not an answer about your case. Try again in a minute.
+          </p>
         ) : null}
         {caseQuery !== "" && caseHit === null ? (
           <div className="mt-4 border-2 border-border bg-tint-primary p-4">
@@ -582,7 +611,7 @@ export function CaseBrowser({
               type="text"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
-              placeholder="Part of a name"
+              placeholder="Start of a name"
               maxLength={120}
               autoComplete="off"
               className={CONTROL}
@@ -594,9 +623,10 @@ export function CaseBrowser({
         </form>
         {searching ? (
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
-            Showing the best {nameHits ? fmtInt(nameHits.length) : "…"} name
-            matches, ordered by how well they match rather than by date, and
-            capped. The filters above don’t apply to a name search.{" "}
+            Showing {nameHits ? fmtInt(nameHits.length) : "…"} matches, newest
+            first and capped. A name search matches from the start of a name, so
+            “fragomen” finds Fragomen, Del Rey, Bernsen &amp; Loewy and “del rey”
+            finds nothing. The filters above don’t apply to it.{" "}
             <button
               type="button"
               onClick={() => {
@@ -641,8 +671,18 @@ export function CaseBrowser({
           ) : null}
         </div>
 
-        {page === undefined && !searching ? (
+        {page === undefined && !searching && !pageFailed ? (
           <p className="mt-6 text-base text-foreground/60">Reading the case table…</p>
+        ) : null}
+
+        {(searching ? nameFailed : pageFailed) ? (
+          <div className="mt-6 border-2 border-border bg-card p-6 shadow-hard-sm">
+            <p className="text-base text-foreground/70">
+              The case table couldn’t be reached just now. Nothing is missing
+              from the record; this is a fault at our end. Try again in a
+              minute.
+            </p>
+          </div>
         ) : null}
 
         {shown.length === 0 && (searching ? nameHits !== undefined : page !== undefined) ? (

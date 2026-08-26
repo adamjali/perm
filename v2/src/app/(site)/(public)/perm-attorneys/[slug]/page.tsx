@@ -19,9 +19,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
-import { fetchQuery } from "convex/nextjs";
 
-import { api } from "../../../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
@@ -30,7 +28,6 @@ import { FigurePlate } from "@/components/tools/FigurePlate";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import {
   DisclosureNote,
-  EntityDataGap,
   LimitsPanel,
   MIN_DECIDED_FOR_MEDIAN,
   MIN_DECIDED_FOR_RATE,
@@ -41,6 +38,12 @@ import {
   rateReliability,
 } from "@/components/tools/EntityContext";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import {
+  comparables,
+  fieldDistribution,
+  getBySlug,
+  listByKind,
+} from "@/lib/turso/entities";
 
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178
@@ -65,37 +68,28 @@ interface Subject {
 }
 
 /**
- * A missing row and an unreachable backend are different answers.
+ * The subject, or `null` when this slug names nothing.
  *
- * Collapsing them into `null` means one Convex blip 404s a live page, and
- * because these routes carry `revalidate`, Next caches that 404 for an hour.
+ * A read that FAILS is deliberately not a third outcome any more. It used
+ * to become an "unavailable" state that rendered an empty page with a 200,
+ * which is the exact shape that let a disabled backend look like a quiet
+ * page and pass every status check. It throws now, and Next's error
+ * boundary decides what the reader sees.
  */
-type SubjectResult =
-  | { status: "found"; row: Subject }
-  | { status: "missing" }
-  | { status: "unavailable" };
-
-async function loadSubject(slug: string): Promise<SubjectResult> {
-  try {
-    const row = await fetchQuery(api.permEntities.getBySlug, { kind: KIND, slug });
-    if (!row) return { status: "missing" };
-    return {
-      status: "found",
-      row: {
-        slug: row.slug,
-        name: row.name,
-        rank: row.rank,
-        total: row.total,
-        certified: row.certified,
-        denied: row.denied,
-        medianDays: row.medianDays,
-        // DOL's cell is unusable on 16 of 3,208 firms, and "" is not a state.
-        state: row.state ? row.state : null,
-      },
-    };
-  } catch {
-    return { status: "unavailable" };
-  }
+async function loadSubject(slug: string): Promise<Subject | null> {
+  const row = await getBySlug(KIND, slug);
+  if (!row) return null;
+  return {
+    slug: row.slug,
+    name: row.name,
+    rank: row.rank,
+    total: row.total,
+    certified: row.certified,
+    denied: row.denied,
+    medianDays: row.medianDays,
+    // DOL's cell is unusable on 16 of 3,208 firms, and "" is not a state.
+    state: row.state ? row.state : null,
+  };
 }
 
 function median(xs: number[]): number | null {
@@ -118,10 +112,7 @@ export async function generateStaticParams() {
   // for an hour. Read from the entity TABLE, so a prerendered slug is one
   // `getBySlug` can find - the aggregate document slugs its own copy of the
   // top 250 separately and the two are not guaranteed to agree.
-  const rows = await fetchQuery(api.permEntities.listByKind, {
-    kind: KIND,
-    limit: 100,
-  }).catch(() => []);
+  const rows = await listByKind(KIND, 100);
   return rows.map((r) => ({ slug: r.slug }));
 }
 
@@ -131,9 +122,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const result = await loadSubject(slug);
-  if (result.status !== "found") return { title: "Law firm not found" };
-  const row = result.row;
+  const row = await loadSubject(slug);
+  if (!row) return { title: "Law firm not found" };
   const reliability = rateReliability(
     row.certified,
     row.denied,
@@ -172,86 +162,58 @@ export default async function AttorneyPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const result = await loadSubject(slug);
-  if (result.status === "missing") notFound();
+  const row = await loadSubject(slug);
+  if (!row) notFound();
   // Stored and searchable is not the same as having a page. Below the
   // threshold the page would say "one case, certified" and nothing more, and
   // 65,000 of those is a doorway-page pattern rather than a directory. The
   // index tables render these rows unlinked, and the sitemap omits them, so
   // nothing points here.
-  if (result.status === "found" && !hasOwnPage(result.row)) notFound();
+  if (!hasOwnPage(row)) notFound();
 
-  const row = result.status === "found" ? result.row : null;
-
-  // `fieldDistribution` takes the same arguments on every firm page, so
-  // Convex's query cache answers all 3,208 of them from one execution. The
-  // peer window is wide because the state filter thins it hard: California
-  // holds 604 firms and Wyoming a handful.
+  // `fieldDistribution` takes the same arguments on every firm page and
+  // memoises on them, so all 3,736 share one cohort read. The peer window is
+  // wide because the state filter thins it hard: California holds 604 firms
+  // and Wyoming a handful.
   const [stats, dist, near] = await Promise.all([
     getDisclosureStats(),
-    fetchQuery(api.permEntities.fieldDistribution, {
+    fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
+    comparables({
       kind: KIND,
-      minDecided: MIN_DECIDED_FOR_RATE,
-    }).catch(() => null),
-    row
-      ? fetchQuery(api.permEntities.comparables, {
-          kind: KIND,
-          rank: row.rank,
-          span: row.state ? 400 : 60,
-          limit: 6,
-          ...(row.state ? { state: row.state } : {}),
-        }).catch(() => null)
-      : Promise.resolve(null),
+      rank: row.rank,
+      span: row.state ? 400 : 60,
+      limit: 6,
+      ...(row.state ? { state: row.state } : {}),
+    }),
   ]);
 
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
-  const kindTotal = dist?.kindTotal ?? 0;
+  const kindTotal = dist.kindTotal;
 
   const schema = {
     "@context": "https://schema.org",
     "@type": "Dataset",
-    name: `${row?.name ?? slug} PERM labor certification cases`,
-    description: `PERM case record for ${row?.name ?? slug} from DOL disclosure data.`,
+    name: `${row.name} PERM labor certification cases`,
+    description: `PERM case record for ${row.name} from DOL disclosure data.`,
     url: `https://permtracker.app${BASE}/${slug}`,
     creator: { "@type": "Organization", name: "PERM Tracker" },
     isBasedOn: "https://www.dol.gov/agencies/eta/foreign-labor/performance",
   };
 
-  if (!row) {
-    return (
-      <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-        <DataNav active="attorneys" />
-        <div className="pt-10 sm:pt-12" />
-        <header className="max-w-3xl">
-          <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-            This firm&apos;s figures are unavailable
-          </h1>
-        </header>
-        <div className="mt-8">
-          <EntityDataGap
-            what="This law firm"
-            backHref={BASE}
-            backLabel="the full firm ranking"
-          />
-        </div>
-      </div>
-    );
-  }
-
   const reliability = rateReliability(row.certified, row.denied, baselineDenialPct);
   const inCohort = reliability.tier !== "withheld";
   // The card and the drawing read one number: the median of the comparable
   // cohort's own medians, which is the distribution the figure plots.
-  const fieldDays = median(dist?.medianDays ?? []);
+  const fieldDays = median(dist.medianDays);
   const daysDelta =
     row.medianDays != null && fieldDays != null ? row.medianDays - fieldDays : null;
   const thinMedian = reliability.decided < MIN_DECIDED_FOR_MEDIAN;
   const where = stateName(row.state);
-  const peers = near?.peers ?? [];
+  const peers = near.peers;
   // The query falls back to volume peers when a state matched nothing, so the
   // heading has to read what came BACK rather than what was asked for. Calling
   // six firms from anywhere "other Wyoming firms" is a caption that lies.
-  const peersAreLocal = near?.matched === "facet" && where != null;
+  const peersAreLocal = near.matched === "facet" && where != null;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
@@ -330,7 +292,7 @@ export default async function AttorneyPage({
         </div>
       </section>
 
-      {dist && dist.cohort >= 8 ? (
+      {dist.cohort >= 8 ? (
         <FigurePlate
           n="01"
           title="Position in the field"
@@ -382,17 +344,15 @@ export default async function AttorneyPage({
         </FigurePlate>
       ) : null}
 
-      {near ? (
-        <RankLadder
-          rank={row.rank}
-          kindTotal={kindTotal}
-          above={near.above}
-          below={near.below}
-          hrefBase={BASE}
-          unit="cases"
-          className="mt-10"
-        />
-      ) : null}
+      <RankLadder
+        rank={row.rank}
+        kindTotal={kindTotal}
+        above={near.above}
+        below={near.below}
+        hrefBase={BASE}
+        unit="cases"
+        className="mt-10"
+      />
 
       <PeerList
         heading={

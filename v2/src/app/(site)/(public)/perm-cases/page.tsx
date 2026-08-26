@@ -15,13 +15,12 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchQuery } from "convex/nextjs";
-
-import { api } from "../../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
-import { CaseBrowser, type CaseMeta, type OccupationOption } from "@/components/tools/CaseBrowser";
+import { CaseBrowser, type OccupationOption } from "@/components/tools/CaseBrowser";
+import { getMeta } from "@/lib/turso/cases";
+import { listByKind } from "@/lib/turso/entities";
 
 const TITLE = "PERM Case Search";
 const DESCRIPTION =
@@ -61,18 +60,20 @@ function longDate(iso: string): string {
 }
 
 export default async function PermCasesPage() {
-  // Both bounded, both tolerate the deploy-skew window where the frontend is
-  // live and the backend has not been redeployed yet.
+  // Both bounded, and neither is caught. `meta` is legitimately null before
+  // the first ingest writes a coverage document, and the page says so; a read
+  // that FAILS is a different thing and throws, because an outage rendered as
+  // an empty state is what let a disabled backend pass every status check.
   const [meta, occupationRows] = await Promise.all([
-    fetchQuery(api.permCases.getMeta, {}).catch(() => null),
-    fetchQuery(api.permEntities.listByKind, { kind: "occupation", limit: 60 }).catch(() => []),
+    getMeta(),
+    listByKind("occupation", 60),
   ]);
 
   // The dropdown wants the busiest occupations, and `listByKind` already
   // returns them in rank order. `code` is optional on the entity row because
   // employers and law firms have none, so an occupation without one cannot be
   // sliced by and is dropped rather than rendered as a dead option.
-  const occupations: OccupationOption[] = (occupationRows ?? []).flatMap((row) =>
+  const occupations: OccupationOption[] = occupationRows.flatMap((row) =>
     row.code ? [{ code: row.code, name: row.name, total: row.total }] : [],
   );
 
@@ -160,7 +161,7 @@ export default async function PermCasesPage() {
           <Suspense
             fallback={<p className="text-base text-foreground/60">Loading the case browser…</p>}
           >
-            <CaseBrowser meta={meta as CaseMeta} occupations={occupations} />
+            <CaseBrowser meta={meta} occupations={occupations} />
           </Suspense>
         ) : (
           <section className="border-2 border-border bg-card p-8 text-center shadow-hard">

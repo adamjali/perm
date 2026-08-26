@@ -5,6 +5,7 @@ import { getAllPosts } from '@/lib/content'
 import { fetchAllEntitiesServer } from '@/lib/entitySeed'
 import { hasOwnPage } from '@/lib/entityPayload'
 import { captureError } from '@/lib/sentry'
+import { getDisclosureStats } from '@/lib/turso/publicData'
 
 // Next.js sitemap routes are cached by default and only regenerated when
 // Next.js revalidates them (or a request-time API forces dynamic). Daily
@@ -38,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // The entity pages come from the same aggregates the pages read, through
   // the same slug helper, so the sitemap can never list a URL that does not
   // resolve or miss one that does.
-  const disclosure = await fetchQuery(api.permDisclosure.getLatest, {}).catch(() => null)
+  const disclosure = await getDisclosureStats().catch(() => null)
 
   const permAsOf = await fetchQuery(api.dolProcessingTimes.getLatest, {})
     .then((snap) => snap?.permAsOf ?? null)

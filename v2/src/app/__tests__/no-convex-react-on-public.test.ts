@@ -16,9 +16,10 @@ import { describe, expect, it } from "vitest";
  * and takes the whole route down. /perm-cases shipped exactly that and was
  * dead in production until someone opened it.
  *
- * The supported path for public pages is `useConvexHttpQuery`, which calls
- * the same already-public query functions over HTTP with no provider and no
- * socket.
+ * The supported path for a public page is `usePublicQuery`, which fetches a
+ * route under /api with no provider and no socket. (It replaced
+ * `useConvexHttpQuery`, which did the same against Convex before the public
+ * DOL data moved to Turso.)
  */
 
 const ROOT = join(process.cwd(), "src");

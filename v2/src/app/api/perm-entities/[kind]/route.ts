@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { api } from "@/../convex/_generated/api";
-import { fetchQuery } from "convex/nextjs";
-
 import { fetchAllEntitiesServer } from "@/lib/entitySeed";
+import { searchByName } from "@/lib/turso/entities";
 import { isEntityKind, packRow, type EntityPayload } from "@/lib/entityPayload";
 
 /**
@@ -34,33 +32,18 @@ export async function GET(
   // ?q= searches the WHOLE corpus rather than dumping it. The page lazily
   // loads a bounded head of the rank order, so a client-side search can only
   // see what was downloaded; for a small sponsor that means "no match" for a
-  // row that plainly exists. A search-index read is bounded and cheap, so
-  // this is the path that makes everything findable without a 7 MB payload.
+  // row that plainly exists. Scanning one kind is at most 16,305 rows and
+  // measured at 42 ms, so this makes everything findable without a 7 MB
+  // payload. It is a substring match in rank order and nothing ranks by
+  // relevance: `perm_entities` has no full-text index.
   const q = new URL(_request.url).searchParams.get("q");
   if (q !== null) {
-    const found = await fetchQuery(api.permEntities.searchByName, {
-      kind,
-      text: q.slice(0, 120),
-      limit: 100,
-    }).catch(() => []);
+    const found = await searchByName(kind, q.slice(0, 120), 100);
     const payload: EntityPayload = {
       kind,
       count: found.length,
       computedAt: null,
-      rows: found.map((r) =>
-        packRow({
-          slug: r.slug,
-          name: r.name,
-          rank: r.rank,
-          total: r.total,
-          certified: r.certified,
-          denied: r.denied,
-          medianDays: r.medianDays,
-          medianAnnualWage: r.medianAnnualWage ?? null,
-          state: r.state ?? null,
-          code: r.code ?? null,
-        }),
-      ),
+      rows: found.map(packRow),
     };
     return NextResponse.json(payload, {
       headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" },

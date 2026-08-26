@@ -20,9 +20,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
-import { fetchQuery } from "convex/nextjs";
 
-import { api } from "../../../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
@@ -30,7 +28,6 @@ import { FieldPosition } from "@/components/tools/FieldPosition";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import {
   DisclosureNote,
-  EntityDataGap,
   LimitsPanel,
   MIN_DECIDED_FOR_MEDIAN,
   MIN_DECIDED_FOR_RATE,
@@ -41,6 +38,12 @@ import {
   rateReliability,
 } from "@/components/tools/EntityContext";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import {
+  comparables,
+  fieldDistribution,
+  getBySlug,
+  listByKind,
+} from "@/lib/turso/entities";
 
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178
@@ -64,37 +67,26 @@ interface Subject {
 }
 
 /**
- * A missing row and an unreachable backend are different answers.
+ * The subject, or `null` when this slug names nothing.
  *
- * Collapsing them into `null` means one Convex blip 404s a live page, and
- * because these routes carry `revalidate`, Next caches that 404 for an hour.
- * A slug with no row is genuinely gone and gets `notFound()`; a query that
- * threw gets an empty state and a 200, so the page keeps its place.
+ * A read that FAILS is deliberately not a third outcome any more. It used
+ * to become an "unavailable" state that rendered an empty page with a 200,
+ * which is the exact shape that let a disabled backend look like a quiet
+ * page and pass every status check. It throws now, and Next's error
+ * boundary decides what the reader sees.
  */
-type SubjectResult =
-  | { status: "found"; row: Subject }
-  | { status: "missing" }
-  | { status: "unavailable" };
-
-async function loadSubject(slug: string): Promise<SubjectResult> {
-  try {
-    const row = await fetchQuery(api.permEntities.getBySlug, { kind: KIND, slug });
-    if (!row) return { status: "missing" };
-    return {
-      status: "found",
-      row: {
-        slug: row.slug,
-        name: row.name,
-        rank: row.rank,
-        total: row.total,
-        certified: row.certified,
-        denied: row.denied,
-        medianDays: row.medianDays,
-      },
-    };
-  } catch {
-    return { status: "unavailable" };
-  }
+async function loadSubject(slug: string): Promise<Subject | null> {
+  const row = await getBySlug(KIND, slug);
+  if (!row) return null;
+  return {
+    slug: row.slug,
+    name: row.name,
+    rank: row.rank,
+    total: row.total,
+    certified: row.certified,
+    denied: row.denied,
+    medianDays: row.medianDays,
+  };
 }
 
 function median(xs: number[]): number | null {
@@ -115,10 +107,7 @@ export async function generateStaticParams() {
   // Read from the entity TABLE, not from the aggregate document. The aggregate
   // carries its own copy of the top 250 and slugs them client-side, so a slug
   // prerendered from it is not guaranteed to be a slug `getBySlug` can find.
-  const rows = await fetchQuery(api.permEntities.listByKind, {
-    kind: KIND,
-    limit: 100,
-  }).catch(() => []);
+  const rows = await listByKind(KIND, 100);
   return rows.map((r) => ({ slug: r.slug }));
 }
 
@@ -128,9 +117,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const result = await loadSubject(slug);
-  if (result.status !== "found") return { title: "Employer not found" };
-  const row = result.row;
+  const row = await loadSubject(slug);
+  if (!row) return { title: "Employer not found" };
   const reliability = rateReliability(
     row.certified,
     row.denied,
@@ -174,76 +162,48 @@ export default async function EmployerPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const result = await loadSubject(slug);
-  if (result.status === "missing") notFound();
+  const row = await loadSubject(slug);
+  if (!row) notFound();
   // Stored and searchable is not the same as having a page. Below the
   // threshold the page would say "one case, certified" and nothing more, and
   // 65,000 of those is a doorway-page pattern rather than a directory. The
   // index tables render these rows unlinked, and the sitemap omits them, so
   // nothing points here.
-  if (result.status === "found" && !hasOwnPage(result.row)) notFound();
-
-  const row = result.status === "found" ? result.row : null;
+  if (!hasOwnPage(row)) notFound();
 
   // The three context reads run together. `fieldDistribution` takes the same
-  // arguments on every page of this kind, so Convex's query cache answers all
-  // 12,240 of them from one execution until the next quarterly ingest.
+  // arguments on every page of this kind, and memoises on them, so all 16,305
+  // sponsor pages share one cohort read rather than each re-reading 1,338 rows.
   const [stats, dist, near] = await Promise.all([
     getDisclosureStats(),
-    fetchQuery(api.permEntities.fieldDistribution, {
+    fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
+    comparables({
       kind: KIND,
-      minDecided: MIN_DECIDED_FOR_RATE,
-    }).catch(() => null),
-    row
-      ? fetchQuery(api.permEntities.comparables, {
-          kind: KIND,
-          rank: row.rank,
-          span: 60,
-          limit: 6,
-        }).catch(() => null)
-      : Promise.resolve(null),
+      rank: row.rank,
+      span: 60,
+      limit: 6,
+    }),
   ]);
 
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
-  const kindTotal = dist?.kindTotal ?? 0;
+  const kindTotal = dist.kindTotal;
 
   const schema = {
     "@context": "https://schema.org",
     "@type": "Dataset",
-    name: `${row?.name ?? slug} PERM labor certification filings`,
-    description: `PERM filing record for ${row?.name ?? slug} from DOL disclosure data.`,
+    name: `${row.name} PERM labor certification filings`,
+    description: `PERM filing record for ${row.name} from DOL disclosure data.`,
     url: `https://permtracker.app${BASE}/${slug}`,
     creator: { "@type": "Organization", name: "PERM Tracker" },
     isBasedOn: "https://www.dol.gov/agencies/eta/foreign-labor/performance",
   };
-
-  if (!row) {
-    return (
-      <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-        <DataNav active="employers" />
-        <div className="pt-10 sm:pt-12" />
-        <header className="max-w-3xl">
-          <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-            This sponsor&apos;s figures are unavailable
-          </h1>
-        </header>
-        <div className="mt-8">
-          <EntityDataGap
-            what="This employer"
-            backHref={BASE}
-            backLabel="the full sponsor ranking"
-          />
-        </div>
-      </div>
-    );
-  }
 
   const reliability = rateReliability(row.certified, row.denied, baselineDenialPct);
   const inCohort = reliability.tier !== "withheld";
   // The card and the drawing read the same number, so they cannot disagree:
   // this is the median of the comparable cohort's own medians, which is
   // exactly the distribution the figure below plots.
-  const fieldDays = median(dist?.medianDays ?? []);
+  const fieldDays = median(dist.medianDays);
   const daysDelta =
     row.medianDays != null && fieldDays != null ? row.medianDays - fieldDays : null;
   const thinMedian = reliability.decided < MIN_DECIDED_FOR_MEDIAN;
@@ -334,7 +294,7 @@ export default async function EmployerPage({
           whether that number is unusual. The population is every sponsor whose
           case count can carry a rate, which is the only denominator these two
           measures can honestly be read against. */}
-      {dist && dist.cohort >= 8 ? (
+      {dist.cohort >= 8 ? (
         <FigurePlate
           n="01"
           title="Position in the field"
@@ -386,17 +346,15 @@ export default async function EmployerPage({
         </FigurePlate>
       ) : null}
 
-      {near ? (
-        <RankLadder
-          rank={row.rank}
-          kindTotal={kindTotal}
-          above={near.above}
-          below={near.below}
-          hrefBase={BASE}
-          unit="filings"
-          className="mt-10"
-        />
-      ) : null}
+      <RankLadder
+        rank={row.rank}
+        kindTotal={kindTotal}
+        above={near.above}
+        below={near.below}
+        hrefBase={BASE}
+        unit="filings"
+        className="mt-10"
+      />
 
       <PeerList
         heading="Sponsors filing at the same rate"
@@ -415,7 +373,7 @@ export default async function EmployerPage({
             .
           </>
         }
-        items={near?.peers ?? []}
+        items={near.peers}
         hrefBase={BASE}
         unit="filings"
         className="mt-12"

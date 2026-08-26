@@ -16,9 +16,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
-import { fetchQuery } from "convex/nextjs";
 
-import { api } from "../../../../../../convex/_generated/api";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
@@ -27,7 +25,6 @@ import { FigurePlate } from "@/components/tools/FigurePlate";
 import { socGroup } from "@/lib/socGroups";
 import {
   DisclosureNote,
-  EntityDataGap,
   LimitsPanel,
   MIN_DECIDED_FOR_MEDIAN,
   MIN_DECIDED_FOR_RATE,
@@ -38,6 +35,12 @@ import {
   rateReliability,
 } from "@/components/tools/EntityContext";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import {
+  comparables,
+  fieldDistribution,
+  getBySlug,
+  listByKind,
+} from "@/lib/turso/entities";
 
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178
@@ -70,39 +73,30 @@ interface Subject {
 }
 
 /**
- * A missing row and an unreachable backend are different answers.
+ * The subject, or `null` when this slug names nothing.
  *
- * Collapsing them into `null` means one Convex blip 404s a live page, and
- * because these routes carry `revalidate`, Next caches that 404 for an hour.
+ * A read that FAILS is deliberately not a third outcome any more. It used
+ * to become an "unavailable" state that rendered an empty page with a 200,
+ * which is the exact shape that let a disabled backend look like a quiet
+ * page and pass every status check. It throws now, and Next's error
+ * boundary decides what the reader sees.
  */
-type SubjectResult =
-  | { status: "found"; row: Subject }
-  | { status: "missing" }
-  | { status: "unavailable" };
-
-async function loadSubject(slug: string): Promise<SubjectResult> {
-  try {
-    const row = await fetchQuery(api.permEntities.getBySlug, { kind: KIND, slug });
-    if (!row) return { status: "missing" };
-    return {
-      status: "found",
-      row: {
-        slug: row.slug,
-        // The table stores every entity's label as `name`; an occupation's
-        // label is its job title. One mapping, at the boundary.
-        title: row.name,
-        code: row.code ? row.code : null,
-        rank: row.rank,
-        total: row.total,
-        certified: row.certified,
-        denied: row.denied,
-        medianDays: row.medianDays,
-        medianAnnualWage: row.medianAnnualWage ?? null,
-      },
-    };
-  } catch {
-    return { status: "unavailable" };
-  }
+async function loadSubject(slug: string): Promise<Subject | null> {
+  const row = await getBySlug(KIND, slug);
+  if (!row) return null;
+  return {
+    slug: row.slug,
+    // The table stores every entity's label as `name`; an occupation's
+    // label is its job title. One mapping, at the boundary.
+    title: row.name,
+    code: row.code ? row.code : null,
+    rank: row.rank,
+    total: row.total,
+    certified: row.certified,
+    denied: row.denied,
+    medianDays: row.medianDays,
+    medianAnnualWage: row.medianAnnualWage ?? null,
+  };
 }
 
 function median(xs: number[]): number | null {
@@ -129,10 +123,7 @@ export async function generateStaticParams() {
   // Only the head is prerendered; the rest generate on first request and cache
   // for an hour. Read from the entity TABLE, so a prerendered slug is one
   // `getBySlug` can find.
-  const rows = await fetchQuery(api.permEntities.listByKind, {
-    kind: KIND,
-    limit: 100,
-  }).catch(() => []);
+  const rows = await listByKind(KIND, 100);
   return rows.map((r) => ({ slug: r.slug }));
 }
 
@@ -142,9 +133,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const result = await loadSubject(slug);
-  if (result.status !== "found") return { title: "Occupation not found" };
-  const row = result.row;
+  const row = await loadSubject(slug);
+  if (!row) return { title: "Occupation not found" };
   const name = displayTitle(row);
   // SOC titles are themselves the searched phrase and run to 79 characters,
   // so padding a long one just pushes it past what Google shows. `entityTitle`
@@ -177,46 +167,39 @@ export default async function OccupationPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const result = await loadSubject(slug);
-  if (result.status === "missing") notFound();
+  const row = await loadSubject(slug);
+  if (!row) notFound();
   // Stored and searchable is not the same as having a page. Below the
   // threshold the page would say "one case, certified" and nothing more, and
   // 65,000 of those is a doorway-page pattern rather than a directory. The
   // index tables render these rows unlinked, and the sitemap omits them, so
   // nothing points here.
-  if (result.status === "found" && !hasOwnPage(result.row)) notFound();
-
-  const row = result.status === "found" ? result.row : null;
+  if (!hasOwnPage(row)) notFound();
   // The first two digits of a SOC code are its major group, so this costs a
   // lookup rather than new data. `socGroups.ts` holds the one copy of it.
-  const group = row ? socGroup(row.code) : null;
-  const prefix = row?.code ? row.code.trim().slice(0, 2) : null;
+  const group = socGroup(row.code);
+  const prefix = row.code ? row.code.trim().slice(0, 2) : null;
 
   const [stats, dist, near] = await Promise.all([
     getDisclosureStats(),
-    fetchQuery(api.permEntities.fieldDistribution, {
+    fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
+    comparables({
       kind: KIND,
-      minDecided: MIN_DECIDED_FOR_RATE,
-    }).catch(() => null),
-    row
-      ? fetchQuery(api.permEntities.comparables, {
-          kind: KIND,
-          rank: row.rank,
-          // The widest window the query allows. A major group's members are
-          // spread across the whole ranking, so a narrow window would return
-          // the handful that happen to file at a similar rate and call them
-          // the group.
-          span: 500,
-          limit: 6,
-          ...(prefix ? { codePrefix: prefix } : {}),
-        }).catch(() => null)
-      : Promise.resolve(null),
+      rank: row.rank,
+      // The widest window the query allows. A major group's members are
+      // spread across the whole ranking, so a narrow window would return
+      // the handful that happen to file at a similar rate and call them
+      // the group.
+      span: 500,
+      limit: 6,
+      ...(prefix ? { codePrefix: prefix } : {}),
+    }),
   ]);
 
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
-  const kindTotal = dist?.kindTotal ?? 0;
+  const kindTotal = dist.kindTotal;
   const ladder = stats?.wageLadder ?? null;
-  const name = row ? displayTitle(row) : slug;
+  const name = displayTitle(row);
 
   const schema = {
     "@context": "https://schema.org",
@@ -228,38 +211,17 @@ export default async function OccupationPage({
     isBasedOn: "https://www.dol.gov/agencies/eta/foreign-labor/performance",
   };
 
-  if (!row) {
-    return (
-      <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-        <DataNav active="wages" />
-        <div className="pt-10 sm:pt-12" />
-        <header className="max-w-3xl">
-          <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-            This occupation&apos;s figures are unavailable
-          </h1>
-        </header>
-        <div className="mt-8">
-          <EntityDataGap
-            what="This occupation"
-            backHref={BASE}
-            backLabel="the full wage ranking"
-          />
-        </div>
-      </div>
-    );
-  }
-
   const reliability = rateReliability(row.certified, row.denied, baselineDenialPct);
   const inCohort = reliability.tier !== "withheld";
-  const fieldDays = median(dist?.medianDays ?? []);
+  const fieldDays = median(dist.medianDays);
   const daysDelta =
     row.medianDays != null && fieldDays != null ? row.medianDays - fieldDays : null;
   const thinMedian = reliability.decided < MIN_DECIDED_FOR_MEDIAN;
   const wageInCohort = inCohort && row.medianAnnualWage != null;
-  const peers = near?.peers ?? [];
+  const peers = near.peers;
   // The query falls back to volume peers when the major group matched nothing,
   // so the heading reads what came BACK rather than what was asked for.
-  const peersAreGroup = near?.matched === "facet" && group != null;
+  const peersAreGroup = near.matched === "facet" && group != null;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
@@ -345,7 +307,7 @@ export default async function OccupationPage({
         </div>
       </section>
 
-      {dist && dist.cohort >= 8 ? (
+      {dist.cohort >= 8 ? (
         <FigurePlate
           n="01"
           title="Position in the field"
@@ -409,17 +371,15 @@ export default async function OccupationPage({
         </FigurePlate>
       ) : null}
 
-      {near ? (
-        <RankLadder
-          rank={row.rank}
-          kindTotal={kindTotal}
-          above={near.above}
-          below={near.below}
-          hrefBase={BASE}
-          unit="filings"
-          className="mt-10"
-        />
-      ) : null}
+      <RankLadder
+        rank={row.rank}
+        kindTotal={kindTotal}
+        above={near.above}
+        below={near.below}
+        hrefBase={BASE}
+        unit="filings"
+        className="mt-10"
+      />
 
       <PeerList
         heading={

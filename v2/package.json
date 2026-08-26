@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:clean": "rm -rf .next && next dev --turbopack",
-    "build": "next build --webpack",
+    "build": "NODE_OPTIONS='--max-old-space-size=6144' next build --webpack",
     "analyze": "ANALYZE=true next build --webpack",
     "start": "next start",
     "lint": "eslint --cache --cache-location node_modules/.cache/eslint",
