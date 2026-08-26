@@ -333,25 +333,25 @@ export function CalendarPageClient() {
       {/* Google Calendar Connection Banner - shown when not connected */}
       {!isGoogleConnected && (
         <div
-          className="mb-4 flex items-center justify-between gap-4 px-4 py-3 bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-200 dark:border-blue-800"
+          className="mb-4 flex items-center justify-between gap-4 border-2 border-border bg-muted px-4 py-3"
           style={{ boxShadow: "var(--shadow-hard-sm)" }}
         >
           <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700">
-              <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <div className="border-2 border-border bg-card p-1.5">
+              <Info className="h-4 w-4 text-foreground" />
             </div>
             <div>
-              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+              <p className="text-sm font-medium text-foreground">
                 Sync deadlines to Google Calendar
               </p>{" "}
-              <p className="text-sm text-blue-600 dark:text-blue-300">
+              <p className="text-sm text-muted-foreground">
                 Connect your Google Calendar to automatically sync case deadlines
               </p>
             </div>
           </div>
           <Link
             href="/settings?tab=calendar-sync"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white border-2 border-black transition-colors"
+            className="inline-flex items-center gap-1.5 border-2 border-border bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5"
             style={{ boxShadow: "var(--shadow-hard-sm)" }}
           >
             Connect

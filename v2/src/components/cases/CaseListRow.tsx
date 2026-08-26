@@ -189,11 +189,11 @@ export const CaseListRow = memo(function CaseListRow({
                 "inline-flex items-center px-2 py-0.5 text-sm",
                 "border border-border",
                 deadlineUrgency === "overdue" &&
-                  "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
+ "bg-data-bad/10 text-foreground border-data-bad",
                 deadlineUrgency === "urgent" &&
-                  "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800",
+ "bg-data-warn/8 text-foreground border-data-warn",
                 deadlineUrgency === "soon" &&
-                  "bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800",
+ "bg-data-warn/8 text-foreground border-data-warn",
                 deadlineUrgency === "normal" && "bg-muted text-muted-foreground",
                 !deadlineUrgency && "bg-muted text-muted-foreground"
               )}

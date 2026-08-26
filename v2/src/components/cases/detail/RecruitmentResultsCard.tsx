@@ -50,18 +50,18 @@ const STATUS_CONFIG: Record<
 > = {
   waiting: {
     icon: Clock,
-    bg: "bg-yellow-50 dark:bg-yellow-900/30",
-    border: "border-yellow-500",
-    text: "text-yellow-900 dark:text-yellow-100",
-    iconCls: "text-yellow-600 dark:text-yellow-400",
+ bg: "bg-data-warn/8",
+ border: "border-data-warn",
+ text: "text-data-warn-ink",
+ iconCls: "text-data-warn-ink",
     label: "WAITING",
   },
   ready: {
     icon: CheckCircle2,
-    bg: "bg-green-50 dark:bg-green-900/30",
-    border: "border-green-500",
-    text: "text-green-900 dark:text-green-100",
-    iconCls: "text-green-600 dark:text-green-400",
+ bg: "",
+ border: "border-data-good",
+ text: "text-primary",
+ iconCls: "text-primary",
     label: "READY TO FILE",
   },
   incomplete: {
@@ -74,10 +74,10 @@ const STATUS_CONFIG: Record<
   },
   expired: {
     icon: XCircle,
-    bg: "bg-red-50 dark:bg-red-900/30",
-    border: "border-red-500",
-    text: "text-red-900 dark:text-red-100",
-    iconCls: "text-red-600 dark:text-red-400",
+ bg: "bg-data-bad/10",
+ border: "border-data-bad",
+ text: "text-data-bad-ink",
+ iconCls: "text-data-bad-ink",
     label: "EXPIRED",
   },
 };
@@ -218,7 +218,7 @@ export function RecruitmentResultsCard({
             <ClipboardText className="h-3.5 w-3.5" />
             Recruitment Results
             {isCustom && !isEditing && (
-              <span className="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-900 px-1.5 py-0.5 text-sm font-medium text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-600/20 ml-1">
+              <span className="ml-1 inline-flex items-center border-2 border-border bg-muted px-1.5 py-0.5 text-sm font-medium text-muted-foreground">
                 Custom
               </span>
             )}
@@ -273,7 +273,7 @@ export function RecruitmentResultsCard({
                         exit={{ scale: 0.5, opacity: 0 }}
                         transition={{ duration: 0.15 }}
                       >
-                        <Check className="h-3.5 w-3.5 text-green-600" />
+                        <Check className="h-3.5 w-3.5 text-primary" />
                       </motion.span>
                     ) : (
                       <motion.span
@@ -360,7 +360,7 @@ export function RecruitmentResultsCard({
         <div
           className={cn(
             "border-b-3 border-border p-4",
-            isCustom && !isEditing && "border-l-3 border-l-blue-500"
+            isCustom && !isEditing && "border-l-3 border-l-primary"
           )}
         >
           {isEditing ? (
@@ -384,7 +384,7 @@ export function RecruitmentResultsCard({
             <div className="fc-label">Mandatory Steps</div>
             <div className="fc-val flex items-center gap-1.5">
               {mandatoryDone === 4 ? (
-                <Check className="h-3.5 w-3.5 text-green-600" />
+                <Check className="h-3.5 w-3.5 text-primary" />
               ) : (
                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
               )}
@@ -396,7 +396,7 @@ export function RecruitmentResultsCard({
               <div className="fc-label">Professional Methods</div>
               <div className="fc-val flex items-center gap-1.5">
                 {status.professionalMethods.allComplete ? (
-                  <Check className="h-3.5 w-3.5 text-green-600" />
+                  <Check className="h-3.5 w-3.5 text-primary" />
                 ) : (
                   <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                 )}

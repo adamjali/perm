@@ -137,7 +137,7 @@ function cardAccentClass(accent: CardAccent, value: number | undefined): string 
   if (!alert) return "border-border";
   return accent === "destructive"
     ? "border-destructive bg-destructive/5"
-    : "border-amber-600 bg-amber-500/5";
+    : "border-data-warn bg-data-warn";
 }
 
 function SummaryCards({ summary }: { summary?: SummaryShape }) {
@@ -199,7 +199,7 @@ function EventsTab() {
     return (
       <Card className="border-2">
         <CardContent className="py-12 text-center">
-          <Check className="mx-auto h-8 w-8 text-emerald-600" aria-hidden />
+          <Check className="mx-auto h-8 w-8 text-primary" aria-hidden />
           <p className="mono mt-2 text-sm uppercase tracking-widest text-muted-foreground">
             No recent security events
           </p>
@@ -233,7 +233,7 @@ function EventsTab() {
                   className={cn(
                     "border-b border-border hover:bg-muted/30",
                     e.severity === "error" && "bg-destructive/5",
-                    e.severity === "warning" && "bg-amber-500/5",
+ e.severity === "warning" && "bg-data-warn",
                   )}
                 >
                   <td className="whitespace-nowrap px-3 py-2 text-sm text-muted-foreground">
@@ -243,7 +243,7 @@ function EventsTab() {
                     <span
                       className={cn(
                         "inline-block border-2 px-1.5 py-0.5 text-sm font-bold uppercase tracking-widest",
-                        e.kind === "strike" && "border-amber-600 text-amber-700",
+ e.kind === "strike" && "border-data-warn text-data-warn-ink",
                         e.kind === "rate_limit" && "border-border",
                         e.kind === "error" && "border-destructive text-destructive",
                       )}
@@ -361,7 +361,7 @@ function BlockedIpsTab() {
         <CardContent className="p-0">
           {blocks.length === 0 ? (
             <div className="py-12 text-center">
-              <Check className="mx-auto h-8 w-8 text-emerald-600" aria-hidden />
+              <Check className="mx-auto h-8 w-8 text-primary" aria-hidden />
               <p className="mono mt-2 text-sm uppercase tracking-widest text-muted-foreground">
                 No active blocks
               </p>
@@ -391,7 +391,7 @@ function BlockedIpsTab() {
                           "border-2 px-1.5 py-0.5 text-sm font-bold uppercase tracking-widest",
                           b.manualOverride
                             ? "border-primary text-primary"
-                            : "border-amber-600 text-amber-700",
+                            : "border-data-warn text-data-warn-ink",
                         )}
                       >
                         {b.manualOverride ? "manual" : "auto"}
@@ -448,7 +448,7 @@ function FlaggedUsersTab() {
     return (
       <Card className="border-2">
         <CardContent className="py-12 text-center">
-          <Check className="mx-auto h-8 w-8 text-emerald-600" aria-hidden />
+          <Check className="mx-auto h-8 w-8 text-primary" aria-hidden />
           <p className="mono mt-2 text-sm uppercase tracking-widest text-muted-foreground">
             No flagged users
           </p>

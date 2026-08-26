@@ -655,8 +655,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   "shrink-0 border-3 transition-all cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.isFavorite
-                    ? "border-amber-400 bg-amber-50 hover:bg-amber-200 active:bg-amber-300 dark:bg-amber-900/20 dark:border-amber-500 dark:hover:bg-amber-800/40 dark:active:bg-amber-800/50"
-                    : "border-border bg-card hover:bg-amber-200 hover:border-amber-400 dark:hover:bg-amber-800/40 hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none"
+                    ? "border-data-warn bg-data-warn/8 hover:bg-data-warn/16 active:bg-data-warn/8 dark:active:bg-data-warn"
+                    : "border-border bg-card hover:bg-data-warn/16 hover:border-data-warn hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none"
                 )}
                 aria-label={caseData.isFavorite ? "Remove bookmark" : "Bookmark case"}
                 aria-pressed={caseData.isFavorite}
@@ -668,8 +668,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     className={cn(
                       "h-5 w-5",
                       caseData.isFavorite
-                        ? "fill-amber-400 text-amber-500"
-                        : "text-amber-400"
+                        ? "fill-amber-400 text-data-warn-ink"
+                        : "text-data-warn-ink"
                     )}
                   />
                 )}
@@ -684,10 +684,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   "shrink-0 border-3 transition-all cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.calendarSyncEnabled && isGoogleConnected
-                    ? "border-emerald-400 bg-emerald-50 hover:bg-emerald-200 active:bg-emerald-300 dark:bg-emerald-900/20 dark:border-emerald-500 dark:hover:bg-emerald-800/40 dark:active:bg-emerald-800/50"
+                    ? "border-data-good hover: active: dark:active:bg-data-good"
                     : caseData.calendarSyncEnabled && !isGoogleConnected
-                      ? "border-amber-500 bg-amber-50 hover:bg-amber-200 active:bg-amber-300 dark:bg-amber-900/20 dark:hover:bg-amber-800/40 dark:active:bg-amber-800/50"
-                      : "border-border bg-card hover:bg-red-200 hover:border-red-400 dark:hover:bg-red-800/40 hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none"
+                      ? "border-data-warn bg-data-warn/8 hover:bg-data-warn/16 active:bg-data-warn/8 dark:active:bg-data-warn"
+                      : "border-border bg-card hover:bg-data-bad/20 hover:border-data-bad hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none"
                 )}
                 title={
                   caseData.calendarSyncEnabled && isGoogleConnected
@@ -700,13 +700,13 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 aria-pressed={caseData.calendarSyncEnabled}
               >
                 {isTogglingCalendarSync ? (
-                  <CircleNotch className="h-5 w-5 animate-spin text-emerald-600" />
+                  <CircleNotch className="h-5 w-5 animate-spin text-primary" />
                 ) : caseData.calendarSyncEnabled && isGoogleConnected ? (
-                  <CalendarCheck className="h-5 w-5 text-emerald-600" />
+                  <CalendarCheck className="h-5 w-5 text-primary" />
                 ) : caseData.calendarSyncEnabled && !isGoogleConnected ? (
-                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  <AlertTriangle className="h-5 w-5 text-data-warn-ink" />
                 ) : (
-                  <CalendarX className="h-5 w-5 text-red-400" />
+                  <CalendarX className="h-5 w-5 text-data-bad-ink" />
                 )}
               </Button>
 
@@ -816,7 +816,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   data-s={stage}
                 >
                   {isDone ? (
-                    <span className="w-[14px] h-[14px] rounded-full bg-emerald-600 dark:bg-emerald-500 flex items-center justify-center shrink-0">
+                    <span className="w-[14px] h-[14px] rounded-full bg-data-good flex items-center justify-center shrink-0">
                       <Check className="h-[9px] w-[9px] text-white" />
                     </span>
                   ) : (

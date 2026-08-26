@@ -165,8 +165,9 @@ describe("ImportModal", () => {
       await waitFor(() => {
         // Find the error row - look for actual Tailwind classes used
         const errorRows = screen.getAllByRole("row").filter((row) => {
-          // Component uses bg-red-50 and border-red-500 for error rows
-          return row.className.includes("bg-red-50") || row.className.includes("border-red-500");
+          // Error rows use the --data-bad token, not Tailwind's red palette,
+          // so one class is correct in both themes.
+          return row.className.includes("bg-data-bad") || row.className.includes("border-data-bad");
         });
 
         expect(errorRows.length).toBeGreaterThan(0);

@@ -250,8 +250,8 @@ export const CaseCard = memo(function CaseCard({
               <div
                 className={cn(
                   "flex items-center gap-2 px-2 py-1",
-                  urgency === "urgent" && "bg-red-100 dark:bg-red-900 border-2 border-red-600",
-                  urgency === "soon" && "bg-orange-50 dark:bg-orange-900"
+ urgency === "urgent" && "bg-data-bad/10 border-2 border-data-bad",
+ urgency === "soon" && "bg-data-warn/8"
                 )}
               >
                 <div className={cn("w-2.5 h-2.5 shrink-0", urgencyDotColor)} />

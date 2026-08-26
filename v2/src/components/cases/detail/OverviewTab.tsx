@@ -512,8 +512,8 @@ export function OverviewTab({
                           className={cn(
                             "flex items-center gap-1 px-3 py-1.5 border-3 text-sm font-mono font-bold uppercase tracking-wider hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm",
                             isExistingTemplateName
-                              ? "border-blue-500 hover:bg-blue-500 hover:text-white"
-                              : "border-border hover:bg-[var(--primary)] hover:text-black hover:border-black dark:hover:border-white/50"
+                              ? "border-data-warn hover:bg-data-warn hover:text-primary-foreground"
+                              : "border-border hover:border-border hover:bg-primary hover:text-primary-foreground"
                           )}
                         >
                           {isSavingTemplate ? (

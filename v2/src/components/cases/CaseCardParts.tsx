@@ -73,7 +73,7 @@ export function FavoriteBookmark({
         "hover:-translate-y-2 hover:scale-105 active:scale-95 active:-translate-y-1",
         "disabled:opacity-70 disabled:cursor-wait",
         isFavorite
-          ? "border-yellow-600 bg-yellow-400 -translate-y-2"
+          ? "border-data-warn bg-data-warn/8 -translate-y-2"
           : "border-black/40 bg-black/10 hover:bg-black/20 translate-y-0"
       )}
       style={{
@@ -82,12 +82,12 @@ export function FavoriteBookmark({
       onClick={onToggle}
     >
       {isToggling ? (
-        <CircleNotch className="w-4 h-4 mt-0.5 animate-spin text-yellow-700" />
+        <CircleNotch className="w-4 h-4 mt-0.5 animate-spin text-data-warn-ink" />
       ) : (
         <Bookmark
           className={cn(
             "w-4 h-4 mt-0.5",
-            isFavorite ? "text-yellow-800 fill-yellow-800" : "text-black/60"
+ isFavorite ? "text-data-warn-ink fill-yellow-800" : "text-black/60"
           )}
         />
       )}
@@ -117,7 +117,7 @@ export function PinIndicator({
         "absolute -top-1 left-2 z-30",
         "flex items-center justify-center",
         "w-6 h-6 rounded-full",
-        "bg-green-700 text-white",
+ "bg-data-good text-white",
         "shadow-hard-sm border border-black",
         "transform rotate-45",
         "transition-all duration-150",
@@ -168,7 +168,7 @@ export function CaseBadges({
       {duplicateOf && (
         <Badge
           variant="outline"
-          className="text-sm px-2 py-0.5 text-white border-black bg-orange-500 font-bold"
+ className="text-sm px-2 py-0.5 text-white border-black bg-data-warn font-bold"
           title="This case was marked as a duplicate of another case"
         >
           DUP
@@ -230,8 +230,8 @@ export function CalendarSyncIndicator({
         </>
       ) : (
         <>
-          <AlertTriangle className="w-4 h-4 text-amber-600" />
-          <span className="font-mono text-sm font-bold uppercase tracking-wider text-amber-600">
+          <AlertTriangle className="w-4 h-4 text-data-warn-ink" />
+          <span className="font-mono text-sm font-bold uppercase tracking-wider text-data-warn-ink">
             Not connected
           </span>
         </>

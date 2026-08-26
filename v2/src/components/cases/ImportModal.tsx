@@ -381,11 +381,11 @@ export function ImportModal({
     const formatLabels: Record<string, { label: string; color: string }> = {
       v2: {
         label: "v2",
-        color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+ color: " text-foreground",
       },
       v1: {
         label: "v1 (Legacy)",
-        color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+        color: "bg-muted text-muted-foreground",
       },
       "perm-tracker-new": {
         label: "Firebase",
@@ -506,7 +506,7 @@ export function ImportModal({
                     <span className="text-sm font-medium text-muted-foreground">Detected Format:</span>
                     {getFormatBadge()}
                     {parseResult.isLegacyFormat && (
-                      <span className="text-sm text-amber-600 dark:text-amber-400">
+                      <span className="text-sm text-data-warn-ink">
                         (auto-converted to v2)
                       </span>
                     )}
@@ -514,13 +514,13 @@ export function ImportModal({
 
                   {/* Legacy Format Warning */}
                   {parseResult.isLegacyFormat && (
-                    <div className="flex items-start gap-3 p-4 border-2 border-amber-500 bg-amber-50 dark:bg-amber-950/20">
-                      <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-3 p-4 border-2 border-data-warn bg-data-warn/8">
+                      <Info className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-medium text-amber-900 dark:text-amber-100">
+                        <p className="font-medium text-data-warn-ink">
                           Legacy Format Detected
                         </p>{" "}
-                        <p className="text-sm text-amber-800 dark:text-amber-200 mt-1">
+                        <p className="text-sm text-data-warn-ink mt-1">
                           This file appears to be from an older version. Field names will be
                           automatically converted to the new format.
                         </p>
@@ -530,17 +530,17 @@ export function ImportModal({
 
                   {/* Foreign Worker Warning Banner */}
                   {parseResult.casesNeedingBeneficiary > 0 && (
-                    <div className="flex items-start gap-3 p-4 border-2 border-orange-500 bg-orange-50 dark:bg-orange-950/20">
-                      <UserX className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-3 p-4 border-2 border-data-warn bg-data-warn/8">
+                      <UserX className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-medium text-orange-900 dark:text-orange-100">
+                        <p className="font-medium text-data-warn-ink">
                           {parseResult.casesNeedingBeneficiary} Case
                           {parseResult.casesNeedingBeneficiary !== 1 ? "s" : ""} Need Foreign Worker Info
                         </p>{" "}
-                        <p className="text-sm text-orange-800 dark:text-orange-200 mt-1">
+                        <p className="text-sm text-data-warn-ink mt-1">
                           These cases were imported from a legacy format without foreign worker IDs. They
                           have been marked with{" "}
-                          <code className="bg-orange-200 dark:bg-orange-800/50 px-1 rounded font-mono text-sm">
+                          <code className="bg-data-warn/8 px-1 rounded font-mono text-sm">
                             {BENEFICIARY_PLACEHOLDER}
                           </code>{" "}
                           and will need manual updates after import.
@@ -713,7 +713,7 @@ export function ImportModal({
                                   key={index}
                                   className={cn(
                                     "group border-b border-border transition-all duration-150",
-                                    isError && "bg-red-50 dark:bg-red-950/20 border-red-500",
+ isError && "bg-data-bad/10 border-data-bad",
                                     isEditing && "bg-primary/5 dark:bg-primary/10 ring-1 ring-primary/50",
                                     !isError &&
                                       !isEditing &&
@@ -741,9 +741,9 @@ export function ImportModal({
                                     title={caseData?.beneficiaryIdentifier}
                                   >
                                     {caseData?.beneficiaryIdentifier === BENEFICIARY_PLACEHOLDER ? (
-                                      <span className="inline-flex items-center gap-1 text-orange-600 dark:text-orange-400 font-medium">
+                                      <span className="inline-flex items-center gap-1 text-data-warn-ink font-medium">
                                         <UserX className="h-3 w-3" />
-                                        <span className="font-mono text-sm bg-orange-100 dark:bg-orange-900/30 px-1 rounded">
+                                        <span className="font-mono text-sm bg-data-warn/8 px-1 rounded">
                                           {BENEFICIARY_PLACEHOLDER}
                                         </span>
                                       </span>
@@ -869,7 +869,7 @@ export function ImportModal({
                             className={cn(
                               "h-9",
                               editingCase.beneficiaryIdentifier === BENEFICIARY_PLACEHOLDER &&
-                                "border-orange-500 bg-orange-50 dark:bg-orange-950/20"
+ "border-data-warn bg-data-warn/8"
                             )}
                           />
                         </div>
@@ -952,19 +952,19 @@ export function ImportModal({
 
                   {/* Error Details */}
                   {parseResult.errors.length > 0 && (
-                    <div className="border-2 border-red-500 bg-red-50 dark:bg-red-950/20 p-4">
+                    <div className="border-2 border-data-bad bg-data-bad/10 p-4">
                       <div className="flex items-start gap-3">
-                        <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="h-5 w-5 text-data-bad-ink flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
-                          <p className="font-medium text-red-900 dark:text-red-100 mb-2">Validation Errors</p>
-                          <ul className="space-y-1 text-sm text-red-800 dark:text-red-200">
+                          <p className="font-medium text-data-bad-ink mb-2">Validation Errors</p>
+                          <ul className="space-y-1 text-sm text-data-bad-ink">
                             {parseResult.errors.slice(0, 5).map((error, index) => (
                               <li key={index}>
                                 Row {error.row + 1}: {error.field} - {error.message}
                               </li>
                             ))}
                             {parseResult.errors.length > 5 && (
-                              <li className="text-red-700 dark:text-red-300">
+                              <li className="text-data-bad-ink">
                                 + {parseResult.errors.length - 5} more errors
                               </li>
                             )}
@@ -982,13 +982,13 @@ export function ImportModal({
           {showDuplicateStep && (
             <>
               {/* Duplicate Warning */}
-              <div className="flex items-start gap-3 p-4 border-2 border-amber-500 bg-amber-50 dark:bg-amber-950/20">
-                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 p-4 border-2 border-data-warn bg-data-warn/8">
+                <AlertTriangle className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-amber-900 dark:text-amber-100">
+                  <p className="font-medium text-data-warn-ink">
                     {duplicates.length} Duplicate{duplicates.length !== 1 ? "s" : ""} Found
                   </p>{" "}
-                  <p className="text-sm text-amber-800 dark:text-amber-200 mt-1">
+                  <p className="text-sm text-data-warn-ink mt-1">
                     These cases already exist in your database. Choose to skip them or replace the existing ones.
                   </p>
                 </div>
@@ -1101,13 +1101,13 @@ export function ImportModal({
           {showSuccessStep && importSummary && (
             <>
               {/* Import Summary */}
-              <div className="flex items-start gap-3 p-4 border-2 border-green-500 bg-green-50 dark:bg-green-950/20">
-                <Check className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 p-4 border-2 border-data-good">
+                <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-green-900 dark:text-green-100">
+                  <p className="font-medium text-primary">
                     Import Successful
                   </p>{" "}
-                  <p className="text-sm text-green-800 dark:text-green-200 mt-1">
+                  <p className="text-sm text-primary mt-1">
                     {importSummary.importedCount > 0 && (
                       <span>{importSummary.importedCount} case{importSummary.importedCount !== 1 ? "s" : ""} imported</span>
                     )}
@@ -1125,14 +1125,14 @@ export function ImportModal({
 
               {/* Validation Warnings */}
               {importSummary.validationWarnings.length > 0 && (
-                <div className="border-2 border-amber-500 bg-amber-50 dark:bg-amber-950/20">
-                  <div className="flex items-start gap-3 p-4 border-b border-amber-400 dark:border-amber-600">
-                    <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="border-2 border-data-warn bg-data-warn/8">
+                  <div className="flex items-start gap-3 p-4 border-b border-data-warn">
+                    <AlertTriangle className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-medium text-amber-900 dark:text-amber-100">
+                      <p className="font-medium text-data-warn-ink">
                         {importSummary.validationWarnings.length} Case{importSummary.validationWarnings.length !== 1 ? "s" : ""} with Validation Issues
                       </p>{" "}
-                      <p className="text-sm text-amber-800 dark:text-amber-200 mt-1">
+                      <p className="text-sm text-data-warn-ink mt-1">
                         These cases were imported but have data that doesn&apos;t meet PERM regulatory requirements.
                         Review and update them to ensure compliance.
                       </p>
@@ -1144,15 +1144,15 @@ export function ImportModal({
                       <div
                         key={idx}
                         className={cn(
-                          "p-3 border-b border-amber-200 dark:border-amber-800 last:border-b-0",
-                          "hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors duration-150"
+ "p-3 border-b border-data-warn last:border-b-0",
+ "hover:bg-data-warn/16 transition-colors duration-150"
                         )}
                       >
                         <div className="flex items-start gap-2 mb-2">
-                          <span className="font-medium text-sm text-amber-900 dark:text-amber-100">
+                          <span className="font-medium text-sm text-data-warn-ink">
                             {warning.employerName}
                           </span>{" "}
-                          <span className="text-sm text-amber-700 dark:text-amber-300">
+                          <span className="text-sm text-data-warn-ink">
                             / {warning.beneficiaryIdentifier}
                           </span>
                         </div>
@@ -1160,9 +1160,9 @@ export function ImportModal({
                           {warning.errors.map((error, errIdx) => (
                             <li
                               key={errIdx}
-                              className="flex items-start gap-2 text-sm text-amber-800 dark:text-amber-200"
+ className="flex items-start gap-2 text-sm text-data-warn-ink"
                             >
-                              <span className="font-mono text-amber-600 dark:text-amber-400 flex-shrink-0">
+                              <span className="font-mono text-data-warn-ink flex-shrink-0">
                                 [{error.ruleId}]
                               </span>{" "}
                               <span>{error.message}</span>
