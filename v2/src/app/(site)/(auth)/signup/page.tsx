@@ -7,7 +7,7 @@ export const dynamic = "force-static";
 export const metadata: Metadata = {
   title: "Create Account",
   description:
-    "Create a free PERM Tracker account to start managing your immigration cases. No credit card required.",
+    "Create a free PERM Tracker account to manage your immigration cases. No account limits and no credit card.",
   alternates: {
     canonical: "/signup",
   },

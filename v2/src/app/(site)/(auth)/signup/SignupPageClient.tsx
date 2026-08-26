@@ -219,7 +219,7 @@ export function SignupPageClient() {
       authBreadcrumb("signup_signin_completed");
 
       if (result.signingIn) {
-        toast.success("Welcome to PERM Tracker!");
+        toast.success("Welcome to PERM Tracker.");
         localStorage.setItem("perm_last_login_at", String(Date.now()));
         recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
         trackSignupSucceeded("email_password");
@@ -282,7 +282,7 @@ export function SignupPageClient() {
 
       await signIn("password", formData);
 
-      toast.success("Account verified! Welcome to PERM Tracker.");
+      toast.success("Account verified. Welcome to PERM Tracker.");
       localStorage.setItem("perm_last_login_at", String(Date.now()));
       recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
       trackSignupSucceeded("email_password");

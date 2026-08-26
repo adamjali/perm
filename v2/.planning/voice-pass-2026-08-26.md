@@ -404,3 +404,69 @@
   NEW: title: "PERM Tracker - Live PERM Data and Case Deadlines",
 - OLD: "Auto-calculate every PERM filing window, PWD expiration, and audit deadline. Email + push alerts before they hit.",
   NEW: "Every PERM filing window, PWD expiration and audit deadline, computed from your case dates, with email and push alerts.",
+
+## Auth, legal, FAQ, contact, security
+
+### `src/app/(site)/(auth)/signup/SignupPageClient.tsx`
+
+- OLD: toast.success("Welcome to PERM Tracker!");
+  NEW: toast.success("Welcome to PERM Tracker.");
+- OLD: toast.success("Account verified! Welcome to PERM Tracker.");
+  NEW: toast.success("Account verified. Welcome to PERM Tracker.");
+
+### `src/app/(site)/(auth)/reset-password/ResetPasswordPageClient.tsx`
+
+- OLD: toast.success("Password reset successful! Please sign in.");
+  NEW: toast.success("Password reset. Please sign in.");
+
+### `src/app/(site)/(auth)/login/LoginPageClient.tsx`
+
+- OLD: toast.success("Email verified! Signing you in.");
+  NEW: toast.success("Email verified. Signing you in.");
+
+### `src/app/(site)/(auth)/signup/page.tsx`
+
+- OLD: "Create a free PERM Tracker account to start managing your immigration cases. No credit card required.",
+  NEW: "Create a free PERM Tracker account to manage your immigration cases. No account limits and no credit card.",
+
+### `src/app/(site)/(public)/faq/page.tsx`
+
+- OLD: plus a calendar view so your whole team stays aligned.
+  NEW: plus a calendar view of everything upcoming.
+- OLD: updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.
+  NEW: updates all downstream dates when one date changes.
+- OLD: "Yes, completely free. No credit card, no trial period, no case limits. We may introduce optional premium features in the future, but the data, the calculators and the core deadline tracking stay free.",
+  NEW: "Yes, currently free, with no credit card and no case limit. We may introduce optional premium features in the future, but the data, the calculators and the core deadline tracking stay free.",
+- OLD: You can also export your data anytime. Your data is always yours.",
+  NEW: You can also export your data at any time.",
+- OLD: "We monitor DOL regulatory changes and update our deadline calculation engine accordingly.
+  NEW: "We monitor DOL regulatory changes and update the deadline calculations accordingly.
+- OLD: Clean documentation and well-justified job requirements significantly reduce audit risk.
+  NEW: Clean documentation and well-justified job requirements reduce audit risk.
+- OLD: The methodology page shows every figure's recipe.
+  NEW: The methodology page lists every source and how each figure is built.
+- OLD: These are wages employers committed to in federal filings, not survey estimates, which makes them the hardest salary data available for sponsored roles. Hourly and other units are annualized before medians are taken.
+  NEW: These are wages employers committed to in federal filings. Hourly and other units are annualized before medians are taken.
+- OLD: The rate isn’t evenly spread. Our denial rates page breaks it down by offered wage, by fiscal year, and by the three risk questions the ETA-9089 itself asks, and is explicit that a group rate isn’t a probability for any single case.
+  NEW: The rate isn’t evenly spread. The denial rates page breaks it down by offered wage, by fiscal year, and by the three risk questions the ETA-9089 itself asks. A group rate isn’t a probability for any single case.
+
+### `src/app/(site)/(public)/contact/page.tsx`
+
+- OLD: Have questions about PERM Tracker? We&apos;re here to help.
+  NEW: Questions, feature requests and bug reports all land in the same inbox.
+- OLD: Have an idea to improve PERM Tracker? We&apos;d love to hear it.
+  NEW: Ideas for PERM Tracker go on the GitHub issue tracker.
+
+### `src/app/(site)/(public)/security/page.tsx`
+
+- OLD: PERM Tracker takes security seriously. Infrastructure is operated on SOC&nbsp;2-compliant providers (Convex, Vercel).
+  NEW: Infrastructure is operated on SOC&nbsp;2-compliant providers (Convex, Vercel).
+- OLD: Below are public-facing summaries of security-relevant incidents. Entries are factual and preserved for transparency.
+  NEW: Public-facing summaries of security-relevant incidents. Entries are kept permanently.
+
+## FAQ (accuracy)
+
+### `src/app/(site)/(public)/faq/page.tsx`
+
+- OLD: PERM Tracker auto-calculates 15+ deadlines per case based on DOL regulations (20 CFR 656)
+  NEW: PERM Tracker auto-calculates 11 deadline types per case based on DOL regulations (20 CFR 656)

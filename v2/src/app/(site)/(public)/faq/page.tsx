@@ -36,17 +36,17 @@ const faqData = [
       {
         question: "What exactly does PERM Tracker do?",
         answer:
-          "PERM Tracker automates deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus a calendar view so your whole team stays aligned.",
+          "PERM Tracker automates deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus a calendar view of everything upcoming.",
       },
       {
         question: "How is this different from using a spreadsheet?",
         answer:
-          "Spreadsheets require manual deadline math, don’t send reminders, and break when regulations change. PERM Tracker auto-calculates 15+ deadlines per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.",
+          "Spreadsheets require manual deadline math, don’t send reminders, and break when regulations change. PERM Tracker auto-calculates 11 deadline types per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes.",
       },
       {
         question: "Is PERM Tracker really free?",
         answer:
-          "Yes, completely free. No credit card, no trial period, no case limits. We may introduce optional premium features in the future, but the data, the calculators and the core deadline tracking stay free.",
+          "Yes, currently free, with no credit card and no case limit. We may introduce optional premium features in the future, but the data, the calculators and the core deadline tracking stay free.",
       },
       {
         question: "Is my client data secure?",
@@ -56,12 +56,12 @@ const faqData = [
       {
         question: "Can I import my existing cases?",
         answer:
-          "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime. Your data is always yours.",
+          "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data at any time.",
       },
       {
         question: "What happens if DOL changes regulations?",
         answer:
-          "We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don’t need to manually update formulas or check for rule changes.",
+          "We monitor DOL regulatory changes and update the deadline calculations accordingly. When regulations change, your existing cases are recalculated automatically. You don’t need to manually update formulas or check for rule changes.",
       },
     ],
   },
@@ -96,7 +96,7 @@ const faqData = [
       {
         question: "What triggers a PERM audit?",
         answer:
-          "Common PERM audit triggers include: layoffs in the same occupation within 6 months, job requirements that exceed the norm for the occupation (such as requiring a specific degree or foreign language without business necessity), discrepancies between the job offer and the beneficiary's qualifications, unusual wage levels, and random selection. Clean documentation and well-justified job requirements significantly reduce audit risk.",
+          "Common PERM audit triggers include: layoffs in the same occupation within 6 months, job requirements that exceed the norm for the occupation (such as requiring a specific degree or foreign language without business necessity), discrepancies between the job offer and the beneficiary's qualifications, unusual wage levels, and random selection. Clean documentation and well-justified job requirements reduce audit risk.",
       },
       {
         question: "What’s the ETA 9089 filing window?",
@@ -116,7 +116,7 @@ const faqData = [
       {
         question: "Where do the processing time numbers come from?",
         answer:
-          "Straight from the Department of Labor. The queue position and average days come from DOL's own published processing times, refreshed automatically, and the medians come from DOL's quarterly disclosure files: 250,000+ real decided cases, unioned and de-duplicated by case number. The methodology page shows every figure's recipe.",
+          "Straight from the Department of Labor. The queue position and average days come from DOL's own published processing times, refreshed automatically, and the medians come from DOL's quarterly disclosure files: 250,000+ real decided cases, unioned and de-duplicated by case number. The methodology page lists every source and how each figure is built.",
       },
       {
         question: "Which states file the most PERM cases?",
@@ -126,12 +126,12 @@ const faqData = [
       {
         question: "What do PERM cases actually pay?",
         answer:
-          "The wages page shows median offered wages by occupation from DOL's disclosure files. These are wages employers committed to in federal filings, not survey estimates, which makes them the hardest salary data available for sponsored roles. Hourly and other units are annualized before medians are taken.",
+          "The wages page shows median offered wages by occupation from DOL's disclosure files. These are wages employers committed to in federal filings. Hourly and other units are annualized before medians are taken.",
       },
       {
         question: "What’s the PERM denial rate?",
         answer:
-          "Denials are rare: across DOL's current disclosure window under 3% of decided PERM cases were denied, with withdrawn cases excluded from both sides of that ratio. The rate isn’t evenly spread. Our denial rates page breaks it down by offered wage, by fiscal year, and by the three risk questions the ETA-9089 itself asks, and is explicit that a group rate isn’t a probability for any single case.",
+          "Denials are rare: across DOL's current disclosure window under 3% of decided PERM cases were denied, with withdrawn cases excluded from both sides of that ratio. The rate isn’t evenly spread. The denial rates page breaks it down by offered wage, by fiscal year, and by the three risk questions the ETA-9089 itself asks. A group rate isn’t a probability for any single case.",
       },
       {
         question: "Which law firms file the most PERM cases?",

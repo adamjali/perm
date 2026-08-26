@@ -48,7 +48,7 @@ export default function ContactPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-4">Contact Us</h1>{" "}
         <p className="text-foreground/60 mb-8">
-          Have questions about PERM Tracker? We&apos;re here to help.
+          Questions, feature requests and bug reports all land in the same inbox.
         </p>{" "}
 
         {/* The form is the primary path; the addresses below stay for anyone
@@ -86,7 +86,7 @@ export default function ContactPage() {
                 Feature Requests & Feedback
               </h2>{" "}
               <p className="text-foreground/60 text-sm mb-2">
-                Have an idea to improve PERM Tracker? We&apos;d love to hear it.
+                Ideas for PERM Tracker go on the GitHub issue tracker.
               </p>{" "}
               <a
                 href={GITHUB_FEATURE_REQUEST_URL}

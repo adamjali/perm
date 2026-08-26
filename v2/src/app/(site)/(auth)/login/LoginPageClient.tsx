@@ -232,7 +232,7 @@ export function LoginPageClient() {
 
       await signIn("password", formData);
 
-      toast.success("Email verified! Signing you in.");
+      toast.success("Email verified. Signing you in.");
       localStorage.setItem("perm_last_login_at", String(Date.now()));
       recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
       trackLoginSucceeded("email_password");

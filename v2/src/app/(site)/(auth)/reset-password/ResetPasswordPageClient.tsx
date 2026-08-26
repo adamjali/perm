@@ -202,7 +202,7 @@ export function ResetPasswordPageClient() {
 
       await signIn("password", formData);
       trackPasswordResetCompleted();
-      toast.success("Password reset successful! Please sign in.");
+      toast.success("Password reset. Please sign in.");
       router.push("/login");
     } catch (error) {
       if (handleStaleDeployment(error)) return;

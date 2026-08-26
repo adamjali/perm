@@ -59,8 +59,8 @@ export default function SecurityPage() {
               Overview
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              PERM Tracker takes security seriously. Infrastructure is operated on
-              SOC&nbsp;2-compliant providers (Convex, Vercel). User data is encrypted at
+              Infrastructure is operated on SOC&nbsp;2-compliant providers
+              (Convex, Vercel). User data is encrypted at
               rest and in transit. Authentication uses email-verified one-time codes
               or Google OAuth; all passwords are salted and hashed using industry-standard
               algorithms. Outbound transactional mail is DKIM-, SPF-, and DMARC-authenticated.
@@ -95,8 +95,8 @@ export default function SecurityPage() {
               Incident Record
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed mb-6">
-              Below are public-facing summaries of security-relevant incidents.
-              Entries are factual and preserved for transparency.
+              Public-facing summaries of security-relevant incidents. Entries are
+              kept permanently.
             </p>
 
             {/* Incident: April 19-20, 2026 signup abuse */}
