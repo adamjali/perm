@@ -20,6 +20,7 @@ import { useId, useMemo, useState } from "react";
 import { CalendarDot as CalendarClock, Info, Warning } from "@phosphor-icons/react";
 
 import { estimateQueueDecision, type CohortStat, type DolFrontier } from "@/lib/perm";
+import type { Pace } from "@/lib/dolPace";
 import { formatMonth } from "@/lib/dolFormat";
 import {
   FrontierProgressChart,
@@ -57,6 +58,15 @@ export interface PermTimelineEstimatorProps {
    * value than the server rendered.
    */
   today: string;
+  /**
+   * DOL's recent working-day pace, computed on the server.
+   *
+   * The pace comes from a 947-day series; computing it here would mean
+   * shipping 947 rows through the RSC payload to derive four numbers. Null
+   * when the window holds no working days, which is a real state and renders
+   * as an absent card rather than a zero.
+   */
+  pace?: Pace | null;
   /** Renders the compact variant used inside other pages. */
   compact?: boolean;
   className?: string;
@@ -101,6 +111,7 @@ export function PermTimelineEstimator({
   disclosure,
   frontierHistory = [],
   today,
+  pace = null,
   compact = false,
   className,
 }: PermTimelineEstimatorProps) {
@@ -130,6 +141,59 @@ export function PermTimelineEstimator({
   );
 
   const position = POSITION_COPY[estimate.position];
+
+  /**
+   * The span every model agrees the answer lies inside.
+   *
+   * NOT a blend, and the distinction is the whole reason this component
+   * exists in the shape it does. The four public estimators disagree by
+   * roughly nine months on an identical filing date, and averaging them into
+   * one confident date would hide that. Taking the earliest and latest bound
+   * any model offers does the opposite: it puts the disagreement on the page
+   * as the headline, at the size a reader actually looks at, with the
+   * individual models still listed below unchanged.
+   *
+   * Every bound is a date a model already published. Nothing here is invented.
+   */
+  const envelope = useMemo(() => {
+    const lo: string[] = [];
+    const hi: string[] = [];
+    for (const m of estimate.models) {
+      lo.push(m.earliestDate ?? m.estimatedDate);
+      hi.push(m.latestDate ?? m.estimatedDate);
+    }
+    if (lo.length === 0) return null;
+    const earliest = lo.reduce((a2, b) => (a2 < b ? a2 : b));
+    const latest = hi.reduce((a2, b) => (a2 > b ? a2 : b));
+    const spanMonths =
+      (Number(latest.slice(0, 4)) - Number(earliest.slice(0, 4))) * 12 +
+      (Number(latest.slice(5, 7)) - Number(earliest.slice(5, 7)));
+    return { earliest, latest, spanMonths, modelCount: estimate.models.length };
+  }, [estimate.models]);
+
+  /**
+   * How far through the wait this case is, as a fraction.
+   *
+   * Domain runs from the filing month to the LATEST bound, so the bar can
+   * never overflow its own track. Three traceable inputs: the month the user
+   * picked, today as resolved on the server, and a bound a model published.
+   */
+  const progress = useMemo(() => {
+    if (!envelope) return null;
+    const monthsBetween = (from: string, to: string) =>
+      (Number(to.slice(0, 4)) - Number(from.slice(0, 4))) * 12 +
+      (Number(to.slice(5, 7)) - Number(from.slice(5, 7)));
+    const total = monthsBetween(month, envelope.latest);
+    if (total <= 0) return null;
+    const elapsed = Math.max(0, monthsBetween(month, today));
+    const toEarliest = Math.max(0, monthsBetween(month, envelope.earliest));
+    return {
+      elapsedPct: Math.min(100, (elapsed / total) * 100),
+      windowStartPct: Math.min(100, (toEarliest / total) * 100),
+      elapsedMonths: elapsed,
+      totalMonths: total,
+    };
+  }, [envelope, month, today]);
 
   return (
     <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
@@ -166,6 +230,103 @@ export function PermTimelineEstimator({
           </select>
         </div>
       </div>
+
+      {/* THE ANSWER, at the size the question was asked. Everything in this
+          band is a bound some model below already published, or arithmetic on
+          the month the reader picked. */}
+      {envelope ? (
+        <div className="border-b-2 border-border p-6 sm:p-8">
+          <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            Likely decision window
+          </p>{" "}
+          <p className="mt-2 font-heading text-3xl font-black leading-[1.05] sm:text-5xl">
+            {formatMonth(envelope.earliest.slice(0, 7))}
+            <span className="text-muted-foreground"> to </span>
+            {formatMonth(envelope.latest.slice(0, 7))}
+          </p>{" "}
+          <p className="mt-3 text-base leading-relaxed text-foreground/70">
+            {envelope.modelCount === 1
+              ? "One model has enough published data to answer for this month."
+              : `${envelope.modelCount} models, each on its own basis, spread across ${envelope.spanMonths} months. They are listed below rather than averaged, because the spread is the honest part.`}
+          </p>
+
+          {progress ? (
+            <div className="mt-6">
+              <div
+                className="relative h-4 w-full border-2 border-border bg-muted"
+                role="img"
+                aria-label={`${progress.elapsedMonths} of about ${progress.totalMonths} months elapsed since filing`}
+              >
+                {/* The window every model lands inside. */}
+                <div
+                  className="absolute inset-y-0 bg-primary/25"
+                  style={{
+                    left: `${progress.windowStartPct}%`,
+                    right: 0,
+                  }}
+                />
+                {/* Time actually elapsed. */}
+                <div
+                  className="absolute inset-y-0 left-0 bg-primary"
+                  style={{ width: `${progress.elapsedPct}%` }}
+                />
+              </div>{" "}
+              <p className="mt-2 font-mono text-sm text-muted-foreground">
+                {progress.elapsedMonths} of about {progress.totalMonths} months
+                elapsed
+              </p>
+            </div>
+          ) : null}
+
+          {/* Stat cards. Each one is a single published figure, labelled with
+              where it came from - not a derived score. */}
+          <div className="mt-6 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-3">
+            {pace ? (
+              <div className="border-2 border-border bg-background p-4">
+                <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  DOL pace
+                </p>{" "}
+                <p className="mt-1 font-heading text-2xl font-black leading-none">
+                  {pace.perBusinessDay.toLocaleString("en-US")}
+                </p>{" "}
+                <p className="mt-1 text-sm text-foreground/70">
+                  decisions per working day, last {pace.businessDays}
+                </p>
+              </div>
+            ) : null}
+            {frontier ? (
+              <div className="border-2 border-border bg-background p-4">
+                <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  Queue is at
+                </p>{" "}
+                <p className="mt-1 font-heading text-2xl font-black leading-none">
+                  {formatMonth(frontier.analystQueueMonth)}
+                </p>{" "}
+                <p className="mt-1 text-sm text-foreground/70">
+                  DOL analyst review, {frontier.asOf}
+                </p>
+              </div>
+            ) : null}
+            {estimate.monthsBehindFrontier !== null ? (
+              <div className="border-2 border-border bg-background p-4">
+                <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  Your month
+                </p>{" "}
+                <p className="mt-1 font-heading text-2xl font-black leading-none">
+                  {estimate.monthsBehindFrontier > 0
+                    ? `+${estimate.monthsBehindFrontier}`
+                    : estimate.monthsBehindFrontier}
+                </p>{" "}
+                <p className="mt-1 text-sm text-foreground/70">
+                  {estimate.monthsBehindFrontier > 0
+                    ? "months ahead of the queue"
+                    : "months behind the queue"}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       {/* Where this case sits relative to DOL's published frontier. */}
       {frontier && position ? (

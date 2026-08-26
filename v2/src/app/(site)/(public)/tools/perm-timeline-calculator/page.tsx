@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
 
 import { PermTimelineEstimator } from "@/components/tools/PermTimelineEstimator";
+import { getDailyDecisions } from "@/lib/turso/publicData";
+import { businessDayPace } from "@/lib/dolPace";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
@@ -69,7 +71,11 @@ const FAQS = [
 export default async function PermTimelineCalculatorPage() {
   // Wrapped: a page that cannot reach Convex must still render its explanation,
   // its FAQ and its signup rather than failing the route outright.
-  const data = await getEstimatorData();
+  const [data, daily] = await Promise.all([
+    getEstimatorData(),
+    getDailyDecisions(),
+  ]);
+  const pace = businessDayPace(daily, 28);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -112,6 +118,7 @@ export default async function PermTimelineCalculatorPage() {
           frontierHistory={data ? data.frontierHistory : []}
           disclosure={data ? data.disclosure : null}
           today={today}
+          pace={pace}
         />
       </section>
 
