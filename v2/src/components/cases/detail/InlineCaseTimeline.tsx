@@ -76,11 +76,7 @@ const GANTT_ROWS: Array<{
   textClass: string;
   relatedStages?: Stage[]; // Stages to also include in this row
 }> = [
-  // NOT retokenised on purpose. This blue is the PWD stage, but --stage-pwd
-  // (#0066FF) measures 3.60:1 as TEXT on the dark card, so text-stage-pwd would
-  // be less readable than what is here. The stage tokens have no -ink variants;
-  // adding them is a token-system change, not a sweep change.
-  { stage: "pwd", label: "PWD", color: STAGE_COLORS.pwd, textClass: "text-blue-600 dark:text-blue-400" },
+  { stage: "pwd", label: "PWD", color: STAGE_COLORS.pwd, textClass: "text-stage-pwd-ink" },
   { stage: "recruitment", label: "Recruitment", color: STAGE_COLORS.recruitment, textClass: "text-purple-600 dark:text-purple-400" },
   { stage: "eta9089", label: "ETA 9089", color: STAGE_COLORS.eta9089, textClass: "text-data-warn-ink", relatedStages: ["rfi"] },
   { stage: "i140", label: "I-140", color: STAGE_COLORS.i140, textClass: "text-primary", relatedStages: ["rfe"] },
