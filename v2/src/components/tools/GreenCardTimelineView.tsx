@@ -14,12 +14,23 @@
  * legible at any width.
  */
 
+import type { ReactNode } from "react";
 import { Lock, Timer, WarningCircle as CircleAlert } from "@phosphor-icons/react";
 import type { GreenCardTimeline, TimelineStage } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 
 export interface GreenCardTimelineViewProps {
   timeline: GreenCardTimeline;
+  /**
+   * Extra content to render inside a stage, keyed by stage id.
+   *
+   * Deliberately generic. The I-140 stage wants USCIS's published subtype
+   * times and the visa-number stage wants the current cutoffs, but neither
+   * belongs in a component whose job is proportion - it would have to know
+   * about USCIS categories and the visa bulletin to render them. The page
+   * owns that data, so the page builds the panel and hands it in.
+   */
+  slots?: Partial<Record<string, ReactNode>>;
   className?: string;
 }
 
@@ -48,7 +59,7 @@ function months(n: number): string {
   return n === 1 ? "1 month" : `${n} months`;
 }
 
-export function GreenCardTimelineView({ timeline, className }: GreenCardTimelineViewProps) {
+export function GreenCardTimelineView({ timeline, slots, className }: GreenCardTimelineViewProps) {
   const measured = timeline.stages.filter((s) => s.months !== null) as (TimelineStage & {
     months: number;
   })[];
@@ -97,6 +108,9 @@ export function GreenCardTimelineView({ timeline, className }: GreenCardTimeline
                 <p className="mt-2 text-sm text-foreground/60">
                   {meta.label}. {meta.note}
                 </p>
+                {slots?.[stage.id] ? (
+                  <div className="mt-4">{slots[stage.id]}</div>
+                ) : null}
               </div>
             </li>
           );

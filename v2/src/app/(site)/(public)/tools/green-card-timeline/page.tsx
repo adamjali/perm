@@ -8,8 +8,12 @@ import { buildGreenCardTimeline } from "@/lib/perm";
 import {
   getI140ProcessingTime,
   type I140Category,
+  type I140Subtype,
 } from "@/lib/processing-times/i140ProcessingTimes";
 import { GreenCardTimelineView } from "@/components/tools/GreenCardTimelineView";
+import { I140SubtypePanel, PriorityDatePanel } from "@/components/tools/GreenCardStagePanels";
+import { getVisaBulletinSeries } from "@/lib/turso/publicData";
+import { PROCESSING_TIMES_AS_OF } from "@/lib/processing-times/i140ProcessingTimes";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -73,10 +77,15 @@ function monthsFromDays(days: number | null): number | null {
 }
 
 export default async function GreenCardTimelinePage() {
-  const [permData, uscisData] = await Promise.all([
+  const [permData, uscisData, bulletins] = await Promise.all([
     getEstimatorData(),
     fetchQuery(api.uscisI140.getLatest, {}).catch(() => null),
+    getVisaBulletinSeries(),
   ]);
+  // The newest bulletin is the only one the panel shows: it answers "where is
+  // the line NOW". The movement over time is the priority-date calculator's
+  // job and it has a 36-month chart for it.
+  const newestBulletin = bulletins.length > 0 ? bulletins[bulletins.length - 1]! : null;
 
   // The I-140 stage uses USCIS's PUBLISHED processing time, not the time it
   // would take to drain the whole backlog. Both are real, and they differ a
@@ -89,6 +98,8 @@ export default async function GreenCardTimelinePage() {
   // visitors are in. Taking the fastest category would flatter the total.
   let i140Months: number | null = null;
   let i140Label: string | null = null;
+  let i140ActiveCode: string | null = null;
+  let i140Subtypes: I140Subtype[] = [];
   if (uscisData && uscisData.subtypes.length > 0) {
     const biggest = [...uscisData.subtypes].sort((a, b) => b.pending - a.pending)[0]!;
     const CATEGORY_OF: Record<string, I140Category> = {
@@ -100,7 +111,13 @@ export default async function GreenCardTimelinePage() {
     if (published) {
       i140Months = Math.round((published.lowMonths + published.highMonths) / 2);
       i140Label = published.label;
+      i140ActiveCode = biggest.code;
     }
+    // Every subtype USCIS publishes for the categories this page covers, so a
+    // reader in EB-1 is not left reading an EB-2 number.
+    i140Subtypes = [...new Set(Object.values(CATEGORY_OF))]
+      .flatMap((c) => getI140ProcessingTime(c)?.subtypes ?? [])
+      .sort((x, y) => x.highMonths - y.highMonths);
   }
 
   const timeline = buildGreenCardTimeline({
@@ -149,7 +166,19 @@ export default async function GreenCardTimelinePage() {
 
       <div className="pop mt-10">
       <section className="border-2 border-border bg-card p-6 sm:p-8">
-        <GreenCardTimelineView timeline={timeline} />
+        <GreenCardTimelineView
+          timeline={timeline}
+          slots={{
+            i140: (
+              <I140SubtypePanel
+                subtypes={i140Subtypes}
+                activeCode={i140ActiveCode}
+                asOf={PROCESSING_TIMES_AS_OF}
+              />
+            ),
+            "priority-date": <PriorityDatePanel bulletin={newestBulletin} />,
+          }}
+        />
         {i140Label ? (
           <p className="mt-6 text-sm text-foreground/60">
             The I-140 stage uses the published processing time for {i140Label},
