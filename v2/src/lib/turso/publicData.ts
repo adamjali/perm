@@ -403,6 +403,43 @@ export interface DatasetFreshness {
   note: string | null;
 }
 
+export interface DailyDecisions {
+  /** ISO date, "YYYY-MM-DD". */
+  date: string;
+  total: number;
+  certified: number;
+  denied: number;
+  withdrawn: number;
+}
+
+/**
+ * Decisions DOL issued on a single day, ascending.
+ *
+ * Two sources live in this table and they are not interchangeable.
+ * "dol-disclosure" is ours, derived from our own case corpus, and runs to 947
+ * days. "permtrack" is the rival's series, backfilled for comparison, and runs
+ * to 88. The default is ours; pass the other only when the point IS the
+ * comparison.
+ */
+export async function getDailyDecisions(
+  source = "dol-disclosure",
+): Promise<DailyDecisions[]> {
+  const r = await rows<Record<string, unknown>>(
+    "SELECT date, total, certified, denied, withdrawn FROM daily_decisions " +
+      "WHERE source = ? ORDER BY date",
+    [source],
+  );
+  return r.map((x) => ({
+    date: x.date as string,
+    // The columns are nullable, and indexing a Record yields `| undefined`.
+    // Both absences collapse to 0 so a caller never has to guard arithmetic.
+    total: (x.total as number) ?? 0,
+    certified: (x.certified as number) ?? 0,
+    denied: (x.denied as number) ?? 0,
+    withdrawn: (x.withdrawn as number) ?? 0,
+  }));
+}
+
 /**
  * The freshness registry: what every dataset is, where it comes from, the
  * date it carries, and how often it moves. Written by the ingest scripts;
