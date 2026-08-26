@@ -1,0 +1,65 @@
+name: USCIS I-485 inventory
+
+# Fetches the USCIS employment-based I-485 pending inventory and stores it in
+# Turso. This is the data behind /tools/i485-queue-position.
+#
+# MONTHLY, because USCIS republishes monthly - eb_inventory_<month>_<year>.xlsx
+# on the immigration-and-citizenship-data page. The 6th is a few days after
+# their usual posting, and the job discovers the newest file rather than
+# constructing a URL, so a late month is picked up by the next run instead of
+# 404ing.
+#
+# EVERY RUN THAT MISSES IS GONE. USCIS keeps no archive of past months: the
+# page carries only the recent few. The month-over-month movement in the
+# backlog is the only way to see which direction it is going, and it exists
+# solely because we store each release as its own as_of. That is why this is
+# scheduled rather than run by hand.
+#
+# www.uscis.gov serves scripts from residential addresses and has been seen to
+# 403 datacenter runners intermittently (recorded 2026-08-24). fetch() in
+# lib_gov_data retries with backoff and a full browser header set; a failure
+# here is not urgent because the data changes monthly, so the next run gets it.
+#
+# Manual run:
+#   cd v2 && python3 scripts/ingest_i485_inventory.py
+
+on:
+  schedule:
+    - cron: "0 8 6 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: i485-inventory-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch, parse and store
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          # The script asserts parsed == stored and exits non-zero on any
+          # primary-key collision, so a silently-dropped category fails the
+          # run instead of shrinking the backlog without comment.
+          python3 scripts/ingest_i485_inventory.py
+
+      - name: Remove credentials
+        if: always()
+        working-directory: v2
+        run: rm -f .env.local
