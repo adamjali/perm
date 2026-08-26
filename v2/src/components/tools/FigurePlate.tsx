@@ -86,7 +86,7 @@ export function FigurePlate({
         <span
           className={cn(
             "font-mono text-xs font-bold uppercase tracking-[0.18em]",
-            ink ? "text-primary" : "text-muted-foreground",
+            ink ? "text-primary-on-ink" : "text-muted-foreground",
           )}
         >
           Fig {n}

@@ -45,7 +45,7 @@ export default function SignOutOverlay() {
                    animate-in fade-in slide-in-from-bottom-4 zoom-in-95 duration-200"
       >
         {/* Spinner - Forest Green */}
-        <CircleNotch className="size-8 animate-spin text-primary" />
+        <CircleNotch className="size-8 animate-spin text-(--primary)" />
 
         {/* Text */}
         <div className="text-center">

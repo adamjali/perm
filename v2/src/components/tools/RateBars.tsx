@@ -193,9 +193,9 @@ export function RateTable({
           }
         }}
         className={
-          "min-h-[44px] w-full px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary " +
+          "min-h-[44px] w-full px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:text-primary-on-ink focus-visible:ring-2 focus-visible:ring-primary " +
           (numeric ? "text-right" : "text-left") +
-          (sortKey === key ? " text-primary" : "")
+          (sortKey === key ? " text-primary-on-ink" : "")
         }
       >
         {label}

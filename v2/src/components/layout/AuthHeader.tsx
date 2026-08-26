@@ -198,7 +198,10 @@ export default function AuthHeader() {
                       onClick={(e) => scrollToSection(e, link.href)}
                       className={cn(
                         "relative px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
-                        isActive ? "text-primary" : "text-white hover:text-primary"
+                        // text-(--primary), not text-primary: the header is black in both
+                        // themes, and text-primary resolves to the darkened light-mode
+                        // reading colour there - the "two different greens" Adam shot.
+                        isActive ? "text-(--primary)" : "text-white hover:text-(--primary)"
                       )}
                     >
                       {link.label}
@@ -304,7 +307,7 @@ export default function AuthHeader() {
                     onClick={() => setIsLearnOpen(!isLearnOpen)}
                     className={cn(
                       "flex items-center gap-1 px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
-                      CONTENT_NAV_LINKS.some(l => l.href === pathname) ? "text-primary" : "text-white hover:text-primary"
+                      CONTENT_NAV_LINKS.some(l => l.href === pathname) ? "text-(--primary)" : "text-white hover:text-(--primary)"
                     )}
                     aria-expanded={isLearnOpen}
                     aria-haspopup="menu"
@@ -327,7 +330,7 @@ export default function AuthHeader() {
                         href={link.href}
                         className={cn(
                         "block px-4 py-2 font-heading text-sm font-semibold transition-colors",
-                        pathname === link.href ? "bg-primary/10 text-primary" : "text-white hover:bg-white/5 hover:text-primary"
+                        pathname === link.href ? "bg-primary/10 text-(--primary)" : "text-white hover:bg-white/5 hover:text-(--primary)"
                         )}
                         spinnerClassName="text-white"
                         spinnerSize={14}
@@ -409,7 +412,10 @@ export default function AuthHeader() {
                       onClick={(e) => scrollToSection(e, link.href)}
                       className={cn(
                         "block py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
-                        isActive ? "text-primary" : "text-white hover:text-primary"
+                        // text-(--primary), not text-primary: the header is black in both
+                        // themes, and text-primary resolves to the darkened light-mode
+                        // reading colour there - the "two different greens" Adam shot.
+                        isActive ? "text-(--primary)" : "text-white hover:text-(--primary)"
                       )}
                     >
                       {link.label}
@@ -476,7 +482,7 @@ export default function AuthHeader() {
                       href={link.href}
                       className={cn(
                       "block py-2 pl-2 font-heading text-sm font-semibold transition-colors",
-                      pathname === link.href ? "text-primary" : "text-white hover:text-primary"
+                      pathname === link.href ? "text-(--primary)" : "text-white hover:text-(--primary)"
                       )}
                       spinnerClassName="text-white"
                       spinnerSize={14}

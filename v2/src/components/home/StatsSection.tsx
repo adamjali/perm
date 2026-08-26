@@ -204,7 +204,7 @@ function StatItem({ stat, isInView, reducedMotion }: StatItemProps) {
       </div>
 
       {/* Number */}
-      <div className="font-heading text-3xl font-bold text-primary sm:text-4xl lg:text-5xl count-up">
+      <div className="font-heading text-3xl font-bold text-primary-on-ink sm:text-4xl lg:text-5xl count-up">
         {count}
         {stat.suffix}
       </div>

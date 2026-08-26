@@ -145,10 +145,30 @@ export const PRELOADER_BOOT = `
   window.__ptCurtain={events:EV};
   ev('parse rs='+d.readyState+' prerendering='+!!d.prerendering+' vis='+d.visibilityState);
 
+  function panel(){
+    // Built HERE, not server-rendered. The page is data-driven, so its HTML
+    // can arrive long after the cover is up - the reported "blank white page
+    // instead of the preloader" was the cover with the panel's markup still
+    // in flight. The script that arms the curtain now also draws it.
+    if(d.querySelector('.pre'))return;
+    var el=d.createElement('div');
+    el.className='pre';el.setAttribute('role','status');el.setAttribute('aria-label','Loading PERM Tracker');
+    el.innerHTML='<svg class="pre-mark" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>'
+      +'<div class="pre-name"><b>PERM</b> Tracker</div>'
+      +'<div class="pre-sub">Live DOL data \u00b7 Automatic deadlines</div>'
+      +'<div class="pre-track"><i class="pre-bar"></i></div>'
+      +'<div class="pre-spin" aria-hidden="true"></div>';
+    if(d.body){d.body.appendChild(el);ev('panel injected')}
+    else d.addEventListener('DOMContentLoaded',function(){
+      if(!d.querySelector('.pre')){d.body.appendChild(el);ev('panel injected late')}
+    },{once:true});
+  }
+
   function start(){
     var t0=Date.now();
     ev('start');
     h.setAttribute('data-pre','on');
+    panel();
     var done=false;
     function leave(){
       if(done)return;

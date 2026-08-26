@@ -419,9 +419,9 @@ export function FilterableStatTable<T>({
                         type="button"
                         onClick={() => toggleSort(c.key, c.numeric)}
                         className={
-                          "min-h-[44px] w-full px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary " +
+                          "min-h-[44px] w-full px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:text-primary-on-ink focus-visible:ring-2 focus-visible:ring-primary " +
                           (c.numeric ? "text-right" : "text-left") +
-                          (isSorted ? " text-primary" : "")
+                          (isSorted ? " text-primary-on-ink" : "")
                         }
                       >
                         {c.label}

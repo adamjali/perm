@@ -108,6 +108,12 @@
   /* Same hue as --primary, darkened until it passes as TEXT: 4.53:1 on
      #FAFAFA where the lime itself is 2.05:1. Surfaces keep the lime. */
   --primary-text: #1D8229;
+  /* Green for text ON an ink panel (bg-foreground). Those panels flip
+     black<->near-white with the theme, so they need the OPPOSITE green to
+     text-primary: bright lime on the black panel (9.83:1), readable dark
+     green on the near-white one (4.70:1). This is the "two greens" from
+     Adam's screenshot, made systematic instead of accidental. */
+  --primary-on-ink: #2ECC40;
   /* 4.51:1 on #FAFAFA; --destructive stays the brighter fill colour. */
   --destructive-text: #E30000;
   /* Text-safe stage variants; the bare tokens are fills. */
@@ -123,6 +129,7 @@
 }
 
 .dark {
+  --primary-on-ink: #1D8229;
   /*
    * Dark ground: the fills lift and the "ink" variants become readable ON
    * dark rather than on paper. Measured against --background #0A0A0A:
@@ -267,6 +274,7 @@
   --color-stage-closed-ink: var(--stage-closed-ink);
   --color-stage-success-ink: var(--stage-success-ink);
   --color-data-good-ink: var(--data-good-ink);
+  --color-primary-on-ink: var(--primary-on-ink);
   --color-manila: var(--manila);
   --color-manila-dark: var(--manila-dark);
   --color-manila-shadow: var(--manila-shadow);

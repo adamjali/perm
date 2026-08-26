@@ -178,10 +178,10 @@ export default function Header(): React.ReactElement {
           className="group flex min-h-[44px] shrink-0 items-center gap-2 px-2 py-1 font-heading text-xl font-bold transition-colors hover:bg-primary sm:text-2xl"
         >
           <FileText
-            className="size-6 text-primary transition-colors group-hover:text-black"
+            className="size-6 text-(--primary) transition-colors group-hover:text-black"
           />
           <span>
-            <span className="text-primary transition-colors group-hover:text-black">PERM</span>{" "}
+            <span className="text-(--primary) transition-colors group-hover:text-black">PERM</span>{" "}
             <span className="text-white transition-colors group-hover:text-black"> Tracker</span>
           </span>
         </Link>
@@ -197,13 +197,13 @@ export default function Header(): React.ReactElement {
                 <Fragment key={link.href}>
                   <NavLink
                     href={link.href}
-                    spinnerClassName="text-primary"
+                    spinnerClassName="text-(--primary)"
                     data-tour={tourId}
                     className={cn(
                       "hover-underline px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors lg:px-4",
                       isActive
-                        ? "text-primary"
-                        : "text-white hover:text-primary"
+                        ? "text-(--primary)"
+                        : "text-white hover:text-(--primary)"
                     )}
                   >
                     {link.label}
@@ -256,10 +256,10 @@ export default function Header(): React.ReactElement {
                 <NavLink
                   key={link.href}
                   href={link.href}
-                  spinnerClassName="text-primary"
+                  spinnerClassName="text-(--primary)"
                   className={cn(
                     "block py-3 px-2 font-heading text-base font-semibold uppercase tracking-wide transition-colors",
-                    isActive ? "text-primary" : "text-white hover:text-primary"
+                    isActive ? "text-(--primary)" : "text-white hover:text-(--primary)"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >

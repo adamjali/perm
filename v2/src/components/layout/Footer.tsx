@@ -62,7 +62,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
             {/* Brand column */}
             <div className="lg:col-span-1">
               <div className="font-heading text-xl font-bold text-white mb-4">
-                <span className="text-primary">PERM</span> Tracker
+                <span className="text-(--primary)">PERM</span> Tracker
               </div>{" "}
               <p className="text-sm text-white/60 leading-relaxed mb-6">
                 Live DOL data for the wait, automatic deadlines for the work. Free for applicants and attorneys.
@@ -105,36 +105,36 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                 <NavLink
                   href="/#features"
                   showLoading={false}
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   Features
                 </NavLink>{" "}
                 <NavLink
                   href="/tools"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   Data
                 </NavLink>{" "}
                 <NavLink
                   href="/faq"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   FAQ
                 </NavLink>{" "}
                 <NavLink
                   href="/signup"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   Sign Up Free
                 </NavLink>{" "}
                 <NavLink
                   href="/login"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   Sign In
                 </NavLink>
@@ -149,29 +149,29 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               <nav className="footer-links flex flex-col gap-3" aria-label="Content links">
                 <NavLink
                   href="/blog"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   Blog
                 </NavLink>{" "}
                 <NavLink
                   href="/guides"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   Guides
                 </NavLink>{" "}
                 <NavLink
                   href="/changelog"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   Changelog
                 </NavLink>{" "}
                 <NavLink
                   href="/perm-processing-times"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   Processing Times
                 </NavLink>
@@ -191,8 +191,8 @@ export default function Footer({ variant = "compact" }: FooterProps) {
                   <Fragment key={link.href}>
                     <NavLink
                       href={link.href}
-                      className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                      spinnerClassName="text-primary"
+                      className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                      spinnerClassName="text-(--primary)"
                     >
                       {link.label}
                     </NavLink>{" "}
@@ -209,29 +209,29 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               <nav className="footer-links flex flex-col gap-3" aria-label="Legal links">
                 <NavLink
                   href="/privacy"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   Privacy Policy
                 </NavLink>{" "}
                 <NavLink
                   href="/terms"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   Terms of Service
                 </NavLink>{" "}
                 <NavLink
                   href="/security"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   Security
                 </NavLink>{" "}
                 <NavLink
                   href="/contact"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-primary"
-                  spinnerClassName="text-primary"
+                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                  spinnerClassName="text-(--primary)"
                 >
                   Contact
                 </NavLink>
@@ -250,7 +250,7 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               </div>
             </div>{" "}
             <div className="flex items-center gap-1 text-xs text-white/70">
-              Made with <Heart className="h-3 w-3 text-primary" /> for everyone in the PERM line
+              Made with <Heart className="h-3 w-3 text-(--primary)" /> for everyone in the PERM line
             </div>
           </div>
         </div>
@@ -266,29 +266,29 @@ export default function Footer({ variant = "compact" }: FooterProps) {
         <div className="flex items-center gap-6 text-sm">
           <NavLink
             href="/privacy"
-            className="hover-underline text-white transition-colors hover:text-primary"
-            spinnerClassName="text-primary"
+            className="hover-underline text-white transition-colors hover:text-(--primary)"
+            spinnerClassName="text-(--primary)"
           >
             Privacy
           </NavLink>{" "}
           <NavLink
             href="/terms"
-            className="hover-underline text-white transition-colors hover:text-primary"
-            spinnerClassName="text-primary"
+            className="hover-underline text-white transition-colors hover:text-(--primary)"
+            spinnerClassName="text-(--primary)"
           >
             Terms
           </NavLink>{" "}
           <NavLink
             href="/security"
-            className="hover-underline text-white transition-colors hover:text-primary"
-            spinnerClassName="text-primary"
+            className="hover-underline text-white transition-colors hover:text-(--primary)"
+            spinnerClassName="text-(--primary)"
           >
             Security
           </NavLink>{" "}
           <NavLink
             href="/contact"
-            className="hover-underline text-white transition-colors hover:text-primary"
-            spinnerClassName="text-primary"
+            className="hover-underline text-white transition-colors hover:text-(--primary)"
+            spinnerClassName="text-(--primary)"
           >
             Contact
           </NavLink>

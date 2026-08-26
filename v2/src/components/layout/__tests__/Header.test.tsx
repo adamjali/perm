@@ -77,14 +77,14 @@ describe("Header", () => {
     ])("highlights %s link on %s route", (path, label) => {
       mockPathname.mockReturnValue(path);
       renderWithProviders(<Header />);
-      expect(screen.getByRole("link", { name: label })).toHaveClass("text-primary");
+      expect(screen.getByRole("link", { name: label })).toHaveClass("text-(--primary)");
     });
 
     it("does not highlight non-active links", () => {
       mockPathname.mockReturnValue("/dashboard");
       renderWithProviders(<Header />);
-      expect(screen.getByRole("link", { name: "Cases" })).not.toHaveClass("text-primary");
-      expect(screen.getByRole("link", { name: "Calendar" })).not.toHaveClass("text-primary");
+      expect(screen.getByRole("link", { name: "Cases" })).not.toHaveClass("text-(--primary)");
+      expect(screen.getByRole("link", { name: "Calendar" })).not.toHaveClass("text-(--primary)");
     });
   });
 

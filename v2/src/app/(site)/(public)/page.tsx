@@ -47,7 +47,6 @@ import {
 import { LiveDataBand } from "@/components/home/LiveDataBand";
 import { SectionDivider } from "@/components/home/SectionDivider";
 import { deriveFigures } from "@/components/home/dataPageFigures";
-import { Preloader } from "@/components/home/Preloader";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 
@@ -118,7 +117,10 @@ export default async function HomePage() {
 
   return (
     <>
-      <Preloader />
+      {/* The curtain panel is built by PRELOADER_BOOT in <head> - the
+          server-rendered copy was removed because on a data-driven page
+          its markup arrived after the cover, leaving a blank white cover
+          with nothing on it. One owner now. */}
       {/* FAQPage + homepage aggregateRating partial. Server-built schemas only. */}
       <JsonLdScript schema={faqSchema} />
       {ratingPartial ? <JsonLdScript schema={ratingPartial} /> : null}

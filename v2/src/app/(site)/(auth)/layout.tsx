@@ -1,5 +1,6 @@
 import { SentryClientInit } from "@/components/layout/SentryClientInit";
 import { ConvexProviders } from "@/app/providers";
+import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 
 /**
  * Layout for sign in, sign up and password reset.
@@ -32,6 +33,9 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
+    // Scoped here from the root layout: this is the tree that talks to
+    // Convex, so this is where the cookie read belongs. See src/app/layout.tsx.
+    <ConvexAuthNextjsServerProvider>
     <ConvexProviders>
       {/* Lazily initialize Sentry on auth pages */}
       <SentryClientInit />
@@ -47,5 +51,6 @@ export default function AuthLayout({
         <div className="w-full max-w-md">{children}</div>
       </main>
     </ConvexProviders>
+    </ConvexAuthNextjsServerProvider>
   );
 }

@@ -32,6 +32,7 @@ import { SentryUserContext } from "@/components/layout/SentryUserContext";
 import { SentryClientInit } from "@/components/layout/SentryClientInit";
 import { ServiceWorkerRegistration } from "@/components/pwa";
 import { ConvexProviders } from "@/app/providers";
+import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 
 export default function AuthenticatedLayout({
   children,
@@ -39,6 +40,9 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   return (
+    // Scoped here from the root layout: this is the tree that talks to
+    // Convex, so this is where the cookie read belongs. See src/app/layout.tsx.
+    <ConvexAuthNextjsServerProvider>
     <ConvexProviders>
     <InactivityTimeoutProvider>
       {/* Lazily initialize Sentry on authenticated pages */}
@@ -109,5 +113,6 @@ export default function AuthenticatedLayout({
       </OnboardingProvider>
     </InactivityTimeoutProvider>
     </ConvexProviders>
+    </ConvexAuthNextjsServerProvider>
   );
 }

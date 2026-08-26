@@ -4,7 +4,6 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { SharedProviders } from "./shared-providers";
-import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import {
   getSoftwareApplicationSchema,
   getOrganizationSchema,
@@ -154,8 +153,16 @@ export default async function RootLayout({
   };
 
   return (
-    <ConvexAuthNextjsServerProvider>
-      <html lang="en" suppressHydrationWarning>
+    // NO auth provider here, deliberately. ConvexAuthNextjsServerProvider
+    // reads the session cookies, and a cookie read in the ROOT layout makes
+    // EVERY route dynamic: the whole public site was rendering ƒ with
+    // no-store - revalidate ignored, a fresh server render (and its Turso
+    // queries) on every visit, the blank-white first paint the preloader
+    // could never cover, and the Fluid CPU bill. Convex Auth's own docs
+    // scope it: "wrap the parts of your app that interact with Convex
+    // functions" - which is (site)/(auth) and (authenticated), where it
+    // now lives.
+    <html lang="en" suppressHydrationWarning>
         <head>
           {/*
             The home curtain's boot script, FIRST in <head>.
@@ -215,6 +222,5 @@ export default async function RootLayout({
           <Analytics />
         </body>
       </html>
-    </ConvexAuthNextjsServerProvider>
   );
 }
