@@ -104,7 +104,7 @@ function CaseDetailSkeleton() {
   return (
     <div className="space-y-6">
       {/* Hero Header Skeleton */}
-      <div className="bg-card border-b-[3px] border-border overflow-hidden -mt-6 full-bleed">
+      <div className="bg-card border-b-3 border-border overflow-hidden -mt-6 full-bleed">
         <div className="h-1 bg-muted" />
         <div className="p-3 sm:px-8 sm:py-3.5 space-y-2.5">
           {/* Breadcrumb */}
@@ -133,9 +133,9 @@ function CaseDetailSkeleton() {
           </div>
         </div>
         {/* Stage Bar */}
-        <div className="flex border-t-[3px] border-border">
+        <div className="flex border-t-3 border-border">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex-1 py-2.5 px-2 border-r-[3px] border-border last:border-r-0">
+            <div key={i} className="flex-1 py-2.5 px-2 border-r-3 border-border last:border-r-0">
               <Skeleton variant="line" className="w-full h-4 mx-auto max-w-[80px]" />
             </div>
           ))}
@@ -595,7 +595,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       {/* ================================================================ */}
       <motion.div
         variants={headerVariants}
-        className="bg-card border-b-[3px] border-border relative z-[2] overflow-hidden -mt-6 full-bleed"
+        className="bg-card border-b-3 border-border relative z-[2] overflow-hidden -mt-6 full-bleed"
       >
         {/* Stage accent strip */}
         <div className="h-1" style={{ backgroundColor: stageColor }} />
@@ -608,7 +608,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               size="icon"
               onClick={() => navigateTo("/cases")}
               className={cn(
-                "shrink-0 h-9 w-9 border-[3px] border-border bg-card hover:!bg-[var(--primary)] hover:text-black hover:border-black hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none transition-all",
+                "shrink-0 h-9 w-9 border-3 border-border bg-card hover:!bg-[var(--primary)] hover:text-black hover:border-black hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none transition-all",
                 isNavigating && "opacity-70 pointer-events-none"
               )}
               disabled={isAnyNavigating}
@@ -620,26 +620,26 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               )}
               <span className="sr-only">Back to cases</span>
             </Button>
-            <span className="font-mono text-[0.68rem] text-muted-foreground">Cases / Detail</span>
+            <span className="font-mono text-sm text-muted-foreground">Cases / Detail</span>
           </nav>
 
           {/* Row 1: Title + Actions */}
           <div className="flex items-center justify-between gap-3 sm:gap-4">
             <div className="min-w-0 flex-1 overflow-hidden">
               <div className="flex items-center gap-2">
-                <h1 className="font-heading text-[1.35rem] sm:text-2xl font-bold leading-[1.15] truncate tracking-tight" title={caseData.employerName}>
+                <h1 className="font-heading text-2xl sm:text-2xl font-bold leading-[1.15] truncate tracking-tight" title={caseData.employerName}>
                   {caseData.employerName}
                 </h1>
                 {isSample && (
-                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[0.625rem] font-bold tracking-wider uppercase border-2 border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
+                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-sm font-bold tracking-wider uppercase border-2 border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
                     SAMPLE
                   </span>
                 )}
               </div>
-              <p className="font-heading text-[0.85rem] text-muted-foreground font-medium mt-0.5" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
+              <p className="font-heading text-sm text-muted-foreground font-medium mt-0.5" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
                 {caseData.positionTitle}
                 {caseData.beneficiaryIdentifier && (
-                  <span className="font-mono text-[0.72rem] opacity-60">, {caseData.beneficiaryIdentifier}</span>
+                  <span className="font-mono text-sm opacity-60">, {caseData.beneficiaryIdentifier}</span>
                 )}
               </p>
             </div>
@@ -652,7 +652,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 onClick={handleToggleFavorite}
                 disabled={isTogglingFavorite}
                 className={cn(
-                  "shrink-0 border-[3px] transition-all cursor-pointer",
+                  "shrink-0 border-3 transition-all cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.isFavorite
                     ? "border-amber-400 bg-amber-50 hover:bg-amber-200 active:bg-amber-300 dark:bg-amber-900/20 dark:border-amber-500 dark:hover:bg-amber-800/40 dark:active:bg-amber-800/50"
@@ -681,7 +681,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 onClick={handleToggleCalendarSync}
                 disabled={isTogglingCalendarSync}
                 className={cn(
-                  "shrink-0 border-[3px] transition-all cursor-pointer",
+                  "shrink-0 border-3 transition-all cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.calendarSyncEnabled && isGoogleConnected
                     ? "border-emerald-400 bg-emerald-50 hover:bg-emerald-200 active:bg-emerald-300 dark:bg-emerald-900/20 dark:border-emerald-500 dark:hover:bg-emerald-800/40 dark:active:bg-emerald-800/50"
@@ -715,8 +715,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 onClick={handleEdit}
                 disabled={isAnyNavigating}
                 className={cn(
-                  "shrink-0 border-[3px] border-black bg-[var(--primary)] text-black font-heading font-bold text-xs",
-                  "shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard hover:bg-[#4AE860] active:translate-y-0 active:shadow-hard-sm transition-all",
+                  "shrink-0 border-3 border-border bg-primary text-primary-foreground font-heading font-bold text-sm",
+                  "shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm transition-all",
                   "min-h-[38px] gap-1.5"
                 )}
               >
@@ -734,7 +734,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     variant="outline"
                     size="icon"
                     className={cn(
-                      "shrink-0 border-[3px] border-border bg-card",
+                      "shrink-0 border-3 border-border bg-card",
                       "hover:!bg-[var(--primary)] hover:text-black hover:border-black hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none transition-all",
                       "min-h-[38px] min-w-[38px] h-[38px] w-[38px]"
                     )}
@@ -744,7 +744,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     <span className="sr-only">Actions</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52 will-change-transform border-[3px] border-border shadow-hard-sm rounded-none p-1" onCloseAutoFocus={(e) => e.preventDefault()}>
+                <DropdownMenuContent align="end" className="w-52 will-change-transform border-3 border-border shadow-hard-sm rounded-none p-1" onCloseAutoFocus={(e) => e.preventDefault()}>
                   {isClosed ? (
                     <DropdownMenuItem onClick={handleReopen} disabled={isUpdating} className="min-h-[44px] font-heading font-bold text-sm rounded-none">
                       <RotateCcw className="h-4 w-4" />
@@ -773,14 +773,14 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           {/* Row 2: Badges */}
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {caseData.caseNumber && (
-              <span className="font-mono text-[0.72rem] font-bold uppercase tracking-wide border-[3px] border-border px-3 py-1 leading-none truncate max-w-[200px]" title={caseData.caseNumber}>
+              <span className="font-mono text-sm font-bold uppercase tracking-wide border-3 border-border px-3 py-1 leading-none truncate max-w-[200px]" title={caseData.caseNumber}>
                 {caseData.caseNumber}
               </span>
             )}
             <CaseStageBadge stage={caseData.caseStatus} bordered />
             <ProgressStatusBadge status={caseData.progressStatus} />
             {isProfessionalOccupation && (
-              <span className="inline-flex items-center border-2 border-border px-2 py-0.5 text-[0.65rem] font-mono font-bold uppercase tracking-wide gap-1">
+              <span className="inline-flex items-center border-2 border-border px-2 py-0.5 text-sm font-mono font-bold uppercase tracking-wide gap-1">
                 Professional
               </span>
             )}
@@ -790,7 +790,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         {/* Stage Bar — flat segments matching mockup */}
         {!isClosed && (
           <div
-            className="flex border-t-[3px] border-border mt-3.5"
+            className="flex border-t-3 border-border mt-3.5"
             role="progressbar"
             aria-valuenow={currentStage + 1}
             aria-valuemin={1}
@@ -806,8 +806,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 <div
                   key={stage}
                   className={cn(
-                    "flex-1 py-2.5 px-2 text-center font-mono text-[0.7rem] font-bold uppercase tracking-wide flex items-center justify-center gap-1.5",
-                    "border-r-[3px] border-border last:border-r-0",
+                    "flex-1 py-2.5 px-2 text-center font-mono text-sm font-bold uppercase tracking-wide flex items-center justify-center gap-1.5",
+                    "border-r-3 border-border last:border-r-0",
                     isDone && "bg-card text-foreground",
                     isActive && "text-white",
                     !isDone && !isActive && "bg-muted text-muted-foreground"
@@ -900,7 +900,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           size="sm"
           onClick={() => setDeleteDialogOpen(true)}
           disabled={isDeleting}
-          className="border-[3px] border-[#DC2626] bg-card text-[#DC2626] hover:bg-[#DC2626] hover:text-white font-mono text-xs font-bold uppercase tracking-wide transition-all gap-1.5 dark:bg-white dark:text-[#DC2626] dark:border-[#DC2626] dark:hover:bg-[#DC2626] dark:hover:text-white"
+          className="border-3 border-destructive bg-card text-destructive hover:bg-destructive hover:text-destructive-foreground font-mono text-sm font-bold uppercase tracking-wide transition-all gap-1.5"
         >
           {isDeleting ? (
             <CircleNotch className="h-3.5 w-3.5 animate-spin" />
@@ -918,7 +918,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
       {/* Footer Metadata */}
       <motion.div variants={itemVariants}>
-        <div className="text-xs text-muted-foreground border-t border-border pt-4 flex flex-wrap items-center justify-center gap-4 font-mono">
+        <div className="text-sm text-muted-foreground border-t border-border pt-4 flex flex-wrap items-center justify-center gap-4 font-mono">
           <span>
             Created:{" "}
             {new Date(caseData.createdAt).toLocaleDateString("en-US", {

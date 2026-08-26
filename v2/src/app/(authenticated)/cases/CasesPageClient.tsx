@@ -1057,7 +1057,7 @@ export function CasesPageClient() {
 
       {/* Case Cards/List View */}
       <div
-        className="transition-opacity duration-200"
+        className="transition-opacity duration-150"
         style={{ opacity: isRefetching || isPending ? 0.6 : 1 }}
       >
         <AnimatePresence mode="wait">

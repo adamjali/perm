@@ -91,7 +91,7 @@ export function DashboardPageClient() {
       {/* Welcome Header + Primary CTA */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <p className="font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
             Dashboard
           </p>{" "}
           <h1 className="mt-2 font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl">

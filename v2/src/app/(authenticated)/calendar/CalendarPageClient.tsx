@@ -344,7 +344,7 @@ export function CalendarPageClient() {
               <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
                 Sync deadlines to Google Calendar
               </p>{" "}
-              <p className="text-xs text-blue-600 dark:text-blue-300">
+              <p className="text-sm text-blue-600 dark:text-blue-300">
                 Connect your Google Calendar to automatically sync case deadlines
               </p>
             </div>

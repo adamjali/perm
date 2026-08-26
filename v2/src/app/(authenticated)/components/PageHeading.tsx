@@ -34,7 +34,7 @@ export function PageHeading({ eyebrow, title, lede }: PageHeadingProps) {
     <div className="min-w-0">
       {eyebrow ? (
         <>
-          <p className="mb-2 font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          <p className="mb-2 font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
             {eyebrow}
           </p>{" "}
         </>

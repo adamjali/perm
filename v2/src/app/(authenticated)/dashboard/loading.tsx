@@ -29,7 +29,7 @@ export default function DashboardLoading() {
 
       {/* Deadline Hero Widget Skeleton */}
       <div
-        className="rounded-lg border-4 border-border bg-card p-6 shadow-hard animate-in fade-in slide-in-from-bottom-2 fill-mode-forwards"
+        className="rounded-lg border-3 border-border bg-card p-6 shadow-hard animate-in fade-in slide-in-from-bottom-2 fill-mode-forwards"
         style={{ animationDelay: "50ms", animationDuration: "0.3s" }}
       >
         <div className="flex items-center justify-between mb-4">

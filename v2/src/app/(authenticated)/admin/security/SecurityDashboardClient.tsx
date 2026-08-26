@@ -69,7 +69,7 @@ export default function SecurityDashboardClient() {
           <h1 className="font-heading text-3xl font-black uppercase tracking-tight">
             Security Ops
           </h1>{" "}
-          <p className="mono text-xs uppercase tracking-widest text-muted-foreground">
+          <p className="mono text-sm uppercase tracking-widest text-muted-foreground">
             Abuse monitoring · blocklist · flagged users
           </p>
         </div>
@@ -92,7 +92,7 @@ export default function SecurityDashboardClient() {
               aria-selected={active}
               onClick={() => setTab(t.id)}
               className={cn(
-                "mono flex items-center gap-2 border-2 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all",
+                "mono flex items-center gap-2 border-2 px-4 py-2 text-sm font-bold uppercase tracking-widest transition-all",
                 active
                   ? "translate-y-[-1px] border-foreground bg-primary text-primary-foreground shadow-hard"
                   : "border-border bg-background hover:shadow-hard-sm",
@@ -158,7 +158,7 @@ function SummaryCards({ summary }: { summary?: SummaryShape }) {
           >
             <CardContent className="space-y-2 p-4">
               <div className="flex items-start justify-between">
-                <p className="mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                <p className="mono text-sm font-bold uppercase tracking-widest text-muted-foreground">
                   {c.label}
                 </p>
                 <Icon className="h-4 w-4 opacity-60" aria-hidden />
@@ -200,7 +200,7 @@ function EventsTab() {
       <Card className="border-2">
         <CardContent className="py-12 text-center">
           <Check className="mx-auto h-8 w-8 text-emerald-600" aria-hidden />
-          <p className="mono mt-2 text-xs uppercase tracking-widest text-muted-foreground">
+          <p className="mono mt-2 text-sm uppercase tracking-widest text-muted-foreground">
             No recent security events
           </p>
         </CardContent>
@@ -217,7 +217,7 @@ function EventsTab() {
       <CardContent className="p-0">
         <div className="overflow-auto">
           <table className="w-full text-sm">
-            <thead className="mono border-b-2 border-border bg-muted/40 text-[10px] uppercase tracking-widest">
+            <thead className="mono border-b-2 border-border bg-muted/40 text-sm uppercase tracking-widest">
               <tr>
                 <th className="px-3 py-2 text-left">Time</th>
                 <th className="px-3 py-2 text-left">Kind</th>
@@ -236,13 +236,13 @@ function EventsTab() {
                     e.severity === "warning" && "bg-amber-500/5",
                   )}
                 >
-                  <td className="whitespace-nowrap px-3 py-2 text-xs text-muted-foreground">
+                  <td className="whitespace-nowrap px-3 py-2 text-sm text-muted-foreground">
                     {new Date(e.at).toLocaleString()}
                   </td>
                   <td className="px-3 py-2">
                     <span
                       className={cn(
-                        "inline-block border-2 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest",
+                        "inline-block border-2 px-1.5 py-0.5 text-sm font-bold uppercase tracking-widest",
                         e.kind === "strike" && "border-amber-600 text-amber-700",
                         e.kind === "rate_limit" && "border-border",
                         e.kind === "error" && "border-destructive text-destructive",
@@ -251,11 +251,11 @@ function EventsTab() {
                       {e.kind}
                     </span>
                   </td>
-                  <td className="max-w-[220px] truncate px-3 py-2 text-xs">{e.endpoint}</td>
-                  <td className="max-w-[200px] truncate px-3 py-2 text-xs">
+                  <td className="max-w-[220px] truncate px-3 py-2 text-sm">{e.endpoint}</td>
+                  <td className="max-w-[200px] truncate px-3 py-2 text-sm">
                     {actorFor(e)}
                   </td>
-                  <td className="max-w-[280px] truncate px-3 py-2 text-xs text-muted-foreground">
+                  <td className="max-w-[280px] truncate px-3 py-2 text-sm text-muted-foreground">
                     {e.reason}
                   </td>
                 </tr>
@@ -346,7 +346,7 @@ function BlockedIpsTab() {
               )}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Defaults to 24h. Blocks expire automatically; hourly cron cleans them up.
           </p>
         </CardContent>
@@ -362,13 +362,13 @@ function BlockedIpsTab() {
           {blocks.length === 0 ? (
             <div className="py-12 text-center">
               <Check className="mx-auto h-8 w-8 text-emerald-600" aria-hidden />
-              <p className="mono mt-2 text-xs uppercase tracking-widest text-muted-foreground">
+              <p className="mono mt-2 text-sm uppercase tracking-widest text-muted-foreground">
                 No active blocks
               </p>
             </div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="mono border-b-2 border-border bg-muted/40 text-[10px] uppercase tracking-widest">
+              <thead className="mono border-b-2 border-border bg-muted/40 text-sm uppercase tracking-widest">
                 <tr>
                   <th className="px-3 py-2 text-left">IP</th>
                   <th className="px-3 py-2 text-left">Reason</th>
@@ -381,14 +381,14 @@ function BlockedIpsTab() {
               <tbody className="mono">
                 {blocks.map((b) => (
                   <tr key={b._id} className="border-b border-border">
-                    <td className="px-3 py-2 text-xs">{b.ip}</td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground">{b.reason}</td>
-                    <td className="px-3 py-2 text-xs">{new Date(b.addedAt).toLocaleString()}</td>
-                    <td className="px-3 py-2 text-xs">{new Date(b.expiresAt).toLocaleString()}</td>
-                    <td className="px-3 py-2 text-xs">
+                    <td className="px-3 py-2 text-sm">{b.ip}</td>
+                    <td className="px-3 py-2 text-sm text-muted-foreground">{b.reason}</td>
+                    <td className="px-3 py-2 text-sm">{new Date(b.addedAt).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-sm">{new Date(b.expiresAt).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-sm">
                       <span
                         className={cn(
-                          "border-2 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest",
+                          "border-2 px-1.5 py-0.5 text-sm font-bold uppercase tracking-widest",
                           b.manualOverride
                             ? "border-primary text-primary"
                             : "border-amber-600 text-amber-700",
@@ -449,7 +449,7 @@ function FlaggedUsersTab() {
       <Card className="border-2">
         <CardContent className="py-12 text-center">
           <Check className="mx-auto h-8 w-8 text-emerald-600" aria-hidden />
-          <p className="mono mt-2 text-xs uppercase tracking-widest text-muted-foreground">
+          <p className="mono mt-2 text-sm uppercase tracking-widest text-muted-foreground">
             No flagged users
           </p>
         </CardContent>
@@ -466,7 +466,7 @@ function FlaggedUsersTab() {
       </CardHeader>
       <CardContent className="p-0">
         <table className="w-full text-sm">
-          <thead className="mono border-b-2 border-border bg-muted/40 text-[10px] uppercase tracking-widest">
+          <thead className="mono border-b-2 border-border bg-muted/40 text-sm uppercase tracking-widest">
             <tr>
               <th className="px-3 py-2 text-left">Email</th>
               <th className="px-3 py-2 text-left">Suspended At</th>
@@ -478,14 +478,14 @@ function FlaggedUsersTab() {
           <tbody className="mono">
             {flagged.map((u) => (
               <tr key={u.profileId} className="border-b border-border bg-destructive/5">
-                <td className="px-3 py-2 text-xs">{u.email ?? "-"}</td>
-                <td className="px-3 py-2 text-xs">
+                <td className="px-3 py-2 text-sm">{u.email ?? "-"}</td>
+                <td className="px-3 py-2 text-sm">
                   {u.suspendedAt ? new Date(u.suspendedAt).toLocaleString() : "-"}
                 </td>
-                <td className="px-3 py-2 text-xs">
+                <td className="px-3 py-2 text-sm">
                   {u.suspendedUntil ? new Date(u.suspendedUntil).toLocaleString() : "-"}
                 </td>
-                <td className="px-3 py-2 text-xs text-muted-foreground">
+                <td className="px-3 py-2 text-sm text-muted-foreground">
                   {u.suspendedReason ?? "-"}
                 </td>
                 <td className="px-3 py-2 text-right">
@@ -540,13 +540,13 @@ function SettingsTab() {
           <tbody className="mono">
             {rows.map(([k, v]) => (
               <tr key={k} className="border-b border-border last:border-0">
-                <td className="px-3 py-2 text-xs text-muted-foreground">{k}</td>
-                <td className="px-3 py-2 text-xs font-bold">{v}</td>
+                <td className="px-3 py-2 text-sm text-muted-foreground">{k}</td>
+                <td className="px-3 py-2 text-sm font-bold">{v}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p className="p-4 text-xs text-muted-foreground">
+        <p className="p-4 text-sm text-muted-foreground">
           Edit these by modifying convex/authRateLimit.ts (per-IP, per-email) and
           convex/rateLimitConfig.ts (per-user) then deploying. A future release will
           make these editable from this page.

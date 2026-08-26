@@ -139,7 +139,7 @@ function EditPageSkeleton() {
       </div>
 
       {/* Sticky footer skeleton */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/95 border-t-4 border-border p-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 border-t-3 border-border p-4">
         <div className="flex justify-end gap-4 max-w-4xl mx-auto">
           <Skeleton variant="block" className="h-11 w-24" />
           <Skeleton variant="block" className="h-11 w-28" />
@@ -424,7 +424,7 @@ export function EditCasePageClient() {
           <h1 className="truncate font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl" title={`Edit Case: ${caseData.employerName} - ${caseData.positionTitle}`}>
             {caseData.employerName}
           </h1>{" "}
-          <p className="mt-2 truncate font-mono text-[14px] font-semibold uppercase tracking-[0.1em] text-muted-foreground" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
+          <p className="mt-2 truncate font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
             {caseData.positionTitle}
             {caseData.beneficiaryIdentifier && <>, {caseData.beneficiaryIdentifier}</>}
           </p>{" "}
