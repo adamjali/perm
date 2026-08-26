@@ -1,3 +1,23 @@
+# Voice pass, 2026-08-26
+
+Every user-visible string changed in the site-wide voice pass, old -> new,
+grouped by the commit that shipped it and then by file.
+
+The trigger was a practicing immigration attorney's read of the live site:
+"sounds salesy... desperate... this language is not normal language... don't
+try too hard, just simple professional... too much text, let the data speak."
+Her own line items were fixed separately in 4332f7b5; this pass is the CLASS
+behind them.
+
+Six registers were hunted: salesy/desperate framing, emphatic-minimal tics
+("One email." "Free."), captions that editorialize on the figure beside them,
+legalese word order, page-talk that points at furniture ("below", "above"),
+and the house-banned "not X, it's Y".
+
+JSX scaffolding has been stripped from the entries below so they read as copy.
+
+Commits: d233fbce (tools) - 7d22be58 (data pages) - 2e14f328 (home) -
+7e1d4ad8 (auth/FAQ/contact/security) - a8c719a3 (scripted sweep).
 
 ## Tools pages (/tools, /calculators)
 
@@ -5,20 +25,20 @@
 
 - OLD: Live figures from the Department of Labor, and free calculators built on them. Each one says where its numbers come from, and says so when it can’t answer.
   NEW: Live figures from the Department of Labor, and free calculators built on them.
-- OLD: <h2 className="font-heading text-2xl font-black">One line, cleared oldest first</h2>
-  NEW: <h2 className="font-heading text-2xl font-black">The queue, oldest first</h2>
-- OLD: Every PERM waits in filing-month order. The tape shows the months DOL has cleared and the months still waiting.{" "}
-  NEW: Every PERM waits in filing-month order.{" "}
-- OLD: <h2 className="font-heading text-2xl font-black">Six calculators, one per question</h2>
-  NEW: <h2 className="font-heading text-2xl font-black">Six calculators</h2>
+- OLD: One line, cleared oldest first
+  NEW: The queue, oldest first
+- OLD: Every PERM waits in filing-month order. The tape shows the months DOL has cleared and the months still waiting.
+  NEW: Every PERM waits in filing-month order.
+- OLD: Six calculators, one per question
+  NEW: Six calculators
 - OLD: Decision times, the wage queue, the I-140 backlog, priority dates, the whole green card to scale, and every statutory deadline.
   NEW: Decision times, the wage queue, the I-140 backlog, priority dates, the whole green card drawn to scale, and every statutory deadline.
-- OLD: blurb: "Median offered wages by occupation - committed figures, not survey estimates.",
-  NEW: blurb: "Median offered wages by occupation, from the wage each employer committed to pay.",
-- OLD: blurb: "What actually gets denied, by wage, by year, and by what the form declares.",
-  NEW: blurb: "What gets denied, by wage, by year, and by what the form declares.",
-- OLD: No newsletter, no account. Set it on the{" "}
-  NEW: Set it on the{" "}
+- OLD: Median offered wages by occupation - committed figures, not survey estimates.
+  NEW: Median offered wages by occupation, from the wage each employer committed to pay.
+- OLD: What actually gets denied, by wage, by year, and by what the form declares.
+  NEW: What gets denied, by wage, by year, and by what the form declares.
+- OLD: No newsletter, no account. Set it on the
+  NEW: Set it on the
 - OLD: The same date math as the deadline calculator, applied to your cases, with alerts and calendar sync. Free.
   NEW: The same date math as the deadline calculator, applied to your cases, with alerts and calendar sync. The account is free.
 
@@ -33,7 +53,7 @@
 
 ### `src/app/(site)/(public)/tools/perm-timeline-calculator/page.tsx`
 
-- OLD: DOL&apos;s date is a forecast. Yours are arithmetic.
+- OLD: DOL’s date is a forecast. Yours are arithmetic.
   NEW: The deadlines on your side of the process are fixed
 - OLD: Nobody can tell you exactly when DOL will decide. The dates that are genuinely fixed are the ones on your side of the process: the recruitment window, the quiet period, the filing window and the I-140 deadline. Every one of them is arithmetic on your prevailing wage determination, and getting one wrong restarts the case.
   NEW: Nobody can tell you exactly when DOL will decide. The recruitment window, the quiet period, the filing window and the I-140 deadline are arithmetic on your prevailing wage determination, and getting one wrong restarts the case.
@@ -53,10 +73,10 @@
   NEW: Any single total that covers all of it hides that variation.
 - OLD: and we don’t have an automated way to read it. Putting an estimate there without a source we can stand behind would be inventing a legally consequential date.
   NEW: and we don’t have an automated way to read it.
-- OLD: name: "Your deadlines", blurb: "The dates the regulations fix." }
-  NEW: name: "Your deadlines", blurb: "Every deadline in your case." }
-- OLD: note: "The stages in detail, and the rules that fix the ones you control." }
-  NEW: note: "The stages in detail, and the rules behind the ones you control." }
+- OLD: "Your deadlines", blurb: "The dates the regulations fix." }
+  NEW: "Your deadlines", blurb: "Every deadline in your case." }
+- OLD: "The stages in detail, and the rules that fix the ones you control." }
+  NEW: "The stages in detail, and the rules behind the ones you control." }
 
 ### `src/app/(site)/(public)/calculators/page.tsx`
 
@@ -78,13 +98,13 @@
 
 ### `src/components/tools/PwdQueueEstimator.tsx`
 
-- OLD: Pick the month DOL received your ETA-9141. The number of requests ahead of yours is DOL&apos;s own published count, not an estimate.
-  NEW: Pick the month DOL received your ETA-9141. The number of requests ahead of yours is DOL&apos;s own published count.
+- OLD: Pick the month DOL received your ETA-9141. The number of requests ahead of yours is DOL’s own published count, not an estimate.
+  NEW: Pick the month DOL received your ETA-9141. The number of requests ahead of yours is DOL’s own published count.
 
 ### `src/components/tools/PermTimelineEstimator.tsx`
 
-- OLD: Pick the month DOL received your ETA-9089. Every figure below comes from DOL&apos;s own published data, and each one says where it came from.
-  NEW: Pick the month DOL received your ETA-9089. Every figure comes from DOL&apos;s own published data.
+- OLD: Pick the month DOL received your ETA-9089. Every figure below comes from DOL’s own published data, and each one says where it came from.
+  NEW: Pick the month DOL received your ETA-9089. Every figure comes from DOL’s own published data.
 
 ### `src/components/tools/GreenCardTimelineView.tsx`
 
@@ -94,27 +114,27 @@
 ### `src/components/tools/PriorityDateEstimator.tsx`
 
 - OLD: For the current cutoff, read it at the source. What everything below has that the current bulletin doesn’t is the movement: {bulletins.length} bulletins of it, including the months the cutoff went backwards.
-  NEW: For the current cutoff, read it at the source. What the archive holds and a single bulletin doesn’t is the movement:{" "} {bulletins.length} bulletins of it, including the months the cutoff went backwards.
+  NEW: For the current cutoff, read it at the source. What the archive holds and a single bulletin doesn’t is the movement: {bulletins.length} bulletins of it, including the months the cutoff went backwards.
 - OLD: Everything below comes from that bulletin and the ones before it. Cutoffs change every month, in both directions.
   NEW: These figures come from that bulletin and the ones before it. Cutoffs change every month, in both directions.
-- OLD: You have the <strong>{selectedChartName}</strong> chart selected above, which is the other one.
-  NEW: You have the <strong>{selectedChartName}</strong> chart selected, which is the other one.
+- OLD: You have the {selectedChartName} chart selected above, which is the other one.
+  NEW: You have the {selectedChartName} chart selected, which is the other one.
 - OLD: That’s the gap to watch when the category reopens. October starts a new fiscal year with a fresh allocation of visa numbers, and the cutoff the category reopens at is set then. It isn’t obliged to return to where it stood.
   NEW: October starts a new fiscal year with a fresh allocation of visa numbers, and the cutoff the category reopens at is set then. It can reopen anywhere, earlier or later than where it stood.
-- OLD: with the new year&apos;s numbers. It’s a normal annual event, not a change in the rules, and it’s most common in the last months of the fiscal year.
-  NEW: with the new year&apos;s numbers. It happens every year, most often in the last months of the fiscal year.
+- OLD: with the new year’s numbers. It’s a normal annual event, not a change in the rules, and it’s most common in the last months of the fiscal year.
+  NEW: with the new year’s numbers. It happens every year, most often in the last months of the fiscal year.
 - OLD: The chart below still shows where the cutoff stood before it closed, which is the part worth watching.
   NEW: The chart still shows where the cutoff stood before it closed.
 
 ### `src/components/tools/CaseBrowser.tsx`
 
-- OLD: That isn’t the same as no such case. DOL&apos;s disclosure files carry decided cases only, so a case still waiting on a determination appears in none of them. If yours is pending, the{" "}
-  NEW: DOL&apos;s disclosure files carry decided cases only, so a case still waiting on a determination appears in none of them. If yours is pending, the{" "}
+- OLD: That isn’t the same as no such case. DOL’s disclosure files carry decided cases only, so a case still waiting on a determination appears in none of them. If yours is pending, the
+  NEW: DOL’s disclosure files carry decided cases only, so a case still waiting on a determination appears in none of them. If yours is pending, the
 
 ### `src/components/tools/EntityContext.tsx`
 
-- OLD: the {baselineDenialPct.toFixed(2)}% the field as a whole records, so this record can&apos;t be told apart from the field in either direction. Reading it as better or worse than average is reading the sample size.
-  NEW: the {baselineDenialPct.toFixed(2)}% the field as a whole records, so this record can&apos;t be told apart from the field in either direction.
+- OLD: the {baselineDenialPct.toFixed(2)}% the field as a whole records, so this record can’t be told apart from the field in either direction. Reading it as better or worse than average is reading the sample size.
+  NEW: the {baselineDenialPct.toFixed(2)}% the field as a whole records, so this record can’t be told apart from the field in either direction.
 
 ## Tools components (continued)
 
@@ -137,15 +157,15 @@
 
 - OLD: The case table couldn’t be reached just now. That’s a fault at our end, not an answer about your case. Try again in a minute.
   NEW: The case table couldn’t be reached just now. That’s a fault at our end. Try again in a minute.
-- OLD: finds nothing. The filters above don’t apply to it.{" "}
-  NEW: finds nothing. The filters don’t apply to it.{" "}
+- OLD: finds nothing. The filters above don’t apply to it.
+  NEW: finds nothing. The filters don’t apply to it.
 
 ## Tools pages (continued)
 
 ### `src/app/(site)/(public)/calculators/page.tsx`
 
-- OLD: Six calculators, one per question </h1>{" "} <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70"> Each one answers a question a PERM case raises, says where its numbers come from, and says so when it can’t answer. </p>
-  NEW: PERM calculators </h1>{" "} <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70"> Six calculators, each answering one question a PERM case raises. </p>
+- OLD: Six calculators, one per question Each one answers a question a PERM case raises, says where its numbers come from, and says so when it can’t answer.
+  NEW: PERM calculators Six calculators, each answering one question a PERM case raises.
 
 ## Data pages: /perm-processing-times, /perm-by-state
 
@@ -153,8 +173,8 @@
 
 - OLD: PERM Tracker reads that source weekly and stores every publication. Nothing is estimated or modelled.
   NEW: PERM Tracker reads that source weekly and stores every publication.
-- OLD: Where the Department of Labor&apos;s queues actually stand, taken from DOL&apos;s own published figures and refreshed every week.
-  NEW: Where the Department of Labor&apos;s queues stand, from DOL&apos;s own published figures, refreshed every week.
+- OLD: Where the Department of Labor’s queues actually stand, taken from DOL’s own published figures and refreshed every week.
+  NEW: Where the Department of Labor’s queues stand, from DOL’s own published figures, refreshed every week.
 - OLD: Every PERM waits in filing-month order and DOL clears the line oldest first. Solid months are cleared; the flag is where the queue stands today.
   NEW: Every PERM waits in filing-month order. Solid months are cleared; the flag is where the queue stands today.
 - OLD: . That’s the difference between two dates DOL published, not a forecast of the next one.
@@ -162,35 +182,35 @@
 - OLD: Every reading DOL has published since we started keeping them. DOL shows only its current position; the record is ours.
   NEW: Every reading DOL has published since we started keeping them.
 - OLD: The queue position says where the line is. This says how fast DOL is emptying it: every determination in the quarterly disclosure files, counted by the month it was issued. From the disclosure files rather than the weekly queue page, so it lags by a quarter and gains a year and a half of history in return.
-  NEW: Every determination in DOL&apos;s quarterly disclosure files, counted by the month it was issued. Those files lag the weekly queue page by a quarter and carry a year and a half of history.
-- OLD: DOL&apos;s figures describe its position across every case. The calculator puts your own filing month against them and shows what each way of measuring implies.
+  NEW: Every determination in DOL’s quarterly disclosure files, counted by the month it was issued. Those files lag the weekly queue page by a quarter and carry a year and a half of history.
+- OLD: DOL’s figures describe its position across every case. The calculator puts your own filing month against them and shows what each way of measuring implies.
   NEW: The calculator reads your own filing month against these figures.
 - OLD: Nothing is modelled or extrapolated. Where a number is missing, DOL didn’t publish one, and we say so rather than filling the gap.
   NEW: Where a number is missing here, DOL didn’t publish one.
-- OLD: These are DOL&apos;s deadlines. Yours are the ones you control.
+- OLD: These are DOL’s deadlines. Yours are the ones you control.
   NEW: The deadlines you control
 - OLD: The queue moves when it moves. The dates that are actually in your hands are the recruitment window, the quiet period and the filing window, and every one of them is fixed arithmetic on your prevailing wage determination date. PERM Tracker computes them for every case you run, and warns you before the deadline that matters rather than after it.
   NEW: The recruitment window, the quiet period and the filing window are fixed arithmetic on your prevailing wage determination date. PERM Tracker computes them for every case you run and sends a reminder before each one.
-- OLD: Free, and there’s no case limit. See the{" "}
-  NEW: There’s no case limit. See the{" "}
+- OLD: Free, and there’s no case limit. See the
+  NEW: There’s no case limit. See the
 
 ### `src/app/(site)/(public)/perm-by-state/page.tsx`
 
 - OLD: Every certified, denied and withdrawn case in the current disclosure window, placed at its worksite state. The map shades by volume, approval rate, denial rate, median days or median wage. Hovering a state reads it, and tapping pins it.
   NEW: Every certified, denied and withdrawn case in the current disclosure window, placed at its worksite state. Hover a state to read it, tap to pin it.
-- OLD: DOL works one national queue, so median days barely move by state. Volume and wages move a lot. That’s industry mix, not a faster line. The{" "}
-  NEW: DOL works one national queue, so median days barely move by state. Volume and wages move a lot, which is industry mix. The{" "}
-- OLD: The smallest jurisdictions here decide a couple of dozen cases in a whole window. One denial swings a rate like that by several points, so the map leaves them uncoloured on rates and medians rather than shading them as if the figure meant the same thing it does in California. Drop the floor to nothing and they come back, with the same denominator sitting beside them in the table. Denial rates ranked this way, with a 95% range on each one, are on the{" "}
-  NEW: The smallest jurisdictions decide a couple of dozen cases in a whole window, where one denial swings a rate by several points. Those stay uncoloured on rates and medians. Drop the floor to nothing and they come back, with the same denominator beside them in the table. Denial rates ranked with a 95% range on each are on the{" "}
-- OLD: Benchmark a case against the national medians, then let the tracker carry the deadlines.{" "}
-  NEW: Benchmark a case against the national medians, then track its deadlines.{" "}
+- OLD: DOL works one national queue, so median days barely move by state. Volume and wages move a lot. That’s industry mix, not a faster line. The
+  NEW: DOL works one national queue, so median days barely move by state. Volume and wages move a lot, which is industry mix. The
+- OLD: The smallest jurisdictions here decide a couple of dozen cases in a whole window. One denial swings a rate like that by several points, so the map leaves them uncoloured on rates and medians rather than shading them as if the figure meant the same thing it does in California. Drop the floor to nothing and they come back, with the same denominator sitting beside them in the table. Denial rates ranked this way, with a 95% range on each one, are on the
+  NEW: The smallest jurisdictions decide a couple of dozen cases in a whole window, where one denial swings a rate by several points. Those stay uncoloured on rates and medians. Drop the floor to nothing and they come back, with the same denominator beside them in the table. Denial rates ranked with a 95% range on each are on the
+- OLD: Benchmark a case against the national medians, then let the tracker carry the deadlines.
+  NEW: Benchmark a case against the national medians, then track its deadlines.
 
 ## Data pages: /perm-denial-risk, /perm-wages
 
 ### `src/app/(site)/(public)/perm-denial-risk/page.tsx`
 
-- OLD: Measured, not modeled </p>{" "} <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl"> What actually gets denied </h1>{" "} <p className="mt-4 text-lg leading-relaxed text-foreground/70"> PERM denials are rare and concentrated. These are the rates DOL&apos;s files record, cut by the factors the form itself asks about, by the job, and by where the work is. </p>
-  NEW: Denial rates </p>{" "} <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl"> What gets denied </h1>{" "} <p className="mt-4 text-lg leading-relaxed text-foreground/70"> The denial rates DOL&apos;s files record, by the factors the form asks about, by job, and by worksite. </p>
+- OLD: Measured, not modeled What actually gets denied PERM denials are rare and concentrated. These are the rates DOL’s files record, cut by the factors the form itself asks about, by the job, and by where the work is.
+  NEW: Denial rates What gets denied The denial rates DOL’s files record, by the factors the form asks about, by job, and by worksite.
 - OLD: sit on neither side of that ratio, because a withdrawal isn’t an approval and not a denial. It’s the reference every other rate is measured against.
   NEW: sit on neither side of that ratio, because a withdrawal is neither an approval nor a denial. It’s the reference every other rate is measured against.
 - OLD: Each bar is the denial rate of a group, measured. It isn’t the probability that a particular case is denied, and the factors are not independent of each other: wage correlates with occupation, which correlates with everything else. A single blended risk score built from these would read as precision we can’t support, so what you get is the measured rates and nothing layered on top.
@@ -203,23 +223,23 @@
   NEW: Denials cluster in a handful of job families and are close to absent in others. Occupations below the minimum population carry no rate.
 - OLD: DOL works one national queue, so this ranks where denials land, not where cases take longer. Several states decide too few cases to carry a rate at all, which is what the floor is for.
   NEW: DOL works one national queue, so this ranks where denials land. Several states decide too few cases to carry a rate at all, which is what the floor is for.
-- OLD: Denials are rare. Most of the wait is queue, not risk. The{" "}
-  NEW: Denials are rare, and most of the wait is queue time. The{" "}
+- OLD: Denials are rare. Most of the wait is queue, not risk. The
+  NEW: Denials are rare, and most of the wait is queue time. The
 
 ### `src/app/(site)/(public)/perm-wages/page.tsx`
 
 - OLD: Offered wages, not survey estimates
-  NEW: From DOL&apos;s own disclosure files
+  NEW: From DOL’s own disclosure files
 - OLD: The wage on a PERM filing is the wage the employer committed to in a federal filing, which is harder currency than any salary survey. These are the medians by occupation for the current disclosure window.
   NEW: The wage on a PERM filing is the wage the employer committed to in a federal filing. These are the medians by occupation for the current disclosure window.
 - OLD: From {ladder.count.toLocaleString("en-US")} certified cases. The gap between the 25th and the median is the two-market split: hourly roles at one end, salaried knowledge work at the other.
   NEW: From {ladder.count.toLocaleString("en-US")} certified cases. The gap between the 25th and the median spans hourly roles at one end and salaried knowledge work at the other.
-- OLD: Median of the occupation medians below. The centre of what a sponsored role pays across all{" "} {occupationCount.toLocaleString("en-US")} occupations.
-  NEW: Median of the occupation medians, across all{" "} {occupationCount.toLocaleString("en-US")} occupations.
+- OLD: Median of the occupation medians below. The centre of what a sponsored role pays across all {occupationCount.toLocaleString("en-US")} occupations.
+  NEW: Median of the occupation medians, across all {occupationCount.toLocaleString("en-US")} occupations.
 - OLD: Search by title or SOC code, narrow to a job family, sort any column, take the whole thing as a CSV.
   NEW: Search by title or SOC code, filter by job family, sort any column, or download the CSV.
-- OLD: Your own case&apos;s pace depends on its filing month, not its wage. The{" "}
-  NEW: A case&apos;s pace depends on its filing month rather than its wage. The{" "}
+- OLD: Your own case’s pace depends on its filing month, not its wage. The
+  NEW: A case’s pace depends on its filing month rather than its wage. The
 - OLD: says exactly how every figure is computed.
   NEW: says how every figure is computed.
 
@@ -236,28 +256,28 @@
 
 - OLD: A big sponsor isn’t a faster one: DOL works one national queue, oldest first, whoever filed the case.
   NEW: DOL works one national queue, oldest first, whoever filed the case.
-- OLD: Their volume says how practiced the process is; your date says when you clear it. The{" "}
-  NEW: Their volume doesn’t change your place in line. The{" "}
+- OLD: Their volume says how practiced the process is; your date says when you clear it. The
+  NEW: Their volume doesn’t change your place in line. The
 
 ### `src/app/(site)/(public)/perm-attorneys/page.tsx`
 
-- OLD: Every PERM filing names the firm that made it. All {" "}{firmCount.toLocaleString("en-US")} of them are here, with what each one&apos;s cases did.
-  NEW: Every PERM filing names the firm that made it. All {" "}{firmCount.toLocaleString("en-US")} of them, with volume, approval rate and median days.
+- OLD: Every PERM filing names the firm that made it. All {firmCount.toLocaleString("en-US")} of them are here, with what each one’s cases did.
+  NEW: Every PERM filing names the firm that made it. All {firmCount.toLocaleString("en-US")} of them, with volume, approval rate and median days.
 - OLD: Volume, not quality. Approval rates cluster above 99% across every firm on this list, so the number that separates them is the work you can’t see in a spreadsheet.
   NEW: Approval rates cluster above 99% across every firm on this list, so the ranking is by volume alone.
-- OLD: Benchmark your own volume and median against the field here, then let the tracker carry the deadlines on every case.{" "}
-  NEW: Benchmark your own volume and median against the field, then track the deadlines on every case.{" "}
+- OLD: Benchmark your own volume and median against the field here, then let the tracker carry the deadlines on every case.
+  NEW: Benchmark your own volume and median against the field, then track the deadlines on every case.
 
 ### `src/app/(site)/(public)/perm-cases/page.tsx`
 
-- OLD: One row per decided case </p>{" "} <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl"> Every case, not just the totals </h1>{" "}
-  NEW: From DOL&apos;s own disclosure files </p>{" "} <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl"> Every decided case </h1>{" "}
+- OLD: One row per decided case Every case, not just the totals
+  NEW: From DOL’s own disclosure files Every decided case
 - OLD: determination won’t be here, however recently it was filed. Finding nothing says where your case isn’t, and nothing about how it’s going.
   NEW: determination won’t be here, however recently it was filed.
-- OLD: Counts on this page come from that data, not from the rows on screen, so a filtered count is a count of that filter and never of the whole file.{" "}
-  NEW: Counts come from the full files rather than the rows on screen, so a filtered count covers only that filter.{" "}
-- OLD: That’s what a pending case looks like. The{" "}
-  NEW: A pending case is in none of DOL&apos;s files. The{" "}
+- OLD: Counts on this page come from that data, not from the rows on screen, so a filtered count is a count of that filter and never of the whole file.
+  NEW: Counts come from the full files rather than the rows on screen, so a filtered count covers only that filter.
+- OLD: That’s what a pending case looks like. The
+  NEW: A pending case is in none of DOL’s files. The
 - OLD: takes your filing month and reads it against where DOL is actually working.
   NEW: reads your filing month against where DOL is working now.
 
@@ -278,14 +298,14 @@
 
 ### `src/app/(site)/(public)/perm-employers/[slug]/page.tsx`
 
-- OLD: head: "Volume isn’t quality, and it isn’t speed",
-  NEW: head: "Volume doesn’t change the wait",
+- OLD: Volume isn’t quality, and it isn’t speed
+  NEW: Volume doesn’t change the wait
 - OLD: A big sponsor is a practised one, nothing more. DOL works a single national queue, oldest first, whoever filed the case, so a company with four thousand filings waits exactly as long as one with three.
   NEW: DOL works a single national queue, oldest first, whoever filed the case, so a company with four thousand filings waits exactly as long as one with three.
 - OLD: : "It says when this sponsor's cases were filed at least as much as it says anything about the sponsor, because the queue is national and first in, first out."}
   NEW: : "The queue is national and first in, first out, so this figure follows when the cases were filed as much as it follows the sponsor."}
-- OLD: head: "Nothing here’s pending",
-  NEW: head: "Nothing here is pending",
+- OLD: Nothing here’s pending
+  NEW: Nothing here is pending
 - OLD: reads your filing month against where DOL is now, which is the part that actually decides your wait.
   NEW: reads your filing month against where DOL is now.
 
@@ -296,29 +316,29 @@
 
 ### `src/app/(site)/(public)/perm-wages/[slug]/page.tsx`
 
-- OLD: head: "Nothing here’s pending",
-  NEW: head: "Nothing here is pending",
-- OLD: , published as separate rates rather than blended into a score.
-  NEW: , published as separate rates.
+- OLD: Nothing here’s pending
+  NEW: Nothing here is pending
+- OLD: published as separate rates rather than blended into a score.
+  NEW: published as separate rates.
 
 ## Entity detail pages (continued)
 
 ### `src/app/(site)/(public)/perm-wages/[slug]/page.tsx`
 
-- OLD: This is the median wage employers committed to in federal filings for this occupation, which makes it harder currency than a salary survey. It mixes every experience level and every metro, and it&apos;s a floor rather than a market rate: the employer must offer at least the prevailing wage DOL determines for the occupation, level and county.
-  NEW: This is the median wage employers committed to in federal filings for this occupation. It mixes every experience level and every metro, and it&apos;s a floor: the employer must offer at least the prevailing wage DOL determines for the occupation, level and county.
+- OLD: This is the median wage employers committed to in federal filings for this occupation, which makes it harder currency than a salary survey. It mixes every experience level and every metro, and it’s a floor rather than a market rate: the employer must offer at least the prevailing wage DOL determines for the occupation, level and county.
+  NEW: This is the median wage employers committed to in federal filings for this occupation. It mixes every experience level and every metro, and it’s a floor: the employer must offer at least the prevailing wage DOL determines for the occupation, level and county.
 
 ## Home (src/components/home)
 
 ### `src/components/home/HeroSection.tsx`
 
-- OLD: A PERM case runs about a year and one missed date can end it. We read DOL&apos;s own published figures and compute every deadline in your case automatically. Free.
-  NEW: A PERM case runs about a year, and one missed date can restart it. PERM Tracker reads DOL&apos;s published figures and computes every deadline in your case.
+- OLD: A PERM case runs about a year and one missed date can end it. We read DOL’s own published figures and compute every deadline in your case automatically. Free.
+  NEW: A PERM case runs about a year, and one missed date can restart it. PERM Tracker reads DOL’s published figures and computes every deadline in your case.
 
 ### `src/components/home/StakesSection.tsx`
 
-- OLD: "Miss the DOL's 30-day audit window and the case is automatically abandoned. No extensions, no appeals. Start the entire process over."
-  NEW: "Miss the DOL's 30-day audit window and the case is automatically abandoned. There is no extension and no appeal, and the process starts over."
+- OLD: Miss the DOL's 30-day audit window and the case is automatically abandoned. No extensions, no appeals. Start the entire process over.
+  NEW: Miss the DOL's 30-day audit window and the case is automatically abandoned. There is no extension and no appeal, and the process starts over.
 - OLD: File after expiration and you restart from zero, months of waiting wasted.
   NEW: File after expiration and you restart from zero.
 - OLD: What a Missed Deadline Actually Costs
@@ -328,7 +348,7 @@
 
 ### `src/components/home/HowItWorks.tsx`
 
-- OLD: Enter your case dates: determination date, recruitment start, filing date. That\u2019s it.
+- OLD: Enter your case dates: determination date, recruitment start, filing date. That’s it.
   NEW: Enter your case dates: determination date, recruitment start, filing date.
 - OLD: 11 deadline types compute instantly. Filing windows, PWD expirations, audit response dates, all from your dates.
   NEW: 11 deadline types compute from those dates: filing windows, PWD expirations, audit response dates.
@@ -350,13 +370,13 @@
 
 ### `src/components/home/CTASection.tsx`
 
-- OLD: The next filing window is already counting down. </p>{" "} <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl"> Stop Tracking Deadlines Manually </h2>{" "} <p className="mx-auto mt-3 max-w-lg text-base text-black/70"> No credit card required. Set up in under 5 minutes. </p>
-  NEW: Start tracking </p>{" "} <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl"> Every PERM Deadline, Computed Per Case </h2>{" "} <p className="mx-auto mt-3 max-w-lg text-base text-black/70"> Free, and setup takes a few minutes. </p>
+- OLD: The next filing window is already counting down. Stop Tracking Deadlines Manually No credit card required. Set up in under 5 minutes.
+  NEW: Start tracking Every PERM Deadline, Computed Per Case Free, and setup takes a few minutes.
 
 ### `src/components/home/SecuritySection.tsx`
 
-- OLD: We don&apos;t sell your data. We don&apos;t train AI on it. Your cases are yours.
-  NEW: We don&apos;t sell your data or train AI on it.
+- OLD: We don’t sell your data. We don’t train AI on it. Your cases are yours.
+  NEW: We don’t sell your data or train AI on it.
 
 ### `src/components/home/TestimonialsSection.tsx`
 
@@ -367,28 +387,28 @@
 
 ### `src/components/home/ToolsSection.tsx`
 
-- OLD: Free calculators on the government&apos;s own numbers. Each one says where its figure came from, and says so when the data can’t answer.
-  NEW: Free calculators built on the government&apos;s own numbers.
+- OLD: Free calculators on the government’s own numbers. Each one says where its figure came from, and says so when the data can’t answer.
+  NEW: Free calculators built on the government’s own numbers.
 
 ### `src/components/home/LiveDataBand.tsx`
 
-- OLD: what: "What actually gets denied",
-  NEW: what: "What gets denied",
+- OLD: What actually gets denied
+  NEW: What gets denied
 
 ### `src/components/home/faqData.tsx`
 
-- OLD: deadlines hit, plus Google Calendar sync so your whole team stays aligned.",
-  NEW: deadlines hit, plus Google Calendar sync.",
-- OLD: deadlines hit, plus Google Calendar sync so your whole team stays aligned.{" "}
-  NEW: deadlines hit, plus Google Calendar sync.{" "}
+- OLD: deadlines hit, plus Google Calendar sync so your whole team stays aligned."
+  NEW: deadlines hit, plus Google Calendar sync."
+- OLD: deadlines hit, plus Google Calendar sync so your whole team stays aligned.
+  NEW: deadlines hit, plus Google Calendar sync.
 - OLD: updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.
   NEW: updates all downstream dates when one date changes.
-- OLD: "Yes, currently free. No credit card, no trial period, no case limits. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.", rich: "Yes, currently free. No credit card, no trial period, no case limits. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.",
-  NEW: "Yes, currently free, with no credit card and no case limit. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.", rich: "Yes, currently free, with no credit card and no case limit. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.",
-- OLD: You can also export your data anytime. Your data is always yours.",
-  NEW: You can also export your data at any time.",
-- OLD: You can also export your data anytime. Your data is always yours.{" "}
-  NEW: You can also export your data at any time.{" "}
+- OLD: Yes, currently free. No credit card, no trial period, no case limits. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.", rich: "Yes, currently free. No credit card, no trial period, no case limits. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.
+  NEW: Yes, currently free, with no credit card and no case limit. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.", rich: "Yes, currently free, with no credit card and no case limit. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.
+- OLD: You can also export your data anytime. Your data is always yours."
+  NEW: You can also export your data at any time."
+- OLD: You can also export your data anytime. Your data is always yours.
+  NEW: You can also export your data at any time.
 - OLD: "We monitor DOL regulatory changes and update our deadline calculation engine accordingly.
   NEW: "We monitor DOL regulatory changes and update the deadline calculations accordingly.
 - OLD: We monitor DOL regulatory changes and update our deadline calculation engine accordingly.
@@ -398,12 +418,12 @@
 
 ### `src/app/(site)/(public)/page.tsx`
 
-- OLD: "Where DOL's PERM queue stands today, and every case deadline computed automatically. For the person waiting and the person managing. Free.",
-  NEW: "Where DOL's PERM queue stands today, and every case deadline computed automatically. Free, for the person waiting and the person managing.",
-- OLD: title: "PERM Tracker - Never Lose a Case to a Missed Deadline",
-  NEW: title: "PERM Tracker - Live PERM Data and Case Deadlines",
-- OLD: "Auto-calculate every PERM filing window, PWD expiration, and audit deadline. Email + push alerts before they hit.",
-  NEW: "Every PERM filing window, PWD expiration and audit deadline, computed from your case dates, with email and push alerts.",
+- OLD: Where DOL's PERM queue stands today, and every case deadline computed automatically. For the person waiting and the person managing. Free.
+  NEW: Where DOL's PERM queue stands today, and every case deadline computed automatically. Free, for the person waiting and the person managing.
+- OLD: PERM Tracker - Never Lose a Case to a Missed Deadline
+  NEW: PERM Tracker - Live PERM Data and Case Deadlines
+- OLD: Auto-calculate every PERM filing window, PWD expiration, and audit deadline. Email + push alerts before they hit.
+  NEW: Every PERM filing window, PWD expiration and audit deadline, computed from your case dates, with email and push alerts.
 
 ## Auth, legal, FAQ, contact, security
 
@@ -426,8 +446,8 @@
 
 ### `src/app/(site)/(auth)/signup/page.tsx`
 
-- OLD: "Create a free PERM Tracker account to start managing your immigration cases. No credit card required.",
-  NEW: "Create a free PERM Tracker account to manage your immigration cases. No account limits and no credit card.",
+- OLD: Create a free PERM Tracker account to start managing your immigration cases. No credit card required.
+  NEW: Create a free PERM Tracker account to manage your immigration cases. No account limits and no credit card.
 
 ### `src/app/(site)/(public)/faq/page.tsx`
 
@@ -435,10 +455,10 @@
   NEW: plus a calendar view of everything upcoming.
 - OLD: updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.
   NEW: updates all downstream dates when one date changes.
-- OLD: "Yes, completely free. No credit card, no trial period, no case limits. We may introduce optional premium features in the future, but the data, the calculators and the core deadline tracking stay free.",
-  NEW: "Yes, currently free, with no credit card and no case limit. We may introduce optional premium features in the future, but the data, the calculators and the core deadline tracking stay free.",
-- OLD: You can also export your data anytime. Your data is always yours.",
-  NEW: You can also export your data at any time.",
+- OLD: Yes, completely free. No credit card, no trial period, no case limits. We may introduce optional premium features in the future, but the data, the calculators and the core deadline tracking stay free.
+  NEW: Yes, currently free, with no credit card and no case limit. We may introduce optional premium features in the future, but the data, the calculators and the core deadline tracking stay free.
+- OLD: You can also export your data anytime. Your data is always yours."
+  NEW: You can also export your data at any time."
 - OLD: "We monitor DOL regulatory changes and update our deadline calculation engine accordingly.
   NEW: "We monitor DOL regulatory changes and update the deadline calculations accordingly.
 - OLD: Clean documentation and well-justified job requirements significantly reduce audit risk.
@@ -452,15 +472,15 @@
 
 ### `src/app/(site)/(public)/contact/page.tsx`
 
-- OLD: Have questions about PERM Tracker? We&apos;re here to help.
+- OLD: Have questions about PERM Tracker? We’re here to help.
   NEW: Questions, feature requests and bug reports all land in the same inbox.
-- OLD: Have an idea to improve PERM Tracker? We&apos;d love to hear it.
+- OLD: Have an idea to improve PERM Tracker? We’d love to hear it.
   NEW: Ideas for PERM Tracker go on the GitHub issue tracker.
 
 ### `src/app/(site)/(public)/security/page.tsx`
 
-- OLD: PERM Tracker takes security seriously. Infrastructure is operated on SOC&nbsp;2-compliant providers (Convex, Vercel).
-  NEW: Infrastructure is operated on SOC&nbsp;2-compliant providers (Convex, Vercel).
+- OLD: PERM Tracker takes security seriously. Infrastructure is operated on SOC 2-compliant providers (Convex, Vercel).
+  NEW: Infrastructure is operated on SOC 2-compliant providers (Convex, Vercel).
 - OLD: Below are public-facing summaries of security-relevant incidents. Entries are factual and preserved for transparency.
   NEW: Public-facing summaries of security-relevant incidents. Entries are kept permanently.
 
@@ -480,8 +500,8 @@
 
 ### `src/app/(site)/(auth)/login/LoginPageClient.tsx`
 
-- OLD: "Invalid email or password. If you signed up with Google, use the Google button below.",
-  NEW: "Invalid email or password. If you signed up with Google, use the Google sign-in button.",
+- OLD: Invalid email or password. If you signed up with Google, use the Google button below.
+  NEW: Invalid email or password. If you signed up with Google, use the Google sign-in button.
 
 ### `src/components/tools/USStateMap.tsx`
 
@@ -490,8 +510,8 @@
 
 ### `src/app/(site)/(public)/faq/page.tsx`
 
-- OLD: question: "What do PERM cases actually pay?",
-  NEW: question: "What do PERM cases pay?",
+- OLD: What do PERM cases actually pay?
+  NEW: What do PERM cases pay?
 
 ### `src/app/(site)/(public)/perm-wages/page.tsx`
 
@@ -500,10 +520,11 @@
 
 ### `src/app/(site)/(public)/tools/i140-calculator/page.tsx`
 
-- OLD: label: "What PERM actually is", note: "The labor certification the petition depends on, in plain terms." }
-  NEW: label: "What PERM is", note: "The labor certification the petition depends on, in plain terms." }
+- OLD: "What PERM actually is", note: "The labor certification the petition depends on, in plain terms." }
+  NEW: "What PERM is", note: "The labor certification the petition depends on, in plain terms." }
 
 ### `src/app/(site)/(public)/tools/green-card-timeline/page.tsx`
 
-- OLD: label: "What PERM actually is", note: "The labor certification stage, in plain terms." }
-  NEW: label: "What PERM is", note: "The labor certification stage, in plain terms." }
+- OLD: "What PERM actually is", note: "The labor certification stage, in plain terms." }
+  NEW: "What PERM is", note: "The labor certification stage, in plain terms." }
+
