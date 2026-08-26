@@ -528,3 +528,10 @@ Commits: d233fbce (tools) - 7d22be58 (data pages) - 2e14f328 (home) -
 - OLD: "What PERM actually is", note: "The labor certification stage, in plain terms." }
   NEW: "What PERM is", note: "The labor certification stage, in plain terms." }
 
+
+## Home (eyebrow, second pass)
+
+### `src/components/home/CTASection.tsx`
+
+- OLD: <p className="mb-3 font-mono text-sm text-black/60 uppercase tracking-wider"> Start tracking </p>{" "}
+  NEW: <p className="mb-3 font-mono text-sm text-black/60 uppercase tracking-wider"> For a caseload </p>{" "}

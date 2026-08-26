@@ -104,7 +104,7 @@ export function CTASection() {
 
           <div>
             <p className="mb-3 font-mono text-sm text-black/60 uppercase tracking-wider">
-              Start tracking
+              For a caseload
             </p>{" "}
             <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl">
               Every PERM Deadline, Computed Per Case
