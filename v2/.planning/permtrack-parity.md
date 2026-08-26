@@ -18,10 +18,17 @@ show something they cannot, **equal** means a reader would not prefer either,
 
 | | count |
 |---|---:|
-| better | 9 |
+| better | 10 |
 | equal | 7 |
-| missing, and we could build it | 2 |
+| missing, and we could build it | 1 |
 | missing, deliberately, with reason | 4 |
+
+**Revised 2026-08-26 after two rows were re-checked against the running site
+rather than against the source.** The wage choropleth was graded missing and
+is in fact shipped and reachable (see its row), which moves it to better on
+freshness. The I-485 gap below is now built from USCIS directly. Both
+mistakes had the same shape: a component or an API was read, and the thing a
+visitor actually gets was not.
 
 ---
 
@@ -56,7 +63,7 @@ show something they cannot, **equal** means a reader would not prefer either,
 | their visual | what it takes | note |
 |---|---|---|
 | `/i485` queue position by EB + country + priority date, with snapshots and a trend | USCIS's I-485 inventory data, ingested and stored as periodic snapshots | The only substantive page we have no answer to. Worth noting their own `applications_ahead` is **constant across priority-date months**, so their version is coarse — a correct one would beat it, not just match it. |
-| `/map` US wage choropleth | `USStateMap` already exists and already carries sentence tooltips | Not wired to a wage-per-state view yet. Small piece of work; listed as missing because a visitor cannot see it today. |
+| `/map` US wage choropleth | **Shipped. Verified live 2026-08-26.** | This was graded a gap in error. `/perm-by-state` renders `StateExplorer` with a five-way metric selector - Filings, Approval rate, Denial rate, Median days, **Median wage** - and all 55 states carry `medianAnnualWage` in `disclosure_stats`. Confirmed on the deployed page as a real control, not prose. The lesson is the same one that corrected the freshness claim below: the component was read, the rendered page was not. |
 
 ## Missing, deliberately, with reason
 

@@ -463,3 +463,115 @@ export async function getFreshness(): Promise<Record<string, DatasetFreshness>> 
   }
   return out;
 }
+
+export interface I485Position {
+  asOf: string;
+  country: string;
+  category: string;
+  /** Applications pending with an EARLIER priority date, counted cells only. */
+  counted: number;
+  /** How many cells USCIS suppressed inside that set (each holds 1-10). */
+  suppressedCells: number;
+  /** counted + suppressedCells (every suppressed cell at its floor of 1). */
+  low: number;
+  /** counted + suppressedCells * 10 (every suppressed cell at its ceiling). */
+  high: number;
+  /** The priority-date range USCIS publishes for this country+category. */
+  coverage: { earliest: string; latest: string };
+  /** True when the asked-for date sits outside that published range. */
+  outsideCoverage: boolean;
+  /** Total pending in this country+category, for context. */
+  categoryTotal: number;
+}
+
+/**
+ * How many employment-based adjustment applications sit ahead of a given
+ * priority date, from USCIS's own monthly inventory.
+ *
+ * WE PUBLISH A RANGE, NOT A POINT. USCIS replaces any cell holding 1-10
+ * applications with a "D", so an exact total is not knowable from the
+ * release. The rival resolves every D to 5 and prints one number with an
+ * error bar underneath; on a site that refuses to blend denial factors into
+ * a single score because the inputs cannot carry it, a point estimate here
+ * would be the same mistake. `low` and `high` are the arithmetic bounds and
+ * both are true statements about the published data.
+ *
+ * "Ahead" counts BOTH pending statuses. A case whose visa number is already
+ * available but which USCIS has not adjudicated is still in front of you in
+ * the only queue that matters to the asker.
+ */
+export async function getI485Position(
+  country: string,
+  category: string,
+  pdYear: number,
+  pdMonth: number,
+): Promise<I485Position | null> {
+  const asOf = await one<{ d: string }>(
+    "SELECT max(as_of) AS d FROM i485_inventory",
+  );
+  if (!asOf?.d) return null;
+
+  const agg = await one<{ counted: number; sup: number }>(
+    `SELECT coalesce(sum(count), 0) AS counted,
+            coalesce(sum(suppressed), 0) AS sup
+       FROM i485_inventory
+      WHERE as_of = ? AND country = ? AND category = ?
+        AND (pd_year = 'prior'
+             OR (pd_year <> 'prior' AND CAST(pd_year AS INTEGER) < ?)
+             OR (pd_year = ? AND pd_month < ?))`,
+    [asOf.d, country, category, pdYear, String(pdYear), pdMonth],
+  );
+  if (!agg) return null;
+
+  const span = await one<{ lo: string; hi: string; total: number }>(
+    `SELECT min(CASE WHEN pd_year = 'prior' THEN '0000' ELSE pd_year END) AS lo,
+            max(CASE WHEN pd_year = 'prior' THEN '0000' ELSE pd_year END) AS hi,
+            coalesce(sum(count), 0) AS total
+       FROM i485_inventory
+      WHERE as_of = ? AND country = ? AND category = ?`,
+    [asOf.d, country, category],
+  );
+  if (!span?.hi) return null;
+
+  const counted = Number(agg.counted) || 0;
+  const sup = Number(agg.sup) || 0;
+  return {
+    asOf: asOf.d,
+    country,
+    category,
+    counted,
+    suppressedCells: sup,
+    low: counted + sup,
+    high: counted + sup * 10,
+    coverage: { earliest: span.lo === "0000" ? "prior" : span.lo, latest: span.hi },
+    outsideCoverage: pdYear > Number(span.hi),
+    categoryTotal: Number(span.total) || 0,
+  };
+}
+
+/** Which country+category pairs USCIS actually publishes, for the form. */
+export async function getI485Options(): Promise<
+  { country: string; categories: string[] }[]
+> {
+  const r = await rows<{ country: string; category: string }>(
+    `SELECT DISTINCT country, category FROM i485_inventory
+      WHERE as_of = (SELECT max(as_of) FROM i485_inventory)
+      ORDER BY country, category`,
+  );
+  const byCountry = new Map<string, string[]>();
+  for (const x of r) {
+    const list = byCountry.get(x.country) ?? [];
+    list.push(x.category);
+    byCountry.set(x.country, list);
+  }
+  return [...byCountry.entries()].map(([country, categories]) => ({ country, categories }));
+}
+
+/** Month-over-month movement in the whole pending inventory. */
+export async function getI485Trend(): Promise<{ asOf: string; total: number }[]> {
+  const r = await rows<{ as_of: string; total: number }>(
+    `SELECT as_of, coalesce(sum(count), 0) AS total
+       FROM i485_inventory GROUP BY as_of ORDER BY as_of`,
+  );
+  return r.map((x) => ({ asOf: x.as_of, total: Number(x.total) || 0 }));
+}

@@ -78,8 +78,8 @@ class Turso:
             "sql": sql, "args": [lit(a) for a in (args or [])]}}]
         return self.pipeline(reqs + [{"type": "close"}])["results"][0]
 
-    def scalar(self, sql: str):
-        res = self.execute(sql)
+    def scalar(self, sql: str, args: list | None = None):
+        res = self.execute(sql, args or [])
         rows = res["response"]["result"]["rows"]
         if not rows:
             return None
