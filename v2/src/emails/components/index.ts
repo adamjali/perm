@@ -14,4 +14,10 @@ export type { EmailButtonProps } from "./EmailButton";
 export { EmailHeader } from "./EmailHeader";
 export type { EmailHeaderProps } from "./EmailHeader";
 
+export { QueueStamp, MONO_STACK, SANS_STACK } from "./QueueStamp";
+export type { QueueStampProps } from "./QueueStamp";
+
+export { EmailLinkList } from "./EmailLinkList";
+export type { EmailLinkListProps, EmailLinkListItem } from "./EmailLinkList";
+
 export * from "./emailStyles";

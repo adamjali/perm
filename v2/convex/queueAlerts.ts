@@ -33,6 +33,25 @@
  *    the SDK directly walks around it, which would make the invariant stated
  *    in convex/lib/emailBlocklist.ts false.
  *
+ * ## Multipart, not HTML-only and not text-only
+ *
+ * Both sends carry `html` AND `text`. That is a deliberate deliverability
+ * choice as much as a design one: a multipart message scores better than a
+ * text-only one and much better than an HTML-only one, and a text part is the
+ * fallback for clients that refuse HTML.
+ *
+ * Links are absolute `https://permtracker.app/...` on purpose. permtracker.app
+ * is the verified Resend sending domain with SPF, DKIM and DMARC aligned, so
+ * link domain and sending domain match. The things that actually trip filters
+ * here would be shorteners, tracking redirects through a third-party host,
+ * an image-only body, and a missing opt-out. None are present: there is no
+ * shortener, no redirect, no image at all, and the alert carries both a
+ * `List-Unsubscribe` header and a visible opt-out link.
+ *
+ * If HTML rendering ever fails, the send degrades to the text part rather than
+ * not going out. For an alert someone waited a year for, a plain-text delivery
+ * beats a missed one.
+ *
  * @module convex/queueAlerts
  */
 
@@ -45,7 +64,9 @@ import {
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { formatAsOf, formatMonth } from "../src/lib/dolFormat";
 import {
   makeUnsubscribeToken,
   verifyUnsubscribeToken,
@@ -323,6 +344,39 @@ export const clearConfirmationCooldown = internalMutation({
   },
 });
 
+/**
+ * Render a template to HTML, or return undefined and let the send go out as
+ * text only.
+ *
+ * The renderer and the templates are imported DYNAMICALLY, and that is
+ * load-bearing rather than stylistic. Convex loads a module for any function in
+ * it, and this file also holds `subscribe`, the mutation behind the
+ * unauthenticated HTTP route. A static `@react-email/render` import made every
+ * cold subscribe pay for a React renderer it never uses: measured, it pushed
+ * the "reject a long address cheaply" test from under 1s to 1.3-2.5s. The
+ * length-cap-before-regex guard was still correct; the cost was module load.
+ * `convex/supportEmail.ts` already imports the renderer this way.
+ *
+ * `render` is async and can throw. Inside the notify sweep a throw is caught by
+ * the per-subscriber handler, which correctly does NOT mark the row notified,
+ * so a template fault would leave every subscriber permanently due and silently
+ * unmailed. Degrading to the text part keeps the one alert they signed up for.
+ */
+async function renderOrTextOnly(
+  ctx: Parameters<typeof recordError>[0],
+  where: string,
+  build: () => Promise<ReactElement>,
+): Promise<string | undefined> {
+  try {
+    const { render } = await import("@react-email/render");
+    return await render(await build());
+  } catch (error) {
+    log.error("email render failed, sending text only", { where });
+    await recordError(ctx, "action", where, error);
+    return undefined;
+  }
+}
+
 /** Send the double opt-in confirmation. */
 export const sendConfirmation = internalAction({
   args: { email: v.string(), filingMonth: v.string() },
@@ -336,10 +390,28 @@ export const sendConfirmation = internalAction({
       );
       const confirmUrl = actionUrl("/queue-alert/confirm", token);
 
+      // Presentation only. `formatMonth` returns null rather than a plausible
+      // wrong month, and the raw "YYYY-MM" is still the true value, so an
+      // unparseable input degrades the label instead of inventing a date.
+      const html = await renderOrTextOnly(
+        ctx,
+        "queueAlerts.sendConfirmation.render",
+        async () => {
+          const { QueueAlertConfirm } = await import(
+            "../src/emails/QueueAlertConfirm"
+          );
+          return QueueAlertConfirm({
+            filingMonth: formatMonth(args.filingMonth) ?? args.filingMonth,
+            confirmUrl,
+          });
+        },
+      );
+
       const result = await sendEmailWithRetry(getResend(), {
         from: FROM_EMAIL,
         to: args.email,
         subject: "Confirm your PERM queue alert",
+        html,
         text: [
           "You asked to be told when the Department of Labor's PERM analyst-review queue reaches your filing month.",
           "",
@@ -594,10 +666,25 @@ export const notifyQueueReached = internalAction({
         );
         const unsubUrl = actionUrl("/queue-alert/unsubscribe", token);
 
+        const html = await renderOrTextOnly(
+          ctx,
+          "queueAlerts.notifyQueueReached.render",
+          async () => {
+            const { QueueReached } = await import("../src/emails/QueueReached");
+            return QueueReached({
+              frontierMonth: formatMonth(args.frontier) ?? args.frontier,
+              filingMonth: formatMonth(row.filingMonth) ?? row.filingMonth,
+              asOf: formatAsOf(args.asOf) ?? args.asOf,
+              unsubscribeUrl: unsubUrl,
+            });
+          },
+        );
+
         const result = await sendEmailWithRetry(getResend(), {
           from: FROM_EMAIL,
           to: row.email,
           subject: `DOL has reached ${row.filingMonth} in the PERM queue`,
+          html,
           headers: {
             "List-Unsubscribe": `<${unsubUrl}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

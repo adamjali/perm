@@ -20,8 +20,18 @@ export interface EmailButtonProps {
   children: React.ReactNode;
   /** Link URL */
   href: string;
-  /** Visual variant for urgency levels */
-  variant?: "default" | "urgent" | "warning";
+  /**
+   * Visual variant.
+   *
+   * `default` is the original black fill and is left exactly as it was, because
+   * fourteen templates render it. Note that on `default` the `4px 4px 0`
+   * shadow is the same colour as the fill, so it does not read as an offset. It
+   * reads as a ragged edge. `primary` and `outline` were added for the queue
+   * alerts and mirror the two button variants the site actually ships in
+   * `src/components/ui/button.tsx`, where the shadow contrasts with the fill and
+   * the device works.
+   */
+  variant?: "default" | "primary" | "outline" | "urgent" | "warning";
 }
 
 /**
@@ -35,12 +45,22 @@ export function EmailButton({
 }: EmailButtonProps) {
   const buttonStyle = {
     ...styles.button,
+    ...(variant === "primary" && styles.primary),
+    ...(variant === "outline" && styles.outline),
     ...(variant === "urgent" && styles.urgent),
     ...(variant === "warning" && styles.warning),
   };
 
+  // The two new variants carry ink labels on light fills, so they must opt out
+  // of the dark-mode rule that repaints `.em-cta-button` / `.em-button` for a
+  // dark ground. Their own classes pin the colours instead.
+  const className =
+    variant === "primary" || variant === "outline"
+      ? `em-button em-button-${variant}`
+      : "em-button";
+
   return (
-    <Button href={href} className="em-button" style={buttonStyle}>
+    <Button href={href} className={className} style={buttonStyle}>
       {children}
     </Button>
   );
@@ -63,6 +83,25 @@ const styles = {
     boxShadow: "4px 4px 0 #000001",
     textTransform: "uppercase" as const,
     letterSpacing: "0.05em",
+  },
+  /**
+   * The site's primary button: brand fill, ink label, ink offset.
+   *
+   * The label is ink because white on `#2ECC40` measures 2.14:1 and fails
+   * outright, while ink on the same lime is 9.82:1.
+   */
+  primary: {
+    backgroundColor: "#2ECC40",
+    color: "#000001",
+    borderColor: "#000001",
+    boxShadow: "4px 4px 0 #000001",
+  },
+  /** The site's outline button: paper fill, ink border and label, ink offset. */
+  outline: {
+    backgroundColor: "#FAFAFA",
+    color: "#000001",
+    borderColor: "#000001",
+    boxShadow: "4px 4px 0 #000001",
   },
   urgent: {
     backgroundColor: "#dc2626",

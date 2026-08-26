@@ -36,6 +36,15 @@ export interface EmailLayoutProps {
   footerText?: string;
   /** Hide "Manage notification settings" link (for auth emails) */
   hideSettingsLink?: boolean;
+  /**
+   * Extra footer content above the copyright line.
+   *
+   * Exists for list mail that has to carry its own opt-out, where the
+   * account-scoped "manage notification settings" link is meaningless. The
+   * queue alerts use it for the unsubscribe that pairs with their
+   * `List-Unsubscribe` header.
+   */
+  footerExtra?: React.ReactNode;
 }
 
 /**
@@ -113,6 +122,45 @@ const DARK_MODE_STYLES = [
   "  .em-days-overdue { color: #fca5a5 !important; }",
   // Date callout sections
   "  .em-date-callout { border-color: #52525b !important; }",
+  // Queue-alert stamp. This one must NOT invert: the block is a solid brand
+  // fill carrying an ink label, measured at 9.82:1. Inverted it becomes white
+  // on lime, which is 2.14:1 and unreadable. The off-pure #000001 is the first
+  // line of defence (clients tend to leave non-pure values alone); these rules
+  // are the second.
+  "  .qa-stamp { background-color: #2ECC40 !important; border-color: #000001 !important; }",
+  "  .qa-stamp-value { color: #000001 !important; }",
+  "  .em-link-strong { color: #fafafa !important; }",
+  // Both queue button variants carry an ink label on a light fill, so the
+  // generic .em-button dark rule above must not repaint them.
+  "  .em-button-primary { background-color: #2ECC40 !important; color: #000001 !important; border-color: #000001 !important; box-shadow: 4px 4px 0 #000001 !important; }",
+  "  .em-button-outline { background-color: #FAFAFA !important; color: #000001 !important; border-color: #000001 !important; box-shadow: 4px 4px 0 #000001 !important; }",
+  // Footer copyright, on the body rather than a card. 5.18:1.
+  "  .em-footer-muted { color: #8A8A93 !important; }",
+  // The queue emails' filing-month box sits on .em-card (#3f3f46 in dark),
+  // where the generic .em-text-secondary #a1a1aa measures 4.07:1.
+  "  .qa-yours-label { color: #B4B4BC !important; }",
+  "}",
+].join("\n");
+
+/**
+ * Narrow-viewport overrides.
+ *
+ * Measured: "September 2024" in the stamp's mono face is 287px at 34px, which
+ * clears the 448px available inside the card at 600px wide and does NOT clear
+ * the ~168px left at a 320px viewport. So the stamp is pinned to one line at
+ * desktop (see QueueStamp's `whiteSpace`) and released here, where the padding
+ * and the type both step down and a long month wraps to a second line rather
+ * than pushing the card into horizontal overflow.
+ *
+ * Outlook's Word engine ignores media queries, but Outlook desktop is never
+ * 480px wide. The clients that are, honour these.
+ */
+const RESPONSIVE_STYLES = [
+  "@media only screen and (max-width: 480px) {",
+  "  .em-container { padding: 12px !important; }",
+  "  .em-content { padding: 20px !important; }",
+  "  .qa-stamp { padding: 16px 14px !important; }",
+  "  .qa-stamp-value { font-size: 26px !important; line-height: 30px !important; white-space: normal !important; }",
   "}",
 ].join("\n");
 
@@ -126,6 +174,7 @@ export function EmailLayout({
   settingsUrl = "https://permtracker.app/settings",
   footerText,
   hideSettingsLink = false,
+  footerExtra,
 }: EmailLayoutProps) {
   return (
     <Html>
@@ -133,10 +182,11 @@ export function EmailLayout({
         <meta name="color-scheme" content="light dark" />
         <meta name="supported-color-schemes" content="light dark" />
         <style>{DARK_MODE_STYLES}</style>
+        <style>{RESPONSIVE_STYLES}</style>
       </Head>
       <Preview>{previewText}</Preview>
       <Body className="em-body" style={styles.body}>
-        <Container style={styles.container}>
+        <Container className="em-container" style={styles.container}>
           {/* Header */}
           <Section className="em-header" style={styles.header}>
             <Text style={styles.logo}>
@@ -174,7 +224,8 @@ export function EmailLayout({
                 Terms of Service
               </Link>
             </Text>
-            <Text className="em-text-muted" style={styles.copyright}>
+            {footerExtra}
+            <Text className="em-footer-muted" style={styles.copyright}>
               &copy; {new Date().getFullYear()} PERM Tracker. All rights
               reserved.
             </Text>
@@ -214,7 +265,10 @@ const styles = {
     letterSpacing: "-0.02em",
   },
   logoPerm: {
-    color: "#22c55e",
+    // The brand lime from globals.css (`--primary`). This read #22c55e, a
+    // Tailwind green that predates the token, so every email in this directory
+    // was signing off in a colour the site does not use.
+    color: "#2ECC40",
   },
   logoTracker: {
     color: "#fffffe",
@@ -230,23 +284,28 @@ const styles = {
     textAlign: "center" as const,
   },
   footerText: {
-    color: "#71717a",
+    // Measured on `.em-body` (#f4f4f5): the previous #71717a was 4.40:1, just
+    // under the floor, and the copyright's #a1a1aa was 2.33:1. These are the
+    // only footer-local styles, so this affects the footer of every template
+    // and nothing else.
+    color: "#5F5F67",
     fontSize: "12px",
     lineHeight: "18px",
     margin: "0 0 12px 0",
   },
   footerLinks: {
-    color: "#71717a",
+    color: "#5F5F67",
     fontSize: "12px",
     lineHeight: "18px",
     margin: "0 0 12px 0",
   },
   footerLink: {
-    color: "#71717a",
+    color: "#5F5F67",
     textDecoration: "underline",
   },
   copyright: {
-    color: "#a1a1aa",
+    // Quieter than the links above it (5.76:1) and still over the floor.
+    color: "#6B6B74",
     fontSize: "11px",
     lineHeight: "16px",
     margin: "0",

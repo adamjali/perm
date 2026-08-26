@@ -42,15 +42,26 @@ export type { PasswordResetCodeProps } from "./PasswordResetCode";
 export { TestEmail } from "./TestEmail";
 export type { TestEmailProps } from "./TestEmail";
 
+export { QueueAlertConfirm } from "./QueueAlertConfirm";
+export type { QueueAlertConfirmProps } from "./QueueAlertConfirm";
+
+export { QueueReached, DOL_PROCESSING_TIMES_URL } from "./QueueReached";
+export type { QueueReachedProps } from "./QueueReached";
+
 // Shared components
 export {
   EmailLayout,
   EmailButton,
   EmailHeader,
+  EmailLinkList,
+  QueueStamp,
 } from "./components";
 
 export type {
   EmailLayoutProps,
   EmailButtonProps,
   EmailHeaderProps,
+  EmailLinkListProps,
+  EmailLinkListItem,
+  QueueStampProps,
 } from "./components";

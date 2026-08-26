@@ -37,6 +37,43 @@ function stubResend(status: number) {
   return calls;
 }
 
+/**
+ * Same stub, but keeps the parsed request bodies.
+ *
+ * The send SHAPE is not visible from the return value: whether `html` went out
+ * alongside `text`, and whether the List-Unsubscribe headers survived, can only
+ * be seen in what was actually posted to Resend.
+ */
+function stubResendCapturing(status = 200) {
+  const bodies: Array<Record<string, unknown>> = [];
+  /** The send to one address. `global.fetch` is shared and CI shuffles order. */
+  const to = (email: string) => {
+    const hit = bodies.filter((b) => b.to === email);
+    if (hit.length !== 1) {
+      throw new Error(
+        `expected exactly one send to ${email}, saw ${hit.length} ` +
+          `(all recipients: ${bodies.map((b) => String(b.to)).join(", ")})`,
+      );
+    }
+    return hit[0]!;
+  };
+  global.fetch = (async (_url: unknown, init?: { body?: string }) => {
+    const body = init?.body ? JSON.parse(init.body) : {};
+    bodies.push(body);
+    if (status >= 400) {
+      return new Response(
+        JSON.stringify({ name: "validation_error", message: "stubbed failure" }),
+        { status, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    return new Response(JSON.stringify({ id: "stub" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }) as unknown as typeof fetch;
+  return { bodies, to };
+}
+
 beforeEach(() => {
   vi.stubEnv("UNSUBSCRIBE_SECRET", SECRET);
   vi.stubEnv("CONVEX_SITE_URL", "https://example.convex.site");
@@ -402,5 +439,128 @@ describe("sendConfirmation", () => {
       ctx.db.query("dolQueueAlerts").withIndex("by_email", (q) => q.eq("email", "retry@example.com")).first(),
     );
     expect(row?.lastConfirmationSentAt).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Multipart send shape
+//
+// Both sends were text-only. Adding `html` is a deliverability improvement as
+// well as a design one (multipart outscores text-only, and far outscores
+// HTML-only), so the text part staying is as load-bearing as the HTML arriving.
+// ---------------------------------------------------------------------------
+
+describe("multipart send shape", () => {
+  it("sends the confirmation as html AND text", async () => {
+    const t = createTestContext();
+    const { to } = stubResendCapturing();
+
+    await t.action(internal.queueAlerts.sendConfirmation, {
+      email: "multi@example.com",
+      filingMonth: "2025-09",
+    });
+
+    const body = to("multi@example.com");
+    expect(typeof body.html).toBe("string");
+    expect(String(body.html)).toContain("<table");
+    expect(typeof body.text).toBe("string");
+    expect(String(body.text).length).toBeGreaterThan(100);
+  });
+
+  it("sends the alert as html AND text", async () => {
+    const t = createTestContext();
+    await t.run(async (ctx) => {
+      await ctx.db.insert("dolQueueAlerts", {
+        email: "multi@example.com",
+        filingMonth: "2025-01",
+        confirmedAt: 1,
+        createdAt: Date.now(),
+      });
+    });
+    const { to } = stubResendCapturing();
+
+    await t.action(internal.queueAlerts.notifyQueueReached, {
+      frontier: "2025-09",
+      asOf: "2026-08-20",
+    });
+
+    const body = to("multi@example.com");
+    expect(typeof body.html).toBe("string");
+    expect(typeof body.text).toBe("string");
+    expect(String(body.text)).toContain("flag.dol.gov/processingtimes");
+  });
+
+  it("keeps List-Unsubscribe and List-Unsubscribe-Post on the alert", async () => {
+    const t = createTestContext();
+    await t.run(async (ctx) => {
+      await ctx.db.insert("dolQueueAlerts", {
+        email: "unsub@example.com",
+        filingMonth: "2025-01",
+        confirmedAt: 1,
+        createdAt: Date.now(),
+      });
+    });
+    const { to } = stubResendCapturing();
+
+    await t.action(internal.queueAlerts.notifyQueueReached, {
+      frontier: "2025-09",
+      asOf: "2026-08-20",
+    });
+
+    const headers = to("unsub@example.com").headers as Record<string, string>;
+    expect(headers["List-Unsubscribe"]).toMatch(/^<https:\/\/.+\/queue-alert\/unsubscribe\?token=.+>$/);
+    expect(headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
+  });
+
+  it("renders the months for a reader and keeps the raw values in the text part", async () => {
+    const t = createTestContext();
+    await t.run(async (ctx) => {
+      await ctx.db.insert("dolQueueAlerts", {
+        email: "fmt@example.com",
+        filingMonth: "2025-01",
+        confirmedAt: 1,
+        createdAt: Date.now(),
+      });
+    });
+    const { to } = stubResendCapturing();
+
+    await t.action(internal.queueAlerts.notifyQueueReached, {
+      frontier: "2025-09",
+      asOf: "2026-08-20",
+    });
+
+    const body = to("fmt@example.com");
+    expect(String(body.html)).toContain("September 2025");
+    expect(String(body.html)).toContain("January 2025");
+    expect(String(body.html)).toContain("August 20, 2026");
+    // The text part is unchanged and still carries DOL's raw published values.
+    expect(String(body.text)).toContain("2025-09");
+  });
+
+  it("every link in the alert html is absolute and on a host we control or cite", async () => {
+    const t = createTestContext();
+    await t.run(async (ctx) => {
+      await ctx.db.insert("dolQueueAlerts", {
+        email: "links@example.com",
+        filingMonth: "2025-01",
+        confirmedAt: 1,
+        createdAt: Date.now(),
+      });
+    });
+    const { to } = stubResendCapturing();
+
+    await t.action(internal.queueAlerts.notifyQueueReached, {
+      frontier: "2025-09",
+      asOf: "2026-08-20",
+    });
+
+    const html = String(to("links@example.com").html);
+    const found = [...html.matchAll(/href="([^"]*)"/g)].map((m) => m[1] as string);
+    expect(found.length).toBeGreaterThan(4);
+    const allowed = new Set(["permtracker.app", "flag.dol.gov", "example.convex.site"]);
+    for (const h of found) {
+      expect(h).toMatch(/^https:\/\//);
+      expect(allowed, h).toContain(new URL(h).host);
+    }
   });
 });
