@@ -1,0 +1,63 @@
+name: PERM queue month stats
+
+# Per-filing-month PERM queue counts INCLUDING pending cases, which DOL's own
+# disclosure files cannot provide - every record in those carries a decision
+# date, so a pending count is not derivable from them at any effort.
+#
+# DAILY, because the pending counts move daily as DOL decides cases. That is
+# the whole value: a queue position computed from a month-old pending count is
+# a month wrong.
+#
+# THIS IS THE ONE INGEST WITH AN EXTERNAL DEPENDENCY, and it is written to
+# fail softly for that reason. It mirrors published aggregates from a third
+# party (35 requests, spaced 0.6s, aggregates rather than rows). If that
+# source changes shape, rate-limits us, or disappears:
+#   - the script skips a month rather than aborting, and only exits non-zero
+#     if it stored NOTHING at all;
+#   - the previous day's rows stay in place, so pages keep rendering real
+#     numbers with their own as-of date rather than emptying out;
+#   - continue-on-error keeps a bad upstream day from reading as our failure.
+# The durable replacement is applicants registering their own case numbers
+# with us, which owes nobody anything.
+#
+# Manual run:
+#   cd v2 && python3 scripts/ingest_month_stats.py
+
+on:
+  schedule:
+    - cron: "30 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: queue-stats-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch and store month stats
+        continue-on-error: true
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          python3 scripts/ingest_month_stats.py
+
+      - name: Remove credentials
+        if: always()
+        working-directory: v2
+        run: rm -f .env.local
