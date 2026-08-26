@@ -575,3 +575,158 @@ export async function getI485Trend(): Promise<{ asOf: string; total: number }[]>
   );
   return r.map((x) => ({ asOf: x.as_of, total: Number(x.total) || 0 }));
 }
+
+/**
+ * Every published cell in the newest release, keyed by country and category.
+ *
+ * `getI485Position` answers one question per query, which is the right shape
+ * for a server caller. The calculator page needs a different shape: four
+ * selects, each of which would otherwise be a database round-trip and a
+ * pending state on a figure that ought to be instant. So the page takes the
+ * whole table once and computes in the browser, exactly as every other
+ * calculator in the suite takes its dataset as a prop.
+ *
+ * It is affordable because the release is small: 2,424 grouped cells, 38 KB
+ * of JSON, about 6 KB over the wire once compressed.
+ *
+ * The two statuses USCIS reports, `awaiting availability` and `available`,
+ * are summed here. Both are pending and both sit ahead of a later priority
+ * date, which is the same rule `getI485Position` applies.
+ *
+ * Shape is `[year, month, count, suppressed]` with year 0 for the "Prior
+ * Years" column, which keeps it compact and lets it sort ahead of every real
+ * year without special handling. `src/lib/i485/position.ts` consumes it.
+ */
+export async function getI485Cells(): Promise<Record<string, [number, number, number, number][]>> {
+  const r = await rows<{
+    country: string;
+    category: string;
+    pd_year: string;
+    pd_month: number;
+    c: number;
+    s: number;
+  }>(
+    `SELECT country, category, pd_year, pd_month,
+            coalesce(sum(count), 0) AS c, coalesce(sum(suppressed), 0) AS s
+       FROM i485_inventory
+      WHERE as_of = (SELECT max(as_of) FROM i485_inventory)
+      GROUP BY country, category, pd_year, pd_month
+      ORDER BY country, category,
+               (CASE WHEN pd_year = 'prior' THEN 0 ELSE CAST(pd_year AS INTEGER) END),
+               pd_month`,
+  );
+  const out: Record<string, [number, number, number, number][]> = {};
+  for (const x of r) {
+    const key = `${x.country}|${x.category}`;
+    (out[key] ??= []).push([
+      x.pd_year === "prior" ? 0 : Number(x.pd_year),
+      Number(x.pd_month),
+      Number(x.c) || 0,
+      Number(x.s) || 0,
+    ]);
+  }
+  return out;
+}
+
+export interface MonthQueueStat {
+  filingMonth: string;
+  total: number;
+  pending: number;
+  decided: number;
+  analystReview: number;
+  rfiIssued: number;
+  auditResponse: number;
+  appeals: number;
+  /** decided / total, 0-100. Null when the month holds nothing. */
+  decidedPct: number | null;
+}
+
+export interface QueueAhead {
+  /** Pending cases filed BEFORE the given month. */
+  ahead: number;
+  /** Pending cases in the same filing month. */
+  sameMonth: number;
+  /** Every month's progress, oldest first. */
+  months: MonthQueueStat[];
+  /** The subject month's own row, when we hold one. */
+  subject: MonthQueueStat | null;
+  /** Months DOL is visibly working: some decided, not yet finished. */
+  activeRange: { from: string; to: string } | null;
+  source: string;
+}
+
+function toMonthStat(r: Record<string, unknown>): MonthQueueStat {
+  const total = Number(r.total) || 0;
+  const decided = Number(r.decided) || 0;
+  return {
+    filingMonth: String(r.filing_month),
+    total,
+    pending: Number(r.pending) || 0,
+    decided,
+    analystReview: Number(r.analyst_review) || 0,
+    rfiIssued: Number(r.rfi_issued) || 0,
+    auditResponse: Number(r.audit_response) || 0,
+    appeals: Number(r.appeals) || 0,
+    decidedPct: total > 0 ? (decided / total) * 100 : null,
+  };
+}
+
+/**
+ * How much of the PERM queue sits in front of a given filing month.
+ *
+ * THIS IS THE ONE THING DOL'S OWN FILES CANNOT ANSWER. The quarterly
+ * disclosure release contains no pending rows - every record carries a
+ * decision date - so a pending count cannot be derived from it at any level
+ * of effort. These counts come from per-case status, mirrored with
+ * attribution; `source` is carried through to the page rather than kept in a
+ * footnote.
+ *
+ * "Ahead" counts PENDING cases only. A decided case in an earlier month is
+ * no longer in front of anyone, and counting it would inflate the number in
+ * exactly the direction that flatters a wait estimate.
+ */
+export async function getQueueAhead(filingMonth: string): Promise<QueueAhead | null> {
+  const all = await rows<Record<string, unknown>>(
+    `SELECT filing_month, total, pending, decided, analyst_review, rfi_issued,
+            audit_response, appeals, source
+       FROM perm_month_stats ORDER BY filing_month`,
+  );
+  if (all.length === 0) return null;
+
+  const months = all.map(toMonthStat);
+  const ahead = months
+    .filter((m) => m.filingMonth < filingMonth)
+    .reduce((n, m) => n + m.pending, 0);
+  const subject = months.find((m) => m.filingMonth === filingMonth) ?? null;
+
+  // The band DOL is visibly working: months that have started but are not
+  // finished. A month at 0% has not been reached; one at ~100% is done.
+  const working = months.filter(
+    (m) => m.decidedPct !== null && m.decidedPct > 0.5 && m.decidedPct < 99,
+  );
+  const activeRange = working.length
+    ? {
+        from: working[0]!.filingMonth,
+        to: working[working.length - 1]!.filingMonth,
+      }
+    : null;
+
+  return {
+    ahead,
+    sameMonth: subject?.pending ?? 0,
+    months,
+    subject,
+    activeRange,
+    source: String(all[0]?.source ?? ""),
+  };
+}
+
+/** Every month's queue progress, for the bar chart. */
+export async function getMonthQueueStats(): Promise<MonthQueueStat[]> {
+  const r = await rows<Record<string, unknown>>(
+    `SELECT filing_month, total, pending, decided, analyst_review, rfi_issued,
+            audit_response, appeals
+       FROM perm_month_stats ORDER BY filing_month`,
+  );
+  return r.map(toMonthStat);
+}
