@@ -451,6 +451,40 @@ build; it needs one uninterrupted pass.
 
 ---
 
+## One cookie read in the root layout made the ENTIRE site dynamic (2026-08-26)
+
+`ConvexAuthNextjsServerProvider` wrapped the root `src/app/layout.tsx`. It reads
+the session cookies, and **a cookie read in the root layout opts every route in
+the app out of static rendering** - including a public marketing page that never
+mentions auth.
+
+**Measured on the live site before the fix:** every public page served
+`cache-control: private, no-cache, no-store`, `x-vercel-cache: MISS` on every
+request, and the build's route table was `ƒ` end to end. `export const revalidate`
+was set correctly on those pages and was being silently ignored, because a
+dynamic route has nothing to revalidate.
+
+**It explained three separate open bugs at once**, which is why it went
+undiagnosed for so long - each looked like its own problem:
+- **"Blank white page instead of the preloader" on first navigation.** No HTML
+  existed yet; the browser was waiting on a server render. No curtain can paint
+  before the document does. Four earlier preloader fixes were all aimed at the
+  wrong layer.
+- **Vercel Fluid CPU at 77% of the plan cap.** Every visit paid a full server
+  render plus its Turso queries.
+- **"ISR isn't working"** despite `revalidate` being set on every data page.
+
+**The fix is scope, not configuration.** Convex Auth's own docs say to wrap
+"the parts of your app that interact with Convex functions" - the provider now
+wraps `(site)/(auth)` and `(authenticated)` only. Verified by the route table
+flipping to `○` with 1d revalidation across the public tree, and on the deployed
+site by `x-vercel-cache: PRERENDER` then `HIT`.
+
+**The general rule: anything in the root layout that reads cookies, headers, or
+`searchParams` makes the whole app dynamic.** Check the built route table for
+`ƒ` on pages that should be static, and check `cache-control` on the deployed
+site - a page that should be prerendered and says `no-store` is the tell.
+
 ## Next 16 renamed middleware to proxy, and the export counts too
 
 `src/middleware.ts` became `src/proxy.ts` and `export default` became a named
