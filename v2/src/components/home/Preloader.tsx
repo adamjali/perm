@@ -243,6 +243,10 @@ export const PRELOADER_BOOT = `
     d.addEventListener('visibilitychange',function f(){
       if(d.visibilityState!=='visible')return;
       d.removeEventListener('visibilitychange',f);
+      // Loaded while hidden (a background tab, cmd+click): by the time it is
+      // revealed the page is already painted, so raising the curtain now
+      // flashes it over ready content - the "mini glitch". Nothing to cover.
+      if(d.readyState!=='loading'){ev('visible; already loaded, no curtain');return;}
       ev('became visible');start();
     });
   }else{
