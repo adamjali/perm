@@ -160,8 +160,28 @@ def row_fingerprint(row: tuple) -> str:
     instead of four minutes.
     """
     import hashlib
-    return hashlib.blake2b("\x1f".join("" if v is None else str(v) for v in row[1:]).encode(),
+    return hashlib.blake2b("\x1f".join(_canon(v) for v in row[1:]).encode(),
                            digest_size=8).hexdigest()
+
+
+def _canon(v) -> str:
+    """One spelling per value, whichever side it came from.
+
+    SQLite stores `wage` as REAL, so a value written as the integer 93205
+    comes back as 93205.0. Comparing str() of the two marks every waged row
+    as changed - which is exactly what the first run of this did: it read all
+    373,939 fingerprints correctly and then rewrote the table anyway. Both
+    sides go through here so the comparison is about the VALUE, not about
+    which type the storage layer happened to choose.
+    """
+    if v is None or v == "":
+        return ""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return str(v)
+    # 93205.0 and 93205 must produce the same string; 1.5 must survive.
+    return str(int(f)) if f == int(f) else repr(f)
 
 
 def existing_fingerprints(db: Turso) -> dict[str, str]:
