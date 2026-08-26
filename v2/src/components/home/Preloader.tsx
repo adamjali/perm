@@ -132,65 +132,102 @@ export const PRELOADER_BOOT = `
 (function(){
   var d=document,h=d.documentElement;
   // Runs from <head>, so it fires on EVERY route and has to exclude itself.
-  // The curtain is a home-page device; the rest of the site has no .pre
-  // markup and an attribute set there would lock scroll over nothing.
-  //
-  // Soft navigations never reach this line at all (no new document), which
-  // is what HomeCurtainNav exists to cover.
   if(location.pathname!=='/')return;
-  h.setAttribute('data-pre','on');
-  var done=false;
-  var t0=Date.now();
-  function leave(){
-    if(done)return;
-    // Hold to the floor rather than dropping the request: a fast load must
-    // still SHOW the curtain, and re-entering leave() later is idempotent.
-    var waited=Date.now()-t0;
-    if(waited<${MIN_MS}){setTimeout(leave,${MIN_MS}-waited);return}
-    done=true;
-    var el=d.querySelector('.pre');
-    if(el)el.classList.add('pre-leave');
-    setTimeout(function(){
-      h.setAttribute('data-pre','off');
-      if(el&&el.parentNode)el.parentNode.removeChild(el);
-    },${EXIT_MS});
+  // Escape hatch for tooling (headless shots, audits): ?nopre=1 shows no
+  // curtain at all. The hide gate is :not([data-pre="on"]), so never setting
+  // the attribute is a complete, safe opt-out.
+  if(location.search.indexOf('nopre=1')>-1)return;
+
+  // Always-on flight recorder, ~zero cost. Read it from the console as
+  // window.__ptCurtain.events, or add ?prediag=1 to render it on the page.
+  var EV=[],T0=Date.now();
+  function ev(n){EV.push((Date.now()-T0)+'ms '+n)}
+  window.__ptCurtain={events:EV};
+  ev('parse rs='+d.readyState+' prerendering='+!!d.prerendering+' vis='+d.visibilityState);
+
+  function start(){
+    var t0=Date.now();
+    ev('start');
+    h.setAttribute('data-pre','on');
+    var done=false;
+    function leave(){
+      if(done)return;
+      var waited=Date.now()-t0;
+      if(waited<${MIN_MS}){setTimeout(leave,${MIN_MS}-waited);return}
+      done=true;
+      ev('leave after '+waited+'ms');
+      exit();
+    }
+    function leaveNow(){
+      // Bypasses the floor: someone already clicking or scrolling has stopped
+      // waiting for a load state.
+      if(done)return; done=true;
+      ev('leaveNow (interaction)');
+      exit();
+    }
+    function exit(){
+      var el=d.querySelector('.pre');
+      if(el)el.classList.add('pre-leave');
+      setTimeout(function(){
+        h.setAttribute('data-pre','off');
+        if(el&&el.parentNode)el.parentNode.removeChild(el);
+        diag();
+      },${EXIT_MS});
+    }
+    var cap=setTimeout(leave,${CAP_MS});
+    ['click','keydown','wheel','touchstart','pointerdown'].forEach(function(t){
+      addEventListener(t,leaveNow,{once:true,capture:true,passive:true});
+    });
+    addEventListener('pagehide',leaveNow,{once:true});
+    function ready(){
+      clearTimeout(cap);
+      var fonts=(d.fonts&&d.fonts.ready)?d.fonts.ready:Promise.resolve();
+      Promise.race([fonts,new Promise(function(r){setTimeout(r,600)})]).then(leave,leave);
+    }
+    if(d.readyState==='complete')ready();
+    else addEventListener('load',function(){ev('window.load');ready()},{once:true});
   }
-  var cap=setTimeout(leave,${CAP_MS});
-  // ANY interaction dismisses it. Two reasons, both real bugs before this.
+
+  function diag(){
+    if(location.search.indexOf('prediag=1')<0)return;
+    try{
+      var nav=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];
+      if(nav)EV.push('activationStart='+Math.round(nav.activationStart||0));
+      var o=d.createElement('pre');
+      o.style.cssText='position:fixed;left:8px;bottom:8px;z-index:9999;background:#000;color:#2ECC40;font:11px/1.5 monospace;padding:10px 12px;max-width:92vw;overflow:auto;border:2px solid #2ECC40;margin:0';
+      o.textContent='curtain timeline\\n'+EV.join('\\n');
+      d.body.appendChild(o);
+    }catch(e){}
+  }
+
+  // THE WHOLE BUG, verified against Chrome's own docs. Typing a
+  // high-confidence URL into the address bar PRERENDERS the page: the full
+  // document loads and scripts execute invisibly, before the tab exists to
+  // the user. This script ran, the curtain showed and dismissed with nobody
+  // watching, and activation revealed a page with no curtain - plus the
+  // hydration entrance animations replaying uncovered, which is the reported
+  // "everything loads twice" stutter. permtracker is typed daily, so it IS
+  // the high-confidence case; the ~/money sites never get typed, never get
+  // prerendered, and therefore "are perfect".
   //
-  // The pathname gate above is evaluated ONCE, at parse time. A visitor who
-  // clicks a link on the home page before the curtain lifts carries
-  // data-pre="on" with them, so the full-viewport cover AND the scroll lock
-  // land on /signup, where there is no .pre markup to animate out. The page
-  // underneath is fine and completely hidden, which is exactly the reported
-  // "loads forever, have to refresh".
-  //
-  // And independently: a curtain that ignores someone who is already trying
-  // to use the page is not a load state, it is an obstacle. leave() is
-  // idempotent, so firing it early costs nothing.
-  function leaveNow(){
-    // Deliberately bypasses MIN_MS. Someone who is already clicking or
-    // scrolling has stopped waiting for a load state, and holding a curtain
-    // over a page they are trying to use is an obstacle, not a flourish.
-    if(done)return; done=true;
-    var el=d.querySelector('.pre');
-    if(el)el.classList.add('pre-leave');
-    setTimeout(function(){
-      h.setAttribute('data-pre','off');
-      if(el&&el.parentNode)el.parentNode.removeChild(el);
-    },${EXIT_MS});
+  // document.prerendering is true during that phase, and prerenderingchange
+  // fires exactly at activation - the first moment a human can see the page.
+  // The same reasoning covers a tab opened in the background: defer to the
+  // first visibilitychange. (This also means the always-hidden automation
+  // tab never arms the curtain, which is correct for screenshots.)
+  if(d.prerendering){
+    ev('deferring: prerendering');
+    d.addEventListener('prerenderingchange',function(){ev('activated');start()},{once:true});
+  }else if(d.visibilityState==='hidden'){
+    ev('deferring: hidden tab');
+    d.addEventListener('visibilitychange',function f(){
+      if(d.visibilityState!=='visible')return;
+      d.removeEventListener('visibilitychange',f);
+      ev('became visible');start();
+    });
+  }else{
+    start();
   }
-  ['click','keydown','wheel','touchstart','pointerdown'].forEach(function(t){
-    addEventListener(t,leaveNow,{once:true,capture:true,passive:true});
-  });
-  addEventListener('pagehide',leaveNow,{once:true});
-  function ready(){
-    clearTimeout(cap);
-    var fonts=(d.fonts&&d.fonts.ready)?d.fonts.ready:Promise.resolve();
-    Promise.race([fonts,new Promise(function(r){setTimeout(r,600)})]).then(leave,leave);
-  }
-  if(d.readyState==='complete')ready();
-  else addEventListener('load',ready,{once:true});
 })();
 `;
 
