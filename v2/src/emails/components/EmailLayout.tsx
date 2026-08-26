@@ -57,6 +57,22 @@ export interface EmailLayoutProps {
  */
 const DARK_MODE_STYLES = [
   ":root { color-scheme: light dark; supported-color-schemes: light dark; }",
+  /*
+   * The page background lives on this class in BOTH themes, and must not also
+   * be set inline on <Body>.
+   *
+   * `@react-email/body@0.3.0` renders `<body {...props} style={bodyStyle}>`
+   * wrapping a table whose single `<td>` receives the FULL `style` object and
+   * NO className. So an inline `backgroundColor` is copied onto that unclassed
+   * `<td>`, which paints across the whole width on top of the body. The dark
+   * `.em-body` rule then repaints an element nobody can see, and every footer
+   * node keeps resolving against the light inline value: measured at 1.34,
+   * 2.33 and 3.11:1 while the greys themselves were correct for #18181b.
+   *
+   * Setting it here instead leaves the `<td>` transparent, so the body's own
+   * background shows through and one class drives both themes.
+   */
+  ".em-body { background-color: #f4f4f5; }",
   "@media (prefers-color-scheme: dark) {",
   // Layout
   "  .em-body { background-color: #18181b !important; }",
@@ -127,13 +143,20 @@ const DARK_MODE_STYLES = [
   // on lime, which is 2.14:1 and unreadable. The off-pure #000001 is the first
   // line of defence (clients tend to leave non-pure values alone); these rules
   // are the second.
-  "  .qa-stamp { background-color: #2ECC40 !important; border-color: #000001 !important; }",
+  /*
+   * The hard offset is the brand device, and in dark mode it disappeared:
+   * ink #000001 against the dark card #27272a measures 1.41:1. #78787E is
+   * 3.39:1, clear of the 3:1 non-text floor, and still reads as a cast shadow
+   * rather than a second border. The FILL stays lime with an ink label, which
+   * must not invert (ink on lime 9.82:1, white on lime 2.14:1).
+   */
+  "  .qa-stamp { background-color: #2ECC40 !important; border-color: #000001 !important; box-shadow: 6px 6px 0 #78787E !important; }",
   "  .qa-stamp-value { color: #000001 !important; }",
   "  .em-link-strong { color: #fafafa !important; }",
   // Both queue button variants carry an ink label on a light fill, so the
   // generic .em-button dark rule above must not repaint them.
-  "  .em-button-primary { background-color: #2ECC40 !important; color: #000001 !important; border-color: #000001 !important; box-shadow: 4px 4px 0 #000001 !important; }",
-  "  .em-button-outline { background-color: #FAFAFA !important; color: #000001 !important; border-color: #000001 !important; box-shadow: 4px 4px 0 #000001 !important; }",
+  "  .em-button-primary { background-color: #2ECC40 !important; color: #000001 !important; border-color: #000001 !important; box-shadow: 4px 4px 0 #78787E !important; }",
+  "  .em-button-outline { background-color: #FAFAFA !important; color: #000001 !important; border-color: #000001 !important; box-shadow: 4px 4px 0 #78787E !important; }",
   // Footer copyright, on the body rather than a card. 5.18:1.
   "  .em-footer-muted { color: #8A8A93 !important; }",
   // The queue emails' filing-month box sits on .em-card (#3f3f46 in dark),
@@ -156,11 +179,32 @@ const DARK_MODE_STYLES = [
  * 480px wide. The clients that are, honour these.
  */
 const RESPONSIVE_STYLES = [
-  "@media only screen and (max-width: 480px) {",
+  /*
+   * 350px, not 480px.
+   *
+   * The step-down exists for viewports too narrow to fit the stamp on one
+   * line. At 480 it fired on every modern phone (390-430px CSS), shipping a
+   * 26px stamp and a narrower card to devices with room for the full 34px one.
+   * Measured: the widest month is 287px in the worst-case fallback face, and a
+   * 390px viewport leaves 390 - 40 - 64 - 48 = 238px... which it does not fit,
+   * so the release below is what handles it: the month wraps at full size
+   * rather than shrinking the whole card. Only genuinely tiny screens get the
+   * padding and type step-down.
+   */
+  "@media only screen and (max-width: 350px) {",
   "  .em-container { padding: 12px !important; }",
   "  .em-content { padding: 20px !important; }",
   "  .qa-stamp { padding: 16px 14px !important; }",
-  "  .qa-stamp-value { font-size: 26px !important; line-height: 30px !important; white-space: normal !important; }",
+  "  .qa-stamp-value { font-size: 26px !important; line-height: 30px !important; }",
+  "}",
+  /*
+   * Releasing the one-line pin is a SEPARATE, wider breakpoint from the size
+   * step-down. A 390px phone has ~238px of stamp interior against a 287px
+   * month, so it must be allowed to wrap; it does not need smaller type or a
+   * tighter card to do that.
+   */
+  "@media only screen and (max-width: 600px) {",
+  "  .qa-stamp-value { white-space: normal !important; }",
   "}",
 ].join("\n");
 
@@ -242,7 +286,9 @@ export function EmailLayout({
  */
 const styles = {
   body: {
-    backgroundColor: "#f4f4f5",
+    // Deliberately no `backgroundColor`. See the .em-body note above: an inline
+    // value here is copied onto an unclassed <td> that paints over the body and
+    // defeats the dark-mode rule entirely.
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     margin: "0",
@@ -296,12 +342,29 @@ const styles = {
   footerLinks: {
     color: "#5F5F67",
     fontSize: "12px",
-    lineHeight: "18px",
-    margin: "0 0 12px 0",
+    // 44px line box, so each link below reaches the tap-target floor without
+    // the row growing taller than the padding it already had.
+    lineHeight: "44px",
+    margin: "0 0 4px 0",
   },
   footerLink: {
     color: "#5F5F67",
     textDecoration: "underline",
+    /*
+     * Measured at an 18px box with a 9.8px gap to its neighbour, which misses
+     * the 44px house floor AND WCAG 2.5.8's 24px spacing exception on the
+     * horizontal axis. These sit three-to-a-row separated by a pipe, so they
+     * are a genuine cluster of adjacent targets rather than links inside a
+     * sentence.
+     *
+     * `inline-block` is what puts the padding inside the hit box: the hit area
+     * of an inline non-replaced element follows its font-size-derived content
+     * box, so a taller line-height alone would look bigger and still be 18px
+     * to a thumb. 13px top and bottom takes the box to 44px; 10px each side
+     * takes the horizontal pitch past 24px.
+     */
+    display: "inline-block",
+    padding: "13px 10px",
   },
   copyright: {
     // Quieter than the links above it (5.76:1) and still over the floor.

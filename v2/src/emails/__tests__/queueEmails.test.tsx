@@ -26,10 +26,23 @@ const confirmProps = {
   confirmUrl: CONFIRM_URL,
 };
 
+/** The ordinary case: DOL has run past this subscriber's month. */
 const alertProps = {
   frontierMonth: "November 2024",
   filingMonth: "September 2024",
   asOf: "August 20, 2026",
+  monthsPast: 2,
+  paceLine: "DOL\u2019s queue has moved 3 months over the last 6 months.",
+  unsubscribeUrl: UNSUB_URL,
+};
+
+/** The exact-landing case, where a second month block would say nothing. */
+const alertPropsEqual = {
+  frontierMonth: "September 2024",
+  filingMonth: "September 2024",
+  asOf: "August 20, 2026",
+  monthsPast: 0,
+  paceLine: null,
   unsubscribeUrl: UNSUB_URL,
 };
 
@@ -293,11 +306,101 @@ describe("queue email templates", () => {
 
     it("keeps every standalone control at or above 44px", async () => {
       const { confirm, alert } = await renderBoth();
-      // The link-list rows: 20px line box plus 13px padding each side.
+      // The alert's link-list rows: 20px line box plus 13px padding each side.
+      // The confirm email has no link list by design, so it is checked for the
+      // footer links instead, which are the only standalone controls it has
+      // besides the button.
+      expect(alert).toMatch(/padding-top:13px/);
+      expect(alert).toMatch(/padding-bottom:13px/);
       for (const html of [confirm, alert]) {
-        expect(html).toMatch(/padding-top:13px/);
-        expect(html).toMatch(/padding-bottom:13px/);
+        expect(html, "footer links must be inline-block with padding").toMatch(
+          /display:inline-block;padding:13px 10px/,
+        );
       }
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The two cases the alert must not confuse
+// ---------------------------------------------------------------------------
+
+describe("alert: frontier past the filing month vs landed on it", () => {
+  it("does not claim the case is being adjudicated once DOL has moved past", async () => {
+    const html = await render(QueueReached(alertProps));
+    const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    // The sentence that was false for every subscriber DOL had run past.
+    expect(text).not.toMatch(/adjudicating cases filed/);
+    expect(text).toMatch(/worked past September 2024 and is now on November 2024/);
+  });
+
+  it("does claim it when DOL landed exactly on the month", async () => {
+    const html = await render(QueueReached(alertPropsEqual));
+    const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    expect(text).toMatch(/adjudicating cases filed in September 2024/);
+  });
+
+  it("drops the second month block when the months are the same", async () => {
+    const equal = await render(QueueReached(alertPropsEqual));
+    const past = await render(QueueReached(alertProps));
+    expect(equal).not.toContain("Your filing month");
+    expect(past).toContain("Your filing month");
+  });
+
+  it("keeps the disclaimer in both cases", async () => {
+    for (const props of [alertProps, alertPropsEqual]) {
+      const text = (await render(QueueReached(props))).replace(/<[^>]+>/g, " ");
+      expect(text).toMatch(/n(\u2019|&rsquo;|')t a decision on your case/);
+      expect(text).toMatch(/n(\u2019|&rsquo;|')t a prediction of one/);
+    }
+  });
+});
+
+describe("alert: the measured pace line", () => {
+  it("states a measured rate when one is supplied", async () => {
+    const html = await render(QueueReached(alertProps));
+    expect(html).toContain("moved 3 months over the last 6 months");
+  });
+
+  it("renders nothing when there is no measurement", async () => {
+    const html = await render(QueueReached(alertPropsEqual));
+    expect(html).not.toMatch(/queue has moved/);
+  });
+
+  it("never turns the rate into a date for this reader", async () => {
+    const text = (await render(QueueReached(alertProps))).replace(/<[^>]+>/g, " ");
+    expect(text).not.toMatch(/you(\u2019|')?ll be reached/i);
+    expect(text).not.toMatch(/expect(ed)? (a )?(decision|approval)/i);
+    expect(text).not.toMatch(/\b(by|around) (January|February|March|April|May|June|July|August|September|October|November|December)\b/);
+  });
+});
+
+describe("confirm: one job", () => {
+  it("carries no onward links, only the confirm action", async () => {
+    const html = await render(QueueAlertConfirm(confirmProps));
+    const site = hrefs(html).filter((h) => h.startsWith("https://permtracker.app"));
+    // Privacy, terms and "Open PERM Tracker" are the shared footer. What must
+    // not be here is a content link competing with the confirm button.
+    expect(site.filter((h) => /perm-processing-times|tools\//.test(h))).toEqual([]);
+    expect(hrefs(html)).toContain(CONFIRM_URL);
+  });
+});
+
+describe("typography", () => {
+  it("uses one apostrophe, the curly one, everywhere", async () => {
+    const { confirm, alert } = await renderBoth();
+    for (const [name, html] of [["confirm", confirm], ["alert", alert]] as const) {
+      const visible = html.replace(/<[^>]+>/g, " ");
+      // A straight apostrophe between letters is the defect: the body copy
+      // rendered curly while the template literals in props rendered straight,
+      // so one email carried both.
+      const straight = visible.match(/[A-Za-z]'[A-Za-z]/g) ?? [];
+      expect(straight, `${name} mixes apostrophes: ${straight.join(", ")}`).toEqual([]);
+    }
+  });
+
+  it("PROBE: the apostrophe gate matches a straight one and not a curly one", () => {
+    expect(/[A-Za-z]'[A-Za-z]/.test("DOL's queue")).toBe(true);
+    expect(/[A-Za-z]'[A-Za-z]/.test("DOL\u2019s queue")).toBe(false);
   });
 });

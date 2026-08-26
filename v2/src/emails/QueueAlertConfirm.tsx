@@ -2,7 +2,12 @@
  * Double opt-in confirmation for a DOL queue alert.
  *
  * One job: get one click. Everything else on the page is subordinate to the
- * confirm button.
+ * confirm button, which is why this email carries NO onward links at all.
+ *
+ * It used to ship an "Also on PERM Tracker" list of two. Both of them lead out
+ * of an opt-in the reader has not completed, and a confirmation is the one
+ * email in the set with a conversion rate to protect. The links are not lost:
+ * every one of them is in the alert this confirms.
  *
  * The stamp shows the month the reader typed, not a figure of ours. That is the
  * one piece of real work this email does beyond the button: a mistyped month
@@ -13,7 +18,7 @@
  */
 
 import { Section, Text } from "@react-email/components";
-import { EmailButton, EmailLayout, EmailLinkList, QueueStamp } from "./components";
+import { EmailButton, EmailLayout, QueueStamp } from "./components";
 import { SANS_STACK } from "./components/QueueStamp";
 
 export interface QueueAlertConfirmProps {
@@ -29,9 +34,9 @@ export function QueueAlertConfirm({
 }: QueueAlertConfirmProps) {
   return (
     <EmailLayout
-      previewText={`Confirm and we'll email you once, on the day DOL reaches ${filingMonth}.`}
+      previewText={`Confirm and we’ll email you once, on the day DOL reaches ${filingMonth}.`}
       hideSettingsLink
-      footerText={`This address was entered to be told when the Department of Labor's PERM queue reaches a filing month. It isn't confirmed yet, so nothing else will be sent.`}
+      footerText={`This address was entered to be told when the Department of Labor’s PERM queue reaches a filing month. It isn’t confirmed yet, so nothing else will be sent.`}
     >
       <QueueStamp eyebrow="Your filing month" month={filingMonth} />
 
@@ -50,20 +55,6 @@ export function QueueAlertConfirm({
       <Text className="em-text-secondary" style={styles.note}>
         If you didn&rsquo;t ask for this, ignore it. Nothing will be sent.
       </Text>
-
-      <EmailLinkList
-        label="Also on PERM Tracker"
-        items={[
-          {
-            href: "https://permtracker.app/perm-processing-times",
-            text: "Where DOL’s queue stands right now",
-          },
-          {
-            href: "https://permtracker.app/tools/perm-timeline-calculator",
-            text: "The deadlines on your side of the process",
-          },
-        ]}
-      />
     </EmailLayout>
   );
 }

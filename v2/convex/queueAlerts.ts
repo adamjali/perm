@@ -62,11 +62,12 @@ import {
   internalQuery,
   type MutationCtx,
 } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
-import { formatAsOf, formatMonth } from "../src/lib/dolFormat";
+import { formatAsOf, formatMonth, monthsMoved } from "../src/lib/dolFormat";
+import { measureQueuePace, paceSentence } from "../src/lib/queuePace";
 import {
   makeUnsubscribeToken,
   verifyUnsubscribeToken,
@@ -393,6 +394,10 @@ export const sendConfirmation = internalAction({
       // Presentation only. `formatMonth` returns null rather than a plausible
       // wrong month, and the raw "YYYY-MM" is still the true value, so an
       // unparseable input degrades the label instead of inventing a date.
+      // Formatted ONCE here, then used by the HTML, the text part and the
+      // subject alike, so no reader can be shown "2025-09" by one of them.
+      const filingLabel = formatMonth(args.filingMonth) ?? args.filingMonth;
+
       const html = await renderOrTextOnly(
         ctx,
         "queueAlerts.sendConfirmation.render",
@@ -400,10 +405,7 @@ export const sendConfirmation = internalAction({
           const { QueueAlertConfirm } = await import(
             "../src/emails/QueueAlertConfirm"
           );
-          return QueueAlertConfirm({
-            filingMonth: formatMonth(args.filingMonth) ?? args.filingMonth,
-            confirmUrl,
-          });
+          return QueueAlertConfirm({ filingMonth: filingLabel, confirmUrl });
         },
       );
 
@@ -415,7 +417,7 @@ export const sendConfirmation = internalAction({
         text: [
           "You asked to be told when the Department of Labor's PERM analyst-review queue reaches your filing month.",
           "",
-          `Filing month: ${args.filingMonth}`,
+          `Filing month: ${filingLabel}`,
           "",
           "Confirm here and we'll email you once, on the day it happens:",
           confirmUrl,
@@ -657,6 +659,28 @@ export const notifyQueueReached = internalAction({
     let sent = 0;
     let failed = 0;
 
+    // Formatted ONCE for the whole sweep, then used by the subject, the text
+    // part and the HTML props alike. The subject line is the one string every
+    // recipient sees in their inbox, and it used to render DOL's raw
+    // "2024-09". It now names the same figure the stamp does, so the inbox and
+    // the email agree.
+    const frontierLabel = formatMonth(args.frontier) ?? args.frontier;
+    const asOfLabel = formatAsOf(args.asOf) ?? args.asOf;
+
+    // Arithmetic on two figures DOL published, or null. Never a projection:
+    // see src/lib/queuePace.ts.
+    const paceLine = paceSentence(
+      measureQueuePace(
+        (
+          await ctx.runQuery(api.dolProcessingTimes.getHistory, { limit: 60 })
+        ).map((s) => ({
+          frontier:
+            s.permQueues.find((q) => ANALYST_REVIEW.test(q.queue))?.priorityDate ?? null,
+          asOf: s.permAsOf,
+        })),
+      ),
+    );
+
     for (const row of batch) {
       try {
         const token = await makeUnsubscribeToken(
@@ -666,15 +690,23 @@ export const notifyQueueReached = internalAction({
         );
         const unsubUrl = actionUrl("/queue-alert/unsubscribe", token);
 
+        const filingLabel = formatMonth(row.filingMonth) ?? row.filingMonth;
+        // How far DOL has run PAST this subscriber's month. 0 means it landed
+        // exactly on it. The template says different things for the two, and
+        // only one of them is true in each case.
+        const monthsPast = Math.max(0, monthsMoved(row.filingMonth, args.frontier) ?? 0);
+
         const html = await renderOrTextOnly(
           ctx,
           "queueAlerts.notifyQueueReached.render",
           async () => {
             const { QueueReached } = await import("../src/emails/QueueReached");
             return QueueReached({
-              frontierMonth: formatMonth(args.frontier) ?? args.frontier,
-              filingMonth: formatMonth(row.filingMonth) ?? row.filingMonth,
-              asOf: formatAsOf(args.asOf) ?? args.asOf,
+              frontierMonth: frontierLabel,
+              filingMonth: filingLabel,
+              asOf: asOfLabel,
+              monthsPast,
+              paceLine,
               unsubscribeUrl: unsubUrl,
             });
           },
@@ -683,21 +715,26 @@ export const notifyQueueReached = internalAction({
         const result = await sendEmailWithRetry(getResend(), {
           from: FROM_EMAIL,
           to: row.email,
-          subject: `DOL has reached ${row.filingMonth} in the PERM queue`,
+          subject: `DOL has reached ${frontierLabel} in the PERM queue`,
           html,
           headers: {
             "List-Unsubscribe": `<${unsubUrl}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
           text: [
-            `The Department of Labor's PERM analyst-review queue has reached ${args.frontier}.`,
-            `You asked to be told when it reached ${row.filingMonth}.`,
+            `The Department of Labor's PERM analyst-review queue has reached ${frontierLabel}.`,
+            `You asked to be told when it reached ${filingLabel}.`,
             "",
-            `This is DOL's own published figure, as of ${args.asOf}, from`,
+            `This is DOL's own published figure, as of ${asOfLabel}, from`,
             "https://flag.dol.gov/processingtimes",
             "",
-            "Reaching your month means DOL is now adjudicating cases filed then. It",
-            "is not a decision on your case and it is not a prediction of one.",
+            // The same branch the HTML makes. "Adjudicating cases filed then"
+            // is false once the frontier has run past their month.
+            monthsPast > 0
+              ? `DOL has worked past ${filingLabel} and is now on ${frontierLabel}. It`
+              : `DOL is now adjudicating cases filed in ${filingLabel}. It`,
+            "isn't a decision on your case and it isn't a prediction of one.",
+            ...(paceLine ? ["", paceLine] : []),
             "",
             `Current figures: ${SITE_URL}/perm-processing-times`,
             "",

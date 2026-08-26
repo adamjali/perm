@@ -1,18 +1,28 @@
 /**
  * The one alert: DOL's queue has reached the subscriber's filing month.
  *
- * Two months sit on this page and the difference between them is the point. The
- * stamp carries DOL's published frontier; the box beneath carries the month the
- * reader signed up for. When the frontier has run past their month, that gap is
- * the most useful thing in the email, and a single-figure layout would hide it.
+ * ## The sentence this email is not allowed to get wrong
  *
- * ## What this email is not allowed to say
+ * An earlier version said "DOL is now adjudicating cases filed then" in every
+ * case. That is true only when the frontier has landed exactly on the
+ * subscriber's month. When it has run PAST them, which is the ordinary case
+ * (`alreadyReached` fires on `filingMonth <= frontier`, so anyone subscribing
+ * to an already-passed month is alerted immediately), it is false: DOL is
+ * working the later month. An anxious applicant reads it as "my case is being
+ * decided right now", which is the exact false hope this product exists not to
+ * create. `monthsPast` selects the sentence.
  *
- * Reaching a filing month is a queue position, not an outcome. The disclaimer
- * is load-bearing and is carried verbatim from the text part, which was written
- * against the same constraint: no claim here may go beyond what DOL published.
- * Every figure is a prop, so there is no literal in this file that can drift
- * away from the data.
+ * The reader's own filing month gets a block of its own ONLY when it differs
+ * from the frontier. When the two are equal, a second block repeating the same
+ * month is one more thing to relate for no information.
+ *
+ * Pace is a measurement and stays one. "The queue moved three months over the
+ * last six" is arithmetic on two figures DOL published. Anything that turns
+ * that into a date for this reader's case is banned, and `paceSentence` gives
+ * the template nothing to build one from.
+ *
+ * Every figure arrives as a prop, so no literal in this file can drift away
+ * from the data.
  *
  * @module
  */
@@ -31,6 +41,15 @@ export interface QueueReachedProps {
   filingMonth: string;
   /** DOL's as-of date for the frontier figure, formatted for display. */
   asOf: string;
+  /**
+   * Whole months the frontier sits beyond the subscriber's filing month.
+   *
+   * 0 means DOL has landed exactly on their month. Anything above 0 means it
+   * has moved past, and changes what this email is allowed to claim.
+   */
+  monthsPast: number;
+  /** One measured sentence about how fast the queue moved, or null. */
+  paceLine?: string | null;
   /** Absolute, purpose-scoped opt-out URL. Pairs with List-Unsubscribe. */
   unsubscribeUrl: string;
 }
@@ -39,13 +58,17 @@ export function QueueReached({
   frontierMonth,
   filingMonth,
   asOf,
+  monthsPast,
+  paceLine = null,
   unsubscribeUrl,
 }: QueueReachedProps) {
+  const hasMovedPast = monthsPast > 0;
+
   return (
     <EmailLayout
-      previewText={`The Department of Labor's published figure, as of ${asOf}.`}
+      previewText={`The Department of Labor’s published figure, as of ${asOf}.`}
       hideSettingsLink
-      footerText={`You asked to be told when the Department of Labor's PERM queue reached ${filingMonth}. This alert doesn't repeat.`}
+      footerText={`You asked to be told when the Department of Labor’s PERM queue reached ${filingMonth}. This alert doesn’t repeat.`}
       footerExtra={
         <Text className="em-text-secondary" style={styles.footerExtra}>
           <Link
@@ -58,7 +81,14 @@ export function QueueReached({
         </Text>
       }
     >
-      <QueueStamp eyebrow="Department of Labor" month={frontierMonth}>
+      {/*
+        The eyebrow is the predicate, not a third attribution. "Department of
+        Labor" here said who published the figure for the third time in one
+        email, while the stamp itself said nothing about what the month means.
+        "DOL has reached" plus the month is a sentence; the agency is still
+        named by the source link directly beneath it.
+      */}
+      <QueueStamp eyebrow="DOL has reached" month={frontierMonth}>
         <Text className="em-text-secondary" style={styles.provenance}>
           Analyst review, as of {asOf}
         </Text>
@@ -73,20 +103,30 @@ export function QueueReached({
         </Text>
       </QueueStamp>
 
-      <Section className="em-card" style={styles.yours}>
-        <Text className="qa-yours-label" style={styles.yoursLabel}>
-          Your filing month
-        </Text>
-        <Text className="em-text" style={styles.yoursValue}>
-          {filingMonth}
-        </Text>
-      </Section>
+      {hasMovedPast ? (
+        <Section className="em-card" style={styles.yours}>
+          <Text className="qa-yours-label" style={styles.yoursLabel}>
+            Your filing month
+          </Text>
+          <Text className="em-text" style={styles.yoursValue}>
+            {filingMonth}
+          </Text>
+        </Section>
+      ) : null}
 
       <Text className="em-text-body" style={styles.body}>
-        Reaching your month means DOL is now adjudicating cases filed then. It
-        isn&rsquo;t a decision on your case and it isn&rsquo;t a prediction of
+        {hasMovedPast
+          ? `DOL has worked past ${filingMonth} and is now on ${frontierMonth}.`
+          : `DOL is now adjudicating cases filed in ${filingMonth}.`}{" "}
+        It isn&rsquo;t a decision on your case and it isn&rsquo;t a prediction of
         one.
       </Text>
+
+      {paceLine ? (
+        <Text className="em-text-secondary" style={styles.pace}>
+          {paceLine}
+        </Text>
+      ) : null}
 
       <Section style={styles.cta}>
         <EmailButton
@@ -107,10 +147,6 @@ export function QueueReached({
           {
             href: "https://permtracker.app/perm-cases",
             text: "Every PERM decision DOL has published",
-          },
-          {
-            href: "https://permtracker.app/tools/green-card-timeline",
-            text: "Where PERM sits in the whole green card path",
           },
         ]}
       />
@@ -165,6 +201,13 @@ const styles = {
     color: "#2A2A2A",
     fontSize: "16px",
     lineHeight: "26px",
+    margin: "0 0 20px 0",
+  },
+  pace: {
+    fontFamily: SANS_STACK,
+    color: "#5A5A5A",
+    fontSize: "15px",
+    lineHeight: "24px",
     margin: "0 0 24px 0",
   },
   cta: {
@@ -183,9 +226,7 @@ const styles = {
     textDecoration: "underline",
     /*
      * Measured at 18px tall as plain inline text, under the 44px floor. This
-     * is a standalone control on its own line, unlike the "Privacy | Terms"
-     * links beside it which are inline inside a sentence, so the floor binds
-     * here and not there.
+     * is a standalone control on its own line, so the floor binds.
      *
      * `inline-block` plus padding is what makes the padding part of the hit
      * box. A taller `line-height` would not: the hit area of an inline

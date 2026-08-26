@@ -512,7 +512,7 @@ describe("multipart send shape", () => {
     expect(headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
   });
 
-  it("renders the months for a reader and keeps the raw values in the text part", async () => {
+  it("renders the months for a reader in both parts", async () => {
     const t = createTestContext();
     await t.run(async (ctx) => {
       await ctx.db.insert("dolQueueAlerts", {
@@ -533,8 +533,11 @@ describe("multipart send shape", () => {
     expect(String(body.html)).toContain("September 2025");
     expect(String(body.html)).toContain("January 2025");
     expect(String(body.html)).toContain("August 20, 2026");
-    // The text part is unchanged and still carries DOL's raw published values.
-    expect(String(body.text)).toContain("2025-09");
+    // The text part is formatted from the SAME constants as the HTML and the
+    // subject. It used to carry DOL's raw "2025-09"; a reader never sees a
+    // machine value now, whichever part their client renders.
+    expect(String(body.text)).toContain("September 2025");
+    expect(String(body.text)).not.toContain("2025-09");
   });
 
   it("every link in the alert html is absolute and on a host we control or cite", async () => {
@@ -562,5 +565,109 @@ describe("multipart send shape", () => {
       expect(h).toMatch(/^https:\/\//);
       expect(allowed, h).toContain(new URL(h).host);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Formatted figures reach the reader
+//
+// The subject line is the one string every recipient sees before opening
+// anything, and it rendered DOL's raw "2024-09" to all of them.
+// ---------------------------------------------------------------------------
+
+describe("no raw YYYY-MM reaches a reader", () => {
+  const RAW_MONTH = /\d{4}-\d{2}(?!\d)/;
+
+  it("PROBE: the detector matches a raw month and not a formatted one", () => {
+    expect(RAW_MONTH.test("DOL has reached 2025-09 in the PERM queue")).toBe(true);
+    expect(RAW_MONTH.test("DOL has reached September 2025 in the PERM queue")).toBe(false);
+    // An as-of date is the same defect wearing one more field.
+    expect(RAW_MONTH.test("as of 2026-08-20")).toBe(true);
+    expect(RAW_MONTH.test("as of August 20, 2026")).toBe(false);
+  });
+
+  it("formats the alert subject, and names the figure the stamp shows", async () => {
+    const t = createTestContext();
+    await t.run(async (ctx) => {
+      await ctx.db.insert("dolQueueAlerts", {
+        email: "subj@example.com",
+        filingMonth: "2025-01",
+        confirmedAt: 1,
+        createdAt: Date.now(),
+      });
+    });
+    const { to } = stubResendCapturing();
+
+    await t.action(internal.queueAlerts.notifyQueueReached, {
+      frontier: "2025-09",
+      asOf: "2026-08-20",
+    });
+
+    const subject = String(to("subj@example.com").subject);
+    expect(subject).toBe("DOL has reached September 2025 in the PERM queue");
+    expect(RAW_MONTH.test(subject)).toBe(false);
+  });
+
+  it("formats every month and date in the alert text part", async () => {
+    const t = createTestContext();
+    await t.run(async (ctx) => {
+      await ctx.db.insert("dolQueueAlerts", {
+        email: "txt@example.com",
+        filingMonth: "2025-01",
+        confirmedAt: 1,
+        createdAt: Date.now(),
+      });
+    });
+    const { to } = stubResendCapturing();
+
+    await t.action(internal.queueAlerts.notifyQueueReached, {
+      frontier: "2025-09",
+      asOf: "2026-08-20",
+    });
+
+    const body = to("txt@example.com");
+    expect(RAW_MONTH.test(String(body.text))).toBe(false);
+    expect(String(body.text)).toContain("September 2025");
+    expect(String(body.text)).toContain("January 2025");
+    expect(String(body.text)).toContain("August 20, 2026");
+  });
+
+  it("formats the confirmation subject and text", async () => {
+    const t = createTestContext();
+    const { to } = stubResendCapturing();
+
+    await t.action(internal.queueAlerts.sendConfirmation, {
+      email: "cfm@example.com",
+      filingMonth: "2025-09",
+    });
+
+    const body = to("cfm@example.com");
+    expect(RAW_MONTH.test(String(body.subject))).toBe(false);
+    expect(RAW_MONTH.test(String(body.text))).toBe(false);
+    expect(String(body.text)).toContain("Filing month: September 2025");
+  });
+
+  it("keeps the text part's claim in step with the HTML branch", async () => {
+    const t = createTestContext();
+    await t.run(async (ctx) => {
+      await ctx.db.insert("dolQueueAlerts", {
+        email: "branch@example.com",
+        filingMonth: "2025-01",
+        confirmedAt: 1,
+        createdAt: Date.now(),
+      });
+    });
+    const { to } = stubResendCapturing();
+
+    await t.action(internal.queueAlerts.notifyQueueReached, {
+      frontier: "2025-09",
+      asOf: "2026-08-20",
+    });
+
+    // Eight months past, so neither part may say the case is being decided.
+    const body = to("branch@example.com");
+    expect(String(body.text)).not.toContain("adjudicating cases filed");
+    expect(String(body.text)).toContain("worked past January 2025");
+    expect(String(body.html)).not.toContain("adjudicating cases filed");
   });
 });
