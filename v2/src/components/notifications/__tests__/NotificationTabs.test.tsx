@@ -94,7 +94,6 @@ describe("NotificationTabs", () => {
         rfe_rfi: "RFE/RFI",
       };
 
-      // eslint-disable-next-line security/detect-non-literal-regexp -- value comes from the hardcoded tabLabels map, not user input
       const activeTabElement = screen.getByRole("tab", { name: new RegExp(tabLabels[activeTab], "i") });
       expect(activeTabElement).toHaveAttribute("aria-selected", "true");
 

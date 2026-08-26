@@ -102,7 +102,6 @@ describe("CaseCard - Next Deadline", () => {
     const parsedDate = new Date(`${futureDateStr}T12:00:00`);
     renderWithProviders(<CaseCard case={createMockCaseCardData({ nextDeadline: futureDateStr, nextDeadlineLabel: "PWD expires" })} />);
     const expected = parsedDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    // eslint-disable-next-line security/detect-non-literal-regexp -- `expected` is a formatted date string we produced from a test fixture, not user input
     expect(screen.getByText(new RegExp(expected))).toBeInTheDocument();
   });
 
@@ -132,7 +131,6 @@ describe("CaseCard - Action Buttons", () => {
   it.each(["delete", "archive"])("shows %s option in More menu", async (option) => {
     const { user } = renderWithProviders(<CaseCard case={createMockCaseCardData()} />);
     await user.click(screen.getByRole("button", { name: /more options/i }));
-    // eslint-disable-next-line security/detect-non-literal-regexp -- `option` is a hardcoded literal from the it.each(["delete","archive"]) table, not user input
     expect(await screen.findByRole("menuitem", { name: new RegExp(option, "i") })).toBeInTheDocument();
   });
 });
