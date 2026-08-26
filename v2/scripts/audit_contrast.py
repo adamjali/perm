@@ -27,6 +27,19 @@ PAIRS = [
     ("--destructive-foreground", "--destructive", "destructive button label", False),
     ("--primary-text", "--background", "primary as text on page", False),
     ("--primary-text", "--card", "primary as text on a card", False),
+    # --muted is a real text surface (panels, chips). primary-text and
+    # destructive-text both FAILED here at 4.3x while the audit stayed green,
+    # because these pairs did not exist - found by the sweep agent, not by
+    # this script, which is the definition of a gap.
+    ("--primary-text", "--muted", "primary as text on muted", False),
+    ("--destructive-text", "--muted", "error text on muted", False),
+    ("--data-good-ink", "--card", "good ink on a card", False),
+    ("--data-good-ink", "--muted", "good ink on muted", False),
+    ("--stage-pwd-ink", "--card", "pwd stage as text", False),
+    ("--stage-recruitment-ink", "--card", "recruitment stage as text", False),
+    ("--stage-eta9089-ink", "--card", "eta9089 stage as text", False),
+    ("--stage-i140-ink", "--card", "i140 stage as text", False),
+    ("--stage-closed-ink", "--card", "closed stage as text", False),
     ("--destructive-text", "--background", "error text on page", False),
     ("--destructive-text", "--card", "error text on a card", False),
     ("--ring", "--background", "focus ring on page", True),
