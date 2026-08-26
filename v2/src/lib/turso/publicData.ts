@@ -401,6 +401,12 @@ export interface DatasetFreshness {
   source: string;
   cadence: string;
   note: string | null;
+  /** Days after which this dataset should be treated as overdue. */
+  maxAgeDays: number | null;
+  /** Whole days between the as-of date and now, null if unparseable. */
+  ageDays: number | null;
+  /** ageDays past maxAgeDays. An ingest has probably stopped. */
+  stale: boolean;
 }
 
 export interface DailyDecisions {
@@ -448,17 +454,39 @@ export async function getDailyDecisions(
  */
 export async function getFreshness(): Promise<Record<string, DatasetFreshness>> {
   const r = await rows<Record<string, unknown>>(
-    "SELECT dataset, as_of, fetched_at, source, cadence, note FROM data_freshness",
+    "SELECT dataset, as_of, fetched_at, source, cadence, note, max_age_days FROM data_freshness",
   );
   const out: Record<string, DatasetFreshness> = {};
+  const now = Date.now();
   for (const x of r) {
+    const asOf = (x.as_of as string) ?? null;
+    const maxAgeDays = (x.max_age_days as number) ?? null;
+    // A bare "2026-08" is a month, and Date.parse reads it as the 1st, which
+    // makes a fresh monthly dataset look up to 30 days older than it is.
+    // Anchor a month to its END so the age is the smallest true value.
+    let ageDays: number | null = null;
+    if (asOf) {
+      const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(asOf);
+      if (m) {
+        const y = Number(m[1]);
+        const mo = Number(m[2]);
+        const d = m[3] ? Number(m[3]) : new Date(Date.UTC(y, mo, 0)).getUTCDate();
+        ageDays = Math.floor((now - Date.UTC(y, mo - 1, d)) / 86_400_000);
+      }
+    }
     out[x.dataset as string] = {
       dataset: x.dataset as string,
-      asOf: (x.as_of as string) ?? null,
+      asOf,
       fetchedAt: (x.fetched_at as number) ?? 0,
       source: (x.source as string) ?? "",
       cadence: (x.cadence as string) ?? "",
       note: (x.note as string) ?? null,
+      maxAgeDays,
+      ageDays,
+      // Only claim stale when BOTH numbers are known. An unknown age is not
+      // evidence of freshness, but it is not evidence of staleness either,
+      // and a false alarm on every page teaches people to ignore the real one.
+      stale: ageDays !== null && maxAgeDays !== null && ageDays > maxAgeDays,
     };
   }
   return out;
