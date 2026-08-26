@@ -34,6 +34,24 @@ PAIRS = [
     ("--border", "--card", "border on a card", True),
 ]
 
+# Manila pairs. The folder surface stays tan in BOTH themes, so its ink is
+# checked as literals against both manila values. This is the class the token
+# pairs above cannot see: text-muted-foreground on dark manila measured
+# 1.16:1 and shipped, twice, before this section existed.
+MANILA = [
+    ("#000000", 1.0, "#F5E6C8", "ink on light manila", 4.5),
+    ("#000000", 1.0, "#C4A97A", "ink on dark manila", 4.5),
+    ("#000000", 0.7, "#F5E6C8", "soft ink (black/70) on light manila", 4.5),
+    ("#000000", 0.7, "#C4A97A", "soft ink (black/70) on dark manila", 4.5),
+    ("#000000", 1.0, "#E8D4A8", "ink on light manila-dark (tab bar)", 4.5),
+    ("#000000", 1.0, "#A8916A", "ink on dark manila-dark (tab bar)", 4.5),
+]
+
+
+def blend(fg, bg, a):
+    return tuple(round(f * a + b * (1 - a)) for f, b in zip(fg, bg))
+
+
 def blocks():
     s = CSS.read_text()
     def one(sel):
@@ -74,6 +92,15 @@ def main() -> int:
             if not ok: bad += 1
             print(f"    {'ok  ' if ok else 'FAIL'} {r:5.2f}:1 (need {floor})  {label}"
                   f"  {t}={toks[t].strip()} on {s_}={toks[s_].strip()}")
+    print("\n  === MANILA (theme-invariant surface) ===")
+    for fg, a, sfc, label, floor in MANILA:
+        eff = blend(rgb(fg), rgb(sfc), a)
+        r = ratio(eff, rgb(sfc))
+        ok = r >= floor
+        if not ok:
+            bad += 1
+        print(f"    {'ok  ' if ok else 'FAIL'} {r:5.2f}:1 (need {floor})  {label}")
+
     print(f"\n  {bad} real failures")
     return 1 if bad else 0
 

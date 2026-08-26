@@ -255,7 +255,7 @@ interface DateRowProps {
 function DateRow({ label, value }: DateRowProps) {
   return (
     <div className="flex justify-between font-mono">
-      <span className="text-muted-foreground">{label}:</span>{" "}
+      <span className="text-black/70">{label}:</span>{" "}
       <span>{formatCompactDate(value)}</span>
     </div>
   );

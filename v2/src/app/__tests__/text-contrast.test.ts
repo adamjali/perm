@@ -49,6 +49,14 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+/**
+ * Files that render onto the MANILA surface. Manila stays tan in both themes,
+ * so theme-flipped text tokens are wrong there by construction:
+ * text-muted-foreground measured 1.16:1 on dark manila. Ink (text-black,
+ * text-black/70) is the only sanctioned text on it.
+ */
+const MANILA_FILES = ["CaseCard.tsx", "CaseCardParts.tsx"];
+
 describe("text contrast", () => {
   const files = walk(SRC);
 
@@ -56,6 +64,20 @@ describe("text contrast", () => {
     // Coverage before verdict: a walk that finds nothing reports zero
     // violations and reads exactly like a pass.
     expect(files.length).toBeGreaterThan(300);
+  });
+
+  it("manila-surfaced components never use theme-flipped text tokens", () => {
+    const offenders: string[] = [];
+    for (const f of files) {
+      if (!MANILA_FILES.some((m) => f.endsWith(m))) continue;
+      const src = readFileSync(f, "utf8");
+      if (/\btext-muted-foreground\b(?!\/)/.test(src.replace(/bg-muted text-muted-foreground/g, ""))) {
+        // The one exemption: the SAMPLE badge carries its OWN bg-muted, so
+        // muted-foreground sits on muted there (5.27:1+), not on manila.
+        offenders.push(f.replace(SRC, "src"));
+      }
+    }
+    expect(offenders, "1.16:1 on dark manila — use text-black/70").toEqual([]);
   });
 
   it.each(Object.entries(BANNED))(

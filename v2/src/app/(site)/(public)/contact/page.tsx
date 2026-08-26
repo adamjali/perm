@@ -101,7 +101,7 @@ export default function ContactPage() {
 
           {/* Bug Reports */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center border-2 border-black bg-accent shadow-hard-sm dark:border-white">
+            <div className="flex h-12 w-12 items-center justify-center border-2 border-black bg-primary shadow-hard-sm dark:border-white">
               <GithubIcon className="h-6 w-6 text-accent-foreground" />
             </div>{" "}
             <div>

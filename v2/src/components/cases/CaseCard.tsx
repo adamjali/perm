@@ -198,13 +198,19 @@ export const CaseCard = memo(function CaseCard({
 
       <div
         className={cn(
-          "relative border-2 shadow-hard p-6 pt-10 min-h-[180px] transition-shadow duration-150 ease-out",
+          // text-black at the ROOT: manila stays tan in both themes, so every
+          // inheriting child (the date values in ExpandedContent measured
+          // 2.16:1 in dark) must default to ink, not to --foreground.
+          "relative border-2 shadow-hard p-6 pt-10 min-h-[180px] transition-shadow duration-150 ease-out text-black",
           isSelected && "ring-4 ring-primary",
           isClosed && "grayscale border-gray-400 dark:border-gray-600",
           !isClosed && "border-border",
           shouldExpand && !isClosed && "shadow-hard-lg"
         )}
-        style={{ backgroundColor: isClosed ? "var(--muted)" : "var(--manila)" }}
+        // Always manila: the `grayscale` class above already renders a closed
+        // card as a gray folder. The old var(--muted) swap put black text
+        // on #1A1A1A in dark mode.
+        style={{ backgroundColor: "var(--manila)" }}
       >
         {/* Paper texture overlay */}
         <div
@@ -226,7 +232,7 @@ export const CaseCard = memo(function CaseCard({
             <h3 className="font-heading font-bold text-lg leading-tight truncate text-black dark:text-black" title={employerName}>
               {employerName}
             </h3>{" "}
-            <p className="text-sm text-muted-foreground truncate" title={positionTitle || beneficiaryIdentifier}>{positionTitle || beneficiaryIdentifier}</p>
+            <p className="text-sm text-black/70 truncate" title={positionTitle || beneficiaryIdentifier}>{positionTitle || beneficiaryIdentifier}</p>
           </div>
           <CaseBadges
             duplicateOf={duplicateOf}
@@ -254,7 +260,7 @@ export const CaseCard = memo(function CaseCard({
                 </span>
               </div>
             ) : isClosed ? (
-              <span className="truncate text-sm italic text-black/60" title={`Closed ${caseData.closedAt ? formatCompactDate(caseData.closedAt) : ""}${formatClosureReasonLabel(caseData.closedReason) ? ` - ${formatClosureReasonLabel(caseData.closedReason)}` : ""}`}>
+              <span className="truncate text-sm italic text-black/70" title={`Closed ${caseData.closedAt ? formatCompactDate(caseData.closedAt) : ""}${formatClosureReasonLabel(caseData.closedReason) ? ` - ${formatClosureReasonLabel(caseData.closedReason)}` : ""}`}>
                 Closed{" "}
                 {caseData.closedAt ? formatCompactDate(caseData.closedAt) : ""}
                 {formatClosureReasonLabel(caseData.closedReason) && (
@@ -262,7 +268,7 @@ export const CaseCard = memo(function CaseCard({
                 )}
               </span>
             ) : (
-              <span className="text-sm text-muted-foreground">No upcoming deadlines</span>
+              <span className="text-sm text-black/70">No upcoming deadlines</span>
             )}
           </div>
           <CalendarSyncIndicator enabled={calendarSyncEnabled ?? false} isGoogleConnected={isGoogleConnected} />

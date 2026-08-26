@@ -25,7 +25,10 @@
   --muted-foreground: #666666;
 
   /* Accent */
-  --accent: #2ECC40;
+  /* A hover WASH, not the brand. This was the lime, so every ghost/outline
+     hover and dropdown highlight painted solid #2ECC40; blended into the
+     manila action bar it produced the olive hover. Brand stays on --primary. */
+  --accent: #ECECEC;
   --accent-foreground: #000000;
 
   /* Destructive */
@@ -87,6 +90,11 @@
   --manila: #F5E6C8;
   --manila-dark: #E8D4A8;
   --manila-shadow: #D4C090;
+  /* Ink for anything sitting ON manila. The folder stays tan in BOTH
+     themes, so its text must stay dark in both: foreground/muted-foreground
+     flip light in dark mode and measured 2.16:1 and 1.16:1 on the tan. */
+  --manila-ink: #000000;
+  --manila-ink-soft: rgba(0, 0, 0, 0.7);
 
   /* Transitions - matching mockup */
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -129,8 +137,10 @@
   --secondary-foreground: #FAFAFA;
   --muted: #1A1A1A;
   --muted-foreground: #A0A0A0;
-  --accent: #2ECC40;
-  --accent-foreground: #000000;
+  /* Neutral hover wash on dark surfaces; see :root note. */
+  --accent: #2A2A2A;
+  /* Label on the dark wash flips light with it. */
+  --accent-foreground: #FAFAFA;
   --destructive: #FF4747;
   /* Black on the red in BOTH themes: white measures 3.22:1 and fails,
      black is 6.24:1. The fill colour is unchanged. */
@@ -674,7 +684,7 @@
   position: relative;
   margin-bottom: -3px;
   background: var(--manila-dark);
-  color: var(--foreground);
+  color: var(--manila-ink);
   border-radius: 0;
   opacity: 0.8;
   display: inline-flex;
@@ -696,7 +706,7 @@
 
 .folder-tab[aria-selected="true"] {
   background: var(--manila);
-  color: var(--foreground);
+  color: var(--manila-ink);
   opacity: 1;
   z-index: 10;
   border-bottom-color: var(--manila);
@@ -1060,7 +1070,9 @@
 .doc-name { font-family: var(--font-heading); font-weight: 700; font-size: 0.875rem; display: flex; align-items: center; gap: 8px; color: var(--foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .doc-meta{ font-family: var(--font-mono); font-size: 0.875rem; color: var(--muted-foreground); margin-top: 2px; }
 .draft-tag{ font-family: var(--font-mono); font-size: 0.875rem; font-weight: 700; text-transform: uppercase; padding: 0 6px; background: var(--yellow, #FFD700); border: 2px solid var(--border); line-height: 1.4; }
-.doc-row.selected, .note.selected { background: var(--manila); }
+.doc-row.selected, .note.selected {
+  /* Manila surface: force ink, or dark mode inherits #FAFAFA at 2.16:1. */
+  color: var(--manila-ink); background: var(--manila); }
 .doc-row.selected:hover, .note.selected:hover { background: var(--manila-dark); }
 .doc-row.selected .doc-meta { color: #444444; }
 .note.selected .note-when { color: #444444; }
@@ -2473,3 +2485,7 @@ html[data-pre="on"] body::before {
     transform: scaleX(1);
   }
 }
+
+/* Children of a selected (manila) row that normally use theme tokens. */
+.doc-row.selected .doc-name, .note.selected .note-text { color: var(--manila-ink); }
+.doc-row.selected .doc-meta, .note.selected .note-when { color: var(--manila-ink-soft); }
