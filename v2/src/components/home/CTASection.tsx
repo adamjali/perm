@@ -104,13 +104,13 @@ export function CTASection() {
 
           <div>
             <p className="mb-3 font-mono text-sm text-black/60 uppercase tracking-wider">
-              The next filing window is already counting down.
+              Start tracking
             </p>{" "}
             <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl">
-              Stop Tracking Deadlines Manually
+              Every PERM Deadline, Computed Per Case
             </h2>{" "}
             <p className="mx-auto mt-3 max-w-lg text-base text-black/70">
-              No credit card required. Set up in under 5 minutes.
+              Free, and setup takes a few minutes.
             </p>
           </div>{" "}
 

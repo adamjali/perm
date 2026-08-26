@@ -26,7 +26,7 @@ const stakes: StakeCard[] = [
     number: "1",
     title: "30-Day Audit Response",
     consequence:
-      "Miss the DOL's 30-day audit window and the case is automatically abandoned. No extensions, no appeals. Start the entire process over.",
+      "Miss the DOL's 30-day audit window and the case is automatically abandoned. There is no extension and no appeal, and the process starts over.",
     prevention:
       "Auto-calculated deadline + alerts at 14, 7, 3, and 1 day before",
     severity: "critical",
@@ -35,7 +35,7 @@ const stakes: StakeCard[] = [
     number: "2",
     title: "PWD Expiration",
     consequence:
-      "Your prevailing wage determination expires per 20 CFR 656.40. File after expiration and you restart from zero, months of waiting wasted.",
+      "Your prevailing wage determination expires per 20 CFR 656.40. File after expiration and you restart from zero.",
     prevention:
       "Expiration auto-calculated from determination date using DOL rules",
     severity: "critical",
@@ -115,11 +115,11 @@ export function StakesSection() {
             The Stakes
           </div>{" "}
           <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
-            What a Missed Deadline Actually Costs
+            What a Missed Deadline Costs
           </h2>{" "}
           <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
-            Every PERM case has filing windows measured in days, not months. One
-            slip means starting over, or worse.
+            Every PERM case has filing windows measured in days. Missing one
+            means starting the recruitment over.
           </p>
         </ScrollReveal>
       </div>

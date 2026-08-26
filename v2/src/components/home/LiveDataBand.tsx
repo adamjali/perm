@@ -199,7 +199,7 @@ export function LiveDataBand({
             {
               href: "/perm-denial-risk",
               label: "Denial rates",
-              what: "What actually gets denied",
+              what: "What gets denied",
               figure: figures?.denial ? (
                 <>
                   <span className="block font-heading text-2xl font-black leading-none">

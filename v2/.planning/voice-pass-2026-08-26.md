@@ -307,3 +307,100 @@
 
 - OLD: This is the median wage employers committed to in federal filings for this occupation, which makes it harder currency than a salary survey. It mixes every experience level and every metro, and it&apos;s a floor rather than a market rate: the employer must offer at least the prevailing wage DOL determines for the occupation, level and county.
   NEW: This is the median wage employers committed to in federal filings for this occupation. It mixes every experience level and every metro, and it&apos;s a floor: the employer must offer at least the prevailing wage DOL determines for the occupation, level and county.
+
+## Home (src/components/home)
+
+### `src/components/home/HeroSection.tsx`
+
+- OLD: A PERM case runs about a year and one missed date can end it. We read DOL&apos;s own published figures and compute every deadline in your case automatically. Free.
+  NEW: A PERM case runs about a year, and one missed date can restart it. PERM Tracker reads DOL&apos;s published figures and computes every deadline in your case.
+
+### `src/components/home/StakesSection.tsx`
+
+- OLD: "Miss the DOL's 30-day audit window and the case is automatically abandoned. No extensions, no appeals. Start the entire process over."
+  NEW: "Miss the DOL's 30-day audit window and the case is automatically abandoned. There is no extension and no appeal, and the process starts over."
+- OLD: File after expiration and you restart from zero, months of waiting wasted.
+  NEW: File after expiration and you restart from zero.
+- OLD: What a Missed Deadline Actually Costs
+  NEW: What a Missed Deadline Costs
+- OLD: Every PERM case has filing windows measured in days, not months. One slip means starting over, or worse.
+  NEW: Every PERM case has filing windows measured in days. Missing one means starting the recruitment over.
+
+### `src/components/home/HowItWorks.tsx`
+
+- OLD: Enter your case dates: determination date, recruitment start, filing date. That\u2019s it.
+  NEW: Enter your case dates: determination date, recruitment start, filing date.
+- OLD: 11 deadline types compute instantly. Filing windows, PWD expirations, audit response dates, all from your dates.
+  NEW: 11 deadline types compute from those dates: filing windows, PWD expirations, audit response dates.
+- OLD: From case creation to deadline tracking, watch the entire PERM workflow.
+  NEW: The whole workflow, from case creation to deadline tracking.
+
+### `src/components/home/FeaturesGrid.tsx`
+
+- OLD: I-140 cutoffs, recruitment method dates. No manual math.
+  NEW: I-140 cutoffs, recruitment method dates.
+- OLD: Configure reminders at 1, 3, 7, 14, or 30 days. Weekly Monday digest included.
+  NEW: Configure reminders at 1, 3, 7, 14, or 30 days, plus a weekly Monday digest.
+- OLD: See exactly where each case stands with a color-coded timeline. Instantly spot which cases need attention and which are on track.
+  NEW: A color-coded timeline per case, showing which ones need attention and which are on track.
+- OLD: expired PWDs, and filing window violations before they become problems.
+  NEW: expired PWDs, and filing window violations.
+- OLD: Stop juggling spreadsheets and calendar reminders. Every tool you need to manage PERM cases, in one place.
+  NEW: Deadline math, alerts, calendar sync and compliance checks, for every case you run.
+
+### `src/components/home/CTASection.tsx`
+
+- OLD: The next filing window is already counting down. </p>{" "} <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl"> Stop Tracking Deadlines Manually </h2>{" "} <p className="mx-auto mt-3 max-w-lg text-base text-black/70"> No credit card required. Set up in under 5 minutes. </p>
+  NEW: Start tracking </p>{" "} <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl"> Every PERM Deadline, Computed Per Case </h2>{" "} <p className="mx-auto mt-3 max-w-lg text-base text-black/70"> Free, and setup takes a few minutes. </p>
+
+### `src/components/home/SecuritySection.tsx`
+
+- OLD: We don&apos;t sell your data. We don&apos;t train AI on it. Your cases are yours.
+  NEW: We don&apos;t sell your data or train AI on it.
+
+### `src/components/home/TestimonialsSection.tsx`
+
+- OLD: Trusted by Practitioners
+  NEW: Reviews
+- OLD: Applicants and attorneys use PERM Tracker to follow the queue and never miss a deadline.
+  NEW: Applicants and attorneys use PERM Tracker to follow the queue and track their deadlines.
+
+### `src/components/home/ToolsSection.tsx`
+
+- OLD: Free calculators on the government&apos;s own numbers. Each one says where its figure came from, and says so when the data can’t answer.
+  NEW: Free calculators built on the government&apos;s own numbers.
+
+### `src/components/home/LiveDataBand.tsx`
+
+- OLD: what: "What actually gets denied",
+  NEW: what: "What gets denied",
+
+### `src/components/home/faqData.tsx`
+
+- OLD: deadlines hit, plus Google Calendar sync so your whole team stays aligned.",
+  NEW: deadlines hit, plus Google Calendar sync.",
+- OLD: deadlines hit, plus Google Calendar sync so your whole team stays aligned.{" "}
+  NEW: deadlines hit, plus Google Calendar sync.{" "}
+- OLD: updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.
+  NEW: updates all downstream dates when one date changes.
+- OLD: "Yes, currently free. No credit card, no trial period, no case limits. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.", rich: "Yes, currently free. No credit card, no trial period, no case limits. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.",
+  NEW: "Yes, currently free, with no credit card and no case limit. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.", rich: "Yes, currently free, with no credit card and no case limit. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.",
+- OLD: You can also export your data anytime. Your data is always yours.",
+  NEW: You can also export your data at any time.",
+- OLD: You can also export your data anytime. Your data is always yours.{" "}
+  NEW: You can also export your data at any time.{" "}
+- OLD: "We monitor DOL regulatory changes and update our deadline calculation engine accordingly.
+  NEW: "We monitor DOL regulatory changes and update the deadline calculations accordingly.
+- OLD: We monitor DOL regulatory changes and update our deadline calculation engine accordingly.
+  NEW: We monitor DOL regulatory changes and update the deadline calculations accordingly.
+
+## Home (page metadata)
+
+### `src/app/(site)/(public)/page.tsx`
+
+- OLD: "Where DOL's PERM queue stands today, and every case deadline computed automatically. For the person waiting and the person managing. Free.",
+  NEW: "Where DOL's PERM queue stands today, and every case deadline computed automatically. Free, for the person waiting and the person managing.",
+- OLD: title: "PERM Tracker - Never Lose a Case to a Missed Deadline",
+  NEW: title: "PERM Tracker - Live PERM Data and Case Deadlines",
+- OLD: "Auto-calculate every PERM filing window, PWD expiration, and audit deadline. Email + push alerts before they hit.",
+  NEW: "Every PERM filing window, PWD expiration and audit deadline, computed from your case dates, with email and push alerts.",

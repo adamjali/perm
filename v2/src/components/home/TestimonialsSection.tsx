@@ -80,13 +80,13 @@ export function TestimonialsSection() {
           <div className="mb-8 text-center">
             <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
               <Star className="h-3.5 w-3.5" />
-              Trusted by Practitioners
+              Reviews
             </div>{" "}
             <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
               What Our Users Say
             </h2>{" "}
             <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
-              Applicants and attorneys use PERM Tracker to follow the queue and never miss a deadline.
+              Applicants and attorneys use PERM Tracker to follow the queue and track their deadlines.
             </p>
           </div>
 

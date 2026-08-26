@@ -43,12 +43,12 @@ export const HOME_FAQS: HomeFaqItem[] = [
     question:
       "What exactly does PERM Tracker do?",
     answer:
-      "PERM Tracker automates deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync so your whole team stays aligned.",
+      "PERM Tracker automates deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync.",
     rich: (
       <>
         PERM Tracker automates the deadline management for{" "}
         <Link href="/blog/what-is-perm-labor-certification" className={faqLink}>PERM labor certification</Link>{" "}
-        cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync so your whole team stays aligned.{" "}
+        cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync.{" "}
         <Link href="/guides/tracking-perm-deadlines" className={faqLink}>See how deadline tracking works &rarr;</Link>
       </>
     ),
@@ -60,7 +60,7 @@ export const HOME_FAQS: HomeFaqItem[] = [
       "Spreadsheets require manual deadline math, don’t send reminders, and break when regulations change. PERM Tracker auto-calculates 11 deadline types per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes.",
     rich: (
       <>
-        <Link href="/guides/manual-vs-automated-tracking" className={faqLink}>Spreadsheets require manual deadline math</Link>, don&apos;t send reminders, and break when regulations change. PERM Tracker auto-calculates 11 deadline types per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes. One missed formula in a spreadsheet can cost a client their green card.
+        <Link href="/guides/manual-vs-automated-tracking" className={faqLink}>Spreadsheets require manual deadline math</Link>, don&apos;t send reminders, and break when regulations change. PERM Tracker auto-calculates 11 deadline types per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes.
       </>
     ),
   },
@@ -68,8 +68,8 @@ export const HOME_FAQS: HomeFaqItem[] = [
     question:
       "Is PERM Tracker really free?",
     answer:
-      "Yes, currently free. No credit card, no trial period, no case limits. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.",
-    rich: "Yes, currently free. No credit card, no trial period, no case limits. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.",
+      "Yes, currently free, with no credit card and no case limit. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.",
+    rich: "Yes, currently free, with no credit card and no case limit. We may introduce paid plans in the future, but the core deadline tracking will remain accessible.",
   },
   {
     question:
@@ -82,10 +82,10 @@ export const HOME_FAQS: HomeFaqItem[] = [
     question:
       "Can I import my existing cases?",
     answer:
-      "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime. Your data is always yours.",
+      "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data at any time.",
     rich: (
       <>
-        Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data anytime. Your data is always yours.{" "}
+        Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data at any time.{" "}
         <Link href="/guides/getting-started" className={faqLink}>Getting started tutorial &rarr;</Link>
       </>
     ),
@@ -94,10 +94,10 @@ export const HOME_FAQS: HomeFaqItem[] = [
     question:
       "What happens if DOL changes regulations?",
     answer:
-      "We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don’t need to manually update formulas or check for rule changes.",
+      "We monitor DOL regulatory changes and update the deadline calculations accordingly. When regulations change, your existing cases are recalculated automatically. You don’t need to manually update formulas or check for rule changes.",
     rich: (
       <>
-        We monitor DOL regulatory changes and update our deadline calculation engine accordingly. When regulations change, your existing cases are recalculated automatically. You don&apos;t need to manually update formulas or check for rule changes.{" "}
+        We monitor DOL regulatory changes and update the deadline calculations accordingly. When regulations change, your existing cases are recalculated automatically. You don&apos;t need to manually update formulas or check for rule changes.{" "}
         <Link href="/blog/perm-processing-times-2026" className={faqLink}>Current processing times &rarr;</Link>
       </>
     ),

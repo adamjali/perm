@@ -110,9 +110,9 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               </>
             ) : (
               <>
-                A PERM case runs about a year and one missed date can end it. We
-                read DOL&apos;s own published figures and compute every deadline
-                in your case automatically. Free.
+                A PERM case runs about a year, and one missed date can restart
+                it. PERM Tracker reads DOL&apos;s published figures and computes
+                every deadline in your case.
               </>
             )}
           </p>{" "}

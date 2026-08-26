@@ -64,7 +64,7 @@ export const metadata: Metadata = {
   // Tracker" doubled. Using `absolute` is the documented escape hatch.
   title: { absolute: "PERM Tracker - Live PERM Data and Deadlines" },
   description:
-    "Where DOL's PERM queue stands today, and every case deadline computed automatically. For the person waiting and the person managing. Free.",
+    "Where DOL's PERM queue stands today, and every case deadline computed automatically. Free, for the person waiting and the person managing.",
   alternates: {
     canonical: "/",
   },
@@ -72,9 +72,9 @@ export const metadata: Metadata = {
     // Spread openGraphBase to preserve siteName / locale / type / images that
     // Next.js's shallow merge would otherwise drop from the parent layout.
     ...openGraphBase,
-    title: "PERM Tracker - Never Lose a Case to a Missed Deadline",
+    title: "PERM Tracker - Live PERM Data and Case Deadlines",
     description:
-      "Auto-calculate every PERM filing window, PWD expiration, and audit deadline. Email + push alerts before they hit.",
+      "Every PERM filing window, PWD expiration and audit deadline, computed from your case dates, with email and push alerts.",
     url: "/",
   },
 };

@@ -37,7 +37,7 @@ const steps: Step[] = [
     number: 1,
     illustration: <RocketLaunchSVG size={80} className="text-foreground" />,
     title: "Add Your PERM Case",
-    description: "Enter your case dates: determination date, recruitment start, filing date. That\u2019s it.",
+    description: "Enter your case dates: determination date, recruitment start, filing date.",
     bgImage: "/images/hero/legal-office-wide.jpg",
     accentColor: "var(--primary)",
   },
@@ -45,7 +45,7 @@ const steps: Step[] = [
     number: 2,
     illustration: <CalendarDeadlineSVG size={80} className="text-foreground" />,
     title: "Deadlines Auto-Calculate",
-    description: "11 deadline types compute instantly. Filing windows, PWD expirations, audit response dates, all from your dates.",
+    description: "11 deadline types compute from those dates: filing windows, PWD expirations, audit response dates.",
     bgImage: "/images/features/calendar-planning.jpg",
     accentColor: "var(--stage-eta9089)",
   },
@@ -248,7 +248,7 @@ export function HowItWorks() {
               See How It Works in 20 Seconds
             </h3>{" "}
             <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
-              From case creation to deadline tracking, watch the entire PERM workflow.
+              The whole workflow, from case creation to deadline tracking.
             </p>
           </div>
           {/* Product demo + Create case — side by side */}

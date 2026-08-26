@@ -93,8 +93,7 @@ export function SecuritySection() {
         {/* Bottom statement */}
         <ScrollReveal direction="up" delay={0.2}>
           <p className="mt-8 text-center text-sm text-muted-foreground">
-            We don&apos;t sell your data. We don&apos;t train AI on it. Your
-            cases are yours.
+            We don&apos;t sell your data or train AI on it.
           </p>
         </ScrollReveal>
       </div>

@@ -33,7 +33,7 @@ const features: Feature[] = [
   {
     title: "Auto Deadline Calculation",
     description:
-      "Enter one date and 11 downstream deadlines update: PWD expiration, filing windows, I-140 cutoffs, recruitment method dates. No manual math.",
+      "Enter one date and 11 downstream deadlines update: PWD expiration, filing windows, I-140 cutoffs, recruitment method dates.",
     illustration: <CalendarDeadlineSVG size={64} className="text-foreground" />,
     accentColor: "var(--stage-pwd)",
     learnMoreHref: "/guides/tracking-perm-deadlines",
@@ -42,7 +42,7 @@ const features: Feature[] = [
   {
     title: "Smart Alerts",
     description:
-      "Email, push, and in-app notifications before deadlines. Configure reminders at 1, 3, 7, 14, or 30 days. Weekly Monday digest included.",
+      "Email, push, and in-app notifications before deadlines. Configure reminders at 1, 3, 7, 14, or 30 days, plus a weekly Monday digest.",
     illustration: <NotificationBellSVG size={64} className="text-foreground" />,
     accentColor: "var(--primary)",
   },
@@ -56,7 +56,7 @@ const features: Feature[] = [
   {
     title: "Visual Case Timeline",
     description:
-      "See exactly where each case stands with a color-coded timeline. Instantly spot which cases need attention and which are on track.",
+      "A color-coded timeline per case, showing which ones need attention and which are on track.",
     illustration: (
       <div className="flex items-center justify-center w-[64px] h-[64px]">
         <TimelineSVG size={120} className="text-foreground" />
@@ -67,7 +67,7 @@ const features: Feature[] = [
   {
     title: "DOL Compliance Checks",
     description:
-      "Built-in validation catches missing recruitment steps, expired PWDs, and filing window violations before they become problems.",
+      "Built-in validation catches missing recruitment steps, expired PWDs, and filing window violations.",
     illustration: <ShieldCheckSVG size={64} className="text-foreground" />,
     accentColor: "var(--stage-i140)",
     learnMoreHref: "/blog/common-perm-audit-triggers",
@@ -167,7 +167,7 @@ export function FeaturesGrid() {
             Built for PERM Practitioners
           </h2>{" "}
           <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
-            Stop juggling spreadsheets and calendar reminders. Every tool you need to manage PERM cases, in one place.
+            Deadline math, alerts, calendar sync and compliance checks, for every case you run.
           </p>
         </ScrollReveal>
 
