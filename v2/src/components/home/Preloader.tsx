@@ -79,14 +79,49 @@ const BG_DARK = "#0A0A0A";
  * override it in both directions.
  */
 export const PRELOADER_CSS = `
+/* Tokens, LITERAL. globals.css has not loaded yet, so every var() it defines
+   resolves to nothing here. Scoped to a private prefix so they cannot collide
+   with the real tokens once the stylesheet arrives and takes over. */
+html[data-pre="on"]{--_pb:${BG_LIGHT};--_pf:#000;--_pp:#2ECC40;--_pbd:#000;--_pc:#FAFAFA}
+@media (prefers-color-scheme:dark){
+html[data-pre="on"]:not(.light){--_pb:${BG_DARK};--_pf:#FAFAFA;--_pbd:#333;--_pc:#1A1A1A}
+}
+html[data-pre="on"].dark{--_pb:${BG_DARK};--_pf:#FAFAFA;--_pbd:#333;--_pc:#1A1A1A}
+html[data-pre="on"].light{--_pb:${BG_LIGHT};--_pf:#000;--_pbd:#000;--_pc:#FAFAFA}
+
 html[data-pre="on"]{overflow:hidden}
 html:not([data-pre="on"]) .pre{display:none}
-html[data-pre="on"] body::before{content:"";position:fixed;inset:0;z-index:199;background:${BG_LIGHT}}
-@media (prefers-color-scheme:dark){
-html[data-pre="on"]:not(.light) body::before{background:${BG_DARK}}
+html[data-pre="on"] body::before{content:"";position:fixed;inset:0;z-index:199;background:var(--_pb)}
+
+/* THE PANEL ITSELF, not just the cover.
+   This is the whole bug the first version had: only the cover was inlined, so
+   a hard load painted a blank background at z-index 199 while .pre sat
+   UNSTYLED behind it - no position, no z-index, no colours, because all of
+   that lived in globals.css. The result was a blank screen for as long as the
+   curtain was up, which the 600ms floor then made longer. Anything needed to
+   PAINT the curtain has to ship in the same bytes as the decision to show it. */
+.pre{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;
+align-items:center;justify-content:center;gap:18px;background:var(--_pb);
+transition:transform .55s cubic-bezier(.65,0,.35,1)}
+.pre-leave{transform:translateY(-101%)}
+.pre-mark{color:var(--_pp)}
+.pre-name{font-family:system-ui,-apple-system,sans-serif;font-weight:900;
+font-size:clamp(1.6rem,4vw,2.1rem);letter-spacing:-.02em;line-height:1;color:var(--_pf)}
+.pre-name b{color:var(--_pp);font-weight:900}
+.pre-sub{font-family:ui-monospace,SFMono-Regular,monospace;font-size:.7rem;
+font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--_pf);opacity:.55}
+.pre-track{width:min(260px,60vw);height:6px;border:2px solid var(--_pbd);
+background:var(--_pc);overflow:hidden}
+.pre-bar{display:block;height:100%;background:var(--_pp);transform-origin:left;
+animation:pre-fill 1.5s cubic-bezier(.22,1,.36,1) forwards}
+.pre-spin{width:18px;height:18px;border:2.5px solid var(--_pbd);
+border-top-color:var(--_pp);border-radius:50%;animation:pre-spin .68s linear infinite}
+@keyframes pre-fill{from{transform:scaleX(0)}to{transform:scaleX(.92)}}
+@keyframes pre-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){
+.pre-bar,.pre-spin{animation:none}
+.pre{transition:none}
 }
-html[data-pre="on"].dark body::before{background:${BG_DARK}}
-html[data-pre="on"].light body::before{background:${BG_LIGHT}}
 `;
 
 /**

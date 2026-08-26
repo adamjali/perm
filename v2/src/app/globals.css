@@ -30,12 +30,16 @@
 
   /* Destructive */
   --destructive: #FF4747;
-  --destructive-foreground: #FAFAFA;
+  /* Black, not white. White on #FF4747 measures 3.22:1 and fails; black
+     is 6.24:1 on the same red, so the red survives and the label works. */
+  --destructive-foreground: #000000;
 
   /* Borders */
   --border: #000000;
   --input: #000000;
-  --ring: #2ECC40;
+  /* 3.02:1 on #FAFAFA. The brand lime is 2.05:1 there - a focus ring you
+     cannot see is an accessibility failure, not a style choice. */
+  --ring: #26A734;
 
   /* Radius - neobrutalist */
   --radius: 0px;
@@ -93,6 +97,11 @@
      adopted the token would have inherited that rebound by default rather than
      by choice. Real objects decelerate; they do not spring past where they are
      going. Use --transition-normal, or author an explicit ease-out. */
+  /* Same hue as --primary, darkened until it passes as TEXT: 4.53:1 on
+     #FAFAFA where the lime itself is 2.05:1. Surfaces keep the lime. */
+  --primary-text: #1E852A;
+  /* 4.51:1 on #FAFAFA; --destructive stays the brighter fill colour. */
+  --destructive-text: #E90000;
 }
 
 .dark {
@@ -123,8 +132,12 @@
   --accent: #2ECC40;
   --accent-foreground: #000000;
   --destructive: #FF4747;
-  --destructive-foreground: #FAFAFA;
-  --border: #333333;
+  /* Black on the red in BOTH themes: white measures 3.22:1 and fails,
+     black is 6.24:1. The fill colour is unchanged. */
+  --destructive-foreground: #000000;
+  /* #333333 measured 1.57:1 on the page and 1.38:1 on a card - borders
+     that are effectively invisible. #666666 clears 3:1 on both. */
+  --border: #666666;
   --input: #333333;
   --ring: #2ECC40;
 
@@ -137,7 +150,35 @@
   --shadow-hard-sm: 2px 2px 0px rgba(255,255,255,0.12);
   --shadow-hard: 4px 4px 0px rgba(255,255,255,0.12);
   --shadow-hard-lg: 8px 8px 0px rgba(255,255,255,0.12);
+  /* On dark the brand lime already measures 9.26:1, so text keeps it. */
+  --primary-text: #2ECC40;
+  /* 5.89:1 on the dark page; no darkening needed. */
+  --destructive-text: #FF4747;
 }
+
+/* ---------------------------------------------------------------------------
+   TEXT-COLOUR OVERRIDES: the brand lime and the alert red are SURFACE colours
+
+   `text-primary` is used 264 times across 92 files and `text-destructive` 85
+   times. Both resolved to the fill colour, which measures 2.05:1 and 3.22:1
+   against the light background - unreadable, and the reason the green reads
+   as "ugly" rather than merely bright. The hue was never the problem.
+
+   Fixed here rather than by rewriting 92 files: Tailwind v4 emits its
+   utilities inside `@layer utilities`, and an UNLAYERED rule beats a layered
+   one no matter the specificity, so these win without !important and without
+   touching a single component.
+
+   Fills are untouched. `bg-primary` stays #2ECC40 with a black label at
+   9.83:1; only the same colour used as TEXT is darkened, and only in light
+   mode - on dark the lime already measures 9.26:1 and --primary-text is the
+   lime itself.
+   --------------------------------------------------------------------------- */
+.text-primary { color: var(--primary-text); }
+.text-destructive { color: var(--destructive-text); }
+/* Icons inherit via currentColor, so stroke/fill follow automatically. */
+.fill-primary { fill: var(--primary-text); }
+.stroke-primary { stroke: var(--primary-text); }
 
 @theme inline {
   --color-background: var(--background);
