@@ -182,7 +182,7 @@ function WaitingInfoDisplay({ waitingInfo }: WaitingInfoDisplayProps) {
         {waitingInfo.tips.map((tip, idx) => (
           <div
             key={idx}
-            className="flex items-start gap-2 text-xs text-muted-foreground"
+            className="flex items-start gap-2 text-sm text-muted-foreground"
           >
             <Info className="h-3 w-3 mt-0.5 shrink-0" />
             <span>{tip}</span>
@@ -456,7 +456,7 @@ export function QuickEditFields({
 
           return (
             <div key={field.name} className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
+              <label className="text-sm font-medium text-muted-foreground">
                 {field.label}
               </label>
               <DateInput
@@ -472,9 +472,9 @@ export function QuickEditFields({
                 className="w-full"
               />
               {fieldError ? (
-                <p className="text-xs text-destructive">{fieldError}</p>
+                <p className="text-sm text-destructive">{fieldError}</p>
               ) : constraint?.hint ? (
-                <p className="text-xs text-muted-foreground">{constraint.hint}</p>
+                <p className="text-sm text-muted-foreground">{constraint.hint}</p>
               ) : null}
             </div>
           );

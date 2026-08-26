@@ -47,7 +47,7 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
     ];
     for (const [field, date] of directFields) {
       if (date && !milestoneByField.has(field)) {
-        milestoneByField.set(field, { field, label: "", date, stage: "recruitment" as const, color: "#9333ea", isCalculated: false });
+        milestoneByField.set(field, { field, label: "", date, stage: "recruitment" as const, color: "var(--stage-recruitment)", isCalculated: false });
       }
     }
 
@@ -58,7 +58,7 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
       const endDate = caseData.recruitmentEndDate
         || [caseData.jobOrderEndDate, caseData.sundayAdSecondDate, caseData.noticeOfFilingEndDate].filter(Boolean).sort().reverse()[0];
       if (endDate && !milestoneByField.has("recruitmentEndDate")) {
-        milestoneByField.set("recruitmentEndDate", { field: "recruitmentEndDate", label: "", date: endDate, stage: "recruitment" as const, color: "#9333ea", isCalculated: false });
+        milestoneByField.set("recruitmentEndDate", { field: "recruitmentEndDate", label: "", date: endDate, stage: "recruitment" as const, color: "var(--stage-recruitment)", isCalculated: false });
       }
     }
 
@@ -72,7 +72,7 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
         label: "Sunday Ads",
         date,
         stage: "recruitment" as const,
-        color: "#9333ea",
+        color: "var(--stage-recruitment)",
         isCalculated: false,
       });
     }

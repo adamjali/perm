@@ -397,16 +397,16 @@ export function ImportModal({
       },
       unknown: {
         label: "Unknown",
-        color: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300",
+        color: "bg-muted text-muted-foreground",
       },
     };
     const format = formatLabels[parseResult.detectedFormat] ?? formatLabels.unknown;
     // Extracted to local variable (React Compiler disabled; kept for SWC safety)
-    const formatColor = format?.color ?? "bg-gray-100 text-gray-800";
+    const formatColor = format?.color ?? "bg-muted text-muted-foreground";
     const formatLabel = format?.label ?? "Unknown";
     return (
       <span
-        className={cn("px-2 py-1 text-xs font-medium rounded", formatColor)}
+        className={cn("px-2 py-1 text-sm font-medium rounded", formatColor)}
       >
         {formatLabel}
       </span>
@@ -458,7 +458,7 @@ export function ImportModal({
               {/* File Dropzone */}
               <div
                 className={cn(
-                  "relative border-2 border-dashed rounded-none p-8 text-center transition-all duration-200",
+                  "relative border-2 border-dashed rounded-none p-8 text-center transition-all duration-150",
                   isDragging
                     ? "border-primary bg-primary/5 scale-[1.01]"
                     : "border-muted-foreground/30 hover:border-muted-foreground/50 hover:bg-muted/30",
@@ -493,7 +493,7 @@ export function ImportModal({
                     <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                     <p className="text-lg font-medium mb-2">Drag & drop your JSON file here</p>{" "}
                     <p className="text-sm text-muted-foreground">or click to browse</p>{" "}
-                    <p className="text-xs text-muted-foreground mt-2">Accepts .json files only</p>
+                    <p className="text-sm text-muted-foreground mt-2">Accepts .json files only</p>
                   </>
                 )}
               </div>
@@ -506,7 +506,7 @@ export function ImportModal({
                     <span className="text-sm font-medium text-muted-foreground">Detected Format:</span>
                     {getFormatBadge()}
                     {parseResult.isLegacyFormat && (
-                      <span className="text-xs text-amber-600 dark:text-amber-400">
+                      <span className="text-sm text-amber-600 dark:text-amber-400">
                         (auto-converted to v2)
                       </span>
                     )}
@@ -540,7 +540,7 @@ export function ImportModal({
                         <p className="text-sm text-orange-800 dark:text-orange-200 mt-1">
                           These cases were imported from a legacy format without foreign worker IDs. They
                           have been marked with{" "}
-                          <code className="bg-orange-200 dark:bg-orange-800/50 px-1 rounded font-mono text-xs">
+                          <code className="bg-orange-200 dark:bg-orange-800/50 px-1 rounded font-mono text-sm">
                             {BENEFICIARY_PLACEHOLDER}
                           </code>{" "}
                           and will need manual updates after import.
@@ -576,7 +576,7 @@ export function ImportModal({
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <span className="text-xs">{showAllWarnings ? "Collapse" : "Expand"}</span>
+                          <span className="text-sm">{showAllWarnings ? "Collapse" : "Expand"}</span>
                           {showAllWarnings ? (
                             <CaretUp className="h-4 w-4" />
                           ) : (
@@ -592,7 +592,7 @@ export function ImportModal({
                             <div
                               key={idx}
                               className={cn(
-                                "flex items-start gap-2 p-2 rounded text-xs",
+                                "flex items-start gap-2 p-2 rounded text-sm",
                                 "bg-muted/30"
                               )}
                             >
@@ -613,7 +613,7 @@ export function ImportModal({
                                 setShowAllWarnings(true);
                               }}
                               className={cn(
-                                "w-full py-2 text-xs font-medium rounded",
+                                "w-full py-2 text-sm font-medium rounded",
                                 "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground",
                                 "transition-colors duration-150",
                                 "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
@@ -634,7 +634,7 @@ export function ImportModal({
                               <li
                                 key={idx}
                                 className={cn(
-                                  "flex items-start gap-2 p-2 rounded text-xs",
+                                  "flex items-start gap-2 p-2 rounded text-sm",
                                   "bg-muted/30 hover:bg-muted/60 transition-colors duration-150"
                                 )}
                               >
@@ -677,7 +677,7 @@ export function ImportModal({
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">Click a row to edit</span>
+                    <span className="text-sm text-muted-foreground">Click a row to edit</span>
                   </div>
 
                   {/* Table with scrollable container */}
@@ -717,7 +717,7 @@ export function ImportModal({
                                     isEditing && "bg-primary/5 dark:bg-primary/10 ring-1 ring-primary/50",
                                     !isError &&
                                       !isEditing &&
-                                      "hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer hover:shadow-sm"
+                                      "hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer hover:shadow-hard-sm"
                                   )}
                                   onClick={() => !isError && !isEditing && handleStartEdit(index)}
                                   role={!isError && !isEditing ? "button" : undefined}
@@ -743,7 +743,7 @@ export function ImportModal({
                                     {caseData?.beneficiaryIdentifier === BENEFICIARY_PLACEHOLDER ? (
                                       <span className="inline-flex items-center gap-1 text-orange-600 dark:text-orange-400 font-medium">
                                         <UserX className="h-3 w-3" />
-                                        <span className="font-mono text-xs bg-orange-100 dark:bg-orange-900/30 px-1 rounded">
+                                        <span className="font-mono text-sm bg-orange-100 dark:bg-orange-900/30 px-1 rounded">
                                           {BENEFICIARY_PLACEHOLDER}
                                         </span>
                                       </span>
@@ -770,7 +770,7 @@ export function ImportModal({
                                       <span>
                                         {caseData?.dates?.pwdFiled ||
                                         (caseData as Record<string, unknown>)?.pwdFilingDate ? (
-                                          <span className="mono text-xs whitespace-nowrap">
+                                          <span className="mono text-sm whitespace-nowrap">
                                             {caseData?.dates?.pwdFiled ||
                                               String((caseData as Record<string, unknown>)?.pwdFilingDate || "")}
                                           </span>
@@ -844,7 +844,7 @@ export function ImportModal({
                       <div className="grid [&>*]:min-w-0 grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Employer Name */}
                         <div className="space-y-2">
-                          <Label htmlFor="edit-employer" className="text-xs font-medium">
+                          <Label htmlFor="edit-employer" className="text-sm font-medium">
                             Employer Name
                           </Label>
                           <Input
@@ -858,7 +858,7 @@ export function ImportModal({
 
                         {/* Foreign Worker ID */}
                         <div className="space-y-2">
-                          <Label htmlFor="edit-beneficiary" className="text-xs font-medium">
+                          <Label htmlFor="edit-beneficiary" className="text-sm font-medium">
                             Foreign Worker ID
                           </Label>
                           <Input
@@ -876,7 +876,7 @@ export function ImportModal({
 
                         {/* Case Status */}
                         <div className="space-y-2">
-                          <Label htmlFor="edit-case-status" className="text-xs font-medium">
+                          <Label htmlFor="edit-case-status" className="text-sm font-medium">
                             Case Status
                           </Label>
                           <select
@@ -903,7 +903,7 @@ export function ImportModal({
 
                         {/* Progress Status */}
                         <div className="space-y-2">
-                          <Label htmlFor="edit-progress-status" className="text-xs font-medium">
+                          <Label htmlFor="edit-progress-status" className="text-sm font-medium">
                             Progress Status
                           </Label>
                           <select
@@ -1152,7 +1152,7 @@ export function ImportModal({
                           <span className="font-medium text-sm text-amber-900 dark:text-amber-100">
                             {warning.employerName}
                           </span>{" "}
-                          <span className="text-xs text-amber-700 dark:text-amber-300">
+                          <span className="text-sm text-amber-700 dark:text-amber-300">
                             / {warning.beneficiaryIdentifier}
                           </span>
                         </div>
@@ -1160,7 +1160,7 @@ export function ImportModal({
                           {warning.errors.map((error, errIdx) => (
                             <li
                               key={errIdx}
-                              className="flex items-start gap-2 text-xs text-amber-800 dark:text-amber-200"
+                              className="flex items-start gap-2 text-sm text-amber-800 dark:text-amber-200"
                             >
                               <span className="font-mono text-amber-600 dark:text-amber-400 flex-shrink-0">
                                 [{error.ruleId}]

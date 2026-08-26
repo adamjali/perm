@@ -26,18 +26,18 @@ export function FolderTab({ caseStatus, isClosed }: FolderTabProps) {
       className={cn(
         "absolute -top-5 left-6 w-32 h-6 flex items-center justify-center z-10 border border-b-0",
         isClosed
-          ? "border-gray-400 dark:border-gray-500"
+          ? "border-black/40"
           : "border-black dark:border-white"
       )}
       style={{
-        backgroundColor: isClosed ? "#D4D4D4" : getStageColorVar(caseStatus),
+        backgroundColor: isClosed ? "var(--stage-closed)" : getStageColorVar(caseStatus),
         clipPath: "polygon(0 100%, 6px 0, calc(100% - 6px) 0, 100% 100%)",
       }}
     >
       <span
         className={cn(
-          "font-mono text-xs font-bold uppercase tracking-wider",
-          isClosed ? "text-gray-500" : "text-white dark:text-white"
+          "font-mono text-sm font-bold uppercase tracking-wider",
+          isClosed ? "text-black/60" : "text-white"
         )}
       >
         {label}
@@ -74,7 +74,7 @@ export function FavoriteBookmark({
         "disabled:opacity-70 disabled:cursor-wait",
         isFavorite
           ? "border-yellow-600 bg-yellow-400 -translate-y-2"
-          : "border-gray-400 bg-gray-300 hover:bg-gray-400 translate-y-0"
+          : "border-black/40 bg-black/10 hover:bg-black/20 translate-y-0"
       )}
       style={{
         clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)",
@@ -159,7 +159,7 @@ export function CaseBadges({
       {isSample && (
         <Badge
           variant="outline"
-          className="text-[0.625rem] px-2 py-0.5 border-2 border-dashed border-muted-foreground/50 bg-muted text-muted-foreground font-bold tracking-wider"
+          className="text-sm px-2 py-0.5 border-2 border-dashed border-muted-foreground/50 bg-muted text-muted-foreground font-bold tracking-wider"
           title="Sample case. Delete anytime"
         >
           SAMPLE
@@ -168,7 +168,7 @@ export function CaseBadges({
       {duplicateOf && (
         <Badge
           variant="outline"
-          className="text-[0.625rem] px-2 py-0.5 text-white border-black bg-orange-500 font-bold"
+          className="text-sm px-2 py-0.5 text-white border-black bg-orange-500 font-bold"
           title="This case was marked as a duplicate of another case"
         >
           DUP
@@ -177,7 +177,7 @@ export function CaseBadges({
       {isProfessionalOccupation && (
         <Badge
           variant="outline"
-          className="text-[0.625rem] px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-black dark:text-white border-2 border-black font-bold"
+          className="text-sm px-2 py-0.5 bg-black/10 text-black border-2 border-black font-bold"
         >
           PRO
         </Badge>
@@ -185,7 +185,7 @@ export function CaseBadges({
       {hasActiveRfi && (
         <Badge
           variant="outline"
-          className="text-[0.625rem] px-2 py-0.5 text-white border-black bg-[var(--urgency-urgent)]"
+          className="text-sm px-2 py-0.5 text-white border-black bg-[var(--urgency-urgent)]"
         >
           RFI
         </Badge>
@@ -193,7 +193,7 @@ export function CaseBadges({
       {hasActiveRfe && (
         <Badge
           variant="outline"
-          className="text-[0.625rem] px-2 py-0.5 text-white border-black bg-[var(--urgency-urgent)]"
+          className="text-sm px-2 py-0.5 text-white border-black bg-[var(--urgency-urgent)]"
         >
           RFE
         </Badge>
@@ -224,19 +224,19 @@ export function CalendarSyncIndicator({
       {isGoogleConnected ? (
         <>
           <Calendar className="w-4 h-4 text-black" />
-          <span className="font-mono text-[0.625rem] font-bold uppercase tracking-wider text-black">
+          <span className="font-mono text-sm font-bold uppercase tracking-wider text-black">
             Synced
           </span>
         </>
       ) : (
         <>
           <AlertTriangle className="w-4 h-4 text-amber-600" />
-          <span className="font-mono text-[0.625rem] font-bold uppercase tracking-wider text-amber-600">
+          <span className="font-mono text-sm font-bold uppercase tracking-wider text-amber-600">
             Not connected
           </span>
         </>
       )}
-      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-[0.625rem] font-mono font-bold bg-black text-white whitespace-nowrap opacity-0 group-hover/calendar:opacity-100 transition-opacity pointer-events-none">
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-sm font-mono font-bold bg-black text-white whitespace-nowrap opacity-0 group-hover/calendar:opacity-100 transition-opacity pointer-events-none">
         {isGoogleConnected ? "Google Calendar" : "Connect in Settings"}
       </span>
     </div>
@@ -272,7 +272,7 @@ function DateSection({ title, dates }: DateSectionProps) {
 
   return (
     <div className="space-y-1">
-      <div className="font-mono font-bold text-[0.625rem] uppercase text-black border-b border-black/30 pb-0.5 mb-1">
+      <div className="font-mono font-bold text-sm uppercase text-black border-b border-black/30 pb-0.5 mb-1">
         {title}
       </div>
       {validDates.map((d) => (
@@ -320,7 +320,7 @@ export function ExpandedContent({
       }}
     >
       <div className="mb-3 border-t border-dashed border-black/30" />
-      <div className="space-y-2 text-xs text-black">
+      <div className="space-y-2 text-sm text-black">
         <DateSection
           title="PWD"
           dates={[
@@ -355,10 +355,10 @@ export function ExpandedContent({
       </div>
       {notes && (
         <div className="mt-3 pt-3 border-t border-black/30">
-          <div className="font-mono font-bold text-[0.625rem] uppercase text-black border-b border-black/30 pb-0.5 mb-1">
+          <div className="font-mono font-bold text-sm uppercase text-black border-b border-black/30 pb-0.5 mb-1">
             Notes
           </div>
-          <div className="text-xs line-clamp-2 text-black" style={{ overflowWrap: "break-word", wordBreak: "break-word" }} title={notes}>{notes}</div>
+          <div className="text-sm line-clamp-2 text-black" style={{ overflowWrap: "break-word", wordBreak: "break-word" }} title={notes}>{notes}</div>
         </div>
       )}
     </div>

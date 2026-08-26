@@ -186,7 +186,7 @@ export const CaseCard = memo(function CaseCard({
           <Checkbox
             checked={isSelected}
             onCheckedChange={() => onSelect?.(_id)}
-            className="size-5 border-2 border-[#1a472a] dark:border-[#2d5a3d] bg-white dark:bg-gray-800 data-[state=checked]:bg-[#1a472a] data-[state=checked]:border-[#1a472a] dark:data-[state=checked]:bg-[#2d5a3d] dark:data-[state=checked]:border-[#2d5a3d] data-[state=checked]:text-white"
+            className="size-5 border-2 border-border bg-white data-[state=checked]:border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
             aria-label="Select case"
           />
         </div>
@@ -203,7 +203,7 @@ export const CaseCard = memo(function CaseCard({
           // 2.16:1 in dark) must default to ink, not to --foreground.
           "relative border-2 shadow-hard p-6 pt-10 min-h-[180px] transition-shadow duration-150 ease-out text-black",
           isSelected && "ring-4 ring-primary",
-          isClosed && "grayscale border-gray-400 dark:border-gray-600",
+          isClosed && "grayscale border-black/40",
           !isClosed && "border-border",
           shouldExpand && !isClosed && "shadow-hard-lg"
         )}
@@ -347,7 +347,7 @@ function ClosedCaseButtons({
         variant="outline"
         size="sm"
         disabled={isViewLoading}
-        className="flex-1 border-2 border-black/50 bg-transparent text-xs text-black/70 hover:bg-black/5 disabled:opacity-70"
+        className="flex-1 border-2 border-black/50 bg-transparent text-sm text-black/70 hover:bg-black/5 disabled:opacity-70"
         onClick={onViewClick}
         aria-label="View"
       >
@@ -358,7 +358,7 @@ function ClosedCaseButtons({
         variant="outline"
         size="sm"
         disabled={isReopening}
-        className="text-xs bg-transparent border-2 border-green-600 text-green-700 hover:bg-green-50 disabled:opacity-70"
+        className="border-2 border-border bg-transparent text-sm text-primary hover:bg-black/5 disabled:opacity-70"
         onClick={onReopenClick}
         aria-label="Reopen"
       >
@@ -368,7 +368,7 @@ function ClosedCaseButtons({
       <Button
         variant="outline"
         size="sm"
-        className="border-2 border-black/50 bg-transparent text-xs text-black/70 hover:bg-black/5"
+        className="border-2 border-black/50 bg-transparent text-sm text-black/70 hover:bg-black/5"
         onClick={onDeleteClick}
         aria-label="Delete"
       >
@@ -406,7 +406,7 @@ function ActiveCaseButtons({
         variant="default"
         size="sm"
         disabled={isViewLoading}
-        className="flex-1 text-xs font-bold border-black shadow-hard hover:shadow-hard-lg disabled:opacity-70 disabled:shadow-none"
+        className="flex-1 text-sm font-bold border-black shadow-hard hover:shadow-hard-lg disabled:opacity-70 disabled:shadow-none"
         onClick={onViewClick}
         aria-label="View"
       >
@@ -423,7 +423,7 @@ function ActiveCaseButtons({
         variant="outline"
         size="sm"
         disabled={isEditLoading}
-        className="text-xs bg-transparent border-2 border-black text-black hover:bg-black/10 disabled:opacity-70"
+        className="text-sm bg-transparent border-2 border-black text-black hover:bg-black/10 disabled:opacity-70"
         onClick={onEditClick}
         aria-label="Edit"
       >

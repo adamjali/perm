@@ -49,7 +49,7 @@ export function ResponseEntryGrid({
             {alertTriangleIcon}
             {fullLabel}
           </span>{" "}
-          <span className="font-mono text-[0.6rem] font-bold uppercase px-2 py-0.5 border-2 border-border bg-muted text-muted-foreground">
+          <span className="font-mono text-sm font-bold uppercase px-2 py-0.5 border-2 border-border bg-muted text-muted-foreground">
             {subtitle}
           </span>
         </div>
@@ -57,7 +57,7 @@ export function ResponseEntryGrid({
           <div className="detail-card-body space-y-4">
             {entries.map((entry, i) => (
               <div key={i} className="border-2 border-border p-3">
-                <div className="font-mono text-xs font-bold mb-1">{type} #{i + 1}</div>
+                <div className="font-mono text-sm font-bold mb-1">{type} #{i + 1}</div>
                 <div className="field-grid" style={{ padding: 0 }}>
                   <div className="field-cell">
                     <div className="fc-label">Received</div>

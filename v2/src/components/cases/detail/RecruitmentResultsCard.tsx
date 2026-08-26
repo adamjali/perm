@@ -218,7 +218,7 @@ export function RecruitmentResultsCard({
             <ClipboardText className="h-3.5 w-3.5" />
             Recruitment Results
             {isCustom && !isEditing && (
-              <span className="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-900 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-600/20 ml-1">
+              <span className="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-900 px-1.5 py-0.5 text-sm font-medium text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-600/20 ml-1">
                 Custom
               </span>
             )}
@@ -305,7 +305,7 @@ export function RecruitmentResultsCard({
         {status.status !== "incomplete" && (
           <div
             className={cn(
-              "border-b-[3px] border-border p-4",
+              "border-b-3 border-border p-4",
               config.bg
             )}
           >
@@ -315,7 +315,7 @@ export function RecruitmentResultsCard({
               />
               <span
                 className={cn(
-                  "font-mono text-[0.68rem] font-bold uppercase tracking-wide",
+                  "font-mono text-sm font-bold uppercase tracking-wide",
                   config.text
                 )}
               >
@@ -327,7 +327,7 @@ export function RecruitmentResultsCard({
             </p>
             {status.filingWindowOpens && status.filingWindowCloses && (
               <div className={cn("mt-2 ml-7 space-y-0.5", config.text)}>
-                <p className="text-xs opacity-80">
+                <p className="text-sm opacity-80">
                   Filing window:{" "}
                   <span className="font-medium">
                     {formatFilingWindowRange(
@@ -338,7 +338,7 @@ export function RecruitmentResultsCard({
                 </p>
                 {status.status === "waiting" &&
                   status.daysUntilWindowOpens !== undefined && (
-                    <p className="text-xs opacity-80">
+                    <p className="text-sm opacity-80">
                       {status.daysUntilWindowOpens} day
                       {status.daysUntilWindowOpens !== 1 ? "s" : ""} until
                       window opens
@@ -346,7 +346,7 @@ export function RecruitmentResultsCard({
                   )}
                 {status.status === "ready" &&
                   status.daysRemainingInWindow !== undefined && (
-                    <p className="text-xs font-semibold">
+                    <p className="text-sm font-semibold">
                       {status.daysRemainingInWindow} day
                       {status.daysRemainingInWindow !== 1 ? "s" : ""} remaining
                     </p>
@@ -359,8 +359,8 @@ export function RecruitmentResultsCard({
         {/* ── DOL Text ── */}
         <div
           className={cn(
-            "border-b-[3px] border-border p-4",
-            isCustom && !isEditing && "border-l-4 border-l-blue-500"
+            "border-b-3 border-border p-4",
+            isCustom && !isEditing && "border-l-3 border-l-blue-500"
           )}
         >
           {isEditing ? (

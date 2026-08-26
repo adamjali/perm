@@ -138,7 +138,7 @@ export function StageProgressIndicator({ currentStage }: StageProgressIndicatorP
               </div>
               <span
                 className={cn(
-                  "text-[10px] sm:text-xs font-medium text-center uppercase tracking-wider",
+                  "text-sm font-medium text-center uppercase tracking-wider",
                   !isCompleted && !isCurrent && "text-muted-foreground"
                 )}
                 style={
@@ -203,7 +203,7 @@ export function DeadlineCountdown({ deadline }: DeadlineCountdownProps) {
             <div className="text-sm font-medium text-muted-foreground">
               {deadline.label}
             </div>
-            <div className="text-xs text-muted-foreground">{formattedDate}</div>
+            <div className="text-sm text-muted-foreground">{formattedDate}</div>
           </div>
         </div>
         <div className="text-right">
@@ -219,7 +219,7 @@ export function DeadlineCountdown({ deadline }: DeadlineCountdownProps) {
             )}
           </div>
           {deadline.daysUntil !== 0 && (
-            <div className={cn("text-xs", urgencyColors.text)}>
+            <div className={cn("text-sm", urgencyColors.text)}>
               {deadline.daysUntil < 0 ? "days overdue" : "days left"}
             </div>
           )}

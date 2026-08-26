@@ -299,7 +299,7 @@ export function OverviewTab({
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-                    className="overflow-hidden border-t-[3px] border-border bg-card"
+                    className="overflow-hidden border-t-3 border-border bg-card"
                   >
                     <div className="p-4">
                       <QuickEditFields
@@ -454,7 +454,7 @@ export function OverviewTab({
                     <div>
                       <label
                         htmlFor="jd-edit-title"
-                        className="block font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-1"
+                        className="block font-mono text-sm uppercase tracking-wider text-muted-foreground mb-1"
                       >
                         Position Title
                       </label>
@@ -465,7 +465,7 @@ export function OverviewTab({
                         onChange={(e) => setEditPositionTitle(e.target.value)}
                         placeholder="e.g., Software Engineer"
                         maxLength={200}
-                        className="w-full min-w-0 border-[3px] border-border bg-card px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary"
+                        className="w-full min-w-0 border-3 border-border bg-card px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary"
                       />
                     </div>
 
@@ -473,7 +473,7 @@ export function OverviewTab({
                     <div>
                       <label
                         htmlFor="jd-edit-desc"
-                        className="block font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-1"
+                        className="block font-mono text-sm uppercase tracking-wider text-muted-foreground mb-1"
                       >
                         Description
                       </label>
@@ -484,22 +484,22 @@ export function OverviewTab({
                         placeholder="Enter job requirements..."
                         rows={8}
                         maxLength={10000}
-                        className="w-full min-w-0 border-[3px] border-border bg-card px-3 py-2 text-sm resize-y focus:outline-none focus:border-primary"
+                        className="w-full min-w-0 border-3 border-border bg-card px-3 py-2 text-sm resize-y focus:outline-none focus:border-primary"
                       />
-                      <div className="text-right font-mono text-[10px] text-muted-foreground mt-1">
+                      <div className="text-right font-mono text-sm text-muted-foreground mt-1">
                         {editDescription.length.toLocaleString()} chars
                       </div>
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t-[3px] border-dashed border-border">
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t-3 border-dashed border-border">
                       <div className="flex items-center gap-2">
                         {hasJobDesc && (
                           <button
                             type="button"
                             onClick={clearJobDesc}
                             disabled={isClearingJobDesc}
-                            className="flex items-center gap-1 px-3 py-1.5 border-[3px] border-border text-[11px] font-mono font-bold uppercase tracking-wider text-destructive hover:bg-destructive hover:text-white hover:border-destructive hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm"
+                            className="flex items-center gap-1 px-3 py-1.5 border-3 border-border text-sm font-mono font-bold uppercase tracking-wider text-destructive hover:bg-destructive hover:text-white hover:border-destructive hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm"
                           >
                             <Trash2 className="h-3 w-3" />
                             {isClearingJobDesc ? "Clearing..." : "Clear"}
@@ -510,7 +510,7 @@ export function OverviewTab({
                           onClick={handleSaveAsTemplate}
                           disabled={isSavingTemplate || !editPositionTitle.trim() || !editDescription.trim()}
                           className={cn(
-                            "flex items-center gap-1 px-3 py-1.5 border-[3px] text-[11px] font-mono font-bold uppercase tracking-wider hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm",
+                            "flex items-center gap-1 px-3 py-1.5 border-3 text-sm font-mono font-bold uppercase tracking-wider hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm",
                             isExistingTemplateName
                               ? "border-blue-500 hover:bg-blue-500 hover:text-white"
                               : "border-border hover:bg-[var(--primary)] hover:text-black hover:border-black dark:hover:border-white/50"
@@ -533,7 +533,7 @@ export function OverviewTab({
                           type="button"
                           onClick={cancelEditJobDesc}
                           disabled={isSavingJobDesc}
-                          className="px-3 py-1.5 border-[3px] border-border text-[11px] font-mono font-bold uppercase tracking-wider hover:bg-muted hover:-translate-y-[1px] hover:shadow-hard-sm transition-all active:translate-y-0 active:shadow-hard-sm"
+                          className="px-3 py-1.5 border-3 border-border text-sm font-mono font-bold uppercase tracking-wider hover:bg-muted hover:-translate-y-[1px] hover:shadow-hard-sm transition-all active:translate-y-0 active:shadow-hard-sm"
                         >
                           Cancel
                         </button>
@@ -541,7 +541,7 @@ export function OverviewTab({
                           type="button"
                           onClick={saveJobDesc}
                           disabled={isSavingJobDesc || !editDescription.trim()}
-                          className="px-3 py-1.5 border-[3px] border-black bg-primary text-primary-foreground text-[11px] font-mono font-bold uppercase tracking-wider shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm"
+                          className="px-3 py-1.5 border-3 border-black bg-primary text-primary-foreground text-sm font-mono font-bold uppercase tracking-wider shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm"
                         >
                           {isSavingJobDesc ? (
                             <span className="flex items-center gap-1">
@@ -649,7 +649,7 @@ export function OverviewTab({
               size="sm"
               onClick={onToggleTimeline}
               disabled={isUpdating}
-              className="gap-1.5 border-[3px] border-border font-mono text-[0.68rem] font-bold uppercase tracking-wide shadow-[2px_2px_0_var(--border)] hover:-translate-y-[1px] hover:shadow-[3px_3px_0_var(--border)] transition-all active:translate-y-0 active:shadow-hard-sm"
+              className="gap-1.5 border-3 border-border font-mono text-sm font-bold uppercase tracking-wide shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all active:translate-y-0 active:shadow-hard-sm"
             >
               {isOnTimeline ? (
                 <>

@@ -42,10 +42,10 @@ export function CaseListEmptyState({
     return (
       <div
         data-testid="empty-state-new-user"
-        className="flex flex-col items-center justify-center py-20 px-6 border-4 border-border bg-background shadow-hard"
+        className="flex flex-col items-center justify-center py-20 px-6 border-3 border-border bg-background shadow-hard"
       >
         {/* Empty Filing Cabinet Icon */}
-        <div className="mb-6 p-6 border-4 border-border bg-muted shadow-hard-sm">
+        <div className="mb-6 p-6 border-3 border-border bg-muted shadow-hard-sm">
           <FolderOpen className="size-24 text-muted-foreground" />
         </div>
 
@@ -68,10 +68,10 @@ export function CaseListEmptyState({
   return (
     <div
       data-testid="empty-state-no-results"
-      className="flex flex-col items-center justify-center py-20 px-6 border-4 border-border bg-background shadow-hard"
+      className="flex flex-col items-center justify-center py-20 px-6 border-3 border-border bg-background shadow-hard"
     >
       {/* Filter Icon */}
-      <div className="mb-6 p-6 border-4 border-border bg-muted shadow-hard-sm">
+      <div className="mb-6 p-6 border-3 border-border bg-muted shadow-hard-sm">
         <Filter className="size-24 text-muted-foreground" />
       </div>
 

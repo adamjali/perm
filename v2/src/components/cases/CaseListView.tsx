@@ -234,7 +234,7 @@ export function CaseListView({
             >
               <h3 className="font-heading font-bold text-sm uppercase tracking-wide text-muted-foreground">
                 {group.label}{" "}
-                <span className="text-xs font-normal">({group.cases.length})</span>
+                <span className="text-sm font-normal">({group.cases.length})</span>
               </h3>
             </div>
           )}

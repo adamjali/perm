@@ -343,7 +343,7 @@ export function InlineCaseTimeline({
                 className="flex items-center justify-start pl-1 sm:pl-2 border-b border-border last:border-b-0"
                 style={{ height: `${Math.max(rowHeight, 40)}px` }}
               >
-                <span className={cn("text-xs font-bold truncate", row.textClass)}>
+                <span className={cn("text-sm font-bold truncate", row.textClass)}>
                   {row.label}
                 </span>
               </div>
@@ -359,7 +359,7 @@ export function InlineCaseTimeline({
               <div
                 key={`${month.year}-${month.month}`}
                 className={cn(
-                  "flex-1 flex items-center justify-center text-xs font-medium",
+                  "flex-1 flex items-center justify-center text-sm font-medium",
                   "border-r border-border/20 last:border-r-0",
                   month.isCurrentMonth
                     ? "bg-foreground/8 text-foreground font-bold"
@@ -368,7 +368,7 @@ export function InlineCaseTimeline({
               >
                 {month.label}
                 {(index === 0 || month.month === 0) && (
-                  <span className="ml-1 text-[10px] opacity-50">
+                  <span className="ml-1 text-sm opacity-50">
                     {month.year.toString().slice(-2)}
                   </span>
                 )}
@@ -390,7 +390,7 @@ export function InlineCaseTimeline({
               style={{ left: `${todayPosition}%`, transform: "translateX(-50%) translateY(-50%)" }}
               aria-hidden="true"
             >
-              <span className="text-[9px] font-bold text-destructive bg-background px-1.5 py-0.5 rounded-full whitespace-nowrap border-2 border-destructive shadow-sm">
+              <span className="text-sm font-bold text-destructive bg-background px-1.5 py-0.5 rounded-full whitespace-nowrap border-2 border-destructive shadow-hard-sm">
                 Today
               </span>
             </div>
@@ -455,7 +455,7 @@ export function InlineCaseTimeline({
                             "absolute inset-0 rounded-sm",
                             "border border-current/20",
                             "transition-all duration-150",
-                            "group-hover:brightness-110 group-hover:shadow-sm",
+                            "group-hover:brightness-110 group-hover:shadow-hard-sm",
                             rangeBar.isCalculated && "border-dashed"
                           )}
                           style={{
@@ -472,14 +472,14 @@ export function InlineCaseTimeline({
                         {/* Label — inside if bar is wide enough, outside with line if too narrow */}
                         {width > 8 ? (
                           <span
-                            className="absolute inset-0 flex items-center pl-2 pr-1 text-[10px] font-semibold pointer-events-none overflow-hidden text-ellipsis whitespace-nowrap"
+                            className="absolute inset-0 flex items-center pl-2 pr-1 text-sm font-semibold pointer-events-none overflow-hidden text-ellipsis whitespace-nowrap"
                             style={{ color: rangeBar.color }}
                           >
                             {rangeBar.label}
                           </span>
                         ) : (
                           <span
-                            className="absolute flex items-center text-[10px] font-semibold pointer-events-none whitespace-nowrap"
+                            className="absolute flex items-center text-sm font-semibold pointer-events-none whitespace-nowrap"
                             style={{
                               left: "100%",
                               top: "50%",
@@ -504,8 +504,8 @@ export function InlineCaseTimeline({
                         <div
                           className={cn(
                             "absolute bottom-full mb-2 left-1/2 -translate-x-1/2",
-                            "px-2.5 py-1.5 bg-foreground text-background text-xs font-medium",
-                            "whitespace-nowrap rounded-lg shadow-xl",
+                            "px-2.5 py-1.5 bg-foreground text-background text-sm font-medium",
+                            "whitespace-nowrap rounded-lg shadow-hard",
                             "opacity-0 group-hover:opacity-100",
                             "transition-opacity duration-150",
                             "pointer-events-none z-50"
@@ -515,7 +515,7 @@ export function InlineCaseTimeline({
                           <span className="font-bold">{rangeBar.label}</span>{" "}
                           <span className="mx-1.5 opacity-40">|</span>
                           {formatISODate(rangeBar.startDate)} to {formatISODate(rangeBar.endDate)}
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-3 border-transparent border-t-foreground" />
                         </div>
                       </motion.div>
                     );
@@ -559,20 +559,20 @@ export function InlineCaseTimeline({
               className="w-3 h-3 shrink-0 rounded-full border-2 border-foreground"
               style={{ backgroundColor: STAGE_COLORS[stage] }}
             />
-            <span className="text-xs text-muted-foreground font-medium">{label}</span>
+            <span className="text-sm text-muted-foreground font-medium">{label}</span>
           </div>
         ))}
         {/* Range bar legend item */}
         <div className="flex items-center gap-1.5">
           <div className="w-6 h-2.5 rounded-sm bg-muted-foreground/20 border border-muted-foreground/40" />
-          <span className="text-xs text-muted-foreground font-medium">Date Range</span>
+          <span className="text-sm text-muted-foreground font-medium">Date Range</span>
         </div>
         {/* Calculated legend item */}
         <div className="flex items-center gap-1.5">
           <div
             className="w-3 h-3 shrink-0 rounded-full border-2 border-dashed border-foreground"
           />
-          <span className="text-xs text-muted-foreground font-medium">Calculated</span>
+          <span className="text-sm text-muted-foreground font-medium">Calculated</span>
         </div>
       </div>
     </div>

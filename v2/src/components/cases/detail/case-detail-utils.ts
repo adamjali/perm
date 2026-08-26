@@ -93,7 +93,7 @@ export function computeWindowStatus(
       label: "I-140 filed",
       pct: 100,
       chip: "Filed",
-      chipStyle: { background: "var(--primary)", color: "#000" },
+      chipStyle: { background: "var(--primary)", color: "var(--primary-foreground)" },
     };
   }
 
@@ -103,7 +103,7 @@ export function computeWindowStatus(
       label: "until window opens",
       pct: 0,
       chip: "Upcoming",
-      chipStyle: { background: "var(--stage-eta9089)", color: "#000" },
+      chipStyle: { background: "var(--stage-eta9089)", color: "var(--primary-foreground)" },
     };
   }
 
@@ -115,7 +115,7 @@ export function computeWindowStatus(
       label: "remaining in window",
       pct: total > 0 ? Math.min(100, Math.max(0, (elapsed / total) * 100)) : 0,
       chip: "Active",
-      chipStyle: { background: "var(--primary)", color: "#000" },
+      chipStyle: { background: "var(--primary)", color: "var(--primary-foreground)" },
     };
   }
 
@@ -124,6 +124,6 @@ export function computeWindowStatus(
     label: "past expiration",
     pct: 100,
     chip: "Expired",
-    chipStyle: { background: "var(--destructive)", color: "#fff" },
+    chipStyle: { background: "var(--destructive)", color: "var(--destructive-foreground)" },
   };
 }

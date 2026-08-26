@@ -155,12 +155,12 @@ export const CaseListRow = memo(function CaseListRow({
           <div className="font-medium text-sm truncate flex items-center gap-1.5" title={employerName}>
             {employerName}
             {isSample && (
-              <span className="inline-flex items-center px-1.5 py-px text-[0.5rem] font-bold tracking-wider uppercase border border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
+              <span className="inline-flex items-center px-1.5 py-px text-sm font-bold tracking-wider uppercase border border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
                 SAMPLE
               </span>
             )}
           </div>
-          <div className="text-xs text-muted-foreground truncate" title={positionTitle}>
+          <div className="text-sm text-muted-foreground truncate" title={positionTitle}>
             {positionTitle}
           </div>
         </div>
@@ -169,7 +169,7 @@ export const CaseListRow = memo(function CaseListRow({
         <div className="shrink-0 hidden sm:block">
           <span
             className={cn(
-              "inline-flex items-center px-2 py-0.5 text-xs font-medium",
+              "inline-flex items-center px-2 py-0.5 text-sm font-medium",
               "border-2 border-border"
             )}
             style={{
@@ -186,7 +186,7 @@ export const CaseListRow = memo(function CaseListRow({
           <div className="shrink-0 hidden md:block">
             <span
               className={cn(
-                "inline-flex items-center px-2 py-0.5 text-xs",
+                "inline-flex items-center px-2 py-0.5 text-sm",
                 "border border-border",
                 deadlineUrgency === "overdue" &&
                   "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
@@ -206,7 +206,7 @@ export const CaseListRow = memo(function CaseListRow({
 
         {/* Progress status */}
         <div className="shrink-0">
-          <ProgressStatusBadge status={progressStatus} className="text-[10px]" />
+          <ProgressStatusBadge status={progressStatus} className="text-sm" />
         </div>
       </div>
       </div>

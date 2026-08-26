@@ -115,10 +115,10 @@ function StatusTooltip({ color, message }: { color: "amber" | "emerald"; message
       <Tooltip>
         <TooltipTrigger asChild>
           <span className="shrink-0 cursor-help">
-            <Info className={`h-3 w-3 ${color === "amber" ? "text-amber-500" : "text-emerald-500"}`} />
+            <Info className={`h-3 w-3 ${color === "amber" ? "text-amber-500" : "text-primary"}`} />
           </span>
         </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-[240px] text-xs">
+        <TooltipContent side="top" className="max-w-[240px] text-sm">
           {message}
         </TooltipContent>
       </Tooltip>

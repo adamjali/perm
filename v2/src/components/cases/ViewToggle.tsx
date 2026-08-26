@@ -87,7 +87,7 @@ function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
         <motion.div
           className={cn(
             "fixed z-[9999] -translate-x-1/2 -translate-y-full",
-            "px-2 py-1.5 bg-foreground text-background text-xs font-medium",
+            "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
             "whitespace-nowrap shadow-hard-sm",
             "pointer-events-none",
             "border-2 border-foreground"
@@ -101,7 +101,7 @@ function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
           {children}
           <div
             className="absolute top-full left-1/2 -translate-x-1/2
-            border-4 border-transparent border-t-foreground"
+            border-3 border-transparent border-t-foreground"
           />
         </motion.div>
       )}
@@ -137,7 +137,7 @@ export function ViewToggle({ view, onChange, className }: ViewToggleProps) {
         // Container styling - neobrutalist
         "relative inline-flex",
         "border-2 border-border bg-background",
-        "shadow-[2px_2px_0px_#000]",
+        "shadow-hard-sm",
         className
       )}
       role="radiogroup"

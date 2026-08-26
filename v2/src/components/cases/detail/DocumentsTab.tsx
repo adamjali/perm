@@ -237,7 +237,7 @@ function FullscreenViewer({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={doc.url} alt={doc.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
         ) : (
-          <div style={{ textAlign: "center", color: "#999", padding: 40 }}>
+          <div style={{ textAlign: "center", color: "var(--muted-foreground)", padding: 40 }}>
             {getFileIcon(doc.mimeType)}
             <div style={{ marginTop: 12, fontSize: "0.9rem" }}>Preview not available. Download to view.</div>
           </div>
@@ -428,7 +428,7 @@ export function DocumentsTab({
               {/* Upload button */}
               {onUpload && (
                 <button
-                  className="flex items-center gap-2 font-mono font-bold uppercase tracking-wider border-[3px] border-current bg-card text-foreground shadow-hard-sm"
+                  className="flex items-center gap-2 font-mono font-bold uppercase tracking-wider border-3 border-current bg-card text-foreground shadow-hard-sm"
                   style={{
                     fontSize: "0.7rem",
                     padding: "3px 10px",
@@ -824,7 +824,7 @@ export function DocumentsTab({
                   padding: "6px 16px",
                   fontWeight: 700,
                   background: "var(--destructive)",
-                  color: "#fff",
+                  color: "var(--destructive-foreground)",
                   border: "2px solid var(--destructive)",
                 }}
                 onClick={handleConfirmDelete}

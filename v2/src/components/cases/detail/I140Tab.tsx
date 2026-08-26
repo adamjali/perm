@@ -115,12 +115,12 @@ export function I140Tab({ caseData }: I140TabProps) {
                 <div className="fc-label">Status</div>
                 <div className="fc-val">
                   <span
-                    className="font-mono text-[0.65rem] font-bold uppercase px-2 py-0.5 border-2 border-border"
+                    className="font-mono text-sm font-bold uppercase px-2 py-0.5 border-2 border-border"
                     style={
                       isApproved
                         ? { background: "var(--primary)", color: "var(--primary-foreground)" }
                         : isDenied
-                          ? { background: "var(--destructive)", color: "#fff" }
+                          ? { background: "var(--destructive)", color: "var(--destructive-foreground)" }
                           : { background: "var(--muted)" }
                     }
                   >
