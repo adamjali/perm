@@ -72,12 +72,31 @@ scanning individual case numbers on `flag.dol.gov`, and that search posts to
 `/recaptcha/caseStatus`; a bare POST returns **401**. It is CAPTCHA-gated, and
 defeating a federal agency's bot protection is not something we will do.
 
-| their visual | what it needs |
-|---|---|
-| `/backlog` live FLAG pending backlog (~121k pending across 28 filing months) | per-case FLAG scanning |
-| `watchlist/months`, per-month pending/decided split | per-case FLAG scanning |
-| "cases ahead of you" / `your_position_in_month` | per-case FLAG scanning |
-| `rfi-funnel`, `letter-dist`, `analyst_review` / `audit_response` per-case states | per-case FLAG scanning |
+| their visual | what it needs | what we already answer |
+|---|---|---|
+| `/backlog` live FLAG pending backlog (~121k across 28 filing months) | per-case FLAG scanning, for the PERM analyst stage | **DOL's own PWD backlog by receipt month**, charted on `/perm-processing-times` via `PwdBacklogChart` - 50,300 pending requests across 7 months, published, not modelled |
+| `watchlist/months`, per-month pending/decided split | same | same chart; the split exists for the PWD stage |
+| "cases ahead of you" / `your_position_in_month` | same, for the PERM stage | **shipped for two of the three queues.** `/tools/pwd-calculator` answers "15,193 requests are ahead of yours" from DOL's published count, and `/tools/i485-queue-position` answers the adjustment stage from USCIS's inventory |
+| `rfi-funnel`, `letter-dist`, per-case `analyst_review` / `audit_response` states | per-case FLAG scanning | nothing, and nothing is derivable: the disclosure files carry no RFI or audit field at all, so this is unavailable to anyone working from public files |
+
+**Re-scoped 2026-08-26. Calling these four "gaps" overstated the position.**
+A PERM applicant waits in three queues, and queue position is the question
+each of them raises:
+
+| queue | do we answer it | source |
+|---|---|---|
+| Prevailing wage determination | **yes** | DOL's published per-month backlog |
+| PERM analyst review | **no, and neither do they honestly** | needs per-case scanning; DOL publishes only the frontier month |
+| I-485 adjustment | **yes** | USCIS inventory, as-of 2026-08-05 against their 2026-05-01 |
+
+So we answer two of the three from published counts; they answer one, three
+months staler, and as a point estimate rather than a range. What is genuinely
+missing is the PERM analyst stage specifically, and the reason is worth
+stating exactly: DOL's disclosure files contain **no pending rows at all**,
+every record carries a decision date, so pending cannot be counted from them.
+It is not a gap we are choosing to leave - it is not derivable from public
+data, and the alternative is a modelled number wearing a measured number's
+clothes.
 
 **This is their real moat, and it is worth being precise about what it is.**
 Everything else they ship runs off the same quarterly OFLC disclosure files we
