@@ -79,10 +79,19 @@ The gap is one access route, not one insight.
 
 Two honest consequences:
 
-1. Our decision data is **quarterly-published and complete**; theirs is
-   **daily-scraped and live**. For "has DOL decided my case", theirs is closer
-   to now. For "what has DOL actually done", ours is the whole record and
-   theirs is a 28-month window.
+1. **Corrected 2026-08-26 by measurement: their public data is NOT live
+   either.** The natural assumption is that per-case scanning makes their
+   decision data fresher than our quarterly ingest. It does not, in anything
+   they expose. Sorting `/api/cases` by decision date descending returns
+   `2026-03-31` — exactly their stated OFLC window boundary — so they hold
+   **zero** cases decided after the quarterly file, and their
+   `decisions-per-day` series ends there too with its feature flag off.
+   Their `/api/stats/timeline-data` publishes a live flag per dataset and only
+   `pwd` is `true`; the `flag_checked` timestamp that refreshes every few
+   minutes is them polling `flag.dol.gov/processingtimes`, the same public
+   page we ingest daily and parse more richly. So on published data ours is
+   both fresher (through 2026-06-30 against their 2026-03-31) and larger.
+   Whatever their scanning feeds, it is not visible in the public API.
 2. A reader who wants their position in the queue today cannot get it from us,
    and saying so plainly is better than approximating it. An estimate of
    "cases ahead of you" built from disclosure files would be a modelled number
