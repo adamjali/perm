@@ -20,6 +20,8 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { CaseBrowser, type OccupationOption } from "@/components/tools/CaseBrowser";
 import { getMeta } from "@/lib/turso/cases";
+import { getDailyDecisions } from "@/lib/turso/publicData";
+import { DailyDecisionsChart } from "@/components/tools/DailyDecisionsChart";
 import { listByKind } from "@/lib/turso/entities";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -65,9 +67,10 @@ export default async function PermCasesPage() {
   // the first ingest writes a coverage document, and the page says so; a read
   // that FAILS is a different thing and throws, because an outage rendered as
   // an empty state is what let a disabled backend pass every status check.
-  const [meta, occupationRows] = await Promise.all([
+  const [meta, occupationRows, daily] = await Promise.all([
     getMeta(),
     listByKind("occupation", 60),
+    getDailyDecisions(),
   ]);
 
   // The dropdown wants the busiest occupations, and `listByKind` already
@@ -159,6 +162,8 @@ export default async function PermCasesPage() {
           <Suspense
             fallback={<p className="text-base text-foreground/60">Loading the case browser…</p>}
           >
+            <DailyDecisionsChart points={daily} className="mb-10" />
+
             <CaseBrowser meta={meta} occupations={occupations} />
           </Suspense>
         ) : (
