@@ -33,7 +33,7 @@ export function QueuePulseWidget() {
     >
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <p className="text-sm leading-relaxed">
-          <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+          <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
             DOL queue
             {snapshot?.permAsOf ? ` · ${formatAsOf(snapshot.permAsOf)}` : null}
           </span>{" "}

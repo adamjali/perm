@@ -691,7 +691,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                               size="sm"
                               onClick={() => removeMethod(index)}
                               aria-label={`Remove method ${index + 1}`}
-                              className="h-6 w-6 p-0 text-destructive hover:text-destructive/80"
+                              className="h-6 w-6 p-0 text-destructive hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

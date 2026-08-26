@@ -596,7 +596,7 @@ export function ImportModal({
                                 "bg-muted/30"
                               )}
                             >
-                              <span className="text-muted-foreground/60 font-mono shrink-0 min-w-[80px]">
+                              <span className="text-muted-foreground font-mono shrink-0 min-w-[80px]">
                                 {warning.employerName
                                   ? `"${warning.employerName.slice(0, 12)}${warning.employerName.length > 12 ? "…" : ""}"`
                                   : `Row ${warning.row + 1}`}
@@ -638,7 +638,7 @@ export function ImportModal({
                                   "bg-muted/30 hover:bg-muted/60 transition-colors duration-150"
                                 )}
                               >
-                                <span className="text-muted-foreground/60 font-mono shrink-0 min-w-[80px]">
+                                <span className="text-muted-foreground font-mono shrink-0 min-w-[80px]">
                                   {warning.employerName
                                     ? `"${warning.employerName.slice(0, 12)}${warning.employerName.length > 12 ? "…" : ""}"`
                                     : `Row ${warning.row + 1}`}
@@ -646,7 +646,7 @@ export function ImportModal({
                                 </span>{" "}
                                 <span className="text-foreground">{warning.message}</span>
                                 {warning.originalValue && (
-                                  <span className="text-muted-foreground/50 ml-auto shrink-0">
+                                  <span className="text-muted-foreground ml-auto shrink-0">
                                     (was: &ldquo;{warning.originalValue}&rdquo;)
                                   </span>
                                 )}
@@ -779,7 +779,7 @@ export function ImportModal({
                                         )}
                                       </span>
                                       {!isError && !isEditing && (
-                                        <Pencil className="h-3 w-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0" />
+                                        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0" />
                                       )}
                                     </div>
                                   </td>

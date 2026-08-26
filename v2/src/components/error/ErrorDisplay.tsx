@@ -48,7 +48,7 @@ export function ErrorDisplay({
         </h2>{" "}
         <p className="mt-2 max-w-md text-sm text-muted-foreground">{message}</p>
         {details && (
-          <p className="mt-1 font-mono text-xs text-muted-foreground/60">
+          <p className="mt-1 font-mono text-xs text-muted-foreground">
             {details}
           </p>
         )}

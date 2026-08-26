@@ -188,7 +188,7 @@ export function QueueAlertForm({
 
       <div className="mt-4 flex flex-col gap-2">
         <Label htmlFor={roleId}>
-          You are <span className="font-normal text-foreground/50">(optional)</span>
+          You are <span className="font-normal text-muted-foreground">(optional)</span>
         </Label>{" "}
         <select
           id={roleId}
@@ -213,7 +213,7 @@ export function QueueAlertForm({
         {status === "sending" ? "Sending" : "Email me when it happens"}
       </Button>{" "}
 
-      <p className="mt-4 text-xs leading-relaxed text-foreground/50">
+      <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
         The month is the only thing that decides when we write to you. You confirm by email
         first, so an address can’t be signed up by someone who doesn’t control it, and one
         click opts out.

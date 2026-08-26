@@ -82,7 +82,7 @@ export default async function I140CalculatorPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-foreground/50">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {/* inline-flex with a 44px min-height: the link is a standalone tap
               target and rendered at 15px tall before this. */}
           <Link

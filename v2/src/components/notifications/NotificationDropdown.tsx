@@ -203,7 +203,7 @@ function NotificationItem({
 
         {/* Case info if available */}
         {notification.caseInfo?.employerName && (
-          <p className="text-xs text-muted-foreground/70 truncate" title={`${notification.caseInfo.employerName}${notification.caseInfo.positionTitle ? ` - ${notification.caseInfo.positionTitle}` : notification.caseInfo.beneficiaryIdentifier ? ` - ${notification.caseInfo.beneficiaryIdentifier}` : ""}`}>
+          <p className="text-xs text-muted-foreground truncate" title={`${notification.caseInfo.employerName}${notification.caseInfo.positionTitle ? ` - ${notification.caseInfo.positionTitle}` : notification.caseInfo.beneficiaryIdentifier ? ` - ${notification.caseInfo.beneficiaryIdentifier}` : ""}`}>
             {notification.caseInfo.employerName}
             {(notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier) &&
               ` - ${notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier}`}
@@ -224,7 +224,7 @@ function NotificationItem({
           className={cn(
             "flex h-5 w-5 items-center justify-center",
             "rounded-sm border border-transparent",
-            "text-muted-foreground/50",
+            "text-muted-foreground",
             "opacity-0 group-hover:opacity-100",
             "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20",
             "transition-all duration-150",
@@ -431,7 +431,7 @@ export default function NotificationDropdown() {
             <span
               className={cn(
                 "inline-flex items-center gap-1.5",
-                "text-sm text-muted-foreground/60 tracking-wide",
+                "text-sm text-muted-foreground tracking-wide",
                 "font-medium cursor-default select-none"
               )}
             >

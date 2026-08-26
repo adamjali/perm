@@ -81,7 +81,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
     <section id="tools" className="py-20 sm:py-28">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
         <div className="max-w-2xl">
-          <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+          <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
             The process, in order
           </p>{" "}
           <h2 className="mt-2 font-heading text-3xl font-black leading-tight sm:text-4xl">
@@ -172,7 +172,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
                       s.owner.startsWith("You")
                         ? "mt-4 inline-block border-2 border-border bg-primary px-2 py-1 text-xs font-bold uppercase tracking-wider text-black"
                         : "mt-4 inline-block text-xs font-bold uppercase tracking-wider " +
-                          (ink ? "text-background/50" : "text-foreground/50")
+                          (ink ? "text-background/50" : "text-muted-foreground")
                     }
                   >
                     {s.owner}

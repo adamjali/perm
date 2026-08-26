@@ -147,7 +147,7 @@ export function TimelineGrid({
           <p className="text-lg font-medium text-muted-foreground">
             No cases to display
           </p>{" "}
-          <p className="text-sm text-muted-foreground/70 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Select cases using the filter to view their timeline
           </p>
         </div>

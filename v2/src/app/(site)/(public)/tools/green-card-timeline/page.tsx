@@ -129,7 +129,7 @@ export default async function GreenCardTimelinePage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-foreground/50">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           <Link
             href="/tools"
             className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"

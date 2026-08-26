@@ -263,7 +263,7 @@ export function FilterableStatTable<T>({
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex min-h-[44px] flex-1 items-center gap-2 border-2 border-border bg-card px-3 shadow-hard-sm focus-within:ring-2 focus-within:ring-primary sm:max-w-sm">
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+            <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Search
             </span>{" "}
             <input
@@ -276,13 +276,13 @@ export function FilterableStatTable<T>({
                 setPage(0);
               }}
               placeholder={searchPlaceholder}
-              className="w-full min-w-0 bg-transparent py-2 text-base outline-none placeholder:text-foreground/40"
+              className="w-full min-w-0 bg-transparent py-2 text-base outline-none placeholder:text-muted-foreground"
             />
           </label>
 
           {facets.map((f) => (
             <label key={f.key} className="flex min-h-[44px] items-center gap-2 border-2 border-border bg-card px-3 shadow-hard-sm focus-within:ring-2 focus-within:ring-primary">
-              <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {f.label}
               </span>{" "}
               <select

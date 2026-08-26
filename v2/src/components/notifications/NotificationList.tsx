@@ -250,7 +250,7 @@ function NotificationListItem({
         </p>
 
         {notification.caseInfo?.employerName && (
-          <p className="text-xs text-muted-foreground/70 truncate" title={`${notification.caseInfo.employerName}${notification.caseInfo.positionTitle ? ` - ${notification.caseInfo.positionTitle}` : notification.caseInfo.beneficiaryIdentifier ? ` - ${notification.caseInfo.beneficiaryIdentifier}` : ""}`}>
+          <p className="text-xs text-muted-foreground truncate" title={`${notification.caseInfo.employerName}${notification.caseInfo.positionTitle ? ` - ${notification.caseInfo.positionTitle}` : notification.caseInfo.beneficiaryIdentifier ? ` - ${notification.caseInfo.beneficiaryIdentifier}` : ""}`}>
             {notification.caseInfo.employerName}
             {(notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier) &&
               ` - ${notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier}`}

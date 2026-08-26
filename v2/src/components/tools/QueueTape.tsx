@@ -84,7 +84,7 @@ export function QueueTape({
                 <span
                   className={cn(
                     "font-mono text-[11px] font-bold leading-none",
-                    cleared || isFrontier ? "text-black/80" : "text-foreground/50",
+                    cleared || isFrontier ? "text-black/80" : "text-muted-foreground",
                     // Room is tight: label every other month, ends always.
                     months.indexOf(m) % 2 !== 0 &&
                       !isFrontier && !isYou && "sr-only",

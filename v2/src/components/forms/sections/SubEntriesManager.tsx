@@ -103,7 +103,7 @@ export function SubEntriesManager({
               size="sm"
               onClick={() => removeEntry(index)}
               aria-label={`Remove entry ${index + 1}`}
-              className="h-8 w-8 p-0 mt-6 text-destructive hover:text-destructive/80"
+              className="h-8 w-8 p-0 mt-6 text-destructive hover:text-destructive"
             >
               <Trash2 className="h-4 w-4" />
             </Button>

@@ -66,7 +66,7 @@ export default async function PermAttorneysPage() {
       <JsonLdScript schema={datasetSchema} />
 
       <header className="max-w-2xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
           As printed in DOL&apos;s files
         </p>{" "}
         <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">

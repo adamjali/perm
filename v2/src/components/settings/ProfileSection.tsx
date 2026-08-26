@@ -208,7 +208,7 @@ export default function ProfileSection({
               {getInitials(fullName || profile.fullName)}
             </span>
           ) : (
-            <User className="w-10 h-10 text-primary/60" />
+            <User className="w-10 h-10 text-primary" />
           )}
         </div>
         <div>

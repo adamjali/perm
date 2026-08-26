@@ -204,9 +204,9 @@ function QueueHistoryTable({
                 {" "}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums">
                   {m === null ? (
-                    <span className="text-foreground/40">—</span>
+                    <span className="text-muted-foreground">—</span>
                   ) : m === 0 ? (
-                    <span className="text-foreground/50">no change</span>
+                    <span className="text-muted-foreground">no change</span>
                   ) : (
                     `${m > 0 ? "+" : ""}${m} month${Math.abs(m) === 1 ? "" : "s"}`
                   )}
@@ -283,7 +283,7 @@ export function QueueHistoryChart({ points, className }: QueueHistoryChartProps)
           {spanMonths > 0 ? (
             <>
               {" "}
-              <span className="text-foreground/50">
+              <span className="text-muted-foreground">
                 (the queue advanced {spanMonths} month{spanMonths === 1 ? "" : "s"} across
                 it)
               </span>

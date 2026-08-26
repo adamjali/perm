@@ -81,7 +81,7 @@ export default async function PermWagesPage() {
       <JsonLdScript schema={datasetSchema} />
 
       <header className="max-w-2xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Offered wages, not survey estimates
         </p>{" "}
         <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">

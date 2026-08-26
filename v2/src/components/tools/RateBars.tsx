@@ -95,7 +95,7 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
                   <BaselineMultiple rate={r.rate} baseline={baseline} />{" "}
                   <span>
                     {r.rate.toFixed(2)}%{" "}
-                    <span className="font-normal text-foreground/50">
+                    <span className="font-normal text-muted-foreground">
                       of {fmtInt(r.decided)}
                     </span>
                   </span>
@@ -357,7 +357,7 @@ export function RankedRateViews({
         label: "#",
         numeric: true,
         sortValue: (r) => r.rank,
-        render: (r) => <span className="text-foreground/50">{r.rank}</span>,
+        render: (r) => <span className="text-muted-foreground">{r.rank}</span>,
       },
       {
         key: "label",
@@ -467,7 +467,7 @@ export function RankedRateViews({
         {hidden > 0 ? (
           <>
             {" "}
-            <span className="text-foreground/50">
+            <span className="text-muted-foreground">
               ({hidden.toLocaleString("en-US")} below it, not ranked)
             </span>
           </>

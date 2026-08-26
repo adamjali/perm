@@ -44,7 +44,7 @@ const rankCol: StatColumn<EntityRow> = {
   // anything, and it is the number people came for.
   secondary: true,
   sortValue: (e) => e.rank,
-  render: (e) => <span className="text-foreground/50">{e.rank}</span>,
+  render: (e) => <span className="text-muted-foreground">{e.rank}</span>,
 };
 
 function nameCol(base: string, label: string): StatColumn<EntityRow> {
@@ -78,7 +78,7 @@ const stateCol: StatColumn<EntityRow> = {
     e.state ? (
       <span className="font-mono text-xs font-bold">{e.state}</span>
     ) : (
-      <span className="text-foreground/40">—</span>
+      <span className="text-muted-foreground">—</span>
     ),
 };
 
@@ -193,7 +193,7 @@ export const OCCUPATION_COLUMNS: StatColumn<EntityRow>[] = [
         ) : (
           e.name
         )}{" "}
-        <span className="font-mono text-xs font-normal text-foreground/50">
+        <span className="font-mono text-xs font-normal text-muted-foreground">
           {e.code ?? ""}
         </span>
       </span>

@@ -165,7 +165,7 @@ export function FormField({
           className={cn(
             "text-sm transition-colors duration-200",
             showErrorIcon
-              ? "text-destructive/80"
+              ? "text-destructive"
               : showWarningIcon
               ? "text-orange-600/80 dark:text-orange-400/80"
               : "text-muted-foreground"

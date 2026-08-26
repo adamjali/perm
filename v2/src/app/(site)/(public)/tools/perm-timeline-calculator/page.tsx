@@ -89,7 +89,7 @@ export default async function PermTimelineCalculatorPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-foreground/50">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           <Link href="/tools" className="underline underline-offset-2 hover:text-primary">
             Tools
           </Link>

@@ -415,7 +415,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <Info className="h-4 w-4" />
           <span className="font-mono text-xs">PERM Tracker v{appVersion}</span>{" "}
-          <span className="text-muted-foreground/50">|</span>{" "}
+          <span className="text-muted-foreground">|</span>{" "}
           <span className="text-xs">&copy; {currentYear} PERM Tracker</span>
         </div>
       </div>

@@ -74,7 +74,7 @@ export default function PermDeadlineCalculatorPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-foreground/50">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           <Link href="/tools" className="underline underline-offset-2 hover:text-primary">
             Tools
           </Link>
@@ -116,7 +116,7 @@ export default function PermDeadlineCalculatorPage() {
           Start tracking free
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
-        <p className="mt-3 text-sm text-foreground/50">Free, and there’s no case limit.</p>
+        <p className="mt-3 text-sm text-muted-foreground">Free, and there’s no case limit.</p>
       </section>
 
       <ToolPageFooter

@@ -88,7 +88,7 @@ export function OnboardingWizard() {
               "absolute top-3 right-3 z-50",
               "flex items-center gap-1.5 px-2.5 py-1.5",
               "text-xs font-mono font-medium uppercase tracking-wider",
-              "text-muted-foreground/70 hover:text-foreground",
+              "text-muted-foreground hover:text-foreground",
               "border border-transparent hover:border-border",
               "transition-all duration-150",
               "hover:bg-muted hover:shadow-hard-sm",

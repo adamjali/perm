@@ -97,7 +97,7 @@ export default function MethodologyPage() {
       <DataNav active="methodology" />
 
       <header className="pt-10 sm:pt-12">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Methodology
         </p>{" "}
         <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
@@ -189,7 +189,7 @@ export default function MethodologyPage() {
                 </a>
               </div>
               <p className="mt-2 text-base leading-relaxed text-foreground/70">{s.what}</p>{" "}
-              <p className="mt-2 font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+              <p className="mt-2 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {s.cadence}
               </p>
             </div>

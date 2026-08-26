@@ -67,7 +67,7 @@ export default async function ToolsPage() {
       <DataNav active="overview" />
 
       <header className="pt-10 sm:pt-12">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Data
           {snapshot?.permAsOf ? ` · DOL figures as of ${formatAsOf(snapshot.permAsOf)}` : null}
         </p>{" "}
@@ -253,7 +253,7 @@ export default async function ToolsPage() {
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+          <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
             For your own case
           </p>{" "}
           <h2 className="mt-2 font-heading text-xl font-black">

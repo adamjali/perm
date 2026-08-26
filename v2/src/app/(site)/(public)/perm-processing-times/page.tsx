@@ -118,7 +118,7 @@ function Figure({
 }) {
   return (
     <div className="border-2 border-border bg-card p-5 shadow-hard">
-      <p className="text-xs font-bold uppercase tracking-wider text-foreground/50">{label}</p>{" "}
+      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>{" "}
       <p className="mt-2 font-heading text-3xl font-black leading-none sm:text-4xl">{value}</p>{" "}
       {caption ? <p className="mt-2 text-sm text-foreground/60">{caption}</p> : null}
     </div>
@@ -273,7 +273,7 @@ export default async function PermProcessingTimesPage() {
         <>
           {/* The headline. This one sentence is what the whole search cluster asks for. */}
           <section className="mt-10 border-2 border-border bg-tint-primary p-6 shadow-hard sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-wider text-foreground/50">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Analyst review queue
             </p>{" "}
             <p className="mt-3 font-heading text-3xl font-black leading-tight sm:text-4xl">
@@ -348,7 +348,7 @@ export default async function PermProcessingTimesPage() {
               because a velocity from a single observation would be invented. */}
           {hasVelocity ? (
             <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard">
-              <p className="text-xs font-bold uppercase tracking-wider text-foreground/50">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Observed movement
               </p>{" "}
               <p className="mt-2 text-base leading-relaxed">
@@ -531,7 +531,7 @@ export default async function PermProcessingTimesPage() {
           Start tracking free
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
-        <p className="mt-3 text-sm text-foreground/50">
+        <p className="mt-3 text-sm text-muted-foreground">
           Free, and there’s no case limit. See the{" "}
           <Link href="/guides/perm-recruitment-checklist" className="underline underline-offset-2">
             recruitment checklist

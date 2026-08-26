@@ -73,7 +73,7 @@ export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
         </Button>
       </div>
 
-      <p className="text-muted-foreground/60 text-xs mt-4">
+      <p className="text-muted-foreground text-xs mt-4">
         You can always replay the tour from Settings &rarr; Support.
       </p>
     </div>

@@ -259,9 +259,9 @@ function FrontierTable({
                 {" "}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums">
                   {a === null ? (
-                    <span className="text-foreground/40">—</span>
+                    <span className="text-muted-foreground">—</span>
                   ) : a === 0 ? (
-                    <span className="text-foreground/50">no change</span>
+                    <span className="text-muted-foreground">no change</span>
                   ) : (
                     `${a > 0 ? "+" : ""}${a} month${Math.abs(a) === 1 ? "" : "s"}`
                   )}
@@ -346,7 +346,7 @@ export function FrontierProgressChart({
           {elapsed > 0 ? (
             <>
               {" "}
-              <span className="text-foreground/50">
+              <span className="text-muted-foreground">
                 ({movedAcross} month{movedAcross === 1 ? "" : "s"} of queue in {elapsed}{" "}
                 month{elapsed === 1 ? "" : "s"} of calendar)
               </span>

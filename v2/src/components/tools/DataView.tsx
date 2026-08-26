@@ -94,7 +94,7 @@ export function ScopeSelect({
     // content, so a long option label ("District of Columbia") pushes the
     // control past a 390px viewport and takes the page sideways with it.
     <label className="flex min-h-[44px] max-w-full items-center gap-2 border-2 border-border bg-card px-3 shadow-hard-sm focus-within:ring-2 focus-within:ring-primary">
-      <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+      <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
         {label}
       </span>{" "}
       <select

@@ -35,7 +35,7 @@ function PasswordInput({
         aria-label={visible ? "Hide password" : "Show password"}
         className={cn(
           "absolute right-0 top-0 h-full w-11 inline-flex items-center justify-center",
-          "text-muted-foreground/70 transition-colors duration-150",
+          "text-muted-foreground transition-colors duration-150",
           "hover:text-foreground",
           "focus-visible:outline-none focus-visible:text-foreground",
           "disabled:pointer-events-none disabled:opacity-50"

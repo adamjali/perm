@@ -438,7 +438,7 @@ export function USStateMap({
             </span>
           </span>
         ) : null}{" "}
-        <span className="text-xs text-foreground/50">
+        <span className="text-xs text-muted-foreground">
           {range
             ? `${range.n} of ${states.length} shaded`
             : "Nothing clears the floor at this setting"}
@@ -454,7 +454,7 @@ export function USStateMap({
           <div>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="font-heading text-xl font-black">{activeName}</h3>{" "}
-              <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+              <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {pinned === activeAbbr
                   ? "Pinned. Another state replaces it"
                   : "Tapping pins it"}
@@ -473,7 +473,7 @@ export function USStateMap({
                 { k: "Median wage", v: fmtWage(active.medianAnnualWage) },
               ].map((d) => (
                 <div key={d.k}>
-                  <dt className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/50">
+                  <dt className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     {d.k}
                   </dt>{" "}
                   <dd className="mt-1 font-heading text-lg font-black tabular-nums">{d.v}</dd>
@@ -560,7 +560,7 @@ export function StateStatTable({ states }: { states: StateStat[] }) {
       label: "#",
       numeric: true,
       sortValue: (s) => s.rank,
-      render: (s) => <span className="text-foreground/50">{s.rank}</span>,
+      render: (s) => <span className="text-muted-foreground">{s.rank}</span>,
     },
     {
       key: "name",
@@ -568,7 +568,7 @@ export function StateStatTable({ states }: { states: StateStat[] }) {
       sortValue: (s) => s.name,
       render: (s) => (
         <span className="font-bold">
-          {s.name} <span className="font-mono text-xs text-foreground/50">{s.state}</span>
+          {s.name} <span className="font-mono text-xs text-muted-foreground">{s.state}</span>
         </span>
       ),
     },
