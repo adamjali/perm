@@ -92,22 +92,34 @@ def category_of(label: str) -> str | None:
     return code
 
 
-def discover_workbook() -> tuple[str, str]:
-    """Find the newest eb_inventory file. Discovered, never constructed -
-    USCIS moves these between /sites/default/files/document/data/ paths and a
-    guessed URL returns a styled 404 that reads exactly like a dead link."""
+def discover_workbooks() -> list[tuple[str, str]]:
+    """EVERY eb_inventory file the page currently lists, oldest first.
+
+    Deliberately not just the newest. USCIS carries only the recent few
+    releases and keeps no archive, so a month we fail to capture is gone
+    permanently - and month-over-month movement in the backlog is the whole
+    reason to store snapshots at all. Taking every listed month each run
+    means a failed or skipped run is repaired by the next one instead of
+    leaving a hole. Re-ingesting a month already held costs one request and
+    rewrites identical rows.
+
+    Discovered, never constructed: USCIS moves these between paths, and a
+    guessed URL returns a styled 404 that reads exactly like a dead link.
+    """
     html = fetch(DATA_PAGE).decode("utf8", "ignore")
     found = re.findall(
         r'href="(/sites/default/files/document/data/eb_inventory_'
         r'([a-z]+)_(\d{4})_v[\d.]+\.xlsx)"', html, re.I)
     if not found:
         raise SystemExit("no eb_inventory link on the USCIS data page")
-    def key(t):
-        _, month, year = t
-        return (int(year), MONTHS.get(month.capitalize(), 0))
-    path, month, year = max(found, key=key)
-    log(f"  newest published: {month} {year}")
-    return HOST + path, f"{month.capitalize()} {year}"
+    seen: dict[str, tuple[int, int, str]] = {}
+    for path, month, year in found:
+        key = f"{month.lower()}-{year}"
+        seen[key] = (int(year), MONTHS.get(month.capitalize(), 0), path)
+    ordered = sorted(seen.values())
+    log(f"  {len(ordered)} month(s) listed: "
+        f"{', '.join(f'{y}-{m:02d}' for y, m, _ in ordered)}")
+    return [(HOST + p, f"{y}-{m:02d}") for y, m, p in ordered]
 
 
 def rows_from(z: zipfile.ZipFile, shared: list[str], sheet_path: str) -> tuple[str | None, list[dict]]:
@@ -166,19 +178,38 @@ def rows_from(z: zipfile.ZipFile, shared: list[str], sheet_path: str) -> tuple[s
     return as_of, out
 
 
-def main() -> int:
-    url, label = discover_workbook()
-    log(f"  fetching {url}")
-    blob = fetch(url, referer=DATA_PAGE)
+def store(db: Turso, as_of: str, records: list[dict]) -> int:
+    """Replace one as-of wholesale. Idempotent, and it REFUSES on loss."""
+    db.execute("DELETE FROM i485_inventory WHERE as_of = ?", [as_of])
+    B = 300
+    for i in range(0, len(records), B):
+        chunk = records[i:i + B]
+        vals = ",".join(["(?,?,?,?,?,?,?,?)"] * len(chunk))
+        args: list = []
+        for r in chunk:
+            args += [as_of, r["country"], r["category"], r["status"],
+                     r["pd_year"], r["pd_month"], r["count"], r["suppressed"]]
+        db.execute(f"INSERT OR REPLACE INTO i485_inventory VALUES {vals}", args)
+    n = int(db.scalar("SELECT count(*) FROM i485_inventory WHERE as_of = ?",
+                      [as_of]) or 0)
+    # Parsed must equal stored. A primary-key collision is otherwise silent:
+    # INSERT OR REPLACE overwrites happily and the only evidence is a count
+    # smaller than what was read. That is exactly how the four EB5 set-asides
+    # and then 130 EW3 cells went missing on the first two runs.
+    if n != len(records):
+        raise SystemExit(
+            f"REFUSING {as_of}: parsed {len(records):,} cells but stored "
+            f"{n:,} - {len(records) - n:,} collided on the primary key")
+    return n
+
+
+def parse_workbook(blob: bytes) -> tuple[str | None, list[dict]]:
     tmp = pathlib.Path("/tmp/eb_inventory.xlsx")
     tmp.write_bytes(blob)
-    log(f"  {len(blob):,} bytes")
-
     z = zipfile.ZipFile(tmp)
     shared = read_shared_strings(z)
-    wb = z.read("xl/workbook.xml").decode("utf8", "ignore")
-    names = re.findall(r'<sheet name="([^"]+)"', wb)
-
+    names = re.findall(r'<sheet name="([^"]+)"',
+                       z.read("xl/workbook.xml").decode("utf8", "ignore"))
     as_of: str | None = None
     records: list[dict] = []
     for i, name in enumerate(names[:12], start=1):
@@ -191,11 +222,10 @@ def main() -> int:
         if rows:
             as_of = as_of or sheet_asof
             records.extend(rows)
-            log(f"    {name:34s} {len(rows):5,} cells")
-    if not records or not as_of:
-        raise SystemExit("parsed nothing - refusing to write")
-    log(f"  as of {as_of}: {len(records):,} cells total")
+    return as_of, records
 
+
+def main() -> int:
     db = Turso()
     db.execute("""CREATE TABLE IF NOT EXISTS i485_inventory (
         as_of TEXT NOT NULL, country TEXT NOT NULL, category TEXT NOT NULL,
@@ -205,40 +235,38 @@ def main() -> int:
     db.execute("""CREATE INDEX IF NOT EXISTS i485_lookup
         ON i485_inventory (country, category, as_of, pd_year, pd_month)""")
 
-    # Replace this as-of wholesale so a re-run is idempotent, and keep older
-    # as-ofs: a month-over-month change in the backlog is the only way to see
-    # which direction it is moving, and USCIS keeps no archive of its own.
-    db.execute("DELETE FROM i485_inventory WHERE as_of = ?", [as_of])
-    B = 300
-    for i in range(0, len(records), B):
-        chunk = records[i:i + B]
-        vals = ",".join(["(?,?,?,?,?,?,?,?)"] * len(chunk))
-        args: list = []
-        for r in chunk:
-            args += [as_of, r["country"], r["category"], r["status"],
-                     r["pd_year"], r["pd_month"], r["count"], r["suppressed"]]
-        db.execute(f"INSERT OR REPLACE INTO i485_inventory VALUES {vals}", args)
+    newest_as_of, newest_total, newest_sup = None, 0, 0
+    for url, label in discover_workbooks():
+        log(f"  {label}: fetching")
+        as_of, records = parse_workbook(fetch(url, referer=DATA_PAGE))
+        if not records or not as_of:
+            log(f"    parsed nothing, skipping")
+            continue
+        n = store(db, as_of, records)
+        total = sum(r["count"] for r in records)
+        sup = sum(r["suppressed"] for r in records)
+        log(f"    as of {as_of}: {n:,} cells, {total:,} applications, "
+            f"{sup:,} suppressed")
+        newest_as_of, newest_total, newest_sup = as_of, total, sup
+        time.sleep(1.5)   # polite between federal fetches
 
-    n = int(db.scalar("SELECT count(*) FROM i485_inventory WHERE as_of = ?", [as_of]) or 0)
-    # Parsed must equal stored. A primary-key collision is silent otherwise:
-    # INSERT OR REPLACE happily overwrites, and the only evidence is a count
-    # that is smaller than what was read. That is exactly how the four EB5
-    # set-asides went missing on the first run.
-    if n != len(records):
-        raise SystemExit(
-            f"REFUSING: parsed {len(records):,} cells but stored {n:,} - "
-            f"{len(records) - n:,} collided on the primary key")
-    tot = int(db.scalar("SELECT sum(count) FROM i485_inventory WHERE as_of = ?", [as_of]) or 0)
-    sup = int(db.scalar("SELECT sum(suppressed) FROM i485_inventory WHERE as_of = ?", [as_of]) or 0)
-    log(f"  VERIFY stored {n:,} cells | {tot:,} counted applications | {sup:,} suppressed cells")
+    if not newest_as_of:
+        raise SystemExit("stored nothing - refusing to report success")
+
+    log("  HISTORY held:")
+    for r in db.execute(
+        "SELECT as_of, sum(count) FROM i485_inventory GROUP BY as_of "
+        "ORDER BY as_of")["response"]["result"]["rows"]:
+        log(f"    {r[0]['value']}  {int(r[1]['value']):>8,} applications")
 
     db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
         dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
         source TEXT, cadence TEXT, note TEXT)""")
     db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?)",
-               ["i485-inventory", as_of, int(time.time() * 1000),
+               ["i485-inventory", newest_as_of, int(time.time() * 1000),
                 "USCIS employment-based I-485 inventory (uscis.gov)", "Monthly",
-                f"{tot:,} pending applications; {sup:,} cells suppressed by USCIS"])
+                f"{newest_total:,} pending applications; "
+                f"{newest_sup:,} cells suppressed by USCIS"])
     return 0
 
 
