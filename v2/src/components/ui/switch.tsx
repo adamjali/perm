@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 /**
  * Switch Component
  *
- * Neobrutalist toggle switch with Forest Green (#228B22) when ON.
+ * Neobrutalist toggle switch, brand lime when ON.
  * Features 2px border, snappy 150ms animation, and hard shadow.
  *
  * @example
@@ -36,7 +36,7 @@ function Switch({
         // OFF state
         "bg-muted",
         // ON state - Forest Green
-        "data-[state=checked]:bg-[#228B22] data-[state=checked]:border-[#228B22]",
+        "data-[state=checked]:bg-primary data-[state=checked]:border-border",
         // Focus states
         "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:border-ring",
         // Disabled state
@@ -63,7 +63,7 @@ function Switch({
           // Position - ON state
           "data-[state=checked]:translate-x-[1.125rem]",
           // ON state thumb border matches green
-          "data-[state=checked]:border-[#1a6b1a]"
+          "data-[state=checked]:border-border"
         )}
       />
     </SwitchPrimitive.Root>

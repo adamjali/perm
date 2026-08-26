@@ -83,7 +83,7 @@ export function Lightbox({
             "fixed inset-0 z-50 bg-black/70 backdrop-blur-md",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
-            "duration-200"
+            "duration-150"
           )}
         />
 
@@ -94,7 +94,7 @@ export function Lightbox({
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
             "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
-            "duration-200 outline-none"
+            "duration-150 outline-none"
           )}
           onClick={(e) => {
             // Close when clicking the backdrop area (not the media itself)

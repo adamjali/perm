@@ -66,7 +66,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <p className="text-sm text-muted-foreground mb-4">
             An error occurred while loading this section.
             {process.env.NODE_ENV === "development" && this.state.error && (
-              <span className="block mt-2 font-mono text-xs text-destructive">
+              <span className="block mt-2 font-mono text-sm text-destructive">
                 {this.state.error.message}
               </span>
             )}
@@ -100,7 +100,7 @@ export function DashboardErrorFallback({
       <p className="text-sm text-muted-foreground mb-4">
         There was a problem loading your dashboard data. Please try refreshing the page.
         {process.env.NODE_ENV === "development" && error && (
-          <span className="block mt-2 font-mono text-xs text-destructive">
+          <span className="block mt-2 font-mono text-sm text-destructive">
             {error.message}
           </span>
         )}

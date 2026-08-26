@@ -22,7 +22,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         // Invalid state
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
         // Valid state — opt-in via data-valid="true"
-        "data-[valid=true]:border-emerald-600 data-[valid=true]:ring-emerald-500/20 dark:data-[valid=true]:ring-emerald-500/40",
+        "data-[valid=true]:border-primary data-[valid=true]:ring-primary/20 dark:data-[valid=true]:ring-primary/40",
         className
       )}
       {...props}

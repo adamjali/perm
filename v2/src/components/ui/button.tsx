@@ -25,7 +25,7 @@ const buttonVariants = cva(
         // Mobile-first: 44px (h-11) touch targets on mobile, smaller on desktop (md:)
         default: "h-11 md:h-9 px-4 py-2 has-[>svg]:px-3",
         sm: "h-11 md:h-8 gap-1.5 px-3 has-[>svg]:px-2.5",
-        xs: "h-10 md:h-6 gap-1 px-2 text-xs has-[>svg]:px-1.5",
+        xs: "h-10 md:h-6 gap-1 px-2 text-sm has-[>svg]:px-1.5",
         lg: "h-11 md:h-10 px-6 has-[>svg]:px-4",
         icon: "size-11 md:size-9",
         "icon-sm": "size-11 md:size-8",

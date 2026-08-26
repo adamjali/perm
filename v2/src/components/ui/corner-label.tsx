@@ -6,7 +6,7 @@
  *
  * Features:
  * - Mono font (JetBrains Mono)
- * - 4px black border
+ * - 3px border (emphasis weight)
  * - Positioned at corners (top-left, top-right, bottom-left, bottom-right)
  * - Small text size
  * - Background color customizable
@@ -51,9 +51,9 @@ export default function CornerLabel({
     <div
       className={cn(
         // Base styles
-        "absolute z-10 border-4 border-border px-2 py-1",
+        "absolute z-10 border-3 border-border px-2 py-1",
         // Typography
-        "mono text-xs font-medium",
+        "mono text-sm font-semibold",
         // Position
         positionClasses[position],
         // Color

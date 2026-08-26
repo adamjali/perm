@@ -134,7 +134,7 @@ export default function ProgressRing({
           strokeLinecap="butt"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className="drop-shadow-sm"
+          className=""
           style={{
             transition: animateOnScroll
               ? "none"

@@ -11,7 +11,7 @@ function Divider({ className, variant = "default", ...props }: DividerProps) {
       className={cn(
         "border-border w-full",
         variant === "default" && "border-t-2",
-        variant === "thick" && "border-t-4",
+        variant === "thick" && "border-t-3",
         className
       )}
       {...props}
