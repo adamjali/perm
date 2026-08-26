@@ -35,6 +35,7 @@ import {
 import {
   getFAQPageSchema,
   getHomepageRatingPartialSchema,
+  shouldAdvertiseRating,
 } from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -107,14 +108,20 @@ export default async function HomePage() {
   // page. The partial below shares the root SoftwareApplication's @id so
   // Google's @id-graph merge attaches the rating to that entity on this
   // page only (not on /blog, /privacy, etc.).
-  const ratingPartial = getHomepageRatingPartialSchema(baseUrl);
+  // Gated on the review count: below the advertising floor the schema is
+  // not emitted at all, which also keeps Google's visible-rating rule
+  // trivially satisfied - no markup, nothing to render. One constant
+  // (MIN_REVIEWS_TO_ADVERTISE) brings both back when the count grows.
+  const ratingPartial = shouldAdvertiseRating()
+    ? getHomepageRatingPartialSchema(baseUrl)
+    : null;
 
   return (
     <>
       <Preloader />
       {/* FAQPage + homepage aggregateRating partial. Server-built schemas only. */}
       <JsonLdScript schema={faqSchema} />
-      <JsonLdScript schema={ratingPartial} />
+      {ratingPartial ? <JsonLdScript schema={ratingPartial} /> : null}
       <HeroSection waitRows={disclosure?.frontierHistory ?? []} />
       <LiveDataBand
         frontierMonth={analyst?.priorityDate ?? null}

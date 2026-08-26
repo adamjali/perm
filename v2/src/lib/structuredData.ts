@@ -146,6 +146,24 @@ export const APP_RATING = {
 } as const;
 
 /**
+ * Below this, the aggregate score is not ADVERTISED - no big 5.0 on the
+ * page, no aggregateRating in the JSON-LD. The testimonials themselves and
+ * the review CTA stay; it is the scorekeeping that goes quiet.
+ *
+ * Google sets no minimum, so this is an editorial floor, set after a
+ * practicing attorney read the site as "trying too hard": a centered
+ * social-proof band declaring 5.0 over "from 2 attorney reviews" performs
+ * beyond its evidence, and a practitioner reads the 2 before the stars.
+ * When the Senja count crosses this line, raise APP_RATING.count and the
+ * band and the markup both return by themselves.
+ */
+export const MIN_REVIEWS_TO_ADVERTISE = 10;
+
+export function shouldAdvertiseRating(): boolean {
+  return Number(APP_RATING.count) >= MIN_REVIEWS_TO_ADVERTISE;
+}
+
+/**
  * Homepage-only aggregateRating partial.
  *
  * Why this is its own helper (and not part of `getSoftwareApplicationSchema`):

@@ -10,7 +10,7 @@
 import Script from "next/script";
 import { ChatDots, Star } from "@phosphor-icons/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
-import { APP_RATING } from "@/lib/structuredData";
+import { APP_RATING, shouldAdvertiseRating } from "@/lib/structuredData";
 
 interface TrustBadge {
   icon: React.ReactNode;
@@ -111,6 +111,7 @@ export function TestimonialsSection() {
             line is built from the same APP_RATING constant as the JSON-LD,
             so the visible number and the marked-up number cannot drift.
           */}
+          {shouldAdvertiseRating() ? (
           <div className="flex items-center justify-center gap-2 mb-6">
             <span className="flex" aria-hidden="true">
               {Array.from({ length: 5 }, (_, i) => (
@@ -124,6 +125,7 @@ export function TestimonialsSection() {
               from {APP_RATING.count} attorney reviews
             </span>
           </div>
+          ) : null}
 
           {/* Senja Reviews Widget */}
           <div>
