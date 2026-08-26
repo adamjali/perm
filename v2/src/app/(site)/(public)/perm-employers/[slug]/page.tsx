@@ -38,6 +38,7 @@ import {
   rateReliability,
 } from "@/components/tools/EntityContext";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import { DataProvenance } from "@/components/data/DataProvenance";
 import {
   comparables,
   fieldDistribution,
@@ -476,6 +477,7 @@ export default async function EmployerPage({
           </p>
         </div>
       </section>
+      <DataProvenance datasets={["perm-cases", "entities"]} />
     </div>
   );
 }

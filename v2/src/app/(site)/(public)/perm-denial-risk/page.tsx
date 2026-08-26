@@ -26,6 +26,7 @@ import { CENSUS_REGION } from "@/components/tools/USStateMap";
 import { FreshnessDots, InsightLede } from "@/components/tools/Insight";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 
+import { DataProvenance } from "@/components/data/DataProvenance";
 const TITLE = "PERM Denial Rates";
 // 147 characters. Anything past ~155 is truncated mid-sentence in the SERP,
 // and the entity-escaped source string is six characters per apostrophe, so
@@ -439,6 +440,7 @@ export default async function PermDenialRiskPage() {
           </p>
         </div>
       </section>
+      <DataProvenance datasets={["perm-cases"]} />
     </div>
   );
 }

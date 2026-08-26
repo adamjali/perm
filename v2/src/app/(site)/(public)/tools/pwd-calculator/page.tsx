@@ -10,6 +10,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { getPwdEstimatorData } from "@/lib/turso/estimate";
 
+import { DataProvenance } from "@/components/data/DataProvenance";
 /**
  * Prevailing wage determination queue calculator.
  *
@@ -124,6 +125,9 @@ export default async function PwdCalculatorPage() {
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
+
+      <DataProvenance datasets={["processing-times"]} />
+
 
       <ToolPageFooter
         currentHref={"/tools/pwd-calculator"}

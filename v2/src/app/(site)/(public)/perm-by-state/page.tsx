@@ -22,6 +22,7 @@ import { DataNav } from "@/components/tools/DataNav";
 import { StateExplorer, type StateStat } from "@/components/tools/USStateMap";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 
+import { DataProvenance } from "@/components/data/DataProvenance";
 const TITLE = "PERM Filings by State";
 const DESCRIPTION =
   "Interactive map of PERM filings by worksite state: volume, approval rate, median days and median wage, from DOL's own disclosure files.";
@@ -193,6 +194,7 @@ export default async function PermByStatePage() {
           </p>
         </div>
       </section>
+      <DataProvenance datasets={["perm-cases"]} />
     </div>
   );
 }

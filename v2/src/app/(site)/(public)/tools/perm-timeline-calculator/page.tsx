@@ -12,6 +12,7 @@ import { currentMonthUtc } from "@/lib/dolFormat";
 import { DataNav } from "@/components/tools/DataNav";
 import { getEstimatorData } from "@/lib/turso/estimate";
 
+import { DataProvenance } from "@/components/data/DataProvenance";
 /**
  * PERM decision-date calculator.
  *
@@ -143,6 +144,9 @@ export default async function PermTimelineCalculatorPage() {
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
+
+      <DataProvenance datasets={["perm-cases", "processing-times"]} />
+
 
       <ToolPageFooter
         currentHref={"/tools/perm-timeline-calculator"}

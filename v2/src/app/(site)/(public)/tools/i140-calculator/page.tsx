@@ -11,6 +11,7 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 
+import { DataProvenance } from "@/components/data/DataProvenance";
 /**
  * I-140 queue calculator.
  *
@@ -132,6 +133,9 @@ export default async function I140CalculatorPage() {
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
+
+      <DataProvenance datasets={["uscis-i140-times"]} />
+
 
       <ToolPageFooter
         currentHref={"/tools/i140-calculator"}

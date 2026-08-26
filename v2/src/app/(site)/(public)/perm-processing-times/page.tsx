@@ -51,6 +51,7 @@ import { FreshnessDots, type Freshness } from "@/components/tools/Insight";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { getProcessingTimes, getProcessingTimesHistory } from "@/lib/turso/processingTimes";
 
+import { DataProvenance } from "@/components/data/DataProvenance";
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
 // Same expression as layout.tsx, sitemap.ts, feed.xml and seo.ts. A bare
 // literal here meant a preview deploy emitted Dataset markup pointing at
@@ -529,6 +530,7 @@ export default async function PermProcessingTimesPage() {
           for the deadline math itself.
         </p>
       </section>
+      <DataProvenance datasets={["processing-times"]} />
     </div>
   );
 }

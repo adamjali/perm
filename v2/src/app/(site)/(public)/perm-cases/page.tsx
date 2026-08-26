@@ -22,6 +22,7 @@ import { CaseBrowser, type OccupationOption } from "@/components/tools/CaseBrows
 import { getMeta } from "@/lib/turso/cases";
 import { listByKind } from "@/lib/turso/entities";
 
+import { DataProvenance } from "@/components/data/DataProvenance";
 const TITLE = "PERM Case Search";
 const DESCRIPTION =
   "Search every PERM case in DOL's published disclosure window by case number, employer, law firm, state or occupation, with the wage and the days it took.";
@@ -219,6 +220,7 @@ export default async function PermCasesPage() {
           </p>
         </div>
       </section>
+      <DataProvenance datasets={["perm-cases"]} />
     </div>
   );
 }

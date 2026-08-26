@@ -17,6 +17,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { getEstimatorData } from "@/lib/turso/estimate";
 
+import { DataProvenance } from "@/components/data/DataProvenance";
 /**
  * The whole employment-based green card in one view.
  *
@@ -227,6 +228,9 @@ export default async function GreenCardTimelinePage() {
         <h2 className="font-heading text-2xl font-black">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
+
+      <DataProvenance datasets={["perm-cases", "processing-times", "visa-bulletin", "uscis-i140-times"]} />
+
 
       <ToolPageFooter
         currentHref={"/tools/green-card-timeline"}

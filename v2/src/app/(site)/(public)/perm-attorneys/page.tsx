@@ -16,6 +16,7 @@ import { DataNav } from "@/components/tools/DataNav";
 import { EntityExplorer } from "@/components/tools/EntityExplorer";
 import { fetchEntitySeed } from "@/lib/entitySeed";
 
+import { DataProvenance } from "@/components/data/DataProvenance";
 const TITLE = "Every PERM Law Firm, Ranked";
 const DESCRIPTION =
   "Every law firm filing PERM cases: volume, approval rate and median processing days per firm, searchable and sortable, from DOL's own disclosure files.";
@@ -163,6 +164,7 @@ export default async function PermAttorneysPage() {
           </p>
         </div>
       </section>
+      <DataProvenance datasets={["perm-cases", "entities"]} />
     </div>
   );
 }

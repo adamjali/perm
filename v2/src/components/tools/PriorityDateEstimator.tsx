@@ -335,7 +335,7 @@ export function PriorityDateEstimator({
     if (run.length > 1) lineSegments.push(run.join(" "));
   }
 
-  const xTickIndices = evenTickIndices(series.length);
+  const xTickIndices = evenTickIndices(series.length, 7);
   const yTicks = yDomain
     ? [yDomain.lo, (yDomain.lo + yDomain.hi) / 2, yDomain.hi]
     : [];
@@ -665,7 +665,7 @@ export function PriorityDateEstimator({
             <div className="-mx-1 mt-6 overflow-x-auto px-1">
               <svg
                 viewBox={`0 0 ${W} ${H}`}
-                className="block h-auto w-full min-w-[34rem]"
+                className="block h-auto w-full min-w-[44rem]"
                 role="img"
                 aria-label={
                   yDomain === null
@@ -761,7 +761,7 @@ export function PriorityDateEstimator({
                     x={PAD_L - 10}
                     y={py(t) + 4}
                     textAnchor="end"
-                    fontSize="13"
+                    fontSize="15"
                     fill="currentColor"
                     fillOpacity="0.7"
                   >
@@ -775,7 +775,7 @@ export function PriorityDateEstimator({
                     x={px(idx)}
                     y={H - PAD_B + 22}
                     textAnchor={tickAnchor(i, xTickIndices.length)}
-                    fontSize="13"
+                    fontSize="15"
                     fill="currentColor"
                     fillOpacity="0.7"
                   >

@@ -9,6 +9,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { getVisaBulletinSeries } from "@/lib/turso/publicData";
 
+import { DataProvenance } from "@/components/data/DataProvenance";
 /**
  * Priority dates against the visa bulletin.
  *
@@ -236,6 +237,9 @@ export default async function PriorityDateCalculatorPage() {
         <h2 className="font-heading text-2xl font-black">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
+
+      <DataProvenance datasets={["visa-bulletin"]} />
+
 
       <ToolPageFooter
         currentHref={"/tools/priority-date-calculator"}

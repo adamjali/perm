@@ -18,6 +18,7 @@ import { EntityExplorer } from "@/components/tools/EntityExplorer";
 import { fetchEntitySeed } from "@/lib/entitySeed";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 
+import { DataProvenance } from "@/components/data/DataProvenance";
 const TITLE = "PERM Salaries by Occupation";
 const DESCRIPTION =
   "What PERM cases actually pay: median offered wages by occupation, with volume and approval rates, from DOL's own disclosure files.";
@@ -235,6 +236,7 @@ export default async function PermWagesPage() {
           </p>
         </div>
       </section>
+      <DataProvenance datasets={["perm-cases", "entities"]} />
     </div>
   );
 }
