@@ -26,6 +26,10 @@ vi.mock("@/lib/turso/processingTimes", () => ({
 }));
 vi.mock("@/lib/turso/publicData", () => ({
   getDisclosureStats: vi.fn(async () => null),
+  // Drives how many child sitemaps the index lists.
+  countPageworthy: vi.fn(async (kind: string) =>
+    kind === "employer" ? 600 : 200,
+  ),
 }));
 vi.mock("@/lib/entitySeed", () => ({
   fetchAllEntitiesServer: vi.fn(),
@@ -51,7 +55,29 @@ import { getAllPosts } from "@/lib/content";
 import { captureError } from "@/lib/sentry";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { fetchAllEntitiesServer } from "@/lib/entitySeed";
-import sitemap, { revalidate } from "../sitemap";
+import { countPageworthy } from "@/lib/turso/publicData";
+import {
+  childNames,
+  entityEntries,
+  indexXml,
+  pagesEntries,
+  parseChildName,
+  urlsetXml,
+  SITEMAP_CHUNK,
+} from "@/lib/sitemap/build";
+import { revalidate } from "../sitemap.xml/route";
+
+/** The whole sitemap as one flat list, which is what the old tests asserted. */
+async function sitemap() {
+  const names = await childNames();
+  const out = [];
+  for (const n of names) {
+    if (n === "pages") { out.push(...(await pagesEntries())); continue; }
+    const parsed = parseChildName(n)!;
+    out.push(...(await entityEntries(parsed.kind, parsed.chunk)));
+  }
+  return out.map((e) => ({ url: e.url, lastModified: e.lastModified }));
+}
 
 function mkPost(
   slug: string,
@@ -213,14 +239,14 @@ describe("sitemap.ts", () => {
     // every entity URL.
     vi.mocked(fetchAllEntitiesServer).mockResolvedValue([]);
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
-    await expect(sitemap()).rejects.toThrow(/entity URLs/i);
+    await expect(sitemap()).rejects.toThrow(/built with only 0 rows/i);
     const messages = vi
       .mocked(captureError)
       .mock.calls.map((c) => (c[0] as Error).message);
     // Still reported as well as refused: the build fails loudly AND the reason
     // reaches Sentry, because a failed build with no explanation is its own
     // kind of silence.
-    expect(messages.some((m) => /entity URLs/i.test(m))).toBe(true);
+    expect(messages.some((m) => /built with only 0 rows/i.test(m))).toBe(true);
   });
 
   it("uses DOL's as-of date for /perm-processing-times, not the newest post date", async () => {
@@ -248,18 +274,84 @@ describe("sitemap.ts", () => {
     // The seed on the index page is 250 rows; the sitemap must carry the whole
     // corpus. A sitemap built from the seed looks entirely healthy and hides
     // 16,000 pages from search.
+    // Counts above the per-kind loss floor. The old fixture used 3 rows for
+    // attorneys, which the summed guard tolerated and the per-kind guard
+    // correctly does not: 3 law firms where there are 3,736 is exactly the
+    // catastrophic read this now refuses to publish.
     vi.mocked(fetchAllEntitiesServer).mockImplementation(async (kind: string) =>
-      entityRows(kind, 1, kind === "employer" ? 2500 : 3),
+      entityRows(kind, 1, kind === "employer" ? 2500 : kind === "attorney" ? 300 : 200),
     );
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
     const entries = await sitemap();
     const count = (p: string) => entries.filter((e) => e.url.includes(p)).length;
 
     expect(count("/perm-employers/")).toBe(2500);
-    expect(count("/perm-attorneys/")).toBe(3);
-    expect(count("/perm-wages/")).toBe(3);
+    expect(count("/perm-attorneys/")).toBe(300);
+    expect(count("/perm-wages/")).toBe(200);
     // The LAST row specifically, not just the total: a count alone cannot tell
     // a complete list from one that stopped early and was padded.
     expect(entries.some((e) => e.url.endsWith("/perm-employers/employer-2500"))).toBe(true);
+  });
+});
+
+describe("sitemap index and chunking", () => {
+  beforeEach(() => {
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+  });
+
+  it("chunks a kind into children of at most SITEMAP_CHUNK URLs", async () => {
+    // 16,305 employers is what production actually holds.
+    vi.mocked(countPageworthy).mockImplementation(async (kind: string) =>
+      kind === "employer" ? 16305 : kind === "attorney" ? 3736 : 1137,
+    );
+    const names = await childNames();
+    expect(names[0]).toBe("pages");
+    // ceil(16305/5000) = 4, and the smaller kinds fit in one each.
+    expect(names.filter((n) => n.startsWith("employer-"))).toHaveLength(4);
+    expect(names.filter((n) => n.startsWith("attorney-"))).toHaveLength(1);
+    expect(names.filter((n) => n.startsWith("occupation-"))).toHaveLength(1);
+  });
+
+  it("always lists at least one child per kind, even at zero", async () => {
+    // A kind that reads as empty must still HAVE a child URL: the child then
+    // throws and Next serves the last good copy. Omitting it from the index
+    // would quietly retire a whole section instead.
+    vi.mocked(countPageworthy).mockResolvedValue(0);
+    const names = await childNames();
+    for (const k of ["employer", "attorney", "occupation"]) {
+      expect(names.filter((n) => n.startsWith(`${k}-`))).toHaveLength(1);
+    }
+  });
+
+  it("parses child names and refuses anything else", async () => {
+    expect(parseChildName("employer-1")).toEqual({ kind: "employer", chunk: 0 });
+    expect(parseChildName("occupation-3")).toEqual({ kind: "occupation", chunk: 2 });
+    for (const bad of ["pages", "employer", "employer-0x", "../../etc", "employer-99999"]) {
+      expect(parseChildName(bad)).toBeNull();
+    }
+  });
+
+  it("emits a sitemapindex, not a urlset", async () => {
+    vi.mocked(countPageworthy).mockResolvedValue(100);
+    const xml = indexXml(await childNames(), "2026-08-20");
+    expect(xml).toContain("<sitemapindex");
+    expect(xml).not.toContain("<urlset");
+    // Children must be absolute URLs, and at or below the index's directory.
+    expect(xml).toContain("https://permtracker.app/sitemaps/pages.xml");
+  });
+
+  it("escapes XML in a slug rather than emitting broken markup", () => {
+    const xml = urlsetXml([{ url: "https://x.test/a?b=1&c=2", lastModified: "2026-01-01" }]);
+    expect(xml).toContain("a?b=1&amp;c=2");
+    expect(xml).not.toContain("&c=2");
+  });
+
+  it("does not emit changefreq or priority", async () => {
+    // Google's docs: "Google ignores <priority> and <changefreq> values."
+    // Bing said the same in July 2025. Measured at 115 bytes per URL, which is
+    // a bare loc+lastmod; this keeps it that way.
+    const xml = urlsetXml(await pagesEntries());
+    expect(xml).not.toContain("changefreq");
+    expect(xml).not.toContain("<priority>");
   });
 });

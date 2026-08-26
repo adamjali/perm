@@ -18,7 +18,7 @@
 import "server-only";
 
 import type { BulletinMonth } from "@/lib/perm";
-import type { EntityKind, EntityRow } from "@/lib/entityPayload";
+import { MIN_TOTAL_FOR_PAGE, type EntityKind, type EntityRow } from "@/lib/entityPayload";
 
 import { one, rows } from "./client";
 
@@ -364,4 +364,20 @@ export async function getVisaBulletinSeries(): Promise<
       datesForFiling: b.datesForFiling as BulletinMonth["datesForFiling"],
     }))
     .sort((a, b) => a.bulletinMonth.localeCompare(b.bulletinMonth));
+}
+
+/**
+ * How many entities of one kind actually HAVE a page.
+ *
+ * The sitemap index has to know how many child files exist before it can list
+ * them, and that count is of PAGEWORTHY rows, not of all rows: everything
+ * below the threshold is stored and searchable but has no URL. Counting in
+ * SQL rather than fetching 16,305 rows to call .filter().length on them.
+ */
+export async function countPageworthy(kind: EntityKind): Promise<number> {
+  const r = await one<{ n: number }>(
+    "SELECT count(*) AS n FROM perm_entities WHERE kind = ? AND total >= ?",
+    [kind, MIN_TOTAL_FOR_PAGE],
+  );
+  return r?.n ?? 0;
 }
