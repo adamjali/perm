@@ -167,3 +167,46 @@ step if PR previews are ever needed.
   allowance** (~12.7 writes per row across the table plus 10 indexes). That
   is roughly TWO full reloads per month. Quarterly ingests are fine; casual
   full reloads are not.
+
+
+## 2026-08-26: prerender, dark-mode ink, rating schema, standardization sweep
+
+All deployed (tip d5f04dba, GitHub deployment status: success 12:05:40Z).
+
+**Preloader, the real root cause at last.** Chrome PRERENDERS high-confidence
+typed URLs - full document, scripts executing, invisibly. The curtain ran and
+dismissed during prerender, so a typed-URL visit showed no curtain and the
+hydration entrance animations replayed uncovered (the reported "loads twice"
+stutter). Fixed with document.prerendering + prerenderingchange: the curtain
+now arms at ACTIVATION. Background tabs defer via visibilitychange. Debug:
+`window.__ptCurtain.events` always on; `?prediag=1` renders the timeline;
+`?nopre=1` opts tooling out. Simulated all three paths against the emitted
+script before shipping.
+
+**Dark-mode ink.** Manila stays tan in both themes; text on it used
+theme-flipped tokens (measured 1.16:1). New --manila-ink/--manila-ink-soft;
+CaseCard root ink; folder tabs and selected doc/note rows fixed; closed cards
+keep manila under the grayscale filter (they were black-on-#1A1A1A).
+--accent is now a neutral hover wash (#ECECEC/#2A2A2A) - it was the brand
+lime, which made every ghost hover and the case-card action bar olive.
+Gates: audit_contrast.py manila section; text-contrast.test.ts manila-file
+rule.
+
+**Rating schema.** The homepage aggregateRating partial is a COMPLETE
+SoftwareApplication node (same @id), and the rating renders as real text
+above the Senja widget from the same APP_RATING constant. The sibling
+session's meta-description list was measured already-fixed (all <=155).
+
+**Verification trap of the day, third instance:** React SSR inserts comment
+markers around JSX interpolations, so grepping served HTML for the contiguous
+string "from 2 attorney reviews" fails while the text renders fine. Probe for
+the pieces, or strip comments first. Also: unquoted $VAR in a zsh for-loop
+does not word-split (documented trap, hit again) - fetch lists in python.
+
+**IN FLIGHT: full design-standardization sweep** by agent `authed-visuals`.
+Inventory committed (.planning/design-inventory.md: 579 files, 116 arbitrary
+type sizes, 456 text-xs, 117 distinct hexes). Batches: (a) ui primitives,
+(b) cases, (c) authenticated, (d) home+public, (e) forms/toasts/dialogs,
+(f) charts. Per batch: typecheck + tests + audit_contrast green, commit with
+counts, NO push - I review and deploy. Files reserved to the main session:
+src/components/home/Preloader.tsx, src/app/layout.tsx.
