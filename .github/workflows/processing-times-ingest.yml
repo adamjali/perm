@@ -10,12 +10,16 @@ name: DOL processing times
 # lives in the same system as the data it feeds fails silently together with
 # it.
 #
-# WEEKLY, because that is DOL's own cadence. The job is idempotent: the row is
-# keyed by DOL's own `permAsOf` date, so a run on a day DOL has not
-# republished replaces one row with an identical one and never fabricates a
-# history point. That matters - the PWD drain rate is measured BETWEEN two
-# snapshots with different as-of dates, so inventing points would invent a
-# rate.
+# DAILY. It was weekly, on the reasoning that DOL republishes weekly - true,
+# but it meant a mid-week update sat unseen for up to six days while the site
+# rendered the older snapshot as current. The rival polls this same page every
+# few minutes; a day is the honest middle, and it costs one page fetch.
+#
+# Safe at any cadence because the job is idempotent: the row is keyed by DOL's
+# own `permAsOf` date, so a run on a day DOL has not republished replaces one
+# row with an identical one and never fabricates a history point. That matters
+# - the PWD drain rate is measured BETWEEN two snapshots with different as-of
+# dates, so inventing points would invent a rate.
 #
 # flag.dol.gov serves scripts without any header ceremony. That is NOT true of
 # www.dol.gov, which 403s a bare user agent and 403s a full browser header set
@@ -29,9 +33,9 @@ name: DOL processing times
 
 on:
   schedule:
-    # 07:00 UTC every Tuesday. DOL updates the page early in the week; a day's
-    # lag costs nothing against a queue measured in months.
-    - cron: "0 7 * * 2"
+    # 07:00 UTC daily. See the idempotency note above: a run on an
+    # unchanged page rewrites one identical row and adds no history point.
+    - cron: "0 7 * * *"
   workflow_dispatch:
 
 permissions:
@@ -73,6 +77,21 @@ jobs:
           printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
             "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
           node --experimental-strip-types scripts/ingest_processing_times.mts
+
+      # A second, independent read of the same public sources. It does not
+      # import anything - it compares. A disagreement on a cutoff cell we both
+      # publish for the same month means one of us has a parsing bug, and that
+      # is worth a red run. continue-on-error because their availability is
+      # not our correctness: if their API is down or changed shape, our data
+      # is unaffected and the ingest above has already succeeded.
+      - name: Cross-check against permtrack public API
+        if: always()
+        continue-on-error: true
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: python3 scripts/cross_check_sources.py
 
       - name: Remove credentials
         if: always()
