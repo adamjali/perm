@@ -48,6 +48,21 @@
 const CAP_MS = 1200;
 const EXIT_MS = 560;
 
+/**
+ * The shortest the curtain may be visible.
+ *
+ * The cap above is a MAXIMUM and there was no minimum, which is the whole
+ * bug: on a hard load of a prerendered page `window.load` fires in a few
+ * hundred milliseconds with the fonts already cached, so leave() ran almost
+ * immediately and the curtain was a flicker. A soft navigation only looked
+ * correct by accident - the click-to-commit time gave it a floor this path
+ * never had.
+ *
+ * A curtain you cannot perceive is worse than no curtain: it reads as a flash
+ * of the wrong thing rather than as a deliberate load state.
+ */
+const MIN_MS = 600;
+
 // Literal, because these are the two values of --background and this CSS has
 // to work before the stylesheet that defines that variable exists.
 const BG_LIGHT = "#FAFAFA";
@@ -90,8 +105,14 @@ export const PRELOADER_BOOT = `
   if(location.pathname!=='/')return;
   h.setAttribute('data-pre','on');
   var done=false;
+  var t0=Date.now();
   function leave(){
-    if(done)return; done=true;
+    if(done)return;
+    // Hold to the floor rather than dropping the request: a fast load must
+    // still SHOW the curtain, and re-entering leave() later is idempotent.
+    var waited=Date.now()-t0;
+    if(waited<${MIN_MS}){setTimeout(leave,${MIN_MS}-waited);return}
+    done=true;
     var el=d.querySelector('.pre');
     if(el)el.classList.add('pre-leave');
     setTimeout(function(){
@@ -112,10 +133,22 @@ export const PRELOADER_BOOT = `
   // And independently: a curtain that ignores someone who is already trying
   // to use the page is not a load state, it is an obstacle. leave() is
   // idempotent, so firing it early costs nothing.
+  function leaveNow(){
+    // Deliberately bypasses MIN_MS. Someone who is already clicking or
+    // scrolling has stopped waiting for a load state, and holding a curtain
+    // over a page they are trying to use is an obstacle, not a flourish.
+    if(done)return; done=true;
+    var el=d.querySelector('.pre');
+    if(el)el.classList.add('pre-leave');
+    setTimeout(function(){
+      h.setAttribute('data-pre','off');
+      if(el&&el.parentNode)el.parentNode.removeChild(el);
+    },${EXIT_MS});
+  }
   ['click','keydown','wheel','touchstart','pointerdown'].forEach(function(t){
-    addEventListener(t,leave,{once:true,capture:true,passive:true});
+    addEventListener(t,leaveNow,{once:true,capture:true,passive:true});
   });
-  addEventListener('pagehide',leave,{once:true});
+  addEventListener('pagehide',leaveNow,{once:true});
   function ready(){
     clearTimeout(cap);
     var fonts=(d.fonts&&d.fonts.ready)?d.fonts.ready:Promise.resolve();

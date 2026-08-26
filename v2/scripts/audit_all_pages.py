@@ -182,7 +182,26 @@ def main() -> int:
     status, sm = get(args.base.rstrip("/") + "/sitemap.xml")
     if status != 200:
         sys.exit(f"FATAL: sitemap.xml returned {status}; nothing to audit")
-    locs = re.findall(r"<loc>(.*?)</loc>", sm)
+
+    # /sitemap.xml is a sitemap INDEX now, not a urlset. Following it matters
+    # more than it looks: an index yields 7 <loc> values, all of them sitemap
+    # files, and this audit would happily check those 7 and print "urls in
+    # sitemap: 7" as though it had covered the site. A gate that cannot see
+    # its subject reads exactly like a pass.
+    if "<sitemapindex" in sm:
+        children = re.findall(r"<loc>(.*?)</loc>", sm)
+        print(f"sitemap index : {len(children)} child sitemaps")
+        locs = []
+        for child in children:
+            cs, cbody = get(re.sub(r"^https?://[^/]+", "", child) or "/")
+            if cs != 200:
+                sys.exit(f"FATAL: child sitemap {child} returned {cs}")
+            found = re.findall(r"<loc>(.*?)</loc>", cbody)
+            print(f"  {child.rsplit('/', 1)[-1]:24s} {len(found):>6,} urls")
+            locs.extend(found)
+    else:
+        locs = re.findall(r"<loc>(.*?)</loc>", sm)
+
     paths = []
     for loc in locs:
         p = re.sub(r"^https?://[^/]+", "", loc) or "/"
