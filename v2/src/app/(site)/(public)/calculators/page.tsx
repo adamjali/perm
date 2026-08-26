@@ -69,7 +69,7 @@ const TOOLS = [
     kind: "Count",
     tone: "paper",
     blurb:
-      "How many wage requests sit ahead of yours. DOL publishes this one as an actual pending count, so it’s a fact rather than a model.",
+      "How many wage requests sit ahead of yours, from the pending count DOL publishes.",
   },
   {
     href: "/tools/i140-calculator",
@@ -79,7 +79,7 @@ const TOOLS = [
     name: "I-140 queue calculator",
     tone: "paper",
     blurb:
-      "How many petitions are waiting in your category against how fast USCIS clears them, next to the processing time USCIS publishes. The two disagree, and the gap is the useful part.",
+      "How many petitions are waiting in your category against how fast USCIS clears them, next to the processing time USCIS publishes.",
   },
   {
     href: "/tools/priority-date-calculator",
@@ -89,7 +89,7 @@ const TOOLS = [
     name: "Priority date calculator",
     tone: "tint",
     blurb:
-      "Where a priority date sits against the visa bulletin, and which way the cutoff has moved. It goes backwards more often than people expect.",
+      "Where a priority date sits against the visa bulletin, and which way the cutoff has moved, including the months it moved backwards.",
   },
   {
     href: "/tools/green-card-timeline",
@@ -99,7 +99,7 @@ const TOOLS = [
     name: "Green card timeline",
     tone: "paper",
     blurb:
-      "Every stage drawn to scale, from the wage queue to the wait for a visa number. Shows which parts are fixed by regulation, which are queues, and which nobody can put a number on.",
+      "Every stage drawn to scale, from the wage queue to the wait for a visa number, marked by which are fixed by regulation, which are queues, and which have no published figure.",
   },
 ];
 
@@ -133,11 +133,10 @@ export default function CalculatorsPage() {
           Calculators
         </p>{" "}
         <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Six calculators, one per question
+          PERM calculators
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          Each one answers a question a PERM case raises, says where its numbers
-          come from, and says so when it can’t answer.
+          Six calculators, each answering one question a PERM case raises.
         </p>
       </header>
 

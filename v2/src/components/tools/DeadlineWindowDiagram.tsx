@@ -187,8 +187,7 @@ export function DeadlineWindowDiagram({
         </svg>
       </div>
       <figcaption className="mt-3 text-sm text-foreground/70">
-        Every span from the dates entered, drawn to one scale. The filing
-        window is the target; everything else explains its edges.
+        Every span from the dates entered, drawn to one scale.
       </figcaption>
     </figure>
   );

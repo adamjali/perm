@@ -231,8 +231,12 @@ describe("PriorityDateEstimator: a closed category", () => {
     renderTool();
     setPriorityDate("2013-01-01");
     expect(screen.getByText(/October starts a new fiscal year/i)).toBeInTheDocument();
-    // And it must not promise the cutoff comes back to where it was.
-    expect(screen.getByText(/(is(n’t| not)) obliged to return to where it stood/i)).toBeInTheDocument();
+    // And it must not promise the cutoff comes back to where it was. The
+    // wording changed in the 2026-08-26 voice pass; the assertion this test
+    // exists for did not.
+    expect(
+      screen.getByText(/can reopen anywhere, earlier or later than where it stood/i),
+    ).toBeInTheDocument();
   });
 });
 

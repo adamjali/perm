@@ -54,7 +54,7 @@ const FAQS = [
   },
   {
     q: "Can you tell me how many petitions are ahead of mine?",
-    a: "No, and nobody honestly can. USCIS publishes pending petitions by category but never by month of receipt, so there’s no way to work out where any particular case sits in the order. The prevailing wage queue is different because DOL does publish that breakdown.",
+    a: "No. USCIS publishes pending petitions by category but never by month of receipt, so there’s no way to work out where any particular case sits in the order. The prevailing wage queue is different because DOL does publish that breakdown.",
   },
   {
     q: "Does premium processing skip the queue?",

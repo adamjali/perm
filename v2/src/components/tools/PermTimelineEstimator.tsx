@@ -144,9 +144,8 @@ export function PermTimelineEstimator({
           </h2>
         </div>
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
-          Pick the month DOL received your ETA-9089. Every figure below comes
-          from DOL&apos;s own published data, and each one says where it came
-          from.
+          Pick the month DOL received your ETA-9089. Every figure comes from
+          DOL&apos;s own published data.
         </p>
 
         <div className="mt-6">

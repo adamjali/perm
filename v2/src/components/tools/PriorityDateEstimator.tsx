@@ -351,8 +351,8 @@ export function PriorityDateEstimator({
           </h2>
         </div>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
-          And, more usefully, which way the line has been moving. Cutoffs go
-          backwards as well as forwards.
+          And which way the cutoff has been moving. Cutoffs go backwards as
+          well as forwards.
         </p>{" "}
 
         <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
@@ -475,16 +475,16 @@ export function PriorityDateEstimator({
                     anywhere this page can reach.
                   </p>{" "}
                   <p className="mt-2 text-base leading-relaxed text-foreground/70">
-                    For the current cutoff, read it at the source. What
-                    everything below has that the current bulletin doesn’t is
-                    the movement: {bulletins.length} bulletins of it, including
-                    the months the cutoff went backwards.
+                    For the current cutoff, read it at the source. What the
+                    archive holds and a single bulletin doesn’t is the movement:{" "}
+                    {bulletins.length} bulletins of it, including the months the
+                    cutoff went backwards.
                   </p>{" "}
                 </>
               ) : (
                 <p className="mt-2 text-base leading-relaxed text-foreground/70">
-                  Everything below comes from that bulletin and the ones before
-                  it. Cutoffs change every month, in both directions.
+                  These figures come from that bulletin and the ones before it.
+                  Cutoffs change every month, in both directions.
                 </p>
               )}{" "}
               <p className="mt-3">
@@ -517,7 +517,7 @@ export function PriorityDateEstimator({
                       <>
                         {" "}
                         You have the <strong>{selectedChartName}</strong> chart
-                        selected above, which is the other one.
+                        selected, which is the other one.
                       </>
                     ) : null}
                   </p>{" "}
@@ -621,10 +621,9 @@ export function PriorityDateEstimator({
                 )}
               </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
-                That’s the gap to watch when the category reopens. October
-                starts a new fiscal year with a fresh allocation of visa
+                October starts a new fiscal year with a fresh allocation of visa
                 numbers, and the cutoff the category reopens at is set then. It
-                isn’t obliged to return to where it stood.
+                can reopen anywhere, earlier or later than where it stood.
               </p>
             </div>
           ) : null}{" "}
@@ -637,13 +636,11 @@ export function PriorityDateEstimator({
                 Each category gets a fixed number of visas per fiscal year. When
                 a category uses its allocation, the State Department marks it
                 &quot;U&quot; for the rest of the year and it reopens in October
-                with the new year&apos;s numbers. It’s a normal annual event,
-                not a change in the rules, and it’s most common in the last
-                months of the fiscal year.
+                with the new year&apos;s numbers. It happens every year, most
+                often in the last months of the fiscal year.
               </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
-                The chart below still shows where the cutoff stood before it
-                closed, which is the part worth watching.
+                The chart still shows where the cutoff stood before it closed.
               </p>
             </div>
           ) : null}

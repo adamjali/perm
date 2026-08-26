@@ -250,8 +250,7 @@ export function ReliabilityBand({
             to a {upperDenialPct.toFixed(1)}% denial rate, which still covers
             the {baselineDenialPct.toFixed(2)}% the field as a whole records, so
             this record can&apos;t be told apart from the field in either
-            direction. Reading it as better or worse than average is reading
-            the sample size.
+            direction.
           </>
         )}
       </p>

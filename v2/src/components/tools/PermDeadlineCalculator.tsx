@@ -182,8 +182,8 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
           </h2>
         </div>
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
-          These aren’t estimates. Every date below is fixed arithmetic on
-          the prevailing wage determination under 20 CFR 656.
+          Every date here is fixed arithmetic on the prevailing wage
+          determination under 20 CFR 656.
         </p>
 
         <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">

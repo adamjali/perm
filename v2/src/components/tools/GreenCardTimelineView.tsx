@@ -110,9 +110,8 @@ export function GreenCardTimelineView({ timeline, className }: GreenCardTimeline
         </p>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           The rest is queue time at DOL and USCIS, plus a wait for a visa number
-          that no published figure covers. The recruitment window is the part
-          you set the pace on, and it’s the part that restarts the case if a
-          date is missed.
+          that no published figure covers. The recruitment window is the one you
+          set the pace on, and missing a date there restarts the case.
         </p>
       </figcaption>
     </figure>

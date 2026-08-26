@@ -270,7 +270,7 @@ export function PwdBacklogChart({
         {selectedMonth === undefined ? (
           <span>
             Every month DOL still has undecided prevailing wage requests in, oldest
-            first. The bars are counts, not a rate of clearance.
+            first. Each bar is a count of requests still pending.
           </span>
         ) : (
           <>

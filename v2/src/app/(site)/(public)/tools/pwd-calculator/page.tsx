@@ -52,7 +52,7 @@ const FAQS = [
   },
   {
     q: "Why is there no estimated wait shown?",
-    a: "DOL publishes how many requests are pending but not how fast it clears them. The count of requests ahead of you is exact and comes straight from DOL. Turning that into a date needs a clearance rate, and rather than assume one we measure it from DOL's own figures as they change over time.",
+    a: "DOL publishes how many requests are pending but not how fast it clears them. The count of requests ahead of you is exact and comes straight from DOL. Turning that into a date needs a clearance rate, which we measure from DOL's own figures as they change over time.",
   },
   {
     q: "What’s the difference between the OEWS and non-OEWS queues?",
@@ -110,12 +110,11 @@ export default async function PwdCalculatorPage() {
 
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-2xl font-black">
-          Once the determination lands, the clock is arithmetic
+          The determination sets every date that follows
         </h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
-          The wait is out of your hands. What happens after isn’t: the
-          recruitment window, the quiet period and the filing window all run
-          from the determination date, and missing one restarts the case.
+          The recruitment window, the quiet period and the filing window all
+          run from the determination date, and missing one restarts the case.
         </p>
         <Link
           href="/tools/perm-deadline-calculator"

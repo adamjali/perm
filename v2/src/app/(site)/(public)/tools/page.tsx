@@ -76,8 +76,7 @@ export default async function ToolsPage() {
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Live figures from the Department of Labor, and free calculators built
-          on them. Each one says where its numbers come from, and says so when
-          it can’t answer.
+          on them.
         </p>
       </header>
 
@@ -124,10 +123,9 @@ export default async function ToolsPage() {
       {/* The queue as a tape: the one drawing that carries the mental model. */}
       {frontierMonth ? (
         <section className="mt-10">
-          <h2 className="font-heading text-2xl font-black">One line, cleared oldest first</h2>{" "}
+          <h2 className="font-heading text-2xl font-black">The queue, oldest first</h2>{" "}
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-            Every PERM waits in filing-month order. The tape shows the months
-            DOL has cleared and the months still waiting.{" "}
+            Every PERM waits in filing-month order.{" "}
             <Link
               href="/tools/perm-timeline-calculator"
               className="font-bold underline underline-offset-2 hover:text-primary"
@@ -144,10 +142,10 @@ export default async function ToolsPage() {
 
       <section className="mt-10 flex flex-wrap items-center justify-between gap-4 border-2 border-border bg-tint-primary p-6 shadow-hard sm:p-8">
         <div>
-          <h2 className="font-heading text-2xl font-black">Six calculators, one per question</h2>{" "}
+          <h2 className="font-heading text-2xl font-black">Six calculators</h2>{" "}
           <p className="mt-1 max-w-xl text-base text-foreground/70">
             Decision times, the wage queue, the I-140 backlog, priority dates,
-            the whole green card to scale, and every statutory deadline.
+            the whole green card drawn to scale, and every statutory deadline.
           </p>
         </div>
         <Link
@@ -179,7 +177,7 @@ export default async function ToolsPage() {
             {
               href: "/perm-wages",
               label: "Wages",
-              blurb: "Median offered wages by occupation - committed figures, not survey estimates.",
+              blurb: "Median offered wages by occupation, from the wage each employer committed to pay.",
               tone: "ink",
               viz: "twobars" as const,
             },
@@ -200,7 +198,7 @@ export default async function ToolsPage() {
             {
               href: "/perm-denial-risk",
               label: "Denial rates",
-              blurb: "What actually gets denied, by wage, by year, and by what the form declares.",
+              blurb: "What gets denied, by wage, by year, and by what the form declares.",
               tone: "tint",
               viz: "steps" as const,
             },
@@ -260,7 +258,7 @@ export default async function ToolsPage() {
             Get notified when DOL reaches your month
           </h2>{" "}
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
-            No newsletter, no account. Set it on the{" "}
+            Set it on the{" "}
             <Link
               href="/perm-processing-times"
               className="font-bold underline underline-offset-2 hover:text-primary"
@@ -279,7 +277,7 @@ export default async function ToolsPage() {
           </h2>{" "}
           <p className="mt-3 text-base leading-relaxed text-background/70">
             The same date math as the deadline calculator, applied to your
-            cases, with alerts and calendar sync. Free.
+            cases, with alerts and calendar sync. The account is free.
           </p>{" "}
           <Link
             href="/signup"

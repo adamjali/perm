@@ -50,7 +50,7 @@ export const revalidate = 86400;
 const FAQS = [
   {
     q: "How long does an employment-based green card take?",
-    a: "The labor certification and petition stages together run a bit over two years on current published figures. After that comes the wait for a visa number, which depends on category and country of birth and for some applicants is longer than everything before it combined. Any single total that covers all of it’s hiding that variation.",
+    a: "The labor certification and petition stages together run a bit over two years on current published figures. After that comes the wait for a visa number, which depends on category and country of birth and for some applicants is longer than everything before it combined. Any single total that covers all of it hides that variation.",
   },
   {
     q: "Which parts of the process can an employer actually control?",
@@ -58,7 +58,7 @@ const FAQS = [
   },
   {
     q: "Why is there no number on the visa bulletin stage?",
-    a: "Because the cutoff dates come only from the monthly visa bulletin published by the State Department, and we don’t have an automated way to read it. Putting an estimate there without a source we can stand behind would be inventing a legally consequential date.",
+    a: "Because the cutoff dates come only from the monthly visa bulletin published by the State Department, and we don’t have an automated way to read it.",
   },
   {
     q: "Does premium processing shorten the whole timeline?",
@@ -201,7 +201,7 @@ export default async function GreenCardTimelinePage() {
       <section className="mt-12 grid gap-6 sm:grid-cols-2">
         {[
           { href: "/tools/pwd-calculator", name: "Prevailing wage queue", blurb: "How many requests sit ahead of yours." },
-          { href: "/tools/perm-deadline-calculator", name: "Your deadlines", blurb: "The dates the regulations fix." },
+          { href: "/tools/perm-deadline-calculator", name: "Your deadlines", blurb: "Every deadline in your case." },
           { href: "/tools/perm-timeline-calculator", name: "PERM decision", blurb: "When DOL is likely to reach your month." },
           { href: "/tools/i140-calculator", name: "I-140 queue", blurb: "How deep the petition backlog is." },
         ].map((t) => (
@@ -231,7 +231,7 @@ export default async function GreenCardTimelinePage() {
       <ToolPageFooter
         currentHref={"/tools/green-card-timeline"}
         reading={[
-          { href: "/guides/ultimate-perm-guide-2026", label: "The full PERM guide", note: "The stages in detail, and the rules that fix the ones you control." },
+          { href: "/guides/ultimate-perm-guide-2026", label: "The full PERM guide", note: "The stages in detail, and the rules behind the ones you control." },
           { href: "/blog/what-is-perm-labor-certification", label: "What PERM actually is", note: "The labor certification stage, in plain terms." },
         ]}
       />

@@ -423,7 +423,7 @@ export function CaseBrowser({
         {caseFailed ? (
           <p className="mt-4 text-base text-foreground/70">
             The case table couldn’t be reached just now. That’s a fault at our
-            end, not an answer about your case. Try again in a minute.
+            end. Try again in a minute.
           </p>
         ) : null}
         {caseQuery !== "" && caseHit === null ? (
@@ -432,9 +432,9 @@ export function CaseBrowser({
               No case with that number in this window.
             </p>{" "}
             <p className="mt-2 text-base leading-relaxed text-foreground/70">
-              That isn’t the same as no such case. DOL&apos;s disclosure files carry
-              decided cases only, so a case still waiting on a determination
-              appears in none of them. If yours is pending, the{" "}
+              DOL&apos;s disclosure files carry decided cases only, so a case still
+              waiting on a determination appears in none of them. If yours is
+              pending, the{" "}
               <Link
                 href="/perm-processing-times"
                 className="font-bold underline decoration-primary decoration-2 underline-offset-2"
@@ -652,7 +652,7 @@ export function CaseBrowser({
             Showing {nameHits ? fmtInt(nameHits.length) : "…"} matches, newest
             first and capped. A name search matches from the start of a name, so
             “fragomen” finds Fragomen, Del Rey, Bernsen &amp; Loewy and “del rey”
-            finds nothing. The filters above don’t apply to it.{" "}
+            finds nothing. The filters don’t apply to it.{" "}
             <button
               type="button"
               onClick={() => {

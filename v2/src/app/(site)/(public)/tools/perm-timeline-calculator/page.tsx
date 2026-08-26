@@ -49,11 +49,11 @@ export const revalidate = 86400;
 const FAQS = [
   {
     q: "How accurate is a PERM processing time estimate?",
-    a: "It’s a forecast over a queue, not a deadline, so it’s wrong by some margin every time. The honest way to read it’s as a range that narrows as DOL gets closer to your filing month. Public PERM estimators currently disagree with each other by around nine months on the same filing date, mostly because they assume different things about how fast DOL is moving.",
+    a: "It’s a forecast over a queue, not a deadline, so it’s wrong by some margin every time. It’s best read as a range that narrows as DOL gets closer to your filing month. Public PERM estimators currently disagree with each other by around nine months on the same filing date, mostly because they assume different things about how fast DOL is moving.",
   },
   {
     q: "Why do you show more than one number?",
-    a: "Because they measure different things. DOL's published average looks backwards at cases it has already closed, which drags it up with audited and long-running ones. A queue-advance figure looks forwards from how fast the queue is actually moving. Showing one and hiding the other would make the estimate look more certain than it is.",
+    a: "Because they measure different things. DOL's published average looks backwards at cases it has already closed, which drags it up with audited and long-running ones. A queue-advance figure looks forwards from how fast the queue is moving now.",
   },
   {
     q: "Does DOL decide PERM cases in the order they were filed?",
@@ -127,14 +127,13 @@ export default async function PermTimelineCalculatorPage() {
 
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-2xl font-black">
-          DOL&apos;s date is a forecast. Yours are arithmetic.
+          The deadlines on your side of the process are fixed
         </h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
-          Nobody can tell you exactly when DOL will decide. The dates that are
-          genuinely fixed are the ones on your side of the process: the
-          recruitment window, the quiet period, the filing window and the
-          I-140 deadline. Every one of them is arithmetic on your prevailing wage
-          determination, and getting one wrong restarts the case.
+          Nobody can tell you exactly when DOL will decide. The recruitment
+          window, the quiet period, the filing window and the I-140 deadline
+          are arithmetic on your prevailing wage determination, and getting one
+          wrong restarts the case.
         </p>
         <Link
           href="/tools/perm-deadline-calculator"

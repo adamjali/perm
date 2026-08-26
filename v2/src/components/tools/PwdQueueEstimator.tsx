@@ -93,7 +93,7 @@ export function PwdQueueEstimator({
         </div>
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           Pick the month DOL received your ETA-9141. The number of requests
-          ahead of yours is DOL&apos;s own published count, not an estimate.
+          ahead of yours is DOL&apos;s own published count.
         </p>
 
         <div className="mt-6">
