@@ -127,22 +127,43 @@ export function TestimonialsSection() {
           </div>
           ) : null}
 
-          {/* Senja Reviews Widget */}
-          <div>
-            <Script
-              src="https://widget.senja.io/widget/3563db96-3a71-4d2a-b7e8-70550d4dd814/platform.js"
-              strategy="lazyOnload"
-            />
-            <div
-              className="senja-embed"
-              data-id="3563db96-3a71-4d2a-b7e8-70550d4dd814"
-              data-mode="shadow"
-              data-lazyload="true"
-              style={{ display: "block", width: "100%" }}
-            />
-          </div>
+          {/*
+            The Senja embed is gated on the SAME threshold as our own rating
+            line, and that is the whole point of gating it.
 
-          {/* Review link */}
+            A rendered-QA pass caught the hole: we suppressed our 5.0 while
+            this widget kept printing gold stars, an average and "from 2
+            reviews" a few pixels lower, in its own palette and with an emoji.
+            So the claim the gate exists to withhold was still on the page,
+            just published by someone else. A gate that does not cover its
+            subject reads exactly like a pass - the same defect class as an
+            audit missing a colour pair, and it was found by looking rather
+            than by any check we own.
+
+            Below the floor the band keeps the trust badges and the CTA, so
+            there is still a reason to be here and a way to contribute. What
+            goes quiet is the scorekeeping, wherever it is rendered from.
+            Raising APP_RATING.count past MIN_REVIEWS_TO_ADVERTISE brings the
+            line, the schema and this widget back together.
+          */}
+          {shouldAdvertiseRating() ? (
+            <div>
+              <Script
+                src="https://widget.senja.io/widget/3563db96-3a71-4d2a-b7e8-70550d4dd814/platform.js"
+                strategy="lazyOnload"
+              />
+              <div
+                className="senja-embed"
+                data-id="3563db96-3a71-4d2a-b7e8-70550d4dd814"
+                data-mode="shadow"
+                data-lazyload="true"
+                style={{ display: "block", width: "100%" }}
+              />
+            </div>
+          ) : null}
+
+          {/* Review link. This stays at every review count: it is the thing
+              that gets us past the floor. */}
           <div className="mt-10 text-center">
             <a
               href="https://senja.io/p/perm-tracker/r/FXAjpr"
