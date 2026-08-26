@@ -131,6 +131,21 @@ export function getFAQPageSchema(faqs: { question: string; answer: string }[]) {
 }
 
 /**
+ * The app's review rating, defined ONCE.
+ *
+ * Three consumers must agree or Google's policy is violated from one side or
+ * another: the JSON-LD below, the visible rating line in
+ * TestimonialsSection, and the Senja widget config. The first two import
+ * THIS. Update it when the Senja count changes.
+ */
+export const APP_RATING = {
+  value: '5',
+  count: '2',
+  best: '5',
+  worst: '1',
+} as const;
+
+/**
  * Homepage-only aggregateRating partial.
  *
  * Why this is its own helper (and not part of `getSoftwareApplicationSchema`):
@@ -156,12 +171,26 @@ export function getHomepageRatingPartialSchema(baseUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication' as const,
     '@id': SCHEMA_IDS.software(baseUrl),
+    // A COMPLETE node, not a rating-only fragment. A parser that merges by
+    // @id sees one entity either way; a parser that does NOT merge (and the
+    // Rich Results Test evaluates items individually) previously saw an
+    // orphan SoftwareApplication with a rating and no name, offers or
+    // category - an item failing required-field validation. Duplicating the
+    // identity fields costs bytes and removes the ambiguity entirely.
+    name: 'PERM Tracker',
+    applicationCategory: 'BusinessApplication' as const,
+    operatingSystem: 'Web Browser',
+    offers: {
+      '@type': 'Offer' as const,
+      price: '0',
+      priceCurrency: 'USD',
+    },
     aggregateRating: {
       '@type': 'AggregateRating' as const,
-      ratingValue: '5',
-      reviewCount: '2',
-      bestRating: '5',
-      worstRating: '1',
+      ratingValue: APP_RATING.value,
+      reviewCount: APP_RATING.count,
+      bestRating: APP_RATING.best,
+      worstRating: APP_RATING.worst,
     },
   };
 }

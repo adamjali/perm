@@ -10,6 +10,7 @@
 import Script from "next/script";
 import { ChatDots, Star } from "@phosphor-icons/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { APP_RATING } from "@/lib/structuredData";
 
 interface TrustBadge {
   icon: React.ReactNode;
@@ -100,6 +101,28 @@ export function TestimonialsSection() {
                 <span>{badge.label}</span>
               </div>
             ))}
+          </div>
+
+          {/*
+            The rating, as REAL text in the served HTML. Google requires a
+            marked-up aggregate rating to be readily visible on the page, and
+            the Senja embed arrives via a third-party script - invisible to
+            any text extraction and dependent on that script executing. This
+            line is built from the same APP_RATING constant as the JSON-LD,
+            so the visible number and the marked-up number cannot drift.
+          */}
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <span className="flex" aria-hidden="true">
+              {Array.from({ length: 5 }, (_, i) => (
+                <Star key={i} weight="fill" className="h-5 w-5 text-primary" />
+              ))}
+            </span>{" "}
+            <span className="font-heading font-bold text-lg">
+              {Number(APP_RATING.value).toFixed(1)}
+            </span>{" "}
+            <span className="text-sm text-muted-foreground">
+              from {APP_RATING.count} attorney reviews
+            </span>
           </div>
 
           {/* Senja Reviews Widget */}
