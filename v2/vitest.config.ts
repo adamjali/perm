@@ -19,6 +19,23 @@ const sharedConfig = {
       "@": path.resolve(__dirname, "./src"),
       "@/test-utils": path.resolve(__dirname, "./test-utils"),
       "@/convex": path.resolve(__dirname, "./convex"),
+      // `server-only` throws on import from anything with a DOM. Every vitest
+      // project here runs happy-dom or edge-runtime, so a test of a SERVER
+      // module - sitemap.ts, which reaches src/lib/turso/client.ts - fails to
+      // load at all, with an error that reads like a client/server mistake and
+      // is not one.
+      //
+      // This is not a stub. The package itself ships `empty.js` for the
+      // `react-server` condition, and that is exactly what Next resolves when
+      // it builds a Server Component. Pointing at the package's own empty
+      // build reproduces the real server resolution rather than papering over
+      // the guard.
+      //
+      // The guard still does its job where it matters: importing a server-only
+      // module from a client component is a BUILD error, and `next build`
+      // still catches it. There is a dedicated test asserting no "use client"
+      // file imports lib/turso.
+      "server-only": path.resolve(__dirname, "./node_modules/server-only/empty.js"),
     },
   },
 };

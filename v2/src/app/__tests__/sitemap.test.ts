@@ -15,15 +15,42 @@ vi.mock("@/lib/sentry", () => ({
 
 // The sitemap reads DOL's own as-of date for /perm-processing-times, so the
 // lastmod moves when DOL publishes rather than when an unrelated blog post
-// ships. Mocked here so the sitemap stays a pure function of its inputs; the
-// unreachable-Convex path is asserted explicitly below.
-vi.mock("convex/nextjs", () => ({
-  fetchQuery: vi.fn(async () => ({ permAsOf: "2026-08-20" })),
+// ships. Mocked so the sitemap stays a pure function of its inputs; the
+// data-unreachable paths are asserted explicitly below.
+//
+// These seams moved from Convex to Turso on 2026-08-25. They are mocked at
+// the MODULE the sitemap imports rather than at the database client, because
+// that is the boundary the sitemap actually depends on.
+vi.mock("@/lib/turso/processingTimes", () => ({
+  getProcessingTimes: vi.fn(async () => ({ permAsOf: "2026-08-20" })),
 }));
+vi.mock("@/lib/turso/publicData", () => ({
+  getDisclosureStats: vi.fn(async () => null),
+}));
+vi.mock("@/lib/entitySeed", () => ({
+  fetchAllEntitiesServer: vi.fn(),
+}));
+
+/** `n` entity rows of one kind, all above the page threshold. */
+function entityRows(kind: string, from: number, count: number) {
+  return Array.from({ length: count }, (_, i) => ({
+    slug: `${kind}-${from + i}`,
+    name: `${kind} ${from + i}`,
+    rank: from + i,
+    total: 500,
+    certified: 400,
+    denied: 10,
+    medianDays: 200,
+    medianAnnualWage: 100000,
+    state: null,
+    code: null,
+  }));
+}
 
 import { getAllPosts } from "@/lib/content";
 import { captureError } from "@/lib/sentry";
-import { fetchQuery } from "convex/nextjs";
+import { getProcessingTimes } from "@/lib/turso/processingTimes";
+import { fetchAllEntitiesServer } from "@/lib/entitySeed";
 import sitemap, { revalidate } from "../sitemap";
 
 function mkPost(
@@ -50,6 +77,15 @@ function mkPost(
 
 describe("sitemap.ts", () => {
   beforeEach(() => {
+    // A healthy default. Below 500 total the sitemap now THROWS rather than
+    // emit a truncated file, so every test that is not about that guard has
+    // to start from a corpus that clears it.
+    vi.mocked(fetchAllEntitiesServer).mockImplementation(async (kind: string) =>
+      entityRows(kind, 1, kind === "employer" ? 600 : 200),
+    );
+    vi.mocked(getProcessingTimes).mockResolvedValue({
+      permAsOf: "2026-08-20",
+    } as never);
     vi.clearAllMocks();
   });
 
@@ -165,15 +201,25 @@ describe("sitemap.ts", () => {
     expect(messages.some((m) => /zero content posts/i.test(m))).toBe(true);
   });
 
-  it("captureErrors when the entity walk comes back nearly empty", async () => {
-    // A build whose Convex is unreachable, or pointed at a deployment holding
-    // a few test rows, emits a perfectly valid sitemap missing 16,210 URLs. A
-    // local build did exactly that: 61 URLs instead of 16,255.
+  it("REFUSES to emit when the entity read comes back nearly empty", async () => {
+    // This is the defect that actually shipped. While Convex was disabled the
+    // entity read failed on every build, this guard reported "0 entity URLs"
+    // to Sentry, and the sitemap went out with 46 URLs anyway - telling Google
+    // the site has 46 pages instead of 21,224. Reporting a 99.8% loss is not a
+    // response to it.
+    //
+    // Throwing is the safer failure: on revalidation Next keeps serving the
+    // last good sitemap, so a transient outage costs freshness instead of
+    // every entity URL.
+    vi.mocked(fetchAllEntitiesServer).mockResolvedValue([]);
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
-    await sitemap();
+    await expect(sitemap()).rejects.toThrow(/entity URLs/i);
     const messages = vi
       .mocked(captureError)
       .mock.calls.map((c) => (c[0] as Error).message);
+    // Still reported as well as refused: the build fails loudly AND the reason
+    // reaches Sentry, because a failed build with no explanation is its own
+    // kind of silence.
     expect(messages.some((m) => /entity URLs/i.test(m))).toBe(true);
   });
 
@@ -187,55 +233,24 @@ describe("sitemap.ts", () => {
     expect(entry!.lastModified).toBe("2026-08-20");
   });
 
-  it("still builds when Convex is unreachable", async () => {
-    // A sitemap with one slightly stale lastmod is fine; a failed build is not.
-    // The route makes TWO Convex reads (the processing snapshot and the
-    // disclosure aggregates that the entity URLs come from), so "unreachable"
-    // has to mean both of them: a single Once would leave the second call
-    // succeeding and stop testing the thing this test is named for.
-    vi.mocked(fetchQuery).mockRejectedValue(new Error("convex down"));
+  it("still builds when the DISCLOSURE read fails: a stale lastmod is not a reason to fail", async () => {
+    // Deliberately different from the entity case above, and the distinction
+    // is the whole point. Losing one lastmod degrades a date; losing the
+    // entity read drops 21,178 URLs. Only the second is worth failing over.
+    vi.mocked(getProcessingTimes).mockRejectedValue(new Error("turso down"));
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
     const entries = await sitemap();
     expect(entries.length).toBeGreaterThan(0);
-    expect(
-      entries.find((e) => e.url.endsWith("/perm-processing-times"))!.lastModified,
-    ).toBe("2026-01-01");
-    // With no aggregates there are no entity pages to list, and that is the
-    // correct output: a sitemap must never advertise a URL that 404s.
-    expect(entries.some((e) => e.url.includes("/perm-employers/"))).toBe(false);
+    expect(entries.some((e) => e.url.endsWith("/perm-processing-times"))).toBe(true);
   });
 
   it("lists EVERY entity, not just the head of each kind", async () => {
-    // The previous sitemap read the aggregate document, which is capped at 250
-    // rows per kind to fit Convex's 1 MB limit, so it submitted 750 URLs for
-    // 16,210 real pages. This asserts the walk pages past a single batch: the
-    // employer kind returns a FULL 2,000-row page and then a partial one, which
-    // is exactly the case a single un-paged read gets wrong.
-    const page = (kind: string, from: number, n: number) =>
-      Array.from({ length: n }, (_, i) => ({
-        slug: `${kind}-${from + i}`,
-        name: `${kind} ${from + i}`,
-        rank: from + i,
-        total: 10,
-        certified: 9,
-        denied: 1,
-        medianDays: 400,
-      }));
-
-    vi.mocked(fetchQuery).mockImplementation((async (_fn: unknown, args: unknown) => {
-      const a = (args ?? {}) as { kind?: string; afterRank?: number };
-      if (!a.kind) return { permAsOf: "2026-08-20" };
-      const after = a.afterRank ?? 0;
-      if (a.kind === "employer") {
-        // 2,000 then 500: a full page must not be mistaken for the end.
-        if (after === 0) return page("employer", 1, 2000);
-        if (after === 2000) return page("employer", 2001, 500);
-        return [];
-      }
-      if (after === 0) return page(a.kind, 1, 3);
-      return [];
-    }) as unknown as typeof fetchQuery);
-
+    // The seed on the index page is 250 rows; the sitemap must carry the whole
+    // corpus. A sitemap built from the seed looks entirely healthy and hides
+    // 16,000 pages from search.
+    vi.mocked(fetchAllEntitiesServer).mockImplementation(async (kind: string) =>
+      entityRows(kind, 1, kind === "employer" ? 2500 : 3),
+    );
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
     const entries = await sitemap();
     const count = (p: string) => entries.filter((e) => e.url.includes(p)).length;
@@ -243,8 +258,8 @@ describe("sitemap.ts", () => {
     expect(count("/perm-employers/")).toBe(2500);
     expect(count("/perm-attorneys/")).toBe(3);
     expect(count("/perm-wages/")).toBe(3);
-    // The last row of the second page has to be present, or the walk stopped
-    // early somewhere that a total count alone would not reveal.
+    // The LAST row specifically, not just the total: a count alone cannot tell
+    // a complete list from one that stopped early and was padded.
     expect(entries.some((e) => e.url.endsWith("/perm-employers/employer-2500"))).toBe(true);
   });
 });

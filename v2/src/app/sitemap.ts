@@ -1,11 +1,10 @@
 import type { MetadataRoute } from 'next'
-import { fetchQuery } from 'convex/nextjs'
-import { api } from '../../convex/_generated/api'
 import { getAllPosts } from '@/lib/content'
 import { fetchAllEntitiesServer } from '@/lib/entitySeed'
 import { hasOwnPage } from '@/lib/entityPayload'
 import { captureError } from '@/lib/sentry'
 import { getDisclosureStats } from '@/lib/turso/publicData'
+import { getProcessingTimes } from '@/lib/turso/processingTimes'
 
 // Next.js sitemap routes are cached by default and only regenerated when
 // Next.js revalidates them (or a request-time API forces dynamic). Daily
@@ -41,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // resolve or miss one that does.
   const disclosure = await getDisclosureStats().catch(() => null)
 
-  const permAsOf = await fetchQuery(api.dolProcessingTimes.getLatest, {})
+  const permAsOf = await getProcessingTimes()
     .then((snap) => snap?.permAsOf ?? null)
     .catch(() => null)
 
@@ -111,14 +110,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // it within a day, but a silent 99.6% loss should never be silent.
   const entityTotal = employers.length + firms.length + occupations.length
   if (entityTotal < 500) {
-    captureError(
-      new Error(
-        `Sitemap built with only ${entityTotal} entity URLs ` +
-          `(employers ${employers.length}, firms ${firms.length}, ` +
-          `occupations ${occupations.length}). Convex may be unreachable or ` +
-          `pointed at a non-production deployment.`,
-      ),
-    )
+    const detail =
+      `Sitemap built with only ${entityTotal} entity URLs ` +
+      `(employers ${employers.length}, firms ${firms.length}, ` +
+      `occupations ${occupations.length}). The Turso read failed or returned ` +
+      `almost nothing.`
+    captureError(new Error(detail))
+    // THROW, do not emit. This guard already existed and already fired: while
+    // Convex was disabled it reported "0 entity URLs" on every build, and the
+    // 46-URL sitemap shipped anyway, telling Google this site has 46 pages.
+    // Reporting a catastrophic loss is not a response to it.
+    //
+    // Throwing is the SAFER failure. On revalidation Next keeps serving the
+    // last good sitemap, so a transient outage costs freshness rather than
+    // 21,178 URLs; on a cold build it fails loudly, which is the correct
+    // outcome when the alternative is publishing a sitemap that is 99.8%
+    // wrong and looks perfectly valid.
+    throw new Error(detail)
   }
 
   // Only entities that HAVE a page. Everything below the threshold is stored
