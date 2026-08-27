@@ -117,7 +117,7 @@ describe("StateConcentration", () => {
     // make every state look near-total.
     const { container } = render(<StateConcentration states={STATES} />);
     const fills = Array.from(
-      container.querySelectorAll<HTMLElement>("div.bg-primary"),
+      container.querySelectorAll<HTMLElement>("div.bg-data-good-ink"),
     ).map((el) => el.style.width);
     expect(fills[0]).toBe("62.7%");
     expect(fills).not.toContain("100%");

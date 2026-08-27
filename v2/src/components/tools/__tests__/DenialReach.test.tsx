@@ -105,7 +105,7 @@ describe("DenialReach", () => {
     expect(reach).toHaveLength(FLAGS.length);
     expect(share).toHaveLength(FLAGS.length);
     expect(reach[0]!.className).toContain("bg-background");
-    expect(share[0]!.className).toContain("bg-primary");
+    expect(share[0]!.className).toContain("bg-data-good-ink");
     expect(reach[0]!.className).not.toContain("opacity");
     expect(share[0]!.className).not.toContain("opacity");
   });

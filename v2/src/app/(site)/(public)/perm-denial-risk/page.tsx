@@ -26,6 +26,12 @@ import { DenialReach } from "@/components/tools/DenialReach";
 import { CENSUS_REGION } from "@/components/tools/USStateMap";
 import { FreshnessDots, InsightLede } from "@/components/tools/Insight";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import {
+  getWageDenialBands,
+  isMonotonic,
+  peakBand,
+  type WageBand,
+} from "@/lib/turso/wageBands";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 const TITLE = "PERM Denial Rates";
@@ -80,7 +86,10 @@ function denialRate(denied: number, decided: number): number | null {
 }
 
 export default async function PermDenialRiskPage() {
-  const stats = await getDisclosureStats();
+  const [stats, wageBands] = await Promise.all([
+    getDisclosureStats(),
+    getWageDenialBands(),
+  ]);
   const risk = stats?.risk ?? null;
   const baseline = risk?.baseline ?? null;
   const sourceWindow = stats?.sourceFiles?.length
@@ -113,9 +122,10 @@ export default async function PermDenialRiskPage() {
   // The wage band carrying the most denials, named rather than left to the
   // reader to find. Chosen by measurement, so it follows the data if the next
   // ingest moves it.
+  const wageForReach = wageBands?.fine ?? risk?.byWage ?? [];
   const topWageByShare =
-    risk?.byWage && risk.byWage.length > 0
-      ? [...risk.byWage].sort((a, b) => b.denied - a.denied)[0]!
+    wageForReach.length > 0
+      ? [...wageForReach].sort((a, b) => b.denied - a.denied)[0]!
       : null;
   const topWageShare =
     topWageByShare && baseline && baseline.denied > 0
@@ -132,16 +142,45 @@ export default async function PermDenialRiskPage() {
     risk?.byFlag && baseline
       ? (risk.byFlag.find((r) => r.denialRate < baseline.denialRate) ?? null)
       : null;
-  // Both ends of the wage gradient, read off the data rather than named in
-  // copy. The bands are stated in the ingest and could be recut; a hardcoded
-  // "under $60K" sentence would then describe a band that no longer exists.
-  const wageSpread = (() => {
-    const bands = (risk?.byWage ?? []).filter((r) => r.denialRate > 0);
-    if (bands.length < 2) return null;
-    const sorted = [...bands].sort((a, b) => b.denialRate - a.denialRate);
-    const worst = sorted[0]!;
-    const best = sorted[sorted.length - 1]!;
-    return { worst, best, multiple: (worst.denialRate / best.denialRate).toFixed(1) };
+  // THE WAGE BANDS, AND WHY THIS PAGE SHOWS ELEVEN AND NOT FIVE.
+  //
+  // At the ingest's five wide bands the data appears to say the middle of the
+  // wage range is the most-denied part of it. It does not. That shape is
+  // produced by averaging: $0k-$40k at 4.96%, $40k-$50k at 7.26% and
+  // $50k-$60k at 4.41% all become one "Under $60k" band at 5.22%, which puts
+  // the real maximum inside a bucket that reports a lower number than the
+  // peak it contains. A finding that changes when an analyst moves a boundary
+  // is a fact about the boundary.
+  //
+  // So the page shows the finer bands and states the bin sensitivity out
+  // loud. What survives both cuts is the broad decline, and that is what the
+  // copy claims. Nothing here explains the bumps: wage, occupation and
+  // employer are entangled, which is the same reason this page refuses to
+  // blend factors into a score.
+  const fineWage: WageBand[] = wageBands?.fine ?? [];
+  const wagePeak = wageBands ? peakBand(wageBands) : null;
+  const wageMonotonic = fineWage.length > 0 ? isMonotonic(fineWage) : true;
+  const wageEnds = (() => {
+    const rated = fineWage.filter((b) => b.denialRate !== null && b.denialRate > 0);
+    if (rated.length < 2) return null;
+    const first = rated[0]!;
+    const last = rated[rated.length - 1]!;
+    const lowest = rated.reduce((a, b) => ((b.denialRate ?? 0) < (a.denialRate ?? 0) ? b : a));
+    return {
+      first,
+      last,
+      lowest,
+      // Only say "turns back up at the top" when the top band actually is
+      // higher than the minimum. On the current data it is, by a quarter of a
+      // point on 52,851 cases. If a future ingest moves the minimum to the
+      // last band the sentence would name it as a rise while printing the
+      // lowest number on the chart.
+      turnsUp: (last.denialRate ?? 0) > (lowest.denialRate ?? 0),
+      // Bottom band against the LOWEST band, not against the top one: on this
+      // data the rate turns back up above $160k, so "bottom over top"
+      // understates the fall and implies a monotonicity that is not there.
+      multiple: ((first.denialRate ?? 0) / (lowest.denialRate ?? 1)).toFixed(1),
+    };
   })();
   // The spread across fiscal years, which is larger than most of the factors
   // the page ranks and is the strongest argument for dating every rate.
@@ -341,7 +380,7 @@ export default async function PermDenialRiskPage() {
                     label="Denial reach by offered wage"
                     unitLabel="Wage band"
                     caption="Each offered-wage band's share of decided cases and share of all denials"
-                    rows={risk.byWage.map((r) => ({
+                    rows={wageForReach.map((r) => ({
                       label: r.bucket,
                       decided: r.decided,
                       denied: r.denied,
@@ -374,7 +413,7 @@ export default async function PermDenialRiskPage() {
                 of them, so those bars don&apos;t sum to the field. The wage
                 bands do, apart from{" "}
                 {(baseline.decided -
-                  risk.byWage.reduce((n, r) => n + r.decided, 0)).toLocaleString("en-US")}{" "}
+                  wageForReach.reduce((n, r) => n + r.decided, 0)).toLocaleString("en-US")}{" "}
                 decided cases whose offered wage couldn&apos;t be annualised from
                 what DOL recorded.
               </p>
@@ -423,34 +462,74 @@ export default async function PermDenialRiskPage() {
             <div>
               <h2 className="font-heading text-2xl font-black">By offered wage</h2>{" "}
               <p className="mt-2 text-base text-foreground/70">
-                Denial rate against the wage the employer offered, in bands.
+                Denial rate against the wage the employer offered.
+                {fineWage.length > 0 ? (
+                  <>
+                    {" "}
+                    In {fineWage.length} bands, because five is too few to see
+                    what this one does.
+                  </>
+                ) : null}
               </p>
               <div className="mt-6">
                 <RateViews
                   label="Denial rate by offered wage"
                   unitLabel="Wage band"
                   caption="Denial rate for each offered-wage band, with its decided-case count and 95% range"
-                  rows={risk.byWage.map((r) => ({
+                  rows={(fineWage.length > 0
+                    ? fineWage.filter((b) => b.denialRate !== null)
+                    : risk.byWage
+                  ).map((r) => ({
                     label: r.bucket,
-                    rate: r.denialRate,
+                    rate: r.denialRate ?? 0,
                     decided: r.decided,
                     denied: r.denied,
                   }))}
                   baseline={baseline.denialRate}
                 />
               </div>
-              {wageSpread ? (
+              {wageEnds ? (
                 <p className="mt-4 text-sm leading-relaxed text-foreground/60">
-                  The gradient runs one way and it&apos;s steep: the{" "}
-                  {wageSpread.worst.bucket.toLowerCase()} band is denied{" "}
-                  {wageSpread.multiple} times as often as the{" "}
-                  {wageSpread.best.bucket.toLowerCase()} band. Wage isn&apos;t
-                  independent of anything else here, though. It tracks
-                  occupation, which tracks employer size and who files with
-                  counsel, and DOL denies on the record rather than on the
-                  salary.
+                  The rate broadly falls as the wage rises, from{" "}
+                  {wageEnds.first.denialRate}% at the bottom to{" "}
+                  {wageEnds.lowest.denialRate}% at{" "}
+                  {wageEnds.lowest.bucket.toLowerCase()}, a{" "}
+                  {wageEnds.multiple}-fold difference.{" "}
+                  {wageMonotonic
+                    ? "It falls at every step."
+                    : wageEnds.turnsUp
+                      ? `It doesn't fall smoothly, and it turns back up at the top: ${wageEnds.last.bucket.toLowerCase()} is denied ${wageEnds.last.denialRate}% of the time, on ${wageEnds.last.decided.toLocaleString("en-US")} decided cases.`
+                      : "It doesn't fall smoothly, and there are bands in the middle that run against the trend."}
                 </p>
               ) : null}
+              {wagePeak && wagePeak.hiddenByCoarse ? (
+                <p className="mt-3 text-sm leading-relaxed text-foreground/60">
+                  Where you draw the bands changes the picture, which is why
+                  they&apos;re drawn narrow here. The highest rate in the data
+                  is <strong>{wagePeak.fine.denialRate}%</strong> at{" "}
+                  {wagePeak.fine.bucket.toLowerCase()}, on{" "}
+                  {wagePeak.fine.decided.toLocaleString("en-US")} decided cases.
+                  Averaged into the five wide bands DOL&apos;s own reporting
+                  suggests, that peak disappears inside a bucket reporting{" "}
+                  {wagePeak.coarse.denialRate}%. Neither number is wrong. The
+                  narrow one is the one that shows you something.
+                </p>
+              ) : null}
+              <p className="mt-3 text-sm leading-relaxed text-foreground/60">
+                What the bumps mean isn&apos;t something this data can say.
+                Wage tracks occupation, which tracks employer and who files
+                with counsel, and DOL denies on the record rather than on the
+                salary. That entanglement is the same reason nothing on this
+                page is blended into a score.
+                {wageBands && wageBands.unbandedDecided > 0 ? (
+                  <>
+                    {" "}
+                    {wageBands.unbandedDecided.toLocaleString("en-US")} decided
+                    cases carry no wage that could be annualised from what DOL
+                    recorded, so they sit in no band.
+                  </>
+                ) : null}
+              </p>
             </div>
           </section>
 

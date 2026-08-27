@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { PermDeadlineCalculator } from "../PermDeadlineCalculator";
+import { calculateFilingWindow } from "@/lib/perm";
 
 /**
  * The deadline calculator is arithmetic on the central PERM model, and these
@@ -19,6 +20,40 @@ function setDate(label: RegExp, value: string) {
   const input = screen.getByLabelText(label) as HTMLInputElement;
   fireEvent.change(input, { target: { value } });
 }
+
+describe("the PWD cap, asserted at the source", () => {
+  /**
+   * The component renders a caption when the cap applies, and asserting the
+   * caption is an indirect test: it would keep passing if the flag were right
+   * and the date wrong, or if someone made the caption unconditional. This
+   * pins the contract itself, so a regression to the raw calculator fails here
+   * with a clear reason rather than as a missing string in the DOM.
+   */
+  it("closes on the PWD date and reports isPwdLimited when the PWD expires first", () => {
+    const w = calculateFilingWindow({
+      firstRecruitmentDate: "2026-02-01", // natural close 2026-07-31
+      lastRecruitmentDate: "2026-03-01",
+      pwdExpirationDate: "2026-06-30", // earlier, so it caps
+    });
+    expect(w).not.toBeNull();
+    expect(w!.closes).toBe("2026-06-30");
+    expect(w!.isPwdLimited).toBe(true);
+    // The raw calculator's answer, which is what a regression would print.
+    // Naming it here is the point: this date is one on which filing is barred.
+    expect(w!.closes).not.toBe("2026-07-31");
+  });
+
+  it("closes on the 180-day limit and reports no cap when the PWD outlives it", () => {
+    const w = calculateFilingWindow({
+      firstRecruitmentDate: "2026-01-10", // natural close 2026-07-09
+      lastRecruitmentDate: "2026-02-10",
+      pwdExpirationDate: "2026-08-30", // later, so it does not cap
+    });
+    expect(w).not.toBeNull();
+    expect(w!.closes).toBe("2026-07-09");
+    expect(w!.isPwdLimited).toBe(false);
+  });
+});
 
 describe("PermDeadlineCalculator", () => {
   it("derives the PWD expiration from the central calculator", () => {

@@ -337,13 +337,13 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
                 where recruitment or a wage determination expired between 1
                 October and 2 November 2025:
               </p>{" "}
-              {/* A framed excerpt, not a lime side-rule. `/methodology`
-                  already uses `border-l-4 border-primary` for its list of
-                  refusals, and giving a QUOTATION the identical treatment
-                  makes an assertion and a citation look like one thing. This
-                  is a pasted fragment of someone else's document, so it gets
-                  the system's own bordered surface and the quote marks carry
-                  the rest. */}
+              {/* A framed excerpt rather than a single lime rule down one
+                  side. The methodology page already uses that treatment for
+                  its list of refusals, and giving a QUOTATION the identical
+                  one makes an assertion and a citation look like one thing.
+                  This is a pasted fragment of someone else's document, so it
+                  gets the system's own bordered surface and the quote marks
+                  carry the rest. */}
               <blockquote className="mt-3 border-2 border-border bg-background p-4 text-base leading-relaxed">
                 &ldquo;{SHUTDOWN_QUOTE}&rdquo;
                 <cite className="mt-2 block font-mono text-xs font-bold uppercase not-italic tracking-wider text-muted-foreground">

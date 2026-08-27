@@ -109,8 +109,14 @@ function Bars({ bars, unit }: { bars: Bar[]; unit: string }) {
               role="img"
               aria-label={`${pct(b.share)} of ${stateName(b.state)} filings are ${b.label}`}
             >
+              {/* `--data-good-ink`, not the bare `--primary`. Measured on
+                  #FAFAFA the brand lime is 2.05:1, under the 3:1 floor WCAG
+                  1.4.11 puts on a graphical object you need in order to read
+                  the content, and the extent of this bar IS the datum. The ink
+                  variant is 4.70:1 in light and resolves to the identical hex
+                  in dark, so it costs nothing there. */}
               <div
-                className="h-full bg-primary"
+                className="h-full bg-data-good-ink"
                 style={{ width: `${Math.min(100, b.share)}%` }}
               />
             </div>

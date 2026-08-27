@@ -118,7 +118,7 @@ export function DenialReach({
               <div className="flex items-center gap-3">
                 <div className="h-4 min-w-0 flex-1">
                   <div
-                    className="h-full border-2 border-border bg-primary"
+                    className="h-full border-2 border-border bg-data-good-ink"
                     style={{ width: `${(c.share / max) * 100}%` }}
                     role="img"
                     aria-label={`${pct(c.share)} of all denials`}
