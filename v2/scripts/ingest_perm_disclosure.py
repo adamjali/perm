@@ -57,6 +57,7 @@ import gzip
 import hashlib
 import json
 import os
+import pathlib
 import re
 import sys
 import tempfile
@@ -277,6 +278,9 @@ def no(raw: str | None) -> bool:
 # reading exactly the key the entity table was built with.
 from entity_identity import ENTITY_NOISE as _ENTITY_NOISE  # noqa: E402
 from entity_identity import entity_key, typo_aliases  # noqa: E402
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from lib_turso import Turso  # noqa: E402
 
 __all_identity__ = (entity_key, typo_aliases, _ENTITY_NOISE)
 
@@ -1497,13 +1501,14 @@ def main() -> int:
     #
     # A monitor reading a frozen row eventually fires a FALSE alarm, which is
     # worse than no monitor: it teaches you to ignore the real one.
+    db = Turso()
     db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
         dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
         source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
     db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
                ["perm-cases", str(db.scalar("SELECT max(decision_date) FROM perm_cases"))[:10], int(time.time() * 1000),
                 "DOL quarterly disclosure files (flag.dol.gov)", "Quarterly",
-                f"{held:,} decided cases", 135])
+                f"{len(seen):,} decided cases", 135])
 
     return 0
 

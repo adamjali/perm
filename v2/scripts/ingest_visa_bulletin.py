@@ -59,11 +59,15 @@ import hashlib
 import html
 import json
 import os
+import pathlib
 import re
 import sys
 import time
 import urllib.error
 import urllib.request
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from lib_turso import Turso  # noqa: E402
 
 # Queried per calendar year. A single wildcard over the whole bulletin path
 # matches thousands of URLs and the row limit truncates before it reaches the
@@ -295,6 +299,7 @@ def main() -> int:
     # workflow, so `as_of` described that run forever while the data refreshed
     # on schedule underneath it. A frozen row makes the monitor cry wolf, and a
     # monitor that cries wolf is one you stop reading.
+    db = Turso()
     db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
         dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
         source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")

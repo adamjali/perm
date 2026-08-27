@@ -42,6 +42,7 @@ from lib_gov_data import (  # noqa: E402
     log,
     read_shared_strings,
 )
+from lib_turso import Turso  # noqa: E402
 
 DATA_PAGE = "https://www.uscis.gov/tools/reports-and-studies/immigration-and-citizenship-data"
 HOST = "https://www.uscis.gov"
@@ -196,6 +197,7 @@ def main() -> int:
     # workflow, so `as_of` described that run forever while the data refreshed
     # on schedule underneath it. A frozen row makes the monitor cry wolf, and a
     # monitor that cries wolf is one you stop reading.
+    db = Turso()
     db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
         dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
         source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")

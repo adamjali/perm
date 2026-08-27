@@ -51,6 +51,28 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      # The ingest scripts have no typechecker, and nothing else in CI ever
+      # imports them: a NameError sits in one until the night it runs. Three
+      # of the eight freshness stamps shipped with an undefined `db` and would
+      # have died on their last line, under `continue-on-error: true`, in
+      # total silence - the monitor built to catch a silent ingest failure was
+      # itself failing silently. F821 is the whole point; the unused-import
+      # codes are pre-existing noise and stay off.
+      - name: Lint ingest scripts for undefined names
+        working-directory: v2
+        run: |
+          pipx run pyflakes scripts/*.py 2>&1 | tee /tmp/pf.txt || true
+          if grep -qE "undefined name|invalid syntax" /tmp/pf.txt; then
+            echo "::error::An ingest script references a name that does not exist."
+            grep -E "undefined name|invalid syntax" /tmp/pf.txt
+            exit 1
+          fi
+          # A linter that found nothing and a linter that never ran look the
+          # same. Prove it parsed the files.
+          n=$(ls scripts/*.py | wc -l)
+          echo "  pyflakes clean across $n scripts"
+          [ "$n" -ge 10 ] || { echo "::error::only $n scripts seen; the glob is wrong"; exit 1; }
+
       - name: Run full test suite
         # --retry=2 re-runs only individual tests that fail, a safety net against
         # rare CI-environment hiccups. The suite is deterministic (per-file
