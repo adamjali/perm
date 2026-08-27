@@ -370,6 +370,105 @@ def ingest_saved_page(path: str, month: str | None) -> int:
     return 0
 
 
+# Which source wins when two of them hold the same month. A better source
+# must never be overwritten by a worse one, and "better" here is not a
+# judgement call: the saved page and the archived page are both the State
+# Department's own document, and the mirror is a third party's summary of it
+# that carries HALF THE CATEGORIES (EB1/EB2/EB3 only, no EB4, EB5 or EW3).
+# ORDER IS LOAD-BEARING, and the mirror clause MUST come before the
+# travel.state.gov one. The mirror records itself as
+#   "permtrack.app/api/stats/visa-bulletin (mirror; original: travel.state.gov)"
+# because naming the original is good provenance - and that means a plain
+# substring test for "travel.state.gov" matches the MIRROR too, ranks it as
+# the real page, and makes the backfill skip every month that most needs
+# upgrading while reporting success. Caught by a unit test before it ran.
+SOURCE_RANK = [
+    (lambda u: "saved from a browser" in u, 3),   # primary, a person fetched it
+    (lambda u: "mirror" in u.lower() or "permtrack" in u.lower(), 1),
+    (lambda u: "travel.state.gov" in u, 2),       # the real page, via the archive
+    (lambda u: True, 1),
+]
+
+
+def rank_of(source_url: str) -> int:
+    for pred, rank in SOURCE_RANK:
+        if pred(source_url or ""):
+            return rank
+    return 0
+
+
+def backfill_from_archive(years: list[int], limit: int) -> int:
+    """Re-parse every bulletin the archive can still serve, straight to Turso.
+
+    WHY THIS EXISTED AS A GAP. `main()` defaults to `[this_year, this_year-1]`,
+    but the folder in the URL is the FISCAL year, so the November 2025 bulletin
+    lives under /2026/ and the whole of calendar 2024 lives under /2024/ and
+    /2025/. Two years of folders is not two years of bulletins, and the months
+    that fell outside them were quietly filled from the mirror instead - at
+    three categories each, for 24 months, with nothing anywhere saying so.
+
+    Nothing was broken and nothing errored. The series just silently carried
+    half the categories for two thirds of its length.
+    """
+    db = Turso()
+    res = db.execute("SELECT bulletin_month, source_url FROM visa_bulletins")
+    have = {r[0]["value"]: (r[1]["value"] if r[1]["type"] != "null" else "")
+            for r in res["response"]["result"]["rows"]}
+    log(f"holding {len(have)} months before this run")
+
+    snaps = discover_snapshots(limit, years)
+    added = upgraded = skipped = failed = 0
+    for month, ts, url in snaps:
+        current = have.get(month)
+        if current is not None and rank_of(current) >= 2:
+            skipped += 1
+            continue
+        try:
+            parsed = parse_bulletin(fetch(f"https://web.archive.org/web/{ts}/{url}"))
+        except Exception as exc:  # noqa: BLE001 - one bad month must not end the run
+            log(f"  {month}: {exc}")
+            failed += 1
+            continue
+        if not parsed:
+            log(f"  {month}: no employment-based charts in that capture")
+            failed += 1
+            continue
+        cats = len(parsed["finalAction"])
+        db.execute(
+            "INSERT OR REPLACE INTO visa_bulletins (bulletin_month, source_url, "
+            "archived_at, final_action, dates_for_filing, computed_at) "
+            "VALUES (?,?,?,?,?,?)",
+            [month, url, ts, json.dumps(parsed["finalAction"]),
+             json.dumps(parsed["datesForFiling"]), int(time.time() * 1000)],
+        )
+        if current is None:
+            log(f"  {month}: ADDED ({cats} categories)")
+            added += 1
+        else:
+            log(f"  {month}: UPGRADED mirror -> State Dept ({cats} categories)")
+            upgraded += 1
+        time.sleep(1)  # the archive is a free public service; do not hammer it
+
+    log("")
+    log(f"added     {added}")
+    log(f"upgraded  {upgraded}")
+    log(f"skipped   {skipped} (already from a source at least as good)")
+    log(f"failed    {failed}")
+
+    n = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
+    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
+        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
+        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
+    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
+               ["visa-bulletin",
+                str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10],
+                int(time.time() * 1000),
+                "State Dept via Internet Archive; current month from a saved page",
+                "Monthly", f"{n:,} bulletins", 75])
+    log(f"visa_bulletins now holds {n} months")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", help="Payload path (required for the archive route)")
@@ -381,14 +480,25 @@ def main() -> int:
              "straight to Turso as a primary-source row.",
     )
     ap.add_argument("--month", help="YYYY-MM, when the page cannot be read for it")
+    ap.add_argument(
+        "--backfill-turso", action="store_true",
+        help="Re-parse every bulletin the archive still serves, writing "
+             "straight to Turso and never overwriting a better source.",
+    )
     args = ap.parse_args()
 
     # The primary route writes to the database directly and needs no payload,
     # so it short-circuits before any archive lookup.
     if args.from_file:
         return ingest_saved_page(args.from_file, args.month)
+    if args.backfill_turso:
+        # The folder is the FISCAL year, so cover a wide span by default
+        # rather than the two the archive route assumes.
+        this_year = datetime.date.today().year
+        return backfill_from_archive(
+            args.years or list(range(this_year - 4, this_year + 1)), args.months)
     if not args.out:
-        ap.error("--out is required unless --from-file is given")
+        ap.error("--out is required unless --from-file or --backfill-turso is given")
 
     this_year = datetime.date.today().year
     years = args.years or [this_year, this_year - 1]
