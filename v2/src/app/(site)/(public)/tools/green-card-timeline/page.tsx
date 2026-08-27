@@ -62,8 +62,12 @@ const FAQS = [
     a: "The recruitment window and the filing window, and that’s roughly two months of the total. Both are fixed arithmetic on the prevailing wage determination date, and both restart the case if they’re missed. Everything else is queue time at DOL or USCIS.",
   },
   {
-    q: "Why is there no number on the visa bulletin stage?",
-    a: "Because the cutoff dates come only from the monthly visa bulletin published by the State Department, and we don’t have an automated way to read it.",
+    q: "Why is there no number of months on the visa bulletin stage?",
+    a: "Because a cutoff date is a position, not a length of time. The stage shows the actual final action cutoffs from the newest bulletin held here, which is the measured fact. Turning one into \u201cyou will wait N months\u201d would need a rate of advance for your category and country and a promise it holds, and cutoffs go backwards as well as forwards. The priority date calculator shows how each cutoff has moved instead, and how fast.",
+  },
+  {
+    q: "How do the four stages connect?",
+    a: "PERM certifies that no willing US worker was available. The I-140 establishes that the job and the worker qualify, and it sets or preserves the priority date. The visa bulletin decides when that priority date can be used, which is what governs the I-485. And the I-485 inventory says how many people are already holding a place in front of you in your category and country. The first two are queues you can be told a duration for; the third is a queue whose length nobody publishes and whose direction can reverse.",
   },
   {
     q: "Does premium processing shorten the whole timeline?",
@@ -264,6 +268,8 @@ export default async function GreenCardTimelinePage() {
       <ToolPageFooter
         currentHref={"/tools/green-card-timeline"}
         reading={[
+          { href: "/tools/priority-date-calculator", label: "Whether your date is current", note: "The third stage on its own: where each cutoff stands, and how fast it has been moving." },
+          { href: "/tools/i485-queue-position", label: "How many are ahead of you", note: "The fourth stage: who already holds a place in your category and country." },
           { href: "/guides/ultimate-perm-guide-2026", label: "The full PERM guide", note: "The stages in detail, and the rules behind the ones you control." },
           { href: "/blog/what-is-perm-labor-certification", label: "What PERM is", note: "The labor certification stage, in plain terms." },
         ]}

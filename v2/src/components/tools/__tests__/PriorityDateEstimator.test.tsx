@@ -48,9 +48,26 @@ const SERIES: BulletinMonth[] = [
   bulletin("2026-07", "U"),
 ];
 
+/** What `categoriesIn` returns for the fixtures above. */
+const CODES = ["EB1", "EB2"] as const;
+
+/**
+ * Note the spread. `Partial<ComponentProps<...>>` does NOT make TypeScript
+ * demand the required props at this call site, because a spread of a
+ * non-fresh variable is assumed to supply anything missing. That is the same
+ * hole that lets an extra validator field typecheck against a Convex table,
+ * and it is why adding a required prop to the component surfaced here as a
+ * runtime crash rather than a red typecheck. Defaults go in the object below,
+ * where the compiler can see them.
+ */
 function renderTool(props: Partial<React.ComponentProps<typeof PriorityDateEstimator>> = {}) {
   return render(
-    <PriorityDateEstimator bulletins={SERIES} today={TODAY} {...props} />,
+    <PriorityDateEstimator
+      bulletins={SERIES}
+      categoryCodes={CODES}
+      today={TODAY}
+      {...props}
+    />,
   );
 }
 
@@ -71,10 +88,32 @@ function selectByLabel(label: RegExp, value: string) {
  * by however many icons happen to be on screen. That reads as a product bug
  * and is not one.
  */
-function chartBars(container: HTMLElement): SVGRectElement[] {
+function chartSvg(container: HTMLElement): SVGSVGElement {
   const svg = container.querySelector('svg[role="img"]');
   expect(svg).not.toBeNull();
-  return [...svg!.querySelectorAll("rect")];
+  return svg as SVGSVGElement;
+}
+
+/**
+ * The columns that say "these priority dates qualified", by their own fill.
+ *
+ * Counting every `rect` under the figure also collects the clip rect, the
+ * hatch pattern's tile, the invisible hover surfaces and the cap rules, so a
+ * bare count comes back inflated and reads as a product bug.
+ */
+function qualifyingColumns(container: HTMLElement): SVGRectElement[] {
+  return [...chartSvg(container).querySelectorAll("rect")].filter(
+    (r) =>
+      r.getAttribute("fill") === "var(--data-good)" &&
+      r.getAttribute("fill-opacity") === "0.16",
+  );
+}
+
+/** The columns that say "shut", which carry a pattern rather than a fill. */
+function closedColumns(container: HTMLElement): SVGRectElement[] {
+  return [...chartSvg(container).querySelectorAll("rect")].filter((r) =>
+    (r.getAttribute("fill") ?? "").startsWith("url(#"),
+  );
 }
 
 describe("PriorityDateEstimator: a future priority date", () => {
@@ -241,24 +280,24 @@ describe("PriorityDateEstimator: a closed category", () => {
 });
 
 describe("PriorityDateEstimator: chart and legend", () => {
-  it("draws a bar for every month of an all-current category", () => {
+  it("draws a full-height column for every month of an all-current category", () => {
     const { container } = renderTool();
     // EB-1 worldwide is C in every bulletin, so it has no dated points at all.
     // The figure used to be gated on having two DATED months, which meant the
-    // one case the legend describes ("a green bar is a month the category was
-    // current") was the one case that rendered nothing.
-    selectByLabel(/category/i, "EB1");
+    // one case the legend describes was the one case that rendered nothing.
+    selectByLabel(/^category$/i, "EB1");
     selectByLabel(/country of birth/i, "worldwide");
 
-    const bars = chartBars(container);
-    expect(bars.length).toBe(SERIES.length);
-    bars.forEach((bar) => {
-      expect(bar.getAttribute("fill")).toBe("var(--primary)");
-    });
-    expect(screen.getByText(/no bulletin in this range published a cutoff date/i)).toBeInTheDocument();
+    const cols = qualifyingColumns(container);
+    expect(cols.length).toBe(SERIES.length);
+    // Current means every priority date qualified, so the column is the whole
+    // plot: the cutoff for that month genuinely is "everything".
+    const heights = new Set(cols.map((c) => c.getAttribute("height")));
+    expect(heights.size).toBe(1);
+    expect(closedColumns(container)).toHaveLength(0);
   });
 
-  it("draws a red bar for a closed month and a green one for a current month", () => {
+  it("separates closed from current by TEXTURE, not by a second opacity", () => {
     const mixed = [
       bulletin("2026-03", "01JAN14"),
       bulletin("2026-04", "C"),
@@ -266,11 +305,67 @@ describe("PriorityDateEstimator: chart and legend", () => {
       bulletin("2026-06", "01SEP13"),
     ];
     const { container } = render(
-      <PriorityDateEstimator bulletins={mixed} today={TODAY} />,
+      <PriorityDateEstimator bulletins={mixed} categoryCodes={CODES} today={TODAY} />,
     );
-    const fills = chartBars(container).map((r) => r.getAttribute("fill"));
-    // Exactly the legend's claim: green for current, red for closed.
-    expect(fills).toEqual(["var(--primary)", "var(--data-bad)"]);
+
+    // Two dated months and one current month qualify somebody; the closed one
+    // qualifies nobody and is drawn as a hatch instead of a fill.
+    expect(qualifyingColumns(container)).toHaveLength(3);
+    expect(closedColumns(container)).toHaveLength(1);
+
+    // The defect this pins: two states that differ only in how faint they are
+    // get read as one state at two strengths, which is how a closed month and
+    // an open one once shared a caption. Nothing may separate them by opacity
+    // alone.
+    const closedFill = closedColumns(container)[0]!.getAttribute("fill")!;
+    const openFill = qualifyingColumns(container)[0]!.getAttribute("fill")!;
+    expect(closedFill).not.toBe(openFill);
+    expect(closedFill).toMatch(/^url\(#/);
+  });
+
+  it("keys every mark on the drawing, and only the marks on it", () => {
+    const mixed = [
+      bulletin("2026-03", "01JAN14"),
+      bulletin("2026-04", "C"),
+      bulletin("2026-05", "U"),
+      bulletin("2026-06", "01SEP13"),
+    ];
+    const { container } = render(
+      <PriorityDateEstimator bulletins={mixed} categoryCodes={CODES} today={TODAY} />,
+    );
+    const caption = container.querySelector("figcaption")!;
+    expect(caption.textContent).toContain("Closed, no visa numbers");
+    expect(caption.textContent).toContain("Current, open to every date");
+    expect(caption.textContent).toContain("The cutoff that month");
+    // No priority date entered, so no dashed line exists to key.
+    expect(caption.textContent).not.toContain("Your priority date");
+
+    // Every swatch is drawn, never named. A word tinted with one token beside
+    // a mark filled with another is two colours claiming to be one.
+    expect(caption.querySelectorAll("svg").length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("drops the closed key entirely when nothing on the drawing is closed", () => {
+    const open = [
+      bulletin("2026-03", "01JAN14"),
+      bulletin("2026-04", "01FEB14"),
+    ];
+    const { container } = render(
+      <PriorityDateEstimator bulletins={open} categoryCodes={CODES} today={TODAY} />,
+    );
+    expect(container.querySelector("figcaption")!.textContent).not.toContain(
+      "Closed, no visa numbers",
+    );
+  });
+
+  it("names both axes", () => {
+    // Two different date scales on one drawing. Unlabelled they are
+    // indistinguishable, and "is the axis right?" is unanswerable.
+    const { container } = renderTool();
+    const svg = chartSvg(container);
+    const labels = [...svg.querySelectorAll("text")].map((t) => t.textContent);
+    expect(labels).toContain("Bulletin month");
+    expect(labels).toContain("Cutoff date");
   });
 
   it("breaks the line across a gap instead of interpolating through it", () => {
@@ -286,16 +381,87 @@ describe("PriorityDateEstimator: chart and legend", () => {
       bulletin("2026-05", "01APR14"),
     ];
     const { container } = render(
-      <PriorityDateEstimator bulletins={gapped} today={TODAY} />,
+      <PriorityDateEstimator bulletins={gapped} categoryCodes={CODES} today={TODAY} />,
     );
-    const svg = container.querySelector('svg[role="img"]')!;
-    const polylines = [...svg.querySelectorAll("polyline")];
+    const polylines = [...chartSvg(container).querySelectorAll("polyline")];
     // Two runs of two, not one run of four. A single polyline would draw a
     // smooth rise straight through the month the category was shut.
     expect(polylines.length).toBe(2);
     polylines.forEach((line) => {
       expect(line.getAttribute("points")!.trim().split(/\s+/).length).toBe(2);
     });
+  });
+});
+
+describe("PriorityDateEstimator: the priority-date line", () => {
+  it("labels the line at the line's own coordinate", () => {
+    const { container } = renderTool();
+    setPriorityDate("2014-01-01");
+    const svg = chartSvg(container);
+    const line = svg.querySelector("line[stroke-dasharray]") as SVGLineElement;
+    expect(line).not.toBeNull();
+
+    const label = [...svg.querySelectorAll("text")].find((t) =>
+      t.textContent!.startsWith("Your date,"),
+    );
+    expect(label).toBeDefined();
+    // A label parked at a fixed offset names whatever date happens to sit
+    // there instead of the one it belongs to. Same drawing, same y.
+    const lineY = Number(line.getAttribute("y1"));
+    const labelY = Number(label!.getAttribute("y"));
+    expect(Math.abs(labelY - lineY)).toBeLessThanOrEqual(14);
+  });
+
+  it("keeps the axis on the cutoffs when the date is years past them", () => {
+    const { container } = renderTool();
+    // Cutoffs here run 2013 to 2014. Stretching the axis to reach a 2024 date
+    // squashes the whole series into a sliver and destroys the movement the
+    // chart exists to show.
+    setPriorityDate("2024-06-01");
+    expect(chartSvg(container).querySelector("line[stroke-dasharray]")).toBeNull();
+
+    // An absence in a drawing has to be explained before the drawing, not
+    // after it and not at all.
+    //
+    // Compared by document position, not by string index. The first version
+    // searched for "Bulletin month" and found the sentence introducing the
+    // axes rather than the axis label itself, so it measured the note against
+    // a string that sits above it either way.
+    const note = [...container.querySelectorAll("p")].find((el) =>
+      el.textContent!.includes("sits off the top of the chart"),
+    );
+    expect(note).toBeDefined();
+    const figure = container.querySelector("figure")!;
+    expect(
+      note!.compareDocumentPosition(figure) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("draws the line when the date is inside the plotted range", () => {
+    const { container } = renderTool();
+    setPriorityDate("2014-01-01");
+    expect(chartSvg(container).querySelector("line[stroke-dasharray]")).not.toBeNull();
+    expect(container.textContent).not.toContain("sits off the top of the chart");
+  });
+});
+
+describe("PriorityDateEstimator: the category selector", () => {
+  it("offers only the categories the archive actually holds", () => {
+    // Six were hardcoded and three exist. Picking one of the missing three
+    // left every cell lookup undefined, so the verdict, the retrogression
+    // note and the whole chart stopped rendering with no warning anywhere
+    // near the control that caused it.
+    renderTool();
+    const select = screen.getByLabelText(/^category$/i) as HTMLSelectElement;
+    const values = [...select.options].map((o) => o.value);
+    expect(values).toEqual(["EB1", "EB2"]);
+    expect(values).not.toContain("EB5");
+  });
+
+  it("opens on a category the archive holds when EB-2 is absent", () => {
+    renderTool({ categoryCodes: ["EB1"] });
+    const select = screen.getByLabelText(/^category$/i) as HTMLSelectElement;
+    expect(select.value).toBe("EB1");
   });
 });
 

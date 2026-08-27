@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PriorityDateEstimator } from "@/components/tools/PriorityDateEstimator";
+import { BulletinBoard } from "@/components/bulletin/BulletinBoard";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { getVisaBulletinSeries } from "@/lib/turso/publicData";
+import { getBulletinBoard, categoriesIn } from "@/lib/turso/bulletin";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 /**
@@ -19,12 +21,13 @@ import { DataProvenance } from "@/components/data/DataProvenance";
  * one, since this month's number is on the State Department's own page and
  * the direction is not.
  *
- * Measured 2026-08-25: the archive route now has a hard ceiling. travel.state.gov
- * started serving 403 to the Internet Archive's crawler in mid-July 2026 (last
- * good capture 2026-07-14, first refusal 2026-07-17), so the August and
- * September 2026 bulletins have never been archived at all. The series stops at
- * July 2026 and re-running the ingest cannot change that. The page states the
- * gap rather than presenting the last figure it holds as a current one.
+ * travel.state.gov began serving 403 to the Internet Archive's crawler in
+ * mid-July 2026 (last good capture 2026-07-14, first refusal 2026-07-17), so
+ * the archive alone stops at July 2026. The bulletins after it reach this
+ * table through a second mirror, which is why the freshness row names both
+ * sources. Whatever the newest month turns out to be, the page reads it from
+ * the data and states how far behind the live bulletin that leaves it, rather
+ * than carrying a month in prose that the ingest can outrun.
  */
 
 const TITLE = "Visa Bulletin Priority Date Calculator";
@@ -162,7 +165,7 @@ const FAQS = [
   },
   {
     q: "Why is this behind the current bulletin?",
-    a: "The State Department publishes the bulletin on a site that refuses automated requests, so these figures come from a public archive of the same pages. In mid-July 2026 that site began refusing the archive's crawler too, so the bulletins published after July 2026 haven’t been captured anywhere this page can read, and the series stops there until that changes. Every figure is labelled with the bulletin it came from, and the current bulletin is one click away on the State Department's own site.",
+    a: "The State Department publishes the bulletin on a site that refuses automated requests, so these figures come from a public archive of the same pages plus a second mirror for the months the archive missed. In mid-July 2026 travel.state.gov began refusing the archive's crawler as well, so nothing here reaches this page directly from the source. Every figure is labelled with the bulletin it came from, the page states how far behind the live bulletin it is, and the current bulletin is one click away on the State Department's own site.",
   },
   {
     q: "What does it mean when a category shows U?",
@@ -173,16 +176,26 @@ const FAQS = [
     a: "Yes, and it does. Retrogression happens when demand in a category turns out higher than expected, and a date that was current one month can stop being current the next. That’s the main reason this page shows the whole series rather than just the latest number.",
   },
   {
+    q: "The cutoff moved forward. Why is the wait no shorter?",
+    a: "Because a cutoff has to advance about thirty days a month just for the queue to stay the same length. It moves forward while a month of real time passes, so anyone holding a fixed priority date only gains ground when it advances faster than that. Across the bulletins held here most employment-based queues moved slower, which means the number on the page went up and the wait got longer at the same time. The pace figures on this page are that measurement.",
+  },
+  {
     q: "Which chart should I use, final action or dates for filing?",
     a: "Final action dates govern when a green card can actually be approved. Dates for filing govern when the adjustment application can be submitted, but only in months when USCIS says it’s honouring that chart, which it announces separately.",
   },
 ];
 
 export default async function PriorityDateCalculatorPage() {
-  const [bulletins, uscis] = await Promise.all([
+  const [bulletins, board, uscis] = await Promise.all([
     getVisaBulletinSeries(),
+    getBulletinBoard(),
     fetchUscisGuidance(),
   ]);
+
+  // The selector offers what the archive holds, computed here rather than
+  // declared in the component. A hardcoded list of six against an archive of
+  // three meant half the options rendered an empty page.
+  const categoryCodes = categoriesIn(bulletins);
 
   // Decided once, on the server, and passed down. A client component calling
   // new Date() on an otherwise static page disagrees with the server render
@@ -227,11 +240,18 @@ export default async function PriorityDateCalculatorPage() {
       <section className="mt-10">
         <PriorityDateEstimator
           bulletins={bulletins}
+          categoryCodes={categoryCodes}
           today={today}
           currentBulletinMonth={uscis?.month ?? null}
           currentEmploymentChart={uscis?.employmentChart ?? null}
         />
       </section>
+
+      {board ? (
+        <section className="mt-12">
+          <BulletinBoard board={board} />
+        </section>
+      ) : null}
 
       <section className="mt-12">
         <h2 className="font-heading text-2xl font-black">Common questions</h2>

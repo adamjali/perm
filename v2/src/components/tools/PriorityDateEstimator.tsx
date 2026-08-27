@@ -16,7 +16,7 @@
  * the exact moment the category closed.
  */
 
-import { useId, useMemo, useState } from "react";
+import { Fragment, useId, useMemo, useState, type ReactNode } from "react";
 import { CalendarBlank as CalendarRange, ClockCounterClockwise as History, TrendDown, Warning } from "@phosphor-icons/react";
 
 import {
@@ -33,6 +33,18 @@ import { cn } from "@/lib/utils";
 
 export interface PriorityDateEstimatorProps {
   bulletins: readonly BulletinMonth[];
+  /**
+   * The category codes the archive actually publishes, computed on the server
+   * from these same bulletins.
+   *
+   * It used to be a hardcoded list of six, and the archive holds three. The
+   * failure was silent and total: picking EB-4, EB-5 or EB-3 other workers
+   * left every cell lookup undefined, so the verdict panel, the retrogression
+   * note and the whole chart simply stopped rendering, with the only
+   * explanation four scrolls down under "what this can't tell you". A
+   * selector should not be able to offer a question the data cannot answer.
+   */
+  categoryCodes: readonly string[];
   /**
    * Today, `YYYY-MM-DD`, computed on the server and passed down.
    *
@@ -90,14 +102,20 @@ function countOfBulletins(n: number): string {
   return n === 1 ? "one bulletin" : `${n} bulletins`;
 }
 
-const CATEGORIES = [
-  { code: "EB1", label: "EB-1 (extraordinary ability, researchers, managers)" },
-  { code: "EB2", label: "EB-2 (advanced degree or exceptional ability)" },
-  { code: "EB3", label: "EB-3 (skilled workers and professionals)" },
-  { code: "EW3", label: "EB-3 other workers (unskilled)" },
-  { code: "EB4", label: "EB-4 (special immigrants)" },
-  { code: "EB5", label: "EB-5 (investors, unreserved)" },
-] as const;
+/**
+ * Labels for the codes the bulletin uses. Which of these are OFFERED is
+ * decided by the archive, not by this map: an entry here for a category the
+ * ingest does not hold is inert, and a code with no entry falls back to
+ * itself rather than disappearing.
+ */
+const CATEGORY_LABELS: Record<string, string> = {
+  EB1: "EB-1 (extraordinary ability, researchers, managers)",
+  EB2: "EB-2 (advanced degree or exceptional ability)",
+  EB3: "EB-3 (skilled workers and professionals)",
+  EW3: "EB-3 other workers (unskilled)",
+  EB4: "EB-4 (special immigrants)",
+  EB5: "EB-5 (investors, unreserved)",
+};
 
 const COUNTRIES: { code: CountryKey; label: string }[] = [
   { code: "worldwide", label: "All other countries" },
@@ -120,16 +138,105 @@ const CHARTS: { code: ChartKind; label: string; note: string }[] = [
   },
 ];
 
-// Plot geometry. Labels live in gutters so none sits on the drawing.
+// Plot geometry. Labels live in gutters so none sits on the drawing, and both
+// gutters carry an axis TITLE as well as tick labels: the chart puts two
+// different date scales on one drawing, bulletin month along the bottom and
+// cutoff date up the side, and unlabelled they are indistinguishable.
 const W = 720;
-const H = 300;
-const PAD_L = 78;
+const H = 320;
+const PAD_L = 104;
 const PAD_R = 16;
-const PAD_T = 26;
-const PAD_B = 42;
+const PAD_T = 34;
+const PAD_B = 58;
+
+type SeriesState = "date" | "current" | "unavailable";
+type PdPlacement = "none" | "inside" | "above" | "below";
+
+/**
+ * The key, drawn in the same fills the marks use.
+ *
+ * Every entry renders a real swatch rather than a coloured word. A word
+ * tinted with `--data-bad-ink` next to a mark filled with `--data-bad` is two
+ * different colours claiming to be one, and the ink token is a different
+ * value again in dark mode. Drawing the swatch removes the question.
+ *
+ * Each entry states when it applies, so the key never lists a mark that is
+ * not on the drawing. A key describing marks the reader cannot find is the
+ * same defect as a mark with no key.
+ */
+const LEGEND: {
+  key: string;
+  label: string;
+  show: (series: readonly { state: SeriesState }[], pd: PdPlacement) => boolean;
+  swatch: () => ReactNode;
+}[] = [
+  {
+    key: "cutoff",
+    label: "The cutoff that month",
+    show: (s) => s.some((x) => x.state === "date"),
+    swatch: () => (
+      <>
+        <rect x="0" y="6" width="26" height="10" fill="var(--data-good)" fillOpacity="0.16" />
+        <line x1="0" y1="6" x2="26" y2="6" stroke="var(--primary)" strokeWidth="3" />
+      </>
+    ),
+  },
+  {
+    key: "qualified",
+    label: "Dates that qualified",
+    show: (s) => s.some((x) => x.state === "date"),
+    swatch: () => (
+      <rect x="0" y="2" width="26" height="14" fill="var(--data-good)" fillOpacity="0.16" />
+    ),
+  },
+  {
+    key: "current",
+    label: "Current, open to every date",
+    show: (s) => s.some((x) => x.state === "current"),
+    swatch: () => (
+      <>
+        <rect x="0" y="2" width="26" height="14" fill="var(--data-good)" fillOpacity="0.16" />
+        <rect x="0" y="2" width="26" height="3" fill="var(--data-good)" />
+      </>
+    ),
+  },
+  {
+    key: "closed",
+    label: "Closed, no visa numbers",
+    show: (s) => s.some((x) => x.state === "unavailable"),
+    swatch: () => (
+      <>
+        <rect x="0" y="2" width="26" height="14" fill="var(--data-bad)" fillOpacity="0.13" />
+        <g stroke="var(--data-bad)" strokeWidth="2.5" strokeOpacity="1">
+          <line x1="1" y1="16" x2="15" y2="2" />
+          <line x1="9" y1="16" x2="23" y2="2" />
+          <line x1="17" y1="16" x2="26" y2="7" />
+        </g>
+      </>
+    ),
+  },
+  {
+    key: "pd",
+    label: "Your priority date",
+    show: (_s, pd) => pd === "inside",
+    swatch: () => (
+      <line
+        x1="0"
+        y1="9"
+        x2="26"
+        y2="9"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeDasharray="7 5"
+        strokeOpacity="0.85"
+      />
+    ),
+  },
+];
 
 export function PriorityDateEstimator({
   bulletins,
+  categoryCodes,
   today,
   currentBulletinMonth = null,
   currentEmploymentChart = null,
@@ -139,10 +246,16 @@ export function PriorityDateEstimator({
   const catId = useId();
   const countryId = useId();
   const chartId = useId();
-  const gradId = useId();
+  const hatchId = useId();
+  const clipId = useId();
 
   const [priorityDate, setPriorityDate] = useState("");
-  const [category, setCategory] = useState("EB2");
+  // EB-2 is the category most people arrive asking about, so it opens there
+  // when the archive holds it, and falls back to whatever the archive does
+  // hold rather than opening on a code that renders nothing.
+  const [category, setCategory] = useState(
+    () => categoryCodes.find((c) => c === "EB2") ?? categoryCodes[0] ?? "EB2",
+  );
   const [country, setCountry] = useState<CountryKey>("india");
   const [chart, setChart] = useState<ChartKind>("finalAction");
 
@@ -297,19 +410,48 @@ export function PriorityDateEstimator({
   // EB-1 worldwide is C across the entire series, so the one case the legend
   // describes as "a green bar is a month the category was current" was the one
   // case that never rendered a bar.
+  //
+  // THE DOMAIN IS THE CUTOFFS, NOT THE CUTOFFS PLUS THE READER'S DATE. Those
+  // two ranges are routinely a decade apart: EB-2 India's cutoffs cover about
+  // two and a half years while the people reading it hold dates from 2022 and
+  // later. Stretching the axis to reach one dashed line compresses the whole
+  // series into a sliver and destroys the one thing the chart exists to show.
+  // An out-of-range date gets an edge marker and the gap stated in words
+  // instead, which is a more precise answer than a squashed line anyway.
   const yDomain = (() => {
     if (times.length === 0) return null;
-    const all = [...times, ...(pdTime !== null ? [pdTime] : [])];
-    let lo = Math.min(...all);
-    let hi = Math.max(...all);
+    let lo = Math.min(...times);
+    let hi = Math.max(...times);
     // A single distinct value would collapse the axis and print three
     // identical tick labels. Give it half a year of room either side.
     if (hi === lo) {
       lo -= 180 * DAY_MS;
       hi += 180 * DAY_MS;
     }
+    const pad = (hi - lo) * 0.06;
+    lo -= pad;
+    hi += pad;
     return { lo, hi, span: hi - lo };
   })();
+
+  // Inside the drawing, above every cutoff on it, or below every one.
+  const pdPlacement: "none" | "inside" | "above" | "below" =
+    pdTime === null || yDomain === null
+      ? "none"
+      : pdTime > yDomain.hi
+        ? "above"
+        : pdTime < yDomain.lo
+          ? "below"
+          : "inside";
+
+  // The gap to the nearest end of the drawn range, for an out-of-range date.
+  const pdEdgeDays =
+    pdTime === null || yDomain === null || pdPlacement === "inside" || pdPlacement === "none"
+      ? null
+      : Math.round(
+          Math.abs(pdTime - (pdPlacement === "above" ? Math.max(...times) : Math.min(...times))) /
+            DAY_MS,
+        );
 
   const px = (i: number) =>
     PAD_L + (series.length <= 1 ? 0 : (i / (series.length - 1)) * (W - PAD_L - PAD_R));
@@ -317,6 +459,14 @@ export function PriorityDateEstimator({
     yDomain === null
       ? H - PAD_B
       : H - PAD_B - ((t - yDomain.lo) / yDomain.span) * (H - PAD_T - PAD_B);
+
+  // One column per bulletin, tiling with no gaps, so a run of closed months
+  // reads as a closed PERIOD rather than as a row of unexplained ticks. Wide
+  // enough to be a tap target's worth of hover surface at 36 points.
+  const stepW =
+    series.length <= 1 ? 24 : (W - PAD_L - PAD_R) / (series.length - 1);
+
+  const PLOT_BOTTOM = H - PAD_B;
 
   // Segments, not one polyline. A month with no cutoff is a BREAK: joining
   // across it draws a smooth rise through a period when the category was
@@ -379,9 +529,9 @@ export function PriorityDateEstimator({
               onChange={(e) => setCategory(e.target.value)}
               className="mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
-              {CATEGORIES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.label}
+              {categoryCodes.map((code) => (
+                <option key={code} value={code}>
+                  {CATEGORY_LABELS[code] ?? code}
                 </option>
               ))}
             </select>
@@ -661,8 +811,38 @@ export function PriorityDateEstimator({
       {series.length >= 2 ? (
         <div className="border-b-2 border-border p-6 sm:p-8">
           <h3 className="font-heading text-lg font-black">How the cutoff has moved</h3>{" "}
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/70">
+            Bulletin month along the bottom, the cutoff it published up the
+            side. The shaded part of each column is the range of priority dates
+            that qualified that month, so a taller column is a month more
+            people were current in.
+          </p>{" "}
+          {pdPlacement === "above" || pdPlacement === "below" ? (
+            // Said ABOVE the drawing, because it explains an absence in the
+            // drawing. A reader who typed a date and sees no dashed line has
+            // to be told why before they read the picture, not after.
+            <p className="mt-3 max-w-2xl border-2 border-border bg-muted p-4 text-base font-bold leading-relaxed">
+              {formatAsOf(priorityDate)} is{" "}
+              {pdEdgeDays !== null
+                ? `${pdEdgeDays.toLocaleString("en-US")} days `
+                : ""}
+              {pdPlacement === "above" ? "later" : "earlier"} than every cutoff
+              this category published in the window, so it sits off the{" "}
+              {pdPlacement === "above" ? "top" : "bottom"} of the chart. The
+              scale stays on the cutoffs: stretching it to reach one line would
+              flatten the movement into nothing.
+            </p>
+          ) : null}{" "}
           <figure className="m-0">
-            <div className="-mx-1 mt-6 overflow-x-auto px-1">
+            <div
+              className="-mx-1 mt-6 overflow-x-auto px-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              // The drawing is wider than a phone, so this scrolls. A
+              // scrollable box that cannot be reached or named is unusable by
+              // keyboard and invisible to a screen reader.
+              role="group"
+              aria-label="Cutoff history, scrollable"
+              tabIndex={0}
+            >
               <svg
                 viewBox={`0 0 ${W} ${H}`}
                 className="block h-auto w-full min-w-[44rem]"
@@ -670,14 +850,41 @@ export function PriorityDateEstimator({
                 aria-label={
                   yDomain === null
                     ? `${category} ${country} published no cutoff date in any bulletin from ${formatMonth(series[0]!.month)} to ${formatMonth(series[series.length - 1]!.month)}; each month was either current or closed.`
-                    : `Cutoff dates for ${category} ${country} from ${formatMonth(series[0]!.month)} to ${formatMonth(series[series.length - 1]!.month)}.`
+                    : `Cutoff dates for ${category} ${country} from ${formatMonth(series[0]!.month)} to ${formatMonth(series[series.length - 1]!.month)}. ${series.filter((s) => s.state === "unavailable").length} of the ${series.length} bulletins closed the category outright.`
                 }
               >
                 <defs>
-                  <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="currentColor" stopOpacity="0.18" />
-                    <stop offset="100%" stopColor="currentColor" stopOpacity="0.02" />
-                  </linearGradient>
+                  {/* Hatching, not a second opacity. Two states that differ
+                      only in how faint they are get read as one state at two
+                      strengths, which is how a closed month and an open one
+                      once shared a caption. Shut is a different TEXTURE as
+                      well as a different colour. */}
+                  <pattern
+                    id={hatchId}
+                    width="7"
+                    height="7"
+                    patternUnits="userSpaceOnUse"
+                    patternTransform="rotate(45)"
+                  >
+                    <rect width="7" height="7" fill="var(--data-bad)" fillOpacity="0.13" />
+                    <line
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="7"
+                      stroke="var(--data-bad)"
+                      strokeWidth="2.5"
+                      strokeOpacity="1"
+                    />
+                  </pattern>
+                  <clipPath id={clipId}>
+                    <rect
+                      x={PAD_L}
+                      y={PAD_T}
+                      width={W - PAD_L - PAD_R}
+                      height={PLOT_BOTTOM - PAD_T}
+                    />
+                  </clipPath>
                 </defs>
 
                 {yTicks.map((t) => (
@@ -692,70 +899,170 @@ export function PriorityDateEstimator({
                   />
                 ))}
 
-                {lineSegments.map((pts) => (
-                  <polyline
-                    key={pts.slice(0, 24)}
-                    points={pts}
-                    fill="none"
-                    stroke="var(--primary)"
-                    strokeWidth="3"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                ))}
+                {/* Everything that belongs to the plot is clipped to it, so a
+                    column half a step wide at either end cannot spill into a
+                    gutter and print over an axis label. */}
+                <g clipPath={`url(#${clipId})`}>
+                  {series.map((s, i) => {
+                    const x = px(i) - stepW / 2;
+                    if (s.state === "unavailable") {
+                      return (
+                        <rect
+                          key={`c${s.month}`}
+                          x={x}
+                          y={PAD_T}
+                          width={stepW}
+                          height={PLOT_BOTTOM - PAD_T}
+                          fill={`url(#${hatchId})`}
+                        />
+                      );
+                    }
+                    // A current month qualifies every priority date, so its
+                    // column is the full height and its cutoff rule sits at
+                    // the ceiling. That is not a flourish: for a C month the
+                    // cutoff genuinely is "everything".
+                    const top = s.state === "current" ? PAD_T : py(Date.parse(s.iso!));
+                    return (
+                      <g key={`c${s.month}`}>
+                        <rect
+                          x={x}
+                          y={top}
+                          width={stepW}
+                          height={Math.max(PLOT_BOTTOM - top, 0)}
+                          fill="var(--data-good)"
+                          fillOpacity="0.16"
+                        />
+                        {s.state === "current" ? (
+                          <rect
+                            x={x}
+                            y={PAD_T}
+                            width={stepW}
+                            height="3"
+                            fill="var(--data-good)"
+                          />
+                        ) : null}
+                      </g>
+                    );
+                  })}
 
-                {series.map((s, i) =>
-                  s.state === "date" && s.iso ? (
-                    <circle
-                      key={s.month}
-                      cx={px(i)}
-                      cy={py(Date.parse(s.iso))}
-                      r="4"
-                      fill="var(--primary)"
+                  {/* Segments, never one polyline. A month with no cutoff is a
+                      BREAK: joining across it draws a smooth rise through a
+                      period when the category was shut and nothing moved. */}
+                  {lineSegments.map((pts) => (
+                    <polyline
+                      key={pts.slice(0, 24)}
+                      points={pts}
+                      fill="none"
+                      stroke="var(--primary)"
+                      strokeWidth="3"
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
                     />
-                  ) : (
-                    // Two OPPOSITE states, drawn in opposite colours. "Current"
-                    // means open to every priority date; "unavailable" means
-                    // shut to all of them. An earlier version drew both as the
-                    // same grey bar in two opacities and captioned them both
-                    // as "no visa numbers at all", which was exactly backwards
-                    // for the lighter one.
+                  ))}
+
+                  {series.map((s, i) =>
+                    s.state === "date" && s.iso ? (
+                      <circle
+                        key={`d${s.month}`}
+                        cx={px(i)}
+                        cy={py(Date.parse(s.iso))}
+                        r="3.5"
+                        fill="var(--primary)"
+                      />
+                    ) : null,
+                  )}
+
+                  {pdPlacement === "inside" && pdTime !== null ? (
+                    <line
+                      x1={PAD_L}
+                      x2={W - PAD_R}
+                      y1={py(pdTime)}
+                      y2={py(pdTime)}
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeDasharray="7 5"
+                      strokeOpacity="0.85"
+                    />
+                  ) : null}
+
+                  {/* One hover surface per bulletin, over everything, so any
+                      month reports its own cutoff rather than only the two
+                      states that used to carry a title. */}
+                  {series.map((s, i) => (
                     <rect
-                      key={s.month}
-                      x={px(i) - 5}
+                      key={`h${s.month}`}
+                      x={px(i) - stepW / 2}
                       y={PAD_T}
-                      width="10"
-                      height={H - PAD_T - PAD_B}
-                      fill={
-                        s.state === "unavailable" ? "var(--data-bad)" : "var(--primary)"
-                      }
-                      fillOpacity={s.state === "unavailable" ? 0.3 : 0.22}
+                      width={stepW}
+                      height={PLOT_BOTTOM - PAD_T}
+                      fill="transparent"
                     >
                       <title>
                         {s.state === "unavailable"
-                          ? `${formatMonth(s.month)}: category closed, no visa numbers`
-                          : `${formatMonth(s.month)}: current, open to every priority date`}
+                          ? `${formatMonth(s.month)}: closed, no visa numbers`
+                          : s.state === "current"
+                            ? `${formatMonth(s.month)}: current, open to every priority date`
+                            : `${formatMonth(s.month)}: cutoff ${formatAsOf(s.iso!)}`}
                       </title>
                     </rect>
-                  ),
-                )}
+                  ))}
+                </g>
 
-                {pdTime !== null && yDomain !== null ? (
-                  <line
-                    x1={PAD_L}
-                    x2={W - PAD_R}
-                    y1={py(pdTime)}
-                    y2={py(pdTime)}
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeDasharray="7 5"
-                    strokeOpacity="0.85"
-                  />
+                {pdPlacement === "inside" && pdTime !== null ? (
+                  // The label shares the line's coordinate. A label parked at
+                  // a fixed offset sits under whatever date happens to be
+                  // there instead, which is how a rail on another chart on
+                  // this site ended up naming a date 204 units away from it.
+                  <text
+                    x={W - PAD_R - 6}
+                    y={Math.min(Math.max(py(pdTime) - 8, PAD_T + 13), PLOT_BOTTOM - 6)}
+                    textAnchor="end"
+                    fontSize="14"
+                    fontWeight="700"
+                    fill="currentColor"
+                    stroke="var(--card)"
+                    strokeWidth="4"
+                    paintOrder="stroke"
+                  >
+                    Your date, {formatAsOf(priorityDate)}
+                  </text>
                 ) : null}
 
+                <line
+                  x1={PAD_L}
+                  x2={W - PAD_R}
+                  y1={PLOT_BOTTOM}
+                  y2={PLOT_BOTTOM}
+                  stroke="currentColor"
+                  strokeOpacity="0.4"
+                  strokeWidth="1.5"
+                />
+                <line
+                  x1={PAD_L}
+                  x2={PAD_L}
+                  y1={PAD_T}
+                  y2={PLOT_BOTTOM}
+                  stroke="currentColor"
+                  strokeOpacity="0.4"
+                  strokeWidth="1.5"
+                />
+
+                <text
+                  x={4}
+                  y={18}
+                  textAnchor="start"
+                  fontSize="13"
+                  fontWeight="700"
+                  fill="currentColor"
+                  fillOpacity="0.75"
+                >
+                  Cutoff date
+                </text>
+
                 {yTicks.map((t) => (
-                  <text
-                    key={`y${t}`}
+                  <Fragment key={`y${t}`}>
+                    {" "}
+                    <text
                     x={PAD_L - 10}
                     y={py(t) + 4}
                     textAnchor="end"
@@ -764,55 +1071,66 @@ export function PriorityDateEstimator({
                     fillOpacity="0.7"
                   >
                     {formatMonthShort(isoOf(t))}
-                  </text>
+                    </text>
+                  </Fragment>
                 ))}
 
                 {xTickIndices.map((idx, i) => (
-                  <text
-                    key={`x${series[idx]!.month}`}
+                  <Fragment key={`x${series[idx]!.month}`}>
+                    {" "}
+                    <text
                     x={px(idx)}
-                    y={H - PAD_B + 22}
+                    y={PLOT_BOTTOM + 22}
                     textAnchor={tickAnchor(i, xTickIndices.length)}
                     fontSize="15"
                     fill="currentColor"
                     fillOpacity="0.7"
                   >
                     {formatMonthShort(series[idx]!.month)}
-                  </text>
+                    </text>
+                  </Fragment>
                 ))}
+
+                <text
+                  x={PAD_L + (W - PAD_L - PAD_R) / 2}
+                  y={H - 10}
+                  textAnchor="middle"
+                  fontSize="13"
+                  fontWeight="700"
+                  fill="currentColor"
+                  fillOpacity="0.75"
+                >
+                  Bulletin month
+                </text>
               </svg>
             </div>
-            <figcaption className="mt-4 space-y-2 text-sm leading-relaxed text-foreground/70">
-              <p>
-                {yDomain !== null ? (
-                  <>
-                    <span className="font-bold text-foreground">The line</span>{" "}
-                    is the cutoff in each bulletin along the bottom, and it
-                    breaks wherever there was no cutoff to plot. A{" "}
-                  </>
-                ) : (
-                  <>
-                    No bulletin in this range published a cutoff date for this
-                    category, so there’s no line to draw. Every month was one
-                    of the two other states instead. A{" "}
-                  </>
-                )}
-                <span className="font-bold text-primary">green bar</span> is a month
-                the category was <strong>current</strong>, open to every priority
-                date. A{" "}
-                <span className="font-bold text-[var(--data-bad-ink)]">red bar</span>{" "}
-                is a month it was <strong>closed</strong>, with no visa numbers at
-                all.
-                {pdTime !== null ? (
-                  <>
+            <figcaption className="mt-5 text-sm leading-relaxed text-foreground/70">
+              {/* The legend sits with the marks, drawn in the same fills the
+                  marks use. Naming a colour in prose under a chart that
+                  scrolls sideways puts the key out of sight of the thing it
+                  explains, and a coloured WORD is a third colour that matches
+                  neither the mark nor itself across themes. */}
+              <ul className="flex flex-wrap gap-x-6 gap-y-2">
+                {LEGEND.filter((l) => l.show(series, pdPlacement)).map((l) => (
+                  <Fragment key={l.key}>
                     {" "}
-                    <span className="font-bold text-foreground">The dashed line</span>{" "}
-                    is your priority date; the cutoff has to rise above it.
-                  </>
-                ) : null}
-              </p>{" "}
-              <p>
-                From the visa bulletins published between{" "}
+                    <li className="flex items-center gap-2">
+                    <svg
+                      width="26"
+                      height="16"
+                      viewBox="0 0 26 16"
+                      aria-hidden="true"
+                      className="shrink-0"
+                    >
+                      {l.swatch()}
+                    </svg>{" "}
+                    <span>{l.label}</span>
+                    </li>
+                  </Fragment>
+                ))}
+              </ul>{" "}
+              <p className="mt-3">
+                From the {series.length} visa bulletins published between{" "}
                 {formatMonth(series[0]!.month)} and{" "}
                 {formatMonth(series[series.length - 1]!.month)}.
               </p>

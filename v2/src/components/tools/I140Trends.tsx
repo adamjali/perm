@@ -4,6 +4,7 @@ import { Fragment, useId, useMemo, useState } from "react";
 
 import { Label } from "@/components/ui";
 import {
+  PREFERENCE_OF,
   isPreference,
   quartersFor,
   totalsFor,
@@ -47,6 +48,45 @@ export function I140Trends({ rows }: I140TrendsProps) {
   const totals = useMemo(() => totalsFor(points), [points]);
   const label =
     rows.find((r) => r.category === category)?.categoryLabel ?? category;
+
+  /**
+   * The subtypes of the selected preference, when it has any.
+   *
+   * `PREFERENCE_OF` already knows the hierarchy and the lib's own field note
+   * already says to keep E-21 and NIW apart on the page. They ARE apart: they
+   * are two entries in one dropdown. Nothing puts them next to each other, so
+   * reading the largest difference in this dataset takes two selections and a
+   * memory of the first, and a reader who does not already know to look never
+   * finds it.
+   */
+  const split = useMemo(() => {
+    if (!isPreference(category)) return null;
+    const children = [...new Set(rows.map((r) => r.category))]
+      .filter((c) => PREFERENCE_OF[c] === category)
+      .map((c) => {
+        const t = totalsFor(quartersFor(rows, c));
+        return {
+          code: c,
+          label: rows.find((r) => r.category === c)?.categoryLabel ?? c,
+          decided: t.approved + t.denied,
+          denialRate: t.denialRate,
+        };
+      })
+      .filter((c) => c.decided > 0 && c.denialRate !== null)
+      .sort((a, z) => z.denialRate! - a.denialRate!);
+    if (children.length < 2) return null;
+    const hi = children[0]!;
+    const lo = children[children.length - 1]!;
+    return {
+      children,
+      hi,
+      lo,
+      // A ratio between two measured rates over two named populations, both
+      // shown. Not a score, not a prediction, and never applied to a person.
+      multiple: lo.denialRate! > 0 ? hi.denialRate! / lo.denialRate! : null,
+      maxRate: Math.max(...children.map((c) => c.denialRate!)),
+    };
+  }, [rows, category]);
 
   const maxReceived = Math.max(1, ...points.map((p) => p.received));
   const maxDecided = Math.max(1, ...points.map((p) => p.approved + p.denied));
@@ -233,6 +273,62 @@ export function I140Trends({ rows }: I140TrendsProps) {
             </section>
 
             <DenialRateLine points={points} />
+
+            {split ? (
+              <section className="mt-12 border-2 border-border bg-tint-primary p-6 sm:p-8">
+                <h3 className="font-heading text-xl font-black">
+                  What the {category} rate is an average of
+                </h3>{" "}
+                <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/70">
+                  {pct(totals.denialRate)} is the blend. Nobody files under{" "}
+                  {category} itself: every petition goes in under one of its
+                  subtypes, and they aren&rsquo;t deciding alike.
+                  {split.multiple !== null ? (
+                    <>
+                      {" "}
+                      <b className="font-bold text-foreground">
+                        {split.hi.code} is denied {split.multiple.toFixed(1)}{" "}
+                        times as often as {split.lo.code}.
+                      </b>
+                    </>
+                  ) : null}
+                </p>{" "}
+                <ul className="mt-6 space-y-3">
+                  {split.children.map((c) => (
+                    <Fragment key={c.code}>
+                      {" "}
+                      <li className="grid grid-cols-1 gap-1 sm:grid-cols-[16rem_1fr_5rem] sm:items-center sm:gap-4 [&>*]:min-w-0">
+                        <span className="text-sm font-bold">
+                          {c.code} · {c.label}
+                        </span>{" "}
+                        <span className="relative block h-6 border-2 border-border bg-background">
+                          <span
+                            className="absolute inset-y-0 left-0 block bg-data-bad"
+                            style={{
+                              width: `${Math.max((c.denialRate! / split.maxRate) * 100, 1)}%`,
+                            }}
+                          />
+                        </span>{" "}
+                        <span className="text-sm font-bold tabular-nums sm:text-right">
+                          {pct(c.denialRate)}
+                        </span>
+                      </li>
+                    </Fragment>
+                  ))}
+                </ul>{" "}
+                <p className="mt-4 text-sm leading-relaxed text-foreground/70">
+                  Denial rates over the{" "}
+                  {int(split.children.reduce((n, c) => n + c.decided, 0))}{" "}
+                  petitions USCIS decided in these {totals.quarters}{" "}
+                  {totals.quarters === 1 ? "quarter" : "quarters"}, per subtype:{" "}
+                  {split.children
+                    .map((c) => `${c.code} ${int(c.decided)}`)
+                    .join(", ")}
+                  . These are rates over past petitions, not odds for a
+                  particular one.
+                </p>
+              </section>
+            ) : null}
           </>
         ) : (
           <p className="mt-8 text-base text-foreground/70">
