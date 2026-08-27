@@ -2,7 +2,8 @@ import { Fragment } from "react";
 
 import {
   MIN_DECIDED_FOR_BAND_RATE,
-  isMonotonicFalling,
+  coarsenBands,
+  reversals,
   worstBand,
   type WageBandRate,
   type WageBandSeries,
@@ -10,31 +11,37 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * Denial rate by wage band, one panel per fiscal year plus the pooled window.
+ * Denial rate by wage band, at the resolution the data actually supports.
  *
- * SMALL MULTIPLES BECAUSE THE SHAPE IS THE FINDING. A single pooled chart
- * answers "does a higher wage go with a lower denial rate" with a qualified
- * yes and hides the interesting part. Measured on the disclosure corpus:
+ * AN EARLIER VERSION OF THIS COMPONENT SHIPPED A FINDING THAT WAS A BINNING
+ * ARTEFACT, and the retraction is the reason it now looks like this. With five
+ * wide bands the pooled corpus reads 5.22 / 5.21 / 2.88 / 2.04 / 1.47 and each
+ * fiscal year appeared to tell a tidy story, including "FY2024 falls at every
+ * step". At eleven bands over the same cases, FY2024 goes 9.47% then 12.18%:
+ * it does not fall at every step, it never did, and the claim was a property of
+ * where the edges were drawn rather than of the filings.
  *
- *   FY2024   9.44  5.65  3.87  2.70  1.47   falls at every step
- *   FY2025   2.57  3.61  1.53  1.20  0.82   rises into $60k-$80k, then falls
- *   FY2026   4.94  6.62  3.44  2.44  2.24   rises into $60k-$80k, then falls
- *   pooled   5.22  5.21  2.88  2.04  1.47   reads as a plateau, then a fall
+ * So the coarse view is no longer a finding. It is a SUMMARY, drawn second,
+ * derived by summing the fine buckets so it cannot disagree with them, and
+ * labelled as the thing that hides the structure above it.
  *
- * The pooled row is not a summary of the three above it. FY2024's very high
- * bottom band almost exactly cancels the later years' hump, so pooling erases
- * a real change rather than averaging it. Four panels on one scale let a
- * reader see both the level and the change of shape.
+ * WHAT SURVIVES EVERY RESOLUTION, and is therefore all this figure claims:
+ *   - the rate broadly falls as the wage rises, roughly 5% to roughly 1.4%
+ *   - it does not fall smoothly, at any binning tried
+ *   - the top is not the floor: over $160k is higher than $130k-$160k in
+ *     EVERY fiscal year (1.63 vs 1.37, 0.91 vs 0.74, 2.38 vs 2.11), on tens of
+ *     thousands of cases each, which a single "over $130k" band erases
  *
- * NO CAUSE IS OFFERED. There are several plausible explanations and this data
- * cannot separate them, so the page reports the shape, the populations behind
- * it, and nothing else.
+ * NO CAUSE IS OFFERED, and the reason is the same one the site gives for
+ * refusing a blended risk score: wage, occupation and employer are entangled,
+ * the low bands are dominated by particular occupations, and nothing here can
+ * separate them. Naming a cause would be narrating a story over a correlation.
  */
 
 export interface DenialByWageBandProps {
-  /** Per-year series, oldest first. */
+  /** Per-year series at FINE resolution, oldest first. */
   byYear: WageBandSeries[];
-  /** The pooled window across every year. */
+  /** The pooled window across every year, at FINE resolution. */
   pooled: WageBandRate[];
   className?: string;
 }
@@ -119,42 +126,56 @@ export function DenialByWageBand({
   className,
 }: DenialByWageBandProps) {
   const every = [...byYear.flatMap((s) => s.bands), ...pooled];
-  const max = Math.max(
-    1,
-    ...every.map((b) => b.deniedPct ?? 0),
-  );
-  const recent = byYear.filter((s) => !isMonotonicFalling(s.bands));
-  const falling = byYear.filter((s) => isMonotonicFalling(s.bands));
+  const max = Math.max(1, ...every.map((b) => b.deniedPct ?? 0));
+  // Summed from the fine bands rather than queried, so the summary and the
+  // structure are the same numbers at two resolutions by construction.
+  const coarse = coarsenBands(pooled);
+  const coarseMax = Math.max(1, ...coarse.map((b) => b.deniedPct ?? 0));
+
+  const known = pooled.filter((b) => b.deniedPct !== null);
+  const lowest = known[0];
+  const highest = known[known.length - 1];
+  const peak = worstBand(pooled);
+  const bumps = reversals(pooled);
 
   return (
     <div className={className}>
-      {/* The reading goes ABOVE the drawing, because a reader who scrolls past
-          the bars has already formed the wrong impression from the pooled
-          panel. */}
+      {/* The reading goes ABOVE the drawing. A reader who forms an impression
+          from the bars first and meets the caveat afterwards has already been
+          misled, which is exactly how the retracted version worked. */}
       <p className="text-base leading-relaxed text-foreground/80">
-        Denial rate does not fall in a straight line as the wage rises.{" "}
-        {recent.length > 0 ? (
+        The denial rate broadly falls as the offered wage rises
+        {lowest && highest ? (
           <>
-            In{" "}
-            {recent
-              .map((s) => `FY${s.fiscalYear}`)
-              .join(recent.length === 2 ? " and " : ", ")}{" "}
-            the highest rate sits in the middle of the range rather than at the
-            bottom of it.{" "}
+            , from {(lowest.deniedPct as number).toFixed(1)}% in the{" "}
+            {lowest.band.toLowerCase()} band to{" "}
+            {(highest.deniedPct as number).toFixed(1)}% in the{" "}
+            {highest.band.toLowerCase()} band
           </>
         ) : null}
-        {falling.length > 0 ? (
+        . It does not fall smoothly.{" "}
+        {peak ? (
           <>
-            In{" "}
-            {falling.map((s) => `FY${s.fiscalYear}`).join(" and ")} it falls at
-            every step.{" "}
+            The highest rate here is {peak.band.toLowerCase()} at{" "}
+            {(peak.deniedPct as number).toFixed(2)}%, not the bottom of the
+            range.{" "}
           </>
         ) : null}
-        Pooling the years cancels most of that out, which is why the years are
-        drawn apart. What causes the shape is not established here, and this
-        data cannot separate the candidates, so no explanation is offered.
+        {bumps.length > 0 ? (
+          <>
+            {bumps.length === 1 ? "One pair of neighbouring bands goes" : `${bumps.length} pairs of neighbouring bands go`}{" "}
+            the wrong way.{" "}
+          </>
+        ) : null}
+        Where those bumps sit moves with the band edges, so the bumps are not a
+        finding and no cause is offered for them: wage, occupation and employer
+        are entangled in these filings and nothing here separates them.
       </p>
-      <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+      <p className="mt-6 font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+        Eleven bands, by fiscal year and pooled
+      </p>
+      <div className="mt-3 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {byYear.map((s) => (
           <Fragment key={s.fiscalYear}>
             <Panel
@@ -172,12 +193,34 @@ export function DenialByWageBand({
           note="The pooled window"
         />
       </div>
+
+      {/* The summary comes SECOND and says what it costs. */}
+      <div className="mt-8 border-2 border-border bg-muted p-4">
+        <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+          The same cases in five wide bands
+        </p>{" "}
+        <p className="mt-1 text-sm leading-relaxed text-foreground/70">
+          Summed from the eleven above, not measured separately. Read it as a
+          scanning aid: it averages the{" "}
+          {peak ? peak.band.toLowerCase() : "peak"} band together with its
+          quieter neighbours, which is how a plateau appears at the bottom of
+          the range where the finer view has a peak.
+        </p>
+        <div className="mt-4">
+          <Panel
+            title="Pooled summary"
+            bands={coarse}
+            max={coarseMax}
+            note="Derived from the eleven-band view"
+          />
+        </div>
+      </div>
+
       <p className="mt-4 text-sm leading-relaxed text-foreground/60">
-        Bars share one scale across all four panels, so a bar means the same
-        length everywhere. The figure on the right of each bar is the number of
-        decided cases behind it; withdrawn cases are excluded, because a
-        withdrawal is the employer stopping rather than a decision going
-        against anyone. A band with fewer than{" "}
+        Bars share one scale within each block. The figure on the right of each
+        bar is the number of decided cases behind it; withdrawn cases are
+        excluded, because a withdrawal is the employer stopping rather than a
+        decision going against anyone. A band with fewer than{" "}
         {MIN_DECIDED_FOR_BAND_RATE.toLocaleString("en-US")} decided cases is
         withheld rather than drawn.
       </p>

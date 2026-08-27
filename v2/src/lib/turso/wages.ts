@@ -28,7 +28,7 @@
 import "server-only";
 
 import { toBands, type Ladder, type WageBandRate, type WageBandSeries } from "@/lib/wageLadder";
-import { WAGE_BAND_EDGES } from "@/lib/wageLadder";
+import { WAGE_BAND_EDGES_FINE } from "@/lib/wageLadder";
 
 import { rows } from "./client";
 import { getWageCells, getWageMeta, type WageCell } from "./publicData";
@@ -178,17 +178,22 @@ export async function getLadder(
 // ---------------------------------------------------------------------------
 
 /**
- * The `CASE` that assigns a wage to a band.
+ * The `CASE` that assigns a wage to a FINE band.
  *
- * Interpolated because the edges are module constants and never caller input;
- * every real parameter below is bound.
+ * Built from the edge list rather than written out, so the SQL cannot drift
+ * from the constant the page derives its summary against. Interpolated because
+ * the edges are module constants and never caller input; every real parameter
+ * below is bound.
+ *
+ * The query is always at the fine resolution. The coarse view is summed from
+ * these rows by `coarsenBands`, never queried separately, so a summary can
+ * never disagree with the structure under it.
  */
 const BAND_CASE = `CASE
-    WHEN wage < ${WAGE_BAND_EDGES[0]} THEN 0
-    WHEN wage < ${WAGE_BAND_EDGES[1]} THEN ${WAGE_BAND_EDGES[0]}
-    WHEN wage < ${WAGE_BAND_EDGES[2]} THEN ${WAGE_BAND_EDGES[1]}
-    WHEN wage < ${WAGE_BAND_EDGES[3]} THEN ${WAGE_BAND_EDGES[2]}
-    ELSE ${WAGE_BAND_EDGES[3]} END`;
+    ${WAGE_BAND_EDGES_FINE.map(
+      (e, i) => `WHEN wage < ${e} THEN ${i === 0 ? 0 : WAGE_BAND_EDGES_FINE[i - 1]}`,
+    ).join("\n    ")}
+    ELSE ${WAGE_BAND_EDGES_FINE[WAGE_BAND_EDGES_FINE.length - 1]} END`;
 
 /**
  * WHY WITHDRAWN IS NOT IN THE DENOMINATOR.

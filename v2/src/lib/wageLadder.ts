@@ -130,7 +130,26 @@ export function moneyShort(n: number): string {
 // Wage against outcome
 // ---------------------------------------------------------------------------
 
-/** Band edges in dollars. The top band is open-ended. */
+/**
+ * Band edges in dollars. The top band is open-ended.
+ *
+ * THE FINE SET IS THE REAL ONE AND THE COARSE SET IS A SUMMARY OF IT. Five wide
+ * bands manufacture a story: pooled, they read 5.22 / 5.21 / 2.88 / 2.04 / 1.47,
+ * which looks like a plateau then a decline. The same cases at this resolution
+ * read 4.96 / 7.26 / 4.41 / 6.93 / 3.53 / 2.73 / 3.00 / 2.25 / 1.85 / 1.35 /
+ * 1.61, so "under $60k" is averaging a 7.26% band together with two around 4.7,
+ * and "$60k-$80k" is averaging 6.93 with 3.53. Move the edges, get a different
+ * headline, which means the headline was a property of the edges.
+ *
+ * The coarse edges are all members of the fine set, so `coarsenBands` can
+ * derive one from the other exactly rather than by a second query. Keep that
+ * true if either list changes.
+ */
+export const WAGE_BAND_EDGES_FINE = [
+  40_000, 50_000, 60_000, 70_000, 80_000, 90_000, 100_000, 115_000, 130_000,
+  160_000,
+] as const;
+
 export const WAGE_BAND_EDGES = [60_000, 80_000, 100_000, 130_000] as const;
 
 /**
@@ -219,8 +238,9 @@ export function bandLabel(from: number, to: number | null): string {
  */
 export function toBands(
   counts: readonly { from: number; decided: number; denied: number }[],
+  bandEdges: readonly number[] = WAGE_BAND_EDGES_FINE,
 ): WageBandRate[] {
-  const edges = [0, ...WAGE_BAND_EDGES];
+  const edges = [0, ...bandEdges];
   const byFrom = new Map(counts.map((c) => [c.from, c]));
   return edges.map((from, i) => {
     const to = i + 1 < edges.length ? (edges[i + 1] as number) : null;
@@ -247,6 +267,73 @@ export function toBands(
         decided >= MIN_DECIDED_FOR_BAND_RATE ? wilsonInterval(denied, decided) : null,
     };
   });
+}
+
+/**
+ * The coarse view, summed from the fine one.
+ *
+ * DERIVED RATHER THAN QUERIED, so the summary cannot disagree with the
+ * structure it summarises. Verified against a direct SQL grouping on all five
+ * coarse buckets: identical decided and denied counts on every one.
+ *
+ * Throws if a coarse edge is not also a fine edge, because then a coarse
+ * bucket would straddle a fine one and the sum would be silently wrong. That
+ * is the failure this function exists to make impossible.
+ */
+export function coarsenBands(
+  fine: readonly WageBandRate[],
+  coarseEdges: readonly number[] = WAGE_BAND_EDGES,
+): WageBandRate[] {
+  const fineEdges = new Set(fine.map((b) => b.from));
+  for (const e of coarseEdges) {
+    if (!fineEdges.has(e)) {
+      throw new Error(
+        `coarsenBands: ${e} is not a fine band edge, so the summary would ` +
+          "straddle a bucket and under-count it.",
+      );
+    }
+  }
+  const sorted = [...coarseEdges].sort((a, b) => a - b);
+  const bucketFor = (from: number) => {
+    let b = 0;
+    for (const e of sorted) if (from >= e) b = e;
+    return b;
+  };
+  const totals = new Map<number, { decided: number; denied: number }>();
+  for (const band of fine) {
+    const k = bucketFor(band.from);
+    const t = totals.get(k) ?? { decided: 0, denied: 0 };
+    t.decided += band.decided;
+    t.denied += band.denied;
+    totals.set(k, t);
+  }
+  return toBands(
+    [...totals.entries()].map(([from, t]) => ({ from, ...t })),
+    sorted,
+  );
+}
+
+/**
+ * Where two neighbouring bands go the wrong way, low to high.
+ *
+ * Returns the pairs rather than a boolean, because "is it monotonic" is the
+ * wrong question once the answer depends on the binning. What survives every
+ * resolution is that reversals EXIST, and naming them lets the page show its
+ * work instead of asserting a shape.
+ */
+export function reversals(
+  bands: readonly WageBandRate[],
+): { lower: WageBandRate; higher: WageBandRate }[] {
+  const known = bands
+    .filter((b) => b.deniedPct !== null)
+    .sort((a, b) => a.from - b.from);
+  const out: { lower: WageBandRate; higher: WageBandRate }[] = [];
+  for (let i = 1; i < known.length; i++) {
+    if ((known[i]!.deniedPct as number) > (known[i - 1]!.deniedPct as number)) {
+      out.push({ lower: known[i - 1]!, higher: known[i]! });
+    }
+  }
+  return out;
 }
 
 /**
