@@ -347,9 +347,15 @@ export function PermTimelineEstimator({
             Likely decision window
           </p>{" "}
           <p className="mt-2 font-heading text-3xl font-black leading-[1.05] sm:text-5xl">
-            {formatMonth(envelope.earliest.slice(0, 7))}
-            <span className="text-muted-foreground"> to </span>
-            {formatMonth(envelope.latest.slice(0, 7))}
+            {envelope.earliest.slice(0, 7) === envelope.latest.slice(0, 7) ? (
+              formatMonth(envelope.earliest.slice(0, 7))
+            ) : (
+              <>
+                {formatMonth(envelope.earliest.slice(0, 7))}
+                <span className="text-muted-foreground"> to </span>
+                {formatMonth(envelope.latest.slice(0, 7))}
+              </>
+            )}
           </p>{" "}
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
             {envelope.modelCount === 1

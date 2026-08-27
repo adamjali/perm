@@ -1,0 +1,21 @@
+// Fixture for no-text-utility-on-svg-paint.test.ts. Not a real component:
+// .txt so no build, lint or typecheck ever sees it, while the gate can still
+// read it and prove it catches the defect it was written for.
+
+// MUST FLAG: a stroked line coloured through the remapped text utility.
+<path d={line} fill="none" stroke="currentColor" strokeWidth="3" className="text-primary" />
+
+// MUST FLAG: a gradient stop, the half a class on the path can never reach.
+<stop offset="0%" stopColor="currentColor" stopOpacity="0.18" className="text-destructive" />
+
+// MUST NOT FLAG: SVG text is text, and the text-safe token is right for it.
+<text x="4" y="8" className="text-primary">Sep 2025</text>
+
+// MUST NOT FLAG: names the brand token directly, which is the fix.
+<path d={line} fill="none" stroke="var(--primary)" strokeWidth="3" />
+
+// MUST NOT FLAG: a wrapper carrying the class for <text> children paints nothing.
+<g className="text-primary"><text x="0" y="0">label</text></g>
+
+// MUST NOT FLAG: an unrelated utility on a painted element.
+<circle r="4" fill="var(--primary)" className="opacity-80" />

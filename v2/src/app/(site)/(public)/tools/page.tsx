@@ -166,7 +166,11 @@ export default async function ToolsPage() {
           Every filing in DOL&apos;s quarterly disclosure files, cut by place,
           pay, sponsor, firm and outcome.
         </p>
-        <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Flex-wrap, not a 3-column grid: there are five cards, so a fixed
+            third column leaves an empty cell in the last row that reads as a
+            card that failed to load. Wrapping lets the last row share the
+            width instead. */}
+        <div className="mt-6 flex flex-wrap gap-4 [&>*]:min-w-0 [&>*]:flex-1 [&>*]:basis-72">
           {[
             {
               href: "/perm-by-state",

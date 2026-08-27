@@ -60,7 +60,7 @@ export function ScrollToTop() {
           >
             <motion.path
               d="M23 1 L45 1 L45 45 L1 45 L1 1 Z"
-              stroke="hsl(var(--primary))"
+              stroke="var(--primary)"
               strokeWidth="2.5"
               strokeLinecap="square"
               strokeDasharray={perimeter}

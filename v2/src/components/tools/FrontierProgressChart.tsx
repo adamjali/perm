@@ -115,10 +115,26 @@ function FrontierSvg({
         role="img"
         aria-label={`DOL's analyst review queue advanced from ${formatMonth(points[0]!.medianFilingMonth)} to ${formatMonth(points[points.length - 1]!.medianFilingMonth)} between ${formatMonth(points[0]!.decisionMonth)} and ${formatMonth(points[points.length - 1]!.decisionMonth)}.`}
       >
+      {/*
+        Colours are named as `var(--primary)` rather than reached through the
+        `text-primary` utility, and that is not a style preference.
+
+        globals.css deliberately remaps `.text-primary` to `--primary-text`
+        (#1D8229), the darker green that clears 4.5:1 as TEXT. Correct for
+        text; wrong for a graphic mark, where the brand lime #2ECC40 is the
+        colour and the 3:1 non-text floor applies. Reaching for the utility
+        here shipped a forest-green line while three sibling charts, which
+        name the variable, shipped lime.
+
+        The gradient is worse. `currentColor` inside a <stop> resolves against
+        the STOP element, not the path referencing the gradient, so a class on
+        the path can never reach it: the stops computed rgb(0,0,0) and a lime
+        ramp was written while a grey one shipped.
+      */}
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="currentColor" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="currentColor" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.02" />
           </linearGradient>
         </defs>
 
@@ -136,15 +152,14 @@ function FrontierSvg({
           />
         ))}
 
-        <path d={area} fill={`url(#${gradientId})`} className="text-primary" />
+        <path d={area} fill={`url(#${gradientId})`} />
         <path
           d={line}
           fill="none"
-          stroke="currentColor"
+          stroke="var(--primary)"
           strokeWidth="3"
           strokeLinejoin="round"
           strokeLinecap="round"
-          className="text-primary"
         />
         {points.map((p, i) => (
           <circle
@@ -152,8 +167,7 @@ function FrontierSvg({
             cx={px(xs[i]!)}
             cy={py(ys[i]!)}
             r="4"
-            fill="currentColor"
-            className="text-primary"
+            fill="var(--primary)"
           />
         ))}
 

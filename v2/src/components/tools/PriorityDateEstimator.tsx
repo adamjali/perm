@@ -697,11 +697,10 @@ export function PriorityDateEstimator({
                     key={pts.slice(0, 24)}
                     points={pts}
                     fill="none"
-                    stroke="currentColor"
+                    stroke="var(--primary)"
                     strokeWidth="3"
                     strokeLinejoin="round"
                     strokeLinecap="round"
-                    className="text-primary"
                   />
                 ))}
 
@@ -712,8 +711,7 @@ export function PriorityDateEstimator({
                       cx={px(i)}
                       cy={py(Date.parse(s.iso))}
                       r="4"
-                      fill="currentColor"
-                      className="text-primary"
+                      fill="var(--primary)"
                     />
                   ) : (
                     // Two OPPOSITE states, drawn in opposite colours. "Current"
