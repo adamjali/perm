@@ -26,6 +26,7 @@ own copy of the list it is checking.
 from __future__ import annotations
 
 import datetime
+import time
 import sys
 import pathlib
 
@@ -59,10 +60,14 @@ def parse_as_of(raw: str) -> datetime.date | None:
     return None
 
 
+NOW_MS = time.time() * 1000
+
+
 def main() -> int:
     db = Turso()
     res = db.execute(
-        "SELECT dataset, as_of, max_age_days, source, cadence FROM data_freshness "
+        "SELECT dataset, as_of, max_age_days, source, cadence, fetched_at "
+        "FROM data_freshness "
         "ORDER BY dataset"
     )
     rows = [
@@ -80,7 +85,7 @@ def main() -> int:
     today = datetime.date.today()
     stale, unparseable = [], []
     print(f"{'dataset':22s} {'as_of':12s} {'age':>6s} {'budget':>7s}  verdict")
-    for dataset, as_of, max_age, source, _cadence in rows:
+    for dataset, as_of, max_age, source, _cadence, fetched_at in rows:
         d = parse_as_of(str(as_of))
         if d is None or max_age is None:
             unparseable.append((dataset, as_of))
@@ -88,8 +93,36 @@ def main() -> int:
             continue
         age = (today - d).days
         budget = int(max_age)
-        bad = age > budget
-        if bad:
+        data_stale = age > budget
+        bad = data_stale
+
+        # AN `as_of` IN THE FUTURE MAKES THE BUDGET UNTRIPPABLE. The visa
+        # bulletin is dated by the month it COVERS, and that month is always
+        # ahead of the day it is published: the September bulletin exists in
+        # August, so its age reads -34 days and no budget can ever be
+        # exceeded. That row was printing `ok` for a reason that had nothing
+        # to do with the ingest still running.
+        #
+        # `as_of` answers "is the SOURCE still publishing". `fetched_at`
+        # answers "is OUR INGEST still running", and only the second one is
+        # monotonic. Check both, and let either trip.
+        run_age = None
+        if fetched_at is not None:
+            run_age = (NOW_MS - int(fetched_at)) / 86_400_000
+            # A run budget of twice the data budget, floored at a week: an
+            # ingest is allowed to be idle between publications, but not
+            # forever. This is what would have caught a dead ingest behind a
+            # future-dated row.
+            run_budget = max(7, budget * 2)
+            if run_age > run_budget:
+                bad = True
+                stale.append((dataset + " (has not RUN)", int(run_age),
+                              run_budget, source))
+        # Report the as_of line ONLY when the as_of is genuinely over budget.
+        # Keying it off `bad` printed "visa-bulletin: -34 days old" in an
+        # alert - a false statement, and the fastest way to teach someone to
+        # skim past the true line sitting next to it.
+        if data_stale:
             stale.append((dataset, age, budget, source))
         print(f"{dataset:22s} {str(as_of):12s} {age:>5}d {budget:>6}d  "
               f"{'STALE' if bad else 'ok'}")
