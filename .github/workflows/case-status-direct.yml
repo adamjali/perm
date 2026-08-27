@@ -1,0 +1,75 @@
+name: Case status (direct from DOL)
+
+# Per-case PERM status, straight from flag.dol.gov instead of permtrack's
+# mirror of it. See scripts/ingest_case_status_direct.py for the measurement
+# that established the endpoint is open (the path is NAMED recaptcha and
+# nothing in the flow is a captcha) and that nothing is lost by switching.
+#
+# TWO PASSES, TWO CHECKPOINTS, for the same reason the mirror had two:
+#   pending  every 12h  - ~98k cases, ~1,972 requests, about 10 minutes
+#   full     weekly     - ~414k cases; a CERTIFIED case silently becomes
+#                         CERTIFIED - EXPIRED when the 180-day I-140 window
+#                         lapses, so "final" is not final and only a full
+#                         pass catches it.
+#
+# Scheduled AROUND DOL's habits, not through them. FLAG publishes evening
+# maintenance windows (observed 19:00-21:00 ET), so both passes run in the
+# early hours ET. The script also retries each batch with backoff and stops
+# cleanly after three consecutive failures rather than hammering a host that
+# is down - and it flushes as it goes, so a shutdown mid-run keeps the work.
+
+on:
+  schedule:
+    - cron: "40 7,19 * * *"    # 03:40 and 15:40 ET - clear of the evening window
+    - cron: "10 8 * * 0"       # Sunday 04:10 ET - the full pass
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Which pass to run
+        required: true
+        default: pending
+        type: choice
+        options: [pending, full]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: case-status-direct
+  cancel-in-progress: false     # never kill a half-written sweep
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sweep
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          # Sunday 08:10 UTC is the weekly full pass; everything else is
+          # the pending pass. workflow_dispatch overrides both.
+          MODE="${{ github.event.inputs.mode }}"
+          if [ -z "$MODE" ]; then
+            if [ "${{ github.event.schedule }}" = "10 8 * * 0" ]; then
+              MODE=full
+            else
+              MODE=pending
+            fi
+          fi
+          echo "mode: $MODE"
+          python3 scripts/ingest_case_status_direct.py --"$MODE"
+
+      - name: Remove credentials
+        if: always()
+        working-directory: v2
+        run: rm -f .env.local

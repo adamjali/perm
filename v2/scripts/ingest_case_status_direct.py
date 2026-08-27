@@ -76,6 +76,30 @@ def log(m: str) -> None:
     print(m, flush=True)
 
 
+def lookup_with_retry(nums: list[str], attempts: int = 4) -> list[dict]:
+    """One batch, with backoff.
+
+    A single transient failure silently skips FIFTY cases, and the caller only
+    counts consecutive failures, so one blip in the middle of a sweep would
+    leave a 50-case hole that nothing reports. Retry the batch before giving
+    up on it.
+
+    The backoff is generous on purpose: the failure this most often sees is
+    DOL's published maintenance window, and hammering through one is both
+    rude and useless.
+    """
+    delay = 4
+    for attempt in range(1, attempts + 1):
+        try:
+            return lookup(nums)
+        except Exception:  # noqa: BLE001
+            if attempt == attempts:
+                raise
+            time.sleep(delay)
+            delay *= 3
+    raise SystemExit("unreachable")
+
+
 def lookup(nums: list[str]) -> list[dict]:
     """One batch. curl, not urllib: this host answers python-urllib with 1010."""
     p = pathlib.Path("/tmp/_csd_batch.json")
@@ -130,7 +154,14 @@ def flush(db, updates: list, events: list) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--pending", action="store_true",
-                    help="Every non-final case (the useful sweep).")
+                    help="Every non-final case (the 12-hourly sweep).")
+    ap.add_argument(
+        "--full", action="store_true",
+        help="EVERY case, decided ones included. A 'final' status is not "
+             "actually final: a CERTIFIED case becomes CERTIFIED - EXPIRED "
+             "when the 180-day I-140 window lapses, and nothing tells us "
+             "except looking. Weekly.",
+    )
     ap.add_argument("--limit", type=int, help="Stop after this many cases.")
     ap.add_argument("--offset", type=int, default=0)
     ap.add_argument(
@@ -141,7 +172,12 @@ def main() -> int:
     args = ap.parse_args()
 
     db = Turso()
-    where = "WHERE is_final=0 OR is_final='0'" if args.pending or not args.limit else ""
+    if args.full:
+        where = ""
+    elif args.pending or not args.limit:
+        where = "WHERE is_final=0 OR is_final='0'"
+    else:
+        where = ""
     sql = (f"SELECT case_number, current_status, employer_name, job_title "
            f"FROM perm_case_status {where} ORDER BY case_number "
            f"LIMIT {args.limit or 10**9} OFFSET {args.offset}")
@@ -161,7 +197,7 @@ def main() -> int:
     for i in range(0, len(todo), BATCH):
         chunk = todo[i:i + BATCH]
         try:
-            got = lookup(chunk)
+            got = lookup_with_retry(chunk)
             fails = 0
         except Exception as exc:  # noqa: BLE001
             fails += 1
@@ -223,6 +259,26 @@ def main() -> int:
         log("reconcile mode: statuses corrected, NO events written")
 
     log(f"wrote     {written['u']:,} status changes, {written['e']:,} events")
+
+    # Stamp freshness so `check_ingest_health.py` can see this ingest stop.
+    # An ingest that fails silently is worse than one that fails loudly, and
+    # this one runs unattended against a host with maintenance windows.
+    #
+    # Only stamp on a run that actually got somewhere: a run that died on its
+    # first batch must NOT refresh the clock, or a permanently broken ingest
+    # keeps reporting itself healthy forever.
+    if checked:
+        n = int(db.scalar("SELECT count(*) FROM perm_case_status") or 0)
+        db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
+            dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
+            source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
+        db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
+                   ["perm-case-status", time.strftime("%Y-%m-%d"),
+                    int(time.time() * 1000), SOURCE, "Every 12 hours",
+                    f"{n:,} cases", 3])
+        log("stamped   data_freshness")
+    else:
+        log("NOT stamping freshness: this run checked nothing")
     return 0
 
 

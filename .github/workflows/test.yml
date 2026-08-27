@@ -82,6 +82,16 @@ jobs:
         working-directory: v2
         run: python3 scripts/test_visa_bulletin.py
 
+      # The ingest that talks to DOL unattended. Every case in here is a
+      # defect that happened or would have shipped silently - the batch
+      # ceiling that truncates without erroring, the retry that stops a
+      # transient blip from dropping 50 cases, and the flush that must clear
+      # what it wrote or the next one re-sends it. No network: lookup is
+      # substituted, so CI never adds load to a government host.
+      - name: Direct case-status ingest contract
+        working-directory: v2
+        run: python3 scripts/test_case_status_direct.py
+
       - name: Run full test suite
         # --retry=2 re-runs only individual tests that fail, a safety net against
         # rare CI-environment hiccups. The suite is deterministic (per-file
