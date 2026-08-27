@@ -33,15 +33,41 @@ function env(name: string): string {
 
 async function main() {
   console.log(`  fetching ${SOURCE}`);
-  const res = await fetch(SOURCE, {
-    headers: {
-      // flag.dol.gov serves scripts without ceremony; www.dol.gov does not.
-      // Verified 2026-08-25 with cloudflare.com/discord.com as controls.
-      "User-Agent": "permtracker.app ingest (+https://permtracker.app)",
-      Accept: "text/html,application/xhtml+xml",
-    },
-  });
-  if (!res.ok) throw new Error(`DOL returned ${res.status}`);
+  // RETRY, BECAUSE THIS RUNS UNATTENDED ONCE A DAY. Before this there was a
+  // single fetch with no retry, and the workflow step is `continue-on-error`,
+  // so one blip against flag.dol.gov lost the whole day AND said nothing.
+  // DOL publishes evening maintenance windows, which is exactly the shape of
+  // failure a short backoff rides out.
+  let res: Response | undefined;
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      // ASSIGN, do not redeclare. A `const res` here shadows the outer one,
+      // leaves it undefined forever, and makes the guard below throw on every
+      // run. TypeScript does not flag it - shadowing is legal - so
+      // `pnpm typecheck` passed cleanly over exactly this bug.
+      res = await fetch(SOURCE, {
+        headers: {
+          // flag.dol.gov serves scripts without ceremony; www.dol.gov does not.
+          // Verified 2026-08-25 with cloudflare.com/discord.com as controls.
+          "User-Agent": "permtracker.app ingest (+https://permtracker.app)",
+          Accept: "text/html,application/xhtml+xml",
+        },
+      });
+      if (res.ok) break;
+      // 403/429/503 are worth another go. A 404 means the page moved, and
+      // retrying only delays the real error.
+      if (![403, 429, 503].includes(res.status) || attempt === 4) {
+        throw new Error(`DOL returned ${res.status}`);
+      }
+      console.log(`  HTTP ${res.status} (attempt ${attempt}/4)`);
+    } catch (err) {
+      if (attempt === 4) throw err;
+      console.log(`  ${String(err)} (attempt ${attempt}/4)`);
+    }
+    await new Promise((r) => setTimeout(r, 5000 * 3 ** (attempt - 1)));
+  }
+  if (!res?.ok) throw new Error("DOL unreachable after 4 attempts");
+
   const html = await res.text();
   console.log(`  ${html.length.toLocaleString()} bytes`);
 
