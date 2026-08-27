@@ -1,71 +1,66 @@
-name: Probe travel.state.gov
+name: Visa bulletin access watch
 
-# A one-off measurement, not an ingest. The question it answers: is the
-# Cloudflare 403 on travel.state.gov a blanket policy, or is it this laptop's
-# IP reputation? www.dol.gov 403s the laptop and serves GitHub's runners
-# perfectly, so the two cases are genuinely different and only a request from
-# another network can tell them apart.
+# travel.state.gov refuses every automated client, so the bulletin reaches us
+# either from the Internet Archive (structurally a month or two behind, and now
+# also refused by State, so it has a ceiling) or from a page a person saves out
+# of a browser.
 #
-# Nothing here defeats a bot protection. It is a plain GET with an ordinary
-# browser header set. Either Cloudflare serves it or it does not.
+# Neither of those is wrong, but both are worse than the automated primary
+# route we would have if State ever relaxed. Nobody is going to remember to
+# re-test that by hand, and the last recorded access matrix for this host went
+# stale within two months. So it is tested here, monthly, for the cost of three
+# requests.
+#
+# This does not defeat anything. It is a plain GET with an ordinary browser
+# header set. Either Cloudflare serves it or it does not.
 
 on:
+  schedule:
+    - cron: "40 11 5 * *"   # 05th monthly - after the new bulletin is out
   workflow_dispatch:
 
 jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: GET the bulletin index and the September page
+      - name: Can a script read the bulletin yet?
+        id: probe
         run: |
           UA='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
           B=https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin
-          for u in "$B.html" \
-                   "$B/2026/visa-bulletin-for-september-2026.html" \
-                   "https://travel.state.gov/robots.txt"; do
-            code=$(curl -s -o /tmp/p.html -w '%{http_code}' --max-time 40 \
+          open=0
+          for u in "$B.html" "https://travel.state.gov/robots.txt"; do
+            code=$(curl -s -o /tmp/p.html -w '%{http_code}' --compressed --max-time 40 \
               -A "$UA" \
               -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' \
-              -H 'Accept-Language: en-US,en;q=0.9' \
-              "$u" || echo ERR)
-            sz=$(wc -c < /tmp/p.html)
-            # A cutoff cell looks like 15NOV23. Its presence is the only thing
-            # that distinguishes a served bulletin from a served block page --
-            # a 200 on a JS shell would otherwise read as success.
+              -H 'Accept-Language: en-US,en;q=0.9' "$u" || echo ERR)
+            # The status code alone is not the answer: a 200 carrying a JS
+            # shell or a challenge page would read as success. A cutoff cell
+            # looks like 15NOV23, and only a real bulletin has one.
             cut=$(grep -oE '[0-9]{2}(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[0-9]{2}' /tmp/p.html | wc -l)
-            cf=$(grep -ci cloudflare /tmp/p.html || true)
-            echo "  $code  ${sz}b  cutoffs=$cut  cloudflare_mentions=$cf  ${u##*/}"
+            echo "  $code  $(wc -c < /tmp/p.html)b  cutoffs=$cut  ${u##*/}"
+            [ "$code" = 200 ] && open=1
           done
+          echo "open=$open" >> "$GITHUB_OUTPUT"
 
-      - name: Controls - prove this runner has working egress at all
+      - name: Controls - a probe whose control fails is blind
         run: |
-          # A probe whose control also fails is BLIND, and its 403s mean
-          # nothing. The first two hosts must return 200 or the whole
-          # measurement above is void.
-          UA='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
-          FULL=(-A "$UA"
-            -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
-            -H 'Accept-Language: en-US,en;q=0.9'
-            -H 'Accept-Encoding: gzip, deflate, br'
-            -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate'
-            -H 'Sec-Fetch-Site: none' -H 'Sec-Fetch-User: ?1'
-            -H 'Upgrade-Insecure-Requests: 1'
-            -H 'Sec-Ch-Ua: "Chromium";v="131", "Not_A Brand";v="24"'
-            -H 'Sec-Ch-Ua-Mobile: ?0' -H 'Sec-Ch-Ua-Platform: "macOS"')
+          # Without these, "403 everywhere" cannot be told apart from "this
+          # runner has no egress", and the two need opposite responses. The
+          # first version of this workflow shipped without them and its
+          # result was worthless.
           fail=0
-          for u in https://www.cloudflare.com/ \
-                   https://flag.dol.gov/ \
-                   https://www.dol.gov/agencies/eta/foreign-labor/performance \
-                   https://www.uscis.gov/ ; do
-            code=$(curl -sL -o /dev/null -w '%{http_code}' --compressed --max-time 30 "${FULL[@]}" "$u")
+          for u in https://www.cloudflare.com/ https://flag.dol.gov/; do
+            code=$(curl -sL -o /dev/null -w '%{http_code}' --max-time 30 "$u")
             echo "  $code  $u"
-            case "$u" in
-              https://www.cloudflare.com/|https://flag.dol.gov/)
-                [ "$code" = 200 ] || fail=1 ;;
-            esac
+            [ "$code" = 200 ] || fail=1
           done
-          if [ "$fail" = 1 ]; then
-            echo "::error::A control host failed. The travel.state.gov result above is VOID."
-            exit 1
-          fi
-          echo "  controls OK - the 403s above are the subject's answer, not ours"
+          [ "$fail" = 0 ] || { echo "::error::Control failed - the result above is VOID."; exit 1; }
+
+      - name: Say so, loudly, if it opened up
+        if: steps.probe.outputs.open == '1'
+        run: |
+          echo "::warning::travel.state.gov answered a script. Re-test the full \
+          route and consider switching scripts/ingest_visa_bulletin.py back to \
+          a direct fetch - it would end both the archive lag and the manual step."
+          exit 1
