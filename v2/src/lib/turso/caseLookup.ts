@@ -1,0 +1,214 @@
+import "server-only";
+
+import { slugify } from "@/lib/entitySlug";
+import { rows, one } from "./client";
+
+/**
+ * Everything we can honestly say about ONE case, from a case number.
+ *
+ * The data has been sitting in `perm_case_status` (412,865 cases, 97,657 of
+ * them undecided) with no way for a person to reach their own. Aggregates
+ * answered "how big is the wall"; nobody could ask "where am I in it".
+ *
+ * WHAT THIS DELIBERATELY DOES NOT DO. It never predicts a decision date for
+ * the case, and it never scores the case's odds. Every figure below is
+ * either a fact about this case, or a measured rate over a named population
+ * with its size shown. The distinction matters most here, because a page
+ * that answers a case number feels personal and a reader will over-read a
+ * number that looks tailored.
+ */
+
+export interface CaseLookupResult {
+  caseNumber: string;
+  /** Present when the case is in the live mirror. */
+  live: {
+    status: string;
+    isFinal: boolean;
+    filingDate: string | null;
+    employerName: string | null;
+    jobTitle: string | null;
+    lastCheckedAt: string | null;
+  } | null;
+  /** Present when the case appears in DOL's decided disclosure files. */
+  decided: {
+    status: string;
+    receivedDate: string | null;
+    decisionDate: string | null;
+    days: number | null;
+    employerName: string | null;
+    jobTitle: string | null;
+    socTitle: string | null;
+    state: string | null;
+    wage: number | null;
+  } | null;
+  /** The filing-month cohort this case belongs to. */
+  cohort: {
+    month: string;
+    total: number;
+    decided: number;
+    pending: number;
+    decidedPct: number;
+    /** Pending cases in STRICTLY EARLIER filing months. */
+    aheadOfMonth: number;
+    /** Still-pending cases in this same month. */
+    sameMonthPending: number;
+  } | null;
+  /** The employer's own record in the decided corpus, when we can match it. */
+  employer: {
+    name: string;
+    slug: string;
+    total: number;
+    certified: number;
+    denied: number;
+    approvalRate: number;
+    medianDays: number | null;
+  } | null;
+  /** How this case's own status has historically resolved. */
+  statusOutlook: {
+    status: string;
+    /** Cases now in this status, across every month. */
+    nowInStatus: number;
+  } | null;
+}
+
+/** `G-100-24158-078964` and friends, normalised for a primary-key lookup. */
+export function normaliseCaseNumber(input: string): string | null {
+  const raw = input.trim().toUpperCase().replace(/\s+/g, "");
+  return /^[A-Z]-\d{3}-\d{5}-\d+$/.test(raw) ? raw : null;
+}
+
+export async function lookupCase(input: string): Promise<CaseLookupResult | null> {
+  const caseNumber = normaliseCaseNumber(input);
+  if (!caseNumber) return null;
+
+  // 1. The live mirror: the only source that knows about a PENDING case.
+  const live = await one<Record<string, unknown>>(
+    `SELECT current_status, is_final, filing_date, employer_name, job_title,
+            last_checked_at
+       FROM perm_case_status WHERE case_number = ?`,
+    [caseNumber],
+  );
+
+  // 2. DOL's own disclosure record, which exists only once the case is
+  //    decided and carries fields the mirror does not (wage, SOC, state).
+  const dec = await one<Record<string, unknown>>(
+    `SELECT status, received_date, decision_date, days, employer_name,
+            job_title, soc_title, state, wage
+       FROM perm_cases WHERE case_number = ?`,
+    [caseNumber],
+  );
+
+  if (!live && !dec) {
+    return {
+      caseNumber, live: null, decided: null, cohort: null,
+      employer: null, statusOutlook: null,
+    };
+  }
+
+  const filing =
+    (live?.filing_date as string) ?? (dec?.received_date as string) ?? null;
+  const month = filing ? filing.slice(0, 7) : null;
+
+  // 3. The cohort. Two different questions, kept separate on purpose:
+  //    how far along is MY month, and how much sits in front of it.
+  let cohort: CaseLookupResult["cohort"] = null;
+  if (month) {
+    const c = await one<{ total: number; dec: number }>(
+      `SELECT count(*) AS total, coalesce(sum(is_final), 0) AS dec
+         FROM perm_case_status WHERE substr(filing_date, 1, 7) = ?`,
+      [month],
+    );
+    const ahead = await one<{ n: number }>(
+      `SELECT count(*) AS n FROM perm_case_status
+        WHERE is_final = 0 AND substr(filing_date, 1, 7) < ?`,
+      [month],
+    );
+    const total = Number(c?.total) || 0;
+    const done = Number(c?.dec) || 0;
+    if (total > 0) {
+      cohort = {
+        month,
+        total,
+        decided: done,
+        pending: total - done,
+        decidedPct: (done / total) * 100,
+        aheadOfMonth: Number(ahead?.n) || 0,
+        sameMonthPending: total - done,
+      };
+    }
+  }
+
+  // 4. The employer's own record. The mirror and the disclosure files spell
+  //    employers differently ("Psomagen, Inc." vs "Psomagen Inc"), so the
+  //    join goes through the same slug the entity pages already use rather
+  //    than through the raw string, which matches almost nothing.
+  let employer: CaseLookupResult["employer"] = null;
+  const empName =
+    (live?.employer_name as string) ?? (dec?.employer_name as string) ?? null;
+  if (empName) {
+    const slug = slugify(empName);
+    const e = await one<Record<string, unknown>>(
+      `SELECT name, slug, total, certified, denied, median_days
+         FROM perm_entities WHERE kind = 'employer' AND slug = ?`,
+      [slug],
+    );
+    if (e) {
+      const total = Number(e.total) || 0;
+      const certified = Number(e.certified) || 0;
+      employer = {
+        name: String(e.name),
+        slug: String(e.slug),
+        total,
+        certified,
+        denied: Number(e.denied) || 0,
+        approvalRate: total > 0 ? (certified / total) * 100 : 0,
+        medianDays: e.median_days === null ? null : Number(e.median_days),
+      };
+    }
+  }
+
+  // 5. What this status IS, in scale terms. Deliberately NOT "how likely you
+  //    are to be certified from here" - the mirror is one snapshot per case,
+  //    so it cannot observe transitions and cannot support that claim.
+  let statusOutlook: CaseLookupResult["statusOutlook"] = null;
+  if (live && !Number(live.is_final)) {
+    const s = await one<{ n: number }>(
+      "SELECT count(*) AS n FROM perm_case_status WHERE current_status = ?",
+      [String(live.current_status)],
+    );
+    statusOutlook = {
+      status: String(live.current_status),
+      nowInStatus: Number(s?.n) || 0,
+    };
+  }
+
+  return {
+    caseNumber,
+    live: live
+      ? {
+          status: String(live.current_status),
+          isFinal: Number(live.is_final) === 1,
+          filingDate: (live.filing_date as string) ?? null,
+          employerName: (live.employer_name as string) ?? null,
+          jobTitle: (live.job_title as string) ?? null,
+          lastCheckedAt: (live.last_checked_at as string) ?? null,
+        }
+      : null,
+    decided: dec
+      ? {
+          status: String(dec.status),
+          receivedDate: (dec.received_date as string) ?? null,
+          decisionDate: (dec.decision_date as string) ?? null,
+          days: dec.days === null ? null : Number(dec.days),
+          employerName: (dec.employer_name as string) ?? null,
+          jobTitle: (dec.job_title as string) ?? null,
+          socTitle: (dec.soc_title as string) ?? null,
+          state: (dec.state as string) ?? null,
+          wage: dec.wage === null ? null : Number(dec.wage),
+        }
+      : null,
+    cohort,
+    employer,
+    statusOutlook,
+  };
+}
