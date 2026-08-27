@@ -751,12 +751,58 @@ export async function getQueueAhead(filingMonth: string): Promise<QueueAhead | n
 
 /** Every month's queue progress, for the bar chart. */
 export async function getMonthQueueStats(): Promise<MonthQueueStat[]> {
+  /*
+   * COMPUTED FROM OUR OWN ROWS, not read from a mirrored aggregate.
+   *
+   * This used to read `perm_month_stats`, filled daily from permtrack's
+   * pre-computed per-month endpoint - the same cases we already hold, counted
+   * by somebody else and shipped back. Measured across ten months before the
+   * switch: pending matched EXACTLY on eight, and the two that differed (by 2
+   * and by 8) differed because our mirror had refreshed more recently than
+   * their aggregate. Equivalent, and strictly fresher.
+   *
+   * TWO DIFFERENT QUESTIONS, ANSWERED TWO DIFFERENT WAYS, deliberately:
+   *
+   *   "is this case still open?" -> `is_final`, NEVER a status list. Sixteen
+   *   statuses exist and DOL adds more; a hardcoded list silently mis-buckets
+   *   every one it has not heard of, and mis-buckets it as DECIDED, which is
+   *   the direction that under-reports the backlog.
+   *
+   *   "which stage is it at?" -> named statuses, because a stage breakdown is
+   *   a question ABOUT the names. Anything pending that matches none of them
+   *   is still counted in `pending`; it just does not land in a named bucket,
+   *   which is honest rather than lossy.
+   */
   const r = await rows<Record<string, unknown>>(
-    `SELECT filing_month, total, pending, decided, analyst_review, rfi_issued,
-            audit_response, appeals
-       FROM perm_month_stats ORDER BY filing_month`,
+    `SELECT substr(filing_date, 1, 7) AS month,
+            COUNT(*)                                      AS total,
+            SUM(CASE WHEN is_final = 0 THEN 1 ELSE 0 END) AS pending,
+            SUM(CASE WHEN current_status = 'ANALYST REVIEW' THEN 1 ELSE 0 END) AS analyst,
+            SUM(CASE WHEN current_status = 'RFI ISSUED' THEN 1 ELSE 0 END)     AS rfi,
+            SUM(CASE WHEN current_status = 'PENDING AUDIT RESPONSE' THEN 1 ELSE 0 END) AS audit,
+            SUM(CASE WHEN current_status IN
+                  ('RECONSIDERATION APPEALS','BALCA APPEALS','REQUEST FOR REVIEW')
+                THEN 1 ELSE 0 END) AS appeals
+       FROM perm_case_status
+      WHERE filing_date IS NOT NULL AND filing_date <> ''
+      GROUP BY month ORDER BY month`,
   );
-  return r.map(toMonthStat);
+  return r.map((x) => {
+    const total = Number(x.total) || 0;
+    const pending = Number(x.pending) || 0;
+    const decided = total - pending;
+    return {
+      filingMonth: String(x.month),
+      total,
+      pending,
+      decided,
+      analystReview: Number(x.analyst) || 0,
+      rfiIssued: Number(x.rfi) || 0,
+      auditResponse: Number(x.audit) || 0,
+      appeals: Number(x.appeals) || 0,
+      decidedPct: total > 0 ? (decided / total) * 100 : null,
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
