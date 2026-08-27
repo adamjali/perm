@@ -111,7 +111,7 @@ export function StageLegend({
 }) {
   const int = (n: number) => n.toLocaleString("en-US");
   return (
-    <ul className={`grid gap-3 sm:grid-cols-3 ${className ?? ""}`}>
+    <ul className={`grid grid-cols-1 gap-3 sm:grid-cols-3 ${className ?? ""}`}>
       {STAGE_ORDER.map((stage) => {
         const group = stages.find((s) => s.stage === stage);
         const meta = STAGE_META[stage];

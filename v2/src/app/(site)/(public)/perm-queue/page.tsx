@@ -129,7 +129,7 @@ export default async function PermQueuePage() {
       ) : null}
 
       <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <div className="grid gap-6 sm:grid-cols-3 [&>*]:min-w-0">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 [&>*]:min-w-0">
           <Figure
             label="Still undecided"
             value={int(census.pending)}
