@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Warning } from "@phosphor-icons/react/ssr";
 
 import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { MirrorNote } from "@/components/queue/MirrorNote";
+import { SourceNote } from "@/components/queue/SourceNote";
 import { DecidedList, PendingCensus } from "@/components/queue/PendingCensus";
 import { OctoberNote, OCTOBER_2025 } from "@/components/queue/OctoberNote";
 import { StageBar, StageLegend } from "@/components/queue/StageBar";
@@ -118,7 +118,7 @@ export default async function CohortPage({
           {split.pending === 1 ? "was" : "were"} still waiting when the scan
           last checked.
         </p>{" "}
-        <MirrorNote className="mt-4 text-base leading-relaxed text-foreground/70" />
+        <SourceNote className="mt-4 text-base leading-relaxed text-foreground/70" />
       </header>
 
       {!MIRROR_COMPLETE ? (

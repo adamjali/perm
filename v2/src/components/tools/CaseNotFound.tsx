@@ -370,9 +370,7 @@ export function CaseStatusEmpty({
         </ul>
         {mirrorSize ? (
           <p className="mt-5 border-t-2 border-border pt-4 text-sm text-muted-foreground">
-            Searched against {int(mirrorSize)} per-case statuses, which reach
-            us through a third-party tracker that reads DOL&apos;s FLAG pages,
-            plus DOL&apos;s own published decisions for FY2024 to FY2026.
+            Searched against {int(mirrorSize)} per-case statuses, read from DOL&apos;s own case-status search, plus DOL&apos;s published decisions for FY2024 to FY2026.
             Nothing is stored and nothing is sent anywhere else.
           </p>
         ) : null}

@@ -88,7 +88,7 @@ const FAQS = [
   },
   {
     q: "Is this DOL's official status?",
-    a: "No, and the chain is worth stating. DOL publishes no API for per-case status, so these statuses reach us through a third-party tracker that reads DOL's FLAG pages. The date on each case is when that tracker saw it, not when we did. DOL's own system is the authority, and a case that moved since will show there first. This exists because it's the only per-case pending data available outside DOL's gate."
+    a: "Close to it, and the chain is worth stating. These statuses come from DOL's own case-status search, which we run in batches against every undecided case every 12 hours and against all of them weekly. DOL publishes no documented API for it, so this is the same endpoint their search page uses rather than a supported one. It is a sweep, not a live reading: a case decided since the last sweep will show at DOL first, and DOL is the authority for any single case."
   },
   {
     q: "Why can't you tell me when my case will be decided?",
@@ -222,9 +222,7 @@ export default async function PermCaseStatusPage({
         datasets={["perm-case-status", "perm-cases", "processing-times"]}
       />
       <p className="mt-2 text-sm text-muted-foreground">
-        DOL publishes no API for per-case status, so the statuses here reach us
-        second-hand: a third-party tracker (permtrack.app) reads DOL&apos;s FLAG
-        case-status pages, and we mirror that. The date shown on each case is
+        These statuses are read from DOL directly. The FLAG case-status search answers a batch lookup, and we run it against every undecided case every 12 hours and against all of them weekly. DOL publishes no documented API for this, so it is the same endpoint their own search page uses rather than a supported one. The date shown on each case is
         when the tracker saw it, not when we did, and it is a snapshot rather
         than a live feed. DOL is the authority for any case and this page is
         never a substitute for the determination letter.{" "}

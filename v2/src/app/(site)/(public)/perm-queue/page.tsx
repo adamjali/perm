@@ -5,7 +5,7 @@ import { Warning } from "@phosphor-icons/react/ssr";
 import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { BacklogWall } from "@/components/queue/BacklogWall";
-import { MirrorNote } from "@/components/queue/MirrorNote";
+import { SourceNote } from "@/components/queue/SourceNote";
 import { OctoberNote, OCTOBER_2025 } from "@/components/queue/OctoberNote";
 import { PendingCensus } from "@/components/queue/PendingCensus";
 import { StageLegend } from "@/components/queue/StageBar";
@@ -129,7 +129,7 @@ export default async function PermQueuePage() {
           rows at all, so a count of what is still waiting cannot be derived
           from them at any level of effort.
         </p>{" "}
-        <MirrorNote className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/70" />
+        <SourceNote className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/70" />
       </header>
 
       {/* The provisional notice sits ABOVE every figure it qualifies, for the
