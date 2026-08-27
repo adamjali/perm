@@ -7,6 +7,7 @@ import { LadderComb, TwoMarketsNote } from "../LadderComb";
 import { WageLadderRow } from "../WageLadderRow";
 import { axisTicks, niceStep, WageAxis } from "../WageAxis";
 import { SplitLadderNote } from "../SplitLadderNote";
+import { LadderTable } from "../LadderTable";
 
 /**
  * The doctrine, not the layout.
@@ -228,6 +229,48 @@ describe("WageAxis", () => {
 
   it("renders nothing when the domain admits no round tick", () => {
     const { container } = render(<WageAxis domain={[100_001, 100_002]} ticks={5} />);
+    expect(container.firstChild).toBeNull();
+  });
+});
+
+describe("LadderTable", () => {
+  it("prints every rung as an exact figure, so an offer can be checked against it", () => {
+    render(<LadderTable ladders={[software]} subjectLabel="Occupation" />);
+    for (const v of ["$89,565", "$98,904", "$116,938", "$139,027", "$159,810", "$184,662", "$199,779"]) {
+      expect(screen.getByText((t) => t.trim() === v)).toBeTruthy();
+    }
+    expect(screen.getByText((t) => t.trim() === "73,058")).toBeTruthy();
+  });
+
+  it("puts the cell separator INSIDE the cell, never after the closing tag", () => {
+    // `</td>{" "}` is a whitespace text node whose parent is <tr>. That is
+    // invalid HTML and React reports it as a hydration error; this project
+    // already shipped it in seven files while fixing glued table text. The
+    // space has to be the cell's last child.
+    const { container } = render(
+      <LadderTable ladders={[software, meat]} subjectLabel="Occupation" />,
+    );
+    for (const tr of container.querySelectorAll("tr")) {
+      for (const node of tr.childNodes) {
+        expect(node.nodeType).not.toBe(Node.TEXT_NODE);
+      }
+    }
+    // And the separator really is there, so column text is not glued.
+    const cell = container.querySelector("tbody td");
+    expect(cell?.textContent?.endsWith(" ")).toBe(true);
+  });
+
+  it("drops an incomplete ladder rather than printing a blank rung", () => {
+    const { container } = render(
+      <LadderTable ladders={[software, { ...meat, p90: null }]} subjectLabel="Occupation" />,
+    );
+    expect(container.querySelectorAll("tbody tr")).toHaveLength(1);
+  });
+
+  it("renders nothing when no ladder is complete", () => {
+    const { container } = render(
+      <LadderTable ladders={[{ ...software, p5: null }]} subjectLabel="Occupation" />,
+    );
     expect(container.firstChild).toBeNull();
   });
 });

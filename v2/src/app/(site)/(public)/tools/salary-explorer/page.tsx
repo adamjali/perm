@@ -17,7 +17,7 @@ import {
   getWageStats,
 } from "@/lib/turso/publicData";
 import { getStateLadders, MIN_CASES_FOR_LADDER } from "@/lib/turso/wages";
-import { LadderComb } from "@/components/wages/LadderComb";
+import { LadderCombViews } from "@/components/wages/LadderViews";
 import { SplitLadderNote } from "@/components/wages/SplitLadderNote";
 import { binWidth, clampBins, MIN_FOR_MEDIAN } from "@/lib/wageStats";
 
@@ -164,7 +164,11 @@ export default async function SalaryExplorerPage() {
           source="DOL PERM disclosure files, certified cases only"
           className="mt-12"
         >
-          <LadderComb ladders={stateLadders} />
+          <LadderCombViews
+            label="Wage ladder by state"
+            subjectLabel="State"
+            ladders={stateLadders}
+          />
         </FigurePlate>
       ) : null}
 

@@ -29,7 +29,8 @@ import {
   getWageBandRates,
   getWageBandRatesByYear,
 } from "@/lib/turso/wages";
-import { LadderComb, TwoMarketsNote } from "@/components/wages/LadderComb";
+import { TwoMarketsNote } from "@/components/wages/LadderComb";
+import { LadderCombViews } from "@/components/wages/LadderViews";
 import { DenialByWageBand } from "@/components/wages/DenialByWageBand";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -174,7 +175,9 @@ export default async function PermWagesPage() {
               source="DOL PERM disclosure files, certified cases only"
               className="mt-10"
             >
-              <LadderComb
+              <LadderCombViews
+                label="Wage ladder by occupation"
+                subjectLabel="Occupation"
                 ladders={ladders}
                 href={(l) => {
                   const slug = slugByCode.get(l.key);

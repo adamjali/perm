@@ -36,9 +36,10 @@ import {
 } from "@/components/tools/EntityContext";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { getLadderByYear, getOccupationStateLadders } from "@/lib/turso/wages";
-import { LadderByYear } from "@/components/wages/LadderByYear";
-import { LadderComb } from "@/components/wages/LadderComb";
+import { LadderCombViews, LadderYearViews } from "@/components/wages/LadderViews";
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { PartyMix, StateMix } from "@/components/entities/FilingMakeup";
+import { aliasTarget, entityFacets } from "@/lib/turso/entityDetail";
 import {
   comparables,
   fieldDistribution,
@@ -138,7 +139,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const row = await loadSubject(slug);
-  if (!row) return { title: "Occupation not found" };
+  if (!row) {
+    const target = await aliasTarget(KIND, slug);
+    if (!target) return { title: "Occupation not found" };
+    return { alternates: { canonical: `${BASE}/${target}` } };
+  }
   const name = displayTitle(row);
   // SOC titles are themselves the searched phrase and run to 79 characters,
   // so padding a long one just pushes it past what Google shows. `entityTitle`
@@ -189,7 +194,7 @@ export default async function OccupationPage({
   // The materialised wage cells are keyed by SOC code, so an occupation with
   // no code on file simply has no ladder rather than a wrong one.
   const wageKey = row.code ?? "";
-  const [stats, dist, near, ladderYears, stateLadders] = await Promise.all([
+  const [stats, dist, near, ladderYears, stateLadders, facets] = await Promise.all([
     getDisclosureStats(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
@@ -205,6 +210,7 @@ export default async function OccupationPage({
     }),
     wageKey ? getLadderByYear("occupation", wageKey) : Promise.resolve([]),
     wageKey ? getOccupationStateLadders(wageKey, 16) : Promise.resolve([]),
+    entityFacets(KIND, slug),
   ]);
 
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
@@ -395,7 +401,10 @@ export default async function OccupationPage({
           source="DOL PERM disclosure files, certified cases only"
           className="mt-10"
         >
-          <LadderByYear years={ladderYears} />
+          <LadderYearViews
+            label={`${displayTitle(row)} wage ladder by year`}
+            years={ladderYears}
+          />
         </FigurePlate>
       ) : null}
 
@@ -408,8 +417,48 @@ export default async function OccupationPage({
           source="DOL PERM disclosure files, certified cases only"
           className="mt-10"
         >
-          <LadderComb ladders={stateLadders} />
+          <LadderCombViews
+            label={`${displayTitle(row)} wage ladder by state`}
+            subjectLabel="State"
+            ladders={stateLadders}
+          />
         </FigurePlate>
+      ) : null}
+
+      {/* Who is on the other side of these wages. The ladders above answer
+          what the job pays; a reader weighing an offer also wants to know
+          who files it and where the work is. */}
+      {facets.employer || facets.attorney || facets.state ? (
+        <section className="mt-12">
+          <h2 className="font-heading text-2xl font-black">Who files this job</h2>{" "}
+          <p className="mt-2 max-w-2xl text-base text-foreground/70">
+            The sponsors and firms with the most PERM filings under this code,
+            and the states the work sits in.
+          </p>
+          <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
+            {facets.employer ? (
+              <PartyMix
+                rows={facets.employer}
+                total={row.total}
+                title="Sponsors filing it"
+                note="The employers with the most applications under this code."
+                hrefBase="/perm-employers"
+              />
+            ) : null}
+            {facets.attorney ? (
+              <PartyMix
+                rows={facets.attorney}
+                total={row.total}
+                title="Firms filing it"
+                note="The law firms named on the most applications under this code."
+                hrefBase="/perm-attorneys"
+              />
+            ) : null}
+            {facets.state ? (
+              <StateMix rows={facets.state} total={row.total} className="lg:col-span-2" />
+            ) : null}
+          </div>
+        </section>
       ) : null}
 
       <RankLadder
