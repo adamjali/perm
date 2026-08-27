@@ -148,6 +148,22 @@ def main() -> int:
             log(f"    page {page:,}/{pages:,}  written {written:,}  table holds {held:,}")
         time.sleep(PACE_S)
 
+    # A FINAL sweep, not just canonical writes.
+    #
+    # norm_status() fixes every row this process writes, and that is not
+    # enough on its own: this script was edited while an earlier run was in
+    # flight, and Python had already loaded the old module, so 240 rows
+    # landed mixed-case behind a fix that was correct in the file. A
+    # write-time guarantee is only a guarantee for writes that happen after
+    # it exists. Ending every run by canonicalising the whole table closes
+    # that gap permanently and is idempotent - it touches nothing when there
+    # is nothing to touch.
+    fixed = db.execute(
+        "UPDATE perm_case_status SET current_status = upper(current_status) "
+        "WHERE current_status <> upper(current_status)")
+    spellings = int(db.scalar("SELECT count(DISTINCT current_status) FROM perm_case_status") or 0)
+    log(f"  normalised trailing rows; {spellings} distinct statuses remain")
+
     held = int(db.scalar("SELECT count(*) FROM perm_case_status") or 0)
     pend = int(db.scalar("SELECT count(*) FROM perm_case_status WHERE is_final=0") or 0)
     log(f"  VERIFY table holds {held:,} cases ({pend:,} not final) against {total:,} upstream")
