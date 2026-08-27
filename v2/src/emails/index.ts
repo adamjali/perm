@@ -48,13 +48,21 @@ export type { QueueAlertConfirmProps } from "./QueueAlertConfirm";
 export { QueueReached, DOL_PROCESSING_TIMES_URL } from "./QueueReached";
 export type { QueueReachedProps } from "./QueueReached";
 
+export { CaseAlertConfirm } from "./CaseAlertConfirm";
+export type { CaseAlertConfirmProps } from "./CaseAlertConfirm";
+
+export { CaseStatusChanged, CASE_PAGE_URL } from "./CaseStatusChanged";
+export type { CaseStatusChangedProps } from "./CaseStatusChanged";
+
 // Shared components
 export {
   EmailLayout,
   EmailButton,
   EmailHeader,
   EmailLinkList,
+  FigureTable,
   QueueStamp,
+  StatusRail,
 } from "./components";
 
 export type {
@@ -63,5 +71,8 @@ export type {
   EmailHeaderProps,
   EmailLinkListProps,
   EmailLinkListItem,
+  FigureRow,
+  FigureTableProps,
   QueueStampProps,
+  StatusRailProps,
 } from "./components";

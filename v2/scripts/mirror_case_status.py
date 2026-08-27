@@ -68,6 +68,64 @@ def log(m: str) -> None:
     print(m, flush=True)
 
 
+def diff_page(db: Turso, incoming: list[tuple[str, str | None, int]],
+              stamp: int) -> list:
+    """Event rows for the cases in this page whose status actually moved.
+
+    WHY THIS EXISTS. `INSERT OR REPLACE` keys on case_number, so every refresh
+    DESTROYS the status it is overwriting. That made "did this case change?"
+    unanswerable from our own data at any level of effort, which is the same
+    hole the disclosure files have and the reason `rfi_funnel` has to be
+    mirrored from a third party rather than measured here. One SELECT per page,
+    before the write, closes it permanently.
+
+    THREE THINGS THIS IS CAREFUL ABOUT, each of which would produce a table of
+    fictional transitions:
+
+    1. **Both sides go through `norm_status` first.** The source emits the same
+       status in two casings (see that function), and the stored side is
+       already canonical. Comparing raw incoming against canonical stored would
+       mark every Title Case row as a transition, so the very first run would
+       have invented ~150,000 events.
+    2. **A case we have never seen is an ARRIVAL, not a change.** No previous
+       status exists to move from, so it gets no row.
+    3. **The comparison is explicit inequality between two known values**, not a
+       truthiness check. `if old != new` with `old` absent is true for every new
+       case; this codebase has already shipped that bug once elsewhere.
+
+    `changed_at` is when WE OBSERVED the move, not when DOL made it. Those are
+    different facts and only one of them is ours to state.
+    """
+    if not incoming:
+        return []
+    nums = [c for c, _, _ in incoming]
+    res = db.execute(
+        "SELECT case_number, current_status FROM perm_case_status "
+        f"WHERE case_number IN ({','.join('?' * len(nums))})", nums)
+    held = {
+        r[0]["value"]: (None if r[1]["type"] == "null" else r[1]["value"])
+        for r in res["response"]["result"]["rows"]
+    }
+
+    out: list = []
+    for case_number, raw_status, new_final in incoming:
+        # Rule 1, enforced HERE rather than trusted from the caller. The caller
+        # does normalise, and a future one might not; the cost of the check is
+        # one idempotent upper() per row and the cost of skipping it is a table
+        # of fictional transitions that looks exactly like a real one.
+        new_status = norm_status(raw_status)
+        old_status = norm_status(held.get(case_number))
+        # Rule 2: absent from `held` means we have never held this case.
+        # Rule 3: and a NULL status on either side is not a transition either,
+        # because "we do not know" is not a state a case moved out of.
+        if old_status is None or new_status is None:
+            continue
+        if old_status == new_status:
+            continue
+        out += [case_number, stamp, old_status, new_status, new_final, SOURCE]
+    return out
+
+
 def get(url: str) -> dict | None:
     """curl, not urllib.
 
@@ -106,6 +164,25 @@ def main() -> int:
     db.execute("""CREATE TABLE IF NOT EXISTS mirror_progress (
         job TEXT PRIMARY KEY, last_page INTEGER NOT NULL,
         total INTEGER, updated_at INTEGER NOT NULL)""")
+    # Append-only. A column on perm_case_status would hold exactly ONE step of
+    # history and lose it on the next refresh, so two moves between two reads
+    # would show as one. It is also the only table from which "what does this
+    # status resolve to" can ever be measured with our own data instead of a
+    # third party's aggregate.
+    #
+    # The PK is (case_number, changed_at) so a page fetched twice in one run
+    # writes one row rather than two, matching the upsert's own idempotence.
+    db.execute("""CREATE TABLE IF NOT EXISTS perm_case_events (
+        case_number TEXT NOT NULL,
+        changed_at INTEGER NOT NULL,
+        from_status TEXT NOT NULL,
+        to_status TEXT NOT NULL,
+        to_final INTEGER NOT NULL,
+        source TEXT NOT NULL,
+        PRIMARY KEY (case_number, changed_at))""")
+    # The email sweep asks "what moved since I last looked", so time leads.
+    db.execute("""CREATE INDEX IF NOT EXISTS case_events_recent
+        ON perm_case_events (changed_at)""")
 
     start = int(db.scalar("SELECT last_page FROM mirror_progress WHERE job='case_status'") or 0) + 1
     first = get(f"{BASE}?limit=1")
@@ -116,7 +193,7 @@ def main() -> int:
     log(f"  {total:,} rows across {pages:,} pages; resuming at page {start}")
 
     stamp = int(time.time() * 1000)
-    written = failed = 0
+    written = failed = moved = 0
     for page in range(start, pages + 1):
         d = get(f"{BASE}?limit={PER_PAGE}&page={page}")
         rows = (d or {}).get("data") or []
@@ -129,23 +206,37 @@ def main() -> int:
         failed = 0
         vals = ",".join(["(?,?,?,?,?,?,?,?,?,?,?,?)"] * len(rows))
         args: list = []
+        incoming: list[tuple[str, str | None, int]] = []
         for r in rows:
+            case_number = r.get("case_number")
+            status = norm_status(r.get("current_status"))
+            is_final = 1 if r.get("is_final") else 0
+            if case_number:
+                incoming.append((str(case_number), status, is_final))
             args += [
-                r.get("case_number"), (r.get("filing_date") or "")[:10] or None,
-                norm_status(r.get("current_status")),
-                1 if r.get("is_final") else 0, 1 if r.get("is_disclosed") else 0,
+                case_number, (r.get("filing_date") or "")[:10] or None,
+                status,
+                is_final, 1 if r.get("is_disclosed") else 0,
                 r.get("employer_name"), r.get("job_title"),
                 (r.get("submitted_date") or "")[:19] or None,
                 (r.get("last_checked_at") or "")[:19] or None,
                 1 if r.get("verified") else 0, SOURCE, stamp,
             ]
+        # BEFORE the upsert, which is the only moment the old status still
+        # exists. After it, the previous value is gone from every table.
+        events = diff_page(db, incoming, stamp)
+        if events:
+            ev = ",".join(["(?,?,?,?,?,?)"] * (len(events) // 6))
+            db.execute(f"INSERT OR REPLACE INTO perm_case_events VALUES {ev}", events)
+            moved += len(events) // 6
         db.execute(f"INSERT OR REPLACE INTO perm_case_status VALUES {vals}", args)
         written += len(rows)
         db.execute("INSERT OR REPLACE INTO mirror_progress VALUES (?,?,?,?)",
                    ["case_status", page, total, int(time.time() * 1000)])
         if page % 50 == 0 or page == pages:
             held = int(db.scalar("SELECT count(*) FROM perm_case_status") or 0)
-            log(f"    page {page:,}/{pages:,}  written {written:,}  table holds {held:,}")
+            log(f"    page {page:,}/{pages:,}  written {written:,}  "
+                f"moved {moved:,}  table holds {held:,}")
         time.sleep(PACE_S)
 
     # A FINAL sweep, not just canonical writes.
@@ -167,6 +258,15 @@ def main() -> int:
     held = int(db.scalar("SELECT count(*) FROM perm_case_status") or 0)
     pend = int(db.scalar("SELECT count(*) FROM perm_case_status WHERE is_final=0") or 0)
     log(f"  VERIFY table holds {held:,} cases ({pend:,} not final) against {total:,} upstream")
+
+    # Print the counts BEFORE any verdict, and say plainly when a run observed
+    # nothing. A first run legitimately produces zero events (nothing was held
+    # to compare against) and so does a broken diff; the two must not read the
+    # same. `evs` is the lifetime total, `moved` is this run's.
+    evs = int(db.scalar("SELECT count(*) FROM perm_case_events") or 0)
+    log(f"  VERIFY {moved:,} transitions observed this run; {evs:,} held in total"
+        + ("  (none this run: either nothing moved upstream, or this was a"
+           " first pass with nothing to compare against)" if moved == 0 else ""))
     return 0
 
 

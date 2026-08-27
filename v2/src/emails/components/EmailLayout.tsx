@@ -162,6 +162,27 @@ const DARK_MODE_STYLES = [
   // The queue emails' filing-month box sits on .em-card (#3f3f46 in dark),
   // where the generic .em-text-secondary #a1a1aa measures 4.07:1.
   "  .qa-yours-label { color: #B4B4BC !important; }",
+  /*
+   * Case-status alert. Same problem the stamp's offset had and the same
+   * answer: ink #000001 against the dark card #27272a is 1.41:1, so the rail
+   * would simply vanish and take the whole device with it. #78787E is 3.39:1,
+   * clear of the 3:1 non-text floor.
+   */
+  "  .cs-rail { border-left-color: #78787E !important; }",
+  /*
+   * BOTH blocks keep their light fills and their ink labels, and neither may
+   * invert. The lime one is the 9.82:1 pairing that becomes 2.14:1 inverted.
+   * The closed one is paper, and inverting it to a dark fill with a light
+   * label would erase the only thing separating the two tones: the presence
+   * or absence of the brand colour. Only the offset moves, for the contrast
+   * reason above.
+   */
+  "  .cs-block-live { background-color: #2ECC40 !important; border-color: #000001 !important; box-shadow: 6px 6px 0 #78787E !important; }",
+  "  .cs-block-closed { background-color: #FAFAFA !important; border-color: #000001 !important; box-shadow: 6px 6px 0 #78787E !important; }",
+  "  .cs-block-value { color: #000001 !important; }",
+  // The figure table sits directly on the card. #2A2A2A would be 1.36:1 there.
+  "  .cs-fig-label { color: #D4D4D8 !important; }",
+  "  .cs-fig-value { color: #FAFAFA !important; }",
   "}",
 ].join("\n");
 
@@ -196,6 +217,8 @@ const RESPONSIVE_STYLES = [
   "  .em-content { padding: 20px !important; }",
   "  .qa-stamp { padding: 16px 14px !important; }",
   "  .qa-stamp-value { font-size: 26px !important; line-height: 30px !important; }",
+  "  .cs-block-live, .cs-block-closed { padding: 14px 16px !important; }",
+  "  .cs-block-value { font-size: 21px !important; line-height: 26px !important; }",
   "}",
   /*
    * Releasing the one-line pin is a SEPARATE, wider breakpoint from the size
@@ -205,6 +228,10 @@ const RESPONSIVE_STYLES = [
    */
   "@media only screen and (max-width: 600px) {",
   "  .qa-stamp-value { white-space: normal !important; }",
+  // Same pin, same release, same reason. The status block is pinned so a
+  // sibling spacer cannot size it to its longest word; below 600px the widest
+  // status genuinely does not fit and must break rather than overflow.
+  "  .cs-block-value { white-space: normal !important; }",
   "}",
 ].join("\n");
 

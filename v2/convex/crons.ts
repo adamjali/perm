@@ -241,4 +241,34 @@ crons.weekly(
   internal.dolProcessingTimes.refresh
 );
 
+// ============================================================================
+// PER-CASE STATUS ALERTS
+// ============================================================================
+
+/**
+ * Look at every live case subscription and mail the ones whose case has moved.
+ *
+ * Twice a day rather than hourly. The upstream that feeds it
+ * (`scripts/mirror_case_status.py`) refreshes at most daily, so a more frequent
+ * sweep would re-read the same rows for no new information, and the sweep's own
+ * cost is one bounded SQL query against the mirror plus at most
+ * ALERT_BATCH_LIMIT sends. Twice a day keeps the worst-case lag between the
+ * mirror recording a change and the subscriber hearing about it under twelve
+ * hours, which is well inside the resolution of the underlying data: DOL
+ * publishes no timestamp for a status change at all.
+ *
+ * 11:00 and 23:00 UTC (7am and 7pm ET), deliberately clear of the 14:00, 15:00
+ * and 16:00 UTC bulk email jobs above so the two never contend for the shared
+ * Resend quota in the same minute.
+ *
+ * The sweep reschedules ITSELF when work remains, so these two ticks are the
+ * floor rather than the ceiling.
+ */
+crons.cron(
+  "case-status-alerts",
+  "0 11,23 * * *",
+  internal.caseAlerts.sweepCaseChanges,
+  {}
+);
+
 export default crons;

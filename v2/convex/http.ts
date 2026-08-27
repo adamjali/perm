@@ -441,6 +441,147 @@ http.route({
   }),
 });
 
+// ============================================================================
+// Per-case status alerts
+// ============================================================================
+//
+// Same posture as the queue-alert routes above and for the same reasons: the
+// internal mutation owns the budgets, the route owns the shape, GET never
+// mutates, and 429 is distinguished from 400 so a typo does not read as
+// rate-limiting in monitoring.
+//
+// Every string interpolated into `unsubscribePage` below is either a literal or
+// a case number that has already been through `normaliseCaseNumber`, which
+// admits only `^[A-Z]-\d{3}-\d{5}-\d+$`. That helper does no escaping, so
+// nothing that has not passed that filter may reach it.
+
+http.route({
+  path: "/case-alert/subscribe",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/case-alert/subscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+
+    // Treat the body as unknown and narrow every field before use.
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    if (typeof body !== "object" || body === null) {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+
+    const { email, caseNumber, source } = body as Record<string, unknown>;
+    if (typeof email !== "string" || typeof caseNumber !== "string") {
+      return json({ ok: false, message: "Email and case number are both required." }, 400);
+    }
+    // A cheap length cap BEFORE anything that scans the string. `v.string()`
+    // accepts about a megabyte and the address regex inside `subscribe`
+    // backtracks quadratically on a long failing input; the cap there is the
+    // real guard, and this one keeps a megabyte from crossing the boundary at
+    // all. The slice, not a rejection, so a stray paste still gets a useful
+    // "that does not look like a case number" rather than a shape error.
+    const result = await ctx.runMutation(internal.caseAlerts.subscribe, {
+      email: email.slice(0, 320),
+      caseNumber: caseNumber.slice(0, 64),
+      source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
+    });
+
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+// GET renders a button and changes nothing. Outlook Safe Links, Mimecast,
+// Proofpoint and Barracuda all fetch URLs in inbound mail, so a GET that
+// mutated would let a recipient's own mail gateway complete the double opt-in
+// on their behalf, which is exactly what double opt-in exists to prevent.
+http.route({
+  path: "/case-alert/confirm",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
+    return unsubscribePage(
+      "Confirm your case alerts",
+      "We'll email you when the Department of Labor's status for your case changes, and stop once it's decided.",
+      {
+        action: `/case-alert/confirm?token=${encodeURIComponent(token)}`,
+        label: "Confirm",
+      },
+    );
+  }),
+});
+
+http.route({
+  path: "/case-alert/confirm",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
+
+    const result = await ctx.runMutation(internal.caseAlerts.confirmByToken, { token });
+    if (!result) {
+      // Also the answer for a valid token whose owner has since unsubscribed,
+      // and for a replayed link with nothing staged behind it. Deliberately not
+      // distinguished: re-subscribing is a fresh signup, not a link click.
+      return new Response("This confirmation link is no longer valid.", { status: 400 });
+    }
+
+    const list = result.caseNumbers.join(", ");
+    return unsubscribePage(
+      "You're on the list",
+      `We'll email you when the Department of Labor's status changes for ${list}, and again each time it moves until the case is decided. Current figures are always on permtracker.app/perm-case-status.`,
+    );
+  }),
+});
+
+// POST is what Gmail and Apple Mail hit for one-click List-Unsubscribe.
+http.route({
+  path: "/case-alert/unsubscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
+    const ok = await ctx.runMutation(internal.caseAlerts.unsubscribeByToken, { token });
+    if (!ok) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
+    return unsubscribePage(
+      "You're unsubscribed",
+      "You won't receive case-status alerts from us. That covers every case this address was watching.",
+    );
+  }),
+});
+
+// GET shows a confirmation button rather than acting, so an inbox prefetch
+// (Apple Mail Privacy Protection and friends) cannot silently unsubscribe.
+http.route({
+  path: "/case-alert/unsubscribe",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
+    return unsubscribePage(
+      "Stop your case alerts?",
+      "You'll stop receiving status alerts for every PERM case this address is watching.",
+      { action: `/case-alert/unsubscribe?token=${encodeURIComponent(token)}` },
+    );
+  }),
+});
+
 /**
  * The contact form. Same posture as the queue-alert routes: the internal
  * mutation owns the budgets, the route owns the shape - cheap guards first,

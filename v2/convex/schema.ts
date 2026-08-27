@@ -1385,6 +1385,104 @@ export default defineSchema({
     .index("by_created", ["createdAt"]),
 
   /**
+   * Someone waiting on ONE specific PERM case, by case number.
+   *
+   * Sibling of `dolQueueAlerts` and deliberately a separate table rather than a
+   * variant of it. That one answers a COHORT question ("has DOL reached my
+   * filing month") and fires exactly once, ever. This one answers a PER-CASE
+   * question ("did anything happen to mine") and fires every time the status
+   * moves, until the case reaches a final status and the subscription retires
+   * itself. Same shape of consent, completely different lifecycle, and merging
+   * them would mean one row carrying two `notifiedAt` semantics.
+   *
+   * One row per (email, caseNumber): a person routinely waits on their own case
+   * and a spouse's.
+   */
+  caseStatusAlerts: defineTable({
+    email: v.string(),
+    /** Normalised DOL case number, e.g. "P-100-26125-868956". */
+    caseNumber: v.string(),
+
+    /**
+     * The status as of the last time we told this subscriber, or as of the
+     * moment they confirmed.
+     *
+     * THIS is the change detector, and it lives here rather than being read
+     * back out of the mirror because the question is not "has the case moved"
+     * but "has it moved since THIS subscriber last heard from us". A subscriber
+     * who signs up the day after a transition must not be mailed about it.
+     *
+     * Compared with an explicit inequality between two defined values. A
+     * truthiness check here would fire on every sweep for every row.
+     */
+    lastSeenStatus: v.optional(v.string()),
+
+    /** Null until the address is confirmed; nothing is ever sent before then. */
+    confirmedAt: v.optional(v.number()),
+    /**
+     * A case number requested by an unauthenticated POST, held until the inbox
+     * owner clicks a fresh confirm link. Same reasoning as
+     * `dolQueueAlerts.pendingFilingMonth`: writing straight to `caseNumber`
+     * would let anyone who knows an address repoint that person's alerts.
+     */
+    pendingCaseNumber: v.optional(v.string()),
+    /** Throttles repeat confirmations to THIS address. Records intent, not delivery. */
+    lastConfirmationSentAt: v.optional(v.number()),
+
+    /**
+     * Set when the case reached a final status and we sent the last alert.
+     *
+     * Retires the row from the sweep permanently. A certified or denied case
+     * cannot move again, so continuing to read it every hour would be a growing
+     * cost that buys nothing, and this is the field that stops it.
+     */
+    caseClosedAt: v.optional(v.number()),
+    /**
+     * When the sweep last LOOKED at this row, whether or not anything moved.
+     *
+     * This is the sweep's cursor and it has to be distinct from
+     * `lastAlertSentAt`. Using the send stamp as the cursor starves the tail of
+     * the table: a subscription whose case has not moved never gets a send, so
+     * its stamp stays undefined, so it sorts first on every single run and the
+     * rows behind it are never reached. Bumping this on every read makes the
+     * sweep round-robin over the whole table by construction.
+     */
+    lastCheckedAt: v.optional(v.number()),
+    /** When we last mailed this subscriber. Drives the per-subscription cooldown only. */
+    lastAlertSentAt: v.optional(v.number()),
+    /** How many alerts this subscription has produced. Honest volume reporting. */
+    alertCount: v.optional(v.number()),
+
+    unsubscribedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    /** Which page the signup came from. */
+    source: v.optional(v.string()),
+  })
+    /** Token lookup and one-click unsubscribe, which act on every row for an address. */
+    .index("by_email", ["email"])
+    /** The upsert path on subscribe, and the only unique key. */
+    .index("by_email_case", ["email", "caseNumber"])
+    /**
+     * Drives the sweep. Field order is load-bearing, exactly as it is on
+     * `dolQueueAlerts.by_alert_sweep`.
+     *
+     * The two equality fields mean "is this subscription still live", so the
+     * scan starts inside the rows that can still produce an email and never
+     * walks a retired or opted-out one. `lastCheckedAt` holds the final
+     * position because Convex allows a range comparison only there, and
+     * because ascending order on it IS the round-robin: the least recently
+     * checked rows come first, and rows never checked sort before every number
+     * so a new subscription is looked at on the next sweep.
+     *
+     * `confirmedAt` is deliberately NOT indexed. It would have to take the
+     * range position, and a "not undefined" test is a worse use of that slot
+     * than the cursor. It is filtered in JS after the index has already cut
+     * the read down to live rows.
+     */
+    .index("by_alert_sweep", ["unsubscribedAt", "caseClosedAt", "lastCheckedAt"])
+    .index("by_created", ["createdAt"]),
+
+  /**
    * One row per PERM entity: employer, law firm, or occupation.
    *
    * These used to live as arrays inside the permDisclosureStats document,

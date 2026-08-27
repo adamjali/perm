@@ -77,7 +77,11 @@ function safeEqual(a: string, b: string): boolean {
  * `undefined` means the legacy unscoped form, which exists only for weekly
  * digest links already in the wild. Do not use it for new callers.
  */
-export type TokenPurpose = "queue-confirm" | "queue-unsubscribe";
+export type TokenPurpose =
+  | "queue-confirm"
+  | "queue-unsubscribe"
+  | "case-confirm"
+  | "case-unsubscribe";
 
 /** The exact string that gets signed. Kept in one place so both sides agree. */
 function signedMessage(normalizedEmail: string, purpose?: TokenPurpose): string {
