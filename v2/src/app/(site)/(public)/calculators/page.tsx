@@ -170,7 +170,7 @@ export default function CalculatorsPage() {
                 { s: "Determination in hand, planning recruitment", q: "By when must we file?", href: "/tools/perm-deadline-calculator", tool: "Deadline calculator" },
                 { s: "ETA-9089 filed, waiting", q: "When will DOL decide?", href: "/tools/perm-timeline-calculator", tool: "Decision estimator" },
                 { s: "PERM certified, I-140 next or pending", q: "How deep is USCIS's queue?", href: "/tools/i140-calculator", tool: "I-140 queue" },
-                { s: "I-140 approved, waiting to adjust status", q: "How many are ahead of me?", href: "/tools/i485-queue-position", tool: "I-485 queue position" },
+                { s: "I-140 approved, waiting to adjust status", q: "How deep is the green card queue at my priority date?", href: "/tools/i485-queue-position", tool: "I-485 queue position" },
                 { s: "I-140 approved, watching the bulletin", q: "Is my date current, and which way is it moving?", href: "/tools/priority-date-calculator", tool: "Priority dates" },
                 { s: "Just starting, or explaining it to someone", q: "How long is the whole thing?", href: "/tools/green-card-timeline", tool: "Green card timeline" },
               ].map((r) => (

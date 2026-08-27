@@ -72,6 +72,16 @@ export interface I485Position {
   categorySuppressedCells: number;
   categoryLow: number;
   categoryHigh: number;
+  /**
+   * Applications the release carries with a LATER priority date.
+   *
+   * Arithmetic on two published figures, category minus ahead, so it needs no
+   * estimate. It is the only reassuring fact this page holds, and the page
+   * counted it and threw it away for a while. Bounded on purpose: it means
+   * "filed later, inside what USCIS publishes", never "everyone behind you".
+   */
+  behindLow: number;
+  behindHigh: number;
 }
 
 /** The key `I485CellTable` is indexed by. */
@@ -128,6 +138,9 @@ export function computeI485Position(
     suppressedCells += suppressed;
   }
 
+  const behindCounted = categoryCounted - counted;
+  const behindSuppressed = categorySuppressedCells - suppressedCells;
+
   return {
     counted,
     suppressedCells,
@@ -142,6 +155,8 @@ export function computeI485Position(
     categorySuppressedCells,
     categoryLow: categoryCounted + categorySuppressedCells,
     categoryHigh: categoryCounted + categorySuppressedCells * 10,
+    behindLow: behindCounted + behindSuppressed,
+    behindHigh: behindCounted + behindSuppressed * 10,
   };
 }
 

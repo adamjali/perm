@@ -56,6 +56,20 @@ export function formatAsOf(value: string | null | undefined): string | null {
 }
 
 /**
+ * "2026-08-05" to "Aug 5, 2026". For tight columns, as formatMonthShort is.
+ *
+ * The long form overflows a narrow gutter: the I-485 release rows give the
+ * date an 88px track below 640px, where "August 5, 2026" truncates and
+ * "Aug 5, 2026" fits.
+ */
+export function formatAsOfShort(value: string | null | undefined): string | null {
+  const full = formatAsOf(value);
+  if (!full) return null;
+  const [name, ...rest] = full.split(" ");
+  return name ? `${name.slice(0, 3)} ${rest.join(" ")}` : full;
+}
+
+/**
  * Whole months from `from` to `to`, both "YYYY-MM".
  *
  * This is the forward-velocity measurement: how far the queue moved between

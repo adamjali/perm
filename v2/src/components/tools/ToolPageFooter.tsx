@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "@phosphor-icons/react/ssr";
 
@@ -64,7 +65,13 @@ export function ToolPageFooter({ currentHref, reading }: ToolPageFooterProps) {
         <h2 className="font-heading text-2xl font-black">Other calculators</h2>
         <ul className="mt-6 flex flex-wrap gap-3">
           {others.map((t) => (
-            <li key={t.href}>
+            // Array items render with NOTHING between them, so the six labels
+            // reach every extractor as one word. Keyed Fragment with a leading
+            // space is the house fix; a whitespace-only text node is not laid
+            // out as a flex item, so it costs nothing visually.
+            <Fragment key={t.href}>
+              {" "}
+              <li>
               <Link
                 href={t.href}
                 className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-card px-4 py-2 font-bold shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:translate-y-0 active:shadow-hard-sm"
@@ -72,7 +79,8 @@ export function ToolPageFooter({ currentHref, reading }: ToolPageFooterProps) {
                 {t.label}
                 <ArrowRight className="h-4 w-4 text-primary" aria-hidden="true" />
               </Link>
-            </li>
+              </li>
+            </Fragment>
           ))}
         </ul>
       </section>

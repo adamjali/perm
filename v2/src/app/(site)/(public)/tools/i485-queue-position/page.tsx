@@ -14,6 +14,7 @@ import {
   getI485Cells,
   getI485Options,
   getI485Trend,
+  getVisaBulletinSeries,
   type DatasetFreshness,
 } from "@/lib/turso/publicData";
 import type { I485CellTable } from "@/lib/i485/position";
@@ -62,8 +63,12 @@ const FAQS = [
     a: "USCIS replaces any cell holding between 1 and 10 applications with the letter D, to avoid identifying the people in it. So the exact total genuinely isn’t in the release. The low figure counts every withheld cell as 1 and the high figure counts every one as 10, and the truth is somewhere between them. Other tools resolve each D to 5 and publish a single number, which isn’t a figure USCIS released.",
   },
   {
+    q: "Does this count people who haven't filed yet?",
+    a: "No, and that's the one gap worth knowing about. An I-485 can only be filed once the Dates for Filing chart reaches your priority date, so this inventory is the filed cohort. Anyone with an earlier priority date than yours is past that same gate by definition, so they're counted. Anyone who's eligible and hasn't filed isn't, and USCIS publishes nothing that would size that group.",
+  },
+  {
     q: "Why does it say every published application is ahead of me?",
-    a: "USCIS publishes each category only as far as the priority dates it currently holds. India’s EB-2 and EB-3 backlogs, for instance, are published only through early 2015. If your priority date is later than the last one in the release, there’s no position to report inside that queue.",
+    a: "Usually because filing hasn’t opened for your priority date yet. USCIS publishes each category only as far as the priority dates it holds applications for, and it holds none past the Dates for Filing cutoff, because nobody past that cutoff has been allowed to file. India’s EB-2 chart stands at January 15, 2015 and its published inventory stops at 2015, which is the same boundary seen from two sides.",
   },
   {
     q: "Does this tell me when I’ll get my green card?",
@@ -80,7 +85,7 @@ const FAQS = [
 ];
 
 export default async function I485QueuePositionPage() {
-  const [cells, options, trend, freshness] = await Promise.all([
+  const [cells, options, trend, freshness, bulletins] = await Promise.all([
     // Every read is defaulted rather than allowed to throw. A frontend
     // deployed ahead of its data hits exactly this window, and the component
     // renders its own empty state from an empty table.
@@ -88,9 +93,21 @@ export default async function I485QueuePositionPage() {
     getI485Options().catch((): { country: string; categories: string[] }[] => []),
     getI485Trend().catch((): { asOf: string; total: number }[] => []),
     getFreshness().catch((): Record<string, DatasetFreshness> => ({})),
+    getVisaBulletinSeries().catch(() => []),
   ]);
 
   const asOf = freshness["i485-inventory"]?.asOf ?? null;
+
+  // The newest Dates for Filing chart, which explains the state most visitors
+  // land in. Someone holding a 2019 priority date is beyond what USCIS
+  // publishes BECAUSE filing has not opened for them yet, and the cutoff that
+  // decides it is a figure this project already holds.
+  //
+  // The two boundaries coincide and that is worth stating: India EB-2's chart
+  // reads 15JAN15 and USCIS publishes its inventory through 2015. So anyone
+  // AHEAD of a given date is past the same gate by definition and IS counted;
+  // the undercount is only people who could file and have not.
+  const newestBulletin = bulletins[bulletins.length - 1] ?? null;
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -138,7 +155,7 @@ export default async function I485QueuePositionPage() {
           How many employment-based adjustment applications USCIS had pending
           ahead of a priority date, from the inventory USCIS publishes each
           month.
-        </p>
+        </p>{" "}
       </header>
 
       <section className="mt-10">
@@ -147,11 +164,13 @@ export default async function I485QueuePositionPage() {
           options={options}
           asOf={asOf}
           trend={trend}
+          filingChart={newestBulletin?.datesForFiling ?? null}
+          filingChartMonth={newestBulletin?.bulletinMonth ?? null}
         />
-      </section>
+      </section>{" "}
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-black">Common questions</h2>{" "}
         <FaqList items={FAQS} />
       </section>
 
