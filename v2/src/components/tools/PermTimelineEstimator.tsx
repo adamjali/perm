@@ -16,7 +16,7 @@
  * their case runs past it.
  */
 
-import { useId, useMemo, useState } from "react";
+import { Fragment, useId, useMemo, useState } from "react";
 import { CalendarDot as CalendarClock, Info, Warning } from "@phosphor-icons/react";
 
 import { estimateQueueDecision, type CohortStat, type DolFrontier } from "@/lib/perm";
@@ -95,6 +95,52 @@ export interface PermTimelineEstimatorProps {
   /** Renders the compact variant used inside other pages. */
   compact?: boolean;
   className?: string;
+}
+
+/**
+ * Where one month's pending cases sit across DOL's separate queues.
+ *
+ * Analyst review is the ordinary queue. RFI and audit are their own, and a
+ * case in either is out of filing order entirely, which is the honest answer
+ * to "DOL passed my month and I still have nothing". The rival's table stops
+ * at a pending count; this split is data we hold and they do not show.
+ */
+function StagesLine({
+  subject,
+  month,
+}: {
+  subject: MonthQueue;
+  month: string;
+}) {
+  const parts: { label: string; n: number }[] = [
+    { label: "in analyst review", n: subject.analystReview ?? 0 },
+    { label: "answering a request for information", n: subject.rfiIssued ?? 0 },
+    { label: "in audit", n: subject.auditResponse ?? 0 },
+    { label: "under appeal", n: subject.appeals ?? 0 },
+  ].filter((p) => p.n > 0);
+  if (parts.length === 0) return null;
+
+  const accounted = parts.reduce((n, p) => n + p.n, 0);
+  const rest = subject.pending - accounted;
+  const fmt = (n: number) => n.toLocaleString("en-US");
+
+  return (
+    <p className="mt-4 text-base leading-relaxed text-foreground/70">
+      <b className="font-bold text-foreground">
+        {fmt(subject.pending)} still undecided in {formatMonth(month)}
+      </b>
+      :{" "}
+      {parts.map((p, i) => (
+        <Fragment key={p.label}>
+          {i > 0 ? (i === parts.length - 1 && rest <= 0 ? " and " : ", ") : ""}
+          {fmt(p.n)} {p.label}
+        </Fragment>
+      ))}
+      {rest > 0 ? `, and ${fmt(rest)} in none of those three` : ""}. A case in
+      a request for information or an audit is out of filing order, and DOL
+      publishes those queues separately.
+    </p>
+  );
 }
 
 /** Filing months a live PERM case could plausibly carry, newest first. */
@@ -345,19 +391,6 @@ export function PermTimelineEstimator({
               conditional, and a 3-across grid holding 3 of 4 cards leaves an
               empty cell that reads as a card that failed to load. */}
           <div className="mt-6 flex flex-wrap gap-3">
-            {months.length > 0 ? (
-              <div className="min-w-0 flex-1 basis-60 border-2 border-border bg-background p-4">
-                <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                  Cases ahead of you
-                </p>{" "}
-                <p className="mt-1 font-heading text-2xl font-black leading-none">
-                  {queue.ahead.toLocaleString("en-US")}
-                </p>{" "}
-                <p className="mt-1 text-sm text-foreground/70">
-                  still undecided, filed before {formatMonth(month)}
-                </p>
-              </div>
-            ) : null}
             {pace ? (
               <div className="min-w-0 flex-1 basis-60 border-2 border-border bg-background p-4">
                 <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
@@ -450,12 +483,37 @@ export function PermTimelineEstimator({
             )}
           </p>
 
+          <div className="mt-6 border-2 border-border bg-background p-4 sm:max-w-sm">
+            <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              Cases ahead of you
+            </p>{" "}
+            <p className="mt-1 font-heading text-4xl font-black leading-none">
+              {queue.ahead.toLocaleString("en-US")}
+            </p>{" "}
+            <p className="mt-1 text-sm text-foreground/70">
+              still undecided, filed before {formatMonth(month)}
+            </p>
+          </div>
+
           <QueueMonthChart
             className="mt-6"
             months={months}
             selectedMonth={month}
             anomalies={anomalies}
           />
+
+          {/* Where the reader's own pending cases sit. DOL runs analyst
+              review, RFI and audit as separate queues, and a case in one of
+              the latter two is out of filing order entirely - which is the
+              real answer to "my month has passed and I have nothing".
+
+              The remainder is stated rather than hidden: the three buckets do
+              not necessarily partition `pending`, and silently showing three
+              numbers that do not add up to the fourth invites the reader to
+              do the subtraction and conclude something is broken. */}
+          {queue.subject && queue.subject.pending > 0 ? (
+            <StagesLine subject={queue.subject} month={month} />
+          ) : null}
 
           {/* Provenance where the data is, not in a footnote: these are the
               only figures here that DOL does not publish itself. */}

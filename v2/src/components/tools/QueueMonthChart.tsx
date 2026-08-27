@@ -77,7 +77,7 @@ export function QueueMonthChart({
             <Fragment key={m.filingMonth}>
               {" "}
               <li
-                className="grid grid-cols-[7rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[9.5rem_1fr_5.5rem]"
+                className="grid grid-cols-[6rem_1fr_2.75rem_4rem] items-center gap-2 sm:grid-cols-[9.5rem_1fr_3.5rem_5rem] sm:gap-3"
                 aria-label={`${label}: ${pct.toFixed(0)}% decided, ${fmtInt(m.pending)} still pending`}
               >
                 <span
@@ -121,6 +121,14 @@ export function QueueMonthChart({
                     isSelected ? "font-black" : "text-foreground/70",
                   )}
                 >
+                  {pct.toFixed(0)}%
+                </span>{" "}
+                <span
+                  className={cn(
+                    "text-right text-sm tabular-nums",
+                    isSelected ? "font-black" : "text-foreground/70",
+                  )}
+                >
                   {fmtInt(m.pending)}
                 </span>
               </li>
@@ -142,7 +150,7 @@ export function QueueMonthChart({
           <span className="h-3 w-3 border-2 border-border bg-foreground/20" aria-hidden="true" />
           Filed after yours
         </span>{" "}
-        <span>Bar: share of the month DOL has decided. Number: still pending.</span>
+        <span>Columns: share of the month decided, then cases still pending.</span>
       </div>
 
       {anomalies.length > 0 ? (

@@ -26,6 +26,18 @@ export interface MonthQueue {
   decided: number;
   /** decided / total, 0-100. Null when the month holds nothing. */
   decidedPct: number | null;
+  /**
+   * Where the month's pending cases actually sit.
+   *
+   * Optional because they are extra columns on the same row rather than
+   * something every caller needs, and because a caller passing a bare
+   * {month, total, pending, decided} shape is still valid input to
+   * everything above.
+   */
+  analystReview?: number;
+  rfiIssued?: number;
+  auditResponse?: number;
+  appeals?: number;
 }
 
 export interface QueueAheadResult {
