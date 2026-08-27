@@ -1126,3 +1126,47 @@ export async function getLiveMirrorSize(): Promise<number> {
   );
   return Number(r?.n ?? 0);
 }
+
+// ---------------------------------------------------------------------------
+// I-140 trends (USCIS quarterly counts)
+// ---------------------------------------------------------------------------
+
+export interface I140TrendRow {
+  fiscalYear: number;
+  quarter: number;
+  category: string;
+  categoryLabel: string;
+  received: number;
+  approved: number;
+  denied: number;
+  pending: number;
+}
+
+/**
+ * Every quarter USCIS has reported, oldest first.
+ *
+ * `category_label` is USCIS'S OWN LABEL and is carried through verbatim. E21
+ * is "Professionals with Advanced Degrees", which covers both national-
+ * interest-waiver and employer-sponsored EB-2. Relabelling it "National
+ * Interest Waiver" - as at least one public tracker does - is wrong, and it
+ * is wrong in the direction that misleads this site's readers specifically,
+ * since a PERM applicant is employer-sponsored by definition.
+ */
+export async function getI140Trends(): Promise<I140TrendRow[]> {
+  const r = await rows<Record<string, unknown>>(
+    `SELECT fiscal_year, quarter, category, category_label,
+            received, approved, denied, pending
+       FROM i140_trends
+      ORDER BY fiscal_year, quarter, category`,
+  );
+  return r.map((x) => ({
+    fiscalYear: Number(x.fiscal_year),
+    quarter: Number(x.quarter),
+    category: String(x.category),
+    categoryLabel: String(x.category_label ?? x.category),
+    received: Number(x.received) || 0,
+    approved: Number(x.approved) || 0,
+    denied: Number(x.denied) || 0,
+    pending: Number(x.pending) || 0,
+  }));
+}
