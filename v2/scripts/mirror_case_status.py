@@ -55,6 +55,7 @@ import json
 import pathlib
 import subprocess
 import sys
+import datetime
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -118,6 +119,93 @@ def assert_filter_applied(pending: bool, total: int, full_total: int) -> None:
             f"({share:.0%}). Check PENDING_FILTER; `is_final=0` is ignored."
         )
     log(f"  pending filter applied: {total:,} of {full_total:,} ({share:.0%})")
+
+
+# Fields whose value is a FACT ABOUT THE CASE. A difference in any of these is
+# a reason to write. `source` and `fetched_at` are ours and change on every
+# pass, so comparing them would mark every row dirty and defeat the point.
+FACT_COLS = (
+    "filing_date", "current_status", "is_final", "is_disclosed",
+    "employer_name", "job_title", "submitted_date", "verified",
+)
+
+# How far `last_checked_at` may drift before it alone justifies a write.
+# It is the upstream's own clock and moves whenever THEY re-check, which is
+# most rows on most passes - including it directly would mark ~everything
+# dirty. But it is shown to readers ("DOL showed this status on X"), so it
+# cannot be allowed to rot either. Three days keeps the displayed date honest
+# while skipping the per-pass churn.
+CHECK_DRIFT_DAYS = 3
+
+
+def _drifted(old: str | None, new: str | None) -> bool:
+    """True when the upstream check date moved by more than the threshold.
+
+    Both sides are ISO-8601 TEXT and are compared AS TEXT, deliberately.
+    `last_checked_at` is the upstream's string; lexical order on a fixed-width
+    ISO stamp is chronological order, and parsing it into a number would invite
+    the numeric comparison that silently matches every row (SQLite sorts any
+    string above any number - that bug has already been hit in this project).
+    """
+    if not new:
+        return False
+    if not old:
+        return True
+    return new[:10] > _plus_days(old[:10], CHECK_DRIFT_DAYS)
+
+
+def _plus_days(iso_day: str, n: int) -> str:
+    try:
+        d = datetime.date.fromisoformat(iso_day)
+    except ValueError:
+        return "0000-00-00"   # unparseable: treat as very old, so it refreshes
+    return (d + datetime.timedelta(days=n)).isoformat()
+
+
+def needs_write(db: Turso, rows: list[dict]) -> tuple[list[dict], dict]:
+    """The subset of a page that is actually different, plus why.
+
+    WHY THIS EXISTS. The loop used to `INSERT OR REPLACE` all 200 rows of every
+    page on every pass, whether anything had moved or not. At four passes a day
+    that is ~12 million row writes a month against a 10 million free-tier
+    ceiling, to store data that is overwhelmingly identical to what is already
+    there: on a normal pass the vast majority of cases have not changed at all.
+
+    Reading before writing costs one SELECT per page - the same SELECT
+    `diff_page` already needed - and turns a fixed 200 writes per page into
+    however many rows genuinely moved.
+    """
+    if not rows:
+        return [], {}
+    nums = [r["case_number"] for r in rows]
+    res = db.execute(
+        f"SELECT case_number, {', '.join(FACT_COLS)}, last_checked_at "
+        f"FROM perm_case_status WHERE case_number IN ({','.join('?' * len(nums))})",
+        nums,
+    )
+    held: dict[str, dict] = {}
+    for r in res["response"]["result"]["rows"]:
+        vals = [None if c["type"] == "null" else c["value"] for c in r]
+        held[str(vals[0])] = dict(zip((*FACT_COLS, "last_checked_at"), vals[1:]))
+
+    out, why = [], {"new": 0, "fact": 0, "checkdate": 0, "same": 0}
+    for row in rows:
+        old = held.get(row["case_number"])
+        if old is None:
+            why["new"] += 1
+            out.append(row)
+            continue
+        # str() both sides: the DB hands back TEXT for integer columns over the
+        # HTTP protocol, so 1 != "1" would mark every row dirty forever.
+        if any(str(old[c]) != str(row[c]) for c in FACT_COLS):
+            why["fact"] += 1
+            out.append(row)
+        elif _drifted(old["last_checked_at"], row["last_checked_at"]):
+            why["checkdate"] += 1
+            out.append(row)
+        else:
+            why["same"] += 1
+    return out, why
 
 
 def diff_page(db: Turso, incoming: list[tuple[str, str | None, int]],
@@ -292,7 +380,7 @@ def main() -> int:
         start = 1
 
     stamp = int(time.time() * 1000)
-    written = failed = moved = 0
+    written = failed = moved = skipped = 0
     for page in range(start, pages + 1):
         d = get(f"{BASE}?limit={PER_PAGE}&page={page}{query}")
         rows = (d or {}).get("data") or []
@@ -303,24 +391,28 @@ def main() -> int:
             time.sleep(PACE_S * 2)
             continue
         failed = 0
-        vals = ",".join(["(?,?,?,?,?,?,?,?,?,?,?,?)"] * len(rows))
-        args: list = []
+        parsed: list[dict] = []
         incoming: list[tuple[str, str | None, int]] = []
         for r in rows:
             case_number = r.get("case_number")
+            if not case_number:
+                continue
             status = norm_status(r.get("current_status"))
             is_final = 1 if r.get("is_final") else 0
-            if case_number:
-                incoming.append((str(case_number), status, is_final))
-            args += [
-                case_number, (r.get("filing_date") or "")[:10] or None,
-                status,
-                is_final, 1 if r.get("is_disclosed") else 0,
-                r.get("employer_name"), r.get("job_title"),
-                (r.get("submitted_date") or "")[:19] or None,
-                (r.get("last_checked_at") or "")[:19] or None,
-                1 if r.get("verified") else 0, SOURCE, stamp,
-            ]
+            incoming.append((str(case_number), status, is_final))
+            parsed.append({
+                "case_number": str(case_number),
+                "filing_date": (r.get("filing_date") or "")[:10] or None,
+                "current_status": status,
+                "is_final": is_final,
+                "is_disclosed": 1 if r.get("is_disclosed") else 0,
+                "employer_name": r.get("employer_name"),
+                "job_title": r.get("job_title"),
+                "submitted_date": (r.get("submitted_date") or "")[:19] or None,
+                "last_checked_at": (r.get("last_checked_at") or "")[:19] or None,
+                "verified": 1 if r.get("verified") else 0,
+            })
+
         # BEFORE the upsert, which is the only moment the old status still
         # exists. After it, the previous value is gone from every table.
         events = diff_page(db, incoming, stamp)
@@ -328,14 +420,30 @@ def main() -> int:
             ev = ",".join(["(?,?,?,?,?,?)"] * (len(events) // 6))
             db.execute(f"INSERT OR REPLACE INTO perm_case_events VALUES {ev}", events)
             moved += len(events) // 6
-        db.execute(f"INSERT OR REPLACE INTO perm_case_status VALUES {vals}", args)
-        written += len(rows)
+
+        # WRITE ONLY WHAT MOVED. See needs_write(): a blind 200-row upsert per
+        # page put ~12M writes/month against a 10M ceiling to store rows that
+        # were already identical.
+        dirty, why = needs_write(db, parsed)
+        skipped += why.get("same", 0)
+        if dirty:
+            vals = ",".join(["(?,?,?,?,?,?,?,?,?,?,?,?)"] * len(dirty))
+            args: list = []
+            for row in dirty:
+                args += [
+                    row["case_number"], row["filing_date"], row["current_status"],
+                    row["is_final"], row["is_disclosed"], row["employer_name"],
+                    row["job_title"], row["submitted_date"], row["last_checked_at"],
+                    row["verified"], SOURCE, stamp,
+                ]
+            db.execute(f"INSERT OR REPLACE INTO perm_case_status VALUES {vals}", args)
+        written += len(dirty)
         db.execute("INSERT OR REPLACE INTO mirror_progress VALUES (?,?,?,?)",
                    [job, page, total, int(time.time() * 1000)])
         if page % 50 == 0 or page == pages:
             held = int(db.scalar("SELECT count(*) FROM perm_case_status") or 0)
             log(f"    page {page:,}/{pages:,}  written {written:,}  "
-                f"moved {moved:,}  table holds {held:,}")
+                f"unchanged {skipped:,}  moved {moved:,}  table holds {held:,}")
         time.sleep(PACE_S)
 
     # A FINAL sweep, not just canonical writes.

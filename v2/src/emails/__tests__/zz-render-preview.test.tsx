@@ -1,5 +1,5 @@
 /**
- * Writes the two queue emails to /tmp/emailrender for a real-inbox test send.
+ * Writes the two queue emails to a temp dir for a real-inbox test send.
  *
  * A test rather than a script because vitest already resolves this project's
  * TSX and path aliases correctly, and a standalone node script does not -
@@ -14,12 +14,16 @@ import { render } from "@react-email/render";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+/* tmpdir() rather than a fixed "/tmp": portable, and the sibling preview
+ * test took CI down with EACCES on a hardcoded absolute path. */
+const OUT = join(tmpdir(), "permtracker-emailrender-legacy");
+
 import { QueueAlertConfirm } from "../QueueAlertConfirm";
 import { QueueReached } from "../QueueReached";
 
 describe("render previews for a test send", () => {
-  it("writes both emails to /tmp/emailrender", async () => {
-    mkdirSync(join(tmpdir(), "permtracker-emailrender-legacy"), { recursive: true });
+  it("writes both emails to a temp dir", async () => {
+    mkdirSync(OUT, { recursive: true });
 
     const alert = await render(
       QueueReached({

@@ -13,11 +13,19 @@ name: Per-case status mirror
 #
 # TWO CADENCES, because the two passes do different jobs:
 #
-#   PENDING, every 6h (~10 min, 493 pages). Only a non-final case can move, so
-#   this covers everything that can change. It is what gives the alerts a
-#   latency we can state out loud: at worst about six hours behind DOL, plus
-#   whatever the upstream's own check lag is. Four passes a day at 1.2s spacing
-#   is roughly 2,000 requests - polite for a source we do not own.
+#   PENDING, every 12h (~10 min, 492 pages). Only a non-final case can move,
+#   so this covers everything that can change, and it sets the alert latency we
+#   can state out loud: at worst about twelve hours behind the upstream, plus
+#   whatever their own check lag is.
+#
+#   WRITES ARE THE BINDING CONSTRAINT, NOT TIME. The loop used to upsert all
+#   200 rows of every page whether anything had moved or not: 98,244 writes a
+#   pass, ~12M/month against a 10M free-tier ceiling, to store rows that were
+#   already identical. `needs_write()` reads before writing and skips the
+#   unchanged. Measured over 1,000 live rows across five pages: 87.5% skipped,
+#   so a pass is ~12,280 writes rather than 98,244. Two passes a day is about
+#   737,000 writes a month - 7% of the ceiling, with room for the corpus to
+#   grow several times over.
 #
 #   FULL, weekly on Sunday (~42 min, 2,082 pages). Picks up cases added to the
 #   upstream watchlist since the last sweep, and re-reconciles rows that went
@@ -33,8 +41,8 @@ name: Per-case status mirror
 
 on:
   schedule:
-    # pending sweep, every six hours
-    - cron: "15 */6 * * *"
+    # pending sweep, every twelve hours
+    - cron: "15 */12 * * *"
     # full corpus, Sundays 04:15 UTC, off the hour the pending pass uses
     - cron: "15 4 * * 0"
   workflow_dispatch:
