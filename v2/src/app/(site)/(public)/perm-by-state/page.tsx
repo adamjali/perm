@@ -20,9 +20,12 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { StateExplorer, type StateStat } from "@/components/tools/USStateMap";
+import { StateConcentration, StateLeaders } from "@/components/tools/StateProfiles";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import { getStateProfiles } from "@/lib/turso/states";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { stateName } from "@/lib/usStateNames";
 const TITLE = "PERM Filings by State";
 const DESCRIPTION =
   "Interactive map of PERM filings by worksite state: volume, approval rate, median days and median wage, from DOL's own disclosure files.";
@@ -50,7 +53,10 @@ function fmtInt(n: number): string {
 }
 
 export default async function PermByStatePage() {
-  const stats = await getDisclosureStats();
+  const [stats, profiles] = await Promise.all([
+    getDisclosureStats(),
+    getStateProfiles(),
+  ]);
   const byState: StateStat[] = stats?.byState ?? [];
   const uniqueCases = stats?.uniqueCases ?? 0;
 
@@ -59,6 +65,23 @@ export default async function PermByStatePage() {
   const smallHalf = ranked.slice(Math.ceil(ranked.length / 2));
   const smallHalfTotal = smallHalf.reduce((sum, s) => sum + s.total, 0);
   const topBeatsSmallHalf = Boolean(top) && (top?.total ?? 0) > smallHalfTotal;
+
+  // The profiles come from a post-ingest build step, so they can legitimately
+  // describe an older window than the aggregates beside them. Both documents
+  // stamp the disclosure files they were built from; when those disagree the
+  // section is withheld rather than presenting one quarter's leaders under
+  // another quarter's totals. Withholding is the same discipline the rest of
+  // the site applies to an immature cohort.
+  const windowKey = (files: string[] | undefined) => [...(files ?? [])].sort().join("|");
+  const profilesMatchWindow =
+    profiles !== null && windowKey(profiles.sourceFiles) === windowKey(stats?.sourceFiles);
+  const stateProfiles = profilesMatchWindow ? profiles.states : [];
+
+  // The single loudest fact on the page, chosen by measurement rather than
+  // picked by hand: the state whose filings sit most heavily in one occupation.
+  const mostConcentrated = [...stateProfiles]
+    .filter((s) => s.topOccupationShare !== null && s.topOccupations[0])
+    .sort((a, b) => (b.topOccupationShare ?? 0) - (a.topOccupationShare ?? 0))[0];
 
   const datasetSchema = {
     "@context": "https://schema.org",
@@ -114,7 +137,7 @@ export default async function PermByStatePage() {
                 Busiest state
               </p>{" "}
               <p className="mt-2 font-heading text-3xl font-black">
-                {top ? top.state : "—"}
+                {top ? top.state : "Not yet"}
               </p>{" "}
               <p className="mt-2 text-sm leading-relaxed text-foreground/70">
                 {!top
@@ -138,6 +161,48 @@ export default async function PermByStatePage() {
               </p>
             </div>
           </section>
+
+          {stateProfiles.length > 0 ? (
+            <>
+              <section className="mt-12">
+                <h2 className="font-heading text-2xl font-black">
+                  What each state actually files
+                </h2>{" "}
+                <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+                  Shaded by volume, PERM looks like one national software
+                  program. It isn&apos;t. Here is the share of each state&apos;s
+                  filings sitting in its single biggest occupation, and in its
+                  single biggest employer, with the case counts behind both.
+                  {mostConcentrated && mostConcentrated.topOccupations[0] ? (
+                    <>
+                      {" "}
+                      {stateName(mostConcentrated.state)} is the extreme:{" "}
+                      <strong>
+                        {mostConcentrated.topOccupationShare}% of its{" "}
+                        {fmtInt(mostConcentrated.total)} filings are{" "}
+                        {mostConcentrated.topOccupations[0].label.toLowerCase()}
+                      </strong>
+                      .
+                    </>
+                  ) : null}
+                </p>
+                <StateConcentration states={stateProfiles} className="mt-6" />
+              </section>
+
+              <section className="mt-12">
+                <h2 className="font-heading text-2xl font-black">
+                  Every state&apos;s biggest occupation and biggest employer
+                </h2>{" "}
+                <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+                  DOL prints the same firm under several spellings, so these
+                  are grouped on the identity behind the name rather than the
+                  name itself. Washington&apos;s leader is one company written
+                  two ways, which ranked as two until they were merged.
+                </p>
+                <StateLeaders states={stateProfiles} className="mt-6" />
+              </section>
+            </>
+          ) : null}
 
           <section className="mt-10 border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
             <h2 className="font-heading text-lg font-black">

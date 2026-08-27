@@ -8,7 +8,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CalendarBlank as CalendarRange, CalendarCheck, CalendarDot as CalendarClock, FileText, Path as Route, Scales as Scale, Users } from "@phosphor-icons/react/ssr";
+import { ArrowRight, CalendarBlank as CalendarRange, CalendarCheck, CalendarDot as CalendarClock, ChartBar, CurrencyDollar, FileText, Path as Route, Scales as Scale, Users } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -41,6 +41,21 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-static";
 
+/**
+ * TWO KINDS OF TOOL, AND THE COUNT COMES FROM THE ARRAYS.
+ *
+ * This page said "Seven calculators" in copy while the site's own
+ * `TOOL_NAV_LINKS` carried nine entries, and the two it was missing were real
+ * pages reachable from the footer. Writing a total into a sentence guarantees
+ * it goes stale the next time a tool ships, so the counts below are computed.
+ *
+ * The split is not padding to make the number bigger. A calculator takes YOUR
+ * dates or YOUR category and answers about YOUR case; an explorer takes no
+ * input about you and describes the field. They belong in one place because a
+ * reader arrives with a question rather than a taxonomy, and they are labelled
+ * apart because "what will happen to me" and "what does this job pay" want
+ * different things from the same visit.
+ */
 const TOOLS = [
   {
     href: "/tools/perm-timeline-calculator",
@@ -114,13 +129,32 @@ const TOOLS = [
   },
 ];
 
+const EXPLORERS = [
+  {
+    href: "/tools/salary-explorer",
+    icon: CurrencyDollar,
+    kind: "Distribution",
+    name: "Salary explorer",
+    blurb:
+      "What certified PERM jobs actually pay, by occupation and state, as a percentile ladder rather than one average.",
+  },
+  {
+    href: "/tools/i140-trends",
+    icon: ChartBar,
+    kind: "Series",
+    name: "I-140 trends",
+    blurb:
+      "Petitions received, approved, denied and left pending by category, quarter by quarter, from USCIS's own counts.",
+  },
+] as const;
+
 export default function CalculatorsPage() {
   const itemList = {
     "@context": "https://schema.org",
     "@type": "ItemList" as const,
     name: "PERM calculators and tools",
-    numberOfItems: TOOLS.length,
-    itemListElement: TOOLS.map((t, i) => ({
+    numberOfItems: TOOLS.length + EXPLORERS.length,
+    itemListElement: [...TOOLS, ...EXPLORERS].map((t, i) => ({
       "@type": "ListItem" as const,
       position: i + 1,
       item: {
@@ -147,7 +181,9 @@ export default function CalculatorsPage() {
           PERM calculators
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          Seven calculators, each answering one question a PERM case raises.
+          {TOOLS.length} calculators that take your dates and answer about your
+          case, and {EXPLORERS.length} explorers that describe the field you
+          filed into. All free, all on data the government publishes.
         </p>
       </header>
 
@@ -173,6 +209,8 @@ export default function CalculatorsPage() {
                 { s: "I-140 approved, waiting to adjust status", q: "How deep is the green card queue at my priority date?", href: "/tools/i485-queue-position", tool: "I-485 queue position" },
                 { s: "I-140 approved, watching the bulletin", q: "Is my date current, and which way is it moving?", href: "/tools/priority-date-calculator", tool: "Priority dates" },
                 { s: "Just starting, or explaining it to someone", q: "How long is the whole thing?", href: "/tools/green-card-timeline", tool: "Green card timeline" },
+                { s: "Writing the job offer, before any of the above", q: "What does this role pay here?", href: "/tools/salary-explorer", tool: "Salary explorer" },
+                { s: "Weighing EB-2 against EB-3", q: "Which category is USCIS clearing?", href: "/tools/i140-trends", tool: "I-140 trends" },
               ].map((r) => (
                 <tr key={r.href} className="border-t border-border/40">
                   <td className="p-3">{r.s}{" "}</td>
@@ -264,6 +302,49 @@ export default function CalculatorsPage() {
               </div>
             ) : (
               card
+            );
+          })}
+        </div>
+      </section>
+
+      {/* A different shape from the calculator grid on purpose. These take no
+          input about you, so they get a row of plain records rather than
+          another card with a diagram of a mechanism they do not have. */}
+      <section className="mt-12">
+        <h2 className="font-heading text-2xl font-black">
+          And the field you filed into
+        </h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+          These two ask nothing about your case. They describe what everyone
+          else&apos;s looks like, which is what tells you whether a wage or a
+          category is ordinary.
+        </p>
+        <div className="mt-6 divide-y-2 divide-border border-2 border-border bg-card shadow-hard">
+          {EXPLORERS.map((t) => {
+            const Icon = t.icon;
+            return (
+              <Link
+                key={t.href}
+                href={t.href}
+                className="group flex flex-wrap items-start gap-x-4 gap-y-2 p-6 transition-colors duration-150 hover:bg-tint-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset sm:p-8"
+              >
+                <Icon className="mt-1 h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    {t.kind}
+                  </span>{" "}
+                  <h3 className="mt-1 font-heading text-xl font-black leading-tight">
+                    {t.name}
+                  </h3>{" "}
+                  <p className="mt-2 text-base leading-relaxed text-foreground/70">
+                    {t.blurb}
+                  </p>
+                </div>
+                <ArrowRight
+                  className="mt-1 h-5 w-5 shrink-0 transition-transform duration-150 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+                  aria-hidden="true"
+                />
+              </Link>
             );
           })}
         </div>

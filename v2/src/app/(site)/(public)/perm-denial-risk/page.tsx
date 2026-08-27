@@ -22,6 +22,7 @@ import { socGroup } from "@/lib/socGroups";
 import { stateName } from "@/lib/usStateNames";
 import { DataNav } from "@/components/tools/DataNav";
 import { RateViews, RankedRateViews, type RateRow } from "@/components/tools/RateBars";
+import { DenialReach } from "@/components/tools/DenialReach";
 import { CENSUS_REGION } from "@/components/tools/USStateMap";
 import { FreshnessDots, InsightLede } from "@/components/tools/Insight";
 import { getDisclosureStats } from "@/lib/turso/publicData";
@@ -100,6 +101,56 @@ export default async function PermDenialRiskPage() {
           return x >= 10 ? `${Math.round(x)}x` : `${x.toFixed(1)}x`;
         })()
       : "";
+
+  // REACH, the half a rate leaves out. Every public risk tool ranks these
+  // factors by rate, which puts the rarest one first: a part-time position is
+  // denied 54% of the time and appears in one decided case in 900. Summing the
+  // numerators is what makes that visible, and it is arithmetic on figures
+  // already on the page rather than a new claim.
+  const flagDenied = (risk?.byFlag ?? []).reduce((n, r) => n + r.denied, 0);
+  const flagShare =
+    baseline && baseline.denied > 0 ? (flagDenied / baseline.denied) * 100 : null;
+  // The wage band carrying the most denials, named rather than left to the
+  // reader to find. Chosen by measurement, so it follows the data if the next
+  // ingest moves it.
+  const topWageByShare =
+    risk?.byWage && risk.byWage.length > 0
+      ? [...risk.byWage].sort((a, b) => b.denied - a.denied)[0]!
+      : null;
+  const topWageShare =
+    topWageByShare && baseline && baseline.denied > 0
+      ? (topWageByShare.denied / baseline.denied) * 100
+      : null;
+  const topWageReach =
+    topWageByShare && baseline && baseline.decided > 0
+      ? (topWageByShare.decided / baseline.decided) * 100
+      : null;
+  // A factor whose rate sits BELOW the field is worth naming: it is the one
+  // result a reader would never guess, and a page that only shows elevated
+  // rates quietly implies every listed factor is a hazard.
+  const protectiveFlag =
+    risk?.byFlag && baseline
+      ? (risk.byFlag.find((r) => r.denialRate < baseline.denialRate) ?? null)
+      : null;
+  // Both ends of the wage gradient, read off the data rather than named in
+  // copy. The bands are stated in the ingest and could be recut; a hardcoded
+  // "under $60K" sentence would then describe a band that no longer exists.
+  const wageSpread = (() => {
+    const bands = (risk?.byWage ?? []).filter((r) => r.denialRate > 0);
+    if (bands.length < 2) return null;
+    const sorted = [...bands].sort((a, b) => b.denialRate - a.denialRate);
+    const worst = sorted[0]!;
+    const best = sorted[sorted.length - 1]!;
+    return { worst, best, multiple: (worst.denialRate / best.denialRate).toFixed(1) };
+  })();
+  // The spread across fiscal years, which is larger than most of the factors
+  // the page ranks and is the strongest argument for dating every rate.
+  const yearSwing = (() => {
+    const years = (risk?.byYear ?? []).filter((r) => r.denialRate > 0);
+    if (years.length < 2) return null;
+    const sorted = [...years].sort((a, b) => a.denialRate - b.denialRate);
+    return { low: sorted[0]!, high: sorted[sorted.length - 1]! };
+  })();
 
   // The two ranked cuts. Both are built here rather than in the ingest so the
   // numerator and denominator stay visible: decided = certified + denied, and
@@ -262,6 +313,74 @@ export default async function PermDenialRiskPage() {
             </p>
           </section>
 
+          {/* The reframe. Every rate on this page is a rate; none of them says
+              how much of the denial pile it accounts for, and the two answers
+              point in opposite directions. */}
+          {flagShare !== null && topWageByShare && topWageShare !== null && topWageReach !== null ? (
+            <section className="mt-12">
+              <h2 className="font-heading text-2xl font-black">
+                Where the denials actually are
+              </h2>{" "}
+              <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+                A rate answers &ldquo;how often does this group get
+                denied&rdquo;. It says nothing about how many denials the group
+                accounts for, and on this data the two answers disagree. The
+                three factors the ETA-9089 asks about carry the highest rates on
+                the page and together explain{" "}
+                <strong>{flagShare.toFixed(1)}% of all denials</strong>. Cases in
+                the {topWageByShare.bucket.toLowerCase()} band carry a middling
+                rate and are{" "}
+                <strong>{topWageShare.toFixed(0)}% of them</strong>, against{" "}
+                {topWageReach.toFixed(0)}% of decided cases.
+              </p>
+              <div className="mt-8 grid [&>*]:min-w-0 grid-cols-1 gap-8 lg:grid-cols-2">
+                <div>
+                  <h3 className="font-heading text-lg font-black">By offered wage</h3>{" "}
+                  <DenialReach
+                    className="mt-4"
+                    label="Denial reach by offered wage"
+                    unitLabel="Wage band"
+                    caption="Each offered-wage band's share of decided cases and share of all denials"
+                    rows={risk.byWage.map((r) => ({
+                      label: r.bucket,
+                      decided: r.decided,
+                      denied: r.denied,
+                    }))}
+                    totalDecided={baseline.decided}
+                    totalDenied={baseline.denied}
+                  />
+                </div>
+                <div>
+                  <h3 className="font-heading text-lg font-black">
+                    By what the form declares
+                  </h3>{" "}
+                  <DenialReach
+                    className="mt-4"
+                    label="Denial reach by declared factor"
+                    unitLabel="Declared factor"
+                    caption="Each declared factor's share of decided cases and share of all denials"
+                    rows={risk.byFlag.map((r) => ({
+                      label: FLAG_LABELS[r.bucket]?.label ?? r.bucket,
+                      decided: r.decided,
+                      denied: r.denied,
+                    }))}
+                    totalDecided={baseline.decided}
+                    totalDenied={baseline.denied}
+                  />
+                </div>
+              </div>
+              <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/60">
+                The three declared factors overlap, and most cases declare none
+                of them, so those bars don&apos;t sum to the field. The wage
+                bands do, apart from{" "}
+                {(baseline.decided -
+                  risk.byWage.reduce((n, r) => n + r.decided, 0)).toLocaleString("en-US")}{" "}
+                decided cases whose offered wage couldn&apos;t be annualised from
+                what DOL recorded.
+              </p>
+            </section>
+          ) : null}
+
           <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-8 lg:grid-cols-2">
             <div>
               <h2 className="font-heading text-2xl font-black">
@@ -286,6 +405,19 @@ export default async function PermDenialRiskPage() {
                   baseline={baseline.denialRate}
                 />
               </div>
+              {protectiveFlag ? (
+                <p className="mt-4 text-sm leading-relaxed text-foreground/60">
+                  One of the three runs the other way.{" "}
+                  {FLAG_LABELS[protectiveFlag.bucket]?.label ?? protectiveFlag.bucket} is
+                  denied {protectiveFlag.denialRate}% of the time, below the{" "}
+                  {baseline.denialRate}% field rate, on{" "}
+                  {protectiveFlag.decided.toLocaleString("en-US")} decided cases.
+                  That&apos;s an association, not a cause: declaring a layoff
+                  triggers a notification requirement, and the employers who
+                  reach that question are the ones already working through it
+                  with counsel.
+                </p>
+              ) : null}
             </div>
 
             <div>
@@ -307,6 +439,18 @@ export default async function PermDenialRiskPage() {
                   baseline={baseline.denialRate}
                 />
               </div>
+              {wageSpread ? (
+                <p className="mt-4 text-sm leading-relaxed text-foreground/60">
+                  The gradient runs one way and it&apos;s steep: the{" "}
+                  {wageSpread.worst.bucket.toLowerCase()} band is denied{" "}
+                  {wageSpread.multiple} times as often as the{" "}
+                  {wageSpread.best.bucket.toLowerCase()} band. Wage isn&apos;t
+                  independent of anything else here, though. It tracks
+                  occupation, which tracks employer size and who files with
+                  counsel, and DOL denies on the record rather than on the
+                  salary.
+                </p>
+              ) : null}
             </div>
           </section>
 
@@ -314,6 +458,18 @@ export default async function PermDenialRiskPage() {
             <h2 className="font-heading text-2xl font-black">By fiscal year</h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
               The rate moves year to year, so every figure here carries its year.
+              {yearSwing ? (
+                <>
+                  {" "}
+                  It moves a long way: {yearSwing.low.bucket} was{" "}
+                  {yearSwing.low.denialRate}% and {yearSwing.high.bucket} was{" "}
+                  {yearSwing.high.denialRate}%, a{" "}
+                  {(yearSwing.high.denialRate / yearSwing.low.denialRate).toFixed(1)}-fold
+                  difference over the same programme, on nothing an applicant
+                  controls. A year isn&apos;t a factor in a case; it&apos;s the
+                  reason a rate quoted without one is worth little.
+                </>
+              ) : null}
             </p>
             <div className="mt-6 max-w-2xl">
               <RateViews

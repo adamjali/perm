@@ -71,6 +71,71 @@ describe("PermDeadlineCalculator", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/after the prevailing wage determination expires/i);
   });
 
+  /**
+   * OFLC stopped processing on 1 October 2025 and DOL later said it would take
+   * PERM filings on recruitment that expired during the 33 days FLAG was down.
+   * The regulation is unchanged and so are the computed dates; the exception
+   * is stated beside them, because printing "your window closed" alone is
+   * wrong for the one cohort DOL covered.
+   */
+  describe("the October 2025 shutdown note", () => {
+    it("fires when the 180-day recruitment expiry lands in DOL's window", () => {
+      render(<PermDeadlineCalculator />);
+      setDate(/prevailing wage determination date/i, "2025-01-10");
+      setDate(/first recruitment step/i, "2025-04-20"); // + 180 = 2025-10-17
+      expect(screen.getByText(/expired during the 2025 shutdown/i)).toBeInTheDocument();
+      expect(screen.getByText(/October 17, 2025/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/33 calendar day period/i),
+      ).toBeInTheDocument();
+    });
+
+    it("does not fire a day either side of it", () => {
+      // 2025-04-03 + 180 = 2025-09-30, one day early.
+      const { unmount } = render(<PermDeadlineCalculator />);
+      setDate(/prevailing wage determination date/i, "2025-01-10");
+      setDate(/first recruitment step/i, "2025-04-03");
+      expect(screen.queryByText(/expired during the 2025 shutdown/i)).not.toBeInTheDocument();
+      unmount();
+
+      // 2025-05-07 + 180 = 2025-11-03, one day late.
+      render(<PermDeadlineCalculator />);
+      setDate(/prevailing wage determination date/i, "2025-01-10");
+      setDate(/first recruitment step/i, "2025-05-07");
+      expect(screen.queryByText(/expired during the 2025 shutdown/i)).not.toBeInTheDocument();
+    });
+
+    it("stays out of the way for an ordinary present-day case", () => {
+      render(<PermDeadlineCalculator />);
+      setDate(/prevailing wage determination date/i, "2026-01-15");
+      setDate(/first recruitment step/i, "2026-02-01");
+      expect(screen.queryByText(/2025 shutdown/i)).not.toBeInTheDocument();
+    });
+
+    it("is not styled or announced as a warning", () => {
+      // The exception WIDENED what DOL accepted. Putting it in the alert band
+      // would tell a reader they have a problem when they have the opposite.
+      render(<PermDeadlineCalculator />);
+      setDate(/prevailing wage determination date/i, "2025-01-10");
+      setDate(/first recruitment step/i, "2025-04-20");
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    it("shows the note above the dates it qualifies", () => {
+      // A reader who meets "the window closed" first and stops reading has
+      // been told the wrong thing.
+      const { container } = render(<PermDeadlineCalculator />);
+      setDate(/prevailing wage determination date/i, "2025-01-10");
+      setDate(/first recruitment step/i, "2025-04-20");
+      const note = screen.getByText(/expired during the 2025 shutdown/i);
+      const closes = screen.getByText(/ETA-9089 filing window closes/i);
+      expect(
+        note.compareDocumentPosition(closes) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(container).toBeTruthy();
+    });
+  });
+
   it("warns when the quiet period runs past the filing deadline", () => {
     render(<PermDeadlineCalculator />);
     setDate(/prevailing wage determination date/i, "2026-01-02"); // long validity irrelevant here

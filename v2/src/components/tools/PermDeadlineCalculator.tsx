@@ -14,13 +14,19 @@
  */
 
 import { useId, useMemo, useState } from "react";
-import { CalendarCheck, Warning } from "@phosphor-icons/react";
+import { ArrowSquareOut, CalendarCheck, Info, Warning } from "@phosphor-icons/react";
 
 import {
   calculatePWDExpiration,
   calculateRecruitmentDeadlines,
   calculateFilingWindow,
 } from "@/lib/perm";
+import {
+  SHUTDOWN_ANNOUNCED,
+  SHUTDOWN_QUOTE,
+  SHUTDOWN_SOURCE_URL,
+  inShutdownWindow,
+} from "@/lib/permShutdown2025";
 import { formatAsOf } from "@/lib/dolFormat";
 import { DateInput } from "@/components/forms/DateInput";
 import { DeadlineWindowDiagram } from "./DeadlineWindowDiagram";
@@ -51,6 +57,11 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
   const result = useMemo((): {
     rows: Row[];
     warnings: string[];
+    /**
+     * The 180-day recruitment expiry, when it lands in the Oct-2025 window.
+     * Null the rest of the time, which is almost always.
+     */
+    shutdownRecruitmentEnd: string | null;
     diagram: {
       pwdExpiration: string;
       windowOpens?: string;
@@ -61,6 +72,26 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
     if (!DATE_RE.test(pwdDate)) return null;
     try {
       const warnings: string[] = [];
+      // Not a warning. DOL said it would ACCEPT a filing on this date, so the
+      // warning band would read as "you have a problem" when the fact is the
+      // opposite. It gets its own band, still above the dates, because a
+      // reader who sees "your window closed" and stops reading has been told
+      // the wrong thing.
+      //
+      // ONLY THE RECRUITMENT EXPIRY CAN EVER LAND IN DOL'S WINDOW, and it is
+      // worth writing down why the other half of DOL's sentence is not
+      // implemented here. The announcement covers a recruitment effort OR a
+      // prevailing wage determination that expired between 1 October and 2
+      // November 2025. But `calculatePWDExpiration` implements the OEWS
+      // wage-year rule, under which a determination expires either on a June
+      // 30 or on a date 90 days after issue in the 2 April to 30 June window.
+      // That is June 30, or 1 July through 28 September. October is not
+      // reachable. A branch testing the PWD expiration against this window
+      // would be dead code, and `permShutdown2025.test.ts` sweeps the whole
+      // determination-date domain to keep that true: if the wage-year rule
+      // ever changes, that test fails and this comment is the instruction to
+      // put the branch back.
+      let shutdownRecruitmentEnd: string | null = null;
       let diagram: {
         pwdExpiration: string;
         windowOpens?: string;
@@ -79,6 +110,25 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
 
       if (DATE_RE.test(firstRecruitment)) {
         const deadlines = calculateRecruitmentDeadlines(firstRecruitment, pwdExpiration);
+
+        // The date recruitment itself stops supporting a filing, uncapped by
+        // the wage determination. That is a DIFFERENT quantity from the filing
+        // window's close, which this tool shows and which is the earlier of
+        // this and the PWD expiration.
+        //
+        // Asked of the same composite with no `pwdExpirationDate`, so it is
+        // still the canonical function answering. Reaching for the raw
+        // `calculateETA9089Window` is the mistake this file already carries a
+        // warning about, and re-deriving first + 180 here would put a second
+        // copy of the regulation in a component.
+        const recruitmentOnly = calculateFilingWindow({
+          firstRecruitmentDate: firstRecruitment,
+          lastRecruitmentDate: firstRecruitment,
+        });
+        if (recruitmentOnly && inShutdownWindow(recruitmentOnly.closes)) {
+          shutdownRecruitmentEnd = recruitmentOnly.closes;
+        }
+
         rows.push(
           {
             label: "Notice of filing must be posted by",
@@ -161,7 +211,12 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         }
       }
 
-      return { rows, warnings, diagram: diagram ?? { pwdExpiration } };
+      return {
+        rows,
+        warnings,
+        shutdownRecruitmentEnd,
+        diagram: diagram ?? { pwdExpiration },
+      };
     } catch {
       // A malformed date reaches here rather than crashing the page. The inputs
       // are date pickers, so this is the paste-a-bad-value path.
@@ -256,6 +311,64 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
               <p className="text-base font-bold leading-relaxed">{w}</p>
             </div>
           ))}
+        </div>
+      ) : null}{" "}
+
+      {result && result.shutdownRecruitmentEnd ? (
+        // Under the warnings, above the dates. It qualifies a date this tool
+        // prints, so a reader has to meet it before the date, but it is a
+        // citation rather than an alarm and it is not styled as one.
+        <div className="border-b-2 border-border bg-muted p-6 sm:p-8">
+          <div className="flex items-start gap-3">
+            <Info
+              className="mt-0.5 h-5 w-5 shrink-0 text-foreground"
+              aria-hidden="true"
+            />{" "}
+            <div>
+              <p className="font-heading text-lg font-black leading-tight">
+                This recruitment expired during the 2025 shutdown, and DOL took
+                filings on it anyway
+              </p>{" "}
+              <p className="mt-2 text-base leading-relaxed text-foreground/70">
+                Recruitment that began on this date stops supporting a filing
+                on {formatAsOf(result.shutdownRecruitmentEnd)}. DOL stopped
+                processing on 1 October 2025 and took FLAG offline, so for 33
+                days nobody could file at all. On 5 November 2025 it said that
+                where recruitment or a wage determination expired between 1
+                October and 2 November 2025:
+              </p>{" "}
+              {/* A framed excerpt, not a lime side-rule. `/methodology`
+                  already uses `border-l-4 border-primary` for its list of
+                  refusals, and giving a QUOTATION the identical treatment
+                  makes an assertion and a citation look like one thing. This
+                  is a pasted fragment of someone else's document, so it gets
+                  the system's own bordered surface and the quote marks carry
+                  the rest. */}
+              <blockquote className="mt-3 border-2 border-border bg-background p-4 text-base leading-relaxed">
+                &ldquo;{SHUTDOWN_QUOTE}&rdquo;
+                <cite className="mt-2 block font-mono text-xs font-bold uppercase not-italic tracking-wider text-muted-foreground">
+                  Office of Foreign Labor Certification, {formatAsOf(SHUTDOWN_ANNOUNCED)}
+                </cite>
+              </blockquote>{" "}
+              <p className="mt-3 text-base leading-relaxed text-foreground/70">
+                DOL added that FLAG would show a warning on such a filing and
+                accept it, and that a case denied on those grounds could go
+                back to the Certifying Officer for reconsideration. The dates
+                below are still 20 CFR 656, which is what a case is judged
+                against. That exception covered one 33-day window and applies
+                to nothing filed since.
+              </p>{" "}
+              <a
+                href={SHUTDOWN_SOURCE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-sm font-bold underline underline-offset-2 hover:text-primary"
+              >
+                DOL&apos;s announcement
+                <ArrowSquareOut className="h-3.5 w-3.5" aria-hidden="true" />
+              </a>
+            </div>
+          </div>
         </div>
       ) : null}{" "}
 

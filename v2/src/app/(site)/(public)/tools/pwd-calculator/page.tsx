@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
 
 import { PwdQueueEstimator } from "@/components/tools/PwdQueueEstimator";
+import { PwdValidityWindow } from "@/components/tools/PwdValidityWindow";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -102,6 +103,18 @@ export default async function PwdCalculatorPage() {
           asOf={data ? data.asOf : null}
           clearancePerMonth={data ? data.clearancePerMonth : null}
         />
+      </section>
+
+      <section className="mt-12">
+        <h2 className="font-heading text-2xl font-black">
+          What the determination is worth when it lands
+        </h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+          The queue above says roughly when yours is coming. This says how much
+          time it buys you when it does, which is not the same for everyone and
+          is not a fixed number of days.
+        </p>
+        <PwdValidityWindow className="mt-6" />
       </section>
 
       <section className="mt-12">

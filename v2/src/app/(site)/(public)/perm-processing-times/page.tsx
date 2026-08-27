@@ -50,6 +50,7 @@ import { PwdBacklogChart } from "@/components/tools/PwdBacklogChart";
 import { FreshnessDots, type Freshness } from "@/components/tools/Insight";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { getProcessingTimes, getProcessingTimesHistory } from "@/lib/turso/processingTimes";
+import { getEstimatorData } from "@/lib/turso/estimate";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
@@ -127,12 +128,16 @@ function Figure({
 }
 
 export default async function PermProcessingTimesPage() {
-  const [snapshot, history, disclosure] = await Promise.all([
+  const [snapshot, history, disclosure, estimator] = await Promise.all([
     getProcessingTimes(),
     getProcessingTimesHistory(24),
     // The quarterly files, for the decisions-per-month series. A separate
     // publication on a separate cadence, labelled as such on the page.
     getDisclosureStats(),
+    // The reconstructed frontier. Same disclosure files, different question:
+    // where the queue STOOD in each past month, which DOL publishes for today
+    // only and then overwrites.
+    getEstimatorData(),
   ]);
 
   const decisionsByMonth = disclosure?.clearanceByMonth ?? [];
@@ -206,6 +211,40 @@ export default async function PermProcessingTimesPage() {
   // is a sentence worth publishing.
   const hasVelocity =
     movedMonths !== null && movedMonths > 0 && observedDays !== null && observedDays > 0;
+
+  // THE SERIES DOL CANNOT GIVE YOU. Its queue page prints where the frontier
+  // stands today and is overwritten on the next update, so the RATE it moves
+  // at is unreadable from DOL however long you watch. Reconstructed backwards
+  // instead: for every month of determinations in the disclosure files, the
+  // filing month at their median. That is a second, independent measurement of
+  // the same thing the stored snapshots measure, over a much longer record,
+  // and the two are kept in separate sections rather than one chart because
+  // they are different observations and a shared axis would imply otherwise.
+  const advance = estimator.frontierAdvance;
+  const reconstructed = estimator.frontierHistory;
+  const reconstructedPoints = reconstructed.map((p) => ({
+    asOf: `${p.decisionMonth}-01`,
+    frontierMonth: p.medianFilingMonth,
+  }));
+  // How thin the thinnest point in the series is. Read off the series rather
+  // than written into the copy: a literal here would go stale at the next
+  // quarterly ingest and read as a fact while describing an old file.
+  const reconstructedSpread = {
+    min: Math.min(...reconstructed.map((p) => p.decisions), Infinity),
+    max: Math.max(...reconstructed.map((p) => p.decisions), 0),
+  };
+  // Months of queue cleared per calendar month. Above 1 the queue is catching
+  // up, below 1 it is falling further behind, and 1.0 exactly means it is
+  // holding station while the backlog neither grows nor shrinks. Naming that
+  // threshold is what makes the figure readable.
+  const advanceVerdict =
+    advance === null
+      ? null
+      : advance.rate > 1.05
+        ? "gaining on the backlog"
+        : advance.rate < 0.95
+          ? "falling further behind"
+          : "holding station";
 
   const breadcrumb = generateBreadcrumbSchema([
     { name: "Home", href: "/" },
@@ -372,6 +411,64 @@ export default async function PermProcessingTimesPage() {
             </section>
           ) : null}
 
+          {advance && reconstructedPoints.length >= 2 ? (
+            <section className="mt-12">
+              <h2 className="font-heading text-2xl font-black">
+                How fast the queue advances
+              </h2>{" "}
+              <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+                DOL publishes where the queue stands and overwrites it, so its
+                own pages can never say how fast it is moving. This is
+                reconstructed from the determination dates in the disclosure
+                files: for each month DOL issued decisions, the filing month at
+                their median. It is the same frontier the section above tracks,
+                measured a second way and much further back.
+              </p>
+
+              <div className="mt-6 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
+                <p className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+                  Measured advance
+                </p>{" "}
+                <p className="mt-3 font-heading text-4xl font-black leading-none tabular-nums sm:text-5xl">
+                  {advance.rate.toFixed(2)}
+                </p>{" "}
+                <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
+                  months of filing queue cleared per calendar month, over the{" "}
+                  {advance.pointsUsed} determination months to{" "}
+                  {formatMonth(advance.toMonth) ?? advance.toMonth}. At exactly
+                  1.00 the queue holds station and the backlog neither grows nor
+                  shrinks, so at {advance.rate.toFixed(2)} it is{" "}
+                  <strong className="text-background">{advanceVerdict}</strong>.
+                </p>
+                {advance.slowest !== null && advance.fastest !== null ? (
+                  <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
+                    Across the whole record it has run as slow as{" "}
+                    {advance.slowest.toFixed(2)} and as fast as{" "}
+                    {advance.fastest.toFixed(2)}, measured over rolling
+                    three-month windows. That spread is the reason a single
+                    figure here is a description of the past rather than a rate
+                    to project a case forward on.
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="mt-6">
+                <QueueHistoryChart points={reconstructedPoints} />
+              </div>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-foreground/60">
+                Reconstructed from{" "}
+                {disclosureWindow ?? "the quarterly disclosure files"}, so it
+                ends where those files end and is a quarter behind the readings
+                above. Its points aren&apos;t equally solid either: the thinnest
+                month in the series is a median over{" "}
+                {reconstructedSpread.min.toLocaleString("en-US")} decisions and
+                the fullest over{" "}
+                {reconstructedSpread.max.toLocaleString("en-US")}. Every
+                month&apos;s count is in the next section.
+              </p>
+            </section>
+          ) : null}
+
           {decisionsByMonth.length >= 2 ? (
             <section className="mt-12">
               <h2 className="font-heading text-2xl font-black">
@@ -470,6 +567,7 @@ export default async function PermProcessingTimesPage() {
         <QueueAlertForm
           source="perm-processing-times"
           newestMonth={currentMonthUtc()}
+          frontierMonth={analyst?.priorityDate ?? undefined}
         />
       </section>
 
