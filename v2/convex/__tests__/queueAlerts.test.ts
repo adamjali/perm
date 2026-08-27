@@ -117,23 +117,50 @@ describe("subscribe input validation", () => {
       return { ms: performance.now() - started, ok: res.ok };
     };
 
-    // Warm up, or the one-off module load lands entirely on the first call.
+    // Warm up first, or the measurement includes a one-off module load that
+    // lands entirely on whichever call happens to run first.
     await time("warmup@example.com");
 
-    const short = await time("a@" + ".".repeat(200) + "@");
-    const long = await time("a@" + ".".repeat(80_000) + "@");
+    /*
+     * MINIMUM of several samples, not a single one.
+     *
+     * A single sample is a measurement of whatever else the machine was doing
+     * in that millisecond. The minimum is the least-contended run, which is
+     * the closest thing to the uncontended cost, and it is stable under load
+     * where both a wall-clock budget and a single-sample ratio are not. The
+     * budget version failed at 1459ms against 1000ms; a single-sample ratio
+     * then failed once in five runs, because a sub-millisecond denominator
+     * plus one GC pause on the other side is enough.
+     */
+    const best = async (email: string, n = 5) => {
+      let ms = Infinity;
+      let ok = true;
+      for (let i = 0; i < n; i++) {
+        const r = await time(email);
+        ms = Math.min(ms, r.ms);
+        ok = ok && !r.ok;
+      }
+      return { ms, rejected: ok };
+    };
 
-    expect(short.ok).toBe(false);
-    expect(long.ok).toBe(false);
+    const short = await best("a@" + ".".repeat(200) + "@");
+    const long = await best("a@" + ".".repeat(80_000) + "@");
+
+    expect(short.rejected).toBe(true);
+    expect(long.rejected).toBe(true);
 
     // 400x the input. Unguarded that is ~160,000x the work; guarded both are a
-    // length check and the ratio sits near 1.
-    const ratio = long.ms / Math.max(short.ms, 0.01);
+    // length check and the ratio sits near 1. Twenty is far above the noise
+    // floor on a loaded machine and far below anything quadratic.
+    const ratio = long.ms / Math.max(short.ms, 0.05);
     expect(
       ratio,
       `400x the input took ${ratio.toFixed(1)}x the time ` +
-        `(${short.ms.toFixed(1)}ms then ${long.ms.toFixed(1)}ms)`,
-    ).toBeLessThan(10);
+        `(best of 5: ${short.ms.toFixed(2)}ms then ${long.ms.toFixed(2)}ms)`,
+    ).toBeLessThan(20);
+
+    // A generous absolute backstop, so a machine slow enough to make both
+    // sides equally terrible still fails rather than passing on the ratio.
     expect(long.ms).toBeLessThan(5_000);
   });
 
