@@ -47,9 +47,47 @@ controls (all reachable, so this is agency policy and not our IP):
     archive.today mirror                         429, and a less reputable
                                                  archive is not worth leaning on
 
+THE BLOCK IS AGENCY POLICY, NOT OUR ADDRESS. Re-measured 2026-08-27 from a
+GitHub Actions runner, an entirely different network, with controls in the
+same run:
+
+    travel.state.gov  bulletin index          403   5,843 b, 0 cutoffs
+    travel.state.gov  September 2026 page     403   5,843 b, 0 cutoffs
+    travel.state.gov  robots.txt              403   4,905 b
+    cloudflare.com                            200   (control)
+    flag.dol.gov                              200   (control)
+    www.dol.gov  full browser header set      200   (403 from this laptop)
+    www.uscis.gov                             403   (200 from this laptop)
+
+A host that refuses robots.txt itself is not rate-limiting us. Two networks,
+every path, same 403. The first run of that probe had a control that ALSO
+failed, which made it worthless - a probe whose control fails is blind, and
+its findings read exactly like real ones.
+
+So there is no automated primary route, and there will not be one until the
+State Department relaxes. What there IS:
+
+    --from-file   A person opens the public page in a normal browser and
+                  saves it; this parses, validates and stores it, with
+                  primary-source provenance. The bulletin is ONE page
+                  published ONCE a month, so the human step is 30 seconds
+                  twelve times a year, and it removes the dependency on
+                  anyone else's mirror entirely.
+
 Usage:
+    # Archive route: the back series, automated, structurally behind.
     python3 scripts/ingest_visa_bulletin.py --out /tmp/vb.json --months 18
     npx convex run visaBulletin:storeBulletins "$(cat /tmp/vb.json)" --prod
+
+    # Primary route: this month, from the source, needing one human minute.
+    #   1. Open the bulletin in a browser.
+    #   2. Save it (Cmd+S, "Page Source" / "HTML only" is enough).
+    #   3. Point this at the file. It refuses a challenge page, a page with
+    #      no charts, a month it cannot read, and a month you assert that
+    #      the page contradicts.
+    python3 scripts/ingest_visa_bulletin.py --from-file ~/Downloads/vb.html
+
+Tests: python3 scripts/test_visa_bulletin.py
 """
 from __future__ import annotations
 
@@ -119,6 +157,12 @@ CATEGORY_ROWS = [
 # assumed: a silently reordered column would swap India's cutoff for China's.
 COUNTRY_COLUMNS = ["worldwide", "china", "india", "mexico", "philippines"]
 COUNTRY_HEADINGS = ["ALL CHARGEABILITY", "CHINA", "INDIA", "MEXICO", "PHILIPPINES"]
+
+# Primary source. Named as what it is - a person opened the page - so a
+# reader can tell it apart from the archived and mirrored rows beside it.
+SAVED_PAGE_SOURCE = (
+    "travel.state.gov (page saved from a browser; the site refuses automated clients)"
+)
 
 
 def log(msg: str) -> None:
@@ -227,12 +271,124 @@ def parse_bulletin(page: str) -> dict | None:
     return {"finalAction": chart(eb[0]), "datesForFiling": chart(eb[1])}
 
 
+def month_from_page(page: str) -> str | None:
+    """The bulletin month, read off the page, or None if it cannot be trusted.
+
+    An unanchored search would take the first month-shaped string anywhere in
+    the document, and these pages name several: the cutoffs themselves are
+    dates, and the footer links to the neighbouring months. So this matches
+    only the page's own title phrase, and REFUSES when two different months
+    match it. A plausible wrong month is far worse than no month - a null stops
+    the run, and a wrong one silently files October's cutoffs under September.
+    """
+    hits = {
+        f"{int(y):04d}-{MONTHS[m.lower()]:02d}"
+        for m, y in re.findall(
+            r"[Vv]isa\s+[Bb]ulletin\s+[Ff]or\s+([A-Za-z]+)\s+(\d{4})", page
+        )
+        if m.lower() in MONTHS
+    }
+    return hits.pop() if len(hits) == 1 else None
+
+
+def ingest_saved_page(path: str, month: str | None) -> int:
+    """Store one bulletin from a page saved out of a browser.
+
+    travel.state.gov refuses every automated client, from this machine and
+    from GitHub's runners alike, on every path including robots.txt (measured
+    2026-08-27, with cloudflare.com and flag.dol.gov returning 200 in the same
+    run as controls, so it is agency policy and not our address). Defeating
+    that is not something this project does.
+
+    A person opening a public page in their own browser is not automation, and
+    the bulletin is ONE page published ONCE a month. So the human step is the
+    30 seconds it takes to save the page; everything after it - parsing,
+    validating the column order, storing, stamping - is this function.
+
+    It is deliberately the SAME parser the archive route uses. A second parser
+    for the same document is a second thing to get wrong, and the two would
+    drift on the first bulletin that changed shape.
+    """
+    page = pathlib.Path(path).read_text(errors="replace")
+    log(f"read {path} ({len(page) / 1024:.0f} KB)")
+
+    if "Attention Required" in page or "Just a moment" in page:
+        raise SystemExit(
+            "FATAL: that file is Cloudflare's challenge page, not a bulletin. "
+            "Open the URL in a normal browser tab and save from there."
+        )
+
+    m = month or month_from_page(page)
+    if not m:
+        raise SystemExit(
+            "FATAL: could not read exactly one bulletin month from the page. "
+            "Pass --month YYYY-MM explicitly."
+        )
+    if month and (found := month_from_page(page)) and found != month:
+        raise SystemExit(f"FATAL: --month {month} but the page says {found}.")
+
+    parsed = parse_bulletin(page)   # raises on a reordered column
+    if not parsed:
+        raise SystemExit(
+            "FATAL: no employment-based charts found. Save the bulletin page "
+            "itself, not the index that links to it."
+        )
+    cats = sorted(parsed["finalAction"])
+    if len(cats) < 4:
+        raise SystemExit(f"FATAL: only {len(cats)} categories parsed: {cats}")
+    log(f"month {m}  categories {', '.join(cats)}")
+
+    db = Turso()
+    prior = db.scalar(
+        "SELECT source_url FROM visa_bulletins WHERE bulletin_month = ?", [m]
+    )
+    db.execute(
+        "INSERT OR REPLACE INTO visa_bulletins "
+        "(bulletin_month, source_url, archived_at, final_action, "
+        " dates_for_filing, computed_at) VALUES (?,?,?,?,?,?)",
+        [m, SAVED_PAGE_SOURCE, datetime.datetime.now(datetime.timezone.utc).isoformat(),
+         json.dumps(parsed["finalAction"]), json.dumps(parsed["datesForFiling"]),
+         int(time.time() * 1000)],
+    )
+    # Say when a mirrored row has been replaced by the real thing. Silently
+    # overwriting one source with another is how provenance stops meaning
+    # anything.
+    if prior and prior != SAVED_PAGE_SOURCE:
+        log(f"replaced a row previously sourced from: {prior}")
+    log(f"stored {m}")
+
+    n = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
+    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
+        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
+        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
+    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
+               ["visa-bulletin",
+                str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10],
+                int(time.time() * 1000), SAVED_PAGE_SOURCE, "Monthly",
+                f"{n:,} bulletins", 75])
+    log(f"visa_bulletins now holds {n} months")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--out", help="Payload path (required for the archive route)")
     ap.add_argument("--months", type=int, default=18)
     ap.add_argument("--years", type=int, nargs="*", help="Calendar years to search")
+    ap.add_argument(
+        "--from-file",
+        help="A bulletin page saved from a browser. Stores that one month "
+             "straight to Turso as a primary-source row.",
+    )
+    ap.add_argument("--month", help="YYYY-MM, when the page cannot be read for it")
     args = ap.parse_args()
+
+    # The primary route writes to the database directly and needs no payload,
+    # so it short-circuits before any archive lookup.
+    if args.from_file:
+        return ingest_saved_page(args.from_file, args.month)
+    if not args.out:
+        ap.error("--out is required unless --from-file is given")
 
     this_year = datetime.date.today().year
     years = args.years or [this_year, this_year - 1]

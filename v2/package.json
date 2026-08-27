@@ -18,6 +18,7 @@
     "typecheck:tsc": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:python": "python3 scripts/test_visa_bulletin.py",
     "test:watch": "vitest --watch",
     "test:unit": "vitest run --project unit --project unit-isolated",
     "test:components": "vitest run --project components",

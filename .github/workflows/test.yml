@@ -73,6 +73,15 @@ jobs:
           echo "  pyflakes clean across $n scripts"
           [ "$n" -ge 10 ] || { echo "::error::only $n scripts seen; the glob is wrong"; exit 1; }
 
+      # The parser between a saved government page and a published cutoff
+      # date. Every guard in it protects against a PLAUSIBLE WRONG ANSWER
+      # rather than an error: a reordered column publishes India's cutoff as
+      # China's, and a misread month files October under September. Neither
+      # looks broken on the page.
+      - name: Visa bulletin parser contract
+        working-directory: v2
+        run: python3 scripts/test_visa_bulletin.py
+
       - name: Run full test suite
         # --retry=2 re-runs only individual tests that fail, a safety net against
         # rare CI-environment hiccups. The suite is deterministic (per-file
