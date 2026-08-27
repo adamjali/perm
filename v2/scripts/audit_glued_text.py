@@ -91,19 +91,58 @@ FALLBACK_PAGES = [
 CONTROL = "PERM"
 
 
+def _fetch(url: str) -> str:
+    req = urllib.request.Request(
+        url, headers={"User-Agent": "Mozilla/5.0 (permtracker glue audit)"}
+    )
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.read().decode("utf-8", "replace")
+
+
 def sitemap_paths(base: str) -> list[str]:
-    """Every URL the site publishes, which is what "every page" has to mean."""
+    """Every URL the site publishes, which is what "every page" has to mean.
+
+    THE SITEMAP IS AN INDEX, NOT A FLAT LIST, and this function used to stop at
+    the first level. `/sitemap.xml` is a <sitemapindex> naming seven children;
+    reading only it yields seven `/sitemaps/*.xml` paths and ZERO pages, so the
+    sweep scanned three XML documents, found no glued text in them (there is
+    none to find), and would have reported a clean bill of health over the whole
+    site. It only failed loudly because the control check noticed the pages it
+    expected were missing.
+
+    Same defect class as the hand-kept page list this function replaced: the
+    gate was looking at the wrong subject, and a wrong subject reads exactly
+    like a pass. One level of recursion is the fix, and `<sitemapindex>` in the
+    root element is how you tell the two apart -- not the filename, and not the
+    presence of <loc>, which both documents have.
+
+    The base is re-attached from the CALLER'S base rather than the sitemap's own
+    absolute URLs: locally those point at localhost:3000 (the baseUrl() default)
+    regardless of which port the server is on, so following them verbatim
+    fetches nothing.
+    """
+    root = base.rstrip("/")
     try:
-        req = urllib.request.Request(
-            base.rstrip("/") + "/sitemap.xml",
-            headers={"User-Agent": "Mozilla/5.0 (permtracker glue audit)"},
-        )
-        with urllib.request.urlopen(req, timeout=30) as r:
-            body = r.read().decode("utf-8", "replace")
+        body = _fetch(root + "/sitemap.xml")
     except Exception:
         return []
-    locs = re.findall(r"<loc>(.*?)</loc>", body)
-    return [re.sub(r"^https?://[^/]+", "", loc) or "/" for loc in locs]
+
+    def paths_in(doc: str) -> list[str]:
+        return [
+            re.sub(r"^https?://[^/]+", "", loc) or "/"
+            for loc in re.findall(r"<loc>(.*?)</loc>", doc)
+        ]
+
+    if "<sitemapindex" not in body:
+        return paths_in(body)
+
+    out: list[str] = []
+    for child in paths_in(body):
+        try:
+            out.extend(paths_in(_fetch(root + child)))
+        except Exception:
+            continue
+    return out
 
 
 def glued_pairs(markup: str) -> list[str]:
