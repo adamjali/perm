@@ -59,7 +59,7 @@ const ENTRIES: Entry[] = [
     next:
       "The employer or its attorney answers and the case goes back to the analyst for a determination. Of the ones that have reached a decision, most were certified.",
     unsourced:
-      "20 CFR 656 does not define a request for information, and no response deadline is quoted here for that reason. The letter itself states the date, and that date is the one that counts.",
+      "The words \u201crequest for information\u201d and the acronym RFI appear nowhere in 20 CFR 656. The nearest regulatory hook is 656.20(d), which lets the certifying officer request supplemental information before making a determination, and it sets no deadline. That is why no response window is quoted here: the letter itself states the date, and that date is the one that counts. An audit is the separate, formal instrument under 656.20(a), with its own status and its own queue.",
   },
   {
     status: null,
@@ -67,7 +67,7 @@ const ENTRIES: Entry[] = [
     what:
       "A formal demand for the documentation behind the application: the recruitment report, the tear sheets, the notice of filing, the resumes, and why each U.S. applicant was rejected. The certifying officer can order one after reviewing the case, and some applications are selected at random for quality control.",
     next:
-      "The officer reviews what arrives and certifies, denies, or orders supervised recruitment. A substantial failure to provide the documents is a denial, and can carry a requirement to run supervised recruitment on the employer's filings for up to two years.",
+      "The officer reviews what arrives and certifies or denies. Two different consequences hang off a failure to respond, and they are worth keeping apart: simply missing the date denies this application, while a substantial failure to provide the documentation can also require the employer to run supervised recruitment on its FUTURE filings for up to two years.",
     deadline:
       "30 days from the date on the audit letter. The officer may grant one extension of up to 30 days, at their discretion. Missing it costs more than the application: not responding in time counts as a refusal to exhaust administrative remedies, and the appeal to BALCA is then not available at all.",
     cite: { label: "20 CFR 656.20", section: "656.20" },
@@ -95,7 +95,7 @@ const ENTRIES: Entry[] = [
     next:
       "The officer reviews the recruitment report and decides. A newspaper advertisement has to run three consecutive days, one of them a Sunday.",
     deadline:
-      "The employer supplies the draft advertisement to the officer within 30 days of being notified that supervised recruitment is required.",
+      "Two clocks, both 30 days. The draft advertisement goes to the officer within 30 days of being notified, and the recruitment report within 30 days of the officer asking for it. Missing either one is a denial.",
     cite: { label: "20 CFR 656.21", section: "656.21" },
   },
   {
@@ -118,7 +118,7 @@ const ENTRIES: Entry[] = [
     what:
       "The step that puts a denial in front of the Board. It goes to the certifying officer who issued the denial rather than to the Board directly, and the officer forwards the file. Reconsideration asks that officer to change their mind; a request for review asks a judge to.",
     deadline:
-      "30 days from the date of the determination. It has to identify the determination, set out the grounds, and attach the Final Determination.",
+      "30 days from the date of the determination. It has to identify the determination, set out the grounds, and attach the Final Determination. Letting both this window and the reconsideration window pass counts as a failure to exhaust administrative remedies, and the denial then becomes the final determination of the Secretary, which forecloses a federal court looking at it later.",
     cite: { label: "20 CFR 656.26", section: "656.26" },
   },
   {
@@ -134,7 +134,7 @@ const ENTRIES: Entry[] = [
     what:
       "The ordinary queue. The case is in line for a human analyst and nothing has been asked of the employer.",
     unsourced:
-      "A workflow status rather than a regulatory term. This is where the overwhelming majority of pending cases sit, and DOL publishes which filing month its analysts have reached.",
+      "A workflow status rather than a regulatory term. This is where the overwhelming majority of pending cases sit, and DOL publishes which filing month its analysts have reached. There is a second status, IN PROCESS, holding a few dozen cases, and DOL documents no difference between the two.",
   },
 ];
 

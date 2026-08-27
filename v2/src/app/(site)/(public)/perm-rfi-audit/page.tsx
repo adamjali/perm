@@ -173,17 +173,36 @@ export default async function PermRfiAuditPage() {
         {/* 1. THE CENSUS ------------------------------------------------- */}
         <Section
           id="census"
-          title="Where every pending case is right now"
+          title="How many cases are at each stage"
           lede={
             <>
               {pending.toLocaleString()} PERM cases are waiting on a decision.{" "}
               {reviewCases.toLocaleString()} of them, {share(reviewCases, pending)},
               are at something other than the ordinary queue. DOL&rsquo;s
               quarterly disclosure files contain only decided cases, so these
-              counts cannot be built from them.
+              counts cannot be built from them at all.
             </>
           }
         >
+          {/*
+            THE LAG IS DIRECTIONAL AND THE DIRECTION IS THE USEFUL PART.
+            Measured: all 1,348 cases at the review and appeal stages were
+            re-checked within the last week, so those rows are current. The
+            94,432-case analyst-review queue is not: 76,110 of them were last
+            read before 1 August or carry no timestamp at all. A case that
+            moved from analyst review to an RFI since its last read still
+            reads as analyst review here. So the review counts are a FLOOR,
+            and saying only "these numbers may be stale" would have got the
+            direction wrong as often as right.
+          */}
+          <p className="mb-6 max-w-3xl border-l-4 border-border bg-secondary px-4 py-3 text-sm leading-relaxed">
+            Each case shows the stage it was in when it was last read, and each
+            row below carries that date. Every case at a review or appeal stage
+            was read within the past week. The 94,000-case analyst queue was
+            not, so a case that has moved into one of these stages since its
+            own last read is still counted in that queue: treat the review
+            counts as a floor rather than a total.
+          </p>{" "}
           <StageCensus
             stages={stages}
             smallRecords={smallRecords}
@@ -304,7 +323,7 @@ export default async function PermRfiAuditPage() {
             }
           />
           <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            This is a census by filing month, not a count of RFIs issued per
+            This counts cases by the month they were filed, not RFIs issued per
             month. The mirror records one observation per case, so it cannot
             see a case enter or leave a stage, and no line through these columns
             would mean anything. Whether DOL issues more RFIs than it used to is
@@ -346,10 +365,15 @@ export default async function PermRfiAuditPage() {
           title="What each status actually means"
           lede={
             <>
-              Sourced from the regulations where a regulation defines the term,
-              and marked as undefined where none does. Several of these strings
-              are DOL&rsquo;s internal workflow language with no published
-              definition at all.
+              <b className="font-bold text-foreground">
+                DOL publishes no glossary of these statuses.
+              </b>{" "}
+              Five of the sixteen strings it can show you have no published
+              definition anywhere: two independent research passes went looking
+              and neither found one. So each entry below either cites the
+              regulation that governs it, or says plainly that nothing defines
+              it. Nothing here is reconstructed from what an acronym looks like
+              it should mean.
             </>
           }
         >
@@ -361,10 +385,53 @@ export default async function PermRfiAuditPage() {
           <Limits funnelTracked={funnel?.totalTracked ?? null} auditQueue={auditQueue} />
         </Section>
 
-        <DataProvenance
-          datasets={["perm-case-status", "rfi-funnel", "processing-times"]}
-          className="mt-12 border-t-2 border-border pt-4"
-        />
+        {/*
+          TWO KINDS OF CLAIM ON ONE PAGE, AND THE READER HAS TO BE ABLE TO TELL
+          THEM APART. The regulation citations are first-party federal text
+          from the eCFR API: checkable, permanent, and the strongest material
+          here. The counts are not. DOL publishes no per-case status API and
+          gates its own case-status pages, so the per-case statuses are
+          mirrored from a third-party tracker that reads them. That is worth
+          saying out loud rather than letting a reader discover the chain
+          later, which would turn a genuine scoop into a credibility problem.
+        */}
+        <section className="mt-14 max-w-3xl border-2 border-border bg-card p-5 sm:mt-20">
+          <h2 className="font-heading text-lg font-black">
+            Where these numbers come from
+          </h2>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            The regulations are quoted from the{" "}
+            <a
+              className="font-bold text-primary underline"
+              href="https://www.ecfr.gov/current/title-20/chapter-V/part-656"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              eCFR text of 20 CFR part 656
+            </a>
+            , which is the law itself and does not go stale between quarters.
+          </p>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            The per-case counts are second-hand and we would rather say so.
+            DOL publishes no API for case status and its own status pages are
+            gated, so these statuses are mirrored from a third-party tracker
+            that reads DOL&rsquo;s FLAG pages. DOL&rsquo;s{" "}
+            <a
+              className="font-bold text-primary underline"
+              href="https://flag.dol.gov/processingtimes"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              own processing-times page
+            </a>{" "}
+            is the authority, and it is where the queue positions and the
+            analyst-review average on this page come from directly.
+          </p>{" "}
+          <DataProvenance
+            datasets={["perm-case-status", "rfi-funnel", "processing-times"]}
+            className="mt-4 border-t-2 border-border pt-3"
+          />
+        </section>
       </div>
     </>
   );

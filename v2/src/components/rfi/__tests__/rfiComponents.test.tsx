@@ -210,6 +210,32 @@ describe("RfiOutcomes", () => {
     );
     expect(fills.size).toBeGreaterThanOrEqual(4);
   });
+
+  it("paints the segments with the -ink tokens, which are the ones that pass 3:1", () => {
+    // Measured on #FAFAFA: the bare tokens are --data-good 2.05:1,
+    // --data-warn 2.07:1, --data-none 2.46:1, all under the WCAG 1.4.11
+    // graphic floor. The -ink variants are 4.70, 4.81 and 7.24, and resolve to
+    // the same hex as the bare tokens in dark mode, so this costs nothing there.
+    const { container } = render(<RfiOutcomes funnel={funnel} />);
+    const fills = [...container.querySelectorAll<HTMLElement>("[style*='background-color']")]
+      .map((el) => el.style.backgroundColor)
+      .filter(Boolean);
+    expect(fills.length).toBeGreaterThan(0);
+    for (const f of fills) expect(f).toContain("-ink");
+  });
+
+  it("names every segment in a title, because hue cannot be the only channel", () => {
+    // Certified (#1D8229) against no-decision-yet (#B45309) is 1.02:1 — the
+    // two are separable by hue and by nothing else, and four categories cannot
+    // be spread across a luminance ramp without one landing on the page.
+    const { container } = render(<RfiOutcomes funnel={funnel} />);
+    const titles = [...container.querySelectorAll("[title]")].map((e) =>
+      e.getAttribute("title"),
+    );
+    for (const label of ["Certified", "Denied", "Withdrawn", "No decision yet"]) {
+      expect(titles.some((t) => t?.startsWith(label))).toBe(true);
+    }
+  });
 });
 
 describe("OccupationRates", () => {
@@ -228,6 +254,7 @@ describe("OccupationRates", () => {
         filed: 51,
         filedEmployers: 22,
         rate: 29.41,
+        ci: { lo: 18.6, hi: 43.1 },
       },
       {
         title: "SOFTWARE ENGINEER",
@@ -236,6 +263,7 @@ describe("OccupationRates", () => {
         filed: 1848,
         filedEmployers: 656,
         rate: 0.76,
+        ci: { lo: 0.5, hi: 1.3 },
       },
     ],
   };
@@ -253,6 +281,22 @@ describe("OccupationRates", () => {
     const text = container.textContent ?? "";
     expect(text).toContain("4 more");
     expect(text).toContain("five distinct");
+  });
+
+  it("prints an interval, because 15-of-51 and 14-of-1848 are not equally solid", () => {
+    const { container } = render(<OccupationRates cut={cut} />);
+    const text = container.textContent ?? "";
+    // Wilson, reused from RateBars rather than reimplemented: the normal
+    // approximation returns negative lower bounds exactly where these rates
+    // live. Two intervals, one per row, and the small-n row must be wider.
+    expect(text.match(/95% interval/g) ?? []).toHaveLength(2);
+    const wilson = (k: number, n: number) => {
+      const z = 1.96, p = k / n, d = 1 + (z * z) / n;
+      const c = (p + (z * z) / (2 * n)) / d;
+      const h = (z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n))) / d;
+      return (Math.min(1, c + h) - Math.max(0, c - h)) * 100;
+    };
+    expect(wilson(15, 51)).toBeGreaterThan(wilson(14, 1848));
   });
 
   it("keeps a below-baseline row visible instead of collapsing it to nothing", () => {

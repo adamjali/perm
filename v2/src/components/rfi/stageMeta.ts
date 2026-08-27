@@ -116,27 +116,37 @@ function sentenceCase(s: string): string {
 /**
  * Fill and text tokens per group.
  *
- * `fill` is a shape colour and `ink` is the text-safe variant of the same
- * meaning. globals.css keeps them separate because the light fills measure
- * below 4.5:1 as text, and a chart that labels an amber band in amber is
- * unreadable in exactly the place the reader is looking.
+ * THE FILLS ARE THE `-ink` VARIANTS, NOT THE BARE TOKENS, AND THAT IS
+ * MEASURED. WCAG 1.4.11 puts a 3:1 floor on any graphic you must see to read
+ * the content, and a chart band is exactly that. Against the #FAFAFA page the
+ * bare tokens measure `--data-none` 2.46:1, `--data-warn` 2.07:1 and
+ * `--data-good` 2.05:1 — all under the floor. The `-ink` variants measure
+ * 7.24, 4.81 and 4.70.
+ *
+ * It costs nothing in dark mode: globals.css resolves each `-ink` variant to
+ * the same hex as its bare token there (`--data-good-ink` is `#2ECC40`), so
+ * this is a light-mode fix and a dark-mode no-op.
+ *
+ * `ink` stays separate from `fill` because a label still needs the text-safe
+ * value in contexts where the two diverge, and because a chart that labels a
+ * band in the band's own colour is unreadable exactly where the reader looks.
  */
 export const GROUP_STYLE: Record<
   StageGroup,
   { fill: string; ink: string; name: string }
 > = {
   queue: {
-    fill: "var(--data-none)",
+    fill: "var(--data-none-ink)",
     ink: "var(--data-none-ink)",
     name: "Waiting for an analyst",
   },
   review: {
-    fill: "var(--data-warn)",
+    fill: "var(--data-warn-ink)",
     ink: "var(--data-warn-ink)",
     name: "Pulled aside for extra review",
   },
   appeal: {
-    fill: "var(--data-bad)",
+    fill: "var(--data-bad-ink)",
     ink: "var(--data-bad-ink)",
     name: "Challenging a determination",
   },

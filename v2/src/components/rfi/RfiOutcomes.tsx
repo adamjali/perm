@@ -36,28 +36,28 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel }) {
       key: "certified",
       label: "Certified",
       n: certified,
-      fill: "var(--data-good)",
+      fill: "var(--data-good-ink)",
       ink: "var(--data-good-ink)",
     },
     {
       key: "denied",
       label: "Denied",
       n: denied,
-      fill: "var(--data-bad)",
+      fill: "var(--data-bad-ink)",
       ink: "var(--data-bad-ink)",
     },
     {
       key: "withdrawn",
       label: "Withdrawn",
       n: withdrawn,
-      fill: "var(--data-none)",
+      fill: "var(--data-none-ink)",
       ink: "var(--data-none-ink)",
     },
     {
       key: "open",
       label: "No decision yet",
       n: stillOpen,
-      fill: "var(--data-warn)",
+      fill: "var(--data-warn-ink)",
       ink: "var(--data-warn-ink)",
     },
   ];
@@ -73,8 +73,12 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel }) {
           <div
             className="h-full border-r-2 border-border bg-foreground/85"
             style={{ width: `${share(resolved)}%` }}
+            title={`Reached a decision: ${resolved.toLocaleString()} of ${everIssued.toLocaleString()}`}
           />
-          <div className="h-full flex-1 bg-foreground/25" />
+          <div
+            className="h-full flex-1 bg-foreground/25"
+            title={`No decision yet: ${stillOpen.toLocaleString()} of ${everIssued.toLocaleString()}`}
+          />
         </Row>
 
         <div className="my-1 grid grid-cols-[7.5rem_1fr] gap-3">
@@ -95,9 +99,20 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel }) {
         <Row label="How they ended">
           {outcomes.map((s) => (
             <Fragment key={s.key}>{" "}
+            {/*
+              HUE IS NOT THE ONLY CHANNEL, because it cannot be. Certified
+              (#1D8229) and no-decision-yet (#B45309) measure 1.02:1 against
+              each other: near-identical luminance, so they are separable by
+              hue alone and by nothing else. Four categories cannot be spread
+              across a luminance ramp without one of them landing on the page
+              colour. So the bar carries proportion, the legend below carries
+              the name, the count and the share for every segment, and each
+              segment carries its own title.
+            */}
             <div
               className="h-full border-r-2 border-border last:border-r-0"
               style={{ width: `${share(s.n)}%`, backgroundColor: s.fill }}
+              title={`${s.label}: ${s.n.toLocaleString()} of ${everIssued.toLocaleString()} (${share(s.n).toFixed(1)}%)`}
             />
             </Fragment>
           ))}

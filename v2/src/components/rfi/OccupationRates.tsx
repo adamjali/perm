@@ -12,6 +12,14 @@ import type { RfiOccupationCut } from "@/lib/turso/rfi";
  * mirror. A ranking that survives its denominator being changed twice is a
  * ranking about the occupations rather than about the arithmetic.
  *
+ * EVERY RATE CARRIES ITS INTERVAL, because the populations differ by two
+ * orders of magnitude and the point estimates do not say so. Nail technicians
+ * are 15 of 51 and software engineers are 14 of 1,848: the same kind of
+ * number, one of them far shakier. The interval arrives on the row from the
+ * read layer, already computed: this is a SERVER component, and calling
+ * RateBars' `wilsonInterval` from here threw at runtime because RateBars is a
+ * `"use client"` module. Typecheck and jsdom both missed it.
+ *
  * NO DIRECTION COLOUR ON THE MULTIPLE, which is why the shared
  * `BaselineMultiple` from Insight.tsx is not reused here. It paints anything
  * at 2x or more in the denial red, which is correct on the denial-rates page
@@ -57,7 +65,7 @@ export function OccupationRates({ cut }: { cut: RfiOccupationCut }) {
               <span className="order-3 col-span-2 sm:order-2 sm:col-span-1">
                 <span className="flex h-4 items-center">
                   <span
-                    className="block h-full border-2 border-border bg-[var(--data-warn)]"
+                    className="block h-full border-2 border-border bg-[var(--data-warn-ink)]"
                     style={{ width: width(r.rate) }}
                   />
                 </span>
@@ -78,6 +86,12 @@ export function OccupationRates({ cut }: { cut: RfiOccupationCut }) {
                 {r.rfi.toLocaleString()} of {r.filed.toLocaleString()} filed
                 {", "}
                 {r.rfiEmployers.toLocaleString()} employers
+                {r.ci ? (
+                  <>
+                    {" "}
+                    · 95% interval {r.ci.lo.toFixed(1)} to {r.ci.hi.toFixed(1)}%
+                  </>
+                ) : null}
               </span>
             </li>
             </Fragment>

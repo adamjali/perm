@@ -410,6 +410,46 @@ export async function getRfiFunnel(): Promise<RfiFunnel | null> {
 // Which occupations are carrying the open RFIs
 // ---------------------------------------------------------------------------
 
+/**
+ * Wilson score interval for a proportion, in percent.
+ *
+ * A SECOND COPY, DELIBERATELY, AND THE REPO ALREADY MADE THIS CHOICE ONCE.
+ * `RateBars.wilsonInterval` is the original, but RateBars.tsx is a
+ * `"use client"` module, so calling its export from a server component throws
+ * at runtime: "Attempted to call wilsonInterval() from the server but
+ * wilsonInterval is on the client." That is not a type error and jsdom does
+ * not reproduce it, so `pnpm typecheck` and the component tests were both
+ * green while the section was broken in the browser. `src/lib/wageLadder.ts`
+ * hit the same wall and answered it the same way, with an equivalence test
+ * pinning the two together; `rfiWilsonMatchesRateBars` in the tests does that
+ * job here.
+ *
+ * Character-for-character the arithmetic in RateBars. The normal
+ * approximation is wrong exactly where these rates live - small counts near
+ * zero - and would print a negative lower bound.
+ *
+ * Computed HERE rather than in the component because an interval is a property
+ * of the measurement, not of the rendering.
+ */
+export function wilsonInterval(
+  numerator: number,
+  denominator: number,
+  z = 1.96,
+): { lo: number; hi: number } | null {
+  if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0)
+    return null;
+  const p = numerator / denominator;
+  const denom = 1 + (z * z) / denominator;
+  const centre = (p + (z * z) / (2 * denominator)) / denom;
+  const half =
+    (z * Math.sqrt((p * (1 - p)) / denominator + (z * z) / (4 * denominator * denominator))) /
+    denom;
+  return {
+    lo: Math.max(0, (centre - half) * 100),
+    hi: Math.min(100, (centre + half) * 100),
+  };
+}
+
 export interface RfiOccupation {
   title: string;
   rfi: number;
@@ -419,6 +459,8 @@ export interface RfiOccupation {
   filedEmployers: number;
   /** Open RFIs as a percentage of cases filed with this title in the window. */
   rate: number;
+  /** 95% Wilson interval on that rate, in percent. */
+  ci: { lo: number; hi: number } | null;
 }
 
 export interface RfiOccupationCut {
@@ -533,6 +575,7 @@ export async function getRfiOccupations(): Promise<RfiOccupationCut | null> {
       filed: titleFiled,
       filedEmployers,
       rate: (titleRfi / titleFiled) * 100,
+      ci: wilsonInterval(titleRfi, titleFiled),
     });
   }
   return {

@@ -104,7 +104,8 @@ export function StageCohortsChart({
         </div>
       </div>
       <figcaption className="mt-3 text-sm text-muted-foreground">
-        Cases at each stage today, by the month they were filed. Every row is
+        Cases at each stage as of their own last read, by the month they were
+        filed. Every row is
         scaled to its own busiest month and labelled with it, so the rows show
         where a stage sits and not how big it is next to the others.
       </figcaption>
