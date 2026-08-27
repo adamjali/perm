@@ -1071,14 +1071,17 @@ export interface LiveStatusCount {
 /**
  * Every filing month in the live mirror, oldest first.
  *
- * PENDING COMES FROM `is_final`, NOT FROM A STATUS LIST. Verified across all
- * 15 normalised statuses: final is exact, and it keeps working the day the
- * source adds a sixteenth value.
+ * PENDING COMES FROM `is_final`, NOT FROM A STATUS LIST. Verified on the
+ * settled table: zero integrity violations across all 16 statuses. The count
+ * moved from 15 to 16 while this was being built - `DENIED - BALCA DISMISSED`
+ * arrived with one case - which is exactly the failure a hardcoded list would
+ * have absorbed silently.
  *
- * `current_status` is NOT reliably normalised. The backfill fixed the rows it
- * saw, but new rows still arrive in mixed case - 240 of them shared the newest
- * fetched_at when this was written - so anything grouping or filtering on that
- * column goes through UPPER(). Nothing here needs to.
+ * UPPER() ON `current_status` IS KEPT DELIBERATELY. The table is canonical
+ * uppercase now and the ingest ends each run canonical, so it is currently a
+ * no-op. It stays because it costs nothing and the last regression here came
+ * from a running process holding pre-fix code, which no amount of committing
+ * prevents. The pending split does not read this column at all.
  */
 export async function getLiveBacklog(): Promise<LiveCohortMonth[]> {
   const r = await rows<Record<string, unknown>>(

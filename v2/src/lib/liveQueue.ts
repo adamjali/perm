@@ -10,11 +10,12 @@
  * at all. This mirror carries per-case CURRENT status, so it can answer where
  * the queue actually stands rather than where it stood when a quarter closed.
  *
- * KEY OFF `isFinal`, NEVER A STATUS LIST. Verified across all 15 normalised
- * statuses in 284,066 rows: every CERTIFIED / CERTIFIED - EXPIRED / WITHDRAWN
- * / DENIED row is final, every other status is not, with no exceptions. A
- * status list would also have to be revised the day the source adds a
- * sixteenth value, and it silently under-counts until someone notices.
+ * KEY OFF `isFinal`, NEVER A STATUS LIST. Verified on the settled table at
+ * 412,865 rows: zero integrity violations across every status, so final is
+ * exact. It is also the reason nothing broke when the count went from 15
+ * distinct statuses to 16: `DENIED - BALCA DISMISSED` appeared with a single
+ * case, and a hardcoded list would have silently dropped it into the wrong
+ * group while looking entirely healthy.
  */
 
 export interface CohortMonth {

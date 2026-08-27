@@ -18,10 +18,12 @@
  * arrived yet. The page is built and rendered against it regardless, because
  * the SHAPE is settled and only the row count changes.
  *
- * FLIP THIS ONLY ON CONFIRMATION that the load has settled. It is not a
- * feature flag and it is not a preference.
+ * FLIPPED TRUE 2026-08-26 on confirmation: 412,865 cases (99.1% of upstream,
+ * the shortfall being rows that changed status mid-load), two counts twenty
+ * seconds apart identical, zero mixed-case rows, and `is_final` exact across
+ * all 16 statuses. It is not a feature flag and it is not a preference.
  */
-export const MIRROR_COMPLETE = false;
+export const MIRROR_COMPLETE = true;
 
 /** Shown wherever a figure from the mirror is displayed while it loads. */
 export const PROVISIONAL_NOTICE =
