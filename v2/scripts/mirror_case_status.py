@@ -43,6 +43,27 @@ PACE_S = 1.2            # ~42 min for the full corpus
 SOURCE = "permtrack.app/api/watchlist (mirror; underlying: flag.dol.gov case status)"
 
 
+def norm_status(v) -> str | None:
+    """One spelling per status.
+
+    The source emits the SAME status in two casings and the casing is not
+    noise, it is provenance: measured over 162,681 decided rows, UPPERCASE
+    goes with is_disclosed=0 (seen live on FLAG, not yet in a quarterly file)
+    and Title Case with is_disclosed=1 (read out of the disclosure release).
+
+    That distinction is real and worth keeping - but `is_disclosed` already
+    states it explicitly, in a column built for it. Leaving it ALSO encoded
+    in letter case means `WHERE current_status = 'Certified'` returns 39,257
+    of 162,681 certified cases, a quarter of them, with no error and no
+    obvious tell. So the status is canonicalised here, at ingest, rather than
+    with UPPER() at every read site - one of which will eventually be
+    forgotten.
+    """
+    if v is None:
+        return None
+    return " ".join(str(v).upper().split())
+
+
 def log(m: str) -> None:
     print(m, flush=True)
 
@@ -111,7 +132,7 @@ def main() -> int:
         for r in rows:
             args += [
                 r.get("case_number"), (r.get("filing_date") or "")[:10] or None,
-                r.get("current_status"),
+                norm_status(r.get("current_status")),
                 1 if r.get("is_final") else 0, 1 if r.get("is_disclosed") else 0,
                 r.get("employer_name"), r.get("job_title"),
                 (r.get("submitted_date") or "")[:19] or None,
