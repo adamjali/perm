@@ -17,6 +17,24 @@
 import posthog from "posthog-js";
 import { initBotId } from "botid/client/core";
 
+/**
+ * Strip `case=<number>` out of every URL-shaped property on an event.
+ *
+ * String surgery rather than `new URL()`: these properties are sometimes a
+ * bare path ("/perm-case-status?case=X"), which `new URL()` throws on, and a
+ * throw inside before_send would drop the event entirely. Anything without
+ * the parameter is returned untouched, so the common case costs one
+ * `includes` per property.
+ */
+function redactCaseParam(props: Record<string, unknown> | undefined): void {
+  if (!props) return;
+  for (const key of ["$current_url", "$referrer", "$pathname", "url"]) {
+    const v = props[key];
+    if (typeof v !== "string" || !v.includes("case=")) continue;
+    props[key] = v.replace(/([?&]case=)[^&#]*/gi, "$1redacted");
+  }
+}
+
 // ---------------------------------------------------------------------------
 // PostHog — product analytics + client exception capture.
 // Events are sent via the /ingest reverse proxy (next.config.ts rewrites) to
@@ -49,6 +67,22 @@ if (posthogKey) {
       debug: process.env.NODE_ENV === "development",
       before_send: (event) => {
         if (!event) return event;
+
+        // Case numbers never leave for a third party, on ANY event.
+        //
+        // /perm-case-status carries the looked-up case in `?case=` so a
+        // result is shareable and bookmarkable, which means posthog-js would
+        // otherwise put a real government case number in $current_url on
+        // every autocaptured pageview, pageleave and click. That number
+        // resolves to an employer and a job title, so joined to a PostHog
+        // person it links an identified visitor to a specific application.
+        //
+        // Redacted here rather than on the page because $current_url is read
+        // from window.location by the SDK: there is no page-local hook. The
+        // event still carries the path, so the page is still measurable.
+        redactCaseParam(event.properties);
+        redactCaseParam(event.$set);
+
         if (event.event === "$exception") {
           // Build a single string from all exception message sources for filtering.
           // PostHog stores messages in $exception_message AND/OR $exception_list[].value

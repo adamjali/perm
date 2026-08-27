@@ -76,6 +76,17 @@ export interface PriorityDateEstimatorProps {
    * page can honestly show while its cutoff series is stuck in the past.
    */
   currentEmploymentChart?: "Final Action Dates" | "Dates for Filing" | null;
+  /**
+   * How much of this series came through a third-party mirror rather than
+   * from the State Department or a public archive of its own pages.
+   *
+   * The dataset has two provenances and the split is not cosmetic: the newest
+   * bulletins are the ones a verdict is drawn from, and they are the ones the
+   * archive missed. A reader is entitled to know which of the two a number in
+   * front of them came through, and the row carries it, so there is no reason
+   * to average the two into one unqualified claim.
+   */
+  provenance?: { newestIsMirror: boolean; mirrored: number; total: number } | null;
   className?: string;
 }
 
@@ -176,8 +187,8 @@ const LEGEND: {
     show: (s) => s.some((x) => x.state === "date"),
     swatch: () => (
       <>
-        <rect x="0" y="6" width="26" height="10" fill="var(--data-good)" fillOpacity="0.16" />
-        <line x1="0" y1="6" x2="26" y2="6" stroke="var(--primary)" strokeWidth="3" />
+        <rect x="0" y="6" width="26" height="10" fill="var(--data-good-ink)" fillOpacity="0.16" />
+        <line x1="0" y1="6" x2="26" y2="6" stroke="var(--primary-text)" strokeWidth="3" />
       </>
     ),
   },
@@ -186,7 +197,7 @@ const LEGEND: {
     label: "Dates that qualified",
     show: (s) => s.some((x) => x.state === "date"),
     swatch: () => (
-      <rect x="0" y="2" width="26" height="14" fill="var(--data-good)" fillOpacity="0.16" />
+      <rect x="0" y="2" width="26" height="14" fill="var(--data-good-ink)" fillOpacity="0.16" />
     ),
   },
   {
@@ -195,8 +206,8 @@ const LEGEND: {
     show: (s) => s.some((x) => x.state === "current"),
     swatch: () => (
       <>
-        <rect x="0" y="2" width="26" height="14" fill="var(--data-good)" fillOpacity="0.16" />
-        <rect x="0" y="2" width="26" height="3" fill="var(--data-good)" />
+        <rect x="0" y="2" width="26" height="14" fill="var(--data-good-ink)" fillOpacity="0.16" />
+        <rect x="0" y="2" width="26" height="3" fill="var(--data-good-ink)" />
       </>
     ),
   },
@@ -207,7 +218,7 @@ const LEGEND: {
     swatch: () => (
       <>
         <rect x="0" y="2" width="26" height="14" fill="var(--data-bad)" fillOpacity="0.13" />
-        <g stroke="var(--data-bad)" strokeWidth="2.5" strokeOpacity="1">
+        <g stroke="var(--data-bad-ink)" strokeWidth="2.5" strokeOpacity="1">
           <line x1="1" y1="16" x2="15" y2="2" />
           <line x1="9" y1="16" x2="23" y2="2" />
           <line x1="17" y1="16" x2="26" y2="7" />
@@ -240,6 +251,7 @@ export function PriorityDateEstimator({
   today,
   currentBulletinMonth = null,
   currentEmploymentChart = null,
+  provenance = null,
   className,
 }: PriorityDateEstimatorProps) {
   const dateId = useId();
@@ -637,6 +649,26 @@ export function PriorityDateEstimator({
                   Cutoffs change every month, in both directions.
                 </p>
               )}{" "}
+              {provenance && provenance.mirrored > 0 ? (
+                <p className="mt-2 text-base leading-relaxed text-foreground/70">
+                  {provenance.newestIsMirror ? (
+                    <>
+                      That bulletin reached this page through a third-party
+                      mirror rather than from the State Department or an
+                      archive of its own pages, so the figures on it are
+                      second-hand.
+                    </>
+                  ) : (
+                    <>
+                      That bulletin came from an archive of the State
+                      Department&rsquo;s own page.
+                    </>
+                  )}{" "}
+                  {provenance.mirrored} of the {provenance.total} bulletins
+                  held here are mirrored the same way. Every one of them is
+                  checkable against the source.
+                </p>
+              ) : null}{" "}
               <p className="mt-3">
                 <a
                   href={DOS_BULLETIN_URL}
@@ -872,7 +904,7 @@ export function PriorityDateEstimator({
                       y1="0"
                       x2="0"
                       y2="7"
-                      stroke="var(--data-bad)"
+                      stroke="var(--data-bad-ink)"
                       strokeWidth="2.5"
                       strokeOpacity="1"
                     />
@@ -929,7 +961,7 @@ export function PriorityDateEstimator({
                           y={top}
                           width={stepW}
                           height={Math.max(PLOT_BOTTOM - top, 0)}
-                          fill="var(--data-good)"
+                          fill="var(--data-good-ink)"
                           fillOpacity="0.16"
                         />
                         {s.state === "current" ? (
@@ -938,7 +970,7 @@ export function PriorityDateEstimator({
                             y={PAD_T}
                             width={stepW}
                             height="3"
-                            fill="var(--data-good)"
+                            fill="var(--data-good-ink)"
                           />
                         ) : null}
                       </g>
@@ -953,7 +985,7 @@ export function PriorityDateEstimator({
                       key={pts.slice(0, 24)}
                       points={pts}
                       fill="none"
-                      stroke="var(--primary)"
+                      stroke="var(--primary-text)"
                       strokeWidth="3"
                       strokeLinejoin="round"
                       strokeLinecap="round"
@@ -967,7 +999,7 @@ export function PriorityDateEstimator({
                         cx={px(i)}
                         cy={py(Date.parse(s.iso))}
                         r="3.5"
-                        fill="var(--primary)"
+                        fill="var(--primary-text)"
                       />
                     ) : null,
                   )}

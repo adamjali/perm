@@ -197,6 +197,21 @@ export default async function PriorityDateCalculatorPage() {
   // three meant half the options rendered an empty page.
   const categoryCodes = categoriesIn(bulletins);
 
+  // Two provenances in one dataset, and the row records which. 26 of the 36
+  // bulletins came through a mirror rather than from State or a public
+  // archive of its page, including the newest two, which are the ones a
+  // verdict is drawn from. Counted here rather than asserted, so it cannot
+  // drift when the ingest changes.
+  const isMirror = (url: string) => url.includes("permtrack");
+  const provenance =
+    bulletins.length > 0
+      ? {
+          newestIsMirror: isMirror(bulletins[bulletins.length - 1]!.sourceUrl),
+          mirrored: bulletins.filter((b) => isMirror(b.sourceUrl)).length,
+          total: bulletins.length,
+        }
+      : null;
+
   // Decided once, on the server, and passed down. A client component calling
   // new Date() on an otherwise static page disagrees with the server render
   // across a midnight boundary and React flags a hydration mismatch.
@@ -244,6 +259,7 @@ export default async function PriorityDateCalculatorPage() {
           today={today}
           currentBulletinMonth={uscis?.month ?? null}
           currentEmploymentChart={uscis?.employmentChart ?? null}
+          provenance={provenance}
         />
       </section>
 

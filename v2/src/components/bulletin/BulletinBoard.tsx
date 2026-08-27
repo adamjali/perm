@@ -268,8 +268,8 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
                         left: `${left}%`,
                         width: `${width}%`,
                         background: gaining
-                          ? "var(--data-good)"
-                          : "var(--data-warn)",
+                          ? "var(--data-good-ink)"
+                          : "var(--data-warn-ink)",
                       }}
                     />
                     {/* The baseline is the whole point of the drawing, so it

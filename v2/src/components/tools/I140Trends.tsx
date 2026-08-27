@@ -283,15 +283,6 @@ export function I140Trends({ rows }: I140TrendsProps) {
                   {pct(totals.denialRate)} is the blend. Nobody files under{" "}
                   {category} itself: every petition goes in under one of its
                   subtypes, and they aren&rsquo;t deciding alike.
-                  {split.multiple !== null ? (
-                    <>
-                      {" "}
-                      <b className="font-bold text-foreground">
-                        {split.hi.code} is denied {split.multiple.toFixed(1)}{" "}
-                        times as often as {split.lo.code}.
-                      </b>
-                    </>
-                  ) : null}
                 </p>{" "}
                 <ul className="mt-6 space-y-3">
                   {split.children.map((c) => (
@@ -343,9 +334,14 @@ export function I140Trends({ rows }: I140TrendsProps) {
 /**
  * The denial rate as a trajectory.
  *
- * Colours name `var(--primary)` rather than the `text-primary` utility:
- * globals.css remaps that class to the darker text-safe green, which is
- * correct for type and wrong for a graphic mark. A gate enforces this.
+ * Paint names the TOKEN `var(--primary-text)`, never the `text-primary`
+ * utility. The utility is banned on a painted element and that ban is right:
+ * a class named `text-*` used as paint is confusing even when its value is
+ * correct. The token is a different question, and the measurement settles it.
+ * `--primary` is #2ECC40 on a #FAFAFA card, about 2:1, under the 3:1 floor
+ * WCAG 1.4.11 sets for a graphical object required to understand the content.
+ * `--primary-text` is #1D8229 there, 4.70:1, and resolves to #2ECC40 in dark
+ * mode, so it costs nothing in dark and fixes light.
  */
 function DenialRateLine({
   points,
@@ -363,10 +359,29 @@ function DenialRateLine({
     PAD.l + (i / Math.max(1, points.length - 1)) * (W - PAD.l - PAD.r);
   const py = (v: number) => H - PAD.b - (v / max) * (H - PAD.t - PAD.b);
 
-  const line = points
-    .map((p, i) => (p.denialRate === null ? null : `${px(i)},${py(p.denialRate)}`))
-    .filter((s): s is string => s !== null)
-    .join(" ");
+  // Segments, never one polyline. Filtering the unrated quarters out and
+  // joining what is left draws a straight run from the quarter before a gap
+  // to the quarter after it, through a period with no measured rate at all,
+  // while the axis below still prints a label for the missing quarter. Same
+  // defect the priority-date chart had across closed months.
+  const segments: string[] = [];
+  {
+    let run: string[] = [];
+    points.forEach((p, i) => {
+      if (p.denialRate === null) {
+        if (run.length > 1) segments.push(run.join(" "));
+        run = [];
+      } else {
+        run.push(`${px(i)},${py(p.denialRate)}`);
+      }
+    });
+    if (run.length > 1) segments.push(run.join(" "));
+  }
+
+  // A tick labelled to the nearest whole percent is wrong by half its own
+  // value on a low-rate series: E-21 tops out near 2.53%, so the midpoint
+  // gridline sits at 1.45 and printed "1%". Decimals follow the magnitude.
+  const tickDecimals = max < 1 ? 2 : max < 10 ? 1 : 0;
 
   return (
     <section className="mt-10">
@@ -401,21 +416,24 @@ function DenialRateLine({
                 fontSize="12"
                 className="fill-muted-foreground"
               >
-                {v.toFixed(0)}%
+                {v.toFixed(tickDecimals)}%
               </text>
             </Fragment>
           ))}
-          <polyline
-            points={line}
-            fill="none"
-            stroke="var(--primary)"
-            strokeWidth="3"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
+          {segments.map((pts) => (
+            <polyline
+              key={pts.slice(0, 24)}
+              points={pts}
+              fill="none"
+              stroke="var(--primary-text)"
+              strokeWidth="3"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          ))}
           {points.map((p, i) =>
             p.denialRate === null ? null : (
-              <circle key={p.label} cx={px(i)} cy={py(p.denialRate)} r="4" fill="var(--primary)" />
+              <circle key={p.label} cx={px(i)} cy={py(p.denialRate)} r="4" fill="var(--primary-text)" />
             ),
           )}
           {points.map((p, i) => (

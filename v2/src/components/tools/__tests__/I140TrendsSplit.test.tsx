@@ -49,16 +49,30 @@ describe("I140Trends: the subtype split", () => {
     expect(within(panel).getByText("47.26%")).toBeInTheDocument();
   });
 
-  it("states the multiple between the two, with both populations shown", () => {
+  it("shows the populations each rate is over", () => {
     render(<I140Trends rows={ROWS} />);
     const panel = screen.getByText(/what the EB2 rate is an average of/i).closest("section")!;
-    expect(within(panel).getByText(/NIW is denied 18\.7 times as often as E21/)).toBeInTheDocument();
-    // A ratio between two rates is only honest next to the counts it is over.
+    // A rate is only honest next to the count it is over.
     expect(within(panel).getByText(/NIW 47,291, E21 81,602/)).toBeInTheDocument();
     // And it is a rate over past petitions, never odds for one.
     expect(
       within(panel).getByText(/rates over past petitions, not odds for a particular one/i),
     ).toBeInTheDocument();
+  });
+
+  it("does not restate the multiple the page lead already gives", () => {
+    // ONE FACT, ONE NUMBER. The page's own lead section computes the same
+    // ratio from the same rows and rounds it with toFixed(0), so it printed
+    // "about 19 times" while this printed "18.7 times". Two numbers for one
+    // fact on one page is worse than the duplication that produced them.
+    // The lead makes the argument; this measures the decomposition, which is
+    // the half that generalises to EB-1 and EB-3.
+    const { container } = render(<I140Trends rows={ROWS} />);
+    const panel = screen.getByText(/what the EB2 rate is an average of/i).closest("section")!;
+    expect(panel.textContent).not.toMatch(/times as often/i);
+    // The control: the page lead's phrasing is not in this component at all,
+    // so a future edit cannot reintroduce the clash unnoticed.
+    expect(container.textContent).not.toMatch(/a difference of about/i);
   });
 
   it("names the blend as a blend rather than presenting it as a rate", () => {

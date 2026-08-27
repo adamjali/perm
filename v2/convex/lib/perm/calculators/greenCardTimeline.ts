@@ -126,7 +126,7 @@ export function buildGreenCardTimeline(
       id: 'priority-date',
       label: 'Waiting for a visa number',
       detail:
-        'How long depends on the category and the country of birth, and for some it is the longest stage by far. The cutoff dates come only from the monthly visa bulletin, which is not something this can read.',
+        'How long depends on the category and the country of birth, and for some it is the longest stage by far. The cutoff itself is published every month and is shown below; what has no number is the wait, because a cutoff is a position in a queue rather than a length of time, and it moves backwards as well as forwards.',
       certainty: 'unknown',
       months: null,
       controlledBy: 'government',

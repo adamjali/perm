@@ -104,7 +104,7 @@ function chartSvg(container: HTMLElement): SVGSVGElement {
 function qualifyingColumns(container: HTMLElement): SVGRectElement[] {
   return [...chartSvg(container).querySelectorAll("rect")].filter(
     (r) =>
-      r.getAttribute("fill") === "var(--data-good)" &&
+      r.getAttribute("fill") === "var(--data-good-ink)" &&
       r.getAttribute("fill-opacity") === "0.16",
   );
 }
@@ -442,6 +442,32 @@ describe("PriorityDateEstimator: the priority-date line", () => {
     setPriorityDate("2014-01-01");
     expect(chartSvg(container).querySelector("line[stroke-dasharray]")).not.toBeNull();
     expect(container.textContent).not.toContain("sits off the top of the chart");
+  });
+});
+
+describe("PriorityDateEstimator: provenance", () => {
+  it("says when the bulletin the verdict came from is second-hand", () => {
+    // The dataset has two provenances and the split is not cosmetic: the
+    // newest bulletins are the ones a verdict is drawn from, and they are
+    // exactly the ones the Internet Archive stopped capturing.
+    renderTool({ provenance: { newestIsMirror: true, mirrored: 26, total: 36 } });
+    expect(screen.getByText(/through a third-party mirror/i)).toBeInTheDocument();
+    expect(screen.getByText(/26 of the 36 bulletins/)).toBeInTheDocument();
+  });
+
+  it("says so when it came from an archive of the source's own page", () => {
+    renderTool({ provenance: { newestIsMirror: false, mirrored: 26, total: 36 } });
+    expect(
+      screen.getByText(/came from an archive of the State Department/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/second-hand/i)).not.toBeInTheDocument();
+  });
+
+  it("claims nothing about provenance when it was not given any", () => {
+    // Silence beats an invented claim about where a number came from.
+    renderTool();
+    expect(screen.queryByText(/third-party mirror/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/bulletins held here are mirrored/i)).not.toBeInTheDocument();
   });
 });
 

@@ -1,4 +1,5 @@
 import type { BulletinMonth, CountryKey } from "@/lib/perm";
+import { formatMonth } from "@/lib/dolFormat";
 import type { I140Subtype } from "@/lib/processing-times/i140ProcessingTimes";
 import { cn } from "@/lib/utils";
 
@@ -119,7 +120,7 @@ export function PriorityDatePanel({
   return (
     <div className={cn("border-2 border-border bg-background p-4", className)}>
       <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-        Where the line is this month
+        Where the line stood in {formatMonth(bulletin.bulletinMonth) ?? bulletin.bulletinMonth}
       </p>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[20rem] border-collapse text-sm">
@@ -162,8 +163,18 @@ export function PriorityDatePanel({
         </table>
       </div>
       <p className="mt-3 text-sm text-muted-foreground">
-        Final action dates, {bulletin.bulletinMonth} bulletin. A priority date earlier than the cell
-        is current.
+        Final action dates from the{" "}
+        {formatMonth(bulletin.bulletinMonth) ?? bulletin.bulletinMonth} bulletin,
+        which is the newest one held here and not necessarily the one in force.
+        A priority date earlier than the cell is current.{" "}
+        <a
+          href="https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html"
+          className="font-bold underline underline-offset-2 hover:text-primary"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Check the current bulletin
+        </a>
       </p>
     </div>
   );
