@@ -71,6 +71,19 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
+  /*
+   * Build output directory, overridable for a side-by-side build.
+   *
+   * Added 2026-08-27. Several sessions work in this checkout at once, and
+   * `.next` is one directory: a `next build` in one of them replaces the
+   * artifacts four `next start` servers are reading, and a `next dev` holds
+   * the lock. `NEXT_DIST_DIR=.next-<something> pnpm build` gives a session its
+   * own output and leaves everyone else's serving.
+   *
+   * Unset it and nothing changes, so production, Vercel and CI are all
+   * untouched. Add any new value to .gitignore before using it.
+   */
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   poweredByHeader: false,
   // React Compiler disabled — causes ReferenceError with both Turbopack and Webpack:
   // Turbopack: _ref, _caseData_isProfessionalOccupation (variable scoping)

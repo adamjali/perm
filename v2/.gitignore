@@ -17,6 +17,11 @@
 
 # next.js
 /.next/
+# Side-by-side build output. `NEXT_DIST_DIR=.next-<name> pnpm build`
+# lets one session build without replacing the artifacts another
+# session's server is reading. Untracked, these filled `git status`
+# with thousands of build files that a blanket `git add` would commit.
+/.next-*/
 /out/
 
 # production

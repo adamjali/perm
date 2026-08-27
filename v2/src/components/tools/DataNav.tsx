@@ -15,7 +15,9 @@ import Link from "next/link";
 
 export type DataSection =
   | "overview"
+  | "case-status"
   | "calculators"
+  | "queue"
   | "processing-times"
   | "by-state"
   | "wages"
@@ -26,9 +28,32 @@ export type DataSection =
   | "visa-bulletin"
   | "methodology";
 
-const SECTIONS: { key: DataSection; label: string; href: string }[] = [
+export interface DataNavSection {
+  key: DataSection;
+  label: string;
+  href: string;
+}
+
+/**
+ * Exported so `data-nav-sections.test.ts` can check every page's `active`
+ * prop against the real list rather than a second copy of it. A gate that
+ * holds its own transcript of the thing it is checking passes the day they
+ * diverge, which is the day it was needed.
+ */
+export const SECTIONS: DataNavSection[] = [
   { key: "overview", label: "Overview", href: "/tools" },
+  // Second on purpose. Somebody holding a case number has the highest-intent
+  // question on this whole surface, and every other tab is an aggregate.
+  { key: "case-status", label: "Case status", href: "/perm-case-status" },
   { key: "calculators", label: "Calculators", href: "/calculators" },
+  // Added 2026-08-27. Without it `/perm-queue` and every `/perm-queue/<month>`
+  // page passed `active="overview"`, so the tab marked `aria-current="page"`
+  // was Overview, which points at `/tools`. Same defect class as the
+  // `/perm-cases` tab that shipped highlighting Employers: a section with its
+  // own pages and no section key has to borrow somebody else's.
+  // `data-nav-sections.test.ts` now derives the expected key from each page's
+  // own route so a third one cannot be introduced quietly.
+  { key: "queue", label: "Live queue", href: "/perm-queue" },
   { key: "processing-times", label: "Processing times", href: "/perm-processing-times" },
   { key: "by-state", label: "By state", href: "/perm-by-state" },
   { key: "wages", label: "Wages", href: "/perm-wages" },
