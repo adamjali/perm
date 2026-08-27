@@ -42,7 +42,11 @@ SOURCE = "USCIS Form I-140 by Fiscal Year, Quarter and Case Status (uscis.gov)"
 # Quarter block start columns. 17 is the fiscal-year TOTAL and is deliberately
 # absent - ingesting it would double every category's annual figures.
 QUARTER_COLS = {1: 1, 2: 5, 3: 9, 4: 13}
-CODE_RE = re.compile(r"\(([A-Z]{1,2}\d{1,2})\)\s*$")
+# The code in the trailing parens. E11..EW3 end in a digit; NIW does not,
+# and an earlier `[A-Z]{1,2}\d{1,2}` required one, so the National Interest
+# Waiver row - whose volume (92,802) is LARGER than E21 itself - was skipped
+# in silence. Two to four uppercase letters and digits, ending on either.
+CODE_RE = re.compile(r"\(([A-Z]{1,3}\d{0,2})\)\s*$")
 
 
 def discover() -> list[str]:
