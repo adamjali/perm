@@ -24,6 +24,7 @@ import { StageBar, StageLegend } from "@/components/queue/StageBar";
 import { groupByStage, prettyStatus } from "@/components/queue/stages";
 import type { StatusCount } from "@/lib/liveQueue";
 import { getStatusMeaning, KIND_LABEL } from "@/lib/permStatus";
+import { isApproval } from "@/lib/caseStatusVocabulary";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
 import type { CaseLookupResult } from "@/lib/turso/caseLookup";
 import type { CaseWageContext, CohortDuration } from "@/lib/turso/caseContext";
@@ -287,14 +288,30 @@ function Answer({
   publishedAsOf: string | null;
 }) {
   const verdict = meaning ? KIND_LABEL[meaning.kind] : isFinal ? "Decided" : "Pending";
+
+  /*
+   * A DENIAL IS NOT GOOD NEWS, and this used to say it was.
+   *
+   * All four terminal statuses share `kind: "decided"` - CERTIFIED,
+   * CERTIFIED - EXPIRED, DENIED and WITHDRAWN - so the kind alone cannot tell
+   * an approval from a refusal. The old rule was `isFinal ? "good" : "flat"`,
+   * which drew a denied case with a green badge, a ▲ mark and the word
+   * "Denied" set in the brand lime. Someone opening their own case number saw
+   * the success colour on the worst outcome the process has.
+   *
+   * `isApproval` is a lookup against a set of exactly one status rather than a
+   * substring test, precisely so that CERTIFIED - EXPIRED does not read as an
+   * approval on the strength of containing "CERTIFIED".
+   */
+  const approved = status !== null && isApproval(status);
   const direction =
-    meaning?.kind === "action"
+    meaning?.kind === "action" || meaning?.kind === "appeal"
       ? "warn"
-      : meaning?.kind === "appeal"
-        ? "warn"
-        : isFinal
+      : isFinal
+        ? approved
           ? "good"
-          : "flat";
+          : "bad"
+        : "flat";
 
   const sourceBits = [
     check ? `DOL showed this status on ${formatAsOf(check.date)}` : null,
@@ -314,7 +331,14 @@ function Answer({
       {status ? (
         <>
           DOL&apos;s status for this case is{" "}
-          <b className="text-primary-on-ink">{prettyStatus(status)}</b>.
+          <b
+            className={
+              direction === "bad" ? "text-data-bad-on-ink" : "text-primary-on-ink"
+            }
+          >
+            {prettyStatus(status)}
+          </b>
+          .
         </>
       ) : (
         <>This case is in DOL&apos;s records.</>

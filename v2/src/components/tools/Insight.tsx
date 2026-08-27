@@ -18,11 +18,27 @@ import { cn } from "@/lib/utils";
 
 type Direction = "good" | "warn" | "bad" | "flat";
 
+/*
+ * NO TEXT COLOUR HERE, DELIBERATELY. The badge INHERITS from whatever it sits
+ * on, and that is the only thing that works in both places it is used.
+ *
+ * `InsightLede` is an inverted panel - `bg-foreground text-background` - so it
+ * is black in the light theme and near-white in the dark one. This map used to
+ * hardcode `text-foreground`, which on that panel is THE SAME COLOUR AS THE
+ * BACKGROUND: black on black in light, white on white in dark. The badge was
+ * unreadable in both themes, and it looked like a styling nicety rather than a
+ * bug because the border and tint still drew fine.
+ *
+ * Inheriting is correct on an ordinary surface too, where the ambient colour
+ * already is `--foreground`. The backgrounds stay keyed to `--card` rather
+ * than the panel, which is intentional: a tinted chip needs a stable ground,
+ * and at 14-16% over card it stays legible under inherited text either way.
+ */
 const DIRECTION_STYLE: Record<Direction, string> = {
-  good: "border-primary bg-primary/15 text-foreground",
-  warn: "border-[var(--data-warn)] bg-[color-mix(in_srgb,var(--data-warn)_16%,var(--card))] text-foreground",
-  bad: "border-[var(--data-bad)] bg-[color-mix(in_srgb,var(--data-bad)_14%,var(--card))] text-foreground",
-  flat: "border-border bg-card text-foreground",
+  good: "border-primary bg-primary/15",
+  warn: "border-[var(--data-warn)] bg-[color-mix(in_srgb,var(--data-warn)_16%,var(--card))]",
+  bad: "border-[var(--data-bad)] bg-[color-mix(in_srgb,var(--data-bad)_14%,var(--card))]",
+  flat: "border-border bg-card",
 };
 
 const DIRECTION_MARK: Record<Direction, string> = {

@@ -1,0 +1,100 @@
+name: Per-case status mirror
+
+# The ONLY source of a PENDING case status, and the table every case-alert
+# email reads. DOL's quarterly disclosure files carry a decision date on every
+# row, so "what is this case doing right now" is not derivable from them at any
+# effort, and flag.dol.gov's own status search is CAPTCHA-gated.
+#
+# THIS RAN NOWHERE UNTIL NOW. The mirror script existed, was correct, and was
+# invoked by no workflow and no cron - so the table sat frozen at whatever the
+# last manual run left, while `caseAlerts.sweepCaseChanges` ran on schedule
+# against it and faithfully found nothing. An alert product wired to a source
+# with no heartbeat reports "no change" forever and looks like it is working.
+#
+# TWO CADENCES, because the two passes do different jobs:
+#
+#   PENDING, every 6h (~10 min, 493 pages). Only a non-final case can move, so
+#   this covers everything that can change. It is what gives the alerts a
+#   latency we can state out loud: at worst about six hours behind DOL, plus
+#   whatever the upstream's own check lag is. Four passes a day at 1.2s spacing
+#   is roughly 2,000 requests - polite for a source we do not own.
+#
+#   FULL, weekly on Sunday (~42 min, 2,082 pages). Picks up cases added to the
+#   upstream watchlist since the last sweep, and re-reconciles rows that went
+#   final. Weekly rather than daily because a decided case cannot change again
+#   and re-reading 315,000 settled rows daily would be rude and pointless.
+#
+# The two passes checkpoint SEPARATELY (`case_status_pending` vs
+# `case_status`), so the weekly full pass cannot rewind the 6-hourly one.
+#
+# Manual run:
+#   cd v2 && python3 scripts/mirror_case_status.py --pending
+#   cd v2 && python3 scripts/mirror_case_status.py
+
+on:
+  schedule:
+    # pending sweep, every six hours
+    - cron: "15 */6 * * *"
+    # full corpus, Sundays 04:15 UTC, off the hour the pending pass uses
+    - cron: "15 4 * * 0"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "pending (fast) or full (whole corpus)"
+        required: false
+        default: pending
+        type: choice
+        options: [pending, full]
+
+permissions:
+  contents: read
+
+# Never two mirrors at once: they share the upstream's rate budget and the
+# same Turso table. Queue rather than cancel, so a long full pass is not
+# killed halfway by the next pending tick.
+concurrency:
+  group: case-status-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Decide which pass this run is
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MODE="${{ inputs.mode }}"
+          elif [ "${{ github.event.schedule }}" = "15 4 * * 0" ]; then
+            MODE="full"
+          else
+            MODE="pending"
+          fi
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "This run: $MODE"
+
+      - name: Mirror per-case statuses
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          if [ "${{ steps.mode.outputs.mode }}" = "full" ]; then
+            python3 scripts/mirror_case_status.py
+          else
+            python3 scripts/mirror_case_status.py --pending
+          fi
+
+      - name: Remove credentials
+        if: always()
+        working-directory: v2
+        run: rm -f .env.local

@@ -114,6 +114,12 @@
      green on the near-white one (4.70:1). This is the "two greens" from
      Adam's screenshot, made systematic instead of accidental. */
   --primary-on-ink: #2ECC40;
+  /* On the inverted panel (`bg-foreground`), which is BLACK in this theme
+     and near-white in dark. Measured against that panel, not the page:
+     #E05A44 is 5.72:1 on black, #B3271A is 6.24:1 on #FAFAFA. Swapping
+     them gives 3.22:1 and 3.52:1, both under the floor - which is why
+     this mirrors --primary-on-ink rather than reusing --data-bad-ink. */
+  --data-bad-on-ink: #E05A44;
   /* 4.51:1 on #FAFAFA; --destructive stays the brighter fill colour. */
   --destructive-text: #E30000;
   /* Text-safe stage variants; the bare tokens are fills. */
@@ -130,6 +136,7 @@
 
 .dark {
   --primary-on-ink: #1D8229;
+  --data-bad-on-ink: #B3271A;
   /*
    * Dark ground: the fills lift and the "ink" variants become readable ON
    * dark rather than on paper. Measured against --background #0A0A0A:
@@ -275,6 +282,7 @@
   --color-stage-success-ink: var(--stage-success-ink);
   --color-data-good-ink: var(--data-good-ink);
   --color-primary-on-ink: var(--primary-on-ink);
+  --color-data-bad-on-ink: var(--data-bad-on-ink);
   --color-manila: var(--manila);
   --color-manila-dark: var(--manila-dark);
   --color-manila-shadow: var(--manila-shadow);

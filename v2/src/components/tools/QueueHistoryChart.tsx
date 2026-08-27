@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
+import { evenTickIndices } from "@/components/tools/chartTicks";
 
 import { formatMonthShort, formatMonth } from "@/lib/dolFormat";
 import { cn } from "@/lib/utils";
@@ -75,11 +76,37 @@ function QueueHistorySvg({ sorted }: { sorted: QueueSnapshotPoint[] }) {
     d += ` H ${px(p.asOf).toFixed(1)} V ${py(p.frontierMonth).toFixed(1)}`;
   }
 
-  // Y ticks: every distinct frontier month observed (they are few).
-  const yTicks = [...new Set(sorted.map((p) => p.frontierMonth))];
-  // X ticks: first, middle, last snapshot dates.
-  const mid = sorted[Math.floor(sorted.length / 2)]!;
-  const xTicks = [sorted[0]!, mid, sorted[sorted.length - 1]!];
+  /*
+   * GRIDLINES at every observed level, LABELS on a subset.
+   *
+   * This used to label every distinct frontier month on the reasoning that
+   * "they are few". They are few at two snapshots and thirty at thirty: the
+   * chart shipped with "Dec 2024" sitting on top of "Nov 2024" and five
+   * consecutive months overprinted into a smear. The lines still mark every
+   * level the queue actually sat at, because that is information; only the
+   * labels are thinned, using the same helper every other chart on the site
+   * uses rather than a fourth private copy of the arithmetic.
+   */
+  const levels = [...new Set(sorted.map((p) => p.frontierMonth))].sort();
+  const labelled = new Set(
+    evenTickIndices(levels.length, 6).map((i) => levels[i]!),
+  );
+
+  /*
+   * X ticks: first, middle, last - DE-DUPLICATED.
+   *
+   * With two snapshots `Math.floor(2 / 2)` is 1, so "middle" WAS the last
+   * point, and the same date rendered twice at the right-hand edge: once
+   * centred on its own x, once anchored to the frame. On the live page that
+   * read as "2026-0202708". Two readings is the normal state of a series DOL
+   * has only just started publishing, so the thin case is the common one.
+   */
+  const xTicks = [
+    ...new Map(
+      [sorted[0]!, sorted[Math.floor(sorted.length / 2)]!, sorted[sorted.length - 1]!]
+        .map((p) => [p.asOf, p] as const),
+    ).values(),
+  ];
 
   return (
     <div className="-mx-1 overflow-x-auto px-1">
@@ -90,7 +117,7 @@ function QueueHistorySvg({ sorted }: { sorted: QueueSnapshotPoint[] }) {
         aria-label="DOL's analyst review queue month at each published snapshot"
       >
         {/* Grid + y labels */}
-        {yTicks.map((m) => (
+        {levels.map((m) => (
           <g key={m}>
             <line
               x1={PAD.left}
@@ -100,18 +127,20 @@ function QueueHistorySvg({ sorted }: { sorted: QueueSnapshotPoint[] }) {
               stroke="var(--border)"
               strokeOpacity="0.25"
             />
-            <text
-              x={PAD.left - 8}
-              y={py(m) + 4}
-              textAnchor="end"
-              fontSize="12"
-              fontFamily="var(--font-mono)"
-              fontWeight="700"
-              fill="var(--foreground)"
-              fillOpacity="0.7"
-            >
-              {formatMonthShort(m) ?? m}
-            </text>
+            {labelled.has(m) ? (
+              <text
+                x={PAD.left - 8}
+                y={py(m) + 4}
+                textAnchor="end"
+                fontSize="12"
+                fontFamily="var(--font-mono)"
+                fontWeight="700"
+                fill="var(--foreground)"
+                fillOpacity="0.7"
+              >
+                {formatMonthShort(m) ?? m}
+              </text>
+            ) : null}
           </g>
         ))}
 
@@ -119,9 +148,17 @@ function QueueHistorySvg({ sorted }: { sorted: QueueSnapshotPoint[] }) {
         {xTicks.map((p, i) => (
           <text
             key={p.asOf}
-            x={i === 0 ? PAD.left : i === 2 ? W - PAD.right : px(p.asOf)}
+            x={
+              i === 0
+                ? PAD.left
+                : i === xTicks.length - 1
+                  ? W - PAD.right
+                  : px(p.asOf)
+            }
             y={H - PAD.bottom + 24}
-            textAnchor={i === 0 ? "start" : i === 2 ? "end" : "middle"}
+            textAnchor={
+              i === 0 ? "start" : i === xTicks.length - 1 ? "end" : "middle"
+            }
             fontSize="12"
             fontFamily="var(--font-mono)"
             fontWeight="700"

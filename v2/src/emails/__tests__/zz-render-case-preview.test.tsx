@@ -14,12 +14,25 @@
 import { describe, expect, it } from "vitest";
 import { render } from "@react-email/render";
 import { writeFileSync, mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { statusMeaning } from "@/lib/caseStatusVocabulary";
 import { CaseAlertConfirm } from "../CaseAlertConfirm";
 import { CaseStatusChanged } from "../CaseStatusChanged";
 
-const OUT =
-  "/private/tmp/claude-501/-Users-adammohamed-cc-perm-tracker-v2/43f340d7-ecc8-4c9c-afe3-e9f6eadeda4d/scratchpad/emailrender";
+/*
+ * A MACHINE-SPECIFIC ABSOLUTE PATH IN A TEST IS A TEST THAT ONLY PASSES ON ONE
+ * MACHINE. This was hardcoded to a scratchpad directory on the author's laptop,
+ * where it worked, and it took CI down on the first push with
+ * `EACCES: mkdir '/private/tmp/claude-501/...'` - a directory no runner has and
+ * none may create. It failed AFTER the local suite went green, which is exactly
+ * the class of thing a local run cannot catch.
+ *
+ * `tmpdir()` resolves per platform and is writable everywhere: the runner's
+ * RUNNER_TEMP on CI, /var/folders/... on macOS, /tmp on Linux. The subdirectory
+ * name is fixed so the rendered files stay easy to find locally.
+ */
+const OUT = join(tmpdir(), "permtracker-emailrender");
 
 const CONFIRM_URL =
   "https://giant-dragon-464.convex.site/case-alert/confirm?token=EXAMPLE";

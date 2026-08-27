@@ -12,12 +12,14 @@
 import { describe, expect, it } from "vitest";
 import { render } from "@react-email/render";
 import { writeFileSync, mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { QueueAlertConfirm } from "../QueueAlertConfirm";
 import { QueueReached } from "../QueueReached";
 
 describe("render previews for a test send", () => {
   it("writes both emails to /tmp/emailrender", async () => {
-    mkdirSync("/tmp/emailrender", { recursive: true });
+    mkdirSync(join(tmpdir(), "permtracker-emailrender-legacy"), { recursive: true });
 
     const alert = await render(
       QueueReached({
@@ -35,8 +37,8 @@ describe("render previews for a test send", () => {
       }),
     );
 
-    writeFileSync("/tmp/emailrender/alert.html", alert);
-    writeFileSync("/tmp/emailrender/confirm.html", confirm);
+    writeFileSync(join(OUT, "alert.html"), alert);
+    writeFileSync(join(OUT, "confirm.html"), confirm);
 
     // Assert they are real documents, not empty strings - a preview that
     // silently rendered nothing would look exactly like a successful run.
