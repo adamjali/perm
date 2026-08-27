@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { BulletinMonth, CountryKey } from "@/lib/perm";
 import { formatMonth } from "@/lib/dolFormat";
 import type { I140Subtype } from "@/lib/processing-times/i140ProcessingTimes";
@@ -39,12 +40,13 @@ export function I140SubtypePanel({
     <div className={cn("border-2 border-border bg-background p-4", className)}>
       <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
         USCIS published times, by category
-      </p>
+      </p>{" "}
       <ul className="mt-3 space-y-2">
         {subtypes.map((s) => {
           const active = s.code === activeCode;
           return (
-            <li key={s.code} className="grid grid-cols-[1fr_auto] items-center gap-x-3">
+            <Fragment key={s.code}>{" "}
+            <li className="grid grid-cols-[1fr_auto] items-center gap-x-3">
               <div className="min-w-0">
                 <p className={cn("truncate text-sm", active ? "font-bold" : "text-foreground/70")}>
                   {s.label}
@@ -68,9 +70,10 @@ export function I140SubtypePanel({
                 {s.lowMonths}&ndash;{s.highMonths} mo
               </span>
             </li>
+            </Fragment>
           );
         })}
-      </ul>
+      </ul>{" "}
       <p className="mt-3 text-sm text-muted-foreground">
         USCIS, as of {asOf}. The bar above uses{" "}
         {activeCode ? "the category with the most cases pending" : "no single category"}.
@@ -121,20 +124,29 @@ export function PriorityDatePanel({
     <div className={cn("border-2 border-border bg-background p-4", className)}>
       <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
         Where the line stood in {formatMonth(bulletin.bulletinMonth) ?? bulletin.bulletinMonth}
-      </p>
+      </p>{" "}
+      {/* Legal here, unlike between two cells: this space's parent is the
+          wrapper <div>, not a <tr>. Without it the heading welds to the
+          table's first cell - "...stood in September 2026Category". */}
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[20rem] border-collapse text-sm">
           <thead>
             <tr>
               <th className="border-b-2 border-border pb-1 text-left font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                Category
+                Category{" "}
               </th>
+              {/* The separator lives INSIDE each cell, before the closing tag.
+                  A whitespace text node CANNOT be a child of <tr> - React
+                  raises a hydration error and no-whitespace-in-table-rows
+                  gates it, after the same mistake once reached seven files and
+                  44 places. Inside the cell it is legal, invisible, and an
+                  extractor still sees a boundary between columns. */}
               {COUNTRIES.map((c) => (
                 <th
                   key={c.key}
                   className="border-b-2 border-border pb-1 text-right font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground"
                 >
-                  {c.label}
+                  {c.label}{" "}
                 </th>
               ))}
             </tr>
@@ -142,7 +154,7 @@ export function PriorityDatePanel({
           <tbody>
             {rows.map((cat) => (
               <tr key={cat}>
-                <td className="border-b-2 border-border/40 py-2 font-bold">{cat}</td>
+                <td className="border-b-2 border-border/40 py-2 font-bold">{cat}{" "}</td>
                 {COUNTRIES.map((c) => {
                   const cell = cutoff(bulletin.finalAction[cat]?.[c.key]);
                   return (
@@ -153,7 +165,7 @@ export function PriorityDatePanel({
                         cell.tone,
                       )}
                     >
-                      {cell.text}
+                      {cell.text}{" "}
                     </td>
                   );
                 })}

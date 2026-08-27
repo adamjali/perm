@@ -110,7 +110,7 @@ export function NameSpellings({
                 </li>
               </Fragment>
             ))}
-          </ul>
+          </ul>{" "}
           <p className="mt-4 text-sm leading-relaxed text-foreground/70">
             {fmt(residue)} filing{residue === 1 ? "" : "s"} sit on those pages
             rather than this one. The{" "}
