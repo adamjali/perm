@@ -14,9 +14,9 @@
 import { describe, expect, it } from "vitest";
 import { render } from "@react-email/render";
 import { writeFileSync, mkdirSync } from "node:fs";
+import { statusMeaning } from "@/lib/caseStatusVocabulary";
 import { CaseAlertConfirm } from "../CaseAlertConfirm";
 import { CaseStatusChanged } from "../CaseStatusChanged";
-import { statusMeaning } from "@/lib/caseStatusVocabulary";
 
 const OUT =
   "/private/tmp/claude-501/-Users-adammohamed-cc-perm-tracker-v2/43f340d7-ecc8-4c9c-afe3-e9f6eadeda4d/scratchpad/emailrender";
@@ -92,7 +92,7 @@ describe("render case-alert previews for a test send", () => {
         fromStatus: "ANALYST REVIEW",
         toStatus: "DENIED",
         tone: "closed",
-        meaning: "DOL refused the application. A denial carries appeal rights.",
+        meaning: statusMeaning("DENIED"),
         isFinal: true,
         observedAt: "August 25, 2026",
         contextRows: [
@@ -131,6 +131,11 @@ describe("render case-alert previews for a test send", () => {
     expect(rfi.length).toBeGreaterThan(3000);
     expect(denied.length).toBeGreaterThan(3000);
     expect(rfi).toContain("1,799");
+    // The gloss comes from the vocabulary, so this asserts the two agree. An
+    // earlier harness hardcoded "30 days from receipt", which was corrected in
+    // the vocabulary and kept rendering here.
+    expect(rfi).toContain("the one printed on the RFI letter");
+    expect(rfi).not.toContain("30 days from receipt");
     expect(denied).toContain("496");
     expect(confirm).toContain("Psomagen, Inc.");
   });
