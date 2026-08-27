@@ -200,7 +200,7 @@ export function RateTable({
       >
         {label}
         {sortKey === key ? (desc ? " ↓" : " ↑") : ""}
-      </button>
+      </button>{" "}
     </th>
   );
 
@@ -227,7 +227,7 @@ export function RateTable({
               scope="col"
               className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell"
             >
-              vs field
+              vs field{" "}
             </th>
           </tr>
         </thead>

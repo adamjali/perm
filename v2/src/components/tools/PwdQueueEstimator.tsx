@@ -185,7 +185,7 @@ export function PwdQueueEstimator({
             aria-hidden="true"
           />
           <div>
-            <h3 className="font-heading text-base font-black">What this can’t tell you</h3>
+            <h3 className="font-heading text-base font-black">What this can’t tell you</h3>{" "}
             <ul className="mt-3 space-y-2">
               {estimate.caveats.map((c) => (
                 <li key={c} className="text-base leading-relaxed text-foreground/70">
