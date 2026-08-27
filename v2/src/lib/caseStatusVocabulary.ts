@@ -93,21 +93,47 @@ const MEANING: Record<string, string> = {
   "ANALYST REVIEW":
     "A Department of Labor analyst has the application. This is the main " +
     "queue, and it is where most pending PERM cases sit.",
+  // NO DEADLINE IS PUBLISHED FOR AN RFI, and the 30 days that circulates
+  // online is the AUDIT rule wearing the wrong label. "Request for
+  // Information" and "RFI" appear nowhere in 20 CFR 656; the hook is
+  // 656.20(d), which lets the CO "request supplemental information and/or
+  // documentation" and sets no timeframe at all. An earlier draft of this
+  // sentence said "30 days from receipt", which was wrong twice over: wrong
+  // instrument, and the audit clock runs from the LETTER DATE, not receipt.
+  // In an email that reaches someone the day they are told to respond, a
+  // borrowed deadline could cost them the case.
   "RFI ISSUED":
-    "DOL has asked the employer for more documentation. The response window " +
-    "is 30 days from receipt and it is strict.",
+    "DOL has asked the employer for more documentation. The deadline is the " +
+    "one printed on the RFI letter, because DOL doesn't publish a standard " +
+    "response window for these.",
+  // 656.20(a)(2): the letter must "Specify a date, 30 days from the date of
+  // the audit letter". From the LETTER, not receipt. 656.20(c) allows the CO
+  // one discretionary extension of up to 30 days. The second sentence is the
+  // part almost nobody knows, and it is why this entry earns two: a late
+  // response "constitutes a refusal to exhaust available administrative
+  // remedies", so review is forfeited along with the case.
   "PENDING AUDIT RESPONSE":
     "DOL has audited the application and is waiting on the employer's " +
-    "recruitment file. The response window is 30 days.",
+    "recruitment file. The deadline is 30 days from the date on the audit " +
+    "letter, and answering late can cost the right to appeal as well as " +
+    "the case.",
   "SUPERVISED RECRUITMENT":
     "DOL is running the recruitment itself rather than reviewing the " +
     "employer's. This adds months to a case.",
   CERTIFIED:
     "DOL approved the application. The employer has 180 calendar days from " +
     "the certification date to file the I-140, with no extensions.",
+  // EXPIRY IS A CALENDAR EVENT, NOT A FINDING THAT NOBODY FILED. DOL grants
+  // the certification and USCIS receives the I-140; nothing suggests DOL
+  // learns whether one was filed. So a case where the employer filed on day
+  // 30 and one where nobody ever filed BOTH read CERTIFIED - EXPIRED. 57,038
+  // cases carry this status, and telling all of them they lost something
+  // would be wrong for a large share. The second sentence is our explanation
+  // of DOL's mechanics, not DOL's words.
   "CERTIFIED - EXPIRED":
-    "The application was approved and the certification has since lapsed. " +
-    "That happens when the 180-day window to file the I-140 runs out.",
+    "The application was approved and its 180-day window to be filed with " +
+    "USCIS has since passed. If the I-140 went in inside that window it " +
+    "isn't affected, because DOL's status doesn't track USCIS filings.",
   DENIED: "DOL refused the application. A denial carries appeal rights.",
   WITHDRAWN: "The application was withdrawn. DOL will not decide it.",
   "RECONSIDERATION APPEALS":

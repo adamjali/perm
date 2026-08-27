@@ -9,9 +9,19 @@
  * waited fourteen months has been told plenty of guesses already, and the only
  * thing we can offer that nobody else does is figures that are checkable.
  *
- * It says "we saw this change", never "DOL changed this on". Our mirror records
- * when WE observed a move. DOL does not publish when it made one, and the gap
- * between those two facts can be days.
+ * ## Who checked, and when
+ *
+ * It never says "we checked" or "we verified", because we did not. This
+ * product mirrors a third-party tracker that reads DOL, and
+ * `perm_case_status.last_checked_at` is written straight from that tracker's
+ * own field: it is THEIR check time. So the email attributes the status to DOL
+ * and dates it, and attributes nothing to us but the counting.
+ *
+ * It also never claims the present tense. "Your case is in ANALYST REVIEW" is
+ * a claim about now that a batch-refreshed mirror cannot support; measured,
+ * 79.8% of pending cases had not been re-checked within the month. "DOL showed
+ * it as ANALYST REVIEW on 12 August" is a fact, and it lets the reader judge
+ * the age themselves rather than trusting us to have judged it for them.
  *
  * `fromStatus` and `toStatus` both arrive as props and both are always present.
  * The sweep only sends when it has two known, different statuses, so this
@@ -64,6 +74,21 @@ export interface CaseStatusChangedProps {
   meaning?: string | null;
   /** True when this status is final, so the subscription retires itself. */
   isFinal: boolean;
+  /**
+   * When THIS case was last checked, formatted, or null when unknown.
+   *
+   * Not our check and not a claim about now. It comes from
+   * `perm_case_status.last_checked_at`, which the ingest writes straight from
+   * the upstream tracker's own field, so it is the moment the UPSTREAM looked.
+   * Cases are re-checked in batches, so it can be days old, and the reader has
+   * to be able to see that: "your case is in ANALYST REVIEW" is a claim about
+   * the present that this data cannot support, while "DOL showed it as ANALYST
+   * REVIEW on 12 August" is a fact.
+   *
+   * A null renders its own sentence rather than being dropped. A missing check
+   * date silently omitted reads as a fresh observation.
+   */
+  observedAt?: string | null;
 
   /** Counts about where the case sits, already formatted. */
   contextRows: readonly FigureRow[];
@@ -97,6 +122,7 @@ export function CaseStatusChanged({
   tone,
   meaning = null,
   isFinal,
+  observedAt = null,
   contextRows,
   contextProvenance,
   rfiRows = null,
@@ -115,7 +141,10 @@ export function CaseStatusChanged({
 
   return (
     <EmailLayout
-      previewText={`${caseNumber}${employerName ? ` at ${employerName}` : ""}, as of our latest check.`}
+      previewText={
+        `${caseNumber}${employerName ? ` at ${employerName}` : ""}.` +
+        (observedAt ? ` DOL last checked it on ${observedAt}.` : "")
+      }
       hideSettingsLink
       footerText={
         isFinal
@@ -166,8 +195,11 @@ export function CaseStatusChanged({
       )}
 
       <Text className="em-text-secondary" style={styles.caveat}>
-        This is the status our mirror read on its latest check. It isn&rsquo;t a
-        decision on your case and it isn&rsquo;t a prediction of one.
+        {observedAt
+          ? `DOL showed this status when the case was last checked, on ${observedAt}.`
+          : "We don\u2019t have a check date for this case, so we can\u2019t say when DOL showed this."}{" "}
+        It isn&rsquo;t a decision on your case and it isn&rsquo;t a prediction of
+        one.
       </Text>
 
       {rfiRows && rfiRows.length > 0 ? (
@@ -304,8 +336,9 @@ CaseStatusChanged.PreviewProps = {
   toStatus: "RFI ISSUED",
   tone: "live",
   meaning:
-    "DOL has asked the employer for more documentation. The response window is 30 days from receipt and it is strict.",
+    "DOL has asked the employer for more documentation. The deadline is the one printed on the RFI letter, because DOL doesn't publish a standard response window for these.",
   isFinal: false,
+  observedAt: "August 5, 2026",
   contextRows: [
     { label: "Cases now at this status", value: "906" },
     { label: "Filed the same month as yours", value: "8,172" },
