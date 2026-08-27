@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SalaryExplorer } from "@/components/tools/SalaryExplorer";
 import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { FigurePlate } from "@/components/tools/FigurePlate";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -15,6 +16,9 @@ import {
   getWageHistogram,
   getWageStats,
 } from "@/lib/turso/publicData";
+import { getStateLadders, MIN_CASES_FOR_LADDER } from "@/lib/turso/wages";
+import { LadderComb } from "@/components/wages/LadderComb";
+import { SplitLadderNote } from "@/components/wages/SplitLadderNote";
 import { binWidth, clampBins, MIN_FOR_MEDIAN } from "@/lib/wageStats";
 
 /**
@@ -84,6 +88,13 @@ export default async function SalaryExplorerPage() {
   const hi = stats.p95 !== null ? Math.floor(stats.p95 / width) * width : 0;
   const { bins, below, above } = clampBins(raw, lo, hi);
 
+  // The pre-materialised state ladders, which are a different route from the
+  // explorer above: seven rungs from perm_wage_stats rather than five computed
+  // over the reader's filters. They answer a question the controls cannot,
+  // because the explorer shows one selection at a time and this shows every
+  // state against one axis.
+  const stateLadders = await getStateLadders(60);
+
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,
@@ -134,6 +145,28 @@ export default async function SalaryExplorerPage() {
           />
         </Suspense>
       </section>
+
+      {stateLadders.length > 0 ? (
+        <FigurePlate
+          n="01"
+          title="Every state on one axis"
+          subject={`${stateLadders.length} states and territories with ${MIN_CASES_FOR_LADDER}+ certified cases`}
+          caption={
+            <>
+              <SplitLadderNote ladders={stateLadders} className="mb-3" />
+              Each row is one state&apos;s certified offers, cut at seven
+              points, ordered by how many cases it files. These come from the
+              pre-computed cells rather than from the controls above, so they
+              cover the whole window and every state at once. The explorer
+              recomputes the middle five over whatever you select.
+            </>
+          }
+          source="DOL PERM disclosure files, certified cases only"
+          className="mt-12"
+        >
+          <LadderComb ladders={stateLadders} />
+        </FigurePlate>
+      ) : null}
 
       <section className="mt-12">
         <h2 className="font-heading text-2xl font-black">Common questions</h2>

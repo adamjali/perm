@@ -35,6 +35,9 @@ import {
   rateReliability,
 } from "@/components/tools/EntityContext";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import { getLadderByYear, getOccupationStateLadders } from "@/lib/turso/wages";
+import { LadderByYear } from "@/components/wages/LadderByYear";
+import { LadderComb } from "@/components/wages/LadderComb";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import {
   comparables,
@@ -183,7 +186,10 @@ export default async function OccupationPage({
   const group = socGroup(row.code);
   const prefix = row.code ? row.code.trim().slice(0, 2) : null;
 
-  const [stats, dist, near] = await Promise.all([
+  // The materialised wage cells are keyed by SOC code, so an occupation with
+  // no code on file simply has no ladder rather than a wrong one.
+  const wageKey = row.code ?? "";
+  const [stats, dist, near, ladderYears, stateLadders] = await Promise.all([
     getDisclosureStats(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
@@ -197,6 +203,8 @@ export default async function OccupationPage({
       limit: 6,
       ...(prefix ? { codePrefix: prefix } : {}),
     }),
+    wageKey ? getLadderByYear("occupation", wageKey) : Promise.resolve([]),
+    wageKey ? getOccupationStateLadders(wageKey, 16) : Promise.resolve([]),
   ]);
 
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
@@ -371,6 +379,36 @@ export default async function OccupationPage({
               note={`middle of ${fmt(reliability.decided)} decided, too few to rank`}
             />
           </div>
+        </FigurePlate>
+      ) : null}
+
+      {/* The wage percentiles. A single median is the figure that brings
+          people to this page and it is also the one that misleads them: it
+          says nothing about how wide the range is, and an offer can sit two
+          rungs below it while still clearing the prevailing wage. */}
+      {ladderYears.length >= 2 ? (
+        <FigurePlate
+          n="02"
+          title="The wage ladder, year by year"
+          subject={`${displayTitle(row)}, certified offers`}
+          caption="A median answers whether pay moved. The whole ladder answers which part of it moved, and those are not the same question: a distribution can hold its middle while its top stretches away."
+          source="DOL PERM disclosure files, certified cases only"
+          className="mt-10"
+        >
+          <LadderByYear years={ladderYears} />
+        </FigurePlate>
+      ) : null}
+
+      {stateLadders.length >= 2 ? (
+        <FigurePlate
+          n="03"
+          title="The same job, state by state"
+          subject={`${stateLadders.length} states filing enough of this occupation to publish a ladder`}
+          caption="One SOC code, one federal process, and a wage range that moves with the state. A state is included only when it files enough certified cases of this occupation to support seven percentiles; the rest are left out rather than drawn thin."
+          source="DOL PERM disclosure files, certified cases only"
+          className="mt-10"
+        >
+          <LadderComb ladders={stateLadders} />
         </FigurePlate>
       ) : null}
 

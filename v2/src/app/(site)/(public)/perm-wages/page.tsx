@@ -1,11 +1,17 @@
 /**
  * PERM wages by occupation.
  *
- * Every occupation in the current disclosure window with its median
- * offered wage, volume, approval rate and median days: the numbers a
- * beneficiary compares an offer against and an attorney benchmarks a
- * prevailing wage strategy against. All from DOL's own files; nothing
- * modeled, nothing invented.
+ * Every occupation in the current disclosure window with its median offered
+ * wage, volume, approval rate and median days: the numbers a beneficiary
+ * compares an offer against and an attorney benchmarks a prevailing wage
+ * strategy against. All from DOL's own files; nothing modeled, nothing
+ * invented.
+ *
+ * The page leads with a DISTRIBUTION rather than a ranking. A table of
+ * medians was here first and it hid the most striking thing in the data:
+ * ordered by filing volume, the busiest occupations alternate between two pay
+ * scales whose distributions do not touch at any percentile. That is visible
+ * in one drawing and invisible in a column of medians.
  */
 
 import type { Metadata } from "next";
@@ -15,13 +21,21 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { EntityExplorer } from "@/components/tools/EntityExplorer";
+import { FigurePlate } from "@/components/tools/FigurePlate";
 import { fetchEntitySeed } from "@/lib/entitySeed";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import {
+  getVolumeLadders,
+  getWageBandRates,
+  getWageBandRatesByYear,
+} from "@/lib/turso/wages";
+import { LadderComb, TwoMarketsNote } from "@/components/wages/LadderComb";
+import { DenialByWageBand } from "@/components/wages/DenialByWageBand";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 const TITLE = "PERM Salaries by Occupation";
 const DESCRIPTION =
-  "What PERM cases pay: median offered wages by occupation, with volume and approval rates, from DOL's own disclosure files.";
+  "What PERM cases pay: the full wage ladder by occupation, with volume and approval rates, from DOL's own disclosure files.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -46,14 +60,15 @@ function fmtWage(n: number): string {
 }
 
 export default async function PermWagesPage() {
-  const stats = await getDisclosureStats();
-  const { rows: occupations, total: occupationCount } = await fetchEntitySeed("occupation");
+  const [stats, seed, ladders, bandsByYear, bandsPooled] = await Promise.all([
+    getDisclosureStats(),
+    fetchEntitySeed("occupation"),
+    getVolumeLadders(12),
+    getWageBandRatesByYear(),
+    getWageBandRates(),
+  ]);
+  const { rows: occupations, total: occupationCount } = seed;
   const ladder = stats?.wageLadder ?? null;
-
-  // The chart: the ten biggest occupations by volume, bar length = wage, so
-  // the drawing answers "what do the big categories pay" in one look.
-  const topTen = [...occupations].sort((a, b) => b.total - a.total).slice(0, 10);
-  const maxWage = Math.max(1, ...topTen.map((o) => o.medianAnnualWage ?? 0));
 
   const withWages = occupations.filter((o) => o.medianAnnualWage != null);
   const overallMedian = (() => {
@@ -63,6 +78,14 @@ export default async function PermWagesPage() {
       .sort((a, b) => a - b);
     return sorted[Math.floor(sorted.length / 2)] ?? null;
   })();
+
+  // The comb links each row to that occupation's own page. The slug lives on
+  // the entity seed, and the ladder carries the SOC code, so they are joined
+  // here rather than in the query: perm_wage_stats has no slug column and
+  // computing one in a second place is how a detail page 404s from its index.
+  const slugByCode = new Map(
+    occupations.filter((o) => o.code).map((o) => [o.code as string, o.slug]),
+  );
 
   const datasetSchema = {
     "@context": "https://schema.org",
@@ -90,50 +113,13 @@ export default async function PermWagesPage() {
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           The wage on a PERM filing is the wage the employer committed to in a
-          federal filing. These are the medians by occupation for the current
-          disclosure window.
+          federal filing. Here is the whole distribution behind it, by
+          occupation, by state and by year.
         </p>
       </header>
 
       {occupations.length > 0 ? (
         <>
-          {/* The drawing first: the ten biggest occupations, paid what. */}
-          <section className="pop mt-10">
-            <div className="border-2 border-border bg-card p-6 sm:p-8">
-              <h2 className="font-heading text-xl font-black">
-                The ten biggest occupations, and their median wage
-              </h2>
-              <div className="mt-6 space-y-3">
-                {topTen.map((o) => {
-                  const wage = o.medianAnnualWage;
-                  const w = wage == null ? 0 : Math.max(6, (wage / maxWage) * 100);
-                  return (
-                    <div key={o.slug} className="grid grid-cols-[minmax(0,220px)_1fr] items-center gap-3">
-                      <p className="truncate text-sm font-bold" title={o.name}>
-                        {o.name}
-                      </p>
-                      <div className="flex min-w-0 items-center gap-2">
-                        <div
-                          aria-hidden="true"
-                          className="h-6 shrink-0 border-2 border-border bg-primary"
-                          style={{ width: `${w}%`, maxWidth: "calc(100% - 76px)" }}
-                        />
-                        <span className="whitespace-nowrap font-mono text-xs font-bold tabular-nums">
-                          {wage == null ? "—" : fmtWage(wage)}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="mt-5 text-sm text-foreground/60">
-                Bar length is the median offered annual wage; the list is
-                ordered by filing volume. Hourly and other wage units are
-                annualized before the median is taken.
-              </p>
-            </div>
-          </section>
-
           {ladder ? (
             <section className="mt-10 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
               <h2 className="font-heading text-2xl font-black">
@@ -169,15 +155,59 @@ export default async function PermWagesPage() {
             </section>
           ) : null}
 
+          {ladders.length > 0 ? (
+            <FigurePlate
+              n="01"
+              title="Two pay scales, one process"
+              subject={`${ladders.length} busiest occupations, ordered by filing volume`}
+              caption={
+                <>
+                  <TwoMarketsNote ladders={ladders} className="mb-3" />
+                  Each row is one occupation&apos;s certified offers, sorted and
+                  cut at seven points. The order is filing volume, not pay:
+                  ranked by wage these rows would climb steadily, and the thing
+                  worth seeing is that the busiest occupations alternate between
+                  two scales instead. Hourly and other wage units are annualized
+                  before the percentiles are taken.
+                </>
+              }
+              source="DOL PERM disclosure files, certified cases only"
+              className="mt-10"
+            >
+              <LadderComb
+                ladders={ladders}
+                href={(l) => {
+                  const slug = slugByCode.get(l.key);
+                  return slug ? `/perm-wages/${slug}` : null;
+                }}
+              />
+            </FigurePlate>
+          ) : null}
+
+          {bandsPooled.length > 0 ? (
+            <FigurePlate
+              n="02"
+              title="Denial rate by wage band"
+              subject="Certified and denied cases, by fiscal year"
+              caption="Rates are measured, not modelled, and each band carries the number of decided cases behind it. A wage is one attribute of a filing among many, and nothing here says what a particular wage does to a particular case."
+              source="DOL PERM disclosure files"
+              className="mt-10"
+            >
+              <DenialByWageBand byYear={bandsByYear} pooled={bandsPooled} />
+            </FigurePlate>
+          ) : null}
+
           {overallMedian != null ? (
-            <section className="mt-10 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
+            <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
               <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
                 <p className="font-heading text-4xl font-black tabular-nums sm:text-5xl">
                   {fmtWage(overallMedian)}
                 </p>{" "}
-                <p className="max-w-md text-base leading-relaxed text-background/70">
+                <p className="max-w-md text-base leading-relaxed text-foreground/70">
                   Median of the occupation medians, across all{" "}
-                  {occupationCount.toLocaleString("en-US")} occupations.
+                  {occupationCount.toLocaleString("en-US")} occupations. It sits
+                  well below the median case, because most occupations are small
+                  and the largest ones are the best paid.
                 </p>
               </div>
             </section>
@@ -213,22 +243,23 @@ export default async function PermWagesPage() {
         <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Comparing an offer?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            A case&apos;s pace depends on its filing month rather than its wage.
             The{" "}
-            <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-              decision estimator
+            <Link href="/tools/salary-explorer" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              salary explorer
             </Link>{" "}
-            reads the live queue.
+            recomputes the ladder over any occupation, state and year, and shows
+            the same occupation state by state.
           </p>
         </div>
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Setting a wage strategy?</h2>{" "}
+          <h2 className="font-heading text-lg font-black">Wondering about pace?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            Medians by state sit on the{" "}
-            <Link href="/perm-by-state" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-              state map
-            </Link>
-            , and the{" "}
+            A case&apos;s speed depends on its filing month rather than its
+            wage. The{" "}
+            <Link href="/perm-decision-activity" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              decision activity
+            </Link>{" "}
+            page carries how much DOL clears each day, and the{" "}
             <Link href="/methodology" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               methodology
             </Link>{" "}
