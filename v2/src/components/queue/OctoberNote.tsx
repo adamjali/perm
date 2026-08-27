@@ -22,6 +22,16 @@ import { Warning } from "@phosphor-icons/react/ssr";
  * never says processing resumed "when the shutdown ended", which would be a
  * claim about a date we have not read anywhere.
  *
+ * TWO CORPORA, NAMED SEPARATELY EVERY TIME, AND THERE IS A TRAP IN NOT DOING
+ * SO. The filing counts come from the per-case scan, which holds every
+ * application; the determination counts come from DOL's quarterly disclosure
+ * release, which holds only decided ones. In that release October 2025 has 21
+ * determinations AND, coincidentally, 21 receipts, because in a shut month
+ * both collapse toward zero. A reader who finds those two 21s while this page
+ * cites 1,616 filings could reasonably conclude a figure had been copied into
+ * the wrong slot, and a future editor could "fix" the coincidence into an
+ * error. Naming the corpus beside each number is what closes that.
+ *
  * EVERY FIGURE BELOW IS A LITERAL AND THAT IS DELIBERATE. They are counts of
  * a closed month taken from a fixed disclosure window, so they do not move,
  * and a sentence built around a live query would quietly restate itself the
@@ -79,9 +89,11 @@ export function OctoberNote() {
       </h2>{" "}
 
       <p className="mt-4 text-base leading-relaxed text-foreground/80">
-        1,616 applications carry an October 2025 filing date, against 13,629 in
-        September and 15,034 in November. That&rsquo;s a real event at DOL
-        rather than a hole in the scan, and DOL has published what caused it.
+        1,616 applications carry an October 2025 filing date in the per-case
+        scan, which holds every application whether or not it has been
+        decided, against 13,629 in September and 15,034 in November.
+        That&rsquo;s a real event at DOL rather than a hole in the scan, and
+        DOL has published what caused it.
       </p>{" "}
 
       <p className="mt-3 text-base leading-relaxed text-foreground/80">

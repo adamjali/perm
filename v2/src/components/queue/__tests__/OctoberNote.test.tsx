@@ -15,11 +15,15 @@ import { OctoberNote, OCTOBER_2025 } from "../OctoberNote";
  * project's Turso database on 2026-08-27.
  *
  * THIS TEST WAS INVERTED ON 2026-08-27 AND THAT IS THE POINT. It used to
- * assert the word "shutdown" was ABSENT, because no primary source we had
- * named a cause. DOL had published one on a host that refuses automated
- * clients, eleven days after the resumption notice, and it never appeared on
- * flag.dol.gov at all. The assertions now run the other way: the quotation
- * must be present, and what is still unsourced must stay out.
+ * assert the word "shutdown" was ABSENT, because no source WE HAD REACHED
+ * named a cause. That was never the same claim as "no source exists", and it
+ * is the difference that matters: DOL had published one all along, eleven
+ * days after the resumption notice, on a host that refuses automated clients
+ * and that never mirrored it to flag.dol.gov. A parallel research pass
+ * concluded no primary source could be found, which was a statement about
+ * its own tooling rather than about the world. The assertions now run the
+ * other way: the quotation must be present, and what is still unsourced must
+ * stay out.
  *
  * The test does NOT hit the database or the network. A unit test that needs
  * live credentials fails on every machine that lacks them, which teaches
