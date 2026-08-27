@@ -1,13 +1,65 @@
 /**
- * Slugs for the programmatic entity pages.
+ * Identity and URLs for the programmatic entity pages.
  *
- * DOL prints legal entity names, and two of them really do collapse to the
- * same slug: "NORMAN W. FRIES, INC" and "Norman W. Fries, Inc." both reduce
- * to `norman-w-fries-inc`. A collision is not cosmetic here - two pages
- * claiming one URL means one of them is unreachable and the other shows the
- * wrong numbers - so `withUniqueSlugs` disambiguates by appending an index in
- * a stable order, and `findBySlug` is the only sanctioned way back.
+ * Two separate jobs, and conflating them was the original bug.
+ *
+ * `entityKey` decides WHO an entity is, before anything is counted or
+ * ranked. DOL prints the name that went on the form, so one practice
+ * arrives under dozens of spellings.
+ *
+ * `slugify` / `withUniqueSlugs` decide what URL a decided entity gets. The
+ * `-2` suffix still exists, but it now only handles the residue that
+ * survives a real merge - two genuinely different entities whose names
+ * happen to reduce to the same string. It is no longer doing identity's job.
+ *
+ * THE RULES ARE MIRRORED IN `scripts/entity_identity.py` AND
+ * `scripts/store_entities.py`. A key or a slug computed differently in the
+ * writer than in the reader is a detail page that 404s from its own index,
+ * so `src/lib/__tests__/entitySlug.test.ts` and
+ * `scripts/test_entity_identity.py` assert both against ONE fixture file:
+ * `src/lib/__fixtures__/entityIdentity.json`.
  */
+
+/**
+ * Words that say what KIND of thing something is rather than which one.
+ * Stripping them is conservative: two names still only merge when every
+ * remaining word is identical.
+ */
+const ENTITY_NOISE = new Set([
+  "llp", "llc", "inc", "pc", "plc", "pllc", "lp", "ltd", "corp",
+  "corporation", "co", "company", "pa", "chartered", "and", "the",
+]);
+
+/**
+ * A merge key for one real-world entity across its printed spellings.
+ *
+ * The load-bearing step is the re-glue. Punctuation is shredded to spaces
+ * first, so `P.C.` arrived as `p` + `c` and the noise list - which has
+ * always contained "pc" - never saw it. `Jackson Lewis P.C.` and `Jackson
+ * Lewis PC` were two firms with two pages and two ranks, and so were 604
+ * other pairs. Gluing runs of consecutive single-letter tokens back into one
+ * token before filtering fixes exactly that and nothing else: `l l c` ->
+ * `llc` (dropped), `p a` -> `pa` (dropped), `a t t` -> `att` (kept, and
+ * correct for AT&T).
+ */
+export function entityKey(raw: string): string {
+  const cleaned = raw.toLowerCase().replace(/[^a-z0-9 ]+/g, " ");
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  const glued: string[] = [];
+  for (let i = 0; i < words.length; ) {
+    if (words[i]!.length === 1) {
+      let j = i;
+      while (j < words.length && words[j]!.length === 1) j += 1;
+      glued.push(words.slice(i, j).join(""));
+      i = j;
+    } else {
+      glued.push(words[i]!);
+      i += 1;
+    }
+  }
+  const kept = glued.filter((w) => !ENTITY_NOISE.has(w));
+  return kept.length > 0 ? kept.join(" ") : cleaned.trim();
+}
 
 export function slugify(raw: string): string {
   return raw

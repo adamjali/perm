@@ -85,8 +85,13 @@ export function CaseWall({
                   aria-hidden="true"
                   className={cn(
                     "mt-1 w-full border-2",
+                    // The fill is what says "this month is yours" against
+                    // its neighbours, so it is a graphical object required to
+                    // understand the content and owes 3:1. --primary is
+                    // 2.05:1 on paper; --data-good-ink is 4.70:1 and is the
+                    // same hex as --primary in dark mode.
                     s.isSubject
-                      ? "border-foreground bg-primary"
+                      ? "border-foreground bg-data-good-ink"
                       : "border-border bg-foreground/20",
                   )}
                   style={{

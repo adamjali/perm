@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import { CaseStatusResult } from "../CaseStatusResult";
@@ -16,6 +16,22 @@ import type { CaseLookupResult } from "@/lib/turso/caseLookup";
  */
 
 const TODAY = "2026-08-27";
+
+/**
+ * The alert form derives its endpoint from NEXT_PUBLIC_CONVEX_URL and renders
+ * NOTHING when that is absent, which is correct (a form that cannot submit
+ * should not appear) and made these tests silently env-dependent: they passed
+ * locally with .env.local loaded and would have gone red on CI. Pinned here
+ * so the assertions are about the component, not the machine.
+ */
+const REAL_CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_CONVEX_URL = "https://test-deployment.convex.cloud";
+});
+afterAll(() => {
+  if (REAL_CONVEX_URL === undefined) delete process.env.NEXT_PUBLIC_CONVEX_URL;
+  else process.env.NEXT_PUBLIC_CONVEX_URL = REAL_CONVEX_URL;
+});
 
 /** A miniature of the real backlog shape, with the front at 2025-09. */
 function m(month: string, total: number, decided: number): CohortMonth {
@@ -149,22 +165,46 @@ describe("CaseStatusResult, pending case", () => {
     expect(text).toMatch(/cannot watch a case move/i);
   });
 
+  it("offers alerts while the case can still change", () => {
+    const { container } = renderPending();
+    expect(container.textContent).toMatch(/Watch this case/);
+    expect(container.textContent).toMatch(/stop once it&apos;s decided|stop once it's decided/);
+  });
+
+  it("renders no alert form at all when the endpoint is not configured", () => {
+    // A form that cannot submit must not appear. This is the control for the
+    // two assertions above: without it they would pass on a component that
+    // renders the form unconditionally.
+    const saved = process.env.NEXT_PUBLIC_CONVEX_URL;
+    delete process.env.NEXT_PUBLIC_CONVEX_URL;
+    try {
+      const { container } = renderPending();
+      expect(container.textContent).not.toMatch(/Watch this case/);
+    } finally {
+      process.env.NEXT_PUBLIC_CONVEX_URL = saved;
+    }
+  });
+
   it("dates the status rather than implying it is current", () => {
     renderPending();
     expect(screen.getAllByText(/August 25, 2026/).length).toBeGreaterThan(0);
+    // And never claims WE did the checking.
+    expect(document.body.textContent).not.toMatch(/we (checked|verified|read)/i);
   });
 
   it("warns when the status is old, because a case moves in two months", () => {
     const { container } = renderPending({
       live: { ...PENDING.live!, lastCheckedAt: "2026-07-01T10:00:00" },
     });
-    expect(container.textContent).toMatch(/last read 57 days ago/);
+    // "DOL showed this status", not "we last read it": the timestamp is the
+    // upstream tracker's own check time, written straight through.
+    expect(container.textContent).toMatch(/DOL showed this status 57 days ago/);
     expect(screen.getAllByText("flag.dol.gov").length).toBeGreaterThan(0);
   });
 
   it("does not raise the staleness warning for a fresh read", () => {
     const { container } = renderPending();
-    expect(container.textContent).not.toMatch(/last read \d+ days ago/);
+    expect(container.textContent).not.toMatch(/DOL showed this status \d+ days ago/);
   });
 
   it("shows a small employer's counts and withholds the percentage", () => {
@@ -327,6 +367,11 @@ describe("CaseStatusResult, decided case", () => {
     expect(container.textContent).not.toMatch(/Filed before this case/);
   });
 
+  it("does not offer alerts on a case that is already decided", () => {
+    const { container } = renderDecided(null);
+    expect(container.textContent).not.toMatch(/Watch this case/);
+  });
+
   it("drops the elapsed-days count once a case is finished", () => {
     // "Filed January 11, 2024 (959 days ago)" on a case decided in May 2025
     // reads as though something is still running. The 503 it took is the
@@ -337,7 +382,7 @@ describe("CaseStatusResult, decided case", () => {
     const filed = screen.getByText("Filed").nextElementSibling;
     expect(filed).toHaveTextContent("January 11, 2024");
     expect(filed).not.toHaveTextContent(/days ago/);
-    expect(screen.getByText("Status read").nextElementSibling).toHaveTextContent(
+    expect(screen.getByText("Status seen").nextElementSibling).toHaveTextContent(
       /days ago/,
     );
   });
@@ -695,6 +740,37 @@ describe("CaseNotFound", () => {
   it("still refuses to predict anything, on the empty-handed path too", () => {
     const { container } = renderMissing();
     expect(container.textContent).toMatch(/will not tell you/i);
+  });
+
+  it("explains a legacy number rather than showing a month it guessed", () => {
+    // 92,248 real cases use the three-segment form. It carries no readable
+    // filing date (13.4% exact against a 90.5% control), so there is no
+    // cohort to show and the page has to say why instead of guessing one.
+    const { container } = render(
+      <CaseNotFound
+        caseNumber="A-23043-00641"
+        parsed={null}
+        isLegacy
+        cohort={null}
+        wall={null}
+        neighbours={[]}
+        publishedFront="2025-09"
+        publishedAsOf="2026-08-20"
+        mirrorSize={412_865}
+      />,
+    );
+    const text = container.textContent ?? "";
+    expect(text).toMatch(/older case-number format/);
+    expect(text).toMatch(/13% of the time/);
+    expect(text).not.toMatch(/Cases filed in/);
+    // And no alert form: every legacy case is already decided.
+    expect(text).not.toMatch(/Watch this case/);
+  });
+
+  it("offers the alert on a current-format number it cannot find", () => {
+    // Normal for a recent filing, and exactly the case worth watching.
+    const { container } = renderMissing();
+    expect(container.textContent).toMatch(/Watch this case/);
   });
 
   it("renders without a cohort when the month is one we hold nothing for", () => {

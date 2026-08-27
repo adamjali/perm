@@ -108,12 +108,34 @@ describe("getStatusMeaning", () => {
   });
 
   it("does not let an expired certification read as a lost case", () => {
-    // 57,038 cases carry this status and for most of them the I-140 was
-    // filed on time and DOL was simply never told. Leading with "you lost
-    // it" would frighten tens of thousands of people over a bookkeeping
-    // artefact.
+    // 57,038 cases carry this status. Expiry is a CALENDAR event: DOL grants
+    // the certification, USCIS receives the I-140, and nothing suggests DOL
+    // is told when one arrives. So a case filed on day 30 and a case nobody
+    // ever filed both land here. Leading with "you lost it" would frighten
+    // tens of thousands of people whose petition is fine.
     const m = getStatusMeaning("CERTIFIED - EXPIRED")!;
-    expect(m.action).toMatch(/usually means the I-140 was filed in time/);
+    expect(m.action).toMatch(/unaffected/);
+    expect(m.action).toMatch(/our reading rather than DOL/);
+    // And no unsourced frequency claim about which of the two is common.
+    expect(m.action).not.toMatch(/\busually\b|\bmost\b|\bmany\b/i);
+  });
+
+  it("names the consequence of missing BOTH appeal windows on a denial", () => {
+    const m = getStatusMeaning("DENIED")!;
+    expect(m.action).toMatch(/failure to exhaust administrative remedies/);
+  });
+
+  it("states that an RFI is not an audit, which is the reassuring part", () => {
+    expect(getStatusMeaning("RFI ISSUED")!.summary).toMatch(/not an audit/);
+  });
+
+  it("does not cite a section that does not contain the term", () => {
+    // 656.27 lists affirm / direct-to-grant / order-a-hearing. The words
+    // "dismiss" and "dismissal" do not appear in it, so citing it for
+    // DENIED - BALCA DISMISSED was pointing at a definition that is not there.
+    const m = getStatusMeaning("DENIED - BALCA DISMISSED")!;
+    expect(m.cite).toBeNull();
+    expect(m.summary).toMatch(/publishes no definition/i);
   });
 
   it("keeps the house prose rules the rest of the site is gated on", () => {

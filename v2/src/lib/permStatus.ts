@@ -85,7 +85,7 @@ const MEANINGS: Record<string, Omit<StatusMeaning, "status" | "label">> = {
   "RFI ISSUED": {
     kind: "action",
     summary:
-      "DOL has asked the employer for more information before it decides. The regulation lets the Certifying Officer request supplemental information or documentation at any point before a final determination.",
+      "DOL has asked the employer for more information before it decides. The regulation lets the Certifying Officer request supplemental information or documentation at any point before a final determination. An RFI is not an audit: an audit is a formal instrument under a different subsection with a fixed 30-day clock, and DOL runs the two as separate statuses in separate queues.",
     action:
       "The employer has to answer. The letter itself sets the deadline, and missing it is how a case that was going to be certified gets denied instead.",
     deadline:
@@ -159,10 +159,10 @@ const MEANINGS: Record<string, Omit<StatusMeaning, "status" | "label">> = {
   "DENIED - BALCA DISMISSED": {
     kind: "appeal",
     summary:
-      "A denied case whose appeal to BALCA was dismissed. One case in the whole mirror carries this status, so it is close to unique.",
+      "A denied case whose appeal to BALCA ended without the Board ruling on its merits. DOL publishes no definition of this status, and the words dismiss and dismissal do not appear in the section governing BALCA decisions at all, which lists only affirming the denial, directing the officer to grant, or ordering a hearing. One case in the whole snapshot carries it.",
     action: null,
     deadline: null,
-    cite: { label: "20 CFR 656.27", href: CFR("656.27") },
+    cite: null,
   },
   CERTIFIED: {
     kind: "decided",
@@ -179,7 +179,7 @@ const MEANINGS: Record<string, Omit<StatusMeaning, "status" | "label">> = {
     summary:
       "DOL granted the certification and the 180-day window to file an I-140 with it has passed. The regulation is explicit: a certification expires if it is not filed in support of an I-140 petition within 180 calendar days of the date DOL granted it.",
     action:
-      "An expired certification usually means the I-140 was filed in time and DOL's status page simply moved on past the deadline, because DOL is not told when a petition is filed. If no I-140 was filed, the PERM stage has to start again. The employer's attorney knows which of the two happened; this page cannot.",
+      "This is our reading rather than DOL's, because DOL publishes no note on it: expiry is a calendar event, not a finding that nothing was filed. DOL grants the certification, USCIS receives the I-140, and nothing suggests DOL is told when one arrives. So a case where the employer filed on day 30 and a case where nobody ever filed both end up here. If an I-140 went in inside the window it is unaffected. The employer's attorney knows which of the two happened; this page cannot.",
     deadline: null,
     cite: { label: "20 CFR 656.30(b)(1)", href: CFR("656.30") },
   },
@@ -188,7 +188,7 @@ const MEANINGS: Record<string, Omit<StatusMeaning, "status" | "label">> = {
     summary:
       "The Certifying Officer refused the application. The denial letter states the grounds, and there are two routes on from it: reconsideration by the same officer, or review by BALCA.",
     action:
-      "The employer can request reconsideration or ask BALCA to review. A fresh application is also an option and is often the faster one.",
+      "The employer can request reconsideration or ask BALCA to review. Missing both windows counts as a failure to exhaust administrative remedies and the denial becomes final. A fresh application is also an option and is often the faster one.",
     deadline:
       "30 days from the date the denial was issued, for either route.",
     cite: { label: "20 CFR 656.24(g), 656.26(a)", href: CFR("656.24") },

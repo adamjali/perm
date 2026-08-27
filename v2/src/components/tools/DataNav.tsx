@@ -19,12 +19,14 @@ export type DataSection =
   | "calculators"
   | "queue"
   | "processing-times"
+  | "activity"
   | "by-state"
   | "wages"
   | "employers"
   | "attorneys"
   | "cases"
   | "risk"
+  | "rfi-audit"
   | "visa-bulletin"
   | "methodology";
 
@@ -59,12 +61,17 @@ export const SECTIONS: DataNavSection[] = [
   // last place that distinction should be quietly dropped.
   { key: "queue", label: "Queue backlog", href: "/perm-queue" },
   { key: "processing-times", label: "Processing times", href: "/perm-processing-times" },
+  { key: "activity", label: "Daily activity", href: "/perm-decision-activity" },
   { key: "by-state", label: "By state", href: "/perm-by-state" },
   { key: "wages", label: "Wages", href: "/perm-wages" },
   { key: "employers", label: "Employers", href: "/perm-employers" },
   { key: "attorneys", label: "Law firms", href: "/perm-attorneys" },
   { key: "cases", label: "Case search", href: "/perm-cases" },
   { key: "risk", label: "Denial rates", href: "/perm-denial-risk" },
+  // Its own key rather than borrowing "risk". Measured before adding: this
+  // page had ZERO inbound links from anywhere in the app, so a borrowed chip
+  // would have left it unreachable by navigation, not merely mislabelled.
+  { key: "rfi-audit", label: "RFI and audits", href: "/perm-rfi-audit" },
   { key: "visa-bulletin", label: "Visa bulletin", href: "/tools/priority-date-calculator" },
   { key: "methodology", label: "Methodology", href: "/methodology" },
 ];

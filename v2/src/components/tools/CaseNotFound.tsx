@@ -3,6 +3,7 @@ import { Fragment } from "react";
 
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { InsightLede } from "@/components/tools/Insight";
+import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 import { CaseNumberPlate } from "@/components/tools/CaseNumberPlate";
 import { CaseWall, CohortNeighbours } from "@/components/tools/CaseWall";
 import { WontSay } from "@/components/tools/CaseStatusResult";
@@ -24,7 +25,7 @@ import { CASE_NUMBER_ACCURACY } from "@/lib/permCaseNumber";
  * plain statement that the case was not found.
  *
  * WHY IT HAPPENS, and the page says so rather than implying a problem: the
- * per-case mirror starts at filings from mid-2023, DOL's decided files cover
+ * per-case data starts at filings from mid-2023, DOL's decided files cover
  * FY2024 onward, and a case filed in the last few days may simply not have
  * been picked up yet. None of those are anything wrong with the case.
  */
@@ -35,6 +36,16 @@ export interface CaseNotFoundProps {
   caseNumber: string;
   /** Decoded from the number, when it decodes at all. */
   parsed: ParsedCaseNumber | null;
+  /**
+   * The legacy three-segment form, which carries no readable filing date.
+   *
+   * The two formats diverge here and the page has to as well. A current-format
+   * number we cannot find still yields a filing month, so the cohort around it
+   * is real context. A legacy one yields nothing, and showing a month anyway
+   * would mean guessing: reading its middle block as a date is right 13.4% of
+   * the time against 90.5% for the current format.
+   */
+  isLegacy?: boolean;
   cohort: CohortMonth | null;
   wall: Wall | null;
   neighbours: readonly CohortMonth[];
@@ -46,6 +57,7 @@ export interface CaseNotFoundProps {
 export function CaseNotFound({
   caseNumber,
   parsed,
+  isLegacy = false,
   cohort,
   wall,
   neighbours,
@@ -85,13 +97,14 @@ export function CaseNotFound({
         <ul className="mt-4 max-w-3xl space-y-3 text-base leading-relaxed text-foreground/80">
           <li>
             <b className="font-bold text-foreground">It was filed very recently.</b>{" "}
-            The per-case mirror is rebuilt on a schedule, so a case filed in the
-            last few days can be genuinely pending and genuinely absent here.
+            The per-case snapshot is rebuilt on a schedule, so a case filed
+            in the last few days can be genuinely pending and genuinely absent
+            here.
           </li>{" "}
           <li>
             <b className="font-bold text-foreground">It was filed before mid-2023.</b>{" "}
-            The mirror does not reach further back than that, and DOL&apos;s
-            published decision files start at fiscal year 2024.
+            The per-case status data does not reach further back than that, and
+            DOL&apos;s published decision files start at fiscal year 2024.
           </li>{" "}
           <li>
             <b className="font-bold text-foreground">
@@ -104,6 +117,31 @@ export function CaseNotFound({
         </ul>
       </section>
 
+      {isLegacy ? (
+        <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+          <h2 className="font-heading text-xl font-black">
+            This is the older case-number format
+          </h2>{" "}
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
+            Numbers like{" "}
+            <b className="font-mono font-bold text-foreground">{caseNumber}</b>{" "}
+            have three parts rather than four, and DOL used them mostly in 2022
+            and 2023. The current format states its own filing date in the
+            middle digits. This one does not: reading its middle block as a
+            date matches DOL&apos;s recorded receipt date{" "}
+            <b className="font-bold text-foreground">13% of the time</b>, against
+            90% for the current format, so whatever those digits are they are
+            not the filing date.
+          </p>{" "}
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
+            So there is no filing month to read off it and no cohort to show
+            around it. Every case in this format has already been decided, and
+            DOL publishes those in its quarterly files, so a number that is
+            genuinely one of them will be found here. Worth checking the digits
+            against the receipt.
+          </p>
+        </section>
+      ) : null}{" "}
       {parsed ? (
         <section className="mt-8">
           <CaseNumberPlate parsed={parsed} />{" "}
@@ -113,6 +151,12 @@ export function CaseNotFound({
         </section>
       ) : null}
 
+      {/* A number in the current format that we cannot find is usually a
+          recent filing, which is exactly the case worth watching. Legacy
+          numbers are all decided, so they get nothing. */}
+      {!isLegacy ? (
+        <CaseAlertForm caseNumber={caseNumber} className="mt-8" />
+      ) : null}{" "}
       {parsed && cohort ? (
         <section className="mt-12">
           {/* The heading carries the attribution, not a footnote under the
@@ -171,8 +215,8 @@ export function CaseNotFound({
               }
               source={
                 publishedAsOf
-                  ? `Per-case mirror of flag.dol.gov · DOL queue position as of ${formatAsOf(publishedAsOf)}`
-                  : "Per-case mirror of flag.dol.gov"
+                  ? `Per-case statuses via a third-party mirror of DOL's FLAG · DOL queue position as of ${formatAsOf(publishedAsOf)}`
+                  : "Per-case statuses via a third-party mirror of DOL's FLAG"
               }
             >
               {/* Not "Yours": the case was not found, so this column is the
@@ -326,9 +370,10 @@ export function CaseStatusEmpty({
         </ul>
         {mirrorSize ? (
           <p className="mt-5 border-t-2 border-border pt-4 text-sm text-muted-foreground">
-            Searched against {int(mirrorSize)} per-case statuses mirrored from
-            flag.dol.gov, plus DOL&apos;s published decisions for FY2024 to
-            FY2026. Nothing is stored and nothing is sent anywhere else.
+            Searched against {int(mirrorSize)} per-case statuses, which reach
+            us through a third-party tracker that reads DOL&apos;s FLAG pages,
+            plus DOL&apos;s own published decisions for FY2024 to FY2026.
+            Nothing is stored and nothing is sent anywhere else.
           </p>
         ) : null}
       </section>

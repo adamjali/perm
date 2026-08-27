@@ -39,6 +39,16 @@ import {
 } from "@/components/tools/EntityContext";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { NameSpellings } from "@/components/entities/NameSpellings";
+import { SizeBandNote } from "@/components/entities/SizeBandNote";
+import { OccupationMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
+import {
+  absorbedCount,
+  entityFacets,
+  nameVariants,
+  resolveEntity,
+  sizeBand,
+} from "@/lib/turso/entityDetail";
 import {
   comparables,
   fieldDistribution,
@@ -65,6 +75,7 @@ interface Subject {
   certified: number;
   denied: number;
   medianDays: number | null;
+  medianAnnualWage: number | null;
   state: string | null;
 }
 
@@ -77,10 +88,13 @@ interface Subject {
  * page and pass every status check. It throws now, and Next's error
  * boundary decides what the reader sees.
  */
-async function loadSubject(slug: string): Promise<Subject | null> {
-  const row = await getBySlug(KIND, slug);
-  if (!row) return null;
-  return {
+async function loadSubject(
+  slug: string,
+): Promise<{ subject: Subject; canonicalSlug: string } | null> {
+  const found = await resolveEntity(KIND, slug);
+  if (!found) return null;
+  const { row, canonicalSlug } = found;
+  return { canonicalSlug, subject: {
     slug: row.slug,
     name: row.name,
     rank: row.rank,
@@ -88,9 +102,10 @@ async function loadSubject(slug: string): Promise<Subject | null> {
     certified: row.certified,
     denied: row.denied,
     medianDays: row.medianDays,
+    medianAnnualWage: row.medianAnnualWage,
     // DOL's cell is unusable on 16 of 3,208 firms, and "" is not a state.
     state: row.state ? row.state : null,
-  };
+  } };
 }
 
 function median(xs: number[]): number | null {
@@ -123,8 +138,12 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const row = await loadSubject(slug);
-  if (!row) return { title: "Law firm not found" };
+  const found = await loadSubject(slug);
+  if (!found) return { title: "Law firm not found" };
+  // The canonical names the SURVIVING slug. A retired spelling serves the
+  // merged entity's page rather than a redirect (see `resolveEntity`), so
+  // without this the two URLs would compete instead of consolidating.
+  const row = found.subject;
   const reliability = rateReliability(
     row.certified,
     row.denied,
@@ -150,12 +169,12 @@ export async function generateMetadata({
     // crowding out the name. It measures the RENDERED length.
     title: absolute ? { absolute: title } : title,
     description,
-    alternates: { canonical: `${BASE}/${slug}` },
+    alternates: { canonical: `${BASE}/${found.canonicalSlug}` },
     openGraph: {
       ...openGraphBase,
       title: `${title} | PERM Tracker`,
       description,
-      url: `${BASE}/${slug}`,
+      url: `${BASE}/${found.canonicalSlug}`,
     },
   };
 }
@@ -166,8 +185,12 @@ export default async function AttorneyPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const row = await loadSubject(slug);
-  if (!row) notFound();
+  const found = await loadSubject(slug);
+  if (!found) notFound();
+  const row = found.subject;
+  // Every read below keys on the SURVIVING slug, not the URL: a retired
+  // spelling has no rows of its own in the facet or pending tables.
+  const canonicalSlug = found.canonicalSlug;
   // Below the page threshold the page still RENDERS - an attorney searched a
   // two-case firm she knows, found it, and a result that 404s on click is
   // worse than absence. The doorway-page defense moved to metadata: sub-floor
@@ -178,7 +201,7 @@ export default async function AttorneyPage({
   // memoises on them, so all 3,736 share one cohort read. The peer window is
   // wide because the state filter thins it hard: California holds 604 firms
   // and Wyoming a handful.
-  const [stats, dist, near] = await Promise.all([
+  const [stats, dist, near, facets, variants, absorbed] = await Promise.all([
     getDisclosureStats(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
@@ -188,7 +211,11 @@ export default async function AttorneyPage({
       limit: 6,
       ...(row.state ? { state: row.state } : {}),
     }),
+    entityFacets(KIND, canonicalSlug),
+    nameVariants(KIND, canonicalSlug),
+    absorbedCount(KIND, canonicalSlug),
   ]);
+  const band = await sizeBand(KIND, row.rank);
 
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
   const kindTotal = dist.kindTotal;
@@ -256,16 +283,23 @@ export default async function AttorneyPage({
       />
 
       <section className="pop mt-8">
-        <div className="grid [&>*]:min-w-0 grid-cols-2 gap-px border-2 border-border bg-border sm:grid-cols-4">
+        <div className="grid [&>*]:min-w-0 grid-cols-2 gap-px border-2 border-border bg-border sm:grid-cols-5">
           {[
             {
               k: "Cases",
+              wide: false,
               v: fmt(row.total),
               sub: kindTotal > 0 ? `#${fmt(row.rank)} of ${fmt(kindTotal)}` : "",
             },
-            { k: "Certified", v: fmt(row.certified), sub: `${fmt(row.denied)} denied` },
+            {
+              k: "Certified",
+              wide: false,
+              v: fmt(row.certified),
+              sub: `${fmt(row.denied)} denied`,
+            },
             {
               k: "Approval",
+              wide: false,
               v: reliability.ratePct == null ? "—" : `${reliability.ratePct.toFixed(1)}%`,
               sub:
                 reliability.ratePct == null
@@ -273,7 +307,20 @@ export default async function AttorneyPage({
                   : `field ${(100 - baselineDenialPct).toFixed(1)}%`,
             },
             {
+              k: "Median wage",
+              v:
+                row.medianAnnualWage == null
+                  ? "—"
+                  : `$${Math.round(row.medianAnnualWage).toLocaleString("en-US")}`,
+              sub: row.medianAnnualWage == null ? "not on file" : "offered, per year",
+              // Five cards in a two-column grid leave the fifth alone, and an
+              // empty cell in this `gap-px bg-border` grid paints as a slab of
+              // border colour. Spanning both keeps the mobile grid whole.
+              wide: true,
+            },
+            {
               k: "Median days",
+              wide: false,
               v: row.medianDays == null ? "—" : fmt(Math.round(row.medianDays)),
               sub: thinMedian
                 ? `middle of ${fmt(reliability.decided)} decided`
@@ -284,7 +331,12 @@ export default async function AttorneyPage({
                     : `${fmt(Math.abs(Math.round(daysDelta)))} ${daysDelta > 0 ? "slower" : "faster"} than the field`,
             },
           ].map((d) => (
-            <div key={d.k} className="bg-card p-5">
+            <div
+              key={d.k}
+              className={
+                d.wide ? "bg-card p-5 col-span-2 sm:col-span-1" : "bg-card p-5"
+              }
+            >
               <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
                 {d.k}
               </p>{" "}
@@ -347,6 +399,50 @@ export default async function AttorneyPage({
         </FigurePlate>
       ) : null}
 
+      {/* The client list is the module a firm page has and an employer page
+          does not. "Who do they file for" is the question an attorney
+          benchmarking a competitor and a beneficiary checking their own firm
+          both arrive with, and it is a fact rather than an opinion. */}
+      {facets.employer || facets.occupation || facets.state ? (
+        <section className="mt-12">
+          <h2 className="font-heading text-2xl font-black">
+            The practice, in their own filings
+          </h2>{" "}
+          <p className="mt-2 max-w-2xl text-base text-foreground/70">
+            Who they file for, what the jobs are, and where the work sits. All
+            of it is the employer, occupation and worksite named on their own
+            applications.
+          </p>
+          <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
+            {facets.employer ? (
+              <PartyMix
+                rows={facets.employer}
+                total={row.total}
+                title="Who they file for"
+                note="The employers named on the most applications from this firm."
+                hrefBase="/perm-employers"
+              />
+            ) : null}
+            {facets.occupation ? (
+              <OccupationMix rows={facets.occupation} total={row.total} />
+            ) : null}
+            {facets.state ? (
+              <StateMix rows={facets.state} total={row.total} className="lg:col-span-2" />
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      {band ? (
+        <SizeBandNote
+          band={band}
+          subjectMedianDays={row.medianDays}
+          subject="firms"
+          unit="cases"
+          className="mt-10"
+        />
+      ) : null}
+
       <RankLadder
         rank={row.rank}
         kindTotal={kindTotal}
@@ -384,18 +480,56 @@ export default async function AttorneyPage({
         className="mt-12"
       />
 
+      <NameSpellings
+        variants={variants}
+        absorbed={absorbed}
+        subject="firm"
+        hrefBase={BASE}
+        rank={row.rank}
+        className="mt-12"
+      />
+
       <LimitsPanel
         className="mt-12"
         items={[
           {
-            head: "One practice, several spellings",
+            head: "The wage is the job, not the payer",
             body: (
               <>
-                DOL prints the firm name as typed on the form. Setting
-                punctuation and P.C. style aside, 87 names on this list collapse
-                into fewer practices, and two rows for one firm can sit
-                hundreds of ranks apart, so a rank is a rank among printed
-                names rather than among firms.
+                The median offered wage moves almost entirely with what roles their clients
+                {" "}
+                file. A software developer and a poultry cutter are different
+                numbers wherever they are filed, so this figure is not plotted
+                against the field and no percentile is given for it: that
+                comparison would rank occupation mix and call it pay. Wages by
+                occupation are on the{" "}
+                <Link
+                  href="/perm-wages"
+                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                >
+                  wages page
+                </Link>
+                .
+              </>
+            ),
+          },
+          {
+            head: "Nothing here is waiting",
+            body: (
+              <>
+                Every row in DOL&apos;s disclosure files carries a decision
+                date, so a case still in the queue is in none of these counts.
+                The live tracker that does see pending cases records the
+                employer on each one and not the firm, so a firm&apos;s
+                current queue cannot be broken out at all. Where the queue
+                stands overall is on the{" "}
+                <Link
+                  href="/perm-processing-times"
+                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                >
+                  processing times page
+                </Link>
+                .
               </>
             ),
           },

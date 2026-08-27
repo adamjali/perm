@@ -264,37 +264,47 @@ def no(raw: str | None) -> bool:
 
 # Legal suffixes and connectives. DOL prints whatever the filer typed, so one
 # firm arrives as six spellings that differ only in punctuation, case and
-# these words. Stripping them is conservative: two names only merge when
-# every remaining word is identical.
-_ENTITY_NOISE = {
-    "llp", "llc", "inc", "pc", "plc", "pllc", "lp", "ltd", "corp",
-    "corporation", "co", "company", "pa", "chartered", "and", "the",
-}
+# these words.
+#
+# THE RULES MOVED. `entity_key` used to live here with a private noise list,
+# and it shredded punctuation to spaces BEFORE removing that list, so `P.C.`
+# arrived as `p` + `c` and the list - which contains "pc" - never saw it.
+# 604 pairs of firms were two firms with two pages and two ranks because of
+# it. Identity now lives in `scripts/entity_identity.py` alongside the typo
+# pass, with `src/lib/entitySlug.ts` mirroring it and one fixture file
+# asserting both. Re-exported here so `store_cases.py`, which imports
+# `entity_key` from this module to join a case to its entity slug, keeps
+# reading exactly the key the entity table was built with.
+from entity_identity import ENTITY_NOISE as _ENTITY_NOISE  # noqa: E402
+from entity_identity import entity_key, typo_aliases  # noqa: E402
+
+__all_identity__ = (entity_key, typo_aliases, _ENTITY_NOISE)
 
 
-def entity_key(name: str) -> str:
-    """A merge key for one real-world entity across its printed spellings.
-
-    Measured on the FY2026 files: Fragomen appeared as SIX rows totalling
-    30,180 cases against a published 24,059, occupying five extra ranks and
-    giving each spelling its own page claiming to be a distinct firm. The
-    fix belongs here, before ranking, not in slug disambiguation after it.
-    """
-    cleaned = re.sub(r"[^a-z0-9 ]+", " ", name.lower())
-    words = [w for w in cleaned.split() if w not in _ENTITY_NOISE]
-    return " ".join(words) or cleaned.strip()
-
-
-def merge_entities(bucket: dict, name_of) -> list[dict]:
+def merge_entities(bucket: dict, name_of, kind: str | None = None) -> list[dict]:
     """Pool rows that are one entity, keeping the busiest spelling's name.
 
     Medians are recomputed from the POOLED day and wage lists. Averaging the
     per-spelling medians would be a median of medians, which is not the
     median of the combined population and can sit outside it entirely.
+
+    `kind` enables the second identity pass, which folds a single mistyped
+    token into the spelling it was mistyped from. It is off without one, and
+    `typo_aliases` itself refuses every kind but "attorney" - see
+    `scripts/entity_identity.py` for the measurement behind that.
     """
+    alias: dict[str, str] = {}
+    if kind:
+        totals: dict[str, int] = {}
+        for d in bucket.values():
+            k = entity_key(name_of(d))
+            totals[k] = totals.get(k, 0) + d["certified"] + d["denied"] + d.get("withdrawn", 0)
+        alias = typo_aliases(totals, kind)
+
     merged: dict[str, dict] = {}
     for d in bucket.values():
         key = entity_key(name_of(d))
+        key = alias.get(key, key)
         cur = merged.get(key)
         if cur is None:
             merged[key] = {
@@ -1113,7 +1123,7 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
             "medianDays": percentile(d["days"], 50),
         }
         for d in sorted(
-            merge_entities(acc["byEmployer"], lambda x: x["name"]),
+            merge_entities(acc["byEmployer"], lambda x: x["name"], "employer"),
             key=lambda d: -tot(d),
         )
         if tot(d) >= ENTITY_FLOOR
@@ -1129,7 +1139,7 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
             "medianDays": percentile(d["days"], 50),
         }
         for d in sorted(
-            merge_entities(acc["byAttorney"], lambda x: x["name"]),
+            merge_entities(acc["byAttorney"], lambda x: x["name"], "attorney"),
             key=lambda d: -tot(d),
         )
         if tot(d) >= ENTITY_FLOOR

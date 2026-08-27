@@ -144,6 +144,8 @@ export async function pagesEntries(): Promise<Entry[]> {
     // own directive and open ~412,000 URLs of crawl space.
     { url: `${base}/perm-case-status`, lastModified: "2026-08-27" },
     { url: `${base}/perm-denial-risk`, lastModified: dol ?? "2026-08-24" },
+    { url: `${base}/perm-rfi-audit`, lastModified: "2026-08-27" },
+    { url: `${base}/perm-decision-activity`, lastModified: "2026-08-27" },
     { url: `${base}/contact`, lastModified: "2026-08-24" },
     { url: `${base}/terms`, lastModified: "2026-06-15" },
     { url: `${base}/privacy`, lastModified: "2026-08-24" },

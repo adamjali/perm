@@ -1,0 +1,217 @@
+{
+  "_comment": [
+    "ONE fixture set, read by src/lib/__tests__/entitySlug.test.ts (TypeScript)",
+    "and scripts/test_entity_identity.py (Python). The two implementations are",
+    "duplicated on purpose - the writer is Python and the reader is TypeScript -",
+    "so the only thing keeping them honest is that both are asserted here.",
+    "Every name below is printed verbatim somewhere in DOL's disclosure files."
+  ],
+  "keys": [
+    [
+      "FRAGOMEN, DEL REY, BERNSEN & LOEWY, LLP",
+      "fragomen del rey bernsen loewy"
+    ],
+    [
+      "Fragomen, Del Rey, Bernsen Loewy, LLP",
+      "fragomen del rey bernsen loewy"
+    ],
+    [
+      "FRAGOMEN,DELREY,BERNSENLOEWY, LLP",
+      "fragomen delrey bernsenloewy"
+    ],
+    [
+      "Jackson Lewis P.C.",
+      "jackson lewis"
+    ],
+    [
+      "Jackson Lewis PC",
+      "jackson lewis"
+    ],
+    [
+      "Ogletree, Deakins, Nash, Smoak & Stewart, P.C.",
+      "ogletree deakins nash smoak stewart"
+    ],
+    [
+      "Ogletree, Deakins, Nash, Smoak & Stewart",
+      "ogletree deakins nash smoak stewart"
+    ],
+    [
+      "Corporate Immigration Partners, P.C.",
+      "corporate immigration partners"
+    ],
+    [
+      "Corporate Immigration Partners, LLP",
+      "corporate immigration partners"
+    ],
+    [
+      "Fredrikson & Byron, P.A.",
+      "fredrikson byron"
+    ],
+    [
+      "Fredrikson & Byron PA",
+      "fredrikson byron"
+    ],
+    [
+      "SAMSUNG AUSTIN SEMICONDUCTOR, L.L.C.",
+      "samsung austin semiconductor"
+    ],
+    [
+      "SAMSUNG AUSTIN SEMICONDUCTOR, LLC",
+      "samsung austin semiconductor"
+    ],
+    [
+      "Ernst & Young U.S. LLP",
+      "ernst young us"
+    ],
+    [
+      "AT&T Services, Inc.",
+      "at t services"
+    ],
+    [
+      "Amazon.com Services LLC",
+      "amazon com services"
+    ],
+    [
+      "Microsoft Corporation",
+      "microsoft"
+    ],
+    [
+      "The Company",
+      "the company"
+    ],
+    [
+      "&&&",
+      ""
+    ]
+  ],
+  "keys_comment": [
+    "'The Company' reduces to nothing once 'the', 'company' are stripped, so the",
+    "fallback returns the cleaned string rather than an empty key - two entities",
+    "named only out of noise words must not all collapse into one.",
+    "'Ernst & Young U.S. LLP' proves the re-glue keeps a word that is not noise:",
+    "'u s' -> 'us', so it does not merge with plain 'Ernst & Young LLP'.",
+    "'AT&T' shreds to 'at' + 't' and only the lone 't' is a single letter, so",
+    "the run is one character long and the key stays 'at t services'."
+  ],
+  "must_not_merge": [
+    [
+      "NVIDIA Corporation",
+      "Vidian, Inc."
+    ],
+    [
+      "Twilio, Inc.",
+      "Wiliot, Inc."
+    ],
+    [
+      "Seagen Inc.",
+      "Seamgen LLC"
+    ],
+    [
+      "Centra Health, Inc.",
+      "CENTURA HEALTH CORPORATION"
+    ],
+    [
+      "University of Utah",
+      "UNIVERSITY OF IDAHO"
+    ],
+    [
+      "Hartzman Law Firm, LLC",
+      "Hartman Law Firm, LLC"
+    ],
+    [
+      "Peters Immigration Law, PC",
+      "Powers Immigration Law"
+    ],
+    [
+      "Curtis Law Firm, PLLC",
+      "Currie Law Firm"
+    ],
+    [
+      "MARKAN LAW, LLC",
+      "martin law llc"
+    ],
+    [
+      "Law Offices of Lee & Associates",
+      "Law Offices of Yang & Associates, PLLC"
+    ],
+    [
+      "Amazon.com Services LLC",
+      "Amazon Development Center U.S., Inc."
+    ],
+    [
+      "Law Offices of Lee & Associates",
+      "Law Offices of Li & Associates"
+    ]
+  ],
+  "must_not_merge_comment": [
+    "Each pair was PROPOSED by an earlier, looser version of the typo rule and",
+    "is two different parties. They are the reason same-length substitutions are",
+    "refused, one-token keys are skipped, and a matching token has to carry",
+    "meaning: Hartzman/Hartman agree only on 'law' and 'firm'."
+  ],
+  "typo_merges": [
+    [
+      "FRAGOMEN, DEL REY, BERNSEN & LOEWY, LLP",
+      "Fragomen, Del Rey, Bersen Loewy, LLP"
+    ],
+    [
+      "Vialto Partners LLP",
+      "Vilato Partners LLP"
+    ],
+    [
+      "Morgan Lewis & Bockius LLP",
+      "Morgan, Lewis & Bokcius LLP"
+    ],
+    [
+      "LAW OFFICE OF THOMAS V. ALLEN, PLLC.",
+      "LAW OFFICES OF THOMAS V. ALLEN, PLLC."
+    ],
+    [
+      "Saltzman Evinch PLLC",
+      "Saltman Evinch PLLC"
+    ],
+    [
+      "Higgs, Fletcher, & Mack LLP",
+      "Higgs Flectcher & Mack LLP"
+    ],
+    [
+      "FRAGOMEN, DEL REY, BERNSEN & LOEWY, LLP",
+      "Fragomen, Del Rey, Bernsen Lowey, LLP"
+    ],
+    [
+      "Fredrikson & Byron, P.A.",
+      "Fredrikson Bryon, P.A."
+    ]
+  ],
+  "typo_merges_comment": [
+    "The first name in each pair is the busier spelling and must win. Every one",
+    "is an insertion, a deletion or a transposition inside a single token, with",
+    "at least one meaningful token matching exactly on both sides.",
+    "ATTORNEYS ONLY - see scripts/entity_identity.py for the measurement that",
+    "disqualified this rule for employers.",
+    "Loewy/Lowey and Byron/Bryon are five letters, which is why the transposition",
+    "floor is 5 and the insertion floor is 6. Lee/Li stays refused at three."
+  ],
+  "slugs": [
+    [
+      "Microsoft Corporation",
+      "microsoft-corporation"
+    ],
+    [
+      "JPMORGAN CHASE & CO.",
+      "jpmorgan-chase-co"
+    ],
+    [
+      "Ernst & Young U.S. LLP",
+      "ernst-young-u-s-llp"
+    ],
+    [
+      "Trailing punctuation, ",
+      "trailing-punctuation"
+    ],
+    [
+      "&&&",
+      ""
+    ]
+  ]
+}

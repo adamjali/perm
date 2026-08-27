@@ -15,6 +15,9 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { EntityExplorer } from "@/components/tools/EntityExplorer";
 import { fetchEntitySeed } from "@/lib/entitySeed";
+import { PendingLeaderboard } from "@/components/entities/PendingLeaderboard";
+import { pendingLeaders } from "@/lib/turso/entityDetail";
+import { getFreshness } from "@/lib/turso/publicData";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 const TITLE = "Every PERM Employer, Ranked";
@@ -47,7 +50,9 @@ export default async function PermEmployersPage() {
   // Seeded from the entity TABLE, not the aggregate document. The aggregate
   // is capped at 250 rows per kind to fit Convex's 1 MB document limit, so
   // a page built on it could only ever show 250 of 12,240 sponsors.
-  const { rows: employers, total: employerCount } = await fetchEntitySeed("employer");
+  const [{ rows: employers, total: employerCount }, leaders, freshness] =
+    await Promise.all([fetchEntitySeed("employer"), pendingLeaders(10), getFreshness()]);
+  const mirrorAsOf = freshness["perm-case-status"]?.asOf ?? null;
 
   const topTen = employers.slice(0, 10);
   const maxTotal = Math.max(1, ...topTen.map((e) => e.total));
@@ -118,13 +123,17 @@ export default async function PermEmployersPage() {
             </div>
           </section>
 
+          <PendingLeaderboard leaders={leaders} asOf={mirrorAsOf} n="01" className="mt-10" />
+
           <section className="mt-12">
             <h2 className="font-heading text-2xl font-black">
               All {employerCount.toLocaleString("en-US")} sponsors
             </h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
-              DOL prints legal entity names, so a company you know by one name
-              may appear under several.
+              DOL prints the legal entity name typed on the form. Spellings that
+              differ only by punctuation or a company suffix are counted as one
+              sponsor here, but a group filing through several subsidiaries
+              still appears as several rows.
             </p>
             <div className="mt-6">
               <EntityExplorer kind="employer" rows={employers} total={employerCount} />
@@ -174,7 +183,7 @@ export default async function PermEmployersPage() {
           </p>
         </div>
       </section>
-      <DataProvenance datasets={["perm-cases", "entities"]} />
+      <DataProvenance datasets={["perm-cases", "entities", "perm-case-status"]} />
     </div>
   );
 }

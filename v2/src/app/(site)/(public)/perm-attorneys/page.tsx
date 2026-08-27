@@ -119,8 +119,11 @@ export default async function PermAttorneysPage() {
               All {firmCount.toLocaleString("en-US")} firms
             </h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
-              Spellings of one firm are pooled, so a practice DOL prints six
-              ways counts once. Filter by the state the firm files from.
+              Spellings that differ by punctuation, a legal suffix or a single
+              mistyped letter are pooled, so a practice DOL prints several ways
+              counts once. Spellings that differ by more than that stay
+              separate, and each firm&apos;s page lists the ones near it.
+              Filter by the state the firm files from.
             </p>
             <div className="mt-6">
               <EntityExplorer kind="attorney" rows={attorneys} total={firmCount} />

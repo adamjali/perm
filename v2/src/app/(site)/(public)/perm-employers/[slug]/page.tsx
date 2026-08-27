@@ -37,7 +37,19 @@ import {
   entityTitle,
   rateReliability,
 } from "@/components/tools/EntityContext";
-import { getDisclosureStats } from "@/lib/turso/publicData";
+import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
+import { LiveQueueBand } from "@/components/entities/LiveQueueBand";
+import { NameSpellings } from "@/components/entities/NameSpellings";
+import { SizeBandNote } from "@/components/entities/SizeBandNote";
+import { OccupationMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
+import {
+  absorbedCount,
+  entityFacets,
+  entityPending,
+  nameVariants,
+  resolveEntity,
+  sizeBand,
+} from "@/lib/turso/entityDetail";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import {
   comparables,
@@ -65,6 +77,7 @@ interface Subject {
   certified: number;
   denied: number;
   medianDays: number | null;
+  medianAnnualWage: number | null;
 }
 
 /**
@@ -76,10 +89,13 @@ interface Subject {
  * page and pass every status check. It throws now, and Next's error
  * boundary decides what the reader sees.
  */
-async function loadSubject(slug: string): Promise<Subject | null> {
-  const row = await getBySlug(KIND, slug);
-  if (!row) return null;
-  return {
+async function loadSubject(
+  slug: string,
+): Promise<{ subject: Subject; canonicalSlug: string } | null> {
+  const found = await resolveEntity(KIND, slug);
+  if (!found) return null;
+  const { row, canonicalSlug } = found;
+  return { canonicalSlug, subject: {
     slug: row.slug,
     name: row.name,
     rank: row.rank,
@@ -87,7 +103,8 @@ async function loadSubject(slug: string): Promise<Subject | null> {
     certified: row.certified,
     denied: row.denied,
     medianDays: row.medianDays,
-  };
+    medianAnnualWage: row.medianAnnualWage,
+  } };
 }
 
 function median(xs: number[]): number | null {
@@ -118,8 +135,9 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const row = await loadSubject(slug);
-  if (!row) return { title: "Employer not found" };
+  const found = await loadSubject(slug);
+  if (!found) return { title: "Employer not found" };
+  const row = found.subject;
   const reliability = rateReliability(
     row.certified,
     row.denied,
@@ -150,12 +168,12 @@ export async function generateMetadata({
     // looked at the base and let 15% of these render past 60.
     title: absolute ? { absolute: title } : title,
     description,
-    alternates: { canonical: `${BASE}/${slug}` },
+    alternates: { canonical: `${BASE}/${found.canonicalSlug}` },
     openGraph: {
       ...openGraphBase,
       title: `${title} | PERM Tracker`,
       description,
-      url: `${BASE}/${slug}`,
+      url: `${BASE}/${found.canonicalSlug}`,
     },
   };
 }
@@ -166,8 +184,12 @@ export default async function EmployerPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const row = await loadSubject(slug);
-  if (!row) notFound();
+  const found = await loadSubject(slug);
+  if (!found) notFound();
+  const row = found.subject;
+  // Every read below keys on the SURVIVING slug, not the URL: a retired
+  // spelling has no rows of its own in the facet or pending tables.
+  const canonicalSlug = found.canonicalSlug;
   // Below the page threshold the page still RENDERS - an attorney searched a
   // two-case firm she knows, found it, and a result that 404s on click is
   // worse than absence. The doorway-page defense moved to metadata: sub-floor
@@ -177,16 +199,24 @@ export default async function EmployerPage({
   // The three context reads run together. `fieldDistribution` takes the same
   // arguments on every page of this kind, and memoises on them, so all 16,305
   // sponsor pages share one cohort read rather than each re-reading 1,338 rows.
-  const [stats, dist, near] = await Promise.all([
-    getDisclosureStats(),
-    fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
-    comparables({
-      kind: KIND,
-      rank: row.rank,
-      span: 60,
-      limit: 6,
-    }),
-  ]);
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness] =
+    await Promise.all([
+      getDisclosureStats(),
+      fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
+      comparables({
+        kind: KIND,
+        rank: row.rank,
+        span: 60,
+        limit: 6,
+      }),
+      entityPending(KIND, canonicalSlug),
+      entityFacets(KIND, canonicalSlug),
+      nameVariants(KIND, canonicalSlug),
+      absorbedCount(KIND, canonicalSlug),
+      getFreshness(),
+    ]);
+  const band = await sizeBand(KIND, row.rank);
+  const mirrorAsOf = freshness["perm-case-status"]?.asOf ?? null;
 
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
   const kindTotal = dist.kindTotal;
@@ -249,20 +279,23 @@ export default async function EmployerPage({
       />
 
       <section className="pop mt-8">
-        <div className="grid [&>*]:min-w-0 grid-cols-2 gap-px border-2 border-border bg-border sm:grid-cols-4">
+        <div className="grid [&>*]:min-w-0 grid-cols-2 gap-px border-2 border-border bg-border sm:grid-cols-5">
           {[
             {
               k: "Filings",
+              wide: false,
               v: fmt(row.total),
               sub: kindTotal > 0 ? `#${fmt(row.rank)} of ${fmt(kindTotal)}` : "",
             },
             {
               k: "Certified",
+              wide: false,
               v: fmt(row.certified),
               sub: `${fmt(row.denied)} denied`,
             },
             {
               k: "Approval",
+              wide: false,
               v: reliability.ratePct == null ? "—" : `${reliability.ratePct.toFixed(1)}%`,
               sub:
                 reliability.ratePct == null
@@ -270,7 +303,20 @@ export default async function EmployerPage({
                   : `field ${(100 - baselineDenialPct).toFixed(1)}%`,
             },
             {
+              k: "Median wage",
+              v:
+                row.medianAnnualWage == null
+                  ? "—"
+                  : `$${Math.round(row.medianAnnualWage).toLocaleString("en-US")}`,
+              sub: row.medianAnnualWage == null ? "not on file" : "offered, per year",
+              // Five cards in a two-column grid leave the fifth alone, and an
+              // empty cell in this `gap-px bg-border` grid paints as a slab of
+              // border colour. Spanning both keeps the mobile grid whole.
+              wide: true,
+            },
+            {
               k: "Median days",
+              wide: false,
               v: row.medianDays == null ? "—" : fmt(Math.round(row.medianDays)),
               sub: thinMedian
                 ? `middle of ${fmt(reliability.decided)} decided`
@@ -281,7 +327,12 @@ export default async function EmployerPage({
                     : `${fmt(Math.abs(Math.round(daysDelta)))} ${daysDelta > 0 ? "slower" : "faster"} than the field`,
             },
           ].map((d) => (
-            <div key={d.k} className="bg-card p-5">
+            <div
+              key={d.k}
+              className={
+                d.wide ? "bg-card p-5 col-span-2 sm:col-span-1" : "bg-card p-5"
+              }
+            >
               <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
                 {d.k}
               </p>{" "}
@@ -292,14 +343,27 @@ export default async function EmployerPage({
         </div>
       </section>
 
-      {/* The page's own question, drawn: where does this sponsor sit in the
-          field? A stat card states a number; only the distribution says
-          whether that number is unusual. The population is every sponsor whose
+      {/* The live queue, before the history. Every figure above this point
+          comes from decided cases; this is the only module that can see a
+          case that is still waiting, and it is the thing a reader with a
+          case at this sponsor came for. */}
+      {pending ? (
+        <LiveQueueBand
+          pending={pending}
+          subject="sponsor"
+          n="01"
+          asOf={mirrorAsOf}
+          className="mt-10"
+        />
+      ) : null}
+
+      {/* Where does this sponsor sit in the field? A stat card states a
+          number; only the distribution says whether that number is unusual. The population is every sponsor whose
           case count can carry a rate, which is the only denominator these two
           measures can honestly be read against. */}
       {dist.cohort >= 8 ? (
         <FigurePlate
-          n="01"
+          n={pending ? "02" : "01"}
           title="Position in the field"
           subject={`${fmt(dist.cohort)} sponsors with ${dist.minDecided}+ decided`}
           caption={
@@ -349,6 +413,47 @@ export default async function EmployerPage({
         </FigurePlate>
       ) : null}
 
+      {facets.occupation || facets.state || facets.attorney ? (
+        <section className="mt-12">
+          <h2 className="font-heading text-2xl font-black">
+            What they file, and where
+          </h2>{" "}
+          <p className="mt-2 max-w-2xl text-base text-foreground/70">
+            A rank says how much. It says nothing about what the work is, which
+            is the part a job offer from this sponsor actually turns on.
+          </p>
+          <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
+            {facets.occupation ? (
+              <OccupationMix
+                rows={facets.occupation}
+                total={row.total}
+                className="lg:row-span-2"
+              />
+            ) : null}
+            {facets.state ? <StateMix rows={facets.state} total={row.total} /> : null}
+            {facets.attorney ? (
+              <PartyMix
+                rows={facets.attorney}
+                total={row.total}
+                title="Who files for them"
+                note="The law firm named on the application."
+                hrefBase="/perm-attorneys"
+              />
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      {band ? (
+        <SizeBandNote
+          band={band}
+          subjectMedianDays={row.medianDays}
+          subject="sponsors"
+          unit="filings"
+          className="mt-10"
+        />
+      ) : null}
+
       <RankLadder
         rank={row.rank}
         kindTotal={kindTotal}
@@ -382,9 +487,39 @@ export default async function EmployerPage({
         className="mt-12"
       />
 
+      <NameSpellings
+        variants={variants}
+        absorbed={absorbed}
+        subject="sponsor"
+        hrefBase={BASE}
+        rank={row.rank}
+        className="mt-12"
+      />
+
       <LimitsPanel
         className="mt-12"
         items={[
+          {
+            head: "The wage is the job, not the payer",
+            body: (
+              <>
+                The median offered wage moves almost entirely with what roles they
+                {" "}
+                file. A software developer and a poultry cutter are different
+                numbers wherever they are filed, so this figure is not plotted
+                against the field and no percentile is given for it: that
+                comparison would rank occupation mix and call it pay. Wages by
+                occupation are on the{" "}
+                <Link
+                  href="/perm-wages"
+                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                >
+                  wages page
+                </Link>
+                .
+              </>
+            ),
+          },
           {
             head: "Volume doesn’t change the wait",
             body: (
@@ -417,12 +552,15 @@ export default async function EmployerPage({
             ),
           },
           {
-            head: "Nothing here is pending",
+            head: "Two sources, and they do not add up",
             body: (
               <>
-                Every case in DOL&apos;s disclosure files carries a decision
-                date, so a case still waiting appears in none of these counts.
-                Where the queue stands today is on the{" "}
+                The filing counts come from DOL&apos;s disclosure files, where
+                every row already carries a decision date, so nothing pending
+                is in them. The queue figures come from a live per-case
+                tracker with its own coverage and its own as-of date.
+                Subtracting one from the other gives a number that means
+                nothing. Where the queue stands overall is on the{" "}
                 <Link
                   href="/perm-processing-times"
                   className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -477,7 +615,13 @@ export default async function EmployerPage({
           </p>
         </div>
       </section>
-      <DataProvenance datasets={["perm-cases", "entities"]} />
+      <DataProvenance
+        datasets={
+          pending
+            ? ["perm-cases", "entities", "perm-case-status"]
+            : ["perm-cases", "entities"]
+        }
+      />
     </div>
   );
 }

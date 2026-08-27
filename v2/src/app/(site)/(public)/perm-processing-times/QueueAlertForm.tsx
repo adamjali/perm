@@ -42,18 +42,29 @@ function subscribeEndpoint(): string | null {
  * a month boundary, render a client list one option longer than the cached
  * server list and hydrate with a mismatched <select>.
  */
-function filingMonthOptions(newest: string): { value: string; label: string }[] {
+function filingMonthOptions(
+  newest: string,
+  frontier?: string,
+): { value: string; label: string }[] {
   const m = /^(\d{4})-(\d{2})$/.exec(newest);
   const newestYear = m ? Number(m[1]) : 2020;
   const newestMonth = m ? Number(m[2]) - 1 : 11;
+
+  // "YYYY-MM" sorts lexicographically, so a string compare is the month
+  // compare. Absent a frontier (no readable snapshot) nothing is annotated,
+  // which keeps this form working on a day DOL's page cannot be parsed.
+  const reached = (value: string) => frontier !== undefined && value <= frontier;
 
   const options: { value: string; label: string }[] = [];
   for (let year = newestYear; year >= 2020; year--) {
     const startMonth = year === newestYear ? newestMonth : 11;
     for (let mo = startMonth; mo >= 0; mo--) {
+      const value = `${year}-${String(mo + 1).padStart(2, "0")}`;
       options.push({
-        value: `${year}-${String(mo + 1).padStart(2, "0")}`,
-        label: `${MONTH_NAMES[mo]} ${year}`,
+        value,
+        label: reached(value)
+          ? `${MONTH_NAMES[mo]} ${year} (already reached)`
+          : `${MONTH_NAMES[mo]} ${year}`,
       });
     }
   }
@@ -72,10 +83,21 @@ const selectClasses = cn(
 export function QueueAlertForm({
   source,
   newestMonth,
+  frontierMonth,
 }: {
   source: string;
   /** Newest selectable filing month, "YYYY-MM". Supplied by the server render. */
   newestMonth: string;
+  /**
+   * DOL's current analyst-review frontier, "YYYY-MM", when one is readable.
+   *
+   * Every month at or before it has already been reached, so an alert on one
+   * fires the moment it is confirmed. Saying so in the option label is the
+   * difference between a form whose easy default is a month DOL passed two
+   * years ago and one that tells you what you are asking for. Optional because
+   * this form sits outside the snapshot gate on purpose.
+   */
+  frontierMonth?: string;
 }) {
   const emailId = useId();
   const monthId = useId();
@@ -87,7 +109,7 @@ export function QueueAlertForm({
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
 
-  const options = filingMonthOptions(newestMonth);
+  const options = filingMonthOptions(newestMonth, frontierMonth);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

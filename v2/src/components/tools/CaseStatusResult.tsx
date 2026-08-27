@@ -4,6 +4,7 @@ import { Warning } from "@phosphor-icons/react/ssr";
 
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { InsightLede, Verdict } from "@/components/tools/Insight";
+import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 import { CaseNumberPlate } from "@/components/tools/CaseNumberPlate";
 import {
   CaseWall,
@@ -132,11 +133,11 @@ export function CaseStatusResult({
           />{" "}
           <span>
             <b className="font-bold text-data-warn-ink">
-              This status was last read {check.ageDays} days ago
+              DOL showed this status {check.ageDays} days ago
             </b>
-            , on {formatAsOf(check.date)}. A case can move in that time, so if
-            something has changed recently it will show on DOL&apos;s own
-            status page before it shows here.{" "}
+            , on {formatAsOf(check.date)}, and it has not been looked at since.
+            A case can move in that time, so if something has changed recently
+            it will show on DOL&apos;s own status page before it shows here.{" "}
             <a
               href="https://flag.dol.gov/processingtimes"
               rel="noopener noreferrer"
@@ -184,6 +185,11 @@ export function CaseStatusResult({
         />
       </section>
 
+      {/* Only while the case can still change. On a decided one this would
+          promise mail that can never arrive. */}
+      {!isFinal ? (
+        <CaseAlertForm caseNumber={result.caseNumber} className="mt-8" />
+      ) : null}{" "}
       {!isFinal && wall ? (
         <Position
           wall={wall}
@@ -291,7 +297,7 @@ function Answer({
           : "flat";
 
   const sourceBits = [
-    check ? `Live status read ${formatAsOf(check.date)}` : null,
+    check ? `DOL showed this status on ${formatAsOf(check.date)}` : null,
     publishedAsOf ? `DOL's queue position as of ${formatAsOf(publishedAsOf)}` : null,
   ].filter(Boolean);
 
@@ -381,7 +387,7 @@ function TheRecord({
     { label: "Employer", value: employerName ?? "Not recorded" },
     { label: "Job title", value: jobTitle ?? "Not recorded" },
     {
-      label: "Status read",
+      label: "Status seen",
       value: check
         ? `${formatAsOf(check.date)} (${check.ageDays === 0 ? "today" : `${check.ageDays} days ago`})`
         : "Not recorded",
@@ -459,7 +465,7 @@ function Position({
     <section className="mt-12">
       <h2 className="font-heading text-2xl font-black">Where it sits</h2>{" "}
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-        Every figure here is a count taken from the per-case mirror today. None
+        Every figure here is a count over the per-case snapshot. None
         of them is a date, and none of them is a rate this case will move at.
       </p>
 
@@ -509,8 +515,8 @@ function Position({
           }
           source={
             publishedAsOf
-              ? `Per-case mirror of flag.dol.gov · DOL queue position as of ${formatAsOf(publishedAsOf)}`
-              : "Per-case mirror of flag.dol.gov"
+              ? `Per-case statuses via a third-party mirror of DOL's FLAG · DOL queue position as of ${formatAsOf(publishedAsOf)}`
+              : "Per-case statuses via a third-party mirror of DOL's FLAG"
           }
         >
           <CaseWall wall={wall} publishedFront={publishedFront} />
@@ -676,7 +682,16 @@ function WageLadder({ wage }: { wage: CaseWageContext }) {
       <div className="relative pb-9 pt-9">
         {/* The subject rides above the rail so a wage at either end is never
             clipped by it, and it is translated by its own half-width rather
-            than nudged, so the point of the marker is the coordinate. */}
+            than nudged, so the point of the marker is the coordinate.
+
+            DELIBERATELY `bg-primary` AND NOT THE -ink VARIANT, unlike the
+            rail tick below. This chip carries text, and no fixed text colour
+            clears 4.5:1 on `--data-good-ink` in BOTH themes: it is #1D8229 in
+            light and #2ECC40 in dark, so black fails light and white fails
+            dark. `--primary` is lime in both, `--primary-foreground` is #000
+            in both, and the pair measures 9.83:1 either way. The shape itself
+            is delimited by a 2px near-black border, so the fill is not the
+            only thing carrying it. */}
         <span
           className="absolute top-0 -translate-x-1/2 whitespace-nowrap border-2 border-foreground bg-primary px-2 py-0.5 font-mono text-xs font-bold tabular-nums text-primary-foreground"
           style={{ left: `${subject}%` }}
@@ -697,10 +712,12 @@ function WageLadder({ wage }: { wage: CaseWageContext }) {
             className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-foreground"
             style={{ left: `${clamp(at(p50))}%` }}
           />
-          {/* The subject's own tick, on the rail rather than only above it. */}
+          {/* The subject's own tick, on the rail rather than only above it.
+              -ink for the same reason the wall bars use it: a 2px mark
+              carrying meaning at 2.05:1 is not perceivable on paper. */}
           <span
             aria-hidden="true"
-            className="absolute -inset-y-1 w-0.5 -translate-x-1/2 bg-primary"
+            className="absolute -inset-y-1 w-0.5 -translate-x-1/2 bg-data-good-ink"
             style={{ left: `${subject}%` }}
           />
         </div>

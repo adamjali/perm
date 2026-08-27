@@ -1,26 +1,51 @@
 /**
- * The SHAPE of a PERM case number, on the client side of the boundary.
+ * What a PERM case number looks like, on the client side of the boundary.
  *
- * WHY THIS IS A SECOND COPY. The authority is `normaliseCaseNumber` in
- * src/lib/turso/caseLookup.ts, which is `server-only`: importing it from the
- * lookup form would put the Turso client in the browser bundle, which that
- * module's own guard exists to make a build error. So the rule is duplicated
- * here deliberately, exactly as the entity slug rules are duplicated between
- * the Python writer and the TypeScript reader, and pinned the same way: a
- * fixture test asserts this regex is character-identical to the server's, so
- * changing one without the other goes red rather than silently producing a
- * form that rejects numbers the server would have accepted.
+ * THREE MODULES CARRY A CASE-NUMBER RULE AND THAT IS DELIBERATE, because they
+ * serve three audiences with genuinely different needs. They are cross-
+ * asserted by `caseNumberShape.test.ts` so none can drift silently:
  *
- * IT CHECKS SHAPE ONLY, and that is not an oversight. `parseCaseNumber` in
- * permCaseNumber.ts is stricter: it also rejects an impossible day-of-year, a
- * future date and a pre-2005 year, because it is decoding a date and a wrong
- * date is worse than a refusal. This one is deciding whether a string is
- * worth a database round trip, and a hint that says "not a case number" about
- * a number the server would happily look up is the worse failure here.
+ *   `src/lib/turso/caseLookup.ts`      server, `server-only`, owns both rules
+ *   `src/lib/caseStatusVocabulary.ts`  alerts, NARROW on purpose (G- only)
+ *   this file                          the lookup form, WIDE (G- and A-)
+ *
+ * The narrow one is not a bug. An alert is only meaningful for a case that
+ * can still change, and every A- case in the corpus is decided and years old,
+ * so subscribing to one would promise mail that can never arrive.
+ *
+ * THE WIDE ONE EXISTS BECAUSE THE NARROW ONE WAS REJECTING REAL CASES.
+ * Measured on the full tables: `perm_cases` holds 281,691 four-segment
+ * `G-100-26125-868956` numbers and **92,248** three-segment `A-23043-00641`
+ * ones, peaking at 32,289 in 2022 and 59,106 in 2023. Someone who filed then
+ * and typed their real number was told it was malformed.
+ *
+ * SHAPE ONLY. `parseCaseNumber` in permCaseNumber.ts is stricter because it
+ * is decoding a date and a wrong date is worse than a refusal. This is
+ * deciding whether a string is worth a database round trip, and a hint that
+ * says "not a case number" about a number the server would happily find is
+ * the worse failure here.
  */
 
-/** `G-100-26125-868956` and friends, normalised for a primary-key lookup. */
+/** The current four-segment form: `G-100-26125-868956`. */
+const CURRENT = /^[A-Z]-\d{3}-\d{5}-\d+$/;
+
+/** The legacy three-segment form: `A-23043-00641`. Five digits, then five. */
+const LEGACY = /^[A-Z]-\d{5}-\d{5}$/;
+
+/** Upper-cased and space-stripped, or null when it is neither shape. */
 export function normaliseCaseNumber(input: string): string | null {
   const raw = input.trim().toUpperCase().replace(/\s+/g, "");
-  return /^[A-Z]-\d{3}-\d{5}-\d+$/.test(raw) ? raw : null;
+  return CURRENT.test(raw) || LEGACY.test(raw) ? raw : null;
+}
+
+/**
+ * Whether a number is the legacy form, which must never be date-decoded.
+ *
+ * Reading the legacy middle block as YYDDD lands exactly 13.4% of the time
+ * and within two days 22.3%, measured over 12,000 of them, against a
+ * current-format control at 90.5% and 100% on the same query. Whatever that
+ * block is, it is not reliably the filing date.
+ */
+export function isLegacyCaseNumber(input: string): boolean {
+  return LEGACY.test(input.trim().toUpperCase().replace(/\s+/g, ""));
 }

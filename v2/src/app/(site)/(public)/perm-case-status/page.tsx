@@ -12,7 +12,7 @@ import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { CaseNotFound, CaseStatusEmpty } from "@/components/tools/CaseNotFound";
 import { CaseStatusResult } from "@/components/tools/CaseStatusResult";
 import { buildWall, neighbourMonths } from "@/lib/casePosition";
-import { normaliseCaseNumber } from "@/lib/caseNumberShape";
+import { isLegacyCaseNumber, normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { findFront, type CohortMonth } from "@/lib/liveQueue";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -84,11 +84,11 @@ export async function generateMetadata({
 const FAQS = [
   {
     q: "Where do I find my PERM case number?",
-    a: "On the ETA-9089 filing receipt, and on any status notice DOL sent the employer. It looks like G-100-26125-868956. The employer's attorney has it if you don't.",
+    a: "On the ETA-9089 filing receipt, and on any status notice DOL sent the employer. Current ones look like G-100-26125-868956; cases filed in 2022 and 2023 use a shorter form like A-23043-00641, and both work here. The employer's attorney has it if you don't.",
   },
   {
     q: "Is this DOL's official status?",
-    a: "No. It's a mirror of DOL's per-case status page, and every case here carries the date it was last read. DOL's own system at flag.dol.gov is the authority, and a case that moved since we last checked will show there first.",
+    a: "No, and the chain is worth stating. DOL publishes no API for per-case status, so these statuses reach us through a third-party tracker that reads DOL's FLAG pages. The date on each case is when that tracker saw it, not when we did. DOL's own system is the authority, and a case that moved since will show there first. This exists because it's the only per-case pending data available outside DOL's gate."
   },
   {
     q: "Why can't you tell me when my case will be decided?",
@@ -100,11 +100,11 @@ const FAQS = [
   },
   {
     q: "My case isn't here. Is something wrong?",
-    a: "Almost certainly not. The per-case mirror covers filings from mid-2023 and rebuilds on a schedule, so a very recent filing can be genuinely pending and genuinely absent. DOL's published decision files start at fiscal year 2024. A wrong digit in the serial is also worth ruling out, since it still makes a well-formed case number.",
+    a: "Almost certainly not. The per-case snapshot covers filings from mid-2023 and rebuilds on a schedule, so a very recent filing can be genuinely pending and genuinely absent. DOL's published decision files start at fiscal year 2024. A wrong digit in the serial is also worth ruling out, since it still makes a well-formed case number.",
   },
   {
     q: "What does my case number actually mean?",
-    a: "It encodes its own filing date. In G-100-26125-868956, the 26 is the year and the 125 is the day of that year, so it decodes to May 5, 2026. Measured against 20,000 cases in DOL's records, that decoded date matches exactly 89% of the time and is a day or two off otherwise.",
+    a: "The current format encodes its own filing date. In G-100-26125-868956, the 26 is the year and the 125 is the day of that year, so it decodes to May 5, 2026. Measured against 20,000 cases in DOL's records, that decoded date matches exactly 89% of the time and is a day or two off otherwise. The older three-part format, like A-23043-00641, does not: the same reading lands 13% of the time, so this page refuses to decode one rather than guess a filing month.",
   },
   {
     q: "Do you store the case number I type in?",
@@ -193,9 +193,10 @@ export default async function PermCaseStatusPage({
             <b className="font-bold text-data-warn-ink">
               That is not the shape of a PERM case number,
             </b>{" "}
-            so nothing was looked up. They run letter, three digits, five
-            digits, then a serial, like G-100-26125-868956. It is on the
-            ETA-9089 receipt.
+            so nothing was looked up. Current ones run letter, three digits,
+            five digits, then a serial, like G-100-26125-868956. Cases from
+            2022 and 2023 use a shorter form, like A-23043-00641. Either is on
+            the ETA-9089 receipt.
           </span>
         </p>
       ) : null}
@@ -221,11 +222,20 @@ export default async function PermCaseStatusPage({
         datasets={["perm-case-status", "perm-cases", "processing-times"]}
       />
       <p className="mt-2 text-sm text-muted-foreground">
-        Live statuses come from a per-case mirror of DOL&apos;s own status
-        pages at flag.dol.gov, carried with attribution from
-        permtrack.app&apos;s watchlist endpoint. Each case shows the date it
-        was last read. DOL is the authority for any case, and this page is
-        never a substitute for the determination letter.
+        DOL publishes no API for per-case status, so the statuses here reach us
+        second-hand: a third-party tracker (permtrack.app) reads DOL&apos;s FLAG
+        case-status pages, and we mirror that. The date shown on each case is
+        when the tracker saw it, not when we did, and it is a snapshot rather
+        than a live feed. DOL is the authority for any case and this page is
+        never a substitute for the determination letter.{" "}
+        <a
+          href="https://flag.dol.gov"
+          rel="noopener noreferrer"
+          className="font-bold underline underline-offset-2 hover:text-primary"
+        >
+          Check it yourself at flag.dol.gov
+        </a>
+        .
       </p>
 
       <ToolPageFooter
@@ -300,6 +310,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       <CaseNotFound
         caseNumber={caseNumber}
         parsed={parsed}
+        isLegacy={isLegacyCaseNumber(caseNumber)}
         cohort={cohortRow}
         wall={wall}
         neighbours={neighbours}

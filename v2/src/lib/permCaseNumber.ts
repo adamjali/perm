@@ -78,4 +78,7 @@ export function parseCaseNumber(input: string): ParsedCaseNumber | null {
  * Kept next to the parser so the measurement and the sentence cannot drift.
  */
 export const CASE_NUMBER_ACCURACY =
-  "The filing date is read from the case number itself. Measured against 20,000 cases in DOL's own records, it matches exactly for 89% and is within a day or two otherwise.";
+  "The filing date is read from the case number itself, for numbers in the " +
+  "current four-part format. Measured against 20,000 cases in DOL's own " +
+  "records, it matches exactly for 89% and is within a day or two otherwise. " +
+  "The older three-part format carries no readable date, so it is never decoded.";
