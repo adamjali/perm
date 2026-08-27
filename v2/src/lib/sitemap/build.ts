@@ -6,6 +6,7 @@ import { hasOwnPage, type EntityKind } from "@/lib/entityPayload";
 import { captureError } from "@/lib/sentry";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { countPageworthy } from "@/lib/turso/publicData";
+import { MIRROR_COMPLETE } from "@/lib/liveQueueGate";
 
 /**
  * The sitemap, split into an index and per-kind children.
@@ -121,6 +122,13 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/i140-calculator`, lastModified: "2026-08-23" },
     { url: `${base}/tools/i485-queue-position`, lastModified: "2026-08-26" },
     { url: `${base}/tools/salary-explorer`, lastModified: "2026-08-26" },
+    // Gated on MIRROR_COMPLETE together with the page's own robots directive
+    // and its provisional notice: a page carrying provisional counts must not
+    // be listed for search, and one that is listed must not still be calling
+    // itself provisional.
+    ...(MIRROR_COMPLETE
+      ? [{ url: `${base}/perm-queue`, lastModified: "2026-08-26" }]
+      : []),
     { url: `${base}/tools/priority-date-calculator`, lastModified: "2026-08-23" },
     { url: `${base}/tools/perm-deadline-calculator`, lastModified: "2026-08-23" },
     { url: `${base}/calculators`, lastModified: "2026-08-24" },
