@@ -220,6 +220,28 @@ export default async function RootLayout({
           <SharedProviders>{children}</SharedProviders>
           <SpeedInsights />
           <Analytics />
+          {/*
+            Ahrefs Web Analytics. EXTERNAL-SCRIPT form deliberately - Ahrefs
+            also ships an inline injector variant, and this site's CSP is the
+            reason not to use it.
+
+            NO `integrity=` hash. Ahrefs rotates analytics.js, so a pinned
+            hash would stop analytics silently on their next push, with the
+            tag still sitting in the markup looking installed.
+            `crossOrigin` is still correct: the host serves
+            access-control-allow-origin: *.
+
+            The CSP change in next.config.ts ships in the SAME commit and
+            covers BOTH script-src (to load it) and connect-src (for the
+            beacon). Widening only the first is what produces "analytics
+            installed, no data" with nothing visible to diagnose.
+          */}
+          <script
+            src="https://analytics.ahrefs.com/analytics.js"
+            data-key="yvVWr0lVfhLDGM3cKrT4AA"
+            crossOrigin="anonymous"
+            async
+          />
         </body>
       </html>
   );
