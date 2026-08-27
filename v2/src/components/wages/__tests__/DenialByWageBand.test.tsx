@@ -3,7 +3,9 @@ import { render, screen, within } from "@testing-library/react";
 
 import {
   WAGE_BAND_EDGES_FINE,
+  coarsenBands,
   toBands,
+  worstBand,
   type Ladder,
   type WageBandSeries,
 } from "@/lib/wageLadder";
@@ -88,9 +90,28 @@ describe("DenialByWageBand", () => {
     render(<DenialByWageBand byYear={BY_YEAR} pooled={POOLED} />);
     const text = screen.getByText(/broadly falls/i).textContent ?? "";
     expect(text).toMatch(/does not fall smoothly/i);
-    // $40k to $50k at 7.26%, not the bottom of the range.
+    // Today's measured value: $40k to $50k at 7.26%, not the bottom of the
+    // range. Pinned literally so a silent data shift is visible.
     expect(text).toContain("$40k to $50k");
     expect(text).toContain("7.26%");
+  });
+
+  it("names a peak DERIVED from the bands it draws, at whatever binning those are", () => {
+    // The invariant behind the retraction, stated so it survives an edge
+    // change. The defect was a claim that read as a fact about wages while
+    // actually being a property of the bins. Pinning only the literal string
+    // would go red on any re-binning and look like a copy change; this goes
+    // red only when the copy stops tracking the array being drawn.
+    const drawn = worstBand(POOLED)!;
+    render(<DenialByWageBand byYear={BY_YEAR} pooled={POOLED} />);
+    const text = screen.getByText(/broadly falls/i).textContent ?? "";
+    expect(text).toContain(drawn.band);
+    expect(text).toContain((drawn.deniedPct as number).toFixed(2));
+    // And it must NOT be the peak of the coarse summary, which is the exact
+    // substitution that produced the retracted headline.
+    const summaryPeak = worstBand(coarsenBands(POOLED))!;
+    expect(summaryPeak.band).not.toBe(drawn.band);
+    expect(text).not.toContain(`is ${summaryPeak.band.toLowerCase()} at`);
   });
 
   it("says the bumps move with the band edges and offers no cause", () => {

@@ -170,8 +170,7 @@ export function DenialByWageBand({
         Where those bumps sit moves with the band edges, so the bumps are not a
         finding and no cause is offered for them: wage, occupation and employer
         are entangled in these filings and nothing here separates them.
-      </p>
-
+      </p>{" "}
       <p className="mt-6 font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
         Eleven bands, by fiscal year and pooled
       </p>
