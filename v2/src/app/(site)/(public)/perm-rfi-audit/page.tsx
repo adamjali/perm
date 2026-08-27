@@ -132,7 +132,7 @@ export default async function PermRfiAuditPage() {
         after: docW 1464 against a 1440 viewport, and 406 against 390.
       */}
       <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-        <DataNav active="risk" />
+        <DataNav active="rfi-audit" />
         <div className="pt-10 sm:pt-12" />
         <header className="max-w-3xl">
           <h1 className="font-heading text-3xl font-black leading-tight sm:text-5xl">

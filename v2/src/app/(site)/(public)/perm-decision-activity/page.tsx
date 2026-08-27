@@ -111,7 +111,7 @@ export default async function DecisionActivityPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="processing-times" />
+      <DataNav active="activity" />
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={schema} />
 
