@@ -46,8 +46,17 @@ function hranaResult(rows: Record<string, string | number | null>[]) {
 }
 
 interface MirrorFixture {
-  /** Case number to its current row in `perm_case_status`. */
-  cases: Record<string, { status: string; isFinal: boolean }>;
+  /**
+   * Case number to its current row in `perm_case_status`.
+   *
+   * `lastCheckedAt` is an ISO-8601 STRING, matching the real column. It is the
+   * UPSTREAM's check time, not ours, and 11,955 pending rows carry none, so
+   * `null` is a first-class fixture value rather than an edge case.
+   */
+  cases: Record<
+    string,
+    { status: string; isFinal: boolean; lastCheckedAt?: string | null }
+  >;
 }
 
 /**
@@ -120,6 +129,10 @@ function stubMirrorAndResend(fixture: MirrorFixture, resendStatus = 200) {
             current_status: fixture.cases[n]!.status,
             is_final: fixture.cases[n]!.isFinal ? 1 : 0,
             employer_name: "Psomagen, Inc.",
+            last_checked_at:
+              fixture.cases[n]!.lastCheckedAt === undefined
+                ? "2026-08-05T22:31:24"
+                : fixture.cases[n]!.lastCheckedAt,
           }));
         return hranaResult(rowsOut);
       });
@@ -219,18 +232,53 @@ describe("subscribe input validation", () => {
     const t = createTestContext();
     stubMirrorAndResend({ cases: {} });
 
-    // Measured at 8.2 seconds for this shape when the length check ran second.
-    // The assertion that matters is the WALL CLOCK, not the return value.
-    const evil = "a@" + ".".repeat(80_000) + "@";
-    const started = Date.now();
-    const res = await t.mutation(internal.caseAlerts.subscribe, {
-      email: evil,
-      caseNumber: CASE,
-    });
-    const elapsed = Date.now() - started;
+    /*
+     * `[^\s@]` matches `.`, so `[^\s@]+\.[^\s@]{2,}$` backtracks
+     * QUADRATICALLY on a long failing input: measured in V8 at 8.2 seconds for
+     * 80k characters when the length check ran second, and 0.005 ms with it
+     * first. `v.string()` accepts about a megabyte, so the ordering is what
+     * stops an anonymous caller buying seconds of server compute per request.
+     *
+     * The assertion is a RATIO, not a wall-clock budget. A budget is a
+     * measurement of the machine as much as of the code: this test's first
+     * version asserted under 1s, passed at 201ms alone, and failed at 1459ms
+     * with four test files running concurrently. Nothing about the guard had
+     * changed. The ratio cancels machine load and module-load overhead out of
+     * both sides and measures the actual property, which is that cost does not
+     * grow with input length.
+     */
+    const time = async (email: string) => {
+      const started = performance.now();
+      const res = await t.mutation(internal.caseAlerts.subscribe, {
+        email,
+        caseNumber: CASE,
+      });
+      return { ms: performance.now() - started, ok: res.ok };
+    };
 
-    expect(res.ok).toBe(false);
-    expect(elapsed).toBeLessThan(1_000);
+    // Warm up first, or the measurement includes a one-off module load that
+    // lands entirely on whichever call happens to run first.
+    await time("warmup@example.com");
+
+    const short = await time("a@" + ".".repeat(200) + "@");
+    const long = await time("a@" + ".".repeat(80_000) + "@");
+
+    expect(short.ok).toBe(false);
+    expect(long.ok).toBe(false);
+
+    // 400x the input. Unguarded that is ~160,000x the work; guarded both are a
+    // length check and the ratio sits near 1. Ten is far above the noise floor
+    // and far below anything quadratic.
+    const ratio = long.ms / Math.max(short.ms, 0.01);
+    expect(
+      ratio,
+      `400x the input took ${ratio.toFixed(1)}x the time ` +
+        `(${short.ms.toFixed(1)}ms then ${long.ms.toFixed(1)}ms)`,
+    ).toBeLessThan(10);
+
+    // A generous absolute backstop, so a machine slow enough to make both
+    // sides equally terrible still fails rather than passing on the ratio.
+    expect(long.ms).toBeLessThan(5_000);
   });
 
   it("rejects anything that is not a DOL case number", async () => {
@@ -686,6 +734,81 @@ describe("the alert that goes out", () => {
     await seededSubscription(t2, "denied@example.com", "ANALYST REVIEW");
     await t2.action(internal.caseAlerts.sweepCaseChanges, {});
     expect(String(denied.alerts()[0]!.text)).not.toContain("1,799");
+  });
+
+  it("dates the observation with the UPSTREAM's check time", async () => {
+    const t = createTestContext();
+    const { alerts } = stubMirrorAndResend({
+      cases: {
+        [CASE]: {
+          status: "RFI ISSUED",
+          isFinal: false,
+          lastCheckedAt: "2026-08-05T22:31:24",
+        },
+      },
+    });
+    await seededSubscription(t, "person@example.com", "ANALYST REVIEW");
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+
+    const text = String(alerts()[0]!.text);
+    // We mirror a tracker that reads DOL; we do not check DOL. The email dates
+    // the reading and attributes it to DOL, and claims nothing about now.
+    expect(text).toContain("DOL showed this status when the case was last checked, on August 5, 2026");
+    expect(text).not.toMatch(/\bwe (?:checked|verified)\b/i);
+  });
+
+  it("says so when a case carries no check date", async () => {
+    const t = createTestContext();
+    const { alerts } = stubMirrorAndResend({
+      cases: {
+        [CASE]: { status: "RFI ISSUED", isFinal: false, lastCheckedAt: null },
+      },
+    });
+    await seededSubscription(t, "person@example.com", "ANALYST REVIEW");
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+
+    // A null check date silently omitted reads as a fresh observation, which is
+    // the same class of bug as a truthiness change detector: the absent case
+    // and the good case become indistinguishable to the reader.
+    const text = String(alerts()[0]!.text);
+    expect(text).toContain("don't have a check date");
+    expect(text).not.toContain("last checked, on");
+  });
+
+  it("never compares the check stamp as a number", async () => {
+    const t = createTestContext();
+    const sqls: string[] = [];
+    const inner = global.fetch;
+    stubMirrorAndResend({
+      cases: { [CASE]: { status: "RFI ISSUED", isFinal: false } },
+    });
+    const wrapped = global.fetch;
+    global.fetch = (async (url: unknown, init?: { body?: string }) => {
+      if (String(url).includes("/v2/pipeline") && init?.body) {
+        const body = JSON.parse(init.body) as {
+          requests: { stmt?: { sql: string } }[];
+        };
+        for (const r of body.requests) if (r.stmt) sqls.push(r.stmt.sql);
+      }
+      return wrapped(url as string, init as RequestInit);
+    }) as unknown as typeof fetch;
+
+    await seededSubscription(t, "person@example.com", "ANALYST REVIEW");
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    global.fetch = inner;
+
+    // SQLite sorts any string above any number, so `last_checked_at >= <int>`
+    // is TRUE for every non-null row and returns a clean-looking result that is
+    // entirely artefact. The column is only ever selected, never compared.
+    expect(sqls.length).toBeGreaterThan(0);
+    for (const sql of sqls) {
+      expect(sql, `numeric comparison on the check stamp: ${sql}`).not.toMatch(
+        /last_checked_at\s*[<>=!]+\s*\d/,
+      );
+    }
+    // Control: the sweep really did read the column, so the sweep above is not
+    // passing because it never touched it.
+    expect(sqls.some((q) => q.includes("last_checked_at"))).toBe(true);
   });
 
   it("never predicts a date or odds for this reader's own case", async () => {

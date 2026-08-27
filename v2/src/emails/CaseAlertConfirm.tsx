@@ -44,7 +44,13 @@ export interface CaseAlertConfirmProps {
   currentStatus?: string | null;
   /** The employer on the case, when the mirror carries one. */
   employerName?: string | null;
-  /** As-of date for the mirror, formatted for display. */
+  /**
+   * When THIS case was last checked, formatted, or null when unknown.
+   *
+   * The upstream tracker's check time, not ours. See the note in
+   * `CaseStatusChanged`: this product does not check DOL, it mirrors something
+   * that does, so "we checked" would be false.
+   */
   asOf?: string | null;
   /** Absolute, purpose-scoped confirmation URL. */
   confirmUrl: string;
@@ -76,11 +82,11 @@ export function CaseAlertConfirm({
               Currently {currentStatus}
               {employerName ? ` at ${employerName}` : ""}
             </Text>
-            {asOf ? (
-              <Text className="em-text-secondary" style={styles.provenance}>
-                Our mirror of DOL per-case status, as of {asOf}
-              </Text>
-            ) : null}
+            <Text className="em-text-secondary" style={styles.provenance}>
+              {asOf
+                ? `Last checked ${asOf}`
+                : "We don\u2019t have a check date for this case"}
+            </Text>
           </>
         ) : (
           <Text className="em-text-secondary" style={styles.provenance}>
@@ -90,11 +96,18 @@ export function CaseAlertConfirm({
       </QueueStamp>
 
       {known ? (
-        <Text className="em-text-body" style={styles.body}>
-          If that&rsquo;s your case, confirm below and we&rsquo;ll email you
-          every time DOL&rsquo;s status for it changes, until it&rsquo;s decided.
-          If it isn&rsquo;t, ignore this and enter the number again.
-        </Text>
+        <>
+          <Text className="em-text-body" style={styles.body}>
+            If that&rsquo;s your case, confirm below and we&rsquo;ll email you
+            every time DOL&rsquo;s status for it changes, until it&rsquo;s
+            decided. If it isn&rsquo;t, ignore this and enter the number again.
+          </Text>
+          <Text className="em-text-secondary" style={styles.lag}>
+            Cases are re-checked in batches, so a change can take a few days to
+            reach you. Every alert says when the status was last checked, so you
+            can see how fresh it is.
+          </Text>
+        </>
       ) : (
         <Text className="em-text-body" style={styles.body}>
           We don&rsquo;t hold this case number yet, which is normal for a recent
@@ -132,6 +145,13 @@ const styles = {
     lineHeight: "26px",
     margin: "0 0 24px 0",
   },
+  lag: {
+    fontFamily: SANS_STACK,
+    color: "#5A5A5A",
+    fontSize: "15px",
+    lineHeight: "24px",
+    margin: "0 0 24px 0",
+  },
   cta: {
     marginBottom: "20px",
   },
@@ -149,7 +169,7 @@ CaseAlertConfirm.PreviewProps = {
   caseNumber: "P-100-26125-868956",
   currentStatus: "IN PROCESS",
   employerName: "Psomagen, Inc.",
-  asOf: "August 26, 2026",
+  asOf: "August 5, 2026",
   confirmUrl: "https://example.convex.site/case-alert/confirm?token=abc",
 } satisfies CaseAlertConfirmProps;
 

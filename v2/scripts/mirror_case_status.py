@@ -25,6 +25,29 @@ and a crash forty minutes in that had to restart would be paid for by their
 server as well as ours. Progress is checkpointed per page, so a re-run picks
 up where it stopped. INSERT OR REPLACE keys on case_number, so a page fetched
 twice costs one rewrite and never a duplicate.
+
+TWO MODES, AND THE SECOND ONE IS WHY ALERTS CAN HAVE A LATENCY YOU CAN NAME.
+
+`--pending` pages `is_final=false`, which is 98,584 rows against 416,858, so
+the cycle is 493 pages and about ten minutes rather than 2,082 and forty.
+That matters far beyond the runtime: this is a SEQUENTIAL page-through, so a
+case is re-checked only when the scan reaches its page, and a full-corpus
+cycle therefore gives a case a re-check latency set by its POSITION in the
+table rather than by anything about the case. Measured before this existed,
+77,968 of 97,657 pending cases (79.8%) had not been re-verified since
+2026-08-01, while the April-to-June rows were all final and were being
+re-scanned anyway for no reason: a final case cannot change again.
+
+A pending-only pass covers every case that can still move, so run it often
+and run the full pass rarely. A status-change alert is only as timely as its
+case's own re-scan, and silence that a subscriber reads as "nothing happened"
+is worse than no product at all.
+
+THE FILTER VALUE IS LOAD-BEARING AND THE WRONG ONE FAILS SILENTLY. Measured:
+`is_final=false` returns 98,584 and `is_final=0` returns the full 416,858,
+ignored without an error. So a typo does not break the pending pass, it turns
+it back into a full pass that reports success. `assert_filter_applied` is what
+makes that loud, and it is not optional.
 """
 from __future__ import annotations
 
@@ -38,6 +61,9 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_turso import Turso  # noqa: E402
 
 BASE = "https://permtrack.app/api/watchlist"
+# `false`, not `0`. See the module docstring: `0` is ignored and silently
+# returns the whole corpus.
+PENDING_FILTER = "is_final=false"
 PER_PAGE = 200          # their cap; asking for more silently returns 200
 PACE_S = 1.2            # ~42 min for the full corpus
 SOURCE = "permtrack.app/api/watchlist (mirror; underlying: flag.dol.gov case status)"
@@ -66,6 +92,32 @@ def norm_status(v) -> str | None:
 
 def log(m: str) -> None:
     print(m, flush=True)
+
+
+def assert_filter_applied(pending: bool, total: int, full_total: int) -> None:
+    """A pending pass that quietly became a full pass must fail, not succeed.
+
+    Measured: `is_final=false` returns 98,584 rows and `is_final=0` returns all
+    416,858, ignored with no error and a 200. So the failure mode of a typo in
+    the filter is not a crash, it is a forty-minute full scan wearing a
+    ten-minute pass's name and reporting success.
+
+    The threshold is deliberately loose. The pending share is about 24% today
+    and will drift as DOL decides cases; anything at or above half the corpus
+    means the filter did not apply, and no plausible pending share reaches
+    that.
+    """
+    if not pending:
+        return
+    if full_total <= 0:
+        raise SystemExit("could not read the unfiltered total - refusing to guess")
+    share = total / full_total
+    if share >= 0.5:
+        raise SystemExit(
+            f"pending filter did not apply: {total:,} of {full_total:,} rows "
+            f"({share:.0%}). Check PENDING_FILTER; `is_final=0` is ignored."
+        )
+    log(f"  pending filter applied: {total:,} of {full_total:,} ({share:.0%})")
 
 
 def diff_page(db: Turso, incoming: list[tuple[str, str | None, int]],
@@ -172,6 +224,22 @@ def main() -> int:
     #
     # The PK is (case_number, changed_at) so a page fetched twice in one run
     # writes one row rather than two, matching the upsert's own idempotence.
+    #
+    # TYPE NOTE, DELIBERATE AND NOT MATCHING ITS NEIGHBOUR. `changed_at` is an
+    # INTEGER of epoch milliseconds, while `perm_case_status.last_checked_at`
+    # next to it is an ISO-8601 TEXT string. They are not the same kind of fact
+    # and unifying the type would invite treating them as one:
+    #
+    #   `changed_at`      is OURS. The moment WE observed a transition, from a
+    #                     clock we control, so arithmetic on it is meaningful.
+    #   `last_checked_at` is THEIRS. Written straight from the upstream's own
+    #                     field, so it is the moment the UPSTREAM checked, and
+    #                     it is an opaque string we should compare as a string.
+    #
+    # SQLite sorts any string above any number, so a numeric comparison against
+    # `last_checked_at` (`>= 1787000000`) is TRUE for every non-null row and
+    # returns a clean-looking result that is entirely artefact. Compare it as
+    # text or not at all.
     db.execute("""CREATE TABLE IF NOT EXISTS perm_case_events (
         case_number TEXT NOT NULL,
         changed_at INTEGER NOT NULL,
@@ -184,18 +252,49 @@ def main() -> int:
     db.execute("""CREATE INDEX IF NOT EXISTS case_events_recent
         ON perm_case_events (changed_at)""")
 
-    start = int(db.scalar("SELECT last_page FROM mirror_progress WHERE job='case_status'") or 0) + 1
-    first = get(f"{BASE}?limit=1")
-    if not first:
+    # Two jobs with two checkpoints. Sharing one row would make each pass
+    # resume from the other's page number, which is a different slice of a
+    # differently-sized result set: the pending pass would skip most of its
+    # rows and report success.
+    pending = "--pending" in sys.argv
+    job = "case_status_pending" if pending else "case_status"
+    query = f"&{PENDING_FILTER}" if pending else ""
+    log(f"  mode: {'PENDING ONLY' if pending else 'FULL CORPUS'} (job={job})")
+
+    start = int(db.scalar(
+        "SELECT last_page FROM mirror_progress WHERE job=?", [job]) or 0) + 1
+
+    # The unfiltered total is read on every run, pending or not, because the
+    # guard needs a denominator it did not compute from the same filtered call.
+    full = get(f"{BASE}?limit=1")
+    if not full:
         raise SystemExit("could not reach the source - refusing to report success")
-    total = int(first.get("total") or 0)
+    full_total = int(full.get("total") or 0)
+
+    if pending:
+        first = get(f"{BASE}?limit=1{query}")
+        if not first:
+            raise SystemExit("could not reach the source - refusing to report success")
+        total = int(first.get("total") or 0)
+    else:
+        total = full_total
+
+    assert_filter_applied(pending, total, full_total)
+
     pages = (total + PER_PAGE - 1) // PER_PAGE
     log(f"  {total:,} rows across {pages:,} pages; resuming at page {start}")
+
+    # A finished cycle restarts rather than sitting at the end forever. Without
+    # this the pending pass runs once and every later run is a no-op that looks
+    # like a clean run.
+    if start > pages:
+        log(f"  previous cycle complete ({pages:,} pages); restarting from page 1")
+        start = 1
 
     stamp = int(time.time() * 1000)
     written = failed = moved = 0
     for page in range(start, pages + 1):
-        d = get(f"{BASE}?limit={PER_PAGE}&page={page}")
+        d = get(f"{BASE}?limit={PER_PAGE}&page={page}{query}")
         rows = (d or {}).get("data") or []
         if not rows:
             failed += 1
@@ -232,7 +331,7 @@ def main() -> int:
         db.execute(f"INSERT OR REPLACE INTO perm_case_status VALUES {vals}", args)
         written += len(rows)
         db.execute("INSERT OR REPLACE INTO mirror_progress VALUES (?,?,?,?)",
-                   ["case_status", page, total, int(time.time() * 1000)])
+                   [job, page, total, int(time.time() * 1000)])
         if page % 50 == 0 or page == pages:
             held = int(db.scalar("SELECT count(*) FROM perm_case_status") or 0)
             log(f"    page {page:,}/{pages:,}  written {written:,}  "
@@ -249,11 +348,21 @@ def main() -> int:
     # it exists. Ending every run by canonicalising the whole table closes
     # that gap permanently and is idempotent - it touches nothing when there
     # is nothing to touch.
-    fixed = db.execute(
-        "UPDATE perm_case_status SET current_status = upper(current_status) "
-        "WHERE current_status <> upper(current_status)")
     spellings = int(db.scalar("SELECT count(DISTINCT current_status) FROM perm_case_status") or 0)
-    log(f"  normalised trailing rows; {spellings} distinct statuses remain")
+    if pending:
+        # Skipped on the pending pass on purpose. It is a corpus-wide UPDATE and
+        # this pass touched a quarter of the corpus; running it here would make
+        # a ten-minute job carry a whole-table write for rows it never read.
+        # The full pass still closes the gap.
+        log(f"  skipping the corpus-wide canonicalisation on a pending pass; "
+            f"{spellings} distinct statuses held")
+    else:
+        db.execute(
+            "UPDATE perm_case_status SET current_status = upper(current_status) "
+            "WHERE current_status <> upper(current_status)")
+        spellings = int(db.scalar(
+            "SELECT count(DISTINCT current_status) FROM perm_case_status") or 0)
+        log(f"  normalised trailing rows; {spellings} distinct statuses remain")
 
     held = int(db.scalar("SELECT count(*) FROM perm_case_status") or 0)
     pend = int(db.scalar("SELECT count(*) FROM perm_case_status WHERE is_final=0") or 0)

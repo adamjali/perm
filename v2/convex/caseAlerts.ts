@@ -202,6 +202,29 @@ function casePageUrl(caseNumber: string): string {
   return `${SITE_URL}/perm-case-status?case=${encodeURIComponent(caseNumber)}`;
 }
 
+/**
+ * The upstream's per-case check stamp, formatted, or null.
+ *
+ * `perm_case_status.last_checked_at` is an ISO-8601 STRING like
+ * "2026-08-05T22:31:24", written straight from the upstream tracker's own
+ * field. Two things follow and both have bitten someone already:
+ *
+ * 1. **It is THEIR check time, not ours.** We mirror a tracker that reads DOL.
+ *    No email may say "we checked" or "we verified" on the strength of it.
+ * 2. **Never compare it numerically.** SQLite sorts any string above any
+ *    number, so `last_checked_at >= 1787000000` is TRUE for every non-null row
+ *    and yields a clean-looking result that is entirely artefact. Compare as
+ *    text, or do what this does and only ever format it.
+ *
+ * Returns null for a missing or unparseable stamp so the caller must render
+ * something rather than silently omitting it. A missing check date dropped
+ * from the copy reads as a fresh observation.
+ */
+function observedLabel(raw: string | number | null | undefined): string | null {
+  if (typeof raw !== "string" || raw.length < 10) return null;
+  return formatAsOf(raw.slice(0, 10));
+}
+
 /** Thousands separators, so 94435 reads as 94,435 in a mono column. */
 function count(n: number): string {
   return n.toLocaleString("en-US");
@@ -436,11 +459,14 @@ export const sendConfirmation = internalAction({
       let asOf: string | null = null;
       try {
         current = await one(
-          `SELECT current_status, employer_name FROM perm_case_status
-            WHERE case_number = ?`,
+          `SELECT current_status, employer_name, last_checked_at
+             FROM perm_case_status WHERE case_number = ?`,
           [args.caseNumber],
         );
-        asOf = await mirrorAsOf();
+        // This case's own check date, not the corpus-wide freshness stamp. The
+        // corpus figure would say "August 26" for a case nobody has looked at
+        // since May, which is the precise claim this product must not make.
+        asOf = observedLabel(current?.last_checked_at);
       } catch (error) {
         log.error("mirror unreadable during confirmation", {
           caseNumber: args.caseNumber,
@@ -484,7 +510,10 @@ export const sendConfirmation = internalAction({
           "",
           `Case number: ${args.caseNumber}`,
           ...(status
-            ? [`Currently: ${status}${employer ? ` at ${employer}` : ""}`]
+            ? [
+                `DOL showed: ${status}${employer ? ` at ${employer}` : ""}`,
+                asOf ? `Last checked: ${asOf}` : "We don't have a check date for this case.",
+              ]
             : [
                 "We don't hold this case number yet, which is normal for a recent",
                 "filing and is also what a typo looks like. Check it against your receipt.",
@@ -1016,11 +1045,14 @@ export const sweepCaseChanges = internalAction({
     }
 
     const mirror = await rows(
-      `SELECT case_number, current_status, is_final FROM perm_case_status
-        WHERE case_number IN (${marks})`,
+      `SELECT case_number, current_status, is_final, last_checked_at
+         FROM perm_case_status WHERE case_number IN (${marks})`,
       uniqueCases,
     );
-    const nowByCase = new Map<string, { status: string; isFinal: boolean }>();
+    const nowByCase = new Map<
+      string,
+      { status: string; isFinal: boolean; observedAt: string | null }
+    >();
     for (const row of mirror) {
       const numKey = str(row.case_number);
       const status = str(row.current_status);
@@ -1028,6 +1060,10 @@ export const sweepCaseChanges = internalAction({
       nowByCase.set(numKey, {
         status: canonicalStatus(status),
         isFinal: num(row.is_final) === 1,
+        // May legitimately be null: 11,955 pending rows carry no check date.
+        // Passed through as null rather than defaulted, so the template says
+        // so instead of implying a fresh observation.
+        observedAt: observedLabel(row.last_checked_at),
       });
     }
 
@@ -1036,6 +1072,7 @@ export const sweepCaseChanges = internalAction({
       sub: (typeof batch)[number];
       status: string;
       isFinal: boolean;
+      observedAt: string | null;
     }[] = [];
 
     for (const sub of batch) {
@@ -1068,7 +1105,12 @@ export const sweepCaseChanges = internalAction({
         continue;
       }
 
-      changed.push({ sub, status: current.status, isFinal: current.isFinal });
+      changed.push({
+        sub,
+        status: current.status,
+        isFinal: current.isFinal,
+        observedAt: current.observedAt,
+      });
     }
 
     // Bump the cursor for everything looked at. Rows that produced an alert are
@@ -1098,12 +1140,16 @@ export const sweepCaseChanges = internalAction({
     }
 
     const asOf = await mirrorAsOf();
-    const contextProvenance = `Our mirror of DOL per-case status${asOf ? `, as of ${asOf}` : ""}.`;
+    // Deliberately says COUNTED, not checked. The counting is genuinely ours;
+    // the statuses being counted are not, and `asOf` here is the corpus-wide
+    // refresh stamp rather than any one case's check date, which is why the
+    // per-case date is carried separately in `observedAt`.
+    const contextProvenance = `Counted across our mirror of DOL case status${asOf ? `, as of ${asOf}` : ""}.`;
     const funnel = changed.some((c) => showsRfiFunnel(c.status))
       ? await rfiFunnel()
       : null;
 
-    for (const { sub, status, isFinal } of changed.slice(0, granted)) {
+    for (const { sub, status, isFinal, observedAt } of changed.slice(0, granted)) {
       try {
         const { slugify } = await import("../src/lib/entitySlug");
         const base = await one(
@@ -1205,6 +1251,7 @@ export const sweepCaseChanges = internalAction({
               tone,
               meaning,
               isFinal,
+              observedAt,
               contextRows,
               contextProvenance,
               rfiRows,
@@ -1242,8 +1289,10 @@ export const sweepCaseChanges = internalAction({
               : []),
             ...(meaning ? ["", meaning] : []),
             "",
-            "This is the status our mirror read on its latest check. It isn't a",
-            "decision on your case and it isn't a prediction of one.",
+            observedAt
+              ? `DOL showed this status when the case was last checked, on ${observedAt}.`
+              : "We don't have a check date for this case, so we can't say when DOL showed this.",
+            "It isn't a decision on your case and it isn't a prediction of one.",
             "",
             ...(rfiRows
               ? [

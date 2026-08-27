@@ -95,19 +95,46 @@ describe("subscribe input validation", () => {
     const t = createTestContext();
     stubResend(200);
 
-    // The address pattern backtracks quadratically on this shape: measured at
-    // 8.2 seconds for 80k characters when the length check ran second. The
-    // assertion that matters is the WALL CLOCK, not the return value.
-    const evil = "a@" + ".".repeat(80_000) + "@";
-    const started = Date.now();
-    const res = await t.mutation(internal.queueAlerts.subscribe, {
-      email: evil,
-      filingMonth: "2025-09",
-    });
-    const elapsed = Date.now() - started;
+    /*
+     * The address pattern backtracks QUADRATICALLY on this shape: measured at
+     * 8.2 seconds for 80k characters when the length check ran second.
+     *
+     * The assertion is a RATIO, not a wall-clock budget, and that is a fix
+     * rather than a preference. The budget version failed at 1459ms against a
+     * 1000ms limit with four test files running concurrently, having passed at
+     * 201ms alone, with nothing about the guard changed. CI shuffles test order
+     * and runs with `--retry=2`, so a load-dependent assertion here is a flake
+     * waiting for a busy runner. The ratio cancels machine load and module load
+     * out of both sides and measures the property itself: cost must not grow
+     * with input length.
+     */
+    const time = async (email: string) => {
+      const started = performance.now();
+      const res = await t.mutation(internal.queueAlerts.subscribe, {
+        email,
+        filingMonth: "2025-09",
+      });
+      return { ms: performance.now() - started, ok: res.ok };
+    };
 
-    expect(res.ok).toBe(false);
-    expect(elapsed).toBeLessThan(1_000);
+    // Warm up, or the one-off module load lands entirely on the first call.
+    await time("warmup@example.com");
+
+    const short = await time("a@" + ".".repeat(200) + "@");
+    const long = await time("a@" + ".".repeat(80_000) + "@");
+
+    expect(short.ok).toBe(false);
+    expect(long.ok).toBe(false);
+
+    // 400x the input. Unguarded that is ~160,000x the work; guarded both are a
+    // length check and the ratio sits near 1.
+    const ratio = long.ms / Math.max(short.ms, 0.01);
+    expect(
+      ratio,
+      `400x the input took ${ratio.toFixed(1)}x the time ` +
+        `(${short.ms.toFixed(1)}ms then ${long.ms.toFixed(1)}ms)`,
+    ).toBeLessThan(10);
+    expect(long.ms).toBeLessThan(5_000);
   });
 
   it("rejects a filing month outside the PERM programme's life", async () => {

@@ -19,6 +19,7 @@ import { render } from "@react-email/render";
 import { CaseAlertConfirm } from "../CaseAlertConfirm";
 import { CaseStatusChanged } from "../CaseStatusChanged";
 import type { CaseStatusChangedProps } from "../CaseStatusChanged";
+import { statusMeaning } from "@/lib/caseStatusVocabulary";
 
 const CONFIRM_URL = "https://example.convex.site/case-alert/confirm?token=abc";
 const UNSUB_URL = "https://example.convex.site/case-alert/unsubscribe?token=abc";
@@ -40,9 +41,11 @@ const liveProps: CaseStatusChangedProps = {
   fromStatus: "IN PROCESS",
   toStatus: "RFI ISSUED",
   tone: "live",
-  meaning:
-    "DOL has asked the employer for more documentation. The response window is 30 days from receipt and it is strict.",
+  // Read from the vocabulary, never copied. A hardcoded fixture kept
+  // rendering the old sentence after the real string was corrected.
+  meaning: statusMeaning("RFI ISSUED")!,
   isFinal: false,
+  observedAt: "August 5, 2026",
   contextRows: [
     { label: "Cases now at this status", value: "906" },
     { label: "Filed the same month as yours", value: "8,172" },
@@ -121,6 +124,17 @@ function hrefs(html: string): string[] {
  * `Extended_Pictographic` does not.
  */
 const EMOJI = /\p{Emoji_Presentation}|️/u;
+
+/**
+ * Claims about WHO looked. This product mirrors a third-party tracker that
+ * reads DOL; it does not check DOL, so none of these may appear in an email.
+ */
+const OUR_CHECK_CLAIMS: RegExp[] = [
+  /\bwe (?:checked|check|verified|verify|confirmed)\b/i,
+  /\bour (?:check|latest check|verification)\b/i,
+  /\bmirror read\b/i,
+  /\bwe looked at\b/i,
+];
 
 /** Em dash and en dash. House style permits neither. */
 const LONG_DASH = /[—–]/;
@@ -326,6 +340,61 @@ describe("case email templates", () => {
   // -------------------------------------------------------------------------
   // Degradation
   // -------------------------------------------------------------------------
+
+  // -------------------------------------------------------------------------
+  // Who checked, and when
+  // -------------------------------------------------------------------------
+
+  it("never claims WE checked or verified anything", async () => {
+    // This product mirrors a third-party tracker that reads DOL. It does not
+    // check DOL. `last_checked_at` is written straight from that tracker's own
+    // field, so it is THEIR check time, and an email is a claim delivered to
+    // someone who did not ask a question at that moment.
+    const all = await renderAll();
+    for (const [name, html] of Object.entries(all)) {
+      const text = withoutStylesheets(html).replace(/\s+/g, " ");
+      for (const claim of OUR_CHECK_CLAIMS) {
+        expect(text, `${name} claims we checked: ${claim}`).not.toMatch(claim);
+      }
+    }
+  });
+
+  it("the we-checked gate catches the real sentence and clears the fixed one", () => {
+    // Probed both ways. A pattern that matches nothing passes everything, and
+    // the first version of this file's emoji and dash checks were both wrong.
+    const hits = (t: string) => OUR_CHECK_CLAIMS.some((r) => r.test(t));
+    // The exact sentence that shipped before the correction.
+    expect(hits("This is the status our mirror read on its latest check.")).toBe(true);
+    expect(hits("We verified this with DOL.")).toBe(true);
+    expect(hits("We checked your case this morning.")).toBe(true);
+    // The corrected one, and ordinary copy that must stay clean.
+    expect(hits("DOL showed this status when the case was last checked, on August 5, 2026.")).toBe(false);
+    expect(hits("Counted across our mirror of DOL case status, as of August 26, 2026.")).toBe(false);
+  });
+
+  it("dates the observation, and says so when it cannot", async () => {
+    const { live } = await renderAll();
+    // "Your case is in ANALYST REVIEW" is a claim about the present that a
+    // batch-refreshed mirror cannot support: measured, 79.8% of pending cases
+    // had not been re-checked within the month. The date makes it a fact.
+    expect(live).toContain("when the case was last checked, on August 5, 2026");
+
+    // 11,955 pending rows carry no check date. A null renders its own sentence:
+    // silently omitting it reads as a fresh observation.
+    const undated = await render(
+      CaseStatusChanged({ ...liveProps, observedAt: null }),
+    );
+    expect(undated).toContain("have a check date");
+    expect(undated).not.toContain("last checked, on");
+  });
+
+  it("tells a new subscriber that alerts lag", async () => {
+    const { confirm } = await renderAll();
+    // Silence on a stale case reads as "nothing happened", which is worse than
+    // no product. The expectation is set where expectations are set.
+    expect(confirm).toContain("re-checked in batches");
+    expect(confirm).toContain("when the status was last checked");
+  });
 
   it("says so plainly when the status has no sourced meaning", async () => {
     const html = await render(CaseStatusChanged({ ...liveProps, meaning: null }));

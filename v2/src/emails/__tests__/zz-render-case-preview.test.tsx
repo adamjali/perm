@@ -16,6 +16,7 @@ import { render } from "@react-email/render";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { CaseAlertConfirm } from "../CaseAlertConfirm";
 import { CaseStatusChanged } from "../CaseStatusChanged";
+import { statusMeaning } from "@/lib/caseStatusVocabulary";
 
 const OUT =
   "/private/tmp/claude-501/-Users-adammohamed-cc-perm-tracker-v2/43f340d7-ecc8-4c9c-afe3-e9f6eadeda4d/scratchpad/emailrender";
@@ -35,7 +36,7 @@ describe("render case-alert previews for a test send", () => {
         caseNumber: "P-100-26125-868956",
         currentStatus: "IN PROCESS",
         employerName: "Psomagen, Inc.",
-        asOf: "August 26, 2026",
+        asOf: "August 5, 2026",
         confirmUrl: CONFIRM_URL,
       }),
     );
@@ -50,9 +51,11 @@ describe("render case-alert previews for a test send", () => {
         fromStatus: "IN PROCESS",
         toStatus: "RFI ISSUED",
         tone: "live",
-        meaning:
-          "DOL has asked the employer for more documentation. The response window is 30 days from receipt and it is strict.",
+        // Read from the vocabulary, never copied. A hardcoded fixture kept
+        // rendering the old sentence after the real string was corrected.
+        meaning: statusMeaning("RFI ISSUED")!,
         isFinal: false,
+        observedAt: "August 5, 2026",
         contextRows: [
           { label: "Cases now at this status", value: "906" },
           { label: "Filed the same month as yours", value: "8,172" },
@@ -60,7 +63,7 @@ describe("render case-alert previews for a test send", () => {
           { label: "Pending cases filed earlier", value: "63,603" },
         ],
         contextProvenance:
-          "Our mirror of DOL per-case status, as of August 26, 2026.",
+          "Counted across our mirror of DOL case status, as of August 26, 2026.",
         rfiRows: [
           { label: "Resolved RFIs observed", value: "2,151" },
           { label: "Of those, ended certified", value: "1,799" },
@@ -91,6 +94,7 @@ describe("render case-alert previews for a test send", () => {
         tone: "closed",
         meaning: "DOL refused the application. A denial carries appeal rights.",
         isFinal: true,
+        observedAt: "August 25, 2026",
         contextRows: [
           { label: "Cases now at this status", value: "9,483" },
           { label: "Filed the same month as yours", value: "9,677" },
@@ -98,7 +102,7 @@ describe("render case-alert previews for a test send", () => {
           { label: "Pending cases filed earlier", value: "1,128" },
         ],
         contextProvenance:
-          "Our mirror of DOL per-case status, as of August 26, 2026.",
+          "Counted across our mirror of DOL case status, as of August 26, 2026.",
         rfiRows: null,
         rfiProvenance: null,
         employerRows: [
