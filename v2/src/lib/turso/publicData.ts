@@ -761,6 +761,12 @@ export async function getMonthQueueStats(): Promise<MonthQueueStat[]> {
 
 // ---------------------------------------------------------------------------
 // Salary explorer
+//
+// FOLLOW-UP: this file is now ~1,050 lines against cases.ts at 488, and the
+// browse-shaped reads below have the same shape as the ones in cases.ts - a
+// filtered layer serving an API route. A split into turso/wages.ts is the
+// right end state. Deliberately NOT done now: three agents are in this tree
+// and a file move buys a merge conflict for no user-visible gain.
 // ---------------------------------------------------------------------------
 
 export type WageStatusFilter = "certified" | "denied" | "withdrawn" | "all";
@@ -828,35 +834,97 @@ function wageWhere(f: WageFilters): { sql: string; args: unknown[] } {
 }
 
 /**
- * Nearest-rank percentile over the SELECTED subset.
+ * Percentile over the SELECTED subset, by LINEAR INTERPOLATION.
  *
  * The whole point of the explorer: a median must describe the rows the reader
  * filtered to, never the corpus. Computed in SQL because doing it in JS means
  * shipping 373,162 wages through the RSC payload to produce five numbers.
  *
- * `1 + FLOOR((n - 1) * p)` is the nearest-rank definition, so p50 over an even
- * count takes the lower of the two middle values rather than interpolating.
- * Interpolation would invent a wage nobody was offered.
+ * INTERPOLATED, NOT NEAREST-RANK, AND THAT IS NOT A FREE CHOICE. This project
+ * already fixed the definition: `percentile()` in scripts/ingest_perm_disclosure.py
+ * uses numpy's default `linear` method and its docstring says so explicitly,
+ * so that wage stats and processing-time percentiles agree everywhere on the
+ * site. Rank k = (n-1) * p, then interpolate between floor(k) and ceil(k).
+ *
+ * This first shipped nearest-rank, on the reasoning that interpolating
+ * between two middle values invents a wage nobody was offered. That is a fair
+ * argument and it is the wrong one to make here: the cost of one figure being
+ * computed differently from every other figure on the site is larger than the
+ * cost of a median landing between two real offers. The cross-check script
+ * caught it - four materialised rows disagreed by $1 to $37 with counts
+ * matching exactly, which is the signature of a definition mismatch rather
+ * than a stale corpus.
+ *
+ * Verified: this SQL reproduces perm_wage_stats' own p50 exactly on every row
+ * that had diverged. `scripts/cross_check_wage_stats.py` keeps it that way.
+ *
+ * ONE DIFFERENCE REMAINS AND IT IS A DOLLAR. SQLite's ROUND() rounds halves
+ * away from zero; Python's round() rounds them to even, which the upstream
+ * percentile() docstring calls out by name. So a percentile landing exactly on
+ * a half-dollar can differ by $1 between the two routes - measured on 2 of 8
+ * per-state rows, e.g. FL's median at 58638.5. Matching banker's rounding in
+ * SQLite is real complexity for a difference no reader of a wage can act on,
+ * so the cross-check tolerates exactly $1 and nothing more.
  */
-const PERCENTILE_SELECT = [0.05, 0.25, 0.5, 0.75, 0.95]
-  .map((p, i) => {
-    const name = ["p5", "p25", "p50", "p75", "p95"][i];
-    return `MAX(CASE WHEN rn = 1 + CAST((n - 1) * ${p} AS INTEGER) THEN wage END) AS ${name}`;
-  })
-  .join(",\n         ");
+function percentileExpr(p: number, name: string): string {
+  const k = `(c.n - 1) * ${p}`;
+  const lo = `1 + CAST(${k} AS INTEGER)`;
+  return (
+    `(SELECT ROUND(lo.wage + (hi.wage - lo.wage) * (${k} - CAST(${k} AS INTEGER)))` +
+    `   FROM c JOIN o lo ON lo.rn = ${lo}` +
+    `          JOIN o hi ON hi.rn = MIN(${lo} + 1, c.n)) AS ${name}`
+  );
+}
+
+const PERCENTILE_SELECT = (
+  [
+    [0.05, "p5"],
+    [0.25, "p25"],
+    [0.5, "p50"],
+    [0.75, "p75"],
+    [0.95, "p95"],
+  ] as const
+)
+  .map(([p, name]) => percentileExpr(p, name))
+  .join(",\n            ");
+
+/**
+ * The same interpolation, per state.
+ *
+ * A partitioned window rather than the correlated-subquery form above,
+ * because one query per state would be 56 round trips to build one table.
+ * `n` is constant within a partition, so MAX(n) inside the aggregate is that
+ * partition's count rather than a maximum over anything.
+ */
+function statePercentileExpr(p: number, name: string): string {
+  const k = `(n - 1) * ${p}`;
+  const loRank = `1 + CAST(${k} AS INTEGER)`;
+  const lo = `MAX(CASE WHEN rn = ${loRank} THEN wage END)`;
+  const hi = `MAX(CASE WHEN rn = MIN(${loRank} + 1, n) THEN wage END)`;
+  const frac = `(MAX(${k}) - CAST(MAX(${k}) AS INTEGER))`;
+  return `ROUND(${lo} + (${hi} - ${lo}) * ${frac}) AS ${name}`;
+}
+
+const STATE_PERCENTILE_SELECT = (
+  [
+    [0.05, "p5"],
+    [0.25, "p25"],
+    [0.5, "p50"],
+    [0.75, "p75"],
+    [0.95, "p95"],
+  ] as const
+)
+  .map(([p, name]) => statePercentileExpr(p, name))
+  .join(",\n            ");
 
 export async function getWageStats(f: WageFilters): Promise<WagePercentileRow> {
   const w = wageWhere(f);
   const r = await one<Record<string, unknown>>(
-    `WITH o AS (
-       SELECT wage,
-              ROW_NUMBER() OVER (ORDER BY wage) AS rn,
-              COUNT(*)     OVER ()              AS n
-         FROM perm_cases WHERE ${w.sql}
-     )
-     SELECT MAX(n) AS n, AVG(wage) AS avg,
-            ${PERCENTILE_SELECT}
-       FROM o`,
+    `WITH f AS (SELECT wage FROM perm_cases WHERE ${w.sql}),
+          c AS (SELECT COUNT(*) AS n FROM f),
+          o AS (SELECT wage, ROW_NUMBER() OVER (ORDER BY wage) AS rn FROM f)
+     SELECT (SELECT n FROM c) AS n, (SELECT AVG(wage) FROM f) AS avg,
+            ${PERCENTILE_SELECT}`,
     w.args,
   );
   const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
@@ -908,7 +976,7 @@ export async function getWageByState(
          FROM perm_cases WHERE ${w.sql} AND state IS NOT NULL AND state <> ''
      )
      SELECT state, MAX(n) AS n, AVG(wage) AS avg,
-            ${PERCENTILE_SELECT}
+            ${STATE_PERCENTILE_SELECT}
        FROM o GROUP BY state HAVING MAX(n) >= ? ORDER BY MAX(n) DESC`,
     [...w.args, minCases],
   );
