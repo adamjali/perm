@@ -484,6 +484,27 @@ def main() -> int:
     log(f"  VERIFY {moved:,} transitions observed this run; {evs:,} held in total"
         + ("  (none this run: either nothing moved upstream, or this was a"
            " first pass with nothing to compare against)" if moved == 0 else ""))
+
+    # STAMP OUR OWN FRESHNESS ROW.
+    #
+    # This ingest wrote data and never recorded that it had. The row for this
+    # dataset was created once by `backfill_permtrack.py`, a one-off that is in
+    # no workflow, so `as_of` stayed frozen at whatever that run left while the
+    # data underneath refreshed on schedule. That makes the freshness table -
+    # which `DataProvenance` renders to readers and `check_ingest_health.py`
+    # alerts on - describe a moment that has nothing to do with this data.
+    #
+    # A monitor reading a frozen row eventually fires a FALSE alarm, which is
+    # worse than no monitor: it teaches you to ignore the real one.
+    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
+        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
+        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
+    pend = int(db.scalar("SELECT count(*) FROM perm_case_status WHERE is_final=0") or 0)
+    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
+               ["perm-case-status", str(db.scalar("SELECT max(last_checked_at) FROM perm_case_status"))[:10], int(time.time() * 1000),
+                SOURCE, "Rolling",
+                f"{held:,} cases, {pend:,} of them pending", 14])
+
     return 0
 
 

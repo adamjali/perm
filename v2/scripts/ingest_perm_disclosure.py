@@ -1485,6 +1485,26 @@ def main() -> int:
     with open(args.out, "w") as fh:
         json.dump(payload, fh, separators=(",", ":"))
     log(f"wrote {args.out} ({os.path.getsize(args.out) / 1024:.1f} KB)")
+
+    # STAMP OUR OWN FRESHNESS ROW.
+    #
+    # This ingest wrote data and never recorded that it had. The row for this
+    # dataset was created once by `backfill_permtrack.py`, a one-off that is in
+    # no workflow, so `as_of` stayed frozen at whatever that run left while the
+    # data underneath refreshed on schedule. That makes the freshness table -
+    # which `DataProvenance` renders to readers and `check_ingest_health.py`
+    # alerts on - describe a moment that has nothing to do with this data.
+    #
+    # A monitor reading a frozen row eventually fires a FALSE alarm, which is
+    # worse than no monitor: it teaches you to ignore the real one.
+    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
+        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
+        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
+    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
+               ["perm-cases", str(db.scalar("SELECT max(decision_date) FROM perm_cases"))[:10], int(time.time() * 1000),
+                "DOL quarterly disclosure files (flag.dol.gov)", "Quarterly",
+                f"{held:,} decided cases", 135])
+
     return 0
 
 

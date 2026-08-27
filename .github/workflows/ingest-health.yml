@@ -1,0 +1,62 @@
+name: Ingest health
+
+# THE ONLY THING THAT WILL TELL US AN INGEST HAS STOPPED.
+#
+# Before this, a dead ingest was silent. Four of the six ingest workflows mark
+# their step `continue-on-error: true`, so a failed run exits GREEN and GitHub
+# sends nothing. The other signal - the staleness warning `DataProvenance`
+# renders - appears on a page, and nobody watches pages. So if permtrack
+# changed shape, DOL moved a file, or a token expired, the site would keep
+# serving the last good numbers under their own as-of date indefinitely and
+# nothing would say otherwise. That is worse than an outage: an outage is
+# visible.
+#
+# This reads every row of `data_freshness` and fails when any dataset is past
+# the `max_age_days` ITS OWN INGEST declared. A red scheduled run is what
+# triggers GitHub's built-in notification to the repo owner, so this needs no
+# new alerting service and no extra credential.
+#
+# Deliberately NOT continue-on-error. Failing is the entire feature.
+#
+# Manual run:
+#   cd v2 && python3 scripts/check_ingest_health.py
+
+on:
+  schedule:
+    # 10:00 UTC - after the daily ingests (07:00 processing times, 09:30 month
+    # stats) so a same-day failure is caught the same day rather than tomorrow.
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ingest-health
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check every dataset against its own freshness budget
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          python3 scripts/check_ingest_health.py
+
+      - name: Remove credentials
+        if: always()
+        working-directory: v2
+        run: rm -f .env.local

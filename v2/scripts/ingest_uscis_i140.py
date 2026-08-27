@@ -30,6 +30,7 @@ import json
 import os
 import re
 import sys
+import time
 import tempfile
 import zipfile
 
@@ -189,6 +190,19 @@ def main() -> int:
     with open(args.out, "w") as fh:
         json.dump(payload, fh, separators=(",", ":"))
     log(f"wrote {args.out} ({os.path.getsize(args.out) / 1024:.1f} KB)")
+
+    # Stamp our own freshness row. This ingest previously wrote data without
+    # recording that it had: the row came from a one-off backfill that is in no
+    # workflow, so `as_of` described that run forever while the data refreshed
+    # on schedule underneath it. A frozen row makes the monitor cry wolf, and a
+    # monitor that cries wolf is one you stop reading.
+    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
+        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
+        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
+    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
+               ["uscis-i140-times", str(db.scalar("SELECT max(as_of) FROM uscis_i140_times") or "")[:10], int(time.time() * 1000),
+                "USCIS processing-times page (egov.uscis.gov), dated mirror", "Monthly", "USCIS published I-140 processing times", 90])
+
     return 0
 
 

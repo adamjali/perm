@@ -289,6 +289,20 @@ def main() -> int:
     with open(args.out, "w") as fh:
         json.dump(payload, fh, separators=(",", ":"))
     log(f"wrote {args.out} ({os.path.getsize(args.out) / 1024:.1f} KB)")
+
+    # Stamp our own freshness row. This ingest previously wrote data without
+    # recording that it had: the row came from a one-off backfill that is in no
+    # workflow, so `as_of` described that run forever while the data refreshed
+    # on schedule underneath it. A frozen row makes the monitor cry wolf, and a
+    # monitor that cries wolf is one you stop reading.
+    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
+        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
+        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
+    n = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
+    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
+               ["visa-bulletin", str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10], int(time.time() * 1000),
+                "State Dept via Internet Archive; gaps via permtrack.app mirror", "Monthly", f"{n:,} bulletins", 75])
+
     return 0
 
 

@@ -76,6 +76,19 @@ export interface CaseStatusResultProps {
   today: string;
 }
 
+/**
+ * Does DOL's disclosure record show a decision on this case?
+ *
+ * A decision is not the same as the case being OVER. A denial can be appealed
+ * within 30 days (20 CFR 656.24(g)) and the case re-enters processing, which
+ * is why this asks "is there a decision on the record" and not "is this case
+ * finished". The two questions have different answers for six cases in the
+ * corpus and the difference is the whole point of the banner it feeds.
+ */
+function isTerminalOnRecord(status: string): boolean {
+  return ["certified", "denied", "withdrawn"].includes(status.toLowerCase());
+}
+
 export function CaseStatusResult({
   result,
   cohortStatuses,
@@ -104,6 +117,21 @@ export function CaseStatusResult({
   // 54 cases in 277,016 carry a live status that contradicts DOL's decided
   // record. It is 0.02% of the overlap and it is the whole ballgame when it
   // is YOUR case, so it gets said rather than resolved by picking a winner.
+  //
+  // THE `live.isFinal` REQUIREMENT MISSED A WHOLE CLASS. Six cases read
+  // "denied" in DOL's disclosure file and "RECONSIDERATION APPEALS" in the
+  // live mirror. Those are not a stale source: a denial is NOT terminal, and
+  // 20 CFR 656.24(g) gives the employer 30 days to ask the Certifying Officer
+  // to reconsider, which puts the case back into processing. The mirror is the
+  // CORRECT one there and the page rightly shows the appeal - but it said
+  // nothing about DOL's file recording a denial, so somebody whose employer
+  // had appealed saw no sign that a denial existed at all.
+  //
+  // So the banner now covers both directions, and `reopened` distinguishes
+  // them, because they need opposite wording: one is two sources disagreeing,
+  // the other is one case that genuinely moved twice.
+  const reopened =
+    !!live && !!decided && !live.isFinal && isTerminalOnRecord(decided.status);
   const sourcesDisagree =
     !!live &&
     !!decided &&
@@ -147,6 +175,37 @@ export function CaseStatusResult({
               flag.dol.gov
             </a>{" "}
             is the source, and it is the authority.
+          </span>
+        </p>
+      ) : null}
+
+      {reopened && decided && live ? (
+        <p className="mt-6 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-foreground/80">
+          <Warning
+            className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
+            weight="fill"
+            aria-hidden="true"
+          />{" "}
+          <span>
+            <b className="font-bold text-data-warn-ink">
+              DOL&apos;s file records a decision on this case, and it is back in
+              processing.
+            </b>{" "}
+            The quarterly disclosure file shows it {decided.status.toLowerCase()}
+            {decided.decisionDate ? <> on {formatAsOf(decided.decisionDate)}</> : null}
+            , and the live status page now shows{" "}
+            {prettyStatus(live.status).toLowerCase()}. That is a normal sequence
+            rather than a contradiction: a denial can be appealed within 30 days
+            under{" "}
+            <a
+              href="https://www.ecfr.gov/current/title-20/section-656.24"
+              rel="noopener noreferrer"
+              className="font-bold underline underline-offset-2 hover:text-primary"
+            >
+              20 CFR 656.24(g)
+            </a>
+            , which puts the case back in front of the Certifying Officer. The
+            live status is the current one.
           </span>
         </p>
       ) : null}
