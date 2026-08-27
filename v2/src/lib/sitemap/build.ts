@@ -122,6 +122,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/i140-calculator`, lastModified: "2026-08-23" },
     { url: `${base}/tools/i485-queue-position`, lastModified: "2026-08-26" },
     { url: `${base}/tools/salary-explorer`, lastModified: "2026-08-26" },
+    { url: `${base}/tools/i140-trends`, lastModified: "2026-08-27" },
     // Gated on MIRROR_COMPLETE together with the page's own robots directive
     // and its provisional notice: a page carrying provisional counts must not
     // be listed for search, and one that is listed must not still be calling

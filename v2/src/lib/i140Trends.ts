@@ -28,12 +28,21 @@ export interface TrendRow {
  * under the preference and once under its subtype: 617,840 against a true
  * 355,321. Nothing here ever sums across the two levels.
  *
- * EB2 IS THE EXCEPTION AND IT IS AN INGEST GAP, NOT A DATA SHAPE. E21 covers
- * only 71,797 of EB2's 164,599. The ingest declares an NIW row in its
- * SUBTYPE_ROWS matcher and no NIW row reaches the table, so the missing
- * 92,802 is the national-interest-waiver line failing to parse. Stated on the
- * page rather than papered over: a subtotal that silently fails to add up is
- * worse than one labelled as incomplete.
+ * EB2 = E21 + NIW, and those two are the whole reason this page exists.
+ *
+ * They were briefly out by 92,802 because the ingest's code matcher read a
+ * trailing-parens code as letters-then-a-digit; every code from E11 to EW3
+ * ends in a digit and matched, and `(NIW)` fell through silently. Fixed at
+ * the ingest, and EB2 now reconciles to its two children to the digit in
+ * every quarter.
+ *
+ * KEEP THEM APART ON THE PAGE. Measured over six quarters, E21 denies 2.53%
+ * and NIW denies 47.26% - an eighteen-fold difference between two categories
+ * that at least one public tracker collapses into one by labelling E21
+ * "National Interest Waiver". A reader comparing an employer-sponsored
+ * advanced-degree petition against a self-petitioned waiver is looking at two
+ * different queues, and averaging them would hide the single largest
+ * difference in this dataset.
  */
 export const PREFERENCE_OF: Record<string, string> = {
   E11: "EB1",

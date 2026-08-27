@@ -62,6 +62,7 @@ export const TOOL_NAV_LINKS = [
   { href: "/tools/i140-calculator", label: "I-140 queue" },
   { href: "/tools/i485-queue-position", label: "I-485 queue position" },
   { href: "/tools/salary-explorer", label: "Salary explorer" },
+  { href: "/tools/i140-trends", label: "I-140 trends" },
   { href: "/tools/priority-date-calculator", label: "Priority dates" },
   { href: "/tools/perm-deadline-calculator", label: "PERM deadlines" },
 ] as const satisfies readonly NavLink[];
