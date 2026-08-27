@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 
 import type { NameVariant } from "@/lib/turso/entityDetail";
@@ -90,22 +91,24 @@ export function NameSpellings({
         <>
           <ul className="mt-5 divide-y-2 divide-border border-t-2 border-border">
             {variants.map((v) => (
-              <li key={v.slug}>
-                <Link
-                  href={`${hrefBase}/${v.slug}`}
-                  className={cn(
-                    "flex min-h-[44px] flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2.5",
-                    "hover:text-primary",
-                  )}
-                >
-                  <span className="min-w-0 flex-1 text-sm font-bold leading-snug underline decoration-primary/50 decoration-2 underline-offset-2">
-                    {v.name}
-                  </span>{" "}
-                  <span className="font-mono text-xs tabular-nums text-foreground/70">
-                    {fmt(v.total)} filing{v.total === 1 ? "" : "s"}
-                  </span>
-                </Link>
-              </li>
+              <Fragment key={v.slug}>{" "}
+                <li >
+                  <Link
+                    href={`${hrefBase}/${v.slug}`}
+                    className={cn(
+                      "flex min-h-[44px] flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2.5",
+                      "hover:text-primary",
+                    )}
+                  >
+                    <span className="min-w-0 flex-1 text-sm font-bold leading-snug underline decoration-primary/50 decoration-2 underline-offset-2">
+                      {v.name}
+                    </span>{" "}
+                    <span className="font-mono text-xs tabular-nums text-foreground/70">
+                      {fmt(v.total)} filing{v.total === 1 ? "" : "s"}
+                    </span>
+                  </Link>
+                </li>
+              </Fragment>
             ))}
           </ul>
           <p className="mt-4 text-sm leading-relaxed text-foreground/70">

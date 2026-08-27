@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 
@@ -63,8 +64,14 @@ function Shell({
 }) {
   return (
     <section className={cn("border-2 border-border bg-card p-5 sm:p-6", className)}>
-      <PlateLabel>{title}</PlateLabel>
-      {children}
+      {/* The spaces are load-bearing, not formatting. Without them the title
+          welds to the first row and the last row welds to the note - "What the
+          jobs are||Software Developers", "15-2051.01111||These are the 6
+          occupations..." - because JSX drops the newline between two elements
+          and every child here is block-level, so a browser shows nothing wrong
+          while every DOM extractor reads one run. */}
+      <PlateLabel>{title}</PlateLabel>{" "}
+      {children}{" "}
       {note ? (
         <p className="mt-4 border-t border-border/40 pt-3 text-sm leading-relaxed text-foreground/70">
           {note}
@@ -129,29 +136,30 @@ export function OccupationMix({
       {rest.length > 0 ? (
         <ul className="mt-5 space-y-2 border-t-2 border-border pt-4">
           {rest.map((r) => (
-            <li
-              key={r.key ?? r.label}
-              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5"
-            >
-              <span className="min-w-0 flex-1 text-sm font-bold leading-snug">
-                {r.key ? (
-                  <Link
-                    href={`/perm-wages/${r.key}`}
-                    className="underline decoration-primary/60 decoration-2 underline-offset-2 hover:text-primary"
-                  >
-                    {r.label}
-                  </Link>
-                ) : (
-                  r.label
-                )}
-              </span>{" "}
-              <span className="font-mono text-sm tabular-nums text-foreground/70">
-                {r.code ? (
-                  <span className="mr-2 font-normal text-muted-foreground">{r.code}</span>
-                ) : null}
-                {fmt(r.n)}
-              </span>
-            </li>
+            <Fragment key={r.key ?? r.label}>{" "}
+              <li
+                className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5"
+              >
+                <span className="min-w-0 flex-1 text-sm font-bold leading-snug">
+                  {r.key ? (
+                    <Link
+                      href={`/perm-wages/${r.key}`}
+                      className="underline decoration-primary/60 decoration-2 underline-offset-2 hover:text-primary"
+                    >
+                      {r.label}
+                    </Link>
+                  ) : (
+                    r.label
+                  )}
+                </span>{" "}
+                <span className="font-mono text-sm tabular-nums text-foreground/70">
+                  {r.code ? (
+                    <span className="mr-2 font-normal text-muted-foreground">{r.code}</span>
+                  ) : null}
+                  {fmt(r.n)}
+                </span>
+              </li>
+            </Fragment>
           ))}
         </ul>
       ) : null}
@@ -198,15 +206,16 @@ export function StateMix({
           than a chip that does not. The module's own note carries the link. */}
       <ul className="flex flex-wrap gap-2">
         {rows.map((r) => (
-          <li
-            key={r.key ?? r.label}
-            className="border-2 border-border bg-background px-3 py-1.5"
-          >
-            <span className="block font-mono text-xs font-bold uppercase tracking-[0.1em]">
-              {r.key ? stateName(r.key) : r.label}
-            </span>{" "}
-            <span className="block font-mono text-sm font-bold tabular-nums">{fmt(r.n)}</span>
-          </li>
+          <Fragment key={r.key ?? r.label}>{" "}
+            <li
+              className="border-2 border-border bg-background px-3 py-1.5"
+            >
+              <span className="block font-mono text-xs font-bold uppercase tracking-[0.1em]">
+                {r.key ? stateName(r.key) : r.label}
+              </span>{" "}
+              <span className="block font-mono text-sm font-bold tabular-nums">{fmt(r.n)}</span>
+            </li>
+          </Fragment>
         ))}
       </ul>
     </Shell>
@@ -256,27 +265,29 @@ export function PartyMix({
         {rows.map((r, i) => {
           const rate = ratePct(r);
           return (
-            <li
-              key={r.key ?? r.label}
-              className={cn(i > 0 && "border-t border-border/40 pt-3")}
-            >
-              <span className="min-w-0 flex-1">
-                {r.key ? (
-                  <Link
-                    href={`${hrefBase}/${r.key}`}
-                    className="font-bold leading-snug underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                  >
-                    {r.label}
-                  </Link>
-                ) : (
-                  <span className="font-bold leading-snug">{r.label}</span>
-                )}{" "}
-                <span className="mt-0.5 block font-mono text-xs tabular-nums text-foreground/70">
-                  {fmt(r.n)} filings
-                  {rate != null ? ` · ${rate.toFixed(1)}% approved` : null}
+            <Fragment key={r.key ?? r.label}>{" "}
+              <li
+                
+                className={cn(i > 0 && "border-t border-border/40 pt-3")}
+              >
+                <span className="min-w-0 flex-1">
+                  {r.key ? (
+                    <Link
+                      href={`${hrefBase}/${r.key}`}
+                      className="font-bold leading-snug underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                    >
+                      {r.label}
+                    </Link>
+                  ) : (
+                    <span className="font-bold leading-snug">{r.label}</span>
+                  )}{" "}
+                  <span className="mt-0.5 block font-mono text-xs tabular-nums text-foreground/70">
+                    {fmt(r.n)} filings
+                    {rate != null ? ` · ${rate.toFixed(1)}% approved` : null}
+                  </span>
                 </span>
-              </span>
-            </li>
+              </li>
+            </Fragment>
           );
         })}
       </ol>

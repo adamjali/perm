@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 
 import { FigurePlate } from "@/components/tools/FigurePlate";
@@ -144,7 +145,13 @@ export function LiveQueueBand({
                   const meaning = statusMeaning(s.status);
                   const share = waiting > 0 ? (s.n / waiting) * 100 : 0;
                   return (
-                    <div key={s.status}>
+                    // Keyed Fragment with a leading space: array items render
+                    // with NOTHING between them, so every stage name welded to
+                    // the previous stage's percentage for any extractor walking
+                    // the DOM. A whitespace-only node is not laid out as a grid
+                    // or flex item, so it costs nothing visually.
+                    <Fragment key={s.status}>{" "}
+                    <div>
                       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
                         <dt className="font-mono text-xs font-bold uppercase tracking-[0.1em]">
                           {s.status}
@@ -179,6 +186,7 @@ export function LiveQueueBand({
                         </p>
                       ) : null}
                     </div>
+                    </Fragment>
                   );
                 })}
               </dl>

@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 
 import { FigurePlate } from "@/components/tools/FigurePlate";
@@ -75,39 +76,40 @@ export function PendingLeaderboard({
     >
       <ol className="space-y-3">
         {leaders.map((l, i) => (
-          <li
-            key={l.slug}
-            className={i > 0 ? "border-t border-border/40 pt-3" : undefined}
-          >
-            <div className="grid grid-cols-1 gap-x-4 gap-y-1 [&>*]:min-w-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,14rem)] sm:items-baseline">
-              <p className="text-sm font-bold leading-snug">
-                <Link
-                  href={`/perm-employers/${l.slug}`}
-                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                >
-                  {l.name}
-                </Link>
-              </p>{" "}
-              <p className="font-mono text-xs tabular-nums text-foreground/70">
-                <span className="font-bold text-foreground">{fmt(l.pending)}</span> of{" "}
-                {fmt(l.tracked)} tracked
-              </p>
-            </div>
-            {/* Trackless. The lime fill measures 1.38:1 against a
-                `border/40` track in light mode, under the 3:1 floor for a
-                graphical object; ink on card is 20.1:1. The row already
-                prints "N of M", which is what a track would have implied. */}
-            <div
-              aria-hidden="true"
-              className="mt-1.5 h-1.5 bg-foreground"
-              style={{ width: `${Math.max(2, (l.pending / max) * 100)}%` }}
-            />
-            {l.topStage ? (
-              <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
-                {fmt(l.topStageN)} in {l.topStage.toLowerCase()}
-              </p>
-            ) : null}
-          </li>
+          <Fragment key={l.slug}>{" "}
+            <li
+              className={i > 0 ? "border-t border-border/40 pt-3" : undefined}
+            >
+              <div className="grid grid-cols-1 gap-x-4 gap-y-1 [&>*]:min-w-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,14rem)] sm:items-baseline">
+                <p className="text-sm font-bold leading-snug">
+                  <Link
+                    href={`/perm-employers/${l.slug}`}
+                    className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  >
+                    {l.name}
+                  </Link>
+                </p>{" "}
+                <p className="font-mono text-xs tabular-nums text-foreground/70">
+                  <span className="font-bold text-foreground">{fmt(l.pending)}</span> of{" "}
+                  {fmt(l.tracked)} tracked
+                </p>
+              </div>
+              {/* Trackless. The lime fill measures 1.38:1 against a
+                  `border/40` track in light mode, under the 3:1 floor for a
+                  graphical object; ink on card is 20.1:1. The row already
+                  prints "N of M", which is what a track would have implied. */}
+              <div
+                aria-hidden="true"
+                className="mt-1.5 h-1.5 bg-foreground"
+                style={{ width: `${Math.max(2, (l.pending / max) * 100)}%` }}
+              />
+              {l.topStage ? (
+                <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+                  {fmt(l.topStageN)} in {l.topStage.toLowerCase()}
+                </p>
+              ) : null}
+            </li>
+          </Fragment>
         ))}
       </ol>
     </FigurePlate>

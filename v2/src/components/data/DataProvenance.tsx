@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Warning } from "@phosphor-icons/react/ssr";
 
 import { getFreshness, type DatasetFreshness } from "@/lib/turso/publicData";
@@ -22,8 +23,14 @@ export async function DataProvenance({ datasets, className }: { datasets: string
   if (rows.length === 0) return null;
   return (
     <div className={className ?? "mt-6 border-t-2 border-border pt-3"}>
-      {rows.map((r) =>
-        r.stale ? (
+      {rows.map((r) => (
+        // Keyed Fragment with a leading space. Array items render with NOTHING
+        // between them, so on any page citing two or more datasets the last
+        // word of one line welded to the first word of the next -
+        // "...each federal quarter||Processing times: DOL FLAG..." - and this
+        // component sits on every data page on the site.
+        <Fragment key={r.dataset}>{" "}
+        {r.stale ? (
           /*
            * An ingest that has silently stopped is worse than an outage,
            * because an outage is visible and this is not: the page keeps
@@ -40,7 +47,6 @@ export async function DataProvenance({ datasets, className }: { datasets: string
            * people to ignore the one that matters.
            */
           <p
-            key={r.dataset}
             className="mt-2 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-3 py-2 text-sm text-foreground/80 first:mt-0"
           >
             <Warning
@@ -59,13 +65,14 @@ export async function DataProvenance({ datasets, className }: { datasets: string
             </span>
           </p>
         ) : (
-          <p key={r.dataset} className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             <span className="font-bold text-foreground/80">{label(r.dataset)}:</span>{" "}
             {r.source}
             {r.asOf ? <> · data through {fmt(r.asOf)}</> : null} · {r.cadence.toLowerCase()}
           </p>
-        ),
-      )}
+        )}
+        </Fragment>
+      ))}
     </div>
   );
 }
