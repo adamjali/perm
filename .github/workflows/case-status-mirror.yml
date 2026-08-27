@@ -39,17 +39,24 @@ name: Per-case status mirror
 #   cd v2 && python3 scripts/mirror_case_status.py --pending
 #   cd v2 && python3 scripts/mirror_case_status.py
 
+# SCHEDULE DISABLED 2026-08-27. Kept dispatchable as a fallback, not deleted.
+#
+# THE TWO INGESTS WOULD FIGHT. This one reads permtrack's copy; the direct
+# one reads DOL. permtrack's data is a quarter stale, so after the direct
+# sweep corrected 1,328 statuses from the source, this run would have
+# compared permtrack's OLD values against our NEW ones, called the
+# difference a change, and reverted every correction - twice a day, forever,
+# with its change-detection logic reporting healthy writes the whole time.
+#
+# Two writers with different notions of truth pointed at one table is not a
+# redundancy, it is a flip-flop. Re-enable this ONLY if the direct route
+# stops working, and expect it to walk the table back to permtrack's view.
 on:
-  schedule:
-    # pending sweep, every twelve hours
-    - cron: "15 */12 * * *"
-    # full corpus, Sundays 04:15 UTC, off the hour the pending pass uses
-    - cron: "15 4 * * 0"
   workflow_dispatch:
     inputs:
       mode:
-        description: "pending (fast) or full (whole corpus)"
-        required: false
+        description: Which pass to run
+        required: true
         default: pending
         type: choice
         options: [pending, full]
