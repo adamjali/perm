@@ -31,7 +31,7 @@ export function ShieldCheckSVG({ className = "", size = 200 }: ShieldCheckSVGPro
       {/* Shield inner highlight */}
       <path
         d="M100 30 L155 55 L155 100 Q155 145 100 170 Q45 145 45 100 L45 55 Z"
-        fill="#F0FFF0"
+        fill="var(--primary)" fillOpacity="0.10"
         stroke="currentColor"
         strokeWidth="2"
         opacity="0.5"
@@ -40,7 +40,7 @@ export function ShieldCheckSVG({ className = "", size = 200 }: ShieldCheckSVGPro
       {/* Green top section */}
       <path
         d="M100 15 L170 45 L170 70 L30 70 L30 45 Z"
-        fill="#2ECC40"
+        fill="var(--primary)"
         stroke="currentColor"
         strokeWidth="3"
       />
@@ -49,7 +49,7 @@ export function ShieldCheckSVG({ className = "", size = 200 }: ShieldCheckSVGPro
       <path
         d="M70 100 L90 125 L130 80"
         fill="none"
-        stroke="#2ECC40"
+        stroke="var(--primary)"
         strokeWidth="8"
         strokeLinecap="square"
         strokeLinejoin="miter"

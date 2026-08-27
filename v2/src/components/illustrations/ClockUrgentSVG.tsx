@@ -76,7 +76,7 @@ export function ClockUrgentSVG({ className = "", size = 200 }: ClockUrgentSVGPro
       <path
         d="M100 38 A62 62 0 0 1 145 52"
         fill="none"
-        stroke="#DC2626"
+        stroke="var(--data-bad)"
         strokeWidth="6"
         strokeLinecap="square"
         opacity="0.7"
@@ -86,7 +86,7 @@ export function ClockUrgentSVG({ className = "", size = 200 }: ClockUrgentSVGPro
       <g transform="translate(155, 30)">
         <path
           d="M0 -18 L16 12 L-16 12 Z"
-          fill="#FBBF24"
+          fill="var(--data-warn)"
           stroke="currentColor"
           strokeWidth="3"
         />
@@ -107,15 +107,15 @@ export function ClockUrgentSVG({ className = "", size = 200 }: ClockUrgentSVGPro
       <g transform="translate(40, 35)">
         <path
           d="M10 0 L0 12 L7 12 L3 24 L15 10 L8 10 Z"
-          fill="#FBBF24"
+          fill="var(--data-warn)"
           stroke="currentColor"
           strokeWidth="2"
         />
       </g>
 
       {/* Pulse rings - urgency */}
-      <circle cx="100" cy="100" r="78" fill="none" stroke="#DC2626" strokeWidth="2" opacity="0.2" />
-      <circle cx="100" cy="100" r="85" fill="none" stroke="#DC2626" strokeWidth="1.5" opacity="0.1" />
+      <circle cx="100" cy="100" r="78" fill="none" stroke="var(--data-bad)" strokeWidth="2" opacity="0.2" />
+      <circle cx="100" cy="100" r="85" fill="none" stroke="var(--data-bad)" strokeWidth="1.5" opacity="0.1" />
 
       {/* Hard shadow */}
       <circle cx="104" cy="104" r="70" fill="currentColor" opacity="0.06" />

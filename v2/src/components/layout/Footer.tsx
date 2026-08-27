@@ -73,13 +73,17 @@ export default function Footer({ variant = "compact" }: FooterProps) {
               <div className="flex gap-4">
                 {SOCIAL_LINKS.map(({ href, label, icon }) => {
                   const Icon = SOCIAL_ICONS[icon];
-                  // LinkedIn's mark has an official color (#0A66C2); GitHub
-                  // and X are officially monochrome, so theme white IS their
-                  // brand-correct form on this dark ground.
-                  const brand =
-                    icon === "linkedin"
-                      ? "text-[#0A66C2] brightness-125 hover:brightness-150"
-                      : "text-white/70 hover:text-white";
+                  // All three marks are monochrome here, LinkedIn included.
+                  //
+                  // Its official #0A66C2 was the honest brand colour and it was
+                  // still wrong in place: it made the LinkedIn tile the only
+                  // coloured thing in an otherwise black-and-white footer, on
+                  // every page, so the eye landed on it before anything the
+                  // footer is actually for. Three marks at one weight read as a
+                  // set; one in brand colour reads as a sticker. It also
+                  // carried brightness-125/150, and a brightness filter used
+                  // to lift a colour is the glow this project does not ship.
+                  const brand = "text-white/70 hover:text-white";
                   return (
                     <a
                       key={label}

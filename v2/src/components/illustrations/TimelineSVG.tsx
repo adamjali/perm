@@ -10,7 +10,15 @@ interface TimelineSVGProps {
 }
 
 export function TimelineSVG({ className = "", size = 200 }: TimelineSVGProps) {
-  const stageColors = ["#0066FF", "#9333ea", "#D97706", "#059669", "#2ECC40"];
+  // The five PERM stages, in order. Not a decorative palette: each value is
+  // the token that colours that stage everywhere else in the app.
+  const stageColors = [
+    "var(--stage-pwd)",
+    "var(--stage-recruitment)",
+    "var(--stage-eta9089)",
+    "var(--stage-i140)",
+    "var(--stage-success)",
+  ];
 
   return (
     <svg
@@ -26,7 +34,7 @@ export function TimelineSVG({ className = "", size = 200 }: TimelineSVGProps) {
       <line x1="30" y1="50" x2="370" y2="50" stroke="currentColor" strokeWidth="3" opacity="0.15" />
 
       {/* Progress fill */}
-      <line x1="30" y1="50" x2="280" y2="50" stroke="#2ECC40" strokeWidth="4" />
+      <line x1="30" y1="50" x2="280" y2="50" stroke="var(--primary)" strokeWidth="4" />
 
       {/* Milestone nodes */}
       {stageColors.map((color, i) => {
@@ -133,7 +141,7 @@ export function TimelineSVG({ className = "", size = 200 }: TimelineSVGProps) {
       {/* Flag at end */}
       <g transform="translate(370, 35)">
         <line x1="0" y1="0" x2="0" y2="30" stroke="currentColor" strokeWidth="2" />
-        <path d="M0 0 L18 5 L0 12 Z" fill="#2ECC40" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M0 0 L18 5 L0 12 Z" fill="var(--primary)" stroke="currentColor" strokeWidth="1.5" />
       </g>
     </svg>
   );

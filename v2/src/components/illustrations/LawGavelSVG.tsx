@@ -21,15 +21,15 @@ export function LawGavelSVG({ className = "", size = 200 }: LawGavelSVGProps) {
       aria-hidden="true"
     >
       {/* Sound block / base */}
-      <rect x="30" y="155" width="140" height="20" fill="#2ECC40" stroke="currentColor" strokeWidth="3" />
+      <rect x="30" y="155" width="140" height="20" fill="var(--primary)" stroke="currentColor" strokeWidth="3" />
       <rect x="50" y="145" width="100" height="14" fill="white" stroke="currentColor" strokeWidth="3" />
 
       {/* Gavel head */}
       <g transform="translate(100, 70) rotate(-30)">
-        <rect x="-35" y="-15" width="70" height="30" fill="#8B6914" stroke="currentColor" strokeWidth="3" />
+        <rect x="-35" y="-15" width="70" height="30" fill="var(--data-warn-ink)" stroke="currentColor" strokeWidth="3" />
         {/* Metal bands */}
-        <rect x="-35" y="-15" width="10" height="30" fill="#A0A0A0" stroke="currentColor" strokeWidth="2" />
-        <rect x="25" y="-15" width="10" height="30" fill="#A0A0A0" stroke="currentColor" strokeWidth="2" />
+        <rect x="-35" y="-15" width="10" height="30" fill="var(--muted-foreground)" stroke="currentColor" strokeWidth="2" />
+        <rect x="25" y="-15" width="10" height="30" fill="var(--muted-foreground)" stroke="currentColor" strokeWidth="2" />
       </g>
 
       {/* Gavel handle */}
@@ -38,7 +38,7 @@ export function LawGavelSVG({ className = "", size = 200 }: LawGavelSVGProps) {
         y1="70"
         x2="100"
         y2="140"
-        stroke="#8B6914"
+        stroke="var(--data-warn-ink)"
         strokeWidth="8"
         strokeLinecap="square"
       />
@@ -55,9 +55,9 @@ export function LawGavelSVG({ className = "", size = 200 }: LawGavelSVGProps) {
       />
 
       {/* Impact lines */}
-      <line x1="60" y1="145" x2="45" y2="130" stroke="#2ECC40" strokeWidth="3" opacity="0.6" />
-      <line x1="140" y1="145" x2="155" y2="130" stroke="#2ECC40" strokeWidth="3" opacity="0.6" />
-      <line x1="100" y1="145" x2="100" y2="125" stroke="#2ECC40" strokeWidth="2" opacity="0.4" />
+      <line x1="60" y1="145" x2="45" y2="130" stroke="var(--primary)" strokeWidth="3" opacity="0.6" />
+      <line x1="140" y1="145" x2="155" y2="130" stroke="var(--primary)" strokeWidth="3" opacity="0.6" />
+      <line x1="100" y1="145" x2="100" y2="125" stroke="var(--primary)" strokeWidth="2" opacity="0.4" />
 
       {/* Document behind gavel */}
       <g transform="translate(145, 30)">
@@ -67,7 +67,7 @@ export function LawGavelSVG({ className = "", size = 200 }: LawGavelSVGProps) {
         <line x1="6" y1="26" x2="28" y2="26" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
         <line x1="6" y1="34" x2="32" y2="34" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
         {/* Seal */}
-        <circle cx="28" cy="45" r="6" fill="#2ECC40" opacity="0.5" stroke="currentColor" strokeWidth="1" />
+        <circle cx="28" cy="45" r="6" fill="var(--primary)" opacity="0.5" stroke="currentColor" strokeWidth="1" />
       </g>
 
       {/* Motion blur arcs */}

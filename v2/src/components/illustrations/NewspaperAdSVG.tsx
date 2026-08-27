@@ -43,7 +43,7 @@ export function NewspaperAdSVG({ className = "", size = 200 }: NewspaperAdSVGPro
       <line x1="28" y1="67" x2="152" y2="67" stroke="currentColor" strokeWidth="0.5" opacity="0.2" />
 
       {/* Job Ad box - highlighted */}
-      <rect x="32" y="74" width="116" height="52" fill="#E8FFE8" stroke="#2ECC40" strokeWidth="2.5" />
+      <rect x="32" y="74" width="116" height="52" fill="var(--primary)" fillOpacity="0.14" stroke="var(--primary)" strokeWidth="2.5" />
 
       {/* Job ad header */}
       <text
@@ -85,7 +85,7 @@ export function NewspaperAdSVG({ className = "", size = 200 }: NewspaperAdSVGPro
 
       {/* "NOW HIRING" badge - overlapping top-right corner */}
       <g transform="translate(148, 52)">
-        <rect x="-6" y="-14" width="52" height="28" fill="#2ECC40" stroke="currentColor" strokeWidth="3" />
+        <rect x="-6" y="-14" width="52" height="28" fill="var(--primary)" stroke="currentColor" strokeWidth="3" />
         <text
           x="20"
           y="-3"

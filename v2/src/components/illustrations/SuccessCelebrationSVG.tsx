@@ -22,32 +22,32 @@ export function SuccessCelebrationSVG({ className = "", size = 200 }: SuccessCel
     >
       {/* Confetti pieces */}
       {/* Rectangles */}
-      <rect x="30" y="25" width="10" height="6" fill="#2ECC40" transform="rotate(25, 35, 28)" />
-      <rect x="55" y="15" width="8" height="5" fill="#0066FF" transform="rotate(-15, 59, 17)" />
-      <rect x="140" y="20" width="10" height="6" fill="#DC2626" transform="rotate(40, 145, 23)" />
-      <rect x="160" y="35" width="8" height="5" fill="#FBBF24" transform="rotate(-30, 164, 37)" />
-      <rect x="20" y="60" width="8" height="5" fill="#9333ea" transform="rotate(50, 24, 62)" />
-      <rect x="170" y="65" width="10" height="6" fill="#2ECC40" transform="rotate(-20, 175, 68)" />
+      <rect x="30" y="25" width="10" height="6" fill="var(--primary)" transform="rotate(25, 35, 28)" />
+      <rect x="55" y="15" width="8" height="5" fill="var(--stage-pwd)" transform="rotate(-15, 59, 17)" />
+      <rect x="140" y="20" width="10" height="6" fill="var(--data-bad)" transform="rotate(40, 145, 23)" />
+      <rect x="160" y="35" width="8" height="5" fill="var(--data-warn)" transform="rotate(-30, 164, 37)" />
+      <rect x="20" y="60" width="8" height="5" fill="var(--stage-recruitment)" transform="rotate(50, 24, 62)" />
+      <rect x="170" y="65" width="10" height="6" fill="var(--primary)" transform="rotate(-20, 175, 68)" />
 
       {/* Circles */}
-      <circle cx="45" cy="40" r="4" fill="#FBBF24" />
-      <circle cx="155" cy="45" r="3" fill="#0066FF" />
-      <circle cx="75" cy="20" r="3" fill="#DC2626" />
-      <circle cx="130" cy="15" r="4" fill="#2ECC40" />
+      <circle cx="45" cy="40" r="4" fill="var(--data-warn)" />
+      <circle cx="155" cy="45" r="3" fill="var(--stage-pwd)" />
+      <circle cx="75" cy="20" r="3" fill="var(--data-bad)" />
+      <circle cx="130" cy="15" r="4" fill="var(--primary)" />
 
       {/* Stars */}
       <g transform="translate(35, 50)">
-        <path d="M0 -5 L1.5 -1.5 L5 0 L1.5 1.5 L0 5 L-1.5 1.5 L-5 0 L-1.5 -1.5 Z" fill="#FBBF24" />
+        <path d="M0 -5 L1.5 -1.5 L5 0 L1.5 1.5 L0 5 L-1.5 1.5 L-5 0 L-1.5 -1.5 Z" fill="var(--data-warn)" />
       </g>
       <g transform="translate(165, 55)">
-        <path d="M0 -4 L1 -1 L4 0 L1 1 L0 4 L-1 1 L-4 0 L-1 -1 Z" fill="#2ECC40" />
+        <path d="M0 -4 L1 -1 L4 0 L1 1 L0 4 L-1 1 L-4 0 L-1 -1 Z" fill="var(--primary)" />
       </g>
 
       {/* Trophy */}
       {/* Cup */}
       <path
         d="M65 60 L60 120 Q60 140 80 140 L120 140 Q140 140 140 120 L135 60 Z"
-        fill="#FBBF24"
+        fill="var(--data-warn)"
         stroke="currentColor"
         strokeWidth="3"
       />
@@ -89,10 +89,10 @@ export function SuccessCelebrationSVG({ className = "", size = 200 }: SuccessCel
       </g>
 
       {/* Stem */}
-      <rect x="90" y="140" width="20" height="15" fill="#FBBF24" stroke="currentColor" strokeWidth="3" />
+      <rect x="90" y="140" width="20" height="15" fill="var(--data-warn)" stroke="currentColor" strokeWidth="3" />
 
       {/* Base */}
-      <rect x="70" y="155" width="60" height="12" fill="#2ECC40" stroke="currentColor" strokeWidth="3" />
+      <rect x="70" y="155" width="60" height="12" fill="var(--primary)" stroke="currentColor" strokeWidth="3" />
       <rect x="60" y="167" width="80" height="10" fill="currentColor" stroke="currentColor" strokeWidth="3" />
 
       {/* #1 text */}

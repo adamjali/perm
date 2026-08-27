@@ -24,7 +24,7 @@ export function CalendarSyncSVG({ className = "", size = 200 }: CalendarSyncSVGP
       <rect x="20" y="38" width="130" height="130" fill="white" stroke="currentColor" strokeWidth="3" />
 
       {/* Calendar header */}
-      <rect x="20" y="38" width="130" height="32" fill="#2ECC40" stroke="currentColor" strokeWidth="3" />
+      <rect x="20" y="38" width="130" height="32" fill="var(--primary)" stroke="currentColor" strokeWidth="3" />
 
       {/* Calendar rings */}
       <rect x="48" y="28" width="8" height="22" rx="0" fill="currentColor" />
@@ -46,26 +46,26 @@ export function CalendarSyncSVG({ className = "", size = 200 }: CalendarSyncSVGP
       </text>
 
       {/* Calendar grid - Row 1 */}
-      <rect x="30" y="80" width="22" height="22" fill="#F5F5F5" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="56" y="80" width="22" height="22" fill="#F5F5F5" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="82" y="80" width="22" height="22" fill="#F5F5F5" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="108" y="80" width="22" height="22" fill="#F5F5F5" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="30" y="80" width="22" height="22" fill="var(--muted)" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="56" y="80" width="22" height="22" fill="var(--muted)" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="82" y="80" width="22" height="22" fill="var(--muted)" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="108" y="80" width="22" height="22" fill="var(--muted)" stroke="currentColor" strokeWidth="1.5" />
 
       {/* Calendar grid - Row 2 */}
-      <rect x="30" y="106" width="22" height="22" fill="#F5F5F5" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="30" y="106" width="22" height="22" fill="var(--muted)" stroke="currentColor" strokeWidth="1.5" />
       {/* Highlighted synced day */}
-      <rect x="56" y="106" width="22" height="22" fill="#E8FFE8" stroke="#2ECC40" strokeWidth="2" />
-      <path d="M62 118 L66 122 L74 113" stroke="#2ECC40" strokeWidth="2.5" strokeLinecap="square" fill="none" />
-      <rect x="82" y="106" width="22" height="22" fill="#F5F5F5" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="108" y="106" width="22" height="22" fill="#F5F5F5" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="56" y="106" width="22" height="22" fill="var(--primary)" fillOpacity="0.14" stroke="var(--primary)" strokeWidth="2" />
+      <path d="M62 118 L66 122 L74 113" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="square" fill="none" />
+      <rect x="82" y="106" width="22" height="22" fill="var(--muted)" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="108" y="106" width="22" height="22" fill="var(--muted)" stroke="currentColor" strokeWidth="1.5" />
 
       {/* Calendar grid - Row 3 */}
-      <rect x="30" y="132" width="22" height="22" fill="#F5F5F5" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="56" y="132" width="22" height="22" fill="#F5F5F5" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="30" y="132" width="22" height="22" fill="var(--muted)" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="56" y="132" width="22" height="22" fill="var(--muted)" stroke="currentColor" strokeWidth="1.5" />
       {/* Another synced day */}
-      <rect x="82" y="132" width="22" height="22" fill="#E8FFE8" stroke="#2ECC40" strokeWidth="2" />
-      <path d="M88 144 L92 148 L100 139" stroke="#2ECC40" strokeWidth="2.5" strokeLinecap="square" fill="none" />
-      <rect x="108" y="132" width="22" height="22" fill="#F5F5F5" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="82" y="132" width="22" height="22" fill="var(--primary)" fillOpacity="0.14" stroke="var(--primary)" strokeWidth="2" />
+      <path d="M88 144 L92 148 L100 139" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="square" fill="none" />
+      <rect x="108" y="132" width="22" height="22" fill="var(--muted)" stroke="currentColor" strokeWidth="1.5" />
 
       {/* Sync arrows circle - overlapping bottom-right */}
       <g transform="translate(148, 140)">
@@ -76,26 +76,26 @@ export function CalendarSyncSVG({ className = "", size = 200 }: CalendarSyncSVGP
         <path
           d="M-18 -8 A 22 22 0 0 1 14 -16"
           fill="none"
-          stroke="#2ECC40"
+          stroke="var(--primary)"
           strokeWidth="4"
           strokeLinecap="square"
         />
-        <polygon points="14,-24 20,-14 8,-14" fill="#2ECC40" stroke="currentColor" strokeWidth="1.5" />
+        <polygon points="14,-24 20,-14 8,-14" fill="var(--primary)" stroke="currentColor" strokeWidth="1.5" />
 
         {/* Bottom arrow (counter-clockwise) */}
         <path
           d="M18 8 A 22 22 0 0 1 -14 16"
           fill="none"
-          stroke="#2ECC40"
+          stroke="var(--primary)"
           strokeWidth="4"
           strokeLinecap="square"
         />
-        <polygon points="-14,24 -20,14 -8,14" fill="#2ECC40" stroke="currentColor" strokeWidth="1.5" />
+        <polygon points="-14,24 -20,14 -8,14" fill="var(--primary)" stroke="currentColor" strokeWidth="1.5" />
       </g>
 
       {/* Small connection dots */}
-      <circle cx="130" cy="120" r="2.5" fill="#2ECC40" />
-      <circle cx="138" cy="128" r="2" fill="#2ECC40" opacity="0.6" />
+      <circle cx="130" cy="120" r="2.5" fill="var(--primary)" />
+      <circle cx="138" cy="128" r="2" fill="var(--primary)" opacity="0.6" />
 
       {/* Hard shadow */}
       <rect x="24" y="42" width="130" height="130" fill="currentColor" opacity="0.06" transform="translate(4, 4)" />
