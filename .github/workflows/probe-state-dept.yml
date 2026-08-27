@@ -37,10 +37,35 @@ jobs:
             echo "  $code  ${sz}b  cutoffs=$cut  cloudflare_mentions=$cf  ${u##*/}"
           done
 
-      - name: Control - a host known to serve runners
+      - name: Controls - prove this runner has working egress at all
         run: |
-          echo -n "  www.dol.gov: "
-          curl -s -o /dev/null -w '%{http_code}\n' --max-time 30 \
-            -A 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' \
-            -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' \
-            https://www.dol.gov/agencies/eta/foreign-labor/performance
+          # A probe whose control also fails is BLIND, and its 403s mean
+          # nothing. The first two hosts must return 200 or the whole
+          # measurement above is void.
+          UA='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+          FULL=(-A "$UA"
+            -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
+            -H 'Accept-Language: en-US,en;q=0.9'
+            -H 'Accept-Encoding: gzip, deflate, br'
+            -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate'
+            -H 'Sec-Fetch-Site: none' -H 'Sec-Fetch-User: ?1'
+            -H 'Upgrade-Insecure-Requests: 1'
+            -H 'Sec-Ch-Ua: "Chromium";v="131", "Not_A Brand";v="24"'
+            -H 'Sec-Ch-Ua-Mobile: ?0' -H 'Sec-Ch-Ua-Platform: "macOS"')
+          fail=0
+          for u in https://www.cloudflare.com/ \
+                   https://flag.dol.gov/ \
+                   https://www.dol.gov/agencies/eta/foreign-labor/performance \
+                   https://www.uscis.gov/ ; do
+            code=$(curl -sL -o /dev/null -w '%{http_code}' --compressed --max-time 30 "${FULL[@]}" "$u")
+            echo "  $code  $u"
+            case "$u" in
+              https://www.cloudflare.com/|https://flag.dol.gov/)
+                [ "$code" = 200 ] || fail=1 ;;
+            esac
+          done
+          if [ "$fail" = 1 ]; then
+            echo "::error::A control host failed. The travel.state.gov result above is VOID."
+            exit 1
+          fi
+          echo "  controls OK - the 403s above are the subject's answer, not ours"
