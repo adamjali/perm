@@ -5,12 +5,14 @@ import { Warning } from "@phosphor-icons/react/ssr";
 import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { BacklogWall } from "@/components/queue/BacklogWall";
+import { MirrorNote } from "@/components/queue/MirrorNote";
 import { OctoberNote, OCTOBER_2025 } from "@/components/queue/OctoberNote";
 import { PendingCensus } from "@/components/queue/PendingCensus";
 import { StageLegend } from "@/components/queue/StageBar";
 import { groupByStage } from "@/components/queue/stages";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { findFront } from "@/lib/liveQueue";
+import { findVolumeAnomalies } from "@/lib/queueAhead";
 import { MIRROR_COMPLETE, PROVISIONAL_NOTICE } from "@/lib/liveQueueGate";
 import { getBacklogCensus } from "@/lib/turso/backlog";
 import { getEstimatorData } from "@/lib/turso/estimate";
@@ -40,7 +42,10 @@ import { openGraphBase } from "@/lib/openGraphBase";
  * directive, so the two cannot disagree.
  */
 
-const TITLE = "PERM Queue, Live";
+// NOT "PERM Queue, Live". 79.8% of pending cases were last re-verified before
+// 2026-08-01, so these are the statuses a rolling scan last saw rather than a
+// live reading, and the title was the loudest place the page claimed otherwise.
+const TITLE = "PERM Queue Backlog";
 const DESCRIPTION =
   "How many PERM cases are still undecided in every filing month, which DOL queue they sit in, and where DOL says its analyst review has reached.";
 
@@ -80,6 +85,18 @@ export default async function PermQueuePage() {
       decidedPct: m.decidedPct,
     })),
   );
+  // Detected with the same function the timeline calculator's chart uses, so
+  // the two surfaces cannot disagree about which months are cliffs. It needs
+  // `filingMonth`, which is this layer's `month` under another name.
+  const anomalies = findVolumeAnomalies(
+    census.months.map((m) => ({
+      filingMonth: m.month,
+      total: m.total,
+      pending: m.pending,
+      decided: m.decided,
+      decidedPct: m.decidedPct,
+    })),
+  );
   const newest = census.months.at(-1)?.month ?? null;
   const dolMonth = estimator.frontier?.analystQueueMonth ?? null;
   const dolAsOf = estimator.frontier ? formatAsOf(estimator.frontier.asOf) : null;
@@ -109,9 +126,10 @@ export default async function PermQueuePage() {
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">
           DOL publishes which month it&rsquo;s working and nothing about the
           size of what&rsquo;s behind it. Its disclosure files carry no pending
-          rows at all. These counts come from the status of individual cases,
-          one at a time.
-        </p>
+          rows at all, so a count of what is still waiting cannot be derived
+          from them at any level of effort.
+        </p>{" "}
+        <MirrorNote className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/70" />
       </header>
 
       {/* The provisional notice sits ABOVE every figure it qualifies, for the
@@ -131,7 +149,7 @@ export default async function PermQueuePage() {
       <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 [&>*]:min-w-0">
           <Figure
-            label="Still undecided"
+            label="Last seen undecided"
             value={int(census.pending)}
             note={`cases across ${census.months.length} filing months, out of ${int(census.total)} scanned`}
           />
@@ -231,7 +249,7 @@ export default async function PermQueuePage() {
 
       <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-2xl font-black sm:text-3xl">
-          What those {int(census.pending)} cases are doing
+          What those {int(census.pending)} cases were doing
         </h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
           A waiting case is in one of three places, and they answer different
@@ -245,7 +263,7 @@ export default async function PermQueuePage() {
         <div className="mt-8 border-t-2 border-border pt-6">
           <PendingCensus
             stages={stages}
-            caption="Every DOL status a pending PERM case is currently in, grouped by queue"
+            caption="Every DOL status a pending PERM case was last seen in, grouped by queue"
           />
         </div>
       </section>{" "}
@@ -267,7 +285,8 @@ export default async function PermQueuePage() {
             frontierMonth={dolMonth}
             frontierAsOf={dolAsOf}
             frontMonth={front?.month ?? null}
-            noted={{ [OCTOBER_2025.month]: OCTOBER_2025.anchorId }}
+            anomalies={anomalies}
+            noteAnchors={{ [OCTOBER_2025.month]: OCTOBER_2025.anchorId }}
           />
         </div>
       </section>{" "}

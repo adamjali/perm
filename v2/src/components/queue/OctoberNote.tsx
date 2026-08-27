@@ -9,12 +9,18 @@ import { Warning } from "@phosphor-icons/react/ssr";
  * this site lost the data. One of those is true, the other would be our fault
  * to fix rather than to publish, and the row cannot say which.
  *
- * WHAT IS ASSERTED HERE AND WHAT IS NOT. The stoppage is stated, because it
- * is measured in two sources that do not share a pipeline and DOL itself
- * published that processing had resumed. The CAUSE is not stated, because no
- * primary source we can find gives one. A plausible wrong explanation is
- * worse than none: a reader repeats it, and it arrives somewhere else with
- * this site's name on it.
+ * THE CAUSE IS NOW SOURCED, AND IT WAS NOT WHEN THIS SHIPPED. The first
+ * version stated the stoppage and refused to name a cause, because DOL's
+ * resumption notice does not give one. DOL published the cause on a different
+ * host eleven days later, in an announcement that never reached flag.dol.gov
+ * at all. Everything asserted below is a quotation from that announcement or
+ * a count from our own data; nothing is inferred.
+ *
+ * WHAT IS STILL NOT SOURCED AND STAYS OUT. When the appropriations lapse
+ * ITSELF ended. DOL's announcement gives the dates OFLC was down and the date
+ * its staff came back, and nothing about the lapse's own end. So the note
+ * never says processing resumed "when the shutdown ended", which would be a
+ * claim about a date we have not read anywhere.
  *
  * EVERY FIGURE BELOW IS A LITERAL AND THAT IS DELIBERATE. They are counts of
  * a closed month taken from a fixed disclosure window, so they do not move,
@@ -31,13 +37,27 @@ export const OCTOBER_2025 = {
 } as const;
 
 /**
- * DOL's own announcement, which is the only primary source on the stoppage.
+ * DOL's resumption notice, on OFLC's own filing portal.
  *
  * Dated the same day the filing count recovers, which is the strongest single
- * piece of evidence here: DOL published "resumed" on the exact date the data
- * turns.
+ * piece of corroboration here: DOL published "resumed" on the exact date the
+ * data turns.
  */
-const DOL_NOTICE_URL = "https://flag.dol.gov/announcement/2025-10-31";
+const FLAG_NOTICE_URL = "https://flag.dol.gov/announcement/2025-10-31";
+
+/**
+ * The announcement that gives the cause, read through the Internet Archive.
+ *
+ * `www.dol.gov` refuses automated clients, so the live URL cannot be verified
+ * from here and may behave differently in a reader's browser. The archived
+ * capture is what was actually read, so that is what is linked, and the page
+ * says which. The live address is printed beside it rather than linked, so a
+ * reader can go to DOL directly and knows they are not being sent to an
+ * archive by sleight of hand.
+ */
+const ARCHIVED_NOTICE_URL =
+  "https://web.archive.org/web/20251113005349/https://www.dol.gov/agencies/eta/foreign-labor/news";
+const LIVE_NOTICE_URL = "www.dol.gov/agencies/eta/foreign-labor/news";
 
 export function OctoberNote() {
   return (
@@ -55,47 +75,81 @@ export function OctoberNote() {
           weight="fill"
           aria-hidden="true"
         />{" "}
-        <span>October 2025 is not a gap in this data</span>
+        <span>October 2025: DOL shut the filing system</span>
       </h2>{" "}
 
       <p className="mt-4 text-base leading-relaxed text-foreground/80">
         1,616 applications carry an October 2025 filing date, against 13,629 in
-        September and 15,034 in November. That is a real event at DOL rather
-        than a hole in the scan, and it shows up in two sources that don&rsquo;t
-        share a pipeline.
+        September and 15,034 in November. That&rsquo;s a real event at DOL
+        rather than a hole in the scan, and DOL has published what caused it.
       </p>{" "}
 
       <p className="mt-3 text-base leading-relaxed text-foreground/80">
-        In the per-case scan, filings run at roughly 600 a working day through
-        September, fall to single figures on 2 October, and stay there until 30
-        October. In DOL&rsquo;s quarterly disclosure files, which are a
-        separate publication built from separate records, DOL issued{" "}
+        In an announcement dated 5 November 2025, DOL wrote that{" "}
+        <b className="font-bold">
+          &ldquo;due to the government shutdown, beginning October 1, OFLC
+          ceased all application processing activities and suspended public
+          access to its Foreign Labor Application Gateway (FLAG) system&rdquo;
+        </b>
+        , so employers &ldquo;were unable to prepare and submit requests for
+        prevailing wage determinations or labor certifications using the FLAG
+        system&hellip; between October 1, 2025, through October 31, 2025&rdquo;.
+        DOL extended affected response deadlines by 33 calendar days, which it
+        describes as the span during which staff, &ldquo;officially recalled
+        back to work on November 3&rdquo;, could not accept or process
+        applications.
+      </p>{" "}
+
+      <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        Our own counts land on DOL&rsquo;s dates without being fitted to them.
+        The last ordinary day of determinations is 30 September; there are two
+        in the 30 days that follow; the filing system reopens on 31 October,
+        the day DOL announced the resumption; and ordinary volume returns on 3
+        November, the day DOL says staff came back.
+      </p>{" "}
+
+      <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        The collapse also appears in{" "}
+        <b className="font-bold">DOL&rsquo;s own quarterly disclosure release</b>
+        , which is first-party and built from separate records: DOL issued{" "}
         <b className="font-bold">21 PERM determinations in the whole of October
         2025</b>, against 14,239 in September and 8,890 in November. Nineteen
-        of those 21 landed on 31 October.
+        of the 21 landed on 31 October.
       </p>{" "}
 
       <p className="mt-3 text-base leading-relaxed text-foreground/80">
-        DOL published a notice on 31 October 2025 saying its Office of Foreign
-        Labor Certification &ldquo;has resumed application processing&rdquo;
-        and that the FLAG filing system &ldquo;is now accessible and permits
-        system users to prepare and submit new applications&rdquo;. That is the
-        same day the filing count recovers.
+        October isn&rsquo;t empty because paper kept moving. DOL says employers
+        who couldn&rsquo;t file electronically posted their applications, that
+        OFLC entered those by hand once FLAG was back, and that each one
+        &ldquo;will be considered to have been filed on the date it was
+        postmarked&rdquo;. So a good part of the 1,616 is mail, backdated into
+        a month when the portal was shut.
       </p>{" "}
 
       <p className="mt-3 text-base leading-relaxed text-foreground/80">
-        The notice doesn&rsquo;t say what stopped processing, and no other
-        primary source we&rsquo;ve found does either, so the cause isn&rsquo;t
-        established here.
+        One observation rather than a finding: OFLC&rsquo;s filing portal
+        carries the 31 October resumption notice and nothing announcing the
+        stoppage. Its announcements run from 16 May 2025 straight to 31
+        October. The explanation above is on{" "}
+        <span className="font-mono text-sm">{LIVE_NOTICE_URL}</span>, a
+        different DOL host, which refuses automated clients, so the text quoted
+        here was read from an Internet Archive capture of that page.
       </p>{" "}
 
-      <p className="mt-4 text-base leading-relaxed text-foreground/80">
+      <p className="mt-4 flex flex-col gap-2 text-base leading-relaxed text-foreground/80 sm:flex-row sm:gap-6">
         <a
-          href={DOL_NOTICE_URL}
+          href={ARCHIVED_NOTICE_URL}
           className="font-bold underline underline-offset-2 hover:text-primary"
           rel="noopener"
         >
-          Read DOL&rsquo;s announcement of 31 October 2025
+          DOL&rsquo;s announcement of 5 November 2025, archived
+        </a>{" "}
+        <a
+          href={FLAG_NOTICE_URL}
+          className="font-bold underline underline-offset-2 hover:text-primary"
+          rel="noopener"
+        >
+          OFLC&rsquo;s resumption notice of 31 October 2025
         </a>
       </p>
     </section>

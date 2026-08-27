@@ -53,7 +53,11 @@ export const SECTIONS: DataNavSection[] = [
   // own pages and no section key has to borrow somebody else's.
   // `data-nav-sections.test.ts` now derives the expected key from each page's
   // own route so a third one cannot be introduced quietly.
-  { key: "queue", label: "Live queue", href: "/perm-queue" },
+  // "Queue backlog", not "Live queue". 79.8% of pending cases were last
+  // re-verified before 2026-08-01, so the counts behind this tab are a
+  // rolling snapshot rather than a live reading, and a nav label is the
+  // last place that distinction should be quietly dropped.
+  { key: "queue", label: "Queue backlog", href: "/perm-queue" },
   { key: "processing-times", label: "Processing times", href: "/perm-processing-times" },
   { key: "by-state", label: "By state", href: "/perm-by-state" },
   { key: "wages", label: "Wages", href: "/perm-wages" },

@@ -109,7 +109,17 @@ export interface StageMeta {
   label: string;
   /** What being in this queue means, in one clause. */
   gloss: string;
-  /** Tailwind background utility for the bar segment. */
+  /**
+   * Tailwind background utility for the bar segment.
+   *
+   * THE `-ink` VARIANT, NOT THE BARE TOKEN, AND THAT IS MEASURED. A bar
+   * segment is a graphical object a reader must see to read the chart, so
+   * WCAG 1.4.11's 3:1 floor binds it. Against the light `--muted` track the
+   * bare tokens measure 2.07:1 (warn) and 2.46:1 (none) and FAIL; the `-ink`
+   * variants measure 4.61:1 and 6.93:1 and pass. In dark mode the `-ink`
+   * variant resolves to the same hex as the bare token, so this costs
+   * nothing there and fixes light.
+   */
   fill: string;
   /** Tailwind text utility, contrast-checked against the page ground. */
   ink: string;
@@ -119,20 +129,20 @@ export const STAGE_META: Record<QueueStage, StageMeta> = {
   analyst: {
     label: "Analyst review",
     gloss: "the ordinary queue, worked in filing order",
-    fill: "bg-data-warn",
+    fill: "bg-data-warn-ink",
     ink: "text-data-warn-ink",
   },
   held: {
     label: "Out of filing order",
     gloss:
       "an information request, an audit, supervised recruitment or a hold takes a case off the ordinary queue",
-    fill: "bg-data-none",
+    fill: "bg-data-none-ink",
     ink: "text-data-none-ink",
   },
   appeal: {
     label: "Under appeal or review",
     gloss: "cases that went to appeal after an adverse determination",
-    fill: "bg-data-bad",
+    fill: "bg-data-bad-ink",
     ink: "text-data-bad-ink",
   },
 };

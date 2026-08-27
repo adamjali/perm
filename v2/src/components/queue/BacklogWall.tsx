@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Warning } from "@phosphor-icons/react/ssr";
 
 import { formatMonth, formatMonthShort } from "@/lib/dolFormat";
+import type { VolumeAnomaly } from "@/lib/queueAhead";
 import { cn } from "@/lib/utils";
 import type { BacklogMonth } from "@/lib/turso/backlog";
 
@@ -51,8 +52,25 @@ export interface BacklogWallProps {
   frontierAsOf: string | null;
   /** The oldest month that is not substantially decided, from `findFront`. */
   frontMonth: string | null;
-  /** Months with a sourced note, mapping month to the anchor id on the page. */
-  noted?: Readonly<Record<string, string>>;
+  /**
+   * Months whose filing volume collapsed, from `findVolumeAnomalies`.
+   *
+   * DETECTED, NEVER HARDCODED. An earlier version of this took a literal map
+   * naming October 2025, which is a claim about the future as well as the
+   * past: the next collapse would render as an ordinary short bar and read as
+   * a bug in the scan. `@/lib/queueAhead` already owns this detection and the
+   * chart on the timeline calculator already consumes it.
+   */
+  anomalies?: readonly VolumeAnomaly[];
+  /**
+   * Anchor ids for the anomalies that have a sourced explanation on the page.
+   *
+   * Deliberately separate from detection. A month can be a measured cliff
+   * with nothing published about why, and in that case it is still marked, so
+   * the reader knows the number is real, but the marker leads nowhere rather
+   * than to somebody else's explanation.
+   */
+  noteAnchors?: Readonly<Record<string, string>>;
 }
 
 export function BacklogWall({
@@ -60,9 +78,12 @@ export function BacklogWall({
   frontierMonth,
   frontierAsOf,
   frontMonth,
-  noted,
+  anomalies = [],
+  noteAnchors,
 }: BacklogWallProps) {
   if (months.length === 0) return null;
+
+  const anomalyByMonth = new Map(anomalies.map((a) => [a.filingMonth, a]));
 
   // One shared maximum for every bar on the board. Taken over the months that
   // are actually drawn at full size, so the collapsed tail cannot flatten the
@@ -88,7 +109,13 @@ export function BacklogWall({
             {passed.map((m) => (
               <Fragment key={m.month}>
                 {" "}
-                <MonthRow month={m} scale={scale} isFront={false} noteId={noted?.[m.month]} />
+                <MonthRow
+                  month={m}
+                  scale={scale}
+                  isFront={false}
+                  anomaly={anomalyByMonth.get(m.month)}
+                  noteId={noteAnchors?.[m.month]}
+                />
               </Fragment>
             ))}
           </ol>
@@ -112,7 +139,8 @@ export function BacklogWall({
                 month={m}
                 scale={scale}
                 isFront={m.month === frontMonth}
-                noteId={noted?.[m.month]}
+                anomaly={anomalyByMonth.get(m.month)}
+                noteId={noteAnchors?.[m.month]}
               />
             </Fragment>
           );
@@ -156,11 +184,13 @@ function MonthRow({
   month,
   scale,
   isFront,
+  anomaly,
   noteId,
 }: {
   month: BacklogMonth;
   scale: number;
   isFront: boolean;
+  anomaly?: VolumeAnomaly;
   noteId?: string;
 }) {
   const { stages } = groupByStage(month.statuses);
@@ -183,14 +213,8 @@ function MonthRow({
       aria-label={`${label}: ${int(month.pending)} of ${int(month.total)} still waiting, ${pct.toFixed(0)} percent decided`}
     >
       <span className="flex min-h-11 items-center gap-1 truncate">
-        {noteId ? (
-          <Link
-            href={`#${noteId}`}
-            className="flex min-h-11 w-5 shrink-0 items-center justify-center text-data-warn-ink hover:text-primary"
-            aria-label={`Why ${label} is unusual`}
-          >
-            <Warning className="h-4 w-4" weight="fill" aria-hidden="true" />
-          </Link>
+        {anomaly ? (
+          <AnomalyMark label={label} anomaly={anomaly} noteId={noteId} />
         ) : null}{" "}
         <Link
           href={`/perm-queue/${month.month}`}
@@ -239,5 +263,47 @@ function FrontierRule({ month, asOf }: { month: string; asOf: string | null }) {
         </span>
       ) : null}
     </li>
+  );
+}
+
+/**
+ * Marks a month whose filing volume collapsed against both its neighbours.
+ *
+ * A short bar between two tall ones reads as a bug in the scan, so it is
+ * always marked. Whether the mark is a LINK depends on whether the page
+ * actually has something sourced to say: October 2025 does, and anything the
+ * detector finds later gets the mark and an honest accessible description of
+ * the measurement, with nothing claimed about why.
+ */
+function AnomalyMark({
+  label,
+  anomaly,
+  noteId,
+}: {
+  label: string;
+  anomaly: VolumeAnomaly;
+  noteId?: string;
+}) {
+  const measured = `${label} holds ${int(anomaly.total)} filings against a neighbouring average of ${int(Math.round(anomaly.neighbourMean))}`;
+  const icon = <Warning className="h-4 w-4" weight="fill" aria-hidden="true" />;
+  if (noteId) {
+    return (
+      <Link
+        href={`#${noteId}`}
+        className="flex min-h-11 w-5 shrink-0 items-center justify-center text-data-warn-ink hover:text-primary"
+        aria-label={`${measured}. Read why.`}
+      >
+        {icon}
+      </Link>
+    );
+  }
+  return (
+    <span
+      className="flex min-h-11 w-5 shrink-0 items-center justify-center text-data-warn-ink"
+      title={measured}
+    >
+      <span className="sr-only">{measured}.</span>
+      {icon}
+    </span>
   );
 }

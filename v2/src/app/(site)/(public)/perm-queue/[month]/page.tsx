@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Warning } from "@phosphor-icons/react/ssr";
 
 import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { MirrorNote } from "@/components/queue/MirrorNote";
 import { DecidedList, PendingCensus } from "@/components/queue/PendingCensus";
 import { OctoberNote, OCTOBER_2025 } from "@/components/queue/OctoberNote";
 import { StageBar, StageLegend } from "@/components/queue/StageBar";
@@ -114,8 +115,10 @@ export default async function CohortPage({
           {article(label)} {label} filing date.{" "}
           {int(backlog.decided)} {backlog.decided === 1 ? "has" : "have"} a
           decision. {int(split.pending)}{" "}
-          {split.pending === 1 ? "is" : "are"} still waiting.
-        </p>
+          {split.pending === 1 ? "was" : "were"} still waiting when the scan
+          last checked.
+        </p>{" "}
+        <MirrorNote className="mt-4 text-base leading-relaxed text-foreground/70" />
       </header>
 
       {!MIRROR_COMPLETE ? (
@@ -141,10 +144,11 @@ export default async function CohortPage({
         <p className="mt-3 text-base leading-relaxed text-foreground/80">
           {ahead > 0 ? (
             <>
-              <b className="font-bold">{int(ahead)}</b> undecided cases were
-              filed before {label}. That&rsquo;s what&rsquo;s in front of this
-              month, counting only cases DOL still has to decide. It isn&rsquo;t
-              divided into a wait: the{" "}
+              <b className="font-bold">{int(ahead)}</b> cases filed before{" "}
+              {label} were undecided at their last check, so that&rsquo;s what
+              sits in front of this month, counting only cases DOL still has to
+              decide. Some will have been decided since, so it runs a little
+              high. It isn&rsquo;t divided into a wait: the{" "}
               <Link
                 href="/tools/perm-timeline-calculator"
                 className="font-bold underline underline-offset-2 hover:text-primary"
@@ -200,7 +204,7 @@ export default async function CohortPage({
             <div className="mt-8 border-t-2 border-border pt-6">
               <PendingCensus
                 stages={split.stages}
-                caption={`Every DOL status a pending case filed in ${label} is currently in, grouped by queue`}
+                caption={`Every DOL status a pending case filed in ${label} was last seen in, grouped by queue`}
               />
             </div>
           </>
@@ -243,8 +247,15 @@ export default async function CohortPage({
         )}
       </nav>{" "}
 
+      {/* `perm-cases` only when the October note is on the page: that note
+          quotes DOL's first-party quarterly release, and a dataset listed on
+          a page that does not use it is provenance noise. */}
       <DataProvenance
-        datasets={["perm-case-status", "processing-times"]}
+        datasets={
+          isNoted
+            ? ["perm-case-status", "processing-times", "perm-cases"]
+            : ["perm-case-status", "processing-times"]
+        }
         className="mt-8 border-t-2 border-border pt-4"
       />
     </div>

@@ -44,22 +44,33 @@ export interface StageBarProps {
 const MIN_SEGMENT_PX = 4;
 
 /**
- * WHY EVERY SEGMENT HAS A RIGHT BORDER, MEASURED RATHER THAN ASSUMED.
+ * WHY EVERY SEGMENT HAS A RIGHT BORDER, AND WHY IT IS THE TRACK COLOUR.
  *
- * Against the light track (`--muted` #F5F5F5) the fills measure 1.98:1 for
- * amber, 2.35:1 for slate and 3.37:1 for rust. Two of the three are under the
- * 3:1 floor for a graphical object, so where a segment ends would have been
- * genuinely hard to see in light mode, and where two of them meet harder
- * still. Dark mode is fine on all three, which is exactly how this ships
- * unnoticed.
+ * A segmented bar has to carry two boundaries and they need different things.
  *
- * The fix is the one already used by the certainty bar on the timeline
- * calculator: the boundary is carried by a 2px `--border` rule rather than by
- * the fills, and that rule measures 3.45:1 on the page and 3.03:1 on a card.
- * Recolouring the fills was the alternative and it is worse, because these
- * three tokens carry the same meanings on every other chart on the site.
+ * WHERE THE BAR ENDS is fill against the empty `--muted` track, and that is
+ * now carried by the fills themselves: the `-ink` variants measure 4.61:1
+ * (warn), 6.93:1 (none) and 5.98:1 (bad) in light, against 2.07:1 and 2.46:1
+ * for two of the three bare tokens, which failed the 3:1 floor outright.
+ *
+ * WHERE ONE SEGMENT MEETS THE NEXT is a separate problem, and switching to
+ * the `-ink` fills made it worse rather than better: three dark colours side
+ * by side measure 1.50:1, 1.30:1 and 1.16:1 against each other in light. So
+ * the boundary is carried by a rule, exactly as the certainty bar on the
+ * timeline calculator does it.
+ *
+ * The rule is `--muted`, NOT `--border`. `--border` is #666666, which sits
+ * between the ink fills in luminance and measures 1.14:1 to 1.32:1 against
+ * them in light: a separator nobody can see. The track colour is the one
+ * value already proven to contrast with every fill in both themes, because
+ * that is the same comparison the bar's own end depends on.
+ *
+ * The 2px comes out of the segment's painted width under `border-box`, so a
+ * bar is up to 6px shorter than its true value across three segments. On a
+ * 150px to 400px bar that is under 2%, every count is printed beside it, and
+ * the alternative is a bar whose composition cannot be read at all.
  */
-const SEGMENT_EDGE = "border-r-2 border-border";
+const SEGMENT_EDGE = "border-r-2 border-muted";
 
 export function StageBar({ stages, scale, className }: StageBarProps) {
   const own = stages.reduce((n, s) => n + s.count, 0);
