@@ -82,9 +82,9 @@ describe("statusMeaning", () => {
     for (const status of [
       "NORD ISSUED",
       "DETERMINATION ISSUED",
-      "REQUEST FOR REVIEW",
       "APPLICATION ON HOLD",
       "IN PROCESS",
+      "DENIED - BALCA DISMISSED",
       "SOMETHING DOL INVENTS IN 2028",
     ]) {
       expect(statusMeaning(status), status).toBeNull();
@@ -99,7 +99,7 @@ describe("statusMeaning", () => {
     const covered = glossed.reduce((acc, [, n]) => acc + n, 0);
     const total = LIVE_STATUSES.reduce((acc, [, n]) => acc + n, 0);
     expect(total).toBe(412865);
-    expect(covered).toBe(410884);
+    expect(covered).toBe(410888);
     expect(covered / total).toBeGreaterThan(0.99);
   });
 
@@ -119,6 +119,96 @@ describe("statusMeaning", () => {
       ]) {
         expect(meaning, `${status}: ${meaning}`).not.toMatch(banned);
       }
+    }
+  });
+});
+
+describe("the statuses DOL has not defined", () => {
+  /**
+   * Pinned deliberately. DOL publishes no glossary of PERM case statuses, and
+   * for these four no definition could be sourced from any DOL document.
+   *
+   * The failure mode is specific and documented: for NORD, three separate
+   * search summarisers returned three mutually contradictory expansions
+   * ("Notice of Recruitment Deficiency", "Notice of Recruitment
+   * Determination", "Notice of Recommended Determination"), none quoting a
+   * DOL source. That is exactly the plausible-and-wrong that is hard to walk
+   * back, and it would be wrong in the same direction as the RFI deadline
+   * this file already had to correct.
+   *
+   * So the empty set is an assertion, not an omission. Adding a gloss here
+   * should require deleting a line of this test, which is the point.
+   */
+  const UNDEFINED_BY_DOL = [
+    "NORD ISSUED",
+    "APPLICATION ON HOLD",
+    "IN PROCESS",
+    "DETERMINATION ISSUED",
+    "DENIED - BALCA DISMISSED",
+  ];
+
+  it("stays unglossed until DOL publishes something", () => {
+    for (const status of UNDEFINED_BY_DOL) {
+      expect(statusMeaning(status), `${status} gained an unsourced gloss`).toBeNull();
+    }
+  });
+});
+
+describe("deadlines asserted in the glosses", () => {
+  it("never states a response window for an RFI", () => {
+    // "RFI" is not a term in 20 CFR 656 and no deadline is published for one.
+    // The 30 days that circulates is the AUDIT rule (656.20(a)(2)) wearing the
+    // wrong label, and it runs from the letter date rather than receipt, so
+    // borrowing it moves the start date LATER and costs the reader days they
+    // do not have.
+    const rfi = statusMeaning("RFI ISSUED")!;
+    expect(rfi).not.toMatch(/\b30 days\b/);
+    expect(rfi).not.toMatch(/from receipt/i);
+    expect(rfi).toMatch(/printed on the RFI letter/);
+  });
+
+  it("dates the audit clock from the letter, never from receipt", () => {
+    // 656.20(a)(2): "Specify a date, 30 days from the date of the audit
+    // letter". This is the only status in the vocabulary that may state 30
+    // days at all.
+    const audit = statusMeaning("PENDING AUDIT RESPONSE")!;
+    expect(audit).toMatch(/30 days from the date on the audit letter/);
+    expect(audit).not.toMatch(/from receipt/i);
+  });
+
+  it("attaches every stated deadline to a real instrument", () => {
+    // Any gloss naming a number of days must be one of the statuses that
+    // genuinely has a published deadline. A day count appearing anywhere else
+    // is a borrowed deadline, which is the defect this suite exists for.
+    const MAY_STATE_A_DEADLINE = new Set([
+      "PENDING AUDIT RESPONSE", // 656.20(a)(2)
+      "RECONSIDERATION APPEALS", // 656.24(g)(1)
+      "REQUEST FOR REVIEW", // 656.24(e)(3)
+      "CERTIFIED", // 656.30(b)
+      "CERTIFIED - EXPIRED", // 656.30(b)
+    ]);
+    for (const [status] of LIVE_STATUSES) {
+      const meaning = statusMeaning(status);
+      if (!meaning) continue;
+      if (/\b\d+[- ](?:calendar )?days?\b/.test(meaning)) {
+        expect(
+          MAY_STATE_A_DEADLINE.has(status),
+          `${status} states a deadline: "${meaning}"`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("states no duration DOL does not publish", () => {
+    // "This adds months to a case" was live on SUPERVISED RECRUITMENT. DOL
+    // publishes no duration for it, and an uncheckable quantity is the same
+    // defect as an uncheckable deadline.
+    for (const [status] of LIVE_STATUSES) {
+      const meaning = statusMeaning(status);
+      if (!meaning) continue;
+      expect(meaning, `${status} states an unsourced duration`).not.toMatch(
+        /\badds (?:months|weeks|years)\b|\btakes (?:months|weeks|years)\b/i,
+      );
     }
   });
 });

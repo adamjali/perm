@@ -107,19 +107,46 @@ const MEANING: Record<string, string> = {
     "one printed on the RFI letter, because DOL doesn't publish a standard " +
     "response window for these.",
   // 656.20(a)(2): the letter must "Specify a date, 30 days from the date of
-  // the audit letter". From the LETTER, not receipt. 656.20(c) allows the CO
-  // one discretionary extension of up to 30 days. The second sentence is the
-  // part almost nobody knows, and it is why this entry earns two: a late
-  // response "constitutes a refusal to exhaust available administrative
-  // remedies", so review is forfeited along with the case.
+  // the audit letter". From the LETTER, not receipt.
+  //
+  // The appeal sentence was doubted in review and then verified against the
+  // regulation rather than against either research pass, because two passes
+  // disagreed and neither is a primary source. 656.20(a)(3) reads: "(i)
+  // Failure to provide documentation in a timely manner constitutes a refusal
+  // to exhaust available administrative remedies; and (ii) The
+  // administrative-judicial review procedure provided in 656.26 is not
+  // available." So review really is forfeited along with the case.
+  //
+  // 656.20(c) allows the CO "one extension, of up to 30 days", discretionary,
+  // and 656.20(a) says "certain applications may be selected randomly for
+  // audit and quality control purposes". Both are in the copy because the
+  // reader is standing in this status: one is a lever they may not know they
+  // have, the other stops an audit reading as an accusation.
+  //
+  // Text: GPO govinfo, CFR-2024-title20-vol3-sec656-20. ecfr.gov 302s
+  // automated clients to a bot wall, including the API route an earlier
+  // research pass recorded as working.
   "PENDING AUDIT RESPONSE":
     "DOL has audited the application and is waiting on the employer's " +
     "recruitment file. The deadline is 30 days from the date on the audit " +
     "letter, and answering late can cost the right to appeal as well as " +
-    "the case.",
+    "the case. The officer can grant one extension of up to 30 days, and " +
+    "some applications are picked for audit at random rather than because " +
+    "anything looked wrong.",
+  // 656.21. Replaced "this adds months to a case", which was an unsourced
+  // quantity: DOL publishes no duration for supervised recruitment, and a
+  // number nobody can check is the same defect as the RFI deadline one status
+  // up. What IS in the regulation is the mechanics, and they are more useful
+  // anyway. 656.21(e)(1): draft advertisement to the CO "within 30 days of
+  // being notified". The ad "must be approved by the Certifying Officer
+  // before publication, and the CO will direct where the advertisement is to
+  // be placed", and must "Direct applicants to send resumes or applications
+  // for the job opportunity to the CO for referral to the employer".
   "SUPERVISED RECRUITMENT":
     "DOL is running the recruitment itself rather than reviewing the " +
-    "employer's. This adds months to a case.",
+    "employer's. The officer approves the advertisement before it runs and " +
+    "decides where it goes, and applicants send their applications to DOL " +
+    "rather than to the employer.",
   CERTIFIED:
     "DOL approved the application. The employer has 180 calendar days from " +
     "the certification date to file the I-140, with no extensions.",
@@ -134,13 +161,44 @@ const MEANING: Record<string, string> = {
     "The application was approved and its 180-day window to be filed with " +
     "USCIS has since passed. If the I-140 went in inside that window it " +
     "isn't affected, because DOL's status doesn't track USCIS filings.",
+  // 656.24(e)(3),(4): the Final Determination must "Advise that failure to
+  // request review within 30 days of the date of the determination...
+  // constitutes a failure to exhaust administrative remedies" and that the
+  // denial "shall become the final determination of the Secretary". Filed
+  // with the CERTIFYING OFFICER, not with BALCA, per 656.26(a) - the detail
+  // most likely to cost somebody the window.
+  //
+  // This status was unglossed in the first pass for want of a source. It has
+  // one, so it gets a sentence. Only 4 cases carry it, and that is not a
+  // reason to leave the 4 with nothing.
+  "REQUEST FOR REVIEW":
+    "The employer has asked for the denial to be reviewed by DOL's appeals " +
+    "board. It goes to the officer who denied the case, not to the board " +
+    "directly, within 30 days of the determination.",
   DENIED: "DOL refused the application. A denial carries appeal rights.",
   WITHDRAWN: "The application was withdrawn. DOL will not decide it.",
+  // 656.24(g)(1): "The employer may request reconsideration within 30 days
+  // from the date of issuance of the denial." (g)(2): for applications
+  // submitted after July 16, 2007 a request "may include only: (i)
+  // Documentation that the Department actually received from the employer in
+  // response to a request from the Certifying Officer" or documentation that
+  // existed at filing and had to be retained. The evidence limit is the part
+  // applicants most often get wrong, so it earns the second sentence.
   "RECONSIDERATION APPEALS":
-    "The employer has asked DOL to reconsider a decision on the application.",
+    "The employer has asked the same officer who denied the case to look at " +
+    "it again, within 30 days of the denial. The request can only use " +
+    "documents DOL already had, so new evidence can't be added to fix what " +
+    "the denial was based on.",
+  // 656.26, 656.27. For a denial the submission "must contain only legal
+  // argument and only such evidence that was within the record upon which the
+  // denial of labor certification was based", so this is review of the record
+  // the officer already had rather than a fresh hearing. Saying only who
+  // BALCA is left a reader expecting a second chance to submit evidence.
   "BALCA APPEALS":
-    "The case is with the Board of Alien Labor Certification Appeals, the " +
-    "body that hears appeals of PERM decisions.",
+    "The case is with the Board of Alien Labor Certification Appeals, a " +
+    "panel of DOL administrative law judges. They review the record the " +
+    "officer already had, so it's legal argument rather than a fresh chance " +
+    "to put in evidence.",
 };
 
 /** The plain-English meaning, or null when we cannot source one. */
