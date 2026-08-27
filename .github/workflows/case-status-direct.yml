@@ -6,11 +6,24 @@ name: Case status (direct from DOL)
 # nothing in the flow is a captcha) and that nothing is lost by switching.
 #
 # TWO PASSES, TWO CHECKPOINTS, for the same reason the mirror had two:
-#   pending  every 12h  - ~98k cases, ~1,972 requests, about 10 minutes
-#   full     weekly     - ~414k cases; a CERTIFIED case silently becomes
-#                         CERTIFIED - EXPIRED when the 180-day I-140 window
-#                         lapses, so "final" is not final and only a full
-#                         pass catches it.
+#   full     daily 04:10 ET  - all ~414k cases, 8,281 requests, ~69 min
+#   pending  daily 15:40 ET  - the ~97k undecided, 1,948 requests, ~16 min
+#
+# The full pass is DAILY rather than weekly because "final" is not final: a
+# CERTIFIED case silently becomes CERTIFIED - EXPIRED when the 180-day I-140
+# window lapses, and nothing announces it. The first smoke test found 171 of
+# those in 200 rows. Weekly meant a case could read as certified for six days
+# after it had lapsed.
+#
+# Measured before choosing daily: 10,229 requests/day over ~85 minutes is
+# 2.0 requests/second. Turso writes stay ~1,300/day because only CHANGED rows
+# are written, against a 10M/month plan, and Actions minutes are free on a
+# public repo. The binding cost is politeness to a government host, and 2/s
+# for under an hour and a half is modest for a public search endpoint that
+# answers the same query for real users all day.
+#
+# The pending pass survives because it is cheap and it halves the worst-case
+# staleness on the cases people actually have alerts on.
 #
 # Scheduled AROUND DOL's habits, not through them. FLAG publishes evening
 # maintenance windows (observed 19:00-21:00 ET), so both passes run in the
@@ -20,8 +33,8 @@ name: Case status (direct from DOL)
 
 on:
   schedule:
-    - cron: "40 7,19 * * *"    # 03:40 and 15:40 ET - clear of the evening window
-    - cron: "10 8 * * 0"       # Sunday 04:10 ET - the full pass
+    - cron: "40 19 * * *"      # 15:40 ET - pending only, the mid-day refresh
+    - cron: "10 8 * * *"       # 04:10 ET - EVERY case, daily
   workflow_dispatch:
     inputs:
       mode:
@@ -60,7 +73,7 @@ jobs:
           # the pending pass. workflow_dispatch overrides both.
           MODE="${{ github.event.inputs.mode }}"
           if [ -z "$MODE" ]; then
-            if [ "${{ github.event.schedule }}" = "10 8 * * 0" ]; then
+            if [ "${{ github.event.schedule }}" = "10 8 * * *" ]; then
               MODE=full
             else
               MODE=pending

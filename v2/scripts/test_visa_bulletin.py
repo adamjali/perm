@@ -96,33 +96,66 @@ def main() -> int:
             "Visa Bulletin For March 2026 ... Visa Bulletin For April 2026", None,
             "exactly one bulletin month")
 
-    # --- the column-order assertion, which is the subtlest one -----------
-    # Two distinct failures, and they are rejected by two different
-    # mechanisms. Both must hold.
-    #
-    # 1. A column REORDERED but still present. The chart still looks like an
-    #    employment chart, so it is selected, and only the header assertion
-    #    stands between it and India's cutoff being published as China's.
-    swapped = (page.replace("CHINA", "\x00", 1)
-                   .replace("INDIA", "CHINA", 1)
-                   .replace("\x00", "INDIA", 1))
-    check("the swap fixture actually changed the page", swapped != page)
-    try:
-        vb.parse_bulletin(swapped)
-        check("a reordered column is rejected", False, "parsed a mislabelled chart")
-    except ValueError as exc:
-        check("a reordered column is rejected", "column" in str(exc), str(exc)[:60])
-    except Exception as exc:  # noqa: BLE001
-        check("a reordered column is rejected", False, f"{type(exc).__name__}")
+    # --- the SIX-column layout, which is why position cannot be trusted ---
+    # Bulletins before ~April 2023 carry an extra EL SALVADOR / GUATEMALA /
+    # HONDURAS column on the EMPLOYMENT chart, between CHINA and INDIA. A
+    # parser keyed on position reads El Salvador's cell as India's: for this
+    # very bulletin that would have published EB3 India as "Current" when it
+    # was actually backlogged to 2012.
+    six = (HERE / "__fixtures__" / "visa-bulletin-2023-02-sixcol.html").read_text()
+    check("the six-column month is read", vb.month_from_page(six) == "2023-02",
+          str(vb.month_from_page(six)))
+    old = vb.parse_bulletin(six)
+    check("the six-column layout parses at all", bool(old))
+    if old:
+        fa6 = old["finalAction"]
+        check("six-column: all six categories",
+              sorted(fa6) == ["EB1", "EB2", "EB3", "EB4", "EB5", "EW3"], str(sorted(fa6)))
+        # The whole point: India from India's column, not El Salvador's.
+        check("six-column: EB3 India is 15JUN12, not El Salvador's C",
+              fa6["EB3"]["india"] == "15JUN12", fa6["EB3"]["india"])
+        check("six-column: EB2 India is 08OCT11",
+              fa6["EB2"]["india"] == "08OCT11", fa6["EB2"]["india"])
+        check("six-column: the extra column is not stored",
+              set(fa6["EB3"]) == {"worldwide", "china", "india", "mexico", "philippines"},
+              str(sorted(fa6["EB3"])))
 
-    # 2. A column MISSING - which is what a family-sponsored chart looks like,
-    #    since it carries El Salvador where this one carries India. That chart
-    #    fails the selector rather than the header assertion, so it yields no
-    #    charts at all, and the caller turns that into a refusal.
-    family = page.replace("INDIA", "EL SALVADOR")
+    # --- a MISSING country is still a hard failure ------------------------
+    # Resolving by name means a reordered column is read correctly rather
+    # than refused, which is strictly better. What must still fail loudly is
+    # a country we need not being there at all - that is a family-sponsored
+    # chart, or a layout change we have not seen.
+    # Two refusal MECHANISMS, and the test must accept both or it reports a
+    # working guard as broken. Removing INDIA also removes the token that
+    # SELECTS the employment chart, so the chart is never picked and
+    # parse_bulletin returns None - a refusal that arrives earlier than the
+    # ValueError, not a weaker one.
+    gone = six.replace("INDIA", "ELBONIA")
+    try:
+        got = vb.parse_bulletin(gone)
+        check("a missing country column is rejected", got is None,
+              "parsed a chart with no India column")
+    except ValueError as exc:
+        check("a missing country column is rejected", True, str(exc)[:60])
+    except Exception as exc:  # noqa: BLE001
+        check("a missing country column is rejected", False, type(exc).__name__)
+
+    # And the ValueError path specifically: a chart that IS selected (INDIA
+    # present in the header) but is missing another required country.
+    lost_mexico = six.replace("MEXICO", "ELBONIA")
+    try:
+        vb.parse_bulletin(lost_mexico)
+        check("a chart missing MEXICO raises", False, "parsed anyway")
+    except ValueError as exc:
+        check("a chart missing MEXICO raises", "MEXICO" in str(exc).upper(), str(exc)[:60])
+    except Exception as exc:  # noqa: BLE001
+        check("a chart missing MEXICO raises", False, type(exc).__name__)
+
+    # --- a family-sponsored chart still yields nothing ---------------------
+    page_family = page.replace("INDIA", "EL SALVADOR")
     check("a family-sponsored chart yields nothing",
-          vb.parse_bulletin(family) is None)
-    refuses("refuses a family-sponsored chart", family, "2026-07",
+          vb.parse_bulletin(page_family) is None)
+    refuses("refuses a family-sponsored chart", page_family, "2026-07",
             "no employment-based charts")
 
     print(f"\n  {len(failures)} failure(s)")

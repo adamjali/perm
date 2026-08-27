@@ -251,19 +251,38 @@ def parse_bulletin(page: str) -> dict | None:
         return None
 
     def chart(rows: list[list[str]]) -> dict[str, dict[str, str]]:
+        """Resolve each country to its OWN column, by header name.
+
+        POSITION IS NOT STABLE ACROSS YEARS. Bulletins before roughly April
+        2023 carry a SIXTH country column on the employment chart - EL
+        SALVADOR / GUATEMALA / HONDURAS, between CHINA and INDIA - which was
+        later dropped. A parser that asserted "column 3 is INDIA" therefore
+        refused 18 real bulletins with
+        `column 3 is ['ELSALVADORGUATEMALAHONDURAS'], expected INDIA`.
+
+        Refusing was the right failure: reading that column as India would
+        have published Central American cutoffs as Indian ones, silently, on
+        a page headed "These are not estimates." But the fix is to stop
+        assuming position at all. Finding each country by its own heading
+        handles both layouts, ignores columns we do not track, and still
+        fails loudly when a country we DO need is absent.
+        """
         header = [h.upper().replace("- ", "").replace(" ", "") for h in rows[0]]
-        # Assert the column order rather than trust it.
-        for i, expected in enumerate(COUNTRY_HEADINGS, start=1):
-            if i >= len(header) or expected.replace(" ", "") not in header[i]:
-                raise ValueError(f"column {i} is {header[i:i+1]}, expected {expected}")
+        idx: dict[str, int] = {}
+        for col, heading in zip(COUNTRY_COLUMNS, COUNTRY_HEADINGS):
+            want = heading.replace(" ", "")
+            # Skip cell 0: it is the row-label column ("Employment- based").
+            for i, h in enumerate(header[1:], start=1):
+                if want in h:
+                    idx[col] = i
+                    break
+            else:
+                raise ValueError(f"no column matched {heading}; header={header}")
         out: dict[str, dict[str, str]] = {}
         for code, label in CATEGORY_ROWS:
             for r in rows[1:]:
                 if r and r[0].lower().startswith(label.lower()[:6]):
-                    out[code] = {
-                        c: r[i + 1] if i + 1 < len(r) else ""
-                        for i, c in enumerate(COUNTRY_COLUMNS)
-                    }
+                    out[code] = {c: (r[i] if i < len(r) else "") for c, i in idx.items()}
                     break
         return out
 
