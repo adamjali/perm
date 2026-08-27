@@ -91,6 +91,9 @@ function label(d: string): string {
     "uscis-i140-times": "I-140 times",
     "i485-inventory": "I-485 pending inventory",
     "perm-month-stats": "Pending case counts",
+    "perm-case-status": "Per-case statuses",
+    "i140-trends": "I-140 filings by category",
+    "rfi-funnel": "RFI and audit outcomes",
     entities: "Employers and firms",
   };
   return names[d] ?? d;
