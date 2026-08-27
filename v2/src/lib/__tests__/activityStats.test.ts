@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   MIN_DAYS_FOR_WEEK,
-  adjacentToGap,
+  fillZeros,
   isWeekend,
   outcomeByQuarter,
   pace,
@@ -12,6 +12,7 @@ import {
   weekdayExtremes,
   weekdayIndex,
   weekdayProfile,
+  zeroWeekdays,
   type ActivityDay,
 } from "@/lib/activityStats";
 
@@ -56,9 +57,21 @@ describe("toWeeks", () => {
     expect(weeks[0]).toMatchObject({ weekStart: "2026-08-17", total: 700, daysRecorded: 7 });
   });
 
-  it("withholds a week under the day floor rather than drawing a false dip", () => {
+  it("withholds a partial week at an end rather than drawing a false dip", () => {
+    // After fillZeros the only partial weeks left are the two at the ends, so
+    // this floor trims a cliff rather than hiding a collapse. The collapse
+    // case is covered below: a zero-filled quiet week IS drawn.
     const weeks = toWeeks(run("2026-08-17", MIN_DAYS_FOR_WEEK - 1, 100));
     expect(weeks).toEqual([null]);
+  });
+
+  it("PLOTS a full week of zeros instead of withholding it", () => {
+    // The October 2025 regression test. Three consecutive weeks read 1, 0 and
+    // 0 in the real corpus; withholding them made the largest stoppage in the
+    // record render as blank space.
+    const weeks = toWeeks(fillZeros([day("2026-08-17", 1), day("2026-08-23", 0)]));
+    expect(weeks).toHaveLength(1);
+    expect(weeks[0]).toMatchObject({ total: 1, daysRecorded: 7 });
   });
 
   it("plots a week exactly at the floor", () => {
@@ -196,40 +209,50 @@ describe("pace", () => {
   });
 });
 
-describe("adjacentToGap", () => {
-  const recorded = new Set(["2025-09-30", "2025-10-01", "2025-10-07", "2025-10-31"]);
-
-  it("flags a day whose NEXT day is missing", () => {
-    // 2025-10-01 is followed by a five-day hole.
-    expect(adjacentToGap("2025-10-01", recorded, "2025-09-30", "2025-10-31")).toBe(true);
+describe("fillZeros", () => {
+  it("turns an absent day into a ZERO, because absence is what zero looks like here", () => {
+    // The disclosure series is GROUP BY decision_date over the case corpus,
+    // proven by its total equalling COUNT(*) exactly, so a day with no
+    // decisions produces no row. Reading those as unmeasured is what hid the
+    // October 2025 stoppage behind a gap.
+    const sparse = [day("2026-08-17", 500), day("2026-08-20", 400)];
+    const filled = fillZeros(sparse);
+    expect(filled.map((d) => d.date)).toEqual([
+      "2026-08-17", "2026-08-18", "2026-08-19", "2026-08-20",
+    ]);
+    expect(filled.map((d) => d.total)).toEqual([500, 0, 0, 400]);
   });
 
-  it("flags a day whose PREVIOUS day is missing", () => {
-    // Both halves of the check need their own case. A probe that disabled only
-    // the backward branch left every other test in this file green, because
-    // every day they name is also followed by a hole. 2025-10-31 closes the
-    // 23-day hole and has nothing after it.
-    expect(adjacentToGap("2025-10-31", recorded, "2025-09-30", "2025-10-31")).toBe(true);
+  it("invents nothing outside the series' own ends", () => {
+    // A day after the last is the series ENDING, which is a different fact
+    // from a day DOL decided nothing, and filling it would manufacture an
+    // outage exactly where the two sources hand over.
+    const filled = fillZeros([day("2026-08-17", 500), day("2026-08-18", 400)]);
+    expect(filled).toHaveLength(2);
   });
 
-  it("flags a day with a hole on both sides", () => {
-    // 2025-10-07 sits alone between a five-day hole and a 23-day one.
-    expect(adjacentToGap("2025-10-07", recorded, "2025-09-30", "2025-10-31")).toBe(true);
+  it("carries the outcome columns through on a real day and zeroes an absent one", () => {
+    const filled = fillZeros([
+      day("2026-08-17", 100, { certified: 90, denied: 7, withdrawn: 3 }),
+      day("2026-08-19", 100, { certified: 90, denied: 7, withdrawn: 3 }),
+    ]);
+    expect(filled[1]).toMatchObject({ total: 0, certified: 0, denied: 0, withdrawn: 0 });
+    expect(filled[0]).toMatchObject({ certified: 90, denied: 7, withdrawn: 3 });
   });
 
-  it("does not flag a day whose neighbours are both present", () => {
-    // 2025-09-30 opens the series and 2025-10-01 follows it, so there is no
-    // hole on either side that this day could be measuring.
-    expect(adjacentToGap("2025-09-30", recorded, "2025-09-30", "2025-10-31")).toBe(false);
+  it("returns nothing for an empty series", () => {
+    expect(fillZeros([])).toEqual([]);
   });
+});
 
-  it("does not flag the ends of the series merely for being ends", () => {
-    // The series not having begun, or having ended, is not a gap. Treating it
-    // as one would drop the first and last day of every record.
-    const dense = new Set(["2026-08-17", "2026-08-18", "2026-08-19"]);
-    expect(adjacentToGap("2026-08-17", dense, "2026-08-17", "2026-08-19")).toBe(false);
-    expect(adjacentToGap("2026-08-19", dense, "2026-08-17", "2026-08-19")).toBe(false);
-    expect(adjacentToGap("2026-08-18", dense, "2026-08-17", "2026-08-19")).toBe(false);
+describe("zeroWeekdays", () => {
+  it("finds weekdays with no determinations and ignores weekends", () => {
+    const days = fillZeros([day("2026-08-17", 500), day("2026-08-24", 500)]);
+    const idle = zeroWeekdays(days);
+    expect(idle.every((d) => !isWeekend(d.date))).toBe(true);
+    expect(idle.map((d) => d.date)).toEqual([
+      "2026-08-18", "2026-08-19", "2026-08-20", "2026-08-21",
+    ]);
   });
 });
 
@@ -241,19 +264,14 @@ describe("weekdayExtremes", () => {
     expect(quietest.every((d) => !isWeekend(d.date))).toBe(true);
   });
 
-  it("drops days against a hole and counts them", () => {
-    // Without this guard the two days bracketing the October 2025 hole take
-    // the top of the quietest list at one decision each, which reports the
-    // shape of our record as a fact about the agency.
-    const days = [
-      ...run("2026-08-03", 5, 800),
-      day("2026-08-10", 1), // Monday, followed by a hole
-      // 2026-08-11 and 12 missing
-      ...run("2026-08-13", 3, 700),
-    ];
-    const { quietest, excluded } = weekdayExtremes(days, 3);
-    expect(quietest.map((d) => d.date)).not.toContain("2026-08-10");
-    expect(excluded).toBeGreaterThan(0);
+  it("ranks a genuine zero-decision weekday as the quietest, not as a gap", () => {
+    // The reverse of the earlier behaviour, and the earlier behaviour was
+    // wrong: a weekday DOL decided nothing IS the quietest day, and excluding
+    // it removed every federal holiday and the whole of October 2025.
+    const days = fillZeros([...run("2026-08-03", 5, 800), day("2026-08-12", 700)]);
+    const { quietest } = weekdayExtremes(days, 3);
+    expect(quietest[0]).toMatchObject({ total: 0 });
+    expect(quietest.every((d) => !isWeekend(d.date))).toBe(true);
   });
 
   it("orders ties by date so a rebuild cannot change which day is named", () => {
@@ -271,7 +289,7 @@ describe("weekdayExtremes", () => {
   });
 
   it("handles an empty series without throwing", () => {
-    expect(weekdayExtremes([], 5)).toEqual({ busiest: [], quietest: [], excluded: 0 });
+    expect(weekdayExtremes([], 5)).toEqual({ busiest: [], quietest: [] });
   });
 });
 

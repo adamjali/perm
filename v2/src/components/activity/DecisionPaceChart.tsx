@@ -9,12 +9,17 @@ import { segments, toWeeks, weekStart, type ActivityDay } from "@/lib/activitySt
  * against 91 on Saturday) reads as noise rather than as throughput. Weeks keep
  * every day in the drawing and leave about 135 points, which is legible.
  *
- * WHY IT BREAKS. Two periods carry no record at all: 23 days in October 2025,
- * and 43 days between 2026-06-30 and 2026-08-13, where the quarterly
- * disclosure file had ended and the live scan had not begun. A polyline drawn
- * straight through either one would show a smooth trend across six weeks
- * nobody measured. Each contiguous run gets its own polyline and the hole is
- * left as a hole.
+ * A ZERO AND A BREAK ARE OPPOSITE FACTS AND THIS CHART DRAWS THEM DIFFERENTLY.
+ * The first version got it wrong and it mattered. October 2025 has no rows in
+ * the disclosure series, and that series is `GROUP BY decision_date` over the
+ * corpus, so no row means DOL decided NOTHING that day. Drawn as a hole, the
+ * largest stoppage in the record was invisible; zero-filled by the caller, it
+ * is a line on the floor for three straight weeks, which is what happened.
+ * The only true break here is between two DIFFERENT instruments, 2026-06-30 to
+ * 2026-08-13, where the quarterly file ends and the live scan has not begun.
+ * Drawing THAT as zero would invent a second national outage that never
+ * happened. So: zeros are drawn, instruments are separated, and a period DOL
+ * announced it had stopped gets an annotation naming the announcement.
  *
  * WHY TWO COLOURS. The two runs at the right come from different instruments,
  * not different weeks of one instrument: everything up to 2026-06-30 is
@@ -34,9 +39,24 @@ const PAD_B = 40;
 export interface PaceSeries {
   /** Legend label for this instrument. */
   label: string;
-  /** A CSS colour, resolved from a theme token by the caller. */
+  /**
+   * A CSS colour, resolved from a theme token by the caller.
+   *
+   * Must be an `-ink` / `-text` token. A chart line is a graphical object a
+   * reader has to see to read the chart, so WCAG 1.4.11's 3:1 floor applies,
+   * and the bare tokens miss it in light mode: `--primary` measures 2.05:1 on
+   * the real #FAFAFA page against `--primary-text` at 4.70:1. In dark the two
+   * resolve to the same hex, so the -ink choice costs nothing.
+   */
   color: string;
   days: readonly ActivityDay[];
+}
+
+export interface PaceAnnotation {
+  /** Any date inside the period being marked. */
+  date: string;
+  /** Short label, drawn at the top of the rule. */
+  label: string;
 }
 
 function monthLabel(iso: string): string {
@@ -47,9 +67,19 @@ function monthLabel(iso: string): string {
 
 export function DecisionPaceChart({
   series,
+  annotations = [],
   className,
 }: {
   series: PaceSeries[];
+  /**
+   * Periods worth naming ON the drawing.
+   *
+   * Reserved for something the reader would otherwise misread, and only when
+   * it can be sourced. The October 2025 collapse is the case this exists for:
+   * without a marker it reads as a rendering fault, and with one that asserts
+   * a cause it would be us guessing. The label says what DOL said.
+   */
+  annotations?: PaceAnnotation[];
   className?: string;
 }) {
   // One week axis across every instrument, so a week sits at the same x
@@ -111,7 +141,7 @@ export function DecisionPaceChart({
           viewBox={`0 0 ${W} ${H}`}
           className="block h-auto w-full min-w-[44rem]"
           role="img"
-          aria-label={`Decisions per week from ${monthLabel(weekNames[0] ?? "")} to ${monthLabel(weekNames[weekNames.length - 1] ?? "")}, peaking at ${max.toLocaleString("en-US")} in one week. Weeks with no record are drawn as breaks.`}
+          aria-label={`Decisions per week from ${monthLabel(weekNames[0] ?? "")} to ${monthLabel(weekNames[weekNames.length - 1] ?? "")}, peaking at ${max.toLocaleString("en-US")} in one week. A week DOL decided nothing is drawn at zero; a break in the line separates two different sources rather than marking a stoppage.`}
         >
           {yTicks.map((v) => (
             <g key={v}>
@@ -136,6 +166,32 @@ export function DecisionPaceChart({
               </text>
             </g>
           ))}
+          {annotations.map((a) => {
+            const i = weekIndex.get(weekStart(a.date));
+            if (i === undefined) return null;
+            return (
+              <g key={a.date}>
+                <line
+                  x1={x(i)}
+                  x2={x(i)}
+                  y1={PAD_T}
+                  y2={PAD_T + plotH}
+                  stroke="var(--data-none-ink)"
+                  strokeWidth="1.5"
+                  strokeDasharray="4 3"
+                />
+                <text
+                  x={x(i) + 6}
+                  y={PAD_T + 12}
+                  fontSize="14"
+                  fill="var(--data-none-ink)"
+                  className="font-mono"
+                >
+                  {a.label}
+                </text>
+              </g>
+            );
+          })}
           {runs.map((run, n) =>
             // A run of one week cannot be a line. Drawing it as a dot says
             // "one measurement here", which is exactly what it is: the live

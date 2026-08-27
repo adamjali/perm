@@ -36,11 +36,11 @@ export function OutcomeMix({
     <div className={className}>
       <ul className="mb-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-foreground/70">
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="h-3 w-8 border-2 border-border bg-data-bad" />{" "}
+          <span aria-hidden="true" className="h-3 w-8 border-2 border-border bg-data-bad-ink" />{" "}
           <span>Denied</span>
         </li>{" "}
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="h-3 w-8 border-2 border-border bg-data-warn" />{" "}
+          <span aria-hidden="true" className="h-3 w-8 border-2 border-border bg-data-warn-ink" />{" "}
           <span>Withdrawn by the employer</span>
         </li>{" "}
       </ul>{" "}
@@ -60,8 +60,11 @@ export function OutcomeMix({
             <div className="mt-1.5 space-y-1">
               {(
                 [
-                  { pct: q.deniedPct, bg: "bg-data-bad", label: "denied" },
-                  { pct: q.withdrawnPct, bg: "bg-data-warn", label: "withdrawn" },
+                  // -ink on both: --data-warn measures 2.07:1 on the page
+                  // and fails the 3:1 graphic floor, and a legend swatch that
+                  // does not match its bar is worse than either alone.
+                  { pct: q.deniedPct, bg: "bg-data-bad-ink", label: "denied" },
+                  { pct: q.withdrawnPct, bg: "bg-data-warn-ink", label: "withdrawn" },
                 ] as const
               ).map((row) => (
                 <div key={row.label} className="flex items-center gap-2">

@@ -134,12 +134,52 @@ export function moneyShort(n: number): string {
 export const WAGE_BAND_EDGES = [60_000, 80_000, 100_000, 130_000] as const;
 
 /**
- * The floor under a published denial rate.
+ * The floor under a published denial rate. Must equal `DEFAULT_RATE_FLOOR`.
  *
- * The same floor the entity pages use, so a rate here and a rate on an
- * employer page mean the same thing.
+ * DECLARED HERE RATHER THAN IMPORTED, AND THE REASON IS A SILENT FAILURE THAT
+ * ACTUALLY SHIPPED FOR ONE ITERATION. `DEFAULT_RATE_FLOOR` and
+ * `wilsonInterval` live in `components/tools/RateBars.tsx`, which begins with
+ * `"use client"`. This module is reachable from `lib/turso/wages.ts`, which is
+ * `server-only`, so under React Server Components those imports resolve to
+ * CLIENT REFERENCES rather than to the values. `32020 >= <client reference>`
+ * is simply `false`, so every wage band rendered "withheld" over tens of
+ * thousands of cases, with no error anywhere: the page returned 200 and the
+ * numbers were gone. Vitest does not apply the RSC boundary, so all 28 unit
+ * tests stayed green through it.
+ *
+ * `equivalence.test.ts` asserts this constant and `wilsonInterval` below agree
+ * exactly with the RateBars originals, which is the anti-drift guarantee the
+ * import was supposed to provide, obtained in the one place where importing
+ * both is safe. The real fix is to move the shared maths out of a "use client"
+ * file into `src/lib/`; that file belongs to another agent.
  */
 export const MIN_DECIDED_FOR_BAND_RATE = 100;
+
+/**
+ * Wilson score interval for a proportion, in percent.
+ *
+ * Character-for-character the arithmetic in `RateBars.wilsonInterval`, pinned
+ * by a test that imports both and compares them across a grid of inputs. The
+ * normal approximation is wrong exactly where these rates live, near zero with
+ * small counts, and yields negative lower bounds; Wilson stays inside 0 to 100
+ * by construction.
+ */
+export function wilsonInterval(
+  denied: number,
+  decided: number,
+  z = 1.96,
+): { lo: number; hi: number } | null {
+  if (!Number.isFinite(denied) || !Number.isFinite(decided) || decided <= 0) return null;
+  const p = denied / decided;
+  const denom = 1 + (z * z) / decided;
+  const centre = (p + (z * z) / (2 * decided)) / denom;
+  const half =
+    (z * Math.sqrt((p * (1 - p)) / decided + (z * z) / (4 * decided * decided))) / denom;
+  return {
+    lo: Math.max(0, (centre - half) * 100),
+    hi: Math.min(100, (centre + half) * 100),
+  };
+}
 
 export interface WageBandRate {
   /** Printed label, e.g. "$60k to $80k". */
@@ -153,6 +193,8 @@ export interface WageBandRate {
   denied: number;
   /** Percent of decided cases denied, or null when the band is too thin. */
   deniedPct: number | null;
+  /** 95% Wilson interval in percent, or null when the band is too thin. */
+  interval: { lo: number; hi: number } | null;
 }
 
 export interface WageBandSeries {
@@ -194,6 +236,15 @@ export function toBands(
       // A rate over a thin band is one filing wearing a percentage's clothes.
       deniedPct:
         decided >= MIN_DECIDED_FOR_BAND_RATE ? (denied / decided) * 100 : null,
+      // The interval is what makes the mid-band hump a finding rather than an
+      // impression. Wilson rather than the normal approximation, because these
+      // proportions sit near zero where the normal approximation produces
+      // negative lower bounds. Measured: FY2025 reads 2.57% [2.43, 2.72] under
+      // $60k against 3.61% [3.26, 4.00] at $60k-$80k, and FY2026 4.94%
+      // [4.71, 5.18] against 6.62% [6.12, 7.17]. Both pairs are SEPARATED, so
+      // the hump survives the test rather than merely surviving a glance.
+      interval:
+        decided >= MIN_DECIDED_FOR_BAND_RATE ? wilsonInterval(denied, decided) : null,
     };
   });
 }

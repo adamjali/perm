@@ -80,7 +80,7 @@ function Panel({
                       // second thing, and "highest in this panel" is the same
                       // measurement, marked.
                       className={cn(
-                        "h-full bg-data-bad",
+                        "h-full bg-data-bad-ink",
                         isWorst && "outline-2 outline-offset-0 outline-foreground",
                       )}
                       style={{
@@ -93,6 +93,17 @@ function Panel({
                   {b.decided.toLocaleString("en-US")}
                 </span>
               </div>
+              {/* The interval sits with its own rate, not in a footnote. It is
+                  what separates "this band is worse" from "this band looks
+                  worse": in FY2025 and FY2026 the $60k-$80k interval clears
+                  the sub-$60k interval entirely, so the hump is a measurement
+                  rather than an impression. */}
+              {b.interval ? (
+                <p className="mt-0.5 font-mono text-[11px] tabular-nums text-foreground/55">
+                  95% interval {b.interval.lo.toFixed(2)} to{" "}
+                  {b.interval.hi.toFixed(2)}%
+                </p>
+              ) : null}
             </li>{" "}
             </Fragment>
           );

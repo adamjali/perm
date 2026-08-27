@@ -38,6 +38,50 @@ export function weekStart(iso: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** The next day, as "YYYY-MM-DD". */
+function nextDay(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Every calendar day in the series' own span, absent days filled with ZERO.
+ *
+ * THIS IS THE MOST IMPORTANT FUNCTION IN THE FILE AND IT CORRECTS A REAL
+ * MISREADING. The `dol-disclosure` series is not a log somebody kept; it is
+ * `GROUP BY decision_date` over the whole case corpus, and the proof is that
+ * it sums to 373,939, which is `SELECT COUNT(*) FROM perm_cases` exactly. A
+ * day with no decisions therefore produces NO ROW. Absence means ZERO, not
+ * "nobody measured".
+ *
+ * Treating those 57 absent days as holes hid the single most dramatic event in
+ * the record. Measured straight from the corpus, DOL issued TWO determinations
+ * in the thirty days of October 2025 (one on the 1st, one on the 7th) and 19
+ * on the 31st, the day it announced it had resumed processing. As weeks that
+ * is 3,306 then 2,615 then 1,196 then 1, 0, 0, 30, then 2,458. Drawn as a gap
+ * it is invisible; drawn as zeros it is the story.
+ *
+ * ONLY FOR A SERIES DERIVED BY GROUPING. A live scan that simply has not run
+ * on some day is genuinely unmeasured, and filling that with zero would invent
+ * an outage. `flag-live` is contiguous, so it needs no fill either way.
+ *
+ * Nothing outside the series' own first and last date is invented: a day after
+ * the last is the series ENDING, which is a different fact and stays absent.
+ */
+export function fillZeros(days: readonly ActivityDay[]): ActivityDay[] {
+  if (days.length === 0) return [];
+  const have = new Map(days.map((d) => [d.date, d]));
+  const out: ActivityDay[] = [];
+  const last = days[days.length - 1]!.date;
+  for (let iso = days[0]!.date; iso <= last; iso = nextDay(iso)) {
+    out.push(
+      have.get(iso) ?? { date: iso, total: 0, certified: 0, denied: 0, withdrawn: 0 },
+    );
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Weekly roll-up
 // ---------------------------------------------------------------------------
@@ -53,25 +97,30 @@ export interface ActivityWeek {
 }
 
 /**
- * A week is plotted only when this many of its seven days carry a record.
+ * A week is plotted only when it holds all seven days.
  *
- * A partial week draws as a dip nothing in the world caused. The series starts
- * on a Wednesday and the live segment ends mid-week, so without a floor the
- * chart opens and closes on a cliff, and the October-2025 hole leaves two
- * weeks holding a single day each, which would draw as a collapse to near zero
- * rather than as the absence of measurement that it is.
+ * AFTER `fillZeros` THIS ONLY EVER TRIMS THE ENDS. Every interior week of a
+ * zero-filled series is complete by construction, so the floor's whole job is
+ * to drop the partial week at each end: a series starting on a Wednesday would
+ * otherwise open on a cliff that nothing in the world caused.
+ *
+ * It emphatically does NOT hide the October 2025 collapse any more. That was
+ * the bug: with a 5-day floor over an unfilled series, three genuine
+ * near-zero weeks were withheld as "unmeasurable" and the largest stoppage in
+ * the record rendered as blank space.
  */
-export const MIN_DAYS_FOR_WEEK = 5;
+export const MIN_DAYS_FOR_WEEK = 7;
 
 /**
  * Weeks, with an explicit `null` wherever the record does not support one.
  *
- * The nulls are the point. A caller drawing a line has to segment on them,
- * because a gap in a series is a BREAK and not a point to interpolate through.
- * This series holds two real holes: 23 days in October 2025, and 43 days
- * between 2026-06-30 and 2026-08-13 where the quarterly disclosure file had
- * stopped and the live scan had not started. Both are periods with no
- * measurement, not periods of no work.
+ * The nulls mark a break, and a caller drawing a line has to segment on them,
+ * because a gap in a series is never a point to interpolate through. After
+ * `fillZeros` a null means one of exactly two things and neither is "DOL
+ * stopped": a partial week at an end of this series, or a stretch belonging to
+ * a DIFFERENT series (the 44 days between the disclosure corpus ending on
+ * 2026-06-30 and the live scan beginning on 2026-08-13). A period when DOL
+ * really did stop is zeros, and zeros are drawn.
  */
 export function toWeeks(days: readonly ActivityDay[]): (ActivityWeek | null)[] {
   if (days.length === 0) return [];
@@ -149,15 +198,24 @@ export interface WeekdayProfile {
 }
 
 /**
- * Mean decisions by day of the week.
+ * Mean decisions by day of the week. FEED IT A ZERO-FILLED SERIES.
  *
- * THIS EXISTS BECAUSE THE OBVIOUS ASSUMPTION IS WRONG. The natural claim, and
- * the one this codebase states in prose on two live pages, is that DOL does
- * not decide cases at weekends. Measured over the disclosure series: 254
- * recorded weekend days, NOT ONE of them zero, carrying 19,361 decisions or
- * 5.18% of the corpus, at a Saturday mean of 91 and a Sunday mean of 82
- * against a weekday mean near 520. Weekend work is small and it is real, and
- * a chart that treats it as an outage is wrong in a way nobody would catch.
+ * THIS EXISTS BECAUSE THE OBVIOUS ASSUMPTION IS WRONG, AND THE FIRST
+ * CORRECTION OF IT WAS ALSO WRONG. The natural claim, stated in prose on two
+ * live pages, is that DOL does not decide cases at weekends. Measured over the
+ * zero-filled disclosure series it is closer to the truth than it looks:
+ *
+ *   Mon 471   Tue 541   Wed 526   Thu 493   Fri 442   Sat 73   Sun 63
+ *
+ * so a weekend day runs about an eighth of a weekday and weekends carry 5.18%
+ * of every decision in the corpus. But 33 of 287 weekend days ARE zero (11
+ * Saturdays, 22 Sundays), which the first pass missed by counting only
+ * RECORDED days, where absence had already removed every zero. It then
+ * published "not one weekend day is zero", which was an artefact of the
+ * filtering rather than a fact about DOL.
+ *
+ * The durable finding is the one that survives both readings: weekend output
+ * is small, it is routine, and it is not nothing.
  */
 export function weekdayProfile(days: readonly ActivityDay[]): WeekdayProfile[] {
   const buckets: number[][] = [[], [], [], [], [], [], []];
@@ -215,74 +273,41 @@ export function pace(days: readonly ActivityDay[], window = 28): Pace | null {
 // Extremes and mix
 // ---------------------------------------------------------------------------
 
-/** The day before and the day after, as ISO strings. */
-function neighbours(iso: string): [string, string] {
-  const d = new Date(`${iso}T00:00:00Z`);
-  const before = new Date(d);
-  before.setUTCDate(before.getUTCDate() - 1);
-  const after = new Date(d);
-  after.setUTCDate(after.getUTCDate() + 1);
-  return [
-    before.toISOString().slice(0, 10),
-    after.toISOString().slice(0, 10),
-  ];
-}
-
-/**
- * Is this day sitting against a hole in the record?
- *
- * A recorded day whose neighbour is missing is not comparable to one in a
- * complete stretch. Both ends of the October-2025 hole are exactly this:
- * 2025-10-01 and 2025-10-07 each carry a total of ONE, bracketed by a 5-day
- * and a 23-day absence. A quietest-day ranking that includes them reports the
- * shape of our record as though it were the shape of DOL's work.
- *
- * A day at the very start or end of a series is not adjacent to a hole; the
- * series simply has not begun or has ended.
- */
-export function adjacentToGap(
-  iso: string,
-  recorded: ReadonlySet<string>,
-  first: string,
-  last: string,
-): boolean {
-  const [before, after] = neighbours(iso);
-  if (iso > first && !recorded.has(before)) return true;
-  if (iso < last && !recorded.has(after)) return true;
-  return false;
-}
-
 /**
  * The heaviest and lightest WEEKDAYS in a series.
  *
  * Weekdays on both ends. A ranking that mixes them puts a Sunday at the bottom
  * of every quietest-day list, which says nothing except that it was a Sunday.
  *
- * Days against a hole in the record are dropped from BOTH ends and counted, so
- * a caller can say how many were set aside rather than quietly presenting a
- * gap artefact as the quietest day DOL ever had.
+ * NO GAP-EXCLUSION, AND THE EARLIER VERSION WAS WRONG TO HAVE ONE. It dropped
+ * 33 weekdays for sitting "against a hole in the record", on the belief that a
+ * recorded day beside an absent one measures the edge of our data. For a
+ * series derived by grouping, an absent day is a day DOL decided nothing, so
+ * those were real zero-decision weekdays and excluding them removed exactly
+ * the days worth seeing: 2024-01-01, both Independence Days, and the whole of
+ * October 2025. Feed this a zero-filled series and the extremes are true.
  */
 export function weekdayExtremes(
   days: readonly ActivityDay[],
   n = 5,
-): { busiest: ActivityDay[]; quietest: ActivityDay[]; excluded: number } {
-  if (days.length === 0) return { busiest: [], quietest: [], excluded: 0 };
-  const recorded = new Set(days.map((d) => d.date));
-  const first = days[0]!.date;
-  const last = days[days.length - 1]!.date;
+): { busiest: ActivityDay[]; quietest: ActivityDay[] } {
   const wd = days.filter((d) => !isWeekend(d.date));
-  const clean = wd.filter((d) => !adjacentToGap(d.date, recorded, first, last));
   // Tie-break on date so the ordering is deterministic. Without it two days
   // sharing a total swap places between builds and a "quietest day" changes
-  // identity for no reason.
-  const byTotal = [...clean].sort(
+  // identity for no reason - and with zeros in the series, ties are now the
+  // common case rather than a rarity.
+  const byTotal = [...wd].sort(
     (a, b) => b.total - a.total || a.date.localeCompare(b.date),
   );
   return {
     busiest: byTotal.slice(0, n),
     quietest: byTotal.slice(-n).reverse(),
-    excluded: wd.length - clean.length,
   };
+}
+
+/** Weekdays with no decisions at all, oldest first. */
+export function zeroWeekdays(days: readonly ActivityDay[]): ActivityDay[] {
+  return days.filter((d) => !isWeekend(d.date) && d.total === 0);
 }
 
 export interface OutcomeQuarter {

@@ -30,10 +30,12 @@ import { WeekdayShape } from "@/components/activity/WeekdayShape";
 import { getActivitySeries } from "@/lib/turso/activity";
 import { getLiveMirrorSize } from "@/lib/turso/publicData";
 import {
+  fillZeros,
   outcomeByQuarter,
   pace,
   weekdayExtremes,
   weekdayProfile,
+  zeroWeekdays,
   type ActivityDay,
 } from "@/lib/activityStats";
 
@@ -85,10 +87,15 @@ export default async function DecisionActivityPage() {
   // between them hold no measurement at all.
   const current = live?.days.length ? live : disclosure;
   const currentPace = current ? pace(current.days, 28) : null;
-  const record: ActivityDay[] = disclosure?.days ?? [];
+  // ZERO-FILLED, and that is the difference between showing October 2025 and
+  // hiding it. The disclosure series is GROUP BY decision_date over the case
+  // corpus, so a day with no row is a day DOL decided nothing. The live scan
+  // is contiguous and needs no fill.
+  const record: ActivityDay[] = fillZeros(disclosure?.days ?? []);
   const profile = weekdayProfile(record);
   const quarters = outcomeByQuarter([...record, ...(live?.days ?? [])]);
   const extremes = weekdayExtremes(record, 5);
+  const idleWeekdays = zeroWeekdays(record);
   const recordTotal = record.reduce((a, b) => a + b.total, 0);
 
   const schema = {
@@ -146,9 +153,13 @@ export default async function DecisionActivityPage() {
                     : `${currentPace.weekendDays} weekend days counted`,
               },
               {
-                k: "Cases tracked",
+                k: "Cases in the scan",
                 v: fmt(mirrorSize),
-                sub: "in the per-case mirror",
+                // A row count, not a status claim. Four fifths of the pending
+                // rows carry a check older than 2026-08-01, so "tracked live"
+                // would be false about the statuses even though the total is
+                // exact.
+                sub: "per-case scan of flag.dol.gov",
               },
               {
                 k: "Decisions on record",
@@ -188,28 +199,42 @@ export default async function DecisionActivityPage() {
           subject="Every week in the record, with its holes left open"
           caption={
             <>
-              Two instruments, drawn apart. The long line is our own case
-              corpus counted by decision date and it ends where the quarterly
-              disclosure file ends. The point at the right is the first
-              complete week from the per-case scan of flag.dol.gov. Between
-              them sit 43 days with no measurement, and the two holes earlier
-              in the line are the same thing: a gap in the record, not a
-              period of no work. A week is drawn only when at least five of its
-              seven days carry a record, so a partial week cannot read as a
-              collapse.
+              A week at the floor and a break in the line mean opposite
+              things here. The long line is our own case corpus counted by
+              decision date, and a week DOL decided nothing is drawn at zero
+              rather than left out: in October 2025 that is three straight
+              weeks on the floor, two determinations in thirty days, ending
+              when DOL announced on the 31st that it{"\u2019"}d{" "}
+              <a
+                href="https://flag.dol.gov/announcement/2025-10-31"
+                className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                rel="nofollow noopener"
+              >
+                resumed application processing
+              </a>
+              . Why it stopped is not established here. The one BREAK in the
+              line, before the point on the right, is ours and not DOL{"\u2019"}s:
+              the quarterly file ends on 2026-06-30 and the per-case scan of
+              flag.dol.gov begins on 2026-08-13, and drawing those 44 days as
+              zero would invent a second national stoppage that never
+              happened.
             </>
           }
           source="DOL PERM disclosure files and flag.dol.gov"
           className="mt-10"
         >
           <DecisionPaceChart
+            annotations={[{ date: "2025-10-13", label: "Oct 2025" }]}
             series={[
               ...(disclosure
                 ? [
                     {
                       label: "Disclosure corpus, through 2026-06-30",
-                      color: "var(--primary)",
-                      days: disclosure.days,
+                      // -ink, not the bare token: a chart line is a graphical
+                      // object under WCAG 1.4.11's 3:1 floor and --primary
+                      // measures 2.05:1 on this page.
+                      color: "var(--data-good-ink)",
+                      days: record,
                     },
                   ]
                 : []),
@@ -217,7 +242,7 @@ export default async function DecisionActivityPage() {
                 ? [
                     {
                       label: "Live case scan",
-                      color: "var(--stage-pwd)",
+                      color: "var(--stage-pwd-ink)",
                       days: live.days,
                     },
                   ]
@@ -232,7 +257,7 @@ export default async function DecisionActivityPage() {
           n="02"
           title="The working week"
           subject={`Mean decisions by day of week, ${fmt(record.length)} days`}
-          caption="Weekend output is about a sixth of a weekday and it never stops entirely, which matters for any rate quoted per working day: counting a Saturday as a working day drags the figure down without saying so."
+          caption="A weekend day runs about an eighth of a weekday, and most weekend days carry work rather than none. That matters for any rate quoted per working day: counting a Saturday as a working day drags the figure down without saying so."
           source="DOL PERM disclosure files"
           className="mt-10"
         >
@@ -290,14 +315,14 @@ export default async function DecisionActivityPage() {
               </Fragment>
             ))}
           </div>
-          {extremes.excluded > 0 ? (
+          {idleWeekdays.length > 0 ? (
             <p className="mt-4 max-w-3xl text-sm leading-relaxed text-foreground/60">
-              {fmt(extremes.excluded)} weekdays sit next to a missing day and
-              are left out of both lists. A recorded day with an absent
-              neighbour measures the edge of our record rather than a quiet day
-              at DOL: the two days bracketing the October 2025 hole each carry
-              a single decision, and ranking them as the quietest days on
-              record would be reporting our own gap as a fact about the agency.
+              {fmt(idleWeekdays.length)} weekdays in the record carry no
+              determination at all, so the quietest list is a list of ties. They
+              are federal holidays and the October 2025 stoppage, and they are
+              real days rather than gaps in the data: this series is counted
+              from the case corpus, so a day with no cases decided produces no
+              row, and those days are read as zero rather than as unmeasured.
             </p>
           ) : null}
         </section>

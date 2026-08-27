@@ -62,7 +62,9 @@ export function WeekdayShape({
             </div>
             <div className="mt-1 h-4 w-full border-2 border-border bg-background">
               <div
-                className="h-full bg-primary"
+                // See WageLadderRow: --primary fails the 3:1 graphic floor
+                // in light mode, the -ink variant passes and is identical in dark.
+                className="h-full bg-data-good-ink"
                 style={{ width: `${(p.mean / max) * 100}%` }}
                 aria-hidden="true"
               />
@@ -75,11 +77,12 @@ export function WeekdayShape({
         A weekday clears about {meanOf(weekdays).toLocaleString("en-US")}{" "}
         decisions and a weekend day about{" "}
         {meanOf(weekend).toLocaleString("en-US")}.{" "}
-        {zeroWeekend === 0 && weekendDays > 0 ? (
+        {weekendDays > 0 ? (
           <>
-            Weekend work is small and it is constant: of{" "}
-            {weekendDays.toLocaleString("en-US")} recorded Saturdays and
-            Sundays, none carries zero decisions.
+            Weekend work is small and it is routine rather than exceptional:{" "}
+            {(weekendDays - zeroWeekend).toLocaleString("en-US")} of{" "}
+            {weekendDays.toLocaleString("en-US")} Saturdays and Sundays carry at
+            least one determination.
           </>
         ) : null}
       </p>

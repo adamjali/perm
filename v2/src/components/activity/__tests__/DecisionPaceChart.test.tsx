@@ -36,8 +36,8 @@ describe("DecisionPaceChart", () => {
     const { container } = render(
       <DecisionPaceChart
         series={[
-          { label: "Disclosure", color: "var(--primary)", days: DISCLOSURE },
-          { label: "Live", color: "var(--stage-pwd)", days: LIVE },
+          { label: "Disclosure", color: "var(--data-good-ink)", days: DISCLOSURE },
+          { label: "Live", color: "var(--stage-pwd-ink)", days: LIVE },
         ]}
       />,
     );
@@ -61,7 +61,7 @@ describe("DecisionPaceChart", () => {
     const holed = [...run("2026-06-22", 14, 600), ...run("2026-08-17", 14, 600)];
     const { container } = render(
       <DecisionPaceChart
-        series={[{ label: "Disclosure", color: "var(--primary)", days: holed }]}
+        series={[{ label: "Disclosure", color: "var(--data-good-ink)", days: holed }]}
       />,
     );
     expect(container.querySelectorAll("polyline, circle")).toHaveLength(2);
@@ -71,8 +71,8 @@ describe("DecisionPaceChart", () => {
     const { container } = render(
       <DecisionPaceChart
         series={[
-          { label: "Disclosure", color: "var(--primary)", days: DISCLOSURE },
-          { label: "Live", color: "var(--stage-pwd)", days: LIVE },
+          { label: "Disclosure", color: "var(--data-good-ink)", days: DISCLOSURE },
+          { label: "Live", color: "var(--stage-pwd-ink)", days: LIVE },
         ]}
       />,
     );
@@ -85,8 +85,8 @@ describe("DecisionPaceChart", () => {
     const { container } = render(
       <DecisionPaceChart
         series={[
-          { label: "Disclosure corpus", color: "var(--primary)", days: DISCLOSURE },
-          { label: "Live case scan", color: "var(--stage-pwd)", days: LIVE },
+          { label: "Disclosure corpus", color: "var(--data-good-ink)", days: DISCLOSURE },
+          { label: "Live case scan", color: "var(--stage-pwd-ink)", days: LIVE },
         ]}
       />,
     );
@@ -100,13 +100,41 @@ describe("DecisionPaceChart", () => {
     expect(colours.size).toBe(2);
   });
 
-  it("says in its accessible name that the breaks are breaks", () => {
+  it("distinguishes a zero from a break in its accessible name", () => {
+    // The two mean opposite things and a screen-reader user gets one sentence,
+    // so that sentence has to carry the distinction the drawing carries.
     render(
       <DecisionPaceChart
-        series={[{ label: "Disclosure", color: "var(--primary)", days: DISCLOSURE }]}
+        series={[{ label: "Disclosure", color: "var(--data-good-ink)", days: DISCLOSURE }]}
       />,
     );
-    expect(screen.getByRole("img").getAttribute("aria-label")).toMatch(/breaks/i);
+    const label = screen.getByRole("img").getAttribute("aria-label") ?? "";
+    expect(label).toMatch(/decided nothing is drawn at zero/i);
+    expect(label).toMatch(/two different sources rather than marking a stoppage/i);
+  });
+
+  it("marks an annotated period on the drawing", () => {
+    const { container } = render(
+      <DecisionPaceChart
+        annotations={[{ date: "2026-06-24", label: "Oct 2025" }]}
+        series={[{ label: "Disclosure", color: "var(--data-good-ink)", days: DISCLOSURE }]}
+      />,
+    );
+    expect(screen.getByText("Oct 2025")).toBeTruthy();
+    expect(container.querySelector("line[stroke-dasharray]")).not.toBeNull();
+  });
+
+  it("ignores an annotation whose date falls outside the drawn span", () => {
+    // A marker pinned to index 0 because its lookup missed would sit on a week
+    // it does not describe, which is worse than no marker at all.
+    const { container } = render(
+      <DecisionPaceChart
+        annotations={[{ date: "2019-01-01", label: "Nowhere" }]}
+        series={[{ label: "Disclosure", color: "var(--data-good-ink)", days: DISCLOSURE }]}
+      />,
+    );
+    expect(screen.queryByText("Nowhere")).toBeNull();
+    expect(container.querySelector("line[stroke-dasharray]")).toBeNull();
   });
 
   it("renders nothing for an empty series", () => {
@@ -116,13 +144,11 @@ describe("DecisionPaceChart", () => {
 });
 
 describe("WeekdayShape", () => {
-  it("claims weekend work never stops only when no weekend day is zero", () => {
-    const days = [...run("2026-08-17", 5, 500), ...run("2026-08-22", 2, 90)];
-    render(<WeekdayShape profile={weekdayProfile(days)} />);
-    expect(screen.getByText(/none carries zero decisions/i)).toBeTruthy();
-  });
-
-  it("drops the claim as soon as one weekend day is zero", () => {
+  it("counts how many weekend days carry work rather than claiming none are zero", () => {
+    // The first version published "not one weekend day is zero", which was an
+    // artefact of counting only RECORDED days. Zero-filled, 33 of 287 weekend
+    // days ARE zero. The durable claim is the count, so it cannot go stale
+    // into a falsehood.
     const days = [
       ...run("2026-08-17", 5, 500),
       { date: "2026-08-22", total: 0, certified: 0, denied: 0, withdrawn: 0 },
@@ -130,6 +156,7 @@ describe("WeekdayShape", () => {
     ];
     render(<WeekdayShape profile={weekdayProfile(days)} />);
     expect(screen.queryByText(/none carries zero decisions/i)).toBeNull();
+    expect(screen.getByText(/1 of 2 Saturdays and Sundays carry at least one/i)).toBeTruthy();
     expect(screen.getByText(/1 at zero/)).toBeTruthy();
   });
 
@@ -157,8 +184,8 @@ describe("OutcomeMix", () => {
     const { container } = render(<OutcomeMix quarters={quarters} />);
     expect(screen.getByText("Denied")).toBeTruthy();
     expect(screen.getByText(/Withdrawn by the employer/)).toBeTruthy();
-    expect(container.querySelectorAll(".bg-data-bad").length).toBeGreaterThan(0);
-    expect(container.querySelectorAll(".bg-data-warn").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".bg-data-bad-ink").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".bg-data-warn-ink").length).toBeGreaterThan(0);
   });
 
   it("carries each quarter's decided count", () => {

@@ -83,7 +83,12 @@ export function WageLadderRow({
       {/* p25 to p75, the middle half. */}
       <span
         aria-hidden="true"
-        className="absolute top-1/2 h-4 -translate-y-1/2 border-2 border-border bg-primary"
+        // bg-data-good-ink, not bg-primary. Measured on the real #FAFAFA
+        // page: --primary #2ECC40 is 2.05:1, under WCAG 1.4.11's 3:1 floor
+        // for a graphical object you must see to read the chart. The -ink
+        // variant is #1D8229 at 4.70:1 in light and resolves to the SAME
+        // #2ECC40 in dark, so it costs nothing there and fixes light.
+        className="absolute top-1/2 h-4 -translate-y-1/2 border-2 border-border bg-data-good-ink"
         style={{ left: `${p.p25}%`, width: `${Math.max(0, p.p75 - p.p25)}%` }}
       />
       {/* p10 and p90: where the tails start. */}
@@ -124,7 +129,7 @@ export function WageLadderKey({ className }: { className?: string }) {
       <li className="flex items-center gap-2">
         <span
           aria-hidden="true"
-          className="h-4 w-8 border-2 border-border bg-primary"
+          className="h-4 w-8 border-2 border-border bg-data-good-ink"
         />{" "}
         <span>25th to 75th</span>
       </li>{" "}
