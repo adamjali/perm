@@ -120,6 +120,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/pwd-calculator`, lastModified: dol ?? "2026-08-23" },
     { url: `${base}/tools/i140-calculator`, lastModified: "2026-08-23" },
     { url: `${base}/tools/i485-queue-position`, lastModified: "2026-08-26" },
+    { url: `${base}/tools/salary-explorer`, lastModified: "2026-08-26" },
     { url: `${base}/tools/priority-date-calculator`, lastModified: "2026-08-23" },
     { url: `${base}/tools/perm-deadline-calculator`, lastModified: "2026-08-23" },
     { url: `${base}/calculators`, lastModified: "2026-08-24" },

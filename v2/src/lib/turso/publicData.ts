@@ -758,3 +758,226 @@ export async function getMonthQueueStats(): Promise<MonthQueueStat[]> {
   );
   return r.map(toMonthStat);
 }
+
+// ---------------------------------------------------------------------------
+// Salary explorer
+// ---------------------------------------------------------------------------
+
+export type WageStatusFilter = "certified" | "denied" | "withdrawn" | "all";
+
+export interface WageFilters {
+  /** SOC code, e.g. "15-1252". Null means every occupation. */
+  socCode?: string | null;
+  /** Two-letter worksite state. Null means the whole country. */
+  state?: string | null;
+  /** Fiscal year as DOL prints it. Null means the whole window. */
+  fiscalYear?: string | null;
+  /** Defaults to certified: a denied case's offered wage was never agreed. */
+  status?: WageStatusFilter;
+}
+
+export interface WagePercentileRow {
+  n: number;
+  avg: number | null;
+  p5: number | null;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+  p95: number | null;
+}
+
+export interface WageStateRow extends WagePercentileRow {
+  state: string;
+}
+
+export interface WageOption {
+  value: string;
+  label: string;
+  n: number;
+}
+
+/**
+ * The filtered population, as a WHERE fragment plus its arguments.
+ *
+ * `wage > 0` is not tidiness. DOL's files carry rows with a null or zero
+ * offered wage, and averaging those in drags every figure down by an amount
+ * that varies with how many such rows a filter happens to catch, which is the
+ * worst kind of wrong: invisible and inconsistent.
+ */
+function wageWhere(f: WageFilters): { sql: string; args: unknown[] } {
+  const parts = ["wage IS NOT NULL", "wage > 0"];
+  const args: unknown[] = [];
+  const status = f.status ?? "certified";
+  if (status !== "all") {
+    parts.push("status = ?");
+    args.push(status);
+  }
+  if (f.socCode) {
+    parts.push("soc_code = ?");
+    args.push(f.socCode);
+  }
+  if (f.state) {
+    parts.push("state = ?");
+    args.push(f.state);
+  }
+  if (f.fiscalYear) {
+    parts.push("fiscal_year = ?");
+    args.push(f.fiscalYear);
+  }
+  return { sql: parts.join(" AND "), args };
+}
+
+/**
+ * Nearest-rank percentile over the SELECTED subset.
+ *
+ * The whole point of the explorer: a median must describe the rows the reader
+ * filtered to, never the corpus. Computed in SQL because doing it in JS means
+ * shipping 373,162 wages through the RSC payload to produce five numbers.
+ *
+ * `1 + FLOOR((n - 1) * p)` is the nearest-rank definition, so p50 over an even
+ * count takes the lower of the two middle values rather than interpolating.
+ * Interpolation would invent a wage nobody was offered.
+ */
+const PERCENTILE_SELECT = [0.05, 0.25, 0.5, 0.75, 0.95]
+  .map((p, i) => {
+    const name = ["p5", "p25", "p50", "p75", "p95"][i];
+    return `MAX(CASE WHEN rn = 1 + CAST((n - 1) * ${p} AS INTEGER) THEN wage END) AS ${name}`;
+  })
+  .join(",\n         ");
+
+export async function getWageStats(f: WageFilters): Promise<WagePercentileRow> {
+  const w = wageWhere(f);
+  const r = await one<Record<string, unknown>>(
+    `WITH o AS (
+       SELECT wage,
+              ROW_NUMBER() OVER (ORDER BY wage) AS rn,
+              COUNT(*)     OVER ()              AS n
+         FROM perm_cases WHERE ${w.sql}
+     )
+     SELECT MAX(n) AS n, AVG(wage) AS avg,
+            ${PERCENTILE_SELECT}
+       FROM o`,
+    w.args,
+  );
+  const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
+  return {
+    n: Number(r?.n ?? 0),
+    avg: num(r?.avg),
+    p5: num(r?.p5),
+    p25: num(r?.p25),
+    p50: num(r?.p50),
+    p75: num(r?.p75),
+    p95: num(r?.p95),
+  };
+}
+
+/** Every occupied bin at the given width, oldest edge first. */
+export async function getWageHistogram(
+  f: WageFilters,
+  width: number,
+): Promise<{ from: number; count: number }[]> {
+  const w = wageWhere(f);
+  // Width is a number this module computed, never caller text, but it is
+  // still bound rather than interpolated so the shape of this query cannot
+  // depend on a value at all.
+  const r = await rows<Record<string, unknown>>(
+    `SELECT CAST(wage / ? AS INTEGER) * ? AS bin, COUNT(*) AS n
+       FROM perm_cases WHERE ${w.sql}
+      GROUP BY bin ORDER BY bin`,
+    [width, width, ...w.args],
+  );
+  return r.map((x) => ({ from: Number(x.bin), count: Number(x.n) }));
+}
+
+/**
+ * Per-state percentiles for the same filtered population.
+ *
+ * One query with a PARTITION rather than one query per state: 56 round trips
+ * to build one table is how a page ends up taking eight seconds.
+ */
+export async function getWageByState(
+  f: WageFilters,
+  minCases: number,
+): Promise<WageStateRow[]> {
+  const w = wageWhere({ ...f, state: null });
+  const r = await rows<Record<string, unknown>>(
+    `WITH o AS (
+       SELECT state, wage,
+              ROW_NUMBER() OVER (PARTITION BY state ORDER BY wage) AS rn,
+              COUNT(*)     OVER (PARTITION BY state)               AS n
+         FROM perm_cases WHERE ${w.sql} AND state IS NOT NULL AND state <> ''
+     )
+     SELECT state, MAX(n) AS n, AVG(wage) AS avg,
+            ${PERCENTILE_SELECT}
+       FROM o GROUP BY state HAVING MAX(n) >= ? ORDER BY MAX(n) DESC`,
+    [...w.args, minCases],
+  );
+  const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
+  return r.map((x) => ({
+    state: String(x.state),
+    n: Number(x.n),
+    avg: num(x.avg),
+    p5: num(x.p5),
+    p25: num(x.p25),
+    p50: num(x.p50),
+    p75: num(x.p75),
+    p95: num(x.p95),
+  }));
+}
+
+/**
+ * What the filters may be set to.
+ *
+ * Occupations carry their case count and are ordered by it, because a list of
+ * 4,893 SOC codes in alphabetical order is a list nobody can use. The count
+ * also lets the picker show which choices will actually support a figure.
+ */
+export async function getWageFilterOptions(minCases: number): Promise<{
+  occupations: WageOption[];
+  states: WageOption[];
+  fiscalYears: string[];
+}> {
+  const [occ, st, fy] = await Promise.all([
+    // Labels come from perm_entities, NOT from perm_cases.soc_title.
+    //
+    // That column holds the EMPLOYER'S free-text job title, not the standard
+    // occupation name: soc_code 15-1252.00 carries 263 distinct values across
+    // its rows, among them "Software Developers", "SOFTWARE DEVELOPERS",
+    // "Senior QA Automation Engineer" and "software engineer". A
+    // MAX(soc_title) label would therefore name each occupation after
+    // whichever job title happened to sort last, which is arbitrary and looks
+    // deliberate. perm_entities carries one canonical name per code and is
+    // what the /perm-wages pages already display.
+    rows<Record<string, unknown>>(
+      `SELECT code AS soc_code, name AS soc_title, total AS n
+         FROM perm_entities
+        WHERE kind = 'occupation' AND code IS NOT NULL AND code <> ''
+          AND total >= ? ORDER BY total DESC`,
+      [minCases],
+    ),
+    rows<Record<string, unknown>>(
+      `SELECT state, COUNT(*) AS n
+         FROM perm_cases
+        WHERE wage IS NOT NULL AND wage > 0 AND state IS NOT NULL AND state <> ''
+        GROUP BY state HAVING COUNT(*) >= ? ORDER BY state`,
+      [minCases],
+    ),
+    rows<Record<string, unknown>>(
+      `SELECT DISTINCT fiscal_year FROM perm_cases
+        WHERE fiscal_year IS NOT NULL AND fiscal_year <> '' ORDER BY fiscal_year DESC`,
+    ),
+  ]);
+  return {
+    occupations: occ.map((r) => ({
+      value: String(r.soc_code),
+      label: String(r.soc_title ?? r.soc_code),
+      n: Number(r.n),
+    })),
+    states: st.map((r) => ({
+      value: String(r.state),
+      label: String(r.state),
+      n: Number(r.n),
+    })),
+    fiscalYears: fy.map((r) => String(r.fiscal_year)),
+  };
+}
