@@ -1049,3 +1049,80 @@ export async function getWageFilterOptions(minCases: number): Promise<{
     fiscalYears: fy.map((r) => String(r.fiscal_year)),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Live queue (per-case mirror)
+// ---------------------------------------------------------------------------
+
+export interface LiveCohortMonth {
+  month: string;
+  total: number;
+  pending: number;
+  decided: number;
+  decidedPct: number | null;
+}
+
+export interface LiveStatusCount {
+  status: string;
+  count: number;
+  isFinal: boolean;
+}
+
+/**
+ * Every filing month in the live mirror, oldest first.
+ *
+ * PENDING COMES FROM `is_final`, NOT FROM A STATUS LIST. Verified across all
+ * 15 normalised statuses: final is exact, and it keeps working the day the
+ * source adds a sixteenth value.
+ *
+ * `current_status` is NOT reliably normalised. The backfill fixed the rows it
+ * saw, but new rows still arrive in mixed case - 240 of them shared the newest
+ * fetched_at when this was written - so anything grouping or filtering on that
+ * column goes through UPPER(). Nothing here needs to.
+ */
+export async function getLiveBacklog(): Promise<LiveCohortMonth[]> {
+  const r = await rows<Record<string, unknown>>(
+    `SELECT substr(filing_date, 1, 7) AS month,
+            COUNT(*)                                       AS total,
+            SUM(CASE WHEN is_final = 0 THEN 1 ELSE 0 END)  AS pending
+       FROM perm_case_status
+      WHERE filing_date IS NOT NULL AND filing_date <> ''
+      GROUP BY month ORDER BY month`,
+  );
+  return r.map((x) => {
+    const total = Number(x.total) || 0;
+    const pending = Number(x.pending) || 0;
+    const decided = total - pending;
+    return {
+      month: String(x.month),
+      total,
+      pending,
+      decided,
+      decidedPct: total > 0 ? (decided / total) * 100 : null,
+    };
+  });
+}
+
+/** One filing month's status split, normalised and largest first. */
+export async function getLiveCohort(month: string): Promise<LiveStatusCount[]> {
+  const r = await rows<Record<string, unknown>>(
+    `SELECT UPPER(current_status) AS status, MAX(is_final) AS is_final, COUNT(*) AS n
+       FROM perm_case_status
+      WHERE substr(filing_date, 1, 7) = ?
+      GROUP BY status ORDER BY n DESC`,
+    [month],
+  );
+  return r.map((x) => ({
+    status: String(x.status),
+    count: Number(x.n) || 0,
+    isFinal: Number(x.is_final) === 1,
+  }));
+}
+
+/** How many cases the mirror holds, for the provisional banner. */
+export async function getLiveMirrorSize(): Promise<number> {
+  const r = await one<Record<string, unknown>>(
+    "SELECT COUNT(*) AS n FROM perm_case_status",
+  );
+  return Number(r?.n ?? 0);
+}
