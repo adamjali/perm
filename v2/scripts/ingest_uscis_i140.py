@@ -192,18 +192,35 @@ def main() -> int:
         json.dump(payload, fh, separators=(",", ":"))
     log(f"wrote {args.out} ({os.path.getsize(args.out) / 1024:.1f} KB)")
 
-    # Stamp our own freshness row. This ingest previously wrote data without
-    # recording that it had: the row came from a one-off backfill that is in no
-    # workflow, so `as_of` described that run forever while the data refreshed
-    # on schedule underneath it. A frozen row makes the monitor cry wolf, and a
-    # monitor that cries wolf is one you stop reading.
+    # Stamp a freshness row so `check_ingest_health.py` can see this ingest
+    # stop. It is NOT rendered on any page - the public provenance lines are
+    # Turso-backed and this payload goes to Convex - but a row the monitor can
+    # read is what turns a silent death into a red scheduled run, and this
+    # step runs under `continue-on-error: true`.
+    #
+    # THE FIRST VERSION OF THIS STAMP WAS WRONG IN TWO WAYS AT ONCE, and both
+    # were invisible until it actually ran:
+    #
+    #   1. It wrote to `uscis-i140-times`, which is a DIFFERENT dataset: the
+    #      per-subtype processing RANGES that live in a hand-maintained table
+    #      at src/lib/processing-times/i140ProcessingTimes.ts, scraped from
+    #      egov.uscis.gov, which this script explicitly does not touch. It
+    #      would have overwritten that row's as_of with this one's.
+    #   2. It read `SELECT max(as_of) FROM uscis_i140_times`, a table that has
+    #      never existed in Turso. The run died there every time.
+    #
+    # The as_of now comes from the PAYLOAD, which is the only thing here that
+    # knows which quarter was actually parsed. "FY2026 Q2" is normalised to
+    # "2026Q2" because that is the shape check_ingest_health.py parses.
+    quarter_key = str(payload.get("asOfQuarter", "")).replace("FY", "").replace(" ", "")
     db = Turso()
     db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
         dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
         source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
     db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
-               ["uscis-i140-times", str(db.scalar("SELECT max(as_of) FROM uscis_i140_times") or "")[:10], int(time.time() * 1000),
-                "USCIS processing-times page (egov.uscis.gov), dated mirror", "Monthly", "USCIS published I-140 processing times", 90])
+               ["uscis-i140-counts", quarter_key, int(time.time() * 1000),
+                "USCIS quarterly I-140 spreadsheets (www.uscis.gov)", "Quarterly",
+                f"{len(subtypes)} preference subtypes", 135])
 
     return 0
 
