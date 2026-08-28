@@ -32,7 +32,10 @@ export default function robots(): MetadataRoute.Robots {
   // the distribution strategy. Ahrefs stays: it is our own audit tool. The
   // ones below are SEO-index and scraper fleets whose data nobody here
   // consumes - each obeys robots.txt, and each can re-earn access the day
-  // it is useful. robots.txt is advisory, so this trims the polite
+  // it is useful. Bytespider was on this list for an hour and came off it:
+  // it is ByteDance's AI-training crawler, and the policy above says AI
+  // crawlers are welcome - a block would have contradicted the strategy the
+  // comment states. robots.txt is advisory, so this trims the polite
   // high-volume tail rather than "securing" anything.
   const freeloaders = [
     'SemrushBot',
@@ -40,7 +43,6 @@ export default function robots(): MetadataRoute.Robots {
     'DotBot',
     'BLEXBot',
     'PetalBot',
-    'Bytespider',
     'DataForSeoBot',
     'serpstatbot',
     'ZoominfoBot',
