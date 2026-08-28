@@ -81,6 +81,33 @@ Push to main triggers auto-deploy:
 `Blog` + `Tutorials` reads as `BlogTutorials` to anything that walks the DOM.
 Google's snippet extraction is textContent-shaped and ignores CSS layout — proven
 the same day, when it printed the identical defect verbatim in a sibling site's
-search listing. permtracker.app has **624 joins across its 11 public pages** and
-they are **not yet fixed**. Full recipe, scope and verification loop:
-[`v2/CLAUDE.md`](v2/CLAUDE.md), section "SEO: JSX glues adjacent element text".
+search listing. permtracker.app had **624 joins across its 11 public pages**; they are
+**fixed and gated**. Re-verified live 2026-08-27: 44 pages scanned from the
+sitemap, **0 glued pairs**, and the sweep prints a control string so a blind
+run cannot read as a pass. Full recipe, scope and verification loop:
+[`v2/CLAUDE.md`](v2/CLAUDE.md), section "Glued JSX text".
+
+**The source-level gate is not the authoritative one** - it cannot see
+`.map()` output, custom components, `motion.*`, or conditionals. Run
+`scripts/audit_glued_text.py` against rendered pages.
+
+
+## Where the data comes from (2026-08-27: first-party throughout)
+
+Every dataset now has a primary source of record. **Zero live third-party
+dependencies.**
+
+| dataset | source | cadence |
+|---|---|---|
+| per-case status | **DOL** `flag.dol.gov`, batch API | full daily 04:10 ET, pending 15:40 ET |
+| decided cases | **DOL** quarterly disclosure files | quarterly + monthly check |
+| processing times | **DOL** FLAG | daily |
+| visa bulletin | **State Dept** (84 months, 2019-10 →) | monthly, one human minute |
+| I-140 counts / I-485 inventory | **USCIS** | quarterly / monthly |
+| entities, daily decisions | derived from our own corpus | with each quarterly |
+| RFI funnel | permtrack aggregate **frozen**, plus our own observations | frozen half never re-read |
+
+The permtrack mirror survives as a dispatchable fallback with **no schedule**,
+because two writers with different notions of truth pointed at one table is a
+flip-flop, not redundancy. Detail: [`v2/CLAUDE.md`](v2/CLAUDE.md), sections
+"Per-case status comes from DOL directly" and "The RFI funnel is BLENDED".

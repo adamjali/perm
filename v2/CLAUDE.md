@@ -518,7 +518,7 @@ still on the legacy path.
 
 | Host | Automated fetch | What lives there |
 |---|---|---|
-| `flag.dol.gov` | **200** | PERM processing times, the weekly ingest |
+| `flag.dol.gov` | **200** | processing times, AND an open batch case-status API (`POST /recaptcha/caseStatus`, 50 case numbers per request, no auth, no captcha) |
 | `www.dol.gov` | **200** with a FULL browser header set | quarterly PERM disclosure files |
 | `www.uscis.gov` | **200** from residential IPs; intermittently 403s GitHub's datacenter runners (2026-08-24) | quarterly I-140 counts (23-65 KB) |
 | `egov.uscis.gov` | **403 Cloudflare challenge** | USCIS processing times |
@@ -824,7 +824,61 @@ Every test arranges its own state. Do not paper over it by defaulting the value
 in production code: `getAllPosts()` reads the local content directory and always
 returns an array, so a default there only hides the next badly-arranged test.
 
-## The visa bulletin, and when an archive is the right answer
+## The visa bulletin: three routes, and the one I wrongly ruled out
+
+**CORRECTED 2026-08-27.** This section used to say travel.state.gov was
+unreachable, full stop. Two of its conclusions were wrong.
+
+**A REAL BROWSER GETS THROUGH.** Load the bulletin INDEX first, let Cloudflare
+clear on that, then navigate to the month you want - the cleared session
+carries. Measured: 10 tables, 101 cutoff dates, no challenge. Nothing is
+defeated: no CAPTCHA solved, no `document.hidden` override, no forged token.
+The earlier note said the extension "was still on the challenge after 25
+seconds" and generalised that into unreachable; it just needed the index
+first. Overriding `document.hidden` so the challenge's own proof-of-work can
+finish WOULD be defeating bot detection - do not.
+
+**Everything scripted still refuses**, re-confirmed from a GitHub runner with
+controls in the same run. It 403s `robots.txt` itself, which is what settles
+it as policy rather than rate-limiting. Jina returns Cloudflare's "Just a
+moment" and warns "this page maybe requiring CAPTCHA".
+
+**So there are three routes, in preference order**, and `SOURCE_RANK` in
+`scripts/ingest_visa_bulletin.py` encodes exactly this so a worse source can
+never overwrite a better one:
+
+| rank | route | covers |
+|---|---|---|
+| 3 | `--from-file`, a page saved from a browser | the current month |
+| 2 | Internet Archive | history, capped at 2026-07 (State now 403s their crawler too) |
+| 1 | permtrack mirror | nothing any more; **0 rows** |
+
+**Its clause ORDER is load-bearing.** The mirror records itself as
+`permtrack.app/... (mirror; original: travel.state.gov)` - naming the original
+is good provenance - so a plain substring test for `travel.state.gov` matches
+the MIRROR too and ranks it as the real page. That would have made the
+backfill skip every month that most needed upgrading, while reporting success.
+
+**84 months held, 2019-10 to 2026-09, all six categories, zero mirror rows.**
+Three bugs had to be fixed to get there, each invisible:
+
+1. **The archive route searched two folder-years.** The folder is the FISCAL
+   year, so November 2025 lives under `/2026/`. Everything outside that window
+   was quietly filled from the mirror at three categories instead of six.
+2. **Country columns were read by POSITION.** Bulletins before ~2023-04 carry
+   a sixth column, `EL SALVADOR / GUATEMALA / HONDURAS`, between CHINA and
+   INDIA (and that era also has VIETNAM). Reading column 3 as India would have
+   published EB3 India as "Current" when it was backlogged to 15JUN12.
+   Resolved by header NAME now, which handles every layout.
+3. **EB5 was missing from all 18 pre-2022-05 months.** The EB-5 Reform and
+   Integrity Act renamed those rows. `CATEGORY_ROWS` takes alternates.
+
+**A parser fix must repair its own history.** The backfill used to skip any
+month already archive-sourced, so improving the parser fixed nothing - the 18
+short months would have sat there looking correct. It re-parses when a stored
+row has fewer than six categories.
+
+## When an archive is the right answer
 
 travel.state.gov refuses automated clients. Seven direct routes were tried and
 all refused. The Internet Archive is not a way around that: it is a public
@@ -871,6 +925,101 @@ had been duplicated rather than shared. Two callers is enough.
 
 ---
 
+## Per-case status comes from DOL directly (2026-08-27)
+
+`scripts/ingest_case_status_direct.py`. This replaced mirroring permtrack.
+
+```
+POST https://flag.dol.gov/recaptcha/caseStatus
+["G-100-24339-516453", ...]        <- JSON array, MAX 50
+-> {"value":[{caseNumber, caseStatus, visaType, employerName,
+              jobTitle, submittedDate, "@search.score"}]}
+```
+
+**THE PATH IS NAMED `recaptcha` AND NOTHING IN THE FLOW IS A CAPTCHA.**
+Measured in the live page: `grecaptcha` undefined, no captcha scripts, no
+`[data-sitekey]`, no challenge iframe, no hidden token. Bare curl, no cookie,
+200 in 0.29 s. `robots.txt` does not disallow it. This project previously
+recorded the opposite, **concluded from the path name alone**, and that
+mistake cost the premise of a whole feature.
+
+**Nothing was lost by switching**, verified field by field rather than
+assumed. Status, employer, job title and submitted date matched the mirror
+**8/8 exactly**. The four fields permtrack adds are derived or bookkeeping:
+`filing_date` decodes from the case number's YYDDD segment (94.6% exact, rest
+off by one day) and equals `submitted_date` for 409,127 of 414,050 rows;
+`is_final` is a function of the status; `is_disclosed` **we compute better** -
+they mark 87,820 cases undisclosed that are in the disclosure files we hold,
+because their OFLC data is a quarter stale; `last_checked_at`/`verified` are
+their record of when THEY looked. DOL adds `visaType`, which they do not
+return at all.
+
+### Three traps, all of which produce a wrong number rather than an error
+
+- **The batch ceiling is 50 and it fails QUIETLY.** 100 or 200 returns
+  `200 OK` with exactly 50 records. Only 400 is rejected. A loop asking for
+  200 silently drops three quarters of every batch and reports success.
+- **A RECONCILIATION IS NOT A TRANSITION.** The first pass found 1,328 status
+  differences that were corrections of a months-stale mirror, not same-day
+  events. Writing them into `perm_case_events` stamped today would have
+  fabricated a one-day surge in the table that feeds the alert sweep and the
+  RFI funnel. `--reconcile` corrects statuses and writes no events.
+- **TWO WRITERS WITH DIFFERENT NOTIONS OF TRUTH ARE NOT REDUNDANCY.** The old
+  mirror would have compared permtrack's stale values against our
+  DOL-corrected rows, called the difference a change, and reverted all 1,328
+  corrections - twice a day, forever, logging healthy writes. Its schedule is
+  removed; `workflow_dispatch` kept as a fallback.
+
+### Schedules
+
+| workflow | when (ET) | why |
+|---|---|---|
+| `case-status-direct` full | 04:10 daily | "final" is not final: a CERTIFIED case becomes CERTIFIED - EXPIRED when the 180-day I-140 window lapses and nothing announces it |
+| `case-status-direct` pending | 15:40 daily | halves worst-case staleness on the cases people have alerts on |
+| `ingest-health` | 06:00 daily | the only thing that reports an ingest going quiet |
+| `probe-state-dept` | 5th monthly | fails the run when travel.state.gov OPENS UP |
+
+10,229 requests/day over ~85 minutes is **2.0 req/s** - measured before
+choosing, not after. Writes stay ~1,300/day because only CHANGED rows are
+written, against a 10M/month plan.
+
+## The RFI funnel is BLENDED, and the blend must stay decomposable
+
+Adam's call over my recommendation. `blendRfiFunnel(base, observed)` in
+`src/lib/turso/rfi.ts` pools **counts**, never percentages:
+
+```
+resolved     = base.resolved  + observed.resolved
+approvalRate = certified / resolved
+```
+
+One case at 100% must barely move an 83.6% rate; averaging the two
+percentages gives 91.8%. That is the classic blend bug and it is why the
+counts are stored as counts. Pinned by a test, probed by injecting the
+averaging version.
+
+**Three things keep it honest, and each was a bug first:**
+
+1. **THE WINDOWS MUST STAY DISJOINT.** `ingest_rfi_funnel.py` is deliberately
+   in NO workflow. Re-reading their aggregate on a schedule would absorb
+   resolutions ours had already added, and the denominator would drift with
+   nothing erroring.
+2. **A TIMESTAMP CANNOT TELL AN OBSERVATION FROM A RECONCILIATION.**
+   `perm_case_events` also holds mirror rows that logged a difference against
+   permtrack's copy, written at 19:16 on the freeze date - "after" a 03:25
+   freeze by any time test - while describing changes of unknown age. The
+   filter is therefore on SOURCE. `DIRECT_EVENT_SOURCE` must stay
+   byte-identical to `SOURCE` in the Python ingest; a drift silently zeroes
+   our half forever, so a test reads the Python file and asserts it.
+3. **"RESOLVED" IS NOT AN RFI-TO-FINAL TRANSITION.** Cases go
+   `RFI ISSUED -> ANALYST REVIEW` and decide from there - 10 of the first 48
+   events. Resolution reads from the case's CURRENT status, joined to the
+   cases we watched ENTER an RFI.
+
+**Our half overtakes theirs in ~74 days.** The disclosure fires when EITHER
+half is non-empty: gating it on resolutions alone left a blended `everIssued`
+rendering as single-source the moment we watched one RFI be issued.
+
 ## The rival's whole API is public, and its data is a quarter stale (2026-08-24)
 
 permtrack.app is the namesake competitor. Every endpoint under
@@ -884,7 +1033,7 @@ Two facts that reframe the rivalry, both measured:
 - **`/api/flags` shows `risk_estimator: false`, `i485_queue: false`,
   `daily_decisions: false`** - three features built and switched off in prod.
 
-**Their moat is per-case FLAG scanning, not the disclosure files.** The live
+**Their moat WAS per-case FLAG scanning - and it is gone as of 2026-08-27, because DOL serves that same lookup directly (above).** The live
 pending backlog (39 months, ~99k pending), daily decision counts, and the RFI
 funnel all come from scanning individual case numbers on flag.dol.gov. Every
 other thing they ship runs off the same quarterly XLSX we already ingest -
