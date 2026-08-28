@@ -144,7 +144,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
                 spellCheck={false}
                 placeholder="G-100-24339-516453"
                 aria-describedby="hero-case-help"
-                className="mono min-h-[48px] w-full min-w-0 flex-1 border-3 border-border bg-background px-4 text-base placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="mono min-h-[48px] w-full min-w-0 flex-1 border-3 border-border bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />{" "}
               <button
                 type="submit"

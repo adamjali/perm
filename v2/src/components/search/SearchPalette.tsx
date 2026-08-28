@@ -209,7 +209,7 @@ export function SearchPalette({
             value={query}
             onValueChange={setQuery}
             placeholder="Search pages, employers, firms, or paste a case number"
-            className="min-h-[52px] w-full bg-transparent text-base outline-none placeholder:text-muted-foreground/70"
+            className="min-h-[52px] w-full bg-transparent text-base outline-none placeholder:text-muted-foreground"
           />
         </div>
         <Command.List className="max-h-[55vh] overflow-y-auto p-2">

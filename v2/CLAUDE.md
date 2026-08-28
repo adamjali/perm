@@ -1142,3 +1142,73 @@ The index pages disclose that one practice can appear under several
 spellings. The leaf pages do not, and the ranks are wrong either way.
 **Entity identity needs normalisation before ranking, not slug
 disambiguation after it.**
+
+## The live census doc, and why the lookup path must never query the mirror (2026-08-28)
+
+`/perm-case-status?case=` is dynamic, and its read layer used to aggregate
+the 414k-row mirror on every render: a full status count, an unbounded
+ahead-of-month range, a whole-table month group-by, a bare COUNT(*), and a
+window-function pass over `perm_cases` (no received_date index). Measured:
+**~1.8M row reads per lookup** - which is how one month of crawler traffic
+burned a 500M row-read budget and got Turso reads BLOCKED mid-August.
+
+The fix is a precomputed census: `ingest_case_status_direct.py` writes
+`perm_docs['live_census']` (the month x status x is_final matrix, reconciled
+against COUNT(*) before writing - a mismatched census is skipped, not
+served) and `perm_docs['decided_month_percentiles']` after every run. The
+read layer (`src/lib/turso/liveCensus.ts`) folds everything out of one
+React-cached doc read; legacy SQL survives only as the doc-missing fallback,
+except the 414k status scan, which is withheld because the fallback IS the
+cost bug. A doc older than 8 days is treated as absent: stale queue
+positions read as current ones, which is worse than an empty state.
+
+**Do not add per-request aggregate queries to the lookup path.** Fold from
+the census, or precompute a new doc in the ingest. `perm_month_stats` is a
+frozen orphan (its permtrack writer was retired 08-27) - `getQueueAhead`
+reads the census now; do not resurrect the table.
+
+## One email system: three alert tables, one consent surface (2026-08-28)
+
+Alert kinds: per-case status (`caseStatusAlerts`), queue-month milestones
+(`dolQueueAlerts`, now with a `queue` field: perm / pwd-oews / pwd-nonoews),
+and visa-bulletin movement (`bulletinAlerts`). They stay separate tables on
+purpose - sweep state is per-subscription - with one surface over them:
+
+- `/prefs` (Convex HTTP) is the magic-link preference center; the site page
+  is `/email-preferences`. **OFF ONLY.** The token never expires, so it is
+  never consent to START mail; turning on goes through the owning flow.
+- `newsSubscribers` holds product-news consent for anonymous subscribers,
+  staged by a checkbox and confirmed by the SAME double-opt-in click as the
+  alert (the confirmation email names both). `syncContacts` counts confirmed
+  news rows into its protected set - without that, its orphan removal
+  deletes any non-user Resend contact on the next sync.
+- Token purposes now include `bulletin-confirm`, `bulletin-unsubscribe`,
+  `prefs`. Existing purposes must never be renamed (links live in inboxes).
+- **The Resend 100/day arithmetic lives in convex/caseAlerts.ts and every
+  new sending path must claim a line there before it ships.** Current worst
+  case: 18+10+18+6+12+6 = 70/day, leaving 30 for auth mail.
+
+## The public IA is two audiences with mirrored priorities (2026-08-28)
+
+Beneficiary order: track my case -> alerts -> data -> the app. Attorney
+order: the software -> track a case -> data. Structural consequences:
+- The homepage hero is a GET form into `/perm-case-status?case=` (no client
+  JS; the page's existing shareable contract). The stage-aware estimate
+  (`src/lib/caseEstimate.ts`, composing `estimateQueueDecision` with
+  `queueForecast`'s measured stage percentiles) renders on the case page
+  under the federal record, labeled "Estimate - not a promise", with the
+  alert form directly beneath. Appeals get a refusal with the measured age.
+- The practitioner pitch lives WHOLE on `/for-attorneys`; the homepage
+  keeps a slim panel. Do not move attorney-addressed H2s back to the
+  homepage: heading structure is what answer engines aggregate into "what
+  this product is", and that exact defect is why AI overviews called this
+  attorney-only software.
+- One nav on every public page (`PUBLIC_NAV_LINKS`), plus the Cmd+K palette
+  (`src/components/search/`) over pages, tools, articles and the entity
+  `?q=` route, with case-number and YYYY-MM detection. The palette lazy-
+  loads on first open; keep it that way.
+- `PageBasics` (`src/components/data/PageBasics.tsx`) is the educational
+  layer on the data pages: visible Q&A prose, questions phrased the way
+  people search ("approved", "audit"), stats dated. Schema-only facts score
+  zero retrievals in the best published test; FAQPage markup is dead as a
+  Google lever (May 2026) - visible text is the mechanism.

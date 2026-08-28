@@ -108,7 +108,7 @@ export function DataNav({ active }: { active: DataSection }) {
               <span
                 aria-hidden="true"
                 className={
-                  "select-none self-center whitespace-nowrap font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/60 " +
+                  "select-none self-center whitespace-nowrap font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground " +
                   (i === 0 ? "pr-1" : "border-l-2 border-border/50 pl-3 pr-1")
                 }
               >
