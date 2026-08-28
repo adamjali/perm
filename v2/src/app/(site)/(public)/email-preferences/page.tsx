@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import Link from "next/link";
 
 import { PrefsRequestForm } from "@/components/prefs/PrefsRequestForm";
@@ -71,27 +72,33 @@ export default function EmailPreferencesPage() {
       </p>
       <div className="mt-8">
         <PrefsRequestForm />
-      </div>
-      <h2 className="mt-12 font-heading text-2xl font-black">What exists</h2>
+      </div>{" "}
+      <h2 className="mt-12 font-heading text-2xl font-black">What exists</h2>{" "}
       <ul className="mt-5 space-y-4">
         {KINDS.map((k) => (
-          <li key={k.name} className="border-2 border-border bg-card p-4 shadow-hard-sm">
-            <p className="font-heading text-lg font-black">{k.name}</p>{" "}
-            <p className="mt-1 text-base leading-relaxed text-foreground/70">
-              {k.what}
-            </p>{" "}
-            {k.from ? (
-              <p className="mt-2 text-sm">
-                Set up from{" "}
-                <Link
-                  href={k.from.href}
-                  className="font-bold underline underline-offset-2 hover:text-primary"
-                >
-                  {k.from.label}
-                </Link>
-              </p>
-            ) : null}
-          </li>
+          /* Keyed Fragment with a real space: mapped siblings render with
+             zero characters between them, and every extractor reads the
+             cards as one glued run. Caught by the rendered audit. */
+          <Fragment key={k.name}>
+            {" "}
+            <li className="border-2 border-border bg-card p-4 shadow-hard-sm">
+              <p className="font-heading text-lg font-black">{k.name}</p>{" "}
+              <p className="mt-1 text-base leading-relaxed text-foreground/70">
+                {k.what}
+              </p>{" "}
+              {k.from ? (
+                <p className="mt-2 text-sm">
+                  Set up from{" "}
+                  <Link
+                    href={k.from.href}
+                    className="font-bold underline underline-offset-2 hover:text-primary"
+                  >
+                    {k.from.label}
+                  </Link>
+                </p>
+              ) : null}
+            </li>
+          </Fragment>
         ))}
       </ul>
       <p className="mt-8 text-sm leading-relaxed text-muted-foreground">

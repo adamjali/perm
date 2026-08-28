@@ -138,3 +138,19 @@ describe("buildCaseEstimate", () => {
     expect(e.caveats.join(" ").toLowerCase()).toContain("hasn't been measured");
   });
 });
+
+describe("statuses where a decision already exists", () => {
+  it("refuses to estimate a case at DETERMINATION ISSUED", () => {
+    // The decision has been made; only the published outcome lags. An
+    // estimate for an event that already happened is checkably wrong.
+    expect(
+      buildCaseEstimate({
+        filingDate: "2026-05-05",
+        status: "Determination Issued",
+        isFinal: false,
+        estimator: ESTIMATOR,
+        today: TODAY,
+      }),
+    ).toBeNull();
+  });
+});

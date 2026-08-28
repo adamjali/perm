@@ -78,6 +78,14 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
   if (input.isFinal) return null;
   if (!input.filingDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.filingDate)) return null;
 
+  // A decision already EXISTS for this case - the outcome just hasn't
+  // settled into the live status yet. Offering "when could this be decided"
+  // here would estimate an event that has already happened, which is the
+  // most checkably-wrong sentence this page could print. Caught on the first
+  // rendered QA pass against a real case in exactly this state.
+  const canon = input.status?.trim().toUpperCase().replace(/\s+/g, " ");
+  if (canon === "DETERMINATION ISSUED") return null;
+
   // Appeals first: they are a different proceeding, and even a perfect cohort
   // model has no standing to date them. The measured age is the honest read.
   const place = placeCaseInCohort(input.status);
