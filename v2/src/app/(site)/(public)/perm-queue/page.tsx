@@ -4,6 +4,7 @@ import { Warning } from "@phosphor-icons/react/ssr";
 
 import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { PageBasics } from "@/components/data/PageBasics";
 import { BacklogWall } from "@/components/queue/BacklogWall";
 import { SourceNote } from "@/components/queue/SourceNote";
 import { OctoberNote, OCTOBER_2025 } from "@/components/queue/OctoberNote";
@@ -295,6 +296,7 @@ export default async function PermQueuePage() {
         <OctoberNote />
       </div>{" "}
 
+      <PageBasics page="perm-queue" />{" "}
       <DataProvenance
         datasets={["perm-case-status", "processing-times", "perm-cases"]}
         className="mt-8 border-t-2 border-border pt-4"

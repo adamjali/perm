@@ -25,6 +25,7 @@ import { DailyDecisionsChart } from "@/components/tools/DailyDecisionsChart";
 import { listByKind } from "@/lib/turso/entities";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { PageBasics } from "@/components/data/PageBasics";
 const TITLE = "PERM Case Search";
 const DESCRIPTION =
   "Search every PERM case in DOL's published disclosure window by case number, employer, law firm, state or occupation, with the wage and the days it took.";
@@ -225,6 +226,7 @@ export default async function PermCasesPage() {
           </p>
         </div>
       </section>
+      <PageBasics page="perm-cases" />{" "}
       <DataProvenance datasets={["perm-cases"]} />
     </div>
   );

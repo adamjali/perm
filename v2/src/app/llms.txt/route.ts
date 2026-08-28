@@ -32,10 +32,34 @@ export const revalidate = 86400;
 /** The public data surface, in the order a reader would want it. */
 const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   {
+    path: "/perm-case-status",
+    label: "PERM case status lookup",
+    blurb:
+      "Check any PERM case number for its live DOL status, its place in the queue, and a stage-aware decision estimate. Works for pending cases, free, no account. Email alerts when the status changes.",
+  },
+  {
     path: "/tools",
     label: "Data overview",
     blurb:
       "Where DOL's PERM queue stands right now, with every calculator and dataset one click away.",
+  },
+  {
+    path: "/perm-queue",
+    label: "PERM queue backlog",
+    blurb:
+      "Every filing month's pending census: how many cases are undecided, in which DOL queue, and how far each month has progressed.",
+  },
+  {
+    path: "/perm-rfi-audit",
+    label: "PERM RFIs, audits and appeals",
+    blurb:
+      "How many pending cases sit in a request for information, an audit or an appeal, and the measured funnel of how RFIs resolve.",
+  },
+  {
+    path: "/perm-decision-activity",
+    label: "PERM daily decision activity",
+    blurb:
+      "Decisions per working day, the outcome mix, and the weekly shape of DOL's output.",
   },
   {
     path: "/perm-processing-times",
@@ -172,7 +196,7 @@ export async function GET() {
   const lines: string[] = [
     "# PERM Tracker",
     "",
-    "> PERM Tracker (permtracker.app) is a free, no-account web app for the US Department of Labor PERM (Program Electronic Review Management) labor certification process. It publishes DOL's own disclosure and queue data as searchable datasets, and computes the interdependent PERM deadlines for a single case.",
+    "> PERM Tracker (permtracker.app) is a free web app for the US Department of Labor PERM (Program Electronic Review Management) labor certification process, for both the person waiting on a case and the attorney managing one. Without an account: check any PERM case number for its live DOL status and a stage-aware decision estimate (with email alerts on changes), use timeline calculators for every green-card stage (PWD, PERM, I-140, I-485), and browse DOL's own disclosure and queue data as searchable datasets. With a free account: case-management software that computes every interdependent PERM deadline per case.",
     "",
     "Every figure on this site is measured from a named federal source and carries the window it was measured over. Nothing is modelled. Where the data cannot support a number, the site says so rather than estimating one: there is no per-case denial-risk score, and processing-time estimates are withheld for filing cohorts too young to measure.",
     "",
@@ -237,8 +261,9 @@ export async function GET() {
     "## Product",
     "",
     `- [Home](${BASE_URL}/): What the product does, for the person waiting and the person managing cases`,
-    `- [Demo](${BASE_URL}/demo): Interactive product demo`,
+    `- [For attorneys](${BASE_URL}/for-attorneys): The case-management side - every deadline computed per case, reminders, calendar sync`,
     `- [FAQ](${BASE_URL}/faq): Questions about PERM and about this site`,
+    `- [Email preferences](${BASE_URL}/email-preferences): See and stop everything the site emails an address`,
     `- [Sign Up](${BASE_URL}/signup): Create a free account`,
     `- [Contact](${BASE_URL}/contact): Get in touch`,
     "",

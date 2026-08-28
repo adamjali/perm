@@ -43,12 +43,17 @@ export const HOME_FAQS: HomeFaqItem[] = [
     question:
       "What exactly does PERM Tracker do?",
     answer:
-      "PERM Tracker automates deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync.",
+      "Two things, both free. For the person waiting: check any PERM case number for its live DOL status and a decision estimate, follow the queue with live data, and get an email when your case's status changes. For the person managing cases: enter the case dates once and every critical deadline is computed - PWD expiration, the 30-180 day ETA 9089 filing window, I-140 cutoffs - with email and push reminders and Google Calendar sync.",
     rich: (
       <>
-        PERM Tracker automates the deadline management for{" "}
+        Two things, both free. For the person waiting:{" "}
+        <Link href="/perm-case-status" className={faqLink}>check any PERM case number</Link>{" "}
+        for its live DOL status and a decision estimate, follow the queue with
+        live data, and get an email when the status changes. For the person
+        managing{" "}
         <Link href="/blog/what-is-perm-labor-certification" className={faqLink}>PERM labor certification</Link>{" "}
-        cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus Google Calendar sync.{" "}
+        cases: enter the case dates once and every critical deadline is
+        computed, with email and push reminders and Google Calendar sync.{" "}
         <Link href="/guides/tracking-perm-deadlines" className={faqLink}>See how deadline tracking works &rarr;</Link>
       </>
     ),
@@ -106,7 +111,7 @@ export const HOME_FAQS: HomeFaqItem[] = [
     question:
       "What notifications can I configure?",
     answer:
-      "Email and push notifications for each deadline type (PWD, recruitment, ETA 9089, I-140, RFI, RFE). Set reminders at 1, 3, 7, 14, or 30 days before. Configure quiet hours. A weekly Monday digest summarizes everything upcoming.",
-    rich: "Email and push notifications for each deadline type (PWD, recruitment, ETA 9089, I-140, RFI, RFE). Set reminders at 1, 3, 7, 14, or 30 days before. Configure quiet hours. A weekly Monday digest summarizes everything upcoming.",
+      "Without an account: an email when DOL's status for a case you watch changes, when DOL's queue reaches your filing month (PERM or either prevailing-wage queue), or when the visa bulletin moves your cutoff - all double opt-in. With an account: email and push reminders for each deadline type (PWD, recruitment, ETA 9089, I-140, RFI, RFE) at 1 to 30 days before, quiet hours, and a weekly Monday digest.",
+    rich: "Without an account: an email when DOL's status for a case you watch changes, when DOL's queue reaches your filing month (PERM or either prevailing-wage queue), or when the visa bulletin moves your cutoff - all double opt-in. With an account: email and push reminders for each deadline type (PWD, recruitment, ETA 9089, I-140, RFI, RFE) at 1 to 30 days before, quiet hours, and a weekly Monday digest.",
   },
 ];

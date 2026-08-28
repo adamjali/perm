@@ -27,6 +27,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { PageBasics } from "@/components/data/PageBasics";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { DataNav } from "@/components/tools/DataNav";
 import { DataView } from "@/components/tools/DataView";
@@ -423,6 +424,7 @@ export default async function PermRfiAuditPage() {
             is the authority, and it is where the queue positions and the
             analyst-review average on this page come from directly.
           </p>{" "}
+          <PageBasics page="perm-rfi-audit" />{" "}
           <DataProvenance
             datasets={["perm-case-status", "rfi-funnel", "processing-times"]}
             className="mt-4 border-t-2 border-border pt-3"

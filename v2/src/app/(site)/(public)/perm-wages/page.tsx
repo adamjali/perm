@@ -34,6 +34,7 @@ import { LadderCombViews } from "@/components/wages/LadderViews";
 import { DenialByWageBand } from "@/components/wages/DenialByWageBand";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { PageBasics } from "@/components/data/PageBasics";
 const TITLE = "PERM Salaries by Occupation";
 const DESCRIPTION =
   "What PERM cases pay: the full wage ladder by occupation, with volume and approval rates, from DOL's own disclosure files.";
@@ -270,6 +271,7 @@ export default async function PermWagesPage() {
           </p>
         </div>
       </section>
+      <PageBasics page="perm-wages" />{" "}
       <DataProvenance datasets={["perm-cases", "entities"]} />
     </div>
   );

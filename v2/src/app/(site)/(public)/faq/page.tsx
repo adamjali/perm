@@ -51,7 +51,7 @@ const faqData = [
       {
         question: "Is my client data secure?",
         answer:
-          "Yes. We use industry-standard encryption, secure Google OAuth authentication, and row-level database security. Your data is isolated: no other firm can see your cases. We also offer Privacy Mode to hide sensitive information during screen sharing or presentations.",
+          "Yes. Case data is encrypted at rest with AES-256-GCM, sessions expire after 15 minutes of inactivity, and access is isolated per account: no other firm can see your cases. Privacy Mode hides sensitive fields during screen sharing. The public data pages carry no client data at all, only DOL's published records.",
       },
       {
         question: "Can I import my existing cases?",
@@ -76,7 +76,7 @@ const faqData = [
       {
         question: "How long does the PERM process take?",
         answer:
-          "The complete PERM process typically takes 18 to 36 months from start to finish. This includes the prevailing wage determination (6-12 months), recruitment period (2-3 months), cooling-off period (30+ days), and DOL processing of the ETA 9089 application (currently 8-14 months). Cases selected for audit can add 6-12 additional months.",
+          "The complete PERM process typically runs 18 to 36 months end to end: the prevailing wage determination, the recruitment period (2-3 months), the 30-day quiet period, and DOL's processing of the ETA 9089 itself, which DOL's own published average puts at about 372 days as of August 2026. Cases selected for audit take longer. The processing times page carries the live figure, and the case status page reads any specific case number.",
       },
       {
         question: "What are the main steps in the PERM process?",
@@ -114,6 +114,11 @@ const faqData = [
     category: "The Live Data",
     items: [
       {
+        question: "Is there any way to check my PERM status myself?",
+        answer:
+          "Yes. Most advice pages say only the employer or the attorney can check a pending PERM, and that's wrong: DOL's own FLAG system answers a case number for anyone who has it, pending cases included. Put yours into the case status page and you get the live DOL status in plain English, your place in the queue, a stage-aware decision estimate, and an optional email alert when the status changes. The case number is on the filing receipt; ask whoever filed for you if you don't have it.",
+      },
+      {
         question: "Where do the processing time numbers come from?",
         answer:
           "Straight from the Department of Labor. The queue position and average days come from DOL's own published processing times, refreshed automatically, and the medians come from DOL's quarterly disclosure files: 250,000+ real decided cases, unioned and de-duplicated by case number. The methodology page lists every source and how each figure is built.",
@@ -136,7 +141,7 @@ const faqData = [
       {
         question: "Which law firms file the most PERM cases?",
         answer:
-          "Fragomen files by far the most, followed by Berry Appleman & Leiden and Ogletree Deakins. Our law firms page ranks the hundred most active firms with case volume, approval rate and median processing days, straight from the firm name DOL prints on every filing. Approval rates cluster above 99% across the whole list.",
+          "Fragomen files by far the most, followed by Berry Appleman & Leiden and Ogletree Deakins. Our law firms page ranks the most active firms with case volume, approval rate and median processing days, straight from the firm name DOL prints on every filing. One caution the page states too: DOL prints a single practice under several spellings, so a big firm's true total can span more than one row. Approval rates cluster above 99% across the whole list.",
       },
       {
         question: "Which employers sponsor the most green cards?",

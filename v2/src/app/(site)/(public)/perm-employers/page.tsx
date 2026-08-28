@@ -20,6 +20,7 @@ import { pendingLeaders } from "@/lib/turso/entityDetail";
 import { getFreshness } from "@/lib/turso/publicData";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { PageBasics } from "@/components/data/PageBasics";
 const TITLE = "Every PERM Employer, Ranked";
 const DESCRIPTION =
   "Every company that filed a PERM case: volume, approval rate and median days per sponsor, searchable and sortable, from DOL's own disclosure files.";
@@ -183,6 +184,7 @@ export default async function PermEmployersPage() {
           </p>
         </div>
       </section>
+      <PageBasics page="perm-employers" />{" "}
       <DataProvenance datasets={["perm-cases", "entities", "perm-case-status"]} />
     </div>
   );

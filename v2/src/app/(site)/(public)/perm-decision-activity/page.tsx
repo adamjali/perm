@@ -21,6 +21,7 @@ import Link from "next/link";
 
 import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { PageBasics } from "@/components/data/PageBasics";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -371,6 +372,7 @@ export default async function DecisionActivityPage() {
         </div>
       </section>
 
+      <PageBasics page="perm-decision-activity" />{" "}
       <DataProvenance datasets={["daily-decisions", "perm-case-status"]} />
     </div>
   );

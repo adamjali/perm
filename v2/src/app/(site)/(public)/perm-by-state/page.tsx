@@ -25,6 +25,7 @@ import { getDisclosureStats } from "@/lib/turso/publicData";
 import { getStateProfiles } from "@/lib/turso/states";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { PageBasics } from "@/components/data/PageBasics";
 import { stateName } from "@/lib/usStateNames";
 const TITLE = "PERM Filings by State";
 const DESCRIPTION =
@@ -259,6 +260,7 @@ export default async function PermByStatePage() {
           </p>
         </div>
       </section>
+      <PageBasics page="perm-by-state" />{" "}
       <DataProvenance datasets={["perm-cases"]} />
     </div>
   );

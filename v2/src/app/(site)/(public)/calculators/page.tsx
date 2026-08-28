@@ -13,6 +13,7 @@ import { ArrowRight, CalendarBlank as CalendarRange, CalendarCheck, CalendarDot 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
+import { PageBasics } from "@/components/data/PageBasics";
 import {
   BulletinStepsMini,
   CertaintyRangeMini,
@@ -372,7 +373,8 @@ export default function CalculatorsPage() {
           </Link>
           .
         </p>
-      </section>
+      </section>{" "}
+      <PageBasics page="calculators" />
     </div>
   );
 }
