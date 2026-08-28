@@ -10,6 +10,7 @@
 
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "motion/react";
 import { Calendar, Tag } from "@phosphor-icons/react";
 import type { PostSummary } from "@/lib/content/types";
@@ -111,9 +112,19 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
                 )}
               </div>{" "}
 
-              {/* Title */}
+              {/* Title, linked to the entry's own page. The permalink is what
+                  keeps /changelog/<slug> out of the orphan report: the sitemap
+                  advertises those URLs, and until this link existed nothing
+                  indexable pointed at them (Ahrefs flagged exactly two, both
+                  older entries). The anchor id above still serves the
+                  timeline's own #slug deep links. */}
               <h2 className="mb-2 font-heading text-lg font-bold sm:text-xl">
-                {post.meta.title}
+                <Link
+                  href={`/changelog/${post.slug}`}
+                  className="transition-colors hover:text-primary"
+                >
+                  {post.meta.title}
+                </Link>
               </h2>{" "}
 
               {/* Description */}

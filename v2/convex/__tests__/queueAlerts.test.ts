@@ -238,7 +238,11 @@ describe("abuse limits", () => {
     }
 
     const allowed = results.filter((r) => r.ok).length;
-    expect(allowed).toBe(30);
+    // 18/day since the 2026-08-28 rebalance: the bulletin alerts and the
+    // preference-center links joined the shared Resend pool, and the full
+    // arithmetic (totalling 70/day worst case, 30 reserved for auth mail)
+    // lives in convex/caseAlerts.ts. This pin moves ONLY when that table does.
+    expect(allowed).toBe(18);
     expect(results[results.length - 1]!.ok).toBe(false);
   });
 
@@ -698,7 +702,7 @@ describe("no raw YYYY-MM reaches a reader", () => {
     const body = to("cfm@example.com");
     expect(RAW_MONTH.test(String(body.subject))).toBe(false);
     expect(RAW_MONTH.test(String(body.text))).toBe(false);
-    expect(String(body.text)).toContain("Filing month: September 2025");
+    expect(String(body.text)).toContain("Your filing month: September 2025");
   });
 
   it("keeps the text part's claim in step with the HTML branch", async () => {
