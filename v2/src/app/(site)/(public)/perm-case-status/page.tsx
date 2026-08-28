@@ -88,15 +88,15 @@ const FAQS = [
   },
   {
     q: "Is this DOL's official status?",
-    a: "Close to it, and the chain is worth stating. These statuses come from DOL's own case-status search, which we run in batches against every undecided case every 12 hours and against all of them weekly. DOL publishes no documented API for it, so this is the same endpoint their search page uses rather than a supported one. It is a sweep, not a live reading: a case decided since the last sweep will show at DOL first, and DOL is the authority for any single case."
+    a: "Close to it, and the chain is worth stating. These statuses come from DOL's own case-status search, which we sweep against every pending case twice a day and against the full corpus daily. DOL publishes no documented API for it, so this is the same endpoint their search page uses rather than a supported one. It is a sweep, not a live reading: a case decided since the last sweep will show at DOL first, and DOL is the authority for any single case."
   },
   {
-    q: "Why can't you tell me when my case will be decided?",
-    a: "Because nobody can, and a number that looks tailored to your case would be believed. The queue doesn't move at a constant rate, cases leave it out of order through audits and appeals, and dividing the backlog by a recent decision rate gives a confident figure with nothing behind it. The timeline calculator answers the same question with an envelope drawn from cases DOL has actually decided, which is the honest shape for it.",
+    q: "Is the decision date on this page a prediction for my case?",
+    a: "It's an estimate, labeled as one, and the label is doing real work. The window comes from a named model over this case's own filing month, read at the percentile its current stage implies: a case at RFI reads its month's p90, not the median, because the audited tail is measured. It is checkable arithmetic over DOL's decided cases, and it is not a promise about any single case.",
   },
   {
     q: "Why won't you tell me my odds of being certified?",
-    a: "The mirror holds one reading per case. It can count how many cases sit in a status today, and it cannot watch a case move from one status to another, so it has no basis for a transition rate. Anything of that shape here would be invented. What is real, and shown, is the employer's published record across its own decided cases.",
+    a: "A single odds figure would read as precision the data cannot support. The measured denial factors are not independent, so blending them into one score hides which one is doing the work. The denial-rate pages publish the measured rates separately and refuse the blend on purpose. What is real, and shown, is the employer's published record across its own decided cases.",
   },
   {
     q: "My case isn't here. Is something wrong?",
@@ -343,6 +343,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       publishedAsOf={publishedAsOf}
       wage={wage}
       duration={duration}
+      estimator={estimator}
       today={today}
     />
   );

@@ -5,6 +5,7 @@ import { Warning } from "@phosphor-icons/react/ssr";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { InsightLede, Verdict } from "@/components/tools/Insight";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
+import { CaseEstimate } from "@/components/tools/CaseEstimate";
 import { CaseNumberPlate } from "@/components/tools/CaseNumberPlate";
 import {
   CaseWall,
@@ -72,6 +73,8 @@ export interface CaseStatusResultProps {
   publishedAsOf: string | null;
   wage: CaseWageContext | null;
   duration: CohortDuration | null;
+  /** Estimator data for the stage-aware estimate block. Null degrades to no block. */
+  estimator: Parameters<typeof CaseEstimate>[0]["estimator"];
   /** "YYYY-MM-DD", passed in so every elapsed figure shares one clock. */
   today: string;
 }
@@ -98,6 +101,7 @@ export function CaseStatusResult({
   publishedAsOf,
   wage,
   duration,
+  estimator,
   today,
 }: CaseStatusResultProps) {
   const { live, decided, cohort, employer, statusOutlook } = result;
@@ -245,8 +249,21 @@ export function CaseStatusResult({
         />
       </section>
 
+      {/* The estimate, after the record and before everything else: the
+          question that brought most readers here, answered by the canonical
+          models and adjusted for the stage this case is actually at. Renders
+          nothing when no defensible estimate exists. */}
+      <CaseEstimate
+        filingDate={filingDate}
+        status={status}
+        isFinal={isFinal}
+        estimator={estimator}
+        today={today}
+      />
       {/* Only while the case can still change. On a decided one this would
-          promise mail that can never arrive. */}
+          promise mail that can never arrive. Directly beneath the estimate on
+          purpose: "email me when this changes" is the next step after reading
+          a window. */}
       {!isFinal ? (
         <CaseAlertForm caseNumber={result.caseNumber} className="mt-8" />
       ) : null}{" "}
@@ -893,8 +910,8 @@ function StatusExplainer({
               are in this status right now, across every filing month. That is
               a measure of how common the state is, and nothing more. It is not
               how likely this case is to leave it or where it goes next: the
-              mirror holds one reading per case, so it can count cases in a
-              state and cannot watch them move between states.
+              feed has only been observing status changes since August 2026,
+              and weeks of transitions cannot honestly price the odds of one.
             </p>
           ) : null}
         </div>
@@ -1087,29 +1104,36 @@ export function WontSay({ isFinal }: { isFinal: boolean }) {
           <>
             <li>
               <b className="font-bold text-primary-on-ink">
-                When this case will be decided.
+                A guaranteed decision date.
               </b>{" "}
-              Nothing here is a date. The queue does not move at a constant
-              rate, cases leave it out of order through audits and appeals, and
-              dividing the backlog by a recent decision rate produces a
-              confident number with nothing behind it. The{" "}
+              The estimate above is a statistic about this case&apos;s filing
+              month, read at the percentile its stage implies, from a named
+              model with its spread shown. It is checkable and it is not a
+              promise: cases leave the queue out of order through audits and
+              appeals, and DOL publishes no schedule. The{" "}
               <Link
                 href="/tools/perm-timeline-calculator"
                 className="font-bold text-primary-on-ink underline underline-offset-2"
               >
                 timeline calculator
               </Link>{" "}
-              is where that question belongs, and it answers with an envelope
-              rather than a day.
+              shows every model side by side, disagreements included.
             </li>{" "}
             <li>
               <b className="font-bold text-primary-on-ink">
                 How likely this case is to be certified.
               </b>{" "}
-              The mirror holds one reading per case. It can count how many
-              cases are in a status today, and it cannot watch a case move from
-              one status to another, so it cannot support a transition rate.
-              Any figure of that shape here would be invented.
+              A single odds figure would read as precision the data cannot
+              support: the measured factors are not independent, and blending
+              them into one number hides which one is doing the work. The{" "}
+              <Link
+                href="/perm-denial-risk"
+                className="font-bold text-primary-on-ink underline underline-offset-2"
+              >
+                denial-rate data
+              </Link>{" "}
+              publishes the measured rates separately and refuses the blend,
+              on purpose.
             </li>
           </>
         ) : (

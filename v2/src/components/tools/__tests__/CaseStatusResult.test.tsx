@@ -94,7 +94,35 @@ const PENDING: CaseLookupResult = {
   statusOutlook: { status: "ANALYST REVIEW", nowInStatus: 94_435 },
 };
 
-function renderPending(overrides: Partial<CaseLookupResult> = {}) {
+/**
+ * Estimator data for the stage-aware estimate block. Shaped like
+ * `getEstimatorData`'s output; the settled cohort carries readable
+ * percentiles so a dated estimate can render when a test wants one.
+ */
+const ESTIMATOR = {
+  frontier: {
+    analystQueueMonth: "2025-09",
+    officialAvgDays: 372,
+    asOf: "2026-08-20",
+  },
+  cohorts: [
+    {
+      cohortMonth: "2024-06",
+      decided: 8_200,
+      totalReceived: 8_400,
+      p25: 410,
+      p50: 455,
+      p75: 505,
+      p90: 540,
+    },
+  ],
+  frontierAdvance: { rate: 1.8, slowest: 1.05, fastest: 2.0 },
+} as const;
+
+function renderPending(
+  overrides: Partial<CaseLookupResult> = {},
+  estimator: typeof ESTIMATOR | null = null,
+) {
   const result = { ...PENDING, ...overrides };
   const month = result.cohort?.month ?? "2026-05";
   return render(
@@ -108,6 +136,7 @@ function renderPending(overrides: Partial<CaseLookupResult> = {}) {
       publishedAsOf="2026-08-20"
       wage={null}
       duration={null}
+      estimator={estimator}
       today={TODAY}
     />,
   );
@@ -132,25 +161,53 @@ describe("CaseStatusResult, pending case", () => {
     expect(screen.getByText("8 months")).toBeInTheDocument();
   });
 
-  it("never predicts a decision date, in any shape", () => {
+  it("invents no date when the estimator data is absent, and says what a date here is", () => {
+    // Deploy skew or a failed fetch: `estimator` arrives null. The estimate
+    // block must simply not render - a dated figure with nothing behind it
+    // is the exact defect the old full-refusal doctrine existed to prevent.
     const { container } = renderPending();
     const text = container.textContent ?? "";
     for (const banned of [
       /you (should|can) expect/i,
-      /estimated (decision|completion) date/i,
       /by (January|February|March|April|May|June|July|August|September|October|November|December) \d{4}, your/i,
-      // Anchored to a TIME, because the refusal heading itself reads "When
-      // this case will be decided." A bare /will be decided/ flags the page
-      // for saying it refuses to say it.
-      /will be decided (in|by|on|around|within)\b/i,
       /\bdays remaining\b/i,
       /\bdecision expected\b/i,
     ]) {
       expect(text).not.toMatch(banned);
     }
-    // And it says so out loud rather than merely omitting it.
+    expect(text).not.toMatch(/When this case could be decided/i);
+    // The refusals block still speaks, in its post-estimate wording: what the
+    // page never gives is a GUARANTEED date, and it says so out loud.
     expect(text).toMatch(/will not tell you/i);
-    expect(text).toMatch(/When this case will be decided/i);
+    expect(text).toMatch(/A guaranteed decision date/i);
+  });
+
+  it("renders the estimate labeled as an estimate, stage-adjusted, when the data exists", () => {
+    const { container } = renderPending({}, ESTIMATOR);
+    const text = container.textContent ?? "";
+    // The label IS the contract: an unlabeled date on a page that answers a
+    // case number would be read as a promise.
+    expect(text).toMatch(/Estimate · not a promise/i);
+    expect(text).toMatch(/When this case could be decided/i);
+    // ANALYST REVIEW reads the middle of its month, and says so.
+    expect(text).toMatch(/ordinary path/i);
+    // The model and its source are on the page, not in a footnote elsewhere.
+    expect(text).toMatch(/timeline calculator/i);
+  });
+
+  it("refuses a date for an appeal and shows the measured age instead", () => {
+    const { container } = renderPending(
+      {
+        live: { ...PENDING.live!, status: "BALCA APPEALS" },
+        statusOutlook: { status: "BALCA APPEALS", nowInStatus: 167 },
+      },
+      ESTIMATOR,
+    );
+    const text = container.textContent ?? "";
+    expect(text).toMatch(/No date can honestly be put on this case/i);
+    expect(text).not.toMatch(/When this case could be decided/i);
+    // The measured mean age for BALCA, from lib/queueForecast's table.
+    expect(text).toMatch(/714 days/);
   });
 
   it("never scores the odds, and says why the status count is not one", () => {
@@ -160,9 +217,11 @@ describe("CaseStatusResult, pending case", () => {
     // the ReDoS shape the security lint flags, and this needs neither.
     expect(text).not.toMatch(/[0-9.]+% ?(chance|likely|probability)/i);
     expect(text).not.toMatch(/your (odds|chances)/i);
-    // The count is present AND explicitly framed as a scale.
+    // The count is present AND explicitly framed as a scale. The reason
+    // updated when the direct DOL feed began observing transitions
+    // (2026-08-27): the honest ground is now sample youth, not blindness.
     expect(screen.getAllByText(/94,435 cases/).length).toBeGreaterThan(0);
-    expect(text).toMatch(/cannot watch a case move/i);
+    expect(text).toMatch(/cannot honestly price the odds/i);
   });
 
   it("offers alerts while the case can still change", () => {
@@ -325,7 +384,8 @@ describe("CaseStatusResult, decided case", () => {
         wage={null}
         duration={duration}
         today={TODAY}
-      />,
+      estimator={null}
+    />,
     );
   }
 
@@ -404,7 +464,8 @@ describe("CaseStatusResult, decided case", () => {
         wage={null}
         duration={null}
         today={TODAY}
-      />,
+      estimator={null}
+    />,
     );
     expect(container.textContent).not.toMatch(/against its neighbours/);
   });
@@ -428,7 +489,8 @@ describe("CaseStatusResult, decided case", () => {
         wage={null}
         duration={null}
         today={TODAY}
-      />,
+      estimator={null}
+    />,
     );
     expect(container.textContent).not.toMatch(/Which queue the rest of/);
   });
@@ -449,7 +511,8 @@ describe("CaseStatusResult, decided case", () => {
         wage={null}
         duration={null}
         today={TODAY}
-      />,
+      estimator={null}
+    />,
     );
     expect(container.textContent).toMatch(/two federal sources disagree/i);
     expect(container.textContent).toMatch(/Both are shown below/);
@@ -479,7 +542,8 @@ describe("CaseStatusResult, decided case", () => {
         wage={null}
         duration={null}
         today={TODAY}
-      />,
+      estimator={null}
+    />,
     );
     expect(container.textContent).not.toMatch(/disagree/i);
     expect(container.textContent).toMatch(/180 calendar days/);
@@ -547,7 +611,8 @@ describe("contrast tokens on paper surfaces", () => {
         }}
         duration={null}
         today={TODAY}
-      />,
+      estimator={null}
+    />,
     );
     for (const el of Array.from(container.querySelectorAll(".bg-primary"))) {
       if ((el.textContent ?? "").trim() === "") continue; // a bare rule or tick
@@ -599,7 +664,8 @@ describe("CaseStatusResult, wage ladder", () => {
         wage={{ ...WAGE, ...over }}
         duration={null}
         today={TODAY}
-      />,
+      estimator={null}
+    />,
     );
   }
 
