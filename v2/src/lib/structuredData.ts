@@ -146,18 +146,31 @@ export const APP_RATING = {
 } as const;
 
 /**
- * Below this, the aggregate score is not ADVERTISED - no big 5.0 on the
- * page, no aggregateRating in the JSON-LD. The testimonials themselves and
- * the review CTA stay; it is the scorekeeping that goes quiet.
+ * Below this, the aggregate score is not ADVERTISED - no big 5.0 on the page,
+ * no aggregateRating in the JSON-LD. The testimonials themselves and the
+ * review CTA stay; it is the scorekeeping that goes quiet.
  *
- * Google sets no minimum, so this is an editorial floor, set after a
- * practicing attorney read the site as "trying too hard": a centered
+ * SET TO 2 ON ADAM'S CALL, 2026-08-28. It was 10, and the reason it was 10 is
+ * worth keeping on the record rather than deleting: a practicing attorney
+ * read the site as "trying too hard", and specifically that a centered
  * social-proof band declaring 5.0 over "from 2 attorney reviews" performs
- * beyond its evidence, and a practitioner reads the 2 before the stars.
- * When the Senja count crosses this line, raise APP_RATING.count and the
- * band and the markup both return by themselves.
+ * beyond its evidence - a practitioner reads the 2 before the stars. That is
+ * real user feedback from the audience this product sells to, and it argues
+ * against the current value.
+ *
+ * Adam's decision is that the reviews are genuine and displayed, so they
+ * should count. That is his to make, and it is defensible on the terms that
+ * actually bind: Google prohibits self-serving review markup for
+ * `LocalBusiness` and `Organization` types, ours is `SoftwareApplication`
+ * which is on the eligible list, and the requirement that DOES apply - that
+ * the marked-up rating be readily visible on the page - is satisfied, because
+ * TestimonialsSection renders it from this same constant. The markup and the
+ * visible text cannot disagree.
+ *
+ * Google may still decline a rich result off two reviews, which costs
+ * nothing. Raising APP_RATING.count as reviews arrive needs no other change.
  */
-export const MIN_REVIEWS_TO_ADVERTISE = 10;
+export const MIN_REVIEWS_TO_ADVERTISE = 2;
 
 export function shouldAdvertiseRating(): boolean {
   return Number(APP_RATING.count) >= MIN_REVIEWS_TO_ADVERTISE;

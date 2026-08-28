@@ -103,48 +103,126 @@ export function forecastCohort(
 }
 
 /**
- * How much longer a case at a given review stage has historically sat.
+ * Where a case sits in its OWN cohort, given the stage it is at.
  *
- * Adam's observation, and the data backs it hard. Measured on 2026-08-27 over
- * the live pending population, mean age since filing:
+ * THE POINT IS THAT A CASE AT RFI STILL GETS AN ESTIMATE. An earlier version
+ * of this file refused to give one, on the grounds that the cohort median
+ * cannot describe an audited case. That is true and it is the wrong
+ * conclusion: a case at RFI is not unpredictable, it is in the UPPER TAIL of
+ * its own cohort, and that tail is measured.
  *
- *     ANALYST REVIEW           170d   (n=94,033)
- *     APPLICATION ON HOLD      223d   (n=1,852)
- *     RFI ISSUED               375d   (n=963)     2.21x analyst review
- *     RECONSIDERATION APPEALS  624d   (n=165)
- *     NORD ISSUED              697d   (n=108)
- *     BALCA APPEALS            714d   (n=167)
+ * Over 18 matured cohorts (>=2,000 cases each), as multiples of that cohort's
+ * own median days-to-decision:
  *
- * A case at RFI has ALREADY been pending 205 days longer than the typical
- * analyst-review case, so a cohort-level forecast applied to it is wrong by
- * about that much. When someone gives us a case number and we can see its
- * stage, we know something the cohort average cannot express.
+ *     p90 = 1.029x    p95 = 1.045x    p99 = 1.101x
  *
- * These are AGE MULTIPLES OF AN OBSERVED POPULATION, not a remaining-time
- * model - a case already at BALCA is not 4.2x from a decision, it is in a
- * different process entirely. They are exposed so a page can say "cases at
- * this stage have been waiting far longer than the cohort" and NOT so it can
- * multiply a date. Anything that wants a per-stage completion estimate needs
- * its own hazard model over `perm_case_events`, which we are only now
- * accumulating.
+ * So on a 500-day median, the audited tail runs ~514-550 days. That is a real
+ * answer, not a shrug, and it comes from the same disclosure corpus as the
+ * median itself.
+ *
+ * The stage tells you WHICH percentile to read, and the live pending
+ * population is what maps stage to tail. Mean age since filing, measured
+ * 2026-08-27:
+ *
+ *     ANALYST REVIEW           170d   n=94,033   <- the bulk; use the median
+ *     APPLICATION ON HOLD      223d   n=1,852
+ *     RFI ISSUED               375d   n=963      2.21x analyst review
+ *     RECONSIDERATION APPEALS  624d   n=165
+ *     NORD ISSUED              697d   n=108
+ *     BALCA APPEALS            714d   n=167
+ *
+ * APPEALS ARE DELIBERATELY NOT GIVEN A PERCENTILE. BALCA and reconsideration
+ * are a different proceeding with their own statutory clock, not a slow PERM
+ * decision, and no percentile of the filing cohort describes them. They get
+ * the measured age and an honest "this is a different process" instead of a
+ * date, because inventing one would be the exact over-reach the rest of this
+ * file exists to avoid.
  */
-export const STAGE_AGE_DAYS: Readonly<Record<string, number>> = {
-  "ANALYST REVIEW": 170,
-  "APPLICATION ON HOLD": 223,
-  "RFI ISSUED": 375,
-  "RECONSIDERATION APPEALS": 624,
-  "NORD ISSUED": 697,
-  "BALCA APPEALS": 714,
+export interface StagePlacement {
+  /** Cohort percentile to read, or null when the cohort cannot describe it. */
+  percentile: number | null;
+  /** Mean days this stage's cases have ALREADY been pending. Measured. */
+  observedAgeDays: number;
+  /** Why this stage reads where it does, in one sentence for the page. */
+  note: string;
+}
+
+const STAGE_PLACEMENT: Readonly<Record<string, StagePlacement>> = {
+  "ANALYST REVIEW": {
+    percentile: 50,
+    observedAgeDays: 170,
+    note: "The ordinary path. The middle of your filing month is the right read.",
+  },
+  "IN PROCESS": {
+    percentile: 50,
+    observedAgeDays: 170,
+    note: "The ordinary path. The middle of your filing month is the right read.",
+  },
+  "APPLICATION ON HOLD": {
+    percentile: 75,
+    observedAgeDays: 223,
+    note: "Cases on hold have waited longer than most of their month, so the middle would read early.",
+  },
+  "RFI ISSUED": {
+    percentile: 90,
+    observedAgeDays: 375,
+    note: "Cases at a request for information sit in the slower tail of their filing month, and have already waited about twice as long as a case still in analyst review.",
+  },
+  "NORD ISSUED": {
+    percentile: 95,
+    observedAgeDays: 697,
+    note: "A notice of results of documentation puts a case near the far end of its month.",
+  },
+  "RECONSIDERATION APPEALS": {
+    percentile: null,
+    observedAgeDays: 624,
+    note: "Reconsideration is a separate proceeding with its own clock. No percentile of the original filing month describes it.",
+  },
+  "BALCA APPEALS": {
+    percentile: null,
+    observedAgeDays: 714,
+    note: "A BALCA appeal is a different forum entirely, not a slow PERM decision. Nothing in the filing-month data can date it.",
+  },
 };
 
 /**
- * Whether a cohort forecast is safe to apply to THIS case, given its stage.
+ * How to read a cohort estimate for a case at this stage.
  *
- * False for anything past analyst review: those cases are in a different
- * queue with its own clock, and the cohort number would understate them.
+ * Returns null for an unrecognised status rather than defaulting to the
+ * median: a stage we have not measured is one we should not silently treat
+ * as ordinary.
  */
-export function cohortForecastAppliesTo(status: string | null | undefined): boolean {
-  if (!status) return false;
-  const s = status.trim().toUpperCase();
-  return s === "ANALYST REVIEW" || s === "IN PROCESS";
+export function placeCaseInCohort(status: string | null | undefined): StagePlacement | null {
+  if (!status) return null;
+  return STAGE_PLACEMENT[status.trim().toUpperCase()] ?? null;
+}
+
+/** Cohort percentile factors, measured over 18 matured cohorts. */
+export const COHORT_PERCENTILE_FACTOR: Readonly<Record<number, number>> = {
+  50: 1.0,
+  75: 1.014,
+  90: 1.029,
+  95: 1.045,
+  99: 1.101,
+};
+
+/**
+ * Days-to-decision for a case, adjusted for the stage it is actually at.
+ *
+ * Takes the cohort's median and moves it to the percentile the stage implies.
+ * Returns null only when the stage is a separate proceeding the cohort cannot
+ * speak to at all.
+ */
+export function stageAdjustedDays(
+  cohortMedianDays: number,
+  status: string | null | undefined,
+): { days: number; percentile: number; note: string } | null {
+  const place = placeCaseInCohort(status);
+  if (!place || place.percentile === null) return null;
+  const factor = COHORT_PERCENTILE_FACTOR[place.percentile] ?? 1;
+  return {
+    days: Math.round(cohortMedianDays * factor),
+    percentile: place.percentile,
+    note: place.note,
+  };
 }

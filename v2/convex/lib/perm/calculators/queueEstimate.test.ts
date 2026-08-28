@@ -6,6 +6,7 @@ import {
   cohortMaturity,
   reportablePercentiles,
   type CohortStat,
+  impliedMedianDays,
   type DolFrontier,
 } from './queueEstimate';
 
@@ -456,5 +457,69 @@ describe('cohortMaturity', () => {
   it('rejects a malformed month rather than guessing', () => {
     expect(() => cohortMaturity('2025-3', '2025-09')).toThrow(/cohortMonth/);
     expect(() => cohortMaturity('2025-03', 'nope')).toThrow(/frontierMonth/);
+  });
+});
+
+describe("impliedMedianDays", () => {
+  /**
+   * The shape correction. `reportablePercentiles` withholds the median until a
+   * cohort is ~56% decided, correctly, because the decided-so-far median is
+   * the cohort's low percentile wearing a median's label. This recovers it
+   * from the shape instead, and these tests pin the guards that keep that
+   * honest rather than the arithmetic that makes it convenient.
+   */
+  it("refuses on a cohort too young to have a real percentile", () => {
+    // The floor is 25% and it is MEASURED, not chosen for neatness. Out of
+    // sample the correction helps from the quarter mark (6.5d -> 5.2d) and
+    // HURTS below it (9.0d -> 25.0d at 15%), because that early the decided
+    // cases are instant withdrawals rather than a processing time.
+    expect(impliedMedianDays(0.05, [{ percentile: 5, days: 300 }])).toBeNull();
+    expect(impliedMedianDays(0.15, [{ percentile: 5, days: 300 }])).toBeNull();
+    expect(impliedMedianDays(0.24, [{ percentile: 5, days: 300 }])).toBeNull();
+  });
+
+  it("answers exactly at the measured floor, not one tick above it", () => {
+    // An off-by-one here silently withholds the whole band the correction was
+    // validated on, and would look like the feature simply never firing.
+    expect(impliedMedianDays(0.25, [{ percentile: 10, days: 300 }])).not.toBeNull();
+  });
+
+  it("refuses when nothing is observed", () => {
+    expect(impliedMedianDays(0.9, [])).toBeNull();
+  });
+
+  it("scales an observed low percentile UP toward the median", () => {
+    // p25 sits at 0.987x the median, so an observed 493 days implies 499
+    // (493 / 0.987 = 499.49). The point is the DIRECTION and the magnitude:
+    // a ~6-day upward correction on a ~500-day wait, which is most of the
+    // 9.5-day error the raw reading carries.
+    const r = impliedMedianDays(0.5, [{ percentile: 25, days: 493 }]);
+    expect(r).not.toBeNull();
+    expect(r!.days).toBe(499);
+    expect(r!.days).toBeGreaterThan(493);
+    expect(r!.fromPercentile).toBe(25);
+  });
+
+  it("uses the HIGHEST observed percentile, needing the least extrapolation", () => {
+    const r = impliedMedianDays(0.6, [
+      { percentile: 5, days: 400 },
+      { percentile: 25, days: 493 },
+    ]);
+    expect(r!.fromPercentile).toBe(25);
+  });
+
+  it("leaves an observed median alone", () => {
+    // Factor 1.0 at p50: if the median is genuinely observed, do not adjust it.
+    const r = impliedMedianDays(0.9, [{ percentile: 50, days: 500 }]);
+    expect(r!.days).toBe(500);
+  });
+
+  it("never returns a date EARLIER than what was observed", () => {
+    // The correction only ever pushes later. A shape factor above 1 applied to
+    // a low percentile would be a silent optimism bug.
+    for (const p of [5, 10, 25, 50]) {
+      const r = impliedMedianDays(0.9, [{ percentile: p, days: 400 }]);
+      expect(r!.days).toBeGreaterThanOrEqual(400);
+    }
   });
 });

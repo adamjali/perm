@@ -38,11 +38,21 @@ function source(): string {
 }
 
 describe("aggregate rating gate", () => {
-  it("is currently below the advertising floor", () => {
-    // If this flips, the rest of the suite is asserting the wrong branch and
-    // the failure message should say so rather than looking mysterious.
-    expect(Number(APP_RATING.count)).toBeLessThan(MIN_REVIEWS_TO_ADVERTISE);
-    expect(shouldAdvertiseRating()).toBe(false);
+  it("is currently AT OR ABOVE the advertising floor", () => {
+    // WHICH BRANCH IS LIVE, pinned deliberately. This assertion was inverted
+    // until 2026-08-28, when Adam lowered MIN_REVIEWS_TO_ADVERTISE from 10 to
+    // 2 so the two real reviews would count. It failed loudly on that change,
+    // which is exactly what it is for: the other assertions in this file
+    // describe the ADVERTISING branch, and if nobody noticed the flip they
+    // would be describing a branch that never runs.
+    //
+    // TWO THINGS TURN ON THIS BEING TRUE. The visible 5.0 line renders, and
+    // the third-party Senja script LOADS on every homepage view - it sits
+    // behind this same gate, which is the whole point of the gate, but it
+    // does mean flipping this has a performance cost as well as an editorial
+    // one.
+    expect(Number(APP_RATING.count)).toBeGreaterThanOrEqual(MIN_REVIEWS_TO_ADVERTISE);
+    expect(shouldAdvertiseRating()).toBe(true);
   });
 
   it("puts the Senja widget behind the same gate as our own line", () => {
