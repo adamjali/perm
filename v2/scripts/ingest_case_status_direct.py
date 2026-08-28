@@ -172,6 +172,13 @@ def main() -> int:
     args = ap.parse_args()
 
     db = Turso()
+    # The RFI blend reads "cases that ENTERED an RFI since <a fixed date>".
+    # `changed_at > <freeze>` matches more of the table every day, so with only
+    # a changed_at index that CTE degrades into a growing scan. Leading on
+    # to_status keeps it bounded to the RFI rows, which are a small slice.
+    db.execute("""CREATE INDEX IF NOT EXISTS case_events_status_time
+        ON perm_case_events (to_status, changed_at)""")
+
     if args.full:
         where = ""
     elif args.pending or not args.limit:
