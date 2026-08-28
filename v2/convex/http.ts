@@ -332,13 +332,17 @@ http.route({
       return json({ ok: false, message: "Malformed request." }, 400);
     }
 
-    const { email, filingMonth, role, source } = body as Record<string, unknown>;
+    const { email, filingMonth, role, source, queue, news } = body as Record<string, unknown>;
     if (typeof email !== "string" || typeof filingMonth !== "string") {
       return json({ ok: false, message: "Email and filing month are both required." }, 400);
     }
 
     const validRole =
       role === "attorney" || role === "applicant" || role === "employer" ? role : undefined;
+    const validQueue =
+      queue === "perm" || queue === "pwd-oews" || queue === "pwd-nonoews"
+        ? queue
+        : undefined;
 
     // Best-effort caller identity for the per-IP limit. Convex populates
     // `x-forwarded-for`; the leftmost hop is client-supplied and therefore
@@ -352,10 +356,21 @@ http.route({
     const result = await ctx.runMutation(internal.queueAlerts.subscribe, {
       email,
       filingMonth,
+      queue: validQueue,
       role: validRole,
       source: typeof source === "string" ? source.slice(0, 64) : undefined,
       ip,
     });
+
+    // Optional product-news opt-in, staged inert until the same confirm
+    // click that activates the alert. Only on an accepted request: a
+    // throttled or malformed one stages nothing.
+    if (result.ok && news === true) {
+      await ctx.runMutation(internal.emailPrefs.stageNews, {
+        email: email.slice(0, 320),
+        source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      });
+    }
 
     // 200 on success, 429 when a limit refused it, 400 when the caller sent a
     // field we could not use. Collapsing the last two would report every typo
@@ -485,7 +500,7 @@ http.route({
       return json({ ok: false, message: "Malformed request." }, 400);
     }
 
-    const { email, caseNumber, source } = body as Record<string, unknown>;
+    const { email, caseNumber, source, news } = body as Record<string, unknown>;
     if (typeof email !== "string" || typeof caseNumber !== "string") {
       return json({ ok: false, message: "Email and case number are both required." }, 400);
     }
@@ -501,6 +516,15 @@ http.route({
       source: typeof source === "string" ? source.slice(0, 64) : undefined,
       ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
     });
+
+    // Same staged news opt-in as the queue-alert route; the case-alert
+    // confirm click completes both.
+    if (result.ok && news === true) {
+      await ctx.runMutation(internal.emailPrefs.stageNews, {
+        email: email.slice(0, 320),
+        source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      });
+    }
 
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
   }),
@@ -652,6 +676,369 @@ http.route({
       ip,
     });
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+// ============================================================================
+// Visa-bulletin movement alerts
+//
+// Same posture as the queue-alert and case-alert routes: the internal
+// mutation owns the budgets, the route owns the shape, GET never mutates,
+// and 429 is distinguished from 400.
+// ============================================================================
+
+const BULLETIN_CATEGORIES = new Set(["EB1", "EB2", "EB3", "EW3", "EB4", "EB5"]);
+const BULLETIN_COUNTRIES = new Set([
+  "worldwide",
+  "china",
+  "india",
+  "mexico",
+  "philippines",
+]);
+
+http.route({
+  path: "/bulletin-alert/subscribe",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/subscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    if (typeof body !== "object" || body === null) {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+
+    const { email, category, country, source, news } = body as Record<string, unknown>;
+    if (
+      typeof email !== "string" ||
+      typeof category !== "string" ||
+      typeof country !== "string" ||
+      !BULLETIN_CATEGORIES.has(category) ||
+      !BULLETIN_COUNTRIES.has(country)
+    ) {
+      return json(
+        { ok: false, message: "Email, category and country are all required." },
+        400,
+      );
+    }
+
+    const result = await ctx.runMutation(internal.bulletinAlerts.subscribe, {
+      email: email.slice(0, 320),
+      category: category as "EB1" | "EB2" | "EB3" | "EW3" | "EB4" | "EB5",
+      country: country as "worldwide" | "china" | "india" | "mexico" | "philippines",
+      source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
+    });
+
+    if (result.ok && news === true) {
+      await ctx.runMutation(internal.emailPrefs.stageNews, {
+        email: email.slice(0, 320),
+        source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      });
+    }
+
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/confirm",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
+    return unsubscribePage(
+      "Confirm your visa bulletin alert",
+      "We'll email you when a new visa bulletin moves the final-action cutoff you're watching. Nothing else will be sent.",
+      {
+        action: `/bulletin-alert/confirm?token=${encodeURIComponent(token)}`,
+        label: "Confirm",
+      },
+    );
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/confirm",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
+    const result = await ctx.runMutation(internal.bulletinAlerts.confirmByToken, { token });
+    if (!result) {
+      return new Response("This confirmation link is no longer valid.", { status: 400 });
+    }
+    return unsubscribePage(
+      "You're on the list",
+      `We'll email you when the State Department moves the final-action cutoff for ${result.series
+        .map(escapeHtml)
+        .join(", ")}. The full board is always on permtracker.app/tools/priority-date-calculator.`,
+    );
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/unsubscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
+    const ok = await ctx.runMutation(internal.bulletinAlerts.unsubscribeByToken, { token });
+    if (!ok) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
+    return unsubscribePage(
+      "You're unsubscribed",
+      "You won't receive visa bulletin alerts from us.",
+    );
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/unsubscribe",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
+    return unsubscribePage(
+      "Stop your visa bulletin alerts?",
+      "You'll stop receiving emails when the cutoffs you watch move.",
+      { action: `/bulletin-alert/unsubscribe?token=${encodeURIComponent(token)}` },
+    );
+  }),
+});
+
+// ============================================================================
+// The email preference center
+//
+// Magic link: prove the inbox, then see everything we send to that address
+// and turn any of it off. OFF ONLY - turning anything on goes through the
+// flow that owns it (double opt-in forms, or the signed-in settings page).
+// See convex/emailPrefs.ts for why that asymmetry is deliberate.
+// ============================================================================
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+type PrefsState = {
+  email: string;
+  queueAlerts: {
+    id: string;
+    filingMonth: string;
+    queue: string;
+    active: boolean;
+    notified: boolean;
+  }[];
+  caseAlerts: { id: string; caseNumber: string; active: boolean; closed: boolean }[];
+  bulletinAlerts: { id: string; category: string; country: string; active: boolean }[];
+  news: boolean;
+  weeklyDigest: boolean | null;
+};
+
+function prefsPage(state: PrefsState, token: string): Response {
+  const esc = escapeHtml;
+  const t = encodeURIComponent(token);
+  const offButton = (kind: string, id?: string) =>
+    `<form method="POST" action="/prefs/update?token=${t}" style="margin:0;display:inline;">
+       <input type="hidden" name="kind" value="${esc(kind)}"/>
+       ${id ? `<input type="hidden" name="id" value="${esc(id)}"/>` : ""}
+       <button type="submit" style="background:#fffffe;color:#18181b;border:2px solid #000001;font-size:12px;font-weight:700;padding:6px 14px;cursor:pointer;">Turn off</button>
+     </form>`;
+
+  const queueLabelFor = (q: string) =>
+    q === "pwd-oews"
+      ? "PWD queue (OEWS)"
+      : q === "pwd-nonoews"
+        ? "PWD queue (non-OEWS)"
+        : "PERM queue";
+
+  const row = (label: string, detail: string, control: string) =>
+    `<tr><td style="padding:10px 0;border-bottom:1px solid #e4e4e7;">
+       <div style="font-size:14px;font-weight:600;color:#18181b;">${label}</div>
+       <div style="font-size:12px;color:#52525b;margin-top:2px;">${detail}</div>
+     </td><td style="padding:10px 0;border-bottom:1px solid #e4e4e7;text-align:right;vertical-align:middle;">${control}</td></tr>`;
+
+
+  const queueRows = state.queueAlerts
+    .filter((a) => a.active)
+    .map((a) =>
+      row(
+        `${queueLabelFor(a.queue)} alert`,
+        `Month ${esc(a.filingMonth)}${a.notified ? " (already sent)" : ""}`,
+        offButton("queue", a.id),
+      ),
+    );
+  const caseRows = state.caseAlerts
+    .filter((a) => a.active)
+    .map((a) => row("Case status alert", esc(a.caseNumber), offButton("case", a.id)));
+  const bulletinRows = state.bulletinAlerts
+    .filter((a) => a.active)
+    .map((a) =>
+      row(
+        "Visa bulletin alert",
+        `${esc(a.category)} ${esc(a.country === "worldwide" ? "all countries" : a.country)}`,
+        offButton("bulletin", a.id),
+      ),
+    );
+  const newsRow = state.news
+    ? [row("Product news", "Occasional updates about new data and tools", offButton("news"))]
+    : [];
+  const digestRow =
+    state.weeklyDigest === true
+      ? [
+          row(
+            "Weekly digest",
+            "Your account's Monday summary email",
+            offButton("digest"),
+          ),
+        ]
+      : [];
+
+  const allRows = [...queueRows, ...caseRows, ...bulletinRows, ...newsRow, ...digestRow];
+  const body =
+    allRows.length > 0
+      ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${allRows.join("")}</table>
+         <form method="POST" action="/prefs/update?token=${t}" style="margin:24px 0 0 0;">
+           <input type="hidden" name="kind" value="all"/>
+           <button type="submit" style="background:#18181b;color:#fffffe;border:3px solid #000001;box-shadow:4px 4px 0 #ef4444;font-size:13px;font-weight:700;padding:10px 22px;cursor:pointer;">Stop everything</button>
+         </form>
+         <div style="font-size:12px;color:#52525b;margin-top:16px;">Turning something new on happens from the site itself: alerts from their pages, the weekly digest from your account settings.</div>`
+      : `<div style="font-size:14px;color:#52525b;">Nothing is active for this address. Alerts are set up from the site's own pages, and each asks you to confirm by email first.</div>`;
+
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Email preferences</title><meta name="robots" content="noindex"/></head>
+<body style="margin:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:48px 16px;">
+    <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#fffffe;border:4px solid #000001;">
+      <tr><td style="background:#000001;padding:18px 24px;"><span style="color:#22c55e;font-weight:700;font-size:18px;">PERM</span><span style="color:#fffffe;font-weight:700;font-size:18px;"> Tracker</span></td></tr>
+      <tr><td style="padding:28px 24px;">
+        <div style="font-size:18px;font-weight:700;color:#18181b;margin:0 0 4px 0;">Email preferences</div>
+        <div style="font-size:13px;color:#52525b;margin:0 0 20px 0;">Everything we send to ${esc(state.email)}</div>
+        ${body}
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+  return new Response(html, {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
+}
+
+http.route({
+  path: "/prefs/request",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/prefs/request",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    if (typeof body !== "object" || body === null) {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    const { email } = body as Record<string, unknown>;
+    if (typeof email !== "string") {
+      return json({ ok: false, message: "An email address is required." }, 400);
+    }
+
+    const result = await ctx.runMutation(internal.emailPrefs.requestLink, {
+      email: email.slice(0, 320),
+      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
+    });
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+http.route({
+  path: "/prefs",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid preferences link.", { status: 400 });
+    const state = await ctx.runMutation(internal.emailPrefs.stateByToken, { token });
+    if (!state) return new Response("Invalid or expired preferences link.", { status: 400 });
+    return prefsPage(state, token);
+  }),
+});
+
+http.route({
+  path: "/prefs/update",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid preferences link.", { status: 400 });
+
+    // The buttons submit as form-encoded, being plain HTML forms on a page
+    // served from this same host.
+    let kind = "";
+    let id: string | undefined;
+    try {
+      const form = await req.formData();
+      kind = String(form.get("kind") ?? "");
+      const rawId = form.get("id");
+      id = typeof rawId === "string" && rawId.length > 0 ? rawId : undefined;
+    } catch {
+      return new Response("Malformed request.", { status: 400 });
+    }
+
+    let state: PrefsState | null = null;
+    if (kind === "all") {
+      state = await ctx.runMutation(internal.emailPrefs.unsubscribeAllByToken, { token });
+    } else if (
+      kind === "queue" ||
+      kind === "case" ||
+      kind === "bulletin" ||
+      kind === "news" ||
+      kind === "digest"
+    ) {
+      state = await ctx.runMutation(internal.emailPrefs.disableByToken, {
+        token,
+        kind,
+        id: id?.slice(0, 64),
+      });
+    } else {
+      return new Response("Malformed request.", { status: 400 });
+    }
+
+    if (!state) return new Response("Invalid or expired preferences link.", { status: 400 });
+    return prefsPage(state, token);
   }),
 });
 

@@ -133,7 +133,7 @@ const SUBSCRIBE_IP_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
  * throttled. That is the correct trade: a delayed marketing confirmation is
  * recoverable, a locked-out password reset is not.
  */
-const CONFIRMATION_GLOBAL_BUDGET = { limit: 30, windowMs: 24 * 60 * 60 * 1000 };
+const CONFIRMATION_GLOBAL_BUDGET = { limit: 18, windowMs: 24 * 60 * 60 * 1000 };
 
 /** Shown when either limit trips. Says nothing about the address. */
 const THROTTLED_REPLY =
@@ -162,6 +162,59 @@ const roleValidator = v.union(
   v.literal("applicant"),
   v.literal("employer"),
 );
+
+/**
+ * Which DOL queue a subscription measures its month against.
+ *
+ * "perm" is the analyst-review frontier this module was built for. The two
+ * PWD variants compare the same "YYYY-MM" month against the prevailing-wage
+ * receipt-date frontiers (OEWS / non-OEWS) published in the same DOL
+ * snapshot. Absent on a row means "perm": every subscription that predates
+ * the field has no value and rewriting them would churn rows for nothing.
+ */
+export type QueueKind = "perm" | "pwd-oews" | "pwd-nonoews";
+const queueValidator = v.union(
+  v.literal("perm"),
+  v.literal("pwd-oews"),
+  v.literal("pwd-nonoews"),
+);
+
+/** Human wording per queue, used by subjects, text parts and templates alike. */
+export function queueLabel(queue: QueueKind): string {
+  switch (queue) {
+    case "perm":
+      return "PERM analyst-review queue";
+    case "pwd-oews":
+      return "prevailing-wage queue (OEWS)";
+    case "pwd-nonoews":
+      return "prevailing-wage queue (non-OEWS)";
+  }
+}
+
+/** The frontier month for one queue, from a stored DOL snapshot. */
+export function frontierFor(
+  queue: QueueKind,
+  snapshot: {
+    permQueues: { queue: string; priorityDate: string | null }[];
+    pwdQueues: {
+      program: string;
+      oewsReceiptDate: string | null;
+      nonOewsReceiptDate: string | null;
+    }[];
+  },
+): string | null {
+  if (queue === "perm") {
+    return (
+      snapshot.permQueues.find((q) => ANALYST_REVIEW.test(q.queue))
+        ?.priorityDate ?? null
+    );
+  }
+  const pwd = snapshot.pwdQueues.find(
+    (q) => q.program.toUpperCase() === "PERM",
+  );
+  if (!pwd) return null;
+  return queue === "pwd-oews" ? pwd.oewsReceiptDate : pwd.nonOewsReceiptDate;
+}
 
 /**
  * Conservative address check. Rejects the obvious, defers the rest to Resend.
@@ -218,6 +271,8 @@ export const subscribe = internalMutation({
   args: {
     email: v.string(),
     filingMonth: v.string(),
+    /** Defaults to "perm". One row per (address, queue). */
+    queue: v.optional(queueValidator),
     role: v.optional(roleValidator),
     source: v.optional(v.string()),
     /** Caller IP from the HTTP layer, or "unknown" when none is resolvable. */
@@ -258,10 +313,16 @@ export const subscribe = internalMutation({
       }
     }
 
-    const existing = await ctx.db
+    // One row per (address, queue). The by_email index cuts to this address's
+    // rows (a handful at most); the queue match happens in JS because the
+    // index predates the field and existing rows carry no value.
+    const queue: QueueKind = args.queue ?? "perm";
+    const forAddress = await ctx.db
       .query("dolQueueAlerts")
       .withIndex("by_email", (q) => q.eq("email", email))
-      .first();
+      .collect();
+    const existing =
+      forAddress.find((r) => (r.queue ?? "perm") === queue) ?? null;
 
     const now = Date.now();
 
@@ -291,6 +352,7 @@ export const subscribe = internalMutation({
       await ctx.db.insert("dolQueueAlerts", {
         email,
         filingMonth: args.filingMonth,
+        queue,
         role: args.role,
         createdAt: now,
         source: args.source,
@@ -317,6 +379,7 @@ export const subscribe = internalMutation({
     await ctx.scheduler.runAfter(0, internal.queueAlerts.sendConfirmation, {
       email,
       filingMonth: args.filingMonth,
+      queue,
     });
 
     return { ok: true, message: NEUTRAL_REPLY };
@@ -380,10 +443,15 @@ async function renderOrTextOnly(
 
 /** Send the double opt-in confirmation. */
 export const sendConfirmation = internalAction({
-  args: { email: v.string(), filingMonth: v.string() },
+  args: {
+    email: v.string(),
+    filingMonth: v.string(),
+    queue: v.optional(queueValidator),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
+      const queue: QueueKind = args.queue ?? "perm";
       const token = await makeUnsubscribeToken(
         args.email,
         unsubscribeSecret(),
@@ -397,6 +465,8 @@ export const sendConfirmation = internalAction({
       // Formatted ONCE here, then used by the HTML, the text part and the
       // subject alike, so no reader can be shown "2025-09" by one of them.
       const filingLabel = formatMonth(args.filingMonth) ?? args.filingMonth;
+      const label = queueLabel(queue);
+      const monthNoun = queue === "perm" ? "filing month" : "submission month";
 
       const html = await renderOrTextOnly(
         ctx,
@@ -405,19 +475,27 @@ export const sendConfirmation = internalAction({
           const { QueueAlertConfirm } = await import(
             "../src/emails/QueueAlertConfirm"
           );
-          return QueueAlertConfirm({ filingMonth: filingLabel, confirmUrl });
+          return QueueAlertConfirm({
+            filingMonth: filingLabel,
+            confirmUrl,
+            queueName: label,
+            monthNoun,
+          });
         },
       );
 
       const result = await sendEmailWithRetry(getResend(), {
         from: FROM_EMAIL,
         to: args.email,
-        subject: "Confirm your PERM queue alert",
+        subject:
+          queue === "perm"
+            ? "Confirm your PERM queue alert"
+            : "Confirm your prevailing-wage queue alert",
         html,
         text: [
-          "You asked to be told when the Department of Labor's PERM analyst-review queue reaches your filing month.",
+          `You asked to be told when the Department of Labor's ${label} reaches your ${monthNoun}.`,
           "",
-          `Filing month: ${filingLabel}`,
+          `Your ${monthNoun}: ${filingLabel}`,
           "",
           "Confirm here and we'll email you once, on the day it happens:",
           confirmUrl,
@@ -468,17 +546,17 @@ export const sendConfirmation = internalAction({
  * vice versa. Before that scoping existed both routes accepted the same string,
  * so replaying an unsubscribe link against the confirm route undid the opt-out.
  */
-async function rowForToken(
+async function rowsForToken(
   ctx: MutationCtx,
   token: string,
   purpose: TokenPurpose,
-): Promise<Doc<"dolQueueAlerts"> | null> {
+): Promise<Doc<"dolQueueAlerts">[]> {
   const email = await verifyUnsubscribeToken(token, unsubscribeSecret(), purpose);
-  if (!email) return null;
+  if (!email) return [];
   return await ctx.db
     .query("dolQueueAlerts")
     .withIndex("by_email", (q) => q.eq("email", email))
-    .first();
+    .collect();
 }
 
 export const confirmByToken = internalMutation({
@@ -492,57 +570,94 @@ export const confirmByToken = internalMutation({
     v.null(),
   ),
   handler: async (ctx, args) => {
-    const row = await rowForToken(ctx, args.token, "queue-confirm");
-    if (!row) return null;
+    const rows = await rowsForToken(ctx, args.token, "queue-confirm");
+    if (rows.length === 0) return null;
 
-    // A confirm token never expires and is replayable by anyone who can read
-    // the original email, including a corporate link scanner. So it cannot be
-    // treated as a fresh act of consent: once someone has opted out, replaying
-    // an older confirm link must NOT put them back on the list. Only a new
-    // subscribe request (which stages a pending month) can do that.
-    if (row.unsubscribedAt !== undefined && row.pendingFilingMonth === undefined) {
-      return null;
-    }
-
-    // Reset the send ONLY when the month genuinely moved. `subscribe` stages
-    // `pendingFilingMonth` on every request including a re-submit of the month
-    // already on file, so a truthiness check here cleared `notifiedAt` for an
-    // unchanged month, put the row back in the sweep, and mailed a second
-    // "one alert per subscriber, ever".
-    const monthChanged =
-      row.pendingFilingMonth !== undefined && row.pendingFilingMonth !== row.filingMonth;
-    const filingMonth = row.pendingFilingMonth ?? row.filingMonth;
-
-    await ctx.db.patch(row._id, {
-      confirmedAt: row.confirmedAt ?? Date.now(),
-      filingMonth,
-      pendingFilingMonth: undefined,
-      unsubscribedAt: undefined,
-      ...(monthChanged ? { notifiedAt: undefined } : {}),
-    });
-
-    // Most signups name a month the queue has ALREADY passed: the form offers
-    // every month back to 2020 and the frontier sits inside that range. Without
-    // this they would wait for the next DOL publication (realistically a month)
-    // to be told about something that was already true when they signed up.
     const latest = await ctx.db
       .query("dolProcessingTimes")
       .withIndex("by_fetched")
       .order("desc")
       .first();
-    const frontier =
-      latest?.permQueues.find((q) => ANALYST_REVIEW.test(q.queue))?.priorityDate ?? null;
-    const alreadyReached =
-      frontier !== null && filingMonth <= frontier && (monthChanged || !row.notifiedAt);
 
-    if (alreadyReached && latest) {
-      await ctx.scheduler.runAfter(0, internal.queueAlerts.notifyQueueReached, {
-        frontier,
-        asOf: latest.permAsOf,
+    // One address can now hold one row per queue (PERM, PWD OEWS, PWD
+    // non-OEWS). A confirm click proves inbox access for the address, so it
+    // confirms every row that is confirmable - exactly as the case-alert
+    // confirm covers every staged case for the address.
+    let primary: { email: string; filingMonth: string; alreadyReached: boolean } | null =
+      null;
+    const queuesToNotify = new Set<QueueKind>();
+
+    for (const row of rows) {
+      // A confirm token never expires and is replayable by anyone who can
+      // read the original email, including a corporate link scanner. So it
+      // cannot be treated as a fresh act of consent: once someone has opted
+      // out, replaying an older confirm link must NOT put them back on the
+      // list. Only a new subscribe request (which stages a pending month) can.
+      if (row.unsubscribedAt !== undefined && row.pendingFilingMonth === undefined) {
+        continue;
+      }
+
+      // Reset the send ONLY when the month genuinely moved. `subscribe`
+      // stages `pendingFilingMonth` on every request including a re-submit of
+      // the month already on file, so a truthiness check here cleared
+      // `notifiedAt` for an unchanged month, put the row back in the sweep,
+      // and mailed a second "one alert per subscriber, ever".
+      const monthChanged =
+        row.pendingFilingMonth !== undefined &&
+        row.pendingFilingMonth !== row.filingMonth;
+      const filingMonth = row.pendingFilingMonth ?? row.filingMonth;
+      const queue: QueueKind = row.queue ?? "perm";
+
+      await ctx.db.patch(row._id, {
+        confirmedAt: row.confirmedAt ?? Date.now(),
+        filingMonth,
+        pendingFilingMonth: undefined,
+        unsubscribedAt: undefined,
+        ...(monthChanged ? { notifiedAt: undefined } : {}),
+      });
+
+      // Most signups name a month the queue has ALREADY passed: the form
+      // offers every month back to 2020 and the frontier sits inside that
+      // range. Without this they would wait for the next DOL publication
+      // (realistically a month) to be told about something that was already
+      // true when they signed up.
+      const frontier = latest ? frontierFor(queue, latest) : null;
+      const alreadyReached =
+        frontier !== null &&
+        filingMonth <= frontier &&
+        (monthChanged || !row.notifiedAt);
+      if (alreadyReached) queuesToNotify.add(queue);
+
+      // The page renders one month; rows are rare enough that the row this
+      // click most plausibly came from (a staged change, else the first
+      // confirmable) is the honest one to show.
+      if (primary === null || monthChanged) {
+        primary = { email: row.email, filingMonth, alreadyReached };
+      }
+    }
+
+    if (latest) {
+      for (const queue of queuesToNotify) {
+        const frontier = frontierFor(queue, latest);
+        if (frontier !== null) {
+          await ctx.scheduler.runAfter(0, internal.queueAlerts.notifyQueueReached, {
+            frontier,
+            asOf: latest.permAsOf,
+            queue,
+          });
+        }
+      }
+      // Confirming any alert also confirms a pending product-news opt-in for
+      // the address: the confirmation email named both, and the click proves
+      // the same inbox for both.
+    }
+    if (primary) {
+      await ctx.runMutation(internal.emailPrefs.confirmNewsForEmail, {
+        email: primary.email,
       });
     }
 
-    return { email: row.email, filingMonth, alreadyReached };
+    return primary;
   },
 });
 
@@ -550,15 +665,24 @@ export const unsubscribeByToken = internalMutation({
   args: { token: v.string() },
   returns: v.boolean(),
   handler: async (ctx, args) => {
-    const row = await rowForToken(ctx, args.token, "queue-unsubscribe");
-    if (!row) return false;
+    const rows = await rowsForToken(ctx, args.token, "queue-unsubscribe");
+    if (rows.length === 0) return false;
 
-    // Also drop any staged month change. Leaving it would mean a replayed
-    // confirm link could still resurrect them via the pending-month path.
-    await ctx.db.patch(row._id, {
-      unsubscribedAt: Date.now(),
-      pendingFilingMonth: undefined,
-    });
+    // Tombstone EVERY queue row for the address, and drop any staged month
+    // change - leaving one would mean a replayed confirm link could still
+    // resurrect them via the pending-month path. Address-wide on purpose,
+    // matching the case-alert unsubscribe: an opt-out from "queue alerts"
+    // should not leave a sibling queue still mailing them.
+    const now = Date.now();
+    for (const row of rows) {
+      if (row.unsubscribedAt !== undefined && row.pendingFilingMonth === undefined) {
+        continue;
+      }
+      await ctx.db.patch(row._id, {
+        unsubscribedAt: now,
+        pendingFilingMonth: undefined,
+      });
+    }
     return true;
   },
 });
@@ -584,7 +708,11 @@ export const unsubscribeByToken = internalMutation({
  * hard at the read limit rather than degrading.
  */
 export const dueForAlert = internalQuery({
-  args: { frontier: v.string(), limit: v.number() },
+  args: {
+    frontier: v.string(),
+    limit: v.number(),
+    queue: v.optional(queueValidator),
+  },
   returns: v.array(
     v.object({
       _id: v.id("dolQueueAlerts"),
@@ -593,6 +721,7 @@ export const dueForAlert = internalQuery({
     }),
   ),
   handler: async (ctx, args) => {
+    const queue: QueueKind = args.queue ?? "perm";
     const out: {
       _id: Id<"dolQueueAlerts">;
       email: string;
@@ -611,6 +740,10 @@ export const dueForAlert = internalQuery({
       // indexed because it is the only remaining predicate and the index has
       // already cut the read down to un-notified, un-unsubscribed rows.
       if (!row.confirmedAt) continue;
+      // Queue match in JS: the index predates the field, and each queue's
+      // sweep runs against its own frontier so a PWD row must never qualify
+      // off the PERM month or vice versa.
+      if ((row.queue ?? "perm") !== queue) continue;
       out.push({ _id: row._id, email: row.email, filingMonth: row.filingMonth });
       if (out.length >= args.limit) break;
     }
@@ -643,15 +776,21 @@ export const markNotified = internalMutation({
  * the next DOL publication, roughly a month later.
  */
 export const notifyQueueReached = internalAction({
-  args: { frontier: v.string(), asOf: v.string() },
+  args: {
+    frontier: v.string(),
+    asOf: v.string(),
+    queue: v.optional(queueValidator),
+  },
   returns: v.object({ sent: v.number(), failed: v.number(), remaining: v.boolean() }),
   handler: async (
     ctx,
     args,
   ): Promise<{ sent: number; failed: number; remaining: boolean }> => {
+    const queue: QueueKind = args.queue ?? "perm";
     const due = await ctx.runQuery(internal.queueAlerts.dueForAlert, {
       frontier: args.frontier,
       limit: NOTIFY_BATCH_LIMIT + 1,
+      queue,
     });
 
     const batch = due.slice(0, NOTIFY_BATCH_LIMIT);
@@ -666,20 +805,28 @@ export const notifyQueueReached = internalAction({
     // the email agree.
     const frontierLabel = formatMonth(args.frontier) ?? args.frontier;
     const asOfLabel = formatAsOf(args.asOf) ?? args.asOf;
+    const label = queueLabel(queue);
+    const monthNoun = queue === "perm" ? "filing month" : "submission month";
 
     // Arithmetic on two figures DOL published, or null. Never a projection:
-    // see src/lib/queuePace.ts.
-    const paceLine = paceSentence(
-      measureQueuePace(
-        (
-          await ctx.runQuery(api.dolProcessingTimes.getHistory, { limit: 60 })
-        ).map((s) => ({
-          frontier:
-            s.permQueues.find((q) => ANALYST_REVIEW.test(q.queue))?.priorityDate ?? null,
-          asOf: s.permAsOf,
-        })),
-      ),
-    );
+    // see src/lib/queuePace.ts. Measured on the PERM analyst frontier only -
+    // the PWD history is too shallow to measure yet (store began 2026-08-25),
+    // and a pace from the wrong queue would be a confident wrong number.
+    const paceLine =
+      queue === "perm"
+        ? paceSentence(
+            measureQueuePace(
+              (
+                await ctx.runQuery(api.dolProcessingTimes.getHistory, { limit: 60 })
+              ).map((s) => ({
+                frontier:
+                  s.permQueues.find((q) => ANALYST_REVIEW.test(q.queue))
+                    ?.priorityDate ?? null,
+                asOf: s.permAsOf,
+              })),
+            ),
+          )
+        : null;
 
     for (const row of batch) {
       try {
@@ -708,6 +855,8 @@ export const notifyQueueReached = internalAction({
               monthsPast,
               paceLine,
               unsubscribeUrl: unsubUrl,
+              queueName: label,
+              monthNoun,
             });
           },
         );
@@ -715,14 +864,17 @@ export const notifyQueueReached = internalAction({
         const result = await sendEmailWithRetry(getResend(), {
           from: FROM_EMAIL,
           to: row.email,
-          subject: `DOL has reached ${frontierLabel} in the PERM queue`,
+          subject:
+            queue === "perm"
+              ? `DOL has reached ${frontierLabel} in the PERM queue`
+              : `DOL has reached ${frontierLabel} in the prevailing-wage queue`,
           html,
           headers: {
             "List-Unsubscribe": `<${unsubUrl}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
           text: [
-            `The Department of Labor's PERM analyst-review queue has reached ${frontierLabel}.`,
+            `The Department of Labor's ${label} has reached ${frontierLabel}.`,
             `You asked to be told when it reached ${filingLabel}.`,
             "",
             `This is DOL's own published figure, as of ${asOfLabel}, from`,

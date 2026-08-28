@@ -187,7 +187,29 @@ export const refresh = internalAction({
           await ctx.scheduler.runAfter(0, internal.queueAlerts.notifyQueueReached, {
             frontier: analyst.priorityDate,
             asOf: snapshot.permAsOf,
+            queue: "perm",
           });
+        }
+
+        // The same snapshot carries the prevailing-wage frontiers, so the PWD
+        // month alerts sweep off the identical publication event. A missing
+        // PWD row is not an error the way a missing Analyst Review row is -
+        // DOL has published PERM-only updates - so absence just skips.
+        const pwdRow = snapshot.pwdQueues.find(
+          (q) => q.program.toUpperCase() === "PERM",
+        );
+        const pwdSweeps = [
+          { queue: "pwd-oews" as const, frontier: pwdRow?.oewsReceiptDate ?? null },
+          { queue: "pwd-nonoews" as const, frontier: pwdRow?.nonOewsReceiptDate ?? null },
+        ];
+        for (const s of pwdSweeps) {
+          if (s.frontier) {
+            await ctx.scheduler.runAfter(0, internal.queueAlerts.notifyQueueReached, {
+              frontier: s.frontier,
+              asOf: snapshot.pwdAsOf ?? snapshot.permAsOf,
+              queue: s.queue,
+            });
+          }
         }
       }
 

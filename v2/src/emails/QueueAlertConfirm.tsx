@@ -26,22 +26,32 @@ export interface QueueAlertConfirmProps {
   filingMonth: string;
   /** Absolute, purpose-scoped confirmation URL. */
   confirmUrl: string;
+  /**
+   * Which DOL queue this alert watches, in prose ("PERM analyst-review
+   * queue", "prevailing-wage queue (OEWS)"). Defaults to the PERM wording so
+   * every existing caller and stored link keeps reading exactly as before.
+   */
+  queueName?: string;
+  /** "filing month" for PERM, "submission month" for PWD. */
+  monthNoun?: string;
 }
 
 export function QueueAlertConfirm({
   filingMonth,
   confirmUrl,
+  queueName = "PERM queue",
+  monthNoun = "filing month",
 }: QueueAlertConfirmProps) {
   return (
     <EmailLayout
       previewText={`Confirm and we’ll email you once, on the day DOL reaches ${filingMonth}.`}
       hideSettingsLink
-      footerText={`This address was entered to be told when the Department of Labor’s PERM queue reaches a filing month. It isn’t confirmed yet, so nothing else will be sent.`}
+      footerText={`This address was entered to be told when the Department of Labor’s ${queueName} reaches a ${monthNoun}. It isn’t confirmed yet, so nothing else will be sent.`}
     >
-      <QueueStamp eyebrow="Your filing month" month={filingMonth} />
+      <QueueStamp eyebrow={`Your ${monthNoun}`} month={filingMonth} />
 
       <Text className="em-text-body" style={styles.body}>
-        You asked to be told when the Department of Labor&rsquo;s PERM queue
+        You asked to be told when the Department of Labor&rsquo;s {queueName}{" "}
         reaches this month. Confirm the alert and we&rsquo;ll email you once, on
         the day it happens.
       </Text>

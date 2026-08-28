@@ -41,3 +41,23 @@ export const getUserEmailById = internalQuery({
     return user.email ?? null;
   },
 });
+
+/**
+ * Confirmed, un-unsubscribed product-news opt-ins from anonymous alert
+ * subscribers. The sync treats these exactly like active users: their Resend
+ * contact is created if missing and protected from orphan removal. The table
+ * is small (it grows one row per checkbox tick), so no pagination.
+ */
+export const listNewsSubscribers = internalQuery({
+  args: {},
+  returns: v.array(v.string()),
+  handler: async (ctx) => {
+    const out: string[] = [];
+    for await (const row of ctx.db.query("newsSubscribers")) {
+      if (row.confirmedAt !== undefined && row.unsubscribedAt === undefined) {
+        out.push(row.email.toLowerCase());
+      }
+    }
+    return out;
+  },
+});

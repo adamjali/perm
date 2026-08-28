@@ -1332,6 +1332,21 @@ export default defineSchema({
     email: v.string(),
     /** Month the case was filed with DOL, "YYYY-MM". */
     filingMonth: v.string(),
+    /**
+     * WHICH DOL queue the month is measured against. Absent means "perm"
+     * (the analyst-review frontier) - every row that existed before the PWD
+     * queues were added has no value here, and rewriting history to add one
+     * would churn rows for nothing. The PWD variants compare the same
+     * "YYYY-MM" month against the OEWS / non-OEWS receipt-date frontiers
+     * from the same DOL snapshot.
+     */
+    queue: v.optional(
+      v.union(
+        v.literal("perm"),
+        v.literal("pwd-oews"),
+        v.literal("pwd-nonoews"),
+      ),
+    ),
     /** Optional, and the only segmentation we collect. */
     role: v.optional(
       v.union(v.literal("attorney"), v.literal("applicant"), v.literal("employer")),
@@ -1481,6 +1496,82 @@ export default defineSchema({
      */
     .index("by_alert_sweep", ["unsubscribedAt", "caseClosedAt", "lastCheckedAt"])
     .index("by_created", ["createdAt"]),
+
+  /**
+   * Someone watching ONE visa-bulletin series: a category x country cutoff.
+   *
+   * Third sibling of `dolQueueAlerts` / `caseStatusAlerts`, same consent
+   * grammar on purpose: double opt-in, staged changes, tombstoned opt-outs,
+   * purpose-scoped tokens (`bulletin-confirm` / `bulletin-unsubscribe`).
+   * Recurring like case alerts (a cutoff can move every month), not one-shot
+   * like queue alerts, so it carries `lastSeenCutoff` as its change detector
+   * rather than `notifiedAt`.
+   */
+  bulletinAlerts: defineTable({
+    email: v.string(),
+    /** Employment category as the bulletin prints it: EB1..EB5, EW3. */
+    category: v.string(),
+    /** Country column: ALL, CHINA, INDIA, MEXICO, PHILIPPINES. */
+    country: v.string(),
+    /**
+     * The final-action cutoff we last told them about, as the bulletin
+     * prints it ("C", "U", or "01JAN23"-style). Absent until the first
+     * confirmed sweep baselines it, so the first alert is a real movement
+     * rather than "here is the current value you already saw when you
+     * subscribed".
+     */
+    lastSeenCutoff: v.optional(v.string()),
+    /** Which bulletin month lastSeenCutoff came from, "YYYY-MM". */
+    lastSeenBulletin: v.optional(v.string()),
+
+    /** Null until the address is confirmed; nothing is ever sent before then. */
+    confirmedAt: v.optional(v.number()),
+    /**
+     * A series change requested by an unauthenticated POST, staged exactly
+     * like `pendingFilingMonth`: "category|country", applied only when the
+     * inbox owner clicks a fresh confirm link.
+     */
+    pendingSeries: v.optional(v.string()),
+    lastConfirmationSentAt: v.optional(v.number()),
+    lastAlertSentAt: v.optional(v.number()),
+    alertCount: v.optional(v.number()),
+    unsubscribedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    source: v.optional(v.string()),
+  })
+    .index("by_email", ["email"])
+    /** The upsert key: one row per (address, series). */
+    .index("by_email_series", ["email", "category", "country"])
+    /**
+     * Drives the monthly sweep. The table is small (hundreds, not hundreds of
+     * thousands), so live rows are the only cut that matters; `confirmedAt`
+     * is filtered in JS as on the sibling tables.
+     */
+    .index("by_alert_sweep", ["unsubscribedAt", "createdAt"]),
+
+  /**
+   * Occasional product-news consent for addresses WITHOUT an account.
+   *
+   * Signed-in users' marketing consent lives in Resend (source of truth,
+   * audited via marketingEvents). Anonymous alert subscribers could not join
+   * that list because `marketingEmail.syncContacts` deletes any Resend
+   * contact not in the `users` table - so this table extends the roster:
+   * a confirmed, un-unsubscribed row here both creates the contact and
+   * protects it from orphan removal.
+   *
+   * Rows are created UNCONFIRMED by the news checkbox on an alert form and
+   * confirmed by the same double-opt-in click that confirms the alert; the
+   * confirmation email states both. No sending path reads this table
+   * directly - broadcasts go out via Resend, which is where the unsubscribe
+   * footer lives too.
+   */
+  newsSubscribers: defineTable({
+    email: v.string(),
+    confirmedAt: v.optional(v.number()),
+    unsubscribedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    source: v.optional(v.string()),
+  }).index("by_email", ["email"]),
 
   /**
    * One row per PERM entity: employer, law firm, or occupation.

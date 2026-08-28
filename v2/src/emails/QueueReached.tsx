@@ -52,6 +52,13 @@ export interface QueueReachedProps {
   paceLine?: string | null;
   /** Absolute, purpose-scoped opt-out URL. Pairs with List-Unsubscribe. */
   unsubscribeUrl: string;
+  /**
+   * Which DOL queue reached the month, in prose. Defaults to the PERM
+   * wording so existing callers read exactly as before.
+   */
+  queueName?: string;
+  /** "filing month" for PERM, "submission month" for PWD. */
+  monthNoun?: string;
 }
 
 export function QueueReached({
@@ -61,14 +68,17 @@ export function QueueReached({
   monthsPast,
   paceLine = null,
   unsubscribeUrl,
+  queueName = "PERM queue",
+  monthNoun = "filing month",
 }: QueueReachedProps) {
   const hasMovedPast = monthsPast > 0;
+  const isPwd = queueName.toLowerCase().includes("prevailing");
 
   return (
     <EmailLayout
       previewText={`The Department of Labor’s published figure, as of ${asOf}.`}
       hideSettingsLink
-      footerText={`You asked to be told when the Department of Labor’s PERM queue reached ${filingMonth}. This alert doesn’t repeat.`}
+      footerText={`You asked to be told when the Department of Labor’s ${queueName} reached ${filingMonth}. This alert doesn’t repeat.`}
       footerExtra={
         <Text className="em-text-secondary" style={styles.footerExtra}>
           <Link
@@ -90,7 +100,7 @@ export function QueueReached({
       */}
       <QueueStamp eyebrow="DOL has reached" month={frontierMonth}>
         <Text className="em-text-secondary" style={styles.provenance}>
-          Analyst review, as of {asOf}
+          {isPwd ? `${queueName}, as of ${asOf}` : `Analyst review, as of ${asOf}`}
         </Text>
         <Text style={styles.sourceLine}>
           <Link
@@ -106,7 +116,7 @@ export function QueueReached({
       {hasMovedPast ? (
         <Section className="em-card" style={styles.yours}>
           <Text className="qa-yours-label" style={styles.yoursLabel}>
-            Your filing month
+            Your {monthNoun}
           </Text>
           <Text className="em-text" style={styles.yoursValue}>
             {filingMonth}
@@ -117,7 +127,9 @@ export function QueueReached({
       <Text className="em-text-body" style={styles.body}>
         {hasMovedPast
           ? `DOL has worked past ${filingMonth} and is now on ${frontierMonth}.`
-          : `DOL is now adjudicating cases filed in ${filingMonth}.`}{" "}
+          : isPwd
+            ? `DOL is now working prevailing-wage requests submitted in ${filingMonth}.`
+            : `DOL is now adjudicating cases filed in ${filingMonth}.`}{" "}
         It isn&rsquo;t a decision on your case and it isn&rsquo;t a prediction of
         one.
       </Text>

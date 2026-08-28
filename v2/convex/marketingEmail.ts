@@ -370,7 +370,31 @@ export const syncContacts = internalAction({
       }
     }
 
-    // 5. Remove orphan Resend contacts (not in users table)
+    // 4b. Anonymous news subscribers (confirmed via an alert's double
+    // opt-in; see convex/emailPrefs.ts). Created like users, and counted
+    // into the protected set so step 5 cannot delete them - before this,
+    // the orphan removal would have deleted any public subscriber on the
+    // next sync, which is why alert subscribers could not join the list.
+    const newsEmails: string[] = await ctx.runQuery(
+      internal.marketingEmailHelpers.listNewsSubscribers,
+      {},
+    );
+    for (const email of newsEmails) {
+      if (isEmailBlocked(email)) continue;
+      activeUserEmails.add(email);
+      if (!resendByEmail.has(email)) {
+        const ok = await runWrite("POST (create news)", email, () =>
+          resendFetch("/contacts", apiKey, {
+            method: "POST",
+            body: { email, segment_ids: [SEGMENT_ID] },
+          }),
+        );
+        if (ok) created++;
+        await sleep(RATE_LIMIT_DELAY_MS);
+      }
+    }
+
+    // 5. Remove orphan Resend contacts (not in users table or news list)
     for (const [email, contact] of resendByEmail) {
       if (!activeUserEmails.has(email)) {
         const ok = await runWrite("DELETE (orphan)", email, () =>

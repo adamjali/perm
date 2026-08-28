@@ -271,4 +271,24 @@ crons.cron(
   {}
 );
 
+// ============================================================================
+// VISA BULLETIN ALERTS
+// ============================================================================
+
+/**
+ * Compare every bulletin subscription against the newest bulletin in the
+ * archive and mail the ones whose cutoff moved.
+ *
+ * Daily because the archive is fed by a monthly ingest whose landing day
+ * varies (a saved page or an Archive capture, whenever it arrives); on the
+ * ~29 quiet days this is one Turso row read and zero sends. 17:30 UTC sits
+ * clear of every bulk email job above.
+ */
+crons.daily(
+  "bulletin-alerts",
+  { hourUTC: 17, minuteUTC: 30 },
+  internal.bulletinAlerts.sweep,
+  {}
+);
+
 export default crons;

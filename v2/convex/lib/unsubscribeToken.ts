@@ -81,7 +81,10 @@ export type TokenPurpose =
   | "queue-confirm"
   | "queue-unsubscribe"
   | "case-confirm"
-  | "case-unsubscribe";
+  | "case-unsubscribe"
+  | "bulletin-confirm"
+  | "bulletin-unsubscribe"
+  | "prefs";
 
 /** The exact string that gets signed. Kept in one place so both sides agree. */
 function signedMessage(normalizedEmail: string, purpose?: TokenPurpose): string {

@@ -52,15 +52,24 @@
  * codes, deadline digests and the queue alerts. Exhausting it has already
  * caused one real outage on this product.
  *
- *   queue-alert confirmations   30/day   (convex/queueAlerts.ts)
- *   case-alert confirmations    15/day   (below)
- *   case alerts                 25/day   (below)
- *   ------------------------------------
- *   worst case from list mail   70/day, leaving 30 for mail people depend on.
+ *   queue-alert confirmations      18/day   (convex/queueAlerts.ts)
+ *   case-alert confirmations       10/day   (below)
+ *   case alerts                    18/day   (below)
+ *   bulletin-alert confirmations    6/day   (convex/bulletinAlerts.ts)
+ *   bulletin alerts                12/day   (convex/bulletinAlerts.ts)
+ *   preference-center links         6/day   (convex/emailPrefs.ts)
+ *   ---------------------------------------
+ *   worst case from list mail      70/day, leaving 30 for mail people depend on.
+ *
+ * Rebalanced 2026-08-28 when the bulletin alerts and the preference center
+ * joined the pool: every list-mail budget is enumerated here, and any new
+ * sending path must claim a line in this table before it ships.
  *
  * The queue-alert SEND sweep is not in that column because it is driven by a
  * monthly DOL publication rather than a daily one, so it and the case alerts
- * cannot both be at their ceiling on an ordinary day.
+ * cannot both be at their ceiling on an ordinary day. The bulletin sweep is
+ * counted because a new bulletin can land on any day the case alerts are
+ * also busy.
  *
  * Both of the budgets below are GLOBAL, keyed on the literal string "all". That
  * is the only kind of limit that cannot be rotated around: a per-address
@@ -116,10 +125,10 @@ const log = createLogger("CaseAlerts");
 const CHECK_BATCH_LIMIT = 300;
 
 /** How many alerts one sweep may send. See the budget arithmetic above. */
-const ALERT_BATCH_LIMIT = 25;
+const ALERT_BATCH_LIMIT = 18;
 
 /** Global ceiling on alerts, across every subscriber, per rolling day. */
-const ALERT_GLOBAL_BUDGET = { limit: 25, windowMs: 24 * 60 * 60 * 1000 };
+const ALERT_GLOBAL_BUDGET = { limit: 18, windowMs: 24 * 60 * 60 * 1000 };
 
 /** Global ceiling on confirmation emails, across every caller. */
 const CONFIRMATION_GLOBAL_BUDGET = { limit: 15, windowMs: 24 * 60 * 60 * 1000 };
@@ -633,6 +642,13 @@ export const confirmByToken = internalMutation({
     // genuine transition rather than a restatement of what was already true
     // when they signed up. Runs in an action because a mutation cannot fetch.
     await ctx.scheduler.runAfter(0, internal.caseAlerts.seedLastSeen, {
+      email: all[0]!.email,
+    });
+
+    // Confirming the alert also confirms a pending product-news opt-in for
+    // the address: the confirmation email named both, and the click proves
+    // the same inbox for both. No staged news row means a no-op.
+    await ctx.runMutation(internal.emailPrefs.confirmNewsForEmail, {
       email: all[0]!.email,
     });
 
