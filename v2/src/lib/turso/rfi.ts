@@ -407,6 +407,186 @@ export async function getRfiFunnel(): Promise<RfiFunnel | null> {
 }
 
 // ---------------------------------------------------------------------------
+// The blend: their frozen history plus everything we have seen since
+// ---------------------------------------------------------------------------
+
+/**
+ * Our own half of the funnel, observed from `perm_case_events`.
+ *
+ * Every field counts DISTINCT case numbers, not events. A case can bounce
+ * ANALYST REVIEW -> RFI ISSUED -> ANALYST REVIEW -> RFI ISSUED, and counting
+ * rows would report one case as two RFIs and inflate the denominator.
+ */
+export interface RfiObserved {
+  /** Cases we saw ENTER an RFI after the freeze. */
+  newIssued: number;
+  /** Cases we saw LEAVE an RFI for a final status after the freeze. */
+  resolved: number;
+  certified: number;
+  denied: number;
+  withdrawn: number;
+  /** Earliest event counted, so the window can be stated on the page. */
+  from: string | null;
+}
+
+/**
+ * A funnel built from both halves, with both halves still visible.
+ *
+ * ADAM ASKED FOR ONE BLENDED NUMBER AND THIS IS IT. I argued against it and
+ * was overruled, which is his call; what the code owes him in return is a
+ * blend that can always be taken apart again. So the components are returned
+ * beside the total rather than folded into it, and nothing here computes a
+ * rate that the page cannot decompose into "theirs" and "ours".
+ *
+ * THE ONE THING THAT MAKES THIS SAFE IS THAT THE WINDOWS ARE DISJOINT.
+ * `rfi_funnel` is frozen at a single `observed_at` and is deliberately in no
+ * workflow, so it can never grow to include a resolution we also counted. Our
+ * side counts only events strictly AFTER that timestamp. Re-reading their
+ * aggregate on a schedule would break this immediately and silently: their
+ * number would absorb the same resolutions ours had already added, and the
+ * blended denominator would drift upward with no error anywhere.
+ *
+ * The first direct sweep would have broken it too, which is why it ran with
+ * `--reconcile`: 1,328 status differences that were corrections of a stale
+ * mirror, not transitions, and writing them as events would have poured a
+ * fabricated day of history straight into this denominator.
+ */
+export interface BlendedRfiFunnel extends RfiFunnel {
+  // Extends RfiFunnel rather than redeclaring its fields, so anything that
+  // already renders a funnel renders a blended one unchanged. The inherited
+  // `totalTracked`, `medianDaysToDecision`, `observedAt` and `source` all
+  // still describe the FROZEN half - they are properties of that observation
+  // and blending cannot produce a combined version of them.
+  /** Certified over resolved, as a percentage. */
+  approvalRate: number;
+  /** 95% Wilson interval on that rate. */
+  ci: { lo: number; hi: number } | null;
+  /** The frozen half, unchanged. */
+  base: RfiFunnel;
+  /** Our half. */
+  observed: RfiObserved;
+  /** Our share of the blended denominator, as a percentage. */
+  observedShare: number;
+}
+
+/**
+ * Only events WE observed at DOL count toward our half.
+ *
+ * `perm_case_events` also holds rows written by the old permtrack mirror,
+ * which recorded a "transition" whenever THEIR copy differed from OUR copy.
+ * A difference like that is not necessarily something that moved after the
+ * freeze - if our stored copy was staler than the snapshot their frozen
+ * aggregate was built from, the same RFI is already inside `ever_rfi` and
+ * adding it again double-counts it.
+ *
+ * A timestamp cannot tell those apart: the mirror wrote its rows at 19:16 on
+ * the freeze date, comfortably "after" a 03:25 freeze, while describing
+ * changes of unknown age. The source can. So our half is defined as what the
+ * direct DOL sweep saw, and the mirror's rows are excluded by construction.
+ *
+ * MUST MATCH `SOURCE` in `scripts/ingest_case_status_direct.py`. A drift here
+ * does not error - it silently returns zero for our half and the blend
+ * quietly freezes at the base forever. `rfiBlend.test.ts` reads the Python
+ * file and asserts the two strings are identical.
+ */
+export const DIRECT_EVENT_SOURCE =
+  "flag.dol.gov/recaptcha/caseStatus (DOL, direct)";
+
+/**
+ * Their frozen base plus our observed events, as one funnel.
+ *
+ * Returns null when the base is missing, for the same reason `getRfiFunnel`
+ * does: a caller should decide what to render rather than be handed zeroes.
+ * When our side is empty the blend is exactly the base, which is the correct
+ * behaviour on day one and stays correct as our half grows.
+ */
+export async function getBlendedRfiFunnel(): Promise<BlendedRfiFunnel | null> {
+  const base = await getRfiFunnel();
+  if (!base) return null;
+
+  // RESOLUTION IS READ FROM THE CASE'S CURRENT STATUS, NOT FROM A TRANSITION.
+  //
+  // The obvious query - count events going straight from RFI ISSUED to a
+  // final status - systematically undercounts, and our own event log shows
+  // exactly why: cases move RFI ISSUED -> ANALYST REVIEW and decide from
+  // there. Ten of the first forty-eight events were that hop. Every case that
+  // takes it would resolve without ever producing an RFI-to-final event, so
+  // the denominator would grow slower than the real one and the approval rate
+  // would drift on a population that quietly excludes a whole path.
+  //
+  // So our half is: cases we WATCHED ENTER an RFI after the freeze, joined to
+  // where they stand now. That matches what "resolved" means in the frozen
+  // half - ever had an RFI, now has a final decision - and it does not depend
+  // on catching one particular transition.
+  const x = await one<Record<string, unknown>>(
+    `WITH ours AS (
+       SELECT DISTINCT case_number FROM perm_case_events
+        WHERE to_status = 'RFI ISSUED' AND changed_at > ? AND source = ?
+     ),
+     now AS (
+       SELECT s.case_number, s.current_status, s.is_final
+         FROM perm_case_status s JOIN ours ON ours.case_number = s.case_number
+     )
+     SELECT
+       (SELECT COUNT(*) FROM ours)                                     AS new_issued,
+       (SELECT COUNT(*) FROM now WHERE is_final = 1)                   AS resolved,
+       (SELECT COUNT(*) FROM now
+         WHERE current_status IN ('CERTIFIED', 'CERTIFIED - EXPIRED')) AS certified,
+       (SELECT COUNT(*) FROM now WHERE current_status = 'DENIED')      AS denied,
+       (SELECT COUNT(*) FROM now WHERE current_status = 'WITHDRAWN')   AS withdrawn,
+       (SELECT MIN(changed_at) FROM perm_case_events
+         WHERE to_status = 'RFI ISSUED' AND changed_at > ? AND source = ?) AS first_at`,
+    [base.observedAt, DIRECT_EVENT_SOURCE, base.observedAt, DIRECT_EVENT_SOURCE],
+  );
+
+  const firstAt = Number(x?.first_at) || 0;
+  const observed: RfiObserved = {
+    newIssued: Number(x?.new_issued) || 0,
+    resolved: Number(x?.resolved) || 0,
+    certified: Number(x?.certified) || 0,
+    denied: Number(x?.denied) || 0,
+    withdrawn: Number(x?.withdrawn) || 0,
+    from: firstAt > 0 ? new Date(firstAt).toISOString().slice(0, 10) : null,
+  };
+
+  return blendRfiFunnel(base, observed);
+}
+
+/**
+ * The blend itself, with no database in it.
+ *
+ * Split out so the arithmetic can be probed directly, the same reason
+ * `bandIsPublishable` and `occupationIsPublishable` are exported. A blend
+ * buried inside an async query is a blend nobody tests, and this one decides
+ * the headline percentage on the page.
+ */
+export function blendRfiFunnel(
+  base: RfiFunnel,
+  observed: RfiObserved,
+): BlendedRfiFunnel {
+  const everIssued = base.everIssued + observed.newIssued;
+  const resolved = base.resolved + observed.resolved;
+  const certified = base.certified + observed.certified;
+  return {
+    ...base,                 // totalTracked, median, observedAt, source
+    everIssued,
+    resolved,
+    certified,
+    denied: base.denied + observed.denied,
+    withdrawn: base.withdrawn + observed.withdrawn,
+    // Clamped at zero: a case can resolve inside our window without its RFI
+    // ever appearing in either ever-issued count, and a negative "still open"
+    // is a nonsense number to put on a page.
+    stillOpen: Math.max(0, everIssued - resolved),
+    approvalRate: resolved > 0 ? (certified / resolved) * 100 : 0,
+    ci: wilsonInterval(certified, resolved),
+    base,
+    observed,
+    observedShare: resolved > 0 ? (observed.resolved / resolved) * 100 : 0,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Which occupations are carrying the open RFIs
 // ---------------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 
-import type { RfiFunnel } from "@/lib/turso/rfi";
+import type { BlendedRfiFunnel, RfiFunnel } from "@/lib/turso/rfi";
 
 /**
  * What happened to the cases that already went through an RFI.
@@ -27,7 +27,7 @@ interface Segment {
   ink: string;
 }
 
-export function RfiOutcomes({ funnel }: { funnel: RfiFunnel }) {
+export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }) {
   const { everIssued, resolved, certified, denied, withdrawn, stillOpen } =
     funnel;
 
@@ -150,6 +150,8 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel }) {
         because a third of them have no decision yet. Both are true and the
         first is only true about finished cases.
       */}
+      <Provenance funnel={funnel} />
+
       {certifiedOfResolved !== null ? (
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
           <b className="font-bold text-foreground">
@@ -178,4 +180,42 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       </div>
     </div>
   );
+}
+
+/**
+ * Where the blended figure's two halves came from, and how much each weighs.
+ *
+ * THIS IS THE PRICE OF BLENDING. The counts above pool a frozen third-party
+ * aggregate with everything we have observed since, and a pooled number that
+ * a reader cannot take apart is a number they have to take on trust. So both
+ * denominators are printed, with our share of the total, and the sentence
+ * says plainly which half is ours.
+ *
+ * Renders nothing until our half is non-empty. On day one the blend IS the
+ * base, and a "blended from two sources" line over a figure that is entirely
+ * one source would be its own small untruth.
+ */
+function Provenance({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }) {
+  if (!("observed" in funnel)) return null;
+  const { base, observed, observedShare } = funnel;
+  if (observed.resolved <= 0) return null;
+  return (
+    <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-muted-foreground">
+      <b className="font-bold text-foreground">Two windows, pooled.</b>{" "}
+      {base.resolved.toLocaleString()} resolved RFIs come from a third-party
+      aggregate frozen at {fmtDay(base.observedAt)}, and{" "}
+      {observed.resolved.toLocaleString()} more are ones we have watched resolve
+      ourselves{observed.from ? ` since ${observed.from}` : null}. Our own
+      observations are {observedShare.toFixed(1)}% of the combined total, and
+      that share grows every day. The two windows do not overlap: the frozen
+      half is never re-read, so no case is counted twice.
+    </p>
+  );
+}
+
+function fmtDay(ms: number): string {
+  if (!ms) return "an earlier date";
+  return new Date(ms).toLocaleDateString("en-US", {
+    year: "numeric", month: "short", day: "numeric", timeZone: "UTC",
+  });
 }

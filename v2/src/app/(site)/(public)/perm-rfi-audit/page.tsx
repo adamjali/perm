@@ -47,7 +47,7 @@ import type { ReviewStage } from "@/lib/turso/rfi";
 import {
   SMALL_STAGE_MAX,
   getReviewStages,
-  getRfiFunnel,
+  getBlendedRfiFunnel,
   getRfiOccupations,
   getSmallStageRecords,
   getStageCohorts,
@@ -81,7 +81,7 @@ export default async function PermRfiAuditPage() {
   const [stages, funnel, cohortsRaw, occupations, smallRecords, dol] =
     await Promise.all([
       getReviewStages(),
-      getRfiFunnel(),
+      getBlendedRfiFunnel(),
       getStageCohorts(REVIEW_STATUSES),
       getRfiOccupations(),
       getSmallStageRecords(),
@@ -279,11 +279,12 @@ export default async function PermRfiAuditPage() {
                   </p>
                 ) : null}
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  These outcomes cover a watch list of{" "}
-                  {funnel.totalTracked.toLocaleString()} cases, which is a
-                  different and smaller population than the{" "}
-                  {pending.toLocaleString()} pending cases counted above. The
-                  two sets are not interchangeable and the percentages should
+                  The frozen half of these outcomes covers a watch list of{" "}
+                  {funnel.totalTracked.toLocaleString()} cases; the half we
+                  observe ourselves comes from our own sweep of every PERM
+                  case. Both are different and smaller populations than the{" "}
+                  {pending.toLocaleString()} pending cases counted above. None
+                  of the three are interchangeable, and the percentages should
                   not be applied to each other.
                 </p>
               </div>
