@@ -1,0 +1,71 @@
+---
+title: "Check any case number, and every dataset from its source"
+description: "Per-case DOL status with email alerts, the review-stage funnel, daily decision activity, a pending queue census, and 84 months of visa bulletin history."
+date: "2026-08-28"
+image: "/images/content/dol-building.jpg"
+imageAlt: "The U.S. Department of Labor building"
+category: "Feature"
+tags: ["changelog", "update", "data", "case-status", "alerts", "calculators"]
+---
+
+The site now answers the first question anyone waiting on a PERM case asks, and
+every figure behind it comes from the agency that publishes it.
+
+## Your own case, by number
+
+[PERM case status](/perm-case-status) takes one PERM case number and returns
+DOL's own status with a plain-English reading beside it, how many undecided
+cases were filed ahead of it, and the sponsoring employer's published record.
+Every deadline in the glossary carries the section of 20 CFR part 656 it comes
+from, and the statuses DOL publishes no definition for say so rather than
+getting one invented.
+
+On a case that hasn't been decided, leave an email address and one message
+follows when the status changes. It's double opt-in, it's offered only where a
+case can still move, and nothing else is ever sent.
+
+## The data comes from DOL directly
+
+Per-case status used to be mirrored from a third party. It now comes from
+DOL's own case-status search, in batches, run against every undecided case
+twice a day and across the whole corpus daily. Checked field by field before
+the switch, status, employer, job title and submitted date matched the old
+mirror exactly, and DOL returns the visa type, which the mirror didn't.
+
+That closes the last live third-party dependency on the site. Every dataset
+here now has a primary source of record: DOL for case status, processing times
+and the quarterly disclosure files, the State Department for the visa
+bulletin, USCIS for I-140 counts and the I-485 inventory.
+
+## Three new data pages
+
+- **[RFI, audits and appeals](/perm-rfi-audit)**: what each review stage means,
+  who has to act and by when, and a live count of how many cases are standing
+  at each one. It publishes no audit rate, because our own measurement of that
+  reads zero and a hole in the data isn't a finding.
+- **[Decision activity](/perm-decision-activity)**: how many decisions DOL
+  issues each day and week, the shape of its working week, and what happened to
+  the cases it decided. It reports and forecasts nothing.
+- **[Queue backlog](/perm-queue)**: how many cases are still undecided in every
+  filing month and which DOL queue each sits in. DOL's quarterly files carry a
+  decision date on every row and no pending rows at all, so this is underivable
+  from them and comes from the per-case scan instead.
+
+## 84 months of visa bulletin
+
+The [priority date calculator](/tools/priority-date-calculator) now runs on 84
+months of State Department bulletins, October 2019 through September 2026, all
+six employment categories, with no third-party rows in it. Cutoff dates that
+read C or U are drawn as what they are, one meaning the category was open to
+every priority date and the other meaning it was shut to all of them, and a
+closed run is drawn as a break in the line rather than interpolated through.
+
+## Four stages, four calculators
+
+[The calculators](/calculators) now cover each stage on its own terms: the
+[prevailing wage queue](/tools/pwd-calculator), the
+[PERM decision estimator](/tools/perm-timeline-calculator), the
+[I-140 calculator](/tools/i140-calculator) and
+[I-485 queue position](/tools/i485-queue-position), with the
+[deadline calculator](/tools/perm-deadline-calculator) computing the dates the
+regulations fix rather than estimating them.

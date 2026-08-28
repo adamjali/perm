@@ -1,6 +1,6 @@
 ---
 title: "How to Read the PERM Data"
-description: "A working guide to the live DOL figures and the six calculators: what each number means, where it comes from, and which one answers your question."
+description: "A working guide to the live DOL figures, the data pages and the calculators: what each number means, where it comes from, and which answers your question."
 date: "2026-08-24"
 author: "PERM Tracker Team"
 image: "/images/content/dol-building.jpg"
@@ -8,22 +8,39 @@ imageAlt: "The U.S. Department of Labor building"
 tags: ["guide", "data", "calculators", "processing-times", "dol"]
 category: "data"
 seoTitle: "How to Read the PERM Data"
-seoDescription: "What DOL's queue position, the average to a determination, and the backlog counts actually mean, and which PERM calculator answers which question."
+seoDescription: "What DOL's queue position, the average to a determination, and the backlog counts actually mean, and which PERM page or calculator answers which question."
 published: true
 ---
-
 DOL publishes real figures about the PERM queue, and most of the confusion
 around processing times comes from reading them as something they aren’t.
-This guide walks through each number on our [data overview](/tools) and each
-of the [six calculators](/calculators), in the order a case meets them.
+This guide walks through each number on the [data overview](/tools), each
+of the data pages, and each of the [calculators](/calculators), in the
+order a case meets them.
+
+## Start with your own case number
+
+[PERM case status](/perm-case-status) takes one PERM case number and shows
+what DOL holds against it: the status in DOL's own words with a
+plain-English reading beside it, how many undecided cases were filed ahead
+of it, and the sponsoring employer's published record. The statuses come
+from DOL's own case-status search, which PERM Tracker runs in batches
+against every undecided case twice a day, so a case decided in the last few
+hours shows at DOL first.
+
+Two limits before you type a number in. Current case numbers look like
+`G-100-26125-868956`, and the shorter 2022 and 2023 form, `A-23043-00641`,
+is looked up too, but its middle block isn't a readable filing date, so no
+queue position is drawn from one. And a status alert can only be set on a
+case that can still change, because there's nothing to report on a case DOL
+has already decided.
 
 ## The queue position
 
 The headline figure on the [overview](/tools) is the filing month DOL is
 deciding right now in analyst review, the queue nearly every case sits in.
 Subtract your filing month from that month and you have your rough distance
-in queue terms. The tape below it draws the same fact: cleared months solid,
-waiting months empty, the frontier flagged.
+in queue terms. The tape below it draws the same fact: cleared months
+solid, waiting months empty, the frontier flagged.
 
 Two cautions. The position is a month, not a promise. DOL clears a month
 over weeks, ordered alphabetically by employer inside it. And audited cases
@@ -31,12 +48,44 @@ sit in a separate, slower queue with its own published position.
 
 ## The average, and why it disagrees with everyone
 
-DOL also publishes an average number of days to a determination. On the day
-we wrote this it said 372, while public tools reported anywhere from 335 to
+DOL also publishes an average number of days to a determination. As of
+August 2026 it said 372, while public tools reported anywhere from 335 to
 503\. The spread has mechanical causes (different populations, different
 windows, different data ages), and the [methodology page](/methodology)
 takes them apart one by one. When two numbers disagree, the first question
-is what each one is measuring, and the second is when its data was published.
+is what each one is measuring, and the second is when its data was
+published.
+
+## How much is still waiting, and how fast DOL is clearing it
+
+DOL's quarterly disclosure files carry a decision date on every row and no
+pending rows at all, so the size of its own backlog can't be derived from
+them at any level of effort. [The backlog page](/perm-queue) is built from
+a per-case scan instead: how many cases are still undecided in each filing
+month, and which DOL queue each one is standing in.
+
+[Decision activity](/perm-decision-activity) is the other half of the same
+question. It counts the decisions DOL actually issued, by day and by week,
+the shape of its working week, and what happened to the cases it decided.
+It reports what has already happened and forecasts nothing, because the
+rate the queue moved last month is not a promise about next month.
+
+## RFI, audits and appeals
+
+[The review-stage page](/perm-rfi-audit) covers the statuses DOL puts in
+front of an applicant with no explanation attached: RFI issued, pending
+audit response, supervised recruitment, reconsideration, BALCA. Each one
+gets what it means, who has to act, the deadline the regulation sets, and
+the section it comes from. Beside that is a live count of how many cases
+are standing at each stage, which exists nowhere else because the
+disclosure files hold no pending cases.
+
+The page publishes no audit rate and no probability that a given case draws
+an RFI. A rate over a group isn't a forecast for a member of it, and PERM
+Tracker's own audit measurement currently reads zero, which is a hole in
+the data rather than a finding: DOL's [processing
+times](https://flag.dol.gov/processingtimes) page publishes a live Audit
+Review queue, so the true figure plainly isn't zero.
 
 ## Which calculator answers which question
 
@@ -73,26 +122,26 @@ its worksite state - volume and wages swing hard by state, median days
 barely move, because DOL works one national queue wherever the case was
 filed. The [wages page](/perm-wages) gives median offered wages by
 occupation, which are committed figures from federal filings rather than
-survey estimates. And the [employers page](/perm-employers) ranks the
-hundred biggest sponsors with each one's approval rate and median days -
-useful for checking a sponsor's track record, useless for predicting your
-own case's pace, which only the filing month decides.
+survey estimates. And the [employers page](/perm-employers) ranks every
+sponsor in the window, searchable, with each one's approval rate and median
+days - useful for checking a sponsor's track record, useless for predicting
+your own case's pace, which only the filing month decides.
 
 ## Who filed it, and what gets denied
 
-Two more cuts of the same files answer questions the aggregates above can’t.
-The [law firms page](/perm-attorneys) ranks the hundred most active PERM
-filers, which is the only public benchmark an attorney has for their own
+Two more cuts of the same files answer questions the aggregates above
+can’t. The [law firms page](/perm-attorneys) ranks every firm filing PERM
+cases, which is the only public benchmark an attorney has for their own
 practice against the field, and a way for a beneficiary to see whether the
-firm on their case has done this before. The
-[denial rates page](/perm-denial-risk) shows what actually gets denied: by
-offered wage, by fiscal year, and by the three questions the ETA-9089 asks
-about layoffs, ownership interest and full-time status. Denials are rare and
-concentrated, and none of those rates is a probability for a single case.
+firm on their case has done this before. The [denial rates
+page](/perm-denial-risk) shows what actually gets denied: by offered wage,
+by fiscal year, and by the three questions the ETA-9089 asks about layoffs,
+ownership interest and full-time status. Denials are rare and concentrated,
+and none of those rates is a probability for a single case.
 
 ## For caseloads
 
-Every date the deadline calculator produces, the
-[tracker](/signup) computes automatically per case, with alerts and calendar
-sync. The public calculators and the tracker run the same regulatory
-arithmetic from one shared engine, so the two can never disagree.
+Every date the deadline calculator produces, the [tracker](/signup)
+computes automatically per case, with alerts and calendar sync. The public
+calculators and the tracker run the same regulatory arithmetic from one
+shared engine, so the two can never disagree.
