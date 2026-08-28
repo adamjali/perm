@@ -107,14 +107,27 @@ export function TapeMini() {
         stroke="currentColor"
         strokeWidth="1.5"
       />
-      <rect x={4 + cleared * 14} y={4} width={34} height={12} fill="currentColor" />
+      {/* Outlined, not filled: a filled currentColor flag with
+          var(--background) text is unreadable on any card whose surface
+          isn't the page background - the ink calculator card rendered a
+          white box with white "DOL" inside it in light mode. An outline
+          plus currentColor text reads on every surface. */}
+      <rect
+        x={4 + cleared * 14}
+        y={4}
+        width={34}
+        height={12}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
       <text
-        x={4 + cleared * 14 + 3}
+        x={4 + cleared * 14 + 4}
         y={13}
         fontSize="8"
         fontFamily="var(--font-mono)"
         fontWeight="700"
-        fill="var(--background)"
+        fill="currentColor"
       >
         DOL
       </text>

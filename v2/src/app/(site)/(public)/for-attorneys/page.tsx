@@ -29,7 +29,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 export const metadata: Metadata = {
   title: "PERM Software for Attorneys and Firms",
   description:
-    "Track every PERM case's deadlines automatically: filing windows, wage expirations, recruitment clocks and audit responses, with reminders and calendar sync. Free.",
+    "Track every PERM case's deadlines automatically: filing windows, wage expirations, recruitment clocks and audit responses, with reminders. Free.",
   alternates: {
     canonical: "/for-attorneys",
   },
