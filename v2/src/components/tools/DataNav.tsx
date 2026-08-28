@@ -1,5 +1,9 @@
-import { Fragment } from "react";
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+
+import { cn } from "@/lib/utils";
 
 /**
  * The persistent section nav for the public data surface.
@@ -9,8 +13,19 @@ import Link from "next/link";
  * whole data surface one click deep from anywhere, and that is the correct
  * shape for an instrument — sections, not pages.
  *
- * Server component on purpose: the active state is set by the page that mounts
- * it (each page knows its own section), so no client JS is spent on a nav.
+ * TWO LEVELS, NOT ONE STRIP. The first version rendered all fifteen pages in
+ * a single horizontally-scrolling row with 10px group labels between them.
+ * Adam's read of it: "too crammed, have to scroll, not obvious where
+ * everything is in the hierarchy". He was right — a scroll strip hides
+ * everything past the fold and flattens a lookup, an aggregate and the
+ * methodology page into peers. Now the five GROUPS are the always-visible
+ * row (they fit without scrolling at every width), and the open group's
+ * pages render as chips beneath. Two controls, two behaviours, per the
+ * house rule: a group tab EXPANDS, a page chip NAVIGATES.
+ *
+ * Client component now (the open group is state), which is what the old
+ * server-component note traded away — the strip costs a few KB of JS and
+ * buys the hierarchy the surface was missing.
  */
 
 export type DataSection =
@@ -34,12 +49,7 @@ export interface DataNavSection {
   key: DataSection;
   label: string;
   href: string;
-  /**
-   * Which family the tab belongs to. Rendered as a small label at each
-   * family's start, because fifteen same-weight chips in one strip read as
-   * noise: a lookup, an aggregate, and the methodology page are not peers,
-   * and the grouping is the hierarchy the strip was missing.
-   */
+  /** Which family the tab belongs to — the first-level row. */
   group: "Start" | "Queue" | "Who files" | "Risk" | "Reference";
 }
 
@@ -55,13 +65,6 @@ export const SECTIONS: DataNavSection[] = [
   // question on this whole surface, and every other tab is an aggregate.
   { key: "case-status", group: "Start", label: "Case status", href: "/perm-case-status" },
   { key: "calculators", group: "Start", label: "Calculators", href: "/calculators" },
-  // Added 2026-08-27. Without it `/perm-queue` and every `/perm-queue/<month>`
-  // page passed `active="overview"`, so the tab marked `aria-current="page"`
-  // was Overview, which points at `/tools`. Same defect class as the
-  // `/perm-cases` tab that shipped highlighting Employers: a section with its
-  // own pages and no section key has to borrow somebody else's.
-  // `data-nav-sections.test.ts` now derives the expected key from each page's
-  // own route so a third one cannot be introduced quietly.
   // "Queue backlog", not "Live queue". 79.8% of pending cases were last
   // re-verified before 2026-08-01, so the counts behind this tab are a
   // rolling snapshot rather than a live reading, and a nav label is the
@@ -83,7 +86,14 @@ export const SECTIONS: DataNavSection[] = [
   { key: "methodology", group: "Reference", label: "Methodology", href: "/methodology" },
 ];
 
+const GROUPS = ["Start", "Queue", "Who files", "Risk", "Reference"] as const;
+
 export function DataNav({ active }: { active: DataSection }) {
+  const activeGroup =
+    SECTIONS.find((s) => s.key === active)?.group ?? "Start";
+  const [open, setOpen] = useState<(typeof GROUPS)[number]>(activeGroup);
+  const chips = SECTIONS.filter((s) => s.group === open);
+
   return (
     <nav
       aria-label="Data sections"
@@ -95,41 +105,71 @@ export function DataNav({ active }: { active: DataSection }) {
       className="sticky top-16 z-30 -mx-4 border-b-2 border-border bg-background px-4 before:absolute before:inset-x-0 before:bottom-full before:h-10 before:bg-background sm:-mx-6 sm:px-6"
       style={{ top: "calc(4rem + var(--security-banner-h, 0px))" }}
     >
-      <div className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {SECTIONS.map((s, i) => {
-          const isActive = s.key === active;
-          const startsGroup = i === 0 || SECTIONS[i - 1]!.group !== s.group;
-          // Keyed Fragment with a real space: mapped siblings render with
-          // ZERO characters between them otherwise, and every DOM extractor
-          // (Google included) reads the tab labels as one glued word.
-          return (
-            <Fragment key={s.key}>{" "}
-            {startsGroup ? (
-              <span
-                aria-hidden="true"
-                className={
-                  "select-none self-center whitespace-nowrap font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground " +
-                  (i === 0 ? "pr-1" : "border-l-2 border-border/50 pl-3 pr-1")
-                }
+      <div className="mx-auto max-w-7xl">
+        {/* Level 1: the five groups. They fit at every width, so nothing
+            scrolls and nothing is hidden past a fold. */}
+        {/* overflow-x-auto is the safety valve for very narrow phones only:
+            at 390px the five labels fit at this scale, measured; at 320px
+            they scroll rather than wrap or shrink below the legibility
+            floor. */}
+        <div className="flex items-stretch overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Section groups">
+          {GROUPS.map((g) => {
+            const isOpen = g === open;
+            const holdsActive = g === activeGroup;
+            return (
+              <button
+                key={g}
+                type="button"
+                role="tab"
+                aria-selected={isOpen}
+                aria-controls="data-nav-pages"
+                onClick={() => setOpen(g)}
+                className={cn(
+                  "min-h-[44px] flex-1 whitespace-nowrap border-b-4 px-1.5 py-2.5 font-heading text-xs font-black uppercase tracking-wide transition-colors sm:flex-none sm:px-4 sm:text-sm",
+                  isOpen
+                    ? "border-primary text-foreground"
+                    : "border-transparent text-foreground/60 hover:border-border hover:text-foreground",
+                )}
               >
-                {s.group}
-              </span>
-            ) : null}{" "}
-            <Link
-              href={s.href}
-              aria-current={isActive ? "page" : undefined}
-              className={
-                "whitespace-nowrap border-b-4 px-3 py-3 font-mono text-xs font-bold uppercase tracking-wider transition-colors " +
-                (isActive
-                  ? "border-primary text-foreground"
-                  : "border-transparent text-foreground/60 hover:border-border hover:text-foreground")
-              }
-            >
-              {s.label}
-            </Link>
-            </Fragment>
-          );
-        })}
+                {g}
+                {/* The dot marks the group holding the CURRENT page while a
+                    different group is open — so "where am I" survives
+                    browsing the other tabs. */}
+                {holdsActive && !isOpen ? (
+                  <span
+                    aria-hidden="true"
+                    className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-primary align-middle"
+                  />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+        {/* Level 2: the open group's pages. Wraps instead of scrolling. */}
+        <div
+          id="data-nav-pages"
+          role="tabpanel"
+          className="flex flex-wrap items-center gap-x-1 gap-y-0 border-t-2 border-border/50 py-1"
+        >
+          {chips.map((s) => {
+            const isActive = s.key === active;
+            return (
+              <Link
+                key={s.key}
+                href={s.href}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "whitespace-nowrap border-b-4 px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors sm:text-sm",
+                  isActive
+                    ? "border-primary text-foreground"
+                    : "border-transparent text-foreground/60 hover:border-border hover:text-foreground",
+                )}
+              >
+                {s.label}
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );

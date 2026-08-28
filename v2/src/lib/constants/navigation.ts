@@ -100,7 +100,11 @@ export const HOME_SECTION_LINKS = [
  */
 export const PUBLIC_NAV_LINKS = [
   { href: "/perm-case-status", label: "Track my case" },
-  { href: "/calculators", label: "Timelines" },
+  // "Processing times", verbatim: the phrase carries ~6.7K quarterly Bing
+  // impressions against zero for "timelines"/"predictor" - the nav should
+  // say what people search. It lands on the calculator hub, whose first
+  // card is the PERM processing time calculator.
+  { href: "/calculators", label: "Processing times" },
   { href: "/tools", label: "Data" },
   { href: "/for-attorneys", label: "For attorneys" },
 ] as const satisfies readonly NavLink[];

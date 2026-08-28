@@ -74,11 +74,11 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
       id="hero"
       className="relative border-b-3 border-border lg:min-h-[calc(100dvh-4rem)]"
     >
-      <div className="relative z-10 mx-auto grid max-w-[1400px] grid-cols-1 items-start gap-10 px-4 pb-12 pt-8 [&>*]:min-w-0 sm:px-8 sm:pb-16 sm:pt-12 lg:grid-cols-12 lg:gap-x-12 lg:pb-20 lg:pt-16">
+      <div className="relative z-10 mx-auto grid max-w-[1400px] grid-cols-1 items-start gap-10 px-4 pb-12 pt-8 [&>*]:min-w-0 sm:px-8 sm:pb-16 sm:pt-12 lg:grid-cols-12 lg:gap-x-10 lg:pb-12 lg:pt-10">
         {/* Dateline. The as-of stamp is the most characteristic artifact in
             this subject's world, so it is set as part of the claim rather
             than hidden in fine print under it. */}
-        <div className="flex flex-col lg:col-span-5">
+        <div className="flex flex-col lg:col-span-6">
           <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
             {current
               ? `DOL determinations through ${shortLabel(current.row.decisionMonth)}`
@@ -159,12 +159,19 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
             >
               Live DOL status, your place in the queue, and an estimate. Free,
               no account. The case number is on the filing receipt, or ask
-              whoever filed for you.{" "}
+              whoever filed for you.
+            </p>{" "}
+            {/* The second funnel, at button weight. "Processing time" is the
+                phrase people actually search (Bing: 6.7K impressions against
+                zero for "predictor"), so the control says it verbatim. */}
+            <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t-2 border-border pt-4">
+              <span className="text-sm font-bold">No case number?</span>{" "}
               <Link
                 href="/tools/perm-timeline-calculator"
-                className="font-bold underline underline-offset-2 hover:text-primary"
+                className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-background px-4 font-heading font-black shadow-hard-sm transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
               >
-                No case number? Estimate from your filing month
+                PERM processing time calculator{" "}
+                <ArrowRight className="shrink-0" />
               </Link>
             </p>
           </form>
@@ -213,9 +220,13 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
 
         {/* The instrument. One grid cell, its own height, beside the column
             above and never sizing anything in it. */}
-        <div className="lg:col-span-7">
+        {/* col-span-6, down from 7, with a width cap: at 7/12 the tape ran
+            ~760px wide and the text column read as crammed against it -
+            Adam's exact word for it. The chart is the supporting evidence,
+            not the headline. */}
+        <div className="lg:col-span-6">
           {data ? (
-            <WaitLedger rows={waitRows} />
+            <WaitLedger rows={waitRows} className="lg:ml-auto lg:max-w-[600px]" />
           ) : (
             /* Empty state. The deploy-skew window and a failed fetch both land
                here, and it must offer the primary source rather than a blank. */

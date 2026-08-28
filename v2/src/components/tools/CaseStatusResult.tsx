@@ -7,6 +7,7 @@ import { InsightLede, Verdict } from "@/components/tools/Insight";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 import { CaseEstimate } from "@/components/tools/CaseEstimate";
 import { CaseNumberPlate } from "@/components/tools/CaseNumberPlate";
+import { QueueTape } from "@/components/tools/QueueTape";
 import {
   CaseWall,
   CohortNeighbours,
@@ -471,11 +472,19 @@ function TheRecord({
   const employerName = live?.employerName ?? decided?.employerName ?? null;
   const jobTitle = live?.jobTitle ?? decided?.jobTitle ?? null;
 
+  // The status is why the visitor is here; it must not weigh the same as
+  // "Job title". It leads the card at display size, toned by its kind, and
+  // the dl below keeps the supporting facts. Adam's read of the flat
+  // five-row version: no hierarchy.
+  const kind = status ? getStatusMeaning(status)?.kind ?? null : null;
+  const statusTone =
+    kind === "decided"
+      ? "bg-foreground text-background"
+      : kind === "action"
+        ? "bg-data-warn/15"
+        : "bg-tint-primary";
+
   const rows: { label: string; value: React.ReactNode }[] = [
-    {
-      label: "Status",
-      value: status ? prettyStatus(status) : "Not recorded",
-    },
     {
       label: "Filed",
       value: filingDate
@@ -499,6 +508,14 @@ function TheRecord({
       <p className="border-b-2 border-border px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground sm:px-5">
         The record
       </p>
+      <div className={`border-b-2 border-border px-4 py-4 sm:px-5 ${statusTone}`}>
+        <p className={`font-mono text-[11px] font-bold uppercase tracking-[0.18em] ${kind === "decided" ? "text-background/60" : "text-muted-foreground"}`}>
+          {kind ? KIND_LABEL[kind] : "Status"}
+        </p>{" "}
+        <p className="mt-1 font-heading text-2xl font-black leading-tight">
+          {status ? prettyStatus(status) : "Not recorded"}
+        </p>
+      </div>
       <dl className="px-4 py-4 sm:px-5">
         {rows.map((r) => (
           <Fragment key={r.label}>{" "}
@@ -567,7 +584,19 @@ function Position({
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
         Every figure here is a count over the per-case snapshot. None
         of them is a date, and none of them is a rate this case will move at.
-      </p>
+      </p>{" "}
+
+      {/* The one drawing that carries the whole mental model: DOL's tape of
+          filing months with its work front, and this case's month marked on
+          it. Same component the data hub draws, so the two surfaces teach
+          the same picture. */}
+      {cohort ? (
+        <QueueTape
+          frontierMonth={wall.frontMonth}
+          selectedMonth={cohort.month}
+          className="mt-6"
+        />
+      ) : null}
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Stat

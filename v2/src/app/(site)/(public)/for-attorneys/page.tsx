@@ -9,6 +9,7 @@ import {
   CTASection,
 } from "@/components/home";
 import { SectionDivider } from "@/components/home/SectionDivider";
+import { DeferredShowcase } from "@/components/home/DeferredShowcase";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 /**
@@ -46,7 +47,8 @@ export default function ForAttorneysPage() {
   return (
     <>
       <section className="border-b-3 border-border">
-        <div className="mx-auto max-w-[1400px] px-4 pb-12 pt-10 sm:px-8 sm:pb-16 sm:pt-14">
+        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-10 px-4 pb-12 pt-10 [&>*]:min-w-0 sm:px-8 sm:pb-16 sm:pt-14 lg:grid-cols-12 lg:gap-x-12">
+        <div className="lg:col-span-6">
           <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
             For attorneys, paralegals and HR teams
           </p>{" "}
@@ -76,6 +78,13 @@ export default function ForAttorneysPage() {
               Check a case number first
             </Link>
           </div>
+        </div>
+        {/* The product itself, moving. This half of the hero sat empty after
+            the reorg moved the pitch here from the homepage; the demo loop
+            is the strongest evidence the page has, so it gets the slot. */}
+        <div className="border-3 border-border shadow-hard lg:col-span-6">
+          <DeferredShowcase />
+        </div>
         </div>
       </section>
       <StakesSection />

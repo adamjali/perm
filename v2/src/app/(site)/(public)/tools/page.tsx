@@ -22,6 +22,7 @@ import {
   BulletinStepsMini,
   QueueDepthMini,
   ScaleBarsMini,
+  TapeMini,
   TwoBarsMini,
   WindowSpansMini,
 } from "@/components/tools/MiniDiagrams";
@@ -120,6 +121,47 @@ export default async function ToolsPage() {
         </section>
       ) : null}
 
+      {/* THE FUNNEL, FIRST: a person holding a case number outranks every
+          aggregate below. Same GET contract as the homepage hero - no client
+          JS, an honest form a crawler can see. This hub had no path to the
+          lookup at all until Adam asked where the important pages were. */}
+      <section className="mt-10 border-3 border-border bg-card p-6 shadow-hard sm:p-8">
+        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+          <div className="min-w-0">
+            <h2 className="font-heading text-2xl font-black">
+              Where is your case? When could it be decided?
+            </h2>{" "}
+            <p className="mt-2 max-w-xl text-base leading-relaxed text-foreground/70">
+              Live DOL status, your place in the queue, and a stage-aware
+              estimate. Free, no account.
+            </p>
+          </div>
+          <form action="/perm-case-status" method="get" className="flex min-w-0 flex-wrap items-center gap-3">
+            <label htmlFor="tools-case" className="sr-only">
+              Case number
+            </label>{" "}
+            <input
+              id="tools-case"
+              name="case"
+              placeholder="G-100-24339-516453"
+              className="min-h-[44px] w-64 min-w-0 max-w-full border-2 border-border bg-background px-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />{" "}
+            <button
+              type="submit"
+              className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-5 font-heading font-black text-primary-foreground shadow-hard-sm transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+            >
+              Check my case
+            </button>{" "}
+            <Link
+              href="/tools/perm-timeline-calculator"
+              className="text-sm font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
+            >
+              No number? Processing time calculator
+            </Link>
+          </form>
+        </div>
+      </section>
+
       {/* The queue as a tape: the one drawing that carries the mental model. */}
       {frontierMonth ? (
         <section className="mt-10">
@@ -207,6 +249,13 @@ export default async function ToolsPage() {
               tone: "tint",
               viz: "steps" as const,
             },
+            {
+              href: "/perm-cases",
+              label: "Case search",
+              blurb: "Every decided case DOL has published, searchable by employer, job and outcome.",
+              tone: "card",
+              viz: "tape" as const,
+            },
           ].map((c) => (
             <a
               key={c.href}
@@ -232,6 +281,7 @@ export default async function ToolsPage() {
                 {c.viz === "queue" ? <QueueDepthMini /> : null}
                 {c.viz === "spans" ? <WindowSpansMini /> : null}
                 {c.viz === "steps" ? <BulletinStepsMini /> : null}
+                {c.viz === "tape" ? <TapeMini /> : null}
               </div>{" "}
               <p
                 className={
@@ -254,6 +304,39 @@ export default async function ToolsPage() {
         </div>
       </section>
 
+      {/* The queue, day by day - the pages the strip's Queue and Risk groups
+          hold, so the hub reaches everything the nav does. */}
+      <section className="mt-12">
+        <h2 className="font-heading text-2xl font-black">The queue, day by day</h2>{" "}
+        <div className="mt-6 flex flex-wrap gap-4 [&>*]:min-w-0 [&>*]:flex-1 [&>*]:basis-64">
+          {[
+            { href: "/perm-queue", label: "Queue backlog", blurb: "Every filing month's pending cases, split across DOL's separate queues." },
+            { href: "/perm-decision-activity", label: "Daily activity", blurb: "How many cases DOL decides each day, measured from status changes." },
+            { href: "/perm-rfi-audit", label: "RFI and audits", blurb: "How often cases leave filing order, and what happens to them after." },
+            { href: "/tools/priority-date-calculator", label: "Visa bulletin", blurb: "84 months of cutoff history, and whether your date is current." },
+          ].map((c) => (
+            <Link
+              key={c.href}
+              href={c.href}
+              className="group flex flex-col border-2 border-border bg-card p-5 shadow-hard transition-all duration-150 hover:-translate-y-[2px] hover:shadow-hard-lg active:translate-y-0"
+            >
+              <h3 className="font-heading text-lg font-black">{c.label}</h3>{" "}
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-foreground/70">{c.blurb}</p>{" "}
+              <span className="mt-3 font-mono text-xs font-bold uppercase tracking-wider text-foreground/60 group-hover:text-primary">
+                Open →
+              </span>
+            </Link>
+          ))}
+        </div>{" "}
+        <p className="mt-4 text-sm text-muted-foreground">
+          How every figure is computed:{" "}
+          <Link href="/methodology" className="font-bold underline underline-offset-2 hover:text-primary">
+            the methodology page
+          </Link>
+          .
+        </p>
+      </section>
+
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
           <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -269,6 +352,13 @@ export default async function ToolsPage() {
               className="font-bold underline underline-offset-2 hover:text-primary"
             >
               processing times page
+            </Link>
+            , or on any case you check. Everything we send is listed on the{" "}
+            <Link
+              href="/email-preferences"
+              className="font-bold underline underline-offset-2 hover:text-primary"
+            >
+              email preferences page
             </Link>
             .
           </p>
@@ -290,6 +380,12 @@ export default async function ToolsPage() {
           >
             Start tracking
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>{" "}
+          <Link
+            href="/for-attorneys"
+            className="mt-3 inline-flex min-h-[44px] items-center font-bold underline decoration-primary decoration-2 underline-offset-4 sm:ml-4 sm:mt-5"
+          >
+            What firms get
           </Link>
         </div>
       </section>

@@ -1,6 +1,12 @@
 import Link from "next/link";
 
 import { ArrowRight } from "./icons";
+import {
+  BulletinStepsMini,
+  QueueDepthMini,
+  TapeMini,
+  TwoBarsMini,
+} from "@/components/tools/MiniDiagrams";
 
 /**
  * The four stages, addressed to the person inside them.
@@ -26,6 +32,7 @@ const STAGES = [
     question: "How long is the PWD taking?",
     detail:
       "A separate DOL queue most tools skip entirely, split into OEWS and non-OEWS.",
+    viz: QueueDepthMini,
     tool: { label: "PWD timeline", href: "/tools/pwd-calculator" },
     data: { label: "The backlog", href: "/perm-processing-times" },
     border: "border-t-stage-pwd",
@@ -36,6 +43,7 @@ const STAGES = [
     question: "When will my PERM be approved?",
     detail:
       "DOL's word is certified. Check your case number, or estimate from your filing month.",
+    viz: TapeMini,
     tool: { label: "PERM timeline", href: "/tools/perm-timeline-calculator" },
     data: { label: "Check a case", href: "/perm-case-status" },
     border: "border-t-stage-eta9089",
@@ -46,6 +54,7 @@ const STAGES = [
     question: "How long does the I-140 take?",
     detail:
       "USCIS's petition stage, with premium processing and a 180-day clock that matters in a layoff.",
+    viz: TwoBarsMini,
     tool: { label: "I-140 timeline", href: "/tools/i140-calculator" },
     data: { label: "The trends", href: "/tools/i140-trends" },
     border: "border-t-stage-i140",
@@ -56,6 +65,7 @@ const STAGES = [
     question: "When is my priority date current?",
     detail:
       "The visa bulletin decides the final wait. We hold 84 months of its history.",
+    viz: BulletinStepsMini,
     tool: { label: "Queue position", href: "/tools/i485-queue-position" },
     data: { label: "Cutoff history", href: "/tools/priority-date-calculator" },
     border: "border-t-stage-recruitment",
@@ -81,13 +91,21 @@ export function StageStrip() {
           {STAGES.map((s) => (
             <div
               key={s.name}
-              className={`flex flex-col border-3 border-border border-t-[6px] bg-card p-5 shadow-hard ${s.border}`}
+              className={`group flex flex-col border-3 border-border border-t-[6px] bg-card p-5 shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg ${s.border}`}
             >
               <span className="font-mono text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 {s.tag}
               </span>{" "}
               <span className="mt-1 font-heading text-xl font-black">
                 {s.name}
+              </span>{" "}
+              {/* One drawing per stage from the calculators' own mini-diagram
+                  kit, so the strip and the tools read as one system. Each
+                  depicts the stage's actual mechanism: the PWD's two queues,
+                  DOL's month tape, USCIS's two service centers, the
+                  bulletin's stepped cutoffs. */}
+              <span className="mt-3 block w-full max-w-[180px] text-foreground">
+                <s.viz />
               </span>{" "}
               <span className="mt-2 font-bold">{s.question}</span>{" "}
               <span className="mt-2 flex-1 text-sm leading-relaxed text-foreground/70">
