@@ -26,6 +26,7 @@ export interface BasicInfoSectionProps {
     beneficiaryIdentifier: string;
     positionTitle: string;
     caseNumber?: string;
+    internalCaseNumber?: string;
     caseStatus: CaseStatus;
     progressStatus: ProgressStatus;
   };
@@ -192,7 +193,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
             />
           </FormField>
 
-          {/* Foreign Worker ID | Case Number (side by side) */}
+          {/* Foreign Worker ID | DOL case number (side by side) */}
           <FormField
             label="Foreign Worker ID"
             name="beneficiaryIdentifier"
@@ -210,9 +211,16 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
             />
           </FormField>
 
+          {/*
+            Two different numbers, and this field used to conflate them: it was
+            labelled "Case Number" and asked for an internal reference, while
+            `internalCaseNumber` existed in the schema, the CSV export, the
+            importer and the AI tools with no input anywhere in the form.
+          */}
           <FormField
-            label="Case Number"
+            label="DOL case number"
             name="caseNumber"
+            hint="From DOL, on the ETA 9089 or PWD confirmation"
             error={errors?.caseNumber}
           >
             <Input
@@ -222,7 +230,25 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
               value={values.caseNumber || ''}
               onChange={handleInputChange}
               aria-invalid={!!errors?.caseNumber}
-              placeholder="Internal reference (optional)"
+              placeholder="G-100-24339-516453"
+              maxLength={50}
+            />
+          </FormField>
+
+          <FormField
+            label="Internal reference"
+            name="internalCaseNumber"
+            hint="Your own matter or file number"
+            error={errors?.internalCaseNumber}
+          >
+            <Input
+              id="internalCaseNumber"
+              name="internalCaseNumber"
+              type="text"
+              value={values.internalCaseNumber || ''}
+              onChange={handleInputChange}
+              aria-invalid={!!errors?.internalCaseNumber}
+              placeholder="Optional"
               maxLength={50}
             />
           </FormField>

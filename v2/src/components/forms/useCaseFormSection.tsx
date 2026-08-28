@@ -280,6 +280,7 @@ interface BasicInfoSectionHookReturn {
     beneficiaryIdentifier: string;
     positionTitle: string;
     caseNumber?: string;
+    internalCaseNumber?: string;
     caseStatus: CaseFormData["caseStatus"];
     progressStatus: CaseFormData["progressStatus"];
   };
@@ -300,6 +301,7 @@ export function useBasicInfoSection(props?: {
     beneficiaryIdentifier: string;
     positionTitle: string;
     caseNumber?: string;
+    internalCaseNumber?: string;
     caseStatus: CaseFormData["caseStatus"];
     progressStatus: CaseFormData["progressStatus"];
   };
@@ -322,6 +324,7 @@ export function useBasicInfoSection(props?: {
     beneficiaryIdentifier: context?.formData.beneficiaryIdentifier || "",
     positionTitle: context?.formData.positionTitle || "",
     caseNumber: context?.formData.caseNumber,
+    internalCaseNumber: context?.formData.internalCaseNumber,
     caseStatus: context?.formData.caseStatus || "pwd",
     progressStatus: context?.formData.progressStatus || "working",
   };

@@ -121,12 +121,11 @@ export function useClientActions(
               caseId: string;
               section?: string;
             };
+            // Only two case routes exist: the detail page and its edit page.
+            // A `timeline` section used to map to /cases/<id>/timeline, which
+            // has never existed, so the assistant navigated to a 404.
             const path =
-              section === 'edit'
-                ? `/cases/${caseId}/edit`
-                : section === 'timeline'
-                  ? `/cases/${caseId}/timeline`
-                  : `/cases/${caseId}`;
+              section === 'edit' ? `/cases/${caseId}/edit` : `/cases/${caseId}`;
             router.push(path);
             result = { success: true };
             break;

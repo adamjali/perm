@@ -99,7 +99,7 @@ export default function AuthenticatedLayout({
         </main>
 
         {/* Footer */}
-        <Footer variant="extended" />
+        <Footer variant="extended" audience="app" />
 
         {/* Sign-out loading overlay */}
         <SignOutOverlay />

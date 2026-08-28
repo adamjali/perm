@@ -14,9 +14,10 @@
  */
 
 import { useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { Check, CircleNotch, Gear as SettingsIcon, Prohibit as Ban, Pulse as Activity, Shield, UserMinus as UserX, Warning as AlertTriangle } from "@phosphor-icons/react";
+import { ArrowLeft, Check, CircleNotch, Gear as SettingsIcon, Prohibit as Ban, Pulse as Activity, Shield, UserMinus as UserX, Warning as AlertTriangle } from "@phosphor-icons/react";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
@@ -63,6 +64,16 @@ export default function SecurityDashboardClient() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-8">
+      {/* This page was reachable from the admin dashboard and had no way back:
+          the only exit was the browser button. */}
+      <Link
+        href="/admin"
+        className="mono inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Admin dashboard
+      </Link>
+
       <header className="flex items-center gap-3">
         <Shield className="h-8 w-8 text-primary" aria-hidden />
         <div>

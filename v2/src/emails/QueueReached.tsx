@@ -116,7 +116,7 @@ export function QueueReached({
       {hasMovedPast ? (
         <Section className="em-card" style={styles.yours}>
           <Text className="qa-yours-label" style={styles.yoursLabel}>
-            Your {monthNoun}
+            {`Your ${monthNoun}`}
           </Text>
           <Text className="em-text" style={styles.yoursValue}>
             {filingMonth}

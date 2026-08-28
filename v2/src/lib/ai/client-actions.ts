@@ -57,7 +57,7 @@ export interface ViewCaseAction extends ClientAction {
   type: 'viewCase';
   payload: {
     caseId: string;
-    section?: 'overview' | 'timeline' | 'edit';
+    section?: 'overview' | 'edit';
   };
 }
 

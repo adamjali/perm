@@ -154,8 +154,8 @@ Use for: going to dashboard, cases list, calendar, settings, or creating a new c
 Parameters: path (required), reason (optional).`;
 
 const VIEW_CASE_DESCRIPTION = `Navigate to view a specific PERM case's detail page.
-Use for: showing case details after finding a case via queryCases, viewing case timeline, editing a case.
-Parameters: caseId (required), section (optional: overview, timeline, edit).`;
+Use for: showing case details after finding a case via queryCases, editing a case.
+Parameters: caseId (required), section (optional: overview, edit).`;
 
 const SCROLL_TO_DESCRIPTION = `Scroll to a specific section on the current page.
 Use for: highlighting deadlines section, jumping to form sections, navigating within long pages.

@@ -85,10 +85,9 @@ export const NavigateInputSchema = z.object({
       '/timeline',
       '/notifications',
       '/settings',
-      '/settings/profile',
-      '/settings/notifications',
-      '/settings/calendar',
-      '/settings/account',
+      '/settings?tab=notifications',
+      '/settings?tab=calendar-sync',
+      '/settings?tab=support',
     ])
     .describe('The page path to navigate to'),
   reason: z
@@ -106,7 +105,7 @@ export type NavigateInput = z.infer<typeof NavigateInputSchema>;
 export const ViewCaseInputSchema = z.object({
   caseId: z.string().describe('The Convex ID of the case to view'),
   section: z
-    .enum(['overview', 'timeline', 'edit'])
+    .enum(['overview', 'edit'])
     .optional()
     .describe('Which section to show (defaults to overview)'),
 });
@@ -438,17 +437,17 @@ export const navigateTool = tool({
 - /calendar: Calendar view of deadlines and events
 - /timeline: Overall timeline view across all cases
 - /notifications: Notification center
-- /settings: Main settings page
-- /settings/profile: User profile settings
-- /settings/notifications: Notification preferences
-- /settings/calendar: Calendar sync settings
-- /settings/account: Account settings
+- /settings: Settings, opens on the profile tab
+- /settings?tab=notifications: Notification preferences
+- /settings?tab=calendar-sync: Calendar sync settings
+- /settings?tab=support: Support, data export and account deletion
 
 ## EXAMPLES:
 - "Go to dashboard": { path: "/dashboard" }
 - "I need to add a case": { path: "/cases/new", reason: "Creating new PERM case" }
 - "Show me my notifications": { path: "/notifications" }
-- "Open calendar settings": { path: "/settings/calendar" }`,
+- "Open calendar settings": { path: "/settings?tab=calendar-sync" }
+- "Delete my account": { path: "/settings?tab=support" }`,
 
   inputSchema: NavigateInputSchema,
 });
@@ -474,14 +473,12 @@ export const viewCaseTool = tool({
 - User is asking general questions about a case (use queryCases instead)
 
 ## SECTIONS:
-- overview: Main case details and status (default)
-- timeline: Case timeline with all events and milestones
+- overview: Main case details, status and timeline (default)
 - edit: Edit mode for the case
 
 ## EXAMPLES:
 - "Show TechCorp case": { caseId: "abc123" }
 - "Edit ACME case": { caseId: "xyz789", section: "edit" }
-- "Show case timeline": { caseId: "def456", section: "timeline" }
 
 ## NOTE:
 Always use queryCases first to find the caseId if not already known.`,

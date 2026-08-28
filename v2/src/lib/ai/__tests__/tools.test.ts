@@ -218,10 +218,9 @@ describe('Input Schemas', () => {
         '/timeline',
         '/notifications',
         '/settings',
-        '/settings/profile',
-        '/settings/notifications',
-        '/settings/calendar',
-        '/settings/account',
+        '/settings?tab=notifications',
+        '/settings?tab=calendar-sync',
+        '/settings?tab=support',
       ];
 
       for (const path of validPaths) {
@@ -233,6 +232,20 @@ describe('Input Schemas', () => {
     it('rejects invalid path', () => {
       const result = schema.safeParse({ path: '/invalid-path' });
       expect(result.success).toBe(false);
+    });
+
+    /**
+     * Settings is ONE page with a ?tab= param, not a directory. These four
+     * paths were in the enum and every one of them 404s; the assistant was
+     * navigating users off a cliff whenever it offered to open settings.
+     */
+    it.each([
+      '/settings/profile',
+      '/settings/notifications',
+      '/settings/calendar',
+      '/settings/account',
+    ])('rejects the non-existent route %s', (path) => {
+      expect(schema.safeParse({ path }).success).toBe(false);
     });
 
     it('accepts path with optional reason', () => {
@@ -258,12 +271,20 @@ describe('Input Schemas', () => {
     });
 
     it('accepts caseId with optional section', () => {
-      const validSections = ['overview', 'timeline', 'edit'];
+      const validSections = ['overview', 'edit'];
 
       for (const section of validSections) {
         const result = schema.safeParse({ caseId: 'case123', section });
         expect(result.success).toBe(true);
       }
+    });
+
+    /**
+     * There is no /cases/<id>/timeline route, only the detail page and its
+     * edit page. `timeline` mapped straight to a 404 in useClientActions.
+     */
+    it('rejects the timeline section, which has no route', () => {
+      expect(schema.safeParse({ caseId: 'case123', section: 'timeline' }).success).toBe(false);
     });
 
     it('rejects invalid section', () => {
@@ -676,6 +697,34 @@ describe('Tool Definitions', () => {
       expect(navigateTool.description).toContain('WHEN TO USE');
       expect(navigateTool.description).toContain('WHEN NOT TO USE');
     });
+
+    /**
+     * The prose PATHS list is a second copy of the enum, and it is the copy
+     * the model actually reads. It drifted: it advertised four /settings/*
+     * routes that do not exist. Assert both directions so neither half can
+     * grow a destination the other does not have.
+     */
+    it('the PATHS prose lists exactly the paths the schema accepts', () => {
+      const prose = navigateTool.description!
+        .split('## PATHS:')[1]!
+        .split('## EXAMPLES:')[0]!;
+      const documented = [...prose.matchAll(/^- (\S+):/gm)].map((m) => m[1]!);
+
+      for (const path of documented) {
+        expect(NavigateInputSchema.safeParse({ path }).success).toBe(true);
+      }
+      expect(documented).toHaveLength(NavigateInputSchema.shape.path.options.length);
+    });
+
+    it('every path in the EXAMPLES block is a path the schema accepts', () => {
+      const examples = navigateTool.description!.split('## EXAMPLES:')[1]!;
+      const used = [...examples.matchAll(/path: "([^"]+)"/g)].map((m) => m[1]!);
+
+      expect(used.length).toBeGreaterThan(0);
+      for (const path of used) {
+        expect(NavigateInputSchema.safeParse({ path }).success).toBe(true);
+      }
+    });
   });
 
   describe('viewCaseTool', () => {
@@ -697,6 +746,18 @@ describe('Tool Definitions', () => {
     it('description includes usage guidance', () => {
       expect(viewCaseTool.description).toContain('WHEN TO USE');
       expect(viewCaseTool.description).toContain('WHEN NOT TO USE');
+    });
+
+    it('the SECTIONS prose lists exactly the sections the schema accepts', () => {
+      const prose = viewCaseTool.description!
+        .split('## SECTIONS:')[1]!
+        .split('## EXAMPLES:')[0]!;
+      const documented = [...prose.matchAll(/^- (\S+):/gm)].map((m) => m[1]!);
+
+      for (const section of documented) {
+        expect(ViewCaseInputSchema.safeParse({ caseId: 'x', section }).success).toBe(true);
+      }
+      expect(documented).toHaveLength(2);
     });
   });
 

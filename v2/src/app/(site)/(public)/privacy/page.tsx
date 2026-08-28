@@ -962,7 +962,7 @@ export default function PrivacyPage() {
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
                 <strong>Access:</strong> Download all your data at any time via
-                the &quot;Export All My Data&quot; button in Settings, or request a copy by
+                the &quot;Download everything (.json)&quot; button in Settings, or request a copy by
                 contacting us
               </li>{" "}
               <li>

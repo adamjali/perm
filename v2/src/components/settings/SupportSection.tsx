@@ -337,7 +337,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
           loadingText="Exporting..."
         >
           <Download className="w-4 h-4 mr-2" />
-          Export All My Data
+          Download everything (.json)
         </Button>
       </div>
 

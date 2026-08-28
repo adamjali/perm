@@ -66,6 +66,19 @@ describe("SupportSection", () => {
     expect(screen.getAllByRole("link").length).toBe(3);
   });
 
+  /**
+   * "Export All My Data" sat next to Delete Account and read as part of the
+   * deletion flow. The card is the discoverable surface, so it names the
+   * thing and the button says what pressing it produces.
+   */
+  it("labels the data export as a plain download", () => {
+    renderWithProviders(<SupportSection profile={defaultProfile} />);
+    expect(screen.getByRole("heading", { name: "Your Data" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /download everything \(\.json\)/i }),
+    ).toBeInTheDocument();
+  });
+
   describe("links", () => {
     it("email link has correct mailto href and displays address", () => {
       renderWithProviders(<SupportSection profile={defaultProfile} />);

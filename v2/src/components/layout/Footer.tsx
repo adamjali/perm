@@ -2,16 +2,20 @@
 
 /**
  * Footer Component
- * Footer with compact (authenticated pages) and extended (public pages) variants.
+ * One multi-column footer, shared by the public site and the signed-in app.
  *
  * Features:
  * - Black background matching header
- * - Compact: Privacy, Terms, Contact links + copyright
- * - Extended: Multi-column layout with logo, nav links, social, copyright
+ * - Multi-column layout with logo, nav links, social, copyright
  * - Hover underline animation on links
  * - Dark mode compatible (black bg works in both modes)
  * - Loading states for internal navigation links
  *
+ * There used to be a second "compact" bar documented as the authenticated
+ * footer. Neither call site ever asked for it, so the signed-in app got the
+ * public footer, Sign In and Sign Up Free included, offered to people who
+ * were already signed in. `audience` is what fixes that; the compact branch
+ * is gone rather than left as an unreachable second layout.
  */
 
 import { Heart } from "@phosphor-icons/react";
@@ -47,260 +51,241 @@ const SOCIAL_ICONS = {
 } as const;
 
 interface FooterProps {
-  variant?: "compact" | "extended";
+  /**
+   * Kept because both call sites pass it and only one layout remains.
+   * Collapse it once the public layout can be edited alongside this file.
+   */
+  variant?: "extended";
+
+  /**
+   * Who is reading the footer. The signed-in app drops the two links that
+   * only make sense to a logged-out visitor.
+   */
+  audience?: "public" | "app";
 }
 
-export default function Footer({ variant = "compact" }: FooterProps) {
+export default function Footer({ audience = "public" }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
-  if (variant === "extended") {
-    return (
-      <footer className="relative z-50 border-t-3 border-black bg-black dark:border-white dark:bg-black">
-        <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8">
-          {/* Multi-column grid */}
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {/* Brand column */}
-            <div className="lg:col-span-1">
-              <div className="font-heading text-xl font-bold text-white mb-4">
-                <span className="text-(--primary)">PERM</span> Tracker
-              </div>{" "}
-              <p className="text-sm text-white/60 leading-relaxed mb-6">
-                Live DOL data for the wait, automatic deadlines for the work. Free for applicants and attorneys.
-              </p>
-              {/* Social links. Driven by SOCIAL_LINKS so a network that has no
-                  real profile yet is simply absent, rather than linking its
-                  bare homepage as these previously did. */}
-              <div className="flex gap-4">
-                {SOCIAL_LINKS.map(({ href, label, icon }) => {
-                  const Icon = SOCIAL_ICONS[icon];
-                  // All three marks are monochrome here, LinkedIn included.
-                  //
-                  // Its official #0A66C2 was the honest brand colour and it was
-                  // still wrong in place: it made the LinkedIn tile the only
-                  // coloured thing in an otherwise black-and-white footer, on
-                  // every page, so the eye landed on it before anything the
-                  // footer is actually for. Three marks at one weight read as a
-                  // set; one in brand colour reads as a sticker. It also
-                  // carried brightness-125/150, and a brightness filter used
-                  // to lift a colour is the glow this project does not ship.
-                  const brand = "text-white/70 hover:text-white";
-                  return (
-                    <a
-                      key={label}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={"flex min-h-[44px] min-w-[44px] items-center justify-center transition-all " + brand}
-                      aria-label={label}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Product column */}
-            <div>
-              <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
-                Product
-              </p>{" "}
-              <nav className="footer-links flex flex-col gap-3" aria-label="Product links">
-                <NavLink
-                  href="/#features"
-                  showLoading={false}
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  Features
-                </NavLink>{" "}
-                <NavLink
-                  href="/tools"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  Data
-                </NavLink>{" "}
-                <NavLink
-                  href="/faq"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  FAQ
-                </NavLink>{" "}
-                <NavLink
-                  href="/signup"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  Sign Up Free
-                </NavLink>{" "}
-                <NavLink
-                  href="/login"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  Sign In
-                </NavLink>
-              </nav>
-            </div>
-
-            {/* Learn column */}
-            <div>
-              <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
-                Learn
-              </p>{" "}
-              <nav className="footer-links flex flex-col gap-3" aria-label="Content links">
-                <NavLink
-                  href="/blog"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  Blog
-                </NavLink>{" "}
-                <NavLink
-                  href="/guides"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  Guides
-                </NavLink>{" "}
-                <NavLink
-                  href="/changelog"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  Changelog
-                </NavLink>{" "}
-                <NavLink
-                  href="/perm-processing-times"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  Processing Times
-                </NavLink>
-              </nav>
-            </div>
-
-            {/* Calculators column. The suite shipped reachable from exactly
-                one inbound link, which is the orphan-page defect: a page can
-                return 200, sit in the sitemap, and still be invisible because
-                nothing indexable points at it. */}
-            <div>
-              <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
-                Calculators
-              </p>{" "}
-              <nav className="footer-links flex flex-col gap-3" aria-label="Calculator links">
-                {TOOL_NAV_LINKS.map((link) => (
-                  <Fragment key={link.href}>
-                    <NavLink
-                      href={link.href}
-                      className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                      spinnerClassName="text-(--primary)"
-                    >
-                      {link.label}
-                    </NavLink>{" "}
-                  </Fragment>
-                ))}
-              </nav>
-            </div>
-
-            {/* Legal column */}
-            <div>
-              <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
-                Legal
-              </p>{" "}
-              <nav className="footer-links flex flex-col gap-3" aria-label="Legal links">
-                <NavLink
-                  href="/privacy"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  Privacy Policy
-                </NavLink>{" "}
-                <NavLink
-                  href="/terms"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  Terms of Service
-                </NavLink>{" "}
-                <NavLink
-                  href="/security"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  Security
-                </NavLink>{" "}
-                <NavLink
-                  href="/contact"
-                  className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                  spinnerClassName="text-(--primary)"
-                >
-                  Contact
-                </NavLink>
-              </nav>
-            </div>
-          </div>
-
-          {/* Bottom bar with illustration */}
-          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
-            <div className="flex items-center gap-3">
-              <div className="opacity-30" aria-hidden="true">
-                <LawGavelSVG size={28} className="text-white" />
-              </div>{" "}
-              <div className="mono text-xs text-white/70">
-                &copy; {currentYear} PERM Tracker. All rights reserved.
-              </div>
-            </div>{" "}
-            <div className="flex items-center gap-1 text-xs text-white/70">
-              Made with <Heart className="h-3 w-3 text-(--primary)" /> for everyone in the PERM line
-            </div>
-          </div>
-        </div>
-      </footer>
-    );
-  }
-
-  // Compact variant (default - for authenticated pages)
   return (
     <footer className="relative z-50 border-t-3 border-black bg-black dark:border-white dark:bg-black">
-      <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-3 px-4 py-4 sm:flex-row sm:px-8">
-        {/* Footer Links */}
-        <div className="flex items-center gap-6 text-sm">
-          <NavLink
-            href="/privacy"
-            className="hover-underline text-white transition-colors hover:text-(--primary)"
-            spinnerClassName="text-(--primary)"
-          >
-            Privacy
-          </NavLink>{" "}
-          <NavLink
-            href="/terms"
-            className="hover-underline text-white transition-colors hover:text-(--primary)"
-            spinnerClassName="text-(--primary)"
-          >
-            Terms
-          </NavLink>{" "}
-          <NavLink
-            href="/security"
-            className="hover-underline text-white transition-colors hover:text-(--primary)"
-            spinnerClassName="text-(--primary)"
-          >
-            Security
-          </NavLink>{" "}
-          <NavLink
-            href="/contact"
-            className="hover-underline text-white transition-colors hover:text-(--primary)"
-            spinnerClassName="text-(--primary)"
-          >
-            Contact
-          </NavLink>
+      <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8">
+        {/* Multi-column grid */}
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {/* Brand column */}
+          <div className="lg:col-span-1">
+            <div className="font-heading text-xl font-bold text-white mb-4">
+              <span className="text-(--primary)">PERM</span> Tracker
+            </div>{" "}
+            <p className="text-sm text-white/60 leading-relaxed mb-6">
+              Live DOL data for the wait, automatic deadlines for the work. Free for applicants and attorneys.
+            </p>
+            {/* Social links. Driven by SOCIAL_LINKS so a network that has no
+                real profile yet is simply absent, rather than linking its
+                bare homepage as these previously did. */}
+            <div className="flex gap-4">
+              {SOCIAL_LINKS.map(({ href, label, icon }) => {
+                const Icon = SOCIAL_ICONS[icon];
+                // All three marks are monochrome here, LinkedIn included.
+                //
+                // Its official #0A66C2 was the honest brand colour and it was
+                // still wrong in place: it made the LinkedIn tile the only
+                // coloured thing in an otherwise black-and-white footer, on
+                // every page, so the eye landed on it before anything the
+                // footer is actually for. Three marks at one weight read as a
+                // set; one in brand colour reads as a sticker. It also
+                // carried brightness-125/150, and a brightness filter used
+                // to lift a colour is the glow this project does not ship.
+                const brand = "text-white/70 hover:text-white";
+                return (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={"flex min-h-[44px] min-w-[44px] items-center justify-center transition-all " + brand}
+                    aria-label={label}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Product column */}
+          <div>
+            <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
+              Product
+            </p>{" "}
+            <nav className="footer-links flex flex-col gap-3" aria-label="Product links">
+              <NavLink
+                href="/perm-case-status"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Track my case
+              </NavLink>{" "}
+              <NavLink
+                href="/tools"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Data
+              </NavLink>{" "}
+              <NavLink
+                href="/for-attorneys"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                For attorneys
+              </NavLink>{" "}
+              <NavLink
+                href="/email-preferences"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Email preferences
+              </NavLink>{" "}
+              <NavLink
+                href="/faq"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                FAQ
+              </NavLink>{" "}
+              {audience === "public" && (
+                <>
+                  <NavLink
+                    href="/signup"
+                    className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                    spinnerClassName="text-(--primary)"
+                  >
+                    Sign Up Free
+                  </NavLink>{" "}
+                  <NavLink
+                    href="/login"
+                    className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                    spinnerClassName="text-(--primary)"
+                  >
+                    Sign In
+                  </NavLink>
+                </>
+              )}
+            </nav>
+          </div>
+
+          {/* Learn column */}
+          <div>
+            <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
+              Learn
+            </p>{" "}
+            <nav className="footer-links flex flex-col gap-3" aria-label="Content links">
+              <NavLink
+                href="/blog"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Blog
+              </NavLink>{" "}
+              <NavLink
+                href="/guides"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Guides
+              </NavLink>{" "}
+              <NavLink
+                href="/changelog"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Changelog
+              </NavLink>{" "}
+              <NavLink
+                href="/perm-processing-times"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Processing Times
+              </NavLink>
+            </nav>
+          </div>
+
+          {/* Calculators column. The suite shipped reachable from exactly
+              one inbound link, which is the orphan-page defect: a page can
+              return 200, sit in the sitemap, and still be invisible because
+              nothing indexable points at it. */}
+          <div>
+            <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
+              Calculators
+            </p>{" "}
+            <nav className="footer-links flex flex-col gap-3" aria-label="Calculator links">
+              {TOOL_NAV_LINKS.map((link) => (
+                <Fragment key={link.href}>
+                  <NavLink
+                    href={link.href}
+                    className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                    spinnerClassName="text-(--primary)"
+                  >
+                    {link.label}
+                  </NavLink>{" "}
+                </Fragment>
+              ))}
+            </nav>
+          </div>
+
+          {/* Legal column */}
+          <div>
+            <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
+              Legal
+            </p>{" "}
+            <nav className="footer-links flex flex-col gap-3" aria-label="Legal links">
+              <NavLink
+                href="/privacy"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Privacy Policy
+              </NavLink>{" "}
+              <NavLink
+                href="/terms"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Terms of Service
+              </NavLink>{" "}
+              <NavLink
+                href="/security"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Security
+              </NavLink>{" "}
+              <NavLink
+                href="/contact"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Contact
+              </NavLink>
+            </nav>
+          </div>
         </div>
 
-        {/* Copyright */}
-        <div className="mono text-xs text-white/60">
-          &copy; {currentYear} PERM Tracker
+        {/* Bottom bar with illustration */}
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
+          <div className="flex items-center gap-3">
+            <div className="opacity-30" aria-hidden="true">
+              <LawGavelSVG size={28} className="text-white" />
+            </div>{" "}
+            <div className="mono text-xs text-white/70">
+              &copy; {currentYear} PERM Tracker. All rights reserved.
+            </div>
+          </div>{" "}
+          <div className="flex items-center gap-1 text-xs text-white/70">
+            Made with <Heart className="h-3 w-3 text-(--primary)" /> for everyone in the PERM line
+          </div>
         </div>
       </div>
     </footer>

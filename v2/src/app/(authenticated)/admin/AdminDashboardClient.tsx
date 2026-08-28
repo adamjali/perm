@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
@@ -122,13 +123,13 @@ export default function AdminDashboardClient() {
             </p>
           </div>
         </div>
-        <a
+        <Link
           href="/admin/security"
           className="mono flex items-center gap-2 border-2 border-foreground bg-background px-4 py-2 text-sm font-bold uppercase tracking-widest shadow-hard-sm transition-all hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
         >
           <Shield className="h-4 w-4" aria-hidden />
           Security Ops
-        </a>
+        </Link>
       </div>
 
       {/* Stats Grid */}
