@@ -144,13 +144,27 @@ MONTHS = {
 }
 
 # The row labels the bulletin uses, mapped to the categories people say.
+# Several alternates per code, because DOL has renamed rows over the years and
+# a single label silently drops a whole category from the older months.
+#
+# EB5 IS THE ONE THAT MOVED. The EB-5 Reform and Integrity Act (March 2022)
+# replaced the old split - "5th Non-Regional Center (C5 and T5)" and "5th
+# Regional Center (I5 and R5)" - with "5th Unreserved" plus three set-asides.
+# Matching only "5th Unreserved" left EB5 missing from every bulletin before
+# 2022-05: 18 months, silently, with nothing erroring.
+#
+# The two pre-RIA rows carry IDENTICAL cutoffs (checked on April 2021: both
+# 15AUG15 China final-action, both 15DEC15 dates-for-filing), so taking the
+# non-regional row loses nothing. It is not the same legal category as
+# today's Unreserved, which is why the alternates are listed in order and the
+# newest name wins where both appear.
 CATEGORY_ROWS = [
-    ("EB1", "1st"),
-    ("EB2", "2nd"),
-    ("EB3", "3rd"),
-    ("EW3", "Other Workers"),
-    ("EB4", "4th"),
-    ("EB5", "5th Unreserved"),
+    ("EB1", ["1st"]),
+    ("EB2", ["2nd"]),
+    ("EB3", ["3rd"]),
+    ("EW3", ["Other Workers"]),
+    ("EB4", ["4th"]),
+    ("EB5", ["5th Unreserved", "5th Non-Regional Center", "5th Regional Center"]),
 ]
 
 # Column order is fixed across every bulletin, but is asserted rather than
@@ -279,10 +293,19 @@ def parse_bulletin(page: str) -> dict | None:
             else:
                 raise ValueError(f"no column matched {heading}; header={header}")
         out: dict[str, dict[str, str]] = {}
-        for code, label in CATEGORY_ROWS:
-            for r in rows[1:]:
-                if r and r[0].lower().startswith(label.lower()[:6]):
-                    out[code] = {c: (r[i] if i < len(r) else "") for c, i in idx.items()}
+        for code, labels in CATEGORY_ROWS:
+            done = False
+            for label in labels:          # alternates in preference order
+                for r in rows[1:]:
+                    # Compare on the full label, not a 6-character prefix:
+                    # "5th Unreserved" and "5th Non-Regional" share "5th un"?
+                    # No - but "5th Reg" and "5th Res" would, and a prefix
+                    # short enough to be convenient is short enough to collide.
+                    if r and r[0].strip().lower().startswith(label.lower()):
+                        out[code] = {c: (r[i] if i < len(r) else "") for c, i in idx.items()}
+                        done = True
+                        break
+                if done:
                     break
         return out
 
@@ -430,16 +453,27 @@ def backfill_from_archive(years: list[int], limit: int) -> int:
     half the categories for two thirds of its length.
     """
     db = Turso()
-    res = db.execute("SELECT bulletin_month, source_url FROM visa_bulletins")
-    have = {r[0]["value"]: (r[1]["value"] if r[1]["type"] != "null" else "")
-            for r in res["response"]["result"]["rows"]}
+    res = db.execute("SELECT bulletin_month, source_url, final_action FROM visa_bulletins")
+    have = {}
+    for r in res["response"]["result"]["rows"]:
+        src = r[1]["value"] if r[1]["type"] != "null" else ""
+        try:
+            cats = len(json.loads(r[2]["value"])) if r[2]["type"] != "null" else 0
+        except Exception:  # noqa: BLE001
+            cats = 0
+        have[r[0]["value"]] = (src, cats)
     log(f"holding {len(have)} months before this run")
 
     snaps = discover_snapshots(limit, years)
     added = upgraded = skipped = failed = 0
     for month, ts, url in snaps:
         current = have.get(month)
-        if current is not None and rank_of(current) >= 2:
+        # Re-parse a row that is already from a good source but INCOMPLETE.
+        # This is what makes a parser improvement self-healing: when EB5 was
+        # missing from every pre-2022-05 bulletin because DOL had renamed the
+        # row, a rank-only skip meant fixing the parser fixed nothing, and the
+        # 18 short months would have sat there looking fine.
+        if current is not None and rank_of(current[0]) >= 2 and current[1] >= 6:
             skipped += 1
             continue
         try:
@@ -463,6 +497,9 @@ def backfill_from_archive(years: list[int], limit: int) -> int:
         if current is None:
             log(f"  {month}: ADDED ({cats} categories)")
             added += 1
+        elif rank_of(current[0]) >= 2:
+            log(f"  {month}: RE-PARSED {current[1]} -> {cats} categories")
+            upgraded += 1
         else:
             log(f"  {month}: UPGRADED mirror -> State Dept ({cats} categories)")
             upgraded += 1
