@@ -102,6 +102,30 @@ export async function one<T = Record<string, unknown>>(
   return r[0] ?? null;
 }
 
+let rwClient: Client | null = null;
+
+/**
+ * The write-capable connection, used by exec() alone.
+ *
+ * PRODUCTION'S DEFAULT TOKEN IS READ-ONLY ON PURPOSE, and that is worth
+ * keeping: the entire read layer runs on a credential that cannot corrupt
+ * the corpus even if the web tier is compromised. Discovered the hard way
+ * 2026-08-28 - the first write feature failed silently in prod with
+ * "BLOCKED: SQL write operations are forbidden" while the same code
+ * worked locally, because the local env carries a full-access token under
+ * the same variable name. TURSO_RW_AUTH_TOKEN is the explicit write
+ * credential; absent (local dev), the default token serves both roles.
+ */
+function tursoRw(): Client {
+  const rw = process.env.TURSO_RW_AUTH_TOKEN;
+  if (!rw) return turso();
+  if (rwClient) return rwClient;
+  const url = process.env.TURSO_DATABASE_URL;
+  if (!url) throw new Error("TURSO_DATABASE_URL is not set.");
+  rwClient = createClient({ url, authToken: rw });
+  return rwClient;
+}
+
 /**
  * A parameterized write. The web layer was read-only until case discovery
  * (caseDiscovery.ts) needed to record lookups that miss the corpus; keep it
@@ -110,7 +134,7 @@ export async function one<T = Record<string, unknown>>(
  */
 export async function exec(sql: string, args: unknown[] = []): Promise<number> {
   const rs = await withDeadline(
-    () => turso().execute({ sql, args: args as never[] }),
+    () => tursoRw().execute({ sql, args: args as never[] }),
     sql.slice(0, 80),
   );
   return rs.rowsAffected;
