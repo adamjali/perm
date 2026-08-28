@@ -84,6 +84,8 @@ export function QueueAlertForm({
   source,
   newestMonth,
   frontierMonth,
+  queue = "perm",
+  allowPwdChoice = false,
 }: {
   source: string;
   /** Newest selectable filing month, "YYYY-MM". Supplied by the server render. */
@@ -98,14 +100,30 @@ export function QueueAlertForm({
    * this form sits outside the snapshot gate on purpose.
    */
   frontierMonth?: string;
+  /**
+   * Which DOL queue the alert watches. The PWD calculator passes a PWD
+   * variant and sets `allowPwdChoice`; everywhere else is the PERM analyst
+   * queue.
+   */
+  queue?: "perm" | "pwd-oews" | "pwd-nonoews";
+  /**
+   * Render an OEWS / non-OEWS selector. Only the PWD page wants it - the two
+   * prevailing-wage queues move independently and a subscriber knows which
+   * wage source their request used.
+   */
+  allowPwdChoice?: boolean;
 }) {
   const emailId = useId();
   const monthId = useId();
   const roleId = useId();
+  const newsId = useId();
+  const queueId = useId();
 
   const [email, setEmail] = useState("");
   const [filingMonth, setFilingMonth] = useState("");
   const [role, setRole] = useState("");
+  const [news, setNews] = useState(false);
+  const [selectedQueue, setSelectedQueue] = useState(queue);
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -130,6 +148,8 @@ export function QueueAlertForm({
           filingMonth,
           role: role || undefined,
           source,
+          queue: selectedQueue,
+          news: news || undefined,
         }),
       });
       const result = (await response.json()) as { ok: boolean; message: string };
@@ -208,6 +228,25 @@ export function QueueAlertForm({
         </div>
       </div>{" "}
 
+      {allowPwdChoice ? (
+        <div className="mt-4 flex flex-col gap-2">
+          <Label htmlFor={queueId}>Which prevailing-wage queue</Label>{" "}
+          <select
+            id={queueId}
+            value={selectedQueue}
+            onChange={(e) =>
+              setSelectedQueue(e.target.value as "pwd-oews" | "pwd-nonoews")
+            }
+            className={cn(selectClasses, "sm:max-w-sm")}
+          >
+            <option value="pwd-oews">OEWS (the standard wage survey)</option>{" "}
+            <option value="pwd-nonoews">
+              Non-OEWS (an employer-provided survey)
+            </option>
+          </select>
+        </div>
+      ) : null}{" "}
+
       <div className="mt-4 flex flex-col gap-2">
         <Label htmlFor={roleId}>
           You are <span className="font-normal text-muted-foreground">(optional)</span>
@@ -223,6 +262,20 @@ export function QueueAlertForm({
           <option value="applicant">The person the case is for</option>{" "}
           <option value="employer">The sponsoring employer</option>
         </select>
+      </div>{" "}
+
+      <div className="mt-4 flex items-start gap-2.5">
+        <input
+          id={newsId}
+          type="checkbox"
+          checked={news}
+          onChange={(e) => setNews(e.target.checked)}
+          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none border-2 border-border bg-background checked:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />{" "}
+        <label htmlFor={newsId} className="cursor-pointer text-sm leading-relaxed text-muted-foreground">
+          Also send occasional product news: new data, new tools. The same
+          confirmation email covers it, and it&apos;s off by default.
+        </label>
       </div>
 
       {status === "error" && message ? (

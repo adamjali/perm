@@ -88,3 +88,32 @@ export const HOME_SECTION_LINKS = [
   { href: "#features", label: "Features" },
   { href: "#faq", label: "FAQ" },
 ] as const satisfies readonly NavLink[];
+
+/**
+ * The unified public top nav, one list for every public page including the
+ * homepage.
+ *
+ * The homepage used to render section anchors (#how, #features) instead -
+ * retired when those sections moved to /for-attorneys, and better retired
+ * anyway: a nav that changes shape between pages makes the site feel like
+ * two sites. Ordered by visitor priority: the person waiting first.
+ */
+export const PUBLIC_NAV_LINKS = [
+  { href: "/perm-case-status", label: "Track my case" },
+  { href: "/calculators", label: "Timelines" },
+  { href: "/tools", label: "Data" },
+  { href: "/for-attorneys", label: "For attorneys" },
+] as const satisfies readonly NavLink[];
+
+/**
+ * The Learn dropdown. Superset of CONTENT_NAV_LINKS on purpose: FAQ and
+ * Methodology are reference pages a reader looks for under "learn", and
+ * before this they were reachable only from the footer and the data strip.
+ */
+export const LEARN_NAV_LINKS = [
+  { href: "/blog", label: "Blog" },
+  { href: "/guides", label: "Guides" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/methodology", label: "Methodology" },
+  { href: "/changelog", label: "Changelog" },
+] as const satisfies readonly NavLink[];

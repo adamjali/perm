@@ -52,7 +52,9 @@ export function CaseAlertForm({
 }) {
   const inputId = useId();
   const noteId = useId();
+  const newsId = useId();
   const [email, setEmail] = useState("");
+  const [news, setNews] = useState(false);
   const [state, setState] = useState<State>({ kind: "idle" });
 
   const endpoint = subscribeEndpoint();
@@ -70,6 +72,7 @@ export function CaseAlertForm({
           email: email.trim(),
           caseNumber,
           source: "perm-case-status",
+          news: news || undefined,
         }),
       });
       const body = (await res.json().catch(() => null)) as
@@ -152,6 +155,22 @@ export function CaseAlertForm({
           {state.kind === "sending" ? "Sending" : "Email me changes"}
         </button>
       </div>
+      <div className="mt-3 flex items-start gap-2.5">
+        <input
+          id={newsId}
+          type="checkbox"
+          checked={news}
+          onChange={(e) => setNews(e.target.checked)}
+          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none border-2 border-border bg-background checked:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
+        />{" "}
+        <label
+          htmlFor={newsId}
+          className="cursor-pointer text-sm leading-relaxed text-muted-foreground"
+        >
+          Also send occasional product news. The same confirmation covers it,
+          and it&apos;s off by default.
+        </label>
+      </div>{" "}
       <p id={noteId} className="mt-2 text-sm text-muted-foreground">
         {state.kind === "refused" ? (
           <span className="font-bold text-data-warn-ink">{state.message}</span>

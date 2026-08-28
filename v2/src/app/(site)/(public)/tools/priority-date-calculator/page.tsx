@@ -8,6 +8,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
+import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
 import { getVisaBulletinSeries } from "@/lib/turso/publicData";
 import { getBulletinBoard, categoriesIn } from "@/lib/turso/bulletin";
 
@@ -268,6 +269,12 @@ export default async function PriorityDateCalculatorPage() {
           <BulletinBoard board={board} />
         </section>
       ) : null}
+
+      {/* The alert, after the answer: a bulletin watcher's next question is
+          "will you tell me when it moves". */}
+      <section className="mt-12">
+        <BulletinAlertForm source="priority-date-calculator" />
+      </section>
 
       <section className="mt-12">
         <h2 className="font-heading text-2xl font-black">Common questions</h2>

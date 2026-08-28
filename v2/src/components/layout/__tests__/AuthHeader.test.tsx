@@ -199,3 +199,37 @@ describe("AuthHeader: the tools hub", () => {
     expect(links.length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe("AuthHeader: the unified public nav", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("puts the case lookup first, on every page including home", () => {
+    // The highest-intent destination leads the nav. The homepage used to
+    // render section anchors instead of links at all, which meant the one
+    // page most visitors land on had no route to the one page they came for.
+    for (const path of ["/", "/blog", "/login"]) {
+      vi.mocked(usePathname).mockReturnValue(path);
+      const { unmount } = renderWithProviders(<AuthHeader />);
+      const track = screen.getAllByRole("link", { name: /track my case/i });
+      expect(track[0]).toHaveAttribute("href", "/perm-case-status");
+      unmount();
+    }
+  });
+
+  it("routes practitioners to /for-attorneys from the top nav", () => {
+    vi.mocked(usePathname).mockReturnValue("/");
+    renderWithProviders(<AuthHeader />);
+    const links = screen.getAllByRole("link", { name: /for attorneys/i });
+    expect(links[0]).toHaveAttribute("href", "/for-attorneys");
+  });
+
+  it("renders the search trigger", () => {
+    vi.mocked(usePathname).mockReturnValue("/");
+    renderWithProviders(<AuthHeader />);
+    expect(
+      screen.getAllByRole("button", { name: /search the site/i }).length,
+    ).toBeGreaterThan(0);
+  });
+});

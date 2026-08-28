@@ -10,6 +10,8 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { getPwdEstimatorData } from "@/lib/turso/estimate";
+import { currentMonthUtc } from "@/lib/dolFormat";
+import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 /**
@@ -115,6 +117,18 @@ export default async function PwdCalculatorPage() {
           is not a fixed number of days.
         </p>
         <PwdValidityWindow className="mt-6" />
+      </section>
+
+      {/* The alert, after the answer: the natural next step from reading a
+          queue position is asking to hear when DOL reaches your month. Same
+          machinery as the PERM month alerts, pointed at the PWD frontiers. */}
+      <section className="mt-12">
+        <QueueAlertForm
+          source="pwd-calculator"
+          newestMonth={currentMonthUtc()}
+          queue="pwd-oews"
+          allowPwdChoice
+        />
       </section>
 
       <section className="mt-12">

@@ -1,6 +1,7 @@
 import AuthHeader from "@/components/layout/AuthHeader";
 import Footer from "@/components/layout/Footer";
 import { SecurityIncidentBanner } from "@/components/layout/SecurityIncidentBanner";
+import { getAllPosts } from "@/lib/content";
 
 /**
  * The shell shared by every logged-out page: the marketing and data pages in
@@ -56,7 +57,16 @@ export default function SiteLayout({
           main padding read, so it belongs at the same level as the header. */}
       <SecurityIncidentBanner />
 
-      <AuthHeader />
+      {/* The search palette's article index: titles only, read from the
+          content directory at render time (a server layout, so this costs
+          the client nothing until the palette opens). */}
+      <AuthHeader
+        articles={getAllPosts().map((p) => ({
+          title: p.meta.title,
+          href: `/${p.type}/${p.slug}`,
+          kind: p.type,
+        }))}
+      />
 
       {children}
 

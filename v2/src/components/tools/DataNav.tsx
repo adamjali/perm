@@ -34,6 +34,13 @@ export interface DataNavSection {
   key: DataSection;
   label: string;
   href: string;
+  /**
+   * Which family the tab belongs to. Rendered as a small label at each
+   * family's start, because fifteen same-weight chips in one strip read as
+   * noise: a lookup, an aggregate, and the methodology page are not peers,
+   * and the grouping is the hierarchy the strip was missing.
+   */
+  group: "Start" | "Queue" | "Who files" | "Risk" | "Reference";
 }
 
 /**
@@ -43,11 +50,11 @@ export interface DataNavSection {
  * diverge, which is the day it was needed.
  */
 export const SECTIONS: DataNavSection[] = [
-  { key: "overview", label: "Overview", href: "/tools" },
+  { key: "overview", group: "Start", label: "Overview", href: "/tools" },
   // Second on purpose. Somebody holding a case number has the highest-intent
   // question on this whole surface, and every other tab is an aggregate.
-  { key: "case-status", label: "Case status", href: "/perm-case-status" },
-  { key: "calculators", label: "Calculators", href: "/calculators" },
+  { key: "case-status", group: "Start", label: "Case status", href: "/perm-case-status" },
+  { key: "calculators", group: "Start", label: "Calculators", href: "/calculators" },
   // Added 2026-08-27. Without it `/perm-queue` and every `/perm-queue/<month>`
   // page passed `active="overview"`, so the tab marked `aria-current="page"`
   // was Overview, which points at `/tools`. Same defect class as the
@@ -59,21 +66,21 @@ export const SECTIONS: DataNavSection[] = [
   // re-verified before 2026-08-01, so the counts behind this tab are a
   // rolling snapshot rather than a live reading, and a nav label is the
   // last place that distinction should be quietly dropped.
-  { key: "queue", label: "Queue backlog", href: "/perm-queue" },
-  { key: "processing-times", label: "Processing times", href: "/perm-processing-times" },
-  { key: "activity", label: "Daily activity", href: "/perm-decision-activity" },
-  { key: "by-state", label: "By state", href: "/perm-by-state" },
-  { key: "wages", label: "Wages", href: "/perm-wages" },
-  { key: "employers", label: "Employers", href: "/perm-employers" },
-  { key: "attorneys", label: "Law firms", href: "/perm-attorneys" },
-  { key: "cases", label: "Case search", href: "/perm-cases" },
-  { key: "risk", label: "Denial rates", href: "/perm-denial-risk" },
+  { key: "queue", group: "Queue", label: "Queue backlog", href: "/perm-queue" },
+  { key: "processing-times", group: "Queue", label: "Processing times", href: "/perm-processing-times" },
+  { key: "activity", group: "Queue", label: "Daily activity", href: "/perm-decision-activity" },
+  { key: "by-state", group: "Who files", label: "By state", href: "/perm-by-state" },
+  { key: "wages", group: "Who files", label: "Wages", href: "/perm-wages" },
+  { key: "employers", group: "Who files", label: "Employers", href: "/perm-employers" },
+  { key: "attorneys", group: "Who files", label: "Law firms", href: "/perm-attorneys" },
+  { key: "cases", group: "Who files", label: "Case search", href: "/perm-cases" },
+  { key: "risk", group: "Risk", label: "Denial rates", href: "/perm-denial-risk" },
   // Its own key rather than borrowing "risk". Measured before adding: this
   // page had ZERO inbound links from anywhere in the app, so a borrowed chip
   // would have left it unreachable by navigation, not merely mislabelled.
-  { key: "rfi-audit", label: "RFI and audits", href: "/perm-rfi-audit" },
-  { key: "visa-bulletin", label: "Visa bulletin", href: "/tools/priority-date-calculator" },
-  { key: "methodology", label: "Methodology", href: "/methodology" },
+  { key: "rfi-audit", group: "Risk", label: "RFI and audits", href: "/perm-rfi-audit" },
+  { key: "visa-bulletin", group: "Reference", label: "Visa bulletin", href: "/tools/priority-date-calculator" },
+  { key: "methodology", group: "Reference", label: "Methodology", href: "/methodology" },
 ];
 
 export function DataNav({ active }: { active: DataSection }) {
@@ -89,13 +96,25 @@ export function DataNav({ active }: { active: DataSection }) {
       style={{ top: "calc(4rem + var(--security-banner-h, 0px))" }}
     >
       <div className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {SECTIONS.map((s) => {
+        {SECTIONS.map((s, i) => {
           const isActive = s.key === active;
+          const startsGroup = i === 0 || SECTIONS[i - 1]!.group !== s.group;
           // Keyed Fragment with a real space: mapped siblings render with
           // ZERO characters between them otherwise, and every DOM extractor
           // (Google included) reads the tab labels as one glued word.
           return (
             <Fragment key={s.key}>{" "}
+            {startsGroup ? (
+              <span
+                aria-hidden="true"
+                className={
+                  "select-none self-center whitespace-nowrap font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/60 " +
+                  (i === 0 ? "pr-1" : "border-l-2 border-border/50 pl-3 pr-1")
+                }
+              >
+                {s.group}
+              </span>
+            ) : null}{" "}
             <Link
               href={s.href}
               aria-current={isActive ? "page" : undefined}

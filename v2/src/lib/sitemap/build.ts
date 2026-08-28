@@ -115,6 +115,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/changelog`, lastModified: latest },
     { url: `${base}/faq`, lastModified: "2026-08-24" },
     { url: `${base}/for-attorneys`, lastModified: "2026-08-28" },
+    { url: `${base}/email-preferences`, lastModified: "2026-08-28" },
     { url: `${base}/perm-processing-times`, lastModified: dol ?? latest },
     { url: `${base}/tools`, lastModified: "2026-08-23" },
     { url: `${base}/tools/green-card-timeline`, lastModified: dol ?? "2026-08-23" },
