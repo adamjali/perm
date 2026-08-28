@@ -106,6 +106,38 @@ def main() -> int:
     check("a second flush of empty lists adds nothing",
           csd.written["u"] == 5 and csd.written["e"] == 3, str(csd.written))
 
+    # --- discovery: the pure pieces --------------------------------------
+    import datetime as _dt
+
+    check("decode_filing_date reads the YYDDD segment",
+          csd.decode_filing_date("G-100-26125-868956") == "2026-05-05",
+          str(csd.decode_filing_date("G-100-26125-868956")))
+    check("decode_filing_date: day 239 of 2026 is Aug 27",
+          csd.decode_filing_date("G-100-26239-197015") == "2026-08-27",
+          str(csd.decode_filing_date("G-100-26239-197015")))
+    check("decode_filing_date refuses an impossible day-of-year",
+          csd.decode_filing_date("G-100-26400-000001") is None,
+          str(csd.decode_filing_date("G-100-26400-000001")))
+    check("decode_filing_date refuses day 366 of a non-leap year",
+          csd.decode_filing_date("G-100-26366-000001") is None,
+          str(csd.decode_filing_date("G-100-26366-000001")))
+    check("decode_filing_date refuses junk",
+          csd.decode_filing_date("banana") is None, "matched junk")
+
+    codes = csd.recent_day_codes(_dt.date(2027, 1, 2), 4)
+    check("recent_day_codes crosses the year boundary with real dates",
+          codes == ["27002", "27001", "26365", "26364"], str(codes))
+
+    batches = list(csd.discovery_batches(197000, ["26240", "26239"], 120, batch=50))
+    check("discovery batches are day-major and capped at the batch ceiling",
+          len(batches) == 6 and all(len(c) <= 50 for _, c in batches)
+          and batches[0][0] == "26240" and batches[3][0] == "26239",
+          f"{len(batches)} batches")
+    check("discovery candidates start one past the frontier",
+          batches[0][1][0] == "G-100-26240-197001", batches[0][1][0])
+    check("discovery serials stay inside the span",
+          batches[2][1][-1] == "G-100-26240-197120", batches[2][1][-1])
+
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0
 

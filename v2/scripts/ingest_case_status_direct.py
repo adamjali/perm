@@ -50,8 +50,10 @@ far end starts failing.
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import pathlib
+import re
 import subprocess
 import sys
 import time
@@ -70,6 +72,155 @@ FINAL_STATUSES = {
     "CERTIFIED", "CERTIFIED - EXPIRED", "DENIED", "WITHDRAWN",
     "CERTIFIED-EXPIRED",
 }
+
+
+# ---------------------------------------------------------------------------
+# Discovery: the corpus was a closed set, and this is the systematic half of
+# opening it (the demand half is the web lookup's discoverCase). DOL case
+# numbers are sequential - G-100-<YYDDD><serial> where YYDDD is the filing
+# day and the serial increments globally - so new filings live in a narrow,
+# predictable window past our highest known serial. Each full sweep walks
+# that window across the last few filing days and records what DOL confirms.
+#
+# Measured before building (2026-08-28): one 50-number probe past the known
+# max found five real cases filed the previous day. ~460 filings arrive per
+# business day, so the whole day's discovery fits in a few dozen requests
+# against the ~10,000 the sweep already makes.
+# ---------------------------------------------------------------------------
+
+DISCOVERY_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, discovered)"
+DISCOVERY_DAY_WINDOW = 5        # probe filings from the last N calendar days
+DISCOVERY_SERIAL_SPAN = 1500    # how far past the known max serial to look
+DISCOVERY_REQUEST_CAP = 120     # discovery's own polite budget per run
+DISCOVERY_DRY_STREAK = 2        # stop a day code after this many empty batches
+
+CASE_RE = re.compile(r"^[A-Za-z]-\d{3}-(\d{2})(\d{3})-(\d+)$")
+
+
+def decode_filing_date(case_number: str) -> str | None:
+    """ISO date from the number's own YYDDD segment, or None off-shape.
+
+    Exact for 94.6% of the corpus and equal to DOL's submittedDate for
+    409,127 of 414,050 rows; a None (bad day-of-year) must stay None - a
+    plausible wrong date is invisible downstream in a way a null is not.
+    """
+    m = CASE_RE.match(case_number)
+    if not m:
+        return None
+    year, doy = 2000 + int(m.group(1)), int(m.group(2))
+    if not 1 <= doy <= 366:
+        return None
+    try:
+        d = datetime.date(year, 1, 1) + datetime.timedelta(days=doy - 1)
+    except OverflowError:
+        return None
+    if d.year != year:
+        return None
+    return d.isoformat()
+
+
+def recent_day_codes(today: datetime.date, window: int) -> list[str]:
+    """YYDDD codes for `today` back through `window` days, newest first.
+
+    Built from real dates so the year boundary is free: Jan 1 looks back
+    into the previous year's codes rather than at "00-2".
+    """
+    return [
+        f"{d.year % 100:02d}{d.timetuple().tm_yday:03d}"
+        for d in (today - datetime.timedelta(days=i) for i in range(window))
+    ]
+
+
+def discovery_batches(max_serial: int, day_codes: list[str],
+                      span: int, batch: int = BATCH):
+    """Candidate batches, day-major: every unknown serial under each code.
+
+    A serial exists under exactly one day code, so most candidates miss by
+    construction; the waste is bounded by the caps and buys not having to
+    guess which day each serial belongs to.
+    """
+    for code in day_codes:
+        chunk: list[str] = []
+        for serial in range(max_serial + 1, max_serial + 1 + span):
+            chunk.append(f"G-100-{code}-{serial}")
+            if len(chunk) == batch:
+                yield code, chunk
+                chunk = []
+        if chunk:
+            yield code, chunk
+
+
+def run_discovery(db) -> int:
+    """Probe past the known serial frontier and record what DOL confirms."""
+    codes = recent_day_codes(datetime.date.today(), DISCOVERY_DAY_WINDOW)
+    prefixes = sorted({c[:2] for c in codes})
+    tails: list[str] = []
+    for yy in prefixes:
+        tails += [r[0] for r in _rows(
+            db,
+            "SELECT case_number FROM perm_case_status "
+            "WHERE case_number >= ? AND case_number < ? "
+            "ORDER BY case_number DESC LIMIT 300",
+            [f"G-100-{yy}", f"G-100-{int(yy) + 1:02d}"])]
+    serials = [int(m.group(3)) for t in tails if (m := CASE_RE.match(t))]
+    if not serials:
+        log("discovery: no serial frontier found; skipping")
+        return 0
+    frontier = max(serials)
+    log(f"discovery: frontier serial {frontier:,}, probing "
+        f"{DISCOVERY_SERIAL_SPAN} serials x {len(codes)} day codes")
+
+    inserted = 0
+    requests = 0
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    stamp = int(time.time() * 1000)
+    dry = 0
+    current_code = None
+    for code, chunk in discovery_batches(frontier, codes, DISCOVERY_SERIAL_SPAN):
+        if code != current_code:
+            current_code, dry = code, 0
+        if dry >= DISCOVERY_DRY_STREAK:
+            continue        # this day code has gone quiet; skip its remainder
+        if requests >= DISCOVERY_REQUEST_CAP:
+            log(f"discovery: request cap {DISCOVERY_REQUEST_CAP} reached")
+            break
+        try:
+            got = lookup_with_retry(chunk)
+        except Exception as exc:  # noqa: BLE001
+            log(f"discovery: batch failed ({exc}); stopping cleanly")
+            break
+        requests += 1
+        wanted = set(chunk)
+        hits = [v for v in got if v.get("caseNumber") in wanted]
+        if not hits:
+            dry += 1
+        else:
+            dry = 0
+        for v in hits:
+            cn = v["caseNumber"]
+            status_str = (v.get("caseStatus") or "").strip()
+            if not status_str:
+                continue
+            is_final = 1 if status_str.upper() in FINAL_STATUSES else 0
+            res = db.execute(
+                "INSERT OR IGNORE INTO perm_case_status "
+                "(case_number, filing_date, current_status, is_final, "
+                " is_disclosed, employer_name, job_title, submitted_date, "
+                " last_checked_at, verified, source, fetched_at) "
+                "VALUES (?,?,?,?,0,?,?,?,?,1,?,?)",
+                [cn, decode_filing_date(cn), status_str, is_final,
+                 v.get("employerName"), v.get("jobTitle"),
+                 v.get("submittedDate"), now_iso, DISCOVERY_SOURCE, stamp])
+            # OR IGNORE reports 0 affected rows for an already-known case
+            # (the web lookup may have discovered it first); count only
+            # genuine additions or the log overstates the find.
+            affected = (res.get("response", {}).get("result", {})
+                        .get("affected_row_count", 0))
+            inserted += 1 if affected else 0
+        time.sleep(PACE_S)
+
+    log(f"discovery: {requests} requests, {inserted} new cases recorded")
+    return inserted
 
 
 def log(m: str) -> None:
@@ -270,6 +421,11 @@ def main() -> int:
     ap.add_argument("--limit", type=int, help="Stop after this many cases.")
     ap.add_argument("--offset", type=int, default=0)
     ap.add_argument(
+        "--discover", action="store_true",
+        help="Only probe past the serial frontier for new filings, record "
+             "them, refresh the census, and exit. The full sweep also runs "
+             "discovery on its own.")
+    ap.add_argument(
         "--reconcile", action="store_true",
         help="Correct statuses but write NO events. Use this for the first "
              "pass against a stale mirror.",
@@ -277,6 +433,15 @@ def main() -> int:
     args = ap.parse_args()
 
     db = Turso()
+
+    if args.discover and not (args.full or args.pending):
+        found = run_discovery(db)
+        if found:
+            write_live_census(db)
+            write_decided_percentiles(db)
+            log("census refreshed")
+        return 0
+
     # The RFI blend reads "cases that ENTERED an RFI since <a fixed date>".
     # `changed_at > <freeze>` matches more of the table every day, so with only
     # a changed_at index that CTE degrades into a growing scan. Leading on
@@ -389,6 +554,11 @@ def main() -> int:
                     int(time.time() * 1000), SOURCE, "Every 12 hours",
                     f"{n:,} cases", 3])
         log("stamped   data_freshness")
+        # Discovery rides the full sweep so the census below already carries
+        # the day's new filings. The pending sweep skips it: twice-daily
+        # probing buys little and doubles the polite load.
+        if args.full:
+            run_discovery(db)
         write_live_census(db)
         write_decided_percentiles(db)
     else:
