@@ -24,6 +24,31 @@ export default function robots(): MetadataRoute.Robots {
     '/settings',      // Authenticated user settings
   ]
 
+  // High-volume crawlers that bring this product NOTHING back. Measured
+  // 2026-08-28: humans generated ~1,400 pageviews in a week while Vercel's
+  // edge served 750K requests in a month - the gap is bots working the
+  // 21k-URL sitemap. Search bots (Google, Bing, DuckDuckGo, Apple) and AI
+  // bots (GPTBot, ClaudeBot, Perplexity, CCBot, ...) stay welcome: they are
+  // the distribution strategy. Ahrefs stays: it is our own audit tool. The
+  // ones below are SEO-index and scraper fleets whose data nobody here
+  // consumes - each obeys robots.txt, and each can re-earn access the day
+  // it is useful. robots.txt is advisory, so this trims the polite
+  // high-volume tail rather than "securing" anything.
+  const freeloaders = [
+    'SemrushBot',
+    'MJ12bot',
+    'DotBot',
+    'BLEXBot',
+    'PetalBot',
+    'Bytespider',
+    'DataForSeoBot',
+    'serpstatbot',
+    'ZoominfoBot',
+    'MegaIndex.ru',
+    'Barkrowler',
+    'SeekportBot',
+  ]
+
   return {
     rules: [
       // Allow ALL crawlers on public content; block only authenticated/app routes.
@@ -38,6 +63,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
         disallow: authDisallow,
       },
+      ...freeloaders.map((bot) => ({ userAgent: bot, disallow: '/' })),
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
   }
