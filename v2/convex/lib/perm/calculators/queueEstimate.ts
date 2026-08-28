@@ -545,12 +545,21 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     );
   }
 
+  // A forecast whose date has already elapsed is not a forecast. For a month
+  // the frontier has passed, every filing-anchored model lands in the past -
+  // measured live: a Nov 2024 filing rendered "likely decision window
+  // November 2025 to March 2026" in August 2026, a checkably-wrong headline.
+  // The cohort facts survive in `cohort`; `position` ('overdue') tells the
+  // caller what to say instead. The rule lives here so every surface that
+  // composes these models - the timeline page, the case page - inherits it.
+  const liveModels = models.filter((m) => m.estimatedDate >= input.today);
+
   return {
     filingDate: input.filingDate,
     filingMonth,
     monthsBehindFrontier: monthsBehind,
     position,
-    models,
+    models: liveModels,
     caveats,
     cohort: cohortOut,
   };

@@ -40,9 +40,11 @@ describe("PermTimelineEstimator envelope headline", () => {
     // Model A alone: DOL's published average, which carries no earliest or
     // latest bound, so both ends of the envelope are the same month.
     renderEstimator();
-    const heading = screen.getByText(/Likely decision window/).parentElement;
-    expect(heading).toHaveTextContent("September 2026");
-    expect(heading).not.toHaveTextContent(/September 2026\s*to\s*September 2026/);
+    // The anchor leads; the window line follows and collapses to one month.
+    expect(screen.getByText(/^Around September 2026$/)).toBeInTheDocument();
+    const windowLine = screen.getByText(/Likely decision window/);
+    expect(windowLine).toHaveTextContent("September 2026");
+    expect(windowLine).not.toHaveTextContent(/September 2026\s*to\s*September 2026/);
     expect(screen.getByText(/One model has enough published data/)).toBeInTheDocument();
   });
 
@@ -66,8 +68,9 @@ describe("PermTimelineEstimator envelope headline", () => {
     fireEvent.change(screen.getByLabelText(/Month DOL received/i), {
       target: { value: "2026-03" },
     });
-    const heading = screen.getByText(/Likely decision window/).parentElement;
-    const headline = heading?.querySelector("p.font-heading")?.textContent ?? "";
+    // The window line carries the range; the anchor above it is one month.
+    expect(screen.getByText(/^Around /)).toBeInTheDocument();
+    const headline = screen.getByText(/Likely decision window/).textContent ?? "";
     expect(headline).toContain(" to ");
     // Two DIFFERENT months, which is what makes the range a range. Asserting
     // only on " to " would pass on the degenerate output this guards against.

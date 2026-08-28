@@ -74,7 +74,7 @@ describe("buildCaseEstimate", () => {
 
   it("gives an analyst-review case the cohort estimate at the median, unshifted", () => {
     const e = buildCaseEstimate({
-      filingDate: "2025-06-15",
+      filingDate: "2025-12-15",
       status: "ANALYST REVIEW",
       isFinal: false,
       estimator: ESTIMATOR,
@@ -89,14 +89,14 @@ describe("buildCaseEstimate", () => {
 
   it("shifts an RFI case to its cohort's p90, later than the median read", () => {
     const median = buildCaseEstimate({
-      filingDate: "2025-06-15",
+      filingDate: "2025-12-15",
       status: "ANALYST REVIEW",
       isFinal: false,
       estimator: ESTIMATOR,
       today: TODAY,
     });
     const rfi = buildCaseEstimate({
-      filingDate: "2025-06-15",
+      filingDate: "2025-12-15",
       status: "RFI ISSUED",
       isFinal: false,
       estimator: ESTIMATOR,
@@ -127,7 +127,7 @@ describe("buildCaseEstimate", () => {
 
   it("keeps the cohort estimate for an unmeasured status, flagged as unadjusted", () => {
     const e = buildCaseEstimate({
-      filingDate: "2025-06-15",
+      filingDate: "2025-12-15",
       status: "SOME STATUS DOL INVENTED ON TUESDAY",
       isFinal: false,
       estimator: ESTIMATOR,
@@ -136,6 +136,26 @@ describe("buildCaseEstimate", () => {
     if (e?.kind !== "date") throw new Error("expected a dated estimate");
     expect(e.stage).toBeNull();
     expect(e.caveats.join(" ").toLowerCase()).toContain("hasn't been measured");
+  });
+});
+
+describe("a filing month the frontier has already passed", () => {
+  it("refuses a date and says the case is out of filing order", () => {
+    // Filed Nov 2024 against a Sep 2025 frontier: every filing-anchored model
+    // has elapsed, so the calculator withholds them all. The honest output is
+    // the overdue explanation with the measured age - never a past-dated
+    // window, which is what this case rendered before the rule existed.
+    const e = buildCaseEstimate({
+      filingDate: "2024-11-05",
+      status: "ANALYST REVIEW",
+      isFinal: false,
+      estimator: ESTIMATOR,
+      today: TODAY,
+    });
+    expect(e).not.toBeNull();
+    if (e?.kind !== "no-date") throw new Error("expected the overdue refusal");
+    expect(e.note.toLowerCase()).toContain("passed this filing month");
+    expect(e.observedAgeDays).toBeGreaterThan(600);
   });
 });
 

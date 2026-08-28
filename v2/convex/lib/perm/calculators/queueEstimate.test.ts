@@ -287,10 +287,12 @@ describe('estimateQueueDecision: queue advance', () => {
 });
 
 describe('estimateQueueDecision: cohort percentiles and survivorship', () => {
-  it('uses the cohort median for a fully resolved cohort', () => {
+  it('uses the cohort median while its central date is still ahead', () => {
+    // Same filing and cohort as the withholding test below; only "today"
+    // differs. On 2025-05-01 the median lands 2025-07-15, still a forecast.
     const result = estimateQueueDecision({
       filingDate: '2024-06-10',
-      today: TODAY,
+      today: '2025-05-01',
       frontier: FRONTIER,
       cohorts: [MATURE_COHORT],
     });
@@ -300,6 +302,23 @@ describe('estimateQueueDecision: cohort percentiles and survivorship', () => {
     expect(model?.earliestDate).toBe('2025-04-06'); // +300
     expect(model?.latestDate).toBe('2025-11-12'); // +520
     expect(result.cohort?.truncatedBySurvivorship).toBe(false);
+  });
+
+  it('withholds every model whose date has elapsed, keeping the cohort facts', () => {
+    // Measured live before the rule existed: a Nov 2024 filing rendered
+    // "likely decision window November 2025 to March 2026" in August 2026.
+    // A window that has already elapsed is not a forecast. The facts stay
+    // available in `cohort`; `position` says what to render instead.
+    const result = estimateQueueDecision({
+      filingDate: '2024-06-10',
+      today: TODAY, // 2026-08-23: every filing-anchored date has passed
+      frontier: FRONTIER,
+      cohorts: [MATURE_COHORT],
+    });
+
+    expect(result.models).toHaveLength(0);
+    expect(result.position).toBe('overdue');
+    expect(result.cohort?.reportable.length).toBeGreaterThan(0);
   });
 
   it('refuses to publish a median for a cohort DOL has not reached', () => {
@@ -374,9 +393,11 @@ describe('estimateQueueDecision: honest degradation', () => {
   });
 
   it('surfaces every supported model at once rather than blending them', () => {
+    // "today" sits early enough that both dates are still forecasts; the
+    // withholding of elapsed models has its own test above.
     const result = estimateQueueDecision({
       filingDate: '2024-06-10',
-      today: TODAY,
+      today: '2025-05-01',
       frontier: FRONTIER,
       cohorts: [MATURE_COHORT],
     });

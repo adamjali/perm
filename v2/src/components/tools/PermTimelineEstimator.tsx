@@ -17,6 +17,7 @@
  */
 
 import { Fragment, useEffect, useId, useMemo, useState } from "react";
+import Link from "next/link";
 import { CalendarDot as CalendarClock, Info, Warning } from "@phosphor-icons/react";
 
 import { estimateQueueDecision, type CohortStat, type DolFrontier } from "@/lib/perm";
@@ -260,14 +261,27 @@ export function PermTimelineEstimator({
       lo.push(m.earliestDate ?? m.estimatedDate);
       hi.push(m.latestDate ?? m.estimatedDate);
     }
-    if (lo.length === 0) return null;
-    const earliest = lo.reduce((a2, b) => (a2 < b ? a2 : b));
+    const first = estimate.models[0];
+    if (lo.length === 0 || !first) return null;
+    // A surviving model's central date is in the future (the calculator
+    // withholds elapsed ones), but its p25 bound can still be behind us. A
+    // window that opens in the past reads as a mistake, so the displayed
+    // start is floored at today.
+    const rawEarliest = lo.reduce((a2, b) => (a2 < b ? a2 : b));
+    const earliest = rawEarliest < today ? today : rawEarliest;
     const latest = hi.reduce((a2, b) => (a2 > b ? a2 : b));
     const spanMonths =
       (Number(latest.slice(0, 4)) - Number(earliest.slice(0, 4))) * 12 +
       (Number(latest.slice(5, 7)) - Number(earliest.slice(5, 7)));
-    return { earliest, latest, spanMonths, modelCount: estimate.models.length };
-  }, [estimate.models]);
+    return {
+      earliest,
+      latest,
+      spanMonths,
+      modelCount: estimate.models.length,
+      // The lead model's own date - the same one the case page anchors on.
+      anchor: first.estimatedDate,
+    };
+  }, [estimate.models, today]);
 
   /**
    * How far through the wait this case is, as a fraction.
@@ -365,27 +379,78 @@ export function PermTimelineEstimator({
       {/* THE ANSWER, at the size the question was asked. Everything in this
           band is a bound some model below already published, or arithmetic on
           the month the reader picked. */}
-      {envelope ? (
+      {envelope || estimate.position === "overdue" ? (
         <div className="border-b-2 border-border p-6 sm:p-8">
-          <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-            Likely decision window
-          </p>{" "}
-          <p className="mt-2 font-heading text-3xl font-black leading-[1.05] sm:text-5xl">
-            {envelope.earliest.slice(0, 7) === envelope.latest.slice(0, 7) ? (
-              formatMonth(envelope.earliest.slice(0, 7))
-            ) : (
-              <>
-                {formatMonth(envelope.earliest.slice(0, 7))}
-                <span className="text-muted-foreground"> to </span>
-                {formatMonth(envelope.latest.slice(0, 7))}
-              </>
-            )}
-          </p>{" "}
-          <p className="mt-3 text-base leading-relaxed text-foreground/70">
-            {envelope.modelCount === 1
-              ? "One model has enough published data to answer for this month."
-              : `${envelope.modelCount} models, each on its own basis, spread across ${envelope.spanMonths} months. They are listed below rather than averaged, because the spread is the honest part.`}
-          </p>
+          {envelope ? (
+            /* The anchor leads and the window follows. A range-only headline
+               read as "we don't know" next to rivals printing one confident
+               date; one date with no range is the opposite failure (the four
+               public estimators disagree by ~9 months on identical input).
+               So: the most defensible model's own date, big, with the full
+               envelope right under it and the models listed below. */
+            <>
+              <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                Most likely
+              </p>{" "}
+              <p className="mt-2 font-heading text-3xl font-black leading-[1.05] sm:text-5xl">
+                Around {formatMonth(envelope.anchor.slice(0, 7))}
+              </p>{" "}
+              <p className="mt-3 font-heading text-lg font-bold sm:text-xl">
+                Likely decision window:{" "}
+                {envelope.earliest.slice(0, 7) === envelope.latest.slice(0, 7) ? (
+                  formatMonth(envelope.earliest.slice(0, 7))
+                ) : (
+                  <>
+                    {formatMonth(envelope.earliest.slice(0, 7))}
+                    <span className="text-muted-foreground"> to </span>
+                    {formatMonth(envelope.latest.slice(0, 7))}
+                  </>
+                )}
+              </p>{" "}
+              <p className="mt-3 text-base leading-relaxed text-foreground/70">
+                {envelope.modelCount === 1
+                  ? "One model has enough published data to answer for this month."
+                  : `${envelope.modelCount} models, each on its own basis, spread across ${envelope.spanMonths} months. They are listed below rather than averaged, because the spread is the honest part.`}
+              </p>
+            </>
+          ) : (
+            /* The frontier has already passed this month, so every
+               filing-anchored model lands in the past and the calculator
+               withholds them all - a window that has already elapsed is not
+               a forecast. What a reader with a case this old needs is the
+               CASE's own status, not month arithmetic. */
+            <>
+              <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                Where your case stands
+              </p>{" "}
+              <p className="mt-2 font-heading text-3xl font-black leading-[1.05] sm:text-4xl">
+                DOL&apos;s queue has passed your filing month
+                {estimate.monthsBehindFrontier !== null &&
+                estimate.monthsBehindFrontier < 0
+                  ? ` by ${Math.abs(estimate.monthsBehindFrontier)} month${Math.abs(estimate.monthsBehindFrontier) === 1 ? "" : "s"}`
+                  : ""}
+              </p>{" "}
+              <p className="mt-3 text-base leading-relaxed text-foreground/70">
+                Most cases filed this month have been decided. One still
+                pending has usually been taken out of filing order by an
+                audit, a request for information, or a hold, and none of
+                those can be dated from the filing month alone. Your case
+                number can: it carries the live DOL status and a
+                stage-adjusted estimate.
+              </p>{" "}
+              <p className="mt-4">
+                <Link
+                  href="/perm-case-status"
+                  className="inline-block border-2 border-border bg-primary px-4 py-2.5 font-heading text-base font-black text-primary-foreground shadow-hard-sm transition-transform hover:-translate-y-0.5"
+                >
+                  Check your case number
+                </Link>{" "}
+                <span className="text-sm text-muted-foreground">
+                  Free, no account.
+                </span>
+              </p>
+            </>
+          )}
 
           {progress ? (
             <div className="mt-6">
@@ -452,15 +517,18 @@ export function PermTimelineEstimator({
                 <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   Your month
                 </p>{" "}
+                {/* Signed arithmetic reads backwards here: "-11 months behind
+                    the queue" for a month the queue passed 11 months ago.
+                    Say the direction in words and keep the number positive. */}
                 <p className="mt-1 font-heading text-2xl font-black leading-none">
-                  {estimate.monthsBehindFrontier > 0
-                    ? `+${estimate.monthsBehindFrontier}`
-                    : estimate.monthsBehindFrontier}
+                  {Math.abs(estimate.monthsBehindFrontier)}
                 </p>{" "}
                 <p className="mt-1 text-sm text-foreground/70">
                   {estimate.monthsBehindFrontier > 0
-                    ? "months ahead of the queue"
-                    : "months behind the queue"}
+                    ? "months until the queue reaches your month"
+                    : estimate.monthsBehindFrontier === 0
+                      ? "months away: the queue is at your month"
+                      : "months since the queue passed your month"}
                 </p>
               </div>
             ) : null}
@@ -468,8 +536,9 @@ export function PermTimelineEstimator({
         </div>
       ) : null}
 
-      {/* Where this case sits relative to DOL's published frontier. */}
-      {frontier && position ? (
+      {/* Where this case sits relative to DOL's published frontier. Skipped
+          when the overdue hero above has already said exactly this. */}
+      {frontier && position && !(estimate.position === "overdue" && !envelope) ? (
         <div className={cn("border-b-2 border-border p-6 sm:p-8", position.tone)}>
           <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
             Queue position

@@ -119,9 +119,31 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
   });
 
   // Models arrive most-defensible-first; the head is the one the timeline
-  // page leads with too. No models means no answer, not a made-up one.
+  // page leads with too. No models means no answer, not a made-up one -
+  // except the overdue case, where the absence IS the answer: the calculator
+  // withholds every filing-anchored model once the frontier has passed the
+  // month (their dates have already elapsed), and what remains true is that
+  // a case still pending here is out of filing order.
   const model = est.models[0];
-  if (!model) return null;
+  if (!model) {
+    if (est.position === "overdue") {
+      const passedBy =
+        est.monthsBehindFrontier !== null
+          ? Math.abs(est.monthsBehindFrontier)
+          : null;
+      return {
+        kind: "no-date",
+        note:
+          `DOL's queue ${passedBy ? `passed this filing month ${passedBy} month${passedBy === 1 ? "" : "s"} ago` : "has passed this filing month"}. ` +
+          "A case still pending at that point has usually been taken out of filing order by an audit, a request for information, or a hold, and none of those can be dated from the filing month. The live status above is the accurate read.",
+        observedAgeDays: differenceInCalendarDays(
+          parseISO(input.today),
+          parseISO(input.filingDate),
+        ),
+      };
+    }
+    return null;
+  }
 
   const factor =
     place && place.percentile !== null
