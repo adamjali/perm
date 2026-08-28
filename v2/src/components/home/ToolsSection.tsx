@@ -188,7 +188,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
             href="/calculators"
             className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
           >
-            See all six calculators
+            See every calculator
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
           <Link

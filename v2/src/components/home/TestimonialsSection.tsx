@@ -45,7 +45,7 @@ const trustBadges: TrustBadge[] = [
         <circle cx="10" cy="13" r="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
       </svg>
     ),
-    label: "Built for Attorneys",
+    label: "Applicants and Attorneys",
   },
   {
     icon: (
@@ -122,7 +122,7 @@ export function TestimonialsSection() {
               {Number(APP_RATING.value).toFixed(1)}
             </span>{" "}
             <span className="text-sm text-muted-foreground">
-              from {APP_RATING.count} attorney reviews
+              from {APP_RATING.count} reviews
             </span>
           </div>
           ) : null}

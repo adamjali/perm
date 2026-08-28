@@ -30,7 +30,7 @@ export function CaseEstimate(props: CaseEstimateInput) {
       <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Estimate
-        </p>
+        </p>{" "}
         <h2 className="mt-1 font-heading text-2xl font-black">
           No date can honestly be put on this case
         </h2>{" "}
@@ -52,11 +52,10 @@ export function CaseEstimate(props: CaseEstimateInput) {
     <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
       <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
         Estimate · not a promise
-      </p>
+      </p>{" "}
       <h2 className="mt-1 font-heading text-2xl font-black">
         When this case could be decided
-      </h2>
-
+      </h2>{" "}
       <p className="mt-4 font-heading text-3xl font-black sm:text-4xl">
         {est.earliestDate && est.latestDate ? (
           <>

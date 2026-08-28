@@ -17,7 +17,12 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { RocketLaunchSVG } from "@/components/illustrations";
 
-export function CTASection() {
+export function CTASection({
+  eyebrow = "For a caseload",
+}: {
+  /** The audience line above the heading. Defaults to the practitioner read. */
+  eyebrow?: string;
+}) {
   const { isNavigating, navigateTo, targetPath } = useNavigationLoading();
 
   return (
@@ -104,7 +109,7 @@ export function CTASection() {
 
           <div>
             <p className="mb-3 font-mono text-sm text-black/60 uppercase tracking-wider">
-              For a caseload
+              {eyebrow}
             </p>{" "}
             <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl">
               Every PERM Deadline, Computed Per Case

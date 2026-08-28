@@ -5,7 +5,14 @@
  * - SoftwareApplication (main site schema)
  * - Organization (site publisher info)
  * - WebSite (site name for Google Search)
- * - FAQPage (FAQ rich results)
+ * - FAQPage (kept for non-Google engines; Google dropped FAQ rich results
+ *   in May 2026, so this is no longer a rich-result lever there)
+ *
+ * THE DESCRIPTIONS HERE ARE WHAT ANSWER ENGINES QUOTE. LLM retrieval
+ * tokenizes JSON-LD as text, so the description strings below are read
+ * exactly like visible copy - and for months they said "for immigration
+ * attorneys", which is precisely what AI overviews then said the whole
+ * product was. Both sides of the product, in both descriptions, always.
  */
 
 import { GITHUB_REPO_URL } from "@/lib/constants/externalLinks";
@@ -31,16 +38,30 @@ export function getSoftwareApplicationSchema(baseUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication' as const,
     name: 'PERM Tracker',
-    applicationCategory: 'BusinessApplication',
-    applicationSubCategory: 'Legal Software',
+    // WebApplication over BusinessApplication/'Legal Software': the old pair
+    // encoded B2B-only, and half the product is a free consumer surface.
+    applicationCategory: 'WebApplication',
     operatingSystem: 'Web Browser',
+    isAccessibleForFree: true,
     offers: {
       '@type': 'Offer' as const,
       price: '0',
       priceCurrency: 'USD',
     },
     description:
-      'Free PERM case tracking software for immigration attorneys. Track deadlines, manage labor certification cases, and never miss a filing date.',
+      'Free PERM tracking for green-card applicants and immigration attorneys. Check any PERM case number for its live DOL status and a decision estimate, follow the queue with live data, and compute every case deadline automatically.',
+    disambiguatingDescription:
+      'Two sides, both free: a public tracker for the person waiting (per-case DOL status, timelines for PWD, PERM, I-140 and I-485, and open datasets), and case-management software for attorneys and firms (deadlines computed per case, reminders, calendar sync).',
+    audience: [
+      {
+        '@type': 'Audience' as const,
+        audienceType: 'Green-card applicants and beneficiaries',
+      },
+      {
+        '@type': 'Audience' as const,
+        audienceType: 'Immigration attorneys, paralegals and HR teams',
+      },
+    ],
     url: baseUrl,
     screenshot: `${baseUrl}/opengraph-image`,
     // Cross-reference the Organization @id (set in src/app/layout.tsx where
@@ -48,11 +69,12 @@ export function getSoftwareApplicationSchema(baseUrl: string) {
     // Google understand this is the same entity as the Organization schema.
     creator: { '@id': SCHEMA_IDS.organization(baseUrl) },
     featureList: [
+      'Per-case PERM status lookup from DOL, with email alerts on changes',
+      'Timelines and calculators for PWD, PERM, I-140 and I-485',
+      'Live PERM queue data: backlog, pace, employers, law firms, wages',
       'Automatic deadline calculation per DOL regulations',
-      'Real-time PERM case validation',
       'Multi-case management dashboard',
       'Email and push notifications',
-      'Progress tracking timeline',
       'Calendar view with deadlines',
     ],
     // aggregateRating is intentionally omitted from this root schema because
@@ -104,7 +126,7 @@ export function getWebSiteSchema(baseUrl: string) {
     alternateName: ['PERMTracker'],
     url: baseUrl,
     description:
-      'Free PERM case tracking software for immigration attorneys.',
+      'Free PERM tracking for green-card applicants and immigration attorneys: live DOL data, per-case status, and automatic deadlines.',
     // Cross-reference Organization @id (set in src/app/layout.tsx @graph) so
     // Google understands WebSite is published by the Organization entity.
     publisher: { '@id': SCHEMA_IDS.organization(baseUrl) },

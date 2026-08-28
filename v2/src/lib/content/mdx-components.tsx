@@ -84,7 +84,7 @@ function Callout({
 
 function ProductCTA({
   title = "Try PERM Tracker",
-  description = "Free case tracking for immigration attorneys. Track deadlines, manage cases, never miss a filing date.",
+  description = "Free for applicants and attorneys: live per-case DOL status with email alerts, stage timelines, and every deadline computed per case.",
   href = "/signup",
   buttonText = "Get Started Free",
 }: {

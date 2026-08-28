@@ -16,3 +16,5 @@ export { CTASection } from "./CTASection";
 export { TestimonialsSection } from "./TestimonialsSection";
 export { ScrollProgress } from "./DecorativeElements";
 export { ToolsSection } from "./ToolsSection";
+export { StageStrip } from "./StageStrip";
+export { AttorneyPanel } from "./AttorneyPanel";

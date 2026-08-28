@@ -116,23 +116,73 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               </>
             )}
           </p>{" "}
-          {/* The two doors, inside the text column on purpose. They used to be a
-              second grid row whose height the instrument set; now nothing sits
-              between them and the subcopy that can grow. Real links, so a
+          {/* THE PRIMARY ACTION: check your own case. A plain GET form into
+              /perm-case-status?case= - the page's existing, shareable,
+              works-without-JS contract - so the hero stays free of client
+              JavaScript and a crawler sees an honest form. The answer page
+              carries the live federal record, the queue position, the
+              stage-aware estimate, and the alert form, in that order. */}
+          <form
+            action="/perm-case-status"
+            method="get"
+            className="mt-8 border-3 border-border bg-card p-5 shadow-hard lg:mt-10"
+          >
+            <label
+              htmlFor="hero-case"
+              className="font-heading text-lg font-black leading-tight"
+            >
+              Where is your case? When could it be decided?
+            </label>{" "}
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+              <input
+                id="hero-case"
+                name="case"
+                type="text"
+                required
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+                placeholder="G-100-24339-516453"
+                aria-describedby="hero-case-help"
+                className="mono min-h-[48px] w-full min-w-0 flex-1 border-3 border-border bg-background px-4 text-base placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />{" "}
+              <button
+                type="submit"
+                className="inline-flex min-h-[48px] items-center justify-center gap-2 border-3 border-border bg-primary px-6 font-heading font-black text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+              >
+                Check my case
+              </button>
+            </div>
+            <p
+              id="hero-case-help"
+              className="mt-3 text-sm leading-relaxed text-muted-foreground"
+            >
+              Live DOL status, your place in the queue, and an estimate. Free,
+              no account. The case number is on the filing receipt, or ask
+              whoever filed for you.{" "}
+              <Link
+                href="/tools/perm-timeline-calculator"
+                className="font-bold underline underline-offset-2 hover:text-primary"
+              >
+                No case number? Estimate from your filing month
+              </Link>
+            </p>
+          </form>
+          {/* The two doors, now secondary to the form above. Real links, so a
               crawler and a middle-click both work. */}
-          <div className="mt-8 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2 lg:mt-10">
+          <div className="mt-4 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2">
             <Link
               href="/tools"
               className="group flex flex-col border-3 border-border bg-card p-5 shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
             >
               <span className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                Waiting on a case
+                The live data
               </span>{" "}
               <span className="mt-2 font-heading text-lg font-black leading-tight">
                 See where the queue stands
               </span>{" "}
               <span className="mt-2 text-base leading-relaxed text-foreground/70">
-                Live DOL figures and an alert when your filing month comes up.
+                DOL&apos;s own figures: the backlog, the pace, every employer.
               </span>{" "}
               <span className="mt-3 inline-flex items-center gap-2 font-bold">
                 Open the data{" "}
@@ -140,7 +190,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               </span>
             </Link>
             <Link
-              href="/signup"
+              href="/for-attorneys"
               className="group flex flex-col border-3 border-border bg-foreground p-5 text-background shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
             >
               <span className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-background/70">
@@ -154,7 +204,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
                 per case.
               </span>{" "}
               <span className="mt-3 inline-flex items-center gap-2 font-bold underline decoration-primary decoration-2 underline-offset-4">
-                Start tracking free{" "}
+                For attorneys and firms{" "}
                 <ArrowRight className="transition-transform duration-150 group-hover:translate-x-1" />
               </span>
             </Link>

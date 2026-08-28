@@ -22,8 +22,8 @@ interface ContentCTAProps {
 }
 
 export default function ContentCTA({
-  title = "Start Tracking Your PERM Cases",
-  description = "Free case management for immigration attorneys. Automated deadlines, recruitment tracking, and real-time case status.",
+  title = "Track Your PERM, Free",
+  description = "Check any case number for its live DOL status and a decision estimate. Attorneys and firms get every deadline computed per case.",
   buttonText = "Get Started Free",
   href = "/signup",
 }: ContentCTAProps) {

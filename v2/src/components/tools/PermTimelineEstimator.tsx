@@ -16,7 +16,7 @@
  * their case runs past it.
  */
 
-import { Fragment, useId, useMemo, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useState } from "react";
 import { CalendarDot as CalendarClock, Info, Warning } from "@phosphor-icons/react";
 
 import { estimateQueueDecision, type CohortStat, type DolFrontier } from "@/lib/perm";
@@ -39,6 +39,8 @@ import { cn } from "@/lib/utils";
 export interface PermTimelineEstimatorProps {
   frontier: DolFrontier | null;
   cohorts: readonly CohortStat[];
+  /** "YYYY-MM" to preselect, e.g. from a ?month= link. Ignored when invalid. */
+  initialMonth?: string | null;
   frontierAdvance: {
     rate: number;
     fromMonth: string;
@@ -187,16 +189,38 @@ export function PermTimelineEstimator({
   activeRange = null,
   queueSource = null,
   compact = false,
+  initialMonth = null,
   className,
 }: PermTimelineEstimatorProps) {
   const selectId = useId();
   const options = useMemo(() => filingMonthOptions(today), [today]);
-  // Default to a month DOL is plausibly working, so the empty state shows a
-  // real answer rather than an empty frame.
+  // Default to the caller's prefill (the homepage's "estimate from your
+  // filing month" path arrives with ?month=), else a month DOL is plausibly
+  // working, so the empty state shows a real answer rather than an empty
+  // frame. The prefill must exist in the option list or it is ignored - a
+  // month the select cannot show would desynchronise control and estimate.
   const [month, setMonth] = useState<string>(() => {
+    if (initialMonth && options.some((o) => o.value === initialMonth)) {
+      return initialMonth;
+    }
     if (frontier) return frontier.analystQueueMonth;
     return options[0] ? options[0].value : "2025-01";
   });
+
+  // ?month= prefill, read AFTER mount on purpose. Reading searchParams
+  // server-side would opt the whole route into dynamic rendering - the exact
+  // defect that once made every public page a server render per visit - and
+  // reading window.location in the state initializer would render different
+  // HTML than the server sent. A post-mount set is hydration-safe and keeps
+  // the page static.
+  useEffect(() => {
+    const m = new URLSearchParams(window.location.search).get("month");
+    if (m && /^\d{4}-\d{2}$/.test(m) && options.some((o) => o.value === m)) {
+      setMonth(m);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once; the
+    // URL does not change under this page without a navigation.
+  }, []);
 
   const estimate = useMemo(
     () =>

@@ -5,29 +5,28 @@
  * Complete landing page matching mockup-home-v2.html design.
  *
  * Sections (in order):
- * 1. HeroSection - the measured wait, then the two doors
+ * 1. HeroSection - the measured wait, the case-lookup form, then the doors
  * 2. LiveDataBand - DOL's live queue position + the tape
- * 3. StakesSection - Horizontal scroll PERM consequence cards (#stakes)
- * 4. HowItWorks - 3-step process with connectors + video showcase (#how)
- * 4b. ToolsSection - the four calculators, laid out as the process (#tools)
- * 4c. SectionDivider(comb) - graduations, where the page turns to instruments
- * 5. FeaturesGrid - 6 feature cards with tilt effect (#features)
- * 7. SecuritySection - Neobrutalist security table (#security)
- * 8. TestimonialsSection - Value props + trust badges
- * 9. FAQSection - Common questions (#faq)
- * 10. CTASection - Single CTA with loss-frame
+ * 3. StageStrip - PWD / PERM / I-140 / I-485, each with its timeline + data
+ * 4. ToolsSection - the four calculators, laid out as the process (#tools)
+ * 5. AttorneyPanel - the practitioner door, slimmed; full pitch on /for-attorneys
+ * 6. TestimonialsSection - Value props + trust badges
+ * 7. FAQSection - Common questions (#faq)
+ * 8. CTASection - Single CTA with loss-frame
  * (Footer is rendered by PublicLayout)
  *
+ * The practitioner lower half (Stakes, HowItWorks, FeaturesGrid, Security)
+ * moved WHOLE to /for-attorneys: every H2 below the fold used to address a
+ * caseload, which is exactly what answer engines aggregated into "what this
+ * product is". Nothing was deleted in the move.
  */
 
 import type { Metadata } from "next";
 import {
   HeroSection,
-  StakesSection,
-  FeaturesGrid,
-  HowItWorks,
+  StageStrip,
+  AttorneyPanel,
   ToolsSection,
-  SecuritySection,
   TestimonialsSection,
   FAQSection,
   CTASection,
@@ -131,22 +130,18 @@ export default async function HomePage() {
         averageDays={analystAvg?.calendarDays ?? null}
         figures={deriveFigures(disclosure)}
       />
-      <StakesSection />
-      <SectionDivider kind="tape" fill="var(--muted)" />
-      <HowItWorks />
+      <StageStrip />
       <SectionDivider kind="comb" fill="var(--background)" />
       <ToolsSection
         pwdPending={pwdPending}
         frontierMonth={analyst?.priorityDate ?? null}
         averageDays={analystAvg?.calendarDays ?? null}
       />
-      <FeaturesGrid />
-      <SectionDivider kind="ledger" fill="var(--muted)" />
-      <SecuritySection />
+      <AttorneyPanel />
       <TestimonialsSection />
       <FAQSection />
       <SectionDivider kind="step" fill="var(--primary)" />
-      <CTASection />
+      <CTASection eyebrow="If you manage cases" />
     </>
   );
 }
