@@ -198,17 +198,28 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 function Provenance({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }) {
   if (!("observed" in funnel)) return null;
   const { base, observed, observedShare } = funnel;
-  if (observed.resolved <= 0) return null;
+  // FIRE ON EITHER HALF, NOT JUST RESOLUTIONS. Gating only on
+  // `observed.resolved` was wrong the moment we watched our first RFI be
+  // ISSUED: `everyIssued` was already pooled (3,214 against a base of 3,213)
+  // while the page still read as a single-source figure. A blended number
+  // with no disclosure is the exact thing this component exists to prevent,
+  // and the gap would have lasted however long it took that first RFI to
+  // resolve - a month or more.
+  if (observed.newIssued <= 0 && observed.resolved <= 0) return null;
+  const since = observed.from ? ` since ${observed.from}` : "";
   return (
     <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-muted-foreground">
       <b className="font-bold text-foreground">Two windows, pooled.</b>{" "}
-      {base.resolved.toLocaleString()} resolved RFIs come from a third-party
-      aggregate frozen at {fmtDay(base.observedAt)}, and{" "}
-      {observed.resolved.toLocaleString()} more are ones we have watched resolve
-      ourselves{observed.from ? ` since ${observed.from}` : null}. Our own
-      observations are {observedShare.toFixed(1)}% of the combined total, and
-      that share grows every day. The two windows do not overlap: the frozen
-      half is never re-read, so no case is counted twice.
+      {base.everIssued.toLocaleString()} RFIs, {base.resolved.toLocaleString()}{" "}
+      of them resolved, come from a third-party aggregate frozen at{" "}
+      {fmtDay(base.observedAt)}. On top of that we have watched{" "}
+      {observed.newIssued.toLocaleString()} more be issued and{" "}
+      {observed.resolved.toLocaleString()} resolve ourselves{since}.{" "}
+      {observed.resolved > 0
+        ? `Our own observations are ${observedShare.toFixed(1)}% of the resolved total, and that share grows every day.`
+        : "None of ours have resolved yet, so the percentage above is still entirely theirs."}{" "}
+      The two windows do not overlap: the frozen half is never re-read, so no
+      case is counted twice.
     </p>
   );
 }
