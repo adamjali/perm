@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
+import { MagnifyingGlass, RocketLaunch } from "@phosphor-icons/react/ssr";
 
 import {
   StakesSection,
@@ -9,7 +11,8 @@ import {
   CTASection,
 } from "@/components/home";
 import { SectionDivider } from "@/components/home/SectionDivider";
-import { DeferredShowcase } from "@/components/home/DeferredShowcase";
+import { FloatingShapes } from "@/components/home/DecorativeElements";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 /**
@@ -46,45 +49,87 @@ export const metadata: Metadata = {
 export default function ForAttorneysPage() {
   return (
     <>
-      <section className="border-b-3 border-border">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-10 px-4 pb-12 pt-10 [&>*]:min-w-0 sm:px-8 sm:pb-16 sm:pt-14 lg:grid-cols-12 lg:gap-x-12">
-        <div className="lg:col-span-6">
-          <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-            For attorneys, paralegals and HR teams
-          </p>{" "}
-          <h1 className="mt-4 max-w-3xl font-heading text-[2rem] font-black leading-[1.08] tracking-[-0.03em] sm:text-5xl">
-            Every PERM deadline,{" "}
-            <span className="inline-block bg-primary px-[0.22em] text-primary-foreground shadow-hard">
-              computed per case
-            </span>
-          </h1>{" "}
-          <p className="mt-5 max-w-[52ch] text-base leading-relaxed text-foreground/70 sm:text-lg">
-            Enter the case dates once. The filing window, the wage expiration,
-            the recruitment clocks and the audit response dates come out
-            computed, cascade when a date changes, and remind you before they
-            arrive.
-          </p>{" "}
-          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-            <Link
-              href="/signup"
-              className="inline-flex min-h-[48px] items-center justify-center border-3 border-border bg-primary px-7 font-heading font-black text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
-            >
-              Start tracking free
-            </Link>{" "}
-            <Link
-              href="/perm-case-status"
-              className="inline-flex min-h-[48px] items-center justify-center border-3 border-border px-7 font-heading font-black shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
-            >
-              Check a case number first
-            </Link>
+      {/* The original homepage hero, back by request - Adam pointed at the
+          2026-01-28 archive capture and asked for this one here. Ported from
+          commit 9297548c with three adaptations: the buttons are plain links
+          (the old client Button + navigation-spinner pair is retired), the
+          icons are Phosphor (lucide left the stack), and the dead /demo
+          route became the case lookup. Copy, layout, floating shapes, the
+          accent-box hover and the dashboard still are verbatim. */}
+      <section className="relative overflow-hidden border-b-3 border-border">
+        <FloatingShapes className="absolute inset-0" />
+        <div className="relative z-10 mx-auto flex max-w-[1400px] items-center px-4 py-12 sm:px-8 sm:py-16 lg:py-20">
+          <div className="grid w-full items-center gap-12 [&>*]:min-w-0 lg:grid-cols-2 lg:gap-20">
+            <div className="flex flex-col gap-6">
+              <ScrollReveal direction="up">
+                <div className="inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
+                  <span className="pulse-dot h-2 w-2 bg-primary" />
+                  Case Management Reimagined
+                </div>
+              </ScrollReveal>
+              <ScrollReveal direction="up" delay={0.05}>
+                <h1 className="font-heading text-4xl font-black leading-[1.1] tracking-[-0.02em] sm:text-5xl lg:text-6xl xl:text-7xl">
+                  Track Your PERM Cases{" "}
+                  <span className="inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
+                    Effortlessly
+                  </span>
+                </h1>
+              </ScrollReveal>
+              <ScrollReveal direction="up" delay={0.1}>
+                <p className="max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+                  Free, modern case management for immigration attorneys. Never
+                  miss a deadline, stay organized, and manage your PERM cases
+                  with confidence.
+                </p>
+              </ScrollReveal>
+              <ScrollReveal direction="up" delay={0.15}>
+                <div className="flex flex-wrap gap-4 pt-4">
+                  <Link
+                    href="/signup"
+                    className="inline-flex h-14 items-center border-3 border-border bg-primary px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                  >
+                    <RocketLaunch className="mr-2 h-5 w-5" aria-hidden="true" />
+                    Get Started Free
+                  </Link>{" "}
+                  <Link
+                    href="/perm-case-status"
+                    className="inline-flex h-14 items-center border-3 border-border bg-transparent px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-foreground shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-foreground hover:text-background hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                  >
+                    <MagnifyingGlass className="mr-2 h-5 w-5" aria-hidden="true" />
+                    Check a Case First
+                  </Link>
+                </div>
+              </ScrollReveal>
+              <ScrollReveal direction="up" delay={0.2}>
+                <p className="font-mono text-sm text-muted-foreground">
+                  No credit card required <span className="opacity-50">·</span>{" "}
+                  Free to use <span className="opacity-50">·</span> Built for
+                  attorneys
+                </p>
+              </ScrollReveal>
+            </div>
+            <ScrollReveal direction="right" delay={0.15} className="relative lg:order-last">
+              <div
+                className="absolute -right-10 -top-10 h-28 w-28 rotate-45 bg-primary opacity-10"
+                aria-hidden="true"
+              />
+              <div
+                className="absolute -bottom-16 -left-16 h-32 w-32 rotate-12 bg-primary opacity-10"
+                aria-hidden="true"
+              />
+              <div className="relative border-4 border-black shadow-hard-lg dark:border-white/20">
+                <Image
+                  src="/images/hero-showcase.png"
+                  alt="PERM Tracker dashboard showing case timeline, deadline tracking, and status updates"
+                  width={800}
+                  height={600}
+                  priority
+                  className="w-full"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                />
+              </div>
+            </ScrollReveal>
           </div>
-        </div>
-        {/* The product itself, moving. This half of the hero sat empty after
-            the reorg moved the pitch here from the homepage; the demo loop
-            is the strongest evidence the page has, so it gets the slot. */}
-        <div className="border-3 border-border shadow-hard lg:col-span-6">
-          <DeferredShowcase />
-        </div>
         </div>
       </section>
       <StakesSection />

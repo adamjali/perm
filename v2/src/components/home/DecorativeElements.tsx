@@ -242,4 +242,72 @@ export function FloatingParticles({ className = "" }: { className?: string }) {
 }
 
 const DecorativeElements = { ScrollProgress, FloatingIcons, FloatingParticles };
+
+// ============================================================================
+// FLOATING SHAPES - the January hero's parallax outline squares, restored
+// verbatim from commit 9297548c for the /for-attorneys hero (Adam asked for
+// the archived original back). Scroll-based parallax only - no bobbing, no
+// infinite animation.
+// ============================================================================
+
+interface FloatingShapesProps {
+  className?: string;
+}
+
+export function FloatingShapes({ className = "" }: FloatingShapesProps) {
+  const [scrollY, setScrollY] = React.useState(0);
+  const rafRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      // Throttle with requestAnimationFrame
+      if (rafRef.current !== null) return;
+
+      rafRef.current = requestAnimationFrame(() => {
+        setScrollY(window.scrollY);
+        rafRef.current = null;
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div className={`pointer-events-none ${className}`} style={{ zIndex: 0 }} aria-hidden="true">
+      {/* Shape 1 - Large green square outline - slow parallax */}
+      <div
+        className="absolute border-3 border-primary opacity-15 pointer-events-none"
+        style={{
+          width: "200px",
+          height: "200px",
+          top: "20%",
+          right: "5%",
+          transform: `rotate(12deg) translateY(${scrollY * 0.1}px)`,
+          transition: "transform 0.1s ease-out",
+        }}
+      />
+
+      {/* Shape 2 - Medium blue square outline - medium parallax */}
+      <div
+        className="absolute border-3 opacity-15 pointer-events-none"
+        style={{
+          width: "150px",
+          height: "150px",
+          bottom: "30%",
+          left: "3%",
+          borderColor: "var(--stage-pwd)",
+          transform: `rotate(-8deg) translateY(${scrollY * 0.15}px)`,
+          transition: "transform 0.1s ease-out",
+        }}
+      />
+    </div>
+  );
+}
+
 export default DecorativeElements;

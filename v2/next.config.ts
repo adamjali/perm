@@ -72,6 +72,16 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   /*
+   * Prerender budget per page, up from the 60s default. Measured 2026-08-28:
+   * Turso (the status page's own word was "degraded") served full-table
+   * scans at 5s instead of 0.5s, the scan-heavy pages (salary explorer,
+   * wages, RFI) blew the default three times each, and two production
+   * deploys died on it - a deploy should get slower under a slow provider,
+   * not fail. Point reads were fine throughout; this only buys headroom for
+   * the aggregate prerenders.
+   */
+  staticPageGenerationTimeout: 180,
+  /*
    * Build output directory, overridable for a side-by-side build.
    *
    * Added 2026-08-27. Several sessions work in this checkout at once, and

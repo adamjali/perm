@@ -41,12 +41,46 @@ export function turso(): Client {
   return client;
 }
 
+/**
+ * A per-query deadline with one retry on a fresh request.
+ *
+ * Added 2026-08-28, during a Turso incident their own status page called
+ * degraded: most requests answered normally while a fraction HUNG - undici's
+ * HeadersTimeoutError after minutes with no response headers - and one hung
+ * request was enough to blow a page's whole prerender budget three times and
+ * fail two production deploys. The client cannot abort libSQL's underlying
+ * fetch, so the race abandons the stuck request (it times out harmlessly on
+ * its own) and the retry rides a NEW connection, which is exactly what a
+ * flaky-connection failure mode wants. A genuinely slow query still throws
+ * after two deadlines rather than hanging a build for minutes.
+ */
+const QUERY_DEADLINE_MS = 20_000;
+
+async function withDeadline<T>(run: () => Promise<T>, what: string): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    const timer = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`turso query deadline (${QUERY_DEADLINE_MS}ms, attempt ${attempt}): ${what}`)),
+        QUERY_DEADLINE_MS,
+      ).unref?.(),
+    );
+    try {
+      return await Promise.race([run(), timer]);
+    } catch (e) {
+      if (attempt >= 2 || !String(e).includes("turso query deadline")) throw e;
+    }
+  }
+}
+
 /** Rows as plain objects, with libSQL's bigints narrowed to numbers. */
 export async function rows<T = Record<string, unknown>>(
   sql: string,
   args: unknown[] = [],
 ): Promise<T[]> {
-  const rs = await turso().execute({ sql, args: args as never[] });
+  const rs = await withDeadline(
+    () => turso().execute({ sql, args: args as never[] }),
+    sql.slice(0, 80),
+  );
   return rs.rows.map((r) => {
     const o: Record<string, unknown> = {};
     for (const c of rs.columns) {
@@ -75,6 +109,9 @@ export async function one<T = Record<string, unknown>>(
  * database holds public federal records only.
  */
 export async function exec(sql: string, args: unknown[] = []): Promise<number> {
-  const rs = await turso().execute({ sql, args: args as never[] });
+  const rs = await withDeadline(
+    () => turso().execute({ sql, args: args as never[] }),
+    sql.slice(0, 80),
+  );
   return rs.rowsAffected;
 }
