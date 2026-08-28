@@ -8,6 +8,7 @@ import { useAdminAuth } from "@/lib/admin/adminAuth";
 import { Shield, WarningCircle as AlertCircle } from "@phosphor-icons/react";
 import { AdminStatsGrid } from "@/components/admin/AdminStatsGrid";
 import { UsersTable } from "@/components/admin/UsersTable";
+import { SignalsPanel } from "@/components/admin/SignalsPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -134,6 +135,9 @@ export default function AdminDashboardClient() {
 
       {/* Stats Grid */}
       <AdminStatsGrid data={dashboardData} />
+
+      {/* Growth signals: signups, alert subscriptions, case additions */}
+      <SignalsPanel skip={isSigningOut || authLoading || !isAdmin} />
 
       {/* Users Table */}
       <UsersTable
