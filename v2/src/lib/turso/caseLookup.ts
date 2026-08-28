@@ -2,6 +2,7 @@ import "server-only";
 
 import { slugify } from "@/lib/entitySlug";
 import { one } from "./client";
+import { discoverCase } from "./caseDiscovery";
 import {
   aheadPendingFrom,
   getLiveCensus,
@@ -126,7 +127,7 @@ export async function lookupCase(input: string): Promise<CaseLookupResult | null
   if (!caseNumber) return null;
 
   // 1. The live mirror: the only source that knows about a PENDING case.
-  const live = await one<Record<string, unknown>>(
+  let live = await one<Record<string, unknown>>(
     `SELECT current_status, is_final, filing_date, employer_name, job_title,
             last_checked_at
        FROM perm_case_status WHERE case_number = ?`,
@@ -143,9 +144,26 @@ export async function lookupCase(input: string): Promise<CaseLookupResult | null
   );
 
   if (!live && !dec) {
-    return {
-      caseNumber, live: null, decided: null, cohort: null,
-      employer: null, statusOutlook: null,
+    // A three-way miss becomes a live DOL question. A real case filed last
+    // week is not in the corpus (the seed was a closed set), and telling its
+    // owner "not found" was both wrong and a dead end. discoverCase asks
+    // DOL's own endpoint, records a hit so the daily sweep owns it from
+    // tomorrow, and degrades to null on a genuine miss, a timeout, or an
+    // exhausted global budget - in which case the old answer stands.
+    const found = await discoverCase(caseNumber);
+    if (!found) {
+      return {
+        caseNumber, live: null, decided: null, cohort: null,
+        employer: null, statusOutlook: null,
+      };
+    }
+    live = {
+      current_status: found.status,
+      is_final: found.isFinal ? 1 : 0,
+      filing_date: found.filingDate,
+      employer_name: found.employerName,
+      job_title: found.jobTitle,
+      last_checked_at: found.lastCheckedAt,
     };
   }
 

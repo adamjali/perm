@@ -67,3 +67,14 @@ export async function one<T = Record<string, unknown>>(
   const r = await rows<T>(sql, args);
   return r[0] ?? null;
 }
+
+/**
+ * A parameterized write. The web layer was read-only until case discovery
+ * (caseDiscovery.ts) needed to record lookups that miss the corpus; keep it
+ * that way for everything else - aggregates are the ingest's job, and this
+ * database holds public federal records only.
+ */
+export async function exec(sql: string, args: unknown[] = []): Promise<number> {
+  const rs = await turso().execute({ sql, args: args as never[] });
+  return rs.rowsAffected;
+}
