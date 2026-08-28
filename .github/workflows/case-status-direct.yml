@@ -69,8 +69,11 @@ jobs:
         run: |
           printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
             "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
-          # Sunday 08:10 UTC is the weekly full pass; everything else is
+          # 08:10 UTC (04:10 ET) is the DAILY full pass; the other cron is
           # the pending pass. workflow_dispatch overrides both.
+          # Keep this string in step with the cron above: if they drift, the
+          # full pass silently becomes a second pending pass and the
+          # expiration sweep stops happening with nothing erroring.
           MODE="${{ github.event.inputs.mode }}"
           if [ -z "$MODE" ]; then
             if [ "${{ github.event.schedule }}" = "10 8 * * *" ]; then
