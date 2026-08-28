@@ -174,6 +174,21 @@ COUNTRY_HEADINGS = ["ALL CHARGEABILITY", "CHINA", "INDIA", "MEXICO", "PHILIPPINE
 
 # Primary source. Named as what it is - a person opened the page - so a
 # reader can tell it apart from the archived and mirrored rows beside it.
+# A MONTHLY ARTEFACT NEEDS A BUDGET TIGHTER THAN ITS CADENCE, NOT LOOSER.
+#
+# `as_of` here is the month the bulletin COVERS, which is about a month in the
+# future while we are current, so its age sits near -34 and only crosses zero
+# two months after we fall behind. It cannot catch a single missed month.
+#
+# What can is the RUN age, which `check_ingest_health.py` budgets at
+# max(7, max_age_days * 2). At 20 that is 40 days: a bulletin done on time
+# refreshes every ~30, so 40 fires on one missed month with slack and stays
+# quiet when current. Probed: silent at 35 days, fires at 45.
+#
+# It was 75, which meant a missed October would have said nothing until
+# November.
+BULLETIN_MAX_AGE_DAYS = 20
+
 SAVED_PAGE_SOURCE = (
     "travel.state.gov (page saved from a browser; the site refuses automated clients)"
 )
@@ -407,7 +422,7 @@ def ingest_saved_page(path: str, month: str | None) -> int:
                ["visa-bulletin",
                 str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10],
                 int(time.time() * 1000), SAVED_PAGE_SOURCE, "Monthly",
-                f"{n:,} bulletins", 75])
+                f"{n:,} bulletins", BULLETIN_MAX_AGE_DAYS])
     log(f"visa_bulletins now holds {n} months")
     return 0
 
@@ -520,7 +535,7 @@ def backfill_from_archive(years: list[int], limit: int) -> int:
                 str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10],
                 int(time.time() * 1000),
                 "State Dept via Internet Archive; current month from a saved page",
-                "Monthly", f"{n:,} bulletins", 75])
+                "Monthly", f"{n:,} bulletins", BULLETIN_MAX_AGE_DAYS])
     log(f"visa_bulletins now holds {n} months")
     return 0
 
@@ -628,7 +643,7 @@ def main() -> int:
     n = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
     db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
                ["visa-bulletin", str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10], int(time.time() * 1000),
-                "State Dept via Internet Archive; gaps via permtrack.app mirror", "Monthly", f"{n:,} bulletins", 75])
+                "State Dept via Internet Archive; gaps via permtrack.app mirror", "Monthly", f"{n:,} bulletins", BULLETIN_MAX_AGE_DAYS])
 
     return 0
 
