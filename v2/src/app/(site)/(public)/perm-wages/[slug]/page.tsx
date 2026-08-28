@@ -51,7 +51,26 @@ import {
 // nothing and cost a regeneration per page per hour across 21,178
 // entity pages. A day bounds staleness far below the data's own
 // cadence. The ingest should also revalidate on demand.
-export const revalidate = 86400;
+/**
+ * SEVEN DAYS, NOT ONE, AND THE REASON IS THE SOURCE'S CADENCE.
+ *
+ * These pages render the QUARTERLY disclosure corpus. There are ~20,700 of
+ * them and only the top 100 of each kind are prerendered, so every other one
+ * regenerates on first request after its window expires. At revalidate=86400
+ * that is up to 21,000 cold server renders A DAY - each a React SSR pass plus
+ * Turso round trips - to reflect data that changes FOUR TIMES A YEAR.
+ *
+ * Vercel's free Fluid tier is 4 CPU-hours. 21,000 daily renders at even a
+ * couple of hundred milliseconds of CPU each consumes it, and the account hit
+ * 100% on 2026-08-27 with every public page still serving `x-vercel-cache:
+ * HIT` - so it was never the pages people actually visit, it was the
+ * regeneration of pages almost nobody opens.
+ *
+ * Seven days is still 13x more often than the underlying data moves. If a
+ * quarter lands and these need to reflect it sooner, the ingest should call
+ * on-demand revalidation rather than every page re-rendering on a timer.
+ */
+export const revalidate = 604800;
 
 const KIND = "occupation" as const;
 const BASE = "/perm-wages";
