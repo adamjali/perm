@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CaseStageBadge } from "@/components/status/case-stage-badge";
+import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
 import { getStageIndex } from "@/components/cases/detail/next-up-section.utils";
 import {
@@ -772,11 +773,33 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
           {/* Row 2: Badges */}
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            {caseData.caseNumber && (
-              <span className="font-mono text-sm font-bold uppercase tracking-wide border-3 border-border px-3 py-1 leading-none truncate max-w-[200px]" title={caseData.caseNumber}>
-                {caseData.caseNumber}
-              </span>
-            )}
+            {caseData.caseNumber &&
+              (normaliseCaseNumber(caseData.caseNumber) ? (
+                /* A well-formed DOL case number links to the live federal
+                   record: status, queue position, and the stage-aware
+                   estimate, on the public lookup page. This is the one thing
+                   the app could not show before - the DOL feed the public
+                   side already reads. Opens in a new tab so the working
+                   context stays put. */
+                <a
+                  href={`/perm-case-status?case=${encodeURIComponent(
+                    normaliseCaseNumber(caseData.caseNumber)!,
+                  )}`}
+                  target="_blank"
+                  rel="noopener"
+                  title={`${caseData.caseNumber} - check DOL's live status`}
+                  className="font-mono text-sm font-bold uppercase tracking-wide border-3 border-border px-3 py-1 leading-none truncate max-w-[220px] underline decoration-primary decoration-2 underline-offset-4 transition-colors hover:bg-primary hover:text-primary-foreground"
+                >
+                  {caseData.caseNumber}
+                </a>
+              ) : (
+                <span
+                  className="font-mono text-sm font-bold uppercase tracking-wide border-3 border-border px-3 py-1 leading-none truncate max-w-[200px]"
+                  title={caseData.caseNumber}
+                >
+                  {caseData.caseNumber}
+                </span>
+              ))}
             <CaseStageBadge stage={caseData.caseStatus} bordered />
             <ProgressStatusBadge status={caseData.progressStatus} />
             {isProfessionalOccupation && (
