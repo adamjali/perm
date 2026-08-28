@@ -156,10 +156,26 @@ export async function discoverCase(
   f: typeof fetch = fetch,
   now: Date = new Date(),
 ): Promise<DiscoveredCase | null> {
-  if (!(await underDailyBudget(now))) return null;
+  // The page wraps its lookup in .catch(() => null), so a throw from here
+  // renders as an ordinary "no record" - a silent failure indistinguishable
+  // from a genuine miss. First deploy proved it: the budget INSERT failed in
+  // the Vercel runtime and nothing anywhere said so. Every failure below is
+  // caught and NAMED in the function logs instead.
+  try {
+    if (!(await underDailyBudget(now))) {
+      console.error("[caseDiscovery] daily budget refused", caseNumber);
+      return null;
+    }
+  } catch (e) {
+    console.error("[caseDiscovery] budget write failed:", e);
+    return null;
+  }
 
   const rec = await fetchDolCase(caseNumber, f);
-  if (!rec) return null;
+  if (!rec) {
+    console.error("[caseDiscovery] DOL returned no exact match", caseNumber);
+    return null;
+  }
 
   const isFinal = FINAL_STATUSES.has(rec.caseStatus.trim().toUpperCase());
   // The number's own YYDDD segment, exact for 94.6% of the corpus and equal
@@ -170,25 +186,31 @@ export async function discoverCase(
     parseCaseNumber(caseNumber)?.filingDate ?? rec.submittedDate ?? null;
   const lastCheckedAt = now.toISOString();
 
-  await exec(
-    `INSERT OR IGNORE INTO perm_case_status
-       (case_number, filing_date, current_status, is_final, is_disclosed,
-        employer_name, job_title, submitted_date, last_checked_at, verified,
-        source, fetched_at)
-     VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, 1, ?, ?)`,
-    [
-      caseNumber,
-      filingDate,
-      rec.caseStatus,
-      isFinal ? 1 : 0,
-      rec.employerName,
-      rec.jobTitle,
-      rec.submittedDate,
-      lastCheckedAt,
-      DISCOVERY_SOURCE,
-      now.getTime(),
-    ],
-  );
+  try {
+    await exec(
+      `INSERT OR IGNORE INTO perm_case_status
+         (case_number, filing_date, current_status, is_final, is_disclosed,
+          employer_name, job_title, submitted_date, last_checked_at, verified,
+          source, fetched_at)
+       VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, 1, ?, ?)`,
+      [
+        caseNumber,
+        filingDate,
+        rec.caseStatus,
+        isFinal ? 1 : 0,
+        rec.employerName,
+        rec.jobTitle,
+        rec.submittedDate,
+        lastCheckedAt,
+        DISCOVERY_SOURCE,
+        now.getTime(),
+      ],
+    );
+  } catch (e) {
+    // The visitor still gets the truth DOL just told us; only the recording
+    // failed, and the log names it rather than the page hiding it.
+    console.error("[caseDiscovery] record failed:", e);
+  }
 
   return {
     status: rec.caseStatus,
