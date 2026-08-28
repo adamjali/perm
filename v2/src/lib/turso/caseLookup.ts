@@ -1,7 +1,13 @@
 import "server-only";
 
 import { slugify } from "@/lib/entitySlug";
-import { rows, one } from "./client";
+import { one } from "./client";
+import {
+  aheadPendingFrom,
+  getLiveCensus,
+  monthRowsFrom,
+  statusTotalFrom,
+} from "./liveCensus";
 
 /**
  * Everything we can honestly say about ONE case, from a case number.
@@ -149,20 +155,21 @@ export async function lookupCase(input: string): Promise<CaseLookupResult | null
 
   // 3. The cohort. Two different questions, kept separate on purpose:
   //    how far along is MY month, and how much sits in front of it.
+  //
+  //    FOLDED FROM THE PRECOMPUTED CENSUS, not queried. This route is
+  //    dynamic, and the two aggregates this block used to run per request
+  //    (a cohort group-by plus an unbounded ahead-of-month count) were most
+  //    of what made one lookup cost ~1.8M row reads. The census is one doc
+  //    read shared by every consumer in the render.
+  const census = await getLiveCensus();
   let cohort: CaseLookupResult["cohort"] = null;
-  if (month) {
-    const c = await one<{ total: number; dec: number }>(
-      `SELECT count(*) AS total, coalesce(sum(is_final), 0) AS dec
-         FROM perm_case_status WHERE substr(filing_date, 1, 7) = ?`,
-      [month],
-    );
-    const ahead = await one<{ n: number }>(
-      `SELECT count(*) AS n FROM perm_case_status
-        WHERE is_final = 0 AND substr(filing_date, 1, 7) < ?`,
-      [month],
-    );
-    const total = Number(c?.total) || 0;
-    const done = Number(c?.dec) || 0;
+  if (month && census) {
+    let total = 0;
+    let done = 0;
+    for (const r of monthRowsFrom(census.matrix, month)) {
+      total += r.n;
+      if (r.is_final === 1) done += r.n;
+    }
     if (total > 0) {
       cohort = {
         month,
@@ -170,7 +177,7 @@ export async function lookupCase(input: string): Promise<CaseLookupResult | null
         decided: done,
         pending: total - done,
         decidedPct: (done / total) * 100,
-        aheadOfMonth: Number(ahead?.n) || 0,
+        aheadOfMonth: aheadPendingFrom(census.matrix, month),
         sameMonthPending: total - done,
       };
     }
@@ -208,16 +215,19 @@ export async function lookupCase(input: string): Promise<CaseLookupResult | null
   // 5. What this status IS, in scale terms. Deliberately NOT "how likely you
   //    are to be certified from here" - the mirror is one snapshot per case,
   //    so it cannot observe transitions and cannot support that claim.
+  // Folded from the census: the COUNT(*) this used to run has no usable
+  // index and scanned all 414k rows per lookup. No live fallback on
+  // purpose - if the census is missing the block is withheld, because the
+  // fallback IS the cost bug.
   let statusOutlook: CaseLookupResult["statusOutlook"] = null;
-  if (live && !Number(live.is_final)) {
-    const s = await one<{ n: number }>(
-      "SELECT count(*) AS n FROM perm_case_status WHERE current_status = ?",
-      [String(live.current_status)],
-    );
-    statusOutlook = {
-      status: String(live.current_status),
-      nowInStatus: Number(s?.n) || 0,
-    };
+  if (live && !Number(live.is_final) && census) {
+    const n = statusTotalFrom(census.matrix, String(live.current_status));
+    if (n > 0) {
+      statusOutlook = {
+        status: String(live.current_status),
+        nowInStatus: n,
+      };
+    }
   }
 
   return {

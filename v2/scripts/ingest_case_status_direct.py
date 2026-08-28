@@ -151,6 +151,111 @@ def flush(db, updates: list, events: list) -> None:
     events.clear()
 
 
+def _rows(db, sql: str, args: list | None = None) -> list[list]:
+    """Rows as plain Python values (Hrana cells decoded)."""
+    res = db.execute(sql, args or [])["response"]["result"]
+    return [[None if c["type"] == "null" else c["value"] for c in row]
+            for row in res["rows"]]
+
+
+def write_live_census(db) -> None:
+    """Precompute the mirror census into perm_docs['live_census'].
+
+    WHY. `/perm-case-status?case=` renders dynamically, and its read layer
+    used to aggregate the 414k-row mirror on every request: a full status
+    count, an unbounded ahead-of-month range, a whole-table month group-by
+    and a bare COUNT(*) - measured at ~1.8M row reads per lookup, which is
+    how a month of crawler traffic burned a 500M row-read budget. Two
+    group-bys here, twice a day, replace all of it with one doc read.
+
+    THE DOC MUST RECONCILE OR IT MUST NOT BE WRITTEN. sum(matrix) +
+    noFilingDate == totalCases is asserted before the write; the reader
+    re-checks it and treats a mismatch as no census at all. Half a census
+    folds into small plausible numbers, and nothing downstream can tell.
+    """
+    matrix_rows = _rows(db, """
+        SELECT substr(filing_date, 1, 7) AS month,
+               current_status            AS status,
+               is_final                  AS is_final,
+               COUNT(*)                  AS n
+          FROM perm_case_status
+         WHERE filing_date IS NOT NULL AND filing_date <> ''
+         GROUP BY month, status, is_final""")
+    no_filing = int(db.scalar(
+        "SELECT COUNT(*) FROM perm_case_status "
+        "WHERE filing_date IS NULL OR filing_date = ''") or 0)
+    total = int(db.scalar("SELECT COUNT(*) FROM perm_case_status") or 0)
+
+    matrix = [{"month": str(m), "status": str(s),
+               "is_final": int(f), "n": int(n)}
+              for m, s, f, n in matrix_rows]
+    sum_n = sum(r["n"] for r in matrix)
+    if sum_n + no_filing != total:
+        # The two queries saw different tables (a concurrent write landed
+        # between them). Skip this run; the previous census stays live and
+        # the next run in <=12h reconciles.
+        log(f"NOT writing live_census: matrix {sum_n:,} + noFilingDate "
+            f"{no_filing:,} != total {total:,}")
+        return
+
+    doc = {"asOf": time.strftime("%Y-%m-%d"), "totalCases": total,
+           "noFilingDate": no_filing, "source": SOURCE, "matrix": matrix}
+    payload = json.dumps(doc, separators=(",", ":"))
+    db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
+        key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
+    db.execute(
+        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
+        "VALUES (?, ?, ?)",
+        ["live_census", payload, int(time.time() * 1000)])
+    got = db.scalar("SELECT length(json) FROM perm_docs WHERE key = ?",
+                    ["live_census"])
+    if int(got or 0) != len(payload):
+        raise SystemExit("FATAL: live_census read-back does not match write")
+    log(f"wrote     live_census ({len(matrix):,} matrix rows, "
+        f"{len(payload):,} bytes)")
+
+
+def write_decided_percentiles(db) -> None:
+    """Per received-month decision-day percentiles from the decided corpus.
+
+    Replaces caseContext's per-request window-function pass over perm_cases
+    (259k rows, no received_date index - a full scan per lookup). The corpus
+    only changes at disclosure ingests, but recomputing here twice a day
+    costs two bounded scans and guarantees the doc can never lag a re-ingest.
+    """
+    raw = _rows(db, """
+        WITH f AS (SELECT substr(received_date, 1, 7) AS m, days
+                     FROM perm_cases
+                    WHERE days IS NOT NULL AND received_date IS NOT NULL
+                      AND received_date <> ''),
+             o AS (SELECT m, days,
+                          ROW_NUMBER() OVER (PARTITION BY m ORDER BY days) AS rn,
+                          COUNT(*)    OVER (PARTITION BY m)                AS n
+                     FROM f)
+        SELECT m, MAX(n) AS n,
+               MAX(CASE WHEN rn = MAX(1, n / 4)     THEN days END) AS p25,
+               MAX(CASE WHEN rn = (n + 1) / 2       THEN days END) AS p50,
+               MAX(CASE WHEN rn = MAX(1, n * 3 / 4) THEN days END) AS p75
+          FROM o GROUP BY m ORDER BY m""")
+    months = [{"m": str(m), "n": int(n), "p25": _int_or_none(p25),
+               "p50": _int_or_none(p50), "p75": _int_or_none(p75)}
+              for m, n, p25, p50, p75 in raw]
+    if not months:
+        log("NOT writing decided_month_percentiles: perm_cases is empty here")
+        return
+    doc = {"asOf": time.strftime("%Y-%m-%d"), "months": months}
+    payload = json.dumps(doc, separators=(",", ":"))
+    db.execute(
+        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
+        "VALUES (?, ?, ?)",
+        ["decided_month_percentiles", payload, int(time.time() * 1000)])
+    log(f"wrote     decided_month_percentiles ({len(months)} months)")
+
+
+def _int_or_none(v) -> int | None:
+    return None if v is None else int(v)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--pending", action="store_true",
@@ -284,6 +389,8 @@ def main() -> int:
                     int(time.time() * 1000), SOURCE, "Every 12 hours",
                     f"{n:,} cases", 3])
         log("stamped   data_freshness")
+        write_live_census(db)
+        write_decided_percentiles(db)
     else:
         log("NOT stamping freshness: this run checked nothing")
     return 0

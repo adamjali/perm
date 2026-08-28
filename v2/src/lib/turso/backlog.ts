@@ -33,6 +33,12 @@
 import "server-only";
 
 import { rows } from "./client";
+import {
+  adjacentFrom,
+  aheadPendingFrom,
+  getLiveCensus,
+  monthRowsFrom,
+} from "./liveCensus";
 
 /** One status bucket inside a filing month, or across the whole mirror. */
 export interface BacklogStatusCount {
@@ -137,6 +143,12 @@ const MATRIX_SQL = `SELECT substr(filing_date, 1, 7) AS month,
  * the mirror moved between them.
  */
 export async function getBacklogMatrix(): Promise<BacklogMonth[]> {
+  // The ingest precomputes exactly these rows into the census doc twice a
+  // day; one doc read replaces the whole-table group-by. The live query
+  // stays as the fallback for the window where the doc is missing or has
+  // aged past the staleness guard.
+  const census = await getLiveCensus();
+  if (census) return foldBacklogRows(census.matrix);
   return foldBacklogRows(await rows<RawRow>(MATRIX_SQL));
 }
 
@@ -148,6 +160,10 @@ export async function getBacklogMatrix(): Promise<BacklogMonth[]> {
  * shows up as a bill.
  */
 export async function getMonthBacklog(month: string): Promise<BacklogMonth | null> {
+  const census = await getLiveCensus();
+  if (census) {
+    return foldBacklogRows(monthRowsFrom(census.matrix, month))[0] ?? null;
+  }
   const raw = await rows<RawRow>(
     `SELECT substr(filing_date, 1, 7) AS month,
             current_status              AS status,
@@ -228,6 +244,8 @@ export interface AdjacentMonths {
  * use the index and sorts 412,865 rows to return 39.
  */
 export async function getAdjacentMonths(month: string): Promise<AdjacentMonths> {
+  const census = await getLiveCensus();
+  if (census) return adjacentFrom(census.matrix, month);
   const [next, previous] = await Promise.all([
     rows<{ m: unknown }>(
       `SELECT substr(filing_date, 1, 7) AS m
@@ -266,6 +284,8 @@ export async function getAdjacentMonths(month: string): Promise<AdjacentMonths> 
  * the column makes the index unusable and turns this into a full scan.
  */
 export async function getPendingBefore(month: string): Promise<number> {
+  const census = await getLiveCensus();
+  if (census) return aheadPendingFrom(census.matrix, month);
   const r = await rows<{ n: unknown }>(
     `SELECT COUNT(*) AS n
        FROM perm_case_status

@@ -21,6 +21,7 @@ import type { BulletinMonth } from "@/lib/perm";
 import { MIN_TOTAL_FOR_PAGE, type EntityKind, type EntityRow } from "@/lib/entityPayload";
 
 import { one, rows } from "./client";
+import { getLiveCensus, type CensusMatrixRow } from "./liveCensus";
 
 interface EntityDbRow {
   slug: string;
@@ -714,6 +715,17 @@ function toMonthStat(r: Record<string, unknown>): MonthQueueStat {
  * exactly the direction that flatters a wait estimate.
  */
 export async function getQueueAhead(filingMonth: string): Promise<QueueAhead | null> {
+  // FROM THE LIVE CENSUS, NOT perm_month_stats. That table was filled daily
+  // from permtrack's aggregate and froze when the mirror schedule was
+  // removed (2026-08-27) - nothing writes it any more, so reading it served
+  // a queue position that silently aged. The census doc is our own mirror,
+  // recomputed twice a day, and carries its own source attribution.
+  const census = await getLiveCensus();
+  const fromCensus = census ? monthQueueStatsFromMatrix(census.matrix) : [];
+  if (census && fromCensus.length > 0) {
+    return assembleQueueAhead(fromCensus, filingMonth, census.source);
+  }
+
   const all = await rows<Record<string, unknown>>(
     `SELECT filing_month, total, pending, decided, analyst_review, rfi_issued,
             audit_response, appeals, source
@@ -722,6 +734,14 @@ export async function getQueueAhead(filingMonth: string): Promise<QueueAhead | n
   if (all.length === 0) return null;
 
   const months = all.map(toMonthStat);
+  return assembleQueueAhead(months, filingMonth, String(all[0]?.source ?? ""));
+}
+
+function assembleQueueAhead(
+  months: MonthQueueStat[],
+  filingMonth: string,
+  source: string,
+): QueueAhead {
   const ahead = months
     .filter((m) => m.filingMonth < filingMonth)
     .reduce((n, m) => n + m.pending, 0);
@@ -745,12 +765,61 @@ export async function getQueueAhead(filingMonth: string): Promise<QueueAhead | n
     months,
     subject,
     activeRange,
-    source: String(all[0]?.source ?? ""),
+    source,
   };
+}
+
+/**
+ * Fold the census matrix into per-month queue stats. Pure so the stage
+ * bucketing is testable: the named buckets must match the live-SQL fallback
+ * below exactly, or the two paths disagree the day the doc goes missing.
+ */
+export function monthQueueStatsFromMatrix(
+  matrix: readonly CensusMatrixRow[],
+): MonthQueueStat[] {
+  const by = new Map<
+    string,
+    { total: number; pending: number; analyst: number; rfi: number; audit: number; appeals: number }
+  >();
+  for (const r of matrix) {
+    if (!r.month) continue;
+    const b =
+      by.get(r.month) ??
+      { total: 0, pending: 0, analyst: 0, rfi: 0, audit: 0, appeals: 0 };
+    b.total += r.n;
+    if (r.is_final === 0) b.pending += r.n;
+    const s = r.status.trim().toUpperCase().replace(/\s+/g, " ");
+    if (s === "ANALYST REVIEW") b.analyst += r.n;
+    else if (s === "RFI ISSUED") b.rfi += r.n;
+    else if (s === "PENDING AUDIT RESPONSE") b.audit += r.n;
+    else if (
+      s === "RECONSIDERATION APPEALS" ||
+      s === "BALCA APPEALS" ||
+      s === "REQUEST FOR REVIEW"
+    ) {
+      b.appeals += r.n;
+    }
+    by.set(r.month, b);
+  }
+  return [...by.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([m, b]) => ({
+      filingMonth: m,
+      total: b.total,
+      pending: b.pending,
+      decided: b.total - b.pending,
+      analystReview: b.analyst,
+      rfiIssued: b.rfi,
+      auditResponse: b.audit,
+      appeals: b.appeals,
+      decidedPct: b.total > 0 ? ((b.total - b.pending) / b.total) * 100 : null,
+    }));
 }
 
 /** Every month's queue progress, for the bar chart. */
 export async function getMonthQueueStats(): Promise<MonthQueueStat[]> {
+  const census = await getLiveCensus();
+  if (census) return monthQueueStatsFromMatrix(census.matrix);
   /*
    * COMPUTED FROM OUR OWN ROWS, not read from a mirrored aggregate.
    *
@@ -1130,6 +1199,16 @@ export interface LiveStatusCount {
  * prevents. The pending split does not read this column at all.
  */
 export async function getLiveBacklog(): Promise<LiveCohortMonth[]> {
+  const census = await getLiveCensus();
+  if (census) {
+    return monthQueueStatsFromMatrix(census.matrix).map((m) => ({
+      month: m.filingMonth,
+      total: m.total,
+      pending: m.pending,
+      decided: m.decided,
+      decidedPct: m.decidedPct,
+    }));
+  }
   const r = await rows<Record<string, unknown>>(
     `SELECT substr(filing_date, 1, 7) AS month,
             COUNT(*)                                       AS total,
@@ -1154,6 +1233,21 @@ export async function getLiveBacklog(): Promise<LiveCohortMonth[]> {
 
 /** One filing month's status split, normalised and largest first. */
 export async function getLiveCohort(month: string): Promise<LiveStatusCount[]> {
+  const census = await getLiveCensus();
+  if (census) {
+    const merged = new Map<string, { count: number; isFinal: boolean }>();
+    for (const r of census.matrix) {
+      if (r.month !== month) continue;
+      const key = r.status.trim().toUpperCase().replace(/\s+/g, " ");
+      const b = merged.get(key) ?? { count: 0, isFinal: false };
+      b.count += r.n;
+      if (r.is_final === 1) b.isFinal = true;
+      merged.set(key, b);
+    }
+    return [...merged.entries()]
+      .map(([status, b]) => ({ status, count: b.count, isFinal: b.isFinal }))
+      .sort((a, b) => b.count - a.count);
+  }
   const r = await rows<Record<string, unknown>>(
     `SELECT UPPER(current_status) AS status, MAX(is_final) AS is_final, COUNT(*) AS n
        FROM perm_case_status
@@ -1170,6 +1264,8 @@ export async function getLiveCohort(month: string): Promise<LiveStatusCount[]> {
 
 /** How many cases the mirror holds, for the provisional banner. */
 export async function getLiveMirrorSize(): Promise<number> {
+  const census = await getLiveCensus();
+  if (census) return census.totalCases;
   const r = await one<Record<string, unknown>>(
     "SELECT COUNT(*) AS n FROM perm_case_status",
   );

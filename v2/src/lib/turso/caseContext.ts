@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { one } from "./client";
 import { getWageStats, type WagePercentileRow } from "./publicData";
 
@@ -102,6 +104,23 @@ const MIN_DURATION_SAMPLE = 200;
 export async function getCohortDuration(
   filingMonth: string,
 ): Promise<CohortDuration | null> {
+  // Precomputed by the ingest into perm_docs (one row read) - the inline
+  // window-function pass below scans perm_cases per request, because
+  // received_date carries no index, and this runs on a dynamic route.
+  const doc = await getDecidedPercentiles();
+  const hit = doc?.find((m) => m.m === filingMonth);
+  if (hit) {
+    if (hit.n < MIN_DURATION_SAMPLE) return null;
+    return {
+      n: hit.n,
+      medianDays: hit.p50,
+      p25Days: hit.p25,
+      p75Days: hit.p75,
+    };
+  }
+  if (doc) return null; // the doc is authoritative for months it omits
+  // Doc missing entirely (ingest down long enough to trip the staleness
+  // guard): fall back to the live pass rather than blanking the page.
   const r = await one<Record<string, unknown>>(
     `WITH f AS (
        SELECT days FROM perm_cases
@@ -124,3 +143,41 @@ export async function getCohortDuration(
     p75Days: num(r?.p75),
   };
 }
+
+interface PercentileMonth {
+  m: string;
+  n: number;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+}
+
+/**
+ * The per-month duration percentiles the ingest precomputes. One doc read
+ * per request (React-cached), same freshness posture as the live census:
+ * a doc more than 8 days old is treated as absent.
+ */
+const getDecidedPercentiles = cache(
+  async (): Promise<PercentileMonth[] | null> => {
+    const r = await one<{ json: string; computed_at: number }>(
+      "SELECT json, computed_at FROM perm_docs WHERE key = 'decided_month_percentiles'",
+    );
+    if (!r) return null;
+    if (Date.now() - Number(r.computed_at) > 8 * 24 * 60 * 60 * 1000) {
+      return null;
+    }
+    try {
+      const d = JSON.parse(String(r.json)) as { months?: unknown };
+      if (!Array.isArray(d.months)) return null;
+      const ok = d.months.every(
+        (x): x is PercentileMonth =>
+          typeof x === "object" && x !== null &&
+          typeof (x as PercentileMonth).m === "string" &&
+          typeof (x as PercentileMonth).n === "number",
+      );
+      return ok ? (d.months as PercentileMonth[]) : null;
+    } catch {
+      return null;
+    }
+  },
+);
