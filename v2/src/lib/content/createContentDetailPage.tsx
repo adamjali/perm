@@ -38,7 +38,12 @@ export function createContentDetailPage(type: ContentType) {
   async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { slug } = await params;
     const post = getPostBySlug(type, slug);
-    if (!post) return {};
+    // The route files export `dynamicParams = false`, which answers a junk
+    // slug with a real 404 and no render - that is the load-bearing half.
+    // This throw is the backstop for a route that forgets the export, and it
+    // only sets the status when no loading boundary sits above the segment
+    // (with one, Next streams a 200 before any page code runs - measured).
+    if (!post) notFound();
 
     return {
       title: post.meta.seoTitle ?? post.meta.title,

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 
 import { I485QueuePosition } from "@/components/tools/I485QueuePosition";
@@ -159,14 +160,27 @@ export default async function I485QueuePositionPage() {
       </header>
 
       <section className="mt-10">
-        <I485QueuePosition
-          cells={cells}
-          options={options}
-          asOf={asOf}
-          trend={trend}
-          filingChart={newestBulletin?.datesForFiling ?? null}
-          filingChartMonth={newestBulletin?.bulletinMonth ?? null}
-        />
+        {/* useSearchParams needs a boundary, same as the salary explorer and
+            the case browser. The shared (public)/loading.tsx used to satisfy
+            it for the whole group; when that file was removed (it was masking
+            real 404 statuses on the entity routes), this page was the one
+            mount without its own wrap and the build failed on it. */}
+        <Suspense
+          fallback={
+            <div className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+              <p className="text-base text-foreground/70">Loading queue figures…</p>
+            </div>
+          }
+        >
+          <I485QueuePosition
+            cells={cells}
+            options={options}
+            asOf={asOf}
+            trend={trend}
+            filingChart={newestBulletin?.datesForFiling ?? null}
+            filingChartMonth={newestBulletin?.bulletinMonth ?? null}
+          />
+        </Suspense>
       </section>{" "}
 
       <section className="mt-12">

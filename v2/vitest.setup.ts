@@ -4,8 +4,13 @@ import React from "react";
 
 let mockTheme = "light";
 
-// Mock next/navigation (requires App Router context unavailable in tests)
-vi.mock("next/navigation", () => ({
+// Mock next/navigation's HOOKS (they require App Router context unavailable
+// in tests) while keeping the real module for everything else. notFound() and
+// redirect() are plain throwers with meaningful digests, and replacing the
+// whole module used to erase them - which made any test of a miss path fail
+// with "No notFound export" instead of exercising the real signal.
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),

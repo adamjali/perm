@@ -48,7 +48,15 @@ export async function generateMetadata({
   params: Promise<{ month: string }>;
 }): Promise<Metadata> {
   const { month } = await params;
-  if (!MONTH_RE.test(month)) return {};
+  // Both misses are decided at the earliest point, and the segment has no
+  // loading boundary above it (the shared (public)/loading.tsx was removed) -
+  // with a boundary, Next streams a 200 before any page code runs and a
+  // notFound() can never change the status. The backlog read dedupes with
+  // the page's own (getLiveCensus is React-cached), so this costs no extra
+  // query.
+  if (!MONTH_RE.test(month)) notFound();
+  const peek = await getMonthBacklog(month);
+  if (!peek || peek.total === 0) notFound();
   const label = formatMonth(month) ?? month;
   const title = `PERM Cases Filed ${label}`;
   return {

@@ -155,7 +155,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const found = await loadSubject(slug);
-  if (!found) return { title: "Employer not found" };
+  // A miss is decided at the earliest point, and the segment has NO loading
+  // boundary above it - both halves matter. Measured on the wire: with the
+  // old (public)/loading.tsx in place, Next streamed a 200 before ANY page
+  // code ran, and notFound() thrown anywhere (metadata included) could swap
+  // the UI but never the status - junk slugs answered 200, a soft 404 and a
+  // cold render per crawler guess. With the boundary gone the response waits
+  // for this decision and a miss is a real 404.
+  if (!found) notFound();
   const row = found.subject;
   const reliability = rateReliability(
     row.certified,

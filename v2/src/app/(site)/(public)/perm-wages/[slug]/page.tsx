@@ -160,7 +160,12 @@ export async function generateMetadata({
   const row = await loadSubject(slug);
   if (!row) {
     const target = await aliasTarget(KIND, slug);
-    if (!target) return { title: "Occupation not found" };
+    // A miss must be decided HERE, not in the page body: the (public)
+    // loading.tsx streams a 200 before the body runs, so a notFound() thrown
+    // later can swap the UI but never the status - measured live as junk
+    // slugs answering 200 (a soft 404, and a cold render per crawler guess).
+    // Metadata resolves before the first byte; throwing here yields a real 404.
+    if (!target) notFound();
     return { alternates: { canonical: `${BASE}/${target}` } };
   }
   const name = displayTitle(row);
