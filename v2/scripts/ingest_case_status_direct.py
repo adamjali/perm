@@ -59,7 +59,7 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso  # noqa: E402
+from lib_turso import Turso, record_run, stamp_freshness  # noqa: E402
 
 URL = "https://flag.dol.gov/recaptcha/caseStatus"
 BATCH = 50                      # measured ceiling; larger is silently truncated
@@ -546,14 +546,19 @@ def main() -> int:
     # keeps reporting itself healthy forever.
     if checked:
         n = int(db.scalar("SELECT count(*) FROM perm_case_status") or 0)
-        db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
-            dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
-            source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
-        db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
-                   ["perm-case-status", time.strftime("%Y-%m-%d"),
-                    int(time.time() * 1000), SOURCE, "Every 12 hours",
-                    f"{n:,} cases", 3])
-        log("stamped   data_freshness")
+        # PER-PASS freshness. Both passes used to stamp one `perm-case-status`
+        # row, so the full pass - the only one that catches expirations, runs
+        # discovery and rebuilds the live remainder - could fail every night
+        # and the pending pass would keep the clock green. The full pass now
+        # owns its own dataset key, which check_ingest_health.py picks up for
+        # free because it reads every row in data_freshness.
+        dataset = "perm-case-status-full" if args.full else "perm-case-status"
+        stamp_freshness(db, dataset, source=SOURCE, cadence="Daily",
+                        note=f"{n:,} cases", max_age_days=3)
+        log(f"stamped   {dataset}")
+        record_run(db, "ingest_case_status_direct.py",
+                   status="ok", rows_written=written["u"],
+                   note=f"{'full' if args.full else 'pending'}: {n:,} cases")
         # Discovery rides the full sweep so the census below already carries
         # the day's new filings. The pending sweep skips it: twice-daily
         # probing buys little and doubles the polite load.

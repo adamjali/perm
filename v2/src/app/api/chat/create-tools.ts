@@ -104,6 +104,20 @@ export interface ToolExecutionOptions {
 const LOG_PREVIEW_LENGTH = 500;
 const VERBOSE_LOGGING = process.env.CHAT_LOG_VERBOSE === 'true';
 
+/**
+ * Chat debug logging, OFF in production unless CHAT_LOG_VERBOSE is set.
+ *
+ * These traces carry a signed-in user's own case data — employer, job title,
+ * wage, SOC, filing dates — through the tool params and results. Left on by
+ * default they land, unredacted, in the Vercel/Convex logs the provider
+ * retains. `truncateForLog` caps length, it does not drop fields, so the gate
+ * is what keeps that data out of prod logs. Verbose stays available for
+ * on-demand debugging by flipping one env var.
+ */
+export const chatDebug: (...args: unknown[]) => void = VERBOSE_LOGGING
+  ? (...args) => console.log(...args)
+  : () => {};
+
 /** Truncate data for logging (unless verbose mode enabled) */
 export function truncateForLog(data: unknown, maxLength: number = LOG_PREVIEW_LENGTH): string {
   const str = typeof data === 'string' ? data : JSON.stringify(data, (_, value) =>
@@ -268,7 +282,7 @@ export function createTools(
   actionMode: ActionMode = 'confirm',
   pageContext?: PageContext
 ): Record<string, Tool> {
-  console.log(`[Chat API] Creating tools with actionMode: ${actionMode}`);
+  chatDebug(`[Chat API] Creating tools with actionMode: ${actionMode}`);
 
   const toolsObj = {
     // =========================================================================
@@ -280,7 +294,7 @@ export function createTools(
       inputSchema: QueryCasesInputSchema,
       execute: async (params: QueryCasesInput) => {
         const startTime = Date.now();
-        console.log(`[Chat API] queryCases called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] queryCases called with:`, truncateForLog(params));
 
         try {
           const result = await executeWithCache({
@@ -311,7 +325,7 @@ export function createTools(
           });
 
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] queryCases result (${duration}ms):`, truncateForLog(result));
+          chatDebug(`[Chat API] queryCases result (${duration}ms):`, truncateForLog(result));
           return result;
         } catch (error) {
           console.error(`[Chat API] queryCases executeWithCache error:`, error);
@@ -329,7 +343,7 @@ export function createTools(
       inputSchema: SearchKnowledgeInputSchema,
       execute: async (params: SearchKnowledgeInput) => {
         const startTime = Date.now();
-        console.log(`[Chat API] searchKnowledge called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] searchKnowledge called with:`, truncateForLog(params));
 
         const result = await executeWithCache({
           conversationId,
@@ -364,8 +378,8 @@ export function createTools(
           contextLength: typedResult?.context?.length || 0,
           sourcesCount: typedResult?.sources?.length || 0,
         };
-        console.log(`[Chat API] searchKnowledge result (${duration}ms):`, preview);
-        console.log(`[Chat API] searchKnowledge context preview:`, truncateForLog(typedResult?.context || ''));
+        chatDebug(`[Chat API] searchKnowledge result (${duration}ms):`, preview);
+        chatDebug(`[Chat API] searchKnowledge context preview:`, truncateForLog(typedResult?.context || ''));
         return result;
       },
     },
@@ -375,7 +389,7 @@ export function createTools(
       inputSchema: SearchWebInputSchema,
       execute: async (params: SearchWebInput) => {
         const startTime = Date.now();
-        console.log(`[Chat API] searchWeb called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] searchWeb called with:`, truncateForLog(params));
 
         const result = await executeWithCache({
           conversationId,
@@ -411,7 +425,7 @@ export function createTools(
           resultsCount: typedResult?.results?.length || 0,
           hasAnswer: !!typedResult?.answer,
         };
-        console.log(`[Chat API] searchWeb result (${duration}ms):`, preview);
+        chatDebug(`[Chat API] searchWeb result (${duration}ms):`, preview);
         return result;
       },
     },
@@ -426,7 +440,7 @@ AUTONOMOUS: No confirmation needed.`,
           .describe('If true, fetch full data for visible cases (increases response size)'),
       }),
       execute: async (params: { includeVisibleCaseData?: boolean }) => {
-        console.log(`[Chat API] getPageContext called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] getPageContext called with:`, truncateForLog(params));
 
         if (!pageContext) {
           return {
@@ -486,7 +500,7 @@ AUTONOMOUS: No confirmation needed.`,
       description: NAVIGATE_DESCRIPTION,
       inputSchema: NavigateInputSchema,
       execute: async (params: NavigateInput) => {
-        console.log(`[Chat API] navigate called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] navigate called with:`, truncateForLog(params));
         return {
           success: true,
           clientAction: { type: 'navigate' as const, payload: { path: params.path, reason: params.reason } },
@@ -499,7 +513,7 @@ AUTONOMOUS: No confirmation needed.`,
       description: VIEW_CASE_DESCRIPTION,
       inputSchema: ViewCaseInputSchema,
       execute: async (params: ViewCaseInput) => {
-        console.log(`[Chat API] viewCase called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] viewCase called with:`, truncateForLog(params));
         const idError = validateConvexId(params.caseId, 'case ID');
         if (idError) return idError;
         return {
@@ -514,7 +528,7 @@ AUTONOMOUS: No confirmation needed.`,
       description: SCROLL_TO_DESCRIPTION,
       inputSchema: ScrollToInputSchema,
       execute: async (params: ScrollToInput) => {
-        console.log(`[Chat API] scrollTo called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] scrollTo called with:`, truncateForLog(params));
         return {
           success: true,
           clientAction: { type: 'scrollTo' as const, payload: { target: params.target, smooth: params.smooth !== undefined ? params.smooth : true } },
@@ -527,7 +541,7 @@ AUTONOMOUS: No confirmation needed.`,
       description: REFRESH_PAGE_DESCRIPTION,
       inputSchema: RefreshPageInputSchema,
       execute: async (params: RefreshPageInput) => {
-        console.log(`[Chat API] refreshPage called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] refreshPage called with:`, truncateForLog(params));
         return {
           success: true,
           clientAction: { type: 'refreshPage' as const, payload: { reason: params.reason } },
@@ -545,7 +559,7 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: CreateCaseInputSchema,
       execute: async (params: CreateCaseInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
-        console.log(`[Chat API] createCase called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] createCase called with:`, truncateForLog(params));
 
         const disabled = checkToolAllowed('createCase', actionMode, 'Case creation is disabled', 'create cases');
         if (disabled) return disabled;
@@ -597,7 +611,7 @@ AUTONOMOUS: No confirmation needed.`,
           );
 
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] createCase result (${duration}ms):`, truncateForLog(result));
+          chatDebug(`[Chat API] createCase result (${duration}ms):`, truncateForLog(result));
 
           return {
             success: true,
@@ -619,7 +633,7 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: UpdateCaseInputSchema,
       execute: async (params: UpdateCaseInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
-        console.log(`[Chat API] updateCase called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] updateCase called with:`, truncateForLog(params));
 
         const idError = validateConvexId(params.caseId, 'case ID');
         if (idError) return idError;
@@ -657,7 +671,7 @@ AUTONOMOUS: No confirmation needed.`,
           );
 
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] updateCase result (${duration}ms):`, truncateForLog(result));
+          chatDebug(`[Chat API] updateCase result (${duration}ms):`, truncateForLog(result));
 
           const fieldSummary = updateFieldNames.length <= 3
             ? updateFieldNames.join(', ')
@@ -689,7 +703,7 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: ArchiveCaseInputSchema,
       execute: async (params: ArchiveCaseInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
-        console.log(`[Chat API] archiveCase called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] archiveCase called with:`, truncateForLog(params));
 
         const idError = validateConvexId(params.caseId, 'case ID');
         if (idError) return idError;
@@ -708,7 +722,7 @@ AUTONOMOUS: No confirmation needed.`,
             { token }
           );
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] archiveCase result (${duration}ms):`, truncateForLog(result));
+          chatDebug(`[Chat API] archiveCase result (${duration}ms):`, truncateForLog(result));
           return { success: true, caseId: result, message: 'Case closed successfully. Can be reopened with reopenCase if needed.' };
         } catch (error) {
           captureError(error);
@@ -722,7 +736,7 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: ReopenCaseInputSchema,
       execute: async (params: ReopenCaseInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
-        console.log(`[Chat API] reopenCase called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] reopenCase called with:`, truncateForLog(params));
 
         const idError = validateConvexId(params.caseId, 'case ID');
         if (idError) return idError;
@@ -741,7 +755,7 @@ AUTONOMOUS: No confirmation needed.`,
             { token }
           );
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] reopenCase result (${duration}ms):`, truncateForLog(result));
+          chatDebug(`[Chat API] reopenCase result (${duration}ms):`, truncateForLog(result));
           return {
             success: true,
             caseId: params.caseId,
@@ -760,7 +774,7 @@ AUTONOMOUS: No confirmation needed.`,
       description: deleteCaseTool.description,
       inputSchema: DeleteCaseInputSchema,
       execute: async (params: DeleteCaseInput, { toolCallId }: ToolExecutionOptions) => {
-        console.log(`[Chat API] deleteCase called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] deleteCase called with:`, truncateForLog(params));
 
         const idError = validateConvexId(params.caseId, 'case ID');
         if (idError) return idError;
@@ -787,7 +801,7 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: SyncToCalendarInputSchema,
       execute: async (params: SyncToCalendarInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
-        console.log(`[Chat API] syncToCalendar called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] syncToCalendar called with:`, truncateForLog(params));
 
         const idError = validateConvexId(params.caseId, 'case ID');
         if (idError) return idError;
@@ -802,7 +816,7 @@ AUTONOMOUS: No confirmation needed.`,
         try {
           await fetchMutation(api.cases.enableCalendarSync, { id: params.caseId as Id<'cases'> }, { token });
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] syncToCalendar result (${duration}ms): enabled`);
+          chatDebug(`[Chat API] syncToCalendar result (${duration}ms): enabled`);
           return {
             success: true,
             caseId: params.caseId,
@@ -821,7 +835,7 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: UnsyncFromCalendarInputSchema,
       execute: async (params: UnsyncFromCalendarInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
-        console.log(`[Chat API] unsyncFromCalendar called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] unsyncFromCalendar called with:`, truncateForLog(params));
 
         const idError = validateConvexId(params.caseId, 'case ID');
         if (idError) return idError;
@@ -836,7 +850,7 @@ AUTONOMOUS: No confirmation needed.`,
         try {
           await fetchMutation(api.cases.disableCalendarSync, { id: params.caseId as Id<'cases'> }, { token });
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] unsyncFromCalendar result (${duration}ms): disabled`);
+          chatDebug(`[Chat API] unsyncFromCalendar result (${duration}ms): disabled`);
           return {
             success: true,
             caseId: params.caseId,
@@ -859,7 +873,7 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: MarkNotificationReadInputSchema,
       execute: async (params: MarkNotificationReadInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
-        console.log(`[Chat API] markNotificationRead called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] markNotificationRead called with:`, truncateForLog(params));
 
         const idError = validateConvexId(params.notificationId, 'notification ID');
         if (idError) return idError;
@@ -878,7 +892,7 @@ AUTONOMOUS: No confirmation needed.`,
             { token }
           );
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] markNotificationRead result (${duration}ms):`, result);
+          chatDebug(`[Chat API] markNotificationRead result (${duration}ms):`, result);
           return { success: true, notificationId: params.notificationId, message: 'Notification marked as read.' };
         } catch (error) {
           captureError(error);
@@ -891,7 +905,7 @@ AUTONOMOUS: No confirmation needed.`,
       description: MARK_ALL_NOTIFICATIONS_READ_DESCRIPTION,
       inputSchema: MarkAllNotificationsReadInputSchema,
       execute: async (params: MarkAllNotificationsReadInput, { toolCallId }: ToolExecutionOptions) => {
-        console.log(`[Chat API] markAllNotificationsRead called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] markAllNotificationsRead called with:`, truncateForLog(params));
 
         const disabled = checkToolAllowed('markAllNotificationsRead', actionMode, 'Notification actions are disabled');
         if (disabled) return disabled;
@@ -908,7 +922,7 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: DeleteNotificationInputSchema,
       execute: async (params: DeleteNotificationInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
-        console.log(`[Chat API] deleteNotification called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] deleteNotification called with:`, truncateForLog(params));
 
         const idError = validateConvexId(params.notificationId, 'notification ID');
         if (idError) return idError;
@@ -927,7 +941,7 @@ AUTONOMOUS: No confirmation needed.`,
             { token }
           );
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] deleteNotification result (${duration}ms):`, result);
+          chatDebug(`[Chat API] deleteNotification result (${duration}ms):`, result);
           return { success: true, notificationId: params.notificationId, message: 'Notification deleted.' };
         } catch (error) {
           captureError(error);
@@ -940,7 +954,7 @@ AUTONOMOUS: No confirmation needed.`,
       description: CLEAR_ALL_NOTIFICATIONS_DESCRIPTION,
       inputSchema: ClearAllNotificationsInputSchema,
       execute: async (params: ClearAllNotificationsInput, { toolCallId }: ToolExecutionOptions) => {
-        console.log(`[Chat API] clearAllNotifications called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] clearAllNotifications called with:`, truncateForLog(params));
 
         const disabled = checkToolAllowed('clearAllNotifications', actionMode, 'Notification actions are disabled');
         if (disabled) return disabled;
@@ -964,7 +978,7 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: UpdateSettingsInputSchema,
       execute: async (params: UpdateSettingsInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
-        console.log(`[Chat API] updateSettings called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] updateSettings called with:`, truncateForLog(params));
 
         const disabled = checkToolAllowed('updateSettings', actionMode, 'Settings updates are disabled');
         if (disabled) return disabled;
@@ -985,7 +999,7 @@ AUTONOMOUS: No confirmation needed.`,
 
           const result = await fetchMutation(api.users.updateUserProfile, convexSettings, { token });
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] updateSettings result (${duration}ms):`, result);
+          chatDebug(`[Chat API] updateSettings result (${duration}ms):`, result);
           return { success: true, updatedSettings: settingKeys, message: 'Settings updated successfully.' };
         } catch (error) {
           captureError(error);
@@ -999,12 +1013,12 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: GetSettingsInputSchema,
       execute: async (params: GetSettingsInput) => {
         const startTime = Date.now();
-        console.log(`[Chat API] getSettings called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] getSettings called with:`, truncateForLog(params));
 
         try {
           const profile = await fetchQuery(api.users.currentUserProfile, {}, { token });
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] getSettings result (${duration}ms):`, truncateForLog(profile));
+          chatDebug(`[Chat API] getSettings result (${duration}ms):`, truncateForLog(profile));
 
           if (!profile) {
             return { error: 'User profile not found', suggestion: 'Please ensure you are logged in.' };
@@ -1092,7 +1106,7 @@ AUTONOMOUS: No confirmation needed.`,
       description: BULK_UPDATE_STATUS_DESCRIPTION,
       inputSchema: BulkUpdateStatusInputSchema,
       execute: async (params: BulkUpdateStatusInput, { toolCallId }: ToolExecutionOptions) => {
-        console.log(`[Chat API] bulkUpdateStatus called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] bulkUpdateStatus called with:`, truncateForLog(params));
 
         const caseIds = await resolveBulkCaseIds(params, token, { toolName: 'bulkUpdateStatus' });
         if (caseIds.length === 0) {
@@ -1124,7 +1138,7 @@ AUTONOMOUS: No confirmation needed.`,
       description: BULK_ARCHIVE_CASES_DESCRIPTION,
       inputSchema: BulkArchiveCasesInputSchema,
       execute: async (params: BulkArchiveCasesInput, { toolCallId }: ToolExecutionOptions) => {
-        console.log(`[Chat API] bulkArchiveCases called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] bulkArchiveCases called with:`, truncateForLog(params));
 
         const caseIds = await resolveBulkCaseIds(params, token, { toolName: 'bulkArchiveCases' });
         if (caseIds.length === 0) {
@@ -1155,7 +1169,7 @@ AUTONOMOUS: No confirmation needed.`,
       description: BULK_DELETE_CASES_DESCRIPTION,
       inputSchema: BulkDeleteCasesInputSchema,
       execute: async (params: BulkDeleteCasesInput, { toolCallId }: ToolExecutionOptions) => {
-        console.log(`[Chat API] bulkDeleteCases called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] bulkDeleteCases called with:`, truncateForLog(params));
 
         const caseIds = await resolveBulkCaseIds(params, token, { idsOnly: true, toolName: 'bulkDeleteCases' });
         if (caseIds.length === 0) {
@@ -1180,7 +1194,7 @@ AUTONOMOUS: No confirmation needed.`,
       description: BULK_CALENDAR_SYNC_DESCRIPTION,
       inputSchema: BulkCalendarSyncInputSchema,
       execute: async (params: BulkCalendarSyncInput, { toolCallId }: ToolExecutionOptions) => {
-        console.log(`[Chat API] bulkCalendarSync called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] bulkCalendarSync called with:`, truncateForLog(params));
 
         const caseIds = await resolveBulkCaseIds(params, token, { idsOnly: true, toolName: 'bulkCalendarSync' });
         if (caseIds.length === 0) {
@@ -1221,7 +1235,7 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: ListJobDescriptionTemplatesInputSchema,
       execute: async (params: ListJobDescriptionTemplatesInput) => {
         const startTime = Date.now();
-        console.log(`[Chat API] listJobDescriptionTemplates called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] listJobDescriptionTemplates called with:`, truncateForLog(params));
 
         try {
           const templates = params.searchQuery
@@ -1229,7 +1243,7 @@ AUTONOMOUS: No confirmation needed.`,
             : await fetchQuery(api.jobDescriptionTemplates.list, {}, { token });
 
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] listJobDescriptionTemplates result (${duration}ms): ${templates.length} templates`);
+          chatDebug(`[Chat API] listJobDescriptionTemplates result (${duration}ms): ${templates.length} templates`);
           return { success: true, templates: sanitizeBigInts(templates), count: templates.length };
         } catch (error) {
           captureError(error);
@@ -1243,7 +1257,7 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: CreateJobDescriptionTemplateInputSchema,
       execute: async (params: CreateJobDescriptionTemplateInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
-        console.log(`[Chat API] createJobDescriptionTemplate called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] createJobDescriptionTemplate called with:`, truncateForLog(params));
 
         const disabled = checkToolAllowed('createJobDescriptionTemplate', actionMode, 'Template creation is disabled', 'create templates');
         if (disabled) return disabled;
@@ -1259,7 +1273,7 @@ AUTONOMOUS: No confirmation needed.`,
             { token }
           );
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] createJobDescriptionTemplate result (${duration}ms):`, templateId);
+          chatDebug(`[Chat API] createJobDescriptionTemplate result (${duration}ms):`, templateId);
           return { success: true, templateId, name: params.name, message: `Created job description template "${params.name}"` };
         } catch (error) {
           captureError(error);
@@ -1273,7 +1287,7 @@ AUTONOMOUS: No confirmation needed.`,
       inputSchema: UpdateJobDescriptionTemplateInputSchema,
       execute: async (params: UpdateJobDescriptionTemplateInput, { toolCallId }: ToolExecutionOptions) => {
         const startTime = Date.now();
-        console.log(`[Chat API] updateJobDescriptionTemplate called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] updateJobDescriptionTemplate called with:`, truncateForLog(params));
 
         const idError = validateConvexId(params.templateId, 'template ID');
         if (idError) return idError;
@@ -1313,7 +1327,7 @@ AUTONOMOUS: No confirmation needed.`,
             { token }
           );
           const duration = Date.now() - startTime;
-          console.log(`[Chat API] updateJobDescriptionTemplate result (${duration}ms):`, templateId);
+          chatDebug(`[Chat API] updateJobDescriptionTemplate result (${duration}ms):`, templateId);
           return { success: true, templateId, message: 'Updated job description template' };
         } catch (error) {
           captureError(error);
@@ -1326,7 +1340,7 @@ AUTONOMOUS: No confirmation needed.`,
       description: DELETE_JOB_DESC_TEMPLATE_DESCRIPTION,
       inputSchema: DeleteJobDescriptionTemplateInputSchema,
       execute: async (params: DeleteJobDescriptionTemplateInput, { toolCallId }: ToolExecutionOptions) => {
-        console.log(`[Chat API] deleteJobDescriptionTemplate called with:`, truncateForLog(params));
+        chatDebug(`[Chat API] deleteJobDescriptionTemplate called with:`, truncateForLog(params));
 
         const idError = validateConvexId(params.templateId, 'template ID');
         if (idError) return idError;
@@ -1349,7 +1363,7 @@ AUTONOMOUS: No confirmation needed.`,
   // Full set is 29 tools (~4k+ tokens). Reducing to 8-12 saves ~2-3k tokens,
   // critical for fallback models with tight TPM/context limits (Groq 12k, Cerebras 8k).
   const selectedTools = selectRelevantTools(toolsObj, pageContext, actionMode);
-  console.log(`[Chat API] Tools created: ${Object.keys(selectedTools).length} of ${Object.keys(toolsObj).length} (${Object.keys(selectedTools).join(', ')})`);
+  chatDebug(`[Chat API] Tools created: ${Object.keys(selectedTools).length} of ${Object.keys(toolsObj).length} (${Object.keys(selectedTools).join(', ')})`);
   return selectedTools;
 }
 

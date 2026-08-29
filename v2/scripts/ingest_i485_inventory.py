@@ -46,7 +46,7 @@ import zipfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_gov_data import fetch, log, read_shared_strings, iter_rows  # noqa: E402
-from lib_turso import Turso  # noqa: E402
+from lib_turso import Turso, record_run, stamp_freshness  # noqa: E402
 
 DATA_PAGE = ("https://www.uscis.gov/tools/reports-and-studies/"
              "immigration-and-citizenship-data")
@@ -240,7 +240,7 @@ def main() -> int:
         log(f"  {label}: fetching")
         as_of, records = parse_workbook(fetch(url, referer=DATA_PAGE))
         if not records or not as_of:
-            log(f"    parsed nothing, skipping")
+            log("    parsed nothing, skipping")
             continue
         n = store(db, as_of, records)
         total = sum(r["count"] for r in records)
@@ -259,14 +259,21 @@ def main() -> int:
         "ORDER BY as_of")["response"]["result"]["rows"]:
         log(f"    {r[0]['value']}  {int(r[1]['value']):>8,} applications")
 
-    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
-        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
-        source TEXT, cadence TEXT, note TEXT)""")
-    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?)",
-               ["i485-inventory", newest_as_of, int(time.time() * 1000),
-                "USCIS employment-based I-485 inventory (uscis.gov)", "Monthly",
-                f"{newest_total:,} pending applications; "
-                f"{newest_sup:,} cells suppressed by USCIS"])
+    # Via the shared helper: this script CREATE'd data_freshness with 6 columns
+    # and INSERTed 6 VALUES into the live 7-column table (missing max_age_days),
+    # which errors at runtime - and the workflow has never once run to expose
+    # it. USCIS publishes monthly, so a 45-day budget is a real stall, not
+    # ordinary lag between releases.
+    stamp_freshness(
+        db, "i485-inventory", as_of=newest_as_of,
+        source="USCIS employment-based I-485 inventory (uscis.gov)",
+        cadence="Monthly",
+        note=f"{newest_total:,} pending applications; "
+             f"{newest_sup:,} cells suppressed by USCIS",
+        max_age_days=45,
+    )
+    record_run(db, "ingest_i485_inventory.py", status="ok",
+               rows_written=newest_total, note=f"as of {newest_as_of}")
     return 0
 
 

@@ -83,7 +83,14 @@ jobs:
             fi
           fi
           echo "mode: $MODE"
-          python3 scripts/ingest_case_status_direct.py --"$MODE"
+          # `timeout`, not the job's timeout-minutes, is what makes a hung sweep
+          # NOTIFY. A job that hits timeout-minutes is CANCELLED, and GitHub
+          # sends nothing for a cancellation - which is how the 2026-08-28 full
+          # sweep died two-thirds through with no alert. `timeout 105m` exits
+          # 124 (a real failure, red, notified) below the 120m job cap, which
+          # is a genuine hang: the full pass is ~85 min and the script already
+          # stops itself cleanly after three consecutive far-end failures.
+          timeout 105m python3 scripts/ingest_case_status_direct.py --"$MODE"
           # The searchable remainder (cases newer than the last disclosure
           # file) rebuilds right after the sweep, so the case search and the
           # employer pages see today's discoveries with canonical slugs.

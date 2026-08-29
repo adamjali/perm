@@ -47,7 +47,7 @@ from collections import Counter, defaultdict
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from entity_identity import entity_key  # noqa: E402
-from lib_turso import Turso, lit  # noqa: E402
+from lib_turso import Turso, lit, record_run, stamp_freshness  # noqa: E402
 
 PAGE_FLOOR = 3          # mirrors MIN_TOTAL_FOR_PAGE in src/lib/entityPayload.ts
 TOP_N = 6               # facet rows kept per entity per facet
@@ -490,7 +490,21 @@ def main() -> int:
         if args.dry_run:
             log("\nDRY RUN - nothing written")
             return 0
-        return 0 if write_live_recent(db, live) else 1
+        ok = write_live_recent(db, live)
+        # STAMP FRESHNESS AND AUDIT THE RUN. This table is the only thing that
+        # makes cases newer than the last disclosure file findable, it rebuilds
+        # under `|| true` in the sweep workflow, and it had no monitoring at
+        # all - which is how it sat silently reverted from 137k rows to 16k for
+        # hours. The freshness stamp makes a STALLED rebuild go red in
+        # check_ingest_health after 3 days; the audit row records the row COUNT
+        # per run, which is what makes a sudden drop visible after the fact.
+        if ok:
+            stamp_freshness(db, "live-recent", source="derived from perm_case_status",
+                            cadence="Daily", note=f"{len(live):,} cases", max_age_days=3)
+        record_run(db, "build_entity_detail.py --live-recent-only",
+                   status="ok" if ok else "mismatch", rows_written=len(live),
+                   note=f"remainder past {boundary}")
+        return 0 if ok else 1
 
     log("PENDING")
     pending = build_pending(db, maps)

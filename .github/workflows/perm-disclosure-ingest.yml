@@ -250,3 +250,60 @@ jobs:
           else
             echo "visa bulletin payload absent; skipping (see the step above)"
           fi
+
+      # THE PUBLIC SITE READS TURSO, NOT CONVEX, and this load was in no
+      # workflow at all - only the Convex writes above were automated, and the
+      # public case browser, employer/attorney/wage/state pages and the
+      # alphabet all read Turso's `perm_cases`. So after each quarterly release
+      # the whole public data surface would have frozen on the old quarter,
+      # silently, while freshness stamped green. These steps load the SAME
+      # payload artifact (`${RUNNER_TEMP}`, produced by the ingest above -
+      # independent of CONVEX_DEPLOY_KEY) into Turso and rebuild everything
+      # derived from it, in dependency order: the derived builders read
+      # `perm_cases` back out of Turso, so the two migrate steps must land
+      # first.
+      - name: Load the public corpus into Turso
+        if: ${{ hashFiles(format('{0}/perm-cases.ndjson.gz', runner.temp)) != '' }}
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
+            echo "::error::TURSO secrets absent; the public site would freeze on the old quarter."
+            exit 1
+          fi
+          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          # 1. The ~374k case rows (perm_cases), from the artifact.
+          python3 scripts/turso_migrate.py "${RUNNER_TEMP}"
+          # 2. Everything else the public pages read: entities, wage cells and
+          #    stats, the disclosure-stats document.
+          python3 scripts/turso_migrate_public.py "${RUNNER_TEMP}"
+          # 3. Derived from the freshly-loaded perm_cases (each reads it back
+          #    out of Turso, so they run only after the two loads above).
+          python3 scripts/build_entity_detail.py
+          python3 scripts/build_alphabet.py
+          python3 scripts/build_state_profiles.py
+          python3 scripts/build_wage_bands.py
+
+      # USCIS I-140 trends: same host that 403s a datacenter runner for the
+      # I-140 counts above, so this is non-fatal here and the home-connection
+      # manual path is the real refresh - it is wired so it self-heals if USCIS
+      # ever serves the runner, and so it is not silently in no workflow.
+      - name: Refresh I-140 trends (best effort)
+        if: ${{ always() }}
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          [ -f .env.local ] || printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          python3 scripts/ingest_i140_trends.py || \
+            echo "i140-trends fetch failed (USCIS likely 403'd the runner); run from a home connection."
+
+      - name: Remove credentials
+        if: ${{ always() }}
+        working-directory: v2
+        run: rm -f .env.local

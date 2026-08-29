@@ -90,3 +90,78 @@ class Turso:
         """Run DDL in order, one pipeline, failing loudly on the first error."""
         reqs = [{"type": "execute", "stmt": {"sql": s}} for s in statements]
         return self.pipeline(reqs + [{"type": "close"}])
+
+
+# ---------------------------------------------------------------------------
+# Freshness + audit trail
+#
+# Two small shared writes every ingest should make, kept here so the schema
+# lives in ONE place and a new script cannot invent its own column order.
+# ---------------------------------------------------------------------------
+
+def stamp_freshness(
+    db: "Turso",
+    dataset: str,
+    *,
+    as_of: str | None = None,
+    source: str,
+    cadence: str,
+    note: str,
+    max_age_days: int,
+) -> None:
+    """Record that `dataset` refreshed, so check_ingest_health.py can see it stop.
+
+    The health checker reads every row in this table dynamically, so a NEW
+    dataset name here is monitored automatically - no registry to update. Only
+    call this on a run that actually did the work: stamping on a run that died
+    early keeps a broken ingest reporting itself healthy forever.
+    """
+    db.execute(
+        """CREATE TABLE IF NOT EXISTS data_freshness (
+            dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
+            source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)"""
+    )
+    db.execute(
+        "INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
+        [dataset, as_of or time.strftime("%Y-%m-%d"), int(time.time() * 1000),
+         source, cadence, note, max_age_days],
+    )
+
+
+def record_run(
+    db: "Turso",
+    script: str,
+    *,
+    status: str,
+    rows_written: int | None = None,
+    note: str = "",
+    started_at: int | None = None,
+) -> None:
+    """Append one row to the ingest audit trail.
+
+    This is the answer to 'why did this table change at 13:48, and to what?'
+    A last-write freshness stamp is overwritten every run and cannot show a
+    history; this table is append-only. It exists because a scheduled job once
+    ran OLD code and silently rebuilt perm_live_recent from 137k rows down to
+    16k - freshness stayed green because the reverted run still stamped itself
+    fresh, and the only record of the drop was in GitHub Actions logs that age
+    out. rows_written per run makes that drop visible after the fact.
+
+    Never raises: an audit write that fails must not fail the ingest it audits.
+    """
+    try:
+        db.execute(
+            """CREATE TABLE IF NOT EXISTS ingest_runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                script TEXT NOT NULL, status TEXT NOT NULL,
+                rows_written INTEGER, note TEXT,
+                started_at INTEGER, finished_at INTEGER)"""
+        )
+        now = int(time.time() * 1000)
+        db.execute(
+            "INSERT INTO ingest_runs (script, status, rows_written, note, "
+            "started_at, finished_at) VALUES (?,?,?,?,?,?)",
+            [script, status, rows_written, note, started_at or now, now],
+        )
+    except Exception as exc:  # noqa: BLE001 - audit must never break the ingest
+        print(f"  [record_run] audit write failed (non-fatal): {exc}", flush=True)

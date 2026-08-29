@@ -39,7 +39,7 @@ import { createCacheStats } from '@/lib/ai/cache';
 import { captureError } from '@/lib/sentry';
 import { getPostHogClient } from '@/lib/posthog-server';
 import { checkBotId } from 'botid/server';
-import { createTools, truncateForLog } from './create-tools';
+import { chatDebug, createTools, truncateForLog } from './create-tools';
 
 // Allow up to 60 seconds for streaming responses (extra time for fallbacks + tool calls)
 export const maxDuration = 60;
@@ -64,7 +64,7 @@ async function triggerSummarizationCheck(
   try {
     const needsSummary = await checkNeedsSummarization(conversationId, token);
     if (needsSummary) {
-      console.log(`[Chat API] [${sessionId}] Triggering async summarization`);
+      chatDebug(`[Chat API] [${sessionId}] Triggering async summarization`);
       await summarizeConversation(conversationId, token);
     }
   } catch (error) {
@@ -75,7 +75,7 @@ async function triggerSummarizationCheck(
 
 export async function POST(req: Request) {
   const sessionId = generateSessionId();
-  console.log(`[Chat API] [${sessionId}] === New chat request ===`);
+  chatDebug(`[Chat API] [${sessionId}] === New chat request ===`);
 
   try {
     // BotID check — reject non-browser callers before any Convex hit or LLM
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
     // no token and fail here. Costs nothing on Basic tier.
     const botVerdict = await checkBotId();
     if (botVerdict.isBot) {
-      console.log(`[Chat API] [${sessionId}] Bot blocked`);
+      chatDebug(`[Chat API] [${sessionId}] Bot blocked`);
       return new Response(
         JSON.stringify({ error: "Access denied" }),
         { status: 403, headers: { "Content-Type": "application/json" } }
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
         action: "ip_chat",
       });
       if (!ipCheck.allowed) {
-        console.log(`[Chat API] [${sessionId}] IP rate limit hit`);
+        chatDebug(`[Chat API] [${sessionId}] IP rate limit hit`);
         return new Response(
           JSON.stringify({
             error: ipCheck.message || "Too many requests. Please slow down.",
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
     // Verify authentication (chatbot is authenticated-only)
     const isAuthenticated = await isAuthenticatedNextjs();
     if (!isAuthenticated) {
-      console.log(`[Chat API] [${sessionId}] Auth failed: not authenticated`);
+      chatDebug(`[Chat API] [${sessionId}] Auth failed: not authenticated`);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
@@ -163,12 +163,12 @@ export async function POST(req: Request) {
     const messageContent = lastMessage?.parts
       ? lastMessage.parts.filter((p): p is { type: 'text'; text: string } => (p as { type: string }).type === 'text').map(p => p.text).join(' ')
       : JSON.stringify(lastMessage);
-    console.log(`[Chat API] [${sessionId}] User message:`, truncateForLog(messageContent));
+    chatDebug(`[Chat API] [${sessionId}] User message:`, truncateForLog(messageContent));
     if (conversationId) {
-      console.log(`[Chat API] [${sessionId}] Conversation ID: ${conversationId}`);
+      chatDebug(`[Chat API] [${sessionId}] Conversation ID: ${conversationId}`);
     }
     if (pageContext) {
-      console.log(`[Chat API] [${sessionId}] Page context:`, truncateForLog(pageContext));
+      chatDebug(`[Chat API] [${sessionId}] Page context:`, truncateForLog(pageContext));
     }
 
     if (!messages || !Array.isArray(messages)) {
@@ -193,7 +193,7 @@ export async function POST(req: Request) {
         );
 
         if (contextData.summary || contextData.facts) {
-          console.log(`[Chat API] [${sessionId}] Compacting context (${contextData.totalMessageCount} total messages)`);
+          chatDebug(`[Chat API] [${sessionId}] Compacting context (${contextData.totalMessageCount} total messages)`);
 
           // Convert raw message history to ModelMessage[] (full fidelity — no hard truncation).
           // Let the compaction module walk L0→L4 to fit the target budget.
@@ -216,7 +216,7 @@ export async function POST(req: Request) {
           const compaction = compactToFit(compactionInput, TARGET_TOKENS);
 
           if (compaction) {
-            console.log(`[Chat API] [${sessionId}] Compaction L${compaction.level}: ${compaction.estimatedTokens} tokens`);
+            chatDebug(`[Chat API] [${sessionId}] Compaction L${compaction.level}: ${compaction.estimatedTokens} tokens`);
             convertedMessages = compaction.messages;
           } else {
             // Emergency: even L4 didn't fit — a single turn exceeds the target
@@ -232,7 +232,7 @@ export async function POST(req: Request) {
             convertedMessages = compactAt(4, compactionInput);
           }
         } else {
-          console.log(`[Chat API] [${sessionId}] No summary available, using full history`);
+          chatDebug(`[Chat API] [${sessionId}] No summary available, using full history`);
           convertedMessages = await convertToModelMessages(messages);
         }
       } catch (error) {
@@ -254,7 +254,7 @@ export async function POST(req: Request) {
     try {
       const userActionMode = await actionModePromise;
       actionMode = userActionMode as ActionMode;
-      console.log(`[Chat API] [${sessionId}] Action mode: ${actionMode}`);
+      chatDebug(`[Chat API] [${sessionId}] Action mode: ${actionMode}`);
     } catch (error) {
       console.warn(`[Chat API] [${sessionId}] Failed to get action mode, using default (confirm):`, error);
       captureError(error);
@@ -296,7 +296,7 @@ export async function POST(req: Request) {
     }
 
     try {
-      console.log(`[Chat API] [${sessionId}] Streaming with ${PRIMARY_MODEL_NAME} (fallback across 5 models)`);
+      chatDebug(`[Chat API] [${sessionId}] Streaming with ${PRIMARY_MODEL_NAME} (fallback across 5 models)`);
 
       // Per-request model instance to isolate lastUsedModel/lastAttemptCount
       // from concurrent requests (singleton chatModel would race)
@@ -316,7 +316,7 @@ export async function POST(req: Request) {
           captureError(error);
         },
         onStepFinish: (event) => {
-          console.log(`[Chat API] [${sessionId}] Step finished, reason: ${event.finishReason}`);
+          chatDebug(`[Chat API] [${sessionId}] Step finished, reason: ${event.finishReason}`);
 
           if (event.finishReason === 'error') {
             console.error(`[Chat API] [${sessionId}] Step error - model failed to generate response`);
@@ -329,17 +329,17 @@ export async function POST(req: Request) {
           }
 
           if ('toolCalls' in event && Array.isArray(event.toolCalls) && event.toolCalls.length > 0) {
-            console.log(
+            chatDebug(
               `[Chat API] [${sessionId}] Tool calls:`,
               event.toolCalls.map((tc: { toolName: string }) => ({ tool: tc.toolName }))
             );
           }
           if ('toolResults' in event && Array.isArray(event.toolResults) && event.toolResults.length > 0) {
-            console.log(`[Chat API] [${sessionId}] Tool results: ${event.toolResults.length} result(s)`);
+            chatDebug(`[Chat API] [${sessionId}] Tool results: ${event.toolResults.length} result(s)`);
           }
           if ('usage' in event && event.usage) {
             const usage = event.usage as { inputTokens?: number; outputTokens?: number };
-            console.log(`[Chat API] [${sessionId}] Usage: ${usage.inputTokens || 0} in, ${usage.outputTokens || 0} out`);
+            chatDebug(`[Chat API] [${sessionId}] Usage: ${usage.inputTokens || 0} in, ${usage.outputTokens || 0} out`);
           }
         },
         onFinish: (event) => {
@@ -348,7 +348,7 @@ export async function POST(req: Request) {
           if (event.finishReason === 'error' || event.finishReason === 'other') {
             console.error(`[Chat API] [${sessionId}] Stream finished with error/other: ${event.finishReason} (model: ${modelUsed}, attempts: ${attempts})`);
           } else {
-            console.log(`[Chat API] [${sessionId}] Stream completed: ${event.finishReason} (model: ${modelUsed}, attempts: ${attempts})`);
+            chatDebug(`[Chat API] [${sessionId}] Stream completed: ${event.finishReason} (model: ${modelUsed}, attempts: ${attempts})`);
           }
           // Track provider fallback when more than 1 attempt was needed
           if (attempts > 1) {
