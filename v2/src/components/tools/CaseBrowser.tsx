@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 // A public page has no ConvexProvider above it by design, and the Turso
@@ -202,6 +202,15 @@ export function CaseBrowser({
   const [nameInput, setNameInput] = useState("");
   const [nameField, setNameField] = useState<"employer" | "attorney">("employer");
   const [nameQuery, setNameQuery] = useState("");
+  // A submit counter, folded into each lookup url. Without it, pressing the
+  // button again with an UNCHANGED value is a no-op: the url does not change,
+  // so usePublicQuery does not re-run - which after a failure looks like a dead
+  // page. Bumping the counter on every submit (and on an explicit retry) forces
+  // a fresh request. Manual lookups are rare and mostly unique numbers, so the
+  // lost edge-cache sharing is negligible.
+  const [caseSubmit, setCaseSubmit] = useState(0);
+  const [nameSubmit, setNameSubmit] = useState(0);
+  const [listSubmit, setListSubmit] = useState(0);
 
   const slice = useMemo(() => {
     switch (dimension) {
@@ -291,8 +300,9 @@ export function CaseBrowser({
     p.set("numItems", String(pageSize));
     const cursor = cursors[pageIndex];
     if (cursor) p.set("cursor", cursor);
+    if (listSubmit) p.set("s", String(listSubmit));
     return `/api/perm-cases?${p.toString()}`;
-  }, [filter, order, pageSize, cursors, pageIndex, awaitingValue]);
+  }, [filter, order, pageSize, cursors, pageIndex, awaitingValue, listSubmit]);
 
   const { data: page, failed: pageFailed } = usePublicQuery<CasePage>(listUrl);
 
@@ -301,11 +311,11 @@ export function CaseBrowser({
     live: LiveHit | null;
   }>(
     caseQuery
-      ? `/api/perm-cases?action=lookup&caseNumber=${encodeURIComponent(caseQuery)}`
+      ? `/api/perm-cases?action=lookup&caseNumber=${encodeURIComponent(caseQuery)}&s=${caseSubmit}`
       : "skip",
   );
   const caseHit = lookupData?.disclosed ?? null;
-  const caseLookupPending = caseQuery !== "" && lookupData === undefined;
+  const caseLookupPending = caseQuery !== "" && lookupData === undefined && !caseFailed;
   const liveHit = lookupData?.live ?? null;
 
   const { data: searchData, failed: nameFailed } = usePublicQuery<{
@@ -313,11 +323,12 @@ export function CaseBrowser({
     live: LiveHit[];
   }>(
     nameQuery.length >= 2
-      ? `/api/perm-cases?action=search&field=${nameField}&limit=50&text=${encodeURIComponent(nameQuery)}`
+      ? `/api/perm-cases?action=search&field=${nameField}&limit=50&text=${encodeURIComponent(nameQuery)}&s=${nameSubmit}`
       : "skip",
   );
   const nameHits = searchData?.cases;
   const liveHits = searchData?.live ?? [];
+  const nameSearchPending = nameQuery.length >= 2 && searchData === undefined && !nameFailed;
 
   const rows = page?.page ?? [];
   const isFirstPage = pageIndex === 0;
@@ -407,6 +418,17 @@ export function CaseBrowser({
   const searching = nameQuery.length >= 2;
   const shown: CaseRow[] = searching ? (nameHits ?? []) : sorted;
 
+  // Hold the last non-empty result set so a page change or a new search dims
+  // the current rows in place instead of collapsing to nothing and jumping the
+  // layout - the SalaryExplorer pattern. A ref, not state: it must not itself
+  // trigger a render, only ride along on the next one.
+  const tableBusy =
+    (searching ? nameSearchPending : page === undefined && !pageFailed && !awaitingValue);
+  const prevRows = useRef<CaseRow[]>([]);
+  if (shown.length > 0) prevRows.current = shown;
+  const displayRows: CaseRow[] =
+    shown.length > 0 ? shown : tableBusy ? prevRows.current : [];
+
   return (
     <div className="flex flex-col gap-8">
       {/* ---------------------------------------------------------------- */}
@@ -419,6 +441,7 @@ export function CaseBrowser({
           onSubmit={(e) => {
             e.preventDefault();
             setCaseQuery(caseInput.trim());
+            setCaseSubmit((s) => s + 1);
           }}
         >
           <label className="block">
@@ -434,18 +457,29 @@ export function CaseBrowser({
               className={CONTROL}
             />
           </label>{" "}
-          <button type="submit" className={`${BUTTON} bg-primary text-primary-foreground`}>
-            Look it up
+          <button
+            type="submit"
+            className={`${BUTTON} bg-primary text-primary-foreground`}
+            disabled={caseLookupPending}
+            aria-busy={caseLookupPending}
+          >
+            {caseLookupPending ? "Checking…" : "Look it up"}
           </button>
         </form>
-        {caseLookupPending && !caseFailed ? (
-          <p className="mt-4 text-base text-foreground/60">Checking…</p>
-        ) : null}
         {caseFailed ? (
-          <p className="mt-4 text-base text-foreground/70">
-            The case table couldn’t be reached just now. That’s a fault at our
-            end. Try again in a minute.
-          </p>
+          <div className="mt-4">
+            <p className="text-base text-foreground/70">
+              The case table couldn’t be reached just now. That’s a fault at our
+              end.
+            </p>{" "}
+            <button
+              type="button"
+              className={`${BUTTON} mt-3`}
+              onClick={() => setCaseSubmit((s) => s + 1)}
+            >
+              Try again
+            </button>
+          </div>
         ) : null}
         {caseQuery !== "" && lookupData && !caseHit && liveHit ? (
           /* Not published yet, but DOL's live system knows it - the case the
@@ -661,6 +695,7 @@ export function CaseBrowser({
           onSubmit={(e) => {
             e.preventDefault();
             setNameQuery(nameInput.trim());
+            setNameSubmit((s) => s + 1);
           }}
         >
           <label className="block">
@@ -686,8 +721,13 @@ export function CaseBrowser({
               className={CONTROL}
             />
           </label>{" "}
-          <button type="submit" className={BUTTON}>
-            Search
+          <button
+            type="submit"
+            className={BUTTON}
+            disabled={nameSearchPending}
+            aria-busy={nameSearchPending}
+          >
+            {nameSearchPending ? "Searching…" : "Search"}
           </button>
         </form>
         {searching && nameField === "employer" && liveHits.length > 0 ? (
@@ -736,20 +776,26 @@ export function CaseBrowser({
         ) : null}
         {searching ? (
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
-            Showing {nameHits ? fmtInt(nameHits.length) : "…"} decided matches, newest
-            first and capped. A name search matches from the start of a name, so
-            “fragomen” finds Fragomen, Del Rey, Bernsen &amp; Loewy and “del rey”
-            finds nothing. The filters don’t apply to it.{" "}
-            <button
-              type="button"
-              onClick={() => {
-                setNameInput("");
-                setNameQuery("");
-              }}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2"
-            >
-              Back to browsing
-            </button>
+            {nameHits === undefined ? (
+              "Searching the case table…"
+            ) : (
+              <>
+                Showing {fmtInt(nameHits.length)} decided matches, newest first
+                and capped. A name search matches from the start of a name, so
+                “fragomen” finds Fragomen, Del Rey, Bernsen &amp; Loewy and “del
+                rey” finds nothing. The filters don’t apply to it.{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNameInput("");
+                    setNameQuery("");
+                  }}
+                  className="font-bold underline decoration-primary decoration-2 underline-offset-2"
+                >
+                  Back to browsing
+                </button>
+              </>
+            )}
           </p>
         ) : null}
       </section>
@@ -792,7 +838,14 @@ export function CaseBrowser({
           </div>
         ) : null}
 
-        {page === undefined && !searching && !pageFailed && !awaitingValue ? (
+        {/* Only on the FIRST read, when there are no rows to dim in place.
+            A page change keeps the previous rows mounted at reduced opacity
+            (tableBusy) instead of flashing this message. */}
+        {page === undefined &&
+        !searching &&
+        !pageFailed &&
+        !awaitingValue &&
+        prevRows.current.length === 0 ? (
           <p className="mt-6 text-base text-foreground/60">Reading the case table…</p>
         ) : null}
 
@@ -800,9 +853,19 @@ export function CaseBrowser({
           <div className="mt-6 border-2 border-border bg-card p-6 shadow-hard-sm">
             <p className="text-base text-foreground/70">
               The case table couldn’t be reached just now. Nothing is missing
-              from the record; this is a fault at our end. Try again in a
-              minute.
-            </p>
+              from the record; this is a fault at our end.
+            </p>{" "}
+            <button
+              type="button"
+              className={`${BUTTON} mt-3`}
+              onClick={() =>
+                searching
+                  ? setNameSubmit((s) => s + 1)
+                  : setListSubmit((s) => s + 1)
+              }
+            >
+              Try again
+            </button>
           </div>
         ) : null}
 
@@ -816,10 +879,15 @@ export function CaseBrowser({
           </div>
         ) : null}
 
-        {shown.length > 0 ? (
-          <div className="mt-4 overflow-x-auto border-2 border-border shadow-hard-sm">
+        {displayRows.length > 0 ? (
+          <div
+            className={`mt-4 overflow-x-auto border-2 border-border shadow-hard-sm transition-opacity ${
+              tableBusy ? "opacity-60" : ""
+            }`}
+            aria-busy={tableBusy}
+          >
             <CaseTable
-              rows={shown}
+              rows={displayRows}
               columns={columns}
               sortable={!searching && sortable}
               sortKey={sortKey}
@@ -830,7 +898,7 @@ export function CaseBrowser({
           </div>
         ) : null}
 
-        {!searching && rows.length > 0 ? (
+        {!searching && (rows.length > 0 || prevRows.current.length > 0) ? (
           <nav aria-label="Pages" className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className={LABEL}>Page {fmtInt(pageIndex + 1)}</p>
             <div className="flex gap-2">

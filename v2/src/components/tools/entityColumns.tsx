@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { PendingLink } from "@/components/ui/pending-link";
 
 import { approvalRate, type EntityRow } from "@/lib/entityPayload";
 import { socGroup } from "@/lib/socGroups";
@@ -56,12 +56,12 @@ function nameCol(base: string, label: string): StatColumn<EntityRow> {
     // and carry noindex), so every row links. The old unlinked branch existed
     // because those pages 404ed - which turned a search hit into a dead end.
     render: (e) => (
-      <Link
+      <PendingLink
         href={`${base}/${e.slug}`}
         className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
       >
         {e.name}
-      </Link>
+      </PendingLink>
     ),
   };
 }
@@ -180,12 +180,12 @@ export const OCCUPATION_COLUMNS: StatColumn<EntityRow>[] = [
     sortValue: (e) => e.name,
     render: (e) => (
       <span className="font-bold">
-        <Link
+        <PendingLink
           href={`/perm-wages/${e.slug}`}
           className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
         >
           {e.name}
-        </Link>{" "}
+        </PendingLink>{" "}
         <span className="font-mono text-xs font-normal text-muted-foreground">
           {e.code ?? ""}
         </span>
