@@ -100,12 +100,20 @@ dependencies.**
 | dataset | source | cadence |
 |---|---|---|
 | per-case status | **DOL** `flag.dol.gov`, batch API | full daily 04:10 ET, pending 15:40 ET |
+| new filings | **DOL**, discovered: nightly serial prober + visitor lookups | with the full sweep; lookups instant |
+| live remainder (`perm_live_recent`) | derived: live cases newer than the last disclosure file | rebuilt daily post-sweep |
 | decided cases | **DOL** quarterly disclosure files | quarterly + monthly check |
 | processing times | **DOL** FLAG | daily |
 | visa bulletin | **State Dept** (84 months, 2019-10 →) | monthly, one human minute |
 | I-140 counts / I-485 inventory | **USCIS** | quarterly / monthly |
 | entities, daily decisions | derived from our own corpus | with each quarterly |
 | RFI funnel | permtrack aggregate **frozen**, plus our own observations | frozen half never re-read |
+
+**The corpus grows itself (2026-08-28):** a case-number lookup that misses
+asks DOL live and records the answer; a nightly prober walks the sequential
+serial space for new filings (first run: 108 cases). The case search and
+employer pages read both worlds - published files for decided detail, the
+live remainder for anything newer. Detail: [`v2/CLAUDE.md`](v2/CLAUDE.md).
 
 The permtrack mirror survives as a dispatchable fallback with **no schedule**,
 because two writers with different notions of truth pointed at one table is a

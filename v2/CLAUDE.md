@@ -1212,3 +1212,121 @@ order: the software -> track a case -> data. Structural consequences:
   people search ("approved", "audit"), stats dated. Schema-only facts score
   zero retrievals in the best published test; FAQPage markup is dead as a
   Google lever (May 2026) - visible text is the mechanism.
+
+## A loading.tsx above a segment makes every notFound() a soft 404 (2026-08-28)
+
+Measured live: junk entity slugs answered HTTP 200 with a "not found" body
+and an injected noindex - each one a cold render feeding the Vercel bill.
+Any loading boundary above a segment makes Next stream "200 OK" before page
+code runs, after which `notFound()` thrown ANYWHERE - **generateMetadata
+included; the first fix assumed metadata beat the stream and measurement
+said no** - swaps the UI but never the status.
+
+Three mechanisms fix it, all shipped and pinned by
+`src/app/__tests__/not-found-status.test.ts`:
+1. Content routes (blog/guides/changelog) export `dynamicParams = false` -
+   the slug set is complete at build, so junk 404s with no render.
+2. Entity + queue-month routes throw `notFound()` in `generateMetadata`
+   (the earliest decision point).
+3. The shared `(public)/loading.tsx` is GONE - it was also a stale HOME
+   skeleton flashing under every data page. Only `/perm-case-status` keeps
+   a segment-local one (genuinely dynamic, ~0.7s, no miss state that needs
+   a status code). Removing it exposed one `useSearchParams()` without its
+   own Suspense (the boundary had been masking it) - budget for that when
+   removing any shared boundary.
+
+The wire check is the only real one: `curl -sI` junk + control URLs on a
+CLEAN build (`scratchpad/status-matrix.sh` pattern: 8 junk must 404, 7
+controls must 200).
+
+## Turso: production's default token is READ-ONLY on purpose (2026-08-28)
+
+Vercel prod's `TURSO_AUTH_TOKEN` cannot write; the local `.env.local` holds
+a FULL-ACCESS token under the same name. So write code passes every local
+test and dies in prod with `LibsqlError: BLOCKED: SQL write operations are
+forbidden` - and behind the case page's `.catch(() => null)` that rendered
+as an ordinary "no record". Cost an afternoon. The posture is worth keeping
+(the read layer runs on a credential that cannot corrupt the corpus):
+
+- Web-side writes go through `exec()` in `src/lib/turso/client.ts` ONLY,
+  which rides `TURSO_RW_AUTH_TOKEN` (Vercel prod env) and falls back to the
+  default token in dev. Never call `turso().execute()` for a write.
+- Before believing a prod write worked, check for the ROW, not the exit
+  path. `vercel env pull` redacts sensitive values (`[SENSITIVE]`), so the
+  prod credential cannot be probed locally - diagnose via `vercel logs`
+  with a NAMED error tag (`[caseDiscovery]` pattern: every failure branch
+  logs its cause; a discovery that throws is indistinguishable from a miss
+  otherwise).
+- The client also carries a 20s per-query deadline with one retry on a
+  fresh request, and `next.config.ts` a 180s prerender budget: during
+  Turso's 2026-08-28 degradation (their status page's own word), point
+  reads stayed fast while scans hung with no response headers, and three
+  production builds died on the default 60s. A deploy should get slower
+  under a slow provider, not fail.
+- Vercel builds from GIT: `convex/_generated/` must be COMMITTED after
+  codegen, or the deploy typechecks against yesterday's API and fails on a
+  module that exists locally.
+
+## The corpus grows itself now: discovery, two halves (2026-08-28)
+
+`perm_case_status` was a CLOSED set (the mirror seed; nothing added new
+filings, pending could only drain). Two additions opened it:
+
+1. **Lookup-side** (`src/lib/turso/caseDiscovery.ts`): a case-number lookup
+   that misses the table asks DOL's batch endpoint live (one case, one
+   request), renders the answer verbatim, and records it. Exact-match only
+   (the endpoint is a SEARCH with scored neighbours - a near-miss shown as
+   the visitor's case is somebody else's record). Global budget 2,000 DOL
+   requests/UTC day counted in `perm_docs.discovery_budget_*`; every
+   failure named in logs and degraded to the ordinary miss. NO event row -
+   a discovery is an observation, not a transition.
+2. **Nightly prober** (`--discover` in `ingest_case_status_direct.py`,
+   rides the `--full` sweep): serials are global and sequential, so it
+   walks a bounded window past the highest known serial across the last 5
+   filing days. Caps: 120 requests/run (= 6,000 numbers at the batch
+   ceiling, ~13x a normal day's ~460 filings), 1,500-serial span, stop a
+   day code after 2 consecutive empty batches. The frontier self-heals:
+   whatever a night misses, the next starts from. First real run: 38
+   requests, 108 filings.
+
+## perm_live_recent: the searchable remainder (2026-08-28)
+
+The gap Adam hit: a case he KNEW existed (filed the day before) was
+invisible to the case search and its employer's page, because those read
+`perm_cases` - DOL's published files, decided-only, ending at the last
+quarter (currently 2026-06-30). `perm_live_recent` is the remainder: every
+live-corpus case newer than that boundary (~17k rows, one quarter at most),
+slugged and indexed by employer.
+
+- **Storage stays separate** (published record vs live feed - different
+  truths, different write disciplines; merging them is the two-writers
+  flip-flop). **Experience is unified**: every search box answers from
+  both, plainly labeled. `/api/perm-cases` search returns
+  `{ cases, live }`; lookup returns `{ disclosed, live }`.
+- Firm/state/wage searches stay published-only BECAUSE THE DATA DOES NOT
+  EXIST LIVE (DOL names the firm at publication) - the UI says so in words
+  instead of silently missing.
+- Rebuilt wholesale by `build_entity_detail.py --live-recent-only` daily
+  after the full sweep (wired in case-status-direct.yml, `|| true` - a
+  rebuild failure leaves the band a day stale, never fails the sweep), and
+  by the full entity rebuild. Slug = canonical entity slug when matched,
+  `slugify(name)` fallback otherwise (both name-shaped, so the search
+  needle behaves the same; the nightly pass canonicalizes).
+- Web discovery ALSO inserts here immediately, so "search a number once,
+  find it by employer seconds later" is true - pinned in
+  caseDiscovery.test.ts.
+
+## An estimate whose date has passed is not an estimate (2026-08-28)
+
+A Nov 2024 filing rendered "likely decision window November 2025 to March
+2026" in August 2026: for a month the frontier has passed, every
+filing-anchored model's date has already elapsed. `estimateQueueDecision`
+now WITHHOLDS elapsed models centrally (every composing surface inherits
+it); the timeline page renders the overdue truth instead (queue passed
+your month by N; a case still pending is usually in an audit/RFI/hold ->
+CTA into the per-case lookup), and the case page returns the no-date
+refusal with the measured age. Presentation rule from the same review:
+lead with the strongest model's own date ("Most likely: around X") with
+the full window right under it - an anchor plus honest spread, never a
+bare range and never a blended number. Predictions worth scoring go in
+`../.planning/prediction-ledger.md` BEFORE the outcome.

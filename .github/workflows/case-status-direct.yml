@@ -84,6 +84,12 @@ jobs:
           fi
           echo "mode: $MODE"
           python3 scripts/ingest_case_status_direct.py --"$MODE"
+          # The searchable remainder (cases newer than the last disclosure
+          # file) rebuilds right after the sweep, so the case search and the
+          # employer pages see today's discoveries with canonical slugs.
+          # Cheap (one quarter of filings at most); failure here must not
+          # mark the sweep failed - the band just stays a day staler.
+          python3 scripts/build_entity_detail.py --live-recent-only || true
 
       - name: Remove credentials
         if: always()
