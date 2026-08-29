@@ -159,7 +159,7 @@ def record_run(
     status: str,
     rows_written: int | None = None,
     note: str = "",
-    started_at: int | None = None,
+    started_at: float | None = None,
 ) -> None:
     """Append one row to the ingest audit trail.
 
@@ -182,10 +182,24 @@ def record_run(
                 started_at INTEGER, finished_at INTEGER)"""
         )
         now = int(time.time() * 1000)
+        # BOTH COLUMNS ARE MILLISECONDS. `finished_at` always was, but
+        # `started_at` used to be written through untouched - so a caller
+        # reaching for the obvious `time.time()` (SECONDS) put seconds in a
+        # milliseconds column, and the only symptom was a duration off by a
+        # factor of 1000. Nothing raised. Caught by actually calling this once
+        # and reading the row back, which is the only way a unit mismatch in a
+        # loosely-typed column ever shows up.
+        #
+        # Anything below 1e11 has to be seconds: as milliseconds it would be
+        # 1973, and as seconds it is year 5138. So the two are separable with
+        # no ambiguity for any timestamp this will ever see, and a caller may
+        # pass whichever it has.
+        started = float(started_at) if started_at is not None else float(now)
+        started_ms = int(started * 1000) if started < 1e11 else int(started)
         db.execute(
             "INSERT INTO ingest_runs (script, status, rows_written, note, "
             "started_at, finished_at) VALUES (?,?,?,?,?,?)",
-            [script, status, rows_written, note, started_at or now, now],
+            [script, status, rows_written, note, started_ms, now],
         )
     except Exception as exc:  # noqa: BLE001 - audit must never break the ingest
         print(f"  [record_run] audit write failed (non-fatal): {exc}", flush=True)
