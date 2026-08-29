@@ -76,6 +76,13 @@ export interface CaseStatusResultProps {
   duration: CohortDuration | null;
   /** Estimator data for the stage-aware estimate block. Null degrades to no block. */
   estimator: Parameters<typeof CaseEstimate>[0]["estimator"];
+  /**
+   * Measured day-shift for the employer's initial, or null when the alphabet
+   * document is unavailable or the name does not start with a letter.
+   */
+  letterDelta: number | null;
+  /** The initial the shift came from, for the line that names it. */
+  letterInitial: string | null;
   /** "YYYY-MM-DD", passed in so every elapsed figure shares one clock. */
   today: string;
 }
@@ -103,6 +110,8 @@ export function CaseStatusResult({
   wage,
   duration,
   estimator,
+  letterDelta,
+  letterInitial,
   today,
 }: CaseStatusResultProps) {
   const { live, decided, cohort, employer, statusOutlook } = result;
@@ -259,6 +268,8 @@ export function CaseStatusResult({
         status={status}
         isFinal={isFinal}
         estimator={estimator}
+        letterDeltaDays={letterDelta}
+        letterInitial={letterInitial}
         today={today}
       />
       {/* Only while the case can still change. On a decided one this would

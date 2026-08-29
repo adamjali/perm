@@ -21,6 +21,7 @@ import { getMonthBacklog } from "@/lib/turso/backlog";
 import { getCaseWageContext, getCohortDuration } from "@/lib/turso/caseContext";
 import { lookupCase } from "@/lib/turso/caseLookup";
 import { getEstimatorData } from "@/lib/turso/estimate";
+import { getAlphabet } from "@/lib/turso/alphabet";
 import { getLiveBacklog, getLiveMirrorSize } from "@/lib/turso/publicData";
 
 /**
@@ -320,7 +321,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
   }
 
   const isDecided = result.decided !== null;
-  const [monthBacklog, wage, duration] = await Promise.all([
+  const [monthBacklog, wage, duration, alphabet] = await Promise.all([
     month ? getMonthBacklog(month).catch(() => null) : Promise.resolve(null),
     // Only for a decided case: a pending one has no wage in DOL's files, and
     // asking for one is a round trip that can only ever return null.
@@ -330,7 +331,20 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
     isDecided && month
       ? getCohortDuration(month).catch(() => null)
       : Promise.resolve(null),
+    getAlphabet().catch(() => null),
   ]);
+
+  // The employer's initial costs the reader nothing to supply here: DOL names
+  // the employer, so it is derived from a fact already on the page. The shift
+  // itself is looked up from the measured table and is never invented - if the
+  // document is missing, the estimate simply runs without the term.
+  const employerName =
+    result.live?.employerName ?? result.decided?.employerName ?? null;
+  const initial = (employerName ?? "").trim().slice(0, 1).toUpperCase();
+  const letterDelta =
+    alphabet && initial >= "A" && initial <= "Z"
+      ? alphabet.letters.find((l) => l.letter === initial)?.deltaDays ?? null
+      : null;
 
   return (
     <CaseStatusResult
@@ -344,6 +358,8 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       wage={wage}
       duration={duration}
       estimator={estimator}
+      letterDelta={letterDelta}
+      letterInitial={letterDelta === null ? null : initial}
       today={today}
     />
   );

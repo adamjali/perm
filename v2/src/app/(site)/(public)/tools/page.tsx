@@ -72,8 +72,15 @@ export default async function ToolsPage() {
           Data
           {snapshot?.permAsOf ? ` · DOL figures as of ${formatAsOf(snapshot.permAsOf)}` : null}
         </p>{" "}
+        {/* NOT "Where the PERM queue stands" - that is /perm-queue's H1, and
+            this page shipped a byte-identical copy of it. Two pages competing
+            on one headline is a duplicate-content signal, and the borrowed one
+            described the wrong page anyway: this is the hub over every live
+            figure and calculator, and the queue is one of the things it links
+            to. The H1 now says what the page is, matching its own title and
+            the sentence directly under it. */}
         <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Where the PERM queue stands
+          Live PERM data and free calculators
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Live figures from the Department of Labor, and free calculators built

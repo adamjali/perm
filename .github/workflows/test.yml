@@ -92,6 +92,14 @@ jobs:
         working-directory: v2
         run: python3 scripts/test_case_status_direct.py
 
+      # The nightly diff on perm_live_recent (~137k rows). A diff that never
+      # matches is not slow, it is absent - and it logs "ok" while rewriting
+      # every row, which is what shipped for one run when libSQL's
+      # integers-as-strings met a freshly built int. No network.
+      - name: Live-recent diff contract
+        working-directory: v2
+        run: python3 scripts/test_live_recent.py
+
       - name: Run full test suite
         # --retry=2 re-runs only individual tests that fail, a safety net against
         # rare CI-environment hiccups. The suite is deterministic (per-file

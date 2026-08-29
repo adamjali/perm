@@ -140,24 +140,40 @@ def _search_slug(raw: str) -> str:
 
 
 def build_live_recent(db: Turso, maps) -> tuple[list[dict], str]:
-    """Cases newer than the last disclosure file, slugged for search.
+    """Every live case the published files do not hold, slugged for search.
 
     THE GAP THIS FILLS, in Adam's words: "I knew there was a case by an
-    employer but couldn't find it." The disclosure files run only to the
-    end of the last published quarter, so every newer filing was invisible
-    to the case search and to its employer's page even though the live
-    corpus held it. This table is that remainder - small (one quarter of
-    filings at most), rebuilt wholesale, indexed by employer slug so the
-    same prefix-needle the disclosure search uses reads it for pennies.
+    employer but couldn't find it." The disclosure files carry only DECIDED
+    cases and only up to the last published quarter, so anything they miss is
+    invisible to the case search and to its employer's page even though the
+    live corpus holds it.
+
+    THE FIRST VERSION OF THIS TABLE DEFINED THE REMAINDER BY DATE, AND THAT
+    WAS THE WRONG AXIS. It took cases filed after the last disclosure MONTH,
+    which is the right rule for new filings and the wrong one for everything
+    still waiting: a case filed in March 2026 and still pending is not in the
+    disclosure files (undecided) and was not in this table either (not recent
+    enough), so it existed in our corpus and could be found by nobody who did
+    not already know its number. Measured when it was fixed: the table held
+    16,676 rows and the true remainder was 136,886 - **120,210 cases missing,
+    97,875 of them pending**, which is precisely the population most likely to
+    be searching for themselves.
+
+    The rule is therefore membership, not date: a case belongs here when
+    `perm_cases` does not hold it. That is the honest definition of "the
+    remainder", it needs no boundary to drift, and it self-corrects when a
+    quarterly file lands and absorbs part of the set.
+
+    WRITES ARE DIFFED, NOT WHOLESALE. 137k rows rebuilt nightly is ~4.1M
+    writes a month against a 10M plan, for a set whose membership barely
+    moves. `write_live_recent` writes only rows that changed.
     """
-    boundary = str(db.scalar("SELECT MAX(decision_date) FROM perm_cases") or "")[:7]
-    if not boundary:
-        log("  live-recent: perm_cases empty; skipping")
-        return [], ""
     got = rows_of(db.execute(
-        "SELECT case_number, filing_date, current_status, is_final, "
-        "employer_name, job_title FROM perm_case_status "
-        "WHERE substr(filing_date,1,7) > ?", [boundary]))
+        "SELECT s.case_number, s.filing_date, s.current_status, s.is_final, "
+        "s.employer_name, s.job_title FROM perm_case_status s "
+        "WHERE NOT EXISTS (SELECT 1 FROM perm_cases c "
+        "                   WHERE c.case_number = s.case_number)"))
+    boundary = str(db.scalar("SELECT MAX(decision_date) FROM perm_cases") or "")[:7]
     emp = maps["employer"]
     out = []
     matched = 0
@@ -175,8 +191,8 @@ def build_live_recent(db: Turso, maps) -> tuple[list[dict], str]:
             "employer_slug": hit[0] if hit is not None else _search_slug(name),
             "job_title": cell(r[5]),
         })
-    log(f"  live-recent: {len(out):,} cases newer than {boundary}, "
-        f"{matched:,} matched to a known entity")
+    log(f"  live-recent: {len(out):,} cases absent from the disclosure corpus "
+        f"(published through {boundary}), {matched:,} matched to a known entity")
     return out, boundary
 
 
@@ -194,16 +210,83 @@ LIVE_RECENT_DDL = [
 ]
 
 
+LIVE_COLS = ["case_number", "filing_date", "status", "is_final",
+             "employer_name", "employer_slug", "job_title"]
+
+
+def live_norm(row) -> tuple:
+    """One row of `perm_live_recent` as comparable values, from either side.
+
+    ONE NORMALISER, BOTH SIDES, AND THIS IS NOT A STYLE POINT. libSQL returns
+    every integer as a STRING to protect precision, so a stored `is_final`
+    arrives as '0' while the freshly built row holds int 0. Comparing them raw
+    makes every row look changed - which is not a slow diff, it is NO diff:
+    the first version of this ran and rewrote all 136,886 rows on a night when
+    nothing had changed, reporting "ok" while doing it.
+
+    Accepts a built dict or a libSQL row tuple and returns the same shape for
+    both, because a comparison whose two sides are prepared differently is the
+    defect it is meant to prevent.
+    """
+    is_tuple = not isinstance(row, dict)
+    out = []
+    for i, col in enumerate(LIVE_COLS):
+        v = cell(row[i]) if is_tuple else row[col]
+        out.append(int(v or 0) if col == "is_final" else ("" if v is None else str(v)))
+    return tuple(out)
+
+
 def write_live_recent(db: Turso, live: list[dict]) -> bool:
+    """Write only what changed.
+
+    The set is ~137k rows and its membership barely moves: on an ordinary day
+    a few hundred cases change status and the nightly prober adds a hundred
+    filings. A DELETE-then-reinsert costs 137k writes for that, ~4.1M a month
+    against a 10M plan, which is 40% of the budget to express a few hundred
+    facts. So the desired set is compared against what is stored and only the
+    difference is written.
+
+    The comparison is on the WHOLE row, not on `case_number`: a case whose
+    status moved from ANALYST REVIEW to CERTIFIED keeps its number, and a
+    membership-only diff would leave the old status in the search index
+    forever - stale in exactly the way that makes a live table worse than no
+    table.
+    """
     for ddl in LIVE_RECENT_DDL:
         db.execute(ddl)
-    db.execute("DELETE FROM perm_live_recent")
-    write_rows(db, "perm_live_recent",
-               ["case_number", "filing_date", "status", "is_final",
-                "employer_name", "employer_slug", "job_title"], live)
+
+    stored: dict[str, tuple] = {}
+    for r in rows_of(db.execute(
+            "SELECT case_number, filing_date, status, is_final, "
+            "employer_name, employer_slug, job_title FROM perm_live_recent")):
+        vals = live_norm(r)
+        stored[str(vals[0])] = vals
+
+    changed = []
+    for row in live:
+        key = str(row["case_number"])
+        want = live_norm(row)
+        have = stored.get(key)
+        if have is None or have[1:] != want[1:]:
+            changed.append(row)
+
+    wanted_keys = {str(r["case_number"]) for r in live}
+    gone = [k for k in stored if k not in wanted_keys]
+
+    # Deleted first: a case that has just been absorbed into a quarterly file
+    # must not be served from both tables while the insert half runs.
+    for i in range(0, len(gone), 500):
+        chunk = gone[i:i + 500]
+        marks = ",".join("?" for _ in chunk)
+        db.execute(f"DELETE FROM perm_live_recent WHERE case_number IN ({marks})", chunk)
+
+    if changed:
+        write_rows(db, "perm_live_recent", LIVE_COLS, changed)
+
     got = int(db.scalar("SELECT count(*) FROM perm_live_recent") or 0)
     ok = got == len(live)
-    log(f"  {'ok ' if ok else 'MISMATCH'} perm_live_recent       {got:>7,} of {len(live):,}")
+    log(f"  {'ok ' if ok else 'MISMATCH'} perm_live_recent       {got:>7,} of {len(live):,} "
+        f"({len(changed):,} written, {len(gone):,} removed)")
     return ok
 
 

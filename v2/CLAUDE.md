@@ -1294,9 +1294,31 @@ filings, pending could only drain). Two additions opened it:
 The gap Adam hit: a case he KNEW existed (filed the day before) was
 invisible to the case search and its employer's page, because those read
 `perm_cases` - DOL's published files, decided-only, ending at the last
-quarter (currently 2026-06-30). `perm_live_recent` is the remainder: every
-live-corpus case newer than that boundary (~17k rows, one quarter at most),
+quarter (currently 2026-06-30). `perm_live_recent` is the remainder,
 slugged and indexed by employer.
+
+**THE FIRST VERSION SCOPED THAT REMAINDER BY DATE AND THAT WAS THE WRONG
+AXIS (fixed 2026-08-29).** It took cases filed after the last published
+MONTH, which is right for new filings and wrong for everything still
+waiting: a case filed 2026-03 and still pending is not in the disclosure
+files (undecided) and was not in this table either (not recent enough), so
+it existed in our corpus and could be found by nobody who did not already
+know its number. Measured at the fix: the table held **16,676 rows and the
+true remainder was 136,886 - 120,210 missing, 97,875 of them pending**,
+which is precisely the population most likely to be searching for itself.
+The rule is now MEMBERSHIP, not date: a case belongs here when `perm_cases`
+does not hold it. No boundary to drift, and it self-corrects when a
+quarterly file lands and absorbs part of the set.
+
+**AND THE NIGHTLY WRITE IS DIFFED, WITH A NORMALISER ON BOTH SIDES.** 137k
+rows rebuilt wholesale is ~4.1M writes/month against a 10M plan to express
+the few hundred rows that changed. The first diff silently never matched -
+libSQL returns integers as STRINGS, so a stored `is_final` of `'0'` never
+equalled the built int `0` and every row read as changed. That is not a slow
+diff, it is NO diff, and it logged `ok` while rewriting all 136,886 rows.
+Caught by reading the log line on a second identical run, not by review.
+`live_norm()` now prepares both sides; `scripts/test_live_recent.py` pins it
+and is wired into CI.
 
 - **Storage stays separate** (published record vs live feed - different
   truths, different write disciplines; merging them is the two-writers
@@ -1315,6 +1337,83 @@ slugged and indexed by employer.
 - Web discovery ALSO inserts here immediately, so "search a number once,
   find it by employer seconds later" is true - pinned in
   caseDiscovery.test.ts.
+
+## A sweep's event log is not a diary of that day (2026-08-29)
+
+`/perm-decision-activity` now renders WHICH cases DOL moved and what each moved
+from and to, out of `perm_case_events` (`src/lib/turso/changes.ts`). A count
+cannot show a transition, because a count has no `from`: `ANALYST REVIEW -> RFI
+ISSUED` and `RFI ISSUED -> ANALYST REVIEW` are opposite events and read
+identically as "an RFI row" without both ends.
+
+**THE TABLE HOLDS TWO CLASSES OF ROW AND ONLY ONE HAPPENED THAT DAY.** An event
+is dated when our sweep SAW the difference, not when DOL made it. On 2026-08-28
+the first full sweep wrote **92,113 `CERTIFIED -> CERTIFIED - EXPIRED` rows
+under two timestamps** - 180-day I-140 windows that lapsed across two years and
+were all noticed at once. Rendered raw that is "94,581 cases changed on 28
+August", a fabricated surge on the busiest-looking day in the record. Same
+defect class as the reconciliation guard one level down, which filters on
+source; source does not separate these, because both are the DOL-direct sweep.
+
+Two filters, both on what the rows MEAN, both disclosed on the page rather than
+applied silently (a feed that quietly drops rows is indistinguishable from one
+with no data):
+
+1. **Expiry is not an adjudication.** `CERTIFIED -> CERTIFIED - EXPIRED` is a
+   clock running out, not DOL acting. Excluded by status pair - which removes
+   the backfill and is the right product rule anyway.
+2. **A bulk write is not a day's work.** Any single timestamp carrying more
+   than 5,000 rows is a sweep catching up. DOL's heaviest measured day is under
+   2,000 and the backfill was 92k, so there are three orders of magnitude of
+   headroom either side.
+
+After filtering: 336 / 58 / 48 genuine adjudications on the three observed
+days. `changes.test.ts` reads the SQL the module issues rather than mocking a
+result set, because the defect lives in the predicate - shaped fixture output
+would pass with either filter deleted. Both were probed by reverting them.
+
+## The employer's initial: real, small, and SHOWN not sold (2026-08-29)
+
+DOL works each filing month alphabetically by employer, so the initial is a
+genuine ordering term and every rival estimator uses it. What none of them
+publishes is its SIZE, and the size is the whole question.
+
+**Measured over 339,518 decided cases** (`scripts/build_alphabet.py` ->
+`perm_docs.alphabet`, surfaced on `/perm-queue`):
+
+| | |
+|---|---|
+| A, the fastest letter | **11.4 days under** the corpus mean |
+| Z, the slowest | **15.7 days over** |
+| the whole alphabet, end to end | **about 27 days** |
+| per-month A-I vs S-Z gap | median **+8.2d**, range **-7 to +36** |
+| months where the order REVERSED | **6 of 30** |
+
+permupdate prints this same term as **-80 to +80 days** and its FAQ calls the
+initial roughly 80% of the outcome - the same effect inflated about sixfold.
+
+`estimateQueueDecision` accepts `letterDeltaDays` and shifts every model by it,
+because the ordering acts within a filing month and every model is anchored to
+one. Three rules keep it honest, and they are the whole design:
+
+1. **It is never invented.** The caller passes the measured delta from
+   `perm_docs.alphabet` or passes nothing. There is no fallback constant.
+2. **It is printed with its own number and its own size** ("Employers starting
+   with Z: +16 days... the whole alphabet spans about four weeks, and in a
+   sixth of filing months the order ran backwards"). Folding it into the date
+   is the difference between using an input and appearing to - and stating the
+   magnitude is what stops this becoming the thing it guards against.
+3. **It is applied BEFORE the elapsed filter and cannot rescue a past date.**
+   An overdue case still gets no date; a fortnight does not drag a
+   months-elapsed model into the future.
+
+**Keep it in proportion when tempted to weight it harder: our own measured
+median error is ~50 days and this term moves a date by at most 16.** It is
+inside the noise floor. It earns its place as a specific, personalised output
+the reader can see was used - not as a lever.
+
+On `/perm-case-status` it costs the reader no input at all: DOL names the
+employer, so the initial comes from a fact already on the page.
 
 ## An estimate whose date has passed is not an estimate (2026-08-28)
 

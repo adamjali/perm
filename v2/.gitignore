@@ -82,3 +82,7 @@ outreach/
 # public repo.
 .impeccable/hook.cache.json
 .impeccable/config.local.json
+
+# Session scratch: probe dumps and analysis intermediates. The findings that
+# matter are written into scripts/ and the docs; these are the raw workings.
+scratchpad/

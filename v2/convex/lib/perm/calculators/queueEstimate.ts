@@ -106,6 +106,27 @@ export interface QueueEstimateInput {
    * Omit and the model reports no range rather than an invented one.
    */
   frontierAdvanceRange?: { slowest: number; fastest: number } | null;
+  /**
+   * Days to shift every model for the employer's initial, MEASURED.
+   *
+   * DOL works each filing month alphabetically by employer, so the initial is
+   * a real ordering term. Its size is the whole question, and it is small:
+   * measured over 339,518 decided cases the entire alphabet spans about 27
+   * days (A about 11 under the corpus mean, Z about 16 over), the per-month
+   * gap between the ends has a median of 8 days, and in 6 of 30 months the
+   * ordering RAN BACKWARDS. A rival prints this term as -80 to +80 and sells
+   * the initial as most of the answer; that is the same term inflated ~6x.
+   *
+   * It is accepted here so a reader who supplies their employer gets an answer
+   * that used it, and so the contribution can be shown as its own line rather
+   * than folded silently into a date. It is NEVER invented: the caller passes
+   * the measured delta from `perm_docs.alphabet` or passes nothing.
+   *
+   * It does not change which models run, only where they land, because the
+   * ordering acts within a filing month and every model here is anchored to
+   * one.
+   */
+  letterDeltaDays?: number | null;
 }
 
 // ============================================================================
@@ -189,6 +210,13 @@ export interface QueueEstimate {
   models: EstimateModel[];
   /** Caveats that apply to this specific case, not boilerplate. */
   caveats: string[];
+  /**
+   * The measured employer-initial shift applied to every model, in days, or
+   * null when none was supplied. Returned so a surface can SHOW the term and
+   * its size rather than folding it invisibly into a date - the difference
+   * between using an input and appearing to.
+   */
+  letterDeltaDays: number | null;
   /** Cohort context, when the disclosure data covers this filing month. */
   cohort: {
     month: string;
@@ -552,7 +580,26 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
   // The cohort facts survive in `cohort`; `position` ('overdue') tells the
   // caller what to say instead. The rule lives here so every surface that
   // composes these models - the timeline page, the case page - inherits it.
-  const liveModels = models.filter((m) => m.estimatedDate >= input.today);
+  // The employer's initial, applied BEFORE the elapsed filter so a case the
+  // adjustment would push into the future is not discarded on the strength of
+  // an unadjusted date. Every model shifts by the same measured number of
+  // days, because the ordering acts within a filing month and every model is
+  // anchored to one.
+  const delta =
+    typeof input.letterDeltaDays === 'number' && Number.isFinite(input.letterDeltaDays)
+      ? Math.round(input.letterDeltaDays)
+      : 0;
+  const shift = (iso: string | null): string | null =>
+    iso === null || delta === 0 ? iso : formatUTC(addDays(validateISODate(iso, 'model date'), delta));
+  const adjusted: EstimateModel[] = delta === 0 ? models : models.map((m) => ({
+    ...m,
+    estimatedDate: shift(m.estimatedDate)!,
+    totalDays: m.totalDays + delta,
+    earliestDate: shift(m.earliestDate),
+    latestDate: shift(m.latestDate),
+  }));
+
+  const liveModels = adjusted.filter((m) => m.estimatedDate >= input.today);
 
   return {
     filingDate: input.filingDate,
@@ -562,6 +609,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     models: liveModels,
     caveats,
     cohort: cohortOut,
+    letterDeltaDays: delta === 0 ? null : delta,
   };
 }
 

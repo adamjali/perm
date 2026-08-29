@@ -109,7 +109,13 @@ export async function getEntityBySlug(
   return r ? toEntityRow(r) : null;
 }
 
-async function doc<T>(key: string): Promise<T | null> {
+/**
+ * One precomputed document by key, with its write time folded in.
+ *
+ * Exported so a sibling reader (alphabet.ts) uses this parse rather than a
+ * second copy: two doc readers is two places for `computedAt` to go missing.
+ */
+export async function doc<T>(key: string): Promise<T | null> {
   const r = await one<{ json: string; computed_at: number }>(
     "SELECT json, computed_at FROM perm_docs WHERE key = ?",
     [key],

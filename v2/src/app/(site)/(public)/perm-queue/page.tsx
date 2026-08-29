@@ -9,6 +9,7 @@ import { BacklogWall } from "@/components/queue/BacklogWall";
 import { SourceNote } from "@/components/queue/SourceNote";
 import { OctoberNote, OCTOBER_2025 } from "@/components/queue/OctoberNote";
 import { PendingCensus } from "@/components/queue/PendingCensus";
+import { AlphabetEffect } from "@/components/queue/AlphabetEffect";
 import { StageLegend } from "@/components/queue/StageBar";
 import { groupByStage } from "@/components/queue/stages";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
@@ -17,6 +18,7 @@ import { findVolumeAnomalies } from "@/lib/queueAhead";
 import { MIRROR_COMPLETE, PROVISIONAL_NOTICE } from "@/lib/liveQueueGate";
 import { getBacklogCensus } from "@/lib/turso/backlog";
 import { getEstimatorData } from "@/lib/turso/estimate";
+import { getAlphabet } from "@/lib/turso/alphabet";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 /**
@@ -71,9 +73,12 @@ export const revalidate = 3600;
 const int = (n: number) => n.toLocaleString("en-US");
 
 export default async function PermQueuePage() {
-  const [census, estimator] = await Promise.all([
+  const [census, estimator, alphabet] = await Promise.all([
     getBacklogCensus(),
     getEstimatorData(),
+    // Its own document and its own writer, so a missing one is a missing
+    // panel rather than a missing page.
+    getAlphabet().catch(() => null),
   ]);
 
   const { stages } = groupByStage(census.statuses);
@@ -291,6 +296,32 @@ export default async function PermQueuePage() {
           />
         </div>
       </section>{" "}
+
+      {alphabet ? (
+        <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+          <h2 className="font-heading text-2xl font-black sm:text-3xl">
+            Your employer&rsquo;s first letter, and what it is worth
+          </h2>{" "}
+          <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+            Within a filing month DOL works alphabetically by employer name, so
+            a case sponsored by an A company is decided before one sponsored by
+            a Z company that filed the same month. That much is real, and every
+            public estimator uses it. What none of them publishes is how much it
+            is worth, so here it is measured:{" "}
+            <b>
+              the whole alphabet is about {Math.round(alphabet.spreadDays)} days
+            </b>
+            , and in {alphabet.monthsReversed} of {alphabet.monthsMeasured}{" "}
+            filing months the back half of the alphabet was decided{" "}
+            <b>faster</b> than the front. It is a real term and a small one.
+            Your filing month is worth far more than your initial.
+          </p>{" "}
+
+          <div className="mt-8 border-t-2 border-border pt-6">
+            <AlphabetEffect data={alphabet} />
+          </div>
+        </section>
+      ) : null}{" "}
 
       <div className="mt-6">
         <OctoberNote />

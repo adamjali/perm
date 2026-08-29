@@ -36,6 +36,14 @@ export interface CaseEstimateInput {
     EstimatorData,
     "frontier" | "cohorts" | "frontierAdvance"
   > | null;
+  /**
+   * Days to shift for the employer's initial, MEASURED, or null.
+   *
+   * The case page knows the employer because DOL names it, so this costs the
+   * reader no extra input: the initial is derived from a fact already on
+   * screen. It is looked up from `perm_docs.alphabet` and never invented.
+   */
+  letterDeltaDays?: number | null;
   /** `YYYY-MM-DD`, injected so the function stays pure. */
   today: string;
 }
@@ -104,6 +112,7 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
     today: input.today,
     frontier: input.estimator.frontier,
     cohorts: input.estimator.cohorts,
+    letterDeltaDays: input.letterDeltaDays ?? null,
     frontierAdvanceRate: input.estimator.frontierAdvance
       ? input.estimator.frontierAdvance.rate
       : null,

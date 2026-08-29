@@ -21,7 +21,9 @@ import { formatAsOf } from "@/lib/dolFormat";
 
 const fmtDate = (iso: string) => formatAsOf(iso) ?? iso;
 
-export function CaseEstimate(props: CaseEstimateInput) {
+export function CaseEstimate(
+  props: CaseEstimateInput & { letterInitial?: string | null },
+) {
   const est = buildCaseEstimate(props);
   if (!est) return null;
 
@@ -56,23 +58,28 @@ export function CaseEstimate(props: CaseEstimateInput) {
       <h2 className="mt-1 font-heading text-2xl font-black">
         When this case could be decided
       </h2>{" "}
+      {/* ANCHOR FIRST, WINDOW UNDER IT. This block used to lead with the
+          range at display size and demote the central read to muted 14px,
+          which answers a question nobody asks: a person checking one case
+          wants a date, and a five-month span offered as THE answer reads as
+          an evasion. Leading with the anchor is not a claim of precision -
+          the window is still directly beneath it, at a size that cannot be
+          missed, and both come from the same model. The rival's failure is
+          the opposite one: a single bold date with the spread deleted. */}
       <p className="mt-4 font-heading text-3xl font-black sm:text-4xl">
-        {est.earliestDate && est.latestDate ? (
-          <>
-            {fmtDate(est.earliestDate)}
-            <span className="text-muted-foreground"> to </span>
-            {fmtDate(est.latestDate)}
-          </>
-        ) : (
-          <>around {fmtDate(est.estimatedDate)}</>
-        )}
+        Around {fmtDate(est.estimatedDate)}
       </p>
       {est.earliestDate && est.latestDate ? (
-        <p className="mt-1 text-sm text-muted-foreground">
-          central read {fmtDate(est.estimatedDate)} ·{" "}
+        <p className="mt-1 text-base text-foreground/80">
+          Most likely between <b>{fmtDate(est.earliestDate)}</b> and{" "}
+          <b>{fmtDate(est.latestDate)}</b> ·{" "}
           {est.totalDays.toLocaleString("en-US")} days from filing
         </p>
-      ) : null}
+      ) : (
+        <p className="mt-1 text-base text-foreground/80">
+          {est.totalDays.toLocaleString("en-US")} days from filing
+        </p>
+      )}
 
       {est.stage ? (
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
@@ -81,6 +88,30 @@ export function CaseEstimate(props: CaseEstimateInput) {
             filing month).
           </b>{" "}
           {est.stage.note}
+        </p>
+      ) : null}
+
+      {/* NAMED AND SIZED, NEVER FOLDED IN. DOL works each filing month
+          alphabetically by employer, so this is a real term - and it is a
+          small one, which is exactly why it is printed with its own number
+          instead of disappearing into the date. A competitor applies the same
+          term at -80 to +80 days and tells nobody. Stating "about a week"
+          next to the letter is what stops this becoming that. */}
+      {typeof props.letterDeltaDays === "number" && props.letterInitial ? (
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
+          <b className="font-bold">
+            Employers starting with {props.letterInitial}:{" "}
+            {/* A letter whose measured shift rounds to zero is the commonest
+                case in the middle of the alphabet, and "+0 days" reads as a
+                bug rather than as the finding it is. Say what it means. */}
+            {Math.round(props.letterDeltaDays) === 0
+              ? "no measurable difference."
+              : `${props.letterDeltaDays > 0 ? "+" : ""}${Math.round(props.letterDeltaDays)} days.`}
+          </b>{" "}
+          DOL works each filing month alphabetically by employer name, and this
+          case is adjusted for that. It is a small term: across our corpus the
+          whole alphabet spans about four weeks, and in a sixth of filing months
+          the order ran backwards. The filing month matters far more.
         </p>
       ) : null}
 

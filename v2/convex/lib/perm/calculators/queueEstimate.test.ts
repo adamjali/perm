@@ -544,3 +544,71 @@ describe("impliedMedianDays", () => {
     }
   });
 });
+
+describe('the employer-initial adjustment', () => {
+  /**
+   * DOL works each filing month alphabetically by employer, so the initial is
+   * a real ordering term. It is accepted here so a reader who supplies their
+   * employer gets an answer that used it - and pinned here so it can never
+   * grow into the thing it is guarding against: a rival prints this same term
+   * at -80 to +80 days, roughly six times its measured size.
+   */
+  const base = {
+    filingDate: '2026-03-15',
+    today: TODAY,
+    frontier: FRONTIER,
+    cohorts: [MATURE_COHORT, IMMATURE_COHORT],
+    frontierAdvanceRate: 1.8,
+  };
+
+  it('shifts every model by the same measured number of days', () => {
+    const none = estimateQueueDecision(base);
+    const late = estimateQueueDecision({ ...base, letterDeltaDays: 16 });
+    expect(late.models.length).toBe(none.models.length);
+    for (let i = 0; i < none.models.length; i++) {
+      const a = none.models[i]!;
+      const b = late.models[i]!;
+      expect(b.totalDays).toBe(a.totalDays + 16);
+      // Same shift on the band, or the band would drift out from under its
+      // own central estimate.
+      if (a.earliestDate && b.earliestDate) {
+        expect(b.earliestDate > a.earliestDate).toBe(true);
+      }
+    }
+  });
+
+  it('moves an early-alphabet case earlier and a late one later', () => {
+    const a = estimateQueueDecision({ ...base, letterDeltaDays: -11 });
+    const z = estimateQueueDecision({ ...base, letterDeltaDays: 16 });
+    expect(a.models[0]!.estimatedDate < z.models[0]!.estimatedDate).toBe(true);
+  });
+
+  it('reports the applied shift so a surface can show the term', () => {
+    // Folding it invisibly into a date is the difference between using an
+    // input and appearing to.
+    expect(estimateQueueDecision({ ...base, letterDeltaDays: 16 }).letterDeltaDays).toBe(16);
+    expect(estimateQueueDecision(base).letterDeltaDays).toBeNull();
+  });
+
+  it('treats a missing, null or non-finite delta as no adjustment', () => {
+    const plain = estimateQueueDecision(base).models[0]!.estimatedDate;
+    for (const bad of [null, undefined, NaN, Infinity]) {
+      const got = estimateQueueDecision({ ...base, letterDeltaDays: bad as number | null });
+      expect(got.models[0]!.estimatedDate).toBe(plain);
+      expect(got.letterDeltaDays).toBeNull();
+    }
+  });
+
+  it('still withholds a model the adjustment cannot rescue from the past', () => {
+    // The shift is applied BEFORE the elapsed filter, so a date it pushes into
+    // the future survives - but a date months in the past is still withheld
+    // rather than dragged forward by a fortnight.
+    const overdue = estimateQueueDecision({
+      ...base,
+      filingDate: '2023-06-15',
+      letterDeltaDays: 16,
+    });
+    expect(overdue.position).toBe('overdue');
+    expect(overdue.models).toEqual([]);
+  });
+});

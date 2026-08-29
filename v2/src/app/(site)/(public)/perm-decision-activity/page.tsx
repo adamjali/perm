@@ -28,7 +28,9 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { DecisionPaceChart } from "@/components/activity/DecisionPaceChart";
 import { OutcomeMix } from "@/components/activity/OutcomeMix";
 import { WeekdayShape } from "@/components/activity/WeekdayShape";
+import { ChangeFeed } from "@/components/activity/ChangeFeed";
 import { getActivitySeries } from "@/lib/turso/activity";
+import { getChangeFeed } from "@/lib/turso/changes";
 import { getLiveMirrorSize } from "@/lib/turso/publicData";
 import {
   fillZeros,
@@ -76,9 +78,12 @@ function longDate(iso: string): string {
 }
 
 export default async function DecisionActivityPage() {
-  const [series, mirrorSize] = await Promise.all([
+  const [series, mirrorSize, feed] = await Promise.all([
     getActivitySeries(),
     getLiveMirrorSize(),
+    // The event record is days old, so a failure here must not take the whole
+    // page down: the counts above it come from a different table entirely.
+    getChangeFeed(null, 60).catch(() => null),
   ]);
 
   const disclosure = series.find((s) => s.source === "dol-disclosure");
@@ -189,6 +194,35 @@ export default async function DecisionActivityPage() {
             weekday pace by roughly a fifth, and DOL does issue determinations
             at weekends: {longDate(currentPace.from)} to{" "}
             {longDate(currentPace.to)}, from the per-case scan of flag.dol.gov.
+          </p>
+        </section>
+      ) : null}
+
+      {feed ? (
+        <section className="mt-10">
+          <h2 className="font-heading text-2xl font-black">
+            The cases DOL moved on {longDate(feed.date)}
+          </h2>{" "}
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+            Counts say how much DOL cleared. This says which cases, and what
+            each one moved from and to, which is the only view that separates an
+            information request being issued from one being answered.
+          </p>{" "}
+          <ChangeFeed feed={feed} />{" "}
+          <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/70">
+            Dated when our per-case scan of flag.dol.gov{" "}
+            <b>saw</b> the change, which is not necessarily the day DOL made it:
+            DOL publishes no timestamp, so a Friday determination read on Monday
+            is a Monday row. Observations begin{" "}
+            {feed.observedSince ? longDate(feed.observedSince) : "recently"}, so
+            this is a short record that grows nightly rather than a history:{" "}
+            {feed.availableDays
+              .map((d) => `${fmt(d.total)} on ${longDate(d.date)}`)
+              .join(", ")}
+            .
+            {feed.expiriesExcluded > 0
+              ? ` ${fmt(feed.expiriesExcluded)} certifications whose 180-day I-140 window lapsed are left out of this day: that clock running out is not DOL acting on a case, and they were all noticed in one sweep rather than expiring that day.`
+              : ""}
           </p>
         </section>
       ) : null}
