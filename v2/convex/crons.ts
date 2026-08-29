@@ -1,14 +1,21 @@
 /**
  * Convex Cron Jobs Configuration
  *
- * Scheduled jobs (11 total):
- * - Daily deadline enforcement (6 AM EST / 10:00 UTC)
+ * Scheduled jobs (13 total). The count and the list are only useful if they
+ * match the registrations below, so both are maintained here:
  * - Daily deadline reminder checks (9 AM EST / 14:00 UTC)
+ * - Daily deadline enforcement (6 AM EST / 10:00 UTC)
  * - Hourly cleanup of old read notifications (90+ days, at :30)
  * - Weekly digest emails (Mondays at 9 AM EST / 14:00 UTC)
  * - Hourly account deletion cleanup (safety net, at :45)
  * - Hourly rate limit record cleanup (24h+ old, at :15)
  * - Daily AI conversation TTL cleanup (90+ days, 3:00 AM UTC)
+ * - Hourly abuse-blocklist expiry sweep (at :40)
+ * - Daily orphaned-profile cleanup (3:30 AM UTC)
+ * - Daily re-engagement check (16:00 UTC)
+ * - Daily DOL processing-times refresh (15:00 UTC)
+ * - Per-case status alert sweep (11:00 and 23:00 UTC)
+ * - Daily visa-bulletin alert sweep (17:30 UTC)
  *
  * IMPORTANT: All cron handlers use `internal` functions for security.
  * Never expose scheduled job handlers to the public API.

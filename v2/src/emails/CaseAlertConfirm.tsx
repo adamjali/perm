@@ -54,6 +54,16 @@ export interface CaseAlertConfirmProps {
   asOf?: string | null;
   /** Absolute, purpose-scoped confirmation URL. */
   confirmUrl: string;
+  /**
+   * True when the subscriber also ticked the product-news box, so the same
+   * confirm click opts them into that as well.
+   *
+   * A plain sentence, never a link and never a second button: this email
+   * carries no onward links and everything on it is subordinate to the confirm
+   * button. But the sentence has to be here, because a click that confirms two
+   * things is only consent for the second if the email said so.
+   */
+  includesNews?: boolean;
 }
 
 export function CaseAlertConfirm({
@@ -62,6 +72,7 @@ export function CaseAlertConfirm({
   employerName = null,
   asOf = null,
   confirmUrl,
+  includesNews = false,
 }: CaseAlertConfirmProps) {
   const known = currentStatus !== null;
 
@@ -117,6 +128,13 @@ export function CaseAlertConfirm({
         </Text>
       )}
 
+      {includesNews ? (
+        <Text className="em-text-secondary" style={styles.newsNote}>
+          You also asked for occasional product news. The same click confirms
+          that.
+        </Text>
+      ) : null}
+
       <Section style={styles.cta}>
         <EmailButton href={confirmUrl} variant="primary">
           Confirm these alerts
@@ -150,6 +168,16 @@ const styles = {
     color: "#5A5A5A",
     fontSize: "15px",
     lineHeight: "24px",
+    margin: "0 0 24px 0",
+  },
+  // Above the button, not below it: a reader who clicks straight away never
+  // sees anything under the CTA, and this line has to be read before the click
+  // rather than after it.
+  newsNote: {
+    fontFamily: SANS_STACK,
+    color: "#5A5A5A",
+    fontSize: "14px",
+    lineHeight: "22px",
     margin: "0 0 24px 0",
   },
   cta: {

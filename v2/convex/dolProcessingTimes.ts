@@ -98,10 +98,18 @@ const ingestResult = v.object({
 /**
  * Fetch the live page, parse it, and store it if the content changed.
  *
- * Scheduled WEEKLY (see convex/crons.ts). DOL refreshes PERM in the first work
- * week of each month and prevailing wage on its own cadence, so most runs find
- * no change and report a no-op; polling weekly just means we notice the change
- * within days of it happening rather than on a fixed date DOL does not honour.
+ * Scheduled DAILY at 15:00 UTC (see convex/crons.ts). DOL refreshes PERM in the
+ * first work week of each month and prevailing wage on its own cadence, so most
+ * runs find no change and report a no-op; polling daily just means we notice
+ * the change within a day of it happening rather than on a fixed date DOL does
+ * not honour.
+ *
+ * It was weekly until 2026-08-29, and weekly was too slow for the queue-month
+ * alerts that read this table: the Turso copy had advanced to analyst-review
+ * month 2025-11 while this one still said 2025-09, so a subscriber whose month
+ * HAD been reached was judged not-yet-reached and never mailed. `store` is
+ * insert-only on a content-hash change, so the extra runs cost a ~160KB GET
+ * and nothing else on the ~29 days DOL does not move.
  */
 export const refresh = internalAction({
   args: {},

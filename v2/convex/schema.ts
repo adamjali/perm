@@ -1560,10 +1560,17 @@ export default defineSchema({
    * protects it from orphan removal.
    *
    * Rows are created UNCONFIRMED by the news checkbox on an alert form and
-   * confirmed by the same double-opt-in click that confirms the alert; the
-   * confirmation email states both. No sending path reads this table
-   * directly - broadcasts go out via Resend, which is where the unsubscribe
-   * footer lives too.
+   * confirmed by the same double-opt-in click that confirms the alert. The
+   * confirmation email states both, and that is what makes one click consent
+   * for two things: the three confirm templates each render a line naming the
+   * news opt-in whenever it was requested, driven by an `includesNews` flag
+   * THREADED from the subscribe request rather than read back from this table
+   * (a read at send time can beat the staging write, since the same
+   * transaction stages the row and schedules the email). See
+   * convex/emailPrefs.ts and convex/lib/newsConsent.ts.
+   *
+   * No sending path reads this table directly - broadcasts go out via Resend,
+   * which is where the unsubscribe footer lives too.
    */
   newsSubscribers: defineTable({
     email: v.string(),

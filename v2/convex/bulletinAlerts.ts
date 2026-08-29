@@ -44,6 +44,7 @@ import {
 } from "./lib/unsubscribeToken";
 import { recordError } from "./lib/errorRecording";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
+import { stageNewsFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 
 const log = createLogger("BulletinAlerts");
@@ -116,6 +117,12 @@ export const subscribe = internalMutation({
     category: categoryValidator,
     country: countryValidator,
     source: v.optional(v.string()),
+    /**
+     * The product-news checkbox on the form. Staged here rather than by a
+     * follow-up mutation from the HTTP layer, and passed on to the
+     * confirmation so the email can say so. See convex/emailPrefs.ts.
+     */
+    news: v.optional(v.boolean()),
     ip: v.optional(v.string()),
   },
   returns: v.object({
@@ -190,10 +197,22 @@ export const subscribe = internalMutation({
       return { ok: false, message: THROTTLED_REPLY, throttled: true };
     }
 
+    // Stage the product-news opt-in in THIS transaction, next to the schedule
+    // call, so the row and the email that names it are one write. Doing it
+    // from the HTTP layer after this mutation returned raced the send action,
+    // which is why the flag is threaded rather than looked up. Reached only on
+    // the accepted path, so a request the cooldown absorbed (which sends no
+    // email) can no longer stage news nobody was told about.
+    const includesNews = args.news === true;
+    if (includesNews) {
+      await stageNewsFor(ctx, email, args.source);
+    }
+
     await ctx.scheduler.runAfter(0, internal.bulletinAlerts.sendConfirmation, {
       email,
       category: args.category,
       country: args.country,
+      includesNews,
     });
 
     return { ok: true, message: NEUTRAL_REPLY };
@@ -237,10 +256,21 @@ export const sendConfirmation = internalAction({
     email: v.string(),
     category: categoryValidator,
     country: countryValidator,
+    /**
+     * Whether `subscribe` also staged a product-news opt-in for this address.
+     *
+     * Passed in rather than queried: `subscribe` schedules this action from
+     * inside its own transaction, so a lookup here could run before the
+     * staging commits and send an email that names nothing while the row
+     * exists. Optional so anything already in flight when this shipped still
+     * renders, and absent means "say nothing", which is the safe direction.
+     */
+    includesNews: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
+      const includesNews = args.includesNews === true;
       const token = await makeUnsubscribeToken(
         args.email,
         unsubscribeSecret(),
@@ -256,7 +286,11 @@ export const sendConfirmation = internalAction({
           const { BulletinAlertConfirm } = await import(
             "../src/emails/BulletinAlertConfirm"
           );
-          return BulletinAlertConfirm({ seriesLabel: label, confirmUrl });
+          return BulletinAlertConfirm({
+            seriesLabel: label,
+            confirmUrl,
+            includesNews,
+          });
         },
       );
 
@@ -271,6 +305,15 @@ export const sendConfirmation = internalAction({
           "Confirm here and we'll email you when a new bulletin changes it:",
           confirmUrl,
           "",
+          // The text part must not disagree with the HTML: both name the news
+          // opt-in or neither does. One click confirming two things is only
+          // consent for the second if the email said so.
+          ...(includesNews
+            ? [
+                "You also asked for occasional product news. The same click confirms that.",
+                "",
+              ]
+            : []),
           "If you didn't ask for this, ignore this message. Nothing further will be sent.",
           "",
           "PERM Tracker",

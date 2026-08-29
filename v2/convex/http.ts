@@ -359,18 +359,15 @@ http.route({
       queue: validQueue,
       role: validRole,
       source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      // Optional product-news opt-in, staged inert until the same confirm
+      // click that activates the alert. Handed to `subscribe` rather than
+      // staged here afterwards: `subscribe` schedules the confirmation email
+      // from inside its own transaction, so a second mutation fired after it
+      // returned raced that send, and it also staged on every `ok` reply
+      // including the ones that mail nothing. See convex/emailPrefs.ts.
+      news: news === true,
       ip,
     });
-
-    // Optional product-news opt-in, staged inert until the same confirm
-    // click that activates the alert. Only on an accepted request: a
-    // throttled or malformed one stages nothing.
-    if (result.ok && news === true) {
-      await ctx.runMutation(internal.emailPrefs.stageNews, {
-        email: email.slice(0, 320),
-        source: typeof source === "string" ? source.slice(0, 64) : undefined,
-      });
-    }
 
     // 200 on success, 429 when a limit refused it, 400 when the caller sent a
     // field we could not use. Collapsing the last two would report every typo
@@ -514,17 +511,11 @@ http.route({
       email: email.slice(0, 320),
       caseNumber: caseNumber.slice(0, 64),
       source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      // Same staged news opt-in as the queue-alert route; the case-alert
+      // confirm click completes both, and the confirmation email says so.
+      news: news === true,
       ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
     });
-
-    // Same staged news opt-in as the queue-alert route; the case-alert
-    // confirm click completes both.
-    if (result.ok && news === true) {
-      await ctx.runMutation(internal.emailPrefs.stageNews, {
-        email: email.slice(0, 320),
-        source: typeof source === "string" ? source.slice(0, 64) : undefined,
-      });
-    }
 
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
   }),
@@ -744,15 +735,11 @@ http.route({
       category: category as "EB1" | "EB2" | "EB3" | "EW3" | "EB4" | "EB5",
       country: country as "worldwide" | "china" | "india" | "mexico" | "philippines",
       source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      // Same staged news opt-in as the sibling routes; the bulletin-alert
+      // confirm click completes both, and the confirmation email says so.
+      news: news === true,
       ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
     });
-
-    if (result.ok && news === true) {
-      await ctx.runMutation(internal.emailPrefs.stageNews, {
-        email: email.slice(0, 320),
-        source: typeof source === "string" ? source.slice(0, 64) : undefined,
-      });
-    }
 
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
   }),

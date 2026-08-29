@@ -23,11 +23,33 @@
  * ## Product news for anonymous subscribers
  *
  * `newsSubscribers` rows are created UNCONFIRMED by a checkbox on an alert
- * form and confirmed by the same double-opt-in click that confirms the alert
- * (the confirmation email names both). Signed-in users' marketing consent
- * stays in Resend, untouched by any of this except "unsubscribe from
- * everything", which removes the Resend contact through the same path
- * account deletion uses.
+ * form and confirmed by the same double-opt-in click that confirms the alert.
+ * The confirmation email names both, which is the only thing that makes one
+ * click legitimate consent for two things: a reader who is told they are
+ * confirming an alert and silently signed up for a mailing list has not
+ * consented to the mailing list.
+ *
+ * ## The flag is THREADED, never queried
+ *
+ * Each alert `subscribe` mutation takes a `news` boolean, stages the row
+ * itself through `stageNewsFor`, and passes `includesNews` on to its
+ * `sendConfirmation` action. That looks roundabout next to "let the send
+ * action look up whether a row is staged", and the roundabout version is the
+ * correct one: `subscribe` schedules the confirmation from inside its own
+ * transaction, so a query at send time can run before the staging commits and
+ * would then send an email that says nothing about news for a row that IS
+ * staged. Threading the flag makes the email and the row one write.
+ *
+ * The staging sits on the accepted path only - past the shape checks, past the
+ * per-address cooldown, past the global budget - so it happens exactly when a
+ * confirmation email goes out. That is stricter than the HTTP-layer version it
+ * replaced, which staged on any `ok` response: a request the cooldown absorbed
+ * sent no email, staged news anyway, and left the reader's earlier
+ * confirmation link able to opt them into something it never mentioned.
+ *
+ * Signed-in users' marketing consent stays in Resend, untouched by any of this
+ * except "unsubscribe from everything", which removes the Resend contact
+ * through the same path account deletion uses.
  *
  * @module convex/emailPrefs
  */
@@ -48,6 +70,7 @@ import {
 } from "./lib/unsubscribeToken";
 import { recordError } from "./lib/errorRecording";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
+import { stageNewsFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 
 const log = createLogger("EmailPrefs");
@@ -57,7 +80,7 @@ const SITE_URL = "https://permtracker.app";
 /**
  * Global daily budget for preference-link emails. Part of the documented
  * Resend 100/day arithmetic in convex/caseAlerts.ts - every list-mail budget
- * is enumerated there and the total leaves 30/day for auth mail.
+ * is enumerated there and the total leaves 25/day for auth mail.
  */
 const PREFS_LINK_GLOBAL_BUDGET = { limit: 6, windowMs: 24 * 60 * 60 * 1000 };
 const PREFS_IP_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
@@ -81,31 +104,20 @@ function unsubscribeSecret(): string {
 // Product-news consent (rides the alert double-opt-in)
 // ============================================================================
 
-/** Stage a news opt-in for an address. Inert until an alert confirm lands. */
+/**
+ * Stage a news opt-in for an address. Inert until an alert confirm lands.
+ *
+ * A thin wrapper over `stageNewsFor` so the same write is reachable as a
+ * standalone mutation. The three alert `subscribe` mutations call the helper
+ * directly instead, because a mutation cannot `runMutation` and the staging
+ * has to land in the transaction that schedules the confirmation email. See
+ * the module docstring.
+ */
 export const stageNews = internalMutation({
   args: { email: v.string(), source: v.optional(v.string()) },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const email = args.email.trim().toLowerCase();
-    if (!isPlausibleEmail(email)) return null;
-    const existing = await ctx.db
-      .query("newsSubscribers")
-      .withIndex("by_email", (q) => q.eq("email", email))
-      .first();
-    if (existing) {
-      // An opted-out row stays opted out until a fresh confirm click: the
-      // stage is recorded by clearing nothing. A new checkbox tick on a form
-      // is a request, and the confirm click is what honours it.
-      if (existing.unsubscribedAt !== undefined) {
-        await ctx.db.patch(existing._id, { createdAt: Date.now() });
-      }
-      return null;
-    }
-    await ctx.db.insert("newsSubscribers", {
-      email,
-      createdAt: Date.now(),
-      source: args.source,
-    });
+    await stageNewsFor(ctx, args.email, args.source);
     return null;
   },
 });

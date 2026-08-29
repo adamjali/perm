@@ -75,6 +75,7 @@ import {
 } from "./lib/unsubscribeToken";
 import { recordError } from "./lib/errorRecording";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
+import { stageNewsFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 
 const log = createLogger("QueueAlerts");
@@ -126,8 +127,9 @@ const SUBSCRIBE_IP_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
  * per-IP limit alone cannot prevent that, because an attacker rotating
  * addresses through a proxy pool defeats both the per-address cooldown and the
  * per-IP counter. A global budget cannot be rotated around: whatever an
- * attacker does, confirmations stop at 30 in a rolling day and the remaining
- * ~70 stay available for mail people actually depend on.
+ * attacker does, queue confirmations stop at 18 in a rolling day and the rest
+ * of the shared cap stays available for mail people actually depend on. The
+ * full arithmetic across every list-mail budget lives in convex/caseAlerts.ts.
  *
  * The cost is that a genuine burst of signups (a Reddit thread, a launch) gets
  * throttled. That is the correct trade: a delayed marketing confirmation is
@@ -275,6 +277,12 @@ export const subscribe = internalMutation({
     queue: v.optional(queueValidator),
     role: v.optional(roleValidator),
     source: v.optional(v.string()),
+    /**
+     * The product-news checkbox on the form. Staged here rather than by a
+     * follow-up mutation from the HTTP layer, and passed on to the
+     * confirmation so the email can say so. See convex/emailPrefs.ts.
+     */
+    news: v.optional(v.boolean()),
     /** Caller IP from the HTTP layer, or "unknown" when none is resolvable. */
     ip: v.optional(v.string()),
   },
@@ -376,10 +384,22 @@ export const subscribe = internalMutation({
       return { ok: false, message: THROTTLED_REPLY, throttled: true };
     }
 
+    // Stage the product-news opt-in in THIS transaction, next to the schedule
+    // call, so the row and the email that names it are one write. Doing it
+    // from the HTTP layer after this mutation returned raced the send action,
+    // which is why the flag is threaded rather than looked up. Reached only on
+    // the accepted path, so a request the cooldown absorbed (which sends no
+    // email) can no longer stage news nobody was told about.
+    const includesNews = args.news === true;
+    if (includesNews) {
+      await stageNewsFor(ctx, email, args.source);
+    }
+
     await ctx.scheduler.runAfter(0, internal.queueAlerts.sendConfirmation, {
       email,
       filingMonth: args.filingMonth,
       queue,
+      includesNews,
     });
 
     return { ok: true, message: NEUTRAL_REPLY };
@@ -447,11 +467,22 @@ export const sendConfirmation = internalAction({
     email: v.string(),
     filingMonth: v.string(),
     queue: v.optional(queueValidator),
+    /**
+     * Whether `subscribe` also staged a product-news opt-in for this address.
+     *
+     * Passed in rather than queried: `subscribe` schedules this action from
+     * inside its own transaction, so a lookup here could run before the
+     * staging commits and send an email that names nothing while the row
+     * exists. Optional so links already in flight when this shipped still
+     * render, and absent means "say nothing", which is the safe direction.
+     */
+    includesNews: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
       const queue: QueueKind = args.queue ?? "perm";
+      const includesNews = args.includesNews === true;
       const token = await makeUnsubscribeToken(
         args.email,
         unsubscribeSecret(),
@@ -480,6 +511,7 @@ export const sendConfirmation = internalAction({
             confirmUrl,
             queueName: label,
             monthNoun,
+            includesNews,
           });
         },
       );
@@ -500,6 +532,15 @@ export const sendConfirmation = internalAction({
           "Confirm here and we'll email you once, on the day it happens:",
           confirmUrl,
           "",
+          // The text part must not disagree with the HTML: both name the news
+          // opt-in or neither does. One click confirming two things is only
+          // consent for the second if the email said so.
+          ...(includesNews
+            ? [
+                "You also asked for occasional product news. The same click confirms that.",
+                "",
+              ]
+            : []),
           "If you didn't ask for this, ignore this message. Nothing further will be sent.",
           "",
           "PERM Tracker",

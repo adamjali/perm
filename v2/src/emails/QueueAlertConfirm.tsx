@@ -34,6 +34,16 @@ export interface QueueAlertConfirmProps {
   queueName?: string;
   /** "filing month" for PERM, "submission month" for PWD. */
   monthNoun?: string;
+  /**
+   * True when the subscriber also ticked the product-news box, so the same
+   * confirm click opts them into that as well.
+   *
+   * A plain sentence, never a link and never a second button: this email has
+   * one job and everything on it is subordinate to the confirm button. But the
+   * sentence has to be here, because a click that confirms two things is only
+   * consent for the second if the email said so.
+   */
+  includesNews?: boolean;
 }
 
 export function QueueAlertConfirm({
@@ -41,6 +51,7 @@ export function QueueAlertConfirm({
   confirmUrl,
   queueName = "PERM queue",
   monthNoun = "filing month",
+  includesNews = false,
 }: QueueAlertConfirmProps) {
   return (
     <EmailLayout
@@ -55,6 +66,13 @@ export function QueueAlertConfirm({
         reaches this month. Confirm the alert and we&rsquo;ll email you once, on
         the day it happens.
       </Text>
+
+      {includesNews ? (
+        <Text className="em-text-secondary" style={styles.newsNote}>
+          You also asked for occasional product news. The same click confirms
+          that.
+        </Text>
+      ) : null}
 
       <Section style={styles.cta}>
         <EmailButton href={confirmUrl} variant="primary">
@@ -75,6 +93,16 @@ const styles = {
     color: "#2A2A2A",
     fontSize: "16px",
     lineHeight: "26px",
+    margin: "0 0 24px 0",
+  },
+  // Above the button, not below it: a reader who clicks straight away never
+  // sees anything under the CTA, and this line has to be read before the click
+  // rather than after it.
+  newsNote: {
+    fontFamily: SANS_STACK,
+    color: "#5A5A5A",
+    fontSize: "14px",
+    lineHeight: "22px",
     margin: "0 0 24px 0",
   },
   cta: {

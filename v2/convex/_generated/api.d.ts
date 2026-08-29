@@ -72,6 +72,7 @@ import type * as lib_formatDate from "../lib/formatDate.js";
 import type * as lib_googleHelpers from "../lib/googleHelpers.js";
 import type * as lib_logging from "../lib/logging.js";
 import type * as lib_nameValidation from "../lib/nameValidation.js";
+import type * as lib_newsConsent from "../lib/newsConsent.js";
 import type * as lib_notificationHelpers from "../lib/notificationHelpers.js";
 import type * as lib_perm_calculators_eta9089 from "../lib/perm/calculators/eta9089.js";
 import type * as lib_perm_calculators_greenCardTimeline from "../lib/perm/calculators/greenCardTimeline.js";
@@ -230,6 +231,7 @@ declare const fullApi: ApiFromModules<{
   "lib/googleHelpers": typeof lib_googleHelpers;
   "lib/logging": typeof lib_logging;
   "lib/nameValidation": typeof lib_nameValidation;
+  "lib/newsConsent": typeof lib_newsConsent;
   "lib/notificationHelpers": typeof lib_notificationHelpers;
   "lib/perm/calculators/eta9089": typeof lib_perm_calculators_eta9089;
   "lib/perm/calculators/greenCardTimeline": typeof lib_perm_calculators_greenCardTimeline;

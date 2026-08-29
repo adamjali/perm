@@ -53,17 +53,25 @@
  * caused one real outage on this product.
  *
  *   queue-alert confirmations      18/day   (convex/queueAlerts.ts)
- *   case-alert confirmations       10/day   (below)
+ *   case-alert confirmations       15/day   (below)
  *   case alerts                    18/day   (below)
  *   bulletin-alert confirmations    6/day   (convex/bulletinAlerts.ts)
  *   bulletin alerts                12/day   (convex/bulletinAlerts.ts)
  *   preference-center links         6/day   (convex/emailPrefs.ts)
  *   ---------------------------------------
- *   worst case from list mail      70/day, leaving 30 for mail people depend on.
+ *   worst case from list mail      75/day, leaving 25 for mail people depend on.
+ *
+ * That 25/day is the entire remaining headroom for AUTH mail - password
+ * resets and OTP codes - and it is the number to check before adding any
+ * sending path, because those are the emails whose absence locks somebody out
+ * of their own account. Every list-mail budget is enumerated here, so any new
+ * sending path must claim a line in this table before it ships.
  *
  * Rebalanced 2026-08-28 when the bulletin alerts and the preference center
- * joined the pool: every list-mail budget is enumerated here, and any new
- * sending path must claim a line in this table before it ships.
+ * joined the pool. The arithmetic in this table drifted from the constants
+ * afterwards (it read 10/day for case confirmations against a real 15, and
+ * summed to 70) and was corrected 2026-08-29; the CONSTANTS are authoritative
+ * and were not touched, because lowering one throttles real signups.
  *
  * The queue-alert SEND sweep is not in that column because it is driven by a
  * monthly DOL publication rather than a daily one, so it and the case alerts
@@ -75,7 +83,7 @@
  * is the only kind of limit that cannot be rotated around: a per-address
  * cooldown does nothing against an attacker cycling fresh addresses, and a
  * per-IP limit does nothing against a proxy pool. Whatever anyone does,
- * confirmations stop at 15 and alerts stop at 25 in a rolling day.
+ * confirmations stop at 15 and alerts stop at 18 in a rolling day.
  *
  * @module convex/caseAlerts
  */
@@ -111,6 +119,7 @@ import {
   checkRateLimit,
   recordRateLimitAttempt,
 } from "./lib/rateLimit";
+import { stageNewsFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 
 const log = createLogger("CaseAlerts");
@@ -256,6 +265,12 @@ export const subscribe = internalMutation({
     email: v.string(),
     caseNumber: v.string(),
     source: v.optional(v.string()),
+    /**
+     * The product-news checkbox on the form. Staged here rather than by a
+     * follow-up mutation from the HTTP layer, and passed on to the
+     * confirmation so the email can say so. See convex/emailPrefs.ts.
+     */
+    news: v.optional(v.boolean()),
     /** Caller IP from the HTTP layer, or "unknown" when none is resolvable. */
     ip: v.optional(v.string()),
   },
@@ -377,9 +392,22 @@ export const subscribe = internalMutation({
       return { ok: false, message: THROTTLED_REPLY, throttled: true };
     }
 
+    // Stage the product-news opt-in in THIS transaction, next to the schedule
+    // call, so the row and the email that names it are one write. Doing it
+    // from the HTTP layer after this mutation returned raced the send action,
+    // which is why the flag is threaded rather than looked up. Reached only on
+    // the accepted path, so neither a cooldown-absorbed request nor one
+    // refused at the per-address case ceiling (both send nothing) can stage
+    // news nobody was told about.
+    const includesNews = args.news === true;
+    if (includesNews) {
+      await stageNewsFor(ctx, email, args.source);
+    }
+
     await ctx.scheduler.runAfter(0, internal.caseAlerts.sendConfirmation, {
       email,
       caseNumber,
+      includesNews,
     });
 
     return { ok: true, message: NEUTRAL_REPLY };
@@ -449,10 +477,24 @@ async function mirrorAsOf(): Promise<string | null> {
 
 /** Send the double opt-in confirmation. */
 export const sendConfirmation = internalAction({
-  args: { email: v.string(), caseNumber: v.string() },
+  args: {
+    email: v.string(),
+    caseNumber: v.string(),
+    /**
+     * Whether `subscribe` also staged a product-news opt-in for this address.
+     *
+     * Passed in rather than queried: `subscribe` schedules this action from
+     * inside its own transaction, so a lookup here could run before the
+     * staging commits and send an email that names nothing while the row
+     * exists. Optional so anything already in flight when this shipped still
+     * renders, and absent means "say nothing", which is the safe direction.
+     */
+    includesNews: v.optional(v.boolean()),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
+      const includesNews = args.includesNews === true;
       const token = await makeUnsubscribeToken(
         args.email,
         unsubscribeSecret(),
@@ -505,6 +547,7 @@ export const sendConfirmation = internalAction({
             employerName: employer,
             asOf,
             confirmUrl,
+            includesNews,
           });
         },
       );
@@ -531,6 +574,15 @@ export const sendConfirmation = internalAction({
           "Confirm here and we'll email you when its status changes:",
           confirmUrl,
           "",
+          // The text part must not disagree with the HTML: both name the news
+          // opt-in or neither does. One click confirming two things is only
+          // consent for the second if the email said so.
+          ...(includesNews
+            ? [
+                "You also asked for occasional product news. The same click confirms that.",
+                "",
+              ]
+            : []),
           "If you didn't ask for this, ignore this message. Nothing further will be sent.",
           "",
           "PERM Tracker",
