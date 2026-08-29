@@ -452,6 +452,102 @@ export interface SearchCasesArgs {
  * `slugify` is the same function the ingest slugged these columns with, so
  * the prefix a visitor types and the prefix stored here are computed one way.
  */
+/**
+ * A case from the LIVE feed, newer than the last disclosure file.
+ *
+ * Thin on purpose: DOL's live endpoint returns employer, job title and
+ * status - no firm, no wage, no state. Rows come from `perm_live_recent`,
+ * the small daily-rebuilt remainder table, so this search costs an indexed
+ * prefix range over one quarter of filings rather than a scan of the
+ * 414k-row corpus.
+ */
+export interface LiveCaseRow {
+  caseNumber: string;
+  filingDate: string | null;
+  status: string | null;
+  isFinal: boolean;
+  employerName: string | null;
+  jobTitle: string | null;
+}
+
+interface LiveDbRow {
+  case_number: string;
+  filing_date: string | null;
+  status: string | null;
+  is_final: number;
+  employer_name: string | null;
+  job_title: string | null;
+}
+
+const toLiveRow = (r: LiveDbRow): LiveCaseRow => ({
+  caseNumber: r.case_number,
+  filingDate: r.filing_date,
+  status: r.status,
+  isFinal: Boolean(r.is_final),
+  employerName: r.employer_name,
+  jobTitle: r.job_title,
+});
+
+/**
+ * Employer search over the live remainder: the same slug-prefix needle the
+ * disclosure search uses, against `perm_live_recent`. Only employers - the
+ * live feed simply has no firm names (DOL reveals the firm at publication),
+ * which the UI says in words rather than returning a silently empty list.
+ */
+export async function searchLiveCases(
+  text: string,
+  limit = 25,
+): Promise<LiveCaseRow[]> {
+  if (text.length > 120) return [];
+  const needle = slugify(text.trim());
+  if (needle.length < 2) return [];
+  const upper =
+    needle.slice(0, -1) + String.fromCharCode(needle.charCodeAt(needle.length - 1) + 1);
+  const take = Math.min(Math.max(1, Math.floor(limit)), MAX_SEARCH_RESULTS);
+  const found = await rows<LiveDbRow>(
+    `SELECT case_number, filing_date, status, is_final, employer_name, job_title
+       FROM perm_live_recent
+      WHERE employer_slug >= ? AND employer_slug < ?
+      ORDER BY filing_date DESC LIMIT ?`,
+    [needle, upper, take],
+  );
+  return found.map(toLiveRow);
+}
+
+/**
+ * One case from the live corpus, by exact number. A point read on the
+ * primary key; used when the disclosure lookup misses so the case search
+ * can hand the visitor to the live status page instead of shrugging.
+ */
+export async function lookupLiveByCaseNumber(
+  caseNumber: string,
+): Promise<LiveCaseRow | null> {
+  const cn = normalizeCaseNumber(caseNumber);
+  if (!cn) return null;
+  const r = await one<LiveDbRow>(
+    `SELECT case_number, filing_date, current_status AS status, is_final,
+            employer_name, job_title
+       FROM perm_case_status WHERE case_number = ?`,
+    [cn],
+  );
+  return r ? toLiveRow(r) : null;
+}
+
+/** The newest live filings for one employer page, by its canonical slug. */
+export async function recentLiveByEmployer(
+  slug: string,
+  limit = 8,
+): Promise<LiveCaseRow[]> {
+  if (!slug || slug.length > 80) return [];
+  const found = await rows<LiveDbRow>(
+    `SELECT case_number, filing_date, status, is_final, employer_name, job_title
+       FROM perm_live_recent WHERE employer_slug = ?
+      ORDER BY filing_date DESC LIMIT ?`,
+    [slug, Math.min(Math.max(1, Math.floor(limit)), 25)],
+  );
+  return found.map(toLiveRow);
+}
+
 export async function searchCases(args: SearchCasesArgs): Promise<PermCaseRow[]> {
   // Guards in cost order. The length cap is first because everything after it
   // walks the string, and `text` arrives from a stranger.

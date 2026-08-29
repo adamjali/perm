@@ -111,6 +111,16 @@ describe("discoverCase", () => {
     const args = insert![1] as unknown[];
     expect(args[0]).toBe("G-100-26125-868956");
     expect(args[3]).toBe(0); // ANALYST REVIEW is not final
+
+    // The searchable half of the promise: a case discovered by NUMBER is
+    // findable by EMPLOYER immediately, via the slugged remainder table.
+    const liveInsert = execMock.mock.calls.find(([sql]) =>
+      String(sql).includes("INSERT OR IGNORE INTO perm_live_recent"),
+    );
+    expect(liveInsert).toBeDefined();
+    const liveArgs = liveInsert![1] as unknown[];
+    expect(liveArgs[0]).toBe("G-100-26125-868956");
+    expect(liveArgs[5]).toBe("acme-robotics-llc"); // slugified for the needle
   });
 
   it("marks a decided status final", async () => {

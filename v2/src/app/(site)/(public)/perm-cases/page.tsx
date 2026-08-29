@@ -118,7 +118,11 @@ export default async function PermCasesPage() {
               {fmtInt(meta.totalCases)} PERM cases, every one of them decided
               between {longDate(meta.firstDecisionDate)} and{" "}
               {longDate(meta.lastDecisionDate)}. Filed as far back as{" "}
-              {longDate(meta.firstReceivedDate)}.
+              {longDate(meta.firstReceivedDate)}. Anything newer than{" "}
+              {longDate(meta.lastDecisionDate)} isn&apos;t in DOL&apos;s
+              published files yet - the employer search below fills that gap
+              from DOL&apos;s live feed, and any case number can be checked
+              live.
             </>
           ) : (
             <>

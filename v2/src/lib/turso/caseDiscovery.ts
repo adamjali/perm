@@ -30,6 +30,7 @@
  */
 
 import { parseCaseNumber } from "@/lib/permCaseNumber";
+import { slugify } from "@/lib/entitySlug";
 import { exec, one } from "./client";
 
 /**
@@ -210,6 +211,31 @@ export async function discoverCase(
     // The visitor still gets the truth DOL just told us; only the recording
     // failed, and the log names it rather than the page hiding it.
     console.error("[caseDiscovery] record failed:", e);
+  }
+
+  // The searchable half of the promise: a case discovered by NUMBER must be
+  // findable by EMPLOYER immediately, not after tonight's rebuild. The slug
+  // here is the name-derived fallback; the nightly perm_live_recent rebuild
+  // re-stamps it with the canonical entity slug where one exists (they only
+  // differ for merged spellings).
+  try {
+    await exec(
+      `INSERT OR IGNORE INTO perm_live_recent
+         (case_number, filing_date, status, is_final, employer_name,
+          employer_slug, job_title)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        caseNumber,
+        filingDate,
+        rec.caseStatus,
+        isFinal ? 1 : 0,
+        rec.employerName,
+        rec.employerName ? slugify(rec.employerName) : null,
+        rec.jobTitle,
+      ],
+    );
+  } catch (e) {
+    console.error("[caseDiscovery] live-recent record failed:", e);
   }
 
   return {

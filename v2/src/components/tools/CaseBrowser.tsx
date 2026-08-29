@@ -44,6 +44,16 @@ import type { CasePage } from "@/lib/turso/cases";
 
 type Status = "certified" | "denied" | "withdrawn";
 
+/** A live-feed case: fresher than the published files, thinner on fields. */
+interface LiveHit {
+  caseNumber: string;
+  filingDate: string | null;
+  status: string | null;
+  isFinal: boolean;
+  employerName: string | null;
+  jobTitle: string | null;
+}
+
 export interface CaseRow {
   caseNumber: string;
   status: Status;
@@ -286,17 +296,28 @@ export function CaseBrowser({
 
   const { data: page, failed: pageFailed } = usePublicQuery<CasePage>(listUrl);
 
-  const { data: caseHit, failed: caseFailed } = usePublicQuery<CaseRow | null>(
+  const { data: lookupData, failed: caseFailed } = usePublicQuery<{
+    disclosed: CaseRow | null;
+    live: LiveHit | null;
+  }>(
     caseQuery
       ? `/api/perm-cases?action=lookup&caseNumber=${encodeURIComponent(caseQuery)}`
       : "skip",
   );
+  const caseHit = lookupData?.disclosed ?? null;
+  const caseLookupPending = caseQuery !== "" && lookupData === undefined;
+  const liveHit = lookupData?.live ?? null;
 
-  const { data: nameHits, failed: nameFailed } = usePublicQuery<CaseRow[]>(
+  const { data: searchData, failed: nameFailed } = usePublicQuery<{
+    cases: CaseRow[];
+    live: LiveHit[];
+  }>(
     nameQuery.length >= 2
       ? `/api/perm-cases?action=search&field=${nameField}&limit=50&text=${encodeURIComponent(nameQuery)}`
       : "skip",
   );
+  const nameHits = searchData?.cases;
+  const liveHits = searchData?.live ?? [];
 
   const rows = page?.page ?? [];
   const isFirstPage = pageIndex === 0;
@@ -417,7 +438,7 @@ export function CaseBrowser({
             Look it up
           </button>
         </form>
-        {caseQuery !== "" && caseHit === undefined && !caseFailed ? (
+        {caseLookupPending && !caseFailed ? (
           <p className="mt-4 text-base text-foreground/60">Checking…</p>
         ) : null}
         {caseFailed ? (
@@ -426,22 +447,44 @@ export function CaseBrowser({
             end. Try again in a minute.
           </p>
         ) : null}
-        {caseQuery !== "" && caseHit === null ? (
+        {caseQuery !== "" && lookupData && !caseHit && liveHit ? (
+          /* Not published yet, but DOL's live system knows it - the case the
+             disclosure files cannot show for another quarter. */
+          <div className="mt-4 border-2 border-border bg-tint-primary p-4">
+            <p className="text-base font-bold">
+              Found in DOL&apos;s live system - not yet in the published files.
+            </p>{" "}
+            <p className="mt-2 text-base leading-relaxed text-foreground/70">
+              {liveHit.employerName ?? "This case"}
+              {liveHit.jobTitle ? ` · ${liveHit.jobTitle}` : ""}
+              {liveHit.filingDate ? ` · filed ${liveHit.filingDate}` : ""} ·
+              status <b className="font-bold">{liveHit.status ?? "on file"}</b>.
+              Details like the law firm and wage appear when DOL publishes the
+              decided case.
+            </p>{" "}
+            <Link
+              href={`/perm-case-status?case=${encodeURIComponent(liveHit.caseNumber)}`}
+              className="mt-3 inline-flex min-h-[44px] items-center border-2 border-border bg-primary px-4 font-heading font-black text-primary-foreground shadow-hard-sm"
+            >
+              View the live status
+            </Link>
+          </div>
+        ) : null}
+        {caseQuery !== "" && lookupData && !caseHit && !liveHit ? (
           <div className="mt-4 border-2 border-border bg-tint-primary p-4">
             <p className="text-base font-bold">
               No case with that number in this window.
             </p>{" "}
             <p className="mt-2 text-base leading-relaxed text-foreground/70">
-              DOL&apos;s disclosure files carry decided cases only, so a case still
-              waiting on a determination appears in none of them. If yours is
-              pending, the{" "}
+              DOL&apos;s disclosure files carry decided cases only, and our live
+              feed hasn&apos;t seen this number either. It may be very new:{" "}
               <Link
-                href="/perm-processing-times"
+                href={`/perm-case-status?case=${encodeURIComponent(caseQuery)}`}
                 className="font-bold underline decoration-primary decoration-2 underline-offset-2"
               >
-                queue page
-              </Link>{" "}
-              is where to look instead.
+                check it against DOL&apos;s live system
+              </Link>
+              , which asks DOL directly and remembers the answer.
             </p>
           </div>
         ) : null}
@@ -647,9 +690,52 @@ export function CaseBrowser({
             Search
           </button>
         </form>
+        {searching && nameField === "employer" && liveHits.length > 0 ? (
+          /* The live strip: the exact case Adam searched for and could not
+             find - filings newer than the last disclosure file, from DOL's
+             live feed, each linking to its own status page. */
+          <div className="mt-4 border-2 border-border bg-tint-primary p-4">
+            <p className="text-base font-bold">
+              Newest filings - live from DOL, not yet in the published files
+            </p>{" "}
+            <ul className="mt-2 divide-y divide-border/60">
+              {liveHits.map((h) => (
+                <li
+                  key={h.caseNumber}
+                  className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base"
+                >
+                  <Link
+                    href={`/perm-case-status?case=${encodeURIComponent(h.caseNumber)}`}
+                    className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2"
+                  >
+                    {h.caseNumber}
+                  </Link>{" "}
+                  <span className="font-medium">{h.employerName}</span>{" "}
+                  {h.jobTitle ? (
+                    <span className="text-foreground/70">{h.jobTitle}</span>
+                  ) : null}{" "}
+                  <span className="ml-auto text-sm text-foreground/70">
+                    {h.filingDate ? `filed ${h.filingDate} · ` : ""}
+                    {h.status ?? ""}
+                  </span>
+                </li>
+              ))}
+            </ul>{" "}
+            <p className="mt-2 text-sm text-foreground/70">
+              The law firm and wage for these appear when DOL publishes the
+              decided case.
+            </p>
+          </div>
+        ) : null}
+        {searching && nameField === "attorney" ? (
+          <p className="mt-3 text-sm text-foreground/70">
+            Newer, unpublished cases can&apos;t be listed by firm: DOL only
+            names the firm when it publishes a decided case.
+          </p>
+        ) : null}
         {searching ? (
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
-            Showing {nameHits ? fmtInt(nameHits.length) : "…"} matches, newest
+            Showing {nameHits ? fmtInt(nameHits.length) : "…"} decided matches, newest
             first and capped. A name search matches from the start of a name, so
             “fragomen” finds Fragomen, Del Rey, Bernsen &amp; Loewy and “del rey”
             finds nothing. The filters don’t apply to it.{" "}

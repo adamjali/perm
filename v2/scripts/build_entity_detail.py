@@ -124,6 +124,89 @@ def slug_maps(db: Turso):
 # Pending, from the live mirror
 # ---------------------------------------------------------------------------
 
+def _search_slug(raw: str) -> str:
+    """Mirrors slugify in store_entities.py / src/lib/entitySlug.ts.
+
+    Used only as the FALLBACK for employers the entity tables have never
+    seen (a company whose first-ever filing is newer than the last
+    disclosure file). Matched employers carry their canonical entity slug
+    instead, which is what both the case search's needle and the employer
+    page's own URL are built from.
+    """
+    import re as _re
+    t = _re.sub(r"[^a-z0-9]+", "-", (raw or "").lower())
+    t = _re.sub(r"-+", "-", t).strip("-")[:60]
+    return t.rstrip("-")
+
+
+def build_live_recent(db: Turso, maps) -> tuple[list[dict], str]:
+    """Cases newer than the last disclosure file, slugged for search.
+
+    THE GAP THIS FILLS, in Adam's words: "I knew there was a case by an
+    employer but couldn't find it." The disclosure files run only to the
+    end of the last published quarter, so every newer filing was invisible
+    to the case search and to its employer's page even though the live
+    corpus held it. This table is that remainder - small (one quarter of
+    filings at most), rebuilt wholesale, indexed by employer slug so the
+    same prefix-needle the disclosure search uses reads it for pennies.
+    """
+    boundary = str(db.scalar("SELECT MAX(decision_date) FROM perm_cases") or "")[:7]
+    if not boundary:
+        log("  live-recent: perm_cases empty; skipping")
+        return [], ""
+    got = rows_of(db.execute(
+        "SELECT case_number, filing_date, current_status, is_final, "
+        "employer_name, job_title FROM perm_case_status "
+        "WHERE substr(filing_date,1,7) > ?", [boundary]))
+    emp = maps["employer"]
+    out = []
+    matched = 0
+    for r in got:
+        name = cell(r[4]) or ""
+        hit = emp.get(entity_key(name)) if name else None
+        if hit is not None:
+            matched += 1
+        out.append({
+            "case_number": cell(r[0]),
+            "filing_date": cell(r[1]),
+            "status": cell(r[2]),
+            "is_final": int(cell(r[3]) or 0),
+            "employer_name": name,
+            "employer_slug": hit[0] if hit is not None else _search_slug(name),
+            "job_title": cell(r[5]),
+        })
+    log(f"  live-recent: {len(out):,} cases newer than {boundary}, "
+        f"{matched:,} matched to a known entity")
+    return out, boundary
+
+
+LIVE_RECENT_DDL = [
+    """CREATE TABLE IF NOT EXISTS perm_live_recent (
+         case_number   TEXT PRIMARY KEY,
+         filing_date   TEXT,
+         status        TEXT,
+         is_final      INTEGER,
+         employer_name TEXT,
+         employer_slug TEXT,
+         job_title     TEXT)""",
+    "CREATE INDEX IF NOT EXISTS perm_live_recent_emp "
+    "ON perm_live_recent (employer_slug, filing_date DESC)",
+]
+
+
+def write_live_recent(db: Turso, live: list[dict]) -> bool:
+    for ddl in LIVE_RECENT_DDL:
+        db.execute(ddl)
+    db.execute("DELETE FROM perm_live_recent")
+    write_rows(db, "perm_live_recent",
+               ["case_number", "filing_date", "status", "is_final",
+                "employer_name", "employer_slug", "job_title"], live)
+    got = int(db.scalar("SELECT count(*) FROM perm_live_recent") or 0)
+    ok = got == len(live)
+    log(f"  {'ok ' if ok else 'MISMATCH'} perm_live_recent       {got:>7,} of {len(live):,}")
+    return ok
+
+
 def build_pending(db: Turso, maps) -> list[dict]:
     """Per-employer live queue position, aggregated server-side.
 
@@ -307,11 +390,25 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", help="NDJSON of perm_cases rows, for local iteration")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument(
+        "--live-recent-only", action="store_true",
+        help="Rebuild only perm_live_recent (cases newer than the last "
+             "disclosure file). Cheap; runs daily after the status sweep so "
+             "the case search and employer pages see the day's filings.")
     args = ap.parse_args()
 
     db = Turso()
     log("SLUGS")
     maps = slug_maps(db)
+
+    if args.live_recent_only:
+        log("LIVE RECENT")
+        live, boundary = build_live_recent(db, maps)
+        if args.dry_run:
+            log("\nDRY RUN - nothing written")
+            return 0
+        return 0 if write_live_recent(db, live) else 1
+
     log("PENDING")
     pending = build_pending(db, maps)
     log("FACETS")
@@ -330,6 +427,8 @@ def main() -> int:
     write_rows(db, "perm_entity_facets",
                ["kind", "slug", "facet", "pos", "key", "label", "n", "certified", "denied"],
                facets)
+    live, _ = build_live_recent(db, maps)
+    write_live_recent(db, live)
 
     log("VERIFY")
     ok = True

@@ -6,7 +6,9 @@ import {
   isCaseStatus,
   listCases,
   lookupByCaseNumber,
+  lookupLiveByCaseNumber,
   searchCases,
+  searchLiveCases,
   type CaseFilter,
   type CaseSlice,
 } from "@/lib/turso/cases";
@@ -108,9 +110,23 @@ export async function GET(request: Request) {
     const raw = p.get("caseNumber") ?? "";
     if (!raw || raw.length > MAX_TEXT) return bad("caseNumber missing or too long");
     const row = await lookupByCaseNumber(raw);
-    return NextResponse.json(row, {
-      headers: { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=86400" },
-    });
+    // The disclosure record when it exists; otherwise the live corpus, so a
+    // case DOL has not published yet gets handed to its live status page
+    // instead of a shrug. The live point-read is skipped on a disclosure hit:
+    // the case page itself shows both worlds for one case.
+    const live = row ? null : await lookupLiveByCaseNumber(raw);
+    return NextResponse.json(
+      { disclosed: row, live },
+      {
+        headers: {
+          "Cache-Control": row
+            ? "public, s-maxage=86400, stale-while-revalidate=86400"
+            // A live-only (or missing) answer can change with the next sweep
+            // - or the next visitor's lookup discovering it.
+            : "public, s-maxage=600, stale-while-revalidate=3600",
+        },
+      },
+    );
   }
 
   if (action === "search") {
@@ -127,16 +143,26 @@ export async function GET(request: Request) {
     const limit = Number.isFinite(rawLimit)
       ? Math.min(Math.max(Math.floor(rawLimit), 1), MAX_SEARCH_RESULTS)
       : MAX_SEARCH_RESULTS;
-    const rows = await searchCases({
-      field,
-      text,
-      ...(status && isCaseStatus(status) ? { status } : {}),
-      ...(state ? { state } : {}),
-      limit,
-    });
-    return NextResponse.json(rows, {
-      headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" },
-    });
+    // Both worlds in one answer. The live half exists only for employers
+    // (DOL names the firm at publication, so no live row carries one) and
+    // ignores the status/state filters, whose vocabulary belongs to decided
+    // cases; the client labels the strip accordingly.
+    const [rows, live] = await Promise.all([
+      searchCases({
+        field,
+        text,
+        ...(status && isCaseStatus(status) ? { status } : {}),
+        ...(state ? { state } : {}),
+        limit,
+      }),
+      field === "employer" ? searchLiveCases(text) : Promise.resolve([]),
+    ]);
+    return NextResponse.json(
+      { cases: rows, live },
+      {
+        headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" },
+      },
+    );
   }
 
   if (action !== "list") return bad("unknown action");

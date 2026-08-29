@@ -50,6 +50,7 @@ import {
   resolveEntity,
   sizeBand,
 } from "@/lib/turso/entityDetail";
+import { recentLiveByEmployer } from "@/lib/turso/cases";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import {
   comparables,
@@ -225,7 +226,7 @@ export default async function EmployerPage({
   // The three context reads run together. `fieldDistribution` takes the same
   // arguments on every page of this kind, and memoises on them, so all 16,305
   // sponsor pages share one cohort read rather than each re-reading 1,338 rows.
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive] =
     await Promise.all([
       getDisclosureStats(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -240,6 +241,11 @@ export default async function EmployerPage({
       nameVariants(KIND, canonicalSlug),
       absorbedCount(KIND, canonicalSlug),
       getFreshness(),
+      // Filings newer than the last disclosure file, from the live feed -
+      // the gap Adam hit: a case he KNEW existed was invisible on its own
+      // sponsor's page until DOL's quarterly publication. Indexed point
+      // read over the small remainder table; degrades to an absent band.
+      recentLiveByEmployer(canonicalSlug, 8).catch(() => []),
     ]);
   const band = await sizeBand(KIND, row.rank);
   const mirrorAsOf = freshness["perm-case-status"]?.asOf ?? null;
@@ -381,6 +387,44 @@ export default async function EmployerPage({
           asOf={mirrorAsOf}
           className="mt-10"
         />
+      ) : null}
+
+      {/* The newest individual filings, live from DOL - visible here months
+          before the disclosure files publish them. Firm and wage arrive
+          with publication; until then the case number carries the reader
+          to its own live status. */}
+      {recentLive.length > 0 ? (
+        <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+          <h2 className="font-heading text-xl font-black sm:text-2xl">
+            Latest filings, live from DOL
+          </h2>{" "}
+          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+            Newer than DOL&apos;s published files, so the wage and law firm
+            aren&apos;t known yet. Each case links to its live status.
+          </p>{" "}
+          <ul className="mt-4 divide-y divide-border/60">
+            {recentLive.map((c) => (
+              <li
+                key={c.caseNumber}
+                className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base"
+              >
+                <Link
+                  href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
+                  className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                >
+                  {c.caseNumber}
+                </Link>{" "}
+                {c.jobTitle ? (
+                  <span className="text-foreground/70">{c.jobTitle}</span>
+                ) : null}{" "}
+                <span className="ml-auto text-sm text-foreground/70">
+                  {c.filingDate ? `filed ${c.filingDate}` : ""}
+                  {c.status ? ` · ${c.status}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       {/* Where does this sponsor sit in the field? A stat card states a
