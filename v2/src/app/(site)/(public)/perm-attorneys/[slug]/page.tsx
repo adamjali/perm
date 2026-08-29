@@ -79,7 +79,12 @@ import {
  * quarter lands and these need to reflect it sooner, the ingest should call
  * on-demand revalidation rather than every page re-rendering on a timer.
  */
-export const revalidate = 604800;
+// 30 days, up from 7 (2026-08-29, the night ISR writes hit 100% of the
+// Hobby cap). Every crawler hit on an expired tail page is a paid cache
+// write, and 21k pages x weekly expiry was most of the 200k. The stats
+// here move quarterly; the live band on a tail page moving a few weeks
+// late is invisible; the top-100 pages rebuild with every deploy anyway.
+export const revalidate = 2592000;
 
 const KIND = "attorney" as const;
 const BASE = "/perm-attorneys";
