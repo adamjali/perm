@@ -63,6 +63,18 @@ jobs:
     # generous for a job that should either work or fail visibly.
     timeout-minutes: 45
 
+    # JOB-LEVEL, because three separate steps need it and only one of them
+    # looked like it did. Each of ingest_perm_disclosure.py,
+    # ingest_visa_bulletin.py and ingest_uscis_i140.py ends main() by stamping
+    # its own row in `data_freshness`, so each opens Turso. Without these the
+    # DOL step parsed 259,489 cases, wrote every payload, and THEN died on the
+    # stamp - the work all done, the job red, and the error naming a
+    # `.env.local` nobody had asked for. lib_turso.env() now reads the real
+    # environment first, so these are all any step needs.
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
     steps:
       - uses: actions/checkout@v5
 
@@ -265,16 +277,11 @@ jobs:
       - name: Load the public corpus into Turso
         if: ${{ hashFiles(format('{0}/perm-cases.ndjson.gz', runner.temp)) != '' }}
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
           if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
             echo "::error::TURSO secrets absent; the public site would freeze on the old quarter."
             exit 1
           fi
-          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
-            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
           # 1. The ~374k case rows (perm_cases), from the artifact.
           #    --incremental is REQUIRED here. Without it the script drops the
           #    table and reloads all 373,939 rows, which is ~4.76M row-writes
@@ -301,12 +308,7 @@ jobs:
       - name: Refresh I-140 trends (best effort)
         if: ${{ always() }}
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
-          [ -f .env.local ] || printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
-            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
           python3 scripts/ingest_i140_trends.py || \
             echo "i140-trends fetch failed (USCIS likely 403'd the runner); run from a home connection."
 

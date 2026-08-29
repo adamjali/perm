@@ -10,6 +10,7 @@ the reader is a detail page that 404s from its own index.
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import time
 import urllib.error
@@ -17,10 +18,33 @@ import urllib.request
 
 
 def env(name: str, path: str = ".env.local") -> str:
-    for line in pathlib.Path(path).read_text().splitlines():
-        if line.startswith(name + "="):
-            return line.split("=", 1)[1].strip()
-    raise SystemExit(f"{name} missing from {path}")
+    """The real environment first, then `.env.local`.
+
+    This used to read the FILE ONLY, which is the wrong way round for CI: a
+    GitHub step supplies secrets as environment variables, so a script that
+    only reads a file could not see them and died with a bare
+    `FileNotFoundError: '.env.local'` - an error that names a file nobody
+    expected it to want, from a step that had the credentials all along.
+
+    That is not hypothetical. Three steps of the quarterly ingest call
+    `Turso()` at the end of `main()` to stamp their freshness row, and the DOL
+    one crashed exactly there **after** parsing 259,489 cases and writing every
+    payload. The work was done; only the bookkeeping call failed, and it took
+    the whole job red with it.
+
+    Reading os.environ first also means a workflow no longer has to materialise
+    a credentials file on disk just to hand a value to a Python script.
+    """
+    value = os.environ.get(name)
+    if value:
+        return value
+    p = pathlib.Path(path)
+    if p.exists():
+        for line in p.read_text().splitlines():
+            if line.startswith(name + "="):
+                return line.split("=", 1)[1].strip()
+    raise SystemExit(
+        f"{name} is not set in the environment and was not found in {path}")
 
 
 def lit(v):
