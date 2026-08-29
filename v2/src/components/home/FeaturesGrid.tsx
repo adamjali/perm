@@ -96,8 +96,8 @@ const features: Feature[] = [
 ];
 
 /**
- * Individual feature card with 3D tilt effect.
- * Extracted as a component so each card gets its own useTilt hook instance.
+ * Individual feature card. The lift on hover is the hard shadow's press-and-
+ * lift (see below), not a 3D tilt — the useTilt hook this once used was removed.
  */
 function FeatureCard({ feature }: { feature: Feature }) {
   // No tilt and no photo underlay: the hard shadow's press-and-lift is this

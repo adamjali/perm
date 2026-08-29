@@ -23,7 +23,7 @@ import { getProcessingTimes, getProcessingTimesHistory } from "./processingTimes
 /**
  * How many recent observations set the headline pace.
  *
- * Carried over unchanged from convex/permEstimate.ts. The RANGE below is
+ * Carried over from the original Convex estimator query (since retired). The RANGE below is
  * deliberately measured over the full series instead: a band exists to carry
  * how much the pace has actually varied, and six points have not seen enough
  * of it.
