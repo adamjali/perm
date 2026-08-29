@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
@@ -116,9 +116,16 @@ export function DataNav({ active }: { active: DataSection }) {
           {GROUPS.map((g) => {
             const isOpen = g === open;
             const holdsActive = g === activeGroup;
+            // Keyed Fragment with a real space: mapped siblings render with
+            // ZERO characters between them, and every extractor (Google
+            // included) reads the tab labels as one glued word. The first
+            // version of this rewrite forgot it and shipped
+            // "By stateWagesEmployersLaw firms" on 15 pages - caught by the
+            // rendered audit, invisible to the source gate (its documented
+            // .map() blind spot).
             return (
+              <Fragment key={g}>{" "}
               <button
-                key={g}
                 type="button"
                 role="tab"
                 aria-selected={isOpen}
@@ -142,6 +149,7 @@ export function DataNav({ active }: { active: DataSection }) {
                   />
                 ) : null}
               </button>
+              </Fragment>
             );
           })}
         </div>
@@ -154,8 +162,8 @@ export function DataNav({ active }: { active: DataSection }) {
           {chips.map((s) => {
             const isActive = s.key === active;
             return (
+              <Fragment key={s.key}>{" "}
               <Link
-                key={s.key}
                 href={s.href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
@@ -167,6 +175,7 @@ export function DataNav({ active }: { active: DataSection }) {
               >
                 {s.label}
               </Link>
+              </Fragment>
             );
           })}
         </div>
