@@ -275,9 +275,24 @@ jobs:
       # `perm_cases` back out of Turso, so the two migrate steps must land
       # first.
       - name: Load the public corpus into Turso
-        if: ${{ hashFiles(format('{0}/perm-cases.ndjson.gz', runner.temp)) != '' }}
         working-directory: v2
         run: |
+          # The payload guard is a SHELL test, not an `if:` expression.
+          # It used to be `if: hashFiles(format('{0}/perm-cases.ndjson.gz',
+          # runner.temp)) != ''`, and hashFiles() only ever matches paths
+          # inside GITHUB_WORKSPACE - RUNNER_TEMP is outside it, so the
+          # expression returned an empty string on every run and this step
+          # SKIPPED every time while the job reported success. Two dispatches
+          # went green without it ever executing.
+          #
+          # And it now FAILS on a missing payload rather than skipping. A skip
+          # is what let this hide: the whole point of the step is that the
+          # public site freezes on the old quarter without it, so "quietly did
+          # nothing" is the one outcome that must not look like success.
+          if [ ! -f "${RUNNER_TEMP}/perm-cases.ndjson.gz" ]; then
+            echo "::error::payload missing at ${RUNNER_TEMP}/perm-cases.ndjson.gz; the DOL step should have written it."
+            exit 1
+          fi
           if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
             echo "::error::TURSO secrets absent; the public site would freeze on the old quarter."
             exit 1
