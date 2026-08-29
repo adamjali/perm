@@ -17,6 +17,7 @@
  */
 
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
@@ -408,9 +409,11 @@ export default async function EmployerPage({
             aren&apos;t known yet. Each case links to its live status.
           </p>{" "}
           <ul className="mt-4 divide-y divide-border/60">
+            {/* Keyed Fragment + space: mapped siblings glue their text for
+                every extractor. Third instance of this class tonight. */}
             {recentLive.map((c) => (
+              <Fragment key={c.caseNumber}>{" "}
               <li
-                key={c.caseNumber}
                 className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base"
               >
                 <Link
@@ -427,6 +430,7 @@ export default async function EmployerPage({
                   {c.status ? ` · ${c.status}` : ""}
                 </span>
               </li>
+              </Fragment>
             ))}
           </ul>
         </section>

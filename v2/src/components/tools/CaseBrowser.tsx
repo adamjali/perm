@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 // A public page has no ConvexProvider above it by design, and the Turso
@@ -700,8 +700,8 @@ export function CaseBrowser({
             </p>{" "}
             <ul className="mt-2 divide-y divide-border/60">
               {liveHits.map((h) => (
+                <Fragment key={h.caseNumber}>{" "}
                 <li
-                  key={h.caseNumber}
                   className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base"
                 >
                   <Link
@@ -719,6 +719,7 @@ export function CaseBrowser({
                     {h.status ?? ""}
                   </span>
                 </li>
+                </Fragment>
               ))}
             </ul>{" "}
             <p className="mt-2 text-sm text-foreground/70">
