@@ -235,9 +235,19 @@ crons.daily(
  * Wednesday 15:00 UTC (11:00 ET) sits after DOL's first-work-week refresh has
  * reliably landed in any given month.
  */
-crons.weekly(
+// DAILY, not weekly (changed 2026-08-29). The public site reads the DOL
+// frontier from Turso, refreshed daily by processing-times-ingest.yml; this
+// Convex snapshot is what the QUEUE-MONTH ALERTS read. Weekly, the two
+// diverged: on 2026-08-29 Turso had advanced to analyst-review month 2025-11
+// while this table was still on 2025-09, so a real subscriber whose filing
+// month was 2025-11 was overdue an email that never fired — the alert system
+// judged them not-yet-reached off stale data. Daily keeps the alert source
+// within a day of the site, matching the case-status alert SLA. store is
+// insert-only-on-content-hash-change, so the extra runs cost a ~160KB GET and
+// nothing else on the ~29 days DOL does not move.
+crons.daily(
   "dol-processing-times-refresh",
-  { dayOfWeek: "wednesday", hourUTC: 15, minuteUTC: 0 },
+  { hourUTC: 15, minuteUTC: 0 },
   internal.dolProcessingTimes.refresh
 );
 
