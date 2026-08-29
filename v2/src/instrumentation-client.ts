@@ -58,12 +58,29 @@ if (posthogKey) {
       // Pin PostHog SDK defaults to this date to prevent behavior changes from SDK updates
       defaults: "2026-01-30",
       capture_exceptions: true,
+      // Field Core Web Vitals (LCP/CLS/FCP/INP) — replaces @vercel/speed-insights,
+      // with years of retention instead of Hobby's 7-day window and no extra script.
+      capture_performance: { web_vitals: true },
       // GPC visitors are opted out of all capture (incl. session replay).
       opt_out_capturing_by_default: gpcEnabled,
-      // NOTE: session replay currently uses PostHog defaults — form inputs are
-      // masked, but on-screen TEXT is not. To mask all replay text (recommended
-      // if case data should never be captured), add:
-      //   session_recording: { maskAllInputs: true, maskTextSelector: "*" }
+      // SESSION REPLAY IS OFF BY DEFAULT AND TURNED ON ONLY IN THE AUTHENTICATED
+      // APP (see (authenticated)/layout.tsx), for two measured reasons:
+      //   1. PERF. The public layout renders AmbientMurmuration, a full-viewport
+      //      requestAnimationFrame canvas, and this project's PostHog project has
+      //      recordCanvas enabled (verified in the live remote config: fps 3,
+      //      100% of sessions). Canvas capture is a GPU readback on the main
+      //      thread every frame and cannot be disabled from client init (it reads
+      //      only from remote config). Not loading the recorder on public pages
+      //      removes that cost for 100% of public visitors — the "everything is
+      //      laggy" report.
+      //   2. PRIVACY. /perm-case-status renders a real case number, employer and
+      //      job title as on-screen TEXT. We already strip `case=` from every
+      //      event URL (redactCaseParam below) precisely so a person is never
+      //      linked to an application — and an unmasked replay of that page puts
+      //      it straight back. Not recording public pages closes that entirely;
+      //      maskAllInputs + maskTextSelector below defend the app recording too.
+      disable_session_recording: true,
+      session_recording: { maskAllInputs: true, maskTextSelector: "*" },
       debug: process.env.NODE_ENV === "development",
       before_send: (event) => {
         if (!event) return event;
@@ -133,6 +150,22 @@ if (posthogKey) {
           if (/AbortError.*ServiceWorker|ServiceWorker.*aborted|Operation has been aborted/i.test(msg)) {
             return null;
           }
+          // The noise the Sentry client SDK used to filter, ported here when it
+          // was removed (client error capture consolidated onto PostHog). ONE
+          // filter list now, not two hand-synced copies.
+          // Layout thrash the browser recovers from on its own.
+          if (/ResizeObserver loop/i.test(msg)) return null;
+          // Network flake, including iOS auth-token refresh on suspend/resume.
+          if (/NetworkError|Network request failed/i.test(msg)) return null;
+          // A browser extension's own script, not app code.
+          if (/chrome-extension:\/\/|moz-extension:\/\//i.test(msg)) return null;
+          // Auth transients during token refresh — expected, not a defect.
+          if (/not authenticated|User profile not found/i.test(msg)) return null;
+          // Stale-deployment Server Action hashes (StaleDeploymentReload
+          // handles the UX; the error itself is noise).
+          if (msg.includes("UnrecognizedActionError")) return null;
+          // React reconciler errors from extensions mutating the DOM.
+          if (/Minified React error #(418|423|425)\b/.test(msg)) return null;
         }
         return event;
       },

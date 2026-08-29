@@ -266,6 +266,16 @@ const sentryOptions = {
   // Hide source maps from generated client bundles
   hideSourceMaps: true,
 
+  // We do NOT wire Sentry's client navigation-span instrumentation: tracing is
+  // stripped from the bundle (excludeTracing below) and the client SDK is
+  // lazy-loaded for errors only, in the authenticated app — public pages ship
+  // zero Sentry JS. So `onRouterTransitionStart` (a pure tracing hook) would be
+  // inert AND would pull Sentry onto every page. This is Sentry's own official
+  // flag for that case (SentryBuildOptions, @sentry/nextjs >=9's #16823); it is
+  // a name-only build-time check, so nothing is imported. See the deleted
+  // tracesSampleRate in SentryClientInit for the matching runtime side.
+  suppressOnRouterTransitionStartWarning: true,
+
   // Strip unused Sentry modules (~137KB savings)
   bundleSizeOptimizations: {
     excludeTracing: true,

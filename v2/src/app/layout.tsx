@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { SharedProviders } from "./shared-providers";
 import {
@@ -162,7 +160,7 @@ export default async function RootLayout({
     // scope it: "wrap the parts of your app that interact with Convex
     // functions" - which is (site)/(auth) and (authenticated), where it
     // now lives.
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
         <head>
           {/*
             The home curtain's boot script, FIRST in <head>.
@@ -218,8 +216,11 @@ export default async function RootLayout({
           */}
           <HomeCurtainNav />
           <SharedProviders>{children}</SharedProviders>
-          <SpeedInsights />
-          <Analytics />
+          {/* Vercel Analytics + Speed Insights removed 2026-08-29: both are
+              fully redundant with PostHog (autocapture pageviews + $web_vitals),
+              worse on Hobby (50k-event pause, 1-month window, no custom events),
+              and every beacon is an edge request this project is short of. Web
+              vitals now come from PostHog capture_performance.web_vitals. */}
           {/*
             Ahrefs Web Analytics. EXTERNAL-SCRIPT form deliberately - Ahrefs
             also ships an inline injector variant, and this site's CSP is the

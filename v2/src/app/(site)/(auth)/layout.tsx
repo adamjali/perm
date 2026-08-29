@@ -37,7 +37,8 @@ export default function AuthLayout({
     // Convex, so this is where the cookie read belongs. See src/app/layout.tsx.
     <ConvexAuthNextjsServerProvider>
     <ConvexProviders>
-      {/* Lazily initialize Sentry on auth pages */}
+      {/* Sentry client: error capture + stale-deploy reload. No session
+          replay anywhere; auth pages carry credential fields. */}
       <SentryClientInit />
 
       {/* The padding, not a spacer div, is what reserves the fixed header's

@@ -37,7 +37,10 @@ export function SentryClientInit() {
         environment: process.env.NODE_ENV,
         release: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA,
         enableLogs: true,
-        tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
+        // No tracesSampleRate: tracing is tree-shaken out of the bundle
+        // (bundleSizeOptimizations.excludeTracing in next.config.ts), so a
+        // sample rate has no pipeline to configure. This SDK is errors-only.
+        // Performance/web-vitals live in PostHog (instrumentation-client.ts).
         debug: false,
         ignoreErrors: [
           "ResizeObserver loop limit exceeded",
@@ -89,36 +92,16 @@ export function SentryClientInit() {
           }
           return event;
         },
-        replaysSessionSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
-        replaysOnErrorSampleRate: 1.0,
+        // SESSION REPLAY REMOVED 2026-08-29. PostHog records the authenticated
+        // app (masked) via AppSessionReplay; two replay products recording the
+        // same sessions was pure duplication and double the rrweb/replay
+        // main-thread cost. Sentry stays for what it is better at here — the
+        // explicit captureError() calls throughout the app and its console
+        // integration — while PostHog owns replay and analytics.
         integrations: [
           Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
         ],
       });
-
-      // Lazy-load Session Replay for all sessions — Sentry SDK internally
-      // respects replaysSessionSampleRate/replaysOnErrorSampleRate from init().
-      const client = Sentry.getClient();
-      if (client) {
-        Sentry.lazyLoadIntegration("replayIntegration")
-          .then((replay) => {
-            client.addIntegration(
-              replay({ maskAllText: true, blockAllMedia: true })
-            );
-          })
-          .catch((err) => {
-            // Replay is non-critical, but log so we know if it’s broken
-            if (process.env.NODE_ENV === 'development') {
-              console.debug('[Sentry] Session Replay failed to load:', err);
-            }
-            Sentry.addBreadcrumb({
-              category: 'sentry.init',
-              message: 'Session Replay failed to load',
-              level: 'warning',
-              data: { error: err instanceof Error ? err.message : String(err) },
-            });
-          });
-      }
     };
 
     if ("requestIdleCallback" in window) {

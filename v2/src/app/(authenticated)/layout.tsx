@@ -30,6 +30,7 @@ import { OnboardingTourWrapper } from "@/components/onboarding/OnboardingTourWra
 import { PageTransition } from "@/components/ui/page-transition";
 import { SentryUserContext } from "@/components/layout/SentryUserContext";
 import { SentryClientInit } from "@/components/layout/SentryClientInit";
+import { AppSessionReplay } from "@/components/layout/AppSessionReplay";
 import { ServiceWorkerRegistration } from "@/components/pwa";
 import { ConvexProviders } from "@/app/providers";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
@@ -45,11 +46,15 @@ export default function AuthenticatedLayout({
     <ConvexAuthNextjsServerProvider>
     <ConvexProviders>
     <InactivityTimeoutProvider>
-      {/* Lazily initialize Sentry on authenticated pages */}
+      {/* Sentry client: explicit captureError() + stale-deploy reload. Its
+          session replay was removed; PostHog records the app instead. */}
       <SentryClientInit />
 
-      {/* Set Sentry user context for error tracking */}
+      {/* Sentry user context for the error reports above. */}
       <SentryUserContext />
+
+      {/* PostHog session replay ON (masked) — public pages never record. */}
+      <AppSessionReplay />
 
       {/* Register unified service worker (caching + push) */}
       <ServiceWorkerRegistration />
