@@ -16,6 +16,7 @@ import type {
   GoogleCalendarDate,
 } from "./calendarTypes";
 import { CALENDAR_EVENT_LABELS } from "./calendarTypes";
+import { isValidISODate } from "./dateTypes";
 import { loggers } from "./logging";
 
 const log = loggers.calendar;
@@ -24,22 +25,15 @@ const log = loggers.calendar;
 // DATE UTILITIES
 // ============================================================================
 
-/** ISO date format regex: YYYY-MM-DD */
-const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
-/**
- * Validate ISO date string format (YYYY-MM-DD).
- *
- * @param dateStr - Date string to validate
- * @returns true if valid YYYY-MM-DD format
- *
- * @example
- * isValidISODate("2024-12-31"); // true
- * isValidISODate("12/31/2024"); // false
- */
-export function isValidISODate(dateStr: string): boolean {
-  return ISO_DATE_REGEX.test(dateStr);
-}
+// isValidISODate (YYYY-MM-DD, including that the day is real) now comes from
+// dateTypes, the ONE strict implementation. This file used to define its own
+// as a bare regex test, so it called "2024-02-31" valid while dateTypes
+// rejected it — four copies existed and three were regex-only, so whether an
+// impossible date was caught depended on which import a caller reached for.
+// Imported (not bare re-exported) because this file also uses it internally,
+// then re-exported so its own callers keep importing it from here.
+export { isValidISODate };
 
 /**
  * Check if a date is in the future (after today).

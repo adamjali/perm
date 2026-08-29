@@ -10,6 +10,8 @@
  * @module
  */
 
+import { isValidISODate as isStrictISODate } from "./dateTypes";
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -38,8 +40,10 @@ export const MS_PER_DAY = 1000 * 60 * 60 * 24;
 export function isValidISODate(
   dateStr: string | null | undefined
 ): dateStr is string {
-  if (!dateStr) return false;
-  return ISO_DATE_REGEX.test(dateStr);
+  // The strict check (real calendar day, not just YYYY-MM-DD shape) lives in
+  // dateTypes; this wrapper only adds the null/undefined handling this call
+  // site needs. It used to be a bare regex and so accepted "2024-02-31".
+  return dateStr != null && isStrictISODate(dateStr);
 }
 
 /**

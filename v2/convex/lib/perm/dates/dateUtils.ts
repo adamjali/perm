@@ -1,4 +1,5 @@
 import { parseISO, format, isValid, getDay, subDays } from 'date-fns';
+import { isValidISODate as isStrictISODate } from '../../dateTypes';
 
 /**
  * Type guard to check if a string is a valid ISO date (YYYY-MM-DD).
@@ -13,7 +14,10 @@ import { parseISO, format, isValid, getDay, subDays } from 'date-fns';
  * isValidISODate(null) // false
  */
 export function isValidISODate(dateStr: string | null | undefined): dateStr is string {
-  return Boolean(dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr));
+  // The strict check (a real calendar day, not just YYYY-MM-DD shape) is in
+  // dateTypes; this wrapper adds only the null handling. It used to be a bare
+  // regex and so called "2024-02-31" valid, disagreeing with dateTypes.
+  return dateStr != null && isStrictISODate(dateStr);
 }
 
 /**

@@ -12,7 +12,7 @@ import { useETA9089Section } from "@/components/forms/useCaseFormSection";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 import { isRecruitmentComplete } from "@/lib/forms/date-constraints";
-import { getFirstRecruitmentDate, getLastRecruitmentDate, FILING_WINDOW_WAIT_DAYS, FILING_WINDOW_CLOSE_DAYS } from "@/lib/perm";
+import { getFirstRecruitmentDate, getLastRecruitmentDate, calculateFilingWindow } from "@/lib/perm";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
 
 // ============================================================================
@@ -78,7 +78,8 @@ export interface ETA9089SectionProps {
 
 /**
  * Build filing window data for the FilingWindowIndicator component.
- * Uses canonical FILING_WINDOW_WAIT_DAYS (30) and FILING_WINDOW_CLOSE_DAYS (180).
+ * The window bounds and the PWD cap come from the canonical
+ * calculateFilingWindow; only the today-relative day counts are computed here.
  */
 function buildFilingWindowData(
   lastRecruitmentDate: string | undefined,
@@ -95,30 +96,27 @@ function buildFilingWindowData(
     return { isOpen: false };
   }
 
+  // The 30/180-day window and the PWD-expiration cap are the REGULATION, and
+  // they live in exactly one place. This used to re-derive them by hand
+  // (last+30, min(first+180, pwd)); a raw re-derivation elsewhere in the app
+  // once shipped filing dates barred by the PWD cap because it lacked that
+  // rule — hence one canonical calculator, never a second copy.
+  const window = calculateFilingWindow({
+    firstRecruitmentDate,
+    lastRecruitmentDate,
+    pwdExpirationDate,
+  });
+  if (!window) {
+    return { isOpen: false, isRecruitmentComplete: true };
+  }
+
+  // Everything below is presentation math (how the window sits relative to
+  // today), not regulation, so it stays local. Preserved byte-for-byte from
+  // the previous implementation.
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
-  const lastDate = new Date(lastRecruitmentDate + "T00:00:00");
-  const firstDate = new Date(firstRecruitmentDate + "T00:00:00");
-
-  // Window opens FILING_WINDOW_WAIT_DAYS after recruitment ends
-  const opensDate = addDays(lastDate, FILING_WINDOW_WAIT_DAYS);
-  const opensOn = format(opensDate, "yyyy-MM-dd");
-
-  // Window closes FILING_WINDOW_CLOSE_DAYS after FIRST recruitment activity
-  let closesDate = addDays(firstDate, FILING_WINDOW_CLOSE_DAYS);
-  let closesOn = format(closesDate, "yyyy-MM-dd");
-  let isPwdLimited = false;
-
-  // PWD expiration can truncate the window
-  if (pwdExpirationDate) {
-    const pwdExpires = new Date(pwdExpirationDate + "T00:00:00");
-    if (pwdExpires < closesDate) {
-      closesOn = pwdExpirationDate;
-      closesDate = pwdExpires;
-      isPwdLimited = true;
-    }
-  }
+  const opensDate = new Date(window.opens + "T00:00:00");
+  const closesDate = new Date(window.closes + "T00:00:00");
 
   const daysUntilOpen = differenceInDays(opensDate, today);
   const daysUntilClose = differenceInDays(closesDate, today);
@@ -127,11 +125,11 @@ function buildFilingWindowData(
 
   return {
     isOpen,
-    opensOn,
-    closesOn,
+    opensOn: window.opens,
+    closesOn: window.closes,
     daysUntilOpen: daysUntilOpen > 0 ? daysUntilOpen : 0,
     daysRemaining: daysUntilClose > 0 ? daysUntilClose : 0,
-    isPwdLimited,
+    isPwdLimited: window.isPwdLimited,
     isRecruitmentComplete: true,
   };
 }

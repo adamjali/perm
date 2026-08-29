@@ -86,6 +86,16 @@ function calculateRecruitmentEndDate(data: DerivedDatesInput): string | null {
   return findExtreme([...baseDates, ...professionalDates], "max");
 }
 
+// These derive the open and close dates INDEPENDENTLY, on purpose: the form
+// shows each bound the moment its own input exists (a close date the instant
+// recruitment START is entered, before the END is), which is what makes the
+// live-derivation feel responsive during data entry. The canonical
+// calculateFilingWindow requires BOTH dates and returns null otherwise — right
+// for a settled case, but it would blank a half-filled form. So the rule (the
+// canonical FILING_WINDOW_* day counts and the same min-with-PWD cap) is shared
+// with the canonical; only the "compute each end alone" policy is local. Do not
+// "consolidate" these into calculateFilingWindow — that is a regression, not a
+// cleanup. The both-dates-present path (ETA9089Section) does use the canonical.
 function calculateFilingWindowOpens(recruitmentEndDate: string | null): string | null {
   return recruitmentEndDate ? addDays(recruitmentEndDate, FILING_WINDOW_WAIT_DAYS) : null;
 }
