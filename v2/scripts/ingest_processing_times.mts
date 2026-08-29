@@ -98,11 +98,48 @@ async function main() {
     args: [snap.permAsOf, JSON.stringify(snap), now],
   });
 
+  // Stamp our own freshness row, the same way every Python ingest does.
+  //
+  // THIS INGEST WROTE DATA FOR MONTHS AND NEVER RECORDED THAT IT HAD. The
+  // `processing-times` row in data_freshness was created once by
+  // backfill_permtrack.py, a one-off that is in no workflow, so `as_of` stayed
+  // frozen at whatever that run left while this job refreshed the data daily
+  // underneath it. Measured 2026-08-29: the table held DOL's 2026-08-28
+  // snapshot while the freshness row still claimed 2026-08-20, one day short
+  // of its 10-day budget. The monitor was about to report a dataset as stale
+  // that was actually a day old.
+  //
+  // A monitor that cries wolf is one you stop reading, which is worse than no
+  // monitor. The identical defect was fixed in the Python ingests earlier;
+  // this one survived because it is the only ingest written in TypeScript, so
+  // a sweep over scripts/*.py could not see it.
+  //
+  // max_age_days is 10, not 1: DOL republishes when it republishes, and the
+  // gaps in our own history (2026-08-20 -> 08-27 -> 08-28) are DOL's, not
+  // ours. Ten days is comfortably longer than any gap observed and still short
+  // enough to catch this job dying.
+  await db.execute(`CREATE TABLE IF NOT EXISTS data_freshness (
+      dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
+      source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)`);
+  await db.execute({
+    sql: "INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
+    args: [
+      "processing-times",
+      snap.permAsOf,
+      now,
+      "DOL FLAG (flag.dol.gov/processingtimes)",
+      "Daily",
+      "DOL's own as-of date",
+      10,
+    ],
+  });
+
   const n = await db.execute("SELECT count(*) AS n FROM processing_times");
   const rows = await db.execute(
     "SELECT perm_as_of FROM processing_times ORDER BY perm_as_of DESC LIMIT 5");
   console.log(`  stored. ${n.rows[0]!.n} snapshot(s) in history:`);
   for (const r of rows.rows) console.log(`    ${r.perm_as_of}`);
+  console.log(`  freshness stamped: as_of ${snap.permAsOf}`);
 }
 
 main().catch((e) => { console.error("FAILED:", e.message); process.exit(1); });
