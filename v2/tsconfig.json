@@ -43,7 +43,9 @@
     ".next-rfi/types/**/*.ts",
     ".next-rfi/dev/types/**/*.ts",
     ".next-queue-dev/types/**/*.ts",
-    ".next-queue-dev/dev/types/**/*.ts"
+    ".next-queue-dev/dev/types/**/*.ts",
+    ".next-dev-hero/types/**/*.ts",
+    ".next-dev-hero/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
