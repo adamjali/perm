@@ -103,9 +103,16 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
           </h1>{" "}
           <p className="mt-5 max-w-[46ch] text-base leading-relaxed text-foreground/70 sm:text-lg">
             {current && peak && peak.wait > current.wait ? (
+              /* "PERM Tracker" appears in the visible prose deliberately.
+                 Google corroborates a brand from the title, headings and
+                 prominent text together; after the reorg the H1 became a
+                 data claim with no brand in it, and within a day the FAQ
+                 page - dense with the name - was representing the site on
+                 the brand query instead of the homepage. */
               <>
-                That&apos;s down from {peak.wait} months at the peak, measured
-                across every month DOL has decided since{" "}
+                That&apos;s down from {peak.wait} months at the peak. PERM
+                Tracker measures it from DOL&apos;s own files, across every
+                month decided since{" "}
                 {shortLabel(data.items[0]!.row.decisionMonth)}.
               </>
             ) : (
