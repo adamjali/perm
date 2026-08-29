@@ -276,7 +276,14 @@ jobs:
           printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
             "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
           # 1. The ~374k case rows (perm_cases), from the artifact.
-          python3 scripts/turso_migrate.py "${RUNNER_TEMP}"
+          #    --incremental is REQUIRED here. Without it the script drops the
+          #    table and reloads all 373,939 rows, which is ~4.76M row-writes
+          #    (table + 10 indexes) against a 10M/month plan, and leaves the
+          #    public case search reading an empty table while it reloads. A
+          #    quarterly file is a superset of the last, so the fingerprint
+          #    diff writes only the few thousand rows that actually moved. It
+          #    falls back to a full load by itself when the table is empty.
+          python3 scripts/turso_migrate.py "${RUNNER_TEMP}" --incremental
           # 2. Everything else the public pages read: entities, wage cells and
           #    stats, the disclosure-stats document.
           python3 scripts/turso_migrate_public.py "${RUNNER_TEMP}"

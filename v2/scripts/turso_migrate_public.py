@@ -32,10 +32,22 @@ from lib_turso import Turso, lit  # noqa: E402
 from store_entities import with_unique_slugs  # noqa: E402
 
 SCHEMA = [
+    # ONLY these two are ours to rebuild wholesale: every row in them is
+    # derived from the payload this run just parsed, so a drop is correct.
+    #
+    # `perm_docs` and `visa_bulletins` are NOT, and dropping them was a live
+    # data-loss bug (found 2026-08-29, before it ever ran). We own three of
+    # perm_docs' ten keys; the other seven belong to other writers, and two of
+    # them - `live_census` and `decided_month_percentiles` - are written only
+    # by the nightly case-status sweep. Dropping the table meant the public
+    # case lookup fell back to its pre-census SQL (~1.8M row reads per lookup,
+    # the path that got Turso reads BLOCKED in August) until the next 04:10 ET
+    # sweep. And `visa_bulletins` is an ACCUMULATOR: it held 84 months
+    # (2019-10..2026-09) built up over time and upgraded by source rank, while
+    # this run's artifact carries only `--months 18` - so a drop-and-reload
+    # destroyed 66 months of history and every primary-source upgrade in them.
     "DROP TABLE IF EXISTS perm_entities",
     "DROP TABLE IF EXISTS perm_wage_stats",
-    "DROP TABLE IF EXISTS perm_docs",
-    "DROP TABLE IF EXISTS visa_bulletins",
     """CREATE TABLE perm_entities (
          kind               TEXT NOT NULL,
          slug               TEXT NOT NULL,
@@ -72,12 +84,18 @@ SCHEMA = [
          PRIMARY KEY (kind, key, fiscal_year)
        )""",
     # Singleton, genuinely document-shaped aggregates. A row per logical doc.
-    """CREATE TABLE perm_docs (
+    # IF NOT EXISTS, never dropped: we write three of this table's keys
+    # (disclosure_stats, cases_meta, wage_meta) by INSERT OR REPLACE and leave
+    # every other writer's keys alone.
+    """CREATE TABLE IF NOT EXISTS perm_docs (
          key         TEXT PRIMARY KEY,
          json        TEXT NOT NULL,
          computed_at INTEGER NOT NULL
        )""",
-    """CREATE TABLE visa_bulletins (
+    # IF NOT EXISTS, never dropped: an accumulator owned by
+    # ingest_visa_bulletin.py, whose SOURCE_RANK decides when a month may be
+    # overwritten. This run only ever carries `--months 18`.
+    """CREATE TABLE IF NOT EXISTS visa_bulletins (
          bulletin_month   TEXT PRIMARY KEY,
          source_url       TEXT,
          archived_at      TEXT,
@@ -137,6 +155,20 @@ def main() -> int:
 
     db = Turso()
     log(f"  target: {db.url}")
+
+    # Baseline the two ACCUMULATOR tables BEFORE the schema runs. Reading them
+    # afterwards would make the check self-fulfilling: if a DROP for either one
+    # were ever re-added to SCHEMA, "held before" would read 0 and VERIFY would
+    # sail straight over the loss. Taken here, a drop shows up as a mismatch.
+    def count_or_zero(table: str) -> int:
+        try:
+            return int(db.scalar(f"SELECT count(*) FROM {table}") or 0)
+        except Exception:
+            return 0        # first run: the table does not exist yet
+
+    bulletins_before = count_or_zero("visa_bulletins")
+    docs_before = count_or_zero("perm_docs")
+
     log("  creating schema")
     db.script(SCHEMA)
 
@@ -195,31 +227,77 @@ def main() -> int:
     log(f"    documents   {nd:>6,}")
 
     # ---- visa bulletins ------------------------------------------------
+    # ADD ONLY WHAT IS MISSING. This table is an accumulator: it holds every
+    # month back to 2019-10, and ingest_visa_bulletin.py decides by SOURCE_RANK
+    # when a month may be replaced (a saved primary-source page outranks an
+    # archive capture, which outranks the mirror). This run's artifact is a
+    # plain `--months 18` archive pull, so an unconditional INSERT OR REPLACE
+    # would silently DOWNGRADE any month already upgraded to a better source.
+    # Skipping months we already hold leaves that decision where it belongs,
+    # and a fresh database still gets the full artifact.
+    have_months = set()
+    res = db.execute("SELECT bulletin_month FROM visa_bulletins")
+    for r in res["response"]["result"]["rows"]:
+        have_months.add(r[0]["value"])
+
     brows = [(
         b["bulletinMonth"], b.get("sourceUrl"), b.get("archivedAt"),
         json.dumps(b.get("finalAction")), json.dumps(b.get("datesForFiling")), stamp,
-    ) for b in bulletins.get("bulletins", [])]
+    ) for b in bulletins.get("bulletins", [])
+        if b["bulletinMonth"] not in have_months]
     nb = insert_many(db, "visa_bulletins",
                      ["bulletin_month", "source_url", "archived_at",
                       "final_action", "dates_for_filing", "computed_at"], brows)
-    log(f"    bulletins   {nb:>6,}")
+    log(f"    bulletins   {nb:>6,} new"
+        f"  ({len(have_months):,} already held, left untouched)")
 
     log("  building indexes")
     for s in INDEXES:
         db.execute(s)
 
     # Verify from the TABLES, never from the counters that wrote them.
+    #
+    # Two different invariants, because two of these tables are rebuilt and two
+    # are added to. Asserting "count(*) == rows I wrote" on a table we only
+    # append to would be wrong in the dangerous direction: it passes only when
+    # every pre-existing row is gone.
     log("  VERIFY")
     ok = True
+
+    # Rebuilt wholesale: the table is exactly what this run wrote.
     for table, expect in (("perm_entities", total_entities),
-                          ("perm_wage_stats", nw),
-                          ("perm_docs", nd),
-                          ("visa_bulletins", nb)):
+                          ("perm_wage_stats", nw)):
         got = int(db.scalar(f"SELECT count(*) FROM {table}") or 0)
         flag = "ok " if got == expect else "MISMATCH"
         if got != expect:
             ok = False
         log(f"    {flag} {table:16s} {got:>6,} (expected {expect:,})")
+
+    # Preserved + added to: every row we held before must STILL be there, plus
+    # whatever we just added. This is the check that would have caught the
+    # drop-and-reload bug, so it is written to fail if history goes missing.
+    # bulletins_before is read BEFORE the schema statements, so a re-added DROP
+    # shows up here as a mismatch instead of silently redefining the baseline.
+    vb_expect = bulletins_before + nb
+    vb_got = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
+    if vb_got != vb_expect:
+        ok = False
+    log(f"    {'ok ' if vb_got == vb_expect else 'MISMATCH'} "
+        f"{'visa_bulletins':16s} {vb_got:>6,} (expected {vb_expect:,} = "
+        f"{bulletins_before:,} held + {nb:,} new)")
+
+    # perm_docs: our three keys must be present, and no other writer's key may
+    # have been lost (we never delete, so the total cannot shrink).
+    docs_got = int(db.scalar("SELECT count(*) FROM perm_docs") or 0)
+    ours = int(db.scalar(
+        "SELECT count(*) FROM perm_docs WHERE key IN "
+        "('disclosure_stats','cases_meta','wage_meta')") or 0)
+    docs_ok = ours == 3 and docs_got >= max(docs_before, 3)
+    if not docs_ok:
+        ok = False
+    log(f"    {'ok ' if docs_ok else 'MISMATCH'} {'perm_docs':16s} "
+        f"{docs_got:>6,} keys ({ours}/3 ours, {docs_before:,} held before)")
+
     return 0 if ok else 1
 
 
