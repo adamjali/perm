@@ -556,10 +556,24 @@ export function CaseBrowser({
               onChange={(e) => pickDimension(e.target.value as Dimension)}
               className={CONTROL}
             >
-              <option value="all">Everything</option>
-              <option value="state">State</option>
-              <option value="occupation">Occupation</option>
-              {employerSlug ? <option value="employer">Employer</option> : null}
+              {/* The `{" "}` between adjacent options is the same glued-JSX
+                  fix the rest of the app carries. JSX drops the newline
+                  between two elements, so an extractor walking the DOM reads
+                  "EverythingStateOccupation" as one run. Whitespace between
+                  options is valid inside a select and is ignored when the
+                  control is rendered, so it costs nothing visually.
+
+                  Only the boundaries where a word character meets a word
+                  character are worth spacing. The options built by `.map()`
+                  below all end in a count - "Alabama (1,234)" - so their
+                  boundary is ")" against a letter, which no reader or
+                  extractor mistakes for a compound word. That is the same
+                  predicate `scripts/audit_glued_text.py` uses, and it is why
+                  it flagged three pairs on this page rather than dozens. */}
+              <option value="all">Everything</option>{" "}
+              <option value="state">State</option>{" "}
+              <option value="occupation">Occupation</option>{" "}
+              {employerSlug ? <option value="employer">Employer</option> : null}{" "}
               {attorneySlug ? <option value="attorney">Law firm</option> : null}
             </select>
           </label>
@@ -659,7 +673,7 @@ export function CaseBrowser({
               onChange={(e) => setOrder(e.target.value as "newest" | "oldest")}
               className={CONTROL}
             >
-              <option value="newest">Newest decision first</option>
+              <option value="newest">Newest decision first</option>{" "}
               <option value="oldest">Oldest decision first</option>
             </select>
           </label>
@@ -705,7 +719,7 @@ export function CaseBrowser({
               onChange={(e) => setNameField(e.target.value as "employer" | "attorney")}
               className={CONTROL}
             >
-              <option value="employer">Employer</option>
+              <option value="employer">Employer</option>{" "}
               <option value="attorney">Law firm</option>
             </select>
           </label>
