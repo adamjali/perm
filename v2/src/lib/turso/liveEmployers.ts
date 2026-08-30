@@ -112,7 +112,26 @@ function slugPrefixRange(needle: string): [string, string] | null {
  * search result would then name the employer differently from its own page.
  * MIN() is worse still: a leading double space sorts ahead of the real name.
  * The mode is the only choice here that is both deterministic and right.
+ *
+ * THE VOTE IS COUNTED ON THE RENDERED FORM, NOT THE STORED ONE. HTML collapses
+ * runs of whitespace, so `LMR LLC\t` and `LMR LLC` are the same pixels - which
+ * makes a raw-string count wrong in two ways at once. It splits one spelling's
+ * vote across forms nobody can tell apart, and then it prints the losers as
+ * OTHER spellings: 24 live-only pages said the employer "also filed as" a name
+ * that renders identically to the heading directly above it. The three LGS
+ * variants in the table above are exactly this, and so is
+ * `Haleon US Holdings LLC (f/k/a GlaxoSmithKline Consumer Healthcare Holdings
+ * (US) LLC)`, whose two forms differ by one space inside a parenthesis.
+ *
+ * Collapsing is deliberately the ONLY normalisation. Case and punctuation are
+ * real differences a reader can see, so `CUBOID, LLC` and `Cuboid, LLC` stay
+ * two spellings and the page keeps disclosing both - that disclosure is the
+ * feature. Only the difference that cannot survive being rendered is erased.
  */
+function renderedForm(name: string): string {
+  return name.replace(/\s+/g, " ").trim();
+}
+
 async function modalNames(slugs: string[]): Promise<Map<string, string[]>> {
   const out = new Map<string, string[]>();
   if (slugs.length === 0) return out;
@@ -123,18 +142,22 @@ async function modalNames(slugs: string[]): Promise<Map<string, string[]>> {
       GROUP BY employer_slug, employer_name`,
     slugs,
   );
-  const by = new Map<string, { name: string; n: number }[]>();
+  // Pool by what the browser will actually show, so the count is a count of
+  // spellings a reader could distinguish rather than of stored strings.
+  const by = new Map<string, Map<string, number>>();
   for (const r of found) {
     if (!r.employer_name) continue;
-    const list = by.get(r.employer_slug) ?? [];
-    list.push({ name: r.employer_name, n: Number(r.n) || 0 });
-    by.set(r.employer_slug, list);
+    const shown = renderedForm(r.employer_name);
+    if (!shown) continue;
+    const tally = by.get(r.employer_slug) ?? new Map<string, number>();
+    tally.set(shown, (tally.get(shown) ?? 0) + (Number(r.n) || 0));
+    by.set(r.employer_slug, tally);
   }
-  for (const [slug, list] of by) {
+  for (const [slug, tally] of by) {
     // Count first, then the name, so ties resolve the same way every render
     // rather than however the b-tree happened to come back.
-    list.sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
-    out.set(slug, list.map((x) => x.name));
+    const list = [...tally].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    out.set(slug, list.map(([name]) => name));
   }
   return out;
 }

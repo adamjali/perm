@@ -177,6 +177,58 @@ describe("liveEmployerRecord", () => {
     expect(rec!.stages[0]).toEqual({ status: "ANALYST REVIEW", isFinal: false, n: 173 });
   });
 
+  it("pools spellings that RENDER identically, and keeps ones that do not", async () => {
+    // Measured in production 2026-08-30: 24 live-only pages told the reader
+    // the employer "also filed as" a name that renders identically to the
+    // heading directly above it, because the vote was counted on the stored
+    // string and HTML collapses whitespace. Real rows from
+    // /perm-employers/lgs-staffing-llc-f-k-a-labor-guys-llc, plus a CASE
+    // variant that must SURVIVE - case is a difference a reader can see, and
+    // disclosing it is the feature.
+    reset();
+    one.mockResolvedValue({
+      cases: 295, pending: 290, first_filing: "2026-01-02", last_filing: "2026-08-20",
+    });
+    rows.mockImplementation(async (sql: string) =>
+      sql.includes("GROUP BY employer_slug, employer_name")
+        ? [
+            { employer_slug: "lgs", employer_name: "LGS Staffing LLC (f/k/a Labor Guys, LLC)", n: 264 },
+            { employer_slug: "lgs", employer_name: "LGS Staffing LLC (f/k/a Labor Guys,  LLC)", n: 22 },
+            { employer_slug: "lgs", employer_name: "LGS Staffing LLC (f/k/a Labor  Guys, LLC)", n: 8 },
+            { employer_slug: "lgs", employer_name: "LGS STAFFING LLC (F/K/A LABOR GUYS, LLC)", n: 1 },
+          ]
+        : [],
+    );
+
+    const rec = await liveEmployerRecord("lgs");
+    expect(rec!.name).toBe("LGS Staffing LLC (f/k/a Labor Guys, LLC)");
+    // The three whitespace forms are one spelling. The uppercase one is not.
+    expect(rec!.otherNames).toEqual(["LGS STAFFING LLC (F/K/A LABOR GUYS, LLC)"]);
+  });
+
+  it("does not let a whitespace-split vote hand the page a rarer spelling", async () => {
+    // The counts, not just the labels. Two forms of one name at 3 and 4 beat
+    // a genuinely different spelling at 6 only once they are pooled; counted
+    // raw, the page would be titled with the loser.
+    reset();
+    one.mockResolvedValue({
+      cases: 13, pending: 13, first_filing: "2026-03-01", last_filing: "2026-08-01",
+    });
+    rows.mockImplementation(async (sql: string) =>
+      sql.includes("GROUP BY employer_slug, employer_name")
+        ? [
+            { employer_slug: "acme", employer_name: "Acme Widgets, Inc.", n: 3 },
+            { employer_slug: "acme", employer_name: "Acme  Widgets, Inc.", n: 4 },
+            { employer_slug: "acme", employer_name: "ACME WIDGETS INC", n: 6 },
+          ]
+        : [],
+    );
+
+    const rec = await liveEmployerRecord("acme");
+    expect(rec!.name).toBe("Acme Widgets, Inc.");
+    expect(rec!.otherNames).toEqual(["ACME WIDGETS INC"]);
+  });
+
   it("returns NOTHING that could be read as a published statistic", async () => {
     // The whole point. If this shape ever grows an approvalRate, medianDays,
     // rank or wage, some page will render it, and for these employers there
