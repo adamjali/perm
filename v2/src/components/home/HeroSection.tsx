@@ -85,6 +85,26 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               : "Live DOL data, automatic deadlines"}
           </p>{" "}
           <h1 className="mt-4 font-heading text-[2rem] font-black leading-[1.08] tracking-[-0.03em] sm:text-5xl lg:text-[3.25rem] xl:text-6xl">
+            {/* THE BRAND SITS INSIDE THE H1, not only in the title and the
+                prose below.
+
+                Google's site-names doc lists "heading elements" as a source it
+                corroborates the declared name against, and this H1 was a pure
+                data claim. An earlier pass noticed the same thing and answered
+                it by working the name into the lede paragraph instead; that was
+                not enough. Measured 2026-08-29: for the query "perm tracker" -
+                44,259 impressions over 90 days, our largest by far - Google
+                ranks /faq, which carries an "About PERM Tracker" heading, and
+                the homepage does not appear at all. The competitor that DOES
+                get its name rendered in the SERP has less markup than we do and
+                exactly one thing we lacked: its name is its H1.
+
+                Kept visually subordinate so the hook still leads. The stat is
+                what earns the scroll; the name is what tells Google, and a
+                first-time reader, whose site this is. */}
+            <span className="block font-mono text-xs font-semibold uppercase tracking-[0.18em] text-foreground/60 sm:text-sm">
+              PERM Tracker
+            </span>{" "}
             {current ? (
               <>
                 A PERM case takes{" "}

@@ -61,12 +61,22 @@ describe("getWebSiteSchema", () => {
     expect(schema.name).toBe("PERM Tracker");
   });
 
-  it("alternateName never contains the URL form (Google site-name policy)", () => {
-    // Listing the URL ('permtracker.app') as an alternate site name is exactly
-    // what was making Google display the URL as the site name in SERP.
+  it("carries the lowercase domain as Google's documented backup name", () => {
+    // REVERSED on 2026-08-29. This test used to assert the opposite, on the
+    // belief that listing the URL form caused Google to print the URL. Google's
+    // site-names doc says to do exactly this: "add your domain or subdomain
+    // name as your alternative name", and it "needs to be in all lowercase ...
+    // for our system to detect this as a site name preference."
+    expect(schema.alternateName).toContain("permtracker.app");
+  });
+
+  it("uses the bare lowercase host, never a URL", () => {
+    // A scheme or a trailing slash is NOT the domain form Google detects, and
+    // an uppercase character disqualifies it outright.
     for (const alt of schema.alternateName) {
-      expect(alt).not.toMatch(/\.app/);
       expect(alt).not.toMatch(/^https?:\/\//);
+      expect(alt).not.toMatch(/\//);
+      if (alt.includes(".")) expect(alt).toBe(alt.toLowerCase());
     }
   });
 
@@ -132,6 +142,15 @@ describe("getHomepageRatingPartialSchema", () => {
     expect(partial["@id"]).toBe(SCHEMA_IDS.software(BASE));
     // This @id-merge contract is how Google attaches the rating to the
     // SoftwareApplication entity declared in the root @graph.
+  });
+
+  it("declares the same applicationCategory as the @graph node it shares an @id with", () => {
+    // Both nodes carry SCHEMA_IDS.software(), so they are ONE entity. When this
+    // partial still said 'BusinessApplication' and the graph node said
+    // 'WebApplication', that entity asserted two categories at once. Measured
+    // live on 2026-08-29 before the fix.
+    const graphNode = getSoftwareApplicationSchema(BASE);
+    expect(partial.applicationCategory).toBe(graphNode.applicationCategory);
   });
 
   it("aggregateRating fields are present and string-typed (schema.org)", () => {

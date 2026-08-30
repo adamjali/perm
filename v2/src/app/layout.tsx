@@ -86,6 +86,14 @@ export const metadata: Metadata = {
   //    which is the only place Android reads them from.
   icons: {
     icon: [
+      // DECLARED SIZES, because the file genuinely holds three frames and we
+      // were advertising the smallest. favicon.ico contains 16, 32 AND 48px
+      // (verified by reading its ICONDIR: 2,878 bytes, 3 images), but while it
+      // lived at src/app/favicon.ico the Next file convention emitted
+      // `sizes="16x16"` for it - so the largest size Google was ever TOLD about
+      // was 16, against a documented recommendation of larger than 48x48. It
+      // moved to public/ purely so this declaration is ours to make.
+      { url: "/favicon.ico", type: "image/x-icon", sizes: "16x16 32x32 48x48" },
       { url: "/icon.svg", type: "image/svg+xml", sizes: "any" },
       { url: "/icon.png", type: "image/png", sizes: "192x192" },
     ],

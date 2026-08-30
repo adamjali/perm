@@ -119,11 +119,28 @@ export function getWebSiteSchema(baseUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'WebSite' as const,
     name: 'PERM Tracker',
-    // Single brand variant. Critically: do NOT include the URL form
-    // ('permtracker.app') — Google uses alternateName as a candidate set for
-    // the Site Name SERP feature, and listing the URL as a "name" is exactly
-    // what was causing Google to display the URL as the site name.
-    alternateName: ['PERMTracker'],
+    // The lowercase domain is here DELIBERATELY, reversing an earlier decision
+    // in this file that excluded it.
+    //
+    // That decision read the causation backwards: it assumed listing the URL
+    // form was what made Google print the URL. Google's site-names doc says the
+    // opposite, verbatim - "Provide your domain or subdomain name as a backup
+    // option. To provide your domain or subdomain as a backup option, add your
+    // domain or subdomain name as your alternative name" - and "Your domain or
+    // subdomain needs to be in all lowercase ... for our system to detect this
+    // as a site name preference." It is a documented fallback, not a cause.
+    //
+    // And the feared harm is already the status quo: Google prints
+    // "permtracker.app" in the SERP today, with this list at ['PERMTracker'].
+    // So the only thing this changes is WHY the domain shows - a detected
+    // preference rather than a fallthrough - and it gives the system a legal
+    // second choice for when it declines the primary name.
+    //
+    // It declines it for two documented reasons, neither fixable by markup:
+    // "PERM Tracker" is generic (it IS the search query), and permtrack.app
+    // declares the byte-identical string, while Google "generally won't use the
+    // same site name for two different sites."
+    alternateName: ['PERMTracker', 'permtracker.app'],
     url: baseUrl,
     description:
       'Free PERM tracking for green-card applicants and immigration attorneys: live DOL data, per-case status, and automatic deadlines.',
@@ -231,7 +248,14 @@ export function getHomepageRatingPartialSchema(baseUrl: string) {
     // category - an item failing required-field validation. Duplicating the
     // identity fields costs bytes and removes the ambiguity entirely.
     name: 'PERM Tracker',
-    applicationCategory: 'BusinessApplication' as const,
+    // MUST match the @graph node's category. Both carry SCHEMA_IDS.software(),
+    // so they are one entity by @id - and this one still said
+    // 'BusinessApplication', left behind when the graph node deliberately moved
+    // to 'WebApplication' (see the note at the top of this file). A merging
+    // parser saw one entity asserting two different categories; a
+    // non-merging one saw two SoftwareApplications with the same identity.
+    // Neither is what the complete-node pattern below is trying to achieve.
+    applicationCategory: 'WebApplication' as const,
     operatingSystem: 'Web Browser',
     offers: {
       '@type': 'Offer' as const,
