@@ -123,13 +123,26 @@ export async function pagesEntries(): Promise<Entry[]> {
       ),
     );
   }
+  // A FIXED fallback, not `new Date()`, which is what this was.
+  //
+  // The empty case only happens when the content directory is missing or every
+  // MDX parse failed - it is alerted above and the sitemap still ships, which
+  // is the right trade. But the date it shipped was the clock's, on `/`,
+  // /blog, /guides and /changelog, and that is wrong twice over. It moves
+  // every day, which is exactly the "lastmod that behaves like a timestamp
+  // rather than a fact" corpusAsOf above exists to avoid and which Google
+  // discounts. And `toISOString()` is UTC, so after ~8pm ET it stamps
+  // TOMORROW - a future lastmod on the homepage, from a degraded build.
+  //
+  // A frozen date claims nothing that moves. It is stale rather than false,
+  // and staleness is the honest state when the thing it summarises is gone.
   const latest =
     allPosts.length > 0
       ? allPosts.reduce((acc, p) => {
           const d = p.meta.updated ?? p.meta.date;
           return d > acc ? d : acc;
         }, allPosts[0]!.meta.date)
-      : new Date().toISOString().split("T")[0]!;
+      : "2026-08-24";
 
   const dol = await permAsOf();
   // lastmod tracks DOL's as-of date wherever the page renders live figures:
@@ -232,6 +245,25 @@ async function browseEntries(dol: string | null): Promise<Entry[]> {
   const root = baseUrl();
   const lastModified = dol ?? "2026-08-24";
   const kinds = Object.values(BROWSE_KINDS);
+  // REPORT AND CONTINUE, and this is deliberately the OPPOSITE of what
+  // `entityEntries` does. The asymmetry was questioned on 2026-08-30 and the
+  // measurement defended the original choice, so here is the arithmetic:
+  //
+  // `pagesEntries` builds ONE child, pages.xml, and 69 of its URLs are the
+  // site's most important - `/`, `/faq`, every calculator, every article. The
+  // browse letters are 81 more. The 21,000 entity URLs are NOT here; they are
+  // in employer-*.xml and friends, 5,000 apiece, and a browse failure cannot
+  // touch them.
+  //
+  // So throwing would risk the 69 to protect the 81, and the 81 are the
+  // cheapest URLs on the site to lose: they are a navigational layer, and
+  // every page they lead to is already listed directly in its own child
+  // sitemap. Losing them costs a crawl hop. Losing pages.xml costs the
+  // homepage.
+  //
+  // It is not silent either - `captureError` fires. What it is not is visible
+  // to GOOGLE, which is a real limitation and the reason to keep the Sentry
+  // alert loud rather than to change the failure mode.
   const counts = await Promise.all(
     kinds.map((cfg) =>
       browseCounts(cfg.kind).catch((e: unknown) => {

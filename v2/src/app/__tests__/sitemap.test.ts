@@ -250,6 +250,27 @@ describe("sitemap.ts", () => {
     expect(messages.some((m) => /zero content posts/i.test(m))).toBe(true);
   });
 
+  it("does not stamp the CLOCK on the hubs when the content read comes back empty", async () => {
+    // The fallback here used to be `new Date().toISOString().split("T")[0]`,
+    // which is wrong twice: it moves every day, so the homepage's lastmod
+    // becomes a timestamp rather than a fact (Google discounts those), and
+    // toISOString is UTC, so after ~8pm ET it stamps TOMORROW - a future
+    // lastmod on the homepage, produced by a degraded build.
+    vi.mocked(getAllPosts).mockReturnValue([]);
+    const entries = await sitemap();
+    const home = entries.find((e) => e.url === "https://permtracker.app");
+    expect(home).toBeDefined();
+
+    const stamped = String(home!.lastModified);
+    const todayUtc = new Date().toISOString().slice(0, 10);
+    const tomorrowUtc = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    expect(stamped).not.toBe(todayUtc);
+    expect(stamped).not.toBe(tomorrowUtc);
+    // And never in the future, whichever day this test runs.
+    expect(stamped <= todayUtc).toBe(true);
+    expect(stamped).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
   it("REFUSES to emit when the entity read comes back nearly empty", async () => {
     // This is the defect that actually shipped. While Convex was disabled the
     // entity read failed on every build, this guard reported "0 entity URLs"
