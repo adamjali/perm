@@ -119,9 +119,21 @@ jobs:
           if [ ! -s changed-employer-slugs.json ]; then
             echo "no slug list written; nothing to expire"; exit 0
           fi
+          # An EMPTY list is the normal quiet night, not a failure. The file
+          # still exists and is 13 bytes of '{"slugs": []}', so `-s` passes
+          # it straight through to a POST the endpoint correctly rejects with
+          # 400 "No usable slugs" - which `curl -f` then reports as
+          # "revalidation call failed". Measured by running the rebuild on a
+          # night with nothing to write. A healthy no-op that logs an error
+          # trains everyone to ignore the log, which is worse than no log.
+          N=$(python3 -c "import json;print(len(json.load(open('changed-employer-slugs.json'))['slugs']))" 2>/dev/null || echo 0)
+          if [ "$N" -eq 0 ]; then
+            echo "no employer pages changed; nothing to expire"; exit 0
+          fi
           if [ -z "$REVALIDATE_SECRET" ]; then
             echo "REVALIDATE_SECRET not set; skipping"; exit 0
           fi
+          echo "expiring $N employer pages"
           # -f so a 4xx/5xx is visible in the log rather than a silent 403
           # body scrolling past as if it were a success.
           curl -fsS -X POST https://permtracker.app/api/revalidate-live-employers \

@@ -86,3 +86,8 @@ outreach/
 # Session scratch: probe dumps and analysis intermediates. The findings that
 # matter are written into scripts/ and the docs; these are the raw workings.
 scratchpad/
+
+# Written by build_entity_detail.py for the revalidation step to POST. An
+# ingest artifact, not source: in CI the tree is ephemeral, but a local run
+# would otherwise leave it sitting untracked.
+changed-employer-slugs.json
