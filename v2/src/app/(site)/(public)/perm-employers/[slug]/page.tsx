@@ -38,6 +38,7 @@ import {
   entityTitle,
   rateReliability,
 } from "@/components/tools/EntityContext";
+import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { LiveQueueBand } from "@/components/entities/LiveQueueBand";
@@ -266,13 +267,29 @@ export default async function EmployerPage({
   // date. A Dataset that restamps itself on every deploy tells an answer engine
   // the underlying figures changed when they did not, and these figures move
   // once a quarter. Omitted rather than guessed when freshness is unavailable.
-  const schema = getDatasetSchema(ORIGIN, {
+  const dataset = getDatasetSchema(ORIGIN, {
     name: `${row.name} PERM labor certification filings`,
     description: `PERM filing record for ${row.name} from DOL disclosure data.`,
     url: `${ORIGIN}${BASE}/${slug}`,
     dateModified: freshness["perm-cases"]?.asOf ?? undefined,
     variableMeasured: ["filings", "certified", "denied", "median days to decision"],
   });
+
+  // Home > Employers > this page. Breadcrumbs tell Google the shape of the site,
+  // which is what it reads to decide a result deserves a hierarchy rather than
+  // a bare link. The blog carried these; the ~20,960 pages that ARE the product
+  // did not.
+  const schema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      dataset,
+      generateBreadcrumbSchema([
+        { name: "Home", href: "/" },
+        { name: "Employers", href: BASE },
+        { name: row.name, href: `${BASE}/${slug}` },
+      ]),
+    ],
+  };
 
   const reliability = rateReliability(row.certified, row.denied, baselineDenialPct);
   const inCohort = reliability.tier !== "withheld";

@@ -296,6 +296,14 @@ export interface DatasetSchemaInput {
   /** The columns this slice actually reports. */
   variableMeasured?: string[];
   keywords?: string[];
+  /**
+   * The federal page this slice derives from, when it is not the quarterly
+   * disclosure files. `/perm-decision-activity` reads DOL's processing-times
+   * publication instead, and pointing every dataset at one URL because the
+   * builder happened to hardcode it would be a provenance claim we did not
+   * check.
+   */
+  isBasedOn?: string;
 }
 
 /**
@@ -329,7 +337,7 @@ export function getDatasetSchema(baseUrl: string, input: DatasetSchemaInput) {
     // WebSite and SoftwareApplication nodes publish under, instead of minting
     // a fourth anonymous "PERM Tracker" that no parser can reconcile.
     creator: { '@id': SCHEMA_IDS.organization(baseUrl) },
-    isBasedOn: DOL_SOURCE,
+    isBasedOn: input.isBasedOn ?? DOL_SOURCE,
     license: `${baseUrl}/terms`,
     // Every record is a US filing. Constant, so it belongs here rather than in
     // ten call sites that could each spell it differently.

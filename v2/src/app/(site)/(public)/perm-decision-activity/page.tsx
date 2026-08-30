@@ -23,6 +23,7 @@ import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
 import { FigurePlate } from "@/components/tools/FigurePlate";
+import { getDatasetSchema } from "@/lib/structuredData";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DecisionPaceChart } from "@/components/activity/DecisionPaceChart";
@@ -104,16 +105,12 @@ export default async function DecisionActivityPage() {
   const idleWeekdays = zeroWeekdays(record);
   const recordTotal = record.reduce((a, b) => a + b.total, 0);
 
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "Dataset",
+  const schema = getDatasetSchema("https://permtracker.app", {
     name: "PERM decisions per day",
     description: DESCRIPTION,
     url: "https://permtracker.app/perm-decision-activity",
-    creator: { "@type": "Organization", name: "PERM Tracker" },
     isBasedOn: "https://flag.dol.gov/processingtimes",
-    license: "https://permtracker.app/terms",
-  };
+  });
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">

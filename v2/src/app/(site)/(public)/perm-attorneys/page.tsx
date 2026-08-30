@@ -10,6 +10,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { getDatasetSchema } from "@/lib/structuredData";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
@@ -51,16 +52,11 @@ export default async function PermAttorneysPage() {
   const topTen = attorneys.slice(0, 10);
   const maxTotal = Math.max(1, ...topTen.map((a) => a.total));
 
-  const datasetSchema = {
-    "@context": "https://schema.org",
-    "@type": "Dataset",
+  const datasetSchema = getDatasetSchema("https://permtracker.app", {
     name: "PERM labor certification filings by law firm",
     description: DESCRIPTION,
     url: "https://permtracker.app/perm-attorneys",
-    creator: { "@type": "Organization", name: "PERM Tracker" },
-    isBasedOn: "https://www.dol.gov/agencies/eta/foreign-labor/performance",
-    license: "https://permtracker.app/terms",
-  };
+  });
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">

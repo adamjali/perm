@@ -37,6 +37,7 @@ import {
   entityTitle,
   rateReliability,
 } from "@/components/tools/EntityContext";
+import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -257,13 +258,29 @@ export default async function AttorneyPage({
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
   const kindTotal = dist.kindTotal;
 
-  const schema = getDatasetSchema(ORIGIN, {
+  const dataset = getDatasetSchema(ORIGIN, {
     name: `${row.name} PERM labor certification cases`,
     description: `PERM case record for ${row.name} from DOL disclosure data.`,
     url: `${ORIGIN}${BASE}/${slug}`,
     dateModified: freshness["perm-cases"]?.asOf ?? undefined,
     variableMeasured: ["cases", "certified", "denied", "median days to decision"],
   });
+
+  // Home > Law firms > this page. Breadcrumbs tell Google the shape of the site,
+  // which is what it reads to decide a result deserves a hierarchy rather than
+  // a bare link. The blog carried these; the ~20,960 pages that ARE the product
+  // did not.
+  const schema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      dataset,
+      generateBreadcrumbSchema([
+        { name: "Home", href: "/" },
+        { name: "Law firms", href: BASE },
+        { name: row.name, href: `${BASE}/${slug}` },
+      ]),
+    ],
+  };
 
   const reliability = rateReliability(row.certified, row.denied, baselineDenialPct);
   const inCohort = reliability.tier !== "withheld";
