@@ -209,10 +209,27 @@ export function StageGlossary({
   auditQueue,
   counts,
   asOf,
+  asOfByStatus,
 }: {
   auditQueue: string | null;
   counts?: Readonly<Record<string, number>>;
   asOf?: string | null;
+  /**
+   * When each stage's own count was last observed, keyed by status.
+   *
+   * PER STAGE, NOT ONE DATE FOR ALL OF THEM. A single census date is the
+   * latest sweep that touched ANY stage, which overstates freshness for a
+   * stage the sweep has not reached since. Measured live: the hub dated RFI
+   * ISSUED's 965 cases to August 30 while the stage's own page dated the same
+   * 965 to August 27, because the leaf used the stage's `seenTo` and the hub
+   * used a global maximum. One number, two dates, two linked pages - the same
+   * defect the shared count was meant to prevent, moved onto the stamp.
+   *
+   * The per-stage date is also the more informative one: a stage that has not
+   * been re-checked in three days now says so instead of borrowing another
+   * stage's recency. `asOf` remains the fallback for a status with no row.
+   */
+  asOfByStatus?: Readonly<Record<string, string | null>>;
 }) {
   return (
     <div>
@@ -260,7 +277,7 @@ export function StageGlossary({
                   <CountBadge
                     status={e.status}
                     n={counts[e.status]!}
-                    asOf={asOf ?? null}
+                    asOf={asOfByStatus?.[e.status] ?? asOf ?? null}
                   />
                 ) : null}
               </dt>{" "}

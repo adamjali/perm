@@ -14,6 +14,7 @@ import { OccupationRates } from "../OccupationRates";
 import { RfiOutcomes } from "../RfiOutcomes";
 import { StageCensus } from "../StageCensus";
 import { StageCohortsChart, StageCohortsTable } from "../StageCohorts";
+import { StageGlossary } from "../StageGlossary";
 import { StageLadder, StageLadderTable } from "../StageLadder";
 import { isReviewStage, stageMeta } from "../stageMeta";
 
@@ -334,5 +335,59 @@ describe("StageCohorts", () => {
     for (const n of ["249", "324", "4", "9,677", "13,629"]) {
       expect(text).toContain(n);
     }
+  });
+});
+
+describe("StageGlossary counts", () => {
+  /**
+   * A count and its date have to come from the same measurement.
+   *
+   * Measured on the live site: the hub stamped RFI ISSUED's 965 cases
+   * "August 30, 2026" while the stage's own page stamped the same 965
+   * "August 27, 2026", because the hub used the latest `seenTo` across ALL
+   * stages and the leaf used this stage's own. One number, two dates, two
+   * pages that link to each other - the same defect the shared count was
+   * written to prevent, moved onto the stamp.
+   */
+  it("dates each count from that stage's own observation, not a global one", () => {
+    render(
+      <StageGlossary
+        auditQueue={null}
+        counts={{ "RFI ISSUED": 965 }}
+        asOf="2026-08-30"
+        asOfByStatus={{ "RFI ISSUED": "2026-08-27" }}
+      />,
+    );
+    expect(screen.getByText(/965 now, as of August 27, 2026/)).toBeInTheDocument();
+    expect(screen.queryByText(/August 30, 2026/)).toBeNull();
+  });
+
+  it("falls back to the census date for a stage with no observation of its own", () => {
+    // A stage holding nothing today returns no row, so it has no `seenTo`.
+    // It still gets a real zero and a real date rather than a bare number.
+    render(
+      <StageGlossary
+        auditQueue={null}
+        counts={{ "PENDING AUDIT RESPONSE": 0 }}
+        asOf="2026-08-30"
+        asOfByStatus={{}}
+      />,
+    );
+    expect(screen.getByText(/0 now, as of August 30, 2026/)).toBeInTheDocument();
+  });
+
+  it("links a count only where that stage has a page", () => {
+    render(
+      <StageGlossary
+        auditQueue={null}
+        counts={{ "RFI ISSUED": 965 }}
+        asOf="2026-08-30"
+      />,
+    );
+    // The link target must be the route `generateStaticParams` produces.
+    expect(screen.getByText(/965 now/).closest("a")).toHaveAttribute(
+      "href",
+      "/perm-rfi-audit/rfi-issued",
+    );
   });
 });

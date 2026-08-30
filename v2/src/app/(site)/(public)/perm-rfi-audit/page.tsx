@@ -107,8 +107,15 @@ export default async function PermRfiAuditPage() {
   const stageCounts: Record<string, number> = {};
   for (const { status } of reviewStages()) stageCounts[status] = 0;
   for (const st of stages) stageCounts[st.status] = st.cases;
-  // The latest date our sweep saw ANY of these cases, which is what dates the
-  // census. Taken from the stages themselves so it cannot drift from them.
+  // WHEN EACH STAGE'S OWN COUNT WAS LAST OBSERVED. A global maximum dates
+  // every number to the freshest stage, which is how the hub came to stamp
+  // RFI ISSUED's 965 cases "August 30" while the stage's own page stamped the
+  // same 965 "August 27". Both read from `seenTo` now, so they agree by
+  // construction rather than by two expressions happening to match.
+  const stageAsOf: Record<string, string | null> = {};
+  for (const st of stages) stageAsOf[st.status] = st.seenTo;
+  // The fallback for a stage holding nothing today, which has no row and so
+  // no observation date of its own.
   const censusAsOf = stages.reduce<string | null>(
     (latest, st) =>
       st.seenTo && (latest === null || st.seenTo > latest) ? st.seenTo : latest,
@@ -415,6 +422,7 @@ export default async function PermRfiAuditPage() {
             auditQueue={auditQueue}
             counts={stageCounts}
             asOf={censusAsOf}
+            asOfByStatus={stageAsOf}
           />
         </Section>
 
