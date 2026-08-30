@@ -156,7 +156,24 @@ export default async function StagePage({
   // floor or above the ceiling never issues this query at all.
   const records =
     listing === "list" ? await listStageCases(status, MAX_ROWS, 0) : [];
-  const asOf = row?.seenTo ?? fresh["perm-case-status"]?.asOf ?? null;
+  // THE FALLBACK HAS TO MATCH THE HUB'S FALLBACK, not merely exist.
+  //
+  // Fixing the dates for stages that have rows left this line disagreeing for
+  // the one that does not. PENDING AUDIT RESPONSE holds nothing, so it has no
+  // `seenTo`; the hub fell back to the latest observation across all stages
+  // (August 30) and this fell back to the ingest's freshness stamp (August
+  // 29). Two dates for one zero, on two pages that link to each other - the
+  // same defect one level down from where it was just fixed.
+  //
+  // Both compute the same thing from the same array now. The freshness stamp
+  // survives as the last resort for a deploy-skew window where the census
+  // read returns nothing at all.
+  const censusAsOf = stages.reduce<string | null>(
+    (latest, st) =>
+      st.seenTo && (latest === null || st.seenTo > latest) ? st.seenTo : latest,
+    null,
+  );
+  const asOf = row?.seenTo ?? censusAsOf ?? fresh["perm-case-status"]?.asOf ?? null;
 
   // Filing months this stage's open cases come from, biggest first. Reuses the
   // audit page's own cohort query rather than adding a second one.
