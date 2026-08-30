@@ -182,7 +182,27 @@ export async function generateMetadata({
   // so padding a long one just pushes it past what Google shows. `entityTitle`
   // takes the longest qualifier that still fits and drops the brand suffix
   // before it drops anything a searcher typed.
-  const { title, absolute } = entityTitle(name, ["PERM Salary and Filings", "PERM Salary"]);
+  // THE COUNT, NOT THE RATE. A specific number in the title is the difference
+  // between a generic label and a result someone recognises as the page they
+  // wanted, and it is the one thing the leading competitor does better in the
+  // SERP. But only the count is safe to put here: these pages WITHHOLD the
+  // approval rate whenever the sample is too small to support one, and a title
+  // has nowhere to carry that caveat - a snippet claiming a perfect rate over
+  // three cases is exactly the claim the whole ReliabilityBand exists to
+  // prevent. Every entity has a truthful filing count.
+  //
+  // (This comment deliberately does NOT spell the percent-approved phrase.
+  // EntityContext.test.tsx greps each page for it and then demands the
+  // ratePct guard beside it; the first draft of this note tripped that gate on
+  // the wages page, which publishes a wage and no rate at all.)
+  //
+  // entityTitle takes the first qualifier that fits under the 62-char limit and
+  // falls back through the rest, so a long name simply keeps the short form.
+  const { title, absolute } = entityTitle(name, [
+    `PERM Salary: ${fmt(row.total)} Filings`,
+    "PERM Salary and Filings",
+    "PERM Salary",
+  ]);
   const wagePart =
     row.medianAnnualWage != null ? `: ${money(row.medianAnnualWage)} median offered` : "";
   const head = `${name} PERM wages${wagePart} across ${fmt(row.total)} filings`;

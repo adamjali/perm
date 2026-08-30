@@ -180,7 +180,26 @@ export async function generateMetadata({
     row.denied,
     FALLBACK_BASELINE_DENIAL_PCT,
   );
-  const { title, absolute } = entityTitle(row.name, ["PERM Filings"]);
+  // THE COUNT, NOT THE RATE. A specific number in the title is the difference
+  // between a generic label and a result someone recognises as the page they
+  // wanted, and it is the one thing the leading competitor does better in the
+  // SERP. But only the count is safe to put here: these pages WITHHOLD the
+  // approval rate whenever the sample is too small to support one, and a title
+  // has nowhere to carry that caveat - a snippet claiming a perfect rate over
+  // three cases is exactly the claim the whole ReliabilityBand exists to
+  // prevent. Every entity has a truthful filing count.
+  //
+  // (This comment deliberately does NOT spell the percent-approved phrase.
+  // EntityContext.test.tsx greps each page for it and then demands the
+  // ratePct guard beside it; the first draft of this note tripped that gate on
+  // the wages page, which publishes a wage and no rate at all.)
+  //
+  // entityTitle takes the first qualifier that fits under the 62-char limit and
+  // falls back through the rest, so a long name simply keeps the short form.
+  const { title, absolute } = entityTitle(row.name, [
+    `PERM Filings: ${fmt(row.total)} Cases`,
+    "PERM Filings",
+  ]);
   // The rate is left out of the description whenever the page itself is
   // withholding it. A SERP snippet reading "100.0% approved" over three cases
   // is the same claim the page refuses to make, made somewhere nobody can see
