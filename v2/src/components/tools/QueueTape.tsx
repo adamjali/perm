@@ -114,11 +114,11 @@ export function QueueTape({
       <figcaption className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-foreground/70">
         <span className="flex items-center gap-2">
           <span aria-hidden="true" className="h-3 w-3 border border-border bg-primary" />
-          Cleared, oldest first
+          Processed
         </span>{" "}
         <span className="flex items-center gap-2">
           <span aria-hidden="true" className="h-3 w-3 border border-border bg-card" />
-          Still waiting
+          Still pending
         </span>
       </figcaption>
     </figure>

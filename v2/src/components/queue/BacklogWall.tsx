@@ -167,8 +167,12 @@ function Header() {
       <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">
         Filed
       </span>{" "}
+      {/* "Still pending" everywhere, not "Still waiting". One vocabulary for
+          one state: the queue tape legend, the month page heading and this
+          column header all describe the same cases, and three wordings for one
+          idea is drift a reader has to translate. */}
       <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">
-        Still waiting
+        Still pending
       </span>{" "}
       <span className="text-right font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">
         Cases

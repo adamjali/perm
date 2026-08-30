@@ -138,7 +138,23 @@ const ENTRIES: Entry[] = [
   },
 ];
 
-export function StageGlossary({ auditQueue }: { auditQueue: string | null }) {
+/**
+ * @param counts How many cases sit in each status right now, keyed by DOL's own
+ *   status string. Optional: when the census cannot be read the glossary still
+ *   renders its definitions, because an explanation with no number beside it is
+ *   the page's original state and remains useful. A ZERO is rendered as a
+ *   number, not hidden - "no cases are in this stage" is an answer.
+ * @param asOf The census date, so a count is never printed undated.
+ */
+export function StageGlossary({
+  auditQueue,
+  counts,
+  asOf,
+}: {
+  auditQueue: string | null;
+  counts?: Readonly<Record<string, number>>;
+  asOf?: string | null;
+}) {
   return (
     <div>
       <dl className="grid gap-px border-2 border-border bg-border">
@@ -161,6 +177,16 @@ export function StageGlossary({ auditQueue }: { auditQueue: string | null }) {
                   <code className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
                     {e.status}
                   </code>
+                ) : null}{" "}
+                {/* THE COUNT, BESIDE THE DEFINITION. A reader told "RFI
+                    ISSUED" could learn here what it means and not how many
+                    people are in it, though the number was already computed
+                    and sitting in the census doc. Undated it would be a claim
+                    about now that ages badly, so the date travels with it. */}
+                {e.status && counts && counts[e.status] !== undefined ? (
+                  <span className="font-mono text-[11px] font-semibold text-foreground/70">
+                    {counts[e.status]!.toLocaleString("en-US")} now
+                  </span>
                 ) : null}
               </dt>{" "}
               <dd className="mt-2 grid gap-2 text-sm leading-relaxed">

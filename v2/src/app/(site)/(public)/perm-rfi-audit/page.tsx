@@ -90,6 +90,12 @@ export default async function PermRfiAuditPage() {
     ]);
 
   const pending = stages.reduce((n, s) => n + s.cases, 0);
+  // The glossary explained each stage and printed no number, while this page
+  // already held the count for every one of them. Built from `stages` rather
+  // than a second read: one source, so the definition and the figure beside it
+  // cannot disagree.
+  const stageCounts: Record<string, number> = {};
+  for (const st of stages) stageCounts[st.status] = st.cases;
   const rfi = stages.find((s) => s.status === "RFI ISSUED") ?? null;
   const reviewCases = stages
     .filter((s) => isReviewStage(s.status))
@@ -379,7 +385,11 @@ export default async function PermRfiAuditPage() {
             </>
           }
         >
-          <StageGlossary auditQueue={auditQueue} />
+          <StageGlossary
+            auditQueue={auditQueue}
+            counts={stageCounts}
+            asOf={dol?.permAsOf ?? null}
+          />
         </Section>
 
         {/* 8. THE REFUSALS ------------------------------------------------ */}

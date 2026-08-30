@@ -177,7 +177,7 @@ export default async function CohortPage({
 
       <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-xl font-black sm:text-2xl">
-          Still waiting
+          Still pending
         </h2>{" "}
         <p className="mt-2 text-base leading-relaxed text-foreground/80">
           {split.ordinary > 0 ? (
