@@ -41,7 +41,7 @@ import {
 } from "@/components/rfi/StageCohorts";
 import { StageGlossary } from "@/components/rfi/StageGlossary";
 import { StageLadder, StageLadderTable } from "@/components/rfi/StageLadder";
-import { isReviewStage, stageMeta } from "@/components/rfi/stageMeta";
+import { isReviewStage, reviewStages, stageMeta } from "@/components/rfi/stageMeta";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import type { ReviewStage } from "@/lib/turso/rfi";
@@ -94,8 +94,26 @@ export default async function PermRfiAuditPage() {
   // already held the count for every one of them. Built from `stages` rather
   // than a second read: one source, so the definition and the figure beside it
   // cannot disagree.
+  //
+  // EVERY stage the glossary defines gets a number, defaulting to zero.
+  //
+  // `getReviewStages` returns a row only for a status that currently HOLDS a
+  // pending case, so a stage standing empty had no entry, no count printed,
+  // and - once the counts became links - no link either. PENDING AUDIT
+  // RESPONSE was exactly that: a page in the sitemap that nothing on the site
+  // pointed at, which is an orphan by the same definition used for the entity
+  // pages. Zero is also the more honest render on its own terms: no number at
+  // all reads as "not measured", and this is measured.
   const stageCounts: Record<string, number> = {};
+  for (const { status } of reviewStages()) stageCounts[status] = 0;
   for (const st of stages) stageCounts[st.status] = st.cases;
+  // The latest date our sweep saw ANY of these cases, which is what dates the
+  // census. Taken from the stages themselves so it cannot drift from them.
+  const censusAsOf = stages.reduce<string | null>(
+    (latest, st) =>
+      st.seenTo && (latest === null || st.seenTo > latest) ? st.seenTo : latest,
+    null,
+  );
   const rfi = stages.find((s) => s.status === "RFI ISSUED") ?? null;
   const reviewCases = stages
     .filter((s) => isReviewStage(s.status))
@@ -385,10 +403,18 @@ export default async function PermRfiAuditPage() {
             </>
           }
         >
+          {/* THE DATE HAS TO BE THE CENSUS'S OWN. This passed
+              `dol.permAsOf`, which is the as-of stamp on DOL's PROCESSING
+              TIMES page - a different dataset, refreshed on a different
+              cadence, about a different thing. Stamping a live stage count
+              with it would date the number to whenever DOL last republished
+              its queue positions. `seenTo` is when our sweep last saw a case
+              at that stage, which is what these counts are actually a
+              measurement of. */}
           <StageGlossary
             auditQueue={auditQueue}
             counts={stageCounts}
-            asOf={dol?.permAsOf ?? null}
+            asOf={censusAsOf}
           />
         </Section>
 

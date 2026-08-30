@@ -449,6 +449,20 @@ def main() -> int:
     db.execute("""CREATE INDEX IF NOT EXISTS case_events_status_time
         ON perm_case_events (to_status, changed_at)""")
 
+    # The stage pages list the cases sitting at one FLAG status, oldest filing
+    # first. The two indexes this table already had both lead somewhere else -
+    # case_status_month on the filing month, case_status_final on is_final - so
+    # SQLite served that query from case_status_final and read every one of the
+    # ~98,000 pending rows to return the 974 at RFI ISSUED. Measured with
+    # EXPLAIN QUERY PLAN before this existed:
+    #
+    #   SEARCH perm_case_status USING INDEX case_status_final (is_final=?)
+    #
+    # Leading on current_status bounds the read to the stage; filing_date last
+    # makes the ordering free rather than a sort over the partition.
+    db.execute("""CREATE INDEX IF NOT EXISTS case_status_stage
+        ON perm_case_status (current_status, is_final, filing_date)""")
+
     if args.full:
         where = ""
     elif args.pending or not args.limit:

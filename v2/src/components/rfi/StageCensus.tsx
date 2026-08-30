@@ -2,7 +2,13 @@ import { Fragment } from "react";
 import Link from "next/link";
 
 import type { ReviewStage, StageRecord } from "@/lib/turso/rfi";
-import { GROUP_STYLE, stageMeta, type StageGroup } from "./stageMeta";
+import {
+  GROUP_STYLE,
+  stageFromSlug,
+  stageMeta,
+  stageSlug,
+  type StageGroup,
+} from "./stageMeta";
 
 /**
  * How many cases sit at each stage right now.
@@ -102,7 +108,24 @@ function StageRow({
   return (
     <li className="border-b border-border/30 px-4 py-3 last:border-b-0">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h4 className="font-heading text-sm font-bold">{meta.label}</h4>{" "}
+        {/* The stage name is the link, not the number: a row is scanned by
+            its label, and a bare figure that happens to be clickable is a
+            target nobody looks for. `stageFromSlug` is the membership test,
+            so a stage with no route renders as plain text rather than as a
+            link into a 404 - the queue group is the case that matters, and
+            /perm-queue is where it belongs. */}
+        <h4 className="font-heading text-sm font-bold">
+          {stageFromSlug(stageSlug(stage.status)) ? (
+            <Link
+              href={`/perm-rfi-audit/${stageSlug(stage.status)}`}
+              className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            >
+              {meta.label}
+            </Link>
+          ) : (
+            meta.label
+          )}
+        </h4>{" "}
         <span className="ml-auto font-mono text-lg font-bold tabular-nums">
           {stage.cases.toLocaleString()}
         </span>{" "}

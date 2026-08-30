@@ -256,6 +256,121 @@ export interface StageRecord {
   filingMonth: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// One stage, on its own page
+// ---------------------------------------------------------------------------
+
+/**
+ * The largest cohort a stage page will list case by case.
+ *
+ * Measured 2026-08-30, pending, DOL's fixture excluded: ANALYST REVIEW holds
+ * 93,219 and every other stage put together holds 5,648. That is not a long
+ * tail, it is one stage and then everything else, so a single "list this
+ * stage" rule cannot be right for both. Listing 93,219 rows a hundred at a
+ * time is 933 pages of a queue that is already drawn, month by month, on
+ * /perm-queue - which is the honest destination for it and the one this page
+ * sends the reader to.
+ *
+ * 20,000 is well clear of the second-largest stage (RECONSIDERATION APPEALS,
+ * 2,335) and far below the first, so the rule is not tuned to today's
+ * numbers: a review stage would have to grow eightfold before it changed
+ * hands, and if one ever does, being sent to the queue view is still the
+ * right answer.
+ */
+export const LISTABLE_STAGE_MAX = 20_000;
+
+/**
+ * Whether a stage is listed case by case, and if not, why not.
+ *
+ * Exported as a pure function because the page, the links into it and the
+ * tests all have to agree, and a rule expressed three times is a rule that
+ * will disagree with itself. The two floors are the ones this file already
+ * uses for its other withholding decisions, pointed at a new question.
+ */
+export type StageListing = "list" | "too-small" | "too-large";
+
+export function stageListing(cases: number): StageListing {
+  if (cases > LISTABLE_STAGE_MAX) return "too-large";
+  // The same floor `getSmallStageRecords` uses, and for the same reason. At
+  // this size the cohort is small enough that a case number, an employer and
+  // a job title together identify a person, and the audit page already prints
+  // these records WITHOUT case numbers. A second, more identifying copy of
+  // four people's applications is not more browsable, it is just more
+  // exposed.
+  if (cases < SMALL_STAGE_MAX) return "too-small";
+  return "list";
+}
+
+export interface StageCase {
+  caseNumber: string;
+  filingDate: string | null;
+  employer: string | null;
+  /**
+   * The employer's page slug, or null when we cannot name one.
+   *
+   * READ FROM `perm_live_recent`, NEVER DERIVED FROM THE NAME. The obvious
+   * version - slugify the employer name in the page and link to it - produces
+   * a link that is right most of the time and 404s on exactly the employers
+   * DOL spells more than one way, which are the large ones. The nightly
+   * rebuild has already done this resolution properly: it matches each live
+   * case to a canonical entity where one exists and falls back to a
+   * name-derived slug where none does, and stores the answer. Joining to it
+   * on the case number is exact.
+   *
+   * The join is safe by construction: a PENDING case cannot be in
+   * `perm_cases`, which holds only decided cases, so it is in the remainder
+   * by definition. A LEFT JOIN anyway - a case discovered since last night's
+   * rebuild has no row yet, and the honest render for that is an unlinked
+   * name rather than a guessed URL.
+   */
+  employerSlug: string | null;
+  jobTitle: string | null;
+}
+
+/**
+ * One page of the cases sitting at one stage, oldest filing first.
+ *
+ * OLDEST FIRST IS THE POINT. A reader arriving here is asking how long this
+ * stage takes, so the first row should be the case that has waited longest,
+ * not the one that arrived most recently.
+ *
+ * THE PREDICATES ARE THE MODULE'S OWN CONSTANTS, NOT COPIES. The count on the
+ * audit page comes from `getReviewStages`, and if this list were filtered
+ * even slightly differently the page would print a total from one population
+ * and rows from another. Two numbers that disagree on one page are worse than
+ * one number and no link, so `PENDING` and `NOT_FIXTURE` are shared rather
+ * than restated, and `rfi.test.ts` asserts this SQL carries both.
+ *
+ * NEEDS `case_status_stage`, created by `ingest_case_status_direct.py`.
+ * Without it SQLite serves this from `case_status_final (is_final, filing_date)`,
+ * which reads all ~98,000 pending rows to return 974 - measured with EXPLAIN
+ * QUERY PLAN before the index existed. That is the read-cost shape that got
+ * Turso reads blocked in August.
+ */
+export async function listStageCases(
+  status: string,
+  limit: number,
+  offset: number,
+): Promise<StageCase[]> {
+  const r = await rows<Record<string, unknown>>(
+    `SELECT c.case_number, c.filing_date, c.employer_name, c.job_title,
+            l.employer_slug
+       FROM perm_case_status c
+       LEFT JOIN perm_live_recent l ON l.case_number = c.case_number
+      WHERE c.current_status = ? AND c.${PENDING} AND c.${NOT_FIXTURE}
+   ORDER BY c.filing_date, c.case_number
+      LIMIT ? OFFSET ?`,
+    [status, TEST_FIXTURE_EMPLOYER, limit, offset],
+  );
+  return r.map((x) => ({
+    caseNumber: String(x.case_number),
+    filingDate: x.filing_date == null ? null : String(x.filing_date),
+    employer: x.employer_name == null ? null : String(x.employer_name),
+    employerSlug: x.employer_slug == null ? null : String(x.employer_slug),
+    jobTitle: x.job_title == null ? null : String(x.job_title),
+  }));
+}
+
 /**
  * Every case at a stage holding fewer than `SMALL_STAGE_MAX`, printed.
  *

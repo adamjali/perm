@@ -1,6 +1,51 @@
 import { Fragment } from "react";
+import Link from "next/link";
 
-import { GROUP_STYLE, stageMeta } from "./stageMeta";
+import { formatAsOf } from "@/lib/dolFormat";
+
+import { GROUP_STYLE, stageFromSlug, stageMeta, stageSlug } from "./stageMeta";
+
+/**
+ * The count beside a definition, dated, and linked where there is a page.
+ *
+ * `stageFromSlug` is the membership test rather than a second list: a stage
+ * has a page exactly when the router has a param for it, so this cannot come
+ * to disagree with `generateStaticParams` and render a link into a 404.
+ */
+function CountBadge({
+  status,
+  n,
+  asOf,
+}: {
+  status: string;
+  n: number;
+  asOf: string | null;
+}) {
+  const shown = asOf ? formatAsOf(asOf) : null;
+  const label = `${n.toLocaleString("en-US")} now`;
+  const dated = shown ? `${label}, as of ${shown}` : label;
+  const slug = stageSlug(status);
+  const hasPage = stageFromSlug(slug) !== null;
+
+  if (!hasPage) {
+    return (
+      <span
+        className="font-mono text-[11px] font-semibold text-foreground/70"
+        title={shown ? `As of ${shown}` : undefined}
+      >
+        {dated}
+      </span>
+    );
+  }
+  return (
+    <Link
+      href={`/perm-rfi-audit/${slug}`}
+      className="font-mono text-[11px] font-semibold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+    >
+      {dated}
+    </Link>
+  );
+}
 
 /**
  * What each status means, and whether anything official says so.
@@ -17,7 +62,7 @@ import { GROUP_STYLE, stageMeta } from "./stageMeta";
  * post. Where a regulation sets one it is quoted with its section.
  */
 
-interface Entry {
+export interface Entry {
   /** The FLAG status this explains, or null for a term with no status. */
   status: string | null;
   /** Heading, when there is no status string to take a label from. */
@@ -51,7 +96,7 @@ interface Entry {
 const ECFR =
   "https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-C/section-";
 
-const ENTRIES: Entry[] = [
+export const ENTRIES: Entry[] = [
   {
     status: "RFI ISSUED",
     what:
@@ -139,6 +184,20 @@ const ENTRIES: Entry[] = [
 ];
 
 /**
+ * The sourced explanation for one status, or null.
+ *
+ * Exported so the per-stage pages under /perm-rfi-audit/<stage> render the
+ * SAME definition this glossary does. A stage page that restated the meaning
+ * in its own words would be a second, uncited copy of text whose whole design
+ * is that every entry carries either a CFR section or a written admission
+ * that nothing official defines it - and the two copies would drift the first
+ * time one was corrected.
+ */
+export function stageEntry(status: string): Entry | null {
+  return ENTRIES.find((e) => e.status === status) ?? null;
+}
+
+/**
  * @param counts How many cases sit in each status right now, keyed by DOL's own
  *   status string. Optional: when the census cannot be read the glossary still
  *   renders its definitions, because an explanation with no number beside it is
@@ -181,12 +240,28 @@ export function StageGlossary({
                 {/* THE COUNT, BESIDE THE DEFINITION. A reader told "RFI
                     ISSUED" could learn here what it means and not how many
                     people are in it, though the number was already computed
-                    and sitting in the census doc. Undated it would be a claim
-                    about now that ages badly, so the date travels with it. */}
+                    and sitting in the census doc.
+
+                    THE DATE NOW ACTUALLY TRAVELS WITH IT. The line above said
+                    so from the day the count was added and it was not true:
+                    `asOf` was accepted, typed, documented, and never rendered,
+                    so every one of these numbers was published as a bare claim
+                    about now. A prop that exists to keep a figure honest and
+                    is never read is worse than no prop, because the docstring
+                    then reads as evidence the rule is being followed.
+
+                    AND THE COUNT IS THE LINK. A number with nowhere to go was
+                    the whole of the gap here: the census could say 974 cases
+                    are at this stage and nothing could say which. Only the
+                    stages that HAVE a page get a link - the queue group does
+                    not, because /perm-queue is the honest destination for
+                    93,219 cases and this is not it. */}
                 {e.status && counts && counts[e.status] !== undefined ? (
-                  <span className="font-mono text-[11px] font-semibold text-foreground/70">
-                    {counts[e.status]!.toLocaleString("en-US")} now
-                  </span>
+                  <CountBadge
+                    status={e.status}
+                    n={counts[e.status]!}
+                    asOf={asOf ?? null}
+                  />
                 ) : null}
               </dt>{" "}
               <dd className="mt-2 grid gap-2 text-sm leading-relaxed">

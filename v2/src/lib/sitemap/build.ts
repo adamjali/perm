@@ -1,5 +1,6 @@
 import "server-only";
 
+import { reviewStages } from "@/components/rfi/stageMeta";
 import { getAllPosts } from "@/lib/content";
 import { fetchAllEntitiesServer } from "@/lib/entitySeed";
 import {
@@ -182,6 +183,16 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/perm-case-status`, lastModified: "2026-08-27" },
     { url: `${base}/perm-denial-risk`, lastModified: dol ?? "2026-08-24" },
     { url: `${base}/perm-rfi-audit`, lastModified: "2026-08-27" },
+    // One page per review stage. Listed from `reviewStages()`, the same
+    // function the route's `generateStaticParams` reads, so the sitemap and
+    // the router cannot come to disagree about which of these exist - a
+    // sitemap advertising a URL that 404s is a crawl error we published
+    // ourselves. The queue group is absent from that list on purpose:
+    // ANALYST REVIEW is /perm-queue's subject, not a page here.
+    ...reviewStages().map((s) => ({
+      url: `${base}/perm-rfi-audit/${s.slug}`,
+      lastModified: "2026-08-30",
+    })),
     { url: `${base}/perm-decision-activity`, lastModified: "2026-08-27" },
     { url: `${base}/contact`, lastModified: "2026-08-24" },
     { url: `${base}/terms`, lastModified: "2026-06-15" },

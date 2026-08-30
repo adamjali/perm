@@ -108,6 +108,54 @@ export function isReviewStage(status: string): boolean {
   return stageMeta(status).group !== "queue";
 }
 
+// ---------------------------------------------------------------------------
+// URLs for the per-stage pages
+// ---------------------------------------------------------------------------
+
+/**
+ * The URL segment for a stage, under /perm-rfi-audit.
+ *
+ * Deliberately NOT `slugify` from `@/lib/entitySlug`. That function is the
+ * identity rule for employers and law firms, where it strips corporate noise
+ * words; `LP`, `PC` and `CO` are in that list and `DENIED - BALCA DISMISSED`
+ * has no business going through a function that exists to merge company
+ * spellings. These are a closed set of a dozen fixed strings, so the mapping
+ * is a plain transliteration and `stageFromSlug` inverts it by lookup rather
+ * than by trying to reverse the transform.
+ */
+export function stageSlug(status: string): string {
+  return status
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * Every stage that gets its own page: the review and appeal groups.
+ *
+ * The queue group is excluded on purpose. ANALYST REVIEW holds 93,219 of the
+ * 98,876 pending cases, and the page that describes it already exists and is
+ * better - /perm-queue draws it month by month against DOL's own published
+ * position. A second view listing the same cases a hundred at a time would be
+ * 933 pages of worse.
+ *
+ * Derived from the STATIC vocabulary rather than from a query, so the route
+ * list cannot change under a deploy and a stage briefly emptying does not
+ * delete its page. A status DOL invents tomorrow has no page until someone
+ * adds it here, which is the right failure: the glossary entry has to be
+ * written by a person anyway.
+ */
+export function reviewStages(): { status: string; slug: string }[] {
+  return Object.keys(STAGES)
+    .filter(isReviewStage)
+    .map((status) => ({ status, slug: stageSlug(status) }));
+}
+
+/** The status a URL segment names, or null. */
+export function stageFromSlug(slug: string): string | null {
+  return reviewStages().find((s) => s.slug === slug)?.status ?? null;
+}
+
 function sentenceCase(s: string): string {
   const t = s.toLowerCase().replace(/\s+/g, " ").trim();
   return t.charAt(0).toUpperCase() + t.slice(1);
