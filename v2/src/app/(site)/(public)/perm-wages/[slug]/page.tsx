@@ -34,7 +34,8 @@ import {
   entityTitle,
   rateReliability,
 } from "@/components/tools/EntityContext";
-import { getDisclosureStats } from "@/lib/turso/publicData";
+import { getDatasetSchema } from "@/lib/structuredData";
+import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { getLadderByYear, getOccupationStateLadders } from "@/lib/turso/wages";
 import { LadderCombViews, LadderYearViews } from "@/components/wages/LadderViews";
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -79,6 +80,8 @@ export const revalidate = 2592000;
 
 const KIND = "occupation" as const;
 const BASE = "/perm-wages";
+/** Same literal this file already used for the canonical Dataset url. */
+const ORIGIN = "https://permtracker.app";
 /** DOL's own denial rate, used when the aggregate document cannot be read. */
 const FALLBACK_BASELINE_DENIAL_PCT = 2.57;
 /**
@@ -223,7 +226,7 @@ export default async function OccupationPage({
   // The materialised wage cells are keyed by SOC code, so an occupation with
   // no code on file simply has no ladder rather than a wrong one.
   const wageKey = row.code ?? "";
-  const [stats, dist, near, ladderYears, stateLadders, facets] = await Promise.all([
+  const [stats, dist, near, ladderYears, stateLadders, facets, freshness] = await Promise.all([
     getDisclosureStats(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
@@ -240,6 +243,9 @@ export default async function OccupationPage({
     wageKey ? getLadderByYear("occupation", wageKey) : Promise.resolve([]),
     wageKey ? getOccupationStateLadders(wageKey, 16) : Promise.resolve([]),
     entityFacets(KIND, slug),
+    // An 11-row table, React-cached, on a page that regenerates monthly. It is
+    // here only so the Dataset can state WHEN its figures were last true.
+    getFreshness(),
   ]);
 
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
@@ -247,15 +253,13 @@ export default async function OccupationPage({
   const ladder = stats?.wageLadder ?? null;
   const name = displayTitle(row);
 
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "Dataset",
+  const schema = getDatasetSchema(ORIGIN, {
     name: `${name} PERM offered wages and filings`,
     description: `PERM wage and filing record for ${name} from DOL disclosure data.`,
-    url: `https://permtracker.app${BASE}/${slug}`,
-    creator: { "@type": "Organization", name: "PERM Tracker" },
-    isBasedOn: "https://www.dol.gov/agencies/eta/foreign-labor/performance",
-  };
+    url: `${ORIGIN}${BASE}/${slug}`,
+    dateModified: freshness["perm-cases"]?.asOf ?? undefined,
+    variableMeasured: ["filings", "certified", "denied", "median offered wage"],
+  });
 
   const reliability = rateReliability(row.certified, row.denied, baselineDenialPct);
   const inCohort = reliability.tier !== "withheld";

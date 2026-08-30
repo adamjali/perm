@@ -38,6 +38,7 @@ import {
   entityTitle,
   rateReliability,
 } from "@/components/tools/EntityContext";
+import { getDatasetSchema } from "@/lib/structuredData";
 import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { LiveQueueBand } from "@/components/entities/LiveQueueBand";
 import { NameSpellings } from "@/components/entities/NameSpellings";
@@ -92,6 +93,8 @@ export const revalidate = 2592000;
 
 const KIND = "employer" as const;
 const BASE = "/perm-employers";
+/** Same literal this file already used for the canonical Dataset url. */
+const ORIGIN = "https://permtracker.app";
 /** DOL's own denial rate, used when the aggregate document cannot be read. */
 const FALLBACK_BASELINE_DENIAL_PCT = 2.57;
 
@@ -259,15 +262,17 @@ export default async function EmployerPage({
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
   const kindTotal = dist.kindTotal;
 
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "Dataset",
+  // dateModified is DOL's own as-of for the disclosure corpus, not our build
+  // date. A Dataset that restamps itself on every deploy tells an answer engine
+  // the underlying figures changed when they did not, and these figures move
+  // once a quarter. Omitted rather than guessed when freshness is unavailable.
+  const schema = getDatasetSchema(ORIGIN, {
     name: `${row.name} PERM labor certification filings`,
     description: `PERM filing record for ${row.name} from DOL disclosure data.`,
-    url: `https://permtracker.app${BASE}/${slug}`,
-    creator: { "@type": "Organization", name: "PERM Tracker" },
-    isBasedOn: "https://www.dol.gov/agencies/eta/foreign-labor/performance",
-  };
+    url: `${ORIGIN}${BASE}/${slug}`,
+    dateModified: freshness["perm-cases"]?.asOf ?? undefined,
+    variableMeasured: ["filings", "certified", "denied", "median days to decision"],
+  });
 
   const reliability = rateReliability(row.certified, row.denied, baselineDenialPct);
   const inCohort = reliability.tier !== "withheld";

@@ -37,7 +37,8 @@ import {
   entityTitle,
   rateReliability,
 } from "@/components/tools/EntityContext";
-import { getDisclosureStats } from "@/lib/turso/publicData";
+import { getDatasetSchema } from "@/lib/structuredData";
+import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
@@ -88,6 +89,8 @@ export const revalidate = 2592000;
 
 const KIND = "attorney" as const;
 const BASE = "/perm-attorneys";
+/** Same literal this file already used for the canonical Dataset url. */
+const ORIGIN = "https://permtracker.app";
 /** DOL's own denial rate, used when the aggregate document cannot be read. */
 const FALLBACK_BASELINE_DENIAL_PCT = 2.57;
 
@@ -232,7 +235,7 @@ export default async function AttorneyPage({
   // memoises on them, so all 3,736 share one cohort read. The peer window is
   // wide because the state filter thins it hard: California holds 604 firms
   // and Wyoming a handful.
-  const [stats, dist, near, facets, variants, absorbed] = await Promise.all([
+  const [stats, dist, near, facets, variants, absorbed, freshness] = await Promise.all([
     getDisclosureStats(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
@@ -245,21 +248,22 @@ export default async function AttorneyPage({
     entityFacets(KIND, canonicalSlug),
     nameVariants(KIND, canonicalSlug),
     absorbedCount(KIND, canonicalSlug),
+    // An 11-row table, React-cached, on a page that regenerates daily. It is
+    // here only so the Dataset can state WHEN its figures were last true.
+    getFreshness(),
   ]);
   const band = await sizeBand(KIND, row.rank);
 
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
   const kindTotal = dist.kindTotal;
 
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "Dataset",
+  const schema = getDatasetSchema(ORIGIN, {
     name: `${row.name} PERM labor certification cases`,
     description: `PERM case record for ${row.name} from DOL disclosure data.`,
-    url: `https://permtracker.app${BASE}/${slug}`,
-    creator: { "@type": "Organization", name: "PERM Tracker" },
-    isBasedOn: "https://www.dol.gov/agencies/eta/foreign-labor/performance",
-  };
+    url: `${ORIGIN}${BASE}/${slug}`,
+    dateModified: freshness["perm-cases"]?.asOf ?? undefined,
+    variableMeasured: ["cases", "certified", "denied", "median days to decision"],
+  });
 
   const reliability = rateReliability(row.certified, row.denied, baselineDenialPct);
   const inCohort = reliability.tier !== "withheld";
