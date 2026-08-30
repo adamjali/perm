@@ -14,7 +14,6 @@ import { ArrowRight, ArrowSquareOut } from "@phosphor-icons/react/ssr";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
-import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 
@@ -219,11 +218,7 @@ export default async function MethodologyPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <JsonLdScript schema={breadcrumb} />
-
-      <DataNav active="methodology" />
-
-      <header className="pt-10 sm:pt-12">
+      <JsonLdScript schema={breadcrumb} />      <header className="pt-10 sm:pt-12">
         <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Methodology
         </p>{" "}

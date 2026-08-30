@@ -8,7 +8,6 @@ import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import {
   getFreshness,
@@ -127,9 +126,7 @@ export default async function I485QueuePositionPage() {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="calculators" />
-      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
       <JsonLdScript schema={breadcrumbSchema} />
 

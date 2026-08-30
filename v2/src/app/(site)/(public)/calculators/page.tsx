@@ -12,7 +12,6 @@ import { ArrowRight, CalendarBlank as CalendarRange, CalendarCheck, CalendarDot 
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { DataNav } from "@/components/tools/DataNav";
 import { PageBasics } from "@/components/data/PageBasics";
 import {
   BulletinStepsMini,
@@ -170,11 +169,7 @@ export default function CalculatorsPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <JsonLdScript schema={itemList} />
-
-      <DataNav active="calculators" />
-
-      <header className="pt-10 sm:pt-12">
+      <JsonLdScript schema={itemList} />      <header className="pt-10 sm:pt-12">
         <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Calculators
         </p>{" "}

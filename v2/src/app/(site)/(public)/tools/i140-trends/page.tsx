@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { I140Trends } from "@/components/tools/I140Trends";
-import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
@@ -82,9 +81,7 @@ export default async function I140TrendsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="calculators" />
-      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
 
       <header>

@@ -43,7 +43,6 @@ import {
   analystReviewAverage,
 } from "../../../../../convex/lib/dolProcessingTimes";
 import { QueueAlertForm } from "./QueueAlertForm";
-import { DataNav } from "@/components/tools/DataNav";
 import { QueueTape } from "@/components/tools/QueueTape";
 import { DecisionsByMonth, QueueHistoryChart } from "@/components/tools/QueueHistoryChart";
 import { PwdBacklogChart } from "@/components/tools/PwdBacklogChart";
@@ -283,9 +282,7 @@ export default async function PermProcessingTimesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-8 sm:pb-16">
-      <DataNav active="processing-times" />
-      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-8 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={datasetSchema} />
       <JsonLdScript schema={faqSchema} />
       <JsonLdScript schema={breadcrumb} />

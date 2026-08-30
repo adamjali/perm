@@ -19,7 +19,6 @@ import { notFound } from "next/navigation";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { DataNav } from "@/components/tools/DataNav";
 import { FieldPosition } from "@/components/tools/FieldPosition";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { socGroup } from "@/lib/socGroups";
@@ -311,9 +310,7 @@ export default async function OccupationPage({
   const peersAreGroup = near.matched === "facet" && group != null;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="wages" />
-      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={schema} />
 
       <header className="max-w-3xl">

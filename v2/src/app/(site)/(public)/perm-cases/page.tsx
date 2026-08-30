@@ -18,7 +18,6 @@ import Link from "next/link";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { DataNav } from "@/components/tools/DataNav";
 import { CaseBrowser, type OccupationOption } from "@/components/tools/CaseBrowser";
 import { getMeta } from "@/lib/turso/cases";
 import { getDailyDecisions } from "@/lib/turso/publicData";
@@ -99,9 +98,7 @@ export default async function PermCasesPage() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="cases" />
-      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={datasetSchema} />
 
       <header className="max-w-2xl">

@@ -48,7 +48,6 @@ import { notFound } from "next/navigation";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { DataNav } from "@/components/tools/DataNav";
 import { stageEntry } from "@/components/rfi/StageGlossary";
 import {
   GROUP_STYLE,
@@ -194,10 +193,7 @@ export default async function StagePage({
           { name: meta.label, href: `/perm-rfi-audit/${stage}` },
         ])}
       />
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-        <DataNav active="rfi-audit" />
-
-        <p className="mt-8 font-mono text-xs font-bold uppercase tracking-[0.12em] text-foreground/60">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">        <p className="mt-8 font-mono text-xs font-bold uppercase tracking-[0.12em] text-foreground/60">
           <Link href="/perm-rfi-audit" className="underline hover:text-primary">
             RFI, audits and appeals
           </Link>

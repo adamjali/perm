@@ -29,7 +29,7 @@
  * affordable and is not necessary.
  */
 
-import type { DataSection } from "@/components/tools/DataNav";
+import type { DataSection } from "@/components/tools/dataSections";
 import type { EntityKind } from "@/lib/entityPayload";
 
 /** The bucket every slug that does not begin a-z falls into. */
@@ -125,7 +125,7 @@ export interface BrowseKind {
   kind: EntityKind;
   /** URL prefix for the hub and its detail pages, e.g. "/perm-employers". */
   base: string;
-  /** Which `DataNav` chip is current. Type-only import, erased at build. */
+  /** Which rail entry is current. Type-only import, erased at build. */
   nav: DataSection;
   /** What a title calls them: "PERM Employers". */
   titleNoun: string;

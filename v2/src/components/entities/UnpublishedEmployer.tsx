@@ -1,7 +1,6 @@
 import { Fragment } from "react";
 import Link from "next/link";
 
-import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { statusMeaning } from "@/lib/caseStatusVocabulary";
 import type { LiveCaseRow } from "@/lib/turso/cases";
@@ -83,7 +82,6 @@ export function UnpublishedEmployer({
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="employers" />
       <div className="pt-10 sm:pt-12" />
 
       <header className="max-w-3xl">

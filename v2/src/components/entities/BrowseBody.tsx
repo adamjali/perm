@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import {
   BROWSE_BUCKETS,
@@ -141,7 +140,6 @@ export async function BrowseIndexBody({ kind }: { kind: EntityKind }) {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active={cfg.nav} />
       <div className="pt-10 sm:pt-12" />
 
       <header className="max-w-2xl">
@@ -271,7 +269,6 @@ export async function BrowseLetterBody({
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active={cfg.nav} />
       <div className="pt-10 sm:pt-12" />
 
       <header className="max-w-3xl">

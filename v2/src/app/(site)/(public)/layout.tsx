@@ -17,6 +17,7 @@ import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { HashScrollHandler } from "@/components/ui/hash-scroll-handler";
 import { ViewportDiag } from "@/components/diag/ViewportDiag";
 import { AmbientMurmuration } from "@/components/home/AmbientMurmuration";
+import { DataShell } from "@/components/tools/DataShell";
 
 export default function PublicLayout({
   children,
@@ -43,7 +44,13 @@ export default function PublicLayout({
         className="relative flex-1 transition-[padding] duration-200"
         tabIndex={-1}
       >
-        <PageTransition>{children}</PageTransition>
+        {/* The data rail lives here rather than on each of the 28 data
+            pages: a sidebar has to sit BESIDE the content, so something has
+            to own both. On every other public page DataShell renders its
+            children untouched. */}
+        <PageTransition>
+          <DataShell>{children}</DataShell>
+        </PageTransition>
       </main>
 
       {/* Back-to-top button */}

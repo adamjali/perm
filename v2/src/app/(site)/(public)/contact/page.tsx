@@ -51,11 +51,14 @@ export default function ContactPage() {
           Questions, feature requests and bug reports all land in the same inbox.
         </p>{" "}
 
-        {/* The form is the primary path; the addresses below stay for anyone
-            who would rather use their own mail client. */}
-        <ContactForm />
-
-        <h2 className="mt-12 font-heading text-2xl font-black">Other ways in</h2>
+        {/* THE FORM MOVED TO THE BOTTOM, on Adam's call. It was the first
+            thing on the page, which asks a reader to start typing before the
+            page has told them where their question actually goes. Several of
+            the routes below answer faster than a form does - a bug report
+            belongs on the issue tracker, and a case question is usually
+            answered by the case lookup - so they read first and the form
+            catches whatever they do not cover. */}
+        <h2 className="mt-10 font-heading text-2xl font-black">Where to send it</h2>
         <div className="mt-6 space-y-8">
           {/* Email */}
           <div className="flex items-start gap-4">
@@ -131,6 +134,19 @@ export default function ContactPage() {
             days. For urgent matters related to case deadlines, please include
             &quot;URGENT&quot; in your email subject.
           </p>
+        </div>
+
+        {/* The form, last: everything above says where a question goes, and
+            this is the catch-all for the ones that do not have a better
+            route. */}
+        <h2 className="mt-12 font-heading text-2xl font-black">
+          Or write to us here
+        </h2>{" "}
+        <p className="mt-2 text-foreground/60">
+          Goes to the same inbox as the address above. No account needed.
+        </p>{" "}
+        <div className="mt-6">
+          <ContactForm />
         </div>
 
         {/* Back link */}

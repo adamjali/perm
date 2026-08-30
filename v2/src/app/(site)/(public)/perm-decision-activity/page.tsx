@@ -19,7 +19,6 @@ import { Fragment } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
 import { FigurePlate } from "@/components/tools/FigurePlate";
@@ -113,9 +112,7 @@ export default async function DecisionActivityPage() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="activity" />
-      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={schema} />
 
       <header className="max-w-2xl">

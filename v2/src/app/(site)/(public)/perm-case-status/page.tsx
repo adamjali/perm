@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Warning } from "@phosphor-icons/react/ssr";
 
-import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
@@ -151,9 +150,7 @@ export default async function PermCaseStatusPage({
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="case-status" />
-      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
       <JsonLdScript schema={breadcrumbSchema} />
 

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Warning } from "@phosphor-icons/react/ssr";
 
-import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { SourceNote } from "@/components/queue/SourceNote";
 import { DecidedList, PendingCensus } from "@/components/queue/PendingCensus";
@@ -104,9 +103,7 @@ export default async function CohortPage({
   const isNoted = month === OCTOBER_2025.month;
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="queue" />
-      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
 
       <header>
         <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">

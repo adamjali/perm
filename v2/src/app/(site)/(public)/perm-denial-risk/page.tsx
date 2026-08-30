@@ -20,7 +20,6 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { socGroup } from "@/lib/socGroups";
 import { stateName } from "@/lib/usStateNames";
-import { DataNav } from "@/components/tools/DataNav";
 import { RateViews, RankedRateViews, type RateRow } from "@/components/tools/RateBars";
 import { DenialReach } from "@/components/tools/DenialReach";
 import { CENSUS_REGION } from "@/components/tools/USStateMap";
@@ -261,9 +260,7 @@ export default async function PermDenialRiskPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="risk" />
-      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
 
       <header className="max-w-2xl">

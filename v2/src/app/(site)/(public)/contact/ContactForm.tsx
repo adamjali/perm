@@ -65,6 +65,14 @@ export function ContactForm() {
 
   return (
     <form onSubmit={onSubmit} className="relative border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+      {/* PLACEHOLDERS, NOT FLOATING LABELS. Adam asked for "the fields with
+          the light gray text that disappears when you start typing". The
+          visible <span> label above each field stays: a placeholder that
+          doubles as the label vanishes the moment someone types, so a reader
+          checking their own answer before submitting has nothing left telling
+          them which field it was. The placeholder shows the SHAPE of a good
+          answer instead, which is the job it can do without taking the
+          label's. */}
       <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
@@ -73,6 +81,7 @@ export function ContactForm() {
           <input
             type="text"
             name="name"
+            placeholder="Jordan Rivera"
             required
             maxLength={120}
             autoComplete="name"
@@ -86,6 +95,7 @@ export function ContactForm() {
           <input
             type="email"
             name="email"
+            placeholder="you@example.com"
             required
             maxLength={254}
             autoComplete="email"
@@ -99,6 +109,7 @@ export function ContactForm() {
         </span>{" "}
         <textarea
           name="message"
+          placeholder="What you are trying to do, and what happened instead. A case number helps if it is about one."
           required
           minLength={10}
           maxLength={4000}

@@ -29,7 +29,7 @@ import {
   PUBLIC_NAV_LINKS,
   TOOL_NAV_LINKS,
 } from "@/lib/constants/navigation";
-import { SECTIONS } from "@/components/tools/DataNav";
+import { SECTIONS } from "@/components/tools/dataSections";
 import type { EntityPayload } from "@/lib/entityPayload";
 
 export interface SearchArticle {

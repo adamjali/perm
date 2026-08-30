@@ -8,7 +8,6 @@ import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { DataNav } from "@/components/tools/DataNav";
 import { getPwdEstimatorData } from "@/lib/turso/estimate";
 import { currentMonthUtc } from "@/lib/dolFormat";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
@@ -78,9 +77,7 @@ export default async function PwdCalculatorPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="calculators" />
-      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
 
       <header>

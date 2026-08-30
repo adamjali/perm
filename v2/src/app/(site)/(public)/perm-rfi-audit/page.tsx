@@ -29,7 +29,6 @@ import Link from "next/link";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { DataNav } from "@/components/tools/DataNav";
 import { DataView } from "@/components/tools/DataView";
 import { InsightLede } from "@/components/tools/Insight";
 import { OccupationRates } from "@/components/rfi/OccupationRates";
@@ -155,17 +154,7 @@ export default async function PermRfiAuditPage() {
           },
         }}
       />
-      {/*
-        DataNav GOES INSIDE THE PADDED CONTAINER. It is `-mx-4 sm:-mx-6` so it
-        can run edge to edge, which only cancels out against a parent carrying
-        the matching `px-4 sm:px-6`. Mounted outside it, as this page first
-        did, the bar bleeds 24px past the viewport on desktop and 16px on a
-        phone and the whole document scrolls sideways. Measured before and
-        after: docW 1464 against a 1440 viewport, and 406 against 390.
-      */}
-      <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-        <DataNav active="rfi-audit" />
-        <div className="pt-10 sm:pt-12" />
+            <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">        <div className="pt-10 sm:pt-12" />
         <header className="max-w-3xl">
           <h1 className="font-heading text-3xl font-black leading-tight sm:text-5xl">
             RFIs, audits and appeals

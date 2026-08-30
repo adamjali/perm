@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SalaryExplorer } from "@/components/tools/SalaryExplorer";
-import { DataNav } from "@/components/tools/DataNav";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
@@ -106,9 +105,7 @@ export default async function SalaryExplorerPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="calculators" />
-      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
 
       <header>

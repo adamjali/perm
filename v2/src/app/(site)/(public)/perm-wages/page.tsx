@@ -20,7 +20,6 @@ import Link from "next/link";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { DataNav } from "@/components/tools/DataNav";
 import { EntityExplorer } from "@/components/tools/EntityExplorer";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { BrowseTeaser } from "@/components/entities/BrowseBody";
@@ -98,9 +97,7 @@ export default async function PermWagesPage() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="wages" />
-      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={datasetSchema} />
 
       <header className="max-w-2xl">

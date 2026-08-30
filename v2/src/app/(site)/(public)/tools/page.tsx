@@ -17,7 +17,6 @@ import {
   analystReviewQueue,
   analystReviewAverage,
 } from "../../../../../convex/lib/dolProcessingTimes";
-import { DataNav } from "@/components/tools/DataNav";
 import {
   BulletinStepsMini,
   QueueDepthMini,
@@ -64,10 +63,7 @@ export default async function ToolsPage() {
   const frontierMonth = analyst?.priorityDate ?? null;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <DataNav active="overview" />
-
-      <header className="pt-10 sm:pt-12">
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <header className="pt-10 sm:pt-12">
         <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Data
           {snapshot?.permAsOf ? ` · DOL figures as of ${formatAsOf(snapshot.permAsOf)}` : null}
