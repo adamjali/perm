@@ -100,6 +100,21 @@ jobs:
         working-directory: v2
         run: python3 scripts/test_live_recent.py
 
+      # The quarterly Turso load, against a local SQLite stub instead of the
+      # real thing. Five bugs in these load steps were each found by
+      # dispatching the full 40-minute ingest and reading its log, one bug per
+      # run, because the only way to reach three minutes of load work was to
+      # re-download 156 MB and re-parse 1.21 GB of XML first. This exercises
+      # the same scripts in about two seconds.
+      #
+      # It asserts what the drop-and-reload bug destroyed: visa_bulletins is an
+      # accumulator (84 stored months must survive an artifact carrying 18),
+      # perm_docs is shared (we own 3 of 10 keys), a missing bulletin artifact
+      # must not sink the corpus load, and a fresh database still builds.
+      - name: Quarterly Turso load contract
+        working-directory: v2
+        run: python3 scripts/test_turso_load.py
+
       - name: Run full test suite
         # --retry=2 re-runs only individual tests that fail, a safety net against
         # rare CI-environment hiccups. The suite is deterministic (per-file
