@@ -101,10 +101,44 @@ function QueueHistorySvg({ sorted }: { sorted: QueueSnapshotPoint[] }) {
    * read as "2026-0202708". Two readings is the normal state of a series DOL
    * has only just started publishing, so the thin case is the common one.
    */
+  /*
+   * DE-DUPLICATING WAS NOT ENOUGH: two DIFFERENT dates can still collide.
+   *
+   * The fix above stopped the same date printing twice. It did not stop the
+   * middle tick landing on top of an edge one, because the ticks are chosen by
+   * INDEX and drawn by DATE, and those only agree when the readings are evenly
+   * spaced in time. DOL's are not. With readings on 2026-08-20, 08-27 and
+   * 08-28, the middle tick sits at 87.5% of the span - 40 units from a
+   * right-hand label anchored to the frame - and the page rendered
+   * "2026-08-2023-08-28".
+   *
+   * So the middle tick has to EARN its place: it is kept only when its box
+   * clears both edge labels, and dropped when it cannot. A solver that places
+   * a label it knows collides is the same defect as one that never checked.
+   *
+   * The width is derived from the label's own length rather than assumed, and
+   * the per-character figure errs HIGH on purpose: over-estimating drops a
+   * tick, under-estimating overlaps two, and only one of those is visible to
+   * a reader as a bug.
+   */
+  const CHAR_W = 12 * 0.62; // 12px mono, conservative advance
+  const GAP = 12;
+  const first = sorted[0]!;
+  const last = sorted[sorted.length - 1]!;
+  const mid = sorted[Math.floor(sorted.length / 2)]!;
+
+  const leftEdge = PAD.left + first.asOf.length * CHAR_W;
+  const rightEdge = W - PAD.right - last.asOf.length * CHAR_W;
+  const midHalf = (mid.asOf.length * CHAR_W) / 2;
+  const midX = px(mid.asOf);
+  const midFits =
+    midX - midHalf >= leftEdge + GAP && midX + midHalf <= rightEdge - GAP;
+
   const xTicks = [
     ...new Map(
-      [sorted[0]!, sorted[Math.floor(sorted.length / 2)]!, sorted[sorted.length - 1]!]
-        .map((p) => [p.asOf, p] as const),
+      (midFits ? [first, mid, last] : [first, last]).map(
+        (p) => [p.asOf, p] as const,
+      ),
     ).values(),
   ];
 

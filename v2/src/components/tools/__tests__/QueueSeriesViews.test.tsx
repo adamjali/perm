@@ -92,6 +92,45 @@ describe("QueueHistoryChart", () => {
     expect(within(row).getByText("no change")).toBeInTheDocument();
   });
 
+  it("drops the middle x label when it would collide with the edge one", () => {
+    // The real failing case, from the live page: three readings where two are
+    // a day apart. The middle tick is chosen by INDEX and drawn by DATE, so
+    // with unevenly spaced readings it lands at 87.5% of the span, 40 units
+    // from a right-hand label anchored to the frame. The page rendered
+    // "2026-08-2023-08-28" - two different dates overprinted.
+    const CLUSTERED = [
+      { asOf: "2026-08-20", frontierMonth: "2025-09" },
+      { asOf: "2026-08-27", frontierMonth: "2025-10" },
+      { asOf: "2026-08-28", frontierMonth: "2025-11" },
+    ];
+    const { container } = render(<QueueHistoryChart points={CLUSTERED} />);
+    const labels = [...container.querySelectorAll("svg text")]
+      .map((t) => t.textContent ?? "")
+      .filter((t) => /^\d{4}-\d{2}-\d{2}$/.test(t));
+
+    // Both ends must still be labelled - dropping a tick must not cost the
+    // reader the span the chart covers.
+    expect(labels).toContain("2026-08-20");
+    expect(labels).toContain("2026-08-28");
+    // ...and the crowded middle one is gone rather than overprinted.
+    expect(labels).not.toContain("2026-08-27");
+  });
+
+  it("keeps the middle x label when the readings are spread out", () => {
+    // The guard must not simply delete the middle tick always: a well-spaced
+    // series should still get three, or it has traded one defect for another.
+    const SPREAD = [
+      { asOf: "2026-05-01", frontierMonth: "2025-06" },
+      { asOf: "2026-06-15", frontierMonth: "2025-08" },
+      { asOf: "2026-08-28", frontierMonth: "2025-11" },
+    ];
+    const { container } = render(<QueueHistoryChart points={SPREAD} />);
+    const labels = [...container.querySelectorAll("svg text")]
+      .map((t) => t.textContent ?? "")
+      .filter((t) => /^\d{4}-\d{2}-\d{2}$/.test(t));
+    expect(labels).toContain("2026-06-15");
+  });
+
   it("renders nothing rather than an empty frame on a single reading", () => {
     const { container } = render(<QueueHistoryChart points={[READINGS[0]!]} />);
     expect(container).toBeEmptyDOMElement();
