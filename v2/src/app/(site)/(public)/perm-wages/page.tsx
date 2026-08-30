@@ -22,6 +22,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { EntityExplorer } from "@/components/tools/EntityExplorer";
 import { FigurePlate } from "@/components/tools/FigurePlate";
+import { BrowseTeaser } from "@/components/entities/BrowseBody";
 import { fetchEntitySeed } from "@/lib/entitySeed";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import {
@@ -229,6 +230,12 @@ export default async function PermWagesPage() {
               <EntityExplorer kind="occupation" rows={occupations} total={occupationCount} />
             </div>
           </section>
+
+          {/* The table above is a client component: its rows are fetched and
+              filtered in the browser, so a crawler sees the server-rendered
+              seed links and none of the other occupation pages. The A-Z strip
+              is the crawlable path to all of them. */}
+          <BrowseTeaser kind="occupation" className="mt-12" />
         </>
       ) : (
         <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">

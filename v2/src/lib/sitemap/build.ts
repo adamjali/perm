@@ -2,8 +2,15 @@ import "server-only";
 
 import { getAllPosts } from "@/lib/content";
 import { fetchAllEntitiesServer } from "@/lib/entitySeed";
+import {
+  BROWSE_BUCKETS,
+  BROWSE_KINDS,
+  browseHref,
+  type BrowseBucket,
+} from "@/lib/entityBrowse";
 import { hasOwnPage, type EntityKind } from "@/lib/entityPayload";
 import { captureError } from "@/lib/sentry";
+import { browseCounts } from "@/lib/turso/entityBrowse";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { countPageworthy } from "@/lib/turso/publicData";
 import { MIRROR_COMPLETE } from "@/lib/liveQueueGate";
@@ -140,6 +147,14 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/perm-wages`, lastModified: dol ?? "2026-08-24" },
     { url: `${base}/perm-employers`, lastModified: dol ?? "2026-08-24" },
     { url: `${base}/perm-attorneys`, lastModified: dol ?? "2026-08-24" },
+    // The A-Z index pages. Written literally rather than generated from
+    // BROWSE_KINDS because `scripts/audit_page_registration.py` matches a
+    // template literal here against every static route in the app tree, and a
+    // generated entry is invisible to it. Their letter children ARE generated,
+    // below, since those are dynamic segments the gate skips anyway.
+    { url: `${base}/perm-employers/browse`, lastModified: dol ?? "2026-08-24" },
+    { url: `${base}/perm-attorneys/browse`, lastModified: dol ?? "2026-08-24" },
+    { url: `${base}/perm-wages/browse`, lastModified: dol ?? "2026-08-24" },
     { url: `${base}/perm-cases`, lastModified: dol ?? "2026-08-24" },
     // The bare path only. A `?case=` result sets robots:{index:false} and
     // canonicalises back here, so advertising one would contradict the page's
@@ -159,7 +174,53 @@ export async function pagesEntries(): Promise<Entry[]> {
     lastModified: post.meta.updated ?? post.meta.date,
   }));
 
-  return [...statics, ...content];
+  return [...statics, ...(await browseEntries(dol)), ...content];
+}
+
+/**
+ * The A-Z letter pages, at most 81 of them, in the `pages` child.
+ *
+ * They belong here rather than in a child of their own: 81 URLs is a rounding
+ * error against the 5,000-per-child budget, and putting them beside the hubs
+ * keeps Search Console's per-sitemap coverage split reading "the three entity
+ * corpora" rather than gaining a fourth line nobody asked a question about.
+ *
+ * A bucket with nothing in it is OMITTED, and the letter page itself carries
+ * `robots: noindex` in the same case. Three occupation letters (X, Y, Z) are
+ * genuinely empty, and a sitemap that advertises a page saying "nothing here"
+ * is asking for exactly the thin-page judgement the rest of this surface works
+ * to avoid. The two halves are separate code and must not drift; the sitemap
+ * test asserts the count against `browseCounts`.
+ *
+ * A failed counts read degrades to no letter URLs rather than throwing. Unlike
+ * `entityEntries` there is no catastrophic-loss shape to guard against: the
+ * detail pages these letters index are already in their own children, so the
+ * worst case is that a crawler discovers them one hop later.
+ */
+async function browseEntries(dol: string | null): Promise<Entry[]> {
+  const root = baseUrl();
+  const lastModified = dol ?? "2026-08-24";
+  const kinds = Object.values(BROWSE_KINDS);
+  const counts = await Promise.all(
+    kinds.map((cfg) =>
+      browseCounts(cfg.kind).catch((e: unknown) => {
+        captureError(
+          e instanceof Error ? e : new Error(`browse counts failed: ${String(e)}`),
+        );
+        return null;
+      }),
+    ),
+  );
+  const out: Entry[] = [];
+  kinds.forEach((cfg, i) => {
+    const byBucket = counts[i];
+    if (!byBucket) return;
+    for (const bucket of BROWSE_BUCKETS as readonly BrowseBucket[]) {
+      if ((byBucket[bucket] ?? 0) === 0) continue;
+      out.push({ url: `${root}${browseHref(cfg.base, bucket)}`, lastModified });
+    }
+  });
+  return out;
 }
 
 /**

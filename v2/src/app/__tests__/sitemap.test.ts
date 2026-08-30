@@ -34,6 +34,20 @@ vi.mock("@/lib/turso/publicData", () => ({
 vi.mock("@/lib/entitySeed", () => ({
   fetchAllEntitiesServer: vi.fn(),
 }));
+// The A-Z letter pages are listed from the same per-bucket counts the pages
+// themselves render, so a letter with nothing in it is omitted here and
+// noindexed there. Mocked at that module rather than at the database client,
+// for the same reason as the seams above.
+vi.mock("@/lib/turso/entityBrowse", () => ({
+  browseCounts: vi.fn(),
+}));
+
+/** Per-bucket counts with `empty` at zero and every other bucket populated. */
+function bucketCounts(empty: string[] = []): Record<BrowseBucket, number> {
+  return Object.fromEntries(
+    BROWSE_BUCKETS.map((b) => [b, empty.includes(b) ? 0 : 10]),
+  ) as Record<BrowseBucket, number>;
+}
 
 /** `n` entity rows of one kind, all above the page threshold. */
 function entityRows(kind: string, from: number, count: number) {
@@ -56,6 +70,8 @@ import { captureError } from "@/lib/sentry";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { fetchAllEntitiesServer } from "@/lib/entitySeed";
 import { countPageworthy } from "@/lib/turso/publicData";
+import { browseCounts } from "@/lib/turso/entityBrowse";
+import { BROWSE_BUCKETS, type BrowseBucket } from "@/lib/entityBrowse";
 import {
   childNames,
   entityEntries,
@@ -111,6 +127,7 @@ describe("sitemap.ts", () => {
     vi.mocked(getProcessingTimes).mockResolvedValue({
       permAsOf: "2026-08-20",
     } as never);
+    vi.mocked(browseCounts).mockResolvedValue(bucketCounts());
     vi.clearAllMocks();
   });
 
@@ -269,6 +286,60 @@ describe("sitemap.ts", () => {
     expect(entries.some((e) => e.url.endsWith("/perm-processing-times"))).toBe(true);
   });
 
+  it("lists the A-Z browse index and every populated letter page", async () => {
+    // The letter pages are what make 21,000 entity pages reachable by a
+    // crawlable link at all: the hubs render a client-side table, so before
+    // these existed /perm-employers served 54 anchors against 16,309 pages.
+    // A sitemap entry does not create the link, but a letter page missing from
+    // here is one that has to be discovered entirely by internal link.
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    const urls = new Set((await sitemap()).map((e) => e.url));
+
+    for (const base of ["perm-employers", "perm-attorneys", "perm-wages"]) {
+      expect(urls.has(`https://permtracker.app/${base}/browse`)).toBe(true);
+      expect(urls.has(`https://permtracker.app/${base}/browse/a`)).toBe(true);
+      expect(urls.has(`https://permtracker.app/${base}/browse/z`)).toBe(true);
+      // The residue bucket is a URL like any other, and its slug is the one
+      // most likely to be mangled by a path builder.
+      expect(urls.has(`https://permtracker.app/${base}/browse/0-9`)).toBe(true);
+    }
+  });
+
+  it("OMITS a letter with nothing in it, matching that page's own noindex", async () => {
+    // No SOC title begins with X, Y or Z, so three occupation letters are
+    // genuinely empty. Those pages set robots:{index:false}; advertising them
+    // here would contradict their own directive and submit a page whose whole
+    // content is "nothing here". The two halves are separate code, which is
+    // exactly why this is asserted rather than assumed.
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    vi.mocked(browseCounts).mockImplementation(async (kind: string) =>
+      kind === "occupation" ? bucketCounts(["x", "y", "z"]) : bucketCounts(),
+    );
+    const urls = new Set((await sitemap()).map((e) => e.url));
+
+    expect(urls.has("https://permtracker.app/perm-wages/browse/x")).toBe(false);
+    expect(urls.has("https://permtracker.app/perm-wages/browse/w")).toBe(true);
+    // Only that kind loses them. An employer X page exists and must stay.
+    expect(urls.has("https://permtracker.app/perm-employers/browse/x")).toBe(true);
+  });
+
+  it("still builds when the browse counts read fails: it costs one hop, not 21,000 URLs", async () => {
+    // Deliberately different from the entity-loss guard, and the distinction
+    // is the point. Losing the letter URLs means the detail pages are found
+    // through their own children a crawl later; losing the entity read drops
+    // every detail URL. Only the second is worth failing the build over.
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    vi.mocked(browseCounts).mockRejectedValue(new Error("turso down"));
+    const urls = (await sitemap()).map((e) => e.url);
+
+    expect(urls).toContain("https://permtracker.app/perm-employers");
+    expect(urls.some((u) => u.includes("/browse/"))).toBe(false);
+    const messages = vi
+      .mocked(captureError)
+      .mock.calls.map((c) => (c[0] as Error).message);
+    expect(messages.some((m) => /turso down/i.test(m))).toBe(true);
+  });
+
   it("lists EVERY entity, not just the head of each kind", async () => {
     // The seed on the index page is 250 rows; the sitemap must carry the whole
     // corpus. A sitemap built from the seed looks entirely healthy and hides
@@ -282,7 +353,13 @@ describe("sitemap.ts", () => {
     );
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
     const entries = await sitemap();
-    const count = (p: string) => entries.filter((e) => e.url.includes(p)).length;
+    // DETAIL URLs only. A bare `includes` also matched the A-Z letter pages
+    // that now sit under the same prefix, which inflated this by 28 per kind -
+    // and 28 extra URLs is exactly the shape of the truncation bug this test
+    // was written to catch, so it has to count the thing it names.
+    const count = (p: string) =>
+      entries.filter((e) => e.url.includes(p) && !e.url.includes(`${p}browse`))
+        .length;
 
     expect(count("/perm-employers/")).toBe(2500);
     expect(count("/perm-attorneys/")).toBe(300);
@@ -296,6 +373,13 @@ describe("sitemap.ts", () => {
 describe("sitemap index and chunking", () => {
   beforeEach(() => {
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    // Arranged HERE too, not inherited from the block above. `pagesEntries()`
+    // reads the browse counts, and a bare `vi.fn()` returns undefined, so
+    // `browseCounts(...).catch` threw. It passed in source order (the other
+    // describe's beforeEach had already run) and went red under
+    // `sequence.shuffle`, which CI turns on for exactly this. Reproduced with
+    // `CI=1 vitest --sequence.seed=17`.
+    vi.mocked(browseCounts).mockResolvedValue(bucketCounts());
   });
 
   it("chunks a kind into children of at most SITEMAP_CHUNK URLs", async () => {

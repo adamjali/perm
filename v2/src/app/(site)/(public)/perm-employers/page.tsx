@@ -15,6 +15,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { EntityExplorer } from "@/components/tools/EntityExplorer";
 import { fetchEntitySeed } from "@/lib/entitySeed";
+import { BrowseTeaser } from "@/components/entities/BrowseBody";
 import { PendingLeaderboard } from "@/components/entities/PendingLeaderboard";
 import { pendingLeaders } from "@/lib/turso/entityDetail";
 import { getFreshness } from "@/lib/turso/publicData";
@@ -140,6 +141,12 @@ export default async function PermEmployersPage() {
               <EntityExplorer kind="employer" rows={employers} total={employerCount} />
             </div>
           </section>
+
+          {/* The table above is a client component: its rows are fetched and
+              filtered in the browser, so a crawler sees the 54 server-rendered
+              seed links and none of the other 16,255 pages. The A-Z strip is
+              the crawlable path to all of them. */}
+          <BrowseTeaser kind="employer" className="mt-12" />
         </>
       ) : (
         <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">

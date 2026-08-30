@@ -14,6 +14,7 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
 import { EntityExplorer } from "@/components/tools/EntityExplorer";
+import { BrowseTeaser } from "@/components/entities/BrowseBody";
 import { fetchEntitySeed } from "@/lib/entitySeed";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -130,6 +131,12 @@ export default async function PermAttorneysPage() {
               <EntityExplorer kind="attorney" rows={attorneys} total={firmCount} />
             </div>
           </section>
+
+          {/* The table above is a client component: its rows are fetched and
+              filtered in the browser, so a crawler sees the server-rendered
+              seed links and none of the other firm pages. The A-Z strip is
+              the crawlable path to all of them. */}
+          <BrowseTeaser kind="attorney" className="mt-12" />
         </>
       ) : (
         <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">
