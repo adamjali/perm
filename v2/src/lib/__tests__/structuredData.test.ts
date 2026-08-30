@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  getDatasetSchema,
   SCHEMA_IDS,
   getSoftwareApplicationSchema,
   getOrganizationSchema,
@@ -169,5 +170,49 @@ describe("getHomepageRatingPartialSchema", () => {
     expect(Number(r.reviewCount)).toBeGreaterThan(0);
     expect(Number(r.bestRating)).toBeGreaterThanOrEqual(Number(r.ratingValue));
     expect(Number(r.worstRating)).toBeLessThanOrEqual(Number(r.ratingValue));
+  });
+});
+
+describe("getDatasetSchema", () => {
+  const BASE_URL = "https://permtracker.app";
+  const base = getDatasetSchema(BASE_URL, {
+    name: "Microsoft Corporation PERM filings",
+    description: "PERM filing record from DOL disclosure data.",
+    url: `${BASE_URL}/perm-employers/microsoft-corporation`,
+  });
+
+  it("links creator by @id instead of minting a fourth anonymous Organization", () => {
+    // Ten hand-rolled copies each wrote `{"@type":"Organization","name":"PERM
+    // Tracker"}` inline, so the Dataset attached to a nameless duplicate rather
+    // than the entity the WebSite and SoftwareApplication nodes publish under.
+    expect(base.creator).toEqual({ "@id": SCHEMA_IDS.organization(BASE_URL) });
+  });
+
+  it("always carries provenance, licence and coverage", () => {
+    expect(base.isBasedOn).toContain("dol.gov");
+    expect(base.license).toBe(`${BASE_URL}/terms`);
+    expect(base.spatialCoverage).toEqual({ "@type": "Place", name: "United States" });
+  });
+
+  it("OMITS the dating fields when the caller has nothing measured to pass", () => {
+    // The whole point of making these parameters: a baked-in window is wrong
+    // the day the next quarterly lands and still looks authoritative. Absent is
+    // honest; stale is not.
+    expect(base).not.toHaveProperty("temporalCoverage");
+    expect(base).not.toHaveProperty("dateModified");
+  });
+
+  it("emits the dating fields when the caller measured them", () => {
+    const dated = getDatasetSchema(BASE_URL, {
+      name: "n",
+      description: "d",
+      url: BASE_URL,
+      temporalCoverage: "2023-10-01/2026-06-30",
+      dateModified: "2026-06-30",
+      variableMeasured: ["filings", "approval rate"],
+    });
+    expect(dated.temporalCoverage).toBe("2023-10-01/2026-06-30");
+    expect(dated.dateModified).toBe("2026-06-30");
+    expect(dated.variableMeasured).toEqual(["filings", "approval rate"]);
   });
 });

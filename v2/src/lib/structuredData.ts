@@ -272,3 +272,71 @@ export function getHomepageRatingPartialSchema(baseUrl: string) {
   };
 }
 
+
+// ---------------------------------------------------------------------------
+// Dataset
+// ---------------------------------------------------------------------------
+
+/** The federal source every dataset on this site derives from. */
+const DOL_SOURCE = 'https://www.dol.gov/agencies/eta/foreign-labor/performance';
+
+export interface DatasetSchemaInput {
+  /** Human name for this specific slice, e.g. "Microsoft Corporation PERM filings". */
+  name: string;
+  description: string;
+  /** Absolute page URL this dataset is published at. */
+  url: string;
+  /**
+   * ISO 8601 interval the underlying records span, e.g. "2023-10-01/2026-06-30".
+   * MEASURED from the corpus, never written by hand - see the note below.
+   */
+  temporalCoverage?: string;
+  /** ISO date the underlying data last changed (the source's as-of, not the build). */
+  dateModified?: string;
+  /** The columns this slice actually reports. */
+  variableMeasured?: string[];
+  keywords?: string[];
+}
+
+/**
+ * One Dataset node, built the same way everywhere.
+ *
+ * Ten pages hand-rolled this object with seven keys each, and every one of them
+ * was missing the fields that make a dataset citable rather than merely
+ * declared: `temporalCoverage`, `dateModified`, `license`, `variableMeasured`
+ * and `spatialCoverage`. Those are what an answer engine needs to say WHEN a
+ * figure was true and WHAT it covers, and they are exactly the difference
+ * between a number a model will quote with a date and one it will quote bare.
+ *
+ * `temporalCoverage` and `dateModified` are PARAMETERS, deliberately. The
+ * temptation is to bake in the current window, and a baked window is wrong the
+ * day the next quarterly lands while still looking authoritative. Callers pass
+ * what they measured; a caller with nothing to pass omits it rather than
+ * guessing, because an absent field is honest and a stale one is not.
+ *
+ * `license` points at our terms rather than claiming public domain. The
+ * underlying DOL records are a US Government work, but these pages publish
+ * derived aggregates, and `isBasedOn` is where the provenance belongs.
+ */
+export function getDatasetSchema(baseUrl: string, input: DatasetSchemaInput) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset' as const,
+    name: input.name,
+    description: input.description,
+    url: input.url,
+    // @id-linked so the Dataset attaches to the same Organization entity the
+    // WebSite and SoftwareApplication nodes publish under, instead of minting
+    // a fourth anonymous "PERM Tracker" that no parser can reconcile.
+    creator: { '@id': SCHEMA_IDS.organization(baseUrl) },
+    isBasedOn: DOL_SOURCE,
+    license: `${baseUrl}/terms`,
+    // Every record is a US filing. Constant, so it belongs here rather than in
+    // ten call sites that could each spell it differently.
+    spatialCoverage: { '@type': 'Place' as const, name: 'United States' },
+    ...(input.temporalCoverage ? { temporalCoverage: input.temporalCoverage } : {}),
+    ...(input.dateModified ? { dateModified: input.dateModified } : {}),
+    ...(input.variableMeasured ? { variableMeasured: input.variableMeasured } : {}),
+    ...(input.keywords ? { keywords: input.keywords } : {}),
+  };
+}
