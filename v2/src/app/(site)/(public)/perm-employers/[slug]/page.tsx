@@ -54,6 +54,8 @@ import {
   sizeBand,
 } from "@/lib/turso/entityDetail";
 import { recentLiveByEmployer } from "@/lib/turso/cases";
+import { liveEmployerRecord } from "@/lib/turso/liveEmployers";
+import { UnpublishedEmployer } from "@/components/entities/UnpublishedEmployer";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import {
   comparables,
@@ -137,6 +139,32 @@ async function loadSubject(
   } };
 }
 
+/**
+ * How many individual cases a live-only page lists.
+ *
+ * The list IS the page - there are no statistics to fill it out with - so the
+ * cap is generous. It is also a real cap: 5 of these employers hold more than
+ * 100 cases, and an unbounded list would put a thousand rows in the RSC
+ * payload of a page nobody is meant to index.
+ */
+const LIVE_ONLY_CASE_LIMIT = 50;
+
+/**
+ * The reduced page's data, or null when this slug names nothing anywhere.
+ *
+ * Reached ONLY after `resolveEntity` has missed, so it never runs for an
+ * employer that has a published record. Deliberately NOT wrapped in a catch:
+ * a Turso failure would already have thrown out of `resolveEntity` on the
+ * same client a moment earlier, so swallowing here could not rescue an
+ * outage - it could only turn a real employer into a 404.
+ */
+async function loadLiveOnly(slug: string) {
+  const record = await liveEmployerRecord(slug);
+  if (!record) return null;
+  const cases = await recentLiveByEmployer(slug, LIVE_ONLY_CASE_LIMIT);
+  return { record, cases };
+}
+
 function median(xs: number[]): number | null {
   if (xs.length === 0) return null;
   const s = [...xs].sort((a, b) => a - b);
@@ -173,7 +201,58 @@ export async function generateMetadata({
   // the UI but never the status - junk slugs answered 200, a soft 404 and a
   // cold render per crawler guess. With the boundary gone the response waits
   // for this decision and a miss is a real 404.
-  if (!found) notFound();
+  //
+  // A miss in the PUBLISHED corpus is no longer the end of it. The live feed
+  // knows 21,495 employers the disclosure files have never named, and those
+  // get a reduced page - see loadLiveOnly. A slug in NEITHER is still a real
+  // 404, decided here, before the first byte.
+  if (!found) {
+    const record = await liveEmployerRecord(slug);
+    if (!record) notFound();
+    // NOINDEX, ALWAYS, and this is the load-bearing line of the whole
+    // feature. 17,681 of these employers hold exactly one case, so the page
+    // is a heading and one row by construction. Twenty thousand of those is
+    // the scaled-thin-content shape Google's policy names, whatever we meant
+    // by it. They exist so a person who is looking can find them; they are
+    // not offered to an index, and the sitemap - built from perm_entities,
+    // which by definition holds none of these - never lists one.
+    // Same title rule as the published pages: DOL's printed name is never
+    // cut, the brand suffix goes first and the qualifier second. A legal
+    // entity name can run past what Google shows on its own, and these names
+    // are the least curated in the corpus - they come straight off the
+    // application with no merge pass behind them.
+    const { title, absolute } = entityTitle(record.name, [
+      `PERM Filings: ${fmt(record.cases)} Live Cases`,
+      "PERM Filings",
+    ]);
+    // No rate, no median, no rank - not even as a phrase. A snippet is where
+    // a caveat cannot follow a number, so the description states only what
+    // the page states: a count, and the absence of everything else.
+    //
+    // A PRIORITY LIST, NOT A THRESHOLD, for the same reason entityTitle uses
+    // one: anything past ~155 characters is cut mid-sentence in a SERP, and
+    // these names are the least curated in the corpus - straight off the
+    // application, no merge pass behind them - so the longest of them will
+    // blow any single template. The clauses drop in order of what a reader
+    // loses least by not seeing.
+    const noun = record.cases === 1 ? "case" : "cases";
+    const stem = `${record.name}: ${fmt(record.cases)} PERM ${noun} in DOL's live record`;
+    const description =
+      [
+        `${stem}, none in a published disclosure file yet, so no outcome figures exist for them.`,
+        `${stem}, none in a published disclosure file yet.`,
+        `${stem}.`,
+        // Every clause gone and the NAME alone is still too long. Cutting the
+        // name is the last resort because it is the phrase people search.
+        `${record.name.slice(0, 140)}: PERM cases in DOL's live record.`,
+      ].find((d) => d.length <= 155) ?? "PERM cases in DOL's live record.";
+    return {
+      robots: { index: false, follow: true },
+      title: absolute ? { absolute: title } : title,
+      description,
+      alternates: { canonical: `${BASE}/${slug}` },
+    };
+  }
   const row = found.subject;
   const reliability = rateReliability(
     row.certified,
@@ -241,7 +320,23 @@ export default async function EmployerPage({
 }) {
   const { slug } = await params;
   const found = await loadSubject(slug);
-  if (!found) notFound();
+  if (!found) {
+    // No published record. The live feed may still know them - see the note
+    // in generateMetadata. Everything below this point reads the disclosure
+    // corpus and would produce zeros for these employers, which is why the
+    // reduced page is a different component rather than this one with
+    // sections switched off.
+    const live = await loadLiveOnly(slug);
+    if (!live) notFound();
+    const fresh = await getFreshness();
+    return (
+      <UnpublishedEmployer
+        record={live.record}
+        cases={live.cases}
+        asOf={fresh["perm-case-status"]?.asOf ?? null}
+      />
+    );
+  }
   const row = found.subject;
   // Every read below keys on the SURVIVING slug, not the URL: a retired
   // spelling has no rows of its own in the facet or pending tables.

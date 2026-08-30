@@ -200,7 +200,7 @@ describe("FilterableStatTable", () => {
     // is absent from `rows` and a purely client-side search answers "no
     // match" for a row that plainly exists. That was 79% of employers.
     const remoteHit: Row = { name: "Tiny Bakery LLC", total: 2, state: "OR", days: null };
-    const searchRemote = vi.fn(async () => [remoteHit]);
+    const searchRemote = vi.fn(async () => ({ rows: [remoteHit] }));
     render(
       <FilterableStatTable
         rows={ROWS}
@@ -213,15 +213,100 @@ describe("FilterableStatTable", () => {
     fireEvent.change(screen.getByRole("searchbox"), {
       target: { value: "Tiny Bakery" },
     });
-    await waitFor(() => expect(searchRemote).toHaveBeenCalledWith("Tiny Bakery"));
+    // `false` is the second argument: the local list came up empty, so the
+    // caller is being told it may pay for the expensive published search.
+    await waitFor(() =>
+      expect(searchRemote).toHaveBeenCalledWith("Tiny Bakery", false),
+    );
     await waitFor(() =>
       expect(bodyOrder().some((r) => r.includes("Tiny Bakery LLC"))).toBe(true),
     );
     expect(screen.getByRole("status").textContent).toMatch(/searched across all of them/);
   });
 
-  it("does not ask the server when the local search already answered", async () => {
-    const searchRemote = vi.fn(async () => []);
+  /**
+   * A remote search can find things this table's columns cannot describe.
+   *
+   * The employer index is the caller that needs it: `perm_live_recent` knows
+   * 21,495 employers with no published disclosure record at all, and every
+   * column here - filings, certified, denied, approval rate, median days - is
+   * computed from decided cases in that record. Packing one as a row would
+   * put a fabricated "0 certified, 0 denied" in a sortable table. So the
+   * search hands them back separately and they render under the table.
+   */
+  it("renders extra results the columns cannot describe, with an empty table", async () => {
+    const searchRemote = vi.fn(async () => ({
+      rows: [],
+      extra: <p>Two more sponsors, not in a published DOL file yet</p>,
+    }));
+    render(
+      <FilterableStatTable
+        rows={ROWS}
+        {...base()}
+        totalCount={82677}
+        loadAll={async () => ROWS}
+        searchRemote={searchRemote}
+      />,
+    );
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "Lorenz Bus" },
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByText(/not in a published DOL file yet/),
+      ).toBeInTheDocument(),
+    );
+    // No row was invented for them: the only <tr> under the header is the
+    // empty-state cell, and it spans every column rather than filling them.
+    const body = bodyOrder();
+    expect(body).toHaveLength(1);
+    expect(body[0]).toMatch(/There is more below/);
+    // And the empty cell must not say "nothing matches that" over results
+    // that are sitting directly underneath it.
+    expect(screen.queryByText(/Nothing matches that/)).not.toBeInTheDocument();
+    expect(screen.getByText(/There is more below/)).toBeInTheDocument();
+  });
+
+  it("keeps the ordinary empty message when there is nothing extra either", async () => {
+    // The control for the test above: without it, a message that ALWAYS said
+    // "there is more below" would pass that assertion and be wrong here.
+    const searchRemote = vi.fn(async () => ({ rows: [] }));
+    render(
+      <FilterableStatTable
+        rows={ROWS}
+        {...base()}
+        totalCount={82677}
+        loadAll={async () => ROWS}
+        searchRemote={searchRemote}
+      />,
+    );
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "zzzznotacompany" },
+    });
+    await waitFor(() => expect(searchRemote).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(screen.getByText(/Nothing matches that/)).toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/There is more below/)).not.toBeInTheDocument();
+  });
+
+  /**
+   * The local list answering does NOT end the question, and this test used to
+   * assert that it did.
+   *
+   * It was right about rows and wrong about everything else. A remote search
+   * can also return results these columns cannot describe, and whether the
+   * table filled says nothing about whether those exist. Measured on the
+   * employer index: "lorenz" matches 5 published sponsors, so the table
+   * answered, the server was never asked, and LORENZ BUS SERVICE INC - 174
+   * live cases, no published record - was unreachable by name.
+   *
+   * So the call is still made, and `localHasRows` is how the caller is told
+   * it may skip the expensive half. What must not change is the TABLE: local
+   * rows keep their place and are not replaced by an empty remote list.
+   */
+  it("tells the caller the local search answered, and keeps the local rows", async () => {
+    const searchRemote = vi.fn(async () => ({ rows: [] }));
     render(
       <FilterableStatTable
         rows={ROWS}
@@ -233,7 +318,35 @@ describe("FilterableStatTable", () => {
     );
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "micro" } });
     await waitFor(() => expect(bodyOrder()).toHaveLength(1));
-    expect(searchRemote).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(searchRemote).toHaveBeenCalledWith("micro", true),
+    );
+    // The empty remote `rows` must not blank a table that had a result.
+    expect(bodyOrder()).toHaveLength(1);
+    expect(bodyOrder()[0]).toMatch(/Microsoft/i);
+  });
+
+  it("shows extra results even when the table already answered", async () => {
+    // The case the old trigger could not reach at all.
+    const searchRemote = vi.fn(async () => ({
+      rows: [],
+      extra: <p>Lorenz Bus Service Inc, not in a published DOL file yet</p>,
+    }));
+    render(
+      <FilterableStatTable
+        rows={ROWS}
+        {...base()}
+        totalCount={82677}
+        loadAll={async () => ROWS}
+        searchRemote={searchRemote}
+      />,
+    );
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "micro" } });
+    await waitFor(() =>
+      expect(screen.getByText(/Lorenz Bus Service Inc/)).toBeInTheDocument(),
+    );
+    // And the table still holds its own result underneath the search.
+    expect(bodyOrder()[0]).toMatch(/Microsoft/i);
   });
 
   it("does not strand the viewer on a page that no longer exists", () => {

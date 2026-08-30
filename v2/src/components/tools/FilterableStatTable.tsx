@@ -45,6 +45,21 @@ export interface CsvSpec<T> {
   row: (row: T) => (string | number | null)[];
 }
 
+/**
+ * What a server-side search hands back.
+ *
+ * `rows` go in the table. `extra` is anything the table's columns cannot
+ * honestly describe, rendered underneath it - the employer index uses it for
+ * sponsors that exist only in the live feed, which have no rank, no approval
+ * rate and no median days, so packing them into a sortable column of zeros
+ * would state figures nobody measured. Keeping them out of `rows` means no
+ * column renderer can be handed one by accident.
+ */
+export interface RemoteSearchResult<T> {
+  rows: T[];
+  extra?: ReactNode;
+}
+
 export interface FilterableStatTableProps<T> {
   /** The server-rendered seed. */
   rows: T[];
@@ -63,11 +78,21 @@ export interface FilterableStatTableProps<T> {
   csv?: CsvSpec<T>;
   pageSize?: number;
   /**
-   * Search the whole corpus server-side. Used only when the local search over
-   * the downloaded rows finds nothing, which for a bounded download is the
-   * ordinary case for anything outside the head of the ranking.
+   * Search the whole corpus server-side, on every settled query.
+   *
+   * `localHasRows` says whether the table has already answered from what it
+   * downloaded, and the caller is expected to use it to decide how much to
+   * ask the server for. It exists because the two things a remote search can
+   * return have different costs and different triggers: MORE ROWS are only
+   * wanted when the local slice came up empty, but results the columns cannot
+   * describe (`extra`) are wanted whether or not the table filled.
+   *
+   * That second case is not hypothetical. On the employer index a search for
+   * "lorenz" matches 5 published sponsors, so the table fills and - under the
+   * old "only when local finds nothing" trigger - the server was never asked,
+   * leaving LORENZ BUS SERVICE INC and its 174 live cases unreachable by name.
    */
-  searchRemote?: (text: string) => Promise<T[]>;
+  searchRemote?: (text: string, localHasRows: boolean) => Promise<RemoteSearchResult<T>>;
 }
 
 const PAGE_SIZES = [25, 50, 100, 250] as const;
@@ -169,14 +194,26 @@ export function FilterableStatTable<T>({
     return out;
   }, [working, columns, query, sortKey, sortDesc, searchText, facets, facetValues]);
 
-  // When the local list has nothing and the corpus is bigger than what was
-  // downloaded, ask the server. Debounced, and the newest query wins.
-  const [remote, setRemote] = useState<T[] | null>(null);
+  // Ask the server on every settled query. Debounced, and the newest wins.
+  //
+  // THE TRIGGER USED TO BE "only when the local list is empty" AND THAT WAS
+  // TOO NARROW. It is the right rule for fetching more ROWS - the local slice
+  // having answered means there is nothing more to fetch - but the server can
+  // also return things this table's columns cannot describe, and those exist
+  // whether or not the table filled. Measured: "lorenz" matches 5 published
+  // sponsors, so the table answered, the server was never asked, and an
+  // employer with 174 live cases and no published record stayed unreachable.
+  //
+  // What stops this being a cost regression is that `localHasRows` goes to
+  // the caller, which uses it to skip the expensive half server-side. The
+  // 71,512-row LIKE keeps its original trigger exactly; only the indexed
+  // prefix range runs on the wider one.
+  const [remote, setRemote] = useState<RemoteSearchResult<T> | null>(null);
   const [remoteBusy, setRemoteBusy] = useState(false);
   const remoteSeq = useRef(0);
   const q = query.trim();
-  const wantRemote =
-    searchRemote !== undefined && q.length >= 2 && visible.length === 0;
+  const wantRemote = searchRemote !== undefined && q.length >= 2;
+  const localHasRows = visible.length > 0;
 
   useEffect(() => {
     if (!wantRemote || !searchRemote) {
@@ -187,22 +224,29 @@ export function FilterableStatTable<T>({
     const id = ++remoteSeq.current;
     setRemoteBusy(true);
     const t = setTimeout(() => {
-      searchRemote(q)
+      searchRemote(q, localHasRows)
         .then((r) => {
           if (remoteSeq.current === id) setRemote(r);
         })
         .catch(() => {
-          if (remoteSeq.current === id) setRemote([]);
+          if (remoteSeq.current === id) setRemote({ rows: [] });
         })
         .finally(() => {
           if (remoteSeq.current === id) setRemoteBusy(false);
         });
     }, 250);
     return () => clearTimeout(t);
-  }, [wantRemote, q, searchRemote]);
+  }, [wantRemote, q, localHasRows, searchRemote]);
 
-  const shown = visible.length === 0 && remote !== null ? remote : visible;
-  const usingRemote = shown === remote && remote !== null && remote.length > 0;
+  const remoteRows = remote?.rows ?? null;
+  // Remote ROWS only stand in when the local list came up empty. When the
+  // table answered, the caller asked for the live half only and `rows` is
+  // legitimately empty - substituting it would blank a table that had results.
+  const shown = visible.length === 0 && remoteRows !== null ? remoteRows : visible;
+  const usingRemote = shown === remoteRows && remoteRows !== null && remoteRows.length > 0;
+  // The extra block is NOT gated on the table being empty: it is the half
+  // that has to survive the table having answered.
+  const remoteExtra = remote?.extra ?? null;
 
   const pageCount = Math.max(1, Math.ceil(shown.length / pageSize));
   // A filter that shortens the list can strand the viewer on a page past the
@@ -339,7 +383,7 @@ export function FilterableStatTable<T>({
               <>
                 Found{" "}
                 <strong className="font-bold">
-                  {remote.length.toLocaleString("en-US")}
+                  {remoteRows.length.toLocaleString("en-US")}
                 </strong>{" "}
                 {noun} by name, searched across all of them. Ones with fewer
                 than three filings have no page of their own.
@@ -466,7 +510,12 @@ export function FilterableStatTable<T>({
                 <td colSpan={columns.length} className="px-3 py-8 text-center text-foreground/60">
                   {remoteBusy
                     ? `Searching all ${noun}\u2026`
-                    : `Nothing matches that. Clear the search and the filters to see the full list.`}
+                    : remoteExtra
+                      ? // "Nothing matches that" would be false with results
+                        // sitting directly underneath. This table holds the
+                        // PUBLISHED corpus; the block below holds the rest.
+                        `Nothing in the published files matches that. There is more below.`
+                      : `Nothing matches that. Clear the search and the filters to see the full list.`}
                 </td>
               </tr>
             ) : null}
@@ -508,6 +557,12 @@ export function FilterableStatTable<T>({
           </div>
         </nav>
       ) : null}
+
+      {/* Results the columns above cannot describe. Kept out of the table on
+          purpose - everything the table promises is a published statistic -
+          and placed BELOW its pager, which belongs to the table and not to
+          this block. */}
+      {remoteExtra}
     </div>
   );
 }

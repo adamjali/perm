@@ -81,8 +81,10 @@ export default async function PermEmployersPage() {
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           Every employer that filed a PERM case in the current disclosure
-          window, all {employerCount.toLocaleString("en-US")} of them.
-          Search yours, filter by state, sort any column.
+          window, all {employerCount.toLocaleString("en-US")} of them. Search
+          yours, filter by state, sort any column. Employers whose filings are
+          still working through DOL, and so are not in a published file yet,
+          appear in search under the table.
         </p>
       </header>
 
@@ -124,8 +126,15 @@ export default async function PermEmployersPage() {
           <PendingLeaderboard leaders={leaders} asOf={mirrorAsOf} n="01" className="mt-10" />
 
           <section className="mt-12">
+            {/* "All N sponsors" was true of the published files and reads as
+                a claim about every sponsor that exists. It is now actively
+                misleading on this page: searching here also surfaces employers
+                we hold only from DOL's live feed, 21,495 of which have never
+                appeared in a disclosure file. The heading says which corpus the
+                TABLE is, and the sentence under it says where the rest are. */}
             <h2 className="font-heading text-2xl font-black">
-              All {employerCount.toLocaleString("en-US")} sponsors
+              All {employerCount.toLocaleString("en-US")} sponsors in the
+              published files
             </h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
               DOL prints the legal entity name typed on the form. Spellings that

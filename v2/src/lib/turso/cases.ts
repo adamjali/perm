@@ -533,7 +533,17 @@ export async function lookupLiveByCaseNumber(
   return r ? toLiveRow(r) : null;
 }
 
-/** The newest live filings for one employer page, by its canonical slug. */
+/**
+ * The newest live filings for one employer page, by its canonical slug.
+ *
+ * The ceiling is 100 rather than the 25 this shipped with. A published
+ * employer's page uses this for a BAND of eight under its statistics; an
+ * employer with no published record at all has no statistics, so the case
+ * list is the whole page and 8 would be a page that hides most of itself.
+ * Still capped, because 5 live-only employers hold over 100 cases each and an
+ * unbounded list is an unbounded RSC payload. Index-served either way:
+ * `SEARCH perm_live_recent USING INDEX perm_live_recent_emp (employer_slug=?)`.
+ */
 export async function recentLiveByEmployer(
   slug: string,
   limit = 8,
@@ -543,7 +553,7 @@ export async function recentLiveByEmployer(
     `SELECT case_number, filing_date, status, is_final, employer_name, job_title
        FROM perm_live_recent WHERE employer_slug = ?
       ORDER BY filing_date DESC LIMIT ?`,
-    [slug, Math.min(Math.max(1, Math.floor(limit)), 25)],
+    [slug, Math.min(Math.max(1, Math.floor(limit)), 100)],
   );
   return found.map(toLiveRow);
 }

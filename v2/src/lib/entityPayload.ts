@@ -50,6 +50,31 @@ export type PackedRow = [
   code: string | null,
 ];
 
+/**
+ * An employer we know about from the live feed and from nowhere else.
+ *
+ * NOT a `PackedRow`, and that is the whole point. Every field a `PackedRow`
+ * carries after the name - rank, total, certified, denied, median days,
+ * median wage - is computed from DECIDED cases in DOL's published disclosure
+ * files, and for these employers that corpus is empty. Packing one as a row
+ * of zeros would put a real-looking record of "0 certified, 0 denied" in a
+ * sortable table and rank it #0 by volume. So it travels as its own shape,
+ * which no column renderer can accept by accident.
+ *
+ * Lives here rather than beside its query because it crosses the wire and
+ * `src/lib/turso/*` is `server-only`: this file is where the encode and
+ * decode halves of that wire format already live together.
+ */
+export interface LiveEmployerHit {
+  slug: string;
+  name: string;
+  /** Live cases we hold. NOT a lifetime filing total. */
+  cases: number;
+  pending: number;
+  /** ISO date of the newest filing we hold for them. */
+  latestFiling: string | null;
+}
+
 export interface EntityPayload {
   kind: EntityKind;
   /** How many rows exist in total. Equals rows.length for a complete payload. */
@@ -57,6 +82,13 @@ export interface EntityPayload {
   /** Millis, from the ingest that wrote these rows. */
   computedAt: number | null;
   rows: PackedRow[];
+  /**
+   * Employers matching the same `?q=` that have no published record at all.
+   * Employers only, and only on a search: the live feed carries no law-firm
+   * name (DOL reveals the firm at publication) and no occupation, so for the
+   * other two kinds there is genuinely nothing to search.
+   */
+  live?: LiveEmployerHit[];
 }
 
 export function packRow(r: EntityRow): PackedRow {
