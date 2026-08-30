@@ -202,8 +202,6 @@ describe("deriveFigures", () => {
       lowCases: 39,
     });
     expect(f.wages).toEqual({ p10: 29120, p50: 102066, p90: 176500 });
-    expect(f.employerShare).toBe(35);
-    expect(f.attorneyShare).toBe(65);
     expect(f.denial).toEqual({ rate: 2.57, denied: 6379, decided: 248158 });
   });
 
@@ -224,13 +222,6 @@ describe("deriveFigures", () => {
         ...full,
         wageLadder: { p10: 200000, p50: 102066, p90: 176500 },
       }).wages,
-    ).toBeNull();
-  });
-
-  it("withholds a share that exceeds the case total, which means the inputs disagree", () => {
-    expect(
-      deriveFigures({ ...full, topEmployers: [{ total: 999999999 }] })
-        .employerShare,
     ).toBeNull();
   });
 

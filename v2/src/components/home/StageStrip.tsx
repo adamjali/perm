@@ -29,6 +29,7 @@ const STAGES = [
   {
     tag: "Stage 1",
     name: "Prevailing wage",
+    agency: "Reviewed by the Department of Labor",
     question: "How long is the PWD taking?",
     detail:
       "A separate DOL queue most tools skip entirely, split into OEWS and non-OEWS.",
@@ -40,6 +41,7 @@ const STAGES = [
   {
     tag: "Stage 2",
     name: "PERM",
+    agency: "Reviewed by the Department of Labor",
     question: "When will my PERM be approved?",
     detail:
       "DOL's word is certified. Check your case number, or estimate from your filing month.",
@@ -51,6 +53,7 @@ const STAGES = [
   {
     tag: "Stage 3",
     name: "I-140",
+    agency: "Reviewed by USCIS",
     question: "How long does the I-140 take?",
     detail:
       "USCIS's petition stage, with premium processing and a 180-day clock that matters in a layoff.",
@@ -60,14 +63,32 @@ const STAGES = [
     border: "border-t-stage-i140",
   },
   {
+    // SPLIT FROM WHAT WAS ONE "STAGE 4". Waiting for a priority date to become
+    // current and filing the adjustment are two different waits, run by two
+    // different bodies, and merging them hid the one thing a reader in that
+    // position most needs to see: that the bulletin can be current and the
+    // I-485 still take a year.
     tag: "Stage 4",
-    name: "I-485 and the bulletin",
+    name: "Visa bulletin",
+    agency: "Cutoffs published monthly by the State Department",
     question: "When is my priority date current?",
     detail:
-      "The visa bulletin decides the final wait. We hold 84 months of its history.",
+      "The bulletin decides when a visa number is available at all. We hold 84 months of its history.",
     viz: BulletinStepsMini,
+    tool: { label: "Cutoff history", href: "/tools/priority-date-calculator" },
+    data: null,
+    border: "border-t-stage-recruitment",
+  },
+  {
+    tag: "Stage 4",
+    name: "I-485",
+    agency: "Reviewed by USCIS, or consular processing by the State Department",
+    question: "How long does the adjustment take?",
+    detail:
+      "The last step, once a visa number is available. Filed with USCIS inside the US, or at a consulate abroad.",
+    viz: TwoBarsMini,
     tool: { label: "Queue position", href: "/tools/i485-queue-position" },
-    data: { label: "Cutoff history", href: "/tools/priority-date-calculator" },
+    data: null,
     border: "border-t-stage-recruitment",
   },
 ] as const;
@@ -83,11 +104,10 @@ export function StageStrip() {
           Waiting on your green card? Every stage, measured
         </h2>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/70 sm:text-lg">
-          PERM is one stage of four. Each one below has its own queue, its own
-          clock, and a timeline built from the agencies&apos; own published
-          figures.
+          PERM is only one stage of four. Each stage has its own processing
+          time, based on the supervising agency&apos;s published figures.
         </p>
-        <div className="mt-8 grid grid-cols-1 gap-5 [&>*]:min-w-0 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8 grid grid-cols-1 gap-5 [&>*]:min-w-0 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           {STAGES.map((s) => (
             <div
               key={s.name}
@@ -98,6 +118,12 @@ export function StageStrip() {
               </span>{" "}
               <span className="mt-1 font-heading text-xl font-black">
                 {s.name}
+              </span>{" "}
+              {/* WHO DECIDES THIS STAGE. Four stages run by three different
+                  agencies is the fact that explains why the waits are
+                  unrelated to each other, and the strip never said it. */}
+              <span className="mt-1 text-sm leading-snug text-foreground/60">
+                {s.agency}
               </span>{" "}
               {/* One drawing per stage from the calculators' own mini-diagram
                   kit, so the strip and the tools read as one system. Each
@@ -118,12 +144,14 @@ export function StageStrip() {
                 >
                   {s.tool.label} <ArrowRight />
                 </Link>{" "}
-                <Link
-                  href={s.data.href}
-                  className="inline-flex min-h-[44px] items-center font-bold underline underline-offset-4 hover:text-primary"
-                >
-                  {s.data.label}
-                </Link>
+                {s.data ? (
+                  <Link
+                    href={s.data.href}
+                    className="inline-flex min-h-[44px] items-center font-bold underline underline-offset-4 hover:text-primary"
+                  >
+                    {s.data.label}
+                  </Link>
+                ) : null}
               </span>
             </div>
           ))}

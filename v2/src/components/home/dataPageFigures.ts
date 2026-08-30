@@ -43,19 +43,6 @@ export interface DisclosureLike {
   risk?: { baseline?: { denialRate: number; denied: number; decided: number } };
 }
 
-/** Share of all cases covered by a set of entity rows, as whole percent. */
-function shareOfCases(
-  rows: EntityStat[] | undefined,
-  uniqueCases: number | undefined,
-): number | null {
-  if (!rows?.length || !uniqueCases || uniqueCases <= 0) return null;
-  const covered = rows.reduce((sum, r) => sum + r.total, 0);
-  if (covered <= 0) return null;
-  // A share above 100 means the inputs disagree about what a case is; that is
-  // a data fault, not a figure to print.
-  const pct = Math.round((covered / uniqueCases) * 100);
-  return pct > 100 ? null : pct;
-}
 
 export function deriveFigures(
   d: DisclosureLike | null | undefined,
@@ -64,8 +51,6 @@ export function deriveFigures(
     return {
       states: null,
       wages: null,
-      employerShare: null,
-      attorneyShare: null,
       denial: null,
     };
   }
@@ -109,8 +94,6 @@ export function deriveFigures(
   return {
     states,
     wages,
-    employerShare: shareOfCases(d.topEmployers, d.uniqueCases),
-    attorneyShare: shareOfCases(d.topAttorneys, d.uniqueCases),
     denial,
   };
 }

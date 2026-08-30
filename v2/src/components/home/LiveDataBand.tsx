@@ -35,9 +35,7 @@ export interface DataPageFigures {
   /** Offered-wage ladder, 10th / 50th / 90th percentile. */
   wages: { p10: number; p50: number; p90: number } | null;
   /** Share of all cases sitting in the 250 largest sponsor rows. */
-  employerShare: number | null;
   /** Share of all cases sitting in the 250 largest law-firm rows. */
-  attorneyShare: number | null;
   /** Denial rate and the fraction behind it. */
   denial: { rate: number; denied: number; decided: number } | null;
 }
@@ -98,19 +96,23 @@ export function LiveDataBand({
           monthsAhead={8}
         />
 
-        {/* THE CARDS CARRY EVIDENCE, NOT LABELS. Five identical text tiles
-            reading "Who sponsors the most" was the same defect as a hero with
-            no data in it: a menu pretending to be a page. Each card now shows
-            one real figure from the same disclosure files the pages are built
-            from, and each takes the shape its own content has - a span for
-            geography, a ladder for a distribution, a share for concentration,
-            a rate for an outcome.
+        {/* A CARD CARRIES A FIGURE ONLY IF THE FIGURE ANSWERS SOMETHING.
+            An earlier version gave all five one, on the reasoning that a card
+            without a number was "a menu pretending to be a page". That pushed
+            it the other way: to fill the sponsor and law-firm slots it printed
+            "N% of cases, top 250", and "top 250" is not a cohort anyone chose -
+            it is the residue of a storage cap, the old 1 MB document that could
+            hold 250 entity rows. A figure shaped by a former database limit,
+            printed because the slot wanted one.
 
-            NO ENTITY IS NAMED OR RANKED. DOL prints one law firm under six
-            spellings, so any "#1 by volume" claim from these files is wrong
-            until entity identity is normalised. A SHARE is safe: merging the
-            duplicate rows would only pull more distinct firms into the top
-            250, so the figure understates rather than overstates. */}
+            Two survive because they answer the question their page exists for:
+            the wage ladder IS the wage page, and the denial rate IS the denial
+            page. The other three say what you will see. A label that promises
+            plainly beats a number that impresses and tells you nothing.
+
+            NO ENTITY IS NAMED OR RANKED anywhere here. DOL prints one law firm
+            under six spellings, so any "#1 by volume" claim from these files is
+            wrong until entity identity is normalised. */}
         <nav
           aria-label="Data pages"
           className="mt-10 grid grid-cols-2 gap-3 [&>*]:min-w-0 sm:grid-cols-3 lg:grid-cols-5"
@@ -119,26 +121,17 @@ export function LiveDataBand({
             {
               href: "/perm-by-state",
               label: "By state",
-              what: "Filings and wages per worksite state",
-              figure: figures?.states ? (
-                <>
-                  <span className="block font-heading text-2xl font-black leading-none">
-                    {figures.states.topCases.toLocaleString("en-US")}
-                  </span>{" "}
-                  <span className="mt-1 block font-mono text-sm font-semibold text-foreground/60">
-                    in {figures.states.top}, most of any
-                  </span>{" "}
-                  <span className="mt-1 block font-mono text-sm text-foreground/55">
-                    {figures.states.lowCases.toLocaleString("en-US")} in{" "}
-                    {figures.states.low}, fewest
-                  </span>
-                </>
-              ) : null,
+              what: "View number of filings and wages by state",
+              // The most/least-filings pair is gone. Which state leads is not a
+              // question anyone arrives with, and the runner-up fact ("39 in
+              // VI, fewest") is trivia about a territory with 39 cases. The
+              // card now says what the page does and lets the page do it.
+              figure: null,
             },
             {
               href: "/perm-wages",
               label: "Wages",
-              what: "Median offered wage by occupation",
+              what: "View median offered wage by occupation",
               figure: figures?.wages ? (
                 <>
                   {(
@@ -167,39 +160,28 @@ export function LiveDataBand({
             {
               href: "/perm-employers",
               label: "Employers",
-              what: "Who sponsors, and how concentrated it is",
-              figure:
-                figures?.employerShare != null ? (
-                  <>
-                    <span className="block font-heading text-2xl font-black leading-none">
-                      {figures.employerShare}%
-                    </span>{" "}
-                    <span className="mt-1 block font-mono text-sm font-semibold text-foreground/60">
-                      of cases, top 250 sponsors
-                    </span>
-                  </>
-                ) : null,
+              what: "View employer filing metrics",
+              // The "N% of cases, top 250 sponsors" share is DELETED, and it
+              // should never have shipped. "Top 250" was not a cohort anyone
+              // chose - it is the residue of a storage cap (the old Convex 1 MB
+              // document that could only hold 250 entity rows), so the figure
+              // was shaped by a database limit rather than by anything true
+              // about sponsorship. It also answered a question no visitor
+              // asked. It existed because the five cards were designed to each
+              // carry a figure, which is decoration wearing evidence's clothes.
+              figure: null,
             },
             {
               href: "/perm-attorneys",
               label: "Law firms",
-              what: "Who files, and how concentrated it is",
-              figure:
-                figures?.attorneyShare != null ? (
-                  <>
-                    <span className="block font-heading text-2xl font-black leading-none">
-                      {figures.attorneyShare}%
-                    </span>{" "}
-                    <span className="mt-1 block font-mono text-sm font-semibold text-foreground/60">
-                      of cases, top 250 filers
-                    </span>
-                  </>
-                ) : null,
+              what: "View law firm filing metrics",
+              // Deleted for the same reason as the sponsor share above.
+              figure: null,
             },
             {
               href: "/perm-denial-risk",
               label: "Denial rates",
-              what: "What gets denied",
+              what: "View why cases are denied",
               figure: figures?.denial ? (
                 <>
                   <span className="block font-heading text-2xl font-black leading-none">
