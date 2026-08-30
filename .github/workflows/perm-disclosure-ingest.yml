@@ -46,7 +46,14 @@ on:
       since_fy:
         description: "Earliest fiscal year to union (e.g. 2024). Takes whole years, so the FY2024 old-form/new-form pair is never split."
         required: false
-        default: "2025"
+        # 2024, NOT 2025, because that is what the live corpus actually spans:
+        # perm_cases holds decisions from 2023-10-01 (FY2024) and the freshness
+        # row describes it as "FY2024-FY2026". A narrower union does not just
+        # miss rows, it makes the TABLE and the DOCS describe different
+        # universes - build_state_profiles.py refused to publish for exactly
+        # that reason, comparing 343,649 state-attributed decided cases against
+        # a disclosure_stats baseline of 248,158 and failing the run.
+        default: "2024"
 
 permissions:
   contents: read
@@ -93,7 +100,11 @@ jobs:
         # into `run:` splices the value into the command itself, so a crafted
         # input would execute rather than be read as an argument.
         env:
-          SINCE_FY: ${{ github.event.inputs.since_fy || '2025' }}
+          # The scheduled run has no inputs, so THIS fallback is what the
+          # quarterly cron actually uses. It has to match the input default
+          # above, or the automated run and a hand-dispatched one build
+          # different corpora.
+          SINCE_FY: ${{ github.event.inputs.since_fy || '2024' }}
         run: |
           case "$SINCE_FY" in
             ''|*[!0-9]*) echo "FATAL: since_fy must be a 4-digit year" >&2; exit 1 ;;
