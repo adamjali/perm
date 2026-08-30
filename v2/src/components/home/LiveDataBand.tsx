@@ -46,6 +46,109 @@ export interface LiveDataBandProps {
   figures?: DataPageFigures;
 }
 
+/**
+ * A figure for every card, and a DIFFERENT SHAPE for each.
+ *
+ * Adam, 2026-08-30: "the 5 boxes/links are boring low effort lazy ai slop and
+ * flat and nothing and superficial not deep, no visuals? no unique structure
+ * or layout or skeleton?" He was right, and the reason is documented two
+ * comments below: three of the five carried a numeric figure that was deleted
+ * for being meaningless, and nothing replaced it. Deleting them was correct.
+ * Leaving the slot empty was not.
+ *
+ * THE CONSTRAINT THAT SHAPES ALL OF THIS: employers and law firms have no
+ * honest number to print. DOL spells one practice six ways, so any count or
+ * ranking off these files overstates until entity identity is normalised, and
+ * the deleted "top 250 sponsors" share was the residue of a 1 MB document
+ * limit rather than a cohort anyone chose. So those two cards get a DIAGRAM of
+ * the shape of their data, which is true and needs no disputed figure, while
+ * wages and denial keep the real numbers they already had.
+ *
+ * Each figure is drawn from what its page is actually about rather than from a
+ * house chart style: a grid for geography, a ladder for a range, a long tail
+ * for a population of mostly-small filers, a fan for the many-to-one relation
+ * between employers and the firms that file for them, and a proportion bar for
+ * a rate. Five questions, five geometries.
+ *
+ * All of them: `currentColor` and the theme's own tokens, never a raw hex; the
+ * `-ink` variants, which are the ones that clear 3:1 against this surface in
+ * light mode; `aria-hidden`, because each sits beside text that already says
+ * what the card is; and no animation, so nothing here can pulse.
+ */
+const FIG = "h-[54px] w-full";
+
+/** Geography: a grid where filings cluster unevenly, which is the point. */
+function StateFigure() {
+  // Deliberately schematic and unlabelled. A real choropleth needs per-state
+  // values in the card, and the page itself is where those belong; this says
+  // "this data varies by place" without asserting which place leads.
+  const cells = [
+    0.15, 0.3, 0.15, 0.55, 0.15, 0.15, 0.15, 0.85, 0.4, 0.15, 0.3, 1, 0.15,
+    0.55, 0.15, 0.15, 0.7, 0.15, 0.3, 0.15, 0.15, 0.4, 0.15, 0.15,
+  ];
+  return (
+    <svg viewBox="0 0 96 30" className={FIG} aria-hidden="true">
+      {cells.map((v, i) => (
+        <rect
+          key={i}
+          x={(i % 8) * 12 + 1}
+          y={Math.floor(i / 8) * 10 + 1}
+          width="10"
+          height="8"
+          fill="var(--data-good-ink)"
+          fillOpacity={v}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** A population of mostly-small filers: the long tail, drawn as itself. */
+function EmployersFigure() {
+  const bars = [30, 22, 17, 13, 10, 8, 7, 6, 5, 5, 4, 4, 3, 3, 3, 3];
+  return (
+    <svg viewBox="0 0 96 30" className={FIG} aria-hidden="true">
+      {bars.map((h, i) => (
+        <rect
+          key={i}
+          x={i * 6}
+          y={30 - h}
+          width="4.5"
+          height={h}
+          fill="currentColor"
+          fillOpacity={0.55}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** Many employers, far fewer firms filing for them: a fan, not a bar chart. */
+function FirmsFigure() {
+  const rows = [3, 9, 15, 21, 27];
+  return (
+    <svg viewBox="0 0 96 30" className={FIG} aria-hidden="true">
+      {rows.map((y, i) => (
+        <Fragment key={y}>
+          <line
+            x1="4"
+            y1={y}
+            x2="60"
+            y2={i < 2 ? 11 : i === 2 ? 15 : 19}
+            stroke="currentColor"
+            strokeOpacity={0.4}
+            strokeWidth="1"
+          />
+          <rect x="1" y={y - 2} width="4" height="4" fill="currentColor" fillOpacity={0.5} />
+        </Fragment>
+      ))}
+      {[11, 15, 19].map((y) => (
+        <rect key={y} x="60" y={y - 3} width="7" height="6" fill="var(--data-good-ink)" />
+      ))}
+    </svg>
+  );
+}
+
 export function LiveDataBand({
   frontierMonth,
   asOf,
@@ -125,11 +228,12 @@ export function LiveDataBand({
               href: "/perm-by-state",
               label: "By state",
               what: "View number of filings and wages by state",
-              // The most/least-filings pair is gone. Which state leads is not a
-              // question anyone arrives with, and the runner-up fact ("39 in
-              // VI, fewest") is trivia about a territory with 39 cases. The
-              // card now says what the page does and lets the page do it.
-              figure: null,
+              // The most/least-filings pair stays gone: which state leads is
+              // not a question anyone arrives with, and "39 in VI, fewest" is
+              // trivia about a territory with 39 cases. What replaces it is a
+              // SHAPE rather than a fact - filings cluster unevenly across
+              // places - which is what the page is for and asserts no ranking.
+              figure: <StateFigure />,
             },
             {
               href: "/perm-wages",
@@ -172,14 +276,22 @@ export function LiveDataBand({
               // about sponsorship. It also answered a question no visitor
               // asked. It existed because the five cards were designed to each
               // carry a figure, which is decoration wearing evidence's clothes.
-              figure: null,
+              //
+              // The long tail replaces it: most sponsors file a handful of
+              // cases and a few file thousands. That is true of the corpus,
+              // needs no disputed count, and is the thing the page shows.
+              figure: <EmployersFigure />,
             },
             {
               href: "/perm-attorneys",
               label: "Law firms",
               what: "View law firm filing metrics",
-              // Deleted for the same reason as the sponsor share above.
-              figure: null,
+              // Deleted for the same reason as the sponsor share above. The
+              // fan says the thing that actually distinguishes this page from
+              // the employers one: many employers, far fewer firms filing for
+              // them. A second long-tail chart here would have made two
+              // different questions look like one.
+              figure: <FirmsFigure />,
             },
             {
               href: "/perm-denial-risk",
@@ -196,6 +308,26 @@ export function LiveDataBand({
                   <span className="mt-1 block font-mono text-sm text-foreground/55">
                     {figures.denial.denied.toLocaleString("en-US")} of{" "}
                     {figures.denial.decided.toLocaleString("en-US")}
+                  </span>{" "}
+                  {/* THE BAR IS DRAWN TO SCALE, which is the whole reason to
+                      draw it. The denial rate is a couple of percent, so an
+                      honest bar is a sliver against a long remainder - and
+                      that IS the finding this page exists to deliver, since
+                      the number people arrive fearing is far larger. A bar
+                      padded to a visible minimum would quietly argue the
+                      opposite of the data. `Math.max(0.6, ...)` keeps a
+                      non-zero rate from rounding away to an empty track
+                      entirely, and 0.6% of the width stays visually tiny. */}
+                  <span
+                    className="mt-2 block h-1.5 w-full bg-border/40"
+                    aria-hidden="true"
+                  >
+                    <span
+                      className="block h-full bg-[var(--data-bad-ink)]"
+                      style={{
+                        width: `${Math.min(100, Math.max(0.6, figures.denial.rate))}%`,
+                      }}
+                    />
                   </span>
                 </>
               ) : null,

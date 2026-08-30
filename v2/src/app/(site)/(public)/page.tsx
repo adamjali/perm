@@ -62,8 +62,24 @@ export const metadata: Metadata = {
   // to a literal that already starts with the brand → "...| PERM Tracker | PERM
   // Tracker" doubled. Using `absolute` is the documented escape hatch.
   title: { absolute: "PERM Tracker - Live PERM Data and Deadlines" },
+  // LEADS WITH THE PHRASE THIS PAGE ACTUALLY RANKS FOR, and that is the whole
+  // edit. Measured in GSC 2026-08-30: "perm tracker" brought 1,088 of the
+  // site's 2,300 clicks in the last three months, and the previous
+  // description - accurate, 138 characters, well within every limit - did not
+  // contain the phrase anywhere. Google was not using it. The live SERP
+  // snippet was assembled from the page instead: one sentence out of the
+  // reviews section plus four trust-badge labels welded together with full
+  // stops ("Encrypted Data. DOL Compliant. Applicants and Attorneys. 5 PERM
+  // Stages."), which reads like ad copy.
+  //
+  // Google rewrites descriptions when it judges page text a better answer, and
+  // the text it chose opened with the query, bolded. This cannot be forced -
+  // no description is guaranteed to be used - but one that answers the query
+  // it is competing for has a far better chance than one that never says it.
+  //
+  // 138 characters, the same as what it replaces, so nothing is truncated.
   description:
-    "Where DOL's PERM queue stands today, and every case deadline computed automatically. Free, for the person waiting and the person managing.",
+    "PERM Tracker shows where DOL's queue stands today and computes every deadline on your case. Look up a case number free, no account needed.",
   alternates: {
     canonical: "/",
   },

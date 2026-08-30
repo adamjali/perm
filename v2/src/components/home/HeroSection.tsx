@@ -189,10 +189,9 @@ function Door({
 export function HeroSection({ waitRows = [] }: HeroSectionProps) {
   const data = measure(waitRows);
   const current = data?.items[data.items.length - 1];
-  const peak = data?.items.reduce(
-    (worst, i) => (i.wait > worst.wait ? i : worst),
-    data.items[0]!,
-  );
+  // `peak` went with the subhead it fed. The peak wait is still drawn - the
+  // ledger opposite plots every month, so the high point is visible there as
+  // a shape rather than asserted here as a sentence.
 
   return (
     <section
@@ -261,33 +260,24 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               </>
             )}
           </h1>{" "}
-          {/* 56ch, not 46ch. The measure is wide on purpose: at 46 characters
-              this sentence broke to three lines in the desktop column, and a
-              third line here is 30px straight off the fold. It is still inside
-              the 45-75 character band a line of body text should sit in. */}
-          <p className="mt-3 max-w-[56ch] text-base leading-relaxed text-foreground/70 sm:text-lg">
-            {current && peak && peak.wait > current.wait ? (
-              /* "PERM Tracker" appears in the visible prose deliberately.
-                 Google corroborates a brand from the title, headings and
-                 prominent text together; after the reorg the H1 became a
-                 data claim with no brand in it, and within a day the FAQ
-                 page - dense with the name - was representing the site on
-                 the brand query instead of the homepage. */
-              /* The "across every month decided since Oct 23" clause was cut
-                 on 2026-08-30. It is a third line on a phone, the dateline
-                 above already stamps the window, and the ledger prints the
-                 full range in its own header. */
-              <>
-                That&apos;s down from {peak.wait} months at the peak. PERM
-                Tracker measures it from DOL&apos;s own files.
-              </>
-            ) : (
-              <>
-                A PERM case runs about a year, and one missed date can restart
-                it. PERM Tracker computes every deadline in your case.
-              </>
-            )}
-          </p>{" "}
+          {/* THE SUBHEAD IS GONE, on Adam's call 2026-08-30.
+              ("thats down from 17 months.... dols own files, take that whole
+              thing out.")
+
+              It was carrying two jobs and doing neither well. As a sentence it
+              restated the H1's own number back at the reader, and as an SEO
+              device it was the page's insurance policy for the word "PERM
+              Tracker" in prominent prose - which is why it is worth being
+              explicit that the insurance has not gone with it. The brand still
+              sits in the H1 overline, in the title, and now leads the meta
+              description. `brand-signals.test.ts` asserts the H1 half, so
+              deleting this cannot quietly recreate the state where /faq
+              outranked the homepage on the brand query.
+
+              Removing it also buys back ~60px above the fold, which is what
+              lets the two action cards below sit higher. The ledger opposite
+              stretches to whatever height this column ends at, so the two
+              columns stay bottom-aligned without a second measurement. */}
           {/* THE PRIMARY ACTION: check your own case. A plain GET form into
               /perm-case-status?case= - the page's existing, shareable,
               works-without-JS contract - so the hero stays free of client
@@ -359,7 +349,14 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               // visa bulletin's cutoffs, not to the case corpus this door
               // opens, so claiming it here would be a claim the page cannot
               // answer.
-              body="Track by employer, specialty, state, and law firm"
+              // ORDERED TO MATCH THE DATA BAND BELOW, which runs state,
+              // wages, employers, law firms. Two lists of the same four axes
+              // in two different orders is a reader re-reading to check they
+              // are the same four, and they are. "Specialty" is the wages
+              // page's axis (it is organised by occupation), so the words
+              // differ where the page's own vocabulary differs and the
+              // sequence does not.
+              body="Track by state, specialty, employer, and law firm"
               cta="For foreign workers and employers"
               href="/perm-cases"
               figure={<FacetIndexMini />}

@@ -108,7 +108,10 @@ export function CTASection({
           </div>{" "}
 
           <div>
-            <p className="mb-3 font-mono text-sm text-black/60 uppercase tracking-wider">
+            {/* /70, not /60. Black at 60% over the lime panel measures 4.37:1
+                against a 4.5 floor; 70% gives 5.80:1. Computed against the
+                real token (#2ecc40), not eyeballed. */}
+            <p className="mb-3 font-mono text-sm text-black/70 uppercase tracking-wider">
               {eyebrow}
             </p>{" "}
             <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl">

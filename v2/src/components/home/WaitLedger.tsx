@@ -236,7 +236,13 @@ function Reading({
       <p
         className={cn(
           "mt-1 font-heading font-black leading-none tracking-[-0.03em]",
-          current ? "text-black" : "text-black/60",
+          // /70 for the peak row, not /60. The big numeral clears the floor on
+          // its size alone (3:1 applies at 40px), but the "months" beside it is
+          // 14px and inherits the same colour, so at /60 it measured 4.25:1
+          // against a 4.5 floor. One class, two type sizes, and only the small
+          // one was failing - which is why it survived every look at the big
+          // number next to it.
+          current ? "text-black" : "text-black/70",
         )}
       >
         <span className="text-[2.5rem] sm:text-[3rem]">{wait}</span>{" "}

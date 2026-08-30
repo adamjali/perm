@@ -44,8 +44,22 @@ const TAGS = `(?:motion\\.)?(?:${BASE})`;
  * "30-Day Audit ResponseMiss the DOL's 30-day audit window", because the source
  * reads `</h3>` then `{/* Consequence *\/}` then `<p>`. Twenty-six pairs across
  * twenty-one files were hidden this way, and the pattern is house style here.
+ *
+ * THE COMMENT BODY MUST BE UNABLE TO CROSS ITS OWN TERMINATOR, and `*?` is not
+ * enough to guarantee that. Lazy quantifiers still expand under backtracking
+ * when the rest of the pattern cannot otherwise match, so `[\s\S]*?` would run
+ * from one comment's opener to a LATER comment's closer and swallow every tag
+ * in between as comment body. Measured 2026-08-30 on LiveDataBand.tsx: adding
+ * an ordinary comment above a `<span>` produced a single 7,678-character
+ * "match" welding an `</h2>` to a `<span>` 130 lines below it, with correctly
+ * separated markup throughout. A false positive on a gate this load-bearing is
+ * expensive twice over - it costs an investigation, and it teaches you to
+ * reach for the suppression rather than the diff.
+ *
+ * `(?:(?!\*\/)[\s\S])*` cannot pass a `*\/` under any amount of backtracking,
+ * so a comment matches exactly its own body and nothing beyond it.
  */
-const GAP = `(?:\\s|\\{/\\*[\\s\\S]*?\\*/\\})*`;
+const GAP = `(?:\\s|\\{/\\*(?:(?!\\*/)[\\s\\S])*\\*/\\})*`;
 
 /**
  * A closing tag followed by an opening tag with nothing but whitespace and

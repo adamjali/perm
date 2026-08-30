@@ -74,6 +74,24 @@ const severityColors = {
   high: "var(--urgency-soon, #EA580C)",
 };
 
+/**
+ * The ink each severity can actually carry, measured rather than assumed.
+ *
+ * Both badges hardcoded `color: "#fff"`, and the two backgrounds want opposite
+ * inks:
+ *
+ *   #DC2626 (critical)  white 4.83:1   black 4.35:1
+ *   #EA580C (high)      white 3.56:1   black 5.90:1
+ *
+ * So white was correct on one badge and failed the 4.5 floor on the other, and
+ * the two sit side by side in the same row. A single literal cannot serve two
+ * grounds; the pairing has to be per colour.
+ */
+const severityInk = {
+  critical: "#fff",
+  high: "#000",
+};
+
 export function StakesSection() {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = React.useState(0);
@@ -198,7 +216,7 @@ export function StakesSection() {
                   className="absolute -top-0 right-5 flex h-10 w-10 items-center justify-center border-3 border-border font-heading text-lg font-bold shadow-hard-sm"
                   style={{
                     backgroundColor: severityColors[stake.severity],
-                    color: "#fff",
+                    color: severityInk[stake.severity],
                     top: "-1px",
                   }}
                 >

@@ -301,7 +301,16 @@ export default async function ToolsPage() {
               <span
                 className={
                   "mt-4 font-mono text-xs font-bold uppercase tracking-wider " +
-                  (c.tone === "ink" ? "text-primary" : "text-foreground/60 group-hover:text-primary")
+                  // NOT `text-primary` ON THE INK CARD. That card is
+                  // `bg-foreground`, which is near-black in light and
+                  // near-WHITE in dark, while the lime holds still at #2ecc40
+                  // - so the label measured 4.28:1 in light and 2.05:1 in
+                  // dark. `text-background` is the half of the pair that flips
+                  // WITH the card, so it is legible in both by construction.
+                  // Same defect as the verdict chip, same fix.
+                  (c.tone === "ink"
+                    ? "text-background/80 group-hover:text-background"
+                    : "text-foreground/60 group-hover:text-primary")
                 }
               >
                 Open →

@@ -73,6 +73,47 @@ describe("homepage brand signals", () => {
   });
 });
 
+describe("homepage meta description", () => {
+  const PAGE = join(process.cwd(), "src/app/(site)/(public)/page.tsx");
+
+  /** The `description:` string on the top-level `metadata` export. */
+  function homepageDescription(): string {
+    const src = readFileSync(PAGE, "utf8");
+    // Strip line comments first: the explanation above this field names the
+    // phrase the assertion looks for, and matching that instead of the copy
+    // would pass with the description empty. Same trap the H1 gate above hit.
+    const clean = src.replace(/^\s*\/\/.*$/gm, "");
+    const meta = clean.indexOf("export const metadata");
+    const og = clean.indexOf("openGraph", meta);
+    expect(meta, "no metadata export in page.tsx").toBeGreaterThan(-1);
+    expect(og, "no openGraph block in page.tsx").toBeGreaterThan(meta);
+    // Deliberately bounded to BEFORE openGraph: og has its own description,
+    // written for a social card rather than a search result, and matching it
+    // by accident would make this gate assert the wrong string.
+    const m = /description:\s*\n?\s*"((?:[^"\\]|\\.)*)"/.exec(clean.slice(meta, og));
+    expect(m, "no description found in the metadata export").not.toBeNull();
+    return m![1]!.replace(/\\'/g, "'");
+  }
+
+  it("contains the phrase the page competes for", () => {
+    // Measured in GSC 2026-08-30: "perm tracker" brought 1,088 of 2,300 clicks
+    // over 90 days. The description this replaced was accurate and never said
+    // it, so Google substituted text scraped off the page - a sentence from
+    // the reviews section plus four trust-badge labels run together.
+    expect(homepageDescription()).toContain("PERM Tracker");
+  });
+
+  it("fits in a SERP without being truncated", () => {
+    // Google truncates around 155 characters. Measured on the UNESCAPED text:
+    // house style is contraction-heavy and every apostrophe is six characters
+    // as an HTML entity, which is how a compliant description gets reported as
+    // over-length by a reader that measures the raw attribute.
+    const d = homepageDescription();
+    expect(d.length).toBeGreaterThan(70);
+    expect(d.length).toBeLessThanOrEqual(155);
+  });
+});
+
 describe("WebSite schema site-name candidates", () => {
   const schema = getWebSiteSchema("https://permtracker.app");
 
