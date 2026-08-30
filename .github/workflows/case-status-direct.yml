@@ -98,6 +98,37 @@ jobs:
           # mark the sweep failed - the band just stays a day staler.
           python3 scripts/build_entity_detail.py --live-recent-only || true
 
+      # Expire the employer pages whose live rows just moved.
+      #
+      # /perm-employers/[slug] caches for 30 days, which is right for the
+      # quarterly figures on it and a month too long for the live band. A
+      # route segment gets one window, so the pages that changed are expired
+      # by PATH instead. The rebuild above writes the slug list, busiest
+      # first, capped to match the endpoint's own limit.
+      #
+      # `|| true` for the same reason as the rebuild: a page staying a day
+      # staler is not a reason to mark a 85-minute federal data sweep failed.
+      # The step is skipped rather than failing when the file is absent, which
+      # is what a rebuild that itself failed leaves behind.
+      - name: Expire changed employer pages
+        if: always()
+        working-directory: v2
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ ! -s changed-employer-slugs.json ]; then
+            echo "no slug list written; nothing to expire"; exit 0
+          fi
+          if [ -z "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_SECRET not set; skipping"; exit 0
+          fi
+          # -f so a 4xx/5xx is visible in the log rather than a silent 403
+          # body scrolling past as if it were a success.
+          curl -fsS -X POST https://permtracker.app/api/revalidate-live-employers \
+            -H "x-revalidate-secret: $REVALIDATE_SECRET" \
+            -H "content-type: application/json" \
+            --data @changed-employer-slugs.json || echo "revalidation call failed"
+
       - name: Remove credentials
         if: always()
         working-directory: v2

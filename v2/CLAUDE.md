@@ -1429,3 +1429,94 @@ lead with the strongest model's own date ("Most likely: around X") with
 the full window right under it - an anchor plus honest spread, never a
 bare range and never a blended number. Predictions worth scoring go in
 `../.planning/prediction-ledger.md` BEFORE the outcome.
+
+## Turso forbids ANALYZE, so an index has to win on its own shape (2026-08-30)
+
+`db.execute("ANALYZE")` returns `SQL not allowed statement: ANALYZE`, and
+`sqlite_stat1` does not exist on this database. Every plan is therefore chosen
+from SQLite's no-stats heuristics, which has two consequences worth knowing
+before adding an index:
+
+- **Design the index so the query cannot be served by a worse one.** Lead with
+  the equality the query filters hardest on, and put the ordering column last
+  so the sort comes free. `perm_case_status` had `case_status_month (month,
+  status)` and `case_status_final (is_final, filing_date)`; a per-status list
+  matched neither well and read all ~98,000 pending rows to return 974.
+  `case_status_stage (current_status, is_final, filing_date)` serves it
+  directly.
+- **AN `EXPLAIN QUERY PLAN` IN THE SAME PIPELINE AS ITS `CREATE INDEX` REPORTS
+  THE OLD PLAN.** The statement is prepared against the schema as it was when
+  the pipeline opened, so the new index is invisible to it. This looked exactly
+  like "SQLite is ignoring my index" and cost a detour through storage classes
+  and stats before a second, separate call showed it had been right all along.
+  Re-run the EXPLAIN in a fresh request.
+
+## revalidateTag would be a silent no-op here (2026-08-30)
+
+Tags attach to data through `fetch` with `next.tags`, `unstable_cache`, or
+`cacheTag` inside a `"use cache"` scope. This app uses none of them - Turso is
+read through a raw libSQL client - so `revalidateTag('anything')` returns 200,
+logs nothing, and leaves every prerender in place. Same family as the
+server-side concurrency check whose only client never sent the header.
+
+**`revalidatePath` with a LITERAL path is the mechanism that works**, and it is
+also the right shape: `/perm-employers/[slug]` carries `revalidate = 2592000`
+because ~21,495 live-only pages on a short window is what took Vercel's ISR
+write meter to 100%. A tag over all of them would expire all of them at once
+and reproduce exactly that. `POST /api/revalidate-live-employers` takes the
+few hundred slugs the nightly diff says moved; `build_entity_detail.py` writes
+`changed-employer-slugs.json` (busiest first, capped at 800 to match the
+route), and `case-status-direct.yml` posts it. **Never the
+`('/perm-employers/[slug]', 'page')` pattern form** - that expires all ~33,700
+employer pages in one call.
+
+`export const revalidate` is route-segment config: one statically analysable
+value per segment. Two render branches in one route file cannot have two
+windows, which is why this exists at all.
+
+## Slug "shadowing" between live and published: measured, and not a thing
+
+A live-only employer whose slug collides with a published one is unreachable,
+and its cases would be listed under the published employer's name. Measured
+2026-08-30 over 37,813 live slugs: **zero genuine collisions**. 5,083 slugs
+carry several spellings and every sampled one is a single company
+(`DISH NETWORK LLC` / `DISH NETWORK L.L.C.`, `Cuboid, LLC` / `CUBOID, LLC`),
+which is the merge working. A first pass reported 263 "true collisions" and
+**all 263 were the normaliser I wrote to find them** - the tenth time a new
+gate's first run was mostly the gate.
+
+The one real defect underneath it: `modalNames` counted the vote on the STORED
+string, and HTML collapses whitespace, so `LMR LLC\t` and `LMR LLC` are the
+same pixels. 24 live-only pages told the reader the employer "also filed as" a
+name that renders identically to the heading above it. The vote is pooled on
+the rendered form now; case and punctuation still count as real spellings,
+because a reader can see those and disclosing them is the feature.
+
+## Status cohorts: one stage is not like the others (2026-08-30)
+
+`/perm-rfi-audit/[stage]` lists the cases at a review stage. Measured pending,
+DOL's fixture excluded: ANALYST REVIEW **93,219**, then RECONSIDERATION APPEALS
+2,335, APPLICATION ON HOLD 1,855, RFI ISSUED 974, BALCA APPEALS 351, NORD
+ISSUED 108, and four stages holding 2 to 9. That is one stage and then
+everything else, so `stageListing()` has two floors rather than one rule:
+
+- **too-large** (> 20,000): not listed. ANALYST REVIEW is the ordinary queue
+  and `/perm-queue` already draws it month by month against DOL's published
+  position. The route list comes from `reviewStages()`, which excludes the
+  queue group, so it has no page at all.
+- **too-small** (< `SMALL_STAGE_MAX`): rows withheld. `getSmallStageRecords`
+  already prints these WITHOUT case numbers on purpose; a second, more
+  identifying copy of four people's applications is not more browsable.
+- in between: listed, oldest filing first, capped at 250 with the remainder
+  stated in words.
+
+**No pagination, deliberately.** Reading `searchParams` would make all five
+dynamic. The list answers "how long have these waited"; "is mine one of them"
+is already answered better by `/perm-case-status`, which asks DOL live.
+
+Two invariants: the count comes from `getReviewStages()` on both the hub and
+the leaf (two totals for one cohort on two linked pages would discredit both),
+and the employer slug is **JOINED from `perm_live_recent`, never slugified from
+the name** - a derived slug 404s on exactly the employers DOL spells several
+ways. `/perm-employers?q=` is an API route, not a page param: linking to it
+returns 200 and silently drops the query.

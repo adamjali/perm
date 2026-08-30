@@ -287,7 +287,59 @@ def write_live_recent(db: Turso, live: list[dict]) -> bool:
     ok = got == len(live)
     log(f"  {'ok ' if ok else 'MISMATCH'} perm_live_recent       {got:>7,} of {len(live):,} "
         f"({len(changed):,} written, {len(gone):,} removed)")
+    write_changed_slugs(changed, gone, stored)
     return ok
+
+
+# The employer pages carry `revalidate = 2592000`. Thirty days is right for the
+# quarterly disclosure figures that fill most of that page and wrong for the
+# live band on it, and a route segment gets exactly one window. So the pages
+# whose live rows moved are named here and expired by path after the sweep.
+# See src/app/api/revalidate-live-employers/route.ts for the other half.
+CHANGED_SLUGS_PATH = "changed-employer-slugs.json"
+
+# Matches MAX_PATHS in that route. Truncating HERE rather than letting the
+# endpoint reject the batch means a big night still refreshes the pages that
+# moved most, instead of refreshing nothing.
+MAX_CHANGED_SLUGS = 800
+
+
+def write_changed_slugs(changed: list[dict], gone: list[str],
+                        stored: dict[str, tuple]) -> None:
+    """Name the employer pages whose live content moved, busiest first.
+
+    BOTH HALVES OF THE DIFF COUNT. A case that CHANGED names its employer
+    directly; a case that is GONE - absorbed into a new quarterly file, so
+    deleted from the live table - only exists in the stored row, and its
+    employer's page still has to drop it from the live band. Taking only
+    `changed` would leave every absorbed case listed as live for a month.
+
+    Published employers are included too, not just live-only ones. Their pages
+    render `LiveQueueBand` and a recent-filings list from the same table, so
+    they go stale in exactly the same way; the thirty-day window is there for
+    their disclosure statistics, which is a different half of the same page.
+
+    Ranked by how many cases moved so that a truncated batch keeps the pages a
+    reader is most likely to be looking at.
+    """
+    counts: dict[str, int] = {}
+    for row in changed:
+        slug = row.get("employer_slug")
+        if slug:
+            counts[str(slug)] = counts.get(str(slug), 0) + 1
+    for key in gone:
+        row_vals = stored.get(key)
+        # employer_slug is index 5 in LIVE_COLS order.
+        slug = row_vals[5] if row_vals and len(row_vals) > 5 else None
+        if slug:
+            counts[str(slug)] = counts.get(str(slug), 0) + 1
+
+    ranked = sorted(counts, key=lambda s: (-counts[s], s))
+    kept = ranked[:MAX_CHANGED_SLUGS]
+    with open(CHANGED_SLUGS_PATH, "w", encoding="utf-8") as fh:
+        json.dump({"slugs": kept}, fh)
+    extra = f", {len(ranked) - len(kept):,} over the cap not listed" if len(ranked) > len(kept) else ""
+    log(f"  {len(kept):,} employer pages to expire{extra} -> {CHANGED_SLUGS_PATH}")
 
 
 def build_pending(db: Turso, maps) -> list[dict]:
