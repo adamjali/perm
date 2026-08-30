@@ -51,6 +51,15 @@ const ISOLATED_UNIT_FILES = [
   "src/hooks/__tests__/useJobDescriptionTemplates.test.ts",
   "src/hooks/__tests__/useChatWithPersistence.test.ts",
   "src/hooks/__tests__/useToolOrchestrator.test.ts",
+  // Added 2026-08-30. This file mocks `@/lib/turso/client`, and so do four
+  // other files in the same project. With `isolate: false` they share one
+  // module registry per worker, so whichever registers its factory first
+  // wins and the others' `rows` resolves to a function that was never given
+  // an implementation - `r` comes back undefined and the failure reads as a
+  // bug in the code under test. It passed alone and failed in the full run,
+  // which is the signature. The other turso mockers were already here or
+  // are ordered such that they have not collided yet; this one collides.
+  "src/lib/turso/__tests__/stageCases.test.ts",
 ];
 
 export default defineConfig({

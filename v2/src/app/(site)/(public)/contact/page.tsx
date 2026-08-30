@@ -11,6 +11,7 @@ import { ChatText, Envelope as Mail } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { ContactForm } from "./ContactForm";
+import { RoutingFigure } from "@/components/marketing/PageFigures";
 import {
   GITHUB_BUG_REPORT_URL,
   GITHUB_FEATURE_REQUEST_URL,
@@ -58,6 +59,16 @@ export default function ContactPage() {
             belongs on the issue tracker, and a case question is usually
             answered by the case lookup - so they read first and the form
             catches whatever they do not cover. */}
+        {/* The figure before the routes, because its point is the thing the
+            headings below cannot say at a glance: these are three doors into
+            one inbox, not three different teams. */}
+        <figure className="mt-8 border-2 border-border bg-background p-6 shadow-hard-sm">
+          <RoutingFigure className="h-auto w-full text-foreground" />{" "}
+          <figcaption className="mt-4 border-t-2 border-border pt-3 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Three ways in, one inbox
+          </figcaption>
+        </figure>
+
         <h2 className="mt-10 font-heading text-2xl font-black">Where to send it</h2>
         <div className="mt-6 space-y-8">
           {/* Email */}

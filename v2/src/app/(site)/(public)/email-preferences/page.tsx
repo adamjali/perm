@@ -3,6 +3,7 @@ import { Fragment } from "react";
 import Link from "next/link";
 
 import { PrefsRequestForm } from "@/components/prefs/PrefsRequestForm";
+import { AlertLanesFigure } from "@/components/marketing/PageFigures";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 /**
@@ -70,6 +71,17 @@ export default function EmailPreferencesPage() {
         off. Turning something on always happens from the page that owns it,
         never from a link.
       </p>
+      {/* The figure, before the form. The page asks for an email address, and
+          a reader deciding whether to give one wants to know what arrives -
+          three triggers, one message each, and nothing while nothing moves.
+          The dashed run is that silence drawn. */}
+      <figure className="mt-8 border-2 border-border bg-card p-6 shadow-hard-sm">
+        <AlertLanesFigure className="h-auto w-full text-foreground" />{" "}
+        <figcaption className="mt-4 border-t-2 border-border pt-3 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          One email per change. Nothing while nothing changes.
+        </figcaption>
+      </figure>
+
       <div className="mt-8">
         <PrefsRequestForm />
       </div>{" "}

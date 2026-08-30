@@ -22,5 +22,7 @@ export const metadata: Metadata = {
 };
 
 export default function ResetPasswordPage() {
-  return <ResetPasswordPageClient />;
+  // The layout no longer imposes a width, so the measure lives
+    // here. Unchanged from what it was: max-w-md, centred.
+    return <div className="mx-auto w-full max-w-md"><ResetPasswordPageClient /></div>;
 }

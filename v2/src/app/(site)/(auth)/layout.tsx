@@ -49,7 +49,12 @@ export default function AuthLayout({
         className="relative z-10 flex flex-1 items-center justify-center px-4 pb-8 transition-[padding] duration-200 sm:px-8 sm:pb-12"
         tabIndex={-1}
       >
-        <div className="w-full max-w-md">{children}</div>
+        {/* WIDTH BELONGS TO THE PAGE, not to the layout. A fixed max-w-md
+            here meant sign-up could never be anything but a single column,
+            and it is the one page in this group with something to show
+            beside the form. Sign-in and reset set the same measure
+            themselves, so nothing about them changes. */}
+        <div className="w-full">{children}</div>
       </main>
     </ConvexProviders>
     </ConvexAuthNextjsServerProvider>
