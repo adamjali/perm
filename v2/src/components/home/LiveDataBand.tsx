@@ -83,7 +83,11 @@ export function LiveDataBand({
             href="/tools"
             className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-background px-5 py-2.5 font-bold shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
           >
-            Open the data
+            {/* "Open the data" says nothing about what opens. The hero's
+                card was renamed off this phrasing; this button points at the
+                same place and kept it, which is the drift a reader has to
+                translate. */}
+            Browse every dataset
             <ArrowRight />
           </Link>
         </div>

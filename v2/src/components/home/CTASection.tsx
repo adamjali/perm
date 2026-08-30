@@ -139,7 +139,7 @@ export function CTASection({
               href="/tools"
               className="mt-4 block font-bold text-black underline decoration-black/40 decoration-2 underline-offset-4 transition-colors hover:decoration-black"
             >
-              Or start with the live data, no account needed
+              Or browse the case data, no account needed
             </a>
             </MagneticButton>
           </div>
