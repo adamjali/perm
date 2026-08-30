@@ -15,6 +15,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getDatasetSchema } from "@/lib/structuredData";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
@@ -82,22 +83,20 @@ export default async function PermCasesPage() {
     row.code ? [{ code: row.code, name: row.name, total: row.total }] : [],
   );
 
-  const datasetSchema = {
-    "@context": "https://schema.org",
-    "@type": "Dataset",
+  const datasetSchema = getDatasetSchema("https://permtracker.app", {
     name: "PERM labor certification case decisions",
     description: DESCRIPTION,
     url: "https://permtracker.app/perm-cases",
-    creator: { "@type": "Organization", name: "PERM Tracker" },
-    isBasedOn: "https://www.dol.gov/agencies/eta/foreign-labor/performance",
-    license: "https://permtracker.app/terms",
+    // Measured from the corpus rather than written down, and omitted entirely
+    // when the meta read comes back empty. This page had the honest version of
+    // temporalCoverage before the builder existed; it keeps it.
     ...(meta
       ? {
           temporalCoverage: `${meta.firstDecisionDate}/${meta.lastDecisionDate}`,
-          variableMeasured: "PERM labor certification determinations",
+          variableMeasured: ["PERM labor certification determinations"],
         }
       : {}),
-  };
+  });
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">

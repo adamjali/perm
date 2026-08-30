@@ -17,6 +17,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { getDatasetSchema } from "@/lib/structuredData";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataNav } from "@/components/tools/DataNav";
@@ -90,16 +91,11 @@ export default async function PermWagesPage() {
     occupations.filter((o) => o.code).map((o) => [o.code as string, o.slug]),
   );
 
-  const datasetSchema = {
-    "@context": "https://schema.org",
-    "@type": "Dataset",
+  const datasetSchema = getDatasetSchema("https://permtracker.app", {
     name: "PERM offered wages by occupation",
     description: DESCRIPTION,
     url: "https://permtracker.app/perm-wages",
-    creator: { "@type": "Organization", name: "PERM Tracker" },
-    isBasedOn: "https://www.dol.gov/agencies/eta/foreign-labor/performance",
-    license: "https://permtracker.app/terms",
-  };
+  });
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">

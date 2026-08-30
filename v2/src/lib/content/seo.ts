@@ -4,6 +4,7 @@
  * Generates structured data (JSON-LD) for content pages.
  */
 
+import { KNOWN_PERSON_AUTHORS } from "@/lib/constants/externalLinks";
 import type { PostMeta, ContentType, PostSummary } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
@@ -52,11 +53,31 @@ export function generateArticleSchema(
     image: imageUrl(meta),
     datePublished: toISO8601(meta.date),
     dateModified: toISO8601(meta.updated || meta.date),
-    author: {
-      "@type": "Organization" as const,
-      name: meta.author,
-      url: BASE_URL,
-    },
+    // THE ARTICLE'S OWN BYLINE, resolved to the right schema type.
+    //
+    // Everything used to be an Organization called "PERM Tracker Team", which
+    // asserts no expertise and names nobody accountable - the weakest possible
+    // signal on immigration guidance, the category where Google weighs
+    // experience hardest. The first fix overcorrected and hardcoded ONE person
+    // across all 22 articles, which threw away the per-file frontmatter that
+    // already existed and would have bylined the changelog to a human.
+    //
+    // A registered name becomes a Person with `sameAs`, which is what makes a
+    // byline a checkable identity rather than a string. Anything else stays an
+    // Organization, so a new name in a frontmatter file cannot quietly invent a
+    // person who has no profile behind them.
+    author: KNOWN_PERSON_AUTHORS[meta.author]
+      ? {
+          "@type": "Person" as const,
+          name: meta.author,
+          url: KNOWN_PERSON_AUTHORS[meta.author]!.url,
+          sameAs: [KNOWN_PERSON_AUTHORS[meta.author]!.url],
+        }
+      : {
+          "@type": "Organization" as const,
+          name: meta.author,
+          url: BASE_URL,
+        },
     publisher: PUBLISHER,
     mainEntityOfPage: {
       "@type": "WebPage" as const,

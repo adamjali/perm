@@ -61,3 +61,43 @@ export const SOCIAL_LINKS = [
     icon: "linkedin",
   },
 ] as const satisfies readonly SocialLink[];
+
+/**
+ * The byline on articles, and the profile that corroborates it.
+ *
+ * Approved by the site owner on 2026-08-29 before shipping, because publishing
+ * a person's name is an identity decision rather than an SEO one.
+ *
+ * WHY A PERSON AT ALL. Articles credited `Organization: "PERM Tracker Team"`,
+ * which asserts no expertise and names nobody accountable. This is immigration
+ * guidance - the category where Google weighs experience and accountability
+ * hardest - and the competitor outranking us credits a named individual with a
+ * profile link. `sameAs` is what turns a name into a checkable identity rather
+ * than a string.
+ *
+ * The profile is the project's own GitHub, which is a real, owned, verifiable
+ * destination. It is a weaker authority signal than a professional profile
+ * would be, and that is a known, accepted trade rather than an oversight.
+ */
+export const ARTICLE_AUTHOR = {
+  name: "Adam J Ali",
+  url: "https://github.com/adamjali",
+} as const;
+
+/**
+ * Which bylines are PEOPLE, and where to find them.
+ *
+ * Authorship is per article, from each file's own frontmatter, and it is
+ * deliberately NOT uniform. A changelog entry is the product speaking and
+ * belongs to the site; a guide is advice and belongs to a person. A site where
+ * every single page carries the same human byline reads as manufactured, and
+ * one where nothing does asserts no accountability at all.
+ *
+ * Anything absent from this map is emitted as an Organization, so adding a new
+ * byline to a file cannot silently invent a person - the name has to be
+ * registered here, with a profile that corroborates it, before it is published
+ * as one.
+ */
+export const KNOWN_PERSON_AUTHORS: Record<string, { url: string }> = {
+  [ARTICLE_AUTHOR.name]: { url: ARTICLE_AUTHOR.url },
+};

@@ -1,3 +1,4 @@
+import { ARTICLE_AUTHOR } from "@/lib/constants/externalLinks";
 import { describe, it, expect } from "vitest";
 import {
   generateArticleSchema,
@@ -266,5 +267,45 @@ describe("generateItemListSchema", () => {
     const schema = generateItemListSchema([], "blog");
     expect(schema.itemListElement).toEqual([]);
     expect(schema.numberOfItems).toBe(0);
+  });
+});
+
+describe("article authorship", () => {
+  const person = generateArticleSchema(
+    createTestMeta({ author: ARTICLE_AUTHOR.name }), "s", "blog");
+  const org = generateArticleSchema(
+    createTestMeta({ author: "PERM Tracker Team" }), "s", "changelog");
+
+  it("emits a Person, with a corroborating profile, for a registered byline", () => {
+    // sameAs is what turns a name into a checkable identity rather than a
+    // string. A Person with no external reference is barely better than the
+    // Organization it replaced.
+    const a = person.author as Record<string, unknown>;
+    expect(a["@type"]).toBe("Person");
+    expect(a.name).toBe(ARTICLE_AUTHOR.name);
+    expect(a.url).toBe(ARTICLE_AUTHOR.url);
+    expect(a.sameAs).toContain(ARTICLE_AUTHOR.url);
+  });
+
+  it("leaves an UNREGISTERED byline as an Organization", () => {
+    // Authorship is deliberately mixed: a changelog entry is the product
+    // speaking and belongs to the site, a guide is advice and belongs to a
+    // person. This branch is also the safety property - a new name in a
+    // frontmatter file cannot silently be published as a human with no profile
+    // behind them; it has to be registered first.
+    const a = org.author as Record<string, unknown>;
+    expect(a["@type"]).toBe("Organization");
+    expect(a.name).toBe("PERM Tracker Team");
+  });
+
+  it("never publishes a personal email or the operator's legal identity", () => {
+    // This markup ships on every article and is read by crawlers. The persona
+    // is the only identity that may appear in public output.
+    for (const schema of [person, org]) {
+      const json = JSON.stringify(schema);
+      expect(json).not.toMatch(/@gmail\.com/i);
+      expect(json).not.toMatch(/adamdragon/i);
+      expect(json).not.toMatch(/amohamed369/i);
+    }
   });
 });
