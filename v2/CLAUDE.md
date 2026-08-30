@@ -1520,3 +1520,28 @@ and the employer slug is **JOINED from `perm_live_recent`, never slugified from
 the name** - a derived slug 404s on exactly the employers DOL spells several
 ways. `/perm-employers?q=` is an API route, not a page param: linking to it
 returns 200 and silently drops the query.
+
+## Vercel binds env at DEPLOY time, so a new secret needs a rebuild (2026-08-30)
+
+`vercel env add REVALIDATE_SECRET production` succeeded and `vercel env ls`
+showed it, and the endpoint still answered **403 to the correct secret** -
+because the running deployment was built before the variable existed.
+`process.env.X` in a route handler resolves against the environment bound at
+build. A `vercel redeploy <url>` fixed it in one step.
+
+**Read what the endpoint WROTE, not that it returned something.** The 403 was
+indistinguishable from a wrong secret, and shipping on the assumption that
+"env var set + route deployed = wired" is exactly the failure this repo keeps
+meeting. After the redeploy the live dispatch returned
+`{"revalidated":1,"skipped":2}` for a payload of one good slug, `../..` and
+`BAD` - which proves the guard and the action in one call.
+
+## A shared count with two different dates is the same bug as two counts
+
+The stage pages read `getReviewStages` on the hub AND the leaf specifically so
+one cohort cannot show two totals. It shipped showing one total with two
+DATES: 965 cases "as of August 30" on the hub, the same 965 "as of August 27"
+on the leaf, because the hub took the latest `seenTo` across all stages and
+the leaf took its own. **A figure and its stamp are one claim.** Both read the
+per-stage value now. The global maximum survives only as the fallback for a
+stage holding nothing, which has no observation of its own.
