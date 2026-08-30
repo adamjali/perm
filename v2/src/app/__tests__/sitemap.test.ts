@@ -30,6 +30,13 @@ vi.mock("@/lib/turso/publicData", () => ({
   countPageworthy: vi.fn(async (kind: string) =>
     kind === "employer" ? 600 : 200,
   ),
+  // DELIBERATELY a different date from the processing-times mock above. Entity
+  // URLs must stamp from the quarterly DISCLOSURE corpus, not from DOL's
+  // daily-moving processing-times figure, and two identical dates would let
+  // that regression pass unnoticed.
+  getFreshness: vi.fn(async () => ({
+    "perm-cases": { asOf: "2026-06-30" },
+  })),
 }));
 vi.mock("@/lib/entitySeed", () => ({
   fetchAllEntitiesServer: vi.fn(),
@@ -436,5 +443,33 @@ describe("sitemap index and chunking", () => {
     const xml = urlsetXml(await pagesEntries());
     expect(xml).not.toContain("changefreq");
     expect(xml).not.toContain("<priority>");
+  });
+});
+
+describe("entity lastmod tracks the corpus, not the daily figure", () => {
+  beforeEach(() => {
+    // Arranged in this block's own beforeEach: vi.clearAllMocks() keeps
+    // implementations but CI shuffles test order, so inheriting another
+    // describe's arrangement is the order-dependency this file already got
+    // caught by once.
+    vi.mocked(fetchAllEntitiesServer).mockImplementation(async (kind: string) =>
+      entityRows(kind, 1, kind === "employer" ? 600 : 200),
+    );
+    vi.mocked(browseCounts).mockResolvedValue(bucketCounts());
+  });
+
+  it("stamps entity URLs with the disclosure as-of, never the processing-times one", async () => {
+    // The two mocks carry different dates on purpose. permAsOf() returns DOL's
+    // PROCESSING-TIMES stamp, which moves daily; entity pages render the
+    // QUARTERLY corpus. Before this fix every one of ~20,960 entity URLs
+    // restamped every day for data that changes four times a year, which is a
+    // lastmod Google discounts - and discounting it costs recrawl priority on
+    // exactly the pages whose numbers actually did move.
+    const entries = await entityEntries("employer", 0);
+    expect(entries.length).toBeGreaterThan(0);
+    for (const e of entries) {
+      expect(e.lastModified).toBe("2026-06-30");
+      expect(e.lastModified).not.toBe("2026-08-20");
+    }
   });
 });

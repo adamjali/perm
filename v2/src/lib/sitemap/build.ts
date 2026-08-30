@@ -12,7 +12,7 @@ import { hasOwnPage, type EntityKind } from "@/lib/entityPayload";
 import { captureError } from "@/lib/sentry";
 import { browseCounts } from "@/lib/turso/entityBrowse";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
-import { countPageworthy } from "@/lib/turso/publicData";
+import { countPageworthy, getFreshness } from "@/lib/turso/publicData";
 import { MIRROR_COMPLETE } from "@/lib/liveQueueGate";
 
 /**
@@ -81,6 +81,26 @@ export function baseUrl(): string {
 async function permAsOf(): Promise<string | null> {
   return getProcessingTimes()
     .then((s) => s?.permAsOf ?? null)
+    .catch(() => null);
+}
+
+/**
+ * When the DISCLOSURE CORPUS last changed, for the ~20,960 entity URLs.
+ *
+ * Not `permAsOf()`. That returns DOL's PROCESSING-TIMES as-of, which moves
+ * daily - so every entity URL restamped every day for data that changes four
+ * times a year. Measured 2026-08-29: all 5,000 URLs in employer-1.xml carried
+ * 2026-08-28 while the corpus behind them was published through 2026-06-30.
+ *
+ * A lastmod that behaves like a timestamp rather than a fact is one Google
+ * discounts, and discounting it costs recrawl priority on exactly the pages
+ * whose numbers DID move. Per-row granularity would be better still, but
+ * perm_entities carries no change column, and inventing one from the build
+ * clock would put us back where we started.
+ */
+async function corpusAsOf(): Promise<string | null> {
+  return getFreshness()
+    .then((f) => f["perm-cases"]?.asOf ?? null)
     .catch(() => null);
 }
 
@@ -247,7 +267,8 @@ export async function entityEntries(kind: EntityKind, chunk: number): Promise<En
     throw new Error(detail);
   }
 
-  const dol = (await permAsOf()) ?? "2026-08-24";
+  // The CORPUS date, not the processing-times one. See corpusAsOf.
+  const dol = (await corpusAsOf()) ?? (await permAsOf()) ?? "2026-08-24";
   // Only entities that HAVE a page. A sitemap must never advertise a 404.
   const pageworthy = rows.filter(hasOwnPage);
   const start = chunk * SITEMAP_CHUNK;
