@@ -43,14 +43,12 @@ export interface DataPageFigures {
 export interface LiveDataBandProps {
   frontierMonth: string | null;
   asOf: string | null;
-  averageDays: number | null;
   figures?: DataPageFigures;
 }
 
 export function LiveDataBand({
   frontierMonth,
   asOf,
-  averageDays,
   figures,
 }: LiveDataBandProps) {
   if (!frontierMonth) return null;
@@ -72,13 +70,14 @@ export function LiveDataBand({
               <span className="whitespace-nowrap bg-primary px-2 text-black">
                 {formatMonth(frontierMonth)}
               </span>
-            </h2>{" "}
-            {averageDays != null ? (
-              <p className="mt-3 max-w-xl text-base leading-relaxed text-foreground/70">
-                {averageDays} days on average to a determination. The tracker
-                turns dates like these into your case&apos;s own deadlines.
-              </p>
-            ) : null}
+            </h2>
+            {/* The "N days on average to a determination. The tracker turns
+                dates like these into your case's own deadlines." line was cut
+                on 2026-08-30: the headline above already states DOL's position
+                as a fact, and a second sentence restating it as an average and
+                then explaining the product was the band's own too-many-words
+                problem. The live average still has a home on
+                /perm-processing-times, which the tape below links. */}
           </div>
           <Link
             href="/tools"

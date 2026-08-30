@@ -127,7 +127,6 @@ export default async function HomePage() {
       <LiveDataBand
         frontierMonth={analyst?.priorityDate ?? null}
         asOf={snapshot?.permAsOf ?? null}
-        averageDays={analystAvg?.calendarDays ?? null}
         figures={deriveFigures(disclosure)}
       />
       <StageStrip />

@@ -28,6 +28,12 @@ const APP = join(process.cwd(), "src/app");
 const COMPONENTS = [
   "src/components/home/StageStrip.tsx",
   "src/components/home/LiveDataBand.tsx",
+  // Added 2026-08-30. The hero is the homepage's most-clicked link surface and
+  // it was not covered, because it writes its destinations as JSX attributes
+  // (`href="/perm-cases"`, `action="/perm-case-status"`) rather than in the
+  // `{ href: "..." }` config objects the original pattern was written for. A
+  // gate that cannot see its subject reads exactly like a pass.
+  "src/components/home/HeroSection.tsx",
 ];
 
 /** Route segments Next treats as grouping only, so they vanish from the URL. */
@@ -60,7 +66,14 @@ describe("homepage internal links", () => {
 
   it.each(COMPONENTS)("%s links only to routes that exist", (rel) => {
     const src = readFileSync(join(process.cwd(), rel), "utf8");
-    const hrefs = [...src.matchAll(/href:\s*"(\/[^"]*)"/g)].map((m) => m[1]!);
+    // Both shapes: the `{ href: "/x" }` config objects StageStrip builds its
+    // cards from, and the plain JSX attributes the hero writes. `action` is in
+    // here too - a form posting at a route that does not exist is a dead link
+    // that also loses what the visitor typed. Leading `/` keeps external URLs
+    // and `#` anchors out; those are not this gate's job.
+    const hrefs = [
+      ...src.matchAll(/(?:href:\s*|(?:href|action)=)"(\/[^"]*)"/g),
+    ].map((m) => m[1]!);
 
     expect(hrefs.length, `no hrefs found in ${rel}`).toBeGreaterThan(0);
 

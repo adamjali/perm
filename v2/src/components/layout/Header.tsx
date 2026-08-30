@@ -180,9 +180,22 @@ export default function Header(): React.ReactElement {
           <FileText
             className="size-6 text-(--primary) transition-colors group-hover:text-black"
           />
-          <span>
+          {/* NEVER WRAPS, and that is a layout fix rather than a typographic
+              preference. The public layout pads `main` by a flat 4.5rem for a
+              header it assumes is one line. At 390px this lockup wrapped to
+              two, the bar measured 99px against that 72px of padding, and the
+              first 27px of EVERY public page sat underneath the header on a
+              phone - the dateline on the homepage was being sliced through its
+              cap height. Measured, not inferred.
+
+              The `{" "}` between the two words stays: JSX drops the whitespace
+              between adjacent elements, and without it every text extractor,
+              Google's snippet generator included, reads "PERMTracker". The
+              leading space that used to sit inside " Tracker" is gone, since
+              the two together rendered a double space. */}
+          <span className="whitespace-nowrap">
             <span className="text-(--primary) transition-colors group-hover:text-black">PERM</span>{" "}
-            <span className="text-white transition-colors group-hover:text-black"> Tracker</span>
+            <span className="text-white transition-colors group-hover:text-black">Tracker</span>
           </span>
         </Link>
 

@@ -295,7 +295,10 @@ export function WaitLedger({
         // The bed. Manila is 1.18:1 against the light page ground, so the
         // hard border is what makes this read as a separate surface, not
         // the fill. That is how every layer in this system is defined.
-        "relative border-3 border-border bg-manila text-black shadow-hard-lg",
+        // `flex flex-col` so that when the hero stretches this plate to match
+        // the column beside it, the extra height goes to the chart rather than
+        // leaving a band of empty manila under the last bar.
+        "relative flex flex-col border-3 border-border bg-manila text-black shadow-hard-lg",
         className,
       )}
     >

@@ -15,6 +15,68 @@
 
 const FRAME = "h-auto w-full";
 
+/**
+ * A faceted index: four ways in, one record out.
+ *
+ * Four index rows over one corpus. Each row is a run of records, the lit cell
+ * is the one a case sits in, and the rule threading them is the intersection
+ * all four indexes agree on. It draws the mechanism of a faceted search rather
+ * than decorating a link with a magnifying glass.
+ *
+ * Shares WindowSpansMini's 120x56 viewBox on purpose: two cards standing side
+ * by side get figure panels of identical height without either one being told
+ * a pixel value.
+ */
+export function FacetIndexMini() {
+  const ROWS = 4;
+  const CELLS = 12;
+  const X0 = 4;
+  const PITCH = 112 / CELLS;
+  const CW = PITCH - 1.6;
+  /** The column every index resolves to. */
+  const HIT = 6;
+  const RH = 8;
+  const RGAP = 4;
+  const TOP = 6;
+  const H = TOP * 2 + ROWS * RH + (ROWS - 1) * RGAP;
+  const thread = X0 + HIT * PITCH + CW / 2;
+  const cells: { r: number; c: number }[] = [];
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < CELLS; c++) cells.push({ r, c });
+  return (
+    <svg viewBox={`0 0 120 ${H}`} className={FRAME} aria-hidden="true">
+      {/* Drawn first, so the cells sit on top of it and the thread shows only
+          in the gaps: four hits on one line rather than a line over four. */}
+      <line
+        x1={thread}
+        y1={1}
+        x2={thread}
+        y2={H - 1}
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      {cells.map(({ r, c }) => {
+        const lit = c === HIT;
+        return (
+          <rect
+            key={`${r}-${c}`}
+            x={X0 + c * PITCH}
+            y={TOP + r * (RH + RGAP)}
+            width={CW}
+            height={RH}
+            // Lime on manila measures 1.73:1, so a lit cell is defined by its
+            // edge and never by its fill. Same rule the whole kit follows.
+            fill={lit ? "var(--primary)" : "currentColor"}
+            opacity={lit ? 1 : 0.16}
+            stroke={lit ? "currentColor" : "none"}
+            strokeWidth={lit ? 1.5 : 0}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
 /** Requests stacked ahead of yours: a queue drawn as depth. */
 export function QueueDepthMini({ deep = false }: { deep?: boolean }) {
   const rows = deep
