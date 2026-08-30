@@ -149,8 +149,29 @@ def main() -> int:
                        else "/tmp/ingest-artifact/federal-payloads")
     payload = json.load(open(art / "perm-payload.json"))
     wages = json.load(open(art / "perm-wages.json"))
-    bulletins = json.load(open(art / "visa-bulletin.json"))
     meta = json.load(open(art / "perm-cases.ndjson.gz.meta.json"))
+
+    # The visa bulletin is OPTIONAL, and it is the only one of the four that
+    # is. Its own workflow step is `continue-on-error` because it reads the
+    # Internet Archive, a free public service that has slow days - and on
+    # 2026-08-29 the Archive refused every connection, so the script correctly
+    # declined to write a short series and produced no file at all. That took
+    # the entire corpus load down with it: 21,748 freshly-diffed case rows
+    # loaded, and then a hard FileNotFoundError on a file whose own step is
+    # allowed to fail.
+    #
+    # Missing is now simply "add no months", which is SAFE ONLY BECAUSE this
+    # script no longer drops the table. When it dropped and reloaded, the file
+    # was structurally mandatory: no payload meant no bulletins at all. As an
+    # accumulator, absent input leaves all 84 stored months exactly where they
+    # are, and the next run with a working Archive adds whatever is new.
+    bulletin_path = art / "visa-bulletin.json"
+    if bulletin_path.exists():
+        bulletins = json.load(open(bulletin_path))
+    else:
+        bulletins = {"bulletins": []}
+        log("  NOTE: no visa-bulletin.json in the artifact; leaving the stored "
+            "months untouched and loading everything else.")
     stamp = int(time.time() * 1000)
 
     db = Turso()
