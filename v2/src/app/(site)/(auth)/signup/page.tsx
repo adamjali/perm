@@ -109,12 +109,15 @@ export default async function SignupPage() {
     // on. The min-height subtracts the same expression, so the split fills
     // exactly what is left of the viewport.
     //
-    // `minmax(23rem,1fr)` rather than a bare `1fr` on the form column: a third
-    // of a 1024px screen is 341px, which cannot hold a 448px card, so the ratio
-    // is 2:1 wherever there is room and degrades to a usable width before that
-    // instead of crushing the form.
+    // 3:2, not 2:1. Adam: "make sign up a bit bigger actually, less than half
+    // but more than 1/3" - 40% is the natural stop between those two, and a
+    // 576px column at 1440 gives the 448px card real air rather than pinning it
+    // to its own gutter. `minmax(23rem,2fr)` keeps the guard: a fixed fraction
+    // of a 1024px screen can fall under the card's own width, so the ratio
+    // holds wherever there is room and degrades to a usable measure before it
+    // starts crushing the form.
     <div
-      className="-mx-4 -mb-8 flex flex-col-reverse sm:-mx-8 sm:-mb-12 lg:grid lg:grid-cols-[2fr_minmax(23rem,1fr)] lg:items-stretch"
+      className="-mx-4 -mb-8 flex flex-col-reverse sm:-mx-8 sm:-mb-12 lg:grid lg:grid-cols-[3fr_minmax(23rem,2fr)] lg:items-stretch"
       style={{
         marginTop: "calc(-1 * var(--auth-pad-top, 1.5rem))",
         minHeight:
