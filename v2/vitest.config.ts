@@ -60,6 +60,9 @@ const ISOLATED_UNIT_FILES = [
   // which is the signature. The other turso mockers were already here or
   // are ordered such that they have not collided yet; this one collides.
   "src/lib/turso/__tests__/stageCases.test.ts",
+  // Mocks `@libsql/client` and calls vi.resetModules() per case, so it needs
+  // its own registry - under isolate:false it poisons whatever runs next.
+  "src/lib/turso/__tests__/clientRetry.test.ts",
 ];
 
 export default defineConfig({

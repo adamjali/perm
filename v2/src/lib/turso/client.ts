@@ -56,7 +56,49 @@ export function turso(): Client {
  */
 const QUERY_DEADLINE_MS = 20_000;
 
-async function withDeadline<T>(run: () => Promise<T>, what: string): Promise<T> {
+/**
+ * THE RETRY USED TO FIRE ONLY ON THE DEADLINE THIS FUNCTION RAISES ITSELF, and
+ * that excluded the one failure it was written for.
+ *
+ * Production Sentry, 2026-08-31 06:45 EDT, on a `perm-employers/[slug]` server
+ * component: `SocketError: other side closed` wrapped in `TypeError: fetch
+ * failed`. That is a pooled keep-alive connection the far end had already
+ * dropped - the single most retryable error there is, because a fresh request
+ * almost always succeeds - and `!String(e).includes("turso query deadline")`
+ * threw it straight through. The comment above says the retry exists so it can
+ * ride a NEW connection; the predicate disagreed.
+ *
+ * THE REASON IS IN `e.cause`, NOT THE MESSAGE. `String(err)` on undici's
+ * wrapper is exactly `"TypeError: fetch failed"` and nothing else, so a
+ * predicate reading only the message can never see `other side closed`,
+ * `ECONNRESET` or a DNS failure. Walk the cause chain.
+ *
+ * READS ONLY. `exec()` shares this helper and it writes: "other side closed"
+ * does not say whether the far end processed the statement first, so retrying
+ * an INSERT could apply it twice. A deadline is still retried for both, because
+ * that error is raised here and means our own race gave up, not that the
+ * server acted.
+ */
+const TRANSIENT_NETWORK =
+  /other side closed|socket hang up|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EPIPE|EAI_AGAIN|ENOTFOUND|UND_ERR_SOCKET|UND_ERR_CONNECT_TIMEOUT|fetch failed/i;
+
+function causeChain(e: unknown): string {
+  const seen = new Set<unknown>();
+  const parts: string[] = [];
+  let cur: unknown = e;
+  while (cur && !seen.has(cur) && parts.length < 8) {
+    seen.add(cur);
+    parts.push(String(cur));
+    cur = (cur as { cause?: unknown }).cause;
+  }
+  return parts.join(" <- ");
+}
+
+async function withDeadline<T>(
+  run: () => Promise<T>,
+  what: string,
+  { retryTransient = false }: { retryTransient?: boolean } = {},
+): Promise<T> {
   for (let attempt = 1; ; attempt++) {
     const timer = new Promise<never>((_, reject) =>
       setTimeout(
@@ -67,7 +109,11 @@ async function withDeadline<T>(run: () => Promise<T>, what: string): Promise<T> 
     try {
       return await Promise.race([run(), timer]);
     } catch (e) {
-      if (attempt >= 2 || !String(e).includes("turso query deadline")) throw e;
+      const chain = causeChain(e);
+      const retryable =
+        chain.includes("turso query deadline") ||
+        (retryTransient && TRANSIENT_NETWORK.test(chain));
+      if (attempt >= 2 || !retryable) throw e;
     }
   }
 }
@@ -80,6 +126,7 @@ export async function rows<T = Record<string, unknown>>(
   const rs = await withDeadline(
     () => turso().execute({ sql, args: args as never[] }),
     sql.slice(0, 80),
+    { retryTransient: true },
   );
   return rs.rows.map((r) => {
     const o: Record<string, unknown> = {};
