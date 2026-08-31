@@ -40,7 +40,7 @@
     "@ai-sdk/cerebras": "^2.0.76",
     "@ai-sdk/google": "^3.0.111",
     "@ai-sdk/groq": "^3.0.60",
-    "@ai-sdk/mistral": "^3.0.59",
+    "@ai-sdk/mistral": "^4.0.35",
     "@ai-sdk/react": "^3.0.267",
     "@auth/core": "^0.41.3",
     "@convex-dev/auth": "^0.0.93",
