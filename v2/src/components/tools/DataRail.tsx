@@ -191,7 +191,23 @@ export function DataRail() {
                   isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                 )}
               >
-                <ul className="min-h-0 overflow-hidden" inert={!isOpen}>
+                <ul
+                  // WIDENED BY THE PROTRUSION, and that is not a cosmetic
+                  // tweak. `overflow-hidden` is what makes the `0fr` collapse
+                  // actually reach zero height, and it clips HORIZONTALLY too -
+                  // so a leaf tab reaching past the rail's border was being cut
+                  // off at this box's edge while its geometry said otherwise.
+                  // The tab measured 284 wide and painted to 269.5, which no
+                  // DOM measurement shows and a pixel scan of a screenshot did.
+                  // It is also why Overview protruded and no leaf ever could:
+                  // Overview is not inside one of these.
+                  //
+                  // Widening the clip box by exactly the protrusion lets the
+                  // current tab through and nothing else; each leaf carries the
+                  // margin that decides where it stops (below).
+                  className="min-h-0 w-[calc(100%+14px)] overflow-hidden"
+                  inert={!isOpen}
+                >
                   {items.map((s) => (
                     <Fragment key={s.key}>{" "}
                       <li>
@@ -401,10 +417,21 @@ function Tab({
         if (!current) onNavigate(href);
       }}
       className={cn(
-        "relative flex min-h-11 items-center gap-2.5 py-2 pr-3 text-sm",
+        "relative flex min-h-11 items-center gap-2.5 py-2 pr-3",
         "transition-[transform,background-color,box-shadow,color] duration-150 ease-out",
         "focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-primary",
         "motion-reduce:transition-none motion-reduce:hover:translate-x-0",
+        // SIZE IS THE HIERARCHY. Adam: "make overview bigger and make this one
+        // like the (old) overview if u want hierarchy or something." Overview
+        // is the parent of every group rather than a peer of any item, so it
+        // takes a larger step on the type scale and a taller row. The leaves
+        // keep the indent. Neither has to give up the selected shape to say
+        // where it sits.
+        kind === "home" ? "min-h-12 pl-4 text-base" : "pl-9 text-sm",
+        // Where the row stops. A leaf sits inside a clip box widened by the
+        // protrusion, so it carries the margin that decides its right edge;
+        // Overview sits directly in the nav and pulls itself out instead.
+        kind === "leaf" && (current ? "mr-0" : "mr-[14px]"),
         current
           ? // THE PULLED TAB, AND IT IS THE SAME SHAPE WHEREVER IT SITS. It
             // runs from the screen edge past the rail's border into the
@@ -431,12 +458,12 @@ function Tab({
             // caret is turned down. One rectangle, two facts, neither one
             // paying for the other.
             cn(
-              "-mr-[14px] bg-primary pr-4 font-heading font-black text-black shadow-hard-sm",
-              kind === "home" ? "pl-4" : "pl-9",
+              "bg-primary pr-4 font-heading font-black text-black shadow-hard-sm",
+              kind === "home" && "-mr-[14px]",
             )
           : cn(
               "text-foreground/75 hover:translate-x-[3px] hover:bg-tint-primary hover:text-foreground",
-              kind === "home" ? "pl-4 font-heading font-black" : "pl-9 font-semibold",
+              kind === "home" ? "font-heading font-black" : "font-semibold",
             ),
       )}
     >
