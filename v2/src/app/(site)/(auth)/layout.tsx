@@ -45,7 +45,7 @@ export default function AuthLayout({
           height — the same expression the public group uses. */}
       <main
         id="main-content"
-        style={{ paddingTop: "calc(4.5rem + var(--security-banner-h, 0px))" }}
+        style={{ paddingTop: "calc(var(--site-header-max-h, 4.5rem) + var(--security-banner-h, 0px))" }}
         className="relative z-10 flex flex-1 justify-center px-4 pb-8 transition-[padding] duration-200 sm:px-8 sm:pb-12"
         tabIndex={-1}
       >

@@ -120,15 +120,41 @@ export default function AuthHeader({
   useIsoLayoutEffect(() => {
     const el = headerRef.current;
     if (!el) return;
-    const publish = () =>
-      document.documentElement.style.setProperty(
-        "--site-header-h",
-        `${el.offsetHeight}px`,
-      );
+    const root = document.documentElement;
+    let max = 0;
+    const publish = () => {
+      const h = el.offsetHeight;
+      root.style.setProperty("--site-header-h", `${h}px`);
+      // The RESERVATION never shrinks. `main` pads by this, and padding that
+      // followed the live height would reflow the whole page on every scroll.
+      if (h > max) {
+        max = h;
+        root.style.setProperty("--site-header-max-h", `${h}px`);
+      }
+    };
     publish();
+    // `box: "border-box"` IS THE WHOLE FIX for the scrolled state. A
+    // ResizeObserver watches the CONTENT box by default, and this bar shrinks
+    // by swapping `py-3` for `py-1.5` - padding, which leaves the content box
+    // untouched. So the observer never fired, `--site-header-h` stayed at its
+    // unscrolled 99px while the bar became 87, and the drawer pinned to it
+    // floated 12px below the header with the page showing through the gap.
+    // Measured before and after; nothing about the callback was wrong.
     const ro = new ResizeObserver(publish);
-    ro.observe(el);
-    return () => ro.disconnect();
+    ro.observe(el, { box: "border-box" });
+    // A width change can shrink the bar back (the logo lockup wraps below
+    // ~414px and again at exactly 1024px, where the desktop nav appears), and
+    // ResizeObserver alone cannot lower a high-water mark. Reset it on resize
+    // and let the next observation set the new one.
+    const onResize = () => {
+      max = 0;
+      publish();
+    };
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", onResize);
+    };
   }, []);
 
   return (

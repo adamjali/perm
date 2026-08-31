@@ -121,7 +121,7 @@ export default async function SignupPage() {
       style={{
         marginTop: "calc(-1 * var(--auth-pad-top, 1.5rem))",
         minHeight:
-          "calc(100dvh - 4.5rem - var(--security-banner-h, 0px))",
+          "calc(100dvh - var(--site-header-max-h, 4.5rem) - var(--security-banner-h, 0px))",
       }}
     >
       {/* LEFT: what you are waiting on. A band, not a card - it runs the full

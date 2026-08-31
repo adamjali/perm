@@ -40,7 +40,7 @@ export default function PublicLayout({
           dismissed). The auth group uses this identical expression. */}
       <main
         id="main-content"
-        style={{ paddingTop: "calc(4.5rem + var(--security-banner-h, 0px))" }}
+        style={{ paddingTop: "calc(var(--site-header-max-h, 4.5rem) + var(--security-banner-h, 0px))" }}
         className="relative flex-1 transition-[padding] duration-200"
         tabIndex={-1}
       >

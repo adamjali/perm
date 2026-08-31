@@ -320,8 +320,8 @@ export function DataRail() {
           aria-label="Data sections"
           className="sticky flex flex-col py-2"
           style={{
-            top: "calc(4.5rem + var(--security-banner-h, 0px))",
-            minHeight: "calc(100dvh - 6.5rem - var(--security-banner-h, 0px))",
+            top: "calc(var(--site-header-max-h, 4.5rem) + var(--security-banner-h, 0px))",
+            minHeight: "calc(100dvh - var(--site-header-max-h, 4.5rem) - 2rem - var(--security-banner-h, 0px))",
           }}
         >
           {railOpen ? (
