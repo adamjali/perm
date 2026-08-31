@@ -68,6 +68,11 @@ export function DataRail() {
   const active = sectionForPath(pathname);
   const onOverview = pathname.replace(/\/+$/, "") === OVERVIEW.href;
 
+  // Below `lg` the rail is a real side panel that slides in, not a list
+  // stacked above the article. Adam: "on mobile it should be a side still but
+  // expandable with an arrow tab thing that can open and close the side panel."
+  const [panelOpen, setPanelOpen] = useState(false);
+
   const [open, setOpen] = useState<DataGroup | null>(active?.group ?? null);
 
   // Client-side navigation changes the pathname without remounting, so the
@@ -82,7 +87,27 @@ export function DataRail() {
   // the pathname actually changes, which is the only honest signal that the
   // navigation finished.
   const [pending, setPending] = useState<string | null>(null);
-  useEffect(() => setPending(null), [pathname]);
+  useEffect(() => {
+    setPending(null);
+    setPanelOpen(false);
+  }, [pathname]);
+
+  // Escape closes the panel, and the body stops scrolling behind it. Both are
+  // what a reader expects of anything that covers the page, and neither is
+  // optional once the thing is an overlay rather than a block in the flow.
+  useEffect(() => {
+    if (!panelOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPanelOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [panelOpen]);
 
   if (!isDataPath(pathname)) return null;
 
@@ -118,16 +143,25 @@ export function DataRail() {
                   isOpen ? "text-foreground" : "text-foreground/65",
                 )}
               >
-                {/* THE SPINE. Four pixels at the very edge, filled when this
-                    group holds the page you are on. It replaces a dot that
-                    used to sit at the far end of the row: the same fact,
-                    stated where the eye already is when scanning a left edge,
-                    and it survives the group being collapsed. */}
+                {/* THE SPINE, AND ONLY WHILE THE GROUP IS SHUT. Four pixels of
+                    lime at the very edge saying "the page you are on is in
+                    here", which is worth stating when the group is collapsed
+                    and its contents are invisible.
+
+                    Open, it was actively bad. Adam: "the left side of the
+                    dropdown category is awk and weird u see the green behind
+                    it?" With the group expanded, the active leaf directly
+                    below is already a solid lime block, so the spine put a
+                    second, thinner piece of lime immediately above it at a
+                    different width - reading as the fill leaking out from
+                    behind the header rather than as a marker. The expanded
+                    caret and the lit leaf say the same thing between them, so
+                    the spine has nothing left to add and gets out of the way. */}
                 <span
                   aria-hidden="true"
                   className={cn(
                     "absolute inset-y-0 left-0 w-1 transition-colors duration-150",
-                    holdsActive
+                    holdsActive && !isOpen
                       ? "bg-primary"
                       : "bg-transparent group-hover/tab:bg-border",
                   )}
@@ -209,33 +243,124 @@ export function DataRail() {
           five groups plus one open group's items, and only one group is ever
           open, so it fits any realistic viewport without scrolling. */}
       <div
-        className="-ml-4 hidden sm:-ml-6 lg:block lg:shrink-0 lg:self-stretch lg:border-r-2 lg:border-border"
+        className="-ml-4 hidden bg-background sm:-ml-6 lg:block lg:shrink-0 lg:self-stretch lg:border-r-2 lg:border-border"
         style={{ width: RAIL_W }}
       >
+        {/* A flex column with a MIN height, so the footer's `mt-auto` has a
+            viewport to push against and the rail still grows rather than
+            clipping if the open group makes it taller than that. `min-height`
+            and not `height` for exactly that reason, and no `overflow` for the
+            reason given above - a scroll container would clip the protrusion. */}
         <nav
           aria-label="Data sections"
-          className="sticky py-2"
-          style={{ top: "calc(5rem + var(--security-banner-h, 0px))" }}
+          className="sticky flex flex-col py-2"
+          style={{
+            top: "calc(5rem + var(--security-banner-h, 0px))",
+            minHeight: "calc(100dvh - 7rem - var(--security-banner-h, 0px))",
+          }}
         >
           {body}
+          <RailFooter />
         </nav>
       </div>
 
-      {/* Below lg: the same tree, stacked above the content. A 272px column on
-          a 390px screen is most of the screen, so it collapses to one row. */}
-      <nav aria-label="Data sections" className="lg:hidden">
-        <details className="group/d border-2 border-border bg-card">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2.5 px-3 font-mono text-xs font-bold uppercase tracking-[0.12em] [&::-webkit-details-marker]:hidden">
-            <CaretRight
-              className="size-3.5 shrink-0 transition-transform duration-200 ease-out group-open/d:rotate-90 motion-reduce:transition-none"
-              weight="bold"
-              aria-hidden="true"
-            />{" "}
-            <span>{active?.label ?? OVERVIEW.label}</span>{" "}
-            <span className="ml-auto text-muted-foreground">Sections</span>
-          </summary>{" "}
-          <div className="border-t-2 border-border py-2">{body}</div>
-        </details>
+      {/* Below lg: STILL A SIDE PANEL, pulled out by a tab on the screen edge.
+          Adam: "on mobile it should be a side still but expandable with an
+          arrow tab thing that can open and close the side panel... with
+          animation and arrow switches direction when open v closed and bonus
+          if when closed still shows what's selected."
+
+          It used to be a `<details>` stacked above the article, which is the
+          ordinary answer and loses the thing that makes this rail work: on
+          desktop the sections are a fixed edge you navigate from, and turning
+          them into a strip above the text on a phone makes them a header you
+          scroll past once. A panel that slides out of the same edge keeps one
+          idea across both widths.
+
+          The handle is a real tab, drawn like the current one on desktop: no
+          left border, so it belongs to the edge rather than sitting near it.
+          Closed, it carries the current section's name set vertically, so the
+          phone answers "where am I" without being opened at all. */}
+      <button
+        type="button"
+        aria-expanded={panelOpen}
+        aria-controls="data-rail-panel"
+        onClick={() => setPanelOpen((v) => !v)}
+        className={cn(
+          "fixed left-0 top-[84px] z-[61] flex items-center gap-1 py-3 pl-1 pr-1.5",
+          "border-y-2 border-r-2 border-border bg-background shadow-hard-sm",
+          "transition-transform duration-200 ease-out motion-reduce:transition-none",
+          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+          "lg:hidden",
+          panelOpen && "translate-x-[17rem]",
+        )}
+      >
+        <span className="sr-only">
+          {panelOpen ? "Close data sections" : "Open data sections"}
+        </span>
+        <CaretRight
+          className={cn(
+            "size-4 shrink-0 text-primary transition-transform duration-200 ease-out",
+            "motion-reduce:transition-none",
+            panelOpen && "rotate-180",
+          )}
+          weight="bold"
+          aria-hidden="true"
+        />{" "}
+        {!panelOpen ? (
+          <span
+            aria-hidden="true"
+            className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-foreground/70"
+            // Vertical so the handle stays a thin tab rather than a slab
+            // across the edge of the article. `mixed` keeps the Latin
+            // characters upright inside the rotated line.
+            style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+          >
+            {active?.label ?? OVERVIEW.label}
+          </span>
+        ) : null}
+      </button>
+
+      {/* The scrim. It is what makes the panel dismissible by tapping away,
+          which is the gesture people actually use, and it is `aria-hidden`
+          because Escape and the handle are the accessible affordances. */}
+      {panelOpen ? (
+        <div
+          aria-hidden="true"
+          onClick={() => setPanelOpen(false)}
+          className="fixed inset-0 z-[55] bg-black/50 lg:hidden"
+        />
+      ) : null}
+
+      <nav
+        id="data-rail-panel"
+        aria-label="Data sections"
+        aria-hidden={!panelOpen}
+        inert={!panelOpen}
+        className={cn(
+          // THE CURRENT TAB RUNS THE FULL WIDTH OF THE PANEL HERE. Adam: "the
+          // selection for mobile should go all the way not stop early."
+          //
+          // Cancelling the tab's negative right margin is what allows that
+          // while the panel still scrolls. A scrolling box cannot have
+          // `overflow-x: visible` - setting one axis to `auto` makes the other
+          // `auto` as well - so a tab reaching past the panel's edge would
+          // become a horizontal scrollbar rather than a protrusion. An earlier
+          // version padded the panel instead, which stopped the overflow and
+          // also stopped the tab about six pixels short of the edge, which is
+          // the thing being complained about. Zero the margin and it lands
+          // exactly on the boundary.
+          //
+          // The protrusion stays a desktop move, where there is a gutter for it
+          // to reach into and nothing clipping it.
+          "fixed inset-y-0 left-0 z-[60] flex w-[17rem] flex-col overflow-y-auto border-r-2 border-border bg-background py-4 [&_[aria-current=page]]:mr-0",
+          "transition-transform duration-200 ease-out motion-reduce:transition-none",
+          "lg:hidden",
+          panelOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        {body}
+        <RailFooter />
       </nav>
     </>
   );
@@ -280,28 +405,49 @@ function Tab({
         "transition-[transform,background-color,box-shadow,color] duration-150 ease-out",
         "focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-primary",
         "motion-reduce:transition-none motion-reduce:hover:translate-x-0",
-        kind === "home"
-          ? "pl-4 font-heading font-black"
-          : "pl-9 font-semibold",
         current
-          ? // THE PULLED TAB. It runs past the rail's right border into the
+          ? // THE PULLED TAB, AND IT IS THE SAME SHAPE WHEREVER IT SITS. It
+            // runs from the screen edge past the rail's border into the
             // gutter and carries the shadow, so the current page is a thing
             // sticking out rather than a tinted row. Black on lime measures
             // 9.83:1, which is why the label is ink and not white.
-            "-mr-[6px] bg-primary pr-4 text-black shadow-hard-sm"
-          : "text-foreground/75 hover:translate-x-[3px] hover:bg-tint-primary hover:text-foreground",
+            //
+            // THE BLOCK MATCHES OVERVIEW; THE LABEL STAYS WITH ITS SIBLINGS.
+            // Adam, on the Overview tab: "i like how it's done here how it's
+            // like a nice rectangle and extends past", on a selected leaf:
+            // "when it's selecting from one that's under a sub it doesn't look
+            // at good... if find a way to show its from an expanded but match
+            // the overview one it would look the best", and then, on making
+            // them identical: "needs to be obv part of the category thing."
+            //
+            // Both are right, and they are not in tension once you separate
+            // the two things the old leaf style was doing at once. The SHAPE -
+            // starting at the screen edge, running past the rail's border,
+            // carrying the shadow - is what says "this is the page you are
+            // on", and shortening it for a nested page made the selected state
+            // weaker for no reason. The TEXT INDENT is what says "this sits
+            // inside the group above", and it survives untouched: the label
+            // lines up with its unselected siblings, under a header whose
+            // caret is turned down. One rectangle, two facts, neither one
+            // paying for the other.
+            cn(
+              "-mr-[14px] bg-primary pr-4 font-heading font-black text-black shadow-hard-sm",
+              kind === "home" ? "pl-4" : "pl-9",
+            )
+          : cn(
+              "text-foreground/75 hover:translate-x-[3px] hover:bg-tint-primary hover:text-foreground",
+              kind === "home" ? "pl-4 font-heading font-black" : "pl-9 font-semibold",
+            ),
       )}
     >
-      {kind === "leaf" ? (
-        // The connector: a short rule tying the leaf back to the spine of the
-        // group above it, so an indented row reads as belonging rather than
-        // merely being pushed over.
+      {kind === "leaf" && !current ? (
+        // The connector: a short rule tying the leaf back to the group above
+        // it, so an indented row reads as belonging rather than merely being
+        // pushed over. The current tab has no indent to explain, and drawing
+        // it there would put a rule through the middle of a solid block.
         <span
           aria-hidden="true"
-          className={cn(
-            "absolute left-4 top-0 h-full w-px transition-colors duration-150",
-            current ? "bg-black/30" : "bg-border/60",
-          )}
+          className="absolute left-4 top-0 h-full w-px bg-border/60 transition-colors duration-150"
         />
       ) : null}
       <span
@@ -320,6 +466,56 @@ function Tab({
       </span>{" "}
       <span className="min-w-0 flex-1 truncate">{label}</span>
     </Link>
+  );
+}
+
+/**
+ * What sits under the last section.
+ *
+ * Adam: "we do need to add something to the bottom of that side thing though."
+ * The tabs ran out two thirds of the way up and left the column empty under
+ * them, which on a rail that now runs the full height of the page is a large
+ * amount of nothing.
+ *
+ * IT IS THE ACTION, NOT ANOTHER LINK. A second copy of the nav list, a logo, or
+ * a "resources" block would be filler dressed as content. The one thing a
+ * reader of these pages reliably wants next is their own case: every figure
+ * here is an aggregate, and the question underneath every aggregate is "where
+ * does that leave me". So the bottom of the rail is the lookup, phrased as what
+ * it does rather than as a slogan.
+ *
+ * It repeats a destination that also appears under Case tools, and that is
+ * fine - a list entry and a call to action are different things doing different
+ * jobs, and only one of them is findable by someone who has not thought to open
+ * a group.
+ */
+function RailFooter() {
+  return (
+    // `mt-auto` is what pins it to the bottom of the panel rather than letting
+    // it trail the last tab. Adam: "the thing added below the tabs in side
+    // panel should be near the bottom." Both navs are flex columns with a
+    // height to push against, so this resolves to the foot of the rail on a
+    // tall viewport and collapses to a normal gap on a short one.
+    <div className="mt-auto border-t-2 border-border px-4 pb-2 pt-5">
+      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        Track a case
+      </p>{" "}
+      <p className="mt-2 text-sm text-foreground/75">
+        Look up a case number for its DOL record and its place in the queue.
+      </p>{" "}
+      <Link
+        href="/perm-case-status"
+        className={cn(
+          "mt-3 flex min-h-11 items-center justify-center border-2 border-border bg-primary px-3",
+          "font-heading text-sm font-black text-black shadow-hard-sm",
+          "transition-transform duration-150 ease-out hover:-translate-y-[1px] active:translate-y-0",
+          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+          "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+        )}
+      >
+        Check my case
+      </Link>
+    </div>
   );
 }
 
