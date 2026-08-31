@@ -62,6 +62,7 @@ import {
  */
 
 const RAIL_W = "17rem";
+const RAIL_W_COLLAPSED = "3rem";
 
 export function DataRail() {
   const pathname = usePathname();
@@ -72,6 +73,12 @@ export function DataRail() {
   // stacked above the article. Adam: "on mobile it should be a side still but
   // expandable with an arrow tab thing that can open and close the side panel."
   const [panelOpen, setPanelOpen] = useState(false);
+
+  // Desktop starts OPEN - "detault is open" - and collapsing is a layout
+  // change rather than an overlay. State lives here rather than in a URL or a
+  // cookie: reading either would opt every data page out of static rendering,
+  // and a rail preference is not worth the whole public tree going dynamic.
+  const [railOpen, setRailOpen] = useState(true);
 
   const [open, setOpen] = useState<DataGroup | null>(active?.group ?? null);
 
@@ -214,7 +221,17 @@ export function DataRail() {
                   //
                   // 16px = 14 of reach + 2 of shadow. Each leaf then carries
                   // the margin that decides where it stops (below).
-                  className="min-h-0 w-[calc(100%+16px)] overflow-hidden pb-[2px]"
+                  className={cn(
+                    "min-h-0 w-[calc(100%+16px)] overflow-hidden",
+                    // ONLY WHILE OPEN. Adam sent a screenshot of a collapsed
+                    // group with a green line running out of it: `overflow`
+                    // clips at the PADDING box, so 2px of bottom padding on a
+                    // row collapsed to `0fr` still exposed 2px of the selected
+                    // tab's lime. The padding exists to stop that tab's shadow
+                    // being sliced when the group is open, and a shut group has
+                    // no shadow to protect.
+                    isOpen && "pb-[2px]",
+                  )}
                   inert={!isOpen}
                 >
                   {items.map((s) => (
@@ -268,24 +285,97 @@ export function DataRail() {
           five groups plus one open group's items, and only one group is ever
           open, so it fits any realistic viewport without scrolling. */}
       <div
-        className="-ml-4 hidden bg-background sm:-ml-6 lg:block lg:shrink-0 lg:self-stretch lg:border-r-2 lg:border-border"
-        style={{ width: RAIL_W }}
+        className={cn(
+          "-ml-4 hidden bg-background sm:-ml-6 lg:block lg:shrink-0 lg:self-stretch lg:border-r-2 lg:border-border",
+          // THE COLLAPSE PUSHES, IT DOES NOT COVER. Adam: "the side panel on
+          // dekstop should also be collapsable same way as mobile (but detault
+          // is open) and no over and stuff in backgrounded, but rather push to
+          // the side vs not you know? when collapsed main context should fill
+          // that space." So this is a width change on a real column rather than
+          // an overlay: the content beside it is `lg:flex-1` and takes back
+          // every pixel this gives up, with no scrim and nothing floating.
+          "transition-[width] duration-200 ease-out motion-reduce:transition-none",
+        )}
+        style={{ width: railOpen ? RAIL_W : RAIL_W_COLLAPSED }}
       >
-        {/* A flex column with a MIN height, so the footer's `mt-auto` has a
+        {/* STICKY AT THE COLUMN'S OWN TOP, which is the whole fix for "i should
+            not be able to scroll up and see above the side panel lol?". The
+            threshold used to be 5rem while `main` starts its content at
+            `calc(4.5rem + banner)`, so for the first 8px of scroll the rail
+            drifted before locking. Matching the two exactly means it is already
+            at its sticky position at scroll zero and never moves again.
+
+            A flex column with a MIN height, so the footer's `mt-auto` has a
             viewport to push against and the rail still grows rather than
             clipping if the open group makes it taller than that. `min-height`
-            and not `height` for exactly that reason, and no `overflow` for the
-            reason given above - a scroll container would clip the protrusion. */}
+            and not `height` for exactly that reason, and no `overflow` - a
+            scroll container would clip the protrusion. */}
         <nav
           aria-label="Data sections"
           className="sticky flex flex-col py-2"
           style={{
-            top: "calc(5rem + var(--security-banner-h, 0px))",
-            minHeight: "calc(100dvh - 7rem - var(--security-banner-h, 0px))",
+            top: "calc(4.5rem + var(--security-banner-h, 0px))",
+            minHeight: "calc(100dvh - 6.5rem - var(--security-banner-h, 0px))",
           }}
         >
-          {body}
-          <RailFooter />
+          {railOpen ? (
+            <>
+              {/* The collapse control, drawn as a tab sitting ON the rail's
+                  right border so it reads as part of that edge rather than a
+                  button placed near it - the same reasoning as the mobile
+                  handle, which is the shape it turns into when collapsed. */}
+              <button
+                type="button"
+                aria-expanded={true}
+                aria-controls="data-rail-desktop"
+                onClick={() => setRailOpen(false)}
+                className={cn(
+                  "-mr-[2px] mb-1 flex size-9 shrink-0 items-center justify-center self-end",
+                  "border-2 border-border bg-background text-primary",
+                  "transition-colors duration-150 hover:bg-tint-primary",
+                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                  "motion-reduce:transition-none",
+                )}
+              >
+                <span className="sr-only">Collapse data sections</span>
+                <CaretRight className="size-4 rotate-180" weight="bold" aria-hidden="true" />
+              </button>
+              <div id="data-rail-desktop" className="flex flex-1 flex-col">
+                {body}
+                <RailFooter />
+              </div>
+            </>
+          ) : (
+            /* COLLAPSED, AND IT STILL SAYS WHERE YOU ARE. Adam: "the desktop
+               case should de have when closed still shows whats selected cause
+               it fits." It does fit here in a way it never did on a phone - the
+               strip has the full height of the viewport to set the section name
+               down, where the mobile handle had to share the top of an article
+               with its heading. Same caret, same direction convention: pointing
+               into the page means "this opens". */
+            <button
+              type="button"
+              aria-expanded={false}
+              aria-controls="data-rail-desktop"
+              onClick={() => setRailOpen(true)}
+              className={cn(
+                "flex w-full flex-1 flex-col items-center gap-3 py-3",
+                "text-primary transition-colors duration-150 hover:bg-tint-primary",
+                "focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-primary",
+                "motion-reduce:transition-none",
+              )}
+            >
+              <span className="sr-only">Expand data sections</span>
+              <CaretRight className="size-4 shrink-0" weight="bold" aria-hidden="true" />
+              <span
+                aria-hidden="true"
+                className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-foreground/70"
+                style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+              >
+                {active?.label ?? OVERVIEW.label}
+              </span>
+            </button>
+          )}
         </nav>
       </div>
 
@@ -304,20 +394,37 @@ export function DataRail() {
 
           The handle is a real tab, drawn like the current one on desktop: no
           left border, so it belongs to the edge rather than sitting near it.
-          Closed, it carries the current section's name set vertically, so the
-          phone answers "where am I" without being opened at all. */}
+
+          IT IS THE CARET ALONE, AND THE BONUS LABEL IS WHY. Adam had asked for
+          it - "bonus if when closed still shows what's selected" - so the first
+          version set the current section vertically down the tab. That made the
+          tab 131px tall, which put it straight over the page's own heading:
+          "the arrow covers :/". He had allowed for this ("if can't just arrow
+          is fine too"), and it is the right trade. A 44px square sits inside
+          the gap that already exists between the header and the first line of
+          a page, so it covers nothing, and the panel it opens names the
+          section on its own the moment it is asked for. */}
       <button
         type="button"
         aria-expanded={panelOpen}
         aria-controls="data-rail-panel"
         onClick={() => setPanelOpen((v) => !v)}
         className={cn(
-          "fixed left-0 top-[84px] z-[61] flex items-center gap-1 py-3 pl-1 pr-1.5",
+          "fixed left-0 top-[72px] z-[61] flex size-11 items-center justify-center",
           "border-y-2 border-r-2 border-border bg-background shadow-hard-sm",
           "transition-transform duration-200 ease-out motion-reduce:transition-none",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
           "lg:hidden",
-          panelOpen && "translate-x-[17rem]",
+          // Open, it lands 2px SHORT of the panel's right edge so it sits ON
+          // that border rather than beside it. Adam: "when expanded the arrow
+          // box shouldn't have a border/black line on its left side so it looks
+          // like connected and extension of the right border as a whole". The
+          // handle has no left border of its own, so overlapping the panel's
+          // makes the two outlines meet: the border runs down, the handle's top
+          // edge carries it out, its right edge comes down, its bottom edge
+          // carries it back, and the border resumes. One shape, not a box
+          // parked next to a line.
+          panelOpen && "translate-x-[calc(17rem-2px)]",
         )}
       >
         <span className="sr-only">
@@ -332,18 +439,6 @@ export function DataRail() {
           weight="bold"
           aria-hidden="true"
         />{" "}
-        {!panelOpen ? (
-          <span
-            aria-hidden="true"
-            className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-foreground/70"
-            // Vertical so the handle stays a thin tab rather than a slab
-            // across the edge of the article. `mixed` keeps the Latin
-            // characters upright inside the rotated line.
-            style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
-          >
-            {active?.label ?? OVERVIEW.label}
-          </span>
-        ) : null}
       </button>
 
       {/* The scrim. It is what makes the panel dismissible by tapping away,

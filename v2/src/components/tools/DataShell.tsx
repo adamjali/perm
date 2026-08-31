@@ -48,7 +48,14 @@ export function DataShell({ children }: { children: React.ReactNode }) {
     // left: the h1 broke to one word per line at 390px. Measured, not
     // guessed - the nav element reported a height of 32,268px, stretched to
     // match a column of text it should never have been beside.
-    <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:flex lg:gap-8">
+    // `max-lg:pt-3` buys the phone's edge handle its own space. The handle is
+    // a 44px tap target - the craft floor, not negotiable - pinned flush under
+    // a 71px header, so it runs to y=116 while the first line of a page used to
+    // start at 112. Adam: "the arrow covers :/". Twelve pixels of top padding
+    // below `lg` is the whole fix, and it is far cheaper than the alternative:
+    // insetting the text column by the handle's 44px width would take a 390px
+    // screen's measure down by a tenth for every reader, scrolled or not.
+    <div className="mx-auto w-full max-w-[1600px] px-4 max-lg:pt-3 sm:px-6 lg:flex lg:gap-8">
       <DataRail />
       {/* `min-w-0` is the load-bearing class here. A flex item's default
           minimum is its content, so one wide table or a long unbroken case
