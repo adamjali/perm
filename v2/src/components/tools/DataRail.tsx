@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CaretRight, CircleNotch } from "@phosphor-icons/react";
+import { CaretRight, CircleNotch, House } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
 
@@ -286,7 +286,13 @@ export function DataRail() {
           open, so it fits any realistic viewport without scrolling. */}
       <div
         className={cn(
-          "-ml-4 hidden bg-background sm:-ml-6 lg:block lg:shrink-0 lg:self-stretch lg:border-r-2 lg:border-border",
+          "-ml-4 hidden bg-background sm:-ml-6 lg:block lg:shrink-0 lg:self-stretch",
+          // THE SPINE BELONGS TO THE OPEN RAIL. Adam, on the collapsed state:
+          // "when collapsted it should just be the section and the title, not
+          // the whole line whole bar." Collapsed, there is no rail to draw an
+          // edge for - just a tab hanging off the side of the page - and a
+          // full-height rule down a 48px empty column reads as a leftover.
+          railOpen && "lg:border-r-2 lg:border-border",
           // THE COLLAPSE PUSHES, IT DOES NOT COVER. Adam: "the side panel on
           // dekstop should also be collapsable same way as mobile (but detault
           // is open) and no over and stuff in backgrounded, but rather push to
@@ -330,8 +336,13 @@ export function DataRail() {
                 aria-controls="data-rail-desktop"
                 onClick={() => setRailOpen(false)}
                 className={cn(
-                  "-mr-[2px] mb-1 flex size-9 shrink-0 items-center justify-center self-end",
-                  "border-2 border-border bg-background text-primary",
+                  // Protrudes past the rail's edge with no left border, so it
+                  // reads as the sidebar itself extending rather than a button
+                  // parked on it. Adam: "arrow should be protruding out,
+                  // without a black line on its left border so its like the
+                  // sidebar extends a bit." Same 12px reach as a selected tab.
+                  "-mr-[14px] mb-1 flex h-9 w-[3.25rem] shrink-0 items-center justify-center self-end",
+                  "border-y-2 border-r-2 border-border bg-background text-primary",
                   "transition-colors duration-150 hover:bg-tint-primary",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                   "motion-reduce:transition-none",
@@ -359,7 +370,16 @@ export function DataRail() {
               aria-controls="data-rail-desktop"
               onClick={() => setRailOpen(true)}
               className={cn(
-                "flex w-full flex-1 flex-col items-center gap-3 py-3",
+                // A TAB, NOT A BAR. Sized to the caret and the section name
+                // and pinned at the top, protruding past the column with no
+                // left border, exactly like every other tab in this rail.
+                // NO `w-full` HERE. An explicit width means the negative margin
+                // moves the next sibling instead of widening this box, so the
+                // tab measured 0px of protrusion while looking correct in the
+                // class list. Letting the flex container stretch it and then
+                // subtracting a negative margin is what actually reaches out.
+                "-mr-[12px] flex shrink-0 flex-col items-center gap-3 py-3",
+                "border-y-2 border-r-2 border-border bg-background",
                 "text-primary transition-colors duration-150 hover:bg-tint-primary",
                 "focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-primary",
                 "motion-reduce:transition-none",
@@ -424,7 +444,13 @@ export function DataRail() {
           // edge carries it out, its right edge comes down, its bottom edge
           // carries it back, and the border resumes. One shape, not a box
           // parked next to a line.
-          panelOpen && "translate-x-[calc(17rem-2px)]",
+          // OPEN, IT RIDES TO THE TOP OF THE DRAWER. Adam: "arrow should move
+          // up a bit so fully white on white no possibility of the green
+          // selection clashing with it." At its closed height it sat level
+          // with the first rows, and any of those can be the selected one - so
+          // there is no safe fixed height, only a reserved one. The drawer's
+          // `pt-[72px]` keeps that strip empty; -56px lands the handle in it.
+          panelOpen && "translate-x-[calc(17rem-2px)] -translate-y-14",
         )}
       >
         <span className="sr-only">
@@ -473,7 +499,7 @@ export function DataRail() {
           //
           // The protrusion stays a desktop move, where there is a gutter for it
           // to reach into and nothing clipping it.
-          "fixed inset-y-0 left-0 z-[60] flex w-[17rem] flex-col overflow-y-auto border-r-2 border-border bg-background py-4 [&_[aria-current=page]]:mr-0",
+          "fixed inset-y-0 left-0 z-[60] flex w-[17rem] flex-col overflow-y-auto border-r-2 border-border bg-background pb-4 pt-[72px] [&_[aria-current=page]]:mr-0 [&_ul]:w-full",
           "transition-transform duration-200 ease-out motion-reduce:transition-none",
           "lg:hidden",
           panelOpen ? "translate-x-0" : "-translate-x-full",
@@ -596,11 +622,16 @@ function Tab({
         aria-hidden="true"
         className={cn(
           "flex size-3.5 shrink-0 items-center justify-center",
-          current ? "text-black" : "text-transparent",
+          current ? "text-black" : kind === "home" ? "text-primary" : "text-transparent",
         )}
       >
         {pending ? (
           <CircleNotch className="size-3.5 animate-spin" weight="bold" />
+        ) : kind === "home" ? (
+          // Overview alone gets a real glyph. It is the section's front page
+          // rather than a page inside it, and a house says that in the place
+          // where every other row carries only a state marker.
+          <House className="size-3.5" weight="fill" />
         ) : (
           // A square, not a dot: the site's marker vocabulary is square.
           <span className="size-1.5 bg-current" />

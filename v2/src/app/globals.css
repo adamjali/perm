@@ -1372,6 +1372,28 @@
     overflow-x: hidden;
     overflow-y: auto;
   }
+
+  /* ...EXCEPT ON DESKTOP, where there is no gesture to protect.
+     Adam: "if i scroll to the top and keep scrolling then it pulls everything
+     down (except black header) and i can peek over, this should not happen with
+     the sidebar, it should remain unaffected."
+
+     That is the rubber-band: overscrolling translates the whole document, so a
+     `sticky` rail travels with it while the `fixed` header does not, and the
+     two visibly come apart. Making the rail `fixed` would fix the symptom and
+     cost more than it is worth - a fixed box has to be told its own left edge,
+     which stops being 0 the moment the 1600px shell starts centring, and `100vw`
+     includes the scrollbar so the arithmetic is wrong by ~15px exactly where it
+     matters.
+
+     Suppressing the bounce is the smaller change, and above `lg` it forfeits
+     nothing: pull-to-refresh is a touch gesture and the reason this property was
+     removed from the root in the first place. Below `lg` it stays untouched. */
+  @media (min-width: 64rem) {
+    html {
+      overscroll-behavior-y: none;
+    }
+  }
   body {
     @apply bg-background text-foreground font-body;
     /* No overscroll-behavior here either — see the html comment. Root
