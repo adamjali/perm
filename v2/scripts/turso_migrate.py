@@ -93,6 +93,15 @@ INDEXES = [
     "CREATE INDEX idx_pc_emp_st_dec    ON perm_cases(employer_slug, status, decision_date)",
     "CREATE INDEX idx_pc_att_dec       ON perm_cases(attorney_slug, decision_date)",
     "CREATE INDEX idx_pc_att_st_dec    ON perm_cases(attorney_slug, status, decision_date)",
+    # COVERING INDEX for the /perm-wages band aggregation, added 2026-08-31.
+    # Without it that GROUP BY was `SCAN perm_cases` over 373,939 rows plus a
+    # temp B-tree and took 68s, which blew the query deadline TWICE and failed
+    # two production deploys on "Error occurred prerendering /perm-wages".
+    # With it the plan reads `SCAN perm_cases USING COVERING INDEX` and the
+    # query runs in 4-12s. Both columns are in the index, so SQLite never
+    # touches the table. `perm_cases` is rebuilt quarterly rather than nightly,
+    # so the write cost of another index is close to nothing.
+    "CREATE INDEX idx_pc_fy_wage       ON perm_cases(fiscal_year, wage)",
 ]
 
 

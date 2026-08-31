@@ -69,6 +69,15 @@ export default async function Image() {
           }}
         />
 
+        {/* THE MESSAGE HALF, and it is 58% on purpose.
+            A social card is a BILLBOARD, not a page header - it is read at
+            300-500px wide in a timeline or a text preview, where decoration
+            reads as texture and only large type survives. At 460px (38%) with
+            a 44px title, the tagline was already marginal at 500px and gone at
+            300px, while two thirds of the canvas carried an illustration whose
+            own labels are illegible at any share size. Rendered at 500, 300 and
+            200px and looked at, which is the only check that means anything
+            here. */}
         {/* Right overlay with branding */}
         <div
           style={{
@@ -76,12 +85,12 @@ export default async function Image() {
             right: 0,
             top: 0,
             bottom: 0,
-            width: "460px",
+            width: "700px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
             alignItems: "flex-start",
-            padding: "40px 20px 40px 118px",
+            padding: "44px 48px 44px 96px",
             background:
               "linear-gradient(to right, rgba(245,245,240,0) 0%, rgba(245,245,240,0.8) 10%, rgba(245,245,240,0.95) 30%, rgba(245,245,240,1) 50%)",
           }}
@@ -92,8 +101,8 @@ export default async function Image() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "56px",
-              height: "56px",
+              width: "68px",
+              height: "68px",
               backgroundColor: "#84cc16",
               border: "3px solid #1c1917",
               marginBottom: "20px",
@@ -117,7 +126,7 @@ export default async function Image() {
           <div
             style={{
               display: "flex",
-              fontSize: "44px",
+              fontSize: "64px",
               fontWeight: 800,
               color: "#1c1917",
               letterSpacing: "-1.5px",
@@ -133,7 +142,7 @@ export default async function Image() {
           <div
             style={{
               display: "flex",
-              width: "80px",
+              width: "120px",
               height: "6px",
               backgroundColor: "#84cc16",
               marginBottom: "16px",
@@ -143,7 +152,7 @@ export default async function Image() {
           {/* Tagline */}
           <div
             style={{
-              fontSize: "18px",
+              fontSize: "27px",
               fontWeight: 500,
               color: "#57534e",
               lineHeight: 1.4,
@@ -173,7 +182,7 @@ export default async function Image() {
                   padding: "6px 14px",
                   backgroundColor: "#ecfccb",
                   border: "2px solid #1c1917",
-                  fontSize: "13px",
+                  fontSize: "18px",
                   fontWeight: 600,
                   color: "#1c1917",
                 }}
