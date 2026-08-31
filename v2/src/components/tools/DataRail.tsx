@@ -441,8 +441,19 @@ export function DataRail() {
         aria-expanded={panelOpen}
         aria-controls="data-rail-panel"
         onClick={() => setPanelOpen((v) => !v)}
+        // The header's MEASURED height, not a constant. It is 71px on a desktop
+        // and 99px at 390px where the logo lockup wraps, and it shrinks again
+        // on scroll - so `top-[72px]` put a quarter of this button behind it.
+        style={{ top: "calc(var(--site-header-h, 4.5rem) + 4px)" }}
         className={cn(
-          "fixed left-0 top-[72px] z-40 flex size-11 items-center justify-center",
+          // `z-[41]`: ABOVE THE PANEL, still below the header's 50.
+          // Adam: "arrow box has black line on its left border it shouldn't".
+          // The handle overlaps the panel's right border by 2px so its own
+          // background hides that segment and the two outlines join - but when
+          // both sat at `z-40`, the panel won on DOM order alone (it is
+          // rendered after) and painted its border straight back over the
+          // handle. Equal z-index is not a tie, it is "later wins".
+          "fixed left-0 z-[41] flex size-11 items-center justify-center",
           "border-y-2 border-r-2 border-border bg-background shadow-hard-sm",
           "transition-transform duration-200 ease-out motion-reduce:transition-none",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
@@ -492,7 +503,7 @@ export function DataRail() {
       <nav
         id="data-rail-panel"
         aria-label="Data sections"
-        style={{ top: "calc(4.5rem + var(--security-banner-h, 0px))" }}
+        style={{ top: "var(--site-header-h, 4.5rem)" }}
         aria-hidden={!panelOpen}
         inert={!panelOpen}
         className={cn(

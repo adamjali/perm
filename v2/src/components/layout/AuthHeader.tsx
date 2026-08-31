@@ -102,8 +102,38 @@ export default function AuthHeader({
     setMotionArmed(true);
   }, []);
 
+  /**
+   * Publish this bar's real height as `--site-header-h`.
+   *
+   * IT IS NOT 71px. That number is true at desktop widths and the codebase had
+   * it written down as a constant; at 390px the logo lockup wraps and the bar
+   * measures **99px**. Anything positioning itself under a fixed header from a
+   * hardcoded figure is therefore 28px wrong on a phone - which is exactly how
+   * the data rail's drawer and its handle ended up partly behind it.
+   *
+   * It also changes on its own: `py-3` becomes `py-1.5` on scroll, and the
+   * security banner shifts the whole bar. A ResizeObserver is the only thing
+   * that tracks all three. Same mechanism `SecurityIncidentBanner` already uses
+   * for `--security-banner-h`, so there is one convention rather than two.
+   */
+  const headerRef = React.useRef<HTMLElement>(null);
+  useIsoLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const publish = () =>
+      document.documentElement.style.setProperty(
+        "--site-header-h",
+        `${el.offsetHeight}px`,
+      );
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <header
+      ref={headerRef}
       style={{ top: "var(--security-banner-h, 0px)" }}
       className={cn(
         "fixed inset-x-0 z-50 border-b-3 border-white/20 bg-black",
