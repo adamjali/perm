@@ -25,6 +25,7 @@
 import * as React from "react";
 import { motion, useInView, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { useHasHydratedOnce } from "@/hooks/useHasHydratedOnce";
 import {
   fadeInUp,
   fadeInDown,
@@ -235,6 +236,29 @@ export function ScrollReveal({
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
 
+  /**
+   * THE FIRST PAINT OF A SESSION IS NEVER HIDDEN.
+   *
+   * `initial="hidden"` is serialized by Motion as an inline style during
+   * server rendering, and `animate` resolves to "hidden" too because
+   * `isInView` is false on the server. So a ScrollReveal shipped its
+   * children invisible until React hydrated - which is correct for content
+   * below the fold and actively wrong for anything above it.
+   *
+   * Found by the SSR-visibility gate on 2026-08-31: `/for-attorneys` wrapped
+   * its own `<h1>` in one, so the page's largest element waited on the whole
+   * JS bundle, and with JS off the hero never appeared at all. A "scroll
+   * reveal" on content the visitor is already looking at was never doing
+   * anything except delaying it.
+   *
+   * On the first page of a session everything renders visible and no reveal
+   * runs. Every client-side navigation after that animates normally, which
+   * is where the effect is actually perceptible. There is no flash: the hook
+   * does not trigger a re-render, so nothing transitions from visible to
+   * hidden mid-view.
+   */
+  const hydrated = useHasHydratedOnce();
+
   // Get the pre-created motion component
   const MotionComponent = motionComponents[as];
 
@@ -248,8 +272,8 @@ export function ScrollReveal({
         ref={ref}
         className={className}
         variants={containerVariants}
-        initial="hidden"
-        animate={isInView ? "visible" : "hidden"}
+        initial={hydrated ? "hidden" : false}
+        animate={!hydrated || isInView ? "visible" : "hidden"}
       >
         {React.Children.map(children, (child, index) => {
           if (!React.isValidElement(child)) return child;
@@ -273,8 +297,8 @@ export function ScrollReveal({
       ref={ref}
       className={cn(className)}
       variants={variantWithDelay}
-      initial="hidden"
-      animate={isInView ? "visible" : "hidden"}
+      initial={hydrated ? "hidden" : false}
+      animate={!hydrated || isInView ? "visible" : "hidden"}
     >
       {children}
     </MotionComponent>

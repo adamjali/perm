@@ -309,6 +309,147 @@ def _rows(db, sql: str, args: list | None = None) -> list[list]:
             for row in res["rows"]]
 
 
+# The fixture row DOL leaves in its own data. Must stay byte-identical to
+# TEST_FIXTURE_EMPLOYER in src/lib/turso/rfi.ts, which is asserted by
+# review-stages-doc.test.ts - a drift here would silently change what the
+# published doc counts while the fallback query kept counting the old way.
+TEST_FIXTURE_EMPLOYER = "bah-test-company-name"
+
+# Same expression as AGE_DAYS in src/lib/turso/rfi.ts.
+_AGE_DAYS = """CASE
+  WHEN filing_date IS NOT NULL AND filing_date <> '' AND last_checked_at IS NOT NULL
+  THEN CAST(julianday(substr(last_checked_at, 1, 10)) - julianday(filing_date) AS INTEGER)
+END"""
+
+
+def write_review_stages(db) -> None:
+    """Precompute the pending review-stage census into perm_docs['review_stages'].
+
+    WHY. `/perm-rfi-audit` and its nine stage pages called getReviewStages()
+    on every cold render, and that query is a CTE over ~98,000 pending rows
+    with three window functions, a COUNT(DISTINCT employer_name) and three
+    joins. Measured against production 2026-08-31: **19.56s cold, 2.49s
+    warm**, against the read layer's 20s deadline. It blew the deadline,
+    retried, blew it again and threw - so the page returned 500.
+
+    That was not theoretical. Google's Inspection Tool hit it three times and
+    REFUSED to index two stage URLs ("Page cannot be indexed: Server error
+    (5xx)"), and Sentry caught the cause verbatim:
+    `turso query deadline (20000ms, attempt 2): WITH pend AS (`.
+
+    Computing it once per sweep instead of once per cold render replaces all
+    of it with a single doc read.
+
+    RAW NUMBERS ONLY. The editorial guards that decide whether an age band is
+    honest enough to draw - MIN_BAND_N, and n >= cases/2 - stay in TypeScript
+    where they are already probed by tests. Reimplementing them here would
+    put the same rule in two languages with no way to notice them diverging.
+
+    THE DOC MUST RECONCILE OR IT MUST NOT BE WRITTEN, the same rule
+    write_live_census follows: sum(stage.cases) must equal the pending total
+    counted separately. A partial census folds into smaller plausible
+    numbers and nothing downstream can tell.
+    """
+    stage_rows = _rows(db, f"""
+        WITH pend AS (
+          SELECT current_status AS status, employer_name,
+                 {_AGE_DAYS} AS days, substr(last_checked_at, 1, 10) AS seen
+            FROM perm_case_status
+           WHERE is_final = 0 AND employer_name IS NOT ?
+        ),
+        ranked AS (
+          SELECT status, days,
+                 ROW_NUMBER() OVER (PARTITION BY status ORDER BY days) AS rn,
+                 COUNT(*)     OVER (PARTITION BY status)               AS aged
+            FROM pend WHERE days IS NOT NULL
+        ),
+        pct AS (
+          SELECT status, MAX(aged) AS aged,
+                 MAX(CASE WHEN rn = MAX(1, aged / 2)      THEN days END) AS d50,
+                 MAX(CASE WHEN rn = MAX(1, aged / 10)     THEN days END) AS d10,
+                 MAX(CASE WHEN rn = MAX(1, aged * 9 / 10) THEN days END) AS d90
+            FROM ranked GROUP BY status
+        ),
+        cen AS (
+          SELECT status, COUNT(*) AS cases,
+                 COUNT(DISTINCT employer_name) AS employer_names,
+                 MIN(seen) AS seen_from, MAX(seen) AS seen_to
+            FROM pend GROUP BY status
+        ),
+        top AS (
+          SELECT status, employer_name, n FROM (
+            SELECT status, employer_name, COUNT(*) AS n,
+                   ROW_NUMBER() OVER (PARTITION BY status ORDER BY COUNT(*) DESC) AS rk
+              FROM pend WHERE employer_name IS NOT NULL AND employer_name <> ''
+             GROUP BY status, employer_name)
+           WHERE rk = 1
+        )
+        SELECT cen.status, cen.cases, cen.employer_names, cen.seen_from, cen.seen_to,
+               pct.aged, pct.d10, pct.d50, pct.d90,
+               top.employer_name AS top_employer, top.n AS top_cases
+          FROM cen
+          LEFT JOIN pct ON pct.status = cen.status
+          LEFT JOIN top ON top.status = cen.status
+         ORDER BY cen.cases DESC""", [TEST_FIXTURE_EMPLOYER])
+
+    pending_total = int(db.scalar(
+        "SELECT COUNT(*) FROM perm_case_status "
+        "WHERE is_final = 0 AND employer_name IS NOT ?",
+        [TEST_FIXTURE_EMPLOYER]) or 0)
+
+    stages = []
+    for (status, cases, employer_names, seen_from, seen_to,
+         aged, d10, d50, d90, top_employer, top_cases) in stage_rows:
+        stages.append({
+            "status": str(status),
+            "cases": int(cases or 0),
+            "employerNames": int(employer_names or 0),
+            "topEmployer": None if top_employer is None else str(top_employer),
+            "topEmployerCases": int(top_cases or 0),
+            "seenFrom": None if seen_from is None else str(seen_from),
+            "seenTo": None if seen_to is None else str(seen_to),
+            "aged": None if aged is None else int(aged),
+            "d10": None if d10 is None else int(d10),
+            "d50": None if d50 is None else int(d50),
+            "d90": None if d90 is None else int(d90),
+        })
+
+    summed = sum(s["cases"] for s in stages)
+    if summed != pending_total:
+        log(f"NOT writing review_stages: stages {summed:,} != pending "
+            f"{pending_total:,} (a concurrent write landed mid-run)")
+        return
+
+    doc = {"asOf": time.strftime("%Y-%m-%d"), "source": SOURCE,
+           "pendingTotal": pending_total, "stages": stages}
+    payload = json.dumps(doc, separators=(",", ":"))
+    db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
+        key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
+    db.execute(
+        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
+        "VALUES (?, ?, ?)",
+        ["review_stages", payload, int(time.time() * 1000)])
+    got = db.scalar("SELECT length(json) FROM perm_docs WHERE key = ?",
+                    ["review_stages"])
+    if int(got or 0) != len(payload):
+        raise SystemExit("FATAL: review_stages read-back does not match write")
+    # ITS OWN FRESHNESS ROW, deliberately separate from the sweep's.
+    #
+    # The reconciliation guard above can SKIP the write while the sweep
+    # itself succeeds and stamps `perm-case-status-full` green. Without a row
+    # of its own, a doc that quietly stopped being written would age past the
+    # reader's 8-day cutoff, every stage page would fall back to the 19.5s
+    # query, and they would start 500ing again with nothing alerting.
+    #
+    # 3 days, not 8: check_ingest_health.py must fire well before the reader
+    # gives up on the doc, not at the same moment.
+    stamp_freshness(db, "review-stages", source=SOURCE, cadence="Daily",
+                    note=f"{len(stages)} stages, {pending_total:,} pending",
+                    max_age_days=3)
+    log(f"wrote     review_stages ({len(stages)} stages, "
+        f"{pending_total:,} pending, {len(payload):,} bytes)")
+
+
 def write_live_census(db) -> None:
     """Precompute the mirror census into perm_docs['live_census'].
 
@@ -438,6 +579,7 @@ def main() -> int:
         found = run_discovery(db)
         if found:
             write_live_census(db)
+            write_review_stages(db)
             write_decided_percentiles(db)
             log("census refreshed")
         return 0
@@ -579,6 +721,7 @@ def main() -> int:
         if args.full:
             run_discovery(db)
         write_live_census(db)
+        write_review_stages(db)
         write_decided_percentiles(db)
     else:
         log("NOT stamping freshness: this run checked nothing")

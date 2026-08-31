@@ -90,10 +90,24 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default=DEFAULT_BASE)
     ap.add_argument("--limit", type=int, default=0, help="check only the first N URLs")
+    ap.add_argument(
+        "--sitemap",
+        help="Audit ONE child sitemap instead of the whole index. "
+             "THE UNIT THAT MATTERS IS THE TEMPLATE, NOT THE URL: the index "
+             "holds 21,110 URLs but only ~12 templates, and 16,309 of them "
+             "are the employer page with different words in it. "
+             "`--sitemap .../sitemaps/pages.xml` covers every distinct "
+             "template's non-entity pages; sample the entity ones with "
+             "--limit rather than walking all of them.",
+    )
     args = ap.parse_args()
     base = args.base.rstrip("/")
 
-    urls = sitemap_urls(base)
+    urls = (
+        [u for u in re.findall(r"<loc>([^<]+)</loc>", fetch(args.sitemap)[1])]
+        if args.sitemap
+        else sitemap_urls(base)
+    )
     if args.limit:
         urls = urls[: args.limit]
     if not urls:
@@ -111,6 +125,7 @@ def main() -> int:
         return u, path, status, body
 
     findings: list[str] = []
+    below_fold_total = [0]
     blind: list[str] = []
     ok = 0
 
@@ -122,21 +137,39 @@ def main() -> int:
             if CONTROL not in body:
                 blind.append(f"  200 but no control string ({CONTROL!r})  {path}")
                 continue
-            hid = len(HIDDEN_RE.findall(body))
+            # THE RULE IS POSITIONAL, and that is what makes this gate usable.
+            #
+            # A bare count of `opacity:0` cannot be the failure condition: the
+            # `whileInView` reveals on content pages are SUPPOSED to start
+            # hidden, so counting them would fail every blog and changelog
+            # page forever and the gate would be ignored within a week.
+            #
+            # What is never acceptable is hiding content ABOVE the fold, and
+            # the <h1> is a reliable proxy for that line: anything serialized
+            # hidden before the page's headline is on the critical render path
+            # and is gating LCP on hydration.
+            h1 = body.find("<h1")
+            hidden_before_h1 = [m.start() for m in HIDDEN_RE.finditer(body)
+                                if h1 > -1 and m.start() < h1]
             tf = len(TRANSFORM_RE.findall(body))
+            below = len(HIDDEN_RE.findall(body)) - len(hidden_before_h1)
+
             if tf:
                 findings.append(
                     f"  {path}\n      translateY(8px) x{tf} - the PageTransition "
                     f"wrapper is hiding SSR content again"
                 )
-            elif hid:
-                # Not automatically a bug: a genuinely-hidden decorative element
-                # can legitimately carry opacity:0. Report for a human to judge.
-                findings.append(f"  {path}\n      opacity:0 x{hid} (review: is any of it content?)")
+            elif hidden_before_h1:
+                findings.append(
+                    f"  {path}\n      opacity:0 x{len(hidden_before_h1)} BEFORE the "
+                    f"<h1> - above-the-fold content is hidden until hydration"
+                )
             else:
                 ok += 1
+                below_fold_total[0] += below
 
     print(f"clean   : {ok}")
+    print(f"          (they carry {below_fold_total[0]} hidden elements BELOW the h1 -\n           the whileInView reveals, which are intended)")
     print(f"findings: {len(findings)}")
     print(f"unusable: {len(blind)}\n")
 

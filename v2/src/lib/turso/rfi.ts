@@ -141,7 +141,7 @@ export interface ReviewStage {
  * on status - is a cross product, and on the 94,435-case analyst-review
  * partition it does not return.
  */
-export async function getReviewStages(): Promise<ReviewStage[]> {
+async function getReviewStagesLive(): Promise<ReviewStage[]> {
   const r = await rows<Record<string, unknown>>(
     `WITH pend AS (
        SELECT current_status AS status, employer_name,
@@ -194,6 +194,147 @@ export async function getReviewStages(): Promise<ReviewStage[]> {
     seenTo: x.seen_to == null ? null : String(x.seen_to),
     ageBand: ageBand(x),
   }));
+}
+
+// ---------------------------------------------------------------------------
+// The precomputed doc, and why this page stopped asking SQL on every render
+// ---------------------------------------------------------------------------
+
+/**
+ * A doc older than this is treated as absent.
+ *
+ * The writer runs on both daily sweeps and `ingest-health` alerts within 24
+ * hours of that going quiet, so eight days of staleness means the alerting
+ * failed too. At that point a stale stage census reads as a current one,
+ * which is worse than falling back to a live (slow) query or an empty state.
+ * Same budget and same reasoning as the live census.
+ */
+const REVIEW_STAGES_MAX_AGE_MS = 8 * 24 * 60 * 60 * 1000;
+
+/** One stage exactly as the ingest serialises it: RAW numbers, no guards. */
+interface ReviewStageDocRow {
+  status: string;
+  cases: number;
+  employerNames: number;
+  topEmployer: string | null;
+  topEmployerCases: number;
+  seenFrom: string | null;
+  seenTo: string | null;
+  aged: number | null;
+  d10: number | null;
+  d50: number | null;
+  d90: number | null;
+}
+
+function isDocRow(x: unknown): x is ReviewStageDocRow {
+  if (typeof x !== "object" || x === null) return false;
+  const r = x as Record<string, unknown>;
+  const numOrNull = (v: unknown) =>
+    v === null || (typeof v === "number" && Number.isFinite(v));
+  const strOrNull = (v: unknown) => v === null || typeof v === "string";
+  return (
+    typeof r.status === "string" &&
+    typeof r.cases === "number" &&
+    typeof r.employerNames === "number" &&
+    typeof r.topEmployerCases === "number" &&
+    strOrNull(r.topEmployer) &&
+    strOrNull(r.seenFrom) &&
+    strOrNull(r.seenTo) &&
+    numOrNull(r.aged) &&
+    numOrNull(r.d10) &&
+    numOrNull(r.d50) &&
+    numOrNull(r.d90)
+  );
+}
+
+/**
+ * Parse and validate one review-stages doc. Pure, so every rejection rule is
+ * testable without a database.
+ *
+ * ALL-OR-NOTHING, and the reconciliation is the point. A doc with one stage
+ * dropped still folds into a plausible-looking page - a slightly smaller
+ * backlog, one fewer row - and nothing downstream could tell. `pendingTotal`
+ * is counted by a separate query in the writer, so requiring it to equal the
+ * summed stages catches a doc assembled from two different views of the
+ * table.
+ *
+ * THE EDITORIAL GUARDS ARE NOT REIMPLEMENTED HERE. `ageBand` decides whether
+ * a band is honest enough to draw (MIN_BAND_N, and n >= cases/2), and it is
+ * called with the doc's raw fields under the same names the SQL row used, so
+ * the published page cannot diverge from the fallback path.
+ */
+export function parseReviewStagesDoc(
+  json: string,
+  computedAt: number,
+  now: number,
+): ReviewStage[] | null {
+  if (now - computedAt > REVIEW_STAGES_MAX_AGE_MS) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null) return null;
+  const d = parsed as Record<string, unknown>;
+  if (
+    typeof d.asOf !== "string" ||
+    typeof d.pendingTotal !== "number" ||
+    !Array.isArray(d.stages) ||
+    !d.stages.every(isDocRow)
+  ) {
+    return null;
+  }
+  const stages = d.stages as ReviewStageDocRow[];
+  const summed = stages.reduce((a, s) => a + s.cases, 0);
+  if (summed !== d.pendingTotal) return null;
+
+  return stages.map((s) => ({
+    status: s.status,
+    cases: s.cases,
+    employerNames: s.employerNames,
+    topEmployer: s.topEmployer,
+    topEmployerCases: s.topEmployerCases,
+    seenFrom: s.seenFrom,
+    seenTo: s.seenTo,
+    ageBand: ageBand(s as unknown as Record<string, unknown>),
+  }));
+}
+
+/**
+ * Every stage a pending case can be at, largest first.
+ *
+ * READS A PRECOMPUTED DOC, and falls back to computing it live.
+ *
+ * The live query is a CTE over ~98,000 pending rows with three window
+ * functions, a COUNT(DISTINCT employer_name) and three joins. Measured
+ * against production 2026-08-31: **19.56s cold, 2.49s warm**, against this
+ * layer's 20s deadline. It blew the deadline, retried, blew it again and
+ * threw - so all ten stage pages returned 500 on a cold render. Google's
+ * Inspection Tool hit exactly that and REFUSED to index two of them with
+ * "Page cannot be indexed: Server error (5xx)"; Sentry caught the cause
+ * verbatim as `turso query deadline (20000ms, attempt 2): WITH pend AS (`.
+ *
+ * The fallback is kept rather than deleted because a missing doc must
+ * degrade to a slow page, never a blank one - and it is what runs the first
+ * time this ships, before the next sweep writes the doc.
+ */
+export async function getReviewStages(): Promise<ReviewStage[]> {
+  const doc = await one<{ json: string; computed_at: number }>(
+    "SELECT json, computed_at FROM perm_docs WHERE key = 'review_stages'",
+  );
+  if (doc?.json) {
+    const parsed = parseReviewStagesDoc(
+      String(doc.json),
+      Number(doc.computed_at) || 0,
+      Date.now(),
+    );
+    if (parsed) return parsed;
+    // Named, because a silent fall-through here is a 20s page that looks
+    // like an ordinary slow render.
+    console.warn("[rfi] review_stages doc rejected; computing live");
+  }
+  return getReviewStagesLive();
 }
 
 /**
