@@ -442,7 +442,7 @@ export function DataRail() {
         aria-controls="data-rail-panel"
         onClick={() => setPanelOpen((v) => !v)}
         className={cn(
-          "fixed left-0 top-[72px] z-[61] flex size-11 items-center justify-center",
+          "fixed left-0 top-[72px] z-40 flex size-11 items-center justify-center",
           "border-y-2 border-r-2 border-border bg-background shadow-hard-sm",
           "transition-transform duration-200 ease-out motion-reduce:transition-none",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
@@ -456,13 +456,12 @@ export function DataRail() {
           // edge carries it out, its right edge comes down, its bottom edge
           // carries it back, and the border resumes. One shape, not a box
           // parked next to a line.
-          // OPEN, IT RIDES TO THE TOP OF THE DRAWER. Adam: "arrow should move
-          // up a bit so fully white on white no possibility of the green
-          // selection clashing with it." At its closed height it sat level
-          // with the first rows, and any of those can be the selected one - so
-          // there is no safe fixed height, only a reserved one. The drawer's
-          // `pt-[72px]` keeps that strip empty; -56px lands the handle in it.
-          panelOpen && "translate-x-[calc(17rem-2px)] -translate-y-14",
+          // IT DOES NOT MOVE VERTICALLY. The drawer now opens BELOW the header
+          // and reserves `pt-[52px]`, so the handle's 72-116 band sits beside
+          // empty panel rather than beside a row - which is what Adam asked for
+          // ("fully white on white no possibility of the green selection
+          // clashing with it") without needing a second position for it.
+          panelOpen && "translate-x-[calc(17rem-2px)]",
         )}
       >
         <span className="sr-only">
@@ -486,16 +485,31 @@ export function DataRail() {
         <div
           aria-hidden="true"
           onClick={() => setPanelOpen(false)}
-          className="fixed inset-0 z-[55] bg-black/50 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
         />
       ) : null}
 
       <nav
         id="data-rail-panel"
         aria-label="Data sections"
+        style={{ top: "calc(4.5rem + var(--security-banner-h, 0px))" }}
         aria-hidden={!panelOpen}
         inert={!panelOpen}
         className={cn(
+          // THE HEADER OUTRANKS THIS, and that is the correction. Adam, with
+          // the site's own mobile menu open over a data page: "header should be
+          // on top of it ove the arrow and sidebar not other way around". The
+          // drawer had been pushed to `z-[60]` and the handle to `z-[61]` so it
+          // would stop sliding UNDER the opaque `z-50` header - which fixed
+          // that and broke this, because the header's menu is part of the
+          // header. Raising a z-index to escape an overlap is almost always the
+          // wrong half of the fix.
+          //
+          // Both are back below the header at `z-40`, and the drawer starts at
+          // the header's own bottom edge (`4.5rem`, the same expression `main`
+          // pads by) instead of `inset-y-0`. Nothing is hidden because nothing
+          // overlaps, rather than because it won a stacking fight.
+          //
           // THE CURRENT TAB RUNS THE FULL WIDTH OF THE PANEL HERE. Adam: "the
           // selection for mobile should go all the way not stop early."
           //
@@ -511,7 +525,7 @@ export function DataRail() {
           //
           // The protrusion stays a desktop move, where there is a gutter for it
           // to reach into and nothing clipping it.
-          "fixed inset-y-0 left-0 z-[60] flex w-[17rem] flex-col overflow-y-auto border-r-2 border-border bg-background pb-4 pt-[72px] [&_[aria-current=page]]:mr-0 [&_ul]:w-full",
+          "fixed bottom-0 left-0 z-40 flex w-[17rem] flex-col overflow-y-auto border-r-2 border-border bg-background pb-4 pt-[52px] [&_[aria-current=page]]:mr-0 [&_ul]:w-full",
           "transition-transform duration-200 ease-out motion-reduce:transition-none",
           "lg:hidden",
           panelOpen ? "translate-x-0" : "-translate-x-full",
