@@ -88,8 +88,14 @@ export const metadata: Metadata = {
     // Next.js's shallow merge would otherwise drop from the parent layout.
     ...openGraphBase,
     title: "PERM Tracker - Live PERM Data and Case Deadlines",
+    // THE SOCIAL DESCRIPTION DRIFTED FROM THE META ONE. The `description` above
+    // was rewritten to lead with the free case lookup; this one still opened
+    // with "Every PERM filing window, PWD expiration and audit deadline,
+    // computed from your case dates" - the software pitch. So the SERP said one
+    // thing and every shared link said another, and the shared link is the one
+    // a person waiting on a case actually receives.
     description:
-      "Every PERM filing window, PWD expiration and audit deadline, computed from your case dates, with email and push alerts.",
+      "See where DOL's PERM queue stands today and look up any case number free, no account. Deadlines computed for the cases you track.",
     url: "/",
   },
 };

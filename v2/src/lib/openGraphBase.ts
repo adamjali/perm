@@ -49,7 +49,12 @@ export const socialCardImage = {
   width: SOCIAL_CARD_SIZE.width,
   height: SOCIAL_CARD_SIZE.height,
   type: SOCIAL_CARD_CONTENT_TYPE,
-  alt: "PERM Tracker - Deadline Management for Immigration Attorneys",
+  // TWO AUDIENCES, not one. This alt rides every page's `og:image` and still
+  // said "Deadline Management for Immigration Attorneys" - the positioning the
+  // whole site was reorganised away from, and the exact framing measured as the
+  // cause of AI overviews calling this attorney-only software. It is also what
+  // a screen reader announces for the card.
+  alt: "PERM Tracker - live DOL PERM data and case deadlines, for applicants and attorneys",
 } as const;
 
 export const openGraphBase = {

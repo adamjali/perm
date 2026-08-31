@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { getDatasetSchema } from "@/lib/structuredData";
 import Link from "next/link";
 import { Warning } from "@phosphor-icons/react/ssr";
 
@@ -116,8 +118,23 @@ export default async function PermQueuePage() {
   // the honest denominator for "how fast is this being cleared".
   const lastClearance = estimator.frontierHistory.at(-1) ?? null;
 
+  // A MEASURED DATASET, and this was one of two data pages whose markup
+  // did not say so. Five of seven carried `Dataset`; this one and the other
+  // did not, which is the kind of gap that is invisible in review because
+  // every page looks finished on its own. It is the AEO lever for a data
+  // page: it is what tells an answer engine the numbers have a named federal
+  // source, a licence and a coverage window rather than being prose.
+  const datasetSchema = getDatasetSchema("https://permtracker.app", {
+    name: "PERM pending queue census by filing month",
+    description:
+      "How many PERM cases remain undecided in each filing month, which DOL review queue they sit in, and how far each month has been worked through. Read per case from DOL's own case-status search.",
+    url: "https://permtracker.app/perm-queue",
+    isBasedOn: "https://flag.dol.gov/processingtimes",
+  });
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
+      <JsonLdScript schema={datasetSchema} />
 
       <header>
         <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">

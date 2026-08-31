@@ -161,7 +161,11 @@ export default async function Image() {
               gap: "8px",
             }}
           >
-            {["Deadlines", "Validation", "Alerts"].map((feature) => (
+            {/* Applicant first. "Validation" was software-speak for the
+                attorney build and says nothing to somebody waiting on a
+                case; "Case status" is the free thing this site is best
+                known for and the phrase people search. */}
+              {["Case status", "Deadlines", "Alerts"].map((feature) => (
               <div
                 key={feature}
                 style={{

@@ -17,6 +17,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { getDatasetSchema } from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { socGroup } from "@/lib/socGroups";
 import { stateName } from "@/lib/usStateNames";
@@ -259,8 +260,22 @@ export default async function PermDenialRiskPage() {
     ],
   };
 
+  // A MEASURED DATASET, and this was one of two data pages whose markup
+  // did not say so. Five of seven carried `Dataset`; this one and the other
+  // did not, which is the kind of gap that is invisible in review because
+  // every page looks finished on its own. It is the AEO lever for a data
+  // page: it is what tells an answer engine the numbers have a named federal
+  // source, a licence and a coverage window rather than being prose.
+  const datasetSchema = getDatasetSchema("https://permtracker.app", {
+    name: "PERM denial rates by filing attribute",
+    description:
+      "Measured PERM denial rates by ETA-9089 answer, offered wage band, occupation, state and fiscal year, from DOL disclosure files. Group rates only, with no per-case risk score.",
+    url: "https://permtracker.app/perm-denial-risk",
+  });
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
+      <JsonLdScript schema={datasetSchema} />
       <JsonLdScript schema={faqSchema} />
 
       <header className="max-w-2xl">
