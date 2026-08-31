@@ -1536,6 +1536,71 @@ meeting. After the redeploy the live dispatch returned
 `{"revalidated":1,"skipped":2}` for a payload of one good slug, `../..` and
 `BAD` - which proves the guard and the action in one call.
 
+## The header publishes its own height, and it is not 71px (2026-08-31)
+
+`AuthHeader` measures itself with a ResizeObserver and publishes two variables.
+Nothing may hardcode the header height again; treat a surviving `4.5rem` or
+`71px` as a bug.
+
+| variable | value | consumers |
+|---|---|---|
+| `--site-header-h` | **live** | the mobile data drawer and its handle - things that hug the bar |
+| `--site-header-max-h` | never shrinks | `main` padding in `(public)` and `(auth)`, the sign-up split's `100dvh` arithmetic, the desktop rail's sticky offset |
+
+**Why it cannot be a constant.** Measured on `/tools` across twelve widths:
+**99px at 320-390** (the logo lockup wraps), **71px at 414-768**, **99px again
+at exactly 1024** (the desktop nav appears and wraps), **71px at 1440** - and it
+shrinks on scroll (`py-3` -> `py-1.5`, so 99->87 and 71->59) and shifts with the
+security banner. Content-dependent at both ends, so no media query encodes it.
+The 1024 case was a live desktop defect nobody had noticed.
+
+**Why two variables.** A reservation that followed the live height would reflow
+the entire page on every scroll. `main` previously reserved 72px for a bar that
+is 99px on a phone; nothing was clipped only because every page adds its own top
+padding, so it was absorbed by accident rather than by design.
+
+**`ro.observe(el, { box: "border-box" })` is load-bearing.** A ResizeObserver
+watches the CONTENT box by default and this bar shrinks by changing its own
+padding, so the observer never fired: the variable sat at 99 while the bar was
+87, and the drawer floated 12px below the header with the page showing through.
+`offsetHeight` was already correct - only the observed box was wrong, which is
+why reading the code found nothing.
+
+**A width change resets the high-water mark**, since a ResizeObserver alone
+cannot lower one.
+
+## The Turso retry excluded the failure it was written for (2026-08-31)
+
+`withDeadline` in `src/lib/turso/client.ts` guarded itself with
+`!String(e).includes("turso query deadline")`, so it retried **only the deadline
+it raises itself**. Production threw `SocketError: other side closed` inside
+`TypeError: fetch failed` on a `perm-employers/[slug]` server component - a
+dropped keep-alive connection, the most retryable error there is, and the exact
+case the helper's own comment says it exists for.
+
+- **The reason is in `e.cause`.** `String(err)` on undici's wrapper is exactly
+  `"TypeError: fetch failed"`, so a message-only predicate can never see
+  `other side closed`, `ECONNRESET` or a DNS failure. The chain is walked now.
+- **READS ONLY.** `exec()` shares the helper and writes; "other side closed"
+  does not say whether the server processed the statement, so a retried INSERT
+  could double-apply. `retryTransient` is a parameter for that reason.
+- `clientRetry.test.ts` builds a real `cause` chain in every fixture - a test
+  putting the reason in the message would pass against the broken version. It
+  lives in `unit-isolated` because it mocks `@libsql/client` and calls
+  `vi.resetModules()`.
+
+## Where to look when something is broken in production
+
+| surface | access |
+|---|---|
+| **PostHog** | MCP, connected — project 322551. **Exception autocapture is OFF**, so its error counts are a floor, not coverage |
+| **Sentry** | **No MCP exists.** Read the alert emails; the Gmail OAuth token under `~/emails/gmail-cleanup/` works |
+| **Convex** | `mcp__convex__logs` with `status: "failure"`, and `mcp__convex__insights` |
+
+**Check Sentry's `environment` tag first.** The DEV environment reports to the
+same production project, so an alert with `server_name = Adams-MacBook` and a
+`127.0.0.1` URL is a local blip rather than an incident.
+
 ## The data rail, and why each part of it is shaped that way (2026-08-30)
 
 `DataNav.tsx` is gone. `dataSections.ts` (the map) + `DataRail.tsx` (the rail) +
