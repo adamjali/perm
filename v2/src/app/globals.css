@@ -2346,15 +2346,37 @@ input[type="week"] {
   max-width: 100%;
 }
 
-/* An OPAQUE primary tint for stat panels. `bg-primary/10` is translucent, and
-   what sits behind a panel is not always the card: the I-140 stat grid uses
-   the `gap-px bg-border` hairline trick, so in light mode the surface under
-   its cells is pure BLACK, and 10% lime over black rendered a dark green panel
-   with near-black text on the live site. Mixing the tint into the card colour
-   makes the panel self-contained: the same readable surface whatever it sits
-   on, in both themes. */
+/* An OPAQUE tint for stat panels. `bg-primary/10` is translucent, and this
+   one has to stay opaque - see the black-backdrop note at the end.
+
+   MIXED FROM THE INK GREEN, NOT THE LIME. Adam: "i dont like this lighter
+   green? can we use the normal darker richer green we usually use on the
+   site?" He was looking at the rail's active row and a stat panel, both of
+   which came out a pale mint.
+
+   The cause is the source colour rather than the strength. `--primary` is
+   #2ECC40, a bright lime, and 12% of it over a near-white card lands on
+   #E2F4E4 - a high-value mint with a cyan cast that reads as washed out,
+   especially sitting next to the solid black panels it alternates with.
+   `--data-good-ink` is #1D8229 in light, the darker green already used for
+   every chart and marker on the site, and that IS the green he means. Same
+   mix over the same card gives a sage that belongs to the palette.
+
+   14% IS A MEASURED CEILING, NOT A GUESS. Every ink that currently clears
+   4.5:1 on this surface has to still clear it, and the binding one is
+   `--muted-foreground`: 5.00 today, 4.57 at 14%, 4.46 at 16%. Solved rather
+   than eyeballed, because the whole point of moving to a darker source is
+   that it takes contrast with it.
+
+   The mix is into `--card` and not into whatever sits behind, which is
+   deliberate and predates this: the I-140 stat grid uses the `gap-px
+   bg-border` hairline trick, so in light mode the surface under its cells is
+   pure BLACK, and a tint that composited against its backdrop rendered a dark
+   green panel with near-black text on the live site. Mixing into the card
+   colour makes the panel self-contained - the same readable surface wherever
+   it lands, in both themes. */
 .bg-tint-primary {
-  background-color: color-mix(in srgb, var(--primary) 12%, var(--card));
+  background-color: color-mix(in srgb, var(--data-good-ink) 14%, var(--card));
 }
 
 /* Offset block — the strongest layering device from the client-site system,

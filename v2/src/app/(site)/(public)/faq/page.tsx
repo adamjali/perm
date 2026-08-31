@@ -35,8 +35,22 @@ const faqData = [
     items: [
       {
         question: "What exactly does PERM Tracker do?",
+        // LEADS WITH THE LOOKUP, NOT THE SOFTWARE, and that order is the whole
+        // point. This answer used to open "PERM Tracker automates deadline
+        // management for PERM labor certification cases", which is the
+        // practitioner pitch - and Google prints this answer as the site's FAQ
+        // snippet, so the first thing a searcher read about us was software for
+        // law firms. That framing is the measured cause of AI overviews
+        // describing this as attorney-only, and the rest of the site was
+        // reordered to fix it while this sat here unchanged.
+        //
+        // It also fixes the snippet mechanically. The old text put a colon
+        // before a list, and Google's cut landed on it - the listing ended
+        // "auto-calculates every critical deadline:" with nothing after it. A
+        // complete sentence first means the truncation lands on a finished
+        // thought whatever length Google allows.
         answer:
-          "PERM Tracker automates deadline management for PERM labor certification cases. Enter your case dates, and it auto-calculates every critical deadline: PWD expiration, the 30-180 day ETA 9089 filing window, I-140 filing cutoffs, and more. You get email and push notifications before deadlines hit, plus a calendar view of everything upcoming.",
+          "PERM Tracker follows your PERM case through the Department of Labor and tells you where it stands. Look up a case number to see its federal record and where the queue has reached, get an email when the status changes, and track the deadlines around it: PWD expiration, the 30-180 day ETA 9089 filing window, and I-140 filing cutoffs. Attorneys manage full caseloads on the same data.",
       },
       {
         question: "How is this different from using a spreadsheet?",
