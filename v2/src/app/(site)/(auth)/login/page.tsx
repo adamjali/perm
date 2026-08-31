@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { DeadlineTrackFigure } from "@/components/marketing/PageFigures";
 import { LoginPageClient } from "./LoginPageClient";
 
 export const dynamic = "force-static";
@@ -15,8 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     ...openGraphBase,
     title: "Sign In | PERM Tracker",
-    description:
-      "Sign in to PERM Tracker.",
+    description: "Sign in to PERM Tracker.",
     url: "/login",
   },
   // Auth pages shouldn’t appear in SERPs. `noindex` is the correct signal per
@@ -26,37 +24,40 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
+/**
+ * Sign in. Just the form, and that is a finding rather than the lazy option.
+ *
+ * SIGN-IN AND SIGN-UP ARE DELIBERATELY ASYMMETRIC, and there is a directly
+ * verified example. Vercel's two pages, read an hour apart on 2026-08-31:
+ * `/login` is "Log in to Vercel" and carries NO marketing at all, while
+ * `/signup` is "Your first deploy is just a sign-up away" with customer proof
+ * and logos. It even inverts the method order - email first on sign-in, the
+ * one-click providers first on sign-up - because a returning user knows which
+ * credential they have and wants the shortest path to it, while a new user has
+ * none yet. GitHub, Supabase and Cal.com are bare in the same way.
+ *
+ * So this page loses the panel it briefly had. A value proposition beside a
+ * sign-in form is addressed to somebody who has already decided; it is inert at
+ * best, and showing a screenshot of the product to a person one field away from
+ * the real thing is faintly absurd.
+ *
+ * The one pattern worth stealing for a sign-in page is Railway's, which prints
+ * "All systems operational" - information exactly when somebody wonders why a
+ * login is slow. There is no status endpoint here to read, and inventing one
+ * would be worse than the omission, so it stays off until there is something
+ * true to put in it.
+ *
+ * IT KEPT ITS CARD. Adam: "sign in back to the original please, it can be in a
+ * square container thing if it was before bring it back." Sign-up lost its box
+ * because it now sits in a two-column split where the panel beside it is the
+ * frame; sign-in has no such panel, so a bare form on the dotted ground would
+ * be floating rather than placed. The two pages diverging here is the same
+ * asymmetry as the copy, not an inconsistency.
+ */
 export default function LoginPage() {
-  // The layout no longer imposes a width, so the measure lives
-    // here. Unchanged from what it was: max-w-md, centred.
-    return (
-      // The same shape as sign-up, deliberately: crossing between the two
-      // should not move the form. The copy differs because the reader does -
-      // somebody signing in already decided, so the panel reminds rather than
-      // sells.
-      <div className="mx-auto w-full max-w-5xl lg:grid lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start lg:gap-10">
-        <div className="mx-auto w-full max-w-md lg:mx-0">
-          <LoginPageClient />
-        </div>
-        <aside className="mx-auto mt-8 w-full max-w-md border-2 border-border bg-card p-6 shadow-hard lg:mx-0 lg:mt-0 lg:max-w-none">
-          <p className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground">
-            While you were away
-          </p>{" "}
-          <h2 className="mt-2 font-heading text-2xl font-black leading-tight">
-            Your deadlines kept counting
-          </h2>{" "}
-          <p className="mt-3 text-base leading-relaxed text-foreground/70">
-            Filing windows, wage expirations and audit responses are recomputed
-            from your case dates every time DOL publishes, so nothing needs
-            re-entering.
-          </p>
-          <figure className="mt-6">
-            <DeadlineTrackFigure className="h-auto w-full text-foreground" />{" "}
-            <figcaption className="mt-3 border-t-2 border-border pt-3 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              The window closes at the earlier of the two
-            </figcaption>
-          </figure>
-        </aside>
-      </div>
-    );
+  return (
+    <div className="mx-auto w-full max-w-md">
+      <LoginPageClient />
+    </div>
+  );
 }

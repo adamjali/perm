@@ -357,7 +357,14 @@ export function SignupPageClient() {
               <Input
                 id="code"
                 name="code"
+                // `text`, never `number` - a numeric input strips leading
+                // zeros. ONE field rather than a row of single-character
+                // boxes, which is what keeps a paste working: WCAG 2.2 SC
+                // 3.3.8 fails any authentication step that forces manual
+                // transcription, and the popular six-box component does
+                // exactly that unless it distributes a pasted value.
                 type="text"
+                autoComplete="one-time-code"
                 placeholder="XXXXXXXXXXXX"
                 maxLength={12}
                 required
@@ -557,8 +564,14 @@ export function SignupPageClient() {
           SIGN UP WITH GOOGLE
         </Button>{" "}
 
-        {/* Passive consent — terms acceptance via sign-in wrap */}
-        <p className="text-center text-sm leading-relaxed text-muted-foreground">
+        {/* Passive consent — terms acceptance via sign-in wrap.
+            LEFT-ALIGNED, like every other line in this form. Centred text sets
+            a ragged left edge, so each line starts somewhere new; tolerable for
+            one short line, not for the four-line disclosure below it. Both are
+            legally load-bearing - the session-recording sentence exists because
+            an earlier version of this page claimed the opposite - so the fix is
+            to make them readable, never to trim them. */}
+        <p className="text-sm leading-relaxed text-muted-foreground">
           By creating an account, you agree to our{" "}
           <a
             href="/terms"
@@ -581,7 +594,7 @@ export function SignupPageClient() {
         </p>{" "}
 
         {/* Cloud storage disclaimer */}
-        <p className="text-center text-sm leading-relaxed text-muted-foreground">
+        <p className="text-sm leading-relaxed text-muted-foreground">
           PERM Tracker is a case management tool, not a legal service. Your data
           is stored securely on cloud infrastructure with encryption. We use
           analytics and session-recording tools to improve the product (you can

@@ -366,7 +366,11 @@ export function LoginPageClient() {
             id="email"
             label="Email"
             type="email"
-            autoComplete="email"
+            // `username`, not `email`. MDN pairs `username` with
+            // `current-password` as the couple a password manager recognises on
+            // a SIGN-IN form; `email` is for a form collecting an address.
+            // Sign-up correctly uses `email` + `new-password`, the other pair.
+            autoComplete="username"
             inputMode="email"
             placeholder="you@example.com"
             value={email}
