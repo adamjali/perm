@@ -8,6 +8,7 @@
  */
 
 import Script from "next/script";
+import { useEffect, useRef } from "react";
 import { ChatDots, Star } from "@phosphor-icons/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { APP_RATING, shouldAdvertiseRating } from "@/lib/structuredData";
@@ -70,7 +71,75 @@ const trustBadges: TrustBadge[] = [
   },
 ];
 
+/**
+ * Give Senja's "powered by" link an accessible name.
+ *
+ * The widget renders an icon-only anchor with no text and no label, which is
+ * the ONLY failure in two Lighthouse categories on the homepage: Accessibility
+ * sits at 97 instead of 100 ("Links do not have a discernible name") and
+ * Agentic Browsing at 2/3 ("Accessibility tree is not well-formed"), both
+ * naming `div.senja-embed > div.sj-avatars > a.sj-powered-by`. A screen reader
+ * announces it as "link", and an agent walking the tree gets a destination it
+ * cannot describe.
+ *
+ * We cannot change their markup, so we label it after it arrives. Adding an
+ * accessible name to an element that has none cannot break anything: there is
+ * no name to override.
+ *
+ * Scoped to the embed container rather than document.body - a subtree observer
+ * on the whole document runs on every React commit for the life of the page.
+ * It searches the shadow root too, because the embed is configured
+ * `data-mode="shadow"` and may render either way depending on their build.
+ * Self-disconnects once labelled, and gives up after a bounded window so a
+ * widget that never loads does not leave an observer running.
+ *
+ * If Senja renames the class this silently stops working and we are back to
+ * exactly today's behaviour, which is the right way for a patch on somebody
+ * else's DOM to fail.
+ */
+function useLabelSenjaAttribution(ref: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const host = ref.current;
+    if (!host) return;
+
+    const label = (): boolean => {
+      const roots: (HTMLElement | ShadowRoot)[] = [host];
+      const embed = host.querySelector<HTMLElement>(".senja-embed");
+      if (embed?.shadowRoot) roots.push(embed.shadowRoot);
+
+      let labelled = false;
+      for (const root of roots) {
+        root
+          .querySelectorAll<HTMLAnchorElement>("a.sj-powered-by")
+          .forEach((a) => {
+            // Never overwrite a name they may have added themselves.
+            if (a.getAttribute("aria-label") || a.textContent?.trim()) return;
+            a.setAttribute("aria-label", "Reviews powered by Senja");
+            labelled = true;
+          });
+      }
+      return labelled;
+    };
+
+    if (label()) return;
+
+    const observer = new MutationObserver(() => {
+      if (label()) observer.disconnect();
+    });
+    observer.observe(host, { childList: true, subtree: true });
+    const giveUp = setTimeout(() => observer.disconnect(), 20_000);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(giveUp);
+    };
+  }, [ref]);
+}
+
 export function TestimonialsSection() {
+  const senjaRef = useRef<HTMLDivElement>(null);
+  useLabelSenjaAttribution(senjaRef);
+
   return (
     <section className="relative py-12 sm:py-16 overflow-hidden">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8">
@@ -147,7 +216,7 @@ export function TestimonialsSection() {
             line, the schema and this widget back together.
           */}
           {shouldAdvertiseRating() ? (
-            <div>
+            <div ref={senjaRef}>
               <Script
                 src="https://widget.senja.io/widget/3563db96-3a71-4d2a-b7e8-70550d4dd814/platform.js"
                 strategy="lazyOnload"

@@ -1,11 +1,28 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+// vitest hoists vi.mock above every import, so this closes over the mocked
+// gate regardless of where it is written. Kept at the top for `import/first`.
+import { TestimonialsSection } from "../TestimonialsSection";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   APP_RATING,
   MIN_REVIEWS_TO_ADVERTISE,
   shouldAdvertiseRating,
 } from "@/lib/structuredData";
+
+// Only `shouldAdvertiseRating` is swapped; APP_RATING and the threshold stay
+// real, because two assertions in this file are ABOUT their live values.
+const mockAdvertise = vi.fn(() => true);
+vi.mock("@/lib/structuredData", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/structuredData")>();
+  return { ...actual, shouldAdvertiseRating: () => mockAdvertise() };
+});
+
+beforeEach(() => {
+  mockAdvertise.mockReturnValue(true);
+});
 
 /**
  * Everything that publishes the aggregate rating is behind ONE threshold.
@@ -56,11 +73,41 @@ describe("aggregate rating gate", () => {
   });
 
   it("puts the Senja widget behind the same gate as our own line", () => {
-    const src = source();
-    const gateAt = src.indexOf("shouldAdvertiseRating()", src.indexOf("senja-embed") - 2000);
-    const widgetAt = src.indexOf("senja-embed");
-    expect(gateAt).toBeGreaterThan(-1);
-    expect(gateAt).toBeLessThan(widgetAt);
+    // ASSERTS ON THE RENDERED TREE, NOT ON POSITIONS IN THE SOURCE TEXT.
+    //
+    // Two source-level versions of this test were probed on 2026-08-31 and
+    // BOTH passed against a component whose widget had been deliberately
+    // un-gated:
+    //
+    //   indexOf("senja-embed")              matched a doc comment quoting
+    //                                       Lighthouse's selector, 140 lines
+    //                                       above the markup.
+    //   lastIndexOf(gate, widgetPosition)   found the OTHER call to the same
+    //                                       gate - the one wrapping our own
+    //                                       visible rating line - which is
+    //                                       still before the widget, so the
+    //                                       ordering held with no gate on the
+    //                                       widget at all.
+    //
+    // Any assertion about which conditional encloses which JSX is really a
+    // parse, and indexOf is not a parser. Render it and look for the element.
+    const html = renderToStaticMarkup(
+      React.createElement(TestimonialsSection),
+    );
+    expect(html).toContain('class="senja-embed"');
+  });
+
+  it("withholds the widget entirely below the floor", () => {
+    // The other half, and the one that actually proves the gate: with the
+    // threshold unmet the mount point must not be in the tree at all.
+    mockAdvertise.mockReturnValue(false);
+    const html = renderToStaticMarkup(
+      React.createElement(TestimonialsSection),
+    );
+    expect(html).not.toContain("senja-embed");
+    // ...while the things that survive at every count still do.
+    expect(html).toContain("senja.io/p/perm-tracker/r/");
+    mockAdvertise.mockReturnValue(true);
   });
 
   it("gates the remote script too, not only the mount point", () => {

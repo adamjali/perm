@@ -1479,13 +1479,31 @@ input[type="file"]::file-selector-button:active {
   background: hsl(0 0% 100% / 0.5);
 }
 
-/* Firefox scrollbar */
-* {
+/* Firefox scrollbar.
+ *
+ * ON `html`, NOT ON `*`. Both properties are INHERITED (CSS Scrollbars
+ * Styling Level 1), so declaring them once at the root reaches every
+ * scrollable descendant with an identical computed value. The universal
+ * selector added nothing visually and had a real cost:
+ *
+ * `scrollbar-color` is not a compositable property, and setting it
+ * EXPLICITLY on every element meant every element carrying `transition-all`
+ * (128 usages across this codebase) had a non-compositable property in its
+ * transition set. PageSpeed reported "Avoid non-composited animations: 30
+ * animated elements found", and all 30 named `scrollbar-color` as the
+ * reason - cards, FAQ panels, the calculator tiles, the CTA button.
+ *
+ * The audit is Unscored and CLS here is 0, so this was never a score
+ * problem. It is fixed at the cause rather than by editing 128 call sites
+ * to enumerate transition properties, which would have been a large blast
+ * radius on hover states for a cosmetic report line. (2026-08-31)
+ */
+html {
   scrollbar-width: thin;
   scrollbar-color: hsl(0 0% 0% / 0.3) transparent;
 }
 
-.dark * {
+html.dark {
   scrollbar-color: hsl(0 0% 100% / 0.3) transparent;
 }
 

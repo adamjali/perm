@@ -10,6 +10,7 @@
 import { motion } from "motion/react";
 import TableOfContents from "./TableOfContents";
 import ShareButtons from "./ShareButtons";
+import { useHasHydratedOnce } from "@/hooks/useHasHydratedOnce";
 
 interface ArticleBodyProps {
   title: string;
@@ -18,6 +19,11 @@ interface ArticleBodyProps {
 }
 
 export default function ArticleBody({ title, url, children }: ArticleBodyProps) {
+  // Entrance animations are skipped on the FIRST paint of the session, so the
+  // server's markup is visible with no JavaScript and does not gate LCP. The
+  // whileInView reveals in this directory are deliberately NOT guarded: hiding
+  // below-the-fold content until it is scrolled to is what those are for.
+  const hydrated = useHasHydratedOnce();
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
       <div className="flex gap-10">
@@ -25,7 +31,7 @@ export default function ArticleBody({ title, url, children }: ArticleBodyProps) 
         <div className="min-w-0 flex-1">
           <motion.div
             className="article-content prose-neobrutalist max-w-none"
-            initial={{ opacity: 0 }}
+            initial={hydrated ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
           >

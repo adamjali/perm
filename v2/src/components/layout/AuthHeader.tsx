@@ -197,6 +197,7 @@ export default function AuthHeader({
                 <React.Fragment key={link.href}>
                   <NavLink
                     href={link.href}
+                    aria-label={"ariaLabel" in link ? link.ariaLabel : undefined}
                     className={cn(
                       "relative px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
                       // text-(--primary), not text-primary: the header is black in
@@ -346,6 +347,7 @@ export default function AuthHeader({
               <React.Fragment key={link.href}>
                 <NavLink
                   href={link.href}
+                  aria-label={"ariaLabel" in link ? link.ariaLabel : undefined}
                   className={cn(
                     "block py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
                     pathname === link.href

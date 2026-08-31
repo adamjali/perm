@@ -8,6 +8,19 @@
 export interface NavLink {
   href: string;
   label: string;
+  /**
+   * Accessible name, when the visible label alone is ambiguous.
+   *
+   * Only needed where two links share a visible label but go to different
+   * places - a screen reader user pulling up a list of links sees the name,
+   * not the URL, so two identical entries are indistinguishable. Lighthouse
+   * flags it as "Identical links have the same purpose".
+   *
+   * MUST CONTAIN THE VISIBLE LABEL AS A SUBSTRING (WCAG 2.5.3, Label in
+   * Name). Speech-input users say what they can see, so an accessible name
+   * that drops or rewords the visible text makes the control unspeakable.
+   */
+  ariaLabel?: string;
 }
 
 /**
@@ -104,7 +117,18 @@ export const PUBLIC_NAV_LINKS = [
   // impressions against zero for "timelines"/"predictor" - the nav should
   // say what people search. It lands on the calculator hub, whose first
   // card is the PERM processing time calculator.
-  { href: "/calculators", label: "Processing times" },
+  //
+  // `ariaLabel` because the FOOTER also has a "Processing times" link, and it
+  // points at /perm-processing-times - the data page, which is a different
+  // and equally reasonable destination for that phrase. Two links, one
+  // visible name, two targets. The visible text stays exactly as-is for the
+  // reason above; only the accessible name is widened, and it still contains
+  // "Processing times" verbatim so speech input keeps working.
+  {
+    href: "/calculators",
+    label: "Processing times",
+    ariaLabel: "Processing times calculators",
+  },
   { href: "/tools", label: "Data" },
   { href: "/for-attorneys", label: "For attorneys" },
 ] as const satisfies readonly NavLink[];

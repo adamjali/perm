@@ -11,6 +11,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import type { PostSummary } from "@/lib/content/types";
 import ContentCard from "./ContentCard";
+import { useHasHydratedOnce } from "@/hooks/useHasHydratedOnce";
 
 interface ContentGridProps {
   posts: PostSummary[];
@@ -18,11 +19,16 @@ interface ContentGridProps {
 }
 
 export default function ContentGrid({ posts, showType }: ContentGridProps) {
+  // Entrance animations are skipped on the FIRST paint of the session, so the
+  // server's markup is visible with no JavaScript and does not gate LCP. The
+  // whileInView reveals in this directory are deliberately NOT guarded: hiding
+  // below-the-fold content until it is scrolled to is what those are for.
+  const hydrated = useHasHydratedOnce();
   if (posts.length === 0) {
     return (
       <motion.div
         className="flex flex-col items-center justify-center py-20 text-center"
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={hydrated ? { opacity: 0, scale: 0.95 } : false}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
       >
@@ -43,7 +49,7 @@ export default function ContentGrid({ posts, showType }: ContentGridProps) {
           <motion.div
             key={`${post.type}-${post.slug}`}
             layout
-            initial={{ opacity: 0, y: 20 }}
+            initial={hydrated ? { opacity: 0, y: 20 } : false}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{

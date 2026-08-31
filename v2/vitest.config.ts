@@ -127,7 +127,9 @@ export default defineConfig({
           // (only under sequence.shuffle / CI). Vitest's own guidance: keep files
           // that "depend on a fresh module instance for vi.mock factories"
           // isolated. They run in the "unit-isolated" project below instead.
-          exclude: ISOLATED_UNIT_FILES,
+          // `*.ssr.test.*` runs in the `ssr` project: real node, real
+          // motion. See that project for why it cannot live here.
+          exclude: [...ISOLATED_UNIT_FILES, "**/*.ssr.test.*"],
           globals: true,
           setupFiles: "./vitest.setup.ts",
           testTimeout: 5000,
@@ -144,9 +146,37 @@ export default defineConfig({
           name: "unit-isolated",
           environment: "happy-dom",
           include: ISOLATED_UNIT_FILES,
+          exclude: ["**/*.ssr.test.*"],
           globals: true,
           setupFiles: "./vitest.setup.ts",
           testTimeout: 5000,
+          isolate: true,
+        },
+      },
+      {
+        // SERVER-RENDER SHAPE TESTS. `*.ssr.test.{ts,tsx}`, anywhere.
+        //
+        // This project exists because the other three CANNOT see the class of
+        // defect it covers, and reported a clean pass against a deliberately
+        // broken component when probed on 2026-08-31. Two independent reasons,
+        // either one sufficient:
+        //
+        //   1. They all run happy-dom, so `window` is defined. Motion branches
+        //      on that and takes its CLIENT path, applying `initial` through
+        //      the DOM after mount instead of serializing it into the markup.
+        //   2. `vitest.setup.ts` mocks `motion/react` wholesale, replacing
+        //      every motion component with a plain element.
+        //
+        // So: environment "node", and NO setupFiles. Both are load-bearing.
+        // The defect that prompted this shipped `<div style="opacity:0">`
+        // around 90% of every public page's HTML, invisible until hydration.
+        extends: true,
+        test: {
+          name: "ssr",
+          environment: "node",
+          include: ["src/**/*.ssr.test.{ts,tsx}"],
+          globals: true,
+          testTimeout: 10000,
           isolate: true,
         },
       },
@@ -163,6 +193,9 @@ export default defineConfig({
             "src/emails/**/*.test.{ts,tsx}",
             "test-utils/**/*.test.{ts,tsx}",
           ],
+          // See the `ssr` project below. This one mocks motion and runs a DOM,
+          // so a server-render assertion here is blind by construction.
+          exclude: ["**/*.ssr.test.*"],
           globals: true,
           setupFiles: "./vitest.setup.ts",
           testTimeout: 10000,

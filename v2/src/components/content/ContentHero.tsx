@@ -15,6 +15,7 @@ import type { ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { stagger, fadeUp } from "@/lib/content/animations";
 import { useParallax } from "@/lib/hooks/useGSAP";
+import { useHasHydratedOnce } from "@/hooks/useHasHydratedOnce";
 
 /** Hero background images per content type */
 const HERO_IMAGES: Partial<Record<ContentType, string>> = {
@@ -38,6 +39,11 @@ export default function ContentHero({
   description,
   postCount,
 }: ContentHeroProps) {
+  // Entrance animations are skipped on the FIRST paint of the session, so the
+  // server's markup is visible with no JavaScript and does not gate LCP. The
+  // whileInView reveals in this directory are deliberately NOT guarded: hiding
+  // below-the-fold content until it is scrolled to is what those are for.
+  const hydrated = useHasHydratedOnce();
   const config = CONTENT_TYPE_CONFIG[type];
   const gridRef = React.useRef<HTMLDivElement>(null);
   const heroImage = HERO_IMAGES[type];
@@ -76,13 +82,13 @@ export default function ContentHero({
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <motion.div
           className="absolute -right-16 -top-16 h-64 w-64 border-4 border-primary/10"
-          initial={{ opacity: 0, rotate: 0 }}
+          initial={hydrated ? { opacity: 0, rotate: 0 } : false}
           animate={{ opacity: 1, rotate: 12 }}
           transition={{ duration: 1.2, ease: "easeOut", delay: 0.5 }}
         />
         <motion.div
           className="absolute -bottom-8 -left-8 h-32 w-32 bg-primary/5"
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={hydrated ? { opacity: 0, scale: 0.8 } : false}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.7 }}
         />
@@ -91,7 +97,7 @@ export default function ContentHero({
       <div className="relative mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
         <motion.div
           variants={stagger}
-          initial="hidden"
+          initial={hydrated ? "hidden" : false}
           animate="show"
         >
           {/* Type badge */}

@@ -15,6 +15,7 @@ import { NavLink } from "@/components/ui/nav-link";
 import type { PostMeta, ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { stagger, fadeUp } from "@/lib/content/animations";
+import { useHasHydratedOnce } from "@/hooks/useHasHydratedOnce";
 
 interface ArticleHeaderProps {
   meta: PostMeta;
@@ -22,6 +23,11 @@ interface ArticleHeaderProps {
 }
 
 export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
+  // Entrance animations are skipped on the FIRST paint of the session, so the
+  // server's markup is visible with no JavaScript and does not gate LCP. The
+  // whileInView reveals in this directory are deliberately NOT guarded: hiding
+  // below-the-fold content until it is scrolled to is what those are for.
+  const hydrated = useHasHydratedOnce();
   const config = CONTENT_TYPE_CONFIG[type];
 
   return (
@@ -29,7 +35,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
       <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
         <motion.div
           variants={stagger}
-          initial="hidden"
+          initial={hydrated ? "hidden" : false}
           animate="show"
         >
           {/* Breadcrumb */}
@@ -143,7 +149,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
           <div className="mx-auto max-w-[1400px] px-4 sm:px-8">
             <motion.div
               className="relative -mt-2 aspect-[21/9] overflow-hidden border-2 border-border shadow-hard-lg"
-              initial={{ opacity: 0, y: 20 }}
+              initial={hydrated ? { opacity: 0, y: 20 } : false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3, ease: [0.4, 0, 0.2, 1] as const }}
             >

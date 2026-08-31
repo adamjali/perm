@@ -218,6 +218,28 @@ const nextConfig: NextConfig = {
             value: "camera=(), microphone=(self), geolocation=()",
           },
           {
+            // Cross-origin isolation for the top-level window. Lighthouse
+            // reports its absence at HIGH severity: without it, any page that
+            // opens this one - or that this one opens - keeps a usable
+            // `window.opener` reference across origins, which is the handle
+            // behind a family of cross-site leak techniques.
+            //
+            // `same-origin-allow-popups`, NOT `same-origin`. The strict value
+            // severs the opener relationship in BOTH directions, which breaks
+            // any popup-based OAuth flow - and this app has one, for Google
+            // Calendar (src/lib/google/oauth.ts). The `-allow-popups` variant
+            // keeps popups WE open able to talk back, while still cutting off
+            // references held by pages that opened US, which is where the
+            // attack lives. Verified 2026-08-31 against the report's own
+            // recommendation.
+            //
+            // COEP is deliberately NOT set alongside it: this site embeds
+            // third-party widgets (Senja) that do not send CORP headers, and
+            // requiring them would blank the embed.
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin-allow-popups",
+          },
+          {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",

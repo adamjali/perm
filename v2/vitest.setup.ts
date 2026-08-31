@@ -84,6 +84,15 @@ vi.mock("motion/react", () => {
     AnimatePresence: ({ children }: { children: React.ReactNode }) =>
       React.createElement(React.Fragment, null, children),
     useAnimation: () => ({ start: vi.fn(), stop: vi.fn(), set: vi.fn() }),
+    // Added 2026-08-31. Its absence made any test that RENDERS a component
+    // wrapped in ScrollReveal throw `No "useInView" export is defined on the
+    // "motion/react" mock` - which reads like a broken component and is a
+    // gap in this mock. `true` so revealed content is present in the tree;
+    // a reveal that never fires would hide the very markup under test.
+    useInView: () => true,
+    // Same gap, same day. The real hook reads a media query; false keeps the
+    // animated branch live, which is the one worth exercising.
+    useReducedMotion: () => false,
     useMotionValue: (initial: number) => ({ get: () => initial, set: vi.fn(), onChange: vi.fn() }),
     useTransform: () => ({ get: () => 0, set: vi.fn() }),
   };
