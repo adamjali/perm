@@ -85,14 +85,22 @@ export default async function Image() {
             right: 0,
             top: 0,
             bottom: 0,
-            width: "700px",
+            width: "780px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
             alignItems: "flex-start",
-            padding: "44px 48px 44px 96px",
+            padding: "44px 48px 44px 150px",
+            // OPAQUE BY 14%, NOT 50%. Adam: "needs fully white behind text
+            // and the gradient move to the left". The ramp used to reach solid
+            // only halfway across the panel, so with the panel widened the text
+            // now started at 96px inside a zone that was still translucent -
+            // dark illustration lines showing through the letterforms, which is
+            // exactly the contrast failure a scrim exists to prevent. The
+            // feather is now a short lead-in and everything past it is flat, so
+            // no glyph ever lands on artwork.
             background:
-              "linear-gradient(to right, rgba(245,245,240,0) 0%, rgba(245,245,240,0.8) 10%, rgba(245,245,240,0.95) 30%, rgba(245,245,240,1) 50%)",
+              "linear-gradient(to right, rgba(245,245,240,0) 0%, rgba(245,245,240,0.75) 6%, rgba(245,245,240,1) 14%, rgba(245,245,240,1) 100%)",
           }}
         >
           {/* Logo icon */}
