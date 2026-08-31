@@ -54,7 +54,26 @@ export function turso(): Client {
  * flaky-connection failure mode wants. A genuinely slow query still throws
  * after two deadlines rather than hanging a build for minutes.
  */
-const QUERY_DEADLINE_MS = 20_000;
+// LONGER DURING A BUILD, because a prerender is not a request.
+//
+// The deadline exists to stop ONE hung request blowing a page's whole render
+// budget. 20s is right for a visitor waiting on a page and wrong for a
+// build-time prerender, which can afford to wait and has nobody watching.
+//
+// Measured 2026-08-31, against production Turso: `SELECT 1` answers in 0.38s
+// while /perm-wages' wage-band aggregation over the case corpus takes
+// **39.7s**. It therefore blew both 20s attempts and failed the Vercel build
+// twice on `Error occurred prerendering page "/perm-wages"` - a legitimately
+// slow scan being killed by a guard written for hung connections, not a
+// connection problem at all.
+//
+// THE REAL FIX IS AN INDEX on `perm_cases(fiscal_year, wage)`, which would
+// cover that GROUP BY instead of scanning the table. That is a schema change to
+// a 373k-row production table and belongs in its own deliberate pass - see the
+// note on Turso forbidding ANALYZE, which means an index there has to win on
+// shape rather than statistics.
+const QUERY_DEADLINE_MS =
+  process.env.NEXT_PHASE === "phase-production-build" ? 90_000 : 20_000;
 
 /**
  * THE RETRY USED TO FIRE ONLY ON THE DEADLINE THIS FUNCTION RAISES ITSELF, and
