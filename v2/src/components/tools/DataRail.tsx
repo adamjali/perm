@@ -341,7 +341,14 @@ export function DataRail() {
                   // parked on it. Adam: "arrow should be protruding out,
                   // without a black line on its left border so its like the
                   // sidebar extends a bit." Same 12px reach as a selected tab.
-                  "-mr-[14px] mb-1 flex h-9 w-[3.25rem] shrink-0 items-center justify-center self-end",
+                  // SITS ON THE EDGE, NOT STRADDLING IT. Adam: "the arrow
+                  // should be at the right edge". At `-mr-[14px]` the button's
+                  // bulk was inside the rail with only its tail past the
+                  // border, so it read as a control parked near the seam. A
+                  // 38px pull against a 36px box puts its LEFT edge exactly on
+                  // the border and hangs the whole thing in the gutter, which
+                  // is what the mobile handle already does.
+                  "-mr-[38px] mb-1 flex size-9 shrink-0 items-center justify-center self-end",
                   "border-y-2 border-r-2 border-border bg-background text-primary",
                   "transition-colors duration-150 hover:bg-tint-primary",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
