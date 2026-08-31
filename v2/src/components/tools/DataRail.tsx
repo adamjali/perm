@@ -202,10 +202,19 @@ export function DataRail() {
                   // It is also why Overview protruded and no leaf ever could:
                   // Overview is not inside one of these.
                   //
-                  // Widening the clip box by exactly the protrusion lets the
-                  // current tab through and nothing else; each leaf carries the
-                  // margin that decides where it stops (below).
-                  className="min-h-0 w-[calc(100%+14px)] overflow-hidden"
+                  // WIDEN IT BY THE PROTRUSION *PLUS THE SHADOW*, which is the
+                  // second half of the same bug. Adam, once the fill came
+                  // through: "it like is blunt end or something and looks
+                  // ugly... esp the borders/edges of the green rectangle."
+                  // `shadow-hard-sm` is `2px 2px 0`, so a clip box sized to the
+                  // fill exactly cuts the shadow off flush down the tab's right
+                  // side - a hard vertical stop where Overview, which is not in
+                  // one of these boxes, gets its full offset edge. `pb-[2px]`
+                  // is the same fix downward, for the last item in the list.
+                  //
+                  // 16px = 14 of reach + 2 of shadow. Each leaf then carries
+                  // the margin that decides where it stops (below).
+                  className="min-h-0 w-[calc(100%+16px)] overflow-hidden pb-[2px]"
                   inert={!isOpen}
                 >
                   {items.map((s) => (
@@ -428,10 +437,21 @@ function Tab({
         // keep the indent. Neither has to give up the selected shape to say
         // where it sits.
         kind === "home" ? "min-h-12 pl-4 text-base" : "pl-9 text-sm",
-        // Where the row stops. A leaf sits inside a clip box widened by the
-        // protrusion, so it carries the margin that decides its right edge;
-        // Overview sits directly in the nav and pulls itself out instead.
-        kind === "leaf" && (current ? "mr-0" : "mr-[14px]"),
+        // WHERE THE ROW STOPS, and the two kinds get there differently because
+        // they live in different boxes. A leaf sits inside a clip box that is
+        // 16px wider than the rail, so its margin subtracts back down: 2px
+        // leaves the fill ending 12px past the border with the shadow's 2px
+        // still inside the box, 16px pulls an unselected row back to the border
+        // so hover tint never crosses it. Overview sits directly in the nav
+        // with nothing clipping it and pulls itself out with a negative margin.
+        //
+        // Overview reaches further on purpose. Adam: "just make overview one a
+        // bit bigger (or extend out a bit more for visual heirscrchy)". It is
+        // the parent of every group, so it gets both - a step up the type scale
+        // and 18px of reach against a leaf's 12 - while the treatment itself
+        // stays identical, which is what he asked for first: "make this just
+        // like the og overview one".
+        kind === "leaf" && (current ? "mr-[2px]" : "mr-[16px]"),
         current
           ? // THE PULLED TAB, AND IT IS THE SAME SHAPE WHEREVER IT SITS. It
             // runs from the screen edge past the rail's border into the
@@ -459,7 +479,7 @@ function Tab({
             // paying for the other.
             cn(
               "bg-primary pr-4 font-heading font-black text-black shadow-hard-sm",
-              kind === "home" && "-mr-[14px]",
+              kind === "home" && "-mr-[20px]",
             )
           : cn(
               "text-foreground/75 hover:translate-x-[3px] hover:bg-tint-primary hover:text-foreground",
