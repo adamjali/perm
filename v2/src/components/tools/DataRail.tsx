@@ -345,10 +345,15 @@ export function DataRail() {
                   // should be at the right edge". At `-mr-[14px]` the button's
                   // bulk was inside the rail with only its tail past the
                   // border, so it read as a control parked near the seam. A
-                  // 38px pull against a 36px box puts its LEFT edge exactly on
-                  // the border and hangs the whole thing in the gutter, which
-                  // is what the mobile handle already does.
-                  "-mr-[38px] mb-1 flex size-9 shrink-0 items-center justify-center self-end",
+                  // 36px pull against a 36px box lands its left edge at 270,
+                  // ON the rail's 2px border rather than flush after it - so
+                  // the button's own background covers that segment and the
+                  // two outlines join. Adam: "shouldn have black line on the
+                  // left side of the arrow for square so its a part of it".
+                  // At 38px it started exactly where the border ended, leaving
+                  // the rule visible down its left edge like a seam. Same 2px
+                  // overlap the mobile handle uses for the same reason.
+                  "-mr-[36px] mb-1 flex size-9 shrink-0 items-center justify-center self-end",
                   "border-y-2 border-r-2 border-border bg-background text-primary",
                   "transition-colors duration-150 hover:bg-tint-primary",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
