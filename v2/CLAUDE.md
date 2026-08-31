@@ -1536,6 +1536,103 @@ meeting. After the redeploy the live dispatch returned
 `{"revalidated":1,"skipped":2}` for a payload of one good slug, `../..` and
 `BAD` - which proves the guard and the action in one call.
 
+## The data rail, and why each part of it is shaped that way (2026-08-30)
+
+`DataNav.tsx` is gone. `dataSections.ts` (the map) + `DataRail.tsx` (the rail) +
+`DataShell.tsx` (mounted in the public layout) replace it, and pages no longer
+pass an `active` prop - `sectionForPath()` derives it, longest match first.
+
+The redesign came out of "ugly lazy low effort ai slop", and every decision in
+it was a defect first:
+
+- **A full-height spine, not a card.** The column `self-stretch`es with one
+  right border; the nav inside is `sticky`. The first version was a bordered box
+  that ended two thirds down the page over a tall empty column, and
+  `railLeft: 0` measured true the whole time. A screenshot showed the card.
+- **The current tab is a rectangle from the screen edge crossing the spine**,
+  the same shape whether it is Overview or a leaf. The label keeps its indent;
+  that is what says "inside this group". Size carries the hierarchy instead.
+- **The group's lime marker shows only while the group is SHUT.** Open, it sat
+  above an already-lime leaf and read as fill leaking out from behind the header.
+- **NO `overflow-y` on the desktop nav.** One axis set to `auto` makes the other
+  `auto`, which clips the protrusion the whole design is built on. The rail is
+  at most Overview plus five groups plus one open group, so it fits.
+- **Each group's `<ul>` is 16px wider than the rail** (14 of reach + 2 of
+  shadow) so the current tab can cross the clip box that makes the `0fr`
+  collapse work. Its bottom padding is conditional on `isOpen`, or a shut group
+  leaks 2px of lime - `overflow` clips at the padding box.
+- **Collapsible on desktop, default open, and it PUSHES**: 272px -> 48px with
+  the content on `flex-1` taking the space back. Collapsed, the column drops its
+  border, because a full-height rule down 48px of nothing reads as a leftover.
+- **Mobile is a drawer at `z-[60]`, above the header's `z-50`.** A 44px caret
+  handle at `top-[72px]`; the tap-target floor is why it cannot shrink into the
+  41px gap under the header, and `max-lg:pt-3` on the shell buys the rest. Open,
+  the handle rides to the top of a drawer that reserves `pt-[72px]`, so no
+  selected row can ever sit beside it.
+- **Sticky `top` must equal the column's own top** - `calc(4.5rem + banner)`,
+  the same expression `main` pads by. At 5rem the rail drifted for the first 8px
+  of scroll. Desktop also sets `overscroll-behavior-y: none` **only at `lg`+**:
+  the root-level version was deliberately removed once because it kills
+  pull-to-refresh, which is a touch gesture.
+- **`lg:flex`, never bare `flex`, on the shell.** As unconditional flex the
+  mobile disclosure became a flex sibling of the article and the nav measured
+  32,268px tall.
+
+## The auth pages, and the research behind them (2026-08-31)
+
+`/signup` is a full-bleed, full-height **60/40 split** (pitch left, form right).
+`/login` is a **bare centred card**. Both lost the hand-drawn SVG diagram they
+carried and show a real product screenshot instead.
+
+**The split is Adam's call, made twice, the second time after I argued against
+it.** Keep the objection in view: `login-02` and `signup-02` in the shadcn block
+library are verbatim *"A two column login page with a cover image"*, and of
+seven auth pages readable live on 2026-08-31 - Vercel login **and** signup,
+Resend, Cal.com, GitHub, Supabase, Railway - **none used a split screen**. Full
+research, with sources and what could not be verified:
+`~/.claude/explanations/20260831_auth_page_research/AUTH-PAGE-PATTERNS.md`.
+
+**What keeps it from being the template is the left half's content**: the live
+federal queue from the same `getProcessingTimes()` snapshot `/tools` uses,
+dated. That is Railway's "All systems operational" idea. A fabricated
+testimonial beside a form is the loudest documented template tell, so nothing
+here is invented and the screenshot captions say "demo account".
+
+Rules that came out of building it:
+- **`revalidate = 86400`, not `force-static`** - the page prints a live figure.
+- **A figure DOL did not publish is dropped, never rendered as a dash.**
+- **The panel is dark in BOTH themes.** `bg-foreground text-background` is this
+  site's inverted band (95 uses) and it flips to near-white in dark - right for
+  a stat card, a white slab across 60% of a viewport. Light gets the ink, dark
+  gets `--card`, and muted tones inside use **opacity on currentColor** because
+  every `--background`-derived token inverts too.
+- **`flex-col-reverse` below `lg`** puts the form first on a phone while source
+  order stays pitch-then-form for the grid. No `order` utilities, one image.
+- **`minmax(23rem, 2fr)`** on the form column: a fixed fraction of a 1024px
+  screen falls under the card's own width.
+- **`/login` kept its card**, which also matches the verified asymmetry: Vercel's
+  `/login` carries no marketing and even inverts the method order.
+
+**Form correctness, each against a primary source:**
+- Sign-in's identifier is `autocomplete="username"`, not `email`. MDN pairs
+  `username` with `current-password`; `email` + `new-password` is the sign-up
+  pair.
+- The verification field is **ONE input** with `autocomplete="one-time-code"`
+  and `type="text"` (numeric strips leading zeros). **WCAG 2.2 SC 3.3.8 fails
+  any authentication step forcing manual transcription**, so the six-box OTP
+  component is an AA failure unless it distributes a paste.
+- WCAG 2.2 SC 3.3.7 means step two shows the email rather than asking again.
+- **Open, flagged not done:** web.dev says drop "confirm password" outright. It
+  is contained to `SignupPageClient` and `ResetPasswordPageClient`.
+
+## Phosphor deprecated every bare icon name
+
+`@phosphor-icons/react` 2.1.10 marks `CaretRight`, `CircleNotch`, `House` and
+the rest `@deprecated` in favour of a `*Icon` suffix. The old names still
+resolve, so nothing is broken - but **179 files here import from that package**,
+so the migration is its own commit, never folded into a feature change where it
+would bury the diff. Do not silence the LSP warnings; they are accurate.
+
 ## A shared count with two different dates is the same bug as two counts
 
 The stage pages read `getReviewStages` on the hub AND the leaf specifically so
