@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
-> **Stack:** Next.js 16.2.9 + Convex 1.42.3 + React 19.2.7 + TypeScript (strict)
-> **Status:** Production | **Last Updated:** 2026-05-24
+> **Stack:** Next.js 16.3.4 + Convex 1.42.3 + React 19.2.7 + AI SDK 7 + TypeScript (strict)
+> **Status:** Production | **Last Updated:** 2026-09-01
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -29,11 +29,24 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 4 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 4 projects, 4500+ tests (~9min). Run this before every push.** |
+| `pnpm test:run` | **All 4 projects. Baseline 306 files / ~6,096 tests (~10min). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
 Full test docs: [`TEST_README.md`](TEST_README.md).
+
+**Two things that make a local run look worse or better than it is.**
+`vitest.config.ts` sets **`bail: process.env.CI ? 5 : 1`**, so locally the suite
+stops at the FIRST failure: a run reporting "78 passed of 305 files" is a bail,
+not pool poisoning. And a count meaningfully BELOW the baseline on a run that
+did not bail is a broken run, not a pass.
+
+**`eslint` runs in NO workflow.** The only "Lint" step in CI is the pyflakes
+pass over the Python ingests, so app-code lint errors accumulate silently (8 had
+by 2026-09-01, all `react-hooks`). Run `pnpm exec eslint src convex` as part of
+any audit. Note `--format unix` and `--format compact` were REMOVED from ESLint
+core: passing one exits 2, and a careless `2>/dev/null` turns that into a silent
+"0 errors".
 
 ---
 
@@ -1717,13 +1730,90 @@ Rules that came out of building it:
 - **Open, flagged not done:** web.dev says drop "confirm password" outright. It
   is contained to `SignupPageClient` and `ResetPasswordPageClient`.
 
-## Phosphor deprecated every bare icon name
+## Phosphor `*Icon` migration: DONE, via an AST codemod (2026-09-01)
 
-`@phosphor-icons/react` 2.1.10 marks `CaretRight`, `CircleNotch`, `House` and
-the rest `@deprecated` in favour of a `*Icon` suffix. The old names still
-resolve, so nothing is broken - but **179 files here import from that package**,
-so the migration is its own commit, never folded into a feature change where it
-would bury the diff. Do not silence the LSP warnings; they are accurate.
+`@phosphor-icons/react` 2.1.10 deprecated every bare icon name in favour of a
+`*Icon` suffix. Migrated in commit `a0614fd6`: **177 files, 628 import
+specifiers, 559 identifier references, 0 bare specifiers left of 636.**
+
+**It was done with a TypeScript AST codemod and could not have been a regex.**
+The bare names are ordinary English words that also appear here as user-visible
+copy and inside string literals: `Archive Case`, `"Bookmark case"`,
+`<span>Calendar sync`, `Send a test`. Measured first: **~206 of ~960
+occurrences sat in JSX text, strings or comments**, so `\bArchive\b` would have
+shipped `ArchiveIcon Case` to users. `JsxText` and `StringLiteral` are not
+`Identifier` nodes, so walking identifiers cannot reach them.
+
+Three cases the codemod has to special-case, all real here:
+- An **aliased** import keeps its local name (`{ Building as Building2 }` ->
+  `{ BuildingIcon as Building2 }`, no reference edits) - 187 of 628.
+- A **shorthand** property is also the object's KEY. `RoleStep`'s `ICON_MAP`
+  keys are looked up by string, so a rename silently stops the icon rendering
+  and a skip leaves a dangling binding. Expand: `{ Briefcase: BriefcaseIcon }`.
+- **`vi.mock` factory keys are export names**, so the "skip property keys" rule
+  is backwards inside one. See below.
+
+## A `vi.mock` factory replaces the module, so its keys are EXPORT names
+
+`RouteError.test.tsx` mocks `@phosphor-icons/react` **and**
+`@phosphor-icons/react/ssr` (the second because `ErrorDisplay` has no
+`"use client"` and resolves to the SSR entry). When the source moved to
+`*Icon`, the stale mock keys made every render in that file throw:
+
+```
+No "ArrowCounterClockwiseIcon" export is defined on the "@phosphor-icons/react" mock
+```
+
+**Nothing was type-wrong** - a mock factory is untyped against the real module -
+so `pnpm typecheck` and `pnpm build` both passed. Only running the suite found
+it. This is the concrete reason `pnpm test:run` is the gate and a typecheck is
+not a substitute. Any library-wide rename must sweep `vi.mock` factories and
+every entry point of the package.
+
+## Two dependency facts that a green build will not tell you (2026-09-01)
+
+**`@sentry/nextjs` is pinned to `~10.70.0` on purpose**, and `dependabot.yml`
+ignores `>=10.71.0`. 10.72+ stopped depending on
+`@apm-js-collab/code-transformer-bundler-plugins` and **vendors** it, copying an
+ESM file into their CJS build whose first executable line is
+`fileURLToPath(import.meta.url)`. Vitest cannot resolve that to a `file://` URL,
+so the import throws `ERR_INVALID_URL_SCHEME`. Measured on 10.73.0: **24 test
+files failed and 109 more never ran**, 2,759 tests collected against a 6,092
+baseline - while **the production webpack build compiled clean**. A build-only
+check would have shipped it.
+
+**The AI SDK is on v7, and no provider declares a peer on `ai`.** `ai` 7.0.87
+pulls `@ai-sdk/provider` 4.x, which is `LanguageModelV4`; `FallbackModel` in
+`src/lib/ai/providers.ts` implements that interface directly, so the class, its
+`specificationVersion` and the `wrapMistralModel` middleware all move with a
+major. Because the providers declare no peer on `ai`, **a spec mismatch is a
+runtime failure, not an install error** - `pnpm install` will assemble a broken
+set happily. Before any `ai` major check (1) which `@ai-sdk/provider` major it
+pulls and (2) whether the third-party providers have a release;
+`@openrouter/ai-sdk-provider` is the gating one.
+
+v7 renames, migrated on the **`ai` package only**: `system` -> `instructions`,
+`onFinish` -> `onEnd`, `generateObject` -> `generateText` with
+`Output.object({ schema })`. All three old forms remain as working
+`@deprecated` aliases. **`useChat`'s `onFinish` in `@ai-sdk/react` is NOT
+deprecated** - a blanket rename breaks chat persistence.
+
+## A `route.ts` may export ONLY the known handler names
+
+An extra export fails Next's route type generation:
+
+```
+Property 'DOL_PAGES' is incompatible with index signature.
+  Type 'readonly [...]' is not assignable to type 'never'.
+```
+
+**It appears only in `next build`, after a full compile.** `pnpm typecheck`,
+`next dev` and the tests all pass, because the error is generated against
+`.next/types/...` which does not exist until the build makes it. Put a shared
+constant in a sibling module instead - `api/revalidate-dol/paths.ts` beside its
+route, the same way `api/chat/create-tools.ts` does.
+
+## A shared count with two different dates is the same bug as two counts
 
 ## A shared count with two different dates is the same bug as two counts
 
