@@ -11,7 +11,7 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
-import { MagnifyingGlass } from "@phosphor-icons/react";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 
 import type { SearchArticle } from "./SearchPalette";
 import { cn } from "@/lib/utils";
@@ -58,7 +58,7 @@ export function SiteSearch({
           className,
         )}
       >
-        <MagnifyingGlass className="h-4 w-4" />
+        <MagnifyingGlassIcon className="h-4 w-4" />
         <span className="hidden font-mono text-xs font-bold text-white/60 xl:inline">
           ⌘K
         </span>

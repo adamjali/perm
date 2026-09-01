@@ -4,7 +4,7 @@ import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash as Trash2 } from "@phosphor-icons/react";
+import { PlusIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import type { SubEntry } from "@/lib/shared/types";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 
@@ -120,7 +120,7 @@ export function SubEntriesManager({
           onClick={addEntry}
           className="w-full"
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <PlusIcon className="h-4 w-4 mr-2" />
           Add Entry
         </Button>
       )}

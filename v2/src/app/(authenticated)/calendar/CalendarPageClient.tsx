@@ -6,7 +6,7 @@ import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowSquareOut, Calendar as CalendarIcon, Info, Plus } from "@phosphor-icons/react";
+import { ArrowSquareOutIcon, CalendarIcon as CalendarIcon, InfoIcon, PlusIcon } from "@phosphor-icons/react";
 
 import { api } from "../../../../convex/_generated/api";
 import { caseToCalendarEvents } from "@/lib/calendar/event-mapper";
@@ -147,7 +147,7 @@ function CalendarEmptyState() {
             onClick={() => router.push("/cases/new")}
             className="bg-primary text-primary-foreground font-semibold border-2 border-border shadow-hard hover:shadow-hard-lg transition-all"
           >
-            <Plus className="size-4 mr-2" />
+            <PlusIcon className="size-4 mr-2" />
             Add Your First Case
           </Button>
         </div>
@@ -338,7 +338,7 @@ export function CalendarPageClient() {
         >
           <div className="flex items-center gap-3">
             <div className="border-2 border-border bg-card p-1.5">
-              <Info className="h-4 w-4 text-foreground" />
+              <InfoIcon className="h-4 w-4 text-foreground" />
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">
@@ -355,7 +355,7 @@ export function CalendarPageClient() {
             style={{ boxShadow: "var(--shadow-hard-sm)" }}
           >
             Connect
-            <ArrowSquareOut className="w-3.5 h-3.5" />
+            <ArrowSquareOutIcon className="w-3.5 h-3.5" />
           </Link>
         </div>
       )}

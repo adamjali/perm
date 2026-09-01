@@ -17,7 +17,7 @@
  */
 
 import { Fragment, useId, useMemo, useState } from "react";
-import { FileText, TrendUp as TrendingUp, Warning } from "@phosphor-icons/react";
+import { FileTextIcon, TrendUpIcon as TrendingUp, WarningIcon } from "@phosphor-icons/react";
 
 import { estimateI140Queue, type I140QuarterStats } from "@/lib/perm";
 import {
@@ -115,7 +115,7 @@ export function I140QueueEstimator({
             the icon flex indented it 36px against the form below, which
             reads as the inputs sticking out to the left. */}
         <div className="flex items-center gap-3">
-          <FileText className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
+          <FileTextIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <h2 className="font-heading text-2xl font-black leading-tight">
             How deep is the I-140 queue?
           </h2>
@@ -278,7 +278,7 @@ export function I140QueueEstimator({
 
       <div className="bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
-          <Warning className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
+          <WarningIcon className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
           <div>
             <h3 className="font-heading text-base font-black">What this can’t tell you</h3>{" "}
             <ul className="mt-3 space-y-2">

@@ -6,7 +6,7 @@ import { useQuery, useMutation } from "convex/react";
 import { motion } from "motion/react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
-import { Archive, ArrowCounterClockwise as RotateCcw, ArrowLeft, Bookmark, CalendarCheck, CalendarX, Check, CircleNotch, DotsThreeVertical, Pencil, Trash as Trash2, Warning as AlertTriangle } from "@phosphor-icons/react";
+import { ArchiveIcon, ArrowCounterClockwiseIcon as RotateCcw, ArrowLeftIcon, BookmarkIcon, CalendarCheckIcon, CalendarXIcon, CheckIcon, CircleNotchIcon, DotsThreeVerticalIcon, PencilIcon, TrashIcon as Trash2, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -207,7 +207,7 @@ function NotFoundState() {
         </p>
       </div>
       <Button onClick={() => router.push("/cases")} className="gap-2">
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeftIcon className="h-4 w-4" />
         Back to Cases
       </Button>
     </div>
@@ -615,9 +615,9 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               disabled={isAnyNavigating}
             >
               {isNavigating ? (
-                <CircleNotch className="h-5 w-5 animate-spin" />
+                <CircleNotchIcon className="h-5 w-5 animate-spin" />
               ) : (
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeftIcon className="h-5 w-5" />
               )}
               <span className="sr-only">Back to cases</span>
             </Button>
@@ -663,9 +663,9 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 aria-pressed={caseData.isFavorite}
               >
                 {isTogglingFavorite ? (
-                  <CircleNotch className="h-5 w-5 animate-spin" />
+                  <CircleNotchIcon className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Bookmark
+                  <BookmarkIcon
                     className={cn(
                       "h-5 w-5",
                       caseData.isFavorite
@@ -701,13 +701,13 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 aria-pressed={caseData.calendarSyncEnabled}
               >
                 {isTogglingCalendarSync ? (
-                  <CircleNotch className="h-5 w-5 animate-spin text-primary" />
+                  <CircleNotchIcon className="h-5 w-5 animate-spin text-primary" />
                 ) : caseData.calendarSyncEnabled && isGoogleConnected ? (
-                  <CalendarCheck className="h-5 w-5 text-primary" />
+                  <CalendarCheckIcon className="h-5 w-5 text-primary" />
                 ) : caseData.calendarSyncEnabled && !isGoogleConnected ? (
                   <AlertTriangle className="h-5 w-5 text-data-warn-ink" />
                 ) : (
-                  <CalendarX className="h-5 w-5 text-data-bad-ink" />
+                  <CalendarXIcon className="h-5 w-5 text-data-bad-ink" />
                 )}
               </Button>
 
@@ -722,9 +722,9 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 )}
               >
                 {isEditNavigating ? (
-                  <CircleNotch className="h-4 w-4 animate-spin" />
+                  <CircleNotchIcon className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Pencil className="h-4 w-4" />
+                  <PencilIcon className="h-4 w-4" />
                 )}
                 <span className="hidden sm:inline">Edit Case</span>
               </Button>
@@ -741,7 +741,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     )}
                     disabled={isUpdating || isAnyNavigating}
                   >
-                    <DotsThreeVertical className="h-5 w-5" />
+                    <DotsThreeVerticalIcon className="h-5 w-5" />
                     <span className="sr-only">Actions</span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -753,7 +753,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     </DropdownMenuItem>
                   ) : (
                     <DropdownMenuItem onClick={handleArchive} disabled={isUpdating} className="min-h-[44px] font-heading font-bold text-sm rounded-none">
-                      <Archive className="h-4 w-4" />
+                      <ArchiveIcon className="h-4 w-4" />
                       Archive Case
                     </DropdownMenuItem>
                   )}
@@ -840,7 +840,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 >
                   {isDone ? (
                     <span className="w-[14px] h-[14px] rounded-full bg-data-good flex items-center justify-center shrink-0">
-                      <Check className="h-[9px] w-[9px] text-white" />
+                      <CheckIcon className="h-[9px] w-[9px] text-white" />
                     </span>
                   ) : (
                     <span
@@ -926,7 +926,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           className="border-3 border-destructive bg-card text-destructive hover:bg-destructive hover:text-destructive-foreground font-mono text-sm font-bold uppercase tracking-wide transition-all gap-1.5"
         >
           {isDeleting ? (
-            <CircleNotch className="h-3.5 w-3.5 animate-spin" />
+            <CircleNotchIcon className="h-3.5 w-3.5 animate-spin" />
           ) : (
             <Trash2 className="h-3.5 w-3.5" />
           )}

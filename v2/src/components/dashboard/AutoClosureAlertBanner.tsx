@@ -21,7 +21,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { ArrowSquareOut, CaretDown, CaretUp, Warning as AlertTriangle, X } from "@phosphor-icons/react/ssr";
+import { ArrowSquareOutIcon, CaretDownIcon, CaretUpIcon, WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { handleOperationError } from "@/lib/errors";
@@ -146,9 +146,9 @@ export default function AutoClosureAlertBanner() {
               aria-label={isExpanded ? "Collapse alerts" : "Expand alerts"}
             >
               {isExpanded ? (
-                <CaretUp className="w-4 h-4" />
+                <CaretUpIcon className="w-4 h-4" />
               ) : (
-                <CaretDown className="w-4 h-4" />
+                <CaretDownIcon className="w-4 h-4" />
               )}
             </Button>
           )}
@@ -188,7 +188,7 @@ export default function AutoClosureAlertBanner() {
                   className="p-1.5 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors"
                   title="View case"
                 >
-                  <ArrowSquareOut className="w-4 h-4" />
+                  <ArrowSquareOutIcon className="w-4 h-4" />
                 </Link>
               )}
               <button
@@ -197,7 +197,7 @@ export default function AutoClosureAlertBanner() {
                 title="Dismiss alert"
                 aria-label={`Dismiss alert for ${alert.employerName} - ${alert.positionTitle}`}
               >
-                <X className="w-4 h-4" />
+                <XIcon className="w-4 h-4" />
               </button>
             </div>
           </li>

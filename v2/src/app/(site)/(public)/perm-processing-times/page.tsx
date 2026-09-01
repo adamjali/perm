@@ -32,7 +32,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ArrowSquareOut } from "@phosphor-icons/react/ssr";
+import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
 
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -333,7 +333,7 @@ export default async function PermProcessingTimesPage() {
                 rel="noopener noreferrer"
               >
                 Source
-                <ArrowSquareOut className="ml-1 inline h-3 w-3" aria-hidden="true" />
+                <ArrowSquareOutIcon className="ml-1 inline h-3 w-3" aria-hidden="true" />
               </a>
             </p>
           </section>
@@ -553,7 +553,7 @@ export default async function PermProcessingTimesPage() {
           className="mt-6 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
         >
           Open the processing time calculator
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
 
@@ -615,7 +615,7 @@ export default async function PermProcessingTimesPage() {
           className="mt-6 inline-flex items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
         >
           Start tracking free
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
         </Link>
         <p className="mt-3 text-sm text-muted-foreground">
           There’s no case limit. See the{" "}

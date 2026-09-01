@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, FolderOpen, TrendUp as TrendingUp, UserCheck, UserMinus as UserX, Users } from "@phosphor-icons/react";
+import { ClockIcon, FolderOpenIcon, TrendUpIcon as TrendingUp, UserCheckIcon, UserMinusIcon as UserX, UsersIcon } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AdminStatsGridProps {
@@ -19,21 +19,21 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
     {
       label: "Total Users",
       value: data.totalUsers,
-      icon: Users,
+      icon: UsersIcon,
       color: "text-blue-600",
       bgColor: "bg-blue-100 dark:bg-blue-900/20",
     },
     {
       label: "Active Users",
       value: data.activeUsers,
-      icon: UserCheck,
+      icon: UserCheckIcon,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
     {
       label: "Users with Cases",
       value: data.usersWithCases,
-      icon: FolderOpen,
+      icon: FolderOpenIcon,
       color: "text-purple-600",
       bgColor: "bg-purple-100 dark:bg-purple-900/20",
     },
@@ -47,7 +47,7 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
     {
       label: "Pending Deletion",
       value: data.pendingDeletion,
-      icon: Clock,
+      icon: ClockIcon,
       color: "text-orange-600",
       bgColor: "bg-orange-100 dark:bg-orange-900/20",
     },

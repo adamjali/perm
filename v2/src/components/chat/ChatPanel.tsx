@@ -2,7 +2,7 @@
 
 import { Fragment, useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChatText, ClockCounterClockwise as History, Warning as AlertTriangle, X } from "@phosphor-icons/react";
+import { ChatTextIcon, ClockCounterClockwiseIcon as History, WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react";
 import { Button } from '@/components/ui/button';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
@@ -196,7 +196,7 @@ export function ChatPanel({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b-2 border-border bg-muted gap-2">
         <div className="flex items-center gap-2 flex-shrink-0">
-          <ChatText className="h-5 w-5 text-primary" />
+          <ChatTextIcon className="h-5 w-5 text-primary" />
           <h2 className="font-heading font-semibold text-sm">PERM Assistant</h2>
         </div>
 
@@ -228,7 +228,7 @@ export function ChatPanel({
             className="h-8 w-8"
             aria-label="Close chat"
           >
-            <X className="h-4 w-4" />
+            <XIcon className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -241,7 +241,7 @@ export function ChatPanel({
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-            <ChatText className="h-12 w-12 mb-4 opacity-30" />
+            <ChatTextIcon className="h-12 w-12 mb-4 opacity-30" />
             <p className="text-sm">Start a conversation</p>{" "}
             <p className="text-xs mt-1 opacity-70">
               Ask about PERM process, deadlines, or the app

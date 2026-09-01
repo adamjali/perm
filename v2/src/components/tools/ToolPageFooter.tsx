@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight } from "@phosphor-icons/react/ssr";
+import { ArrowRightIcon, ArrowUpRightIcon } from "@phosphor-icons/react/ssr";
 
 import { TOOL_NAV_LINKS } from "@/lib/constants/navigation";
 
@@ -46,7 +46,7 @@ export function ToolPageFooter({ currentHref, reading }: ToolPageFooterProps) {
                     <span className="font-heading text-base font-black leading-tight">
                       {r.label}
                     </span>
-                    <ArrowUpRight
+                    <ArrowUpRightIcon
                       className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
                       aria-hidden="true"
                     />
@@ -77,7 +77,7 @@ export function ToolPageFooter({ currentHref, reading }: ToolPageFooterProps) {
                 className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-card px-4 py-2 font-bold shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:translate-y-0 active:shadow-hard-sm"
               >
                 {t.label}
-                <ArrowRight className="h-4 w-4 text-primary" aria-hidden="true" />
+                <ArrowRightIcon className="h-4 w-4 text-primary" aria-hidden="true" />
               </Link>
               </li>
             </Fragment>

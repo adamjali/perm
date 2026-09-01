@@ -23,7 +23,7 @@
 
 "use client";
 
-import { Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

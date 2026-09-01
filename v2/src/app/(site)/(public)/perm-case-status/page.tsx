@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Warning } from "@phosphor-icons/react/ssr";
+import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FaqList } from "@/components/tools/FaqList";
@@ -182,7 +182,7 @@ export default async function PermCaseStatusPage({
           un-absorbed by a note underneath it. */}
       {malformed ? (
         <p className="mt-6 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-foreground/80">
-          <Warning
+          <WarningIcon
             className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
             weight="fill"
             aria-hidden="true"

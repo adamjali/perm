@@ -2,7 +2,7 @@
 
 import { RocketLaunchSVG } from "@/components/illustrations";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, FolderOpen } from "@phosphor-icons/react";
+import { CalendarIcon, ClockIcon, FolderOpenIcon } from "@phosphor-icons/react";
 
 interface WelcomeStepProps {
   onNext: () => void;
@@ -10,17 +10,17 @@ interface WelcomeStepProps {
 
 const VALUE_PROPS = [
   {
-    icon: Clock,
+    icon: ClockIcon,
     text: "Automated deadline tracking",
     detail: "Never miss a PWD expiration or filing window",
   },
   {
-    icon: Calendar,
+    icon: CalendarIcon,
     text: "Filing window calculations",
     detail: "Dates auto-computed from your case data",
   },
   {
-    icon: FolderOpen,
+    icon: FolderOpenIcon,
     text: "Multi-case management",
     detail: "Track every case from PWD through I-140",
   },

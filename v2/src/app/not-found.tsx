@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, House as Home } from "@phosphor-icons/react/ssr";
+import { ArrowLeftIcon, HouseIcon as Home } from "@phosphor-icons/react/ssr";
 
 /**
  * A 404 must not be indexable. Without this it inherits the site default and
@@ -65,7 +65,7 @@ export default function NotFound() {
                 href="/dashboard"
                 className="inline-flex items-center justify-center gap-2 bg-card text-foreground font-heading font-bold text-sm uppercase tracking-wide px-6 py-3 border-2 border-border shadow-hard hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-150"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeftIcon className="w-4 h-4" />
                 Dashboard
               </Link>
             </div>

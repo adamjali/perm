@@ -23,7 +23,7 @@
  */
 
 import { motion } from 'motion/react';
-import { CheckCircle, CircleNotch, MagnifyingGlass as Search, XCircle } from "@phosphor-icons/react";
+import { CheckCircleIcon, CircleNotchIcon, MagnifyingGlassIcon as Search, XCircleIcon } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import { springConfig } from '@/lib/animations';
 import {
@@ -231,14 +231,14 @@ function StatusIcon({
         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
         className="text-primary"
       >
-        <CircleNotch className="h-3.5 w-3.5" />
+        <CircleNotchIcon className="h-3.5 w-3.5" />
       </motion.div>
     );
   }
 
   // Spring animation for result icons
   const springTransition = { type: 'spring' as const, stiffness: 500, damping: 25 };
-  const Icon = status === 'success' ? CheckCircle : XCircle;
+  const Icon = status === 'success' ? CheckCircleIcon : XCircleIcon;
   const className = status === 'success'
     ? 'text-green-600 dark:text-green-400'
     : isDenied

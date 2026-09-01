@@ -35,7 +35,7 @@ import { useMutation } from "convex/react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zod4Resolver } from "@/lib/forms/zod4-resolver";
 import { api } from "../../../convex/_generated/api";
-import { Building as Building2, ClipboardText, FileArrowUp as FileCheck, FileText, Note as StickyNote, Trash as Trash2, Warning as AlertTriangle, XCircle } from "@phosphor-icons/react/ssr";
+import { BuildingIcon as Building2, ClipboardTextIcon, FileArrowUpIcon as FileCheck, FileTextIcon, NoteIcon as StickyNote, TrashIcon as Trash2, WarningIcon as AlertTriangle, XCircleIcon } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -621,12 +621,12 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
         <BasicInfoSection />
 
         {/* PWD Section */}
-        <CollapsibleSection name="pwd" title="PWD (Prevailing Wage Determination)" state={sectionStates.pwd} onToggle={() => toggleSection("pwd")} icon={<FileText className="size-5" />} description="Prevailing wage filing and determination dates">
+        <CollapsibleSection name="pwd" title="PWD (Prevailing Wage Determination)" state={sectionStates.pwd} onToggle={() => toggleSection("pwd")} icon={<FileTextIcon className="size-5" />} description="Prevailing wage filing and determination dates">
           <PWDSection />
         </CollapsibleSection>
 
         {/* Recruitment Section */}
-        <CollapsibleSection name="recruitment" title="Recruitment" state={sectionStates.recruitment} onToggle={() => toggleSection("recruitment")} icon={<ClipboardText className="size-5" />} description="Sunday ads, job order, and notice of filing">
+        <CollapsibleSection name="recruitment" title="Recruitment" state={sectionStates.recruitment} onToggle={() => toggleSection("recruitment")} icon={<ClipboardTextIcon className="size-5" />} description="Sunday ads, job order, and notice of filing">
           <RecruitmentSection />
         </CollapsibleSection>
 
@@ -698,7 +698,7 @@ function ErrorSummary({ errors, errorCount, onDismiss, onFieldClick }: { errors:
   return (
     <div className="rounded-lg border-4 border-destructive bg-destructive/10 p-4 animate-shake">
       <div className="flex items-start gap-3">
-        <XCircle className="size-6 text-destructive shrink-0 mt-0.5" />
+        <XCircleIcon className="size-6 text-destructive shrink-0 mt-0.5" />
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <h3 className="font-heading font-bold text-destructive">{errorCount} Validation Error{errorCount > 1 ? "s" : ""}</h3>

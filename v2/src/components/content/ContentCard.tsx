@@ -11,7 +11,7 @@
 import { Fragment } from "react";
 import Image from "next/image";
 import { motion } from "motion/react";
-import { Calendar, CircleNotch, Clock } from "@phosphor-icons/react";
+import { CalendarIcon, CircleNotchIcon, ClockIcon } from "@phosphor-icons/react";
 import type { PostSummary } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { NavLink, useNavigationContext } from "@/components/ui/nav-link";
@@ -39,7 +39,7 @@ export default function ContentCard({ post, showType }: ContentCardProps) {
           {/* Loading overlay */}
           {isNavigating && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50">
-              <CircleNotch className="h-6 w-6 animate-spin text-primary" />
+              <CircleNotchIcon className="h-6 w-6 animate-spin text-primary" />
             </div>
           )}
           {/* Image */}
@@ -94,7 +94,7 @@ export default function ContentCard({ post, showType }: ContentCardProps) {
             {/* Meta row */}
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
+                <CalendarIcon className="h-3 w-3" />
                 {new Date(meta.date).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
@@ -103,7 +103,7 @@ export default function ContentCard({ post, showType }: ContentCardProps) {
                 })}
               </span>{" "}
               <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
+                <ClockIcon className="h-3 w-3" />
                 {meta.readingTime}
               </span>
             </div>

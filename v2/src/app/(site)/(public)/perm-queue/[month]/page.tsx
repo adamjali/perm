@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, Warning } from "@phosphor-icons/react/ssr";
+import { ArrowLeftIcon, ArrowRightIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { SourceNote } from "@/components/queue/SourceNote";
@@ -128,7 +128,7 @@ export default async function CohortPage({
 
       {!MIRROR_COMPLETE ? (
         <p className="mt-8 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base text-foreground/80">
-          <Warning className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
+          <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>{PROVISIONAL_NOTICE}</span>
         </p>
       ) : null}
@@ -395,7 +395,7 @@ function SiblingLink({
   direction: "previous" | "next";
 }) {
   const label = formatMonth(month) ?? month;
-  const Icon = direction === "previous" ? ArrowLeft : ArrowRight;
+  const Icon = direction === "previous" ? ArrowLeftIcon : ArrowRightIcon;
   return (
     <Link
       href={`/perm-queue/${month}`}

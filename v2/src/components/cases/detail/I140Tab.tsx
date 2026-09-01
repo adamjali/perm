@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import Link from "next/link";
-import { Clock, Shield } from "@phosphor-icons/react";
+import { ClockIcon, ShieldIcon } from "@phosphor-icons/react";
 import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
 import { itemVariants, tabContainerVariants, fmtISODate, computeWindowStatus } from "./case-detail-utils";
@@ -52,7 +52,7 @@ export function I140Tab({ caseData }: I140TabProps) {
           <div className="detail-card">
             <div className="detail-card-head ch-i140">
               <span className="flex items-center gap-1.5">
-                <Shield className="h-3.5 w-3.5" />
+                <ShieldIcon className="h-3.5 w-3.5" />
                 I-140 Petition
               </span>{" "}
               <span className="head-badge">{statusLabel}</span>
@@ -133,7 +133,7 @@ export function I140Tab({ caseData }: I140TabProps) {
             {/* Status Summary */}
             {!isApproved && !isDenied && (
               <div className="detail-status-bar">
-                <Clock className="h-4 w-4 shrink-0" style={{ color: "var(--stage-i140)" }} />
+                <ClockIcon className="h-4 w-4 shrink-0" style={{ color: "var(--stage-i140)" }} />
                 <span>
                   {isFiled
                     ? "I-140 filed. Awaiting USCIS decision."
@@ -153,7 +153,7 @@ export function I140Tab({ caseData }: I140TabProps) {
           type="RFE"
           subtitle="USCIS"
           entries={rfeEntries}
-          emptyIcon={<Shield className="h-8 w-8" />}
+          emptyIcon={<ShieldIcon className="h-8 w-8" />}
           emptyDescription="Entries will appear here if USCIS issues a request during I-140 review."
         />
       </Link>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
-import { Shield, WarningCircle as AlertCircle } from "@phosphor-icons/react";
+import { ShieldIcon, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react";
 import { AdminStatsGrid } from "@/components/admin/AdminStatsGrid";
 import { UsersTable } from "@/components/admin/UsersTable";
 import { SignalsPanel } from "@/components/admin/SignalsPanel";
@@ -113,7 +113,7 @@ export default function AdminDashboardClient() {
       <div className="flex items-center justify-between gap-4 border-b-3 border-border pb-6">
         <div className="flex items-center gap-4">
           <div className="flex size-12 items-center justify-center border-2 border-border bg-primary shadow-hard">
-            <Shield className="size-6 text-black" />
+            <ShieldIcon className="size-6 text-black" />
           </div>
           <div>
             <h1 className="font-heading text-3xl font-bold uppercase tracking-wide">
@@ -128,7 +128,7 @@ export default function AdminDashboardClient() {
           href="/admin/security"
           className="mono flex items-center gap-2 border-2 border-foreground bg-background px-4 py-2 text-sm font-bold uppercase tracking-widest shadow-hard-sm transition-all hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
         >
-          <Shield className="h-4 w-4" aria-hidden />
+          <ShieldIcon className="h-4 w-4" aria-hidden />
           Security Ops
         </Link>
       </div>

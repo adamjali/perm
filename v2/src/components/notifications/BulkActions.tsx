@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
-import { Checks as CheckCheck, Trash as Trash2, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { ChecksIcon as CheckCheck, TrashIcon as Trash2, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 
 interface BulkActionsProps {

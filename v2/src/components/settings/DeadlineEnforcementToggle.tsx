@@ -14,7 +14,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Shield, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { ShieldIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { analytics } from "@/lib/analytics";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
@@ -69,7 +69,7 @@ export default function DeadlineEnforcementToggle() {
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-        <Shield className="w-5 h-5 text-foreground" />
+        <ShieldIcon className="w-5 h-5 text-foreground" />
         <h3 className="font-heading font-bold text-lg text-foreground">
           Deadline Enforcement
         </h3>

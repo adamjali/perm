@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "motion/react";
-import { ArrowsOut, CaretLeft, CaretRight, CircleNotch, Download, FileText, FileXls, FolderOpen, Image as ImageIcon, Trash as Trash2, Upload, X } from "@phosphor-icons/react";
+import { ArrowsOutIcon, CaretLeftIcon, CaretRightIcon, CircleNotchIcon, DownloadIcon, FileTextIcon, FileXlsIcon, FolderOpenIcon, ImageIcon as ImageIcon, TrashIcon as Trash2, UploadIcon, XIcon } from "@phosphor-icons/react";
 import {
   DOCUMENT_CATEGORIES,
   DOCUMENT_CATEGORY_LABELS,
@@ -42,8 +42,8 @@ function getFileTypeLabel(mimeType: string): string {
 function getFileIcon(mimeType: string) {
   if (mimeType.startsWith("image/")) return <ImageIcon className="h-5 w-5" />;
   if (mimeType.includes("spreadsheet") || mimeType.includes("excel") || mimeType.includes("xlsx"))
-    return <FileXls className="h-5 w-5" />;
-  return <FileText className="h-5 w-5" />;
+    return <FileXlsIcon className="h-5 w-5" />;
+  return <FileTextIcon className="h-5 w-5" />;
 }
 
 const ACCEPT_STRING = ".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.tiff,.tif";
@@ -73,7 +73,7 @@ function DocumentPreview({ doc, onFullscreen }: { doc: DocumentEntry; onFullscre
             title="Full screen"
             style={{ position: "absolute", top: 8, right: 8 }}
           >
-            <ArrowsOut className="h-3.5 w-3.5" />
+            <ArrowsOutIcon className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
@@ -113,7 +113,7 @@ function DocumentPreview({ doc, onFullscreen }: { doc: DocumentEntry; onFullscre
             style={{ position: "absolute", top: 8, right: 8 }}
             onClick={(e) => { e.stopPropagation(); onFullscreen(); }}
           >
-            <ArrowsOut className="h-3.5 w-3.5" />
+            <ArrowsOutIcon className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
@@ -193,7 +193,7 @@ function FullscreenViewer({
             disabled={!hasPrev}
             title="Previous"
           >
-            <CaretLeft className="h-3.5 w-3.5" />
+            <CaretLeftIcon className="h-3.5 w-3.5" />
           </button>
           <button
             className="icon-btn"
@@ -201,7 +201,7 @@ function FullscreenViewer({
             disabled={!hasNext}
             title="Next"
           >
-            <CaretRight className="h-3.5 w-3.5" />
+            <CaretRightIcon className="h-3.5 w-3.5" />
           </button>
         </div>
         <div className="doc-fullscreen-name">{doc.name}</div>
@@ -214,7 +214,7 @@ function FullscreenViewer({
             className="icon-btn"
             style={{ width: "auto", padding: "4px 10px", gap: 6, display: "flex", alignItems: "center", textDecoration: "none" }}
           >
-            <Download className="h-3.5 w-3.5" /> Download
+            <DownloadIcon className="h-3.5 w-3.5" /> Download
           </a>
           {onDelete && (
             <button
@@ -226,7 +226,7 @@ function FullscreenViewer({
             </button>
           )}
           <button className="icon-btn" onClick={onClose} title="Close (Esc)">
-            <X className="h-3.5 w-3.5" />
+            <XIcon className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -387,7 +387,7 @@ export function DocumentsTab({
         <div className="detail-card" style={{ overflow: "hidden" }}>
           <div className="detail-card-head ch-dark" style={{ gap: 8 }}>
             <span className="flex items-center gap-1.5">
-              <FolderOpen className="h-3.5 w-3.5" />
+              <FolderOpenIcon className="h-3.5 w-3.5" />
               Documents
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -439,9 +439,9 @@ export function DocumentsTab({
                   disabled={isUploading || !!pendingFile}
                 >
                   {isUploading ? (
-                    <CircleNotch className="h-3.5 w-3.5 animate-spin" />
+                    <CircleNotchIcon className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Upload className="h-3.5 w-3.5" />
+                    <UploadIcon className="h-3.5 w-3.5" />
                   )}
                   {isUploading ? "Uploading..." : "Upload"}
                 </button>
@@ -459,7 +459,7 @@ export function DocumentsTab({
           {/* Pending upload bar — outside split-wrap so it stays visible on mobile when preview is open */}
           {pendingFile && (
             <div className="pending-upload-bar">
-              <FileText className="h-4 w-4" style={{ flexShrink: 0 }} />
+              <FileTextIcon className="h-4 w-4" style={{ flexShrink: 0 }} />
               <div className="pending-upload-name">{pendingFile.name}</div>
               <select
                 value={pendingCategory}
@@ -499,7 +499,7 @@ export function DocumentsTab({
                 disabled={isUploading}
               >
                 {isUploading ? (
-                  <CircleNotch className="h-3.5 w-3.5 animate-spin" />
+                  <CircleNotchIcon className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   "Upload"
                 )}
@@ -511,7 +511,7 @@ export function DocumentsTab({
                   onClick={handleCancelUpload}
                   title="Cancel"
                 >
-                  <X className="h-3 w-3" />
+                  <XIcon className="h-3 w-3" />
                 </button>
               )}
             </div>
@@ -558,7 +558,7 @@ export function DocumentsTab({
                             title="Download"
                             style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
                           >
-                            <Download className="h-3.5 w-3.5" />
+                            <DownloadIcon className="h-3.5 w-3.5" />
                           </a>
                           {onDelete && (
                             <button
@@ -580,7 +580,7 @@ export function DocumentsTab({
                   className="detail-empty-state"
                   style={{ padding: "32px 20px" }}
                 >
-                  <FolderOpen className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
+                  <FolderOpenIcon className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
                   <div className="detail-empty-state-title">No documents</div>
                   <div className="detail-empty-state-desc">
                     {onUpload
@@ -594,11 +594,11 @@ export function DocumentsTab({
               {totalPages > 1 && (
                 <div className="pagination-bar">
                   <button onClick={() => setPage((p) => p - 1)} disabled={page === 0}>
-                    <CaretLeft className="h-3 w-3" />
+                    <CaretLeftIcon className="h-3 w-3" />
                   </button>
                   <span>{page + 1} / {totalPages}</span>
                   <button onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages - 1}>
-                    <CaretRight className="h-3 w-3" />
+                    <CaretRightIcon className="h-3 w-3" />
                   </button>
                 </div>
               )}
@@ -629,7 +629,7 @@ export function DocumentsTab({
                     onDragLeave={handleDragLeave}
                     disabled={isUploading}
                   >
-                    <Upload className="h-4 w-4" />
+                    <UploadIcon className="h-4 w-4" />
                     {isDragOver
                       ? "Drop file to upload"
                       : "Drag files here or click to upload"}
@@ -649,7 +649,7 @@ export function DocumentsTab({
                         disabled={documents.findIndex((d) => d.id === selectedId) <= 0}
                         title="Previous"
                       >
-                        <CaretLeft className="h-3.5 w-3.5" />
+                        <CaretLeftIcon className="h-3.5 w-3.5" />
                       </button>
                       <button
                         className="icon-btn"
@@ -657,7 +657,7 @@ export function DocumentsTab({
                         disabled={documents.findIndex((d) => d.id === selectedId) >= documents.length - 1}
                         title="Next"
                       >
-                        <CaretRight className="h-3.5 w-3.5" />
+                        <CaretRightIcon className="h-3.5 w-3.5" />
                       </button>
                     </div>
                     <button
@@ -665,7 +665,7 @@ export function DocumentsTab({
                       onClick={closePreview}
                       title="Close"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <XIcon className="h-3.5 w-3.5" />
                     </button>
                   </div>
 
@@ -720,7 +720,7 @@ export function DocumentsTab({
                         }}
                         onClick={() => setFullscreenId(selectedDoc.id)}
                       >
-                        <ArrowsOut className="h-3.5 w-3.5" /> Full Screen
+                        <ArrowsOutIcon className="h-3.5 w-3.5" /> Full Screen
                       </button>
                     )}
                     <a
@@ -738,7 +738,7 @@ export function DocumentsTab({
                         textDecoration: "none",
                       }}
                     >
-                      <Download className="h-3.5 w-3.5" /> Download
+                      <DownloadIcon className="h-3.5 w-3.5" /> Download
                     </a>
                     {onDelete && (
                       <button

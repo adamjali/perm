@@ -9,7 +9,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ArrowSquareOut } from "@phosphor-icons/react/ssr";
+import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -306,7 +306,7 @@ export default async function MethodologyPage() {
                   className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold underline underline-offset-2 hover:text-primary"
                 >
                   Source
-                  <ArrowSquareOut className="h-3.5 w-3.5" aria-hidden="true" />
+                  <ArrowSquareOutIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 </a>
               </div>
               <p className="mt-2 text-base leading-relaxed text-foreground/70">{s.what}</p>{" "}
@@ -396,7 +396,7 @@ export default async function MethodologyPage() {
           className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-5 py-2.5 font-bold text-black shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
         >
           Open the calculators
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
 

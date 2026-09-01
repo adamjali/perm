@@ -23,7 +23,7 @@
  */
 
 import { motion, AnimatePresence } from 'motion/react';
-import { Check, CheckCircle, CircleNotch, MagnifyingGlass as Search, Warning as AlertTriangle, X, XCircle } from "@phosphor-icons/react";
+import { CheckIcon, CheckCircleIcon, CircleNotchIcon, MagnifyingGlassIcon as Search, WarningIcon as AlertTriangle, XIcon, XCircleIcon } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import { springConfig } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
@@ -91,7 +91,7 @@ function StatusIcon({ status }: { status: ConfirmationStatus }) {
         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
         className="text-primary"
       >
-        <CircleNotch className="h-4 w-4" />
+        <CircleNotchIcon className="h-4 w-4" />
       </motion.div>
     );
   }
@@ -101,10 +101,10 @@ function StatusIcon({ status }: { status: ConfirmationStatus }) {
 
   // Determine icon and color based on status
   const iconConfig = {
-    approved: { Icon: CheckCircle, className: 'text-green-600 dark:text-green-400' },
-    done: { Icon: CheckCircle, className: 'text-green-600 dark:text-green-400' },
-    denied: { Icon: XCircle, className: 'text-muted-foreground' },
-    error: { Icon: XCircle, className: 'text-red-600 dark:text-red-400' },
+    approved: { Icon: CheckCircleIcon, className: 'text-green-600 dark:text-green-400' },
+    done: { Icon: CheckCircleIcon, className: 'text-green-600 dark:text-green-400' },
+    denied: { Icon: XCircleIcon, className: 'text-muted-foreground' },
+    error: { Icon: XCircleIcon, className: 'text-red-600 dark:text-red-400' },
   }[status];
 
   if (!iconConfig) return null;
@@ -329,7 +329,7 @@ export function InChatConfirmationCard({
                 onClick={onDeny}
                 className="gap-1.5"
               >
-                <X className="h-3.5 w-3.5" />
+                <XIcon className="h-3.5 w-3.5" />
                 Cancel
               </Button>
               <Button
@@ -338,7 +338,7 @@ export function InChatConfirmationCard({
                 onClick={onApprove}
                 className="gap-1.5"
               >
-                <Check className="h-3.5 w-3.5" />
+                <CheckIcon className="h-3.5 w-3.5" />
                 Confirm
               </Button>
             </motion.div>

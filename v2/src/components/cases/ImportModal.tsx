@@ -18,7 +18,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { CaretDown, CaretUp, Check, CircleNotch, Info, Pencil, Upload, UserMinus as UserX, Warning as AlertTriangle, WarningCircle as AlertCircle, X } from "@phosphor-icons/react/ssr";
+import { CaretDownIcon, CaretUpIcon, CheckIcon, CircleNotchIcon, InfoIcon, PencilIcon, UploadIcon, UserMinusIcon as UserX, WarningIcon as AlertTriangle, WarningCircleIcon as AlertCircle, XIcon } from "@phosphor-icons/react/ssr";
 import {
   Dialog,
   DialogContent,
@@ -484,13 +484,13 @@ export function ImportModal({
 
                 {isParsing ? (
                   <div className="py-4">
-                    <CircleNotch className="mx-auto h-12 w-12 mb-4 text-primary animate-spin" />
+                    <CircleNotchIcon className="mx-auto h-12 w-12 mb-4 text-primary animate-spin" />
                     <p className="text-lg font-medium mb-2">Parsing file...</p>{" "}
                     <p className="text-sm text-muted-foreground">Validating case data</p>
                   </div>
                 ) : (
                   <>
-                    <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <UploadIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                     <p className="text-lg font-medium mb-2">Drag & drop your JSON file here</p>{" "}
                     <p className="text-sm text-muted-foreground">or click to browse</p>{" "}
                     <p className="text-sm text-muted-foreground mt-2">Accepts .json files only</p>
@@ -515,7 +515,7 @@ export function ImportModal({
                   {/* Legacy Format Warning */}
                   {parseResult.isLegacyFormat && (
                     <div className="flex items-start gap-3 p-4 border-2 border-data-warn bg-data-warn/8">
-                      <Info className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
+                      <InfoIcon className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium text-data-warn-ink">
                           Legacy Format Detected
@@ -569,7 +569,7 @@ export function ImportModal({
                         }}
                       >
                         <div className="flex items-center gap-2">
-                          <Info className="h-4 w-4 text-muted-foreground" />
+                          <InfoIcon className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm font-medium">
                             {parseResult.warnings.length} Conversion Note
                             {parseResult.warnings.length !== 1 ? "s" : ""}
@@ -578,9 +578,9 @@ export function ImportModal({
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <span className="text-sm">{showAllWarnings ? "Collapse" : "Expand"}</span>
                           {showAllWarnings ? (
-                            <CaretUp className="h-4 w-4" />
+                            <CaretUpIcon className="h-4 w-4" />
                           ) : (
-                            <CaretDown className="h-4 w-4" />
+                            <CaretDownIcon className="h-4 w-4" />
                           )}
                         </div>
                       </div>
@@ -779,7 +779,7 @@ export function ImportModal({
                                         )}
                                       </span>
                                       {!isError && !isEditing && (
-                                        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0" />
+                                        <PencilIcon className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0" />
                                       )}
                                     </div>
                                   </td>
@@ -805,12 +805,12 @@ export function ImportModal({
                       >
                         {showAllCases ? (
                           <>
-                            <CaretUp className="h-4 w-4" />
+                            <CaretUpIcon className="h-4 w-4" />
                             <span>Show less</span>
                           </>
                         ) : (
                           <>
-                            <CaretDown className="h-4 w-4" />
+                            <CaretDownIcon className="h-4 w-4" />
                             <span>
                               Show all {parseResult.valid.length + parseResult.errors.length} cases
                             </span>
@@ -837,7 +837,7 @@ export function ImportModal({
                           onClick={handleCancelEdit}
                           disabled={isSavingEdit}
                         >
-                          <X className="h-4 w-4" />
+                          <XIcon className="h-4 w-4" />
                         </Button>
                       </div>
 
@@ -936,12 +936,12 @@ export function ImportModal({
                         <Button size="sm" onClick={handleSaveEdit} disabled={isSavingEdit}>
                           {isSavingEdit ? (
                             <>
-                              <CircleNotch className="h-4 w-4 mr-2 animate-spin" />
+                              <CircleNotchIcon className="h-4 w-4 mr-2 animate-spin" />
                               Saving...
                             </>
                           ) : (
                             <>
-                              <Check className="h-4 w-4 mr-2" />
+                              <CheckIcon className="h-4 w-4 mr-2" />
                               Save Changes
                             </>
                           )}
@@ -1102,7 +1102,7 @@ export function ImportModal({
             <>
               {/* Import Summary */}
               <div className="flex items-start gap-3 p-4 border-2 border-data-good">
-                <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                <CheckIcon className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-primary">
                     Import Successful

@@ -36,7 +36,7 @@ import ThemeToggle from "./ThemeToggle";
 import { NavLink } from "@/components/ui/nav-link";
 import { SiteSearch } from "@/components/search/SiteSearch";
 import type { SearchArticle } from "@/components/search/SearchPalette";
-import { CaretDown, FileText, List as Menu, X } from "@phosphor-icons/react";
+import { CaretDownIcon, FileTextIcon, ListIcon as Menu, XIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 export default function AuthHeader({
@@ -174,7 +174,7 @@ export default function AuthHeader({
           className="group flex min-h-[44px] items-center gap-2 px-2 py-1 font-heading text-2xl font-bold transition-colors hover:bg-primary"
           spinnerClassName="text-(--primary) group-hover:text-black"
         >
-          <FileText
+          <FileTextIcon
             className="size-6 text-(--primary) transition-colors group-hover:text-black"
           />
           <span>
@@ -255,7 +255,7 @@ export default function AuthHeader({
                 aria-haspopup="menu"
               >
                 Learn
-                <CaretDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
+                <CaretDownIcon className={cn("h-3.5 w-3.5 transition-transform duration-200", isLearnOpen && "rotate-180")} />
               </button>{" "}
               <div
                 role="menu"
@@ -329,7 +329,7 @@ export default function AuthHeader({
             aria-label="Toggle menu"
             aria-expanded={isMobileMenuOpen}
           >
-            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isMobileMenuOpen ? <XIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>{" "}

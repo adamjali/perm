@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import Link from "next/link";
-import { Warning } from "@phosphor-icons/react/ssr";
+import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { formatMonth, formatMonthShort } from "@/lib/dolFormat";
 import type { VolumeAnomaly } from "@/lib/queueAhead";
@@ -289,7 +289,7 @@ function AnomalyMark({
   noteId?: string;
 }) {
   const measured = `${label} holds ${int(anomaly.total)} filings against a neighbouring average of ${int(Math.round(anomaly.neighbourMean))}`;
-  const icon = <Warning className="h-4 w-4" weight="fill" aria-hidden="true" />;
+  const icon = <WarningIcon className="h-4 w-4" weight="fill" aria-hidden="true" />;
   if (noteId) {
     return (
       <Link

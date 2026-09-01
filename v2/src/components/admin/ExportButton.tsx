@@ -1,6 +1,6 @@
 "use client";
 
-import { Download } from "@phosphor-icons/react";
+import { DownloadIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { exportUsersToCSV, downloadCSV } from "@/lib/admin/csvExport";
 import { toast } from "@/lib/toast";
@@ -35,7 +35,7 @@ export function ExportButton({ users }: ExportButtonProps) {
       onClick={handleExport}
       className="flex items-center gap-2"
     >
-      <Download className="size-4" />
+      <DownloadIcon className="size-4" />
       Export CSV
     </Button>
   );

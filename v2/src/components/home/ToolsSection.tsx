@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import Link from "next/link";
-import { ArrowRight, CalendarCheck, CalendarDot as CalendarClock, FileText, Scales as Scale } from "@phosphor-icons/react/ssr";
+import { ArrowRightIcon, CalendarCheckIcon, CalendarDotIcon as CalendarClock, FileTextIcon, ScalesIcon as Scale } from "@phosphor-icons/react/ssr";
 
 import { formatMonth } from "@/lib/dolFormat";
 import { QueueDepthMini, TapeMini, WindowSpansMini } from "@/components/tools/MiniDiagrams";
@@ -38,7 +38,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
     },
     {
       href: "/tools/perm-deadline-calculator",
-      icon: CalendarCheck,
+      icon: CalendarCheckIcon,
       n: "02",
       viz: "spans" as const,
       name: "Your deadlines",
@@ -64,7 +64,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
     },
     {
       href: "/tools/i140-calculator",
-      icon: FileText,
+      icon: FileTextIcon,
       n: "04",
       viz: "queue-deep" as const,
       name: "I-140 petition",
@@ -189,7 +189,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
             className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
           >
             See every calculator
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
           </Link>
           <Link
             href="/tools/green-card-timeline"

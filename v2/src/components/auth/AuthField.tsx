@@ -15,7 +15,7 @@
  * Consumer owns validation, this component only renders the state.
  */
 
-import { CheckCircle as CheckCircle2, WarningCircle as AlertCircle } from "@phosphor-icons/react";
+import { CheckCircleIcon as CheckCircle2, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";

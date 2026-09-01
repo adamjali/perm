@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "@phosphor-icons/react/ssr";
+import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 import { fetchQuery } from "convex/nextjs";
 
 import { api } from "../../../../../../convex/_generated/api";
@@ -245,7 +245,7 @@ export default async function GreenCardTimelinePage() {
             <p className="mt-2 flex-1 text-base leading-relaxed text-foreground/70">{t.blurb}</p>{" "}
             <span className="mt-4 inline-flex items-center gap-2 font-bold text-foreground underline decoration-primary decoration-2 underline-offset-4">
               Open
-              <ArrowRight
+              <ArrowRightIcon
                 className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
                 aria-hidden="true"
               />

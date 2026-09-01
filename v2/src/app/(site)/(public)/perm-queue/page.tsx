@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { getDatasetSchema } from "@/lib/structuredData";
 import Link from "next/link";
-import { Warning } from "@phosphor-icons/react/ssr";
+import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
@@ -157,7 +157,7 @@ export default async function PermQueuePage() {
           the reader has already absorbed cannot be un-absorbed by a footnote. */}
       {!MIRROR_COMPLETE ? (
         <p className="mt-8 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base text-foreground/80">
-          <Warning
+          <WarningIcon
             className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink"
             weight="fill"
             aria-hidden="true"

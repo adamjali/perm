@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Fragment } from "react";
-import { Warning } from "@phosphor-icons/react/ssr";
+import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { InsightLede, Verdict } from "@/components/tools/Insight";
@@ -169,7 +169,7 @@ export function CaseStatusResult({
 
       {check?.stale && !isFinal ? (
         <p className="mt-6 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-foreground/80">
-          <Warning
+          <WarningIcon
             className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
             weight="fill"
             aria-hidden="true"
@@ -195,7 +195,7 @@ export function CaseStatusResult({
 
       {reopened && decided && live ? (
         <p className="mt-6 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-foreground/80">
-          <Warning
+          <WarningIcon
             className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
             weight="fill"
             aria-hidden="true"
@@ -226,7 +226,7 @@ export function CaseStatusResult({
 
       {sourcesDisagree && decided && live ? (
         <p className="mt-6 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-foreground/80">
-          <Warning
+          <WarningIcon
             className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
             weight="fill"
             aria-hidden="true"

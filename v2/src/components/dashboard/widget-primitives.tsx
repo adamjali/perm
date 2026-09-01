@@ -9,7 +9,7 @@
 
 import { type ReactNode } from "react";
 import Link from "next/link";
-import { CircleNotch, type Icon as PhosphorIcon } from "@phosphor-icons/react";
+import { CircleNotchIcon, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -108,7 +108,7 @@ export function WidgetHeaderAction({
     >
       {isNavigating ? (
         <>
-          <CircleNotch className="size-4 animate-spin" />
+          <CircleNotchIcon className="size-4 animate-spin" />
           {loadingLabel}
         </>
       ) : (

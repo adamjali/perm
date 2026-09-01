@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState, useCallback, useEffect } from "react";
-import { ArrowsClockwise as RefreshCw, CaretDown, Check, Copy, FileText, FloppyDisk as Save, Sparkle, Trash as Trash2 } from "@phosphor-icons/react";
+import { ArrowsClockwiseIcon as RefreshCw, CaretDownIcon, CheckIcon, CopyIcon, FileTextIcon, FloppyDiskIcon as Save, SparkleIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -328,7 +328,7 @@ export function JobDescriptionField({
         aria-expanded={isExpanded}
       >
         <div className="flex items-center gap-2 sm:gap-3">
-          <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
+          <FileTextIcon className="h-5 w-5 text-muted-foreground shrink-0" />
           <div className="flex items-center gap-2">
             <span className="font-heading font-semibold text-base sm:text-lg">
               Job Description
@@ -361,7 +361,7 @@ export function JobDescriptionField({
               {characterCount.toLocaleString()}/{maxLength.toLocaleString()}
             </span>
           )}
-          <CaretDown
+          <CaretDownIcon
             className={cn(
               "h-5 w-5 text-muted-foreground transition-transform duration-200",
               isExpanded && "rotate-180"
@@ -409,9 +409,9 @@ export function JobDescriptionField({
                         className="gap-1.5 border-2 min-h-[44px] min-w-[44px]"
                       >
                         {isCopied ? (
-                          <Check className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
+                          <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
                         ) : (
-                          <Copy className="h-5 w-5 sm:h-4 sm:w-4" />
+                          <CopyIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                         )}
                         <span className="hidden sm:inline">Copy</span>
                       </Button>
@@ -542,7 +542,7 @@ export function JobDescriptionField({
                       </>
                     ) : (
                       <>
-                        <Sparkle className="h-5 w-5 sm:h-4 sm:w-4" />
+                        <SparkleIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                         <span className="text-sm">{isSaving ? "Saving..." : "Save Template"}</span>
                       </>
                     )}

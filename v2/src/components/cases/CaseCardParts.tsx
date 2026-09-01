@@ -3,7 +3,7 @@
  * Extracted presentational components used by CaseCard.
  */
 
-import { Bookmark, Calendar, CircleNotch, PushPin, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { BookmarkIcon, CalendarIcon, CircleNotchIcon, PushPinIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { formatCompactDate, getStageColorVar } from "./case-card.utils";
@@ -82,9 +82,9 @@ export function FavoriteBookmark({
       onClick={onToggle}
     >
       {isToggling ? (
-        <CircleNotch className="w-4 h-4 mt-0.5 animate-spin text-data-warn-ink" />
+        <CircleNotchIcon className="w-4 h-4 mt-0.5 animate-spin text-data-warn-ink" />
       ) : (
-        <Bookmark
+        <BookmarkIcon
           className={cn(
             "w-4 h-4 mt-0.5",
  isFavorite ? "text-data-warn-ink fill-yellow-800" : "text-black/60"
@@ -127,9 +127,9 @@ export function PinIndicator({
       aria-label={isToggling ? "Updating pin status" : "Card pinned open"}
     >
       {isToggling ? (
-        <CircleNotch className="w-3 h-3 -rotate-45 animate-spin" />
+        <CircleNotchIcon className="w-3 h-3 -rotate-45 animate-spin" />
       ) : (
-        <PushPin className="w-3 h-3 -rotate-45" />
+        <PushPinIcon className="w-3 h-3 -rotate-45" />
       )}
     </div>
   );
@@ -223,7 +223,7 @@ export function CalendarSyncIndicator({
     >
       {isGoogleConnected ? (
         <>
-          <Calendar className="w-4 h-4 text-black" />
+          <CalendarIcon className="w-4 h-4 text-black" />
           <span className="font-mono text-sm font-bold uppercase tracking-wider text-black">
             Synced
           </span>

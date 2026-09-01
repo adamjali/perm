@@ -22,7 +22,7 @@
  */
 
 import { type ReactNode } from "react";
-import { CircleNotch } from "@phosphor-icons/react";
+import { CircleNotchIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
@@ -79,7 +79,7 @@ export function NavigableCard({
     <>
       {loadingIndicator === "spinner" && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-          <CircleNotch className="h-5 w-5 animate-spin text-primary" />
+          <CircleNotchIcon className="h-5 w-5 animate-spin text-primary" />
         </div>
       )}
       {loadingIndicator === "overlay" && (

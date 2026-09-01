@@ -15,7 +15,7 @@
  */
 
 import { useId, useState } from "react";
-import { Bell, CheckCircle as CheckCircle2 } from "@phosphor-icons/react";
+import { BellIcon, CheckCircleIcon as CheckCircle2 } from "@phosphor-icons/react";
 
 import { MONTH_NAMES } from "@/lib/dolFormat";
 import { Button, Input, Label } from "@/components/ui";
@@ -185,7 +185,7 @@ export function QueueAlertForm({
       className="border-2 border-border bg-card p-6 shadow-hard sm:p-8"
     >
       <div className="flex items-center gap-2">
-        <Bell className="h-5 w-5 text-primary" aria-hidden="true" />
+        <BellIcon className="h-5 w-5 text-primary" aria-hidden="true" />
         <h2 className="font-heading text-xl font-black sm:text-2xl">
           Get notified when DOL reaches your month
         </h2>

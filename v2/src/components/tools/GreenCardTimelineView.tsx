@@ -15,7 +15,7 @@
  */
 
 import type { ReactNode } from "react";
-import { Lock, Timer, WarningCircle as CircleAlert } from "@phosphor-icons/react";
+import { LockIcon, TimerIcon, WarningCircleIcon as CircleAlert } from "@phosphor-icons/react";
 import type { GreenCardTimeline, TimelineStage } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 
@@ -38,13 +38,13 @@ const CERTAINTY = {
   statutory: {
     label: "Fixed by regulation",
     bar: "bg-primary",
-    icon: Lock,
+    icon: LockIcon,
     note: "Exact arithmetic on the prevailing wage determination.",
   },
   queue: {
     label: "Government queue",
     bar: "bg-foreground/70",
-    icon: Timer,
+    icon: TimerIcon,
     note: "A forecast over a backlog. It moves when the agency moves.",
   },
   unknown: {

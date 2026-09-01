@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback } from "react";
 import { useWatch } from "react-hook-form";
-import { Plus, WarningCircle as AlertCircle } from "@phosphor-icons/react";
+import { PlusIcon, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { RFIEntry } from "./RFIEntry";
@@ -169,7 +169,7 @@ export function RFIEntryList({
           disabled={hasActiveEntry || entries.length >= 50}
           className="gap-1.5"
         >
-          <Plus className="h-4 w-4" />
+          <PlusIcon className="h-4 w-4" />
           Add RFI
         </Button>
 

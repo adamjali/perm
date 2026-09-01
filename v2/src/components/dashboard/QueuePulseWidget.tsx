@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "convex/react";
-import { ArrowRight } from "@phosphor-icons/react";
+import { ArrowRightIcon } from "@phosphor-icons/react";
 
 import { api } from "../../../convex/_generated/api";
 import { analystReviewQueue } from "../../../convex/lib/dolProcessingTimes";
@@ -46,7 +46,7 @@ export function QueuePulseWidget() {
           className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-background px-4 py-2 text-sm font-bold shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
         >
           Estimate a decision
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>
       <QueueTape frontierMonth={frontier} monthsBehind={5} monthsAhead={7} className="mt-4" />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ComponentProps } from "react";
-import { Eye, EyeSlash as EyeOff } from "@phosphor-icons/react";
+import { EyeIcon, EyeSlashIcon as EyeOff } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +44,7 @@ function PasswordInput({
         {visible ? (
           <EyeOff className="h-4 w-4" />
         ) : (
-          <Eye className="h-4 w-4" />
+          <EyeIcon className="h-4 w-4" />
         )}
       </button>
     </div>

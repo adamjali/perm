@@ -12,7 +12,7 @@
  */
 
 import { useId, useMemo, useState } from "react";
-import { Scales as Scale, Warning } from "@phosphor-icons/react";
+import { ScalesIcon as Scale, WarningIcon } from "@phosphor-icons/react";
 
 import { estimatePwdQueue, type PwdBacklogMonth } from "@/lib/perm";
 import { formatMonth } from "@/lib/dolFormat";
@@ -180,7 +180,7 @@ export function PwdQueueEstimator({
 
       <div className="bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
-          <Warning
+          <WarningIcon
             className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70"
             aria-hidden="true"
           />

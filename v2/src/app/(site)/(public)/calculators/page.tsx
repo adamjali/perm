@@ -8,7 +8,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CalendarBlank as CalendarRange, CalendarCheck, CalendarDot as CalendarClock, ChartBar, CurrencyDollar, FileText, Path as Route, Scales as Scale, Users } from "@phosphor-icons/react/ssr";
+import { ArrowRightIcon, CalendarBlankIcon as CalendarRange, CalendarCheckIcon, CalendarDotIcon as CalendarClock, ChartBarIcon, CurrencyDollarIcon, FileTextIcon, PathIcon as Route, ScalesIcon as Scale, UsersIcon } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -70,7 +70,7 @@ const TOOLS = [
   {
     href: "/tools/perm-deadline-calculator",
     viz: "spans" as const,
-    icon: CalendarCheck,
+    icon: CalendarCheckIcon,
     name: "PERM deadline calculator",
     kind: "Exact",
     tone: "pop",
@@ -90,7 +90,7 @@ const TOOLS = [
   {
     href: "/tools/i140-calculator",
     viz: "twobars" as const,
-    icon: FileText,
+    icon: FileTextIcon,
     kind: "Count",
     name: "I-140 queue calculator",
     tone: "paper",
@@ -100,7 +100,7 @@ const TOOLS = [
   {
     href: "/tools/i485-queue-position",
     viz: "range" as const,
-    icon: Users,
+    icon: UsersIcon,
     kind: "Range",
     name: "I-485 queue position",
     tone: "ink",
@@ -132,7 +132,7 @@ const TOOLS = [
 const EXPLORERS = [
   {
     href: "/tools/salary-explorer",
-    icon: CurrencyDollar,
+    icon: CurrencyDollarIcon,
     kind: "Distribution",
     name: "Salary explorer",
     blurb:
@@ -140,7 +140,7 @@ const EXPLORERS = [
   },
   {
     href: "/tools/i140-trends",
-    icon: ChartBar,
+    icon: ChartBarIcon,
     kind: "Series",
     name: "I-140 trends",
     blurb:
@@ -284,7 +284,7 @@ export default function CalculatorsPage() {
                   }
                 >
                   Open
-                  <ArrowRight
+                  <ArrowRightIcon
                     className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
                     aria-hidden="true"
                   />
@@ -336,7 +336,7 @@ export default function CalculatorsPage() {
                     {t.blurb}
                   </p>
                 </div>
-                <ArrowRight
+                <ArrowRightIcon
                   className="mt-1 h-5 w-5 shrink-0 transition-transform duration-150 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
                   aria-hidden="true"
                 />

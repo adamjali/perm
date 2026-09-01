@@ -14,7 +14,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowDown, ArrowUp, Copy, MagnifyingGlass as Search } from "@phosphor-icons/react";
+import { ArrowDownIcon, ArrowUpIcon, CopyIcon, MagnifyingGlassIcon as Search } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -410,7 +410,7 @@ export function CaseFilterBar({
           title={filters.duplicatesOnly ? "Showing duplicates only - click to show all" : "Show only duplicate cases"}
           className="gap-2"
         >
-          <Copy className="size-4" />
+          <CopyIcon className="size-4" />
           Duplicates
         </Button>
 
@@ -467,9 +467,9 @@ export function CaseFilterBar({
             title={sort.sortOrder === "asc" ? "Ascending (click for descending)" : "Descending (click for ascending)"}
           >
             {sort.sortOrder === "asc" ? (
-              <ArrowUp className="size-4" />
+              <ArrowUpIcon className="size-4" />
             ) : (
-              <ArrowDown className="size-4" />
+              <ArrowDownIcon className="size-4" />
             )}
           </Button>
         </div>

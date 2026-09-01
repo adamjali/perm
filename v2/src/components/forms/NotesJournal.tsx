@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Flag, Plus, SortAscending, Tag, Trash as Trash2 } from "@phosphor-icons/react";
+import { FlagIcon, PlusIcon, SortAscendingIcon, TagIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -414,7 +414,7 @@ export function NotesJournal({
             disabled={!newNoteContent.trim() || notes.length >= 200}
             className="gap-1.5"
           >
-            <Plus className="h-4 w-4" />
+            <PlusIcon className="h-4 w-4" />
             Add Note
           </Button>
           <span className="text-xs text-muted-foreground">
@@ -433,7 +433,7 @@ export function NotesJournal({
             >
               {/* Priority selector */}
               <div className="flex items-center gap-1.5">
-                <Flag className="h-3.5 w-3.5 text-muted-foreground" />
+                <FlagIcon className="h-3.5 w-3.5 text-muted-foreground" />
                 <select
                   value={newNotePriority}
                   onChange={(e) => setNewNotePriority(e.target.value as NotePriority)}
@@ -449,7 +449,7 @@ export function NotesJournal({
 
               {/* Category selector */}
               <div className="flex items-center gap-1.5">
-                <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                <TagIcon className="h-3.5 w-3.5 text-muted-foreground" />
                 <select
                   value={newNoteCategory}
                   onChange={(e) => setNewNoteCategory(e.target.value as NoteCategory)}
@@ -526,7 +526,7 @@ export function NotesJournal({
 
           {/* Sort dropdown */}
           <div className="flex items-center gap-1.5">
-            <SortAscending className="h-3.5 w-3.5 text-muted-foreground" />
+            <SortAscendingIcon className="h-3.5 w-3.5 text-muted-foreground" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
@@ -592,7 +592,7 @@ export function NotesJournal({
                             priorityConfig.color
                           )}
                         >
-                          <Flag className="h-2.5 w-2.5" />
+                          <FlagIcon className="h-2.5 w-2.5" />
                           {priorityConfig.label}
                         </span>{" "}
 

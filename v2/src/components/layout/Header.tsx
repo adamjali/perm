@@ -7,7 +7,7 @@ import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { handleOperationError } from "@/lib/errors";
-import { CaretDown, CircleNotch, FileText, Gear as Settings, List as Menu, SignOut, X } from "@phosphor-icons/react";
+import { CaretDownIcon, CircleNotchIcon, FileTextIcon, GearIcon as Settings, ListIcon as Menu, SignOutIcon, XIcon } from "@phosphor-icons/react";
 import { api } from "../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { AUTHENTICATED_NAV_LINKS, ADMIN_NAV_LINK } from "@/lib/constants/navigation";
@@ -80,7 +80,7 @@ function UserMenu({ userName }: UserMenuProps) {
         className="group flex min-h-[44px] cursor-pointer items-center gap-2 rounded-none border-2 border-transparent bg-transparent px-3 py-2 text-sm font-medium text-white transition-all hover:border-white/50 hover:bg-white/10 focus:outline-none focus-visible:border-white/50"
       >
         <span className="max-w-[100px] truncate">{userName}</span>
-        <CaretDown className="size-4 transition-transform duration-150 group-data-[state=open]:rotate-180" />
+        <CaretDownIcon className="size-4 transition-transform duration-150 group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
@@ -99,7 +99,7 @@ function UserMenu({ userName }: UserMenuProps) {
           )}
         >
           {isNavigatingToSettings ? (
-            <CircleNotch className="size-4 animate-spin" />
+            <CircleNotchIcon className="size-4 animate-spin" />
           ) : (
             <Settings className={cn("size-4", isOnSettingsPage && "text-muted-foreground")} />
           )}
@@ -112,9 +112,9 @@ function UserMenu({ userName }: UserMenuProps) {
           className="flex cursor-pointer items-center gap-3 rounded-none px-4 py-3 text-sm font-semibold hover:bg-muted"
         >
           {isSigningOut ? (
-            <CircleNotch className="size-4 animate-spin" />
+            <CircleNotchIcon className="size-4 animate-spin" />
           ) : (
-            <SignOut className="size-4" />
+            <SignOutIcon className="size-4" />
           )}
           {isSigningOut ? "Signing out..." : "Sign Out"}
         </DropdownMenuItem>
@@ -177,7 +177,7 @@ export default function Header(): React.ReactElement {
           href="/dashboard"
           className="group flex min-h-[44px] shrink-0 items-center gap-2 px-2 py-1 font-heading text-xl font-bold transition-colors hover:bg-primary sm:text-2xl"
         >
-          <FileText
+          <FileTextIcon
             className="size-6 text-(--primary) transition-colors group-hover:text-black"
           />
           {/* NEVER WRAPS, and that is a layout fix rather than a typographic
@@ -253,7 +253,7 @@ export default function Header(): React.ReactElement {
             aria-label="Toggle menu"
             aria-expanded={isMobileMenuOpen}
           >
-            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isMobileMenuOpen ? <XIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </nav>
       </div>
@@ -301,9 +301,9 @@ export default function Header(): React.ReactElement {
                   className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary text-left disabled:opacity-50"
                 >
                   {isSigningOut ? (
-                    <CircleNotch className="size-4 animate-spin" />
+                    <CircleNotchIcon className="size-4 animate-spin" />
                   ) : (
-                    <SignOut className="size-4" />
+                    <SignOutIcon className="size-4" />
                   )}
                   {isSigningOut ? "Signing out..." : "Sign Out"}
                 </button>

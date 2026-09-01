@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Clock, Info, Lightning as Zap } from "@phosphor-icons/react";
+import { ClockIcon, InfoIcon, LightningIcon as Zap } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import {
   PROCESSING_TIMES_AS_OF,
@@ -53,7 +53,7 @@ export function ProcessingTimeEstimate({
         )}
       >
         <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4" aria-hidden="true" />
+          <ClockIcon className="h-4 w-4" aria-hidden="true" />
           <span>Choose a petition category to see USCIS processing times.</span>
         </div>
       </div>
@@ -73,7 +73,7 @@ export function ProcessingTimeEstimate({
           {isPremiumProcessing ? (
             <Zap className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
           ) : (
-            <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+            <ClockIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
           )}
           <span className="text-sm font-medium">
             {isPremiumProcessing
@@ -98,7 +98,7 @@ export function ProcessingTimeEstimate({
         {isPremiumProcessing ? (
           <Zap className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
         ) : (
-          <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <ClockIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
         )}
         <span className="text-sm font-semibold">
           {isPremiumProcessing ? "Premium processing" : "USCIS processing time"}
@@ -150,7 +150,7 @@ export function ProcessingTimeEstimate({
       )}
 
       <div className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
-        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <InfoIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <p>
           {isPremiumProcessing
             ? "Premium processing guarantees a first review inside the window. It doesn’t guarantee approval, and the clock restarts if USCIS issues a request for evidence."

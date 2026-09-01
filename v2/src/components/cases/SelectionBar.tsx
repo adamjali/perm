@@ -25,7 +25,7 @@
 
 "use client";
 
-import { Archive, ArrowCounterClockwise as RotateCcw, Calendar, CalendarSlash, Download, FileJs, Trash as Trash2, X } from "@phosphor-icons/react/ssr";
+import { ArchiveIcon, ArrowCounterClockwiseIcon as RotateCcw, CalendarIcon, CalendarSlashIcon, DownloadIcon, FileJsIcon, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 
 // ============================================================================
@@ -98,7 +98,7 @@ export function SelectionBar({
               aria-label="Cancel"
               className="text-muted-foreground"
             >
-              <X className="size-4 mr-1.5" />
+              <XIcon className="size-4 mr-1.5" />
               Cancel
             </Button>
           </div>
@@ -133,7 +133,7 @@ export function SelectionBar({
               aria-label="Export CSV"
               disabled={isLoading}
             >
-              <Download className="size-4 mr-1.5" />
+              <DownloadIcon className="size-4 mr-1.5" />
               Export CSV
             </Button>
             <Button
@@ -143,7 +143,7 @@ export function SelectionBar({
               aria-label="Export JSON"
               disabled={isLoading}
             >
-              <FileJs className="size-4 mr-1.5" />
+              <FileJsIcon className="size-4 mr-1.5" />
               Export JSON
             </Button>
             {hasClosedCases && (
@@ -165,7 +165,7 @@ export function SelectionBar({
               aria-label="Archive"
               disabled={isLoading}
             >
-              <Archive className="size-4 mr-1.5" />
+              <ArchiveIcon className="size-4 mr-1.5" />
               Archive
             </Button>
             {isCalendarConnected && (
@@ -177,7 +177,7 @@ export function SelectionBar({
                   aria-label="Sync to Calendar"
                   disabled={isLoading}
                 >
-                  <Calendar className="size-4 mr-1.5" />
+                  <CalendarIcon className="size-4 mr-1.5" />
                   Sync
                 </Button>
                 <Button
@@ -187,7 +187,7 @@ export function SelectionBar({
                   aria-label="Unsync from Calendar"
                   disabled={isLoading}
                 >
-                  <CalendarSlash className="size-4 mr-1.5" />
+                  <CalendarSlashIcon className="size-4 mr-1.5" />
                   Unsync
                 </Button>
               </>
@@ -219,7 +219,7 @@ export function SelectionBar({
               aria-label="Cancel"
               className="text-muted-foreground"
             >
-              <X className="size-4 mr-1.5" />
+              <XIcon className="size-4 mr-1.5" />
               Cancel
             </Button>
           </div>
@@ -257,7 +257,7 @@ export function SelectionBar({
               className="flex-1"
               disabled={isLoading}
             >
-              <Download className="size-4 mr-1.5" />
+              <DownloadIcon className="size-4 mr-1.5" />
               CSV
             </Button>
             <Button
@@ -268,7 +268,7 @@ export function SelectionBar({
               className="flex-1"
               disabled={isLoading}
             >
-              <FileJs className="size-4 mr-1.5" />
+              <FileJsIcon className="size-4 mr-1.5" />
               JSON
             </Button>
           </div>
@@ -283,7 +283,7 @@ export function SelectionBar({
               className="flex-1"
               disabled={isLoading}
             >
-              <Archive className="size-4 mr-1.5" />
+              <ArchiveIcon className="size-4 mr-1.5" />
               Archive
             </Button>
             <Button
@@ -307,7 +307,7 @@ export function SelectionBar({
                   className="flex-1"
                   disabled={isLoading}
                 >
-                  <Calendar className="size-4 mr-1.5" />
+                  <CalendarIcon className="size-4 mr-1.5" />
                   Sync
                 </Button>
                 <Button
@@ -318,7 +318,7 @@ export function SelectionBar({
                   className="flex-1"
                   disabled={isLoading}
                 >
-                  <CalendarSlash className="size-4 mr-1.5" />
+                  <CalendarSlashIcon className="size-4 mr-1.5" />
                   Unsync
                 </Button>
               </>

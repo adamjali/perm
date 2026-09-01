@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Plus, Trash as Trash2 } from "@phosphor-icons/react";
+import { GraduationCapIcon, PlusIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { useRecruitmentSection } from "@/components/forms/useCaseFormSection";
@@ -632,7 +632,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
               onCheckedChange={handleCheckboxChange}
             />
             <div className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-muted-foreground" />
+              <GraduationCapIcon className="h-5 w-5 text-muted-foreground" />
               <Label
                 htmlFor="isProfessionalOccupation"
                 className="font-semibold cursor-pointer"
@@ -885,7 +885,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                         onClick={addMethod}
                         className="w-full"
                       >
-                        <Plus className="h-4 w-4 mr-2" />
+                        <PlusIcon className="h-4 w-4 mr-2" />
                         Add Method ({methods.length}/3)
                       </Button>
                     )}

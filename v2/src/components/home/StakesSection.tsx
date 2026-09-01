@@ -10,7 +10,7 @@
  */
 
 import * as React from "react";
-import { ArrowRight, Shield, Warning as AlertTriangle } from "@phosphor-icons/react";
+import { ArrowRightIcon, ShieldIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 interface StakeCard {
@@ -246,7 +246,7 @@ export function StakesSection() {
                 {/* Prevention line */}
                 <div className="border-t-2 border-border pt-4">
                   <div className="flex items-start gap-2">
-                    <Shield
+                    <ShieldIcon
                       className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary"
                     />
                     <p className="text-sm font-semibold text-foreground leading-relaxed">
@@ -271,7 +271,7 @@ export function StakesSection() {
       <div className="flex flex-col items-center gap-4 pt-8">
         <div className="flex items-center gap-2 font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
           <span>{stakes.length} ways a case is lost</span>{" "}
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRightIcon className="h-4 w-4" />
         </div>{" "}
         <p className="text-sm text-muted-foreground text-center">
           Every one of these deadlines is calculated automatically.

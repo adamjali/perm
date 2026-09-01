@@ -31,7 +31,7 @@
 
 import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Users, Info } from "@phosphor-icons/react";
+import { UsersIcon, InfoIcon } from "@phosphor-icons/react";
 
 import {
   certaintySplit,
@@ -285,7 +285,7 @@ export function I485QueuePosition({
     <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
       <div className="border-b-2 border-border p-6 sm:p-8">
         <div className="flex items-center gap-3">
-          <Users className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
+          <UsersIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <h2 className="font-heading text-2xl font-black leading-tight">
             How many are ahead of you?
           </h2>
@@ -605,7 +605,7 @@ export function I485QueuePosition({
 
       <div className="bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
-          <Info className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
+          <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
           <div>
             <h3 className="font-heading text-base font-black">
               What this can’t tell you

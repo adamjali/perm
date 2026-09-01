@@ -7,7 +7,7 @@
  */
 
 import type { Metadata } from "next";
-import { ChatText, Envelope as Mail } from "@phosphor-icons/react/ssr";
+import { ChatTextIcon, EnvelopeIcon as Mail } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { ContactForm } from "./ContactForm";
@@ -93,7 +93,7 @@ export default function ContactPage() {
           {/* Feature Requests */}
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 items-center justify-center border-2 border-black bg-secondary shadow-hard-sm dark:border-white">
-              <ChatText className="h-6 w-6 text-secondary-foreground" />
+              <ChatTextIcon className="h-6 w-6 text-secondary-foreground" />
             </div>{" "}
             <div>
               <h2 className="font-heading text-lg font-bold mb-1">

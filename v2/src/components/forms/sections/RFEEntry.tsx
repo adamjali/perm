@@ -8,7 +8,7 @@ import { DateInput } from "@/components/forms/DateInput";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { CheckCircle as CheckCircle2, X } from "@phosphor-icons/react";
+import { CheckCircleIcon as CheckCircle2, XIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { getRfiRfeUrgency, type UrgencyLevelWithCompletion } from "@/lib/status/urgency";
 import type { CaseFormData, RFEEntry as RFEEntryType } from "@/lib/forms/case-form-schema";
@@ -270,7 +270,7 @@ function RFEEntryComponent({
           className="ml-auto"
           aria-label="Remove RFE"
         >
-          <X className="h-4 w-4" />
+          <XIcon className="h-4 w-4" />
         </Button>
       </div>
 

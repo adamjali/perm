@@ -20,7 +20,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { CircleNotch } from "@phosphor-icons/react";
+import { CircleNotchIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Z_INDEX } from "@/lib/constants/zIndex";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
@@ -241,7 +241,7 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
           {/* Loading spinner overlay */}
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-              <CircleNotch className="h-5 w-5 animate-spin text-primary" />
+              <CircleNotchIcon className="h-5 w-5 animate-spin text-primary" />
             </div>
           )}
 

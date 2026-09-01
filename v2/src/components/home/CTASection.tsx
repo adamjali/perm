@@ -10,7 +10,7 @@
  */
 
 import Image from "next/image";
-import { CircleNotch, Rocket } from "@phosphor-icons/react";
+import { CircleNotchIcon, RocketIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
@@ -132,9 +132,9 @@ export function CTASection({
                 disabled={isNavigating}
               >
                 {isNavigating && targetPath === "/signup" ? (
-                  <CircleNotch className="mr-2 h-5 w-5 animate-spin" />
+                  <CircleNotchIcon className="mr-2 h-5 w-5 animate-spin" />
                 ) : (
-                  <Rocket className="mr-2 h-5 w-5" />
+                  <RocketIcon className="mr-2 h-5 w-5" />
                 )}
                 Start Tracking Cases
               </Button>{" "}

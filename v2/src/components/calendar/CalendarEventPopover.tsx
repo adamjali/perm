@@ -23,7 +23,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { motion } from "motion/react";
-import { ArrowSquareOut, Calendar, Eye, EyeSlash as EyeOff } from "@phosphor-icons/react/ssr";
+import { ArrowSquareOutIcon, CalendarIcon, EyeIcon, EyeSlashIcon as EyeOff } from "@phosphor-icons/react/ssr";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -254,7 +254,7 @@ export function CalendarEventPopover({
         >
           <DialogHeader className="gap-1">
             <div className="flex items-center gap-2">
-              <Calendar
+              <CalendarIcon
                 className="size-5"
                 style={{ color: stageColor }}
                 aria-hidden="true"
@@ -360,7 +360,7 @@ export function CalendarEventPopover({
                 animate="visible"
                 className="flex items-center gap-2 p-2 bg-muted border-2 border-border"
               >
-                <Eye className="size-4 text-primary" aria-hidden="true" />
+                <EyeIcon className="size-4 text-primary" aria-hidden="true" />
                 <span className="text-xs font-medium text-foreground">
                   Filing Window Deadline
                 </span>
@@ -389,7 +389,7 @@ export function CalendarEventPopover({
             onClick={handleViewCase}
             className="bg-primary hover:bg-primary/90"
           >
-            <ArrowSquareOut className="size-4" aria-hidden="true" />
+            <ArrowSquareOutIcon className="size-4" aria-hidden="true" />
             <span>View Case</span>
           </Button>
         </DialogFooter>

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { CalendarDot as CalendarClock, CheckCircle, Clock, Warning as AlertTriangle, XCircle } from "@phosphor-icons/react";
+import { CalendarDotIcon as CalendarClock, CheckCircleIcon, ClockIcon, WarningIcon as AlertTriangle, XCircleIcon } from "@phosphor-icons/react";
 import { format, parseISO, differenceInDays } from "date-fns";
 
 // ============================================================================
@@ -100,7 +100,7 @@ function getStatusConfig(status: WindowStatus) {
         bgColor: "bg-slate-100 dark:bg-slate-800",
         textColor: "text-slate-500 dark:text-slate-400",
         borderColor: "border-slate-300 dark:border-slate-600",
-        icon: Clock,
+        icon: ClockIcon,
         progressColor: "bg-slate-400",
       };
     case "not_open":
@@ -109,7 +109,7 @@ function getStatusConfig(status: WindowStatus) {
         bgColor: "bg-slate-100 dark:bg-slate-800",
         textColor: "text-slate-600 dark:text-slate-400",
         borderColor: "border-slate-300 dark:border-slate-600",
-        icon: Clock,
+        icon: ClockIcon,
         progressColor: "bg-slate-400",
       };
     case "open":
@@ -118,7 +118,7 @@ function getStatusConfig(status: WindowStatus) {
         bgColor: "bg-green-50 dark:bg-green-900/20",
         textColor: "text-green-700 dark:text-green-400",
         borderColor: "border-green-300 dark:border-green-700",
-        icon: CheckCircle,
+        icon: CheckCircleIcon,
         progressColor: "bg-green-500",
       };
     case "closing_soon":
@@ -136,7 +136,7 @@ function getStatusConfig(status: WindowStatus) {
         bgColor: "bg-red-50 dark:bg-red-900/20",
         textColor: "text-red-700 dark:text-red-400",
         borderColor: "border-red-300 dark:border-red-700",
-        icon: XCircle,
+        icon: XCircleIcon,
         progressColor: "bg-red-500",
       };
   }

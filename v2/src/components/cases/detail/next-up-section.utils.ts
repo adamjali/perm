@@ -6,7 +6,7 @@
  */
 
 import { createElement, type ReactNode } from "react";
-import { Briefcase, Certificate as Award, CheckCircle as CheckCircle2, Clock, FileArrowUp as FileCheck, FileText, GraduationCap, Hourglass as HourglassIcon, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { BriefcaseIcon, CertificateIcon as Award, CheckCircleIcon as CheckCircle2, ClockIcon, FileArrowUpIcon as FileCheck, FileTextIcon, GraduationCapIcon, HourglassIcon as HourglassIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 import type { CaseStatus, ProgressStatus } from "@/lib/perm";
 import {
   isProfessionalRecruitmentComplete,
@@ -293,7 +293,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "File PWD",
       description: "Submit Prevailing Wage Determination request to DOL",
-      icon: createElement(FileText, { className: "h-5 w-5" }),
+      icon: createElement(FileTextIcon, { className: "h-5 w-5" }),
       urgency: "normal",
     };
   }
@@ -317,7 +317,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "Start Recruitment",
       description: "Begin recruitment activities for labor certification",
-      icon: createElement(Briefcase, { className: "h-5 w-5" }),
+      icon: createElement(BriefcaseIcon, { className: "h-5 w-5" }),
       urgency: "normal",
     };
   }
@@ -326,7 +326,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "Post Job Order",
       description: "Submit job posting to State Workforce Agency (30+ days)",
-      icon: createElement(Briefcase, { className: "h-5 w-5" }),
+      icon: createElement(BriefcaseIcon, { className: "h-5 w-5" }),
       urgency: "normal",
     };
   }
@@ -335,7 +335,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "Post Notice of Filing",
       description: "Post internal notice for 10 consecutive business days",
-      icon: createElement(FileText, { className: "h-5 w-5" }),
+      icon: createElement(FileTextIcon, { className: "h-5 w-5" }),
       urgency: "normal",
     };
   }
@@ -344,7 +344,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     return {
       action: "Place Sunday Ads",
       description: "Publish two newspaper ads on consecutive Sundays",
-      icon: createElement(FileText, { className: "h-5 w-5" }),
+      icon: createElement(FileTextIcon, { className: "h-5 w-5" }),
       urgency: "normal",
     };
   }
@@ -362,7 +362,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Complete Additional Recruitment",
         description: `${completedCount}/3 professional recruitment methods completed`,
-        icon: createElement(GraduationCap, { className: "h-5 w-5" }),
+        icon: createElement(GraduationCapIcon, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }
@@ -376,7 +376,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       return {
         action: "Wait for Filing Window",
         description: `ETA 9089 filing window opens in ${daysUntilOpens} days`,
-        icon: createElement(Clock, { className: "h-5 w-5" }),
+        icon: createElement(ClockIcon, { className: "h-5 w-5" }),
         urgency: "normal",
       };
     }

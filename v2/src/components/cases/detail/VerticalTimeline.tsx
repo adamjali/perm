@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Check, Circle, Clock } from "@phosphor-icons/react";
+import { CheckIcon, CircleIcon, ClockIcon } from "@phosphor-icons/react";
 import { parseISO, format } from "date-fns";
 import { extractMilestones } from "@/lib/timeline/milestones";
 import { isRecruitmentComplete } from "@/lib/perm";
@@ -106,7 +106,7 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
     <div className="detail-card">
       <div className="detail-card-head ch-dark">
         <span className="flex items-center gap-1.5">
-          <Clock className="h-3.5 w-3.5" />
+          <ClockIcon className="h-3.5 w-3.5" />
           Timeline
         </span>
       </div>
@@ -145,11 +145,11 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
                 <div className="vtl-icon-col">
                   <div className={`vtl-icon ${step.status}`}>
                     {step.status === "done" ? (
-                      <Check className="h-3.5 w-3.5" />
+                      <CheckIcon className="h-3.5 w-3.5" />
                     ) : step.status === "current" ? (
-                      <Clock className="h-3.5 w-3.5" />
+                      <ClockIcon className="h-3.5 w-3.5" />
                     ) : (
-                      <Circle className="h-3.5 w-3.5" />
+                      <CircleIcon className="h-3.5 w-3.5" />
                     )}
                   </div>
                   {!isLast && <div className={`vtl-line ${step.status}`} />}

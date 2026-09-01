@@ -21,7 +21,7 @@
  * wrong way.
  */
 
-import { Moon, Sun } from "@phosphor-icons/react";
+import { MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
@@ -54,8 +54,8 @@ export default function ThemeToggle() {
     >
       {/* Both render; CSS picks one from the .dark class next-themes sets
           before first paint. Never both, never neither, never a swap. */}
-      <Sun className={`${ICON} hidden dark:block`} aria-hidden="true" />
-      <Moon className={`${ICON} block dark:hidden`} aria-hidden="true" />
+      <SunIcon className={`${ICON} hidden dark:block`} aria-hidden="true" />
+      <MoonIcon className={`${ICON} block dark:hidden`} aria-hidden="true" />
     </button>
   );
 }

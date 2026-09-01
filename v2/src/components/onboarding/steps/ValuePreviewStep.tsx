@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Bell, Calendar, Clock, Robot as Bot } from "@phosphor-icons/react";
+import { BellIcon, CalendarIcon, ClockIcon, RobotIcon as Bot } from "@phosphor-icons/react";
 
 interface ValuePreviewStepProps {
   onNext: () => void;
@@ -9,19 +9,19 @@ interface ValuePreviewStepProps {
 
 const FEATURES = [
   {
-    icon: Clock,
+    icon: ClockIcon,
     title: "Deadlines auto-calculated",
     description:
       "PWD expiration, filing windows, and I-140 deadlines are computed from your dates.",
   },
   {
-    icon: Bell,
+    icon: BellIcon,
     title: "Reminders sent automatically",
     description:
       "Get email alerts at 30, 14, 7, 3, and 1 day before each deadline.",
   },
   {
-    icon: Calendar,
+    icon: CalendarIcon,
     title: "Calendar stays in sync",
     description:
       "Deadlines appear on your calendar view. Connect Google Calendar for external sync.",

@@ -1,4 +1,4 @@
-import { CaretDown } from "@phosphor-icons/react/ssr";
+import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 
 /**
  * The questions at the foot of a calculator page.
@@ -40,7 +40,7 @@ export function FaqList({ items, openFirst = true }: FaqListProps) {
             className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 p-5 font-heading text-lg font-black transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-6 [&::-webkit-details-marker]:hidden"
           >
             {item.q}{" "}
-            <CaretDown
+            <CaretDownIcon
               className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
               aria-hidden="true"
             />

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { X } from "@phosphor-icons/react";
+import { XIcon } from "@phosphor-icons/react";
 import {
   Dialog,
   DialogContent,
@@ -101,7 +101,7 @@ export function OnboardingWizard() {
             ) : (
               <>
                 <span className="hidden sm:inline">Skip</span>
-                <X className="size-3.5" />
+                <XIcon className="size-3.5" />
               </>
             )}
           </button>

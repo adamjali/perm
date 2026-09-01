@@ -4,7 +4,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import { ArrowLeft } from "@phosphor-icons/react";
+import { ArrowLeftIcon } from "@phosphor-icons/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -291,7 +291,7 @@ export function TimelinePageClient() {
               className="border-2 border-border shadow-hard hover:shadow-hard-lg transition-all"
               data-testid="back-to-all-cases"
             >
-              <ArrowLeft className="size-4 mr-2" />
+              <ArrowLeftIcon className="size-4 mr-2" />
               Back to All Cases
             </Button>
           )}

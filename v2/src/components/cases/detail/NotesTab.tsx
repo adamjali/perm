@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo, type CSSProperties } from "react";
 import { motion } from "motion/react";
-import { CalendarDots, CaretLeft, CaretRight, ChatCircle, CheckCircle, Flag, PaperPlaneTilt as Send, Pencil, Tag, Trash as Trash2, X } from "@phosphor-icons/react";
+import { CalendarDotsIcon, CaretLeftIcon, CaretRightIcon, ChatCircleIcon, CheckCircleIcon, FlagIcon, PaperPlaneTiltIcon as Send, PencilIcon, TagIcon, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react";
 import {
   NOTE_CATEGORY_LABELS,
   NOTE_PRIORITIES,
@@ -229,7 +229,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
         <div className="detail-card" style={{ overflow: "hidden" }}>
           <div className="detail-card-head ch-yellow" style={{ gap: 8 }}>
             <span className="flex items-center gap-1.5">
-              <ChatCircle className="h-3.5 w-3.5" />
+              <ChatCircleIcon className="h-3.5 w-3.5" />
               Case Notes
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -307,7 +307,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                 </div>
               ) : visibleNotes.length === 0 ? (
                 <div className="detail-empty-state" style={{ padding: "32px 20px" }}>
-                  <ChatCircle className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
+                  <ChatCircleIcon className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
                   <div className="detail-empty-state-title">No notes</div>
                   <div className="detail-empty-state-desc">Add a note below to get started.</div>
                 </div>
@@ -317,11 +317,11 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
               {totalPages > 1 && (
                 <div className="pagination-bar">
                   <button onClick={() => setPage((p) => p - 1)} disabled={page === 0}>
-                    <CaretLeft className="h-3 w-3" />
+                    <CaretLeftIcon className="h-3 w-3" />
                   </button>
                   <span>{page + 1} / {totalPages}</span>
                   <button onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages - 1}>
-                    <CaretRight className="h-3 w-3" />
+                    <CaretRightIcon className="h-3 w-3" />
                   </button>
                 </div>
               )}
@@ -333,14 +333,14 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                   <div className="preview-nav">
                     <div className="preview-nav-btns">
                       <button className="icon-btn" onClick={() => navNote(-1)} disabled={visibleNotes.findIndex((n) => n.id === selectedId) <= 0} title="Previous">
-                        <CaretLeft className="h-3.5 w-3.5" />
+                        <CaretLeftIcon className="h-3.5 w-3.5" />
                       </button>
                       <button className="icon-btn" onClick={() => navNote(1)} disabled={visibleNotes.findIndex((n) => n.id === selectedId) >= visibleNotes.length - 1} title="Next">
-                        <CaretRight className="h-3.5 w-3.5" />
+                        <CaretRightIcon className="h-3.5 w-3.5" />
                       </button>
                     </div>
                     <button className="icon-btn" onClick={closePreview} title="Close">
-                      <X className="h-3.5 w-3.5" />
+                      <XIcon className="h-3.5 w-3.5" />
                     </button>
                   </div>
 
@@ -431,7 +431,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                       disabled={!onUpdateNotes}
                       onClick={() => toggleDone(selectedNote.id)}
                     >
-                      <CheckCircle className="h-3.5 w-3.5" />
+                      <CheckCircleIcon className="h-3.5 w-3.5" />
                       {selectedNote.status === "done" ? "Mark Pending" : "Mark Done"}
                     </button>
                     <button
@@ -440,7 +440,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                       disabled={!onUpdateNotes}
                       onClick={startEdit}
                     >
-                      <Pencil className="h-3.5 w-3.5" /> Edit
+                      <PencilIcon className="h-3.5 w-3.5" /> Edit
                     </button>
                     <button
                       className="icon-btn icon-btn-danger"
@@ -504,7 +504,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                 >
                   {/* Priority */}
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <Flag className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
+                    <FlagIcon className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
                     <select
                       value={newPriority}
                       onChange={(e) => setNewPriority(e.target.value as NotePriority)}
@@ -529,7 +529,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
 
                   {/* Category */}
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <Tag className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
+                    <TagIcon className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
                     <select
                       value={newCategory}
                       onChange={(e) => setNewCategory(e.target.value as NoteCategory)}
@@ -552,7 +552,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
 
                   {/* Due Date */}
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <CalendarDots className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
+                    <CalendarDotsIcon className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
                     <input
                       type="date"
                       value={newDueDate}
@@ -587,7 +587,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                         }}
                         title="Clear due date"
                       >
-                        <X className="h-3 w-3" />
+                        <XIcon className="h-3 w-3" />
                       </button>
                     )}
                   </div>

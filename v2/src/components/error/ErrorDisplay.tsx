@@ -6,7 +6,7 @@
  */
 
 import * as React from "react";
-import { Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 

@@ -7,7 +7,7 @@
  */
 
 import { differenceInDays, format, parseISO } from "date-fns";
-import { CalendarDot as CalendarClock, Clock, Warning as AlertTriangle } from "@phosphor-icons/react";
+import { CalendarDotIcon as CalendarClock, ClockIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { calculateRecruitmentWindowCloses, getFirstRecruitmentDate } from "@/lib/perm";
 
@@ -114,7 +114,7 @@ export function RecruitmentDeadlineIndicator({
       bgColor: "bg-green-50 dark:bg-green-900/20",
       borderColor: "border-green-300 dark:border-green-700",
       textColor: "text-green-700 dark:text-green-400",
-      icon: Clock,
+      icon: ClockIcon,
     },
     warning: {
       bgColor: "bg-amber-50 dark:bg-amber-900/20",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PaperPlaneTilt as Send } from "@phosphor-icons/react";
+import { PaperPlaneTiltIcon as Send } from "@phosphor-icons/react";
 
 /**
  * The contact form. Posts to the Convex HTTP route, which owns the shape

@@ -17,7 +17,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'motion/react';
-import { Archive, ArrowsClockwise as RefreshCw, Calendar, CaretDown, CaretUp, Check, CircleNotch, Clock, Database, Lock, MagnifyingGlass as Search, Trash as Trash2, X } from "@phosphor-icons/react/ssr";
+import { ArchiveIcon, ArrowsClockwiseIcon as RefreshCw, CalendarIcon, CaretDownIcon, CaretUpIcon, CheckIcon, CircleNotchIcon, ClockIcon, DatabaseIcon, LockIcon, MagnifyingGlassIcon as Search, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react/ssr";
 import { cn } from '@/lib/utils';
 import { springConfig, STAGGER_DELAY } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
@@ -50,9 +50,9 @@ interface ActionChainProgressProps {
 const TOOL_ICONS: Record<string, typeof Search> = {
   queryCases: Search,
   bulkUpdateStatus: RefreshCw,
-  bulkArchiveCases: Archive,
+  bulkArchiveCases: ArchiveIcon,
   bulkDeleteCases: Trash2,
-  bulkCalendarSync: Calendar,
+  bulkCalendarSync: CalendarIcon,
   // Add more as needed
 };
 
@@ -70,7 +70,7 @@ function StatusIcon({ status }: { status: ActionStep['status'] }) {
   switch (status) {
     case 'pending':
       return (
-        <Clock className="h-4 w-4 text-muted-foreground" />
+        <ClockIcon className="h-4 w-4 text-muted-foreground" />
       );
     case 'executing':
       return (
@@ -78,7 +78,7 @@ function StatusIcon({ status }: { status: ActionStep['status'] }) {
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
         >
-          <CircleNotch className="h-4 w-4 text-primary" />
+          <CircleNotchIcon className="h-4 w-4 text-primary" />
         </motion.div>
       );
     case 'done':
@@ -88,7 +88,7 @@ function StatusIcon({ status }: { status: ActionStep['status'] }) {
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 25 }}
         >
-          <Check className="h-4 w-4 text-green-600" />
+          <CheckIcon className="h-4 w-4 text-green-600" />
         </motion.div>
       );
     case 'error':
@@ -98,12 +98,12 @@ function StatusIcon({ status }: { status: ActionStep['status'] }) {
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 25 }}
         >
-          <X className="h-4 w-4 text-red-600" />
+          <XIcon className="h-4 w-4 text-red-600" />
         </motion.div>
       );
     case 'waiting_approval':
       return (
-        <Lock className="h-4 w-4 text-amber-600" />
+        <LockIcon className="h-4 w-4 text-amber-600" />
       );
     default:
       return null;
@@ -140,7 +140,7 @@ function StepCard({
   onApprove?: () => void;
   onDeny?: () => void;
 }) {
-  const Icon = TOOL_ICONS[step.toolName] || Database;
+  const Icon = TOOL_ICONS[step.toolName] || DatabaseIcon;
   const displayName = TOOL_NAMES[step.toolName] || step.toolName;
 
   const borderColor = {
@@ -226,7 +226,7 @@ function StepCard({
             onClick={onApprove}
             className="flex-1"
           >
-            <Check className="h-3 w-3 mr-1" />
+            <CheckIcon className="h-3 w-3 mr-1" />
             Approve
           </Button>
           <Button
@@ -235,7 +235,7 @@ function StepCard({
             onClick={onDeny}
             className="flex-1"
           >
-            <X className="h-3 w-3 mr-1" />
+            <XIcon className="h-3 w-3 mr-1" />
             Deny
           </Button>
         </div>
@@ -303,12 +303,12 @@ export function ActionChainProgress({
         >
           {isCollapsed ? (
             <>
-              <CaretDown className="h-3 w-3" />
+              <CaretDownIcon className="h-3 w-3" />
               Show {completedSteps.length} completed steps
             </>
           ) : (
             <>
-              <CaretUp className="h-3 w-3" />
+              <CaretUpIcon className="h-3 w-3" />
               Collapse completed steps
             </>
           )}

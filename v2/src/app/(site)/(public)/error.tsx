@@ -25,7 +25,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { ArrowClockwise, ArrowSquareOut } from "@phosphor-icons/react/dist/ssr";
+import { ArrowClockwiseIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/dist/ssr";
 
 /** Where each dataset actually comes from, for the outage case. */
 const PRIMARY_SOURCES = [
@@ -89,7 +89,7 @@ export default function PublicDataError({
           onClick={reset}
           className="inline-flex min-h-[44px] items-center gap-2 border-3 border-border bg-primary px-5 py-3 font-heading text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-hard transition-all duration-200 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg"
         >
-          <ArrowClockwise className="size-4" weight="bold" aria-hidden="true" />
+          <ArrowClockwiseIcon className="size-4" weight="bold" aria-hidden="true" />
           Try again
         </button>{" "}
         <Link
@@ -111,7 +111,7 @@ export default function PublicDataError({
                 className="inline-flex min-h-[44px] items-center gap-2 font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
               >
                 {s.label}
-                <ArrowSquareOut className="size-4" aria-hidden="true" />
+                <ArrowSquareOutIcon className="size-4" aria-hidden="true" />
               </a>{" "}
               <span className="block text-sm text-muted-foreground">{s.note}</span>
             </li>

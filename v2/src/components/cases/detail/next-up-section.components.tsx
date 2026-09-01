@@ -8,7 +8,7 @@
 
 import { Fragment } from "react";
 import { motion } from "motion/react";
-import { Briefcase, Certificate as Award, CheckCircle as CheckCircle2, Clock, FileArrowUp as FileCheck, FileText } from "@phosphor-icons/react";
+import { BriefcaseIcon, CertificateIcon as Award, CheckCircleIcon as CheckCircle2, ClockIcon, FileArrowUpIcon as FileCheck, FileTextIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import {
   getUrgencyLevel,
@@ -23,8 +23,8 @@ import { STAGE_ACCENT_COLORS } from "./case-detail-utils";
 // ============================================================================
 
 export const STAGES = [
-  { id: "pwd", label: "PWD", icon: FileText },
-  { id: "recruitment", label: "Recruitment", icon: Briefcase },
+  { id: "pwd", label: "PWD", icon: FileTextIcon },
+  { id: "recruitment", label: "Recruitment", icon: BriefcaseIcon },
   { id: "eta9089", label: "ETA 9089", icon: FileCheck },
   { id: "i140", label: "I-140", icon: Award },
 ] as const;
@@ -198,7 +198,7 @@ export function DeadlineCountdown({ deadline }: DeadlineCountdownProps) {
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Clock className={cn("h-5 w-5", urgencyColors.text)} />
+          <ClockIcon className={cn("h-5 w-5", urgencyColors.text)} />
           <div>
             <div className="text-sm font-medium text-muted-foreground">
               {deadline.label}

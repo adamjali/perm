@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { CaretDown, Check, Copy, FileText, FloppyDisk as Save, Pencil, Sliders, Sparkle, Trash as Trash2 } from "@phosphor-icons/react";
+import { CaretDownIcon, CheckIcon, CopyIcon, FileTextIcon, FloppyDiskIcon as Save, PencilIcon, SlidersIcon, SparkleIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -298,7 +298,7 @@ export function JobDescriptionDetailView({
         aria-expanded={isOpen}
       >
         <div className="flex items-center gap-2 sm:gap-3">
-          <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
+          <FileTextIcon className="h-5 w-5 text-muted-foreground shrink-0" />
           <h3 className="font-heading font-semibold text-base sm:text-lg">
             Job Description
           </h3>
@@ -309,7 +309,7 @@ export function JobDescriptionDetailView({
               {characterCount.toLocaleString()} chars
             </span>
           )}
-          <CaretDown
+          <CaretDownIcon
             className={cn(
               "h-5 w-5 text-muted-foreground transition-transform duration-200",
               isOpen && "rotate-180"
@@ -355,7 +355,7 @@ export function JobDescriptionDetailView({
                             onClick={() => setManagementOpen(true)}
                             className="border-2 gap-1.5 min-h-[44px]"
                           >
-                            <Sliders className="h-5 w-5 sm:h-4 sm:w-4" />
+                            <SlidersIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                             <span className="hidden sm:inline">Manage</span>
                           </Button>
                         </TooltipTrigger>
@@ -390,9 +390,9 @@ export function JobDescriptionDetailView({
                             className="gap-1.5 border-2 min-h-[44px] min-w-[44px]"
                           >
                             {isCopied ? (
-                              <Check className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
+                              <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
                             ) : (
-                              <Copy className="h-5 w-5 sm:h-4 sm:w-4" />
+                              <CopyIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                             )}
                             <span className="hidden sm:inline">Copy</span>
                           </Button>
@@ -475,7 +475,7 @@ export function JobDescriptionDetailView({
                             </>
                           ) : (
                             <>
-                              <Sparkle className="h-5 w-5 sm:h-4 sm:w-4" />
+                              <SparkleIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                               <span className="text-sm">{isSavingTemplate ? "Saving..." : "Save Template"}</span>
                             </>
                           )}
@@ -555,7 +555,7 @@ export function JobDescriptionDetailView({
                                 }}
                                 className="h-9 sm:h-8 gap-1.5 text-xs min-w-[44px] px-2 sm:px-3"
                               >
-                                <Sliders className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                                <SlidersIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                                 <span>Templates</span>
                               </Button>
                             </TooltipTrigger>
@@ -576,7 +576,7 @@ export function JobDescriptionDetailView({
                                   }}
                                   className="h-9 sm:h-8 gap-1.5 text-xs min-w-[44px] px-2 sm:px-3"
                                 >
-                                  <Pencil className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                                  <PencilIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                                   <span>Edit</span>
                                 </Button>
                               </TooltipTrigger>
@@ -599,9 +599,9 @@ export function JobDescriptionDetailView({
                                   className="h-9 sm:h-8 gap-1.5 text-xs min-w-[44px] px-2 sm:px-3"
                                 >
                                   {isCopied ? (
-                                    <Check className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-green-600" />
+                                    <CheckIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-green-600" />
                                   ) : (
-                                    <Copy className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                                    <CopyIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                                   )}
                                   <span>Copy</span>
                                 </Button>

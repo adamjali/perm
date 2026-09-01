@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { Warning as AlertTriangle, X } from "@phosphor-icons/react";
+import { WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -103,7 +103,7 @@ export default function DeletionBanner() {
           className="flex-shrink-0 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/30"
           aria-label="Dismiss deletion warning"
         >
-          <X className="w-4 h-4" />
+          <XIcon className="w-4 h-4" />
         </Button>
       </div>
     </div>

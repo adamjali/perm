@@ -17,7 +17,7 @@ import { memo, useMemo } from "react";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useQuery } from "convex/react";
 import { toast } from "@/lib/toast";
-import { Archive, ArrowCounterClockwise as RotateCcw, CircleNotch, DotsThree, Eye, Trash as Trash2 } from "@phosphor-icons/react/ssr";
+import { ArchiveIcon, ArrowCounterClockwiseIcon as RotateCcw, CircleNotchIcon, DotsThreeIcon, EyeIcon, TrashIcon as Trash2 } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import { getUrgencyFromDeadline, getUrgencyDotClass } from "@/lib/status";
 import { Button } from "@/components/ui/button";
@@ -351,7 +351,7 @@ function ClosedCaseButtons({
         onClick={onViewClick}
         aria-label="View"
       >
-        {isViewLoading ? <CircleNotch className="size-3 mr-1.5 animate-spin" /> : <Eye className="size-3 mr-1.5" />}
+        {isViewLoading ? <CircleNotchIcon className="size-3 mr-1.5 animate-spin" /> : <EyeIcon className="size-3 mr-1.5" />}
         {isViewLoading ? "Loading..." : "View"}
       </Button>
       <Button
@@ -362,7 +362,7 @@ function ClosedCaseButtons({
         onClick={onReopenClick}
         aria-label="Reopen"
       >
-        {isReopening ? <CircleNotch className="size-3 mr-1.5 animate-spin" /> : <RotateCcw className="size-3 mr-1.5" />}
+        {isReopening ? <CircleNotchIcon className="size-3 mr-1.5 animate-spin" /> : <RotateCcw className="size-3 mr-1.5" />}
         {isReopening ? "Reopening..." : "Reopen"}
       </Button>
       <Button
@@ -412,7 +412,7 @@ function ActiveCaseButtons({
       >
         {isViewLoading ? (
           <>
-            <CircleNotch className="size-3 mr-1.5 animate-spin" />
+            <CircleNotchIcon className="size-3 mr-1.5 animate-spin" />
             Loading...
           </>
         ) : (
@@ -429,7 +429,7 @@ function ActiveCaseButtons({
       >
         {isEditLoading ? (
           <>
-            <CircleNotch className="size-3 mr-1.5 animate-spin" />
+            <CircleNotchIcon className="size-3 mr-1.5 animate-spin" />
             Loading...
           </>
         ) : (
@@ -445,7 +445,7 @@ function ActiveCaseButtons({
             aria-label="More options"
             onClick={(e) => e.stopPropagation()}
           >
-            <DotsThree className="size-4" />
+            <DotsThreeIcon className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -454,7 +454,7 @@ function ActiveCaseButtons({
             Delete
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onArchiveClick} aria-label="Archive" className="cursor-pointer">
-            <Archive className="size-4 mr-2" />
+            <ArchiveIcon className="size-4 mr-2" />
             Archive
           </DropdownMenuItem>
         </DropdownMenuContent>

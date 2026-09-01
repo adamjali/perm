@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, type KeyboardEvent } from "react";
-import { FileText, FolderOpen, Note as StickyNote, Scales as Scale, SquaresFour as LayoutDashboard, Users } from "@phosphor-icons/react";
+import { FileTextIcon, FolderOpenIcon, NoteIcon as StickyNote, ScalesIcon as Scale, SquaresFourIcon as LayoutDashboard, UsersIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 export type TabId =
@@ -20,10 +20,10 @@ interface TabConfig {
 
 const TABS: TabConfig[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "recruitment", label: "Recruitment", icon: Users },
-  { id: "eta9089", label: "ETA 9089", icon: FileText },
+  { id: "recruitment", label: "Recruitment", icon: UsersIcon },
+  { id: "eta9089", label: "ETA 9089", icon: FileTextIcon },
   { id: "i140", label: "I-140", icon: Scale },
-  { id: "documents", label: "Documents", icon: FolderOpen },
+  { id: "documents", label: "Documents", icon: FolderOpenIcon },
   { id: "notes", label: "Notes", icon: StickyNote },
 ];
 

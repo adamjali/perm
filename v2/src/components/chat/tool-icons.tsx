@@ -9,7 +9,7 @@
  * - Colors follow semantic meaning
  */
 
-import { Archive, ArrowCounterClockwise as RotateCcw, ArrowDown, ArrowsClockwise as CalendarSync, ArrowsClockwise as RefreshCw, Bell, BellSlash as BellOff, BookOpen, Calendar, CalendarMinus, CalendarPlus, Check, Checks as CheckCheck, Database, Eye, FileText, Gear as Settings, Globe, MagnifyingGlass as Search, NavigationArrow as Navigation2, Pencil, Plus, SlidersHorizontal, Trash as Trash2 } from "@phosphor-icons/react/ssr";
+import { ArchiveIcon, ArrowCounterClockwiseIcon as RotateCcw, ArrowDownIcon, ArrowsClockwiseIcon as CalendarSync, ArrowsClockwiseIcon as RefreshCw, BellIcon, BellSlashIcon as BellOff, BookOpenIcon, CalendarIcon, CalendarMinusIcon, CalendarPlusIcon, CheckIcon, ChecksIcon as CheckCheck, DatabaseIcon, EyeIcon, FileTextIcon, GearIcon as Settings, GlobeIcon, MagnifyingGlassIcon as Search, NavigationArrowIcon as Navigation2, PencilIcon, PlusIcon, SlidersHorizontalIcon, TrashIcon as Trash2 } from "@phosphor-icons/react/ssr";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 
 /**
@@ -18,46 +18,46 @@ import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
  */
 export const TOOL_ICONS: Record<string, PhosphorIcon> = {
   // Read-only tools (current)
-  queryCases: Database,
-  searchKnowledge: BookOpen,
-  searchWeb: Globe,
+  queryCases: DatabaseIcon,
+  searchKnowledge: BookOpenIcon,
+  searchWeb: GlobeIcon,
 
   // Case CRUD tools
-  createCase: Plus,
-  updateCase: Pencil,
-  archiveCase: Archive,
+  createCase: PlusIcon,
+  updateCase: PencilIcon,
+  archiveCase: ArchiveIcon,
   reopenCase: RotateCcw,
   deleteCase: Trash2,
 
   // Other action tools
-  syncCalendar: Calendar,
+  syncCalendar: CalendarIcon,
   searchCases: Search,
-  generateDocument: FileText,
+  generateDocument: FileTextIcon,
   refreshData: RefreshCw,
 
   // Navigation tools
   navigate: Navigation2,
-  viewCase: Eye,
-  scrollTo: ArrowDown,
+  viewCase: EyeIcon,
+  scrollTo: ArrowDownIcon,
   refreshPage: RefreshCw,
 
   // Calendar sync tools
-  syncToCalendar: CalendarPlus,
-  unsyncFromCalendar: CalendarMinus,
+  syncToCalendar: CalendarPlusIcon,
+  unsyncFromCalendar: CalendarMinusIcon,
 
   // Notification tools
-  markNotificationRead: Check,
+  markNotificationRead: CheckIcon,
   markAllNotificationsRead: CheckCheck,
-  deleteNotification: Bell,
+  deleteNotification: BellIcon,
   clearAllNotifications: BellOff,
 
   // Settings tools
   updateSettings: Settings,
-  getSettings: SlidersHorizontal,
+  getSettings: SlidersHorizontalIcon,
 
   // Bulk operation tools
   bulkUpdateStatus: RefreshCw,
-  bulkArchiveCases: Archive,
+  bulkArchiveCases: ArchiveIcon,
   bulkDeleteCases: Trash2,
   bulkCalendarSync: CalendarSync,
 } as const;

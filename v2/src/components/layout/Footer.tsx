@@ -18,7 +18,7 @@
  * is gone rather than left as an unreachable second layout.
  */
 
-import { Heart } from "@phosphor-icons/react";
+import { HeartIcon } from "@phosphor-icons/react";
 
 import { NavLink } from "@/components/ui/nav-link";
 import { LawGavelSVG } from "@/components/illustrations";
@@ -291,7 +291,7 @@ export default function Footer({ audience = "public" }: FooterProps) {
             </div>
           </div>{" "}
           <div className="flex items-center gap-1 text-xs text-white/70">
-            Made with <Heart className="h-3 w-3 text-(--primary)" /> for everyone in the PERM line
+            Made with <HeartIcon className="h-3 w-3 text-(--primary)" /> for everyone in the PERM line
           </div>
         </div>
       </div>

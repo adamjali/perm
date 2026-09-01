@@ -5,7 +5,7 @@ import { useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
-import { CircleNotch, Envelope as Mail } from "@phosphor-icons/react";
+import { CircleNotchIcon, EnvelopeIcon as Mail } from "@phosphor-icons/react";
 import {
   Dialog,
   DialogContent,
@@ -136,7 +136,7 @@ export function SendEmailModal({ user, onClose }: SendEmailModalProps) {
             <Button type="submit" disabled={isSending}>
               {isSending ? (
                 <>
-                  <CircleNotch className="size-4 animate-spin" />
+                  <CircleNotchIcon className="size-4 animate-spin" />
                   Sending...
                 </>
               ) : (

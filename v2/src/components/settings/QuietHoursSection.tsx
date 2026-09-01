@@ -28,7 +28,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, Clock, Globe, Info, Moon, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { CheckIcon, ClockIcon, GlobeIcon, InfoIcon, MoonIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
 import { useSettingsSectionDirtyState } from "./SettingsUnsavedChangesContext";
@@ -234,7 +234,7 @@ export default function QuietHoursSection({
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
-        <Moon className="w-5 h-5 text-foreground" />
+        <MoonIcon className="w-5 h-5 text-foreground" />
         <h3 className="font-heading font-bold text-lg text-foreground">
           Quiet Hours
         </h3>
@@ -251,7 +251,7 @@ export default function QuietHoursSection({
               htmlFor="quiet-hours-enabled"
               className="text-sm font-medium flex items-center gap-2"
             >
-              <Moon className="w-4 h-4 text-primary" />
+              <MoonIcon className="w-4 h-4 text-primary" />
               Enable Quiet Hours
             </Label>
             <p className="text-xs text-muted-foreground">
@@ -284,7 +284,7 @@ export default function QuietHoursSection({
                     htmlFor="quiet-hours-start"
                     className="text-sm font-medium flex items-center gap-2"
                   >
-                    <Clock className="w-4 h-4" />
+                    <ClockIcon className="w-4 h-4" />
                     Start Time
                   </Label>
                   <div className="relative">
@@ -307,7 +307,7 @@ export default function QuietHoursSection({
                     htmlFor="quiet-hours-end"
                     className="text-sm font-medium flex items-center gap-2"
                   >
-                    <Clock className="w-4 h-4" />
+                    <ClockIcon className="w-4 h-4" />
                     End Time
                   </Label>
                   <div className="relative">
@@ -327,7 +327,7 @@ export default function QuietHoursSection({
 
               {/* Timezone Display (Read-only) */}
               <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 border-2 border-border text-sm">
-                <Globe className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <GlobeIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-muted-foreground">
                   Timezone: <strong className="text-foreground">{timezoneDisplay}</strong>
                 </span>
@@ -344,7 +344,7 @@ export default function QuietHoursSection({
 
               {/* Info Box - Urgent notifications bypass */}
               <div className="flex items-start gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-200 dark:border-blue-800 text-sm">
-                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <InfoIcon className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                 <span className="text-blue-700 dark:text-blue-300">
                   <strong>Note:</strong> Urgent notifications (overdue deadlines, critical alerts) will always be delivered, even during quiet hours.
                 </span>
@@ -398,7 +398,7 @@ export default function QuietHoursSection({
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 500, damping: 15 }}
                     >
-                      <Check className="w-4 h-4" />
+                      <CheckIcon className="w-4 h-4" />
                     </motion.span>
                     Saved!
                   </motion.span>
@@ -422,7 +422,7 @@ export default function QuietHoursSection({
               loading={isSaving}
               loadingText="Saving..."
             >
-              <Check className="w-4 h-4" />
+              <CheckIcon className="w-4 h-4" />
               Save Changes
             </Button>
           </motion.div>

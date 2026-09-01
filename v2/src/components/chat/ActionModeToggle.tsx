@@ -21,7 +21,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { EyeSlash as EyeOff, Lightning as Zap, ShieldCheck } from "@phosphor-icons/react/ssr";
+import { EyeSlashIcon as EyeOff, LightningIcon as Zap, ShieldCheckIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import type { ActionMode } from "@/lib/ai/tool-permissions";
 
@@ -56,7 +56,7 @@ const MODE_CONFIG: Record<ActionMode, ModeConfig> = {
     tooltip: "Read-only mode - I’ll only answer questions",
   },
   confirm: {
-    icon: ShieldCheck,
+    icon: ShieldCheckIcon,
     label: "CONFIRM",
     tooltip: "I’ll ask before taking actions",
   },

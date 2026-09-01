@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { Warning } from "@phosphor-icons/react/ssr";
+import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { getFreshness, type DatasetFreshness } from "@/lib/turso/publicData";
 
@@ -49,7 +49,7 @@ export async function DataProvenance({ datasets, className }: { datasets: string
           <p
             className="mt-2 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-3 py-2 text-sm text-foreground/80 first:mt-0"
           >
-            <Warning
+            <WarningIcon
               className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink"
               weight="fill"
               aria-hidden="true"

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { Calendar, X } from "@phosphor-icons/react";
+import { CalendarIcon, XIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -288,7 +288,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
           aria-label="Open date picker"
           tabIndex={-1}
         >
-          <Calendar className="h-4 w-4" />
+          <CalendarIcon className="h-4 w-4" />
         </button>
 
         {/* Clear button */}
@@ -300,7 +300,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
             className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             aria-label="Clear date"
           >
-            <X className="h-4 w-4" />
+            <XIcon className="h-4 w-4" />
           </button>
         )}
       </div>

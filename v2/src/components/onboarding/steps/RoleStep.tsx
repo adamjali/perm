@@ -6,15 +6,15 @@ import { api } from "../../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { ONBOARDING_ROLES } from "@/lib/onboarding/constants";
 import type { UserRole } from "@/lib/onboarding/types";
-import { Briefcase, Building as Building2, Question as HelpCircle, Scales as Scale, UserCheck } from "@phosphor-icons/react";
+import { BriefcaseIcon, BuildingIcon as Building2, QuestionIcon as HelpCircle, ScalesIcon as Scale, UserCheckIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { handleOperationError } from "@/lib/errors";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Scale,
-  Briefcase,
+  Briefcase: BriefcaseIcon,
   Building2,
-  UserCheck,
+  UserCheck: UserCheckIcon,
   HelpCircle,
 };
 

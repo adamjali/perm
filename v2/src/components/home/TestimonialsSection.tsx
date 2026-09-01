@@ -9,7 +9,7 @@
 
 import Script from "next/script";
 import { useEffect, useRef } from "react";
-import { ChatDots, Star } from "@phosphor-icons/react";
+import { ChatDotsIcon, StarIcon } from "@phosphor-icons/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { APP_RATING, shouldAdvertiseRating } from "@/lib/structuredData";
 
@@ -148,7 +148,7 @@ export function TestimonialsSection() {
           {/* Section header */}
           <div className="mb-8 text-center">
             <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
-              <Star className="h-3.5 w-3.5" />
+              <StarIcon className="h-3.5 w-3.5" />
               Reviews
             </div>{" "}
             <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
@@ -184,7 +184,7 @@ export function TestimonialsSection() {
           <div className="flex items-center justify-center gap-2 mb-6">
             <span className="flex" aria-hidden="true">
               {Array.from({ length: 5 }, (_, i) => (
-                <Star key={i} weight="fill" className="h-5 w-5 text-primary" />
+                <StarIcon key={i} weight="fill" className="h-5 w-5 text-primary" />
               ))}
             </span>{" "}
             <span className="font-heading font-bold text-lg">
@@ -240,7 +240,7 @@ export function TestimonialsSection() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 border-3 border-border bg-primary px-5 py-2.5 font-heading text-sm font-bold uppercase tracking-wide text-black shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
             >
-              <ChatDots className="h-4 w-4" />
+              <ChatDotsIcon className="h-4 w-4" />
               Leave a Review
             </a>
           </div>

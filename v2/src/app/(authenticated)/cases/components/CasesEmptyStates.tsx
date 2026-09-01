@@ -4,7 +4,7 @@
  * - NoResultsEmptyState: shown when filters match nothing
  */
 
-import { Plus } from "@phosphor-icons/react/ssr";
+import { PlusIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import { CaseListEmptyState } from "@/components/cases/CaseListEmptyState";
 import { CaseFilterBar } from "@/components/cases/CaseFilterBar";
@@ -29,7 +29,7 @@ export function NewUserEmptyState({ onAddCase, isAddingCase }: NewUserEmptyState
           loading={isAddingCase}
           loadingText="Adding..."
         >
-          <Plus className="size-4 mr-2" />
+          <PlusIcon className="size-4 mr-2" />
           Add Case
         </Button>
       </div>
@@ -80,7 +80,7 @@ export function NoResultsEmptyState({
           loading={isAddingCase}
           loadingText="Adding..."
         >
-          <Plus className="size-4 mr-2" />
+          <PlusIcon className="size-4 mr-2" />
           Add Case
         </Button>
       </div>

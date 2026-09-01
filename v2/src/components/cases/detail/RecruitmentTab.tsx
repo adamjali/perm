@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { motion } from "motion/react";
 import { format, parseISO, differenceInDays, addDays } from "date-fns";
-import { ChartBar, Check, Clock, FileText, Flag, Info, Newspaper, Users } from "@phosphor-icons/react";
+import { ChartBarIcon, CheckIcon, ClockIcon, FileTextIcon, FlagIcon, InfoIcon, NewspaperIcon, UsersIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { getMethodLabel } from "@/lib/recruitment";
 import { isBusinessDay, getFederalHolidays, getFirstRecruitmentDate, getLastRecruitmentDate, isBasicRecruitmentComplete, isProfessionalRecruitmentComplete, FILING_WINDOW_WAIT_DAYS } from "@/lib/perm";
@@ -115,7 +115,7 @@ function StatusTooltip({ color, message }: { color: "amber" | "emerald"; message
       <Tooltip>
         <TooltipTrigger asChild>
           <span className="shrink-0 cursor-help">
-            <Info className={`h-3 w-3 ${color === "amber" ? "text-data-warn-ink" : "text-primary"}`} />
+            <InfoIcon className={`h-3 w-3 ${color === "amber" ? "text-data-warn-ink" : "text-primary"}`} />
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-[240px] text-sm">
@@ -181,12 +181,12 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
             <div className="detail-card">
               <div className="detail-card-head ch-rec">
                 <span className="flex items-center gap-1.5">
-                  <Flag className="h-3.5 w-3.5" />
+                  <FlagIcon className="h-3.5 w-3.5" />
                   Job Order (SWA)
                 </span>
                 {hasJobOrder && (
                   <span className="head-badge">
-                    <Check className="h-2.5 w-2.5" /> Done
+                    <CheckIcon className="h-2.5 w-2.5" /> Done
                   </span>
                 )}
               </div>
@@ -236,12 +236,12 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
             <div className="detail-card">
               <div className="detail-card-head ch-rec">
                 <span className="flex items-center gap-1.5">
-                  <Newspaper className="h-3.5 w-3.5" />
+                  <NewspaperIcon className="h-3.5 w-3.5" />
                   Sunday Ads
                 </span>
                 {hasSundayAds && caseData.sundayAdSecondDate && (
                   <span className="head-badge">
-                    <Check className="h-2.5 w-2.5" /> Done
+                    <CheckIcon className="h-2.5 w-2.5" /> Done
                   </span>
                 )}
               </div>
@@ -284,12 +284,12 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
             <div className="detail-card">
               <div className="detail-card-head ch-rec">
                 <span className="flex items-center gap-1.5">
-                  <FileText className="h-3.5 w-3.5" />
+                  <FileTextIcon className="h-3.5 w-3.5" />
                   Notice of Filing
                 </span>
                 {hasNOF && caseData.noticeOfFilingEndDate && (
                   <span className="head-badge">
-                    <Check className="h-2.5 w-2.5" /> Done
+                    <CheckIcon className="h-2.5 w-2.5" /> Done
                   </span>
                 )}
               </div>
@@ -318,7 +318,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
             <div className="detail-card">
               <div className="detail-card-head ch-rec">
                 <span className="flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5" />
+                  <UsersIcon className="h-3.5 w-3.5" />
                   Additional Methods
                 </span>{" "}
                 <span className="head-badge">{methods.length} / {caseData.isProfessionalOccupation ? Math.max(3, methods.length) : methods.length}</span>
@@ -336,9 +336,9 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                     <div key={i} className="recruit-row">
                       <div className={`recruit-icon ${hasDate ? "done" : "pending"}`}>
                         {hasDate ? (
-                          <Check className="h-3.5 w-3.5" />
+                          <CheckIcon className="h-3.5 w-3.5" />
                         ) : (
-                          <Clock className="h-3.5 w-3.5" />
+                          <ClockIcon className="h-3.5 w-3.5" />
                         )}
                       </div>
                       <div className="recruit-info">
@@ -382,7 +382,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
         <div className="detail-card">
           <div className="detail-card-head ch-muted">
             <span className="flex items-center gap-1.5">
-              <ChartBar className="h-3.5 w-3.5" />
+              <ChartBarIcon className="h-3.5 w-3.5" />
               Summary
             </span>
           </div>

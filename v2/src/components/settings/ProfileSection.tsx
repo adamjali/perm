@@ -30,7 +30,7 @@ import { FormField } from "@/components/forms/FormField";
 import { Input } from "@/components/ui/input";
 import { SelectInput, type SelectOption } from "@/components/forms/SelectInput";
 import { Button } from "@/components/ui/button";
-import { Check, Envelope as Mail, Globe, User } from "@phosphor-icons/react/ssr";
+import { CheckIcon, EnvelopeIcon as Mail, GlobeIcon, UserIcon } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
 import { useSettingsSectionDirtyState } from "./SettingsUnsavedChangesContext";
@@ -182,7 +182,7 @@ export default function ProfileSection({
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-6">
-        <User className="w-5 h-5 text-foreground" />
+        <UserIcon className="w-5 h-5 text-foreground" />
         <h3 className="font-heading font-bold text-lg text-foreground">
           Profile Information
         </h3>
@@ -208,7 +208,7 @@ export default function ProfileSection({
               {getInitials(fullName || profile.fullName)}
             </span>
           ) : (
-            <User className="w-10 h-10 text-primary" />
+            <UserIcon className="w-10 h-10 text-primary" />
           )}
         </div>
         <div>
@@ -261,7 +261,7 @@ export default function ProfileSection({
           hint="Used for deadline reminders and notifications"
         >
           <div className="relative">
-            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
+            <GlobeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
             <SelectInput
               id="timezone"
               value={timezone}
@@ -291,7 +291,7 @@ export default function ProfileSection({
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 500, damping: 15 }}
                 >
-                  <Check className="w-4 h-4" />
+                  <CheckIcon className="w-4 h-4" />
                 </motion.span>
                 Saved!
               </motion.span>
@@ -325,7 +325,7 @@ export default function ProfileSection({
           loading={isSaving}
           loadingText="Saving..."
         >
-          <Check className="w-4 h-4" />
+          <CheckIcon className="w-4 h-4" />
           Save Changes
         </Button>
       </div>

@@ -29,7 +29,7 @@ import {
   isTomorrow,
   addDays,
 } from "date-fns";
-import { Calendar, CaretRight, CheckCircle as CheckCircle2, Clock, WarningCircle as AlertCircle } from "@phosphor-icons/react/ssr";
+import { CalendarIcon, CaretRightIcon, CheckCircleIcon as CheckCircle2, ClockIcon, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react/ssr";
 
 import { cn } from "@/lib/utils";
 import type { CalendarEvent } from "@/lib/calendar/types";
@@ -166,7 +166,7 @@ function UrgencyIcon({ urgency }: { urgency: CalendarEvent["urgency"] }) {
     case "urgent":
       return <AlertCircle className="size-4" />;
     case "soon":
-      return <Clock className="size-4" />;
+      return <ClockIcon className="size-4" />;
     case "normal":
       return <CheckCircle2 className="size-4" />;
   }
@@ -199,7 +199,7 @@ export function CalendarMobileList({
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
         <div className="mb-4 p-4 bg-muted inline-block border-2 border-border shadow-hard">
-          <Calendar className="size-10 text-muted-foreground" />
+          <CalendarIcon className="size-10 text-muted-foreground" />
         </div>
         <h3 className="font-heading text-lg font-semibold mb-2">
           No Upcoming Deadlines
@@ -310,7 +310,7 @@ export function CalendarMobileList({
                   </div>
 
                   {/* Chevron indicator */}
-                  <CaretRight
+                  <CaretRightIcon
                     className="size-5 text-muted-foreground shrink-0"
                     aria-hidden="true"
                   />

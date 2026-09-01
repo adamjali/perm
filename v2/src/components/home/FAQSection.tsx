@@ -10,7 +10,7 @@
  */
 
 import * as React from "react";
-import { CaretDown, Question as HelpCircle } from "@phosphor-icons/react";
+import { CaretDownIcon, QuestionIcon as HelpCircle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { HOME_FAQS, type HomeFaqItem } from "./faqData";
@@ -65,7 +65,7 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
             isOpen && "rotate-180"
           )}
         >
-          <CaretDown className="h-5 w-5" aria-hidden="true" />
+          <CaretDownIcon className="h-5 w-5" aria-hidden="true" />
         </div>
       </button>
 

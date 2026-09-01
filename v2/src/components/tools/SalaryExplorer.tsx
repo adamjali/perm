@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Warning } from "@phosphor-icons/react";
+import { WarningIcon } from "@phosphor-icons/react";
 
 import { Label } from "@/components/ui";
 import {
@@ -245,13 +245,13 @@ export function SalaryExplorer({
           population must not read as more authoritative than the doubt. */}
       {error ? (
         <p className="flex items-start gap-2 border-b-2 border-border bg-data-warn/8 px-6 py-4 text-base text-foreground/80 sm:px-8">
-          <Warning className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
+          <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>{error}</span>
         </p>
       ) : null}
       {report.note ? (
         <p className="flex items-start gap-2 border-b-2 border-border bg-data-warn/8 px-6 py-4 text-base text-foreground/80 sm:px-8">
-          <Warning className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
+          <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>{report.note}</span>
         </p>
       ) : null}

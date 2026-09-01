@@ -14,7 +14,7 @@
  */
 
 import { useId, useMemo, useState } from "react";
-import { ArrowSquareOut, CalendarCheck, Info, Warning } from "@phosphor-icons/react";
+import { ArrowSquareOutIcon, CalendarCheckIcon, InfoIcon, WarningIcon } from "@phosphor-icons/react";
 
 import {
   calculatePWDExpiration,
@@ -231,7 +231,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
             the icon flex indented it 36px against the form below, which
             reads as the inputs sticking out to the left. */}
         <div className="flex items-center gap-3">
-          <CalendarCheck className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
+          <CalendarCheckIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <h2 className="font-heading text-2xl font-black leading-tight">
             Your PERM deadlines
           </h2>
@@ -304,7 +304,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         >
           {result.warnings.map((w) => (
             <div key={w} className="flex items-start gap-3 [&+&]:mt-4">
-              <Warning
+              <WarningIcon
                 className="mt-0.5 h-5 w-5 shrink-0 text-foreground"
                 aria-hidden="true"
               />{" "}
@@ -320,7 +320,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         // citation rather than an alarm and it is not styled as one.
         <div className="border-b-2 border-border bg-muted p-6 sm:p-8">
           <div className="flex items-start gap-3">
-            <Info
+            <InfoIcon
               className="mt-0.5 h-5 w-5 shrink-0 text-foreground"
               aria-hidden="true"
             />{" "}
@@ -365,7 +365,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
                 className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-sm font-bold underline underline-offset-2 hover:text-primary"
               >
                 DOL&apos;s announcement
-                <ArrowSquareOut className="h-3.5 w-3.5" aria-hidden="true" />
+                <ArrowSquareOutIcon className="h-3.5 w-3.5" aria-hidden="true" />
               </a>
             </div>
           </div>
@@ -411,7 +411,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
 
       <div className="border-t-2 border-border bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
-          <Warning
+          <WarningIcon
             className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70"
             aria-hidden="true"
           />

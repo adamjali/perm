@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { CaretRight, Check, Sparkle, X } from "@phosphor-icons/react";
+import { CaretRightIcon, CheckIcon, SparkleIcon, XIcon } from "@phosphor-icons/react";
 import { useOnboarding } from "./OnboardingProvider";
 import { CHECKLIST_ITEMS } from "@/lib/onboarding/constants";
 import { cn } from "@/lib/utils";
@@ -41,7 +41,7 @@ export function OnboardingChecklist() {
       {/* Header */}
       <div className="flex items-start justify-between p-4 pb-3">
         <div className="flex items-center gap-2">
-          <Sparkle className="w-5 h-5 text-primary" />
+          <SparkleIcon className="w-5 h-5 text-primary" />
           <div>
             <h3 className="font-heading font-bold text-base">
               Getting Started
@@ -66,7 +66,7 @@ export function OnboardingChecklist() {
           className="flex-shrink-0 p-2 -mr-1 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Dismiss checklist"
         >
-          <X className="w-4 h-4" />
+          <XIcon className="w-4 h-4" />
         </button>
       </div>
 
@@ -118,7 +118,7 @@ export function OnboardingChecklist() {
                 )}
               >
                 {isComplete && (
-                  <Check
+                  <CheckIcon
                     className="w-3 h-3 text-primary-foreground"
                   />
                 )}
@@ -143,7 +143,7 @@ export function OnboardingChecklist() {
 
               {/* Arrow for clickable items */}
               {isClickable && (
-                <CaretRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <CaretRightIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               )}
             </button>
           );

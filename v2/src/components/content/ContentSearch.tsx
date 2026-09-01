@@ -9,7 +9,7 @@
  */
 
 import { motion, AnimatePresence } from "motion/react";
-import { MagnifyingGlass as Search, X } from "@phosphor-icons/react";
+import { MagnifyingGlassIcon as Search, XIcon } from "@phosphor-icons/react";
 
 interface ContentSearchProps {
   value: string;
@@ -44,7 +44,7 @@ export default function ContentSearch({
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.15 }}
           >
-            <X className="h-4 w-4" />
+            <XIcon className="h-4 w-4" />
           </motion.button>
         )}
       </AnimatePresence>

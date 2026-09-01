@@ -17,7 +17,7 @@ import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
 import type { I140Category } from "@/lib/processing-times/i140ProcessingTimes";
-import { CheckCircle as CheckCircle2, Info } from "@phosphor-icons/react";
+import { CheckCircleIcon as CheckCircle2, InfoIcon } from "@phosphor-icons/react";
 
 // ============================================================================
 // TYPES
@@ -450,7 +450,7 @@ export function I140Section(props: I140SectionProps) {
                   className="font-semibold cursor-pointer flex items-center gap-2"
                 >
                   Premium Processing
-                  <Info className="h-4 w-4 text-muted-foreground" />
+                  <InfoIcon className="h-4 w-4 text-muted-foreground" />
                 </Label>
                 <p className="text-sm text-muted-foreground">
                   Expedited processing (15 business days guaranteed review). Additional fee required.

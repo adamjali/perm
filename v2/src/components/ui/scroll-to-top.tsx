@@ -8,7 +8,7 @@ import {
   useTransform,
   useMotionValueEvent,
 } from "motion/react";
-import { ArrowUp } from "@phosphor-icons/react";
+import { ArrowUpIcon } from "@phosphor-icons/react";
 
 /**
  * ScrollToTop, neobrutalist square button, fixed bottom-right.
@@ -67,7 +67,7 @@ export function ScrollToTop() {
               style={{ strokeDashoffset: dashOffset }}
             />
           </svg>
-          <ArrowUp className="relative z-10 h-4 w-4 text-foreground" />
+          <ArrowUpIcon className="relative z-10 h-4 w-4 text-foreground" />
         </motion.button>
       )}
     </AnimatePresence>

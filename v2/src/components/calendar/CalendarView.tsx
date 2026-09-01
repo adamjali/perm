@@ -42,7 +42,7 @@ import { CalendarEvent as CalendarEventComponent } from "./CalendarEvent";
 import { CalendarEventPopover } from "./CalendarEventPopover";
 import { CalendarMobileList } from "./CalendarMobileList";
 import { Button } from "@/components/ui/button";
-import { GridNine, List } from "@phosphor-icons/react/ssr";
+import { GridNineIcon, ListIcon } from "@phosphor-icons/react/ssr";
 
 // ============================================================================
 // Types
@@ -234,13 +234,13 @@ export function CalendarView({
           >
             {userViewMode === "list" ? (
               <>
-                <GridNine className="size-4" />
+                <GridNineIcon className="size-4" />
                 <span className="hidden sm:inline">Calendar View</span>{" "}
                 <span className="sm:hidden">Calendar</span>
               </>
             ) : (
               <>
-                <List className="size-4" />
+                <ListIcon className="size-4" />
                 <span className="hidden sm:inline">List View</span>{" "}
                 <span className="sm:hidden">List</span>
               </>

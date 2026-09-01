@@ -41,7 +41,7 @@ import { api } from "../../../convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowsClockwise as RefreshCw, Calendar, Check, CircleNotch, Cloud, Trash as Trash2, Warning as AlertTriangle, X } from "@phosphor-icons/react/ssr";
+import { ArrowsClockwiseIcon as RefreshCw, CalendarIcon, CheckIcon, CircleNotchIcon, CloudIcon, TrashIcon as Trash2, WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 
@@ -516,7 +516,7 @@ export default function CalendarSyncSection({
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-foreground" />
+            <CalendarIcon className="w-5 h-5 text-foreground" />
             <h3 className="font-heading font-bold text-lg text-foreground">
               Google Calendar Sync
             </h3>
@@ -540,7 +540,7 @@ export default function CalendarSyncSection({
                   : "bg-background border-border"
               }`}
             >
-              <Cloud
+              <CloudIcon
                 className={`w-5 h-5 ${
                   isConnected
                     ? "text-green-600 dark:text-green-400"
@@ -572,12 +572,12 @@ export default function CalendarSyncSection({
             >
               {isDisconnecting ? (
                 <>
-                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotchIcon className="w-4 h-4 mr-2 animate-spin" />
                   Disconnecting...
                 </>
               ) : (
                 <>
-                  <X className="w-4 h-4 mr-2" />
+                  <XIcon className="w-4 h-4 mr-2" />
                   Disconnect
                 </>
               )}
@@ -592,12 +592,12 @@ export default function CalendarSyncSection({
             >
               {isConnecting ? (
                 <>
-                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotchIcon className="w-4 h-4 mr-2 animate-spin" />
                   Connecting...
                 </>
               ) : (
                 <>
-                  <Check className="w-4 h-4 mr-2" />
+                  <CheckIcon className="w-4 h-4 mr-2" />
                   Connect Calendar
                 </>
               )}
@@ -636,7 +636,7 @@ export default function CalendarSyncSection({
               >
                 {isSyncingAll ? (
                   <>
-                    <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
+                    <CircleNotchIcon className="w-4 h-4 mr-2 animate-spin" />
                     Syncing...
                   </>
                 ) : (
@@ -744,7 +744,7 @@ export default function CalendarSyncSection({
               >
                 {isClearingEvents ? (
                   <>
-                    <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
+                    <CircleNotchIcon className="w-4 h-4 mr-2 animate-spin" />
                     Clearing...
                   </>
                 ) : (
@@ -835,7 +835,7 @@ export default function CalendarSyncSection({
             checked={masterEnabled}
             onCheckedChange={handleMasterToggle}
             disabled={isUpdatingMaster}
-            icon={<Calendar className="w-4 h-4 text-primary" />}
+            icon={<CalendarIcon className="w-4 h-4 text-primary" />}
           />
 
           {/* Warning when disabled */}

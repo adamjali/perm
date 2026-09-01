@@ -13,7 +13,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { ToolbarProps, View } from "react-big-calendar";
 import { Navigate } from "react-big-calendar";
-import { CaretDown, CaretLeft, CaretRight, CaretUp } from "@phosphor-icons/react/ssr";
+import { CaretDownIcon, CaretLeftIcon, CaretRightIcon, CaretUpIcon } from "@phosphor-icons/react/ssr";
 
 import type { CalendarEvent } from "@/lib/calendar/types";
 
@@ -143,9 +143,9 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
             {label}
           </h2>
           {isPickerOpen ? (
-            <CaretUp className="size-5 text-muted-foreground" />
+            <CaretUpIcon className="size-5 text-muted-foreground" />
           ) : (
-            <CaretDown className="size-5 text-muted-foreground" />
+            <CaretDownIcon className="size-5 text-muted-foreground" />
           )}
         </button>
 
@@ -163,7 +163,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
                 onClick={() => setPickerYear((y) => y - 1)}
                 className="p-2 hover:bg-muted border-2 border-border bg-card text-foreground transition-colors"
               >
-                <CaretLeft className="size-4" />
+                <CaretLeftIcon className="size-4" />
               </button>
               <span className="font-bold text-foreground">{pickerYear}</span>
               <button
@@ -171,7 +171,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
                 onClick={() => setPickerYear((y) => y + 1)}
                 className="p-2 hover:bg-muted border-2 border-border bg-card text-foreground transition-colors"
               >
-                <CaretRight className="size-4" />
+                <CaretRightIcon className="size-4" />
               </button>
             </div>
 
@@ -223,7 +223,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
             className={btnIcon}
             aria-label="Previous"
           >
-            <CaretLeft className="size-5" />
+            <CaretLeftIcon className="size-5" />
           </button>
 
           <button
@@ -240,7 +240,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
             className={btnIcon}
             aria-label="Next"
           >
-            <CaretRight className="size-5" />
+            <CaretRightIcon className="size-5" />
           </button>
         </div>
 

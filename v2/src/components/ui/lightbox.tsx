@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "@phosphor-icons/react";
+import { XIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -117,7 +117,7 @@ export function Lightbox({
                 "focus:outline-none focus:ring-2 focus:ring-white/50"
               )}
             >
-              <X className="h-4 w-4" />
+              <XIcon className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </DialogPrimitive.Close>
 

@@ -17,7 +17,7 @@
 
 "use client";
 
-import { CircleNotch, Plus } from "@phosphor-icons/react/ssr";
+import { CircleNotchIcon, PlusIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
@@ -57,9 +57,9 @@ export default function AddCaseButton() {
       )}
     >
       {isNavigating ? (
-        <CircleNotch className="size-5 animate-spin" />
+        <CircleNotchIcon className="size-5 animate-spin" />
       ) : (
-        <Plus className="size-5" />
+        <PlusIcon className="size-5" />
       )}
       <span className="hidden sm:inline">
         {isNavigating ? "Loading..." : "Add New Case"}

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowCounterClockwise as RotateCcw, Check, CheckCircle as CheckCircle2, ClipboardText, Clock, Copy, FloppyDisk as Save, Pencil, X, XCircle } from "@phosphor-icons/react";
+import { ArrowCounterClockwiseIcon as RotateCcw, CheckIcon, CheckCircleIcon as CheckCircle2, ClipboardTextIcon, ClockIcon, CopyIcon, FloppyDiskIcon as Save, PencilIcon, XIcon, XCircleIcon } from "@phosphor-icons/react";
 import {
   generateRecruitmentResultsText,
   calculateRecruitmentStatus,
@@ -40,7 +40,7 @@ interface RecruitmentResultsCardProps {
 const STATUS_CONFIG: Record<
   RecruitmentStatusType,
   {
-    icon: typeof Clock;
+    icon: typeof ClockIcon;
     bg: string;
     border: string;
     text: string;
@@ -49,7 +49,7 @@ const STATUS_CONFIG: Record<
   }
 > = {
   waiting: {
-    icon: Clock,
+    icon: ClockIcon,
  bg: "bg-data-warn/8",
  border: "border-data-warn",
  text: "text-data-warn-ink",
@@ -65,7 +65,7 @@ const STATUS_CONFIG: Record<
     label: "READY TO FILE",
   },
   incomplete: {
-    icon: Clock,
+    icon: ClockIcon,
     bg: "bg-muted",
     border: "border-muted-foreground/30",
     text: "text-muted-foreground",
@@ -73,7 +73,7 @@ const STATUS_CONFIG: Record<
     label: "INCOMPLETE",
   },
   expired: {
-    icon: XCircle,
+    icon: XCircleIcon,
  bg: "bg-data-bad/10",
  border: "border-data-bad",
  text: "text-data-bad-ink",
@@ -215,7 +215,7 @@ export function RecruitmentResultsCard({
         {/* ── Header ── */}
         <div className="detail-card-head ch-rec">
           <span className="flex items-center gap-1.5">
-            <ClipboardText className="h-3.5 w-3.5" />
+            <ClipboardTextIcon className="h-3.5 w-3.5" />
             Recruitment Results
             {isCustom && !isEditing && (
               <span className="ml-1 inline-flex items-center border-2 border-border bg-muted px-1.5 py-0.5 text-sm font-medium text-muted-foreground">
@@ -233,7 +233,7 @@ export function RecruitmentResultsCard({
                   className="icon-btn"
                   title="Cancel editing"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <XIcon className="h-3.5 w-3.5" />
                 </button>
                 {isCustom && (
                   <button
@@ -273,7 +273,7 @@ export function RecruitmentResultsCard({
                         exit={{ scale: 0.5, opacity: 0 }}
                         transition={{ duration: 0.15 }}
                       >
-                        <Check className="h-3.5 w-3.5 text-primary" />
+                        <CheckIcon className="h-3.5 w-3.5 text-primary" />
                       </motion.span>
                     ) : (
                       <motion.span
@@ -283,7 +283,7 @@ export function RecruitmentResultsCard({
                         exit={{ scale: 0.5, opacity: 0 }}
                         transition={{ duration: 0.15 }}
                       >
-                        <Copy className="h-3.5 w-3.5" />
+                        <CopyIcon className="h-3.5 w-3.5" />
                       </motion.span>
                     )}
                   </AnimatePresence>
@@ -294,7 +294,7 @@ export function RecruitmentResultsCard({
                   className="icon-btn"
                   title="Edit recruitment summary"
                 >
-                  <Pencil className="h-3.5 w-3.5" />
+                  <PencilIcon className="h-3.5 w-3.5" />
                 </button>
               </>
             )}
@@ -384,9 +384,9 @@ export function RecruitmentResultsCard({
             <div className="fc-label">Mandatory Steps</div>
             <div className="fc-val flex items-center gap-1.5">
               {mandatoryDone === 4 ? (
-                <Check className="h-3.5 w-3.5 text-primary" />
+                <CheckIcon className="h-3.5 w-3.5 text-primary" />
               ) : (
-                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                <ClockIcon className="h-3.5 w-3.5 text-muted-foreground" />
               )}
               {mandatoryDone}/4
             </div>
@@ -396,9 +396,9 @@ export function RecruitmentResultsCard({
               <div className="fc-label">Professional Methods</div>
               <div className="fc-val flex items-center gap-1.5">
                 {status.professionalMethods.allComplete ? (
-                  <Check className="h-3.5 w-3.5 text-primary" />
+                  <CheckIcon className="h-3.5 w-3.5 text-primary" />
                 ) : (
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <ClockIcon className="h-3.5 w-3.5 text-muted-foreground" />
                 )}
                 {status.professionalMethods.completedCount}/3
               </div>

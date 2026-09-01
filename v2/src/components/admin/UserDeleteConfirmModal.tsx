@@ -6,7 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
-import { CircleNotch, Warning as AlertTriangle } from "@phosphor-icons/react";
+import { CircleNotchIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
 import {
   Dialog,
   DialogContent,
@@ -116,7 +116,7 @@ export function UserDeleteConfirmModal({ user, onClose }: UserDeleteConfirmModal
             >
               {isDeleting ? (
                 <>
-                  <CircleNotch className="size-4 animate-spin" />
+                  <CircleNotchIcon className="size-4 animate-spin" />
                   Deleting...
                 </>
               ) : (

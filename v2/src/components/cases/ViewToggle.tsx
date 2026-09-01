@@ -12,7 +12,7 @@
 import { useCallback, useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { List, SquaresFour as LayoutGrid } from "@phosphor-icons/react/ssr";
+import { ListIcon, SquaresFourIcon as LayoutGrid } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 
 export type ViewMode = "card" | "list";
@@ -43,7 +43,7 @@ const VIEW_CONFIG: Record<ViewMode, ViewConfig> = {
     tooltip: "Card view",
   },
   list: {
-    icon: List,
+    icon: ListIcon,
     label: "List",
     tooltip: "List view",
   },

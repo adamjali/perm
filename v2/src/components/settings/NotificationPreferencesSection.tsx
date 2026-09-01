@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Bell, BellRinging, Briefcase, Calendar, CaretDown, Check, CircleNotch, Clock, DeviceMobile as Smartphone, Envelope as Mail, FileArrowUp as FileCheck, FileText, Megaphone, Minus, Newspaper, PaperPlaneTilt as Send, Plus, Question as HelpCircle, Warning as AlertTriangle, WarningCircle as AlertCircle, type Icon as PhosphorIcon } from "@phosphor-icons/react";
+import { BellIcon, BellRingingIcon, BriefcaseIcon, CalendarIcon, CaretDownIcon, CheckIcon, CircleNotchIcon, ClockIcon, DeviceMobileIcon as Smartphone, EnvelopeIcon as Mail, FileArrowUpIcon as FileCheck, FileTextIcon, MegaphoneIcon, MinusIcon, NewspaperIcon, PaperPlaneTiltIcon as Send, PlusIcon, QuestionIcon as HelpCircle, WarningIcon as AlertTriangle, WarningCircleIcon as AlertCircle, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import {
@@ -32,9 +32,9 @@ const MIN_URGENT_DAYS = 1;
 const MAX_URGENT_DAYS = 30;
 
 const DEADLINE_TYPES = [
-  { key: "emailDeadlineReminderPwd", label: "PWD Expiration", description: "Prevailing wage determination deadlines", icon: FileText },
-  { key: "emailDeadlineReminderRecruitment", label: "Recruitment", description: "Job posting and recruitment deadlines", icon: Briefcase },
-  { key: "emailDeadlineReminderEta9089", label: "ETA 9089", description: "Labor certification filing deadlines", icon: Calendar },
+  { key: "emailDeadlineReminderPwd", label: "PWD Expiration", description: "Prevailing wage determination deadlines", icon: FileTextIcon },
+  { key: "emailDeadlineReminderRecruitment", label: "Recruitment", description: "Job posting and recruitment deadlines", icon: BriefcaseIcon },
+  { key: "emailDeadlineReminderEta9089", label: "ETA 9089", description: "Labor certification filing deadlines", icon: CalendarIcon },
   { key: "emailDeadlineReminderI140", label: "I-140", description: "Immigration petition filing deadlines", icon: FileCheck },
   { key: "emailDeadlineReminderRfi", label: "RFI Response", description: "Request for information due dates", icon: HelpCircle },
   { key: "emailDeadlineReminderRfe", label: "RFE Response", description: "Request for evidence due dates", icon: AlertCircle },
@@ -144,7 +144,7 @@ function TestButton({ onClick, disabled, loading, justSent, label, sentLabel = "
       <AnimatePresence mode="wait">
         {justSent ? (
           <motion.span key="sent" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ type: "spring", stiffness: 500, damping: 15 }}>
-            <Check className="w-4 h-4 text-primary" />
+            <CheckIcon className="w-4 h-4 text-primary" />
           </motion.span>
         ) : (
           <motion.span key="send" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -498,7 +498,7 @@ export default function NotificationPreferencesSection({
             description="Receive notifications via email"
             checked={emailEnabled}
             onCheckedChange={handleMasterToggle}
-            icon={<Bell className="w-4 h-4 text-primary" />}
+            icon={<BellIcon className="w-4 h-4 text-primary" />}
           />
 
           <WarningBanner visible={!emailEnabled}>
@@ -515,10 +515,10 @@ export default function NotificationPreferencesSection({
                   disabled={!emailEnabled}
                   className={`flex-1 flex items-center gap-2 text-left ${!emailEnabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 >
-                  <CaretDown className={`w-4 h-4 transition-transform duration-200 ${deadlineRemindersExpanded ? "rotate-0" : "-rotate-90"} ${!emailEnabled ? "opacity-50" : ""}`} />
+                  <CaretDownIcon className={`w-4 h-4 transition-transform duration-200 ${deadlineRemindersExpanded ? "rotate-0" : "-rotate-90"} ${!emailEnabled ? "opacity-50" : ""}`} />
                   <div className="space-y-0.5 flex-1">
                     <span className={`text-sm font-medium flex items-center gap-2 ${!emailEnabled ? "opacity-50" : ""}`}>
-                      <BellRinging className="w-4 h-4" />
+                      <BellRingingIcon className="w-4 h-4" />
                       Deadline Reminders
                     </span>{" "}
                     <p className={`text-xs text-muted-foreground ${!emailEnabled ? "opacity-50" : ""}`}>
@@ -595,7 +595,7 @@ export default function NotificationPreferencesSection({
               checked={weeklyDigest}
               onCheckedChange={handleWeeklyDigestToggle}
               disabled={!emailEnabled}
-              icon={<Newspaper className="w-4 h-4" />}
+              icon={<NewspaperIcon className="w-4 h-4" />}
               indented
             />
           </div>
@@ -606,7 +606,7 @@ export default function NotificationPreferencesSection({
           <div className="flex items-center justify-between">
             <div className="space-y-0.5 flex-1">
               <Label htmlFor="marketing-updates" className="text-sm font-medium flex items-center gap-2">
-                <Megaphone className="w-4 h-4 text-primary" />
+                <MegaphoneIcon className="w-4 h-4 text-primary" />
                 Product Updates &amp; Announcements
               </Label>
               <p className="text-xs text-muted-foreground">
@@ -614,7 +614,7 @@ export default function NotificationPreferencesSection({
               </p>
             </div>
             {marketingLoading ? (
-              <CircleNotch className="w-4 h-4 animate-spin text-muted-foreground" />
+              <CircleNotchIcon className="w-4 h-4 animate-spin text-muted-foreground" />
             ) : marketingSubscribed === null ? (
               <span className="text-xs text-muted-foreground">Not available</span>
             ) : (
@@ -655,7 +655,7 @@ export default function NotificationPreferencesSection({
           <div className="flex items-center justify-between">
             <div className="space-y-0.5 flex-1">
               <Label htmlFor="push-notifications-enabled" className={`text-sm font-medium flex items-center gap-2 ${!pushStatus?.supported || isUpdatingPush ? "opacity-50" : ""}`}>
-                <Bell className="w-4 h-4 text-primary" />
+                <BellIcon className="w-4 h-4 text-primary" />
                 Push Notifications
               </Label>
               <p className={`text-xs text-muted-foreground ${!pushStatus?.supported || isUpdatingPush ? "opacity-50" : ""}`}>
@@ -699,7 +699,7 @@ export default function NotificationPreferencesSection({
       </SectionCard>
 
       {/* Reminder Settings Section */}
-      <SectionCard icon={Clock} title="Reminder Settings" description="Configure when you receive deadline reminders">
+      <SectionCard icon={ClockIcon} title="Reminder Settings" description="Configure when you receive deadline reminders">
         <div className="space-y-4">
           <div>
             <Label className="text-sm font-medium text-foreground">Remind me before deadlines</Label>
@@ -735,7 +735,7 @@ export default function NotificationPreferencesSection({
                 loading={isUpdatingUrgentDays}
                 className="h-9 w-9"
               >
-                <Minus className="w-4 h-4" />
+                <MinusIcon className="w-4 h-4" />
               </Button>
               <Input
                 id="urgent-deadline-days"
@@ -755,7 +755,7 @@ export default function NotificationPreferencesSection({
                 loading={isUpdatingUrgentDays}
                 className="h-9 w-9"
               >
-                <Plus className="w-4 h-4" />
+                <PlusIcon className="w-4 h-4" />
               </Button>
               <span className="text-sm text-muted-foreground">days</span>
             </div>

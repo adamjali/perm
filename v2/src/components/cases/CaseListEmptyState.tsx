@@ -16,7 +16,7 @@
  * Created: 2025-12-24
  */
 
-import { FolderOpen, Funnel as Filter } from "@phosphor-icons/react/ssr";
+import { FolderOpenIcon, FunnelIcon as Filter } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 
 // ============================================================================
@@ -46,7 +46,7 @@ export function CaseListEmptyState({
       >
         {/* Empty Filing Cabinet Icon */}
         <div className="mb-6 p-6 border-3 border-border bg-muted shadow-hard-sm">
-          <FolderOpen className="size-24 text-muted-foreground" />
+          <FolderOpenIcon className="size-24 text-muted-foreground" />
         </div>
 
         {/* Message */}

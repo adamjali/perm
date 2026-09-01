@@ -18,7 +18,7 @@
 
 import { Fragment, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDot as CalendarClock, Info, Warning } from "@phosphor-icons/react";
+import { CalendarDotIcon as CalendarClock, InfoIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { estimateQueueDecision, type CohortStat, type DolFrontier } from "@/lib/perm";
 import type { Pace } from "@/lib/dolPace";
@@ -680,7 +680,7 @@ export function PermTimelineEstimator({
       {estimate.caveats.length > 0 ? (
         <div className="border-t-2 border-border bg-muted p-6 sm:p-8">
           <div className="flex items-start gap-3">
-            <Warning
+            <WarningIcon
               className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70"
               aria-hidden="true"
             />
@@ -700,7 +700,7 @@ export function PermTimelineEstimator({
 
       {!compact && disclosure ? (
         <div className="border-t-2 border-border p-6 text-sm leading-relaxed text-foreground/60 sm:px-8">
-          <Info className="mr-2 inline h-4 w-4 align-text-bottom" aria-hidden="true" />
+          <InfoIcon className="mr-2 inline h-4 w-4 align-text-bottom" aria-hidden="true" />
           Cohort figures are computed from{" "}
           {disclosure.uniqueCases.toLocaleString("en-US")} decided cases in DOL&apos;s
           disclosure files ({disclosure.sourceFiles.join(", ")}).

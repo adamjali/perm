@@ -11,7 +11,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Path as Route, Play } from "@phosphor-icons/react";
+import { PathIcon as Route, PlayIcon } from "@phosphor-icons/react";
 import { useInView } from "motion/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useReducedMotion } from "@/lib/animations";
@@ -241,7 +241,7 @@ export function HowItWorks() {
         <ScrollReveal direction="up" delay={0.3} className="mt-12">
           <div className="text-center mb-8">
             <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
-              <Play className="h-3.5 w-3.5" />
+              <PlayIcon className="h-3.5 w-3.5" />
               Watch: The PERM Process
             </div>{" "}
             <h3 className="font-heading text-xl font-black tracking-tight sm:text-2xl lg:text-3xl">

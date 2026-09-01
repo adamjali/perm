@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FloppyDisk as Save, Sparkle, Warning as AlertTriangle } from "@phosphor-icons/react";
+import { FloppyDiskIcon as Save, SparkleIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -149,7 +149,7 @@ export function TemplateUpdateConfirmDialog({
               disabled={isProcessing}
               className="w-full gap-2 border-2"
             >
-              <Sparkle className="h-4 w-4" />
+              <SparkleIcon className="h-4 w-4" />
               Save as New Template
             </Button>
 
@@ -206,7 +206,7 @@ export function TemplateUpdateConfirmDialog({
                   "dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:border-emerald-500"
                 )}
               >
-                <Sparkle className="h-4 w-4" />
+                <SparkleIcon className="h-4 w-4" />
                 {isProcessing ? "Saving..." : "Save"}
               </Button>
             </AlertDialogFooter>

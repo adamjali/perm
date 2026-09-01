@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { MagnifyingGlass, RocketLaunch } from "@phosphor-icons/react/ssr";
+import { MagnifyingGlassIcon, RocketLaunchIcon } from "@phosphor-icons/react/ssr";
 
 import {
   StakesSection,
@@ -88,14 +88,14 @@ export default function ForAttorneysPage() {
                     href="/signup"
                     className="inline-flex h-14 items-center border-3 border-border bg-primary px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
                   >
-                    <RocketLaunch className="mr-2 h-5 w-5" aria-hidden="true" />
+                    <RocketLaunchIcon className="mr-2 h-5 w-5" aria-hidden="true" />
                     Get Started Free
                   </Link>{" "}
                   <Link
                     href="/perm-case-status"
                     className="inline-flex h-14 items-center border-3 border-border bg-transparent px-8 font-heading text-base font-bold uppercase tracking-[0.05em] text-foreground shadow-hard transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-foreground hover:text-background hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
                   >
-                    <MagnifyingGlass className="mr-2 h-5 w-5" aria-hidden="true" />
+                    <MagnifyingGlassIcon className="mr-2 h-5 w-5" aria-hidden="true" />
                     Check a Case First
                   </Link>
                 </div>

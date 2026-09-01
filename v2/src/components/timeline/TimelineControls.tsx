@@ -16,7 +16,7 @@
 
 "use client";
 
-import { Calendar, CaretDown, Funnel as Filter, MagnifyingGlassMinus, MagnifyingGlassPlus } from "@phosphor-icons/react/ssr";
+import { CalendarIcon, CaretDownIcon, FunnelIcon as Filter, MagnifyingGlassMinusIcon, MagnifyingGlassPlusIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -85,7 +85,7 @@ export function TimelineControls({
             className="flex items-center gap-2 px-3 py-2 border-2 border-border bg-background shadow-hard min-h-[44px]"
             data-testid="zoom-control"
           >
-            <MagnifyingGlassMinus className="size-4 text-muted-foreground" />
+            <MagnifyingGlassMinusIcon className="size-4 text-muted-foreground" />
             <input
               type="range"
               min={50}
@@ -97,7 +97,7 @@ export function TimelineControls({
               aria-label="Zoom level"
               data-testid="zoom-slider"
             />
-            <MagnifyingGlassPlus className="size-4 text-muted-foreground" />
+            <MagnifyingGlassPlusIcon className="size-4 text-muted-foreground" />
             <span className="text-xs font-medium text-muted-foreground min-w-[3ch] text-right">
               {zoomLevel}%
             </span>
@@ -112,13 +112,13 @@ export function TimelineControls({
               className="border-2 border-border bg-background shadow-hard hover:shadow-hard-lg hover:-translate-y-0.5 transition-all min-h-[44px] justify-between sm:justify-center"
             >
               <div className="flex items-center">
-                <Calendar className="size-4 mr-2" />
+                <CalendarIcon className="size-4 mr-2" />
                 <span className="hidden sm:inline">{currentRangeLabel}</span>{" "}
                 <span className="sm:hidden">
                   {timeRange}M
                 </span>
               </div>
-              <CaretDown className="size-4 ml-2 opacity-70" />
+              <CaretDownIcon className="size-4 ml-2 opacity-70" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent

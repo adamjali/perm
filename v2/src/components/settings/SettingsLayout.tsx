@@ -3,7 +3,7 @@
 import { useCallback, useRef, KeyboardEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
-import { Bell, Calendar, Moon, Question as HelpCircle, Shield, User, type Icon as PhosphorIcon } from "@phosphor-icons/react";
+import { BellIcon, CalendarIcon, MoonIcon, QuestionIcon as HelpCircle, ShieldIcon, UserIcon, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { useSettingsUnsavedChanges } from "./SettingsUnsavedChangesContext";
 
 // ============================================================================
@@ -35,11 +35,11 @@ interface SettingsLayoutProps {
 // ============================================================================
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "profile", label: "Profile", icon: User },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "quiet-hours", label: "Quiet Hours", icon: Moon },
-  { id: "calendar-sync", label: "Calendar Sync", icon: Calendar },
-  { id: "auto-close", label: "Auto-Close", icon: Shield },
+  { id: "profile", label: "Profile", icon: UserIcon },
+  { id: "notifications", label: "Notifications", icon: BellIcon },
+  { id: "quiet-hours", label: "Quiet Hours", icon: MoonIcon },
+  { id: "calendar-sync", label: "Calendar Sync", icon: CalendarIcon },
+  { id: "auto-close", label: "Auto-Close", icon: ShieldIcon },
   { id: "support", label: "Support", icon: HelpCircle },
 ];
 

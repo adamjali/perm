@@ -17,7 +17,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { ArrowLeft, Check, CircleNotch, Gear as SettingsIcon, Prohibit as Ban, Pulse as Activity, Shield, UserMinus as UserX, Warning as AlertTriangle } from "@phosphor-icons/react";
+import { ArrowLeftIcon, CheckIcon, CircleNotchIcon, GearIcon as SettingsIcon, ProhibitIcon as Ban, PulseIcon as Activity, ShieldIcon, UserMinusIcon as UserX, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
@@ -52,7 +52,7 @@ export default function SecurityDashboardClient() {
       <div className="mx-auto max-w-3xl p-8">
         <Card className="border-2 border-destructive">
           <CardContent className="py-12 text-center">
-            <Shield className="mx-auto h-12 w-12 text-destructive" />
+            <ShieldIcon className="mx-auto h-12 w-12 text-destructive" />
             <p className="mono mt-4 font-bold uppercase tracking-widest">
               Access denied, admin only
             </p>
@@ -70,12 +70,12 @@ export default function SecurityDashboardClient() {
         href="/admin"
         className="mono inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
+        <ArrowLeftIcon className="h-4 w-4" aria-hidden />
         Admin dashboard
       </Link>
 
       <header className="flex items-center gap-3">
-        <Shield className="h-8 w-8 text-primary" aria-hidden />
+        <ShieldIcon className="h-8 w-8 text-primary" aria-hidden />
         <div>
           <h1 className="font-heading text-3xl font-black uppercase tracking-tight">
             Security Ops
@@ -210,7 +210,7 @@ function EventsTab() {
     return (
       <Card className="border-2">
         <CardContent className="py-12 text-center">
-          <Check className="mx-auto h-8 w-8 text-primary" aria-hidden />
+          <CheckIcon className="mx-auto h-8 w-8 text-primary" aria-hidden />
           <p className="mono mt-2 text-sm uppercase tracking-widest text-muted-foreground">
             No recent security events
           </p>
@@ -351,7 +351,7 @@ function BlockedIpsTab() {
               className="sm:min-w-[120px]"
             >
               {pending === "add" ? (
-                <CircleNotch className="h-4 w-4 animate-spin" />
+                <CircleNotchIcon className="h-4 w-4 animate-spin" />
               ) : (
                 "BLOCK"
               )}
@@ -372,7 +372,7 @@ function BlockedIpsTab() {
         <CardContent className="p-0">
           {blocks.length === 0 ? (
             <div className="py-12 text-center">
-              <Check className="mx-auto h-8 w-8 text-primary" aria-hidden />
+              <CheckIcon className="mx-auto h-8 w-8 text-primary" aria-hidden />
               <p className="mono mt-2 text-sm uppercase tracking-widest text-muted-foreground">
                 No active blocks
               </p>
@@ -416,7 +416,7 @@ function BlockedIpsTab() {
                         disabled={pending === b.ip}
                       >
                         {pending === b.ip ? (
-                          <CircleNotch className="h-3 w-3 animate-spin" />
+                          <CircleNotchIcon className="h-3 w-3 animate-spin" />
                         ) : (
                           "UNBLOCK"
                         )}
@@ -459,7 +459,7 @@ function FlaggedUsersTab() {
     return (
       <Card className="border-2">
         <CardContent className="py-12 text-center">
-          <Check className="mx-auto h-8 w-8 text-primary" aria-hidden />
+          <CheckIcon className="mx-auto h-8 w-8 text-primary" aria-hidden />
           <p className="mono mt-2 text-sm uppercase tracking-widest text-muted-foreground">
             No flagged users
           </p>
@@ -507,7 +507,7 @@ function FlaggedUsersTab() {
                     disabled={pending === u.userId}
                   >
                     {pending === u.userId ? (
-                      <CircleNotch className="h-3 w-3 animate-spin" />
+                      <CircleNotchIcon className="h-3 w-3 animate-spin" />
                     ) : (
                       "UNSUSPEND"
                     )}

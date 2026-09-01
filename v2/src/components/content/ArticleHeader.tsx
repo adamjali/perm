@@ -10,7 +10,7 @@ import { Fragment } from "react";
 
 import Image from "next/image";
 import { motion } from "motion/react";
-import { ArrowLeft, Calendar, Clock, User } from "@phosphor-icons/react";
+import { ArrowLeftIcon, CalendarIcon, ClockIcon, UserIcon } from "@phosphor-icons/react";
 import { NavLink } from "@/components/ui/nav-link";
 import type { PostMeta, ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
@@ -50,7 +50,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
               spinnerClassName="text-muted-foreground"
               spinnerSize={12}
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
+              <ArrowLeftIcon className="h-3.5 w-3.5" />
               {config.plural}
             </NavLink>
           </motion.nav>
@@ -85,11 +85,11 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
             className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground"
           >
             <span className="flex items-center gap-1.5">
-              <User className="h-4 w-4" />
+              <UserIcon className="h-4 w-4" />
               {meta.author}
             </span>{" "}
             <span className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4" />
+              <CalendarIcon className="h-4 w-4" />
               <time dateTime={meta.date}>
                 {new Date(meta.date).toLocaleDateString("en-US", {
                   month: "long",
@@ -113,7 +113,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
               </span>
             )}
             <span className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4" />
+              <ClockIcon className="h-4 w-4" />
               {meta.readingTime}
             </span>
           </motion.div>

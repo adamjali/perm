@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CaretRight, CircleNotch, House } from "@phosphor-icons/react";
+import { CaretRightIcon, CircleNotchIcon, HouseIcon } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
 
@@ -173,7 +173,7 @@ export function DataRail() {
                       : "bg-transparent group-hover/tab:bg-border",
                   )}
                 />
-                <CaretRight
+                <CaretRightIcon
                   className={cn(
                     "size-3.5 shrink-0 transition-transform duration-200 ease-out",
                     "motion-reduce:transition-none",
@@ -361,7 +361,7 @@ export function DataRail() {
                 )}
               >
                 <span className="sr-only">Collapse data sections</span>
-                <CaretRight className="size-4 rotate-180" weight="bold" aria-hidden="true" />
+                <CaretRightIcon className="size-4 rotate-180" weight="bold" aria-hidden="true" />
               </button>
               <div id="data-rail-desktop" className="flex flex-1 flex-col">
                 {body}
@@ -398,7 +398,7 @@ export function DataRail() {
               )}
             >
               <span className="sr-only">Expand data sections</span>
-              <CaretRight className="size-4 shrink-0" weight="bold" aria-hidden="true" />
+              <CaretRightIcon className="size-4 shrink-0" weight="bold" aria-hidden="true" />
               <span
                 aria-hidden="true"
                 className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-foreground/70"
@@ -478,7 +478,7 @@ export function DataRail() {
         <span className="sr-only">
           {panelOpen ? "Close data sections" : "Open data sections"}
         </span>
-        <CaretRight
+        <CaretRightIcon
           className={cn(
             "size-4 shrink-0 text-primary transition-transform duration-200 ease-out",
             "motion-reduce:transition-none",
@@ -663,12 +663,12 @@ function Tab({
         )}
       >
         {pending ? (
-          <CircleNotch className="size-3.5 animate-spin" weight="bold" />
+          <CircleNotchIcon className="size-3.5 animate-spin" weight="bold" />
         ) : kind === "home" ? (
           // Overview alone gets a real glyph. It is the section's front page
           // rather than a page inside it, and a house says that in the place
           // where every other row carries only a state marker.
-          <House className="size-3.5" weight="fill" />
+          <HouseIcon className="size-3.5" weight="fill" />
         ) : (
           // A square, not a dot: the site's marker vocabulary is square.
           <span className="size-1.5 bg-current" />

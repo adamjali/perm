@@ -8,7 +8,7 @@
  *
  */
 
-import { Shield } from "@phosphor-icons/react";
+import { ShieldIcon } from "@phosphor-icons/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 interface SecurityRow {
@@ -46,7 +46,7 @@ export function SecuritySection() {
         {/* Section header */}
         <ScrollReveal direction="up" className="mb-10 text-center sm:mb-12">
           <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
-            <Shield className="h-3.5 w-3.5" />
+            <ShieldIcon className="h-3.5 w-3.5" />
             Security
           </div>{" "}
           <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
@@ -76,7 +76,7 @@ export function SecuritySection() {
                 } ${index % 2 === 0 ? "bg-background" : "bg-muted"}`}
               >
                 <div className="px-5 py-4 font-heading text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Shield
+                  <ShieldIcon
                     className="h-4 w-4 flex-shrink-0 text-primary"
                     aria-hidden="true"
                   />

@@ -17,7 +17,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useMutation } from "convex/react";
 import { motion } from "motion/react";
-import { ArrowSquareOut, Check, CircleNotch, Clock, Info, WarningCircle as AlertCircle } from "@phosphor-icons/react";
+import { ArrowSquareOutIcon, CheckIcon, CircleNotchIcon, ClockIcon, InfoIcon, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
@@ -175,7 +175,7 @@ function WaitingInfoDisplay({ waitingInfo }: WaitingInfoDisplayProps) {
       className="space-y-3"
     >
       <div className="flex items-center gap-2 text-sm">
-        <Clock className="h-4 w-4 text-primary" />
+        <ClockIcon className="h-4 w-4 text-primary" />
         <span className="font-medium">Estimated: {waitingInfo.estimatedTime}</span>
       </div>
       <div className="space-y-1.5">
@@ -184,7 +184,7 @@ function WaitingInfoDisplay({ waitingInfo }: WaitingInfoDisplayProps) {
             key={idx}
             className="flex items-start gap-2 text-sm text-muted-foreground"
           >
-            <Info className="h-3 w-3 mt-0.5 shrink-0" />
+            <InfoIcon className="h-3 w-3 mt-0.5 shrink-0" />
             <span>{tip}</span>
           </div>
         ))}
@@ -213,7 +213,7 @@ function ComplexActionDisplay({ message, onNavigateToForm }: ComplexActionDispla
           className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
         >
           Open full edit form
-          <ArrowSquareOut className="h-3.5 w-3.5" />
+          <ArrowSquareOutIcon className="h-3.5 w-3.5" />
         </button>
       )}
     </motion.div>
@@ -504,12 +504,12 @@ export function QuickEditFields({
       >
         {submitStatus === "saving" ? (
           <>
-            <CircleNotch className="h-4 w-4 animate-spin" />
+            <CircleNotchIcon className="h-4 w-4 animate-spin" />
             <span>Saving...</span>
           </>
         ) : submitStatus === "saved" ? (
           <>
-            <Check className="h-4 w-4" />
+            <CheckIcon className="h-4 w-4" />
             <span>Saved!</span>
           </>
         ) : (

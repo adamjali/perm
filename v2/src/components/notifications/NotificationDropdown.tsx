@@ -26,7 +26,7 @@
 
 import { useState, useEffect } from "react";
 import { handleOperationError } from "@/lib/errors";
-import { ArrowsClockwise as RefreshCw, Bell, Calendar, CircleNotch, Clock, Info, Warning as AlertTriangle, X, type Icon as PhosphorIcon } from "@phosphor-icons/react";
+import { ArrowsClockwiseIcon as RefreshCw, BellIcon, CalendarIcon, CircleNotchIcon, ClockIcon, InfoIcon, WarningIcon as AlertTriangle, XIcon, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
@@ -79,12 +79,12 @@ interface Notification {
  * Icon mapping for notification types
  */
 const NOTIFICATION_ICONS: Record<NotificationType, PhosphorIcon> = {
-  deadline_reminder: Calendar,
+  deadline_reminder: CalendarIcon,
   status_change: RefreshCw,
   rfe_alert: AlertTriangle,
   rfi_alert: AlertTriangle,
-  auto_closure: Clock,
-  system: Info,
+  auto_closure: ClockIcon,
+  system: InfoIcon,
 };
 
 /**
@@ -232,7 +232,7 @@ function NotificationItem({
           )}
           aria-label="Delete notification"
         >
-          <X className="h-3 w-3" />
+          <XIcon className="h-3 w-3" />
         </button>
       </div>
     </div>
@@ -270,7 +270,7 @@ function EmptyState() {
           "bg-muted"
         )}
       >
-        <Bell className="h-7 w-7 text-muted-foreground" />
+        <BellIcon className="h-7 w-7 text-muted-foreground" />
       </div>
       <p className="text-sm font-heading font-bold text-foreground">
         No notifications
@@ -467,7 +467,7 @@ export default function NotificationDropdown() {
             >
               {navigatingToAll ? "Loading..." : remainingCount > 0 ? `+${remainingCount} more` : "View all"}
               {navigatingToAll ? (
-                <CircleNotch className="h-4 w-4 animate-spin" />
+                <CircleNotchIcon className="h-4 w-4 animate-spin" />
               ) : (
                 <svg
                   width="16"

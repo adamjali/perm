@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import Link from "next/link";
-import { Clock, FileText } from "@phosphor-icons/react";
+import { ClockIcon, FileTextIcon } from "@phosphor-icons/react";
 import { isRecruitmentComplete } from "@/lib/perm";
 import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
@@ -59,7 +59,7 @@ export function ETA9089Tab({
           <div className="detail-card">
             <div className="detail-card-head ch-eta">
               <span className="flex items-center gap-1.5">
-                <FileText className="h-3.5 w-3.5" />
+                <FileTextIcon className="h-3.5 w-3.5" />
                 ETA Form 9089
               </span>{" "}
               <span className="head-badge">
@@ -102,7 +102,7 @@ export function ETA9089Tab({
             </div>
             {!isCertified && (
               <div className="detail-status-bar">
-                <Clock className="h-4 w-4 shrink-0" style={{ color: "var(--stage-eta9089)" }} />
+                <ClockIcon className="h-4 w-4 shrink-0" style={{ color: "var(--stage-eta9089)" }} />
                 <span>
                   {isFiled
                     ? "ETA 9089 filed. Awaiting DOL decision."
@@ -123,7 +123,7 @@ export function ETA9089Tab({
           type="RFI"
           subtitle="DOL Audit"
           entries={rfiEntries}
-          emptyIcon={<FileText className="h-8 w-8" />}
+          emptyIcon={<FileTextIcon className="h-8 w-8" />}
           emptyDescription="Entries will appear here if DOL issues a request during audit."
         />
       </Link>

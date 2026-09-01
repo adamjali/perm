@@ -11,7 +11,7 @@
  * - Bold, direct messaging
  */
 
-import { ArrowsClockwise as RefreshCw, WifiSlash } from "@phosphor-icons/react";
+import { ArrowsClockwiseIcon as RefreshCw, WifiSlashIcon } from "@phosphor-icons/react";
 
 export default function OfflinePage() {
   return (
@@ -22,7 +22,7 @@ export default function OfflinePage() {
           {/* Icon container */}
           <div className="flex justify-center mb-6">
             <div className="w-20 h-20 bg-muted border-2 border-border shadow-hard-sm flex items-center justify-center">
-              <WifiSlash className="w-10 h-10 text-muted-foreground" />
+              <WifiSlashIcon className="w-10 h-10 text-muted-foreground" />
             </div>
           </div>
 

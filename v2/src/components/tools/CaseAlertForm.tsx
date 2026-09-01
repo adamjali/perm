@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Bell, CheckCircle } from "@phosphor-icons/react";
+import { BellIcon, CheckCircleIcon } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
 
@@ -102,7 +102,7 @@ export function CaseAlertForm({
         )}
       >
         <p className="flex items-start gap-2 text-base leading-relaxed text-foreground/80">
-          <CheckCircle
+          <CheckCircleIcon
             className="mt-1 h-5 w-5 shrink-0 text-data-good-ink"
             weight="fill"
             aria-hidden="true"
@@ -125,7 +125,7 @@ export function CaseAlertForm({
       )}
     >
       <p className="flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-        <Bell className="h-4 w-4" weight="fill" aria-hidden="true" />{" "}
+        <BellIcon className="h-4 w-4" weight="fill" aria-hidden="true" />{" "}
         Watch this case
       </p>{" "}
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">

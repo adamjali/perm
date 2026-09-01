@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CaretUpDown, Check, FileText, Sliders } from "@phosphor-icons/react";
+import { CaretUpDownIcon, CheckIcon, FileTextIcon, SlidersIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,12 +108,12 @@ export function TemplateSelector({
             )}
           >
             <div className="flex items-center gap-2 truncate">
-              <FileText className="h-5 w-5 sm:h-4 sm:w-4 shrink-0" />
+              <FileTextIcon className="h-5 w-5 sm:h-4 sm:w-4 shrink-0" />
               <span className="truncate text-sm">
                 {selectedTemplate ? selectedTemplate.name : "Load Template..."}
               </span>
             </div>
-            <CaretUpDown className="h-5 w-5 sm:h-4 sm:w-4 shrink-0 opacity-50" />
+            <CaretUpDownIcon className="h-5 w-5 sm:h-4 sm:w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[calc(100vw-2rem)] max-w-[300px] p-0 border-2" align="start">
@@ -122,7 +122,7 @@ export function TemplateSelector({
             <CommandList>
               <CommandEmpty>
                 <div className="flex flex-col items-center gap-2 py-4">
-                  <FileText className="h-8 w-8 text-muted-foreground" />
+                  <FileTextIcon className="h-8 w-8 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">No templates found</p>{" "}
                   <p className="text-xs text-muted-foreground">
                     Create one by filling in the description below
@@ -139,7 +139,7 @@ export function TemplateSelector({
                       className="flex items-center justify-between gap-2 min-h-[44px] py-2"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <Check
+                        <CheckIcon
                           className={cn(
                             "h-5 w-5 sm:h-4 sm:w-4 shrink-0",
                             selectedTemplateId === template._id
@@ -165,7 +165,7 @@ export function TemplateSelector({
                   }}
                   className="gap-2 min-h-[44px] py-2"
                 >
-                  <Sliders className="h-5 w-5 sm:h-4 sm:w-4" />
+                  <SlidersIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                   <span>Manage Templates...</span>
                 </CommandItem>
               </CommandGroup>

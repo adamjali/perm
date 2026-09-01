@@ -15,7 +15,7 @@
 import type { Metadata } from "next";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
-import { CheckCircle as CheckCircle2, Shield } from "@phosphor-icons/react/ssr";
+import { CheckCircleIcon as CheckCircle2, ShieldIcon } from "@phosphor-icons/react/ssr";
 
 export const dynamic = "force-static";
 
@@ -44,7 +44,7 @@ export default function SecurityPage() {
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
       <div className="card-brutalist p-8">
         <div className="flex items-center gap-3 mb-3">
-          <Shield className="h-8 w-8 text-primary" aria-hidden="true" />
+          <ShieldIcon className="h-8 w-8 text-primary" aria-hidden="true" />
           <h1 className="font-heading text-4xl font-black">Security</h1>
         </div>{" "}
         <p className="text-foreground/60 mb-8">

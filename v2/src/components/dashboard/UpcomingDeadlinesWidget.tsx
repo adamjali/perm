@@ -10,7 +10,7 @@
 
 import { type ReactNode } from "react";
 import { useQuery } from "convex/react";
-import { Calendar } from "@phosphor-icons/react/ssr";
+import { CalendarIcon } from "@phosphor-icons/react/ssr";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
 import { api } from "../../../convex/_generated/api";
@@ -69,7 +69,7 @@ export default function UpcomingDeadlinesWidget(): ReactNode {
   return (
     <div data-tour="upcoming-deadlines" className={WIDGET_CONTAINER_CLASSES}>
       <WidgetHeader
-        icon={Calendar}
+        icon={CalendarIcon}
         title="Next 30 Days"
         count={hasDeadlines ? count : undefined}
         badgeVariant="default"
@@ -95,7 +95,7 @@ export default function UpcomingDeadlinesWidget(): ReactNode {
         </div>
       ) : (
         <WidgetEmptyState
-          icon={Calendar}
+          icon={CalendarIcon}
           message="No deadlines in next 30 days"
           description="You’re all caught up!"
         />

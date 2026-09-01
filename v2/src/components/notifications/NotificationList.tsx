@@ -26,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { handleOperationError } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import { safeFormatDistanceToNow } from "@/lib/utils/date";
-import { ArrowsClockwise as RefreshCw, Bell, Calendar, Check, CircleNotch, Clock, Info, Trash as Trash2, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { ArrowsClockwiseIcon as RefreshCw, BellIcon, CalendarIcon, CheckIcon, CircleNotchIcon, ClockIcon, InfoIcon, TrashIcon as Trash2, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { NotificationTabType } from "./NotificationTabs";
@@ -77,12 +77,12 @@ interface NotificationListProps {
 
 // Icon mapping for notification types
 const NOTIFICATION_ICONS: Record<NotificationType, PhosphorIcon> = {
-  deadline_reminder: Calendar,
+  deadline_reminder: CalendarIcon,
   status_change: RefreshCw,
   rfe_alert: AlertTriangle,
   rfi_alert: AlertTriangle,
-  auto_closure: Clock,
-  system: Info,
+  auto_closure: ClockIcon,
+  system: InfoIcon,
 };
 
 // Priority colors
@@ -280,7 +280,7 @@ function NotificationListItem({
             aria-label="Mark as read"
             title="Mark as read"
           >
-            <Check className="h-4 w-4" />
+            <CheckIcon className="h-4 w-4" />
           </button>
         )}
         <button
@@ -365,7 +365,7 @@ function EmptyState({ activeTab }: { activeTab: NotificationTabType }) {
           "bg-muted"
         )}
       >
-        <Bell className="h-8 w-8 text-muted-foreground" />
+        <BellIcon className="h-8 w-8 text-muted-foreground" />
       </div>
       <p className="text-lg font-heading font-bold text-foreground">{title}</p>{" "}
       <p className="text-sm text-muted-foreground mt-2 max-w-xs">{description}</p>
@@ -519,7 +519,7 @@ export default function NotificationList({
           >
             {isLoadingMore ? (
               <>
-                <CircleNotch className="size-4 mr-2 animate-spin" />
+                <CircleNotchIcon className="size-4 mr-2 animate-spin" />
                 Loading...
               </>
             ) : (

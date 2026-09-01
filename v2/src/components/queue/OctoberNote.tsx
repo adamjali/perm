@@ -1,4 +1,4 @@
-import { Warning } from "@phosphor-icons/react/ssr";
+import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 /**
  * Why one month in the backlog is a twelfth the size of its neighbours.
@@ -80,7 +80,7 @@ export function OctoberNote() {
         id="october-2025-heading"
         className="flex items-start gap-2 font-heading text-xl font-black sm:text-2xl"
       >
-        <Warning
+        <WarningIcon
           className="mt-1 h-5 w-5 shrink-0 text-data-warn-ink"
           weight="fill"
           aria-hidden="true"

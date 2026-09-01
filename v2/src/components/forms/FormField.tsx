@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle as CheckCircle2, Warning as AlertTriangle, WarningCircle as AlertCircle } from "@phosphor-icons/react";
+import { CheckCircleIcon as CheckCircle2, WarningIcon as AlertTriangle, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";

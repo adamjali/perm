@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState, useEffect, useTransition } from "react";
-import { CheckSquare, Plus, Upload, Warning as AlertTriangle } from "@phosphor-icons/react";
+import { CheckSquareIcon, PlusIcon, UploadIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
 import {
   DndContext,
   DragOverlay,
@@ -1021,7 +1021,7 @@ export function CasesPageClient() {
             onClick={handleToggleSelectionMode}
             aria-label={selectionMode ? "Exit selection mode" : "Enter selection mode"}
           >
-            <CheckSquare className="size-5 mr-2" />
+            <CheckSquareIcon className="size-5 mr-2" />
             {selectionMode ? "Exit Selection" : "Select Cases"}
           </Button>
           <Button
@@ -1030,7 +1030,7 @@ export function CasesPageClient() {
             onClick={() => setImportModalOpen(true)}
             aria-label="Import cases from JSON"
           >
-            <Upload className="size-5 mr-2" />
+            <UploadIcon className="size-5 mr-2" />
             Import
           </Button>
           <Button
@@ -1039,7 +1039,7 @@ export function CasesPageClient() {
             loading={isAddingCase}
             loadingText="Adding..."
           >
-            <Plus className="size-5 mr-2" />
+            <PlusIcon className="size-5 mr-2" />
             Add Case
           </Button>
         </div>

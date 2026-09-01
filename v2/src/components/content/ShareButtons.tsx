@@ -10,7 +10,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Check, Link } from "@phosphor-icons/react";
+import { CheckIcon, LinkIcon } from "@phosphor-icons/react";
 interface ShareButtonsProps {
   title: string;
   url: string;
@@ -91,7 +91,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
               exit={{ scale: 0 }}
               transition={{ type: "spring", stiffness: 500, damping: 25 }}
             >
-              <Check className="h-4 w-4 text-primary" />
+              <CheckIcon className="h-4 w-4 text-primary" />
             </motion.span>
           ) : (
             <motion.span
@@ -101,7 +101,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
               exit={{ scale: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <Link className="h-4 w-4" />
+              <LinkIcon className="h-4 w-4" />
             </motion.span>
           )}
         </AnimatePresence>

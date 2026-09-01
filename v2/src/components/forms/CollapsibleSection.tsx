@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CaretDown, CheckCircle as CheckCircle2, Warning as AlertTriangle } from "@phosphor-icons/react";
+import { CaretDownIcon, CheckCircleIcon as CheckCircle2, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import type { SectionState, SectionName } from "@/hooks/useSectionState";
@@ -141,7 +141,7 @@ export function CollapsibleSection({
 
           {/* Chevron */}
           <span className="text-muted-foreground transition-transform duration-200">
-            <CaretDown className={cn(
+            <CaretDownIcon className={cn(
               "h-5 w-5",
               isOpen && "rotate-180"
             )} />

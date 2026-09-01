@@ -17,7 +17,7 @@
  * Created: 2025-12-30
  */
 
-import { Bell } from "@phosphor-icons/react";
+import { BellIcon } from "@phosphor-icons/react";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
@@ -75,7 +75,7 @@ export default function NotificationBell({ className, children }: NotificationBe
           )}
         >
           {/* Bell Icon */}
-          <Bell
+          <BellIcon
             className={cn(
               "size-5 transition-transform duration-300 ease-out",
               // Hover animation matching ThemeToggle

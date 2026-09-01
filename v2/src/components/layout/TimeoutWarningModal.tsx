@@ -19,7 +19,7 @@
 
 import { useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Clock, SignOut } from "@phosphor-icons/react";
+import { ClockIcon, SignOutIcon } from "@phosphor-icons/react";
 import { formatTimeRemaining } from "@/lib/hooks/useInactivityTimeout";
 import { Z_INDEX } from "@/lib/constants/zIndex";
 
@@ -101,7 +101,7 @@ export default function TimeoutWarningModal({
               isUrgent ? "bg-red-100 dark:bg-red-900/30" : "bg-amber-100 dark:bg-amber-900/30"
             }`}
           >
-            <Clock
+            <ClockIcon
               className={`size-8 ${isUrgent ? "text-red-600" : "text-amber-600"}`}
             />
           </div>
@@ -151,7 +151,7 @@ export default function TimeoutWarningModal({
             className="flex-1 gap-2"
             onClick={onLogout}
           >
-            <SignOut className="size-4" />
+            <SignOutIcon className="size-4" />
             Log Out Now
           </Button>
           <Button

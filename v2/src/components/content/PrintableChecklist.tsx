@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useCallback, useEffect, useState } from "react";
-import { ArrowCounterClockwise as RotateCcw, Checks as CheckCheck, Printer } from "@phosphor-icons/react";
+import { ArrowCounterClockwiseIcon as RotateCcw, ChecksIcon as CheckCheck, PrinterIcon } from "@phosphor-icons/react";
 
 /**
  * Generate a localStorage key from the checklist title.
@@ -237,7 +237,7 @@ export default function PrintableChecklist({
           onClick={handlePrint}
           className={`${btnBase} bg-card text-foreground`}
         >
-          <Printer className="h-3.5 w-3.5" />
+          <PrinterIcon className="h-3.5 w-3.5" />
           Print
         </button>
       </div>{" "}

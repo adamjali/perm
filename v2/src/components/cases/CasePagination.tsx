@@ -14,7 +14,7 @@
  * - Monospace font for numbers
  */
 
-import { CaretLeft, CaretRight } from "@phosphor-icons/react/ssr";
+import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -130,7 +130,7 @@ export function CasePagination({
           aria-label="Previous page"
           className="gap-1"
         >
-          <CaretLeft className="size-4" />
+          <CaretLeftIcon className="size-4" />
           Previous
         </Button>
 
@@ -144,7 +144,7 @@ export function CasePagination({
           className="gap-1"
         >
           Next
-          <CaretRight className="size-4" />
+          <CaretRightIcon className="size-4" />
         </Button>
 
         {/* Page Size Dropdown */}

@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
-import { ChatText, Plus, Trash as Trash2, X } from "@phosphor-icons/react/ssr";
+import { ChatTextIcon, PlusIcon, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react/ssr";
 import { formatDistanceToNow } from 'date-fns';
 import { springConfig } from '@/lib/animations';
 import { cn } from '@/lib/utils';
@@ -93,7 +93,7 @@ export function ChatHistory({
                 onClick={onClose}
                 aria-label="Close history"
               >
-                <X className="h-4 w-4" />
+                <XIcon className="h-4 w-4" />
               </Button>
             </div>
 
@@ -106,7 +106,7 @@ export function ChatHistory({
                 }}
                 className="w-full shadow-hard-sm"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <PlusIcon className="h-4 w-4 mr-2" />
                 New Conversation
               </Button>
             </div>
@@ -115,7 +115,7 @@ export function ChatHistory({
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {!conversations || conversations.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
-                  <ChatText className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <ChatTextIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   <p className="text-sm">No conversations yet</p>
                 </div>
               ) : (

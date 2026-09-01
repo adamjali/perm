@@ -18,7 +18,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Info } from "@phosphor-icons/react/ssr";
+import { InfoIcon } from "@phosphor-icons/react/ssr";
 import { springConfig, useReducedMotion } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +57,7 @@ export function NotLegalAdviceNotice({
         className,
       )}
     >
-      <Info
+      <InfoIcon
         className={cn(
           "shrink-0",
           isChat ? "mt-px h-3 w-3" : "mt-0.5 h-3.5 w-3.5",

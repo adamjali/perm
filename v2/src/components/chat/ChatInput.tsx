@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback, KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
-import { Microphone as Mic, MicrophoneSlash, PaperPlaneTilt as Send, Square } from "@phosphor-icons/react";
+import { MicrophoneIcon as Mic, MicrophoneSlashIcon, PaperPlaneTiltIcon as Send, SquareIcon } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import { captureError } from '@/lib/sentry';
 
@@ -335,7 +335,7 @@ export function ChatInput({
           aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
         >
           {isRecording ? (
-            <MicrophoneSlash className="h-4 w-4" />
+            <MicrophoneSlashIcon className="h-4 w-4" />
           ) : (
             <Mic className="h-4 w-4" />
           )}
@@ -351,7 +351,7 @@ export function ChatInput({
           className="shrink-0 shadow-hard-sm"
           aria-label="Stop generating"
         >
-          <Square className="h-4 w-4 fill-current" />
+          <SquareIcon className="h-4 w-4 fill-current" />
         </Button>
       ) : (
         <Button

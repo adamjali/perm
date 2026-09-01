@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { CaretLeft, CaretRight, Check, Copy, FileText, MagnifyingGlass as Search, Pencil, Trash as Trash2, X } from "@phosphor-icons/react";
+import { CaretLeftIcon, CaretRightIcon, CheckIcon, CopyIcon, FileTextIcon, MagnifyingGlassIcon as Search, PencilIcon, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -238,7 +238,7 @@ export function TemplateManagementModal({
                 onClick={handleBackToList}
                 className="w-fit -ml-2 mb-2 gap-1.5 min-h-[44px]"
               >
-                <CaretLeft className="h-4 w-4" />
+                <CaretLeftIcon className="h-4 w-4" />
                 Back to Templates
               </Button>
             )}
@@ -279,7 +279,7 @@ export function TemplateManagementModal({
               <ScrollArea className="flex-1">
                 {sortedTemplates.length === 0 ? (
                   <div className="flex flex-col items-center justify-center p-6 sm:p-8 text-center">
-                    <FileText className="h-10 sm:h-12 w-10 sm:w-12 text-muted-foreground mb-3" />
+                    <FileTextIcon className="h-10 sm:h-12 w-10 sm:w-12 text-muted-foreground mb-3" />
                     <p className="text-sm text-muted-foreground">
                       {searchQuery
                         ? "No templates match your search"
@@ -302,7 +302,7 @@ export function TemplateManagementModal({
                       >
                         <div className="flex items-center justify-between gap-2 min-w-0">
                           <span className="font-medium truncate flex-1 min-w-0">{template.name}</span>
-                          <CaretRight className="h-5 w-5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                          <CaretRightIcon className="h-5 w-5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                         </div>
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {template.description}
@@ -362,7 +362,7 @@ export function TemplateManagementModal({
                               disabled={isProcessing}
                               className="min-h-[44px] min-w-[44px]"
                             >
-                              <X className="h-5 w-5 sm:h-4 sm:w-4" />
+                              <XIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                             </Button>
                             <Button
                               size="sm"
@@ -374,7 +374,7 @@ export function TemplateManagementModal({
                               }
                               className="min-h-[44px] min-w-[44px]"
                             >
-                              <Check className="h-5 w-5 sm:h-4 sm:w-4" />
+                              <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                             </Button>
                           </>
                         ) : (
@@ -386,9 +386,9 @@ export function TemplateManagementModal({
                               className="gap-1.5 min-h-[44px] min-w-[44px]"
                             >
                               {isCopied ? (
-                                <Check className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
+                                <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
                               ) : (
-                                <Copy className="h-5 w-5 sm:h-4 sm:w-4" />
+                                <CopyIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                               )}
                             </Button>
                             {onUpdate && (
@@ -398,7 +398,7 @@ export function TemplateManagementModal({
                                 onClick={handleStartEdit}
                                 className="min-h-[44px] min-w-[44px]"
                               >
-                                <Pencil className="h-5 w-5 sm:h-4 sm:w-4" />
+                                <PencilIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                               </Button>
                             )}
                             {onDelete && (
@@ -426,9 +426,9 @@ export function TemplateManagementModal({
                           className="gap-1.5 min-h-[44px]"
                         >
                           {isCopied ? (
-                            <Check className="h-5 w-5 text-green-600" />
+                            <CheckIcon className="h-5 w-5 text-green-600" />
                           ) : (
-                            <Copy className="h-5 w-5" />
+                            <CopyIcon className="h-5 w-5" />
                           )}
                           <span className="text-sm">Copy</span>
                         </Button>
@@ -439,7 +439,7 @@ export function TemplateManagementModal({
                             onClick={handleStartEdit}
                             className="gap-1.5 min-h-[44px]"
                           >
-                            <Pencil className="h-5 w-5" />
+                            <PencilIcon className="h-5 w-5" />
                             <span className="text-sm">Edit</span>
                           </Button>
                         )}
@@ -536,7 +536,7 @@ export function TemplateManagementModal({
                     {!editMode && onSelect && (
                       <div className="p-3 sm:p-4 border-t border-border">
                         <Button onClick={handleUseTemplate} className="w-full gap-2 min-h-[48px]">
-                          <FileText className="h-5 w-5 sm:h-4 sm:w-4" />
+                          <FileTextIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                           Use This Template
                         </Button>
                       </div>
@@ -551,7 +551,7 @@ export function TemplateManagementModal({
                       isMobile && "hidden" // On mobile, we show list by default
                     )}
                   >
-                    <FileText className="h-12 sm:h-16 w-12 sm:w-16 text-muted-foreground mb-4" />
+                    <FileTextIcon className="h-12 sm:h-16 w-12 sm:w-16 text-muted-foreground mb-4" />
                     <p className="text-base sm:text-lg font-medium text-muted-foreground">
                       Select a template
                     </p>{" "}

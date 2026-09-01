@@ -36,7 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowSquareOut, Bug, Download, Envelope as Mail, Info, Lightbulb, Lightning as Zap, PlayCircle, Trash as Trash2, Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { ArrowSquareOutIcon, BugIcon, DownloadIcon, EnvelopeIcon as Mail, InfoIcon, LightbulbIcon, LightningIcon as Zap, PlayCircleIcon, TrashIcon as Trash2, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleOperationError } from "@/lib/errors";
@@ -209,7 +209,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
       >
         {/* Header */}
         <div className="flex items-center gap-2 mb-2">
-          <Info className="w-5 h-5 text-foreground" />
+          <InfoIcon className="w-5 h-5 text-foreground" />
           <h3 className="font-heading font-bold text-lg text-foreground">
             Help & Support
           </h3>
@@ -233,7 +233,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             <div className="text-center">
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
                 Contact Support
-                <ArrowSquareOut className="h-3 w-3 text-muted-foreground" />
+                <ArrowSquareOutIcon className="h-3 w-3 text-muted-foreground" />
               </span>{" "}
               <span className="text-xs text-muted-foreground">{SUPPORT_EMAIL}</span>
             </div>
@@ -247,12 +247,12 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             className="group flex flex-col items-center gap-3 border-2 border-border bg-card p-4 shadow-hard-sm transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard active:translate-x-0.5 active:translate-y-0.5 active:shadow-hard-sm"
           >
             <div className="p-3 bg-destructive/10 border-2 border-destructive/20 group-hover:bg-destructive/20 transition-colors">
-              <Bug className="h-6 w-6 text-destructive" />
+              <BugIcon className="h-6 w-6 text-destructive" />
             </div>
             <div className="text-center">
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
                 Report a Bug
-                <ArrowSquareOut className="h-3 w-3 text-muted-foreground" />
+                <ArrowSquareOutIcon className="h-3 w-3 text-muted-foreground" />
               </span>{" "}
               <span className="text-xs text-muted-foreground">
                 GitHub Issues
@@ -268,12 +268,12 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             className="group flex flex-col items-center gap-3 border-2 border-border bg-card p-4 shadow-hard-sm transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard active:translate-x-0.5 active:translate-y-0.5 active:shadow-hard-sm"
           >
             <div className="p-3 bg-yellow-500/10 border-2 border-yellow-500/20 group-hover:bg-yellow-500/20 transition-colors">
-              <Lightbulb className="h-6 w-6 text-yellow-500" />
+              <LightbulbIcon className="h-6 w-6 text-yellow-500" />
             </div>
             <div className="text-center">
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
                 Request Feature
-                <ArrowSquareOut className="h-3 w-3 text-muted-foreground" />
+                <ArrowSquareOutIcon className="h-3 w-3 text-muted-foreground" />
               </span>{" "}
               <span className="text-xs text-muted-foreground">
                 GitHub Issues
@@ -299,7 +299,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               {isRestarting ? (
                 <div className="h-6 w-6 border-2 border-primary border-t-transparent animate-spin rounded-full" />
               ) : (
-                <PlayCircle className="h-6 w-6 text-primary" />
+                <PlayCircleIcon className="h-6 w-6 text-primary" />
               )}
             </div>
             <div className="text-center">
@@ -320,7 +320,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
         style={{ boxShadow: "var(--shadow-hard)" }}
       >
         <div className="flex items-center gap-2 mb-2">
-          <Download className="w-5 h-5 text-foreground" />
+          <DownloadIcon className="w-5 h-5 text-foreground" />
           <h3 className="font-heading font-bold text-lg text-foreground">
             Your Data
           </h3>
@@ -336,7 +336,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
           loading={isExporting}
           loadingText="Exporting..."
         >
-          <Download className="w-4 h-4 mr-2" />
+          <DownloadIcon className="w-4 h-4 mr-2" />
           Download everything (.json)
         </Button>
       </div>
@@ -413,7 +413,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
       {/* App Info Card */}
       <div className="bg-muted/30 border border-border p-4">
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Info className="h-4 w-4" />
+          <InfoIcon className="h-4 w-4" />
           <span className="font-mono text-xs">PERM Tracker v{appVersion}</span>{" "}
           <span className="text-muted-foreground">|</span>{" "}
           <span className="text-xs">&copy; {currentYear} PERM Tracker</span>

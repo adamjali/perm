@@ -12,7 +12,7 @@
 
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
-import { ArrowCounterClockwise as RefreshCcw, House as Home } from "@phosphor-icons/react";
+import { ArrowCounterClockwiseIcon as RefreshCcw, HouseIcon as Home } from "@phosphor-icons/react";
 import { isAuthError, isStaleDeploymentError, isLikelySessionTimeout } from "./auth-error";
 import { ErrorDisplay } from "./ErrorDisplay";
 

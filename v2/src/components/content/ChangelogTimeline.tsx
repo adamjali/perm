@@ -12,7 +12,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { Calendar, Tag } from "@phosphor-icons/react";
+import { CalendarIcon, TagIcon } from "@phosphor-icons/react";
 import type { PostSummary } from "@/lib/content/types";
 import { useScrollStagger } from "@/lib/hooks/useGSAP";
 
@@ -99,7 +99,7 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
                   give Google a clear date signal alongside the JSON-LD ItemList. */}
               <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <span className="flex items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5" />
+                  <CalendarIcon className="h-3.5 w-3.5" />
                   <time dateTime={post.meta.date}>{fmtDate(post.meta.date)}</time>
                 </span>{" "}
                 {post.meta.updated && post.meta.updated !== post.meta.date && (
@@ -135,7 +135,7 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
               {/* Tags */}
               {post.meta.tags.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <Tag className="h-3 w-3 text-muted-foreground" />
+                  <TagIcon className="h-3 w-3 text-muted-foreground" />
                   {post.meta.tags.map((tag) => (
                     // Mapped siblings glue: "changelogupdatetimelineaiux".
                     <React.Fragment key={tag}>

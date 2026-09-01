@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowRight, Briefcase, CalendarMinus, CalendarPlus, CaretDown, Check, CircleNotch, Copy, FilePlus, FileText, Flag, FloppyDisk as Save, Pencil, Trash as Trash2 } from "@phosphor-icons/react";
+import { ArrowRightIcon, BriefcaseIcon, CalendarMinusIcon, CalendarPlusIcon, CaretDownIcon, CheckIcon, CircleNotchIcon, CopyIcon, FilePlusIcon, FileTextIcon, FlagIcon, FloppyDiskIcon as Save, PencilIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { ConvexError } from "convex/values";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { calculateNextAction, calculateNextDeadline } from "./next-up-section.utils";
@@ -236,7 +236,7 @@ export function OverviewTab({
                   const mainContent = (
                     <>
                       <div className="next-up-icon">
-                        <FileText className="h-5 w-5" />
+                        <FileTextIcon className="h-5 w-5" />
                       </div>
                       <div style={{ flex: 1 }}>
                         <div className="next-up-label">Next Up</div>
@@ -250,11 +250,11 @@ export function OverviewTab({
                           className="shrink-0"
                           aria-hidden="true"
                         >
-                          <CaretDown className="h-5 w-5 text-muted-foreground" />
+                          <CaretDownIcon className="h-5 w-5 text-muted-foreground" />
                         </motion.div>
                       )}
                       {navigateUrl && !canExpand && (
-                        <ArrowRight className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden="true" />
+                        <ArrowRightIcon className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden="true" />
                       )}
                     </>
                   );
@@ -341,7 +341,7 @@ export function OverviewTab({
                 <div className="detail-card">
                   <div className="detail-card-head ch-pwd">
                     <span className="flex items-center gap-1.5">
-                      <Flag className="h-3.5 w-3.5" />
+                      <FlagIcon className="h-3.5 w-3.5" />
                       Prevailing Wage
                     </span>
                     {caseData.pwdDeterminationDate && (
@@ -409,7 +409,7 @@ export function OverviewTab({
               <div className="detail-card">
                 <div className="detail-card-head ch-yellow">
                   <span className="flex items-center gap-1.5">
-                    <Briefcase className="h-3.5 w-3.5" />
+                    <BriefcaseIcon className="h-3.5 w-3.5" />
                     Job Description
                   </span>
                   <div className="flex items-center gap-1">
@@ -420,7 +420,7 @@ export function OverviewTab({
                         className="icon-btn"
                         title="Copy to clipboard"
                       >
-                        {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                        {isCopied ? <CheckIcon className="h-3.5 w-3.5" /> : <CopyIcon className="h-3.5 w-3.5" />}
                       </button>
                     )}
                     {jobDescProps && !isEditingJobDesc && (
@@ -430,7 +430,7 @@ export function OverviewTab({
                         className="icon-btn"
                         title="Edit job description"
                       >
-                        <Pencil className="h-3.5 w-3.5" />
+                        <PencilIcon className="h-3.5 w-3.5" />
                       </button>
                     )}
                   </div>
@@ -517,11 +517,11 @@ export function OverviewTab({
                           )}
                         >
                           {isSavingTemplate ? (
-                            <CircleNotch className="h-3 w-3 animate-spin" />
+                            <CircleNotchIcon className="h-3 w-3 animate-spin" />
                           ) : isExistingTemplateName ? (
                             <Save className="h-3 w-3" />
                           ) : (
-                            <FilePlus className="h-3 w-3" />
+                            <FilePlusIcon className="h-3 w-3" />
                           )}
                           {isSavingTemplate
                             ? (isExistingTemplateName ? "Updating..." : "Saving...")
@@ -545,7 +545,7 @@ export function OverviewTab({
                         >
                           {isSavingJobDesc ? (
                             <span className="flex items-center gap-1">
-                              <CircleNotch className="h-3 w-3 animate-spin" />
+                              <CircleNotchIcon className="h-3 w-3 animate-spin" />
                               Saving...
                             </span>
                           ) : "Save"}
@@ -653,12 +653,12 @@ export function OverviewTab({
             >
               {isOnTimeline ? (
                 <>
-                  <CalendarMinus className="h-3.5 w-3.5" />
+                  <CalendarMinusIcon className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Remove</span>
                 </>
               ) : (
                 <>
-                  <CalendarPlus className="h-3.5 w-3.5" />
+                  <CalendarPlusIcon className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Add to Timeline</span>
                 </>
               )}

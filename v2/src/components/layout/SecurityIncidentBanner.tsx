@@ -23,7 +23,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Warning as AlertTriangle, X } from "@phosphor-icons/react";
+import { WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react";
 
 const EXPIRES_AT_UTC = new Date("2026-04-27T00:00:00Z").getTime();
 const LS_KEY = "security-incident-2026-04-19-dismissed";
@@ -112,7 +112,7 @@ export function SecurityIncidentBanner() {
           aria-label="Dismiss security notice"
           className="shrink-0 rounded-none p-1 text-amber-700 hover:bg-amber-100 hover:text-amber-900 dark:text-amber-400 dark:hover:bg-amber-900/50 dark:hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
         >
-          <X className="h-4 w-4" aria-hidden="true" />
+          <XIcon className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Fragment } from "react";
-import { Warning } from "@phosphor-icons/react/ssr";
+import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { formatMonth } from "@/lib/dolFormat";
 import { findFront, type CohortMonth } from "@/lib/liveQueue";
@@ -29,7 +29,7 @@ export function LiveQueueBoard({ months }: { months: readonly CohortMonth[] }) {
           the reader has already absorbed cannot be un-absorbed by a footnote. */}
       {!MIRROR_COMPLETE ? (
         <p className="flex items-start gap-2 border-b-2 border-border bg-data-warn/8 px-6 py-4 text-base text-foreground/80 sm:px-8">
-          <Warning
+          <WarningIcon
             className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink"
             weight="fill"
             aria-hidden="true"

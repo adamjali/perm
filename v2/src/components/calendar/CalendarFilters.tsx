@@ -21,7 +21,7 @@
 import * as React from "react";
 import { useMutation } from "convex/react";
 import { motion, AnimatePresence } from "motion/react";
-import { CaretDown, CaretUp, Funnel as Filter, FunnelSimple } from "@phosphor-icons/react/ssr";
+import { CaretDownIcon, CaretUpIcon, FunnelIcon as Filter, FunnelSimpleIcon } from "@phosphor-icons/react/ssr";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -309,7 +309,7 @@ export function CalendarFilters({
             className="gap-2 min-h-[44px] flex-1 sm:flex-initial"
             data-testid="case-selection-btn"
           >
-            <FunnelSimple className="size-4" />
+            <FunnelSimpleIcon className="size-4" />
             <span>Cases</span>{" "}
             <span
               className={cn(
@@ -334,9 +334,9 @@ export function CalendarFilters({
             <Filter className="size-4" />
             <span className="hidden sm:inline">Deadline Filters</span>
             {isFiltersExpanded ? (
-              <CaretUp className="size-4" />
+              <CaretUpIcon className="size-4" />
             ) : (
-              <CaretDown className="size-4" />
+              <CaretDownIcon className="size-4" />
             )}
           </Button>
         </div>

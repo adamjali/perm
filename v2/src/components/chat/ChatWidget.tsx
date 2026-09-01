@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChatText } from "@phosphor-icons/react";
+import { ChatTextIcon } from "@phosphor-icons/react";
 import { Button } from '@/components/ui/button';
 import { ChatPanel } from './ChatPanel';
 import { type ActionMode } from './ActionModeToggle';
@@ -98,7 +98,7 @@ export function ChatWidget({
               )}
               aria-label="Open chat"
             >
-              <ChatText className="h-6 w-6" />
+              <ChatTextIcon className="h-6 w-6" />
             </Button>
           </motion.div>
         )}
