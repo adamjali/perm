@@ -55,6 +55,7 @@ import {
   fieldDistribution,
   getBySlug,
   listByKind,
+  PRERENDERED_ENTITY_HEAD,
 } from "@/lib/turso/entities";
 
 // The disclosure files are quarterly, so an hourly window bought
@@ -155,7 +156,7 @@ export async function generateStaticParams() {
   // for an hour. Read from the entity TABLE, so a prerendered slug is one
   // `getBySlug` can find - the aggregate document slugs its own copy of the
   // top 250 separately and the two are not guaranteed to agree.
-  const rows = await listByKind(KIND, 100);
+  const rows = await listByKind(KIND, PRERENDERED_ENTITY_HEAD);
   return rows.map((r) => ({ slug: r.slug }));
 }
 

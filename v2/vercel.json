@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "ignoreCommand": "git rev-parse HEAD^ >/dev/null 2>&1 || exit 1; git diff --name-only HEAD^ HEAD | grep -qvE '^(v2/scripts/|\\.github/|\\.planning/|v2/docs/)|\\.md$|/__tests__/|\\.test\\.tsx?$|^v2/vitest\\.' && exit 1 || exit 0"
+}

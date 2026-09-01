@@ -50,6 +50,27 @@ export const getBySlug = getEntityBySlug;
  * through `getAllEntities` instead - so it is not carried over. Adding it
  * back is one `AND rank > ?`.
  */
+/**
+ * How many entity detail pages are PRERENDERED at build time. The rest are
+ * valid routes that render on first request and cache for 30 days.
+ *
+ * WHY 25 AND NOT 100. Build CPU is billed by the minute and it is this
+ * project's largest Vercel line by far - $13.20 of a $20.05 month, against
+ * 12 cents of function invocations. Measured in the build log: 483 static
+ * pages took 2.4 minutes of a 6-minute build, and 303 of those pages were
+ * these three entity routes at 100 each.
+ *
+ * 25 rather than 10 because these are ordered by filing VOLUME, so the head
+ * is also the traffic. Prerendering the top 25 keeps the pages anyone
+ * actually opens warm from the first request after a deploy; #26 and beyond
+ * pay one cold render each, once per 30 days, at a cost that does not show
+ * up on the bill.
+ *
+ * The floor on lowering it further is UX, not correctness: `dynamicParams`
+ * is true on these routes, so every slug still resolves.
+ */
+export const PRERENDERED_ENTITY_HEAD = 25;
+
 export async function listByKind(kind: EntityKind, limit = 250): Promise<EntityRow[]> {
   const take = Math.min(Math.max(1, Math.floor(limit)), 2000);
   const seed = await getEntitySeed(kind, take);
