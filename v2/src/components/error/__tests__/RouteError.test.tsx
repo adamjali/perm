@@ -9,21 +9,27 @@ vi.mock("@sentry/nextjs", () => ({
 }));
 
 // Mock the Phosphor icons this tree renders. These are the package's EXPORT
-// names, not the local aliases the components import them under.
+// names, not the local aliases the components import them under, so they carry
+// the `*Icon` suffix even where the component imports them as `Home` or
+// `RefreshCcw`. THEY MUST TRACK THE SOURCE IMPORTS: a mock factory replaces the
+// whole module, so an export the component asks for and the factory does not
+// define is a hard error at render ("No X export is defined on the mock"), not
+// a silently missing icon. That is exactly how the 2026-09-01 `*Icon`
+// migration surfaced here.
 //
 // Both specifiers are needed: RouteError is a client component and takes its
 // icons from the main entry, while the warning triangle is rendered by
 // ErrorDisplay, which has no "use client" and so resolves to /ssr. Mocking one
 // leaves the other drawing a real SVG that carries no test id.
 vi.mock("@phosphor-icons/react", () => ({
-  Warning: () => <div data-testid="alert-triangle-icon" />,
-  ArrowCounterClockwise: () => <div data-testid="refresh-icon" />,
-  House: () => <div data-testid="home-icon" />,
+  WarningIcon: () => <div data-testid="alert-triangle-icon" />,
+  ArrowCounterClockwiseIcon: () => <div data-testid="refresh-icon" />,
+  HouseIcon: () => <div data-testid="home-icon" />,
 }));
 vi.mock("@phosphor-icons/react/ssr", () => ({
-  Warning: () => <div data-testid="alert-triangle-icon" />,
-  ArrowCounterClockwise: () => <div data-testid="refresh-icon" />,
-  House: () => <div data-testid="home-icon" />,
+  WarningIcon: () => <div data-testid="alert-triangle-icon" />,
+  ArrowCounterClockwiseIcon: () => <div data-testid="refresh-icon" />,
+  HouseIcon: () => <div data-testid="home-icon" />,
 }));
 
 describe("RouteError", () => {

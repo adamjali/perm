@@ -79,3 +79,58 @@ Caret-safe `pnpm update` sweep + targeted security fixes, verified through the f
 **`pnpm audit` after the sweep:** only the non-exploitable `js-yaml` advisory remains (see held-back table — gray-matter API incompatibility). The `js-yaml >=4.2.0` override was attempted and **reverted** because it broke gray-matter's `safeLoad()` frontmatter parsing.
 
 **Superseded Dependabot PRs:** #95, #96, #109, #110, #111.
+
+---
+
+## September 2026 audit — AI SDK v7, and one deliberate hold-back
+
+**Date:** 2026-09-01
+**Status:** RESOLVED
+
+### AI SDK v6 to v7
+
+`ai` 6.0.273 to **7.0.87**. The version that matters underneath is
+`@ai-sdk/provider`, which went **3.x to 4.x**, i.e. `LanguageModelV3` to
+`LanguageModelV4`. This repo implements that interface directly in
+`FallbackModel`, so the major is not a passive bump.
+
+| Package | → Version |
+|---------|-----------|
+| `ai` | 7.0.87 |
+| `@ai-sdk/react` | 4.0.90 |
+| `@ai-sdk/google` | 4.0.59 |
+| `@ai-sdk/groq` | 4.0.35 |
+| `@ai-sdk/mistral` | 4.0.37 |
+| `@ai-sdk/cerebras` | 3.0.41 |
+| `@openrouter/ai-sdk-provider` | 3.0.0 |
+| `@ai-sdk/provider` | 4.0.9 (**newly explicit**) |
+
+**Migration notes:**
+- `LanguageModelV3*` to `LanguageModelV4*` throughout `src/lib/ai/providers.ts`,
+  and `specificationVersion` `'v3'` to `'v4'` in BOTH the `FallbackModel` class
+  and the `wrapMistralModel` middleware.
+- `system:` to `instructions:` and `onFinish` to `onEnd` on the **`ai`** package
+  only. **`useChat`'s `onFinish` in `@ai-sdk/react` is NOT deprecated** and was
+  deliberately left alone; a blanket rename breaks the persistence hook.
+- `generateObject` to `generateText` with `output: Output.object({ schema })`.
+  The standalone function is deprecated in v7.
+- `@ai-sdk/provider` was being imported by `providers.ts` while absent from
+  `package.json`, resolving only by hoisting. Now an explicit dependency.
+
+**None of the provider packages declare a peer on `ai`,** so a version mismatch
+here is a runtime failure, not an install error. The compatibility that gated
+this upgrade was `@openrouter/ai-sdk-provider`, whose 3.0.0 declares
+`peer ai: ^7.0.0`. Verified before starting, not after.
+
+## Packages intentionally held back (September 2026)
+
+| Package | Held at | Latest | Why |
+|---------|---------|--------|-----|
+| `@sentry/nextjs` | **~10.70.0** | 10.73.0 | 10.72+ stopped depending on `@apm-js-collab/code-transformer-bundler-plugins` and **vendors** it instead, copying an ESM file that runs `fileURLToPath(import.meta.url)` at module load into their CJS build. Vitest cannot resolve that to a `file://` URL, so importing it throws `ERR_INVALID_URL_SCHEME`. Measured on 10.73.0: **24 test files failed and 109 more never ran** (2,759 tests collected against a 6,092 baseline). **The production webpack build is unaffected**, which is why this is invisible until the suite runs. `dependabot.yml` ignores `>=10.71.0` with the same reasoning. Revisit when upstream ships a vendored copy that does not touch `import.meta.url`. |
+| `image-size` (transitive, via `@storybook/nextjs-vite`) | <=2.0.2 | — | Unchanged from the Audit 7 policy, re-verified: **2.0.2 IS the latest published version** and it is the vulnerable one, so there is no override target. devDependency only, never ships. |
+
+**Superseded Dependabot PRs:** #23, #24, #25 (Actions, superseded by normalising
+every workflow to v7), #26, #27 (grouped, superseded by the caret bulk update —
+note #27 also wanted the Sentry bump that was deliberately reverted), #28, #29,
+#30 (the `@ai-sdk` provider majors, superseded by going further to the full v7
+upgrade).

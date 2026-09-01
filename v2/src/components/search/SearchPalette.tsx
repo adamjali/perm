@@ -22,7 +22,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
-import { MagnifyingGlass } from "@phosphor-icons/react";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 
 import {
   LEARN_NAV_LINKS,
@@ -120,7 +120,11 @@ export function SearchPalette({
   const [entityHits, setEntityHits] = React.useState<EntityHit[]>([]);
   const [searchingEntities, setSearchingEntities] = React.useState(false);
 
-  const pages = React.useMemo(staticIndex, []);
+  // Inline arrow, not a bare `staticIndex` reference: `react-hooks/use-memo`
+  // requires the first argument to be an inline function expression so the
+  // compiler can see the computation it is memoizing. Behaviour is identical,
+  // staticIndex takes no arguments.
+  const pages = React.useMemo(() => staticIndex(), []);
   const caseNumber = looksLikeCaseNumber(query);
   const month = looksLikeMonth(query);
 
@@ -203,7 +207,7 @@ export function SearchPalette({
         className="w-full max-w-xl border-3 border-border bg-background text-foreground shadow-hard-lg"
       >
         <div className="flex items-center gap-2 border-b-2 border-border px-4">
-          <MagnifyingGlass className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <MagnifyingGlassIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
           <Command.Input
             autoFocus
             value={query}

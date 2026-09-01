@@ -1,5 +1,12 @@
 # GitHub Audit History
 
+<!-- IN_PROGRESS
+run: full (all phases, deploy gated)
+started: 2026-09-01 07:19
+phase: 1 (audit)
+-->
+
+
 ## Saved Policies
 <!-- Persistent rules applied automatically on future audits -->
 - **sharp — track the CVE floor, never pin to Next's copy**: sharp is NOT a peerDependency of next (next declares only sass, react, react-dom, @playwright/test, @opentelemetry/api, babel-plugin-react-compiler). Duplicate libvips comes from two *installed copies*, which a `pnpm.overrides.sharp` entry collapses. Audit 6: sharp was pinned to ^0.34.5 "to match Next's peer" while 0.34.5 carried a HIGH CVE (GHSA-f88m-g3jw-g9cj), and the Dependabot bump was wrongly waved off. Always check the advisory before declining a bump on peer-compatibility grounds.

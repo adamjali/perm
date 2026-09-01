@@ -45,10 +45,10 @@ import { createCerebras } from '@ai-sdk/cerebras';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { wrapLanguageModel } from 'ai';
 import type {
-  LanguageModelV3,
-  LanguageModelV3CallOptions,
-  LanguageModelV3GenerateResult,
-  LanguageModelV3StreamResult,
+  LanguageModelV4,
+  LanguageModelV4CallOptions,
+  LanguageModelV4GenerateResult,
+  LanguageModelV4StreamResult,
 } from '@ai-sdk/provider';
 import { captureError, addBreadcrumb } from '@/lib/sentry';
 import { estimateTokensOf } from './compaction';
@@ -140,11 +140,11 @@ function toMistralToolCallId(id: string): string {
  * Without this, historical IDs from other providers in the same conversation
  * (16-char Gemini IDs, etc.) cause Mistral to 400.
  */
-function wrapMistralModel(model: LanguageModelV3): LanguageModelV3 {
+function wrapMistralModel(model: LanguageModelV4): LanguageModelV4 {
   return wrapLanguageModel({
     model,
     middleware: {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       transformParams: async ({ params }) => {
         const transformedPrompt = params.prompt.map((msg) => {
           if (msg.role === 'assistant' && Array.isArray(msg.content)) {
@@ -186,7 +186,7 @@ export { toMistralToolCallId, wrapMistralModel };
 // =============================================================================
 
 interface ModelConfig {
-  model: LanguageModelV3;
+  model: LanguageModelV4;
   name: string;
   /** Max estimated input tokens. Skip this model if input exceeds this. */
   maxInputTokens?: number;
@@ -198,7 +198,7 @@ interface ModelConfig {
  * model tokens by ~30-50% due to JSON overhead, biased toward skipping
  * marginal models rather than sending oversized payloads.
  */
-function estimateInputTokens(options: LanguageModelV3CallOptions): number {
+function estimateInputTokens(options: LanguageModelV4CallOptions): number {
   return estimateTokensOf(options);
 }
 
@@ -254,8 +254,8 @@ function formatError(error: unknown): string {
  * doStream resolves) are outside the fallback loop. Acceptable because most
  * errors (rate limit, quota, auth, 404) happen at connection time.
  */
-export class FallbackModel implements LanguageModelV3 {
-  readonly specificationVersion = 'v3' as const;
+export class FallbackModel implements LanguageModelV4 {
+  readonly specificationVersion = 'v4' as const;
 
   /** Last model that succeeded (per-instance — use forRequest() for isolation). */
   private _lastUsedModel = '';
@@ -300,8 +300,8 @@ export class FallbackModel implements LanguageModelV3 {
 
   private async tryModels<T>(
     mode: 'generate' | 'stream',
-    invoke: (model: LanguageModelV3) => PromiseLike<T>,
-    options?: LanguageModelV3CallOptions,
+    invoke: (model: LanguageModelV4) => PromiseLike<T>,
+    options?: LanguageModelV4CallOptions,
   ): Promise<T> {
     const errors: Array<{ name: string; error: string }> = [];
     const estimatedTokens = options ? estimateInputTokens(options) : undefined;
@@ -353,11 +353,11 @@ export class FallbackModel implements LanguageModelV3 {
     );
   }
 
-  async doGenerate(options: LanguageModelV3CallOptions): Promise<LanguageModelV3GenerateResult> {
+  async doGenerate(options: LanguageModelV4CallOptions): Promise<LanguageModelV4GenerateResult> {
     return this.tryModels('generate', (model) => model.doGenerate(options), options);
   }
 
-  async doStream(options: LanguageModelV3CallOptions): Promise<LanguageModelV3StreamResult> {
+  async doStream(options: LanguageModelV4CallOptions): Promise<LanguageModelV4StreamResult> {
     return this.tryModels('stream', (model) => model.doStream(options), options);
   }
 }

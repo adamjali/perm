@@ -304,7 +304,7 @@ export async function POST(req: Request) {
 
       const result = streamText({
         model: requestModel,
-        system: systemPrompt,
+        instructions: systemPrompt,
         messages: convertedMessages,
         tools,
         stopWhen: stepCountIs(10),
@@ -342,7 +342,7 @@ export async function POST(req: Request) {
             chatDebug(`[Chat API] [${sessionId}] Usage: ${usage.inputTokens || 0} in, ${usage.outputTokens || 0} out`);
           }
         },
-        onFinish: (event) => {
+        onEnd: (event) => {
           const modelUsed = requestModel.lastUsedModel || 'unknown';
           const attempts = requestModel.lastAttemptCount || 0;
           if (event.finishReason === 'error' || event.finishReason === 'other') {
@@ -394,12 +394,12 @@ export async function POST(req: Request) {
             },
           }));
         },
-        onFinish: () => {
+        onEnd: () => {
           // Schedule summarization AFTER the response is sent. `after()` keeps the
           // serverless invocation alive until the work settles (bounded by
           // maxDuration) — a bare fire-and-forget promise can be frozen/killed
           // once the response flushes, so summaries would intermittently never run.
-          // Note: onFinish also fires on abort/error in v6; an extra summarization
+          // Note: onEnd also fires on abort/error; an extra summarization
           // check after a failed turn is harmless (it self-gates on need).
           if (typedConversationId) {
             const convId = typedConversationId;

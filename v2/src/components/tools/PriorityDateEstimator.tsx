@@ -17,7 +17,7 @@
  */
 
 import { Fragment, useId, useMemo, useState, type ReactNode } from "react";
-import { CalendarBlank as CalendarRange, ClockCounterClockwise as History, TrendDown, Warning } from "@phosphor-icons/react";
+import { CalendarBlankIcon as CalendarRange, ClockCounterClockwiseIcon as History, TrendDownIcon, WarningIcon } from "@phosphor-icons/react";
 
 import {
   estimatePriorityDate,
@@ -245,6 +245,42 @@ const LEGEND: {
   },
 ];
 
+type LastOpenCutoff =
+  | { bulletinMonth: string; kind: "current" }
+  | { bulletinMonth: string; kind: "date"; iso: string };
+
+/**
+ * When the newest cutoff is U, the verdict alone is a dead end: "closed that
+ * month" is true and tells the reader nothing about their own case. The last
+ * bulletin that DID publish a cutoff is where they can still see where they
+ * stand.
+ *
+ * Returns an already-narrowed shape rather than the raw CutoffPoint: the loop
+ * rules `unavailable` out at runtime, and handing the union back leaves the JSX
+ * unable to reach `.iso` without a cast.
+ *
+ * MODULE LEVEL ON PURPOSE. Inlined into the useMemo below, the React Compiler
+ * could not preserve the manual memoization and therefore skipped optimizing
+ * this entire component (`react-hooks/preserve-manual-memoization`). Hoisting
+ * the body out leaves the memo as a single call over one dependency, which the
+ * compiler can analyse, and it makes the function independently testable.
+ */
+function findLastOpenCutoff(
+  estimate: ReturnType<typeof estimatePriorityDate> | null,
+): LastOpenCutoff | null {
+  if (!estimate || estimate.latest?.kind !== "unavailable") return null;
+  for (let i = estimate.history.length - 1; i >= 0; i -= 1) {
+    const point = estimate.history[i]!;
+    if (point.cutoff.kind === "current") {
+      return { bulletinMonth: point.bulletinMonth, kind: "current" };
+    }
+    if (point.cutoff.kind === "date") {
+      return { bulletinMonth: point.bulletinMonth, kind: "date", iso: point.cutoff.iso };
+    }
+  }
+  return null;
+}
+
 export function PriorityDateEstimator({
   bulletins,
   categoryCodes,
@@ -331,30 +367,8 @@ export function PriorityDateEstimator({
   const uscisChartDiffers =
     currentEmploymentChart !== null && currentEmploymentChart !== selectedChartName;
 
-  // When the newest cutoff is U, the verdict alone is a dead end: "closed that
-  // month" is true and tells the reader nothing about their own case. The last
-  // bulletin that DID publish a cutoff is where they can still see where they
-  // stand.
-  // Returns an already-narrowed shape rather than the raw CutoffPoint: the
-  // loop rules `unavailable` out at runtime, and handing the union back leaves
-  // the JSX unable to reach `.iso` without a cast.
-  const lastOpen = useMemo<
-    | { bulletinMonth: string; kind: "current" }
-    | { bulletinMonth: string; kind: "date"; iso: string }
-    | null
-  >(() => {
-    if (!estimate || estimate.latest?.kind !== "unavailable") return null;
-    for (let i = estimate.history.length - 1; i >= 0; i -= 1) {
-      const point = estimate.history[i]!;
-      if (point.cutoff.kind === "current") {
-        return { bulletinMonth: point.bulletinMonth, kind: "current" };
-      }
-      if (point.cutoff.kind === "date") {
-        return { bulletinMonth: point.bulletinMonth, kind: "date", iso: point.cutoff.iso };
-      }
-    }
-    return null;
-  }, [estimate]);
+  // See findLastOpenCutoff above for why this lives at module level.
+  const lastOpen = useMemo(() => findLastOpenCutoff(estimate), [estimate]);
 
   // Positive means the priority date sits BEFORE that cutoff, so it was past it.
   const lastOpenDeltaDays =
@@ -595,7 +609,7 @@ export function PriorityDateEstimator({
         <div className="border-b-2 border-border bg-tint-primary p-6 sm:p-8" role="alert">
           {warnings.map((w) => (
             <div key={w} className="flex items-start gap-3 [&+&]:mt-4">
-              <Warning
+              <WarningIcon
                 className="mt-0.5 h-5 w-5 shrink-0 text-foreground"
                 aria-hidden="true"
               />{" "}
@@ -831,7 +845,7 @@ export function PriorityDateEstimator({
 
       {estimate && estimate.retrogressions.length > 0 ? (
         <div className="flex items-start gap-3 border-b-2 border-border bg-muted p-6 sm:p-8">
-          <TrendDown className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
+          <TrendDownIcon className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
           <p className="text-base leading-relaxed">
             <strong>This cutoff has gone backwards.</strong> It retrogressed in{" "}
             {estimate.retrogressions.map((m) => formatMonth(m)).join(", ")}. Being
@@ -1173,7 +1187,7 @@ export function PriorityDateEstimator({
 
       <div className="bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
-          <Warning className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
+          <WarningIcon className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
           <div>
             <h3 className="font-heading text-base font-black">What this can’t tell you</h3>{" "}
             <ul className="mt-3 space-y-2">

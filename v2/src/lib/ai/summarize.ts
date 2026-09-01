@@ -16,7 +16,7 @@
  * @module lib/ai/summarize
  */
 
-import { generateObject, generateText } from "ai";
+import { generateText, Output } from "ai";
 import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
@@ -124,14 +124,17 @@ async function extractEntities(
 ): Promise<CompactionFacts | undefined> {
   try {
     const text = formatMessagesForSummary(messages, null);
-    const { object } = await generateObject({
+    // AI SDK v7 folded `generateObject` into `generateText` behind an `output`
+    // setting and deprecated the standalone function. Same schema, same
+    // validation, one code path instead of two.
+    const { output } = await generateText({
       model: entityExtractionModel,
-      schema: CompactionFactsSchema,
-      system: ENTITY_EXTRACTION_PROMPT,
+      output: Output.object({ schema: CompactionFactsSchema }),
+      instructions: ENTITY_EXTRACTION_PROMPT,
       prompt: text,
       maxOutputTokens: 800,
     });
-    return object;
+    return output;
   } catch (error) {
     console.warn(
       `[Summarization] Entity extraction failed (non-fatal):`,
@@ -155,7 +158,7 @@ async function generateProseSummary(
   try {
     const { text } = await generateText({
       model: prosePrimaryModel,
-      system: PROSE_SUMMARIZATION_PROMPT,
+      instructions: PROSE_SUMMARIZATION_PROMPT,
       prompt: formatted,
       maxOutputTokens: 1000,
     });
@@ -172,7 +175,7 @@ async function generateProseSummary(
     try {
       const { text } = await generateText({
         model: proseFallbackModel,
-        system: PROSE_SUMMARIZATION_PROMPT,
+        instructions: PROSE_SUMMARIZATION_PROMPT,
         prompt: formatted,
         maxOutputTokens: 1000,
       });

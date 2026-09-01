@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 // A public page has no ConvexProvider above it by design, and the Turso
@@ -420,14 +420,28 @@ export function CaseBrowser({
 
   // Hold the last non-empty result set so a page change or a new search dims
   // the current rows in place instead of collapsing to nothing and jumping the
-  // layout - the SalaryExplorer pattern. A ref, not state: it must not itself
-  // trigger a render, only ride along on the next one.
+  // layout - the SalaryExplorer pattern.
+  //
+  // STATE SET FROM AN EFFECT, not a ref written during render. Reading and
+  // writing a ref mid-render is unsafe under concurrent rendering, because
+  // React may discard a render and re-run it, leaving the ref holding a value
+  // from a render that never committed. `react-hooks/refs` rejects it.
+  //
+  // An effect is the right shape here rather than the "adjust state during
+  // render" pattern, because `prevRows` is only ever READ on a render where
+  // `shown` is empty. The retained set is therefore never needed on the same
+  // render that produces it, so updating it after commit costs nothing
+  // visible, and it cannot loop: the write is guarded on `shown` being
+  // non-empty, and an empty `shown` is the only value whose identity changes
+  // every render (`page?.page ?? []`).
   const tableBusy =
     (searching ? nameSearchPending : page === undefined && !pageFailed && !awaitingValue);
-  const prevRows = useRef<CaseRow[]>([]);
-  if (shown.length > 0) prevRows.current = shown;
+  const [prevRows, setPrevRows] = useState<CaseRow[]>([]);
+  useEffect(() => {
+    if (shown.length > 0) setPrevRows(shown);
+  }, [shown]);
   const displayRows: CaseRow[] =
-    shown.length > 0 ? shown : tableBusy ? prevRows.current : [];
+    shown.length > 0 ? shown : tableBusy ? prevRows : [];
 
   return (
     <div className="flex flex-col gap-8">
@@ -859,7 +873,7 @@ export function CaseBrowser({
         !searching &&
         !pageFailed &&
         !awaitingValue &&
-        prevRows.current.length === 0 ? (
+        prevRows.length === 0 ? (
           <p className="mt-6 text-base text-foreground/60">Reading the case table…</p>
         ) : null}
 
@@ -912,7 +926,7 @@ export function CaseBrowser({
           </div>
         ) : null}
 
-        {!searching && (rows.length > 0 || prevRows.current.length > 0) ? (
+        {!searching && (rows.length > 0 || prevRows.length > 0) ? (
           <nav aria-label="Pages" className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className={LABEL}>Page {fmtInt(pageIndex + 1)}</p>
             <div className="flex gap-2">

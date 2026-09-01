@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Helper to create a mock model
 const makeMockModel = (provider: string) => (model: string) => ({
-  specificationVersion: 'v3',
+  specificationVersion: 'v4',
   provider,
   modelId: model,
   supportedUrls: {},
@@ -84,7 +84,7 @@ describe('AI Providers', { timeout: 15_000 }, () => {
   it('chatModel is a FallbackModel', async () => {
     const { chatModel, FallbackModel } = await import('../providers');
     expect(chatModel).toBeInstanceOf(FallbackModel);
-    expect(chatModel.specificationVersion).toBe('v3');
+    expect(chatModel.specificationVersion).toBe('v4');
     expect(chatModel.provider).toBe('fallback');
   });
 });
@@ -98,7 +98,7 @@ describe('FallbackModel', () => {
     const { FallbackModel } = await import('../providers');
 
     const model1 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-1',
       supportedUrls: {},
@@ -106,7 +106,7 @@ describe('FallbackModel', () => {
       doStream: vi.fn(),
     };
     const model2 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-2',
       supportedUrls: {},
@@ -114,7 +114,7 @@ describe('FallbackModel', () => {
       doStream: vi.fn(),
     };
     const model3 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-3',
       supportedUrls: {},
@@ -141,7 +141,7 @@ describe('FallbackModel', () => {
     const { FallbackModel } = await import('../providers');
 
     const model1 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-1',
       supportedUrls: {},
@@ -149,7 +149,7 @@ describe('FallbackModel', () => {
       doStream: vi.fn().mockRejectedValue(new Error('429 Too Many Requests')),
     };
     const model2 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-2',
       supportedUrls: {},
@@ -157,7 +157,7 @@ describe('FallbackModel', () => {
       doStream: vi.fn().mockRejectedValue(new Error('Not Found')),
     };
     const model3 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-3',
       supportedUrls: {},
@@ -184,7 +184,7 @@ describe('FallbackModel', () => {
     const { FallbackModel } = await import('../providers');
 
     const model1 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-1',
       supportedUrls: {},
@@ -192,7 +192,7 @@ describe('FallbackModel', () => {
       doStream: vi.fn(),
     };
     const model2 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-2',
       supportedUrls: {},
@@ -214,7 +214,7 @@ describe('FallbackModel', () => {
     const { FallbackModel } = await import('../providers');
 
     const model1 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-1',
       supportedUrls: {},
@@ -222,7 +222,7 @@ describe('FallbackModel', () => {
       doStream: vi.fn().mockRejectedValue(new Error('Not Found')),
     };
     const model2 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-2',
       supportedUrls: {},
@@ -244,7 +244,7 @@ describe('FallbackModel', () => {
     const { FallbackModel } = await import('../providers');
 
     const model1 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-1',
       supportedUrls: {},
@@ -272,7 +272,7 @@ describe('FallbackModel', () => {
     ];
 
     const models = errors.map((err, i) => ({
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: `model-${i}`,
       supportedUrls: {},
@@ -282,7 +282,7 @@ describe('FallbackModel', () => {
 
     // Add one working model at the end
     const workingModel = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-working',
       supportedUrls: {},
@@ -313,7 +313,7 @@ describe('FallbackModel', () => {
 
     let callCount = 0;
     const model1 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-1',
       supportedUrls: {},
@@ -328,7 +328,7 @@ describe('FallbackModel', () => {
       }),
     };
     const model2 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-2',
       supportedUrls: {},
@@ -366,7 +366,7 @@ describe('FallbackModel', () => {
     const { FallbackModel } = await import('../providers');
 
     const model1 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-1',
       supportedUrls: {},
@@ -374,7 +374,7 @@ describe('FallbackModel', () => {
       doStream: vi.fn().mockResolvedValue({ stream: 'ok' }),
     };
     const model2 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-2',
       supportedUrls: {},
@@ -419,7 +419,7 @@ describe('FallbackModel', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const model1 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-1',
       supportedUrls: {},
@@ -427,7 +427,7 @@ describe('FallbackModel', () => {
       doStream: vi.fn().mockRejectedValue(new Error('quota exceeded')),
     };
     const model2 = {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       provider: 'test',
       modelId: 'model-2',
       supportedUrls: {},
@@ -558,7 +558,7 @@ describe('toMistralToolCallId', () => {
 });
 
 describe('wrapMistralModel', () => {
-  it('exports a wrapper function that returns a LanguageModelV3', async () => {
+  it('exports a wrapper function that returns a LanguageModelV4', async () => {
     const { wrapMistralModel } = await import('../providers');
     expect(typeof wrapMistralModel).toBe('function');
   });

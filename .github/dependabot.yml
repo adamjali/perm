@@ -36,6 +36,17 @@ updates:
       # Major bumps (17.x+) require manual review due to RSC/caching behavior changes.
       - dependency-name: "next"
         update-types: ["version-update:semver-major"]
+      # @sentry/nextjs 10.72+ stopped depending on
+      # @apm-js-collab/code-transformer-bundler-plugins and VENDORS it instead,
+      # copying an ESM file that runs `fileURLToPath(import.meta.url)` at module
+      # load into its CJS build. Vitest cannot resolve that to a file:// URL, so
+      # it throws ERR_INVALID_URL_SCHEME on import: 10.73.0 failed 24 test files
+      # and stopped 109 more from ever running. The production webpack build is
+      # UNAFFECTED, which is why this is invisible until the suite runs.
+      # Pinned to ~10.70.0 in v2/package.json. Drop this rule once upstream
+      # ships a build whose vendored copy no longer touches import.meta.url.
+      - dependency-name: "@sentry/nextjs"
+        versions: [">=10.71.0"]
 
   # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
