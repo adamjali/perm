@@ -1,12 +1,5 @@
 # GitHub Audit History
 
-<!-- IN_PROGRESS
-run: full (all phases, deploy gated)
-started: 2026-09-01 07:19
-phase: 1 (audit)
--->
-
-
 ## Saved Policies
 <!-- Persistent rules applied automatically on future audits -->
 - **sharp — track the CVE floor, never pin to Next's copy**: sharp is NOT a peerDependency of next (next declares only sass, react, react-dom, @playwright/test, @opentelemetry/api, babel-plugin-react-compiler). Duplicate libvips comes from two *installed copies*, which a `pnpm.overrides.sharp` entry collapses. Audit 6: sharp was pinned to ^0.34.5 "to match Next's peer" while 0.34.5 carried a HIGH CVE (GHSA-f88m-g3jw-g9cj), and the Dependabot bump was wrongly waved off. Always check the advisory before declining a bump on peer-compatibility grounds.
@@ -36,7 +29,43 @@ phase: 1 (audit)
 - **`ctx.scheduler.runAfter` discards return values**: a batched function that returns `{sent, remaining}` to a scheduler resumes nothing. Batched work must reschedule itself, guarded on having made progress so a total outage cannot spin a timer.
 - **Probe a fix by reverting it**: after fixing a reviewed defect, revert the fix and confirm the new test goes red before claiming coverage. Applies the existing "probe every gate with a broken input" policy to your own patch.
 - **Every verification sweep needs a control string**: assert one phrase you know is still present in the same run. A `grep -F` pattern containing `\n` matches a literal backslash-n and reports everything clean (hit twice on 2026-08-23).
+- **`@sentry/nextjs` is pinned at `~10.70.0` and `dependabot.yml` ignores `>=10.71.0`** (Audit 9). 10.72+ vendors an ESM file that calls `fileURLToPath(import.meta.url)` at module load into their CJS build; Vitest cannot resolve that to a `file://` URL, so the import throws `ERR_INVALID_URL_SCHEME`. On 10.73.0 that failed 24 test files and stopped 109 more from running, while the **production build stayed green** — so a build-only check would have shipped it. Drop the pin when upstream stops touching `import.meta.url` in the vendored copy.
+- **No `@ai-sdk/*` provider declares a peer on `ai`** (Audit 9). A spec mismatch is therefore a RUNTIME failure, not an install error, and `pnpm install` will happily assemble a broken set. Before any `ai` major, check (a) which `@ai-sdk/provider` major it pulls (that is the `LanguageModelVn` contract this repo implements directly in `FallbackModel`) and (b) whether the third-party providers have a release for it. `@openrouter/ai-sdk-provider` is the gating one.
+- **`useChat`'s `onFinish` in `@ai-sdk/react` is NOT deprecated**, unlike `onFinish` on the `ai` package (Audit 9). Never rename it in a blanket pass; it drives chat persistence.
+- **A library-wide identifier rename needs an AST codemod, never a regex** (Audit 9). The Phosphor bare names are ordinary words (`Archive`, `Warning`, `Calendar`, `Search`) that also appear in user-visible copy and strings; ~206 of ~960 occurrences sat in JSX text, strings or comments. Walk `Identifier` nodes with the repo's own `typescript` and JsxText/StringLiteral/trivia become unreachable by construction. Also: an aliased import keeps its local name, and a SHORTHAND property is also the object's key, so expand it (`{ Briefcase: BriefcaseIcon }`) rather than renaming or skipping.
+- **A `vi.mock` factory's keys are EXPORT names and must track the source imports** (Audit 9). A factory replaces the whole module, so an export the component asks for and the factory does not define is a hard error at render. Nothing is type-wrong (a factory is untyped against the real module), so only running the suite finds it. This is a concrete reason `pnpm test:run` cannot be replaced by `typecheck`.
+- **`gh pr close --comment` silently DROPS the comment when the PR is already closed** (Audit 9), and still exits 0. Dependabot auto-closes its PRs the moment the change lands on main, so this is the normal case. Post with `gh pr comment` and then re-read the thread to confirm; do not trust the exit code.
+- **Run the production build in the FOREGROUND on this machine** (Audit 6, reconfirmed Audit 9). Two explicitly-backgrounded `pnpm build` runs were killed mid-compile under memory pressure; the same build in the foreground completed. Check `sysctl -n vm.swapusage` first, and clear a stale `.next/lock` left by a killed build.
+- **eslint runs in NO workflow** (Audit 9). The only "Lint" step is the pyflakes pass over the Python ingests, so app-code lint errors accumulate invisibly (8 had). Run `pnpm exec eslint src convex` as part of any audit, and note that `--format unix`/`compact` were removed from ESLint core, so a bad `--format` exits 2 and an unwary `2>/dev/null` turns that into a silent "0 errors".
 - **`pnpm test:run` is the pre-push gate, never `pnpm test:fast`**: `test:fast` runs 2 of 4 vitest projects and skips `components` (which owns `src/app/**`) and `convex`. A green `test:fast` plus a green `--project convex` still shipped a red CI on 2026-08-23, because the broken file lived in the only project neither command runs. Same family as the two-typechecker policy above: enumerate what a check actually covers before trusting it.
+
+## Audit 9 — 2026-09-01
+- **health_before:** 100/100 by rubric; 0 dependabot alerts, 0 secret-scanning, 10 code-scanning "error" (all verified false positives), 8 open Dependabot PRs
+- **health_after:** 100/100; 0 open PRs, 0 lint errors, CI + CodeQL green on the pushed commit
+- **items_fixed:** 1 blocking regression + 8 lint errors + 22 stale action refs + 177-file icon migration
+- **items_discussed:** 4 (all via AskUserQuestion; user expanded scope on two)
+- **prs_merged:** 0 (**8 closed as superseded**, each with its specific reason)
+- **quality_issues_fixed:** 8 eslint errors that no CI gate has ever run
+- **deployed:** yes — `0e774ee1` + `a0614fd6` pushed to main, Vercel READY and verified live. **No Convex deploy** (`convex/` untouched)
+- **duration:** ~3h
+
+### Changes Made
+- **AI SDK v6 → v7.** `ai` 6.0.273 → 7.0.87 plus all five providers and `@openrouter/ai-sdk-provider` 2.10 → 3.0. The real work is that `@ai-sdk/provider` went 3.x → 4.x, i.e. `LanguageModelV3` → `V4`, and `FallbackModel` implements that interface directly. Migrated the class, its `specificationVersion`, and the `wrapMistralModel` middleware. Deprecated APIs moved on the `ai` package only: `system`→`instructions`, `onFinish`→`onEnd`, `generateObject`→`generateText` with `Output.object`. `@ai-sdk/provider` was imported by `providers.ts` while absent from `package.json`; now explicit.
+- **`@sentry/nextjs` pinned to `~10.70.0`** after 10.73.0 broke the suite (see Saved Policies), with a matching `dependabot.yml` ignore.
+- **8 eslint errors fixed.** Five were `react-hooks/refs` in `CaseBrowser`, where a ref was written AND read during render to retain the last non-empty rows; replaced with state set from an effect, provably loop-free because `prevRows` is only read when `shown` is empty.
+- **Every GitHub Action normalized.** `actions/checkout` alone was spread across four majors (v4 ×5, v5 ×1, v7 ×6). All 22 refs now current, with zero exposure to the two real v7 breaking changes.
+- **Phosphor `*Icon` migration: 177 files, 628 specifiers, 559 references**, via a TypeScript AST codemod. 0 bare specifiers remain of 636.
+
+### Decisions
+- **Full AI SDK v7 rather than the three provider PRs** — user's call over my recommendation to defer. Correct in hindsight: the providers alone would have been a silent spec mismatch, since none declares a peer on `ai`.
+- **Fix all 8 lint errors now** — user's call over my recommendation to log them. The `react-hooks/refs` five were genuine concurrent-rendering hazards, not just compiler advice.
+- **`image-size` still ACCEPTED / leave-open**, re-verified rather than inherited: 2.0.2 IS the latest published version and it is the vulnerable one, so no override target exists.
+- **10 CodeQL "error" alerts verified false positives**: 2 × `run-shell-injection` read a `workflow_dispatch` input typed `choice` (GitHub validates server-side), and 7 × `sqlalchemy-execute-raw-query` are libSQL HTTP calls whose f-strings interpolate only `?` placeholders or module constants. SQLAlchemy is not a dependency.
+
+### What went wrong, and what it cost
+- I asserted another session was mid-deploy. **It was my own orphaned watcher**, and the PPID proved it in one command. Two of my pollers had been spinning 12h and 42h; killing them and an orphaned `next-server` freed ~2GB of swap.
+- I trusted `gh pr close --comment`'s exit code; **all 8 comments silently never posted**.
+- The Phosphor codemod's one gap (`vi.mock` factory keys) was caught by the suite, not by typecheck. Two build runs were killed under memory pressure before I applied Audit 6's own foreground-build note.
 
 ## Audit 8 — 2026-08-22
 - **health_before:** 100/100 by rubric, but 4 open HIGH CodeQL alerts the rubric does not score
@@ -70,15 +99,8 @@ phase: 1 (audit)
 - **Deployed**: 3 commits to `main`, two Vercel production deploys, both Ready and verified live. No Convex changes.
 - **Open / not done**: 256 em-dashes remain across 12 of 14 `content/*.mdx` files (only the 2 guides touched here are clean); `tutorials/getting-started.mdx` alone has 98. They leak into related-post cards and JSON-LD on otherwise-clean pages. Dependabot has 5+ non-security version PRs open again.
 
-## Audit 6 — 2026-08-03
-- **health 0 -> 100**: 20 open Dependabot alerts (2 critical, 11 high, 6 medium, 1 low) cleared to zero; `pnpm audit` reports no known vulnerabilities. Secret scanning already clean; code scanning findings are all note/warning, no error severity.
-- **Fixed**: next 16.2.9->16.2.12 (9 alerts), @auth/core 0.41.2->0.41.3 (3, incl. 1 critical), sharp 0.34.5->0.35.3 (2 high), @vitest/browser->4.1.10 (1 critical, dev). Override floors raised: postcss >=8.5.18, brace-expansion >=5.0.8, dompurify >=3.4.12 (per Saved Policy), plus new fast-uri >=3.1.4, sharp >=0.35.0, undici >=6.27.0 (all 9 remaining audit findings were one package via @ai-sdk/cerebras).
-- **Method**: caret `pnpm update` per Saved Policy (never --latest), then overrides for stubborn transitives, then full `pnpm install` to re-resolve — `pnpm update` alone does NOT re-apply overrides to already-locked entries, which is why sharp looked unfixed at first.
-- **Governance**: added `Typecheck + Vitest` to required status checks on main. `enforce_admins` left false deliberately so direct pushes to main (the deploy path) keep working. Required reviews left off: sole maintainer.
-- **No Convex deploy**: zero `convex/` changes, frontend-only -> Vercel only.
-- **Machine note**: five build attempts failed on ENOSPC before ~23 GB was freed. Explicitly-backgrounded builds got killed; a foreground build auto-moved to background completed. Prefer the latter on this machine.
-
 ## Archived Summaries
+- **Audit 6 — 2026-08-03**: health 0→100. 20 Dependabot alerts (2 critical, 11 high) cleared: next 16.2.12, @auth/core 0.41.3, sharp 0.35.3, @vitest/browser 4.1.10, plus override floors (postcss, brace-expansion, dompurify, fast-uri, sharp, undici). Method: caret `pnpm update` then overrides then a full `pnpm install` to re-resolve, because `pnpm update` alone does not re-apply overrides to locked entries. Added `Typecheck + Vitest` to required checks; `enforce_admins` left false so direct pushes to main (the deploy path) keep working. Machine note now promoted to a Saved Policy: backgrounded builds get killed, foreground ones complete.
 - 2026-06-29: health 94->97, fixed dompurify CVE + caret bulk update, closed 4 PRs
 - 2026-06-09: see archived summary
 - 2026-05-24: see archived summary
