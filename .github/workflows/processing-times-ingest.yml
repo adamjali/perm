@@ -66,6 +66,7 @@ jobs:
           pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Fetch and store
+        id: ingest
         working-directory: v2
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
@@ -77,6 +78,40 @@ jobs:
           printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
             "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
           node --experimental-strip-types scripts/ingest_processing_times.mts
+
+      # Expire the public pages that render DOL's number, but ONLY on a day DOL
+      # actually republished.
+      #
+      # The pages carry `revalidate = 86400` while this job runs daily, so
+      # without this the fresh figure can sit in Turso while every page still
+      # serves the old one for up to another 24 hours: worst case ~48h behind
+      # DOL, on a band whose whole claim is that it is live.
+      #
+      # Gated on `dol_changed` rather than running every night because DOL moves
+      # roughly weekly. Firing unconditionally would expire these pages on the
+      # ~29 days a month nothing changed, and every expiry a visitor walks into
+      # is a paid ISR render for an identical number.
+      #
+      # Never fails the run: the ingest above has already stored the data, and a
+      # page staying one window staler is not a reason to report a successful
+      # federal-data fetch as failed. Same rule the employer-page expiry uses.
+      - name: Expire the DOL pages
+        if: steps.ingest.outputs.dol_changed == 'true'
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          # Through env, not interpolated into the shell: this value is parsed
+          # out of a third party's HTML, so it is untrusted by construction.
+          PERM_AS_OF: ${{ steps.ingest.outputs.perm_as_of }}
+        run: |
+          if [ -z "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_SECRET not set; skipping"; exit 0
+          fi
+          echo "DOL published a new as-of ($PERM_AS_OF); expiring the pages that show it"
+          # -f so a 4xx/5xx is visible in the log rather than a silent 403 body
+          # scrolling past as if it were a success.
+          curl -fsS -X POST https://permtracker.app/api/revalidate-dol \
+            -H "x-revalidate-secret: $REVALIDATE_SECRET" \
+            || echo "revalidation call failed"
 
       # A second, independent read of the same public sources. It does not
       # import anything - it compares. A disagreement on a cutoff cell we both

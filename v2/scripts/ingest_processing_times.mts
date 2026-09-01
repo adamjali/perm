@@ -17,7 +17,7 @@
  *   node --experimental-strip-types scripts/ingest_processing_times.mts
  */
 import { createClient } from "@libsql/client";
-import { readFileSync } from "node:fs";
+import { appendFileSync, readFileSync } from "node:fs";
 
 import { parseProcessingTimes } from "../convex/lib/dolProcessingTimes.ts";
 
@@ -90,6 +90,22 @@ async function main() {
       fetched_at INTEGER NOT NULL
     )`);
 
+  // DID DOL ACTUALLY REPUBLISH? Asked BEFORE the write, because the write
+  // itself destroys the answer: the table is keyed by DOL's own as-of, so
+  // INSERT OR REPLACE makes a new publication and a re-read of an unchanged
+  // page look identical afterwards.
+  //
+  // This gates the on-demand revalidation the workflow does with it. DOL moves
+  // roughly weekly, so firing it on every run would expire the public pages on
+  // the ~29 days a month DOL did NOT move, and every expiry a visitor walks
+  // into is a paid ISR render for a number that did not change. Same cost
+  // shape as the employer-page tail that took the Vercel write meter to 100%.
+  const existing = await db.execute({
+    sql: "SELECT 1 FROM processing_times WHERE perm_as_of = ? LIMIT 1",
+    args: [snap.permAsOf],
+  });
+  const isNewAsOf = existing.rows.length === 0;
+
   const now = Date.now();
   // Keyed by DOL's own as-of date, so re-running on a day DOL has not
   // republished is idempotent and does not fabricate a history point.
@@ -140,6 +156,17 @@ async function main() {
   console.log(`  stored. ${n.rows[0]!.n} snapshot(s) in history:`);
   for (const r of rows.rows) console.log(`    ${r.perm_as_of}`);
   console.log(`  freshness stamped: as_of ${snap.permAsOf}`);
+  console.log(
+    `  DOL as-of ${snap.permAsOf} is ${isNewAsOf ? "NEW (revalidation will fire)" : "unchanged (no revalidation)"}`,
+  );
+
+  // Hand the decision to the workflow. Written only under GITHUB_OUTPUT so a
+  // local run is unaffected, and appended rather than truncated because the
+  // file is shared with every other step in the job.
+  const ghOut = process.env.GITHUB_OUTPUT;
+  if (ghOut) {
+    appendFileSync(ghOut, `dol_changed=${isNewAsOf}\nperm_as_of=${snap.permAsOf}\n`);
+  }
 }
 
 main().catch((e) => { console.error("FAILED:", e.message); process.exit(1); });

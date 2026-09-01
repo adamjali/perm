@@ -1474,6 +1474,33 @@ employer pages in one call.
 value per segment. Two render branches in one route file cannot have two
 windows, which is why this exists at all.
 
+**The second one is `POST /api/revalidate-dol` (2026-09-01), and it takes NO
+input.** The homepage band says "Live from the Department of Labor · <date>",
+where the date is DOL's own as-of stamp parsed from their table caption, not our
+fetch time. The ingest runs daily but the pages carrying that number sit on
+`revalidate = 86400`, so on the day DOL moves the fresh figure could be in Turso
+while every page served the old one for up to another 24 hours: worst case ~48h
+behind DOL, on a band whose whole claim is that it is live. `page.tsx` had said
+"The ingest should also revalidate on demand" since it was written.
+
+Two design points worth keeping:
+
+- **A fixed list, not caller-supplied paths.** The employer endpoint must accept
+  slugs because which employers moved is only known at runtime. Here the set is
+  static (the ten ISR pages that read `getProcessingTimes()` or
+  `lib/turso/estimate`), so taking no input removes path validation, traversal,
+  and any way to aim the endpoint at something else. `/perm-queue/[month]` and
+  `/perm-case-status` are deliberately excluded, each with its reason in the
+  route, and `route.test.ts` re-derives the list from the app tree so a new page
+  cannot quietly start serving a stale figure. Both drift guards were probed by
+  breaking them.
+- **Gated on DOL actually republishing**, via a `dol_changed` output the ingest
+  computes BEFORE its write (the table is keyed on `perm_as_of`, so
+  `INSERT OR REPLACE` destroys the evidence). DOL moves roughly weekly, so
+  firing every night would expire these pages on the ~29 days a month nothing
+  changed, and every expiry a visitor walks into is a paid ISR render for an
+  identical number.
+
 ## Slug "shadowing" between live and published: measured, and not a thing
 
 A live-only employer whose slug collides with a published one is unreachable,
