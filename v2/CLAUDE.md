@@ -1707,3 +1707,145 @@ on the leaf, because the hub took the latest `seenTo` across all stages and
 the leaf took its own. **A figure and its stamp are one claim.** Both read the
 per-stage value now. The global maximum survives only as the fallback for a
 stage holding nothing, which has no observation of its own.
+
+
+## Motion's `initial` is an SSR inline style, and it hid the whole site (2026-08-31)
+
+`initial={{ opacity: 0 }}` is not a client-only instruction. Motion serializes
+it as an **inline style during server rendering** so the element does not flash
+before hydration. Put one on a wrapper around `{children}` and the prerendered
+HTML ships that content invisible.
+
+`PageTransition` did exactly that in the public layout. Measured on the live
+site:
+
+    <main id="main-content" ...>
+      <div style="opacity:0;transform:translateY(8px)">   <- 266KB of 296KB
+
+**90% of every page's bytes, on all ~298 sitemap URLs.** Three consequences,
+and only the first is a performance problem:
+
+1. FCP/LCP gated on the whole JS bundle, for a page whose HTML arrived at
+   20ms. PageSpeed mobile: FCP 3.0s, LCP 5.8s, **element render delay
+   2,470ms**, TTFB 20ms. The server was never the problem.
+2. With JS disabled or broken the page is permanently blank below the header.
+   A decoration had become a hard dependency for reading the site.
+3. **Invisible on desktop**, which scored 96 with the defect fully present.
+
+It was in three separate places, each needing a different fix:
+
+| Component | Shape | Fix |
+|---|---|---|
+| `PageTransition` | entrance, wraps every page | `initial={mounted ? {...} : false}` |
+| `ArticleHeader` / `ArticleBody` / `ContentHero` / `ContentGrid` | entrance | `useHasHydratedOnce()` |
+| `ScrollReveal` | scroll-gated | BOTH `initial` and `animate` - `animate` also resolves to "hidden" on a server, because `isInView` is false there |
+
+`src/hooks/useHasHydratedOnce.ts` is the shared answer: false on the server and
+on the session's first client render, true for every mount after. So the first
+paint is never hidden and client-side navigations still animate, which is the
+only time a "transition" is perceptible anyway. It uses module state rather
+than `useState` deliberately - these components remount on every navigation, so
+a per-instance flag would kill the animation permanently instead of moving it.
+
+**`whileInView` reveals BELOW the fold are deliberately left hidden.** That is
+what the animation is for. The rule is positional, not categorical.
+
+### The gates, and why the first two were blind
+
+`scripts/audit_ssr_visibility.py` reads the sitemap, carries a control string,
+prints its counts before its verdict, and **fails only on content hidden ABOVE
+the `<h1>`** - a bare `opacity:0` count would flag every content page forever
+and be ignored within a week. Probed against production while production was
+still broken: 12/12 findings, exit 1. It later found `/for-attorneys` on its
+own, which no amount of reading had.
+
+    python3 scripts/audit_ssr_visibility.py --sitemap https://permtracker.app/sitemaps/pages.xml
+
+**A component test for this CANNOT live in the existing vitest projects**, and
+two attempts passed against a deliberately broken component before that was
+understood. Two independent reasons, either one sufficient:
+
+- all three projects run **happy-dom**, so `window` exists and Motion takes its
+  CLIENT path, applying `initial` through the DOM instead of serializing it;
+- `vitest.setup.ts` **mocks `motion/react` wholesale**.
+
+Hence the `ssr` vitest project: `environment: "node"`, **no setupFiles**, and
+it owns `*.ssr.test.{ts,tsx}`. Both are load-bearing.
+
+## The stage pages: a 19.56s query that only Google saw (2026-08-31)
+
+`getReviewStages()` is a CTE over ~98,000 pending rows with three window
+functions, `COUNT(DISTINCT employer_name)` and three joins. Measured against
+production: **19.56s cold, 2.49s warm**, against the read layer's 20s deadline.
+Blew it, retried, blew it again, threw - so all ten stage pages 500'd on a cold
+render while returning 200 to anyone whose region had it cached.
+
+Google's Inspection Tool refused to index two of them. Sentry named it
+verbatim: `turso query deadline (20000ms, attempt 2): WITH pend AS (`.
+
+**Two of my own diagnoses were wrong first.** I timed `listStageCases`
+(0.27-0.82s) and concluded "not a timeout" - wrong query. Then I blamed a
+concurrent audit script for competing on cold renders - also wrong; it
+reproduced with the site idle. Only the Sentry trace plus a direct timing
+settled it. **Time the query in the stack trace, not the one you assume.**
+
+Now precomputed into `perm_docs['review_stages']` by
+`ingest_case_status_direct.py`, read by `src/lib/turso/rfi.ts`, same shape as
+`live_census`:
+
+- **Raw numbers in the doc.** The editorial guards (`MIN_BAND_N`, `n >=
+  cases/2`) stay in TypeScript where they are already probed, and are called
+  with the doc's fields under the SQL row's names, so the published page cannot
+  diverge from the fallback.
+- **It must reconcile or it is not written.** `sum(stage.cases)` must equal a
+  separately-counted pending total. **That guard fired on its second real run**
+  against a concurrent sweep (98,210 vs 98,009) and left the previous good doc
+  live.
+- **Its own `data_freshness` row at 3 days**, shorter than the reader's 8-day
+  cutoff on purpose: the reconciliation guard can skip the write while the
+  sweep still stamps itself green, so without a row of its own a doc that
+  quietly stopped being written would age out in silence.
+- **The live query is kept as the fallback.** A missing doc degrades to a slow
+  page, never a blank one.
+
+## Vercel: builds are the bill, not traffic (2026-08-31)
+
+$20.05 of a $20 credit, and the breakdown is not where anyone assumes:
+
+| line | cost | share |
+|---|---|---|
+| **Build CPU Minutes** | **$13.20** | **66%** |
+| Observability Events | $2.49 | 12% |
+| ISR Writes | $2.29 | 11% |
+| Speed Insights Plus | $0.65 | 3% |
+| **Function Invocations** | **$0.12** | 0.6% |
+
+**Crawler traffic across 21,110 sitemap URLs costs 12 cents.** Deploys cost
+~$0.60 each. Read the real numbers with `npx vercel usage`, and the per-build
+breakdown with `npx vercel inspect <deployment-url> --logs`.
+
+What was wrong, all found in one build log:
+
+- **`VERCEL_FORCE_NO_BUILD_CACHE` was set** (228 days old). Worst of both
+  worlds: recompile from scratch every time AND still spend 1m12s building and
+  uploading a 617 MB cache nobody restores. Deleted.
+- **Build machine was Elastic**, which Vercel auto-scales to **Turbo (30
+  cores)** "based on recent build usage" - the more you deploy, the bigger the
+  machine, the faster the burn. Billed in CPU-minutes, so 30 cores x 6 min =
+  ~180. Pinned to **Standard (4 vCPU)**. If a build nears the 45-minute
+  ceiling, Enhanced is the next step.
+- **Every push built everything**, including script- and docs-only pushes.
+  `vercel.json` `ignoreCommand` now skips a build when nothing outside
+  `scripts/`, `.github/`, `.planning/`, `docs/`, `*.md` and tests changed.
+  **Probe it in BOTH directions** before trusting it: one `src/` file must
+  force a build, and `content/`, `convex/` and `public/` must never be skipped.
+  A wrongly-skipped build is a change that silently never ships.
+- **`PRERENDERED_ENTITY_HEAD = 25`** (was 100 x 3). Entity details were 303 of
+  483 prerendered pages; `dynamicParams` is true, so every slug still resolves.
+  483 -> 259 pages, static generation 104s -> 75s locally.
+
+**Speed Insights and Observability were NOT cut, reversing an earlier
+recommendation of mine.** Speed Insights carries real RUM (211 samples on `/`
+scoring 80) and PageSpeed's "No Data" is CrUX, a different and much larger
+sample - so it is the only real-user measurement this site has. $1.81 of a $14
+bill against $13.20 of builds: the lever is deploy count, not add-ons.
