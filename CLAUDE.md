@@ -113,6 +113,8 @@ dependencies.**
 | I-140 counts / I-485 inventory | **USCIS** | quarterly / monthly |
 | entities, daily decisions | derived from our own corpus | with each quarterly |
 | RFI funnel | permtrack aggregate **frozen**, plus our own observations | frozen half never re-read |
+| prevailing wage requests (`P-100-`) | **DOL** batch API, same counter as PERM | daily pending sweep + discovery; weekly full |
+| H-1B LCAs (`I-200-`, `I-203-`) | **DOL** batch API, same counter | daily pending sweep + discovery; weekly full |
 
 **The corpus grows itself (2026-08-28):** a case-number lookup that misses
 asks DOL live and records the answer; a nightly prober walks the sequential

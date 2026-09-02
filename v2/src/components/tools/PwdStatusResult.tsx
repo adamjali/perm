@@ -3,6 +3,8 @@ import { estimatePwdQueue } from "@/lib/perm";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { getPwdEstimatorData } from "@/lib/turso/estimate";
 import { lookupPwdCase, type PwdCaseRow } from "@/lib/turso/pwdCases";
+import { currentMonthUtc } from "@/lib/dolFormat";
+import { QueueAlertForm } from "@/app/(site)/(public)/perm-processing-times/QueueAlertForm";
 
 /**
  * A prevailing wage request (ETA-9141) by number: DOL's own status for it,
@@ -202,6 +204,18 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
             shows the same figures for any month.
           </p>
         </section>
+      ) : null}
+
+      {!row.isFinal && !notPerm ? (
+        // The natural next step from reading a queue position: hear when DOL
+        // reaches the month. Same machinery as the calculator page's form,
+        // same PWD queues; the source tag says which page asked.
+        <QueueAlertForm
+          source="pwd-status"
+          newestMonth={currentMonthUtc()}
+          queue="pwd-oews"
+          allowPwdChoice
+        />
       ) : null}
 
       {row.isFinal ? (

@@ -99,6 +99,8 @@ function label(d: string): string {
     "i485-inventory": "I-485 pending inventory",
     "perm-month-stats": "Pending case counts",
     "perm-case-status": "Per-case statuses",
+    "pwd-status": "Wage request statuses",
+    "lca-status": "LCA statuses",
     "i140-trends": "I-140 filings by category",
     "rfi-funnel": "RFI and audit outcomes",
     entities: "Employers and firms",

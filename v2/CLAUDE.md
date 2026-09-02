@@ -1623,6 +1623,49 @@ inheriting somebody else's boundary. A type-only importer,
 `cases/detail/case-detail-types.ts`, correctly needs nothing - type imports are
 erased at compile, so a blanket fix would have been wrong there.
 
+## Every FLAG program shares one endpoint and one serial counter (2026-09-02)
+
+DOL's batch case-status endpoint serves every foreign-labor program with the
+same record shape: PERM (`G-100-`), prevailing wage requests (`P-100-`) and
+H-1B LCAs (`I-200-`, `I-203-`; `I-201-`/`I-202-` returned nothing in sampled
+windows). FLAG's own page lists all three. And **every program draws from ONE
+serial counter**: on day code 26239 (2026-08-27), serials 199900-199949 held
+PERM cases already in our corpus, 14 H-1B LCAs, 2 `I-203` LCAs and a run of
+PWDs. So the serial range the PERM corpus knows for a filing day IS the range
+to probe for that day's other programs. Roughly a third of the counter is
+LCAs, a quarter PWDs, a tenth PERMs; it advances ~3,000 a day.
+
+**Two probes said no and were misleading.** DOL's 2019 example number from
+the form documentation and an invented 2026 number both returned `[]`. The
+endpoint is not fuzzy across prefixes and 2019 cases are not indexed. Probing
+serials known to be live on the same day settled it in one request.
+
+`scripts/ingest_pwd_status_direct.py` is the multi-program prober: it walks
+each day's serials once, tries prefixes in measured hit-rate order
+(`I-200-`, `P-100-`, `I-203-`, then the rare two) and drops a serial the
+moment a prefix claims it, ~180 requests per filing day. Writes are batched
+(one round trip per row made 1,457 rows take twelve minutes). Separate tables
+per program (`pwd_case_status`, `lca_case_status`, plus events), because the
+PERM tables feed the census, stage pages, RFI funnel and alert sweep, all
+written against a PERM vocabulary. **Ten P-/I- rows had already leaked into
+`perm_case_status` through the web lookup's discovery path** before
+`discoverCase` refused non-PERM prefixes; they were deleted 2026-09-02.
+
+Read side: `src/lib/turso/flagCases.ts` is one factory (lookup with
+discovery, employer search with title/month filters, browse, summary doc);
+`pwdCases.ts` and `lcaCases.ts` are its instances, `flagCasesApi.ts` the
+shared route handler. Final-status sets are pinned against the Python
+`PROGRAMS` dict by `pwdCases.test.ts` / `lcaCases.test.ts` via a shared
+helper that is NOT a test file: importing one test module from another drags
+its `vi.mock` registrations along and the second file's mocks silently lose.
+
+`/perm-case-status` accepts all three prefixes (P- and I- checked FIRST,
+because the PERM shape rule accepts any letter). The wage-request panel
+composes `estimatePwdQueue` from the same DOL snapshot the calculator uses.
+Pages: `/pwd-cases`, `/lca-cases`. Workflow: `pwd-status-direct.yml` (daily
+pending + discovery, weekly full, dispatchable backfill, resumable via
+`perm_docs['flag_backfill_progress']`).
+
 ## Slug "shadowing" between live and published: measured, and not a thing
 
 A live-only employer whose slug collides with a published one is unreachable,
