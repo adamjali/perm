@@ -1514,6 +1514,86 @@ Two design points worth keeping:
   changed, and every expiry a visitor walks into is a paid ISR render for an
   identical number.
 
+## ISR cost: what actually drives it, and two models that were wrong (2026-09-01)
+
+**A WRITE UNIT IS 8 KB, NOT A PAGE.** Vercel: *"One write unit equals 8 KB of
+data written to the ISR cache."* So 951,650 units over five days is **~7.6 GB**,
+which at this site's page sizes is ~29,000 regenerations, not 951,000. Reading
+units as pages overstates the rate by ~33x. Corollary: **page SIZE is the bill**.
+Measured: `/` 320 KB (40 units), `/perm-wages/[slug]` 330 KB (42), `/perm-queue`
+289 KB (37), `/tools` 178 KB (23).
+
+**A DEPLOY DOES NOT PURGE THE ISR CACHE.** *"All the data you write remains
+cached for the duration you specify. Only you or your team can invalidate this
+cache, unless it goes unaccessed for 31 days."* Deploy frequency is a Build CPU
+cost and nothing to do with ISR. That 31-day eviction is also why pushing entity
+windows past ~30 days wins nothing; `[slug]` routes are already correct at
+2592000.
+
+**UNCHANGED OUTPUT COSTS NOTHING**, so unexpected writes mean genuine
+non-determinism in the render. Checked here and ruled out: every `new Date()` in
+an ISR page is date-only (`.slice(0,10)`) on a page that revalidates daily.
+
+**What actually drove writes, in order:**
+1. **Crawlable surface.** Entity pages ARE the sitemap (20,960 of ~21,110 URLs)
+   and each crawler visit to a lapsed page is a paid regeneration. Cut 35% by
+   raising `MIN_TOTAL_FOR_PAGE` 3 -> 5 (16,309 -> 9,646 employers). Nothing
+   404s: sub-floor pages still render, they go `noindex` and leave the sitemap.
+2. **Windows shorter than the data.** `/perm-queue`, `/perm-queue/[month]`
+   (~39 pages) and `/perm-decision-activity` sat on `revalidate = 3600` while
+   their own comments said the data "moves daily" and "quarterly" - ~984
+   regenerations/day expressing at most one change. Now 21600 (6h).
+3. **Page size**, which is where the next section went wrong.
+
+## The RSC payload model is INVERTED, and I shipped on the wrong one
+
+Half a cached entity page is the RSC flight payload (**163 KB of 330 KB,
+49.4%**; most frequent keys `className` x846, `children` x711, `style` x197).
+The intuitive read is that a component with no interactivity is "stored twice"
+and converting it to a server component halves the page. **Backwards:**
+
+| | in the payload |
+|---|---|
+| **client** component | a compact client REFERENCE (module id + props) |
+| **server** component | its FULL rendered element tree, serialized |
+
+Converting markup-heavy `Footer` client -> server made **every page bigger**:
+
+    /tools            181,750 -> 191,266 B   +9,516
+    /perm-queue       295,935 -> 305,451 B   +9,516
+    /perm-wages/...   338,201 -> 347,581 B   +9,380
+
+Identical +9,516 on two unrelated routes = the component's constant per-page
+cost, **+1 write unit on every page**. Reverted; the full account is in
+`Footer.tsx`. **The payload shrinks by rendering less, not by moving
+boundaries.** The "~25% available" estimate that motivated this is retired, and
+the "2%" once claimed for `QueueMonthChart` was probably noise against a
+differently-dated production build.
+
+## `@phosphor-icons/react`'s main entry is client-only
+
+It calls `createContext` at module scope for its `IconContext`, so **a server
+component importing it fails the build** with
+`TypeError: (0 , d.createContext) is not a function`, naming webpack bootstrap
+and no source file. Use **`@phosphor-icons/react/ssr`**, which ~60 files here
+already do.
+
+Finding it took four builds of guessing and then one pass of evidence: take the
+module id from the frame, locate it in `.next/server/chunks/*.js`, and read what
+it requires. **The stack names the IMPORTER, not the thrower.** Do not iterate
+on production builds to find this class of bug.
+
+**Three dormant traps remain** - server-side files still importing the main
+entry: `chat/tool-icons.tsx`, `empty-states/EmptyState.tsx`,
+`error/ErrorDisplay.tsx`. Harmless until the chunk graph shifts.
+
+**Related and kept: 25 modules had no client boundary of their own** (6 found by
+walking the import graph from server entry points, 4 calling `createContext`
+directly, 19 with value imports of `convex/react`). They worked purely by
+inheriting somebody else's boundary. A type-only importer,
+`cases/detail/case-detail-types.ts`, correctly needs nothing - type imports are
+erased at compile, so a blanket fix would have been wrong there.
+
 ## Slug "shadowing" between live and published: measured, and not a thing
 
 A live-only employer whose slug collides with a published one is unreachable,
