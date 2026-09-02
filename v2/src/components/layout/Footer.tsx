@@ -1,5 +1,21 @@
 "use client";
 
+// KEEP THIS DIRECTIVE UNTIL THE CLIENT GRAPH IS UNTANGLED (tried and reverted
+// 2026-09-01). Footer itself has no state, effects, handlers or browser APIs,
+// both its parents are server components, and as a client component its entire
+// multi-column tree is serialized into the RSC flight payload on top of being
+// rendered as HTML - stored twice in EVERY cached page. That is a real ISR
+// saving and it is worth taking eventually.
+//
+// It cannot be taken yet. Removing the directive reshuffles the client chunk
+// graph and `/admin/security` then fails to collect page data with
+// `TypeError: (0 , d.createContext) is not a function`, pointing at webpack
+// bootstrap rather than at any source file. `lib/admin/adminAuth.ts` was one
+// missing boundary on that path and declaring it did NOT clear the failure, so
+// something further along (AuthContext / convex/react) is also being pulled
+// server-side. Untangle that first, with a clean build to verify, rather than
+// as a drive-by.
+
 /**
  * Footer Component
  * One multi-column footer, shared by the public site and the signed-in app.

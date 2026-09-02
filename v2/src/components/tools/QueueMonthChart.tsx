@@ -1,5 +1,14 @@
-"use client";
-
+// NO "use client" (removed 2026-09-01). This chart takes props and renders
+// markup: no state, no effects, no handlers, no browser APIs. As a client
+// component every node it produced was serialized into the RSC flight payload
+// AND rendered into the HTML, so the whole ~39-row chart was stored twice in
+// every cached copy of the queue pages. Measured on an entity page, the flight
+// payload was 49% of the document and the most frequent keys in it were
+// `className`, `style`, `left` and `height` - chart nodes, exactly this shape.
+//
+// Vercel bills ISR writes in 8 KB units, so page size is the bill. Keep this a
+// server component; if it ever needs interactivity, put the interactive part in
+// its own small client child rather than making the whole chart client again.
 import { Fragment } from "react";
 
 import { formatMonth } from "@/lib/dolFormat";

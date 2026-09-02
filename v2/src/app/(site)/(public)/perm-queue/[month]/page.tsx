@@ -67,7 +67,12 @@ export async function generateMetadata({
   };
 }
 
-export const revalidate = 3600;
+// Six hours, matching /perm-queue. This route is ~39 generated pages, so the
+// old hourly window was ~936 regenerations a day on its own, against a census
+// that is rebuilt once daily. See the note on the parent route: ISR writes bill
+// in 8 KB units and these pages are ~289 KB, so the waste was real money rather
+// than a rounding error.
+export const revalidate = 21600;
 
 const int = (n: number) => n.toLocaleString("en-US");
 

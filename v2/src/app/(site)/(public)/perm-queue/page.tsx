@@ -66,10 +66,18 @@ export const metadata: Metadata = {
   },
 };
 
-// The mirror updates continuously, so an hour is the right bound: this is a
-// queue position, not a live ticker, and nobody's decision changes on a
-// ten-minute boundary.
-export const revalidate = 3600;
+// SIX HOURS, NOT ONE (changed 2026-09-01 on cost evidence). The reasoning for
+// an hour was sound about the reader and wrong about the data: this is a queue
+// position rather than a live ticker, but the underlying census is rebuilt ONCE
+// daily after the full DOL sweep, so twenty-four regenerations a day expressed
+// at most one change. Six still bounds staleness below the data's own cadence
+// and catches both the 04:10 and 15:40 ET sweeps.
+//
+// It is not free to regenerate. Vercel bills ISR writes in 8 KB units and this
+// page is ~289 KB, so every regeneration is ~37 units. Across this route and
+// `[month]` (~39 pages) the hourly window was ~984 regenerations a day, roughly
+// a fifth of all ISR writes on the site, for no freshness anyone could observe.
+export const revalidate = 21600;
 
 const int = (n: number) => n.toLocaleString("en-US");
 

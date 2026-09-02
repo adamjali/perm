@@ -58,10 +58,12 @@ export const metadata: Metadata = {
   },
 };
 
-// The live scan moves daily and the disclosure series quarterly, so an hour
-// bounds staleness below the faster of the two without regenerating a page
-// nobody has asked for.
-export const revalidate = 3600;
+// SIX HOURS, NOT ONE (changed 2026-09-01 on cost evidence). The old comment
+// said it plainly and then picked the wrong number: "the live scan moves daily
+// and the disclosure series quarterly". An hour therefore bought nothing, it
+// just regenerated a ~290 KB page 24 times to express one change. Six hours is
+// still four times faster than the faster of the two inputs.
+export const revalidate = 21600;
 
 function fmt(n: number): string {
   return n.toLocaleString("en-US");
