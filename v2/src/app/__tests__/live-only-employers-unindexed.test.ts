@@ -56,7 +56,17 @@ describe("the sitemap cannot reach the live-only employers", () => {
     // advertises a page we withhold is a 404 in Google's index.
     const sitemap = source("lib/sitemap/build.ts");
     expect(sitemap).toContain("rows.filter(hasOwnPage)");
-    expect(source("lib/entityPayload.ts")).toContain("MIN_TOTAL_FOR_PAGE = 3");
+
+    // Assert the INVARIANT, not the number. The rule this test exists to
+    // protect is "the floor must not be LOOSENED", and pinning the literal 3
+    // also failed on a deliberate TIGHTENING (3 -> 5 on 2026-09-01, to cut the
+    // crawlable surface by 35% for ISR cost). A floor that only ever moves up
+    // is the thing worth guarding; a specific value is not.
+    const floor = Number(
+      /MIN_TOTAL_FOR_PAGE\s*=\s*(\d+)/.exec(source("lib/entityPayload.ts"))?.[1],
+    );
+    expect(Number.isInteger(floor)).toBe(true);
+    expect(floor).toBeGreaterThanOrEqual(3);
   });
 });
 

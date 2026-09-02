@@ -1,3 +1,12 @@
+"use client";
+
+// DECLARED, not inherited (2026-09-01). This module uses useState, so it is a
+// client module in every sense except the annotation. It worked without one
+// only because every path that reached it happened to cross somebody else's
+// `"use client"` boundary first, which made it a latent trap: move a boundary
+// anywhere above it and this lands on the server, where the API does not exist.
+// See lib/ai/page-context.tsx for the failure this actually caused.
+
 /**
  * ChatWidgetConnected Component
  *

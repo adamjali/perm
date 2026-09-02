@@ -1,3 +1,26 @@
+"use client";
+
+// DECLARED, not inherited (2026-09-01), AND THIS IS THE ONE THAT BIT.
+//
+// `createContext` exists only in React's CLIENT build; in the server build the
+// export is genuinely absent. This module calls it with no directive of its
+// own and worked anyway, because every path that reached it crossed somebody
+// else's `"use client"` boundary first.
+//
+// Removing the directive from Footer - a component with no client features,
+// imported by two server layouts, whose whole tree was being serialized into
+// the RSC payload of every cached page - re-partitioned the client chunk graph
+// and dropped this module on the server side. The build then failed with
+//
+//     Failed to collect configuration for /admin/security
+//     TypeError: (0 , d.createContext) is not a function
+//
+// which names webpack bootstrap and no source file, so it is close to
+// undiagnosable by reading the stack. Found instead by walking the import graph
+// from every server entry point and asking which reachable modules use a
+// client-only API without declaring a boundary. Six did; this was the one with
+// `createContext`.
+
 /**
  * Page Context System for Chat
  *

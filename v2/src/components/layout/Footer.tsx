@@ -1,20 +1,49 @@
 "use client";
 
-// KEEP THIS DIRECTIVE UNTIL THE CLIENT GRAPH IS UNTANGLED (tried and reverted
-// 2026-09-01). Footer itself has no state, effects, handlers or browser APIs,
-// both its parents are server components, and as a client component its entire
-// multi-column tree is serialized into the RSC flight payload on top of being
-// rendered as HTML - stored twice in EVERY cached page. That is a real ISR
-// saving and it is worth taking eventually.
+// THIS DIRECTIVE IS LOAD-BEARING AND SHOULD NOT BE. Attempted and reverted
+// 2026-09-01, after four clean builds. Read this before trying again.
 //
-// It cannot be taken yet. Removing the directive reshuffles the client chunk
-// graph and `/admin/security` then fails to collect page data with
-// `TypeError: (0 , d.createContext) is not a function`, pointing at webpack
-// bootstrap rather than at any source file. `lib/admin/adminAuth.ts` was one
-// missing boundary on that path and declaring it did NOT clear the failure, so
-// something further along (AuthContext / convex/react) is also being pulled
-// server-side. Untangle that first, with a clean build to verify, rather than
-// as a drive-by.
+// THE PRIZE. Footer has no state, effects, handlers or browser APIs, and both
+// parents - `(site)/layout.tsx` and `(authenticated)/layout.tsx` - are server
+// components. As a client component its whole multi-column tree is serialized
+// into the RSC flight payload ON TOP OF being rendered as HTML, so it is stored
+// twice in every cached page on the site. Measured on an entity page that
+// payload is 163 KB of 330 KB (49.4%), and Vercel bills ISR writes in 8 KB
+// units, so the duplication is money on every route.
+//
+// WHY IT DOES NOT WORK YET. Footer is not merely duplicating itself, it is
+// acting as a client BOUNDARY for a large graph underneath the authenticated
+// layout. Remove the directive and webpack re-partitions the chunks, some of
+// that graph lands server-side, and the build dies collecting page data with
+//
+//     TypeError: (0 , d.createContext) is not a function
+//
+// naming webpack bootstrap and no source file. `createContext` exists only in
+// React's client build.
+//
+// WHAT WAS ALREADY FIXED (kept - correct on its own merits, and the trap is
+// real whether or not Footer ever changes). Twenty-five modules were using
+// client-only APIs with no boundary of their own, working purely because every
+// path that reached them crossed somebody else's first:
+//   - 6 found by walking the import graph from every server entry point:
+//     lib/ai/page-context (createContext), LoginTracker, PendingTermsHandler,
+//     ChatWidgetConnected, useToolOrchestrator, useChatWithPersistence
+//   - 4 more calling createContext directly: CaseFormContext,
+//     useCaseFormSection, pwa/InstallPrompt, SettingsUnsavedChangesContext
+//   - 19 with VALUE imports of `convex/react`, whose hooks reach createContext
+//     (a type-only importer, case-detail-types.ts, correctly needs nothing)
+//
+// WHY IT STILL FAILED. With all of those declared, the failure did not go away,
+// it MOVED - /admin/security, then /admin, then back. Chunk membership shifts
+// each time, so this is not one more missing directive; something about how the
+// authenticated layout's client graph is partitioned is doing it. Declaring
+// boundaries one at a time is whack-a-mole and does not converge.
+//
+// HOW TO ACTUALLY FINISH IT. Do not iterate on production builds at 5-6 minutes
+// a cycle. Read the emitted chunk (`.next/server/chunks/*.js`) to find which
+// module id is calling createContext and what pulled it in, or bisect the
+// authenticated layout's imports. That is an hour of focused work and worth it:
+// it is the difference between the 2% one component bought and roughly 25%.
 
 /**
  * Footer Component

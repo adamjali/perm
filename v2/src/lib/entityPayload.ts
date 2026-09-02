@@ -137,15 +137,35 @@ export function approvalRate(r: {
 }
 
 /**
- * Filings an entity needs before it gets a page of its own.
+ * Filings an entity needs before it gets an INDEXED page of its own.
  *
- * Every entity is STORED and searchable; this decides which are worth a URL.
- * Below three, the page would say "one case, certified" and nothing else,
- * and 65,000 of those is the doorway-page pattern rather than a directory.
- * The sitemap, `generateStaticParams` and the index tables all read this, so
- * a row that links somewhere and a page that exists cannot disagree.
+ * Every entity is STORED and searchable, and every entity page still RENDERS at
+ * its URL for anyone who searches or follows a link. This decides only which
+ * are worth advertising to a crawler: below the floor a page is `noindex` and
+ * the sitemap omits it. The sitemap, `generateStaticParams` and the index
+ * tables all read this constant, so a row that links somewhere and a page that
+ * is indexed cannot disagree.
+ *
+ * RAISED 3 -> 5 ON 2026-09-01, on cost evidence, with the SEO trade accepted
+ * deliberately. Entity pages ARE the crawlable surface: 20,960 of the ~21,110
+ * URLs in the sitemap. Every crawler visit to a page whose ISR window has
+ * lapsed is a paid regeneration, and Vercel bills those in 8 KB units against
+ * pages that are 220-330 KB, so the surface size is the bill.
+ *
+ *     >= 3   attorney 3,514   employer 16,309   occupation 1,137   = 20,960
+ *     >= 5   attorney 2,919   employer  9,646   occupation 1,014   = 13,579
+ *
+ * That is 7,381 fewer indexed pages, a 35% cut to the crawlable surface. The
+ * employer bucket carries almost all of it (16,309 -> 9,646) because most
+ * sponsors file a handful of cases, which is exactly the population whose page
+ * shows three rows and little else.
+ *
+ * FIVE RATHER THAN TEN, deliberately. Ten would cut 62% but starts removing
+ * pages with a real table, a median and an approval rate on them - genuine
+ * content with genuine search value. Three and four rows is thin; ten is not.
+ * If more is needed later this is one constant, and nothing 404s either way.
  */
-export const MIN_TOTAL_FOR_PAGE = 3;
+export const MIN_TOTAL_FOR_PAGE = 5;
 
 /** Does this entity have a page, or is it search-only? */
 export function hasOwnPage(row: { total: number }): boolean {
