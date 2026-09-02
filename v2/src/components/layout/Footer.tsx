@@ -1,49 +1,48 @@
 "use client";
 
-// THIS DIRECTIVE IS LOAD-BEARING AND SHOULD NOT BE. Attempted and reverted
-// 2026-09-01, after four clean builds. Read this before trying again.
+// KEEP "use client" HERE. Making this a server component was tried on
+// 2026-09-01, got all the way to a green build, was MEASURED, and made every
+// page BIGGER. Do not try it again without reading this.
 //
-// THE PRIZE. Footer has no state, effects, handlers or browser APIs, and both
-// parents - `(site)/layout.tsx` and `(authenticated)/layout.tsx` - are server
-// components. As a client component its whole multi-column tree is serialized
-// into the RSC flight payload ON TOP OF being rendered as HTML, so it is stored
-// twice in every cached page on the site. Measured on an entity page that
-// payload is 163 KB of 330 KB (49.4%), and Vercel bills ISR writes in 8 KB
-// units, so the duplication is money on every route.
+// THE MODEL THAT MOTIVATED IT WAS BACKWARDS, and that is the useful part.
+// The reasoning was: half of a cached page is the RSC flight payload (measured,
+// 163 KB of 330 KB on an entity page), so a component with no interactivity
+// should not be a client component, because then it is "stored twice" - once as
+// HTML, once in the payload. Convert it and the page shrinks.
 //
-// WHY IT DOES NOT WORK YET. Footer is not merely duplicating itself, it is
-// acting as a client BOUNDARY for a large graph underneath the authenticated
-// layout. Remove the directive and webpack re-partitions the chunks, some of
-// that graph lands server-side, and the build dies collecting page data with
+// That is not how the payload works. A CLIENT component appears in it as a
+// compact client REFERENCE: a module id plus its props. A SERVER component's
+// full rendered element tree is serialized into it. So converting a
+// markup-heavy component from client to server REPLACES a small reference with
+// a large serialized tree, and the page grows.
 //
-//     TypeError: (0 , d.createContext) is not a function
+// Measured, same build, four routes, local vs production:
 //
-// naming webpack bootstrap and no source file. `createContext` exists only in
-// React's client build.
+//     /tools            181,750 -> 191,266 B   +9,516
+//     /perm-queue       295,935 -> 305,451 B   +9,516
+//     /perm-wages/...   338,201 -> 347,581 B   +9,380
+//     /                 327,680 -> 335,246 B   +7,566
 //
-// WHAT WAS ALREADY FIXED (kept - correct on its own merits, and the trap is
-// real whether or not Footer ever changes). Twenty-five modules were using
-// client-only APIs with no boundary of their own, working purely because every
-// path that reached them crossed somebody else's first:
-//   - 6 found by walking the import graph from every server entry point:
-//     lib/ai/page-context (createContext), LoginTracker, PendingTermsHandler,
-//     ChatWidgetConnected, useToolOrchestrator, useChatWithPersistence
-//   - 4 more calling createContext directly: CaseFormContext,
-//     useCaseFormSection, pwa/InstallPrompt, SettingsUnsavedChangesContext
-//   - 19 with VALUE imports of `convex/react`, whose hooks reach createContext
-//     (a type-only importer, case-detail-types.ts, correctly needs nothing)
+// The identical +9,516 on two unrelated routes is Footer's constant per-page
+// cost. That is +1 ISR write unit on EVERY page, the opposite of the intent.
 //
-// WHY IT STILL FAILED. With all of those declared, the failure did not go away,
-// it MOVED - /admin/security, then /admin, then back. Chunk membership shifts
-// each time, so this is not one more missing directive; something about how the
-// authenticated layout's client graph is partitioned is doing it. Declaring
-// boundaries one at a time is whack-a-mole and does not converge.
+// SO THE PAYLOAD IS NOT REDUCED BY MOVING BOUNDARIES. It is reduced by
+// rendering less, or by rendering it somewhere that is not serialized at all.
+// Anyone optimising ISR write volume here should start from that.
 //
-// HOW TO ACTUALLY FINISH IT. Do not iterate on production builds at 5-6 minutes
-// a cycle. Read the emitted chunk (`.next/server/chunks/*.js`) to find which
-// module id is calling createContext and what pulled it in, or bisect the
-// authenticated layout's imports. That is an hour of focused work and worth it:
-// it is the difference between the 2% one component bought and roughly 25%.
+// TWO THINGS FOUND ALONG THE WAY THAT WERE KEPT, both real:
+//   1. `@phosphor-icons/react`'s MAIN entry calls `createContext` at module
+//      scope for its IconContext, so it needs React's client build. Importing
+//      it from a server component is what produced
+//      `TypeError: (0 , d.createContext) is not a function` - an error naming
+//      webpack bootstrap and no source file, found only by reading the module
+//      ids in the emitted chunk (`.next/server/chunks/*.js`). The `/ssr` entry
+//      exists for this and ~60 files here already use it. Footer is a client
+//      component again so its main-entry import is fine, but three other
+//      SERVER-side files still import the main entry and are dormant traps:
+//      chat/tool-icons.tsx, empty-states/EmptyState.tsx, error/ErrorDisplay.tsx
+//   2. 25 modules used client-only APIs with no boundary of their own, working
+//      purely by inheriting somebody else's. Those are declared now.
 
 /**
  * Footer Component
