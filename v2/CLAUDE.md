@@ -1523,18 +1523,38 @@ units as pages overstates the rate by ~33x. Corollary: **page SIZE is the bill**
 Measured: `/` 320 KB (40 units), `/perm-wages/[slug]` 330 KB (42), `/perm-queue`
 289 KB (37), `/tools` 178 KB (23).
 
-**A DEPLOY DOES NOT PURGE THE ISR CACHE.** *"All the data you write remains
-cached for the duration you specify. Only you or your team can invalidate this
-cache, unless it goes unaccessed for 31 days."* Deploy frequency is a Build CPU
-cost and nothing to do with ISR. That 31-day eviction is also why pushing entity
-windows past ~30 days wins nothing; `[slug]` routes are already correct at
-2592000.
+**EVERY DEPLOY STARTS THE ISR CACHE COLD. (Corrected 2026-09-02; the 09-01
+version of this paragraph said the opposite.)** The earlier text quoted the
+storage-retention sentence ("all the data you write remains cached for the
+duration you specify...") as if it covered deployments. It does not. Vercel's
+ISR page: *"It is scoped to a specific deployment where each deployment
+generates its own cache"* and *"each new deployment uses its own ISR cache and
+does not reuse the cache from a previous deployment."* The cache-status page
+lists a deployment as a cause of a **Cold** miss: *"after a new deployment
+(Vercel scopes cached responses to the deployment that produced them)"*. The old
+cache survives only so rollbacks work. So after every production build, each
+ISR path is regenerated and WRITTEN on its first request, and "unchanged output
+costs nothing" cannot help, because the new cache holds nothing to compare
+against.
+
+**Measured: five production builds in the 24 hours around 2026-09-01 (`vercel ls`:
+09:38, 10:33, 21:43, 23:04, 23:57 EDT) -> $3.23 of ISR writes on the Sep 1 usage
+line, ONE day** (~808k units, ~6.5 GB, roughly 20-25k regenerations), against $3.81 for
+the five days before it. **Deploy count is an ISR lever, not only a
+build-minutes lever.** Corollary: an entity window of 2592000 is really
+min(30 days, time to next deploy); with daily pushes that is about a day, so
+raising windows buys nothing until pushes are batched. A comment-only change
+under `src/` (the `Footer.tsx` doc commit) is a full cold-cache event, because
+`ignoreCommand` cannot tell it from code. The 31-day eviction rule still holds
+within one deployment.
 
 **UNCHANGED OUTPUT COSTS NOTHING**, so unexpected writes mean genuine
 non-determinism in the render. Checked here and ruled out: every `new Date()` in
 an ISR page is date-only (`.slice(0,10)`) on a page that revalidates daily.
 
 **What actually drove writes, in order:**
+0. **Deploys.** Each one cold-starts the whole ISR tree (above). Five in 24h
+   cost more than the previous five days combined.
 1. **Crawlable surface.** Entity pages ARE the sitemap (20,960 of ~21,110 URLs)
    and each crawler visit to a lapsed page is a paid regeneration. Cut 35% by
    raising `MIN_TOTAL_FOR_PAGE` 3 -> 5 (16,309 -> 9,646 employers). Nothing
