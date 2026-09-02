@@ -170,7 +170,16 @@ async function computeFieldDistribution(
         "WHERE kind = ? AND (IFNULL(certified, 0) + IFNULL(denied, 0)) >= ?",
       [kind, bar],
     ),
-    one<{ n: number }>("SELECT count(*) AS n FROM perm_entities WHERE kind = ?", [kind]),
+    // Ranks are dense 1..N per kind (measured: employer MAX(rank) = COUNT(*)
+    // = 71,512), so the kind's size is one index read from the top of
+    // idx_pe_kind_rank rather than a count that walks every row. The cohort
+    // read above is served by idx_pe_kind_decided, an expression index on
+    // (kind, certified + denied) created 2026-09-02; before it, this pair of
+    // reads walked 143k rows on every cold render of every entity page.
+    one<{ n: number }>(
+      "SELECT rank AS n FROM perm_entities WHERE kind = ? ORDER BY rank DESC LIMIT 1",
+      [kind],
+    ),
   ]);
 
   const approval: number[] = [];

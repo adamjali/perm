@@ -65,9 +65,9 @@ export default async function LcaCasesPage() {
           Find an H-1B LCA
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          The labor condition application is what the employer files with DOL
-          before the H-1B petition. Search the employer, get the number, the
-          title, the filing date and DOL&apos;s status.{" "}
+          The employer files the labor condition application with DOL before the
+          H-1B petition. Search the employer to get the number, job title, filing
+          date and DOL&apos;s status.{" "}
           {summary ? (
             <>
               {summary.total.toLocaleString("en-US")} LCAs confirmed by DOL so far
@@ -81,10 +81,10 @@ export default async function LcaCasesPage() {
         <div className="border-2 border-border bg-tint-primary p-5 sm:p-6">
           <h2 className="font-heading text-lg font-black">What&apos;s in here, and what isn&apos;t</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/80">
-            Every row is a case DOL&apos;s own system confirmed: number, employer,
+            Every row comes from DOL&apos;s own case system: number, employer,
             job title, filing date and status. Wage, worksite and visa class
-            arrive only in DOL&apos;s quarterly disclosure files. An LCA is not
-            the H-1B petition; that has a USCIS receipt number and is tracked
+            arrive only in DOL&apos;s quarterly disclosure files. The H-1B
+            petition is separate: it has a USCIS receipt number and is tracked
             at USCIS.
           </p>{" "}
           <p className="mt-3 text-sm leading-relaxed text-foreground/70">
@@ -107,16 +107,14 @@ export default async function LcaCasesPage() {
         <h2 className="font-heading text-2xl font-black">How this works</h2>{" "}
         <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
           <p>
-            <b className="font-bold">Where the rows come from.</b> DOL&apos;s case
-            status search covers LCAs, and DOL numbers every filing from one
-            running counter. This site checks that counter nightly for new PERM
-            and wage filings; LCAs sit in the same windows and are confirmed the
-            same way, then re-checked until DOL decides.
+            <b className="font-bold">Where the rows come from.</b> DOL numbers every
+            filing from one running counter. This site checks it nightly for new
+            filings, then re-checks each LCA until DOL decides.
           </p>{" "}
           <p>
             <b className="font-bold">Why one might be missing.</b> Watching started
-            in September 2026 and works backwards through earlier filing days. A
-            filing from today shows up after the next nightly check.
+            in September 2026 and is working backwards through earlier filings. A
+            filing from today appears after the next nightly check.
           </p>
         </div>
       </section>

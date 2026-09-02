@@ -172,16 +172,28 @@ def serial_of(case_number: str) -> int | None:
     return int(m.group(3)) if m else None
 
 
-def _serial_stats(db: Turso, table: str, like: str, codes: list[str]):
-    marks = ",".join("?" for _ in codes)
-    return _rows(
-        db,
-        f"SELECT substr(case_number, 7, 5) AS day, "
-        f"       MIN(CAST(substr(case_number, 13) AS INTEGER)), "
-        f"       MAX(CAST(substr(case_number, 13) AS INTEGER)) "
-        f"  FROM {table} WHERE case_number LIKE ? "
-        f"   AND substr(case_number, 7, 5) IN ({marks}) GROUP BY day",
-        [like, *codes])
+def _serial_stats(db: Turso, table: str, prefixes: list[str], codes: list[str]):
+    """Per day code, min and max serial, read by PRIMARY KEY RANGE.
+
+    Turso meters every row READ, and `LIKE 'G-100-26238-%'` cannot use the
+    primary key index (LIKE is case-insensitive by default while the column
+    collates BINARY), so the first version scanned all 414k PERM rows per
+    call. A half-open range on the same prefix walks only that day's rows.
+    """
+    out = []
+    for prefix in prefixes:
+        for code in codes:
+            lo, hi = f"{prefix}{code}-", f"{prefix}{code}-~"
+            for _day, mn, mx in _rows(
+                    db,
+                    f"SELECT ? AS day, "
+                    f"       MIN(CAST(substr(case_number, 13) AS INTEGER)), "
+                    f"       MAX(CAST(substr(case_number, 13) AS INTEGER)) "
+                    f"  FROM {table} WHERE case_number >= ? AND case_number < ?",
+                    [code, lo, hi]):
+                if mn is not None:
+                    out.append((code, mn, mx))
+    return out
 
 
 def day_windows(db: Turso, codes: list[str]) -> dict[str, tuple[int, int]]:
@@ -195,11 +207,11 @@ def day_windows(db: Turso, codes: list[str]) -> dict[str, tuple[int, int]]:
     if not codes:
         return {}
     out: dict[str, list[int]] = {}
-    sources = [("perm_case_status", PERM_PREFIX + "%")]
+    sources: list[tuple[str, list[str]]] = [("perm_case_status", [PERM_PREFIX])]
     for cfg in PROGRAMS.values():
-        sources.append((cfg["table"], cfg["prefixes"][0][0] + "-%"))
-    for table, like in sources:
-        for day, lo, hi in _serial_stats(db, table, like, codes):
+        sources.append((cfg["table"], list(cfg["prefixes"])))
+    for table, prefixes in sources:
+        for day, lo, hi in _serial_stats(db, table, prefixes, codes):
             if lo is None or hi is None:
                 continue
             cur = out.setdefault(str(day), [int(lo), int(hi)])
@@ -218,10 +230,14 @@ def day_windows(db: Turso, codes: list[str]) -> dict[str, tuple[int, int]]:
 def known_serials(db: Turso, code: str) -> set[int]:
     """Every serial already claimed for a day, across ALL programs."""
     known: set[int] = set()
-    for table, like in [("perm_case_status", f"{PERM_PREFIX}{code}-%")] + [
-            (cfg["table"], f"{cfg['prefixes'][0][0]}-%-{code}-%") for cfg in PROGRAMS.values()]:
+    pairs: list[tuple[str, str]] = [("perm_case_status", PERM_PREFIX)]
+    for cfg in PROGRAMS.values():
+        pairs += [(cfg["table"], pfx) for pfx in cfg["prefixes"]]
+    for table, prefix in pairs:
+        # Primary-key range, not LIKE: see _serial_stats.
         for (s,) in _rows(db, f"SELECT CAST(substr(case_number, 13) AS INTEGER) FROM {table} "
-                              f"WHERE case_number LIKE ?", [like]):
+                              f"WHERE case_number >= ? AND case_number < ?",
+                          [f"{prefix}{code}-", f"{prefix}{code}-~"]):
             known.add(int(s))
     return known
 

@@ -79,8 +79,8 @@ export default async function ToolsPage() {
           Live PERM data and free calculators
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          Live figures from the Department of Labor, and free calculators built
-          on them.
+          DOL&apos;s own figures, each with its date, and calculators built on
+          them.
         </p>
       </header>
 
@@ -107,7 +107,7 @@ export default async function ToolsPage() {
               {analystAvg?.calendarDays != null ? `${analystAvg.calendarDays} days` : "—"}
             </p>{" "}
             <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-              Over cases DOL decided recently. An RFI or audit can make an individual case take longer.
+              Across cases DOL decided recently. An RFI or audit can make one case take longer.
             </p>
           </div>
           <div className="border-2 border-border bg-card p-6 shadow-hard">
@@ -132,11 +132,11 @@ export default async function ToolsPage() {
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
           <div className="min-w-0">
             <h2 className="font-heading text-2xl font-black">
-              Where is your case? When could it be decided?
+              Where&apos;s your case? When could it be decided?
             </h2>{" "}
             <p className="mt-2 max-w-xl text-base leading-relaxed text-foreground/70">
-              Live DOL status, your place in the queue, and a stage-aware
-              estimate. Free, no account.
+              Live DOL status, your place in the queue and an estimate. Free,
+              no account.
             </p>
           </div>
           <form action="/perm-case-status" method="get" className="flex min-w-0 flex-wrap items-center gap-3">
@@ -206,10 +206,11 @@ export default async function ToolsPage() {
       {/* The two sides of the product, connected in one band. */}
       {/* The disclosure aggregates: three cuts of the same quarterly files. */}
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">The whole field, five ways</h2>{" "}
+        <h2 className="font-heading text-2xl font-black">The whole field</h2>{" "}
         <p className="mt-2 max-w-2xl text-base text-foreground/70">
-          Every filing in DOL&apos;s quarterly disclosure files, cut by place,
-          pay, sponsor, firm and outcome.
+          DOL&apos;s disclosure files cut by place, pay, sponsor, firm and
+          outcome, then case-by-case search across PERM, wage requests and
+          LCAs.
         </p>
         {/* Flex-wrap, not a 3-column grid: there are five cards, so a fixed
             third column leaves an empty cell in the last row that reads as a
@@ -227,14 +228,14 @@ export default async function ToolsPage() {
             {
               href: "/perm-wages",
               label: "Wages",
-              blurb: "Median offered wages by occupation, from the wage each employer committed to pay.",
+              blurb: "Median offered wage by occupation, from what each employer committed to pay.",
               tone: "ink",
               viz: "twobars" as const,
             },
             {
               href: "/perm-employers",
               label: "Employers",
-              blurb: "The hundred biggest sponsors, ranked, searchable, with their track records.",
+              blurb: "Every sponsor in DOL's files, ranked and searchable, with their track records.",
               tone: "card",
               viz: "queue" as const,
             },
@@ -397,8 +398,8 @@ export default async function ToolsPage() {
             Track every deadline in every case
           </h2>{" "}
           <p className="mt-3 text-base leading-relaxed text-background/70">
-            The same date math as the deadline calculator, applied to your
-            cases, with alerts and calendar sync. The account is free.
+            The deadline calculator&apos;s date math, applied to every case you
+            run, with alerts and calendar sync. Free.
           </p>{" "}
           <Link
             href="/signup"

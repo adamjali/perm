@@ -37,7 +37,7 @@ const steps: Step[] = [
     number: 1,
     illustration: <RocketLaunchSVG size={80} className="text-foreground" />,
     title: "Add Your PERM Case",
-    description: "Enter your case dates: determination date, recruitment start, filing date.",
+    description: "Enter the case dates: wage determination, recruitment start, filing.",
     bgImage: "/images/hero/legal-office-wide.jpg",
     accentColor: "var(--primary)",
   },
@@ -45,7 +45,7 @@ const steps: Step[] = [
     number: 2,
     illustration: <CalendarDeadlineSVG size={80} className="text-foreground" />,
     title: "Deadlines Auto-Calculate",
-    description: "11 deadline types compute from those dates: filing windows, PWD expirations, audit response dates.",
+    description: "11 deadline types follow from those dates: filing windows, PWD expiration, audit responses.",
     bgImage: "/images/features/calendar-planning.jpg",
     accentColor: "var(--stage-eta9089)",
   },
@@ -53,7 +53,7 @@ const steps: Step[] = [
     number: 3,
     illustration: <NotificationBellSVG size={80} className="text-foreground" />,
     title: "Get Alerted Before They Hit",
-    description: "Email, push notifications, or Google Calendar. Choose when and how you\u2019re reminded. 1, 3, 7, 14, or 30 days before.",
+    description: "Email, push or Google Calendar, at 1, 3, 7, 14 or 30 days before.",
     bgImage: "/images/features/notification-phone.jpg",
     accentColor: "var(--stage-pwd)",
   },
@@ -237,7 +237,7 @@ export function HowItWorks() {
           ))}
         </ScrollReveal>
 
-        {/* Product screenshots — see it in action */}
+        {/* Product screenshots: see it in action */}
         <ScrollReveal direction="up" delay={0.3} className="mt-12">
           <div className="text-center mb-8">
             <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
@@ -248,10 +248,10 @@ export function HowItWorks() {
               See How It Works in 20 Seconds
             </h3>{" "}
             <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
-              The whole workflow, from case creation to deadline tracking.
+              From creating a case to tracking its deadlines.
             </p>
           </div>
-          {/* Product demo + Create case — side by side */}
+          {/* Product demo + Create case, side by side */}
           <div className="grid gap-6 md:grid-cols-2">
             {/* Product Demo video */}
             <div>
@@ -290,7 +290,7 @@ export function HowItWorks() {
                 </div>
               </Lightbox>{" "}
               <p className="mt-3 text-center font-mono text-sm uppercase tracking-widest text-muted-foreground">
-                See the full app in action
+                Open the walkthrough
               </p>
             </div>
           </div>

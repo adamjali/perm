@@ -101,7 +101,19 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/perm-cases",
     label: "PERM case search",
     blurb:
-      "Search individual published PERM cases by case number, employer, law firm, state or occupation.",
+      "Every PERM case: DOL's published files, plus every pending and newly decided case from DOL's daily check, searchable by employer, job title and filing month.",
+  },
+  {
+    path: "/pwd-cases",
+    label: "PWD case search",
+    blurb:
+      "Find a prevailing wage request (ETA-9141) by employer, job title and filing month, with the case number, filing date and DOL's current status. Live from DOL's daily check.",
+  },
+  {
+    path: "/lca-cases",
+    label: "LCA case search",
+    blurb:
+      "Find an H-1B labor condition application (ETA-9035) by employer, job title and filing month, with the case number, filing date and DOL's current status. Live from DOL's daily check.",
   },
   {
     path: "/calculators",

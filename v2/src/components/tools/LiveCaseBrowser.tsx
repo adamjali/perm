@@ -8,11 +8,7 @@ import { usePublicQuery } from "@/lib/usePublicQuery";
 import { formatMonth } from "@/lib/dolFormat";
 // Type-only: `@/lib/turso/liveCases` imports `server-only`, and a value import
 // here would be a build error. A type import compiles to nothing.
-import type {
-  LiveKind,
-  LiveListPage,
-  LiveRemainderSummary,
-} from "@/lib/turso/liveCases";
+import type { LiveKind, LiveListPage, LiveRemainderSummary } from "@/lib/turso/liveCases";
 
 /**
  * The live half of the case corpus, browsable.
@@ -134,21 +130,18 @@ export function LiveCaseBrowser({
           {summary ? (
             <>
               DOL&apos;s published files end on {longDate(publishedThrough ?? summary.publishedThrough)}.
-              Everything below comes from checking DOL&apos;s own case system every
-              day: {fmtInt(summary.total)} cases the files don&apos;t hold yet,{" "}
-              {fmtInt(summary.decided)} of them decided ({fmtInt(summary.certified)}{" "}
+              A daily check of DOL&apos;s case system adds {fmtInt(summary.total)} cases
+              they don&apos;t hold yet: {fmtInt(summary.decided)} decided ({fmtInt(summary.certified)}{" "}
               certified, {fmtInt(summary.denied)} denied, {fmtInt(summary.withdrawn)}{" "}
-              withdrawn) and {fmtInt(summary.pending)} still waiting.
+              withdrawn), {fmtInt(summary.pending)} still waiting.
             </>
           ) : (
             <>
               DOL&apos;s published files end on {longDate(publishedThrough)}. Everything
-              below comes from checking DOL&apos;s own case system every day: the
-              cases the files don&apos;t hold yet.
+              below is newer, from a daily check of DOL&apos;s case system.
             </>
           )}{" "}
-          These rows carry only what that check returns. The wage, law firm and
-          state appear when DOL publishes the case.
+          Wage, law firm, state and decision date arrive when DOL publishes the case.
         </p>
 
         <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -192,8 +185,8 @@ export function LiveCaseBrowser({
             {fmtInt(cohort.total)} live {cohort.total === 1 ? "case was" : "cases were"} filed in{" "}
             {formatMonth(cohort.month) ?? cohort.month}: {fmtInt(cohort.pending)} waiting,{" "}
             {fmtInt(cohort.decided)} decided. Rows aren&apos;t listed for a month this
-            small, because a case number beside an employer and a job title is
-            close to naming a person.
+            small. A case number beside an employer and job title is close to
+            naming a person.
           </p>
         ) : null}
 
@@ -213,7 +206,7 @@ export function LiveCaseBrowser({
               <thead className="bg-foreground text-background">
                 <tr>
                   {["Case", "Status", "Employer", "Job title", "Filed", "Seen"].map((h) => (
-                    <Fragment key={h}>{" "}
+                    <Fragment key={h}>
                     <th
                       scope="col"
                       className="whitespace-nowrap px-3 py-3 font-mono text-xs font-bold uppercase tracking-wider"
@@ -248,7 +241,7 @@ export function LiveCaseBrowser({
                       >
                         {r.caseNumber}
                       </Link>
-                    </td>{" "}
+                    </td>
                     <td className="whitespace-nowrap px-3 py-3">
                       <span
                         className={
@@ -258,7 +251,7 @@ export function LiveCaseBrowser({
                       >
                         {r.status ?? "unknown"}
                       </span>
-                    </td>{" "}
+                    </td>
                     <td className="px-3 py-3">
                       {r.employerSlug ? (
                         <Link
@@ -270,11 +263,11 @@ export function LiveCaseBrowser({
                       ) : (
                         <span className="font-bold">{r.employerName}</span>
                       )}
-                    </td>{" "}
-                    <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}</td>{" "}
+                    </td>
+                    <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}</td>
                     <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
                       {r.filingDate ?? ""}
-                    </td>{" "}
+                    </td>
                     <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">
                       {r.decidedSeen ?? ""}
                     </td>
@@ -289,8 +282,7 @@ export function LiveCaseBrowser({
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-foreground/70">
               Newest filing first. &ldquo;Seen&rdquo; is the day this site first saw the
-              decision, not DOL&apos;s decision date; it&apos;s blank for cases decided
-              before the daily check began.
+              decision. It&apos;s blank for cases decided before the daily check began.
             </p>{" "}
             <div className="flex gap-2">
               <button

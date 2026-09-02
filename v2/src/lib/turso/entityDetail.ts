@@ -338,13 +338,19 @@ export async function nameVariants(
   if (!mergeKey) return [];
   const root = mergeKey.split(" ")[0] ?? "";
   if (root.length < 4 || GENERIC_ROOTS.has(root)) return [];
-  // `%` and `_` are LIKE wildcards, so a name containing one would widen its
-  // own search. Escaped, with the escape character escaped first.
-  const prefix = `${root.replace(/[\\%_]/g, (c) => `\\${c}`)} %`;
+  // A HALF-OPEN RANGE ON THE INDEX, NOT LIKE. `merge_key = root OR merge_key
+  // LIKE 'root %'` cannot use idx_pe_merge (an OR, and a LIKE on a BINARY
+  // column), so EXPLAIN showed it walking every row of the kind: 71,512
+  // employer rows per employer page render. Turso meters rows READ, and
+  // that one query, multiplied by the regenerations a cold ISR cache causes,
+  // was most of a 7.75-billion-row invoice (2026-09-02). Every key that is
+  // exactly `root` or starts with `root ` sorts in [root, root + "!"), because
+  // the space (0x20) is the last character below "!" (0x21); nothing else
+  // lands there. Measured plan: SEARCH perm_entities USING INDEX idx_pe_merge.
   const found = await rows<{ slug: string; name: string; total: number }>(
-    "SELECT slug, name, total FROM perm_entities WHERE kind = ? AND slug <> ? "
-      + "AND (merge_key = ? OR merge_key LIKE ? ESCAPE '\\') ORDER BY total DESC LIMIT ?",
-    [kind, slug, root, prefix, MAX_VARIANTS + 1],
+    "SELECT slug, name, total FROM perm_entities WHERE kind = ? "
+      + "AND merge_key >= ? AND merge_key < ? AND slug <> ? ORDER BY total DESC LIMIT ?",
+    [kind, root, `${root}!`, slug, MAX_VARIANTS + 1],
   );
   // One over the cap means the root is commoner than it looked, so the list
   // would be a directory rather than a variant set. Withhold instead.

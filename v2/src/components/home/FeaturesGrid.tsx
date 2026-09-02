@@ -33,7 +33,7 @@ const features: Feature[] = [
   {
     title: "Auto Deadline Calculation",
     description:
-      "Enter one date and 11 downstream deadlines update: PWD expiration, filing windows, I-140 cutoffs, recruitment method dates.",
+      "Enter one date and 11 downstream deadlines update: PWD expiration, filing windows, I-140 cutoffs, recruitment dates.",
     illustration: <CalendarDeadlineSVG size={64} className="text-foreground" />,
     accentColor: "var(--stage-pwd)",
     learnMoreHref: "/guides/tracking-perm-deadlines",
@@ -42,14 +42,14 @@ const features: Feature[] = [
   {
     title: "Smart Alerts",
     description:
-      "Email, push, and in-app notifications before deadlines. Configure reminders at 1, 3, 7, 14, or 30 days, plus a weekly Monday digest.",
+      "Email, push and in-app reminders at 1, 3, 7, 14 or 30 days before each deadline, plus a Monday digest.",
     illustration: <NotificationBellSVG size={64} className="text-foreground" />,
     accentColor: "var(--primary)",
   },
   {
     title: "Google Calendar Sync",
     description:
-      "Every PERM deadline appears on your Google Calendar automatically. Access your filing schedule from any device.",
+      "Every PERM deadline goes onto your Google Calendar automatically.",
     illustration: <CalendarSyncSVG size={64} className="text-foreground" />,
     accentColor: "var(--stage-recruitment)",
   },
@@ -67,7 +67,7 @@ const features: Feature[] = [
   {
     title: "DOL Compliance Checks",
     description:
-      "Built-in validation catches missing recruitment steps, expired PWDs, and filing window violations.",
+      "Validation catches missing recruitment steps, expired PWDs and filing window violations.",
     illustration: <ShieldCheckSVG size={64} className="text-foreground" />,
     accentColor: "var(--stage-i140)",
     learnMoreHref: "/blog/common-perm-audit-triggers",
@@ -76,7 +76,7 @@ const features: Feature[] = [
   {
     title: "AI Case Assistant",
     description:
-      "Ask questions about your cases, create and update cases, check deadlines, search PERM regulations, all in plain English.",
+      "Ask about your cases, create or update them, check deadlines and search PERM regulations, in plain English.",
     illustration: (
       <svg width="64" height="64" viewBox="0 0 200 200" fill="none" className="text-foreground" aria-hidden="true">
         {/* Chat bubble */}
@@ -97,7 +97,7 @@ const features: Feature[] = [
 
 /**
  * Individual feature card. The lift on hover is the hard shadow's press-and-
- * lift (see below), not a 3D tilt — the useTilt hook this once used was removed.
+ * lift (see below), not a 3D tilt; the useTilt hook this once used was removed.
  */
 function FeatureCard({ feature }: { feature: Feature }) {
   // No tilt and no photo underlay: the hard shadow's press-and-lift is this

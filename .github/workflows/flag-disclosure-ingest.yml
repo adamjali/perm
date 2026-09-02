@@ -1,0 +1,106 @@
+name: PW and LCA disclosure ingest
+
+# Loads DOL's quarterly prevailing-wage (Form ETA-9141) and LCA (Form
+# ETA-9035) disclosure files into Turso, one row per case, into `pwd_cases`
+# and `lca_cases`. The same discipline as perm-disclosure-ingest.yml: the file
+# URL is discovered from DOL's performance page, never constructed; the
+# workbook is streamed, never loaded whole (an LCA file is several hundred MB
+# compressed and multiple GB of XML); and the run reports success only after
+# `COUNT(*)` for the file equals the number of unique cases it read.
+#
+# MONTHLY, not quarterly, on purpose. DOL republishes each quarter a week or
+# two after it ends, under a NEW filename, and the freshness row allows 120
+# days. A monthly check picks the new quarter up within a few weeks of it
+# appearing. It does not cost a rewrite on the other months: the script keeps
+# the loaded file's SHA-256 and row count in `perm_docs`, and a run that sees
+# the same hash with the rows still present skips the write and re-stamps
+# freshness. Dispatch with `force` to override that.
+#
+# Manual run, from a home connection (www.dol.gov 403s some addresses):
+#   python3 v2/scripts/ingest_flag_disclosure.py --program pw
+#   python3 v2/scripts/ingest_flag_disclosure.py --program lca
+
+on:
+  schedule:
+    # 07:00 UTC on the 10th of every month, after the quarterly PERM ingest
+    # (the 8th) so the two never contend for DOL's goodwill on one morning.
+    - cron: "0 7 10 * *"
+  workflow_dispatch:
+    inputs:
+      program:
+        description: Which disclosure file to load
+        required: true
+        default: all
+        type: choice
+        options: [all, pw, lca]
+      force:
+        description: Write even if the file's hash matches the last load
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flag-disclosure-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    # Generous because the LCA file is large: the download is minutes, the
+    # streaming parse of a few GB of XML is tens of minutes, and the chunked
+    # write of several hundred thousand rows is minutes more. The `timeout`
+    # inside the step is what actually bounds a hang, and it is set BELOW
+    # this so a stuck run FAILS and notifies rather than being cancelled
+    # silently at the job cap.
+    timeout-minutes: 240
+
+    strategy:
+      # One program failing must not cancel the other's load.
+      fail-fast: false
+      matrix:
+        # A scheduled run and an `all` dispatch load both programs; a
+        # dispatch naming one program loads only that one. The expression is
+        # the `(cond && a) || b` form because Actions has no ternary.
+        program: ${{ fromJSON((github.event_name == 'workflow_dispatch' && inputs.program != 'all' && format('["{0}"]', inputs.program)) || '["pw","lca"]') }}
+
+    # JOB-LEVEL, as in perm-disclosure-ingest.yml: lib_turso.env() reads the
+    # real environment first, so no credentials file is materialised on disk.
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Load the ${{ matrix.program }} disclosure file
+        working-directory: v2
+        # Inputs reach the shell through env and are checked against the
+        # allowed set before they touch a command. Interpolating `${{ ... }}`
+        # straight into `run:` splices the value into the command itself.
+        env:
+          PROGRAM: ${{ matrix.program }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          case "$PROGRAM" in
+            pw|lca) ;;
+            *) echo "::error::program must be pw or lca, got '$PROGRAM'"; exit 1 ;;
+          esac
+          if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
+            echo "::error::TURSO secrets absent; nothing to load into."
+            exit 1
+          fi
+          EXTRA=""
+          if [ "$FORCE" = "true" ]; then
+            EXTRA="--force"
+          fi
+          echo "program: $PROGRAM ${EXTRA:+($EXTRA)}"
+          # `timeout` rather than the job cap, so a hang FAILS and notifies
+          # instead of being cancelled silently (see pwd-status-direct.yml).
+          timeout 230m python3 scripts/ingest_flag_disclosure.py --program "$PROGRAM" $EXTRA

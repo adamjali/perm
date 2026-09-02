@@ -275,19 +275,19 @@ export default async function CohortPage({
             {liveMonth.total === 1 ? "isn't" : "aren't"} in DOL&apos;s published
             files yet: {int(liveMonth.pending)} still waiting, {int(liveMonth.decided)}{" "}
             decided since the last file. DOL&apos;s daily check gives the employer,
-            the job title and the status, and nothing else until DOL publishes
-            the case.
+            job title and status. Everything else arrives when DOL publishes the
+            case.
           </p>
         ) : (
           <p className="mt-2 text-base leading-relaxed text-foreground/80">
-            Every {label} filing DOL still holds is in its published files. The{" "}
+            Every {label} filing is in DOL&apos;s published files. The{" "}
             <Link
               href="/perm-cases"
               className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
             >
               case search
             </Link>{" "}
-            carries them with the wage, firm and decision date.
+            has them, with the wage, firm and decision date.
           </p>
         )}
         {liveRows.length > 0 ? (
@@ -322,8 +322,8 @@ export default async function CohortPage({
           </ol>
         ) : liveMonth && liveMonth.total > 0 ? (
           <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-            Rows aren&apos;t listed for a month this small, because a case number
-            beside an employer and a job title is close to naming a person.
+            Rows aren&apos;t listed for a month this small. A case number beside
+            an employer and job title is close to naming a person.
           </p>
         ) : null}
         {liveMonth && liveRows.length > 0 ? (
@@ -337,8 +337,8 @@ export default async function CohortPage({
             >
               All {int(liveMonth.total)} live {label} filings, pending and decided
             </Link>
-            , newest first. DOL works a month alphabetically by employer, so the
-            order they decide in is not the order above.
+            , newest first. DOL works a month alphabetically by employer, so
+            decisions won&apos;t follow this order.
           </p>
         ) : null}
       </section>{" "}

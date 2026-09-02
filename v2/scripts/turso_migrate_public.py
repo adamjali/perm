@@ -107,6 +107,10 @@ SCHEMA = [
 
 INDEXES = [
     "CREATE INDEX idx_pe_kind_rank ON perm_entities(kind, rank)",
+    # Expression index for fieldDistribution's cohort filter. The SQL text in
+    # src/lib/turso/entities.ts must match this expression exactly or SQLite
+    # walks the whole kind (71k rows per entity page render, 2026-09-02).
+    "CREATE INDEX idx_pe_kind_decided ON perm_entities(kind, (IFNULL(certified, 0) + IFNULL(denied, 0)))",
     "CREATE INDEX idx_pe_kind_total ON perm_entities(kind, total DESC)",
     "CREATE INDEX idx_pe_kind_name ON perm_entities(kind, name)",
     "CREATE INDEX idx_pe_merge ON perm_entities(kind, merge_key)",

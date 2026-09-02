@@ -13,7 +13,7 @@ import { QueueDepthMini, TapeMini, WindowSpansMini } from "@/components/tools/Mi
  * runs through all four stages in the order they happen, each stage carries an
  * oversized numeral and its own tone (the one stage the employer paces is the
  * inverted one), and where the page already holds a live figure, the stage
- * shows it — evidence in the card, not adjectives.
+ * shows it: evidence in the card, not adjectives.
  */
 
 export interface ToolsSectionProps {
@@ -94,7 +94,7 @@ export function ToolsSection({ pwdPending, frontierMonth, averageDays }: ToolsSe
 
         {/* The rail: a hard line running through the four stages, numerals
             sitting on it. Reads left to right on desktop, top to bottom on a
-            phone — the order the stages actually happen in. */}
+            phone, the order the stages actually happen in. */}
         <ol className="relative mt-14 grid gap-x-4 gap-y-10 md:grid-cols-4">
           <span
             aria-hidden="true"

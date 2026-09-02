@@ -42,8 +42,8 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
         </p>{" "}
         <h2 className="mt-2 font-heading text-2xl font-black">No record under {caseNumber}</h2>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-          DOL&apos;s case system returned nothing for this number just now, or
-          didn&apos;t answer in time. Check it on{" "}
+          DOL&apos;s case system returned nothing for this number, or didn&apos;t
+          answer in time. Check it on{" "}
           <a
             href="https://flag.dol.gov/case-status-search"
             className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -109,13 +109,13 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
         <h3 className="font-heading text-xl font-black">What this status means</h3>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
           {u === "IN PROCESS"
-            ? "DOL is reviewing it. Its own target for an LCA is seven business days from filing, and most are certified inside that."
+            ? "DOL is reviewing it. Its target is seven business days from filing, and most LCAs are certified within that."
             : u.startsWith("CERTIFIED")
-              ? "DOL has certified the wage and working-condition attestations. The employer can file the H-1B petition with USCIS; that petition gets a separate USCIS receipt number."
+              ? "DOL has certified the wage and working-condition attestations. The employer can now file the H-1B petition, which gets its own USCIS receipt number."
               : u === "WITHDRAWN"
-                ? "The employer withdrew it before a decision. A withdrawn LCA is not a denial; employers often refile with corrected details."
+                ? "The employer withdrew it before a decision. A withdrawal isn't a denial. Employers often refile with corrected details."
                 : u === "DENIED"
-                  ? "DOL found a problem with the attestations. Employers usually correct and refile; ask the employer or attorney which."
+                  ? "DOL found a problem with the attestations. Employers usually correct and refile. Ask the employer or attorney what happens next."
                   : "DOL's status for this case, as shown on its own case status page."}
         </p>
       </section>

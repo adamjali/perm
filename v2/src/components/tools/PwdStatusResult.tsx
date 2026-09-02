@@ -65,10 +65,9 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
           No record under {caseNumber}
         </h2>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-          DOL&apos;s case system returned nothing for this number just now, or
-          didn&apos;t answer in time. It may be a typo, a request filed within
-          the last day, or a number from before DOL moved wage requests into
-          its current system. You can check it on{" "}
+          DOL&apos;s case system returned nothing for this number, or didn&apos;t
+          answer in time. It may be a typo, a filing from the last day, or a
+          number from before DOL&apos;s current system. Check it on{" "}
           <a
             href="https://flag.dol.gov/case-status-search"
             className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -149,8 +148,8 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
         </dl>{" "}
         {notPerm ? (
           <p className="mt-4 text-sm leading-relaxed text-foreground/70">
-            DOL tags this request as {row.visaType}, not PERM. The queue figures
-            below are for the PERM wage queue and don&apos;t apply to it.
+            DOL tags this request as {row.visaType}. The queue figures on this
+            site cover PERM wage requests only, so none are shown for it.
           </p>
         ) : null}
       </section>
@@ -160,21 +159,21 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
           <h3 className="font-heading text-xl font-black">Where it sits in DOL&apos;s wage queue</h3>{" "}
           {est?.frontier?.oewsMonth ? (
             <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-              As of {formatAsOf(est.asOf) ?? est.asOf}, DOL is working requests it
+              As of {formatAsOf(est.asOf) ?? est.asOf}, DOL is working requests
               received in {formatMonth(est.frontier.oewsMonth)} where the wage comes
               from the OEWS survey
               {est.frontier.nonOewsMonth
                 ? `, and ${formatMonth(est.frontier.nonOewsMonth)} where it doesn't`
                 : ""}
-              . A case record doesn&apos;t say which of the two this one is in.
+              . A case record doesn&apos;t say which line this one is in.
             </p>
           ) : (
             <p className="mt-3 text-base text-foreground/80">
-              DOL&apos;s current wage-queue position hasn&apos;t loaded; the{" "}
+              DOL&apos;s current queue position didn&apos;t load. The{" "}
               <Link href="/tools/pwd-calculator" className="underline decoration-primary decoration-2 underline-offset-2">
                 PWD queue calculator
               </Link>{" "}
-              carries it.
+              has it.
             </p>
           )}{" "}
           {estimate && month ? (
@@ -196,8 +195,8 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
             </dl>
           ) : null}{" "}
           <p className="mt-4 text-sm leading-relaxed text-foreground/70">
-            Estimate, not a promise: it assumes DOL keeps clearing requests at
-            the rate it has been. The month picker on the{" "}
+            An estimate only. It assumes DOL keeps clearing requests at its
+            recent rate. The{" "}
             <Link href="/tools/pwd-calculator" className="underline decoration-primary decoration-2 underline-offset-2">
               PWD queue calculator
             </Link>{" "}
@@ -222,13 +221,12 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
         <section className="border-2 border-border bg-tint-primary p-5 sm:p-6">
           <h3 className="font-heading text-xl font-black">What comes next</h3>{" "}
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-            With the wage set, the employer recruits and then files the PERM
-            itself, which gets a separate G- case number. Once that&apos;s filed,
-            the{" "}
+            With the wage set, the employer recruits, then files the PERM. That
+            gets its own G- case number. Once filed, the{" "}
             <Link href="/perm-cases" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               PERM case search
             </Link>{" "}
-            finds it by employer, usually within a day of filing.
+            finds it by employer, usually within a day.
           </p>
         </section>
       ) : null}

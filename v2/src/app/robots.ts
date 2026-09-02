@@ -22,6 +22,11 @@ export default function robots(): MetadataRoute.Robots {
     '/timeline',      // Authenticated timeline view
     '/notifications', // Authenticated notifications
     '/settings',      // Authenticated user settings
+    // The lookup page is indexable; its query-string variants are not worth a
+    // crawl. Every case number on the site links to one, each is a dynamic
+    // render that can ask DOL live, and a crawler walking thousands of them is
+    // pure cost (measured 2026-09-02 in Turso rows read and DOL requests).
+    '/perm-case-status?',
   ]
 
   // High-volume crawlers that bring this product NOTHING back. Measured

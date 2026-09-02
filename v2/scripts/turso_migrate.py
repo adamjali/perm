@@ -84,6 +84,9 @@ SCHEMA = [
 # which is a large part of why the storage bill got away from us.
 INDEXES = [
     "CREATE INDEX idx_pc_decision      ON perm_cases(decision_date)",
+    # Filing-month cohorts (getCohortDuration fallback). Added 2026-09-02: the
+    # table had no received_date index and the fallback scanned 373k rows.
+    "CREATE INDEX idx_pc_received      ON perm_cases(received_date, days)",
     "CREATE INDEX idx_pc_status_dec    ON perm_cases(status, decision_date)",
     "CREATE INDEX idx_pc_state_dec     ON perm_cases(state, decision_date)",
     "CREATE INDEX idx_pc_state_st_dec  ON perm_cases(state, status, decision_date)",

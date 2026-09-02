@@ -52,7 +52,7 @@ const PAGE_SIZE = 50;
 const SMALL_COHORT = 20;
 
 const CONTROL =
-  "w-full min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
+  "w-full min-w-0 min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const BUTTON =
   "min-h-[44px] border-2 border-border bg-foreground px-5 font-mono text-xs font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
 const CHIP =
@@ -76,7 +76,7 @@ function Rows({ rows, caption }: { rows: FlagCaseRow[]; caption: string }) {
         <thead className="bg-foreground text-background">
           <tr>
             {["Case", "Status", "Employer", "Job title", "Filed", "Checked"].map((h) => (
-              <Fragment key={h}>{" "}
+              <Fragment key={h}>
               <th scope="col" className="whitespace-nowrap px-3 py-3 font-mono text-xs font-bold uppercase tracking-wider">
                 {h}
               </th>
@@ -94,15 +94,15 @@ function Rows({ rows, caption }: { rows: FlagCaseRow[]; caption: string }) {
                 >
                   {r.caseNumber}
                 </Link>
-              </td>{" "}
+              </td>
               <td className="whitespace-nowrap px-3 py-3">
                 <span className={"border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chip(r.status, r.isFinal)}>
                   {r.status}
                 </span>
-              </td>{" "}
-              <td className="px-3 py-3 font-bold">{r.employerName ?? ""}</td>{" "}
-              <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}</td>{" "}
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.filingDate ?? ""}</td>{" "}
+              </td>
+              <td className="px-3 py-3 font-bold">{r.employerName ?? ""}</td>
+              <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.filingDate ?? ""}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">
                 {r.lastCheckedAt?.slice(0, 10) ?? ""}
               </td>
@@ -180,8 +180,8 @@ export function FlagCaseBrowser({
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <h2 className="font-heading text-xl font-black">Find {program.noun === "LCA" ? "an" : "a"} {program.noun} by employer</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/80">
-          Start of the employer&apos;s name is enough. A word from the job title
-          and the month it was filed narrow it down when the employer files a lot.
+          The start of the employer&apos;s name is enough. Add a word from the job
+          title or a filing month if the employer files a lot.
         </p>{" "}
         <form
           className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] [&>*]:min-w-0"
@@ -228,11 +228,11 @@ export function FlagCaseBrowser({
           <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
             <label className="block">
               <span className="mb-1 block text-sm font-bold">Filed from</span>{" "}
-              <input type="month" value={fromInput} onChange={(e) => setFromInput(e.target.value)} placeholder="YYYY-MM" className={CONTROL} />
+              <input type="month" value={fromInput} onChange={(e) => setFromInput(e.target.value)} placeholder="YYYY-MM" className={CONTROL + " min-w-0"} />
             </label>{" "}
             <label className="block">
               <span className="mb-1 block text-sm font-bold">Filed to</span>{" "}
-              <input type="month" value={toInput} onChange={(e) => setToInput(e.target.value)} placeholder="YYYY-MM" className={CONTROL} />
+              <input type="month" value={toInput} onChange={(e) => setToInput(e.target.value)} placeholder="YYYY-MM" className={CONTROL + " min-w-0"} />
             </label>
           </div>
         </form>{" "}
@@ -241,10 +241,9 @@ export function FlagCaseBrowser({
         ) : null}
         {searching && search && search.cases.length === 0 ? (
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
-            Nothing under that employer yet. The list grows every night as DOL
-            confirms new filings, and it only reaches back to when this started
-            watching, so an older request may not be here. If you have the
-            number, the{" "}
+            Nothing under that employer yet. The list grows nightly and only
+            reaches back to when this site started watching, so an older filing
+            may be missing. Have the number? The{" "}
             <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
               status lookup
             </Link>{" "}
@@ -311,7 +310,7 @@ export function FlagCaseBrowser({
         {withheld && cohort ? (
           <p className="mt-4 text-base leading-relaxed text-foreground/80">
             {fmt(cohort.total)} {program.nouns} were filed in {formatMonth(cohort.month) ?? cohort.month}. Rows aren&apos;t
-            listed for a month this small, because a case number beside an employer and a job title is close to naming a person.
+            listed for a month this small. A case number beside an employer and job title is close to naming a person.
           </p>
         ) : null}
         {listFailed ? <p className="mt-4 text-base text-foreground/80">The list didn&apos;t load.</p> : null}

@@ -293,7 +293,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               htmlFor="hero-case"
               className="font-heading text-lg font-black leading-tight"
             >
-              Where is your case? When could it be decided?
+              Where&apos;s your case? When could it be decided?
             </label>{" "}
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
               <input
@@ -317,7 +317,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
             </div>{" "}
             <p id="hero-case-hint" className="mt-2 text-sm text-foreground/70">
               PERM (G-), wage request (P-) or LCA (I-) number.
-            </p>
+            </p>{" "}
             {/* NO HELP LINE. It read "Live DOL status, your place in the
                 queue, and an estimate. Free, no account. The case number is on
                 the filing receipt, or ask whoever filed for you." The tail was
@@ -345,7 +345,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
           <div className="mt-5 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2">
             <Door
               eyebrow="Case updates"
-              title="See where your case is"
+              title="Search every PERM case"
               // "state", not "country". DOL's disclosure files carry the
               // worksite state and not the beneficiary's nationality, and the
               // case search indexes employer, occupation, state and law firm.
@@ -360,7 +360,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               // page's axis (it is organised by occupation), so the words
               // differ where the page's own vocabulary differs and the
               // sequence does not.
-              body="Track by state, specialty, employer, and law firm"
+              body="By state, specialty, employer and law firm"
               cta="For foreign workers and employers"
               href="/perm-cases"
               figure={<FacetIndexMini />}
@@ -401,7 +401,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
                 The determination history couldn’t be read just now. DOL
-                publishes the underlying disclosure files itself.
+                publishes the disclosure files itself.
               </p>{" "}
               <a
                 href="https://flag.dol.gov/programs/perm"

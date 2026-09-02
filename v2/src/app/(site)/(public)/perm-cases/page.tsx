@@ -117,9 +117,9 @@ export default async function PermCasesPage() {
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           {meta ? (
             <>
-              {fmtInt(meta.totalCases)} PERM cases, every one of them decided
-              between {longDate(meta.firstDecisionDate)} and{" "}
-              {longDate(meta.lastDecisionDate)}. Filed as far back as{" "}
+              {fmtInt(meta.totalCases)} PERM cases decided between{" "}
+              {longDate(meta.firstDecisionDate)} and{" "}
+              {longDate(meta.lastDecisionDate)}, filed as far back as{" "}
               {longDate(meta.firstReceivedDate)}. Anything newer than{" "}
               {longDate(meta.lastDecisionDate)} isn&apos;t in DOL&apos;s
               published files yet. Those cases, decided and still waiting, are
@@ -130,8 +130,7 @@ export default async function PermCasesPage() {
               >
                 live list
               </Link>{" "}
-              further down, the employer search returns them too, and any case
-              number can be checked live.
+              below.
             </>
           ) : (
             <>
@@ -148,15 +147,14 @@ export default async function PermCasesPage() {
         <div className="border-2 border-border bg-tint-primary p-5 sm:p-6">
           <h2 className="font-heading text-lg font-black">What’s in here, and what isn’t</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/80">
-            DOL publishes cases it has already decided. There are no pending
-            rows in these files at all, so a case still waiting on a
-            determination won’t be here, however recently it was filed.
+            DOL publishes only cases it has decided. A case still waiting on a
+            determination isn’t in these files, however recently it was filed.
           </p>{" "}
           {meta ? (
             <p className="mt-3 text-sm leading-relaxed text-foreground/70">
               Source: {meta.sourceFiles.join(", ") || "DOL PERM disclosure files"}.
-              Counts come from the full files rather than the rows on screen, so
-              a filtered count covers only that filter.{" "}
+              Counts cover every row in the files, including the ones off screen.
+              A filtered count covers only that filter.{" "}
               <Link
                 href="/methodology"
                 className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"

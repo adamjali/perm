@@ -803,7 +803,7 @@ export function CaseBrowser({
                 onChange={(e) => setFromInput(e.target.value)}
                 placeholder="YYYY-MM"
                 pattern="\\d{4}-\\d{2}"
-                className={CONTROL}
+                className={CONTROL + " min-w-0"}
               />
             </label>{" "}
             <label className="block">
@@ -814,7 +814,7 @@ export function CaseBrowser({
                 onChange={(e) => setToInput(e.target.value)}
                 placeholder="YYYY-MM"
                 pattern="\\d{4}-\\d{2}"
-                className={CONTROL}
+                className={CONTROL + " min-w-0"}
               />
             </label>
           </div>

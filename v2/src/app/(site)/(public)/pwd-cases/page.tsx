@@ -75,10 +75,9 @@ export default async function PwdCasesPage() {
           Find a prevailing wage request
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          The wage request is the first step of a PERM, filed by the employer
-          months before the PERM itself, and you usually never see its number.
-          Search the employer here, and the number, the job title, the filing
-          date and DOL&apos;s current status come back.{" "}
+          The employer files the wage request months before the PERM. You
+          rarely see its number. Search the employer to get it, with the job
+          title, filing date and DOL&apos;s status.{" "}
           {summary ? (
             <>
               {summary.total.toLocaleString("en-US")} requests confirmed by DOL so far
@@ -92,19 +91,17 @@ export default async function PwdCasesPage() {
         <div className="border-2 border-border bg-tint-primary p-5 sm:p-6">
           <h2 className="font-heading text-lg font-black">What&apos;s in here, and what isn&apos;t</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/80">
-            Every row is a case DOL&apos;s own system confirmed: number, employer,
-            job title, filing date and status. It does not carry the wage DOL
-            set, which appears only in DOL&apos;s quarterly disclosure files
-            once the determination is issued. Requests filed for H-1B or H-2B
-            wages are left out; this is the PERM queue.
+            Every row comes from DOL&apos;s own case system: number, employer,
+            job title, filing date and status. The wage itself arrives later, in
+            DOL&apos;s quarterly disclosure files. H-1B and H-2B requests are
+            left out; this is the PERM queue.
           </p>{" "}
           <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-            Have the number already? The{" "}
+            Have the number? The{" "}
             <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               status lookup
             </Link>{" "}
-            takes P- numbers and asks DOL directly. Wondering how long the queue
-            is? The{" "}
+            takes P- numbers and asks DOL directly. The{" "}
             <Link href="/tools/pwd-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               PWD queue calculator
             </Link>{" "}
@@ -123,26 +120,17 @@ export default async function PwdCasesPage() {
         <h2 className="font-heading text-2xl font-black">How this works</h2>{" "}
         <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
           <p>
-            <b className="font-bold">Where the rows come from.</b> DOL&apos;s case status
-            search covers prevailing wage requests as well as PERM, and DOL numbers
-            both from one running counter. This site already checks the counter
-            every night for new PERM filings; the wage requests sit in the same
-            windows, so they&apos;re confirmed the same way, one batch of numbers at
-            a time, and re-checked daily until DOL issues the determination.
+            <b className="font-bold">Where the rows come from.</b> DOL numbers wage
+            requests and PERM cases from one running counter. This site checks it
+            nightly for new filings, then re-checks each request daily until DOL
+            decides.
           </p>{" "}
           <p>
             <b className="font-bold">Why a request might be missing.</b> Watching
-            started in September 2026 and works backwards through earlier filing
-            days, so an older request can be absent for a while. A request filed
-            today shows up after the next nightly check. Anything DOL&apos;s
-            system doesn&apos;t return for a number can&apos;t be listed.
-          </p>{" "}
-          <p>
-            <b className="font-bold">What &ldquo;in process&rdquo; means.</b> DOL works
-            wage requests in the order it received them, in two lines: wages taken
-            from the OEWS survey, and everything else. The status stays &ldquo;in
-            process&rdquo; until the determination is issued, and the queue
-            calculator says which month DOL is on.
+            started in September 2026 and is working backwards through earlier
+            filings, so an older request can be absent. A request filed today
+            appears after the next nightly check. A number DOL&apos;s system
+            doesn&apos;t return can&apos;t be listed.
           </p>
         </div>
       </section>

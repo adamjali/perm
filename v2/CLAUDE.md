@@ -1623,6 +1623,59 @@ inheriting somebody else's boundary. A type-only importer,
 `cases/detail/case-detail-types.ts`, correctly needs nothing - type imports are
 erased at compile, so a blanket fix would have been wrong there.
 
+## Turso bills rows READ, and two queries read 143k rows per entity page (2026-09-02)
+
+The Aug 28-31 invoice charged **7.75 billion rows read** ($7 over the plan's
+1B), and by the afternoon of Sep 2 the new cycle had already read **11.58
+billion** against a 2.5B allowance. Writes were nowhere near the cap. Turso's
+own dashboard (`app.turso.tech`, sidebar "Usage") is where to read this; the
+CLI is not installed here and the platform API needs a token we do not hold.
+
+**EXPLAIN QUERY PLAN over the read layer found the cost.** Every employer,
+firm and occupation page render ran:
+
+| query | plan before | rows per render |
+|---|---|---|
+| `nameVariants`: `merge_key = ? OR merge_key LIKE ?` | walks the whole kind (`idx_pe_kind_total (kind=?)`) | 71,512 |
+| `fieldDistribution`: `(IFNULL(certified,0)+IFNULL(denied,0)) >= ?` | walks the whole kind | 71,512 |
+| `count(*) FROM perm_entities WHERE kind = ?` | covering index, every entry | 71,512 |
+
+~213k rows per render, times the tens of thousands of regenerations a cold
+ISR cache produces after each deploy, is the invoice. Fixes, each verified by a
+fresh EXPLAIN (an EXPLAIN in the same pipeline as its CREATE INDEX reports
+the OLD plan):
+
+- **A range beats OR + LIKE.** `merge_key >= root AND merge_key < root || '!'`
+  captures exactly `root` and `root <suffix>` (space, 0x20, is the last
+  character below `!`, 0x21) and is served by the existing `(kind,
+  merge_key)` index.
+- **An expression index serves a filter on an expression**, if the SQL text
+  matches the index expression exactly: `CREATE INDEX idx_pe_kind_decided ON
+  perm_entities (kind, (IFNULL(certified, 0) + IFNULL(denied, 0)))` turned the
+  cohort read into `SEARCH ... (kind=? AND <expr>>?)`, 9,176 rows. Created
+  live; it took effect for the deployed code immediately because the text
+  already matched.
+- **Ranks are dense 1..N per kind** (measured `MAX(rank) = COUNT(*)`), so the
+  kind's size is one read from the top of `idx_pe_kind_rank`, not a count.
+- `perm_cases` had **no index on `received_date`**; `idx_pc_received
+  (received_date, days)` covers the cohort-duration fallback.
+
+**How to audit this again:** pull every SQL literal out of `src/lib/turso`,
+bind `?` to placeholders, `EXPLAIN QUERY PLAN` each against production with
+the local token, and read for `SCAN`. Crude extraction mis-parses concatenated
+strings (they show as `WHERE x`); those need a manual EXPLAIN. Also: LIKE with
+a prefix does NOT use an index on a BINARY-collated column (LIKE is
+case-insensitive by default), which is why the FLAG prober's `LIKE
+'G-100-26238-%'` reads were rewritten as primary-key ranges too.
+
+**robots.txt now disallows `/perm-case-status?`.** Every case number on the
+site links to a lookup URL; each is a dynamic render that can ask DOL live,
+and a crawler walking thousands of them is pure cost. The bare page stays
+indexable.
+
+**Turso offers a one-time "Vegas Blackout"** on the Databases page: erase one
+day of usage, no questions asked. Use it on the worst day of a runaway cycle.
+
 ## Every FLAG program shares one endpoint and one serial counter (2026-09-02)
 
 DOL's batch case-status endpoint serves every foreign-labor program with the

@@ -26,27 +26,27 @@ const stakes: StakeCard[] = [
     number: "1",
     title: "30-Day Audit Response",
     consequence:
-      "Miss the DOL's 30-day audit window and the case is automatically abandoned. There is no extension and no appeal, and the process starts over.",
+      "Miss DOL's 30-day audit window and the case is abandoned. No extension, no appeal, and the process starts over.",
     prevention:
-      "Auto-calculated deadline + alerts at 14, 7, 3, and 1 day before",
+      "Deadline computed for you, with alerts at 14, 7, 3 and 1 day before",
     severity: "critical",
   },
   {
     number: "2",
     title: "PWD Expiration",
     consequence:
-      "Your prevailing wage determination expires per 20 CFR 656.40. File after expiration and you restart from zero.",
+      "A prevailing wage determination expires under 20 CFR 656.40. File after that and you start from zero.",
     prevention:
-      "Expiration auto-calculated from determination date using DOL rules",
+      "Expiration computed from the determination date under DOL's rules",
     severity: "critical",
   },
   {
     number: "3",
     title: "180-Day Filing Window",
     consequence:
-      "The ETA 9089 must be filed 30-180 days after recruitment ends and before PWD expires. Miss this window and recruitment must be redone.",
+      "The ETA 9089 must be filed 30 to 180 days after recruitment ends, and before the PWD expires. Miss the window and recruitment is redone.",
     prevention:
-      "Filing window open/close dates computed from your recruitment dates",
+      "Open and close dates computed from your recruitment dates",
     severity: "high",
   },
   {
@@ -55,16 +55,16 @@ const stakes: StakeCard[] = [
     consequence:
       "You have 180 days after PERM certification to file the I-140. Miss it and the approved labor certification expires.",
     prevention:
-      "180-day deadline auto-set when certification date is entered",
+      "Set automatically when you enter the certification date",
     severity: "high",
   },
   {
     number: "5",
     title: "Recruitment Timing",
     consequence:
-      "Sunday ads, job orders, and notice of filing all have precise timing requirements. Documentation gaps trigger DOL audits.",
+      "Sunday ads, job orders and the notice of filing each have exact timing rules. Gaps in the documentation trigger DOL audits.",
     prevention:
-      "All recruitment method deadlines calculated with business day awareness",
+      "Every recruitment deadline computed, business days accounted for",
     severity: "high",
   },
 ];
@@ -136,8 +136,8 @@ export function StakesSection() {
             What a Missed Deadline Costs
           </h2>{" "}
           <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
-            Every PERM case has filing windows measured in days. Missing one
-            means starting the recruitment over.
+            PERM filing windows are measured in days. Miss one and recruitment
+            starts over.
           </p>
         </ScrollReveal>
       </div>
@@ -274,7 +274,7 @@ export function StakesSection() {
           <ArrowRightIcon className="h-4 w-4" />
         </div>{" "}
         <p className="text-sm text-muted-foreground text-center">
-          Every one of these deadlines is calculated automatically.
+          PERM Tracker computes every one of them.
         </p>
       </div>
     </section>
