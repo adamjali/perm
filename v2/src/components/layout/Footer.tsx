@@ -38,9 +38,11 @@
 //      webpack bootstrap and no source file, found only by reading the module
 //      ids in the emitted chunk (`.next/server/chunks/*.js`). The `/ssr` entry
 //      exists for this and ~60 files here already use it. Footer is a client
-//      component again so its main-entry import is fine, but three other
-//      SERVER-side files still import the main entry and are dormant traps:
-//      chat/tool-icons.tsx, empty-states/EmptyState.tsx, error/ErrorDisplay.tsx
+//      component again so its main-entry import is fine. NOTE: three other
+//      server files were briefly recorded as dormant traps here; that was a
+//      FALSE POSITIVE - their main-entry imports are `import type`, which is
+//      erased at compile. Measured 2026-09-02: zero server-side VALUE imports
+//      of the main entry exist in src/.
 //   2. 25 modules used client-only APIs with no boundary of their own, working
 //      purely by inheriting somebody else's. Those are declared now.
 

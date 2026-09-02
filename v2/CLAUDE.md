@@ -1583,9 +1583,18 @@ module id from the frame, locate it in `.next/server/chunks/*.js`, and read what
 it requires. **The stack names the IMPORTER, not the thrower.** Do not iterate
 on production builds to find this class of bug.
 
-**Three dormant traps remain** - server-side files still importing the main
-entry: `chat/tool-icons.tsx`, `empty-states/EmptyState.tsx`,
-`error/ErrorDisplay.tsx`. Harmless until the chunk graph shifts.
+**There are ZERO real cases of this in the codebase** (measured 2026-09-02):
+118 value imports of the main entry, none from a server file; 58 value imports
+of `/ssr`; 4 type-only imports of the main entry, which are erased at compile
+and emit no runtime require.
+
+I previously recorded `chat/tool-icons.tsx`, `empty-states/EmptyState.tsx` and
+`error/ErrorDisplay.tsx` here as dormant traps. **That was a false positive** -
+all three import the main entry as `import type { Icon as PhosphorIcon }`, and
+two already take their value icons from `/ssr`. The detector did not separate
+`import type` from `import`, the same distinction applied correctly to
+`convex/react` in the same session. When auditing, match
+`^\s*import\s+(?!type\s)` and intersect with files lacking `"use client"`.
 
 **Related and kept: 25 modules had no client boundary of their own** (6 found by
 walking the import graph from server entry points, 4 calling `createContext`
