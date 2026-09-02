@@ -1,4 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "BASE=\"${VERCEL_GIT_PREVIOUS_SHA:-}\"; if [ -z \"$BASE\" ] || ! git cat-file -e \"$BASE\" 2>/dev/null; then BASE=HEAD^; fi; git rev-parse \"$BASE\" >/dev/null 2>&1 || exit 1; git diff --name-only \"$BASE\" HEAD | grep -qvE '^(v2/scripts/|\\.github/|\\.planning/|v2/docs/)|\\.md$|/__tests__/|\\.test\\.tsx?$|^v2/vitest\\.' && exit 1 || exit 0"
+  "ignoreCommand": "sh \"$(git rev-parse --show-toplevel)/v2/scripts/vercel-ignore.sh\""
 }
