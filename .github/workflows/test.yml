@@ -98,9 +98,10 @@ jobs:
       # integers-as-strings met a freshly built int. No network.
       - name: Live-recent diff contract
         working-directory: v2
-        run: python3 scripts/test_live_recent.py
-        run: python3 scripts/test_flag_disclosure.py
-        run: python3 scripts/test_pwd_status.py
+        run: |
+          python3 scripts/test_live_recent.py
+          python3 scripts/test_flag_disclosure.py
+          python3 scripts/test_pwd_status.py
 
       # The quarterly Turso load, against a local SQLite stub instead of the
       # real thing. Five bugs in these load steps were each found by
