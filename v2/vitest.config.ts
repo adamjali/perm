@@ -51,6 +51,15 @@ const ISOLATED_UNIT_FILES = [
   "src/hooks/__tests__/useJobDescriptionTemplates.test.ts",
   "src/hooks/__tests__/useChatWithPersistence.test.ts",
   "src/hooks/__tests__/useToolOrchestrator.test.ts",
+  // Turso read-layer tests that mock ../client and import modules which
+  // share `../cases` underneath. In the shared pool the first file to load
+  // `cases.ts` binds it to ITS mock; every later file's mock then sees no
+  // calls (6 failures on 2026-09-02 that each passed alone).
+  "src/lib/turso/__tests__/liveCases.test.ts",
+  "src/lib/turso/__tests__/searchFilters.test.ts",
+  "src/lib/turso/__tests__/pwdCases.test.ts",
+  "src/lib/turso/__tests__/lcaCases.test.ts",
+  "src/lib/turso/__tests__/entityReads.test.ts",
   // Added 2026-08-30. This file mocks `@/lib/turso/client`, and so do four
   // other files in the same project. With `isolate: false` they share one
   // module registry per worker, so whichever registers its factory first
